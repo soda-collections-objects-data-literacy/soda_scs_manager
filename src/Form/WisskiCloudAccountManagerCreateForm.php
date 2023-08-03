@@ -2,7 +2,6 @@
 
 namespace Drupal\wisski_cloud_account_manager\Form;
 
-use Drupal\Core\Database\Database;
 use Drupal\Core\Form\FormBase;
 use Drupal\Core\Form\FormStateInterface;
 use Drupal\wisski_cloud_account_manager\WisskiCloudAccountManagerDaemonApiActions;
@@ -15,7 +14,7 @@ class WisskiCloudAccountManagerCreateForm extends FormBase {
 
   /**
    * @var \Drupal\wisski_cloud_account_manager\WisskiCloudAccountManagerDaemonApiActions
-   *  The WissKi Cloud account manager daemon API actions service.
+   *   The WissKi Cloud account manager daemon API actions service.
    */
   protected WisskiCloudAccountManagerDaemonApiActions $wisskiCloudAccountManagerDaemonApiActions;
 
@@ -119,47 +118,29 @@ class WisskiCloudAccountManagerCreateForm extends FormBase {
    * {@inheritdoc}
    */
   public function validateForm(array &$form, FormStateInterface $form_state) {
-    // Check if username is in database.
+    // Check if account data is already in use.
     // @todo Check if username is WissKI Cloud accounts, i.e add direct by admin?.
-    $username = $form_state->getValue('username');
-    $conn = Database::getConnection();
-    $accountWithUsername = $conn
-      ->select('wisski_cloud_accounts', 'wca')
-      ->fields('wca', ['username'])
-      ->condition('username', $username)
-      ->execute()
-      ->fetchCol();
-    if (!empty($accountWithUsername)) {
-      $form_state->setErrorByName('username', $this->t('The username @username is already in use.', ['@username' => $username]));
+    $dataToCheck['username'] = $form_state->getValue('username');
+    $dataToCheck['email'] = $form_state->getValue('email');
+    $dataToCheck['subdomain'] = $form_state->getValue('subdomain');
+
+    $response = $this->wisskiCloudAccountManagerDaemonApiActions->checkAccountData($dataToCheck);
+
+    if ($response['accountData']['userWithUsername']) {
+      $form_state->setErrorByName('username', $this->t('The username "@username" is already in use.', ['@username' => $dataToCheck['username']]));
+    }
+
+    if ($response['accountData']['userWithEmail']) {
+      $form_state->setErrorByName('email', $this->t('The email "@email" is already in use.', ['@email' => $dataToCheck['email']]));
+    }
+
+    if ($response['accountData']['userWithSubdomain']) {
+      $form_state->setErrorByName('subdomain', $this->t('The subdomain "@subdomain" is already in use.', ['@subdomain' => $dataToCheck['subdomain']]));
     }
 
     // Check if email is in valid form.
-    $email = $form_state->getValue('email');
-    if (!\Drupal::service('email.validator')->isValid($email)) {
+    if (!\Drupal::service('email.validator')->isValid($dataToCheck['email'])) {
       $form_state->setErrorByName('email', $this->t('Email not in valid form, i.e. "name@example.com".'));
-    }
-
-    // Check if email is in database.
-    $accountWithEmail = $conn
-      ->select('wisski_cloud_accounts', 'wca')
-      ->fields('wca', ['email'])
-      ->condition('email', $email)
-      ->execute()
-      ->fetchCol();
-    if (!empty($accountWithEmail)) {
-      $form_state->setErrorByName('email', $this->t('The email @email is already in use.', ['@email' => $email]));
-    }
-
-    // Check if subdomain is in database.
-    $subdomain = $form_state->getValue('subdomain');
-    $accountWithSubdomain = $conn
-      ->select('wisski_cloud_accounts', 'wca')
-      ->fields('wca', ['subdomain'])
-      ->condition('subdomain', $subdomain)
-      ->execute()
-      ->fetchCol();
-    if (!empty($accountWithSubdomain)) {
-      $form_state->setErrorByName('subdomain', $this->t('The subdomain @subdomain is already in use.', ['@subdomain' => $subdomain]));
     }
   }
 
@@ -168,8 +149,6 @@ class WisskiCloudAccountManagerCreateForm extends FormBase {
    */
   public function submitForm(array &$form, FormStateInterface $form_state): void {
     try {
-      $conn = Database::getConnection();
-
       $field = $form_state->getValues();
 
       $account["personname"] = $field['personname'];
@@ -179,19 +158,10 @@ class WisskiCloudAccountManagerCreateForm extends FormBase {
       $account["password"] = $field['password'];
       $account["subdomain"] = $field['subdomain'];
 
-      $daemonResponse = $this->wisskiCloudAccountManagerDaemonApiActions->addAccount($account);
-      dpm($daemonResponse, 'Daemon response');
+      $this->wisskiCloudAccountManagerDaemonApiActions->addAccount($account);
 
-      unset($account["password"]);
-
-      dpm($account);
-
-      /*
-      $conn->insert('wisski_cloud_accounts')
-      ->fields($account)->execute();
       \Drupal::messenger()
-      ->addMessage($this->t('The account data has been succesfully saved'));
-       */
+        ->addMessage($this->t('The account data has been succesfully saved'));
     }
     catch (\Exception $ex) {
       \Drupal::logger('wisski_cloud_account_manager')->error($ex->getMessage());
