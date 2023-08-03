@@ -1,0 +1,23 @@
+wisski_cloud_account.settings:
+  path: '/admin/config/system/wisski-cloud-account-manager/settings'
+  defaults:
+    _form: '\Drupal\wisski_cloud_account_manager\Form\WisskiCloudAccountManagerSettingsForm'
+    _title:  'WissKI cloud account settings'
+  requirements:
+    _permission: 'administer site configuration'
+
+wisski_cloud_account.create:
+  path: '/wisski-cloud-account-manager/create'
+  defaults:
+    _form: '\Drupal\wisski_cloud_account_manager\Form\WisskiCloudAccountManagerCreateForm'
+    _title:  'Create WissKI cloud account'
+  requirements:
+    _access: 'TRUE'
+
+wisski_cloud_account.terms_and_conditions:
+  path: '/wisski-cloud-account-manager/terms-and-conditions'
+  defaults:
+    _controller: '\Drupal\wisski_cloud_account_manager\Controller\WisskiCloudAccountManagerController::termsAndConditions'
+    _title:  'Terms and Conditions'
+  requirements:
+    _access: 'TRUE'
