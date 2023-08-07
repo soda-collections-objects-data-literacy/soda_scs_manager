@@ -40,7 +40,9 @@
       {% if responseContents.data.valid == 1 and responseContents.data.provisioned == 1 %}
         <p class="wisski-cloud-account-manager-success"><strong> Your account is valid and provisioned. You can now log in to your account at <a href="https://{{ responseContents.data.subdomain }}.wisski.cloud">https://{{ responseContents.data.subdomain }}.wisski.cloud</a>.</strong></p>
       {% elseif responseContents.data.valid == 1 and responseContents.data.provisioned == 0 %}
-        <p class="wisski-cloud-account-manager-warning"><strong>Your account is valid but not yet provisioned. Please wait a few minutes and reload this page.</strong></p>
+        <p class="wisski-cloud-account-manager-error"><strong>Your account is valid but the provision has not started. Please contact <a href="mailto:info@wiss-ki.eu">info@wiss-ki.eu</a> to resolve this issue.</strong></p>
+      {% elseif responseContents.data.valid == 1 and responseContents.data.provisioned == 2 %}
+        <p class="wisski-cloud-account-manager-warning"><strong>Your account is valid and the provision of your WissKI Cloud instance has started. Please wait a few minutes and refresh this page.</strong></p>
       {% elseif responseContents.data.valid == 0 %}
       <p class="wisski-cloud-account-manager-error"><strong>Your account is not valid. Please contact <a href="mailto:info@wiss-ki.eu">info@wiss-ki.eu</a> to resolve this issue.</strong></p>
       {% else %}
