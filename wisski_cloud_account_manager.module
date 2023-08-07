@@ -42,3 +42,15 @@ function wisski_cloud_account_manager_mail($key, &$message, $params) {
       break;
   }
 }
+
+/**
+ * Implements hook_theme().
+ */
+function wisski_cloud_account_manager_theme($existing, $type, $theme, $path) {
+  return [
+    'wisski_cloud_account_manager_validation_page' => [
+      'variables' => ['responseContents' => NULL],
+    ],
+  ];
+}
+

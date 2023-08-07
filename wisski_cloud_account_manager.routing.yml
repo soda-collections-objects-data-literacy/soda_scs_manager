@@ -23,10 +23,22 @@ wisski_cloud_account.create:
   requirements:
     _access: 'TRUE'
 
+wisski_cloud_account.validate:
+  path: '/wisski-cloud-account-manager/validate/{validationCode}'
+  defaults:
+    _controller: '\Drupal\wisski_cloud_account_manager\Controller\WisskiCloudAccountManagerController::validationPage'
+    _title:  'Check validation and provision of your WissKI Cloud account'
+  requirements:
+    _access: 'TRUE'
+    token: '[a-zA-Z0-9]+'
+
 wisski_cloud_account.terms_and_conditions:
   path: '/wisski-cloud-account-manager/terms-and-conditions'
   defaults:
-    _controller: '\Drupal\wisski_cloud_account_manager\Controller\WisskiCloudAccountManagerController::termsAndConditions'
+    _controller: '\Drupal\wisski_cloud_account_manager\Controller\WisskiCloudAccountManagerController::termsAndConditionsPage'
     _title:  'Terms and conditions'
   requirements:
     _access: 'TRUE'
+
+
+

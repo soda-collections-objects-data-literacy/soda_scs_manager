@@ -42,18 +42,25 @@ class WisskiCloudAccountManagerSettingsForm extends ConfigFormBase {
       '#default_value' => $config->get('daemonUrl'),
     ];
 
-    $form['userPostUrlPath'] = [
+    $form['accountPostUrlPath'] = [
       '#type' => 'url',
       '#title' => $this->t('POST URL path'),
-      '#description' => $this->t('Provide the path to the POST endpoint, i. e. "/user"'),
-      '#default_value' => $config->get('userPostUrlPath'),
+      '#description' => $this->t('Provide the path to the POST endpoint, i. e. "/account"'),
+      '#default_value' => $config->get('accountPostUrlPath'),
     ];
 
-    $form['userFilterByData'] = [
+    $form['accountFilterByData'] = [
       '#type' => 'url',
       '#title' => $this->t('Filter by Data URL path'),
-      '#description' => $this->t('Provide the path to the Get user by data endpoint, i. e. "/user/by_data"'),
-      '#default_value' => $config->get('userFilterByData'),
+      '#description' => $this->t('Provide the path to the Get account by data endpoint, i. e. "/account/by_data"'),
+      '#default_value' => $config->get('accountFilterByData'),
+    ];
+
+    $form['accountValidation'] = [
+      '#type' => 'url',
+      '#title' => $this->t('User Validation URL path'),
+      '#description' => $this->t('Provide the path to the account validation PUT endpoint, i. e. "/account/validation"'),
+      '#default_value' => $config->get('accountValidation'),
     ];
 
     return $form;
@@ -66,8 +73,10 @@ class WisskiCloudAccountManagerSettingsForm extends ConfigFormBase {
     $config = $this->config('wisski_cloud_account_manager.settings');
 
     $config->set('daemonURL', $form_state->getValue('daemonURL'))
-      ->set('userPostUrlPath', $form_state->getValue('userPostUrlPath'))
-      ->set('userFilterByData', $form_state->getValue('userFilterByData'))
+      ->set('accountPostUrlPath', $form_state->getValue('accountPostUrlPath'))
+      ->set('accountFilterByData', $form_state->getValue('accountFilterByData'))
+      ->set('accountProvisionAndValidationCheck', $form_state->getValue('accountProvisionAndValidationCheck'))
+      ->set('accountValidation', $form_state->getValue('accountValidation'))
       ->save();
 
     parent::submitForm($form, $form_state);

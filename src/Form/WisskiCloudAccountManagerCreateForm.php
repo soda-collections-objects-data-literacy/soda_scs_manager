@@ -2,6 +2,7 @@
 
 namespace Drupal\wisski_cloud_account_manager\Form;
 
+use Drupal\Component\Utility\EmailValidatorInterface;
 use Drupal\Core\Form\FormBase;
 use Drupal\Core\Form\FormStateInterface;
 use Drupal\wisski_cloud_account_manager\WisskiCloudAccountManagerDaemonApiActions;
@@ -19,9 +20,15 @@ class WisskiCloudAccountManagerCreateForm extends FormBase {
   protected WisskiCloudAccountManagerDaemonApiActions $wisskiCloudAccountManagerDaemonApiActions;
 
   /**
+   * @var \Drupal\Component\Utility\EmailValidatorInterface
+   *  The email validator service.
+   */
+  private EmailValidatorInterface $emailValidator;
+
+  /**
    * {@inheritdoc}
    */
-  public function getFormId() {
+  public function getFormId(): string {
     return 'wisski_cloud_account_manager_create';
   }
 
@@ -30,9 +37,12 @@ class WisskiCloudAccountManagerCreateForm extends FormBase {
    *
    * @param \Drupal\wisski_cloud_account_manager\WisskiCloudAccountManagerDaemonApiActions $wisskiCloudAccountManagerDaemonApiActions
    *   The WissKi Cloud account manager daemon API actions service.
+   * @param \Drupal\Component\Utility\EmailValidatorInterface $emailValidator
+   *   The email validator service.
    */
-  public function __construct(WisskiCloudAccountManagerDaemonApiActions $wisskiCloudAccountManagerDaemonApiActions) {
+  public function __construct(WisskiCloudAccountManagerDaemonApiActions $wisskiCloudAccountManagerDaemonApiActions, EmailValidatorInterface $emailValidator) {
     $this->wisskiCloudAccountManagerDaemonApiActions = $wisskiCloudAccountManagerDaemonApiActions;
+    $this->emailValidator = $emailValidator;
   }
 
   /**
@@ -44,6 +54,7 @@ class WisskiCloudAccountManagerCreateForm extends FormBase {
   public static function create(ContainerInterface $container) {
     return new static(
       $container->get('wisski_cloud_account_manager.daemon_api.actions'),
+      $container->get('email.validator'),
     );
   }
 
@@ -126,20 +137,20 @@ class WisskiCloudAccountManagerCreateForm extends FormBase {
 
     $response = $this->wisskiCloudAccountManagerDaemonApiActions->checkAccountData($dataToCheck);
 
-    if ($response['accountData']['userWithUsername']) {
+    if ($response['accountData']['accountWithUsername']) {
       $form_state->setErrorByName('username', $this->t('The username "@username" is already in use.', ['@username' => $dataToCheck['username']]));
     }
 
-    if ($response['accountData']['userWithEmail']) {
+    if ($response['accountData']['accountWithEmail']) {
       $form_state->setErrorByName('email', $this->t('The email "@email" is already in use.', ['@email' => $dataToCheck['email']]));
     }
 
-    if ($response['accountData']['userWithSubdomain']) {
+    if ($response['accountData']['accountWithSubdomain']) {
       $form_state->setErrorByName('subdomain', $this->t('The subdomain "@subdomain" is already in use.', ['@subdomain' => $dataToCheck['subdomain']]));
     }
 
     // Check if email is in valid form.
-    if (!\Drupal::service('email.validator')->isValid($dataToCheck['email'])) {
+    if (!$this->emailValidator->isValid($dataToCheck['email'])) {
       $form_state->setErrorByName('email', $this->t('Email not in valid form, i.e. "name@example.com".'));
     }
   }
@@ -160,13 +171,13 @@ class WisskiCloudAccountManagerCreateForm extends FormBase {
 
       $accountResponse = $this->wisskiCloudAccountManagerDaemonApiActions->addAccount($account);
       dpm($accountResponse, 'accountResponse');
-      $this->wisskiCloudAccountManagerDaemonApiActions->sendValidationEmail($accountResponse['user']['email'], $accountResponse['user']['validationCode']);
+      $this->wisskiCloudAccountManagerDaemonApiActions->sendValidationEmail($accountResponse['account']['email'], $accountResponse['account']['validationCode']);
 
-      \Drupal::messenger()
+      $this->messenger()
         ->addMessage($this->t('The account data has been successfully saved, please check your email for validation!'));
     }
     catch (\Exception $ex) {
-      \Drupal::logger('wisski_cloud_account_manager')->error($ex->getMessage());
+      $this->logger('wisski_cloud_account_manager')->error($ex->getMessage());
     }
   }
 

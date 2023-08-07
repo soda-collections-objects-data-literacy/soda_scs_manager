@@ -11,6 +11,7 @@ use Drupal\Core\Messenger\MessengerInterface;
 use Drupal\Core\Render\Markup;
 use Drupal\Core\StringTranslation\TranslationInterface;
 use GuzzleHttp\ClientInterface;
+use Psr\Http\Message\ResponseInterface;
 
 /**
  * Handles the communication with the WissKI Cloud account manager daemon.
@@ -31,14 +32,21 @@ class WisskiCloudAccountManagerDaemonApiActions {
    *
    * @var string
    */
-  private string $USER_POST_URL_PART = '/user';
+  private string $ACCOUNT_POST_URL_PART = '/account';
 
   /**
    * The URL path to the GET endpoint.
    *
    * @var string
    */
-  private string $FILTER_BY_DATA_URL_PART = '/user/by_data';
+  private string $FILTER_BY_DATA_URL_PART = '/account/by_data';
+
+  /**
+   * The URL path to provision and validation GET endpoint.
+   *
+   * @var string
+   */
+  private string $ACCOUNT_VALIDATION_URL_PART = '/account/validation';
 
   /**
    * The string translation service.
@@ -68,8 +76,6 @@ class WisskiCloudAccountManagerDaemonApiActions {
    */
   protected Config $settings;
 
-
-
   /**
    * The mail manager.
    *
@@ -93,7 +99,8 @@ class WisskiCloudAccountManagerDaemonApiActions {
     ClientInterface $httpClient,
     ConfigFactoryInterface $configFactory,
     MailManagerInterface $mailManager,
-    LanguageManagerInterface $languageManager) {
+    LanguageManagerInterface $languageManager
+  ) {
     // Services from container.
     $this->stringTranslation = $stringTranslation;
     $this->messenger = $messenger;
@@ -108,9 +115,10 @@ class WisskiCloudAccountManagerDaemonApiActions {
 
     // Set the daemon URL and the URL parts class variables.
     $this->DAEMON_URL = $settings->get('daemonUrl') ?: 'http://wisski_cloud_api_daemon:3000/wisski-cloud-daemon/api/v1';
-    $this->USER_POST_URL_PART = $settings->get('userPostUrlPath') ?: '/user';
-    $this->FILTER_BY_DATA_URL_PART = $settings->get('userFilterByData') ?: '/user/by_data';
-
+    $this->USER_POST_URL_PART = $settings->get('accountPostUrlPath') ?: '/account';
+    $this->FILTER_BY_DATA_URL_PART = $settings->get('accountFilterByData') ?: '/account/by_data';
+    $this->USER_PROVISION_AND_VALIDATION_URL_PART = $settings->get('accountProvisionAndValidationUrlPart') ?: '/account/provision_and_validation';
+    $this->ACCOUNT_VALIDATION_URL_PART = $settings->get('accountValidationUrlPart') ?: '/account/validation';
   }
 
   /**
@@ -120,7 +128,7 @@ class WisskiCloudAccountManagerDaemonApiActions {
    *   The account to add.
    *
    * @return array
-   *   The response from the daemon (user id with validation code).
+   *   The response from the daemon (account id with validation code).
    */
   public function addAccount(array $account): array {
     $request = [
@@ -129,21 +137,25 @@ class WisskiCloudAccountManagerDaemonApiActions {
       ],
       'body' => json_encode($account),
     ];
-    $userPostUrl = $this->DAEMON_URL . $this->USER_POST_URL_PART;
-    $response = $this->httpClient->post($userPostUrl, $request);
-    return array_merge(json_decode($response->getBody()->getContents(), TRUE), ['statusCode' => $response->getStatusCode()]);
+    $accountPostUrl = $this->DAEMON_URL . $this->ACCOUNT_POST_URL_PART;
+    $response = $this->httpClient->post($accountPostUrl, $request);
+    return array_merge(json_decode($response->getBody()
+      ->getContents(), TRUE), ['statusCode' => $response->getStatusCode()]);
   }
 
   /**
    * Check if an account with the given data already exists.
    *
    * @param array $dataToCheck
-   *   The data to check.
+   *   The data to check. Possible keys are:
+   *    - email
+   *    - subdomain
+   *    - username.
    *
    * @return array
    *   The response from the daemon.
    */
-  public function checkAccountData($dataToCheck): array {
+  public function checkAccountData(array $dataToCheck): array {
     // Build the query string from the parameters.
     $query_string = http_build_query($dataToCheck);
 
@@ -171,6 +183,22 @@ class WisskiCloudAccountManagerDaemonApiActions {
   }
 
   /**
+   * Checks the validation status of the given validation code.
+   *
+   * @param string $validationCode
+   *   The validation code to check.
+   *
+   * @return \Psr\Http\Message\ResponseInterface
+   *   The response from the daemon.
+   */
+  public function validateAccount(string $validationCode): ResponseInterface {
+    $url = $this->DAEMON_URL . $this->ACCOUNT_VALIDATION_URL_PART . '/' . $validationCode;
+    return $this->httpClient->put($url);
+
+  }
+
+
+  /**
    * Sends a validation email to the given email address.
    *
    * @param string $email
@@ -184,7 +212,8 @@ class WisskiCloudAccountManagerDaemonApiActions {
     $langcode = $this->languageManager->getDefaultLanguage()->getId();
     $to = $email;
 
-    $validationLink = \Drupal::request()->getSchemeAndHttpHost() . '/wisski-cloud-account-manager/validate/' . $validationCode;
+    $validationLink = \Drupal::request()
+      ->getSchemeAndHttpHost() . '/wisski-cloud-account-manager/validate/' . $validationCode;
 
     $params['message'] = Markup::create($this->stringTranslation->translate('<p>Please validate your account by clicking on this <a href="@validationLink" target="_blank">link</a> or copy this to the address bar of your browser: <p>@validationLink</p>.</p>', ['@validationLink' => $validationLink]));
     $params['subject'] = $this->stringTranslation->translate('WissKI Cloud account validation');
