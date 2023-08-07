@@ -6,3 +6,5 @@ services:
       - '@messenger'
       - '@http_client'
       - '@config.factory'
+      - '@plugin.manager.mail'
+      - '@language_manager'

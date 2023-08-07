@@ -1,0 +1,5 @@
+wisski_cloud_account.settings.menu:
+    title: 'WissKI cloud account settings'
+    description: 'WissKI cloud account settings'
+    parent: system.admin_config_wisski_cloud_account
+    route_name: wisski_cloud_account.settings

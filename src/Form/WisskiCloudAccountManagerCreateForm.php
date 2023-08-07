@@ -51,7 +51,7 @@ class WisskiCloudAccountManagerCreateForm extends FormBase {
    * {@inheritdoc}
    */
   public function buildForm(array $form, FormStateInterface $form_state) {
-    $form['personname'] = [
+    $form['personName'] = [
       '#type' => 'textfield',
       '#title' => $this->t('Person name'),
       '#description' => $this->t('Your first and last name.'),
@@ -117,7 +117,7 @@ class WisskiCloudAccountManagerCreateForm extends FormBase {
   /**
    * {@inheritdoc}
    */
-  public function validateForm(array &$form, FormStateInterface $form_state) {
+  public function validateForm(array &$form, FormStateInterface $form_state): void {
     // Check if account data is already in use.
     // @todo Check if username is WissKI Cloud accounts, i.e add direct by admin?.
     $dataToCheck['username'] = $form_state->getValue('username');
@@ -151,17 +151,19 @@ class WisskiCloudAccountManagerCreateForm extends FormBase {
     try {
       $field = $form_state->getValues();
 
-      $account["personname"] = $field['personname'];
+      $account["personName"] = $field['personName'];
       $account["organisation"] = $field['organisation'];
       $account["email"] = $field['email'];
       $account["username"] = $field['username'];
       $account["password"] = $field['password'];
       $account["subdomain"] = $field['subdomain'];
 
-      $this->wisskiCloudAccountManagerDaemonApiActions->addAccount($account);
+      $accountResponse = $this->wisskiCloudAccountManagerDaemonApiActions->addAccount($account);
+      dpm($accountResponse, 'accountResponse');
+      $this->wisskiCloudAccountManagerDaemonApiActions->sendValidationEmail($accountResponse['user']['email'], $accountResponse['user']['validationCode']);
 
       \Drupal::messenger()
-        ->addMessage($this->t('The account data has been succesfully saved'));
+        ->addMessage($this->t('The account data has been successfully saved, please check your email for validation!'));
     }
     catch (\Exception $ex) {
       \Drupal::logger('wisski_cloud_account_manager')->error($ex->getMessage());

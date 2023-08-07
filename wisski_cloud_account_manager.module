@@ -1,0 +1,44 @@
+<?php
+
+use Drupal\Core\Mail\MailManagerInterface;
+use Drupal\Component\Utility\SafeMarkup;
+use Drupal\Component\Utility\Html;
+
+/**
+ * Implements hook_help().
+ */
+function wisski_cloud_account_manager_help($route_name, \Drupal\Core\Routing\RouteMatchInterface $route_match){
+  switch ($route_name) {
+    case 'help.page.wisski_cloud_account_manager':
+      $output = '';
+      $output .= '<h3>' . t('About') . '</h3>';
+      $output .= '<p>' . t('This module provides a form to create a WissKI Cloud account. Create form can be found at the route <a href="@createPage"> "/wisski_cloud_account_manager/create" </a>', ['@createPage' => '/wisski_cloud_account_manager/create']). '</p>';
+      return $output;
+  }
+}
+
+/**
+ * Implements hook_mail().
+ */
+function wisski_cloud_account_manager_mail($key, &$message, $params) {
+  $options = array(
+    'langcode' => $message['langcode'],
+  );
+  switch ($key) {
+    case 'wisski_cloud_account_validation':
+      $message['from'] = \Drupal::config('system.site')->get('mail');
+      $message['subject'] = t('@subject', array('@subject' => $params['subject']), $options);
+      $message['body'][] = $params['message'];
+
+      $headers = [
+        'Content-Type' => 'text/html; charset=UTF-8; format=flowed',
+        'MIME-Version' => '1.0',
+        'Content-Transfer-Encoding' => '8Bit',
+        'X-Mailer' => 'Drupal',
+      ];
+
+      $message['headers'] = $headers;
+
+      break;
+  }
+}

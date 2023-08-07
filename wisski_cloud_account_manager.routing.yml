@@ -1,5 +1,14 @@
+# Site config group
+system.admin_config_wisski_cloud_account:
+  path: '/admin/config/wisski-cloud-account-manager'
+  defaults:
+    _controller: '\Drupal\system\Controller\SystemController::systemAdminMenuBlockPage'
+    _title: 'WissKI cloud account manager'
+  requirements:
+    _permission: 'administer site configuration'
+
 wisski_cloud_account.settings:
-  path: '/admin/config/system/wisski-cloud-account-manager/settings'
+  path: '/admin/config/wisski-cloud-account-manager/settings'
   defaults:
     _form: '\Drupal\wisski_cloud_account_manager\Form\WisskiCloudAccountManagerSettingsForm'
     _title:  'WissKI cloud account settings'
@@ -18,6 +27,6 @@ wisski_cloud_account.terms_and_conditions:
   path: '/wisski-cloud-account-manager/terms-and-conditions'
   defaults:
     _controller: '\Drupal\wisski_cloud_account_manager\Controller\WisskiCloudAccountManagerController::termsAndConditions'
-    _title:  'Terms and Conditions'
+    _title:  'Terms and conditions'
   requirements:
     _access: 'TRUE'
