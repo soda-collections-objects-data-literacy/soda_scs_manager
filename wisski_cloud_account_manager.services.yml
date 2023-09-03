@@ -2,9 +2,11 @@ services:
   wisski_cloud_account_manager.daemon_api.actions:
     class: Drupal\wisski_cloud_account_manager\WisskiCloudAccountManagerDaemonApiActions
     arguments:
-      - '@string_translation'
-      - '@messenger'
-      - '@http_client'
       - '@config.factory'
-      - '@plugin.manager.mail'
+      - '@http_client'
       - '@language_manager'
+      - '@logger.factory'
+      - '@messenger'
+      - '@plugin.manager.mail'
+      - '@string_translation'
+

@@ -42,6 +42,13 @@ class WisskiCloudAccountManagerSettingsForm extends ConfigFormBase {
       '#default_value' => $config->get('daemonUrl'),
     ];
 
+    $form['allAccounts'] = [
+      '#type' => 'url',
+      '#title' => $this->t('All accounts URL path'),
+      '#description' => $this->t('Provide the endpoint to the GET endpoint for all accounts, i. e. "http://wisski_cloud_api_daemon:3000/wisski-cloud-daemon/api/v1/account/all"'),
+      '#default_value' => $config->get('allAccounts'),
+    ];
+
     $form['accountPostUrlPath'] = [
       '#type' => 'url',
       '#title' => $this->t('POST URL path'),
@@ -63,7 +70,33 @@ class WisskiCloudAccountManagerSettingsForm extends ConfigFormBase {
       '#default_value' => $config->get('accountValidation'),
     ];
 
+    $form['usernameBlacklist'] = [
+      '#type' => 'textfield',
+      '#title' => $this->t('Username blacklist'),
+      '#description' => $this->t('Provide blocked usernames with a comma separated list, i. e. "admin,root"'),
+      '#default_value' => $config->get('usernameBlacklist'),
+    ];
+    $form['subdomainBlacklist'] = [
+      '#type' => 'textfield',
+      '#title' => $this->t('Subdomain blacklist'),
+      '#description' => $this->t('Provide blocked subdomain with a comma separated list, i. e. "www,admin,root"'),
+      '#default_value' => $config->get('subdomainBlacklist'),
+    ];
+
     return $form;
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function validateForm(array &$form, FormStateInterface $form_state): void {
+    parent::validateForm($form, $form_state);
+    if (!preg_match("/^(?:\w+(?:,\w+)*)?$/", $form_state->getValue('usernameBlacklist'))) {
+      $form_state->setErrorByName('usernameBlacklist', $this->t('The username blacklist is not valid. Only words separated by commas are allowed.'));
+    }
+    if (!preg_match("/^(?:\w+(?:,\w+)*)?$/", $form_state->getValue('subdomainBlacklist'))) {
+      $form_state->setErrorByName('subdomainBlacklist', $this->t('The subdomain blacklist is not valid. Only words separated by commas are allowed.'));
+    }
   }
 
   /**
@@ -77,6 +110,8 @@ class WisskiCloudAccountManagerSettingsForm extends ConfigFormBase {
       ->set('accountFilterByData', $form_state->getValue('accountFilterByData'))
       ->set('accountProvisionAndValidationCheck', $form_state->getValue('accountProvisionAndValidationCheck'))
       ->set('accountValidation', $form_state->getValue('accountValidation'))
+      ->set('usernameBlacklist', $form_state->getValue('usernameBlacklist'))
+      ->set('subdomainBlacklist', $form_state->getValue('subdomainBlacklist'))
       ->save();
 
     parent::submitForm($form, $form_state);

@@ -47,7 +47,8 @@ class WisskiCloudAccountManagerController extends ControllerBase {
    */
   public function termsAndConditionsPage(): array {
     $build = [
-      '#markup' => $this->t('Hello World!'),
+      '#theme' => 'terms_and_conditions_page',
+      '#date' => date('Y'),
     ];
     return $build;
   }
@@ -64,16 +65,40 @@ class WisskiCloudAccountManagerController extends ControllerBase {
   public function validationPage(string $validationCode): array {
     $validationResponse = $this->wisskiCloudAccountManagerDaemonApiActions->validateAccount($validationCode);
 
-    $responseContents = json_decode($validationResponse->getBody()
+    $account = json_decode($validationResponse->getBody()
       ->getContents(), TRUE);
-
     return [
       '#theme' => 'wisski_cloud_account_manager_validation_page',
-      '#responseContents' => $responseContents,
+      '#account' => $account,
       '#attached' => [
         'library' => [
           'wisski_cloud_account_manager/wisski_cloud_account_manager',
         ],
+      ],
+      '#cache' => [
+        'max-age' => 0,
+      ],
+    ];
+  }
+
+  /**
+   * Page list the account statuses.
+   *
+   * @return array
+   *   The page build array.
+   */
+  public function accountManagingPage(): array {
+    $accounts = $this->wisskiCloudAccountManagerDaemonApiActions->getAccounts();
+    return [
+      '#theme' => 'wisski_cloud_account_manager_account_managing_page',
+      '#accounts' => $accounts,
+      '#attached' => [
+        'library' => [
+          'wisski_cloud_account_manager/wisski_cloud_account_manager',
+        ],
+      ],
+      '#cache' => [
+        'max-age' => 0,
       ],
     ];
   }

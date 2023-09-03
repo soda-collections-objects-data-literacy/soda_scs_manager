@@ -1,6 +1,6 @@
 {# wisski_cloud_account_manager/templates/wisski_cloud_account_manager_validation_page.html.twig #}
 <div>
-  {% if responseContents is not empty %}
+  {% if account is not empty %}
     <table class="wisski-cloud-account-manager-table">
       <tr>
         <th>Person name</th>
@@ -9,41 +9,43 @@
         <th>Subdomain</th>
         <th>Valid</th>
         <th>Provisioned</th>
+        <th>Error</th>
       </tr>
       <tr>
-        <td>{{ responseContents.data.personName }}</td>
-        <td>{{ responseContents.data.email }}</td>
-        <td>{{ responseContents.data.username }}</td>
-        <td>{{ responseContents.data.subdomain }}</td>
+        <td>{{ account.data.personName }}</td>
+        <td>{{ account.data.email }}</td>
+        <td>{{ account.data.username }}</td>
+        <td>{{ account.data.subdomain }}</td>
         <td class="valid">
-          {% if responseContents.data.valid == 1 %}
+          {% if account.data.valid == 1 %}
             yes
-          {% elseif responseContents.data.valid == 0 %}
+          {% elseif account.data.valid == 0 %}
             no
             {% else %}
               unknown
           {% endif %}
         </td>
-        <td class="provisioned">{% if responseContents.data.provisioned == 1 %}
-            yes
-          {% elseif responseContents.data.provisioned == 0 %}
-            no
-          {% elseif responseContents.data.provisioned == 2 %}
+        <td class="provisioned">{% if account.data.provisioned == 1 %}
             ongoing
+          {% elseif account.data.provisioned == 2 %}
+            yes
+          {% elseif account.data.provisioned == 3 %}
+            failed
           {% else %}
             unknown
           {% endif %}</td>
+        <td>{{ account.error }}</td>
       </tr>
     </table>
     <hr>
       <div class="wisski-cloud-account-manager-center">
-      {% if responseContents.data.valid == 1 and responseContents.data.provisioned == 1 %}
-        <p class="wisski-cloud-account-manager-success"><strong> Your account is valid and provisioned. You can now log in to your account at <a href="https://{{ responseContents.data.subdomain }}.wisski.cloud">https://{{ responseContents.data.subdomain }}.wisski.cloud</a>.</strong></p>
-      {% elseif responseContents.data.valid == 1 and responseContents.data.provisioned == 0 %}
-        <p class="wisski-cloud-account-manager-error"><strong>Your account is valid but the provision has not started. Please contact <a href="mailto:info@wiss-ki.eu">info@wiss-ki.eu</a> to resolve this issue.</strong></p>
-      {% elseif responseContents.data.valid == 1 and responseContents.data.provisioned == 2 %}
+      {% if account.data.valid == 1 and account.data.provisioned == 2 %}
+        <p class="wisski-cloud-account-manager-success"><strong> Your account is valid and provisioned. You can now log in to your account at <a href="https://{{ account.data.subdomain }}.wisski.cloud">https://{{ account.data.subdomain }}.wisski.cloud</a>.</strong></p>
+      {% elseif account.data.valid == 1 and (account.data.provisioned == 0 or account.data.provisioned == 3)%}
+        <p class="wisski-cloud-account-manager-error"><strong>Your account is valid but the provision failed or the state is unknown. Please refresh this site and if the state persists contact <a href="mailto:info@wiss-ki.eu">cloud@wiss-ki.eu</a> to resolve this issue.</strong></p>
+      {% elseif account.data.valid == 1 and account.data.provisioned == 1 %}
         <p class="wisski-cloud-account-manager-warning"><strong>Your account is valid and the provision of your WissKI Cloud instance has started. Please wait a few minutes and refresh this page.</strong></p>
-      {% elseif responseContents.data.valid == 0 %}
+      {% elseif account.data.valid == 0 %}
       <p class="wisski-cloud-account-manager-error"><strong>Your account is not valid. Please contact <a href="mailto:info@wiss-ki.eu">info@wiss-ki.eu</a> to resolve this issue.</strong></p>
       {% else %}
       <p class="wisski-cloud-account-manager-error"><strong>Something went wrong. Please contact <a href="mailto:info@wiss-ki.eu">info@wiss-ki.eu</a> to resolve this issue.</strong></p>

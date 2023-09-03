@@ -12,7 +12,7 @@ function wisski_cloud_account_manager_help($route_name, \Drupal\Core\Routing\Rou
     case 'help.page.wisski_cloud_account_manager':
       $output = '';
       $output .= '<h3>' . t('About') . '</h3>';
-      $output .= '<p>' . t('This module provides a form to create a WissKI Cloud account. Create form can be found at the route <a href="@createPage"> "/wisski_cloud_account_manager/create" </a>', ['@createPage' => '/wisski_cloud_account_manager/create']). '</p>';
+      $output .= '<p>' . t('This module provides a form to create a WissKI Cloud account. Create form can be found at the route <a href="@createPage"> "/wisski_cloud_account_manager/create" </a>', ['@createPage' => '/wisski-cloud-account-manager/create']). '</p>';
       return $output;
   }
 }
@@ -48,9 +48,16 @@ function wisski_cloud_account_manager_mail($key, &$message, $params) {
  */
 function wisski_cloud_account_manager_theme($existing, $type, $theme, $path) {
   return [
-    'wisski_cloud_account_manager_validation_page' => [
-      'variables' => ['responseContents' => NULL],
+    'wisski_cloud_account_manager_terms_and_conditions_page' => [
+      'variables' => ['date' => NULL],
     ],
+    'wisski_cloud_account_manager_account_managing_page' => [
+      'variables' => ['accounts' => NULL],
+    ],
+    'wisski_cloud_account_manager_validation_page' => [
+      'variables' => ['account' => NULL],
+    ],
+
   ];
 }
 

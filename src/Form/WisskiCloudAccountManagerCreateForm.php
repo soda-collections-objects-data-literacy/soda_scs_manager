@@ -3,8 +3,10 @@
 namespace Drupal\wisski_cloud_account_manager\Form;
 
 use Drupal\Component\Utility\EmailValidatorInterface;
+use Drupal\Core\Config\ConfigFactoryInterface;
 use Drupal\Core\Form\FormBase;
 use Drupal\Core\Form\FormStateInterface;
+use Drupal\Core\Messenger\MessengerInterface;
 use Drupal\wisski_cloud_account_manager\WisskiCloudAccountManagerDaemonApiActions;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 
@@ -13,17 +15,43 @@ use Symfony\Component\DependencyInjection\ContainerInterface;
  */
 class WisskiCloudAccountManagerCreateForm extends FormBase {
 
-  /**
-   * @var \Drupal\wisski_cloud_account_manager\WisskiCloudAccountManagerDaemonApiActions
-   *   The WissKi Cloud account manager daemon API actions service.
-   */
-  protected WisskiCloudAccountManagerDaemonApiActions $wisskiCloudAccountManagerDaemonApiActions;
+
+
 
   /**
+   * The config factory service.
+   *
+   * @var \Drupal\Core\Config\ConfigFactoryInterface
+   */
+  protected $configFactory;
+
+  /**
+   * The email validator service.
+   *
    * @var \Drupal\Component\Utility\EmailValidatorInterface
-   *  The email validator service.
    */
   private EmailValidatorInterface $emailValidator;
+
+  /**
+   * The messenger service.
+   *
+   * @var \Drupal\Core\Messenger\MessengerInterface
+   */
+  protected $messenger;
+
+  /**
+   * The settings config.
+   *
+   * @var \Drupal\Core\Config\Config
+   */
+  protected $settings;
+
+  /**
+   * The WissKi Cloud account manager daemon API actions service.
+   *
+   * @var \Drupal\wisski_cloud_account_manager\WisskiCloudAccountManagerDaemonApiActions
+   */
+  protected WisskiCloudAccountManagerDaemonApiActions $wisskiCloudAccountManagerDaemonApiActions;
 
   /**
    * {@inheritdoc}
@@ -35,14 +63,23 @@ class WisskiCloudAccountManagerCreateForm extends FormBase {
   /**
    * Class constructor.
    *
-   * @param \Drupal\wisski_cloud_account_manager\WisskiCloudAccountManagerDaemonApiActions $wisskiCloudAccountManagerDaemonApiActions
-   *   The WissKi Cloud account manager daemon API actions service.
+   * @param \Drupal\Core\Config\ConfigFactoryInterface $configFactory
+   *   The config factory service.
    * @param \Drupal\Component\Utility\EmailValidatorInterface $emailValidator
    *   The email validator service.
+   * @param \Drupal\Core\Messenger\MessengerInterface $messenger
+   *   The messenger service.
+   * @param \Drupal\wisski_cloud_account_manager\WisskiCloudAccountManagerDaemonApiActions $wisskiCloudAccountManagerDaemonApiActions
+   *   The WissKi Cloud account manager daemon API actions service.
    */
-  public function __construct(WisskiCloudAccountManagerDaemonApiActions $wisskiCloudAccountManagerDaemonApiActions, EmailValidatorInterface $emailValidator) {
+  public function __construct(ConfigFactoryInterface $configFactory, EmailValidatorInterface $emailValidator, MessengerInterface $messenger, WisskiCloudAccountManagerDaemonApiActions $wisskiCloudAccountManagerDaemonApiActions) {
+    $this->configFactory = $configFactory;
+    $settings = $configFactory
+      ->getEditable('wisski_cloud_account_manager.settings');
+    $this->settings = $settings;
     $this->wisskiCloudAccountManagerDaemonApiActions = $wisskiCloudAccountManagerDaemonApiActions;
     $this->emailValidator = $emailValidator;
+    $this->messenger = $messenger;
   }
 
   /**
@@ -53,8 +90,10 @@ class WisskiCloudAccountManagerCreateForm extends FormBase {
    */
   public static function create(ContainerInterface $container) {
     return new static(
-      $container->get('wisski_cloud_account_manager.daemon_api.actions'),
+      $container->get('config.factory'),
       $container->get('email.validator'),
+      $container->get('messenger'),
+      $container->get('wisski_cloud_account_manager.daemon_api.actions'),
     );
   }
 
@@ -102,8 +141,8 @@ class WisskiCloudAccountManagerCreateForm extends FormBase {
     $form['subdomain'] = [
       '#type' => 'textfield',
       '#title' => $this->t('Subdomain'),
-      '#maxlength' => 12,
-      '#description' => $this->t('WissKI cloud subdomain. Only small caps (a-z), underscore (_), minus (-) and 12 letter maximum allowed, i.e. "my_wisski" will end in "my_wisski.wisski.cloud".'),
+      '#maxlength' => 64,
+      '#description' => $this->t('WissKI cloud subdomain. Only small caps (a-z), underscore (_), minus (-) and 64 letter maximum allowed, i.e. "my_wisski" will end in "my_wisski.wisski.cloud".'),
       '#pattern' => '[a-z]+([_-]{1}[a-z]+)*',
       '#required' => TRUE,
     ];
@@ -137,6 +176,15 @@ class WisskiCloudAccountManagerCreateForm extends FormBase {
 
     $response = $this->wisskiCloudAccountManagerDaemonApiActions->checkAccountData($dataToCheck);
 
+    if (!$response['success']) {
+      $this->messenger->addError('Can not communicate with the provision daemon, please try again later or write an email to cloud@wiss-ki.eu.');
+    }
+    if (strlen($dataToCheck['username']) < 3) {
+      $form_state->setErrorByName('username', $this->t('The username "@username" is too short, please use at least 3 characters.', ['@username' => $dataToCheck['username']]));
+    }
+    if (in_array($dataToCheck['username'], explode(',', $this->settings->get('usernameBlacklist')))) {
+      $form_state->setErrorByName('username', $this->t('The username "@username" is not allowed.', ['@username' => $dataToCheck['username']]));
+    }
     if ($response['accountData']['accountWithUsername']) {
       $form_state->setErrorByName('username', $this->t('The username "@username" is already in use.', ['@username' => $dataToCheck['username']]));
     }
@@ -145,6 +193,13 @@ class WisskiCloudAccountManagerCreateForm extends FormBase {
       $form_state->setErrorByName('email', $this->t('The email "@email" is already in use.', ['@email' => $dataToCheck['email']]));
     }
 
+    if (strlen($dataToCheck['subdomain']) < 3) {
+      $form_state->setErrorByName('subdomain', $this->t('The subdomain "@subdomain" is too short, please use at least 3 characters.', ['@subdomain' => $dataToCheck['subdomain']]));
+    }
+
+    if (in_array($dataToCheck['subdomain'], explode(',', $this->settings->get('subdomainBlacklist')))) {
+      $form_state->setErrorByName('subdomain', $this->t('The subdomain "@subdomain" is not allowed.', ['@subdomain' => $dataToCheck['subdomain']]));
+    }
     if ($response['accountData']['accountWithSubdomain']) {
       $form_state->setErrorByName('subdomain', $this->t('The subdomain "@subdomain" is already in use.', ['@subdomain' => $dataToCheck['subdomain']]));
     }
@@ -170,8 +225,7 @@ class WisskiCloudAccountManagerCreateForm extends FormBase {
       $account["subdomain"] = $field['subdomain'];
 
       $accountResponse = $this->wisskiCloudAccountManagerDaemonApiActions->addAccount($account);
-      dpm($accountResponse, 'accountResponse');
-      $this->wisskiCloudAccountManagerDaemonApiActions->sendValidationEmail($accountResponse['account']['email'], $accountResponse['account']['validationCode']);
+      $this->wisskiCloudAccountManagerDaemonApiActions->sendValidationEmail($accountResponse['data']['email'], $accountResponse['data']['validationCode']);
 
       $this->messenger()
         ->addMessage($this->t('The account data has been successfully saved, please check your email for validation!'));

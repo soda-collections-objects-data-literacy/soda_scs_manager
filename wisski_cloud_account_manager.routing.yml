@@ -7,6 +7,22 @@ system.admin_config_wisski_cloud_account:
   requirements:
     _permission: 'administer site configuration'
 
+wisski_cloud_account.create:
+  path: '/wisski-cloud-account-manager/create'
+  defaults:
+    _form: '\Drupal\wisski_cloud_account_manager\Form\WisskiCloudAccountManagerCreateForm'
+    _title:  'Create WissKI cloud account'
+  requirements:
+    _access: 'TRUE'
+
+wisski_cloud_account.manage:
+  path: '/wisski-cloud-account-manager/manage'
+  defaults:
+    _controller: '\Drupal\wisski_cloud_account_manager\Controller\WisskiCloudAccountManagerController::accountManagingPage'
+    _title:  'Account managing page'
+  requirements:
+    _access: 'TRUE'
+
 wisski_cloud_account.settings:
   path: '/admin/config/wisski-cloud-account-manager/settings'
   defaults:
@@ -15,11 +31,12 @@ wisski_cloud_account.settings:
   requirements:
     _permission: 'administer site configuration'
 
-wisski_cloud_account.create:
-  path: '/wisski-cloud-account-manager/create'
+
+wisski_cloud_account.terms_and_conditions:
+  path: '/wisski-cloud-account-manager/terms-and-conditions'
   defaults:
-    _form: '\Drupal\wisski_cloud_account_manager\Form\WisskiCloudAccountManagerCreateForm'
-    _title:  'Create WissKI cloud account'
+    _controller: '\Drupal\wisski_cloud_account_manager\Controller\WisskiCloudAccountManagerController::termsAndConditionsPage'
+    _title:  'Terms and conditions'
   requirements:
     _access: 'TRUE'
 
@@ -31,14 +48,9 @@ wisski_cloud_account.validate:
   requirements:
     _access: 'TRUE'
     token: '[a-zA-Z0-9]+'
+  options:
+    no_cache: TRUE
 
-wisski_cloud_account.terms_and_conditions:
-  path: '/wisski-cloud-account-manager/terms-and-conditions'
-  defaults:
-    _controller: '\Drupal\wisski_cloud_account_manager\Controller\WisskiCloudAccountManagerController::termsAndConditionsPage'
-    _title:  'Terms and conditions'
-  requirements:
-    _access: 'TRUE'
 
 
 
