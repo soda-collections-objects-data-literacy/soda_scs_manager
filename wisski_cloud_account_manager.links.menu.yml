@@ -1,6 +1,17 @@
-# @TODO: Find bug why this is not working
-wisski_cloud_account.settings.menu:
-    title: 'WissKI cloud account settings'
-    description: 'WissKI cloud account settings'
-    parent: system.admin_config_wisski_cloud_account
-    route_name: wisski_cloud_account.settings
+wisski_cloud_account_manager.settings_menu_block:
+    title: 'WissKI cloud account manager'
+    description: 'WissKI cloud account manager'
+    parent: system.admin_config
+    route_name: wisski_cloud_account_manager.settings.menu
+
+wisski_cloud_account_manager.settings_form:
+    title: 'WissKI cloud account manager settings'
+    description: 'WissKI cloud account manager settings'
+    parent: wisski_cloud_account_manager.settings_menu_block
+    route_name: wisski_cloud_account_manager.settings
+
+wisski_cloud_account_manager.overview_page:
+    title: 'WissKI cloud account manager overview page'
+    description: 'WissKI cloud account manager overview page'
+    parent: wisski_cloud_account_manager.settings_menu_block
+    route_name: wisski_cloud_account_manager.manage

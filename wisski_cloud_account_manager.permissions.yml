@@ -1,0 +1,6 @@
+admister wisski cloud account manager:
+  title: 'Administer WissKI Cloud Account Manager'
+  description: 'Administer WissKI Cloud Account Manager Settings and Accounts'
+  restrict access: true
+
+

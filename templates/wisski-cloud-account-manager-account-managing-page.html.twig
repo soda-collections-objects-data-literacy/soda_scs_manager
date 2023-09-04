@@ -10,7 +10,6 @@
         <th>Subdomain</th>
         <th>Valid</th>
         <th>Provisioned</th>
-        <th>Error</th>
         <th>Options</th>
       </tr>
       {% for item in accounts.data  %}
@@ -38,7 +37,6 @@
           {% else %}
             unknown
           {% endif %}</td>
-        <td>{{ accounts.error }}</td>
         <td><label for="account-edit"></label>
           <select name="account-edit" id="account-edit">
             <option value="edit">edit</option>

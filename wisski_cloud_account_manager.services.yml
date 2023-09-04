@@ -8,5 +8,6 @@ services:
       - '@logger.factory'
       - '@messenger'
       - '@plugin.manager.mail'
+      - '@request_stack'
       - '@string_translation'
 

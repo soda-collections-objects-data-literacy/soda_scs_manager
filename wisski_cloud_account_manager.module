@@ -7,27 +7,38 @@ use Drupal\Component\Utility\Html;
 /**
  * Implements hook_help().
  */
-function wisski_cloud_account_manager_help($route_name, \Drupal\Core\Routing\RouteMatchInterface $route_match){
+function wisski_cloud_account_manager_help($route_name, \Drupal\Core\Routing\RouteMatchInterface $route_match) {
+  $output = '';
+
   switch ($route_name) {
     case 'help.page.wisski_cloud_account_manager':
-      $output = '';
       $output .= '<h3>' . t('About') . '</h3>';
-      $output .= '<p>' . t('This module provides a form to create a WissKI Cloud account. Create form can be found at the route <a href="@createPage"> "/wisski_cloud_account_manager/create" </a>', ['@createPage' => '/wisski-cloud-account-manager/create']). '</p>';
-      return $output;
+      $output .= '<p>' . t('This module provides the functionality to create, validate and manage WissKI Cloud accounts.') . '</p>';
+
+      $output .= '<h3>' . t('Configuration') . '</h3>';
+      $output .= '<p>' . t('Configuration is done on the <a href="@settingsPage" targer="_blank">settings page</a>.', ['@settingsPage' => '/admin/config/wisski-cloud-account-manager/settings']) . '</p>';
+
+      $output .= '<h3>' . t('Create WissKI Cloud Account') . '</h3>';
+      $output .= '<p>' . t('<a href="@createPage" targer="_blank">This page</a> allows you to create a WissKI Cloud account.', ['@createPage' => '/wisski-cloud-account-manager/create']) . '</p>';
+
+      $output .= '<h3>' . t('Validate WissKI Cloud Account') . '</h3>';
+      $output .= '<p>' . t('<a href="@validationPage" targer="_blank">This page</a> allows you to validate your account and check the status of the provision.', ['@validationPage' => '/wisski-cloud-account-manager/validate/GsyMv5DdFhPCixL1wTLZhzFg7sVDOiHq']) . '</p>';
+      break;
   }
+  return $output;
 }
 
 /**
  * Implements hook_mail().
  */
 function wisski_cloud_account_manager_mail($key, &$message, $params) {
-  $options = array(
+  $options = [
     'langcode' => $message['langcode'],
-  );
+  ];
   switch ($key) {
     case 'wisski_cloud_account_validation':
       $message['from'] = \Drupal::config('system.site')->get('mail');
-      $message['subject'] = t('@subject', array('@subject' => $params['subject']), $options);
+      $message['subject'] = t('@subject', ['@subject' => $params['subject']], $options);
       $message['body'][] = $params['message'];
 
       $headers = [

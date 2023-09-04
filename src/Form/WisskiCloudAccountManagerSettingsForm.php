@@ -71,15 +71,28 @@ class WisskiCloudAccountManagerSettingsForm extends ConfigFormBase {
     ];
 
     $form['usernameBlacklist'] = [
-      '#type' => 'textfield',
+      '#type' => 'textarea',
       '#title' => $this->t('Username blacklist'),
-      '#description' => $this->t('Provide blocked usernames with a comma separated list, i. e. "admin,root"'),
+      '#rows' => '5',
+      '#cols' => '60',
+      '#description' => $this->t('Provide blocked usernames separeated by new lines, i. e. "\n admin \n root"'),
       '#default_value' => $config->get('usernameBlacklist'),
     ];
+    $form['emailProviderBlacklist'] = [
+      '#type' => 'textarea',
+      '#title' => $this->t('Email provider blacklist'),
+      '#rows' => '5',
+      '#cols' => '60',
+      '#resizable' => 'vertical',
+      '#description' => $this->t('Provide blocked email providers with a comma separated list, i. e. "\n admin\nroot"'),
+      '#default_value' => $config->get('emailProviderBlacklist'),
+    ];
     $form['subdomainBlacklist'] = [
-      '#type' => 'textfield',
+      '#type' => 'textarea',
+      '#rows' => '5',
+      '#cols' => '60',
       '#title' => $this->t('Subdomain blacklist'),
-      '#description' => $this->t('Provide blocked subdomain with a comma separated list, i. e. "www,admin,root"'),
+      '#description' => $this->t('Provide blocked subdomain with a comma separated list, i. e. "\nwww\nadmin\nroot"'),
       '#default_value' => $config->get('subdomainBlacklist'),
     ];
 
@@ -91,11 +104,14 @@ class WisskiCloudAccountManagerSettingsForm extends ConfigFormBase {
    */
   public function validateForm(array &$form, FormStateInterface $form_state): void {
     parent::validateForm($form, $form_state);
-    if (!preg_match("/^(?:\w+(?:,\w+)*)?$/", $form_state->getValue('usernameBlacklist'))) {
-      $form_state->setErrorByName('usernameBlacklist', $this->t('The username blacklist is not valid. Only words separated by commas are allowed.'));
+    if (!preg_match("/^[a-zA-Z0-9\-]+(\r?\n[a-zA-Z0-9\-]+)*$/", $form_state->getValue('usernameBlacklist'))) {
+      $form_state->setErrorByName('usernameBlacklist', $this->t('The username blacklist is not valid. Only words separated by new lines are allowed.'));
     }
-    if (!preg_match("/^(?:\w+(?:,\w+)*)?$/", $form_state->getValue('subdomainBlacklist'))) {
-      $form_state->setErrorByName('subdomainBlacklist', $this->t('The subdomain blacklist is not valid. Only words separated by commas are allowed.'));
+    if (!preg_match("/^([a-zA-Z0-9-]+\.[a-zA-Z0-9-]+)+(\r?\n[a-zA-Z0-9-]+\.[a-zA-Z0-9-]+)*$/", $form_state->getValue('emailProviderBlacklist'))) {
+      $form_state->setErrorByName('emailProviderBlacklist', $this->t('The email provider blacklist is not valid. Only &lt;second level domain&gt; &lt;dot&gt; &lt;first level domain&gt; separated by new lines are allowed.'));
+    }
+    if (!preg_match("/^[a-zA-Z0-9\-]+(\r?\n[a-zA-Z0-9\-]+)*$/", $form_state->getValue('subdomainBlacklist'))) {
+      $form_state->setErrorByName('subdomainBlacklist', $this->t('The subdomain blacklist is not valid. Only words separated by new lines are allowed.'));
     }
   }
 
@@ -111,6 +127,7 @@ class WisskiCloudAccountManagerSettingsForm extends ConfigFormBase {
       ->set('accountProvisionAndValidationCheck', $form_state->getValue('accountProvisionAndValidationCheck'))
       ->set('accountValidation', $form_state->getValue('accountValidation'))
       ->set('usernameBlacklist', $form_state->getValue('usernameBlacklist'))
+      ->set('emailProviderBlacklist', $form_state->getValue('emailProviderBlacklist'))
       ->set('subdomainBlacklist', $form_state->getValue('subdomainBlacklist'))
       ->save();
 

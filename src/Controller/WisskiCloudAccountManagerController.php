@@ -47,7 +47,7 @@ class WisskiCloudAccountManagerController extends ControllerBase {
    */
   public function termsAndConditionsPage(): array {
     $build = [
-      '#theme' => 'terms_and_conditions_page',
+      '#theme' => 'wisski_cloud_account_manager_terms_and_conditions_page',
       '#date' => date('Y'),
     ];
     return $build;
@@ -63,10 +63,7 @@ class WisskiCloudAccountManagerController extends ControllerBase {
    *   The page build array.
    */
   public function validationPage(string $validationCode): array {
-    $validationResponse = $this->wisskiCloudAccountManagerDaemonApiActions->validateAccount($validationCode);
-
-    $account = json_decode($validationResponse->getBody()
-      ->getContents(), TRUE);
+    $account = $this->wisskiCloudAccountManagerDaemonApiActions->validateAccount($validationCode);
     return [
       '#theme' => 'wisski_cloud_account_manager_validation_page',
       '#account' => $account,

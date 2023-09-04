@@ -172,6 +172,7 @@ class WisskiCloudAccountManagerCreateForm extends FormBase {
     // @todo Check if username is WissKI Cloud accounts, i.e add direct by admin?.
     $dataToCheck['username'] = $form_state->getValue('username');
     $dataToCheck['email'] = $form_state->getValue('email');
+    $dataToCheck['emailProvider'] = explode('@', $dataToCheck['email'])[1];
     $dataToCheck['subdomain'] = $form_state->getValue('subdomain');
 
     $response = $this->wisskiCloudAccountManagerDaemonApiActions->checkAccountData($dataToCheck);
@@ -182,11 +183,15 @@ class WisskiCloudAccountManagerCreateForm extends FormBase {
     if (strlen($dataToCheck['username']) < 3) {
       $form_state->setErrorByName('username', $this->t('The username "@username" is too short, please use at least 3 characters.', ['@username' => $dataToCheck['username']]));
     }
-    if (in_array($dataToCheck['username'], explode(',', $this->settings->get('usernameBlacklist')))) {
+    if (in_array($dataToCheck['username'], preg_split('/\r\n|\r|\n/', $this->settings->get('usernameBlacklist')))) {
       $form_state->setErrorByName('username', $this->t('The username "@username" is not allowed.', ['@username' => $dataToCheck['username']]));
     }
     if ($response['accountData']['accountWithUsername']) {
       $form_state->setErrorByName('username', $this->t('The username "@username" is already in use.', ['@username' => $dataToCheck['username']]));
+    }
+
+    if (in_array($dataToCheck['emailProvider'], preg_split('/\r\n|\r|\n/', $this->settings->get('emailProviderBlacklist')))) {
+      $form_state->setErrorByName('email', $this->t('The email provider  "@provider"is not allowed.', ['@provider' => $dataToCheck['emailProvider']]));
     }
 
     if ($response['accountData']['accountWithEmail']) {
@@ -197,7 +202,7 @@ class WisskiCloudAccountManagerCreateForm extends FormBase {
       $form_state->setErrorByName('subdomain', $this->t('The subdomain "@subdomain" is too short, please use at least 3 characters.', ['@subdomain' => $dataToCheck['subdomain']]));
     }
 
-    if (in_array($dataToCheck['subdomain'], explode(',', $this->settings->get('subdomainBlacklist')))) {
+    if (in_array($dataToCheck['subdomain'], preg_split('/\r\n|\r|\n/', $this->settings->get('subdomainBlacklist')))) {
       $form_state->setErrorByName('subdomain', $this->t('The subdomain "@subdomain" is not allowed.', ['@subdomain' => $dataToCheck['subdomain']]));
     }
     if ($response['accountData']['accountWithSubdomain']) {
@@ -231,6 +236,8 @@ class WisskiCloudAccountManagerCreateForm extends FormBase {
         ->addMessage($this->t('The account data has been successfully saved, please check your email for validation!'));
     }
     catch (\Exception $ex) {
+      $this->messenger()
+        ->addError($this->t('The account data could not be saved, please try again later or write an email to cloud@wiss-ki.eu.'));
       $this->logger('wisski_cloud_account_manager')->error($ex->getMessage());
     }
   }

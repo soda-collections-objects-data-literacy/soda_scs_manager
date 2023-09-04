@@ -2,6 +2,7 @@
 
 namespace Drupal\wisski_cloud_account_manager;
 
+use Symfony\Component\HttpFoundation\RequestStack;
 use Drupal\Core\Config\Config;
 use Drupal\Core\Config\ConfigFactoryInterface;
 use Drupal\Core\DependencyInjection\DependencySerializationTrait;
@@ -12,7 +13,6 @@ use Drupal\Core\Messenger\MessengerInterface;
 use Drupal\Core\Render\Markup;
 use Drupal\Core\StringTranslation\TranslationInterface;
 use GuzzleHttp\ClientInterface;
-use Psr\Http\Message\ResponseInterface;
 
 /**
  * Handles the communication with the WissKI Cloud account manager daemon.
@@ -106,6 +106,13 @@ class WisskiCloudAccountManagerDaemonApiActions {
   protected MailManagerInterface $mailManager;
 
   /**
+   * The request stack.
+   *
+   * @var \Symfony\Component\HttpFoundation\RequestStack
+   */
+  protected RequestStack $requestStack;
+
+  /**
    * The string translation service.
    *
    * @var \Drupal\Core\StringTranslation\TranslationInterface
@@ -122,20 +129,20 @@ class WisskiCloudAccountManagerDaemonApiActions {
     LoggerChannelFactoryInterface $loggerFactory,
     MessengerInterface $messenger,
     MailManagerInterface $mailManager,
+    RequestStack $requestStack,
     TranslationInterface $stringTranslation,
   ) {
     // Services from container.
+    $settings = $configFactory
+      ->getEditable('wisski_cloud_account_manager.settings');
+    $this->settings = $settings;
     $this->stringTranslation = $stringTranslation;
     $this->loggerFactory = $loggerFactory;
     $this->messenger = $messenger;
     $this->httpClient = $httpClient;
     $this->mailManager = $mailManager;
+    $this->requestStack = $requestStack;
     $this->languageManager = $languageManager;
-
-    // Settings.
-    $settings = $configFactory
-      ->getEditable('wisski_cloud_account_manager.settings');
-    $this->settings = $settings;
 
     // Set the daemon URL and the URL parts class variables.
     $this->DAEMON_URL = $settings->get('daemonUrl') ?: 'http://wisski_cloud_api_daemon:3000/wisski-cloud-daemon/api/v1';
@@ -156,16 +163,34 @@ class WisskiCloudAccountManagerDaemonApiActions {
    *   The response from the daemon (account id with validation code).
    */
   public function addAccount(array $account): array {
-    $request = [
-      'headers' => [
-        'Content-Type' => 'application/json',
-      ],
-      'body' => json_encode($account),
-    ];
-    $accountPostUrl = $this->DAEMON_URL . $this->ACCOUNT_POST_URL_PART;
-    $response = $this->httpClient->post($accountPostUrl, $request);
-    return array_merge(json_decode($response->getBody()
-      ->getContents(), TRUE), ['statusCode' => $response->getStatusCode()]);
+    try {
+      $request = [
+        'headers' => [
+          'Content-Type' => 'application/json',
+        ],
+        'body' => json_encode($account),
+      ];
+      $accountPostUrl = $this->DAEMON_URL . $this->ACCOUNT_POST_URL_PART;
+      $response = $this->httpClient->post($accountPostUrl, $request);
+      return json_decode($response->getBody()
+        ->getContents(), TRUE);
+    }
+    catch (\Exception $e) {
+      // Request failed, handle the error.
+      $this->loggerFactory
+        ->get('wisski_cloud_account_manager')
+        ->error('Request failed with exception: ' . $e->getMessage());
+      $this->messenger
+        ->addError($this->stringTranslation->translate('Can not communicate with the WissKI Cloud account manager daemon. Try again later or contact cloud@wiss-ki.eu.'));
+      return [
+        "message" => 'Request failed with exception: ' . $e->getMessage(),
+        "data" => [
+          'email' => NULL,
+          'validationCode' => NULL,
+        ],
+        'success' => FALSE,
+      ];
+    }
   }
 
   /**
@@ -219,6 +244,8 @@ class WisskiCloudAccountManagerDaemonApiActions {
       $this->loggerFactory
         ->get('wisski_cloud_account_manager')
         ->error('Request failed with exception: ' . $e->getMessage());
+      $this->messenger
+        ->addError($this->stringTranslation->translate('Can not communicate with the WissKI Cloud account manager daemon. Try again later or contact cloud@wiss-ki.eu.'));
       return [
         "message" => 'Request failed with exception: ' . $e->getMessage(),
         "accountData" => [
@@ -238,11 +265,26 @@ class WisskiCloudAccountManagerDaemonApiActions {
    *   The accounts response from the daemon.
    */
   public function getAccounts(): array {
-    // Combine the base URL and the query string.
-    $request_url = $this->DAEMON_URL . $this->ALL_ACCOUNTS;
-    // Send the GET request using the `drupal_http_request()` function.
-    $response = $this->httpClient->get($request_url);
-    return json_decode($response->getBody()->getContents(), TRUE);
+    try {
+      // Combine the base URL and the query string.
+      $request_url = $this->DAEMON_URL . $this->ALL_ACCOUNTS;
+      // Send the GET request using the `drupal_http_request()` function.
+      $response = $this->httpClient->get($request_url);
+      return json_decode($response->getBody()->getContents(), TRUE);
+    }
+    catch (\Exception $e) {
+      // Request failed, handle the error.
+      $this->loggerFactory
+        ->get('wisski_cloud_account_manager')
+        ->error('Request failed with exception: ' . $e->getMessage());
+      $this->messenger
+        ->addError($this->stringTranslation->translate('Can not communicate with the WissKI Cloud account manager daemon. Try again later or contact cloud@wiss-ki.eu.'));
+      return [
+        "message" => 'Request failed with exception: ' . $e->getMessage(),
+        "accounts" => [],
+        'success' => FALSE,
+      ];
+    }
   }
 
   /**
@@ -251,12 +293,29 @@ class WisskiCloudAccountManagerDaemonApiActions {
    * @param string $validationCode
    *   The validation code to check.
    *
-   * @return \Psr\Http\Message\ResponseInterface
-   *   The response from the daemon.
+   * @return array
+   *   The account data from the daemon.
    */
-  public function validateAccount(string $validationCode): ResponseInterface {
-    $url = $this->DAEMON_URL . $this->ACCOUNT_VALIDATION_URL_PART . '/' . $validationCode;
-    return $this->httpClient->put($url);
+  public function validateAccount(string $validationCode): array {
+    try {
+      $url = $this->DAEMON_URL . $this->ACCOUNT_VALIDATION_URL_PART . '/' . $validationCode;
+      $validationResponse = $this->httpClient->put($url);
+      return json_decode($validationResponse->getBody()
+        ->getContents(), TRUE);
+    }
+    catch (\Exception $e) {
+      // Request failed, handle the error.
+      $this->loggerFactory
+        ->get('wisski_cloud_account_manager')
+        ->error('Request failed with exception: ' . $e->getMessage());
+      $this->messenger
+        ->addError($this->stringTranslation->translate('Can not communicate with the WissKI Cloud account manager daemon. Try again later or contact cloud@wiss-ki.eu.'));
+      return [
+        "message" => 'Request failed with exception: ' . $e->getMessage(),
+        "accounts" => [],
+        'success' => FALSE,
+      ];
+    }
   }
 
   /**
@@ -268,26 +327,37 @@ class WisskiCloudAccountManagerDaemonApiActions {
    *   The validation code to be used in the validation link.
    */
   public function sendValidationEmail(string $email, string $validationCode): void {
-    $module = 'wisski_cloud_account_manager';
-    $key = 'wisski_cloud_account_validation';
-    $langcode = $this->languageManager->getDefaultLanguage()->getId();
-    $to = $email;
+    try {
+      $module = 'wisski_cloud_account_manager';
+      $key = 'wisski_cloud_account_validation';
+      $langcode = $this->languageManager->getDefaultLanguage()->getId();
+      $to = $email;
 
-    $validationLink = \Drupal::request()
+      $validationLink = $this->requestStack->getCurrentRequest()
         ->getSchemeAndHttpHost() . '/wisski-cloud-account-manager/validate/' . $validationCode;
 
-    $params['message'] = Markup::create($this->stringTranslation->translate('<p>Please validate your account by clicking on this <a href="@validationLink" target="_blank">link</a> or copy this to the address bar of your browser: <p>@validationLink</p>.</p>', ['@validationLink' => $validationLink]));
-    $params['subject'] = $this->stringTranslation->translate('WissKI Cloud account validation');
+      $params['message'] = Markup::create($this->stringTranslation->translate('<p>Please validate your account by clicking on this <a href="@validationLink" target="_blank">link</a> or copy this to the address bar of your browser: <p>@validationLink</p>.</p>', ['@validationLink' => $validationLink]));
+      $params['subject'] = $this->stringTranslation->translate('WissKI Cloud account validation');
+      $result = $this->mailManager->mail($module, $key, $to, $langcode, $params, NULL, TRUE);
+      if ($result['result'] === TRUE) {
+        $this->messenger
+          ->addMessage($this->stringTranslation->translate('Email send successfully.'));
+      }
+      else {
+        $this->messenger
+          ->addMessage($this->stringTranslation->translate('There was an error sending the email.'), 'error');
 
-    $result = $this->mailManager->mail($module, $key, $to, $langcode, $params, NULL, TRUE);
-    if ($result['result'] === TRUE) {
-      $this->messenger
-        ->addMessage($this->stringTranslation->translate('Email sent successfully.'));
+      }
     }
-    else {
+    catch (\Exception $e) {
+      // Request failed, handle the error.
+      $this->loggerFactory
+        ->get('wisski_cloud_account_manager')
+        ->error('Email sending operation ended with exception: ' . $e->getMessage());
       $this->messenger
-        ->addMessage($this->stringTranslation->translate('There was an error sending the email.'), 'error');
+        ->addError($this->stringTranslation->translate('Email sending operation ended with error. Try again later or contact cloud@wiss-ki.eu.'));
     }
+
   }
 
 }
