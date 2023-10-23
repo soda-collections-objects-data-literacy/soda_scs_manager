@@ -1,7 +1,7 @@
 {# wisski_cloud_account_manager/templates/wisski_cloud_account_manager_account_managing_page.html.twig #}
 <div>
   {% if accounts is not empty %}
-    <table class="wisski-cloud-account-manager-table">
+    <table id="wcam--table" class="wcam--table">
       <tr>
         <th>Id</th>
         <th>Person name</th>
@@ -13,8 +13,8 @@
         <th>Options</th>
       </tr>
       {% for item in accounts.data  %}
-      <tr>
-        <td>{{ item._id }}</td>
+      <tr class="wcam--table--row">
+        <td class="wcam--row--item-id">{{ item._id }}</td>
         <td>{{ item.personName }}</td>
         <td>{{ item.email }}</td>
         <td>{{ item.username }}</td>
@@ -37,8 +37,9 @@
           {% else %}
             unknown
           {% endif %}</td>
-        <td><label for="account-edit"></label>
-          <select name="account-edit" id="account-edit">
+        <td><label for="wcam--account-edit--{{ item._id }}"></label>
+          <select class="wcam--select" name="account-edit" id="wcam--account-edit--{{ item._id }}">
+            <option value="">select...</option>
             <option value="edit">edit</option>
             {% if item.valid == 0 %}
             <option value="validate">validate</option>

@@ -8,6 +8,7 @@ use Drupal\Core\Form\FormBase;
 use Drupal\Core\Form\FormStateInterface;
 use Drupal\Core\Messenger\MessengerInterface;
 use Drupal\wisski_cloud_account_manager\WisskiCloudAccountManagerDaemonApiActions;
+use mysql_xdevapi\Exception;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 
 /**
@@ -230,6 +231,9 @@ class WisskiCloudAccountManagerCreateForm extends FormBase {
       $account["subdomain"] = $field['subdomain'];
 
       $accountResponse = $this->wisskiCloudAccountManagerDaemonApiActions->addAccount($account);
+      if (!$accountResponse['success']) {
+        throw new Exception('Get no valid response from api daemon. Can not send validiation email.');
+       };
       $this->wisskiCloudAccountManagerDaemonApiActions->sendValidationEmail($accountResponse['data']['email'], $accountResponse['data']['validationCode']);
 
       $this->messenger()

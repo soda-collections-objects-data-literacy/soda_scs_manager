@@ -3,3 +3,9 @@ wisski_cloud_account_manager:
   css:
     theme:
       css/style.css: {}
+  js:
+    js/accountOptions.js: {}
+  dependencies:
+    - core/jquery
+    - core/drupalSettings
+    - core/Drupal

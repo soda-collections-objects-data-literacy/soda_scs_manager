@@ -36,35 +36,35 @@ class WisskiCloudAccountManagerSettingsForm extends ConfigFormBase {
     $config = $this->config('wisski_cloud_account_manager.settings');
 
     $form['daemonUrl'] = [
-      '#type' => 'url',
+      '#type' => 'textfield',
       '#title' => $this->t('The WissKI Cloud API Daemon URL'),
       '#description' => $this->t('Provide the complete base URL with protocol, domain (resp. service name in docker), ports and API path, i. e. "http://wisski_cloud_api_daemon:3000/wisski-cloud-daemon/api/v1"'),
       '#default_value' => $config->get('daemonUrl'),
     ];
 
     $form['allAccounts'] = [
-      '#type' => 'url',
+      '#type' => 'textfield',
       '#title' => $this->t('All accounts URL path'),
-      '#description' => $this->t('Provide the endpoint to the GET endpoint for all accounts, i. e. "http://wisski_cloud_api_daemon:3000/wisski-cloud-daemon/api/v1/account/all"'),
+      '#description' => $this->t('Provide the endpoint to the GET endpoint for all accounts, i. e. "/account/all"'),
       '#default_value' => $config->get('allAccounts'),
     ];
 
     $form['accountPostUrlPath'] = [
-      '#type' => 'url',
+      '#type' => 'textfield',
       '#title' => $this->t('POST URL path'),
       '#description' => $this->t('Provide the path to the POST endpoint, i. e. "/account"'),
       '#default_value' => $config->get('accountPostUrlPath'),
     ];
 
     $form['accountFilterByData'] = [
-      '#type' => 'url',
+      '#type' => 'textfield',
       '#title' => $this->t('Filter by Data URL path'),
       '#description' => $this->t('Provide the path to the Get account by data endpoint, i. e. "/account/by_data"'),
       '#default_value' => $config->get('accountFilterByData'),
     ];
 
     $form['accountValidation'] = [
-      '#type' => 'url',
+      '#type' => 'textfield',
       '#title' => $this->t('User Validation URL path'),
       '#description' => $this->t('Provide the path to the account validation PUT endpoint, i. e. "/account/validation"'),
       '#default_value' => $config->get('accountValidation'),
@@ -121,8 +121,9 @@ class WisskiCloudAccountManagerSettingsForm extends ConfigFormBase {
   public function submitForm(array &$form, FormStateInterface $form_state) {
     $config = $this->config('wisski_cloud_account_manager.settings');
 
-    $config->set('daemonURL', $form_state->getValue('daemonURL'))
+    $config->set('daemonUrl', $form_state->getValue('daemonUrl'))
       ->set('accountPostUrlPath', $form_state->getValue('accountPostUrlPath'))
+      ->set('allAccounts', $form_state->getValue('allAccounts'))
       ->set('accountFilterByData', $form_state->getValue('accountFilterByData'))
       ->set('accountProvisionAndValidationCheck', $form_state->getValue('accountProvisionAndValidationCheck'))
       ->set('accountValidation', $form_state->getValue('accountValidation'))
