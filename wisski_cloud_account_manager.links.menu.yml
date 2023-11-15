@@ -1,3 +1,15 @@
+wisski_cloud_account_manager.create_account_page:
+    title: 'WissKI cloud account manager create account page'
+    description: 'Create an account for the WissKI cloud'
+    parent: wisski_cloud_account_manager.settings_menu_block
+    route_name: wisski_cloud_account_manager.create
+
+wisski_cloud_account_manager.overview_page:
+    title: 'WissKI cloud account manager overview page'
+    description: 'WissKI cloud account manager overview page'
+    parent: wisski_cloud_account_manager.settings_menu_block
+    route_name: wisski_cloud_account_manager.manage
+
 wisski_cloud_account_manager.settings_menu_block:
     title: 'WissKI cloud account manager'
     description: 'WissKI cloud account manager'
@@ -10,8 +22,3 @@ wisski_cloud_account_manager.settings_form:
     parent: wisski_cloud_account_manager.settings_menu_block
     route_name: wisski_cloud_account_manager.settings
 
-wisski_cloud_account_manager.overview_page:
-    title: 'WissKI cloud account manager overview page'
-    description: 'WissKI cloud account manager overview page'
-    parent: wisski_cloud_account_manager.settings_menu_block
-    route_name: wisski_cloud_account_manager.manage

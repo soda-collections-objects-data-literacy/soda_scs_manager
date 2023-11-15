@@ -5,6 +5,7 @@ namespace Drupal\wisski_cloud_account_manager\Controller;
 use Drupal\Core\Controller\ControllerBase;
 use Drupal\wisski_cloud_account_manager\WisskiCloudAccountManagerDaemonApiActions;
 use Symfony\Component\DependencyInjection\ContainerInterface;
+use Symfony\Component\HttpFoundation\JsonResponse;
 
 /**
  * The Wisski Cloud account manager info controller.
@@ -39,6 +40,63 @@ class WisskiCloudAccountManagerController extends ControllerBase {
     );
   }
 
+    /**
+   * Page list the account statuses.
+   *
+   * @return array
+   *   The page build array.
+   */
+  public function accountManagingPage(): array {
+    $currentUser = \Drupal::currentUser();
+    $healthCheck = $this->wisskiCloudAccountManagerDaemonApiActions->healthCheck();
+    $accounts = $this->wisskiCloudAccountManagerDaemonApiActions->getAccounts();
+    // If the user is not an admin, filter the accounts to only include their own.
+    if (!$currentUser->hasPermission('admister wisski cloud account manager')) {
+    $accounts = array_filter($accounts, function($account) use ($currentUser) {
+      return $account['uid'] === $currentUser->id();
+    });
+  }
+    return [
+      '#theme' => 'wisski_cloud_account_manager_account_managing_page',
+      '#accounts' => $accounts,
+      '#healthCheck' => $healthCheck,
+      '#attached' => [
+        'library' => [
+          'wisski_cloud_account_manager/accountOptions',
+          'wisski_cloud_account_manager/globalStyling',
+          'wisski_cloud_account_manager/provisionStatus'
+        ],
+      ],
+      '#cache' => [
+        'max-age' => 0,
+      ],
+    ];
+  }
+
+  // @todo Implement healthcheckPage().
+  public function healthcheckPage(): array {
+    return [
+      '#theme' => 'wisski_cloud_account_manager_healthcheck_page',
+      '#healthCheck' => $this->wisskiCloudAccountManagerDaemonApiActions->healthCheck(),
+    ];
+  }
+
+  public function provisionStatusPage($aid) {
+    $accounts = $this->wisskiCloudAccountManagerDaemonApiActions->getAccounts($aid);
+    // Return the status as a JSON response.
+    switch ($accounts[0]['provisioned']) {
+      case '0':
+        return new JsonResponse(['status' => 'no']);
+      case '1':
+        return new JsonResponse(['status' => 'ongoing']);
+      case '2':
+        return new JsonResponse(['status' => 'yes']);
+      case '3':
+        return new JsonResponse(['status' => 'unknown']);
+    }
+    return new JsonResponse(['status' => $accounts[0]['provisioned']]);
+  }
+
   /**
    * Info page for terms and conditions.
    *
@@ -63,41 +121,13 @@ class WisskiCloudAccountManagerController extends ControllerBase {
    *   The page build array.
    */
   public function validationPage(string $validationCode): array {
-    $account = $this->wisskiCloudAccountManagerDaemonApiActions->validateAccount($validationCode);
+    $user = $this->wisskiCloudAccountManagerDaemonApiActions->validateAccount($validationCode);
+
     return [
-      '#theme' => 'wisski_cloud_account_manager_validation_page',
-      '#account' => $account,
-      '#attached' => [
-        'library' => [
-          'wisski_cloud_account_manager/wisski_cloud_account_manager',
-        ],
-      ],
-      '#cache' => [
-        'max-age' => 0,
-      ],
+      '#markup' => $this->t('Your WissKI Cloud account for user :name is now validated. You can now <a href="/user">login</a> and start a provision!.', [
+        ':name' => $user['name'],
+      ]),
     ];
   }
-
-  /**
-   * Page list the account statuses.
-   *
-   * @return array
-   *   The page build array.
-   */
-  public function accountManagingPage(): array {
-    $accounts = $this->wisskiCloudAccountManagerDaemonApiActions->getAccounts();
-    return [
-      '#theme' => 'wisski_cloud_account_manager_account_managing_page',
-      '#accounts' => $accounts,
-      '#attached' => [
-        'library' => [
-          'wisski_cloud_account_manager/wisski_cloud_account_manager',
-        ],
-      ],
-      '#cache' => [
-        'max-age' => 0,
-      ],
-    ];
-  }
-
 }
+

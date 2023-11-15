@@ -1,43 +1,4 @@
-/* Reset the table styles */
-table.wcam--table {
-  border-collapse: collapse;
-  width: 100%;
-}
-
-/* Style for table headers */
-table.wcam--table th {
-  background-color: #f2f2f2;
-  padding: 8px;
-  text-align: center;
-}
-
-/* Alternate row background color */
-table.wcam--table tr:nth-child(even) {
-  background-color: #f2f2f2;
-}
-
-/* Style for table cells */
-table.wcam--table td {
-  padding: 8px;
-  border: 1px solid #dddddd;
-}
-
-/* Center-align certain cells */
-table.wcam--table td.valid,
-table.wcam--table td.provisioned {
-  text-align: center;
-}
-
-.wisski-cloud-account-manager-success {
-  background-color: green;
-}
-.wisski-cloud-account-manager-warning {
-  background-color: orange;
-}
-.wisski-cloud-account-manager-error {
-  background-color: red;
-}
-
-.wisski-cloud-account-manager-center {
-  text-align: center;
+.spinner-border {
+  height: 1em !important;
+  width: 1em !important;
 }

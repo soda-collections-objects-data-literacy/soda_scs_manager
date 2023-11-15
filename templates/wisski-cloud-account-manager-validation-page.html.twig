@@ -1,52 +1,58 @@
 {# wisski_cloud_account_manager/templates/wisski_cloud_account_manager_validation_page.html.twig #}
 <div>
   {% if account is not empty %}
-    <table class="wisski-cloud-account-manager-table">
+    <table class="table">
+      <thead>
       <tr>
-        <th>Person name</th>
-        <th>Email</th>
-        <th>Username</th>
-        <th>Subdomain</th>
-        <th>Valid</th>
-        <th>Provisioned</th>
+        <th scope="col">Account ID</th>
+        <th scope="col">Person name</th>
+        <th scope="col">Organisation</th>
+        <th scope="col">Email</th>
+        <th scope="col">Username</th>
+        <th scope="col">Subdomain</th>
+        <th scope="col">Valid</th>
+        <th scope="col">Provisioned</th>
       </tr>
+      </thead>
+      <tbody>
       <tr>
-        <td>{{ account.data.personName }}</td>
-        <td>{{ account.data.email }}</td>
-        <td>{{ account.data.username }}</td>
-        <td>{{ account.data.subdomain }}</td>
+        <th scope="row"> {{ account.aid }} </th>
+        <td>{{ account.person_name }}</td>
+        <td>{{ account.organisation }}</td>
+        <td>{{ account.mail }}</td>
+        <td>{{ account.name }}</td>
+        <td>{{ account.subdomain }}</td>
         <td class="valid">
-          {% if account.data.valid == 1 %}
+          {% if account.status == 1 %}
             yes
-          {% elseif account.data.valid == 0 %}
+          {% elseif account.status == 0 %}
             no
             {% else %}
               unknown
           {% endif %}
         </td>
-        <td class="provisioned">{% if account.data.provisioned == 1 %}
+        <td class="provisioned">{% if account.provisioned == 1 %}
             ongoing
-          {% elseif account.data.provisioned == 2 %}
+          {% elseif account.provisioned == 2 %}
             yes
-          {% elseif account.data.provisioned == 3 %}
-            failed
-          {% else %}
+          {% elseif account.provisioned == 3 %}
             unknown
           {% endif %}</td>
       </tr>
+      </tbody>
     </table>
     <hr>
-      <div class="wisski-cloud-account-manager-center">
-      {% if account.data.valid == 1 and account.data.provisioned == 2 %}
-        <p class="wisski-cloud-account-manager-success"><strong> Your account is valid and provisioned. You can now log in to your account at <a href="https://{{ account.data.subdomain }}.wisski.cloud">https://{{ account.data.subdomain }}.wisski.cloud</a>.</strong></p>
-      {% elseif account.data.valid == 1 and (account.data.provisioned == 0 or account.data.provisioned == 3)%}
-        <p class="wisski-cloud-account-manager-error"><strong>Your account is valid but the provision failed or the state is unknown. Please refresh this site and if the state persists contact <a href="mailto:info@wiss-ki.eu">cloud@wiss-ki.eu</a> to resolve this issue.</strong></p>
-      {% elseif account.data.valid == 1 and account.data.provisioned == 1 %}
-        <p class="wisski-cloud-account-manager-warning"><strong>Your account is valid and the provision of your WissKI Cloud instance has started. Please wait a few minutes and refresh this page.</strong></p>
-      {% elseif account.data.valid == 0 %}
-      <p class="wisski-cloud-account-manager-error"><strong>Your account is not valid. Please contact <a href="mailto:info@wiss-ki.eu">info@wiss-ki.eu</a> to resolve this issue.</strong></p>
+      <div class="d-flex justify-content-center">
+      {% if account.status == 1 and account.provisioned == 2 %}
+        <p class="text-success"><strong> Your account is valid and provisioned. You can now log in to your account at <a href="https://{{ account.subdomain }}.wisski.cloud">https://{{ account.subdomain }}.wisski.cloud</a>.</strong></p>
+      {% elseif account.status == 1 and (account.provisioned == 0 or account.provisioned == 3)%}
+        <p class="text-warning"><strong>Your account is valid but the provision failed or the state is unknown. Please refresh this site and if the state persists contact <a href="mailto:info@wiss-ki.eu">cloud@wiss-ki.eu</a> to resolve this issue.</strong></p>
+      {% elseif account.status == 1 and account.provisioned == 1 %}
+        <p class="text-info"><strong>Your account is valid and the provision of your WissKI Cloud instance has started. Please wait a few minutes and refresh this page.</strong></p>
+      {% elseif account.status == 0 %}
+      <p class="text-warning"><strong>Your account is not valid. Please contact <a href="mailto:info@wiss-ki.eu">info@wiss-ki.eu</a> to resolve this issue.</strong></p>
       {% else %}
-      <p class="wisski-cloud-account-manager-error"><strong>Something went wrong. Please contact <a href="mailto:info@wiss-ki.eu">info@wiss-ki.eu</a> to resolve this issue.</strong></p>
+      <p class="text-warning"><strong>Something went wrong. Please contact <a href="mailto:info@wiss-ki.eu">info@wiss-ki.eu</a> to resolve this issue.</strong></p>
       {% endif %}
       </div>
 

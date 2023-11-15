@@ -5,30 +5,37 @@
    */
   Drupal.behaviors.accountOptions = {
     attach: function (context, settings) {
-      once('accountOptions', '#wcam--table', context).forEach(function (form) {
+      once('accountOptions', '#wcam--table', context).forEach(function () {
         $('.wcam--select').change(function () {
-          console.log($(this))
           let selectedOption = $(this).val();
-          let itemId = $(this).closest('tr').find('.wcam--row--item-id').text();
+          let aid = $(this).closest('tr').find('.wcam--row--account-id').text().trim();
           switch (selectedOption) {
             case 'delete':
-              // Führen Sie hier Ihren JavaScript-Code für 'delete' aus.
-
-              console.log('delete:', itemId);
+              // Construct the URL for the delete route.
+              let deleteUrl = Drupal.url('wisski-cloud-account-manager/delete/' + aid);
+              // Redirect to the delete route.
+              window.location.href = deleteUrl;
               break;
 
             case 'edit':
-              // Führen Sie hier Ihren JavaScript-Code für 'edit' aus.
-              console.log('Edit:', itemId);
+              console.log('Edit:', aid);
               break;
 
             case 'provise':
-              // Führen Sie hier Ihren JavaScript-Code für 'provise' aus.
-              console.log('Provise', itemId);
+              // Construct the URL for the provise route.
+              let proviseUrl = Drupal.url('wisski-cloud-account-manager/provise/' + aid);
+              // Redirect to the provise route.
+              window.location.href = proviseUrl;
+              break;
+
+            case 'purge':
+              // Construct the URL for the purge route.
+              let purgeUrl = Drupal.url('wisski-cloud-account-manager/purge/' + aid);
+              // Redirect to the purge route.
+              window.location.href = purgeUrl;
               break;
 
             case 'validate':
-              // Führen Sie hier Ihren JavaScript-Code für 'validate' aus.
               console.log('Die Option "validate" wurde ausgewählt.');
               break;
 

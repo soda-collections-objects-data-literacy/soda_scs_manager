@@ -1,56 +1,88 @@
 {# wisski_cloud_account_manager/templates/wisski_cloud_account_manager_account_managing_page.html.twig #}
 <div>
+  {% if healthCheck %}
+  <div>
+    <p class="{{ healthCheck.success ? 'text-success' : 'text-error' }}">{{ healthCheck.message }}</p>
+  </div>
+  {% endif %}
   {% if accounts is not empty %}
-    <table id="wcam--table" class="wcam--table">
+    <table id="wcam--table" class="table">
+    <thead>
       <tr>
-        <th>Id</th>
-        <th>Person name</th>
-        <th>Email</th>
-        <th>Username</th>
-        <th>Subdomain</th>
-        <th>Valid</th>
-        <th>Provisioned</th>
-        <th>Options</th>
+        <th scope="col">AID</th>
+        <th scope="col">UID</th>
+        <th scope="col">Person name</th>
+        <th scope="col">Organisation</th>
+        <th scope="col">Email</th>
+        <th scope="col">Username</th>
+        <th scope="col">Subdomain</th>
+        <th scope="col">Valid</th>
+        <th scope="col">Provisioned</th>
+        <th scope="col">Options</th>
       </tr>
-      {% for item in accounts.data  %}
-      <tr class="wcam--table--row">
-        <td class="wcam--row--item-id">{{ item._id }}</td>
-        <td>{{ item.personName }}</td>
-        <td>{{ item.email }}</td>
-        <td>{{ item.username }}</td>
-        <td>{{ item.subdomain }}</td>
+      </thead>
+      {% for item in accounts %}
+      <tr class="wcam--table--row {% if item.status is null %}table-danger{% endif %}">
+        <td class="wcam--row--account-id" scope="row"> {{ item.aid }} </td>
+        <td>{{ item.uid }} {% if item.status is null %}<span class="align-bottom material-icons" title="Drupal user does not exist, please contact cloud admin!">error_outline</span>{% endif %}</td>
+        <td>{{ item.person_name }}</td>
+        <td>{{ item.organisation }}</td>
+        <td>
+          <a href="mailto:{{ item.mail }}">{{ item.mail }}</a>
+        </td>
+        <td>{{ item.name }}</td>
+        <td>
+        {% if item.provisioned == 2 %}
+	        <a href="https://{{ item.subdomain }}.wisski.cloud" target="_blank">{{ item.subdomain }}.wisski.cloud</a>
+        {% else %}
+          {{ item.subdomain }}.wisski.cloud
+        {% endif %}
+          </td>
         <td class="valid">
-          {% if item.valid == 1 %}
+          {% if item.status is same as("1")  %}
             yes
-          {% elseif item.valid == 0 %}
+          {% elseif item.status is same as("0") %}
             no
             {% else %}
               unknown
           {% endif %}
         </td>
-        <td class="provisioned">{% if item.provisioned == 1 %}
-            ongoing
+        <td id="provision-status--row--aid-{{ item.aid }}" class="provisioned">
+          {% if item.provisioned == 1 %}
+            <div id="process-idle-animation--aid-{{ item.aid }}" class="spinner-border" role="status">
+              <span id="provision-status--aid-{{ item.aid }}" class="visually-hidden">ongoing</span>
+            </div>
           {% elseif item.provisioned == 2 %}
             yes
-          {% elseif item.provisioned == 3 %}
+          {% elseif item.provisioned == 0 %}
             no
           {% else %}
-            unknown
+            <div id="process-idle-animation--aid-{{ item.aid }}" class="spinner-border" role="status">
+              <span id="provision-status--aid-{{ item.aid }}" class="visually-hidden">unknown</span>
+            </div>
+
           {% endif %}</td>
-        <td><label for="wcam--account-edit--{{ item._id }}"></label>
-          <select class="wcam--select" name="account-edit" id="wcam--account-edit--{{ item._id }}">
+        <td><label for="wcam--account-edit--account-{{ item.aid }}"></label>
+          <select class="wcam--select" name="account-edit" id="wcam--account-edit--account-{{ item.aid }}">
             <option value="">select...</option>
-            <option value="edit">edit</option>
-            {% if item.valid == 0 %}
-            <option value="validate">validate</option>
+            {% if item.status is not null %}
+            <option title="Edit account data." value="edit">edit</option>
+            {% if item.status == 0 %}
+            <option title="Validates the account." value="validate">validate</option>
             {% endif %}
             {% if item.provisioned == 0 %}
-            <option value="provise">provise</option>
+            <option title="Create a new WissKI Cloud Instance with provided account data." value="provise">provise</option>
             {% endif %}
-            <option value="delete">delete</option>
+            {% endif %}
+            {% if item.provisioned >= 2 %}
+            <option title="Deletes only the WissKI Cloud instance, user and account remain." value="delete">delete</option>
+            {% endif %}
+            <option title="Deletes everything, nothing will remain." value="purge">purge</option>
           </select></td>
       </tr>
       {% endfor %}
     </table>
+  {% else %}
+    <p>No accounts found. Go get some friends.</p>
   {% endif %}
 </div>

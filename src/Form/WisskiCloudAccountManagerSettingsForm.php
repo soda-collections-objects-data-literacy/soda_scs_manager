@@ -42,32 +42,39 @@ class WisskiCloudAccountManagerSettingsForm extends ConfigFormBase {
       '#default_value' => $config->get('daemonUrl'),
     ];
 
-    $form['allAccounts'] = [
+     $form['wsUrl'] = [
       '#type' => 'textfield',
-      '#title' => $this->t('All accounts URL path'),
-      '#description' => $this->t('Provide the endpoint to the GET endpoint for all accounts, i. e. "/account/all"'),
-      '#default_value' => $config->get('allAccounts'),
+      '#title' => $this->t('The websocket URL of the WissKI Cloud'),
+      '#description' => $this->t('Provide the complete base URL with protocol, domain (resp. service name in docker), ports and API path, i. e. "wss://panel.wisski.cloud/api/v1/ws"'),
+      '#default_value' => $config->get('wsUrl'),
     ];
 
-    $form['accountPostUrlPath'] = [
-      '#type' => 'textfield',
-      '#title' => $this->t('POST URL path'),
-      '#description' => $this->t('Provide the path to the POST endpoint, i. e. "/account"'),
-      '#default_value' => $config->get('accountPostUrlPath'),
+    $form['wsToken'] = [
+      '#type' => 'password',
+      '#title' => $this->t('The websocket access token of the WissKI Cloud provisioning account.'),
+      '#description' => $this->t('Provide the access token for the websocket, i. e. "1234567890"'),
+      '#default_value' => $config->get('wsToken'),
     ];
 
-    $form['accountFilterByData'] = [
+    $form['provisionRoute'] = [
       '#type' => 'textfield',
-      '#title' => $this->t('Filter by Data URL path'),
-      '#description' => $this->t('Provide the path to the Get account by data endpoint, i. e. "/account/by_data"'),
-      '#default_value' => $config->get('accountFilterByData'),
+      '#title' => $this->t('Instance provision URL path'),
+      '#description' => $this->t('Provide the path to the account validation PUT endpoint, i. e. "/provision"'),
+      '#default_value' => $config->get('provisionRoute'),
     ];
 
-    $form['accountValidation'] = [
+    $form['deleteRoute'] = [
       '#type' => 'textfield',
-      '#title' => $this->t('User Validation URL path'),
-      '#description' => $this->t('Provide the path to the account validation PUT endpoint, i. e. "/account/validation"'),
-      '#default_value' => $config->get('accountValidation'),
+      '#title' => $this->t('Instance delete URL path'),
+      '#description' => $this->t('Provide the path to the account validation DELETE endpoint, i. e. "/delete"'),
+      '#default_value' => $config->get('deleteRoute'),
+    ];
+
+    $form['healthCheckRoute'] = [
+      '#type' => 'textfield',
+      '#title' => $this->t('Deamon health check URL path'),
+      '#description' => $this->t('Provide the path to the health check GET endpoint, i. e. "/health-check"'),
+      '#default_value' => $config->get('healthCheckRoute'),
     ];
 
     $form['usernameBlacklist'] = [
@@ -121,15 +128,16 @@ class WisskiCloudAccountManagerSettingsForm extends ConfigFormBase {
   public function submitForm(array &$form, FormStateInterface $form_state) {
     $config = $this->config('wisski_cloud_account_manager.settings');
 
-    $config->set('daemonUrl', $form_state->getValue('daemonUrl'))
-      ->set('accountPostUrlPath', $form_state->getValue('accountPostUrlPath'))
-      ->set('allAccounts', $form_state->getValue('allAccounts'))
-      ->set('accountFilterByData', $form_state->getValue('accountFilterByData'))
-      ->set('accountProvisionAndValidationCheck', $form_state->getValue('accountProvisionAndValidationCheck'))
-      ->set('accountValidation', $form_state->getValue('accountValidation'))
-      ->set('usernameBlacklist', $form_state->getValue('usernameBlacklist'))
+    $config
+      ->set('daemonUrl', $form_state->getValue('daemonUrl'))
+      ->set('deleteRoute', $form_state->getValue('deleteRoute'))
       ->set('emailProviderBlacklist', $form_state->getValue('emailProviderBlacklist'))
+      ->set('healthCheckRoute', $form_state->getValue('healthCheckRoute'))
+      ->set('provisionRoute', $form_state->getValue('provisionRoute'))
+      ->set('usernameBlacklist', $form_state->getValue('usernameBlacklist'))
       ->set('subdomainBlacklist', $form_state->getValue('subdomainBlacklist'))
+      ->set('wsUrl', $form_state->getValue('wsUrl'))
+      ->set('wsToken', $form_state->getValue('wsToken'))
       ->save();
 
     parent::submitForm($form, $form_state);

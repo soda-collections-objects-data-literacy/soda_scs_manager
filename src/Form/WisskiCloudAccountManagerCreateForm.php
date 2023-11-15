@@ -16,9 +16,6 @@ use Symfony\Component\DependencyInjection\ContainerInterface;
  */
 class WisskiCloudAccountManagerCreateForm extends FormBase {
 
-
-
-
   /**
    * The config factory service.
    *
@@ -126,7 +123,7 @@ class WisskiCloudAccountManagerCreateForm extends FormBase {
       '#type' => 'textfield',
       '#title' => $this->t('Username'),
       '#maxlength' => 20,
-      '#description' => $this->t('WissKI cloud login user. Only small caps (a-z), underscore (_), minus (-) and 20 letter maximum allowed, i.e. "wisski_user".'),
+      '#description' => $this->t('WissKI cloud login - NOT your password for your instance - this will be send separately. Only small caps (a-z), underscore (_), minus (-) and 20 letter maximum allowed, i.e. "wisski_user".'),
       '#pattern' => '[a-z]+([_-]{1}[a-z]+)*',
       '#required' => TRUE,
     ];
@@ -175,38 +172,54 @@ class WisskiCloudAccountManagerCreateForm extends FormBase {
     $dataToCheck['email'] = $form_state->getValue('email');
     $dataToCheck['emailProvider'] = explode('@', $dataToCheck['email'])[1];
     $dataToCheck['subdomain'] = $form_state->getValue('subdomain');
+    $dataToCheck['usernameBlacklist'] = $this->settings->get('usernameBlacklist') ?? '';
+    $dataToCheck['emailProviderBlacklist'] = $this->settings->get('emailProviderBlacklist') ?? '';
+    $dataToCheck['subdomainBlacklist'] = $this->settings->get('subdomainBlacklist') ?? '';
 
-    $response = $this->wisskiCloudAccountManagerDaemonApiActions->checkAccountData($dataToCheck);
+    // Check if username is too short.
+    if (strlen($dataToCheck['username']) < 2) {
+      $form_state->setErrorByName('username', $this->t('The username "@username" is too short, please use at least 2 characters.', ['@username' => $dataToCheck['username']]));
+    }
 
-    if (!$response['success']) {
-      $this->messenger->addError('Can not communicate with the provision daemon, please try again later or write an email to cloud@wiss-ki.eu.');
-    }
-    if (strlen($dataToCheck['username']) < 3) {
-      $form_state->setErrorByName('username', $this->t('The username "@username" is too short, please use at least 3 characters.', ['@username' => $dataToCheck['username']]));
-    }
-    if (in_array($dataToCheck['username'], preg_split('/\r\n|\r|\n/', $this->settings->get('usernameBlacklist')))) {
+    // Check if username is in blacklist.
+    if (in_array($dataToCheck['username'], preg_split('/\r\n|\r|\n/', $dataToCheck['usernameBlacklist']))) {
       $form_state->setErrorByName('username', $this->t('The username "@username" is not allowed.', ['@username' => $dataToCheck['username']]));
     }
-    if ($response['accountData']['accountWithUsername']) {
-      $form_state->setErrorByName('username', $this->t('The username "@username" is already in use.', ['@username' => $dataToCheck['username']]));
+
+    // Check if username only contains lowercase letters, numbers, and underscores
+    if (!preg_match('/^[a-z0-9_]+$/', $dataToCheck['username'])) {
+      $form_state->setErrorByName('username', t('Username can only contain lowercase letters, numbers, and underscores.'));
     }
 
-    if (in_array($dataToCheck['emailProvider'], preg_split('/\r\n|\r|\n/', $this->settings->get('emailProviderBlacklist')))) {
+    // Check if username is unique
+    $userFromUsername = \Drupal::entityTypeManager()->getStorage('user')->loadByProperties(['name' =>$dataToCheck['username']]);
+    if (!empty($userFromUsername)) {
+      $form_state->setErrorByName('username', $this->t('The username is already taken.'));
+    }
+
+    // Check if email provider is in blacklist.
+    if (in_array($dataToCheck['emailProvider'], preg_split('/\r\n|\r|\n/', $dataToCheck['emailProviderBlacklist']))) {
       $form_state->setErrorByName('email', $this->t('The email provider  "@provider"is not allowed.', ['@provider' => $dataToCheck['emailProvider']]));
     }
 
-    if ($response['accountData']['accountWithEmail']) {
+    // Check if email is already in use.
+    $userFromEmail = \Drupal::entityTypeManager()->getStorage('user')->loadByProperties(['name' => $dataToCheck['email']]);
+    if (!empty($userFromEmail)) {
       $form_state->setErrorByName('email', $this->t('The email "@email" is already in use.', ['@email' => $dataToCheck['email']]));
     }
 
+    // Check if subdomain is too short.
     if (strlen($dataToCheck['subdomain']) < 3) {
       $form_state->setErrorByName('subdomain', $this->t('The subdomain "@subdomain" is too short, please use at least 3 characters.', ['@subdomain' => $dataToCheck['subdomain']]));
     }
 
-    if (in_array($dataToCheck['subdomain'], preg_split('/\r\n|\r|\n/', $this->settings->get('subdomainBlacklist')))) {
+    // Check if subdomain is in blacklist.
+    if (in_array($dataToCheck['subdomain'], preg_split('/\r\n|\r|\n/', $dataToCheck['emailProviderBlacklist']))) {
       $form_state->setErrorByName('subdomain', $this->t('The subdomain "@subdomain" is not allowed.', ['@subdomain' => $dataToCheck['subdomain']]));
     }
-    if ($response['accountData']['accountWithSubdomain']) {
+
+    // Check if subdomain is already in use.
+    if ($this->wisskiCloudAccountManagerDaemonApiActions->checkForRedundantAccountData('subdomain', $dataToCheck['subdomain'])) {
       $form_state->setErrorByName('subdomain', $this->t('The subdomain "@subdomain" is already in use.', ['@subdomain' => $dataToCheck['subdomain']]));
     }
 
@@ -230,11 +243,8 @@ class WisskiCloudAccountManagerCreateForm extends FormBase {
       $account["password"] = $field['password'];
       $account["subdomain"] = $field['subdomain'];
 
-      $accountResponse = $this->wisskiCloudAccountManagerDaemonApiActions->addAccount($account);
-      if (!$accountResponse['success']) {
-        throw new Exception('Get no valid response from api daemon. Can not send validiation email.');
-       };
-      $this->wisskiCloudAccountManagerDaemonApiActions->sendValidationEmail($accountResponse['data']['email'], $accountResponse['data']['validationCode']);
+      $user = $this->wisskiCloudAccountManagerDaemonApiActions->addAccount($account);
+      $this->wisskiCloudAccountManagerDaemonApiActions->sendValidationEmail($user['email'], $user['personName'], $user['validationCode']);
 
       $this->messenger()
         ->addMessage($this->t('The account data has been successfully saved, please check your email for validation!'));

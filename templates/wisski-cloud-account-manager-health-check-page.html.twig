@@ -1,0 +1,27 @@
+{# wisski_cloud_account_manager/templates/wisski_cloud_account_manager_validation_page.html.twig #}
+<div>
+  <table class="table">
+    <thead>
+      <tr>
+        <th scope="col">Check</th>
+        <th scope="col">Values</th>
+        <th scope="col">Test</th>
+        <th scope="col">Result</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% if healthCheck %}
+        <tr>
+          <td>healthCheck</td>
+          <td>-</td>
+          <td>
+            <form action="/wisski-cloud-account-manager/health-check" method="get">
+              <button type="submit">Check Health</button>
+            </form>
+          </td>
+          <td id="health-check-result"></td>
+        </tr>
+      {% endif %}
+    </tbody>
+  </table>
+</div>
