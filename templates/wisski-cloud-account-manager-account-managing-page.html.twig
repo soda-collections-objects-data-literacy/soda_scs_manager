@@ -4,25 +4,29 @@
   <div>
     <p class="{{ healthCheck.success ? 'text-success' : 'text-error' }}">{{ healthCheck.message }}</p>
   </div>
+  <div>
+    <p> Provision take up to 10 minutes. Please be patient.</p>
+    <p> <em>Hover other the table headers/ dropdown options for more information.</em></p>
+  </div>
   {% endif %}
   {% if accounts is not empty %}
     <table id="wcam--table" class="table">
     <thead>
       <tr>
-        <th scope="col">AID</th>
-        <th scope="col">UID</th>
-        <th scope="col">Person name</th>
-        <th scope="col">Organisation</th>
-        <th scope="col">Email</th>
-        <th scope="col">Username</th>
-        <th scope="col">Subdomain</th>
-        <th scope="col">Valid</th>
-        <th scope="col">Provisioned</th>
-        <th scope="col">Options</th>
+        <th title="The WissKI Cloud account ID" scope="col">AID</th>
+        <th title="The Drupal User ID" scope="col">UID</th>
+        <th title="Real name of the user"scope="col">Person name</th>
+        <th title="Affilation of the user"scope="col">Organisation</th>
+        <th title="E-mail adress"scope="col">Email</th>
+        <th title="Drupal user name" scope="col">Username</th>
+        <th title="WissKI Cloud domain"scope="col">Subdomain</th>
+        <th title="Positive validation through email"scope="col">Valid</th>
+        <th title="WissKI Cloud instance is online"scope="col">Provisioned</th>
+        <th title="Account options"scope="col">Options</th>
       </tr>
       </thead>
       {% for item in accounts %}
-      <tr class="wcam--table--row {% if item.status is null %}table-danger{% endif %}">
+      <tr class="wcam--table--row{% if item.status is null %} table-danger{% endif %}">
         <td class="wcam--row--account-id" scope="row"> {{ item.aid }} </td>
         <td>{{ item.uid }} {% if item.status is null %}<span class="align-bottom material-icons" title="Drupal user does not exist, please contact cloud admin!">error_outline</span>{% endif %}</td>
         <td>{{ item.person_name }}</td>
@@ -66,7 +70,9 @@
           <select class="wcam--select" name="account-edit" id="wcam--account-edit--account-{{ item.aid }}">
             <option value="">select...</option>
             {% if item.status is not null %}
+            <!--
             <option title="Edit account data." value="edit">edit</option>
+            -->
             {% if item.status == 0 %}
             <option title="Validates the account." value="validate">validate</option>
             {% endif %}

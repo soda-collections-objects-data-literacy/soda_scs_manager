@@ -36,7 +36,10 @@
               break;
 
             case 'validate':
-              console.log('Die Option "validate" wurde ausgewählt.');
+              // Construct the URL for the purge route.
+              let validateUrl = Drupal.url('wisski-cloud-account-manager/force-validate/' + aid);
+              // Redirect to the valide route.
+              window.location.href = validateUrl;
               break;
 
             default:

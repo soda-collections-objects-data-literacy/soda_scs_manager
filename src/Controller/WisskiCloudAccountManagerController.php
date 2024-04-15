@@ -122,12 +122,33 @@ class WisskiCloudAccountManagerController extends ControllerBase {
    */
   public function validationPage(string $validationCode): array {
     $user = $this->wisskiCloudAccountManagerDaemonApiActions->validateAccount($validationCode);
-
+    
     return [
-      '#markup' => $this->t('Your WissKI Cloud account for user :name is now validated. You can now <a href="/user">login</a> and start a provision!.', [
+      '#markup' => $this->t('Your WissKI Cloud account for user :name is now validated. You can now <a href="/user">login</a>. Do not forget to start your provision by navigating to WissKI Cloud->Manage instances, and select the option "provise".', [
         ':name' => $user['name'],
       ]),
     ];
   }
+
+/**
+   * Page to check the validation and provision status.
+   *
+   * @param string $validationCode
+   *   The token to check the status for.
+   *
+   * @return array
+   *   The page build array.
+   */
+  public function forceValidationPage(string $aid): array {
+    $user = $this->wisskiCloudAccountManagerDaemonApiActions->forceValidateAccount($aid);
+    dpm($user);
+    return [
+      '#markup' => $this->t('Your WissKI Cloud account for user :name is now validated. You can now <a href="/user">login</a>. Do not forget to start your provision by navigating to WissKI Cloud->Manage instances, and select the option "provise".', [
+        ':name' => $user['name'],
+      ]),
+    ];
+  }
+
 }
 
+  

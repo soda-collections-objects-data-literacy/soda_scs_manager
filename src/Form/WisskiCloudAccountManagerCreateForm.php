@@ -140,8 +140,8 @@ class WisskiCloudAccountManagerCreateForm extends FormBase {
       '#type' => 'textfield',
       '#title' => $this->t('Subdomain'),
       '#maxlength' => 64,
-      '#description' => $this->t('WissKI cloud subdomain. Only small caps (a-z), underscore (_), minus (-) and 64 letter maximum allowed, i.e. "my_wisski" will end in "my_wisski.wisski.cloud".'),
-      '#pattern' => '[a-z]+([_-]{1}[a-z]+)*',
+      '#description' => $this->t('WissKI cloud subdomain. Only small caps (a-z), minus (-) and 64 letter maximum allowed, i.e. "my-wisski" will end in "my-wisski.wisski.cloud".'),
+      '#pattern' => '[a-z0-9]+([-]{1}[a-z0-9]+)*',
       '#required' => TRUE,
     ];
 
@@ -188,7 +188,7 @@ class WisskiCloudAccountManagerCreateForm extends FormBase {
 
     // Check if username only contains lowercase letters, numbers, and underscores
     if (!preg_match('/^[a-z0-9_]+$/', $dataToCheck['username'])) {
-      $form_state->setErrorByName('username', t('Username can only contain lowercase letters, numbers, and underscores.'));
+      $form_state->setErrorByName('username', $this->t('Username can only contain lowercase letters, numbers, and underscores.'));
     }
 
     // Check if username is unique

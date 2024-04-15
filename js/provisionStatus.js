@@ -10,22 +10,25 @@
         $rows.each(function () {
           let $row = $(this);
           let aid = $row.find('.wcam--row--account-id').text().trim();
-          let initialStatus = $row.find('#provision-status--aid-' + aid).text().trim();
+          console.log(aid);
+          let initialStatus = $row.find('#provision-status--row--aid-' + aid).text().trim();
           // If the initial provision status is 'ongoing', start checking the provision status.
+          console.log(initialStatus, 'first');
           if (initialStatus === 'ongoing' || initialStatus === 'unknown') {
+            console.log(initialStatus, 'second');
             let intervalId = setInterval(function () {
               $.get('/wisski-cloud-account-manager/provision-status/' + aid, function (data) {
+                console.log(data.status, 'third');
                 // Update the provision status on the page.
-                let $status = $('#provision-status--aid-' + aid);
-                $status.text(data.status);
+                //let $status = $('#provision-status--row--aid-' + aid);
+                //$status.text(data.status);
                 // If the provision status is not 'ongoing', stop the process idle animation.
-                if (data.status !== 'ongoing') {
-                  if (data.status !== 'unknown') {
-                    $row.find('#provision-status--row--aid-' + aid).text(data.status);
-                    $animation.hide();  // Hide the spinner.
-                    clearInterval(intervalId);
-                    location.reload();
-                  }
+                if (data.status === 'yes' || data.status === 'no' || data.status === 'error') {
+                  console.log(data.status, 'fourth');
+                  $row.find('#provision-status--row--aid-' + aid).text(data.status);
+                  $animation.hide();  // Hide the spinner.
+                  clearInterval(intervalId);
+                  location.reload();
                 }
               });
             }, 3000);

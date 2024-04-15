@@ -22,6 +22,17 @@ wisski_cloud_account_manager.delete:
   requirements:
     _custom_access: 'wisski_cloud_account_manager.account_route_access_check:access'
 
+wisski_cloud_account_manager.force_validate:
+  path: '/wisski-cloud-account-manager/force-validate/{aid}'
+  defaults:
+    _controller: '\Drupal\wisski_cloud_account_manager\Controller\WisskiCloudAccountManagerController::forceValidationPage'
+    _title:  ' WissKI Cloud account validation'
+  requirements:
+    _access: 'TRUE'
+    token: '[a-zA-Z0-9]+'
+  options:
+    no_cache: TRUE
+
 wisski_cloud_account_manager.provision_status:
   path: '/wisski-cloud-account-manager/provision-status/{aid}'
   defaults:
@@ -44,7 +55,7 @@ wisski_cloud_account_manager.manage:
     _controller: '\Drupal\wisski_cloud_account_manager\Controller\WisskiCloudAccountManagerController::accountManagingPage'
     _title:  'Account managing page'
   requirements:
-    _permission: 'access content'
+    _permission: 'authenticated wisski cloud account manager'
 
 wisski_cloud_account_manager.provise:
   path: '/wisski-cloud-account-manager/provise/{aid}'

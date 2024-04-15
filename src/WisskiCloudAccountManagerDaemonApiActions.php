@@ -506,24 +506,26 @@ class WisskiCloudAccountManagerDaemonApiActions {
 
       // Delete the instance via the daemon from the WissKI Cloud.
       $response = $this->crudInstance('delete', $aid);
+
       if ($response['success']) {
         // Delete the account and Drupal user.
         $this->deleteAccount($aid);
         $this->messenger
-          ->addMessage($this->stringTranslation->translate('Account purged successfully.'));
+          ->addMessage($this->stringTranslation->translate('Cloud and Drupal account purged successfully.'));
           return [
             'data' => NULL,
             'error' => NULL,
-            'message' => 'Account purged successfully.',
+            'message' => 'Cloud and Drupal account purged successfully.',
             'success' => TRUE,
       ];
 
       }
       else {
         if (!$response['error']) {
+          $this->deleteAccount($aid);
           // No success and no error.
           $this->messenger
-          ->addMessage($this->stringTranslation->translate('Account not found or already purged.'));
+          ->addMessage($this->stringTranslation->translate('Cloud Account not found, deleted only Drupal user.'));
           return [
           'data' => NULL,
           'error' => NULL,
@@ -616,6 +618,59 @@ class WisskiCloudAccountManagerDaemonApiActions {
       $selectQuery = $this->database->select('wisski_cloud_account_manager_accounts', 'w')
         ->fields('w', ['aid', 'organisation', 'person_name', 'provisioned','subdomain', 'validation_code'])
         ->condition('w.validation_code', $validationCode, '=');
+      $selectQuery->join('users_field_data', 'u', 'w.uid = u.uid');
+      $selectQuery->fields('u', ['uid', 'name', 'mail', 'status']);
+      $account = $selectQuery->execute()->fetchAll(\PDO::FETCH_ASSOC);
+      if (isset($account[0]['status'])) {
+        if ($account[0]['status'] == 0) {
+        $updateQuery = $this->database->update('users_field_data')
+          ->fields(['status' => 1])
+          ->condition('uid', $account['0']['uid'], '=');
+        $updateQuery->execute();
+        $account = $selectQuery->execute()->fetchAll(\PDO::FETCH_ASSOC);
+        $this->messenger
+          ->addMessage($this->stringTranslation->translate('Account validated successfully.'));
+
+        } else {
+          $this->messenger
+            ->addMessage($this->stringTranslation->translate('Account already validated.'));
+        }
+        return [
+          'uid' => $account[0]['uid'],
+          'name' => $account[0]['name']];
+      }
+      else {
+        $this->messenger
+          ->addError($this->stringTranslation->translate('Account validation failed. Please contact @adminEmail.',
+            ['@adminEmail'
+            => $this->ADMIN_EMAIL]));
+            return [];
+      }
+    }
+    catch (\Exception $e) {
+      // Request failed, handle the error.
+      $this->loggerFactory
+        ->get('wisski_cloud_account_manager')
+        ->error('Request failed with exception: ' . $e->getMessage());
+      $this->messenger
+        ->addError($this->stringTranslation->translate('Can not communicate with the WissKI Cloud account manager daemon. Try again later or contact cloud@wiss-ki.eu.'));
+      return [];
+    }
+  }
+
+  /**
+   * Validates the account.
+   *
+   * @param string $validationCode
+   *   The validation code to check.
+   *
+   * @return array [uid, name]
+   */
+  public function forceValidateAccount(string $aid): array {
+    try {
+      $selectQuery = $this->database->select('wisski_cloud_account_manager_accounts', 'w')
+        ->fields('w', ['aid', 'organisation', 'person_name', 'provisioned','subdomain', 'validation_code'])
+        ->condition('w.aid', $aid, '=');
       $selectQuery->join('users_field_data', 'u', 'w.uid = u.uid');
       $selectQuery->fields('u', ['uid', 'name', 'mail', 'status']);
       $account = $selectQuery->execute()->fetchAll(\PDO::FETCH_ASSOC);
