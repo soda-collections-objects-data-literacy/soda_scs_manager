@@ -1,0 +1,145 @@
+openapi: "3.0.0"
+info:
+  version: "1.0.0"
+  title: "SODa SCS Manager API"
+  description: "API for managing SODa SCS components and bundles"
+paths:
+  /soda-scs-manager/api-spec:
+    get:
+      summary: "Get API specification"
+      operationId: "getApiSpec"
+      responses:
+        '200':
+          description: "API specification returned"
+  /modules/custom/soda-scs-manager/assets/{asset}:
+    get:
+      summary: "Load asset"
+      operationId: "loadAsset"
+      parameters:
+        - name: "asset"
+          in: "path"
+          required: true
+          schema:
+            type: "string"
+      responses:
+        '200':
+          description: "Asset loaded"
+  /admin/structure/soda-scs-component-bundle/{soda_scs_component_bundle}:
+    get:
+      summary: "Get SODa SCS component bundle"
+      operationId: "getComponentBundle"
+      parameters:
+        - name: "soda_scs_component_bundle"
+          in: "path"
+          required: true
+          schema:
+            type: "string"
+      responses:
+        '200':
+          description: "Component bundle returned"
+  /admin/structure/soda-scs-component-bundle/add:
+    post:
+      summary: "Add SODa SCS component bundle"
+      operationId: "addComponentBundle"
+      responses:
+        '200':
+          description: "Component bundle added"
+  /admin/structure/soda-scs-component-bundle/{soda_scs_component_bundle}/edit:
+    put:
+      summary: "Edit SODa SCS component bundle"
+      operationId: "editComponentBundle"
+      parameters:
+        - name: "soda_scs_component_bundle"
+          in: "path"
+          required: true
+          schema:
+            type: "string"
+      responses:
+        '200':
+          description: "Component bundle edited"
+  /admin/structure/soda-scs-component-bundle/{soda_scs_component_bundle}/delete:
+    delete:
+      summary: "Delete SODa SCS component bundle"
+      operationId: "deleteComponentBundle"
+      parameters:
+        - name: "soda_scs_component_bundle"
+          in: "path"
+          required: true
+          schema:
+            type: "string"
+      responses:
+        '200':
+          description: "Component bundle deleted"
+  /soda-scs-manager/component/{soda_scs_component}:
+    get:
+      summary: "Get SODa SCS component"
+      operationId: "getComponent"
+      parameters:
+        - name: "soda_scs_component"
+          in: "path"
+          required: true
+          schema:
+            type: "string"
+      responses:
+        '200':
+          description: "Component returned"
+  /soda-scs-manager/component/{soda_scs_component_bundle}/add:
+    post:
+      summary: "Add SODa SCS component"
+      operationId: "addComponent"
+      parameters:
+        - name: "soda_scs_component_bundle"
+          in: "path"
+          required: true
+          schema:
+            type: "string"
+      responses:
+        '200':
+          description: "Component added"
+  /soda-scs-manager/component/{soda_scs_component_bundle}/edit:
+    put:
+      summary: "Edit SODa SCS component"
+      operationId: "editComponent"
+      parameters:
+        - name: "soda_scs_component_bundle"
+          in: "path"
+          required: true
+          schema:
+            type: "string"
+      responses:
+        '200':
+          description: "Component edited"
+  /soda-scs-manager/component/{soda_scs_component_bundle}/delete:
+    delete:
+      summary: "Delete SODa SCS component"
+      operationId: "deleteComponent"
+      parameters:
+        - name: "soda_scs_component_bundle"
+          in: "path"
+          required: true
+          schema:
+            type: "string"
+      responses:
+        '200':
+          description: "Component deleted"
+  /soda-scs-manager/components:
+    get:
+      summary: "Get components managing page"
+      operationId: "getComponentsPage"
+      responses:
+        '200':
+          description: "Components managing page returned"
+  /admin/config/soda-scs-manager/settings:
+    get:
+      summary: "Get WissKI cloud account settings"
+      operationId: "getSettings"
+      responses:
+        '200':
+          description: "Settings returned"
+  /soda-scs-manager/users:
+    get:
+      summary: "Get user managing page"
+      operationId: "getUsersPage"
+      responses:
+        '200':
+          description: "User managing page returned"

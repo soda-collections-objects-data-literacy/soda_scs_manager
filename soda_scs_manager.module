@@ -1,0 +1,82 @@
+<?php
+use Drupal\Core\StringTranslation\TranslatableMarkup;
+use Drupal\Core\Requirement\RequirementInterface;
+/**
+ * Implements hook_help().
+ */
+function soda_scs_manager_help($route_name, \Drupal\Core\Routing\RouteMatchInterface $route_match) {
+  $output = '';
+
+  switch ($route_name) {
+    case 'help.page.soda_scs_manager':
+      $output .= '<h3>' . new TranslatableMarkup('About') . '</h3>';
+      $output .= '<p>' . new TranslatableMarkup('This module provides the functionality to create, validate and manage WissKI Cloud accounts.') . '</p>';
+
+      $output .= '<h3>' . new TranslatableMarkup('Configuration') . '</h3>';
+      $output .= '<p>' . new TranslatableMarkup('Configuration is done on the <a href="@settingsPage" targer="_blank">settings page</a>.', ['@settingsPage' => '/admin/config/wisski-cloud-account-manager/settings']) . '</p>';
+
+      $output .= '<h3>' . new TranslatableMarkup('Create WissKI Cloud Account') . '</h3>';
+      $output .= '<p>' . new TranslatableMarkup('<a href="@createPage" targer="_blank">This page</a> allows you to create a WissKI Cloud account.', ['@createPage' => '/wisski-cloud-account-manager/create']) . '</p>';
+
+      $output .= '<h3>' . new TranslatableMarkup('Validate WissKI Cloud Account') . '</h3>';
+      $output .= '<p>' . new TranslatableMarkup('<a href="@validationPage" targer="_blank">This page</a> allows you to validate your account and check the status of the provision.', ['@validationPage' => '/wisski-cloud-account-manager/validate/GsyMv5DdFhPCixL1wTLZhzFg7sVDOiHq']) . '</p>';
+      break;
+  }
+  return $output;
+}
+
+
+/**
+ * Implements hook_theme().
+ */
+function soda_scs_manager_theme($existing, $type, $theme, $path) {
+  return [
+    'bundle_card' => [
+      'variables' => ['title' => NULL, 'description' => NULL, 'url' => NULL, 'image_url' => NULL],
+    ],
+    'component_card' => [
+      'variables' => [
+        'component' => NULL,
+      ],
+    ],
+    'components_page' => [
+      'variables' => [
+        'componentsByUser' => NULL,
+      ],
+    ],
+    'components_overview_page' => [
+      'variables' => [
+        'accounts' => NULL,
+        'healthCheck' => NULL,],
+    ],
+    'components_add_page' => [
+      'variables' => [
+        'accounts' => NULL,
+        'healthCheck' => NULL,],
+    ],
+    'health_page' => [
+      'variables' => ['healthCheck' => NULL],
+    ],
+    'users_page' => [
+      'variables' => ['users' => NULL],
+    ],
+    
+  ];
+}
+
+/**
+ * Implements hook_requirements().
+ */
+function soda_scs_manager_requirements($phase) {
+  $requirements = [];
+  if ($phase == 'install' || $phase == 'runtime') {
+    $theme_list = \Drupal::service('theme_handler')->listInfo();
+    if (!isset($theme_list['bootstrap5'])) {
+      $requirements['soda_scs_manager_theme'] = [
+          'severity' => RequirementInterface::ERROR,
+
+      ];
+    }
+  }
+  return $requirements;
+}

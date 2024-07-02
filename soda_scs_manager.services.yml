@@ -1,0 +1,14 @@
+services:
+  soda_scs_manager.api.actions:
+    class: Drupal\soda_scs_manager\SodaScsApiActions
+    arguments:
+      - '@config.factory'
+      - '@database'
+      - '@http_client'
+      - '@language_manager'
+      - '@logger.factory'
+      - '@plugin.manager.mail'
+      - '@messenger'
+      - '@request_stack'
+      - '@string_translation'
+      - '@twig'

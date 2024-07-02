@@ -1,0 +1,121 @@
+<?php
+
+use Drupal\Core\File\FileSystemInterface;
+
+
+/**
+ * Implements hook_schema().
+ */
+function soda_scs_manager_schema() {
+  $schema['soda_scs_manager__components'] = [
+    'description' => 'Table for SODa SCS components management.',
+    'fields' => [
+      'component_id' => [
+        'description' => 'The name of the component.',
+        'type' => 'int',
+        'size' => 'tiny',
+        'not null' => TRUE,
+      ],
+      'uid' => [
+        'description' => 'The primary identifier for the account. Same id as user id in drupal.',
+        'type' => 'int',
+        'size' => 'tiny',
+        'not null' => TRUE,
+      ],
+    ],
+    'primary key' => ['component_id'],    
+  ];
+
+  $schema['soda_scs_manager__projects'] = [
+    'description' => 'Table for SODa SCS projects management',
+    'fields' => [
+      'project_id' => [
+        'description' => 'Id of the project.',
+        'type' => 'int',
+        'size' => 'tiny',
+        'not null' => TRUE,
+      ],
+      'project_name' => [
+        'description' => 'Name of the project.',
+        'type' => 'int',
+        'size' => 'tiny',
+        'not null' => TRUE,
+      ],
+    ],
+    'primary key' => ['project_id'],    
+  ];
+
+  $schema['soda_scs_manager__components_users'] = [
+    'description' => 'Table for SODa SCS components management.',
+    'fields' => [
+      'id' => [
+        'description' => 'Row id',
+        'type' => 'int',
+        'size' => 'tiny',
+        'not null' => TRUE,
+      ],
+      'component_id' => [
+        'description' => 'The name of the component.',
+        'type' => 'int',
+        'size' => 'tiny',
+        'not null' => TRUE,
+      ],
+      'uid' => [
+        'description' => 'Drupal user id',
+        'type' => 'int',
+        'size' => 'tiny',
+        'not null' => TRUE,
+      ],
+    ],
+    'primary key' => ['id'],    
+  ];
+
+  $schema['soda_scs_manager__projects_users'] = [
+    'description' => 'Table for SODa SCS components management.',
+    'fields' => [
+      'id' => [
+        'description' => 'Row id',
+        'type' => 'int',
+        'size' => 'tiny',
+        'not null' => TRUE,
+      ],
+      'project_id' => [
+        'description' => 'Id of the project.',
+        'type' => 'int',
+        'size' => 'tiny',
+        'not null' => TRUE,
+      ],
+      'uid' => [
+        'description' => 'Drupal user id',
+        'type' => 'int',
+        'size' => 'tiny',
+        'not null' => TRUE,
+      ],
+    ],
+    'primary key' => ['id'],    
+  ];
+
+  return $schema;
+}
+
+/**
+ * Implements hook_install().
+ */
+function soda_scs_manager_install() {
+  $source_directory = \Drupal::service('extension.list.module')->getPath('soda_scs_manager') . '/assets/images';
+  $destination_directory = 'public://soda_scs_manager/bundle_images';
+
+  $file_system = \Drupal::service('file_system');
+
+  // Ensure the destination directory exists.
+  $file_system->prepareDirectory($destination_directory, FileSystemInterface::CREATE_DIRECTORY);
+
+  // Get all image files from the source directory.
+  $files = $file_system->scanDirectory($source_directory, '/.*\.(jpg|png|gif|svg)$/');
+
+  // Copy each file to the destination directory.
+  foreach ($files as $file) {
+    $destination = $destination_directory . '/' . $file->filename;
+    $file_system->copy($file->uri, $destination, FileSystemInterface::EXISTS_REPLACE);
+  }
+}

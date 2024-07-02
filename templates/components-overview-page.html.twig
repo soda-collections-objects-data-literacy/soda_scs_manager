@@ -1,0 +1,22 @@
+{# soda_scs_manager/templates/components.html.twig #}
+<div>
+  {% if healthCheck %}
+  <div>
+    <p class="{{ healthCheck.success ? 'text-success' : 'text-error' }}">{{ healthCheck.message }}</p>
+  </div>
+  <div>
+    <p> Provision take up to 10 minutes. Please be patient.</p>
+    <p> <em>Hover other the table headers/ dropdown options for more information.</em></p>
+  </div>
+  {% endif %}
+  {% if components is not empty %}
+    <div>
+    {% for component in components %}
+    <div class="soda-scs-manager--component--card">
+    </div>
+    {% endfor %}
+    </div>
+  {% else %}
+    <p>No accounts found. Go get some friends.</p>
+  {% endif %}
+</div>

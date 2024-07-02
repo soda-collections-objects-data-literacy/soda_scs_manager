@@ -1,0 +1,164 @@
+{
+  "openapi": "3.0.0",
+  "info": {
+    "version": "1.0.0",
+    "title": "SODa SCS SQL API",
+    "description": "API for managing SQL Components in SODa SCS"
+  },
+  "paths": {
+    "/sql": {
+      "post": {
+        "summary": "Create a new SQL Database",
+        "description": "Create a new SQL Database",
+        "parameters": [
+          {
+            "in": "body",
+            "name": "body",
+            "description": "Database information",
+            "required": true,
+            "schema": {
+              "type": "object",
+              "properties": {
+                "databaseName": {
+                  "type": "string"
+                },
+                "user": {
+                  "type": "string"
+                },
+                "roles": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "Created"
+          },
+          "400": {
+            "description": "Bad request"
+          },
+          "500": {
+            "description": "Internal server error"
+          }
+        }
+      }
+    },
+    "/sql/{id}": {
+      "get": {
+        "summary": "Get a specific SQL Database",
+        "description": "Get a specific SQL Database",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "description": "Database ID",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "A successful response"
+          },
+          "400": {
+            "description": "Bad request"
+          },
+          "404": {
+            "description": "Not found"
+          },
+          "500": {
+            "description": "Internal server error"
+          }
+        }
+      },
+      "put": {
+        "summary": "Update a specific SQL Database",
+        "description": "Update a specific SQL Database",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "description": "Database ID",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "body",
+            "name": "body",
+            "description": "Database information",
+            "required": true,
+            "schema": {
+              "type": "object",
+              "properties": {
+                "databaseName": {
+                  "type": "string"
+                },
+                "user": {
+                  "type": "string"
+                },
+                "roles": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Updated"
+          },
+          "400": {
+            "description": "Bad request"
+          },
+          "404": {
+            "description": "Not found"
+          },
+          "500": {
+            "description": "Internal server error"
+          }
+        }
+      },
+      "delete": {
+        "summary": "Delete a specific SQL Database",
+        "description": "Delete a specific SQL Database",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "description": "Database ID",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Deleted"
+          },
+          "400": {
+            "description": "Bad request"
+          },
+          "404": {
+            "description": "Not found"
+          },
+          "500": {
+            "description": "Internal server error"
+          }
+        }
+      }
+    }
+  }
+}

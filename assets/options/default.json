@@ -1,0 +1,30 @@
+{
+  "openapi": "3.0.0",
+  "info": {
+    "version": "1.0.0",
+    "title": "SODa SCS SQL API",
+    "description": "API for managing SQL Components in SODa SCS"
+  },
+  "paths": {
+    "https://devel.local/sql": {
+      "get": {
+        "summary": "Get all SQL Databases",
+        "description": "Get all SQL Databases",
+        "responses": {
+          "200": {
+            "description": "A successful response"
+          },
+          "400": {
+            "description": "Bad request"
+          },
+          "404": {
+            "description": "Not found"
+          },
+          "500": {
+            "description": "Internal server error"
+          }
+        }
+      }
+    }
+  }
+}

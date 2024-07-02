@@ -1,0 +1,17 @@
+entity.soda_scs_component.canonical:
+  route_name: entity.soda_scs_component.canonical
+  base_route: entity.soda_scs_component.canonical
+  title: 'View'
+  weight: 50
+
+entity.soda_scs_component.edit_form:
+  route_name: entity.soda_scs_component.edit_form
+  base_route: entity.soda_scs_component.canonical
+  title: 'Edit'
+  weight: 10
+
+entity.soda_scs_component.delete_form:
+  route_name: entity.soda_scs_component.delete_form
+  base_route: entity.soda_scs_component.canonical
+  title: 'Delete'
+  weight: 20

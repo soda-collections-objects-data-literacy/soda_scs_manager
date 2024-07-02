@@ -1,0 +1,50 @@
+route:
+  create:
+    title: 'Create'
+    description: 'Create a new SCS'
+    access: 'create scs'
+    url: 'http://localhost:2912/dummy-daemon/api/v1/sql'
+    type: 'POST'
+    params:
+    body:
+      - name: 'my_new_database'
+      - user: $currentUser
+      - project: $currentProject
+  getAll:
+    title: 'Get All'
+    description: 'Get all SCS'
+    access: 'get all sql'
+    url: 'http://localhost:2912/dummy-daemon/api/v1/sql'
+    type: 'GET'
+    params:
+    body:
+  getById:
+    title: 'Get By Id'
+    description: 'Get SQL Database by id'
+    access: 'get sql by id'
+    url: 'http://localhost:2912/dummy-daemon/api/v1/sql/{id}'
+    type: 'GET'
+    params:
+      - id: integer
+    body:
+  update:
+    title: 'Update'
+    description: 'Update sql database'
+    access: 'update sql'
+    url: 'http://localhost:2912/dummy-daemon/api/v1/sql/{id}'
+    type: 'PUT'
+    params:
+      - id: integer
+    body:
+      - name: 'my_updated_database'
+      - user: $currentUser
+      - project: $currentProject
+  delete:
+    title: 'Delete'
+    description: 'Delete sql database'
+    access: 'delete scs'
+    url: 'http://localhost:2912/dummy-daemon/api/v1/sql/{id}'
+    type: 'DELETE'
+    params:
+      - id: integer
+    body:

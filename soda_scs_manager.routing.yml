@@ -1,0 +1,189 @@
+# APi Spec
+
+soda_scs_manager.api_spec:
+  path: '/soda-scs-manager/api-spec'
+  defaults:
+    _controller: '\Drupal\soda_scs_manager\Controller\SodaScsManagerController::apiSpec'
+    _title: 'API Spec'
+  requirements:
+    _access: 'TRUE'
+
+# Assets
+
+soda_scs_manager.assets:
+  path: '/soda-scs-manager/assets/{asset}'
+  defaults:
+    _controller: '\Drupal\soda_scs_manager\Controller\SodaScsAssetController::loadImage'
+  requirements:
+    asset: '.*'
+    _access: 'TRUE'
+
+soda_scs_manager.spec:
+  path: '/soda-scs-manager/spec/soda-scs-api-spec.yaml'
+  defaults:
+    _controller: '\Drupal\soda_scs_manager\Controller\SodaScsAssetController::loadSpec'
+  requirements:
+    _access: 'TRUE'
+
+# Bundles
+
+entity.soda_scs_component_bundle.canonical:
+  path: '/admin/structure/soda-scs-component-bundle/{soda_scs_component_bundle}'
+  defaults:
+    _entity_view: 'soda_scs_component_bundle.default'
+    _title_callback: '\Drupal\soda_scs_manager\Controller\SodaScsComponentBundleController::title'
+  options:
+    parameters:
+      soda_scs_component_bundle:
+        type: entity:soda_scs_component_bundle
+  requirements:
+    _access: 'TRUE'
+
+entity.soda_scs_component_bundle.add_form:
+  path: '/admin/structure/soda-scs-component-bundle/add'
+  defaults:
+    _entity_form: 'soda_scs_component_bundle.add'
+    _title: 'Add SODa SCS Component Bundle'
+  requirements:
+    _access: 'TRUE'
+
+entity.soda_scs_component_bundle.edit_form:
+  path: '/admin/structure/soda-scs-component-bundle/{soda_scs_component_bundle}/edit'
+  defaults:
+    _entity_form: 'soda_scs_component_bundle.default'
+    _title: 'Edit SODa SCS Component Bundle'
+  options:
+    parameters:
+      soda_scs_component_bundle:
+        type: entity:soda_scs_component_bundle
+  requirements:
+    _access: 'TRUE'
+
+entity.soda_scs_component_bundle.delete_form:
+  path: '/admin/structure/soda-scs-component-bundle/{soda_scs_component_bundle}/delete'
+  defaults:
+    _entity_form: 'soda_scs_component_bundle.delete'
+    _title: 'Delete SODa SCS Component Bundle'
+  options:
+    parameters:
+      soda_scs_component_bundle:
+        type: entity:soda_scs_component_bundle
+  requirements:
+    _access: 'TRUE'
+
+soda_scs_manager.bundles:
+  path: '/soda-scs-manager/component/bundles'
+  defaults:
+    _controller: '\Drupal\soda_scs_manager\Controller\SodaScsComponentBundleController::content'
+    _title: 'ScsComponent Bundles'
+  requirements:
+    _access: 'TRUE'
+
+entity.soda_scs_component_bundle.collection:
+  path: '/admin/structure/soda-scs-component-bundle'
+  defaults:
+    _entity_list: 'soda_scs_component_bundle'
+    _title: 'SODa SCS Component Bundles'
+  requirements:
+    _access: 'TRUE'
+
+# Entities
+
+entity.soda_scs_component.canonical:
+  path: '/soda-scs-manager/component/{soda_scs_component}'
+  defaults:
+    _entity_view: 'soda_scs_component.default'
+    _title: 'ScsComponent'
+  options:
+    parameters:
+      soda_scs_component:
+        type: entity:soda_scs_component
+  requirements:
+    _access: 'TRUE'
+
+entity.soda_scs_component.add_form:
+  path: '/soda-scs-manager/component/{soda_scs_component_bundle}/add'
+  defaults:
+    _entity_form: 'soda_scs_component.add'
+    _title: 'Add ScsComponent'
+  options:
+    parameters:
+      soda_scs_component_bundle:
+        type: entity:soda_scs_component_bundle
+  requirements:
+    _access: 'TRUE'
+
+entity.soda_scs_component.edit_form:
+  path: '/soda-scs-manager/component/{soda_scs_component}/edit'
+  defaults:
+    _entity_form: 'soda_scs_component.edit'
+    _title: 'Edit ScsComponent'
+  requirements:
+    _access: 'TRUE'
+
+entity.soda_scs_component.delete_form:
+  path: '/soda-scs-manager/component/{soda_scs_component}/delete'
+  defaults:
+    _entity_form: 'soda_scs_component.delete'
+    _title: 'Delete ScsComponent'
+  requirements:
+    _access: 'TRUE'
+
+
+entity.soda_scs_component.collection:
+  path: '/soda-scs-manager/components/list'
+  defaults:
+    _entity_list: 'soda_scs_component'
+    _title: 'ScsComponents'
+  requirements:
+    _access: 'TRUE'
+
+# Pages
+
+soda_scs_manager.components:
+  path: '/soda-scs-manager/components'
+  defaults:
+    _controller: '\Drupal\soda_scs_manager\Controller\SodaScsManagerController::componentsPage'
+    _title:  'Components managing page'
+  requirements:
+    _access: 'TRUE'
+
+soda_scs_manager.settings:
+  path: '/admin/config/soda-scs-manager/settings'
+  defaults:
+    _form: '\Drupal\soda_scs_manager\Form\SettingsForm'
+    _title:  'WissKI cloud account settings'
+  requirements:
+    _access: 'TRUE'
+
+soda_scs_manager.settings.menu:
+  path: '/admin/config/soda-scs-manager'
+  defaults:
+    _controller: '\Drupal\system\Controller\SystemController::systemAdminMenuBlockPage'
+    _title: 'WissKI cloud account manager'
+  requirements:
+    _access: 'TRUE'
+
+soda_scs_manager.users:
+  path: '/soda-scs-manager/users'
+  defaults:
+    _controller: '\Drupal\soda_scs_manager\Controller\SodaScsManagerController::usersPage'
+    _title:  'User managing page'
+  requirements:
+    _access: 'TRUE'
+
+## Menu items for the main navigation
+
+soda_scs_manager.menu.default:
+  path: '/soda-scs-manager/menu'
+  defaults:
+    _title: 'Our Main link page'
+    _controller: '\Drupal\soda_scs_manager\Controller\SodaScsMenuController::mainLinkPage'
+  requirements:
+    _permission: 'access content'
+
+
+
+
+
+

@@ -1,0 +1,59 @@
+
+soda_scs_manager.admin:
+  title: 'SODa SCS Component Bundles'
+  description: 'Manage SODa SCS Component Bundles'
+  parent: system.admin_structure
+  route_name: entity.soda_scs_component_bundle.collection
+  weight: 100
+
+soda_scs_manager.users_page:
+    title: 'SODa SCS manager users page'
+    description: 'SODa SCS manager users page'
+    parent: soda_scs_manager.settings_menu_block
+    route_name: soda_scs_manager.users
+
+soda_scs_manager.component_page:
+    title: 'SODa SCS manager components page'
+    description: 'SODa SCS manager components page'
+    parent: soda_scs_manager.settings_menu_block
+    route_name: soda_scs_manager.components
+
+soda_scs_manager.component_store:
+    title: 'Component store'
+    description: 'List all available components and provide the possibility to install them'
+    parent: soda_scs_manager.settings_menu_block
+    route_name: soda_scs_manager.bundles
+
+soda_scs_manager.settings_menu_block:
+    title: 'SODa SCS manager'
+    description: 'SODa SCS manager'
+    parent: system.admin_config
+    route_name: soda_scs_manager.settings.menu
+
+soda_scs_manager.settings_form:
+    title: 'SODa SCS manager settings'
+    description: 'SODa SCS manager settings'
+    parent: soda_scs_manager.settings_menu_block
+    route_name: soda_scs_manager.settings
+
+# Menu items for the main navigation
+soda_scs_manager.main_navigation:
+  title: 'SODa SCS Manager'
+  description: 'Link to the SODa SCS Manager Component Page'
+  menu_name: main
+  route_name: soda_scs_manager.menu.default
+  weight: 10
+
+soda_scs_manager.menu.desk:
+  title: 'Desk'
+  description: 'Your components'
+  parent: soda_scs_manager.main_navigation
+  route_name: soda_scs_manager.components
+  weight: 10
+
+soda_scs_manager.menu.store:
+  title: 'Store'
+  description: 'Available components'
+  parent: soda_scs_manager.main_navigation
+  route_name: soda_scs_manager.bundles
+  weight: 10

@@ -1,0 +1,305 @@
+<?php
+
+namespace Drupal\soda_scs_manager\Entity;
+
+use Drupal\Component\Serialization\Yaml as SerializationYaml;
+use Drupal\Core\Entity\ContentEntityBase;
+use Drupal\Core\Entity\EntityInterface;
+use Drupal\Core\Entity\EntityTypeInterface;
+use Drupal\Core\Field\BaseFieldDefinition;
+use Drupal\Core\Serialization\Yaml as CoreSerializationYaml;
+use Drupal\Core\StringTranslation\TranslatableMarkup;
+use Drupal\file\Entity\File;
+use Symfony\Component\Yaml\Yaml;
+
+/**
+ * @ContentEntityType(
+ *   id = "soda_scs_component",
+ *   label = @Translation("SODa SCS Component"),
+ *   handlers = {
+ *     "views_data" = "Drupal\views\EntityViewsData",
+ *     "list_builder" = "Drupal\soda_scs_manager\SodaScsComponentListBuilder",
+ *     "form" = {
+ *       "default" = "Drupal\soda_scs_manager\Form\SodaScsComponentForm",
+ *       "add" = "Drupal\soda_scs_manager\Form\SodaScsComponentForm",
+ *       "edit" = "Drupal\Core\Entity\ContentEntityForm",
+ *       "delete" = "Drupal\Core\Entity\ContentEntityDeleteForm",
+ *     },
+ *     "access" = "Drupal\Core\Entity\EntityAccessControlHandler",
+ *   },
+ *   bundle_entity_type = "soda_scs_component_bundle",
+ *   base_table = "soda_scs_component",
+ *   admin_permission = "administer soda scs component entities",
+ *   entity_keys = {
+ *     "id" = "id",
+ *     "uuid" = "uuid",
+ *     "label" = "label",
+ *     "bundle" = "bundle",
+ *   },
+ *   links = {
+ *     "canonical" = "/soda-scs-manager/component/{soda_scs_component}",
+ *     "add-form" = "/soda-scs-manager/component/add",
+ *     "edit-form" = "/soda-scs-manager/component/{soda_scs_component}/edit",
+ *     "delete-form" = "/soda-scs-manager/component/{soda_scs_component}/delete",
+ *     "collection" = "/soda-scs-manager/components",
+ *   },
+ *   field_ui_base_route = "entity.soda_scs_component_bundle.edit_form",
+ *   fieldable = TRUE,
+ *
+ *   config_export = {
+ *    "bundle",
+ *    "created",
+ *    "description",
+ *    "id",
+ *    "imageUrl",
+ *    "label",
+ *    "uuid",
+ *    "updated",
+ *    "user",
+ *    }
+ *
+ * )
+ */
+class SodaScsComponent extends ContentEntityBase {
+
+     /**
+    * The SODa SCS Component Bundle.
+    *
+    * @var string
+    */
+    protected $bundle;
+
+   /**
+   * The description of the SODa SCS Component.
+   *
+   * @var string
+   */
+    protected $description;
+
+
+    /**
+    * The SODa SCS Component ID.
+    *
+    * @var integer
+    */
+    protected $id;
+
+
+  /**
+   * The Image URL of the SODa SCS Component.
+   *
+   * @var string
+   */
+
+  protected $imageUrl;
+
+
+     /**
+    * The SODa SCS Component label.
+    *
+    * @var string
+    */
+    protected $label;
+
+
+   /**
+    * The API options of the SODa SCS Component.
+    *
+    * @var string
+    */
+    protected $optionsUrl;
+
+    /**
+     * The uuid of the SODa SCS Component.
+     *
+     * @var string
+     */
+    protected $uuid;
+
+
+
+
+  /**
+   * Returns the description of the SODa SCS Component.
+   *
+   * @return string
+   *   The description of the SODa SCS Component.
+   */
+  public function getDescription(EntityInterface $entity) {
+    return $this->description;
+  }
+
+  /**
+ * Sets the description of the SODa SCS Component.
+ *
+ * @param string $description
+ *   The description of the SODa SCS Component.
+ *
+ * @return $this
+ */
+public function setDescription($description) {
+  $this->description = $description;
+  return $this;
+}
+
+ /**
+  * Returns the image of the SODa SCS Component.
+  *
+  * @return string
+  *   The image of the SODa SCS Component.
+  */
+  public function getImageUrl() {
+    return $this->imageUrl;
+  }
+
+  /**
+   * Sets the image of the SODa SCS Component.
+   *
+   * @param string $imageUrl
+   *   The image of the SODa SCS Component.
+   *
+   * @return $this
+   */
+  public function setImageUrl($imageUrl) {
+    $this->imageUrl = $imageUrl;
+    return $this;
+  }
+
+  /**
+   * Returns the label of the SODa SCS Component.
+   *
+   * @return string
+   *   The label of the SODa SCS Component.
+   */
+  public function getLabel() {
+    return $this->label;
+  }
+
+  /**
+   * Sets the label of the SODa SCS Component.
+   *
+   * @param string $label
+   *
+   * @return $this
+   */
+
+  public function setLabel($label) {
+    $this->label = $label;
+    return $this;
+  }
+
+  /**
+   * Get the owner of the SODa SCS Component.
+   *
+   * @return \Drupal\user\Entity\User
+   * The owner of the SODa SCS Component.
+   */
+  public function getOwner() {
+    return $this->get('user')->entity;
+  }
+
+  /**
+   * Get the API options of the SODa SCS Component.
+   *
+   * @return string
+   */
+  public function getOptionsUrl() {
+    return $this->optionsUrl;
+  }
+
+  /**
+   * Set the API options of the SODa SCS Component.
+   *
+   * @param string $optionsUrl
+   *
+   * @return $this
+   */
+  public function setOptionsUrl($optionsUrl) {
+    $this->optionsUrl = $optionsUrl;
+    return $this;
+  }
+
+  /**
+   * Parse the API options of the SODa SCS Component.
+   *
+   * @return array
+   *  The parsed API options of the SODa SCS Component.
+   */
+  public function parseOptions() {
+    #$options = file_get_contents($this->optionsUrl);
+    #return Yaml::parseFile($options);
+  }
+
+
+  /**
+   * {@inheritdoc}
+   */
+  public static function baseFieldDefinitions(EntityTypeInterface $entity_type) {
+    // Fetch any existing base field definitions from the parent class.
+    $fields = parent::baseFieldDefinitions($entity_type);
+
+    $fields['bundle'] = BaseFieldDefinition::create('entity_reference')
+    ->setLabel(new TranslatableMarkup('Bundle'))
+    ->setDescription(new TranslatableMarkup('The bundle of the SODa SCS Component.'))
+    ->setSetting('target_type', 'soda_scs_component_bundle')
+    ->setRequired(TRUE)
+    ->setDisplayConfigurable('view', TRUE);
+
+    $fields['created'] = BaseFieldDefinition::create('created')
+    ->setLabel(new TranslatableMarkup('Created'))
+    ->setDescription(new TranslatableMarkup('The time that the SODa SCS Component was created.'))
+    ->setReadOnly(TRUE)
+    ->setDisplayConfigurable('view', TRUE);
+
+
+    $fields['description'] = BaseFieldDefinition::create('text')
+        ->setLabel(new TranslatableMarkup('Description'))
+        ->setDescription(new TranslatableMarkup('The description of the SODa SCS Component.'))
+        ->setTranslatable(TRUE);
+
+    $fields['id'] = BaseFieldDefinition::create('integer')
+      ->setLabel(new TranslatableMarkup('ID'))
+      ->setDescription(new TranslatableMarkup('The ID of the SCS component entity.'))
+      ->setReadOnly(TRUE)
+      ->setDisplayConfigurable('view', TRUE);
+
+    $fields['imageUrl'] = BaseFieldDefinition::create('string')
+      ->setLabel(new TranslatableMarkup('Image'))
+      ->setDescription(new TranslatableMarkup('The image of the SODa SCS Component.'))
+      ->setTranslatable(TRUE)
+      ->setDisplayConfigurable('view', TRUE);
+
+    $fields['label'] = BaseFieldDefinition::create('string')
+      ->setLabel(new TranslatableMarkup('Label'))
+      ->setDescription(new TranslatableMarkup('The name of the component.'))
+      ->setRequired(TRUE)
+      ->setTranslatable(TRUE)
+      ->setDisplayConfigurable('view', TRUE);
+
+    $fields['optionsUrl'] = BaseFieldDefinition::create('string')
+      ->setLabel(new TranslatableMarkup('API Options'))
+      ->setDescription(new TranslatableMarkup('The URL of the API options for the SODa SCS Component.'))
+      ->setTranslatable(TRUE)
+      ->setDisplayConfigurable('view', TRUE);
+
+    $fields['updated'] = BaseFieldDefinition::create('changed')
+      ->setLabel(new TranslatableMarkup('Updated'))
+      ->setDescription(new TranslatableMarkup('The time that the SODa SCS Component was last updated.'))
+      ->setReadOnly(TRUE);
+
+    $fields['user'] = BaseFieldDefinition::create('entity_reference')
+    ->setLabel(new TranslatableMarkup('Owned by'))
+    ->setDescription(new TranslatableMarkup('The user ID of the author of the SODa SCS Component.'))
+    ->setSetting('target_type', 'user')
+    ->setReadOnly(TRUE);
+
+    $fields['uuid'] = BaseFieldDefinition::create('uuid')
+      ->setLabel(new TranslatableMarkup('UUID'))
+      ->setDescription(new TranslatableMarkup('The UUID of the SODa SCS Component entity.'))
+      ->setReadOnly(TRUE);
+    return $fields;
+  }
+
+
+
+}

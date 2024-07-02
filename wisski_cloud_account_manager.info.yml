@@ -1,6 +1,0 @@
-name: 'WissKI cloud account manager'
-type: module
-description: 'WissKI cloud manager with opt in service. Provides a create form and handles communication with WissKI Cloud API Daemon for creating users for the WissKI Cloud.'
-package: WissKI Cloud
-configure: wisski_cloud_account_manager.settings
-core_version_requirement: ^9 || ^10

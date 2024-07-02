@@ -1,0 +1,5 @@
+entity.soda_scs_component_bundle.add_form:
+  route_name: entity.soda_scs_component_bundle.add_form
+  title: 'Add bundle'
+  base_route: entity.soda_scs_component_bundle.collection
+  weight: 100
