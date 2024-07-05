@@ -20,9 +20,9 @@ use Symfony\Component\Yaml\Yaml;
  *     "views_data" = "Drupal\views\EntityViewsData",
  *     "list_builder" = "Drupal\soda_scs_manager\SodaScsComponentListBuilder",
  *     "form" = {
- *       "default" = "Drupal\soda_scs_manager\Form\SodaScsComponentForm",
- *       "add" = "Drupal\soda_scs_manager\Form\SodaScsComponentForm",
- *       "edit" = "Drupal\Core\Entity\ContentEntityForm",
+ *       "default" = "Drupal\soda_scs_manager\Form\SodaScsComponentCreateForm",
+ *       "add" = "Drupal\soda_scs_manager\Form\SodaScsComponentCreateForm",
+ *       "edit" = "Drupal\soda_scs_manager\Form\SodaScsComponentEditForm",
  *       "delete" = "Drupal\Core\Entity\ContentEntityDeleteForm",
  *     },
  *     "access" = "Drupal\Core\Entity\EntityAccessControlHandler",
@@ -239,23 +239,34 @@ public function setDescription($description) {
     $fields = parent::baseFieldDefinitions($entity_type);
 
     $fields['bundle'] = BaseFieldDefinition::create('entity_reference')
-    ->setLabel(new TranslatableMarkup('Bundle'))
-    ->setDescription(new TranslatableMarkup('The bundle of the SODa SCS Component.'))
-    ->setSetting('target_type', 'soda_scs_component_bundle')
-    ->setRequired(TRUE)
-    ->setDisplayConfigurable('view', TRUE);
+      ->setLabel(new TranslatableMarkup('Bundle'))
+      ->setDescription(new TranslatableMarkup('The bundle of the SODa SCS Component.'))
+      ->setSetting('target_type', 'soda_scs_component_bundle')
+      ->setRequired(TRUE)
+      ->setReadOnly(TRUE)
+      ->setDisplayConfigurable('view', TRUE);
 
     $fields['created'] = BaseFieldDefinition::create('created')
-    ->setLabel(new TranslatableMarkup('Created'))
-    ->setDescription(new TranslatableMarkup('The time that the SODa SCS Component was created.'))
-    ->setReadOnly(TRUE)
-    ->setDisplayConfigurable('view', TRUE);
-
+      ->setLabel(new TranslatableMarkup('Created'))
+      ->setDescription(new TranslatableMarkup('The time that the SODa SCS Component was created.'))
+      ->setReadOnly(TRUE)
+      ->setDisplayConfigurable('view', TRUE)
+      ->setDisplayOptions('view', [
+        'label' => 'above',
+        'type' => 'timestamp',
+        'weight' => 30,
+      ]);
 
     $fields['description'] = BaseFieldDefinition::create('text')
-        ->setLabel(new TranslatableMarkup('Description'))
-        ->setDescription(new TranslatableMarkup('The description of the SODa SCS Component.'))
-        ->setTranslatable(TRUE);
+      ->setLabel(new TranslatableMarkup('Description'))
+      ->setDescription(new TranslatableMarkup('The description of the SODa SCS Component.'))
+      ->setTranslatable(TRUE)
+      ->setDisplayConfigurable('view', TRUE)
+      ->setDisplayOptions('view', [
+        'label' => 'above',
+        'type' => 'text_default',
+        'weight' => 50,
+      ]);
 
     $fields['id'] = BaseFieldDefinition::create('integer')
       ->setLabel(new TranslatableMarkup('ID'))
@@ -267,14 +278,54 @@ public function setDescription($description) {
       ->setLabel(new TranslatableMarkup('Image'))
       ->setDescription(new TranslatableMarkup('The image of the SODa SCS Component.'))
       ->setTranslatable(TRUE)
-      ->setDisplayConfigurable('view', TRUE);
+      ->setDisplayConfigurable('view', TRUE)
+      ->setDisplayOptions('view', [
+        'label' => 'hidden',
+        'type' => 'image',
+        'weight' => 10,
+      ]);
 
     $fields['label'] = BaseFieldDefinition::create('string')
       ->setLabel(new TranslatableMarkup('Label'))
       ->setDescription(new TranslatableMarkup('The name of the component.'))
       ->setRequired(TRUE)
       ->setTranslatable(TRUE)
-      ->setDisplayConfigurable('view', TRUE);
+      ->setDisplayConfigurable('view', TRUE)
+      ->setDisplayOptions('view', [
+        'label' => 'hidden',
+        'type' => 'string',
+        'weight' => 0,
+      ]);
+
+    $fields['subdomain'] = BaseFieldDefinition::create('string')
+      ->setLabel(new TranslatableMarkup('Subdomain'))
+      ->setDescription(new TranslatableMarkup('Used for "subdomain".soda-scs.org.'))
+      ->setTranslatable(TRUE)
+      ->setDisplayConfigurable('view', TRUE)
+      ->setDisplayOptions('form', [
+        'type' => 'string_textfield',
+        'weight' => 0,
+      ])
+      ->setDisplayOptions('view', [
+        'label' => 'above',
+        'type' => 'string',
+        'weight' => 0,
+      ]);
+
+    $fields['notes'] = BaseFieldDefinition::create('text_long')
+      ->setLabel(new TranslatableMarkup('Notes'))
+      ->setDescription(new TranslatableMarkup('Notes about the SODa SCS Component.'))
+      ->setTranslatable(TRUE)
+      ->setDisplayConfigurable('view', TRUE)
+      ->setDisplayOptions('form', [
+        'type' => 'text_textarea',
+        'weight' => 0,
+      ])
+      ->setDisplayOptions('view', [
+        'label' => 'above',
+        'type' => 'text_default',
+        'weight' => 60,
+      ]);
 
     $fields['optionsUrl'] = BaseFieldDefinition::create('string')
       ->setLabel(new TranslatableMarkup('API Options'))
@@ -285,13 +336,26 @@ public function setDescription($description) {
     $fields['updated'] = BaseFieldDefinition::create('changed')
       ->setLabel(new TranslatableMarkup('Updated'))
       ->setDescription(new TranslatableMarkup('The time that the SODa SCS Component was last updated.'))
-      ->setReadOnly(TRUE);
+      ->setReadOnly(TRUE)
+      ->setDisplayConfigurable('view', TRUE)
+      ->setDisplayOptions('view', [
+        'label' => 'above',
+        'type' => 'timestamp',
+        'weight' => 40,
+      ]);
+
 
     $fields['user'] = BaseFieldDefinition::create('entity_reference')
     ->setLabel(new TranslatableMarkup('Owned by'))
     ->setDescription(new TranslatableMarkup('The user ID of the author of the SODa SCS Component.'))
     ->setSetting('target_type', 'user')
-    ->setReadOnly(TRUE);
+    ->setReadOnly(TRUE)
+    ->setDisplayConfigurable('view', TRUE)#
+    ->setDisplayOptions('view', [
+      'label' => 'above',
+      'type' => 'author',
+      'weight' => 20,
+    ]);
 
     $fields['uuid'] = BaseFieldDefinition::create('uuid')
       ->setLabel(new TranslatableMarkup('UUID'))

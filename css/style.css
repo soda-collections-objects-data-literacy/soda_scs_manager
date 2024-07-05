@@ -27,3 +27,11 @@
   background: aliceblue;
   border-radius: 1rem;
 }
+
+.soda-scs-manager--img--thumbnail {
+  width: 100px;
+  height: auto;
+  border: 1px solid #ddd;
+  border-radius: 2px;
+  padding: 5px;
+}

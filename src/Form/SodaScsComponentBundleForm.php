@@ -53,14 +53,14 @@ class SodaScsComponentBundleForm extends EntityForm {
       '#description' => $this->t("Description for the SODa SCS Component bundle."),
       '#required' => FALSE,
     ];
-    
 
-    $form['imageSet'] = [
+
+    $form['image_set'] = [
       '#type' => 'fieldset',
       '#title' => $this->t('Icon'),
     ];
 
-    $form['imageSet']['imageUpload'] = [
+    $form['image_set']['image_upload'] = [
       '#type' => 'managed_file',
       '#title' => $this->t('Image Upload'),
       '#upload_location' => 'public://soda_scs_manager/bundle_images',
@@ -69,19 +69,19 @@ class SodaScsComponentBundleForm extends EntityForm {
       ],
     ];
 
-    $form['imageSet']['imageUrl'] = [
+    $form['image_set']['image_url'] = [
       '#type' => 'textfield',
       '#title' => $this->t('Image URL'),
       '#default_value' => $entity->getImageUrl(),
       '#disabled' => TRUE,
     ];
 
-    $form['optionsSet'] = [
+    $form['options_set'] = [
       '#type' => 'fieldset',
       '#title' => $this->t('Options'),
     ];
 
-    $form['optionsSet']['options'] = [
+    $form['options_set']['options'] = [
       '#type' => 'radios',
       '#title' => $this->t('Options'),
       '#options' => [
@@ -91,7 +91,7 @@ class SodaScsComponentBundleForm extends EntityForm {
       '#default_value' => 'upload',
     ];
 
-    $form['optionsSet']['optionsUpload'] = [
+    $form['options_set']['options_upload'] = [
       '#type' => 'managed_file',
       '#title' => $this->t('Options Upload'),
       '#upload_location' => 'public://soda_scs_manager/bundle_options',
@@ -106,7 +106,7 @@ class SodaScsComponentBundleForm extends EntityForm {
       ],
     ];
 
-    $form['optionsSet']['optionsUrl'] = [
+    $form['options_set']['optionsUrl'] = [
       '#type' => 'textfield',
       '#title' => $this->t('Options URL'),
       '#default_value' => $entity->getOptionsUrl(),
@@ -126,7 +126,7 @@ class SodaScsComponentBundleForm extends EntityForm {
       } else {
       $swaggerSpecUrl = $optionsUrl;
       }
-    
+
     }
     $form['swagger'] =  [
       '#markup' => '<div id="swagger-ui">Swagger UI</div>',
@@ -151,8 +151,8 @@ class SodaScsComponentBundleForm extends EntityForm {
   public function save(array $form, FormStateInterface $form_state) {
     $entity = $this->entity;
     $entity->setDescription($form_state->getValue('description'));
-    
-    foreach(['imageUpload', 'optionsUpload'] as $fileField) {      
+
+    foreach(['image_upload', 'options_upload'] as $fileField) {
       $fileFormValue = $form_state->getValue($fileField);
       if (empty($fileFormValue)) {
         continue;
@@ -161,16 +161,16 @@ class SodaScsComponentBundleForm extends EntityForm {
       if ($file) {
         $file->setPermanent();
         $file->save();
-  
+
         $file_uri = $file->getFileUri();
-  
+
         // Store the URL in the text field.
         $form_state->setValue($fileField, $file_uri);
         switch ($fileField) {
-          case 'imageUpload':
+          case 'image_upload':
             $entity->setImageUrl($file_uri);
             break;
-          case 'optionsUpload':
+          case 'options_upload':
             $entity->setOptionsUrl($file_uri);
             break;
         }
@@ -194,7 +194,7 @@ class SodaScsComponentBundleForm extends EntityForm {
 
   public function submitForm(array &$form, FormStateInterface $form_state) {
     $triggering_element = $form_state->getTriggeringElement();
-  
+
     // Check if the triggering element is a Swagger UI button.
     // Replace 'swagger_ui_button' with the actual name of your Swagger UI button.
     if ($triggering_element['#name'] === 'swagger_ui_button') {

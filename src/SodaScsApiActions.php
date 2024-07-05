@@ -26,6 +26,8 @@ class SodaScsApiActions {
 
   use DependencySerializationTrait;
 
+  protected $ADMIN_EMAIL = 'not set';
+
   /**
    * The database.
    *
@@ -130,7 +132,7 @@ class SodaScsApiActions {
 
 
    /**
-   * Provisions an user in the SCS user manager daemon.
+   * Provisions a user in the SCS user manager daemon.
    *
    * @param string $action
    *  The action to perform: create, read, update, delete.
@@ -161,8 +163,8 @@ class SodaScsApiActions {
           break;
       }
 
-      // Set the request options.
-      $body = json_encode($options);
+      // Set the request body.
+      $body = json_encode($options['body']);
 
       // Headers.
 
@@ -173,7 +175,7 @@ class SodaScsApiActions {
       ];
 
       // Send the GET request using the `drupal_http_request()` function.
-      $response = $this->httpClient->request($restMethod, $this->settings->get('apiUrl') . '/components', [
+      $response = $this->httpClient->request($restMethod, $options['route'], [
         'headers' => $headers,
         'body' => $body,
       ]);
@@ -225,13 +227,13 @@ class SodaScsApiActions {
 
 /**
  * Gets the users from the Drupal database and Distillery.
- * 
+ *
  * @param int $uid
  * The user ID to get.
- * 
+ *
  * @return array
  * The users.
- * 
+ *
  * @throws \Exception
  * If the request fails.
  */
@@ -252,13 +254,13 @@ class SodaScsApiActions {
       $query->groupBy('ufd.mail');
       $query->groupBy('ufd.status');
       $query->orderBy('ufd.name', 'ASC');
-      
+
       if ($uid) {
         $query->condition('ufd.uid', $uid, '=');
       }
 
       $users = $query->execute()->fetchAll(\PDO::FETCH_ASSOC);
-     
+
       foreach ($users as $index => $user) {
         $users[$index]['role'] = explode(',', $user['role']);
       }

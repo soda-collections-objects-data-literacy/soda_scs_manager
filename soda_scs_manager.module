@@ -60,7 +60,7 @@ function soda_scs_manager_theme($existing, $type, $theme, $path) {
     'users_page' => [
       'variables' => ['users' => NULL],
     ],
-    
+
   ];
 }
 
@@ -79,4 +79,25 @@ function soda_scs_manager_requirements($phase) {
     }
   }
   return $requirements;
+}
+
+/**
+ * Implements hook_ENTITY_TYPE_view() for soda_scs_component entities.
+ */
+function soda_scs_manager_soda_scs_component_view(array &$build, \Drupal\Core\Entity\EntityInterface $entity, \Drupal\Core\Entity\Display\EntityViewDisplayInterface $display, $view_mode) {
+  if ($entity->getEntityTypeId() === 'soda_scs_component') {
+    // Check if the imageUrl field has a value.
+    if ($imageUrl = $entity->get('imageUrl')->value) {
+      $imageUrl = Drupal::service('file_url_generator')->generateAbsoluteString($imageUrl);
+      $build['#attached']['library'][] = 'soda_scs_manager/globalStyling';
+      // Add a custom render array for the imageUrl field.
+      $build['imageUrl'] = [
+        '#type' => 'markup',
+        '#markup' => '<img class="img-thumbnail soda-scs-manager--img--thumbnail" src="' . $imageUrl . '" alt="Image description" />',
+        // Ensure proper sanitization of the URL.
+        '#allowed_tags' => ['img'],
+        '#weight' => 10, // Adjust the weight as needed.
+      ];
+    }
+  }
 }

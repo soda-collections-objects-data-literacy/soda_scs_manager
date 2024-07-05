@@ -151,7 +151,7 @@ soda_scs_manager.components:
 soda_scs_manager.settings:
   path: '/admin/config/soda-scs-manager/settings'
   defaults:
-    _form: '\Drupal\soda_scs_manager\Form\SettingsForm'
+    _form: '\Drupal\soda_scs_manager\Form\SodaScsSettingsForm'
     _title:  'WissKI cloud account settings'
   requirements:
     _access: 'TRUE'

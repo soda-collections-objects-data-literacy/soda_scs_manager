@@ -98,7 +98,7 @@ class UserCreateForm extends FormBase {
    * {@inheritdoc}
    */
   public function buildForm(array $form, FormStateInterface $form_state) {
-    $form['personName'] = [
+    $form['person_name'] = [
       '#type' => 'textfield',
       '#title' => $this->t('Person name'),
       '#description' => $this->t('Your first and last name.'),
@@ -144,10 +144,10 @@ class UserCreateForm extends FormBase {
       '#required' => TRUE,
     ];
 
-    $form['termsConditions'] = [
+    $form['terms_conditions'] = [
       '#type' => 'checkbox',
       '#title' => $this->t('Terms & Conditions'),
-      '#description' => $this->t('You have to agree to our <a href="@termsConditions" target="_blank">terms and conditions</a> to use the WissKI Cloud.', ['@termsConditions' => '/wisski-cloud-account-manager/terms-and-conditions']),
+      '#description' => $this->t('You have to agree to our <a href="@terms_conditions" target="_blank">terms and conditions</a> to use the WissKI Cloud.', ['@terms_conditions' => '/wisski-cloud-account-manager/terms-and-conditions']),
       '#required' => TRUE,
     ];
 
@@ -169,10 +169,10 @@ class UserCreateForm extends FormBase {
     // @todo Check if username is WissKI Cloud accounts, i.e add direct by admin?.
     $dataToCheck['username'] = $form_state->getValue('username');
     $dataToCheck['email'] = $form_state->getValue('email');
-    $dataToCheck['emailProvider'] = explode('@', $dataToCheck['email'])[1];
+    $dataToCheck['email_provider'] = explode('@', $dataToCheck['email'])[1];
     $dataToCheck['subdomain'] = $form_state->getValue('subdomain');
     $dataToCheck['usernameBlacklist'] = $this->settings->get('usernameBlacklist') ?? '';
-    $dataToCheck['emailProviderBlacklist'] = $this->settings->get('emailProviderBlacklist') ?? '';
+    $dataToCheck['email_provider_blacklist'] = $this->settings->get('email_provider_blacklist') ?? '';
     $dataToCheck['subdomainBlacklist'] = $this->settings->get('subdomainBlacklist') ?? '';
 
     // Check if username is too short.
@@ -197,8 +197,8 @@ class UserCreateForm extends FormBase {
     }
 
     // Check if email provider is in blacklist.
-    if (in_array($dataToCheck['emailProvider'], preg_split('/\r\n|\r|\n/', $dataToCheck['emailProviderBlacklist']))) {
-      $form_state->setErrorByName('email', $this->t('The email provider  "@provider"is not allowed.', ['@provider' => $dataToCheck['emailProvider']]));
+    if (in_array($dataToCheck['email_provider'], preg_split('/\r\n|\r|\n/', $dataToCheck['email_provider_blacklist']))) {
+      $form_state->setErrorByName('email', $this->t('The email provider  "@provider"is not allowed.', ['@provider' => $dataToCheck['email_provider']]));
     }
 
     // Check if email is already in use.
@@ -213,7 +213,7 @@ class UserCreateForm extends FormBase {
     }
 
     // Check if subdomain is in blacklist.
-    if (in_array($dataToCheck['subdomain'], preg_split('/\r\n|\r|\n/', $dataToCheck['emailProviderBlacklist']))) {
+    if (in_array($dataToCheck['subdomain'], preg_split('/\r\n|\r|\n/', $dataToCheck['email_provider_blacklist']))) {
       $form_state->setErrorByName('subdomain', $this->t('The subdomain "@subdomain" is not allowed.', ['@subdomain' => $dataToCheck['subdomain']]));
     }
 
@@ -235,7 +235,7 @@ class UserCreateForm extends FormBase {
     try {
       $field = $form_state->getValues();
 
-      $account["personName"] = $field['personName'];
+      $account["person_name"] = $field['person_name'];
       $account["organisation"] = $field['organisation'];
       $account["email"] = $field['email'];
       $account["username"] = $field['username'];
@@ -243,7 +243,7 @@ class UserCreateForm extends FormBase {
       $account["subdomain"] = $field['subdomain'];
 
       $user = $this->wisskiCloudAccountManagerDaemonApiActions->addAccount($account);
-      $this->wisskiCloudAccountManagerDaemonApiActions->sendValidationEmail($user['email'], $user['personName'], $user['validationCode']);
+      $this->wisskiCloudAccountManagerDaemonApiActions->sendValidationEmail($user['email'], $user['person_name'], $user['validationCode']);
 
       $this->messenger()
         ->addMessage($this->t('The account data has been successfully saved, please check your email for validation!'));
