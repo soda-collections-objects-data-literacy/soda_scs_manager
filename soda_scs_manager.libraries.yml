@@ -3,17 +3,3 @@ globalStyling:
   css:
     theme:
       css/style.css: {}
-
-swagger_ui:
-  version: 1.x
-  js:
-    /libraries/swagger-ui/dist/swagger-ui-bundle.js: {}
-    /libraries/swagger-ui/dist/swagger-ui-standalone-preset.js: {}
-    js/swaggerUiInit.js: {}
-
-  css:
-    theme:
-      /libraries/swagger-ui/dist/swagger-ui.css: { minified: true }
-  dependencies:
-    - core/jquery
-    - core/drupalSettings

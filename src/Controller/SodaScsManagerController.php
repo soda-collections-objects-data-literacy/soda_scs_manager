@@ -122,7 +122,6 @@ class SodaScsManagerController extends ControllerBase {
       $userName = $component->getOwner()->getDisplayName();
       $componentsByUser[$userName][] = $component;
     }
-    dpm($componentsByUser, 'componentsByUser');
     return [
       '#theme' => 'components_page',
       '#componentsByUser' => $componentsByUser,

@@ -134,6 +134,8 @@ class SodaScsApiActions {
    /**
    * Provisions a user in the SCS user manager daemon.
    *
+   * @param string $bundle
+   * The bundle to perform the action on.
    * @param string $action
    *  The action to perform: create, read, update, delete.
    * @param int $uid
@@ -144,48 +146,43 @@ class SodaScsApiActions {
    * @return array
    *   The response from the daemon.
    */
-  public function crudComponent($action, $options) {
+  public function crudComponent($bundle, $action, $options) {
     try {
 
       // Determine the route part depending on the action.
       switch ($action) {
         case 'create':
-          $restMethod = 'post';
+          $restMethod = 'POST';
           break;
         case 'update':
-          $restMethod = 'put';
+          $restMethod = 'PUT';
           break;
         case 'delete':
-          $restMethod = 'delete';
+          $restMethod = 'DELETE';
           break;
         default:
-          $restMethod = 'get';
+          $restMethod = 'GET';
           break;
       }
-
-      // Set the request body.
-      $body = json_encode($options['body']);
-
-      // Headers.
-
-      $headers = [
-        'Content-Type' => 'application/json',
-        'Accept' => 'application/json',
-        'Bearer' => $this->settings->get('apiToken'),
-      ];
+      switch ($bundle) {
+        case 'wisski':
+          if (in_array($action, ['delete', 'start', 'stop', 'rebuild', 'snapshot', 'update', 'echo'])) {
+            $restMethod  = 'POST';
+          }
+          $request = $this->buildWisskiRequest($action, $options);
+      }
 
       // Send the GET request using the `drupal_http_request()` function.
-      $response = $this->httpClient->request($restMethod, $options['route'], [
-        'headers' => $headers,
-        'body' => $body,
-      ]);
+      $response = $this->httpClient->request($restMethod, $request['route'], [
+        'headers' => $request['headers'],
+        'body' => $request['body']]);
 
       // Check the response and handle the data accordingly.
       if ($response->getStatusCode() == 200 || $response->getStatusCode() == 201) {
         // Request successful, handle the data in $response->data.
         $resultArray = json_decode($response->getBody()->getContents(), TRUE);
-        $this->messenger
-          ->addMessage($this->stringTranslation->translate('@message', ['@message' => $resultArray['message']]));
+        #$this->messenger
+        #  ->addMessage($this->stringTranslation->translate('@message', ['@message' => $resultArray['message']]));
         return  $resultArray;
 
       }
@@ -276,6 +273,107 @@ class SodaScsApiActions {
       ->addError($this->stringTranslation->translate('Can not communicate with the SCS user manager daemon. Try again later or contact cloud@wiss-ki.eu.'));
       return [];
     }
+  }
+
+  /**
+   * Builds the request for the WissKI Distillery service API.
+   *
+   * @param $action
+   * @param $options
+   *
+   * @return array
+   */
+  public function buildWisskiRequest($action, $options): array {
+    $request = [
+      'route' => '',
+      'headers' => [
+        'Content-Type' => 'application/json',
+        'Accept' => 'application/json',
+        'Authorization' => 'Bearer ' . $this->settings->get('wisski')['token'],
+      ],
+      'body' => [
+        "call" => "provision",
+        "params" => [],
+      ]
+    ];
+    switch ($action) {
+      case 'create':
+        $request['route'] = 'http://panel.scs.local/api/v1/pow/new';
+        $params = json_encode([
+          "Slug" => $options['subdomain'],
+          "Flavor" => "Drupal 10",
+          "System" => [
+            "PHP" => "8.2",
+            "OpCacheDevelopment" => false,
+            "ContentSecurityPolicy" => ""
+          ]
+        ]);
+        $request['body'] = json_encode([
+          'call' => 'provision',
+          'params' => [$params]
+        ]);
+        break;
+      case 'delete':
+        $request['route'] = 'http://scs.local:3001/api/v1/pow/new';
+        $params = json_encode([
+          "Slug" => $options['subdomain'],
+        ]);
+        $request['body'] = json_encode([
+          'call' => 'purge',
+          'params' => [$params]
+        ]);
+        break;
+      case 'start':
+        $request['route'] = 'http://scs.local:3001/api/v1/pow/new';
+        $request['body']['call'] = 'start';
+        $request['body']['params'] = [
+          $options['subdomain']
+        ];
+        break;
+      case 'stop':
+        $request['route'] = 'http://scs.local:3001/api/v1/pow/new';
+        $request['body']['call'] = 'stop';
+        $request['body']['params'] = [
+          $options['subdomain']
+        ];
+        break;
+      case 'rebuild':
+        $request['route'] = 'http://scs.local:3001/api/v1/pow/new';
+        $request['body']['call'] = 'rebuild';
+        $request['body']['params'] = [
+          $options['subdomain'],
+          [
+            "PHP"=> "8.2",
+            "OpCacheDevelopment"=> false,
+            "ContentSecurityPolicy"=> ""
+          ]
+        ];
+        break;
+        case 'snapshot':
+          $request['route'] = 'http://scs.local:3001/api/v1/pow/new';
+          $request['body']['call'] = 'snapshot';
+          $request['body']['params'] = [
+            $options['subdomain']
+          ];
+          break;
+      case 'update':
+        $request['route'] = 'http://scs.local:3001/api/v1/pow/new';
+        $request['body']['call'] = 'update';
+        $request['body']['params'] = [
+          $options['subdomain']
+        ];
+        break;
+      case 'echo':
+        $request['route'] = 'http://panel.scs.local/api/v1/pow/new';
+        $request['body'] = json_encode([
+          "call" => "echo",
+          "params" => [
+            "message" => "Hello from Drupal"
+          ]
+        ]);
+        break;
+    }
+    return $request;
   }
 
 }

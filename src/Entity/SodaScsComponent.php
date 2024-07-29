@@ -23,7 +23,7 @@ use Symfony\Component\Yaml\Yaml;
  *       "default" = "Drupal\soda_scs_manager\Form\SodaScsComponentCreateForm",
  *       "add" = "Drupal\soda_scs_manager\Form\SodaScsComponentCreateForm",
  *       "edit" = "Drupal\soda_scs_manager\Form\SodaScsComponentEditForm",
- *       "delete" = "Drupal\Core\Entity\ContentEntityDeleteForm",
+ *       "delete" = "\Drupal\soda_scs_manager\Form\SodaScsComponentDeleteForm",
  *     },
  *     "access" = "Drupal\Core\Entity\EntityAccessControlHandler",
  *   },
@@ -53,6 +53,8 @@ use Symfony\Component\Yaml\Yaml;
  *    "id",
  *    "imageUrl",
  *    "label",
+ *    "serviceProcessUuid",
+ *    "subdomain",
  *    "uuid",
  *    "updated",
  *    "user",
@@ -333,6 +335,12 @@ public function setDescription($description) {
       ->setTranslatable(TRUE)
       ->setDisplayConfigurable('view', TRUE);
 
+    $fields['serviceProcessUuid'] = BaseFieldDefinition::create('string')
+      ->setLabel(new TranslatableMarkup('Service Process UUID'))
+      ->setDescription(new TranslatableMarkup('The UUID of the process.'))
+      ->setReadOnly(TRUE)
+      ->setDisplayConfigurable('view', TRUE);
+
     $fields['updated'] = BaseFieldDefinition::create('changed')
       ->setLabel(new TranslatableMarkup('Updated'))
       ->setDescription(new TranslatableMarkup('The time that the SODa SCS Component was last updated.'))
@@ -361,6 +369,8 @@ public function setDescription($description) {
       ->setLabel(new TranslatableMarkup('UUID'))
       ->setDescription(new TranslatableMarkup('The UUID of the SODa SCS Component entity.'))
       ->setReadOnly(TRUE);
+
+
     return $fields;
   }
 

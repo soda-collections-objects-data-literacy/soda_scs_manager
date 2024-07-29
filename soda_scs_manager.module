@@ -1,6 +1,8 @@
 <?php
+use Drupal\block\Entity\Block;
 use Drupal\Core\StringTranslation\TranslatableMarkup;
 use Drupal\Core\Requirement\RequirementInterface;
+
 /**
  * Implements hook_help().
  */
@@ -54,6 +56,11 @@ function soda_scs_manager_theme($existing, $type, $theme, $path) {
         'accounts' => NULL,
         'healthCheck' => NULL,],
     ],
+    'component_status' => [
+      'variables' => [
+        'component' => NULL,
+      ],
+    ],
     'health_page' => [
       'variables' => ['healthCheck' => NULL],
     ],
@@ -101,3 +108,7 @@ function soda_scs_manager_soda_scs_component_view(array &$build, \Drupal\Core\En
     }
   }
 }
+
+/**
+ * @todo add status block programmatically.
+ */

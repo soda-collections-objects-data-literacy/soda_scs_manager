@@ -19,8 +19,9 @@ class SodaScsComponentListBuilder extends EntityListBuilder {
    * {@inheritdoc}
    */
   public function buildHeader() {
-    $header['id'] = $this->t('SODa SCS Component ID');
-    // Add other field headers as needed.
+    $header['type'] = $this->t('Type');
+    $header['subdomain'] = $this->t('Domain');
+    $header['status'] = $this->t('Status');
     $header['operations'] = $this->t('Operations');
     return $header + parent::buildHeader();
   }
@@ -30,9 +31,40 @@ class SodaScsComponentListBuilder extends EntityListBuilder {
    */
   public function buildRow(EntityInterface $entity) {
     /* @var $entity \Drupal\soda_scs_manager\Entity\Component */
-    $row['id'] = $entity->id();
+    $row['type'] = $entity->bundle();
+    $row['subdomain'] = $entity->get('subdomain')->value;
+    $row['status'] = 'to implement';
     // Add other field data as needed.
     return $row + parent::buildRow($entity);
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  protected function getDefaultOperations(EntityInterface $entity) {
+    $operations = parent::getDefaultOperations($entity);
+    // Add custom operations.
+    $operations['create'] = [
+      'title' => $this->t('Create'),
+      'url' => Url::fromRoute('soda_scs_manager.service.action', ['soda_scs_component_id' => $entity->id(), 'action' => 'create']),
+    ];
+    $operations['start'] = [
+      'title' => $this->t('Start'),
+      'url' => Url::fromRoute('soda_scs_manager.service.action', ['soda_scs_component_id' => $entity->id(), 'action' => 'start']),
+    ];
+    $operations['stop'] = [
+      'title' => $this->t('Stop'),
+      'url' => Url::fromRoute('soda_scs_manager.service.action', ['soda_scs_component_id' => $entity->id(), 'action' => 'stop']),
+    ];
+    $operations['restart'] = [
+      'title' => $this->t('Restart'),
+      'url' => Url::fromRoute('soda_scs_manager.service.action', ['soda_scs_component_id' => $entity->id(), 'action' => 'restart']),
+    ];
+    $operations['delete'] = [
+      'title' => $this->t('Delete'),
+      'url' => Url::fromRoute('soda_scs_manager.service.action', ['soda_scs_component_id' => $entity->id(), 'action' => 'delete']),
+    ];
+    return $operations;
   }
 
   /**

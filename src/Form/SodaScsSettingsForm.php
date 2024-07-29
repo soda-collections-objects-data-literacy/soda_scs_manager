@@ -71,11 +71,12 @@ class SodaScsSettingsForm extends ConfigFormBase {
     // Load the configuration.
     $config = $this->config('soda_scs_manager.settings');
 
+    // Retrieve the current bundle configuration.
+    $current_bundle_config = $config->get($form_state->getValue('bundle'));
     // Loop through all form values and update the configuration.
+
     foreach ($form_state->getValues() as $key => $value) {
-      if ($key !== 'bundle') {
-        // Retrieve the current bundle configuration.
-        $current_bundle_config = $config->get($form_state->getValue('bundle'));
+      if (!in_array($key, ['bundle', 'form_id', 'form_token', 'form_build_id', 'op'])) {
 
         // Update the specific key within this bundle configuration.
         // This assumes $current_bundle_config is an array. If it's not, you might need to initialize it as an array first.
@@ -85,7 +86,6 @@ class SodaScsSettingsForm extends ConfigFormBase {
         $config->set($form_state->getValue('bundle'), $current_bundle_config);
       }
     }
-
     // Save the configuration.
     $config->save();
 
@@ -159,11 +159,11 @@ class SodaScsSettingsForm extends ConfigFormBase {
       '#type' => 'select',
       '#title' => $this->t('Select a auth method'),
       '#options' => $authMethods,
-      '#value' => $this->config('soda_scs_manager.settings')->get($form_state->getValue('bundle'))['authentication_method'],
       '#ajax' => [
         'callback' => '::updateAuthenticationMethodSubform',
         'wrapper' => 'soda-scs--settings--authentication-method-subform',
       ],
+      '#default_value' => $this->config('soda_scs_manager.settings')->get($form_state->getValue('bundle'))['authentication_method'] ?? '',
     ];
 
     // Build subform container.
@@ -172,18 +172,20 @@ class SodaScsSettingsForm extends ConfigFormBase {
       '#attributes' => ['id' => 'soda-scs--settings--authentication-method-subform'],
     ];
 
-    // Build method subform for selected authentication method.
-    if ($form_state->getValue('authentication_method')) {
-      switch ($form_state->getValue('authentication_method')) {
-        case 'basic':
-          $subform['authentication_method_subform'] = $this->buildBasicAuthSubform($form, $form_state);
-          break;
+    $subform['authentication_method_subform'] = $this->buildTokenAuthSubform($form, $form_state);
 
-        case 'token':
-          $subform['authentication_method_subform'] = $this->buildTokenAuthSubform($form, $form_state);
-          break;
-      }
-    }
+    // Build method subform for selected authentication method.
+#    if ($form_state->getValue('authentication_method')) {
+#      switch ($form_state->getValue('authentication_method')) {
+#        case 'basic':
+#          $subform['authentication_method_subform'] = $this->buildBasicAuthSubform($form, $form_state);
+#          break;
+#
+#        case 'token':
+#          $subform['authentication_method_subform'] = $this->buildTokenAuthSubform($form, $form_state);
+#          break;
+#      }
+#    }
 
     return $subform;
   }
@@ -213,14 +215,14 @@ class SodaScsSettingsForm extends ConfigFormBase {
   private function buildBasicAuthSubform($form, $form_state): array {
     // Build and return the subform for the selected bundle.
     $subform['basic_auth'] = [
-      '#type' => 'fieldset',
+      '#type' => 'container',
       '#attributes' => ['id' => 'soda-scs--settings--authentication-method-subform--basic-auth'],
     ];
 
     $subform['basic_auth']['username'] = [
       '#type' => 'textfield',
       '#title' => $this->t('Username'),
-      '#value' => $this->config('soda_scs_manager.settings')->get($form_state->getValue('bundle'))['username'],
+      '#default_value' => $this->config('soda_scs_manager.settings')->get($form_state->getValue('bundle'))['username'],
     ];
     $subform['basic_auth']['password'] = [
       '#type' => 'textfield',
@@ -240,16 +242,17 @@ class SodaScsSettingsForm extends ConfigFormBase {
    * @return array
    */
   private function buildTokenAuthSubform($form, $form_state): array {
+    $currentConfig = $this->config('soda_scs_manager.settings')->get($form_state->getValue('bundle'));
     // Build and return the subform for the selected bundle.
     $subform['token_auth'] = [
-      '#type' => 'fieldset',
+      '#type' => 'container',
       '#attributes' => ['id' => 'soda-scs--settings--authentication-method-subform--token-auth'],
     ];
 
     $subform['token_auth']['token'] = [
       '#type' => 'textfield',
       '#title' => $this->t('Token'),
-      '#value' => $this->config('soda_scs_manager.settings')->get($form_state->getValue('bundle'))['token'],
+      '#default_value' => $currentConfig['token'] ?? '',
     ];
 
     return $subform;
@@ -271,31 +274,53 @@ class SodaScsSettingsForm extends ConfigFormBase {
       '#title' => 'Routes for ' . $form_state->getValue('bundle') . ' service',
     ];
 
+    $subform['apiBaseRoute'] = [
+        '#type' => 'textfield',
+        '#title' => $this->t('API base route'),
+        '#default_value' => $currentConfig['apiBaseRoute'] ?? '',
+    ];
+
+    $subform['healthCheckContainer'] = [
+      '#type' => 'fieldset',
+      '#attributes' => ['id' => 'soda-scs--routes-subform--health-check'],
+      '#title' => 'Health check route',
+    ];
+    $subform['healthCheckContainer']['healthCheckPath'] = [
+      '#type' => 'textfield',
+      '#title' => $this->t('Health check route path'),
+      '#default_value' => $currentConfig['healthCheckPath'] ?? '',
+    ];
+    $subform['healthCheckContainer']['check'] = [
+      '#type' => 'button',
+      '#default_value' => $this->t('Check health'),
+    ];
+
     $subform['getAll'] = [
         '#type' => 'textfield',
-        '#title' => $this->t('GET all route'),
-        '#value' => $currentConfig['getAll'] ?? '',
+        '#title' => $this->t('GET all route path'),
+        '#default_value' => $currentConfig['getAll'] ?? '',
     ];
     $subform['getOne'] = [
         '#type' => 'textfield',
-        '#title' => $this->t('GET single route'),
-        '#value' => $currentConfig['getOne'] ?? '',
+        '#title' => $this->t('GET single route path'),
+        '#default_value' => $currentConfig['getOne'] ?? '',
     ];
     $subform['post'] = [
         '#type' => 'textfield',
-        '#title' => $this->t('Create route'),
-        '#value' => $currentConfig['post'] ?? '',
+        '#title' => $this->t('Create route path'),
+        '#default_value' => $currentConfig['post'] ?? '',
     ];
     $subform['put'] = [
         '#type' => 'textfield',
-        '#title' => $this->t('Update route'),
-        '#value' => $currentConfig['put'] ?? '',
+        '#title' => $this->t('Update route path'),
+        '#default_value' => $currentConfig['put'] ?? '',
     ];
     $subform['delete'] = [
         '#type' => 'textfield',
-        '#title' => $this->t('DELETE route'),
-        '#value' => $currentConfig['delete'] ?? '',
+        '#title' => $this->t('DELETE route path'),
+        '#default_value' => $currentConfig['delete'] ?? '',
     ];
+
 
     return $subform;
   }

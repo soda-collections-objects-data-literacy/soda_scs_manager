@@ -144,18 +144,15 @@ class SodaScsComponentCreateForm extends ContentEntityForm {
         '@username' => \Drupal::currentUser()->getDisplayName(),
       ]), 'error');
     }
-
     $options = [
-      'body' => [
         'user' => \Drupal::currentUser()->getDisplayName(),
-        'subdomain' => $entity->get('subdomain')->getValue(),
+        'subdomain' => $entity->get('subdomain')->value,
         'project' => 'my_project',
-        ],
-      'route' => 'http://localhost:2912/dummy-daemon/api/v1/wisski',
-
     ];
     // Make request to component
-    $resultArray = $this->sodaScsApiActions->crudComponent('create', $options);
+    $resultArray = $this->sodaScsApiActions->crudComponent($this->entity->bundle(),'create', $options);
+
+
 
     // Redirect to the components page.
     $form_state->setRedirect('soda_scs_manager.components');
