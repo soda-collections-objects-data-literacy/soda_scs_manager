@@ -433,7 +433,7 @@ class SodaScsApiActions {
       'body' => json_encode([
         'composeFile' => 'drupal10.3-php8.2-apache-bookworm-vanilla/traefik/external_db/docker-compose.yml',
         'env' => $env,
-        'name' => 'teststack',
+        'name' => $options['subdomain'],
         'repositoryAuthentication' => false,
         'repositoryURL' => 'https://github.com/rnsrk/scs-manager-stacks.git',
         'swarmID' => 'z2r6wmof2qjqsvrudexikxv51'
