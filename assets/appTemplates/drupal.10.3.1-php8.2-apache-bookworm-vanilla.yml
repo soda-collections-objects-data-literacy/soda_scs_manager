@@ -1,0 +1,54 @@
+version: '3.6'
+
+services:
+  drupal:
+    image: ghcr.io/rnsrk/scs-manager-images:drupal10.3-php8.2-apache-bookworm-vanilla
+    volumes:
+      - drupal-modules:/var/www/html/modules
+      - drupal-profiles:/var/www/html/profiles
+      - drupal-themes:/var/www/html/themes
+      - drupal-libraries:/var/www/html/libraries
+      - drupal-sites:/var/www/html/sites
+    environment:
+      DB_HOST: ${DB_HOST}
+      DB_DRIVER: ${DB_DRIVER}
+      DOMAIN: ${DOMAIN}
+      DRUPAL_USER: ${DRUPAL_USER}
+      DRUPAL_PASSWORD: ${DRUPAL_PASSWORD}
+      DB_NAME: ${DB_NAME}
+      DB_PASSWORD: ${DB_PASSWORD}
+      DB_USER: ${DB_USER}
+      SERVICE_NAME: ${SERVICE_NAME}
+      SITE_NAME: ${SITE_NAME}
+    restart: 'no'
+    networks:
+      - database-network
+      - traefik-public
+    labels:
+      - traefik.enable=true
+      - traefik.docker.network=traefik-public
+      - traefik.constraint-label=traefik-public
+      - traefik.http.middlewares.https-redirect.redirectscheme.scheme=https
+      - traefik.http.middlewares.https-redirect.redirectscheme.permanent=true
+      - traefik.http.routers.${SERVICE_NAME}-http.rule=Host(`${SERVICE_NAME}.${DOMAIN}`)
+      - traefik.http.routers.${SERVICE_NAME}-http.entrypoints=http
+      - traefik.http.routers.${SERVICE_NAME}-http.middlewares=https-redirect
+      - traefik.http.routers.${SERVICE_NAME}-https.rule=Host(`${SERVICE_NAME}.${DOMAIN}`)
+      - traefik.http.routers.${SERVICE_NAME}-https.entrypoints=https
+      - traefik.http.routers.${SERVICE_NAME}-https.tls=true
+      - traefik.http.routers.${SERVICE_NAME}-https.tls.certresolver=le
+      - traefik.http.routers.${SERVICE_NAME}-ssh.entrypoints=ssh
+      - traefik.http.services.drupal.loadbalancer.server.port=80
+
+networks:
+  database-network:
+    external: true
+  traefik-public:
+    external: true
+
+volumes:
+  drupal-modules:
+  drupal-profiles:
+  drupal-themes:
+  drupal-libraries:
+  drupal-sites:

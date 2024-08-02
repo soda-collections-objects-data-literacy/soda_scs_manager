@@ -2,15 +2,12 @@
 
 namespace Drupal\soda_scs_manager\Entity;
 
-use Drupal\Component\Serialization\Yaml as SerializationYaml;
 use Drupal\Core\Entity\ContentEntityBase;
 use Drupal\Core\Entity\EntityInterface;
 use Drupal\Core\Entity\EntityTypeInterface;
 use Drupal\Core\Field\BaseFieldDefinition;
-use Drupal\Core\Serialization\Yaml as CoreSerializationYaml;
 use Drupal\Core\StringTranslation\TranslatableMarkup;
-use Drupal\file\Entity\File;
-use Symfony\Component\Yaml\Yaml;
+use Drupal\soda_scs_manager\SodaScsComponentInterface;
 
 /**
  * @ContentEntityType(
@@ -62,7 +59,7 @@ use Symfony\Component\Yaml\Yaml;
  *
  * )
  */
-class SodaScsComponent extends ContentEntityBase {
+class SodaScsComponent extends ContentEntityBase implements SodaScsComponentInterface {
 
      /**
     * The SODa SCS Component Bundle.

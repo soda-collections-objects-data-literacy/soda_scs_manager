@@ -2,6 +2,7 @@
 
 namespace Drupal\soda_scs_manager\Form;
 
+use Drupal\Core\Database\Database;
 use Drupal\Core\Entity\ContentEntityForm;
 use Drupal\Core\Form\FormStateInterface;
 use Drupal\soda_scs_manager\SodaScsApiActions;
@@ -150,9 +151,20 @@ class SodaScsComponentCreateForm extends ContentEntityForm {
         'project' => 'my_project',
     ];
     // Make request to component
-    $resultArray = $this->sodaScsApiActions->crudComponent($this->entity->bundle(),'create', $options);
+    $processUuid = $this->sodaScsApiActions->crudComponent($this->entity->bundle(),'create', $options);
 
+    // Prepare data for insertion into the soda_scs_manager__services table.
+    $fields = [
+      'component_id' => $entity->id(),
+      'service_uuid' => $processUuid,
+      'status' => 3, // ongoing
+    ];
 
+    // Insert data into the soda_scs_manager__services table.
+    $connection = Database::getConnection();
+    $connection->insert('soda_scs_manager__services')
+      ->fields($fields)
+      ->execute();
 
     // Redirect to the components page.
     $form_state->setRedirect('soda_scs_manager.components');

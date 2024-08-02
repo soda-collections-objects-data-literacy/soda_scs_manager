@@ -6,7 +6,7 @@ use Drupal\Core\Entity\EntityInterface;
 use Drupal\Core\Entity\EntityListBuilder;
 use Drupal\Core\Url;
 use Drupal\Core\Link;
-
+use Drupal\soda_scs_manager\SodaScsApiActions;
 
 /**
  * Defines a class to build a listing of SODa SCS Component entities.
@@ -30,11 +30,16 @@ class SodaScsComponentListBuilder extends EntityListBuilder {
    * {@inheritdoc}
    */
   public function buildRow(EntityInterface $entity) {
-    /* @var $entity \Drupal\soda_scs_manager\Entity\Component */
-    $row['type'] = $entity->bundle();
+    $bundle = $entity->bundle();
+    $action = 'status';
+    $options = [
+      'subdomain' => $entity->get('subdomain')->value,
+      'componentId' => $entity->id(),
+    ];
+
+    $row['type'] = $bundle;
     $row['subdomain'] = $entity->get('subdomain')->value;
-    $row['status'] = 'to implement';
-    // Add other field data as needed.
+    $row['status'] =\Drupal::service('soda_scs_manager.api.actions')->crudComponent($entity->bundle(), $action, $options);
     return $row + parent::buildRow($entity);
   }
 

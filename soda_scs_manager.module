@@ -1,7 +1,7 @@
 <?php
 use Drupal\block\Entity\Block;
 use Drupal\Core\StringTranslation\TranslatableMarkup;
-use Drupal\Core\Requirement\RequirementInterface;
+use \Drupal\system\SystemManager;
 
 /**
  * Implements hook_help().
@@ -80,7 +80,7 @@ function soda_scs_manager_requirements($phase) {
     $theme_list = \Drupal::service('theme_handler')->listInfo();
     if (!isset($theme_list['bootstrap5'])) {
       $requirements['soda_scs_manager_theme'] = [
-          'severity' => RequirementInterface::ERROR,
+          'severity' => SystemManager::REQUIREMENT_ERROR,
 
       ];
     }

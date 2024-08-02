@@ -10,5 +10,14 @@ services:
       - '@plugin.manager.mail'
       - '@messenger'
       - '@request_stack'
+      - '@soda_scs_manager.db.actions'
       - '@string_translation'
       - '@twig'
+  soda_scs_manager.db.actions:
+    class: Drupal\soda_scs_manager\SodaScsDbActions
+    arguments:
+      - '@database'
+      - '@logger.factory'
+      - '@messenger'
+      - '@string_translation'
+

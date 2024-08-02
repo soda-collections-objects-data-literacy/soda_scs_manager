@@ -7,7 +7,7 @@ use Drupal\Core\File\FileSystemInterface;
  * Implements hook_schema().
  */
 function soda_scs_manager_schema() {
-  $schema['soda_scs_manager__components'] = [
+  $schema['soda_scs_manager__services'] = [
     'description' => 'Table for SODa SCS components management.',
     'fields' => [
       'component_id' => [
@@ -16,83 +16,20 @@ function soda_scs_manager_schema() {
         'size' => 'tiny',
         'not null' => TRUE,
       ],
-      'uid' => [
-        'description' => 'The primary identifier for the account. Same id as user id in drupal.',
+      'service_uuid' => [
+        'description' => 'The primary identifier for the service.',
+        'type' => 'char',
+        'length' => 36,
+        'not null' => TRUE,
+      ],
+      'status' => [
+        'description' => 'The status of the service. 0 = inactive, 1 = active, 2 = changing, 3 = error',
         'type' => 'int',
         'size' => 'tiny',
         'not null' => TRUE,
       ],
     ],
-    'primary key' => ['component_id'],    
-  ];
-
-  $schema['soda_scs_manager__projects'] = [
-    'description' => 'Table for SODa SCS projects management',
-    'fields' => [
-      'project_id' => [
-        'description' => 'Id of the project.',
-        'type' => 'int',
-        'size' => 'tiny',
-        'not null' => TRUE,
-      ],
-      'project_name' => [
-        'description' => 'Name of the project.',
-        'type' => 'int',
-        'size' => 'tiny',
-        'not null' => TRUE,
-      ],
-    ],
-    'primary key' => ['project_id'],    
-  ];
-
-  $schema['soda_scs_manager__components_users'] = [
-    'description' => 'Table for SODa SCS components management.',
-    'fields' => [
-      'id' => [
-        'description' => 'Row id',
-        'type' => 'int',
-        'size' => 'tiny',
-        'not null' => TRUE,
-      ],
-      'component_id' => [
-        'description' => 'The name of the component.',
-        'type' => 'int',
-        'size' => 'tiny',
-        'not null' => TRUE,
-      ],
-      'uid' => [
-        'description' => 'Drupal user id',
-        'type' => 'int',
-        'size' => 'tiny',
-        'not null' => TRUE,
-      ],
-    ],
-    'primary key' => ['id'],    
-  ];
-
-  $schema['soda_scs_manager__projects_users'] = [
-    'description' => 'Table for SODa SCS components management.',
-    'fields' => [
-      'id' => [
-        'description' => 'Row id',
-        'type' => 'int',
-        'size' => 'tiny',
-        'not null' => TRUE,
-      ],
-      'project_id' => [
-        'description' => 'Id of the project.',
-        'type' => 'int',
-        'size' => 'tiny',
-        'not null' => TRUE,
-      ],
-      'uid' => [
-        'description' => 'Drupal user id',
-        'type' => 'int',
-        'size' => 'tiny',
-        'not null' => TRUE,
-      ],
-    ],
-    'primary key' => ['id'],    
+    'primary key' => ['component_id'],
   ];
 
   return $schema;

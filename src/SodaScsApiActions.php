@@ -3,20 +3,17 @@
 namespace Drupal\soda_scs_manager;
 
 use Symfony\Component\HttpFoundation\RequestStack;
-use Drupal\soda_scs_manager\DistilleryDatabaseConnection;
 use Drupal\Core\Config\Config;
 use Drupal\Core\Config\ConfigFactoryInterface;
-use Drupal\Core\Config\Schema\Undefined;
 use Drupal\Core\Database\Connection;
 use Drupal\Core\DependencyInjection\DependencySerializationTrait;
 use Drupal\Core\Language\LanguageManagerInterface;
 use Drupal\Core\Logger\LoggerChannelFactoryInterface;
 use Drupal\Core\Mail\MailManagerInterface;
 use Drupal\Core\Messenger\MessengerInterface;
-use Drupal\Core\Render\Markup;
-use Drupal\Core\Template\TwigEnvironment;
+use Drupal\soda_scs_manager\SodaScsDbActions;
 use Drupal\Core\StringTranslation\TranslationInterface;
-use Drupal\user\Entity\User;
+use Drupal\Core\Template\TwigEnvironment;
 use GuzzleHttp\ClientInterface;
 
 /**
@@ -87,6 +84,13 @@ class SodaScsApiActions {
   protected Config $settings;
 
   /**
+   * The SCS database actions service.
+   *
+   * @var \Drupal\soda_scs_manager\SodaScsDbActions
+   */
+  protected SodaScsDbActions $sodaScsDbActions;
+
+  /**
    * The string translation service.
    *
    * @var \Drupal\Core\StringTranslation\TranslationInterface
@@ -112,6 +116,7 @@ class SodaScsApiActions {
     MailManagerInterface $mailManager,
     MessengerInterface $messenger,
     RequestStack $requestStack,
+    SodaScsDbActions $sodaScsDbActions,
     TranslationInterface $stringTranslation,
     TwigEnvironment $twig
   ) {
@@ -126,6 +131,7 @@ class SodaScsApiActions {
     $this->messenger = $messenger;
     $this->requestStack = $requestStack;
     $this->settings = $settings;
+    $this->sodaScsDbActions = $sodaScsDbActions;
     $this->stringTranslation = $stringTranslation;
     $this->twig = $twig;
   }
@@ -148,7 +154,6 @@ class SodaScsApiActions {
    */
   public function crudComponent($bundle, $action, $options) {
     try {
-
       // Determine the route part depending on the action.
       switch ($action) {
         case 'create':
@@ -164,12 +169,31 @@ class SodaScsApiActions {
           $restMethod = 'GET';
           break;
       }
+      $provider = 'portainer';
       switch ($bundle) {
         case 'wisski':
-          if (in_array($action, ['delete', 'start', 'stop', 'rebuild', 'snapshot', 'update', 'echo'])) {
-            $restMethod  = 'POST';
+          if ($provider == 'distillery') {
+            if (in_array($action, [
+              'delete',
+              'start',
+              'stop',
+              'rebuild',
+              'snapshot',
+              'update',
+              'echo'
+            ])) {
+              $restMethod = 'POST';
+            }
+            if ($action == 'status') {
+              $options['serviceUuid'] = $this->sodaScsDbActions->getService('component_id', $options['componentId'])[0]['service_uuid'];
+            }
+            $request = $this->buildWisskiDistilleryRequest($action, $options);
+          } elseif ($provider == 'portainer') {
+            // Prepare database
+            $options['dbPassword'] = $this->generateRandomPassword();
+            $database = $this->sodaScsDbActions->createDb($options['subdomain'], $options['user'], $options['dbPassword']);
+            $request = $this->buildPortainerRequest($options);
           }
-          $request = $this->buildWisskiRequest($action, $options);
       }
 
       // Send the GET request using the `drupal_http_request()` function.
@@ -283,7 +307,7 @@ class SodaScsApiActions {
    *
    * @return array
    */
-  public function buildWisskiRequest($action, $options): array {
+  public function buildWisskiDistilleryRequest($action, $options): array {
     $request = [
       'route' => '',
       'headers' => [
@@ -291,10 +315,7 @@ class SodaScsApiActions {
         'Accept' => 'application/json',
         'Authorization' => 'Bearer ' . $this->settings->get('wisski')['token'],
       ],
-      'body' => [
-        "call" => "provision",
-        "params" => [],
-      ]
+      'body' => [],
     ];
     switch ($action) {
       case 'create':
@@ -305,12 +326,12 @@ class SodaScsApiActions {
           "System" => [
             "PHP" => "8.2",
             "OpCacheDevelopment" => false,
-            "ContentSecurityPolicy" => ""
-          ]
+            "ContentSecurityPolicy" => "",
+          ],
         ]);
         $request['body'] = json_encode([
           'call' => 'provision',
-          'params' => [$params]
+          'params' => [$params],
         ]);
         break;
       case 'delete':
@@ -320,21 +341,21 @@ class SodaScsApiActions {
         ]);
         $request['body'] = json_encode([
           'call' => 'purge',
-          'params' => [$params]
+          'params' => [$params],
         ]);
         break;
       case 'start':
         $request['route'] = 'http://scs.local:3001/api/v1/pow/new';
         $request['body']['call'] = 'start';
         $request['body']['params'] = [
-          $options['subdomain']
+          $options['subdomain'],
         ];
         break;
       case 'stop':
         $request['route'] = 'http://scs.local:3001/api/v1/pow/new';
         $request['body']['call'] = 'stop';
         $request['body']['params'] = [
-          $options['subdomain']
+          $options['subdomain'],
         ];
         break;
       case 'rebuild':
@@ -345,22 +366,22 @@ class SodaScsApiActions {
           [
             "PHP"=> "8.2",
             "OpCacheDevelopment"=> false,
-            "ContentSecurityPolicy"=> ""
-          ]
+            "ContentSecurityPolicy"=> "",
+          ],
         ];
         break;
         case 'snapshot':
           $request['route'] = 'http://scs.local:3001/api/v1/pow/new';
           $request['body']['call'] = 'snapshot';
           $request['body']['params'] = [
-            $options['subdomain']
+            $options['subdomain'],
           ];
           break;
       case 'update':
         $request['route'] = 'http://scs.local:3001/api/v1/pow/new';
         $request['body']['call'] = 'update';
         $request['body']['params'] = [
-          $options['subdomain']
+          $options['subdomain'],
         ];
         break;
       case 'echo':
@@ -368,12 +389,65 @@ class SodaScsApiActions {
         $request['body'] = json_encode([
           "call" => "echo",
           "params" => [
-            "message" => "Hello from Drupal"
-          ]
+            "message" => "Hello from Drupal",
+          ],
         ]);
+        break;
+      case 'status':
+        $request['route'] = 'http://scs.local:3001/api/v1/pow/status/' . $options['serviceUuid'];
         break;
     }
     return $request;
+  }
+
+  /**
+   * Builds the request for the Portainer service API.
+   *
+   * @return array
+   */
+  public function buildPortainerRequest(array $options): array {
+    $baseRoute = "https://portainer.dena-dev.de/api/stacks/create/swarm/repository";
+    $queryParams = [
+      'endpointId' => '1',
+    ];
+    $route = $baseRoute . '?' . http_build_query($queryParams);
+    $env = [
+      ["name" => "DB_DRIVER", "value" => "mysql"],
+      ["name" => "DB_HOST", "value" => "mariadb"],
+      ["name" => "DB_NAME", "value" => $options['subdomain']],
+      ["name" => "DB_PASSWORD", "value" => $options['dbPassword']],
+      ["name" => "DB_USER", "value" => $options['user']],
+      ["name" => "DOMAIN", "value" => "dena-dev.de"],
+      ["name" => "DRUPAL_USER", "value" => "admin"],
+      ["name" => "DRUPAL_PASSWORD", "value" => "admin"],
+      ["name" => "SERVICE_NAME", "value" => "drupal"],
+      ["name" => "SITE_NAME", "value" => "Drupal"],
+    ];
+    $route = [
+      'route' => $route,
+      'headers' => [
+        'Content-Type' => 'application/json',
+        'Accept' => 'application/json',
+        'X-API-Key' => $this->settings->get('wisski')['token'],
+      ],
+      'body' => json_encode([
+        'composeFile' => 'drupal10.3-php8.2-apache-bookworm-vanilla/traefik/external_db/docker-compose.yml',
+        'env' => $env,
+        'name' => 'teststack',
+        'repositoryAuthentication' => false,
+        'repositoryURL' => 'https://github.com/rnsrk/scs-manager-stacks.git',
+        'swarmID' => 'z2r6wmof2qjqsvrudexikxv51'
+      ])
+    ];
+    return $route;
+  }
+
+  function generateRandomPassword(): string {
+    $password = '';
+    while (strlen($password) < 32) {
+      $password .= base_convert(random_int(0, 35), 10, 36);
+    }
+    return substr($password, 0, 32);
   }
 
 }
