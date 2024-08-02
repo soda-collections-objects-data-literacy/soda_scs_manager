@@ -38,6 +38,26 @@ class SodaScsSettingsForm extends ConfigFormBase {
     $form = parent::buildForm($form, $form_state);
     $form_state->setCached(FALSE);
 
+    $form['db'] = [
+      '#type' => 'fieldset',
+      '#title' => $this->t('Database settings'),
+    ];
+    $form['db']['db_host'] = [
+      '#type' => 'textfield',
+      '#title' => $this->t('Database host'),
+      '#default_value' => $this->config('soda_scs_manager.settings')->get('db_host'),
+    ];
+    $form['db']['db_port'] = [
+      '#type' => 'textfield',
+      '#title' => $this->t('Database port'),
+      '#default_value' => $this->config('soda_scs_manager.settings')->get('db_port'),
+    ];
+    $form['db']['db_root_password'] = [
+      '#type' => 'password',
+      '#title' => $this->t('Root password'),
+      '#default_value' => $this->config('soda_scs_manager.settings')->get('db_root_password'),
+    ];
+
     // Build main form wit bundle selection and subform for bundle settings.
     $form['bundle'] = [
       '#type' => 'select',
@@ -76,7 +96,7 @@ class SodaScsSettingsForm extends ConfigFormBase {
     // Loop through all form values and update the configuration.
 
     foreach ($form_state->getValues() as $key => $value) {
-      if (!in_array($key, ['bundle', 'form_id', 'form_token', 'form_build_id', 'op'])) {
+      if (!in_array($key, ['db_host', 'db_port', 'root_password', 'bundle', 'form_id', 'form_token', 'form_build_id', 'op'])) {
 
         // Update the specific key within this bundle configuration.
         // This assumes $current_bundle_config is an array. If it's not, you might need to initialize it as an array first.
@@ -85,6 +105,9 @@ class SodaScsSettingsForm extends ConfigFormBase {
         // Save the updated configuration back.
         $config->set($form_state->getValue('bundle'), $current_bundle_config);
       }
+      $config->set('db_host', $form_state->getValue('db_host'));
+      $config->set('db_port', $form_state->getValue('db_port'));
+      $config->set('db_root_password', $form_state->getValue('db_root_password'));
     }
     // Save the configuration.
     $config->save();
@@ -130,7 +153,6 @@ class SodaScsSettingsForm extends ConfigFormBase {
    * @return array
    */
   private function buildSubform(array $form, FormStateInterface $form_state): array{
-
     $subform[$form_state->getValue('bundle')]['authentication'] = $this->buildAuthenticationSubform($form, $form_state);
     $subform[$form_state->getValue('bundle')]['routes'] = $this->buildRoutesSubform($form, $form_state);
 

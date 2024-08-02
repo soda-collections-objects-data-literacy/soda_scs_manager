@@ -2,6 +2,8 @@
 
 namespace Drupal\soda_scs_manager;
 
+use Drupal\Core\Config\Config;
+use Drupal\Core\Config\ConfigFactoryInterface;
 use Drupal\Core\Database\Connection;
 use Drupal\Core\Logger\LoggerChannelFactoryInterface;
 use Drupal\Core\StringTranslation\TranslationInterface;
@@ -27,6 +29,12 @@ class SodaScsDbActions {
   protected LoggerChannelFactoryInterface $loggerFactory;
 
   /**
+   * The settings config.
+   *
+   * @var \Drupal\Core\Config\Config
+   */
+  protected Config $settings;
+  /**
    * The string translation service.
    *
    * @var \Drupal\Core\StringTranslation\TranslationInterface
@@ -40,7 +48,9 @@ class SodaScsDbActions {
    */
   protected MessengerInterface $messenger;
 
-  public function __construct(Connection $database, LoggerChannelFactoryInterface $loggerFactory, MessengerInterface $messenger, TranslationInterface $stringTranslation,) {
+  public function __construct(ConfigFactoryInterface $configFactory, Connection $database, LoggerChannelFactoryInterface $loggerFactory, MessengerInterface $messenger, TranslationInterface $stringTranslation,) {
+    $this->settings = $configFactory
+      ->getEditable('soda_scs_manager.settings');
     $this->database = $database;
     $this->loggerFactory = $loggerFactory;
     $this->messenger = $messenger;
@@ -161,22 +171,22 @@ class SodaScsDbActions {
     }
   }
 
-  public function createDb(string $dbName, string $dbUser, string $dbPassword): bool {
+  public function createDb(string $dbName, $dbUser, $dbUserPassword): bool {
+    $dbHost = $this->settings->get('db_host');
+    $dbRootPassword = $this->settings->get('db_root_password');
     try {
-      $this->database->createDatabase($dbName);
-      $this->database->query("CREATE USER :user@'%' IDENTIFIED BY :password", [
-        ':user' => $dbUser,
-        ':password' => $dbPassword,
-      ]);
+      // Create the database
+      shell_exec("mysql -h $dbHost -uroot -p$dbRootPassword  -e 'CREATE DATABASE $dbName;'");
+
+      // Create the new database user
+      shell_exec("mysql -e 'CREATE USER \"$dbUser\"@\"%\" IDENTIFIED BY \"$dbUserPassword\";'");
 
       // Grant privileges to the new user on the specified database
-      $this->database->query("GRANT ALL PRIVILEGES ON :db.* TO :user@'%'", [
-        ':db' => $dbName,
-        ':user' => $dbUser,
-      ]);
+      shell_exec("mysql -e 'GRANT ALL PRIVILEGES ON $dbName.* TO \"$dbUser\"@\"%\";'");
 
       // Flush privileges to ensure that the changes take effect
-      $this->database->query("FLUSH PRIVILEGES");
+      shell_exec("mysql -e 'FLUSH PRIVILEGES;'");
+
       return TRUE;
     } catch (\Exception $e) {
       $this->loggerFactory->get('soda_scs_manager')->error('Failed to create database: ' . $e->getMessage());

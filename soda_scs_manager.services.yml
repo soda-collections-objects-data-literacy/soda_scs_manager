@@ -16,6 +16,7 @@ services:
   soda_scs_manager.db.actions:
     class: Drupal\soda_scs_manager\SodaScsDbActions
     arguments:
+      - '@config.factory'
       - '@database'
       - '@logger.factory'
       - '@messenger'
