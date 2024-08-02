@@ -176,16 +176,16 @@ class SodaScsDbActions {
     $dbRootPassword = $this->settings->get('db_root_password');
     try {
       // Create the database
-      shell_exec("mysql -h $dbHost -uroot -p$dbRootPassword  -e 'CREATE DATABASE $dbName;'");
+      shell_exec("mysql -h $dbHost -uroot -p$dbRootPassword -e 'CREATE DATABASE $dbName;'");
 
       // Create the new database user
-      shell_exec("mysql -e 'CREATE USER \"$dbUser\"@\"%\" IDENTIFIED BY \"$dbUserPassword\";'");
+      shell_exec("mysql -h $dbHost -uroot -p$dbRootPassword -e 'CREATE USER \"$dbUser\"@\"%\" IDENTIFIED BY \"$dbUserPassword\";'");
 
       // Grant privileges to the new user on the specified database
-      shell_exec("mysql -e 'GRANT ALL PRIVILEGES ON $dbName.* TO \"$dbUser\"@\"%\";'");
+      shell_exec("mysql -h $dbHost -uroot -p$dbRootPassword -e 'GRANT ALL PRIVILEGES ON $dbName.* TO \"$dbUser\"@\"%\";'");
 
       // Flush privileges to ensure that the changes take effect
-      shell_exec("mysql -e 'FLUSH PRIVILEGES;'");
+      shell_exec("mysql -h $dbHost -uroot -p$dbRootPassword -e 'FLUSH PRIVILEGES;'");
 
       return TRUE;
     } catch (\Exception $e) {
