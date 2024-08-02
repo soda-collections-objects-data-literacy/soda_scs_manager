@@ -193,6 +193,9 @@ class SodaScsApiActions {
             $options['dbPassword'] = $this->generateRandomPassword();
             $database = $this->sodaScsDbActions->createDb($options['subdomain'], $options['user'], $options['dbPassword']);
             $request = $this->buildPortainerRequest($options);
+            $this->loggerFactory
+              ->get('soda_scs_manager')
+              ->info('Portainer request: ' . json_encode($request));
           }
       }
 
@@ -420,7 +423,7 @@ class SodaScsApiActions {
       ["name" => "DOMAIN", "value" => "dena-dev.de"],
       ["name" => "DRUPAL_USER", "value" => "admin"],
       ["name" => "DRUPAL_PASSWORD", "value" => "admin"],
-      ["name" => "SERVICE_NAME", "value" => "drupal"],
+      ["name" => "SERVICE_NAME", "value" => $options['subdomain']],
       ["name" => "SITE_NAME", "value" => "Drupal"],
     ];
     $route = [
