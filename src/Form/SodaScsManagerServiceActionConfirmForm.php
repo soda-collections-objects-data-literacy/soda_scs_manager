@@ -87,7 +87,7 @@ class SodaScsManagerServiceActionConfirmForm extends ConfirmFormBase {
    * {@inheritdoc}
    */
   public function getCancelUrl() {
-    return new Url('entity.soda_scs_component.collection');
+    return new Url('soda_scs_manager.desk');
   }
 
   /**

@@ -22,7 +22,7 @@ class SodaScsComponentBundleDeleteForm extends EntityConfirmFormBase {
    * {@inheritdoc}
    */
   public function getCancelUrl() {
-    return new Url('entity.soda_scs_component_bundle.collection');
+    return new Url('entity.soda_scs_component_bundle.desk');
   }
 
   /**

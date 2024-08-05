@@ -66,22 +66,34 @@ class SodaScsComponent extends ContentEntityBase implements SodaScsComponentInte
     *
     * @var string
     */
-    protected $bundle;
+    protected string $bundle;
 
    /**
    * The description of the SODa SCS Component.
    *
-   * @var string
+   * @var array
    */
-    protected $description;
+    protected array $description;
+
+  /**
+   * The external service ID of the SODa SCS Component.
+   *
+   * Used to identify the component in the external system.
+   * Can be an integer or string in ext. system, so we
+   * may have to parse it.
+   *
+   * @var string
+   *
+   */
+    protected string $externalId;
 
 
     /**
     * The SODa SCS Component ID.
     *
-    * @var integer
+    * @var int
     */
-    protected $id;
+    protected int $id;
 
 
   /**
@@ -90,7 +102,7 @@ class SodaScsComponent extends ContentEntityBase implements SodaScsComponentInte
    * @var string
    */
 
-  protected $imageUrl;
+  protected string $imageUrl;
 
 
      /**
@@ -98,7 +110,7 @@ class SodaScsComponent extends ContentEntityBase implements SodaScsComponentInte
     *
     * @var string
     */
-    protected $label;
+    protected string $label;
 
 
    /**
@@ -106,14 +118,14 @@ class SodaScsComponent extends ContentEntityBase implements SodaScsComponentInte
     *
     * @var string
     */
-    protected $optionsUrl;
+    protected string $optionsUrl;
 
     /**
      * The uuid of the SODa SCS Component.
      *
      * @var string
      */
-    protected $uuid;
+    protected string $uuid;
 
 
 
@@ -131,7 +143,7 @@ class SodaScsComponent extends ContentEntityBase implements SodaScsComponentInte
   /**
  * Sets the description of the SODa SCS Component.
  *
- * @param string $description
+ * @param array $description
  *   The description of the SODa SCS Component.
  *
  * @return $this
@@ -197,26 +209,6 @@ public function setDescription($description) {
     return $this->get('user')->entity;
   }
 
-  /**
-   * Get the API options of the SODa SCS Component.
-   *
-   * @return string
-   */
-  public function getOptionsUrl() {
-    return $this->optionsUrl;
-  }
-
-  /**
-   * Set the API options of the SODa SCS Component.
-   *
-   * @param string $optionsUrl
-   *
-   * @return $this
-   */
-  public function setOptionsUrl($optionsUrl) {
-    $this->optionsUrl = $optionsUrl;
-    return $this;
-  }
 
   /**
    * Parse the API options of the SODa SCS Component.
@@ -267,6 +259,12 @@ public function setDescription($description) {
         'weight' => 50,
       ]);
 
+    $fields['externalId'] = BaseFieldDefinition::create('string')
+      ->setLabel(new TranslatableMarkup('External ID'))
+      ->setDescription(new TranslatableMarkup('The external ID of the SODa SCS Component.'))
+      ->setReadOnly(TRUE)
+      ->setDisplayConfigurable('view', TRUE);
+
     $fields['id'] = BaseFieldDefinition::create('integer')
       ->setLabel(new TranslatableMarkup('ID'))
       ->setDescription(new TranslatableMarkup('The ID of the SCS component entity.'))
@@ -315,6 +313,10 @@ public function setDescription($description) {
       ->setLabel(new TranslatableMarkup('Notes'))
       ->setDescription(new TranslatableMarkup('Notes about the SODa SCS Component.'))
       ->setTranslatable(TRUE)
+      ->setSettings([
+        'default_value' => '',
+        'text_processing' => TRUE, // Enable text processing for HTML
+      ])
       ->setDisplayConfigurable('view', TRUE)
       ->setDisplayOptions('form', [
         'type' => 'text_textarea',
@@ -325,12 +327,6 @@ public function setDescription($description) {
         'type' => 'text_default',
         'weight' => 60,
       ]);
-
-    $fields['optionsUrl'] = BaseFieldDefinition::create('string')
-      ->setLabel(new TranslatableMarkup('API Options'))
-      ->setDescription(new TranslatableMarkup('The URL of the API options for the SODa SCS Component.'))
-      ->setTranslatable(TRUE)
-      ->setDisplayConfigurable('view', TRUE);
 
     $fields['serviceProcessUuid'] = BaseFieldDefinition::create('string')
       ->setLabel(new TranslatableMarkup('Service Process UUID'))

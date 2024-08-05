@@ -16,13 +16,13 @@ soda_scs_manager.component_page:
     title: 'SODa SCS manager components page'
     description: 'SODa SCS manager components page'
     parent: soda_scs_manager.settings_menu_block
-    route_name: soda_scs_manager.components
+    route_name: soda_scs_manager.desk
 
 soda_scs_manager.component_store:
     title: 'Component store'
     description: 'List all available components and provide the possibility to install them'
     parent: soda_scs_manager.settings_menu_block
-    route_name: soda_scs_manager.bundles
+    route_name: soda_scs_manager.store
 
 soda_scs_manager.settings_menu_block:
     title: 'SODa SCS manager'
@@ -48,12 +48,12 @@ soda_scs_manager.menu.desk:
   title: 'Desk'
   description: 'Your components'
   parent: soda_scs_manager.main_navigation
-  route_name: soda_scs_manager.components
+  route_name: soda_scs_manager.desk
   weight: 10
 
 soda_scs_manager.menu.store:
   title: 'Store'
   description: 'Available components'
   parent: soda_scs_manager.main_navigation
-  route_name: soda_scs_manager.bundles
+  route_name: soda_scs_manager.store
   weight: 10

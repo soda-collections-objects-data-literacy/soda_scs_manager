@@ -35,6 +35,7 @@ class SodaScsComponentListBuilder extends EntityListBuilder {
     $options = [
       'subdomain' => $entity->get('subdomain')->value,
       'componentId' => $entity->id(),
+      'user' => $entity->get('user')->value,
     ];
 
     $row['type'] = $bundle;

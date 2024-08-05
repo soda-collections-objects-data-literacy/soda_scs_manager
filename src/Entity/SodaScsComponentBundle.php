@@ -156,44 +156,4 @@ class SodaScsComponentBundle extends ConfigEntityBundleBase {
     $this->imageUrl = $imageUrl;
     return $this;
   }
-
-  /**
-   * Returns the options of the ComponentBundle.
-   *
-   * @return string
-   *   The options of the ComponentBundle.
-   */
-  public function getOptionsUrl() {
-    return $this->optionsUrl;
-  }
-
-  /**
-   * Sets the options of the ComponentBundle.
-   *
-   * @param string $optionsUrl
-   *   The options of the ComponentBundle.
-   *
-   * @return $this
-   */
-  public function setOptionsUrl($optionsUrl) {
-    dpm($optionsUrl,'setOptions');
-    $this->optionsUrl = $optionsUrl;
-    dpm($this->optionsUrl,'setOptions');
-    return $this;
-  }
-
-  /**
-   * Returns the options of the ComponentBundle.
-   *
-   * @return string
-   *  The options of the ComponentBundle.
-   */
-  public function parseOptions() {
-    dpm($this->optionsUrl);
-    if (empty($this->optionsUrl)) {
-      return '';
-    }
-    $options = file_get_contents($this->optionsUrl);
-    return $options;
-  }
 }

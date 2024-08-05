@@ -63,6 +63,6 @@ class SodaScsComponentEditForm extends ContentEntityForm {
     parent::save($form, $form_state);
 
     // Redirect to the components page.
-    $form_state->setRedirect('soda_scs_manager.components');
+    $form_state->setRedirect('soda_scs_manager.desk');
   }
 }

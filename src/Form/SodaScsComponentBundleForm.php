@@ -6,7 +6,6 @@ use Drupal\Core\Entity\EntityForm;
 use Drupal\Core\Form\FormStateInterface;
 use Drupal\file\Entity\File;
 use Drupal\file\Upload\FormFileUploadHandler;
-use Drupal\Core\Url;
 
 /**
  * Class ScsComponentBundleForm.
@@ -54,7 +53,6 @@ class SodaScsComponentBundleForm extends EntityForm {
       '#required' => FALSE,
     ];
 
-
     $form['image_set'] = [
       '#type' => 'fieldset',
       '#title' => $this->t('Icon'),
@@ -76,72 +74,6 @@ class SodaScsComponentBundleForm extends EntityForm {
       '#disabled' => TRUE,
     ];
 
-    $form['options_set'] = [
-      '#type' => 'fieldset',
-      '#title' => $this->t('Options'),
-    ];
-
-    $form['options_set']['options'] = [
-      '#type' => 'radios',
-      '#title' => $this->t('Options'),
-      '#options' => [
-        'upload' => $this->t('Options Upload'),
-        'url' => $this->t('Options URL'),
-      ],
-      '#default_value' => 'upload',
-    ];
-
-    $form['options_set']['options_upload'] = [
-      '#type' => 'managed_file',
-      '#title' => $this->t('Options Upload'),
-      '#upload_location' => 'public://soda_scs_manager/bundle_options',
-      '#description' => $this->t("Upload a json file with the options for the SCS Component."),
-      '#upload_validators' => [
-        'file_validate_extensions' => ['json'],
-      ],
-      '#states' => [
-        'disabled' => [
-          ':input[name="options"]' => ['value' => 'url'],
-        ],
-      ],
-    ];
-
-    $form['options_set']['optionsUrl'] = [
-      '#type' => 'textfield',
-      '#title' => $this->t('Options URL'),
-      '#default_value' => $entity->getOptionsUrl(),
-      '#description' => $this->t("Options path for the SODa SCS Component as json or swagger url."),
-      '#states' => [
-        'disabled' => [
-          ':input[name="options"]' => ['value' => 'upload'],
-        ],
-      ],
-    ];
-
-
-    if ($entity->getOptionsUrl()) {
-      $optionsUrl = $entity->getOptionsUrl();
-      if (strpos($optionsUrl, '.json') !== false) {
-      $swaggerSpecUrl = \Drupal::service('file_url_generator')->generateAbsoluteString($optionsUrl);
-      } else {
-      $swaggerSpecUrl = $optionsUrl;
-      }
-
-    }
-    $form['swagger'] =  [
-      '#markup' => '<div id="swagger-ui">Swagger UI</div>',
-      '#attached' => [
-        'library' => [
-          'soda_scs_manager/swagger_ui',
-        ],
-        'drupalSettings' => [
-          'swaggerSpecUrl' => $swaggerSpecUrl,
-        ],
-      ],
-    ];
-
-    dpm($form);
-
     return $form;
   }
 
@@ -149,33 +81,24 @@ class SodaScsComponentBundleForm extends EntityForm {
    * {@inheritdoc}
    */
   public function save(array $form, FormStateInterface $form_state) {
+    parent::save($form, $form_state);
+    /**
     $entity = $this->entity;
     $entity->setDescription($form_state->getValue('description'));
-
-    foreach(['image_upload', 'options_upload'] as $fileField) {
-      $fileFormValue = $form_state->getValue($fileField);
-      if (empty($fileFormValue)) {
-        continue;
-      }
-      $file = File::load(reset($fileFormValue));
-      if ($file) {
+    $fileFormValue = $form_state->getValue('image_upload');
+    $file = File::load(reset($fileFormValue));
+    if ($file) {
         $file->setPermanent();
         $file->save();
 
         $file_uri = $file->getFileUri();
 
         // Store the URL in the text field.
-        $form_state->setValue($fileField, $file_uri);
-        switch ($fileField) {
-          case 'image_upload':
+        $form_state->setValue('image_upload', $file_uri);
             $entity->setImageUrl($file_uri);
-            break;
-          case 'options_upload':
-            $entity->setOptionsUrl($file_uri);
-            break;
-        }
-      }
+
     }
+
     $status = $entity->save();
 
     if ($status) {
@@ -189,17 +112,11 @@ class SodaScsComponentBundleForm extends EntityForm {
       ]));
     }
 
-    $form_state->setRedirect('entity.soda_scs_component_bundle.collection');
+    $form_state->setRedirect('soda_scs_manager.desk');
+     **/
   }
 
   public function submitForm(array &$form, FormStateInterface $form_state) {
-    $triggering_element = $form_state->getTriggeringElement();
-
-    // Check if the triggering element is a Swagger UI button.
-    // Replace 'swagger_ui_button' with the actual name of your Swagger UI button.
-    if ($triggering_element['#name'] === 'swagger_ui_button') {
-      $form_state->setResponse(new RedirectResponse('/')); // Redirect to home page.
-    }
+    parent::submitForm($form, $form_state);
   }
-
 }

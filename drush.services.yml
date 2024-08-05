@@ -1,0 +1,5 @@
+services:
+  drush.command.soda_scs_manager.check_description:
+    class: Drupal\soda_scs_manager\Commands\CheckDescriptionCommand
+    tags:
+      - { name: drush.command }

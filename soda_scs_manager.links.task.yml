@@ -15,3 +15,15 @@ entity.soda_scs_component.delete_form:
   base_route: entity.soda_scs_component.canonical
   title: 'Delete'
   weight: 20
+
+entity.soda_scs_component.service_link:
+  route_name: soda_scs_manager.service_link
+  base_route: entity.soda_scs_component.canonical
+  title: 'Show'
+  weight: 100
+  options:
+    parameters:
+      soda_scs_component: { type: 'entity:soda_scs_component' }
+    attributes:
+      target: '_blank'
+      class: ['soda-scs-manager--service-link']

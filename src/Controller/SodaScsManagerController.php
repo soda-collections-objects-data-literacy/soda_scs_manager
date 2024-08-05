@@ -97,7 +97,7 @@ class SodaScsManagerController extends ControllerBase {
    * @return array
    *   The page build array.
    */
-  public function componentsPage(): array {
+  public function deskPage(): array {
     $current_user = \Drupal::currentUser();
     try {
       $storage = $this->entityTypeManager->getStorage('soda_scs_component');
@@ -129,21 +129,42 @@ class SodaScsManagerController extends ControllerBase {
   }
 
   /**
-   * Page for component store.
+   * Display the markup.
    *
    * @return array
-   *   The page build array.
    */
-  public function componentsStore(): array {
+  public function storePage() {
 
-    $options['uid'] = \Drupal::currentUser()->id();
-    // If the user is not an admin, filter the accounts to only include their own.
-    $components = $this->ApiActions->crudComponent('read', $options);
+    // Create the build array
+    $build = [
+      '#theme' => 'container',
+      '#attributes' => ['class' => 'd-flex justify-content-between'],
+      '#children' => [],
+    ];
 
-    return [
-      '#theme' => 'component_page',
-      '#components' => $components,
+    // Get all component bundles
+    $bundles = $this->entityTypeManager->getStorage('soda_scs_component_bundle')->loadMultiple();
+
+
+    /** @var \Drupal\soda_scs_manager\Entity\SodaScsComponentBundle $bundle */
+    foreach ($bundles as $bundle) {
+
+
+
+      // Add the card to the build array
+      $build['#children'][] = [
+        '#theme' => 'bundle_card',
+        '#title' => $this->t('@bundle', ['@bundle' => $bundle->label()]),
+        '#description' => $bundle->getDescription(),
+        '#image_url' =>  $bundle->getImageUrl(),
+        '#url' => Url::fromRoute('entity.soda_scs_component.add_form', ['soda_scs_component_bundle' => $bundle->id()]),
+        '#attached' => [
+          'library' => ['soda_scs_manager/globalStyling'],
+        ],
       ];
+    }
+
+    return $build;
   }
 
 

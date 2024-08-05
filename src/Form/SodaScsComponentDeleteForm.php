@@ -2,7 +2,11 @@
 
 namespace Drupal\soda_scs_manager\Form;
 
+use Drupal\Component\Datetime\TimeInterface;
+use Drupal\Core\Entity\EntityRepositoryInterface;
+use Drupal\Core\Entity\EntityTypeBundleInfoInterface;
 use Drupal\Core\Routing\RouteMatchInterface;
+use Drupal\Core\Url;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 use Drupal\Core\Entity\ContentEntityDeleteForm;
 use Drupal\Core\Form\FormStateInterface;
@@ -20,6 +24,29 @@ class SodaScsComponentDeleteForm extends ContentEntityDeleteForm {
    * @var \Drupal\soda_scs_manager\SodaScsApiActions
    */
   protected SodaScsApiActions $sodaScsApiActions;
+
+  /**
+   * Constructs a new SodaScsComponentCreateForm.
+   *
+   * @param \Drupal\soda_scs_manager\SodaScsApiActions $sodaScsApiActions
+   *   The Soda SCS API Actions service.
+   */
+  public function __construct(EntityRepositoryInterface $entity_repository, EntityTypeBundleInfoInterface $entity_type_bundle_info, TimeInterface $time, SodaScsApiActions $sodaScsApiActions) {
+    parent::__construct($entity_repository, $entity_type_bundle_info, $time);
+    $this->entityRepository = $entity_repository;
+    $this->entityTypeBundleInfo = $entity_type_bundle_info;
+    $this->time = $time;
+    $this->sodaScsApiActions = $sodaScsApiActions;
+  }
+
+  public static function create(ContainerInterface $container) {
+    return new static(
+      $container->get('entity.repository'),
+      $container->get('entity_type.bundle.info'),
+      $container->get('datetime.time'),
+      $container->get('soda_scs_manager.api.actions')
+    );
+  }
 
   /**
    * {@inheritdoc}
@@ -40,7 +67,7 @@ class SodaScsComponentDeleteForm extends ContentEntityDeleteForm {
    * {@inheritdoc}
    */
   public function getCancelUrl() {
-    return $this->entity->toUrl('collection');
+    return new Url('soda_scs_manager.desk');
   }
 
   /**
@@ -50,16 +77,16 @@ class SodaScsComponentDeleteForm extends ContentEntityDeleteForm {
     // Add custom logic before deletion.
     \Drupal::logger('soda_scs_manager')->notice('Deleting component: @label', ['@label' => $this->entity->label()]);
 
-    // Load Entity
-    #$entity = $this->entityTypeManager->getStorage('soda_scs_component')->load($this->componentId);
-
     // Construct properties.
-    #$bundle = $entity->bundle();
-    #$options = [
-    #  'user' => $entity->get('user')->value,
-    #  'subdomain' => $entity->get('subdomain')->value,
-    #];
-    #$this->sodaScsApiActions->crudComponent($bundle,'delete', $options);
+    /** @var \Drupal\soda_scs_manager\Entity\SodaScsComponent $entity */
+    $entity = $this->entity;
+    $bundle = $entity->bundle();
+    $options = [
+      'user' => $entity->get('user')->value,
+      'subdomain' => $entity->get('subdomain')->value,
+      'externalId' => $entity->get('externalId')->value,
+    ];
+    $this->sodaScsApiActions->crudComponent($bundle,'delete', $options);
     // Call the parent submit handler to delete the entity.
     parent::submitForm($form, $form_state);
 

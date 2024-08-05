@@ -4,9 +4,11 @@ namespace Drupal\soda_scs_manager\Controller;
 
 use Drupal\Core\Controller\ControllerBase;
 use Drupal\Core\Entity\EntityTypeManagerInterface;
+use Drupal\Core\Routing\TrustedRedirectResponse;
 use Drupal\soda_scs_manager\SodaScsApiActions;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 use Symfony\Component\HttpFoundation\JsonResponse;
+
 
 /**
  * The SODa SCS Manager service controller.
@@ -18,12 +20,6 @@ class SodaScsManagerServiceController extends ControllerBase {
    *  The SODa SCS Manager API actions service.
    */
   protected SodaScsApiActions $sodaScsApiActions;
-
-  /**
-   * @var \Drupal\Core\Entity\EntityTypeManagerInterface
-   *  The entity type manager.
-   */
-  protected EntityTypeManagerInterface $entityTypeManager;
 
   /**
    * Class constructor
@@ -63,6 +59,27 @@ class SodaScsManagerServiceController extends ControllerBase {
     $status = $this->sodaScsApiActions->crudComponent($bundle, $action, $options);
     // Return the status as a JSON response.
     return new JsonResponse(['status' => $status]);
+  }
+
+  /**
+   * Generate a URL based on the component ID.
+   *
+   * @param $soda_scs_component
+   *
+   * @return TrustedRedirectResponse
+   *  The redirect response.
+   */
+  public function generateUrl($soda_scs_component): TrustedRedirectResponse {
+    // Generate the URL based on the component ID.
+    $entity = $this->entityTypeManager->getStorage('soda_scs_component')->load($soda_scs_component);
+    $host = $this->config('soda_scs_manager.settings')->get('scs_host');
+    $subdomain = $entity->get('subdomain')->value;
+
+    // Generate the URL.
+    $url = 'https://' . $subdomain . '.' . $host;
+
+    // Redirect to the generated URL.
+    return new TrustedRedirectResponse($url);
   }
 
 }

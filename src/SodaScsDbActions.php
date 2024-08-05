@@ -171,27 +171,38 @@ class SodaScsDbActions {
     }
   }
 
-  public function createDb(string $dbName, $dbUser, $dbUserPassword): bool {
+  /**
+   * Creates a new database.
+   *
+   * @param string $dbName
+   *   The name of the database.
+   * @param string $dbUser
+   *   The name of the database user.
+   * @param string $dbUserPassword
+   *   The password of the database user.
+   *
+   * @return array
+   *  Success result.
+   */
+  public function createDb(string $dbName, string $dbUser, string $dbUserPassword): array {
     $dbHost = $this->settings->get('db_host');
     $dbRootPassword = $this->settings->get('db_root_password');
     try {
       // Create the database
-      shell_exec("mysql -h $dbHost -uroot -p$dbRootPassword -e 'CREATE DATABASE $dbName;'");
+      $shellResult = shell_exec("mysql -h $dbHost -uroot -p$dbRootPassword -e 'CREATE DATABASE $dbName; CREATE USER \"$dbUser\"@\"%\" IDENTIFIED BY \"$dbUserPassword\"; GRANT ALL PRIVILEGES ON $dbName.* TO \"$dbUser\"@\"%\"; FLUSH PRIVILEGES;'");
 
-      // Create the new database user
-      shell_exec("mysql -h $dbHost -uroot -p$dbRootPassword -e 'CREATE USER \"$dbUser\"@\"%\" IDENTIFIED BY \"$dbUserPassword\";'");
-
-      // Grant privileges to the new user on the specified database
-      shell_exec("mysql -h $dbHost -uroot -p$dbRootPassword -e 'GRANT ALL PRIVILEGES ON $dbName.* TO \"$dbUser\"@\"%\";'");
-
-      // Flush privileges to ensure that the changes take effect
-      shell_exec("mysql -h $dbHost -uroot -p$dbRootPassword -e 'FLUSH PRIVILEGES;'");
-
-      return TRUE;
+      return [
+        'shellResult' => $shellResult,
+        'error' => NULL,
+        'success' => TRUE
+      ];
     } catch (\Exception $e) {
       $this->loggerFactory->get('soda_scs_manager')->error('Failed to create database: ' . $e->getMessage());
       $this->messenger->addError($this->stringTranslation->translate('Failed to create database.'));
-      return FALSE;
+      return [
+        'shellResult' => NULL,
+        'error' => $e->getMessage(),
+        'success' => FALSE];
     }
   }
 }

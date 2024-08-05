@@ -53,7 +53,7 @@ class SodaScsApiActions {
    */
   protected LoggerChannelFactoryInterface $loggerFactory;
 
-  /**
+    /**
    * The mail manager.
    *
    * @var \Drupal\Core\Mail\MailManagerInterface
@@ -74,7 +74,9 @@ class SodaScsApiActions {
    */
   protected RequestStack $requestStack;
 
-  /**
+
+
+   /**
    * The settings config.
    *
    * @var \Drupal\Core\Config\Config
@@ -120,7 +122,7 @@ class SodaScsApiActions {
   ) {
     // Services from container.
     $settings = $configFactory
-      ->getEditable('soda_scs_manager.settings');
+    ->getEditable('soda_scs_manager.settings');
     $this->httpClient = $httpClient;
     $this->database = $database;
     $this->languageManager = $languageManager;
@@ -134,74 +136,6 @@ class SodaScsApiActions {
     $this->twig = $twig;
   }
 
-  public function createComponent($bundle, $options): array {
-    switch ($bundle) {
-      case 'wisski':
-        $options['dbPassword'] = $this->generateRandomPassword();
-        $createDatabaseResult = $this->sodaScsDbActions->createDb($options['subdomain'], $options['user'], $options['dbPassword']);
-        if ($createDatabaseResult['success'] == FALSE) {
-          return ['success' => FALSE, 'message' => 'Database creation failed.'];
-        }
-        $buildCreateRequest = $this->buildPortainerCreateRequest($options);
-        $createRequestResult = $this->makeRequest($buildCreateRequest);
-        break;
-      default:
-        $restMethod = 'GET';
-        break;
-    }
-    return [];
-  }
-
-  public function makeRequest($request): array {
-    try {
-    // Send the GET request using the `drupal_http_request()` function.
-    $response = $this->httpClient->request($request['method'], $request['url'], [
-      'headers' => $request['headers'],
-      'body' => $request['body']
-    ]);
-
-    // Check the response and handle the data accordingly.
-    if ($response->getStatusCode() == 200 || $response->getStatusCode() == 201) {
-      // Request successful, handle the data in $response->data.
-      $resultArray = json_decode($response->getBody()->getContents(), TRUE);
-      #$this->messenger
-      #  ->addMessage($this->stringTranslation->translate('@message', ['@message' => $resultArray['message']]));
-      return $resultArray;
-    }
-    if ($response->getStatusCode() == 404) {
-      // Request successful, handle the data in $response->data.
-      $resultArray = json_decode($response->getBody()->getContents(), TRUE);
-      $this->messenger
-        ->addError($this->stringTranslation->translate('@message', ['@message' => $resultArray['message']]));
-      return $resultArray;
-    }
-    else {
-      // Request failed, handle the error.
-      return [
-        "message" => 'Request failed with code: ' . $response->getStatusCode(),
-        "data" => [],
-        'success' => FALSE,
-        'error' => $response->getBody()->getContents(),
-      ];
-    }
-  }
-catch (\Exception $e) {
-
-  // Request failed, handle the error.
-$this->loggerFactory
-->get('soda_scs_manager')
-->error('Request failed with exception: ' . $e->getMessage());
-$this->messenger
-->addError($this->stringTranslation->translate('Can not communicate with the SCS user manager daemon. Try again later or contact @email.',
-['@email'
-=> $this->ADMIN_EMAIL]));
-return ["message" => 'Request failed with exception.',
-"data" => [],
-'success' => FALSE,
-'error' => $e->getMessage(),];
-
-}
-}
 
    /**
    * Provisions a user in the SCS user manager daemon.
@@ -218,43 +152,102 @@ return ["message" => 'Request failed with exception.',
    * @return array
    *   The response from the daemon.
    */
-  public function crudComponent($bundle, $action, $options): array {
+  public function crudComponent($bundle, $action, $options) {
     try {
       // Determine the route part depending on the action.
       switch ($action) {
         case 'create':
-      }
-      switch ($bundle) {
-        case 'wisski':
-          $options['dbPassword'] = $this->generateRandomPassword();
-          $database = $this->sodaScsDbActions->createDb($options['subdomain'], $options['user'], $options['dbPassword']);
-          if ($database['success'] == FALSE) {
-            return [
-              'success' => FALSE,
-              'message' => 'Database creation failed.'
-            ];
-          }
-          $request = $this->buildPortainerRequest($options);
+          $restMethod = 'POST';
+          break;
+        case 'update':
+          $restMethod = 'PUT';
+          break;
+        case 'delete':
+          $restMethod = 'DELETE';
           break;
         default:
           $restMethod = 'GET';
           break;
       }
-    } catch (\Exception $e) {
+      $provider = 'portainer';
+      switch ($bundle) {
+        case 'wisski':
+          if ($provider == 'distillery') {
+            if (in_array($action, [
+              'delete',
+              'start',
+              'stop',
+              'rebuild',
+              'snapshot',
+              'update',
+              'echo'
+            ])) {
+              $restMethod = 'POST';
+            }
+            if ($action == 'status') {
+              $options['serviceUuid'] = $this->sodaScsDbActions->getService('component_id', $options['componentId'])[0]['service_uuid'];
+            }
+            $request = $this->buildWisskiDistilleryRequest($action, $options);
+          } elseif ($provider == 'portainer') {
+            // Prepare database
+            $options['dbPassword'] = $this->generateRandomPassword();
+            $database = $this->sodaScsDbActions->createDb($options['subdomain'], $options['user'], $options['dbPassword']);
+            $request = $this->buildPortainerRequest($options);
+            $this->loggerFactory
+              ->get('soda_scs_manager')
+              ->info('Portainer request: ' . json_encode($request));
+          }
+      }
+
+      // Send the GET request using the `drupal_http_request()` function.
+      $response = $this->httpClient->request($restMethod, $request['route'], [
+        'headers' => $request['headers'],
+        'body' => $request['body']]);
+
+      // Check the response and handle the data accordingly.
+      if ($response->getStatusCode() == 200 || $response->getStatusCode() == 201) {
+        // Request successful, handle the data in $response->data.
+        $resultArray = json_decode($response->getBody()->getContents(), TRUE);
+        #$this->messenger
+        #  ->addMessage($this->stringTranslation->translate('@message', ['@message' => $resultArray['message']]));
+        return  $resultArray;
+
+      }
+      if ($response->getStatusCode() == 404) {
+        // Request successful, handle the data in $response->data.
+        $resultArray = json_decode($response->getBody()->getContents(), TRUE);
+        $this->messenger
+          ->addError($this->stringTranslation->translate('@message', ['@message' => $resultArray['message']]));
+        return  $resultArray;
+      }
+      else {
+        // Request failed, handle the error.
+        return [
+          "message" => 'Request failed with code: ' . $response->getStatusCode(),
+          "data" => [],
+          'success' => FALSE,
+          'error' =>  $response->getBody()->getContents(),
+        ];
+      }
+    }
+    catch (\Exception $e) {
       // Request failed, handle the error.
       $this->loggerFactory
         ->get('soda_scs_manager')
         ->error('Request failed with exception: ' . $e->getMessage());
       $this->messenger
-        ->addError($this->stringTranslation->translate('Can not communicate with the SCS user manager daemon. Try again later or contact'));
+        ->addError($this->stringTranslation->translate('Can not communicate with the SCS user manager daemon. Try again later or contact @email.',
+          ['@email'
+          => $this->ADMIN_EMAIL]));
       return [
+        "message" => 'Request failed with exception.',
+        "data" => [],
         'success' => FALSE,
-        'message' => 'Request failed with exception.',
-        'error' => $e->getMessage(),
+        'error' =>  $e->getMessage(),
       ];
-    }
-    return [];
   }
+}
+
 
 /**
  * Gets the users from the Drupal database and Distillery.
@@ -309,20 +302,118 @@ return ["message" => 'Request failed with exception.',
     }
   }
 
+  /**
+   * Builds the request for the WissKI Distillery service API.
+   *
+   * @param $action
+   * @param $options
+   *
+   * @return array
+   */
+  public function buildWisskiDistilleryRequest($action, $options): array {
+    $request = [
+      'route' => '',
+      'headers' => [
+        'Content-Type' => 'application/json',
+        'Accept' => 'application/json',
+        'Authorization' => 'Bearer ' . $this->settings->get('wisski')['token'],
+      ],
+      'body' => [],
+    ];
+    switch ($action) {
+      case 'create':
+        $request['route'] = 'http://panel.scs.local/api/v1/pow/new';
+        $params = json_encode([
+          "Slug" => $options['subdomain'],
+          "Flavor" => "Drupal 10",
+          "System" => [
+            "PHP" => "8.2",
+            "OpCacheDevelopment" => false,
+            "ContentSecurityPolicy" => "",
+          ],
+        ]);
+        $request['body'] = json_encode([
+          'call' => 'provision',
+          'params' => [$params],
+        ]);
+        break;
+      case 'delete':
+        $request['route'] = 'http://scs.local:3001/api/v1/pow/new';
+        $params = json_encode([
+          "Slug" => $options['subdomain'],
+        ]);
+        $request['body'] = json_encode([
+          'call' => 'purge',
+          'params' => [$params],
+        ]);
+        break;
+      case 'start':
+        $request['route'] = 'http://scs.local:3001/api/v1/pow/new';
+        $request['body']['call'] = 'start';
+        $request['body']['params'] = [
+          $options['subdomain'],
+        ];
+        break;
+      case 'stop':
+        $request['route'] = 'http://scs.local:3001/api/v1/pow/new';
+        $request['body']['call'] = 'stop';
+        $request['body']['params'] = [
+          $options['subdomain'],
+        ];
+        break;
+      case 'rebuild':
+        $request['route'] = 'http://scs.local:3001/api/v1/pow/new';
+        $request['body']['call'] = 'rebuild';
+        $request['body']['params'] = [
+          $options['subdomain'],
+          [
+            "PHP"=> "8.2",
+            "OpCacheDevelopment"=> false,
+            "ContentSecurityPolicy"=> "",
+          ],
+        ];
+        break;
+        case 'snapshot':
+          $request['route'] = 'http://scs.local:3001/api/v1/pow/new';
+          $request['body']['call'] = 'snapshot';
+          $request['body']['params'] = [
+            $options['subdomain'],
+          ];
+          break;
+      case 'update':
+        $request['route'] = 'http://scs.local:3001/api/v1/pow/new';
+        $request['body']['call'] = 'update';
+        $request['body']['params'] = [
+          $options['subdomain'],
+        ];
+        break;
+      case 'echo':
+        $request['route'] = 'http://panel.scs.local/api/v1/pow/new';
+        $request['body'] = json_encode([
+          "call" => "echo",
+          "params" => [
+            "message" => "Hello from Drupal",
+          ],
+        ]);
+        break;
+      case 'status':
+        $request['route'] = 'http://scs.local:3001/api/v1/pow/status/' . $options['serviceUuid'];
+        break;
+    }
+    return $request;
+  }
 
   /**
    * Builds the request for the Portainer service API.
    *
-   * @param array $options
-   *
    * @return array
    */
-  public function buildPortainerCreateRequest(array $options): array {
-    $url = $this->settings->get('wisski')['routes']['createUrl'];
+  public function buildPortainerRequest(array $options): array {
+    $baseRoute = "https://portainer.dena-dev.de/api/stacks/create/swarm/repository";
     $queryParams = [
-      'endpointId' => $this->settings->get('wisski')['portainerOptions']['endpoint'],
+      'endpointId' => '1',
     ];
-    $route = $url . '?' . http_build_query($queryParams);
+    $route = $baseRoute . '?' . http_build_query($queryParams);
     $env = [
       ["name" => "DB_DRIVER", "value" => "mysql"],
       ["name" => "DB_HOST", "value" => $this->settings->get()['dbHost']],
@@ -335,12 +426,12 @@ return ["message" => 'Request failed with exception.',
       ["name" => "SERVICE_NAME", "value" => $options['subdomain']],
       ["name" => "SITE_NAME", "value" => "Drupal"],
     ];
-    $request = [
+    $route = [
       'route' => $route,
       'headers' => [
         'Content-Type' => 'application/json',
         'Accept' => 'application/json',
-        'X-API-Key' => $this->settings->get('wisski')['portainerOptions']['authenticationToken'],
+        'X-API-Key' => $this->settings->get('wisski')['token'],
       ],
       'body' => json_encode([
         'composeFile' => 'drupal10.3-php8.2-apache-bookworm-vanilla/traefik/external_db/docker-compose.yml',
@@ -348,18 +439,11 @@ return ["message" => 'Request failed with exception.',
         'name' => $options['subdomain'],
         'repositoryAuthentication' => false,
         'repositoryURL' => 'https://github.com/rnsrk/scs-manager-stacks.git',
-        'swarmID' => $this->settings->get('wisski')['portainerOptions']['swarmId'],
+        'swarmID' => 'z2r6wmof2qjqsvrudexikxv51'
       ])
     ];
-    return $request;
+    return $route;
   }
 
-  function generateRandomPassword(): string {
-    $password = '';
-    while (strlen($password) < 32) {
-      $password .= base_convert(random_int(0, 35), 10, 36);
-    }
-    return substr($password, 0, 32);
-  }
 
 }

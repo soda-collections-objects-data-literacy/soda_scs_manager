@@ -114,8 +114,15 @@ class SodaScsComponentCreateForm extends ContentEntityForm {
     /** @var \Drupal\soda_scs_manager\Entity\SodaScsComponentBundle $bundle */
     $bundle = \Drupal::service('entity_type.manager')->getStorage('soda_scs_component_bundle')->load($this->entity->bundle());
 
+    // Create options array for the API call.
+    $options = [
+      'subdomain' => $entity->get('subdomain')->value,
+      'project' => 'my_project',
+    ];
+
     // Set the user, created/updated time, and label.
-    $entity->set('user', \Drupal::currentUser()->id());
+    $options['user'] =  \Drupal::currentUser()->id();
+    $entity->set('user', $options['user']);
 
     if ($entity->isNew()) {
       $entity->set('created', time());
@@ -123,13 +130,26 @@ class SodaScsComponentCreateForm extends ContentEntityForm {
       $entity->set('updated', time());
     }
 
-    $entity->set('label', $bundle->label());
+    $entity->set('label', $options['subdomain'] . '.' . $this->config('soda_scs_manager.settings')->get('scsHost'));
 
-    // Set the bundle information.
+    // Set the information coming from the bundle.
     $entity->set('description', $bundle->getDescription());
     $entity->set('imageUrl', $bundle->getImageUrl());
 
-    // Save the entity.
+    // Make request to component
+    $response = $this->sodaScsApiActions->crudComponent($this->entity->bundle(),'create', $options);
+
+    if ($response['success'] == 'false') {
+      $this->messenger()->addMessage($this->t('The @label component for @username could not be created. See logs for more details.', [
+        '@label' => $entity->label(),
+        '@username' => \Drupal::currentUser()->getDisplayName(),
+      ]), 'error');
+      return;
+    }
+
+    // Set the external ID.
+    $entity->set('externalId', $response['id']);
+
     $status = $entity->save();
 
     // Check if the entity was saved.
@@ -145,28 +165,15 @@ class SodaScsComponentCreateForm extends ContentEntityForm {
         '@username' => \Drupal::currentUser()->getDisplayName(),
       ]), 'error');
     }
+
     $options = [
         'user' => \Drupal::currentUser()->getDisplayName(),
         'subdomain' => $entity->get('subdomain')->value,
         'project' => 'my_project',
     ];
-    // Make request to component
-    $processUuid = $this->sodaScsApiActions->crudComponent($this->entity->bundle(),'create', $options);
 
-    // Prepare data for insertion into the soda_scs_manager__services table.
-    $fields = [
-      'component_id' => $entity->id(),
-      'service_uuid' => $processUuid,
-      'status' => 3, // ongoing
-    ];
-
-    // Insert data into the soda_scs_manager__services table.
-    $connection = Database::getConnection();
-    $connection->insert('soda_scs_manager__services')
-      ->fields($fields)
-      ->execute();
 
     // Redirect to the components page.
-    $form_state->setRedirect('soda_scs_manager.components');
+    $form_state->setRedirect('soda_scs_manager.desk');
   }
 }

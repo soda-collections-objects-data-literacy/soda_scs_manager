@@ -71,11 +71,11 @@ entity.soda_scs_component_bundle.delete_form:
   requirements:
     _access: 'TRUE'
 
-soda_scs_manager.bundles:
-  path: '/soda-scs-manager/component/bundles'
+soda_scs_manager.store:
+  path: '/soda-scs-manager/store'
   defaults:
-    _controller: '\Drupal\soda_scs_manager\Controller\SodaScsComponentBundleController::content'
-    _title: 'ScsComponent Bundles'
+    _controller: '\Drupal\soda_scs_manager\Controller\SodaScsManagerController::storePage'
+    _title: 'Store'
   requirements:
     _access: 'TRUE'
 
@@ -140,13 +140,21 @@ entity.soda_scs_component.collection:
 
 # Pages
 
-soda_scs_manager.components:
-  path: '/soda-scs-manager/components'
+soda_scs_manager.desk:
+  path: '/soda-scs-manager/desk'
   defaults:
-    _controller: '\Drupal\soda_scs_manager\Controller\SodaScsManagerController::componentsPage'
+    _controller: '\Drupal\soda_scs_manager\Controller\SodaScsManagerController::deskPage'
     _title:  'Components managing page'
   requirements:
     _access: 'TRUE'
+
+soda_scs_manager.service_link:
+  path: '/soda-scs-manager/service-link/{soda_scs_component}'
+  defaults:
+    _controller: '\Drupal\soda_scs_manager\Controller\SodaScsManagerServiceController::generateUrl'
+    _title: 'External service link'
+  requirements:
+    _permission: 'access content'
 
 soda_scs_manager.settings:
   path: '/admin/config/soda-scs-manager/settings'
