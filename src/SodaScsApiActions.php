@@ -140,8 +140,6 @@ class SodaScsApiActions {
       case 'wisski':
         $options['dbPassword'] = $this->generateRandomPassword();
         $result = $this->sodaScsDbActions->createDb($options['subdomain'], $options['user'], $options['dbPassword']);
-        #DELETELATER
-        $result['success'] = TRUE;
         if (!$result['success']) {
           break;
         }

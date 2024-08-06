@@ -194,8 +194,8 @@ class SodaScsDbActions {
    *  Success result.
    */
   public function createDb(string $dbName, string $dbUser, string $dbUserPassword): array {
-    $dbHost = $this->settings->get('db_host');
-    $dbRootPassword = $this->settings->get('db_root_password');
+    $dbHost = $this->settings->get('dbHost');
+    $dbRootPassword = $this->settings->get('dbRootPassword');
 
     // Check if the user exists
     $checkUserCommand = "mysql -h $dbHost -uroot -p$dbRootPassword -e 'SELECT EXISTS(SELECT 1 FROM mysql.user WHERE user = \"$dbUser\");'";

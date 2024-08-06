@@ -179,6 +179,7 @@ class SodaScsSettingsForm extends ConfigFormBase {
       ->set('scsHost', $form_state->getValue('scsHost'))
       ->set('dbHost', $form_state->getValue('dbHost'))
       ->set('dbPort', $form_state->getValue('dbPort'))
+      ->set('dbRootPassword', $form_state->getValue('dbRootPassword'))
       ->set('wisski', $form_state->getValue('wisski'))
       ->save();
     parent::submitForm($form, $form_state);
