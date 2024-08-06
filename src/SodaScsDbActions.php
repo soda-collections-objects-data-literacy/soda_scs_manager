@@ -199,9 +199,9 @@ class SodaScsDbActions {
 
     // Check if the user exists
     $checkUserCommand = "mysql -h $dbHost -uroot -p$dbRootPassword -e 'SELECT EXISTS(SELECT 1 FROM mysql.user WHERE user = \"$dbUser\");' 2>&1";
-    exec($checkUserCommand, $checkUserCommandOutput, $checkUserReturnVar);
+    $checkUserCommandResult = exec($checkUserCommand, $checkUserCommandOutput, $checkUserReturnVar);
 
-    if ($checkUserCommandOutput[1] === 0) {
+    if ($checkUserReturnVar != 0) {
       // Command failed
       $this->loggerFactory->get('soda_scs_manager')
         ->error('Failed to execute MySQL command to check if user exists. Are the database credentials correct and the select permissions available?');
@@ -213,12 +213,12 @@ class SodaScsDbActions {
       ];
     }
 
-    if ($checkUserCommandOutput[1] === 1) {
+    if ($checkUserCommandResult === 1) {
       // User does not exist, create the user and grant privileges
       $createUserCommand = "mysql -h $dbHost -uroot -p$dbRootPassword -e 'CREATE USER \"$dbUser\"@\"%\" IDENTIFIED BY \"$dbUserPassword\"; GRANT ALL PRIVILEGES ON $dbName.* TO \"$dbUser\"@\"%\"; FLUSH PRIVILEGES;' 2>&1";
-      exec($createUserCommand, $createUserCommandOutput, $createUserReturnVar);
+      $createUserCommandResult = exec($createUserCommand, $createUserCommandOutput, $createUserReturnVar);
 
-      if ($createUserCommandOutput === NULL) {
+      if ($createUserReturnVar != 0) {
         // Command failed
         $this->loggerFactory->get('soda_scs_manager')
           ->error('Failed to execute MySQL command to create user. Are the database credentials correct and the create permissions available?');
@@ -237,10 +237,21 @@ class SodaScsDbActions {
 
     // Check if the database was created
     $checkDbCommand = "mysql -h $dbHost -uroot -p$dbRootPassword -e 'SHOW DATABASES LIKE \"$dbName\";'";
-    $databaseCreated = shell_exec($checkDbCommand);
+    $databaseCreated = exec($checkDbCommand, $databaseExists, $checkDbReturnVar);
 
-    if (str_contains($databaseCreated, $dbName)) {
-      // Database was created successfully
+    if ($checkDbReturnVar != 0) {
+      // Command failed
+      $this->loggerFactory->get('soda_scs_manager')
+        ->error('Failed to execute MySQL command to check if database was created. Are the database credentials correct and the select permissions available?');
+      $this->messenger->addError($this->stringTranslation->translate('Failed to execute MySQL command to check if the database was created. See logs for more information.'));
+      return [
+        'message' => t('Could not check if database %s was created', ['@dbName' => $dbName]),
+        'error' => 'Failed to execute MySQL command to check if the database was created',
+        'success' => FALSE,
+      ];
+    }
+    if ($databaseCreated === $dbName) {
+      // Command succeeded
       return [
         'message' => t('Database %s for %s created successfully', [
           '@dbName' => $dbName,
@@ -249,17 +260,18 @@ class SodaScsDbActions {
         'error' => NULL,
         'success' => TRUE,
       ];
-    } else {
-      // Database creation failed
+    }
+    else {
+      // Command failed
       $this->loggerFactory->get('soda_scs_manager')
-        ->error('Failed to execute MySQL command to create database. Are the database credentials correct and the create permissions available?');
-      $this->messenger->addError($this->stringTranslation->translate('Failed to execute MySQL command to create the database. See logs for more information.'));
+        ->error('Database was not created. Are the database credentials correct and the create permissions available?');
+      $this->messenger->addError($this->stringTranslation->translate('Failed to create the database. See logs for more information.'));
       return [
-        'message' => t('Could not create database %s for %s', [
+        'message' => t('Database %s for %s was not created', [
           '@dbName' => $dbName,
           '@dbUser' => $dbUser,
         ]),
-        'error' => 'Failed to execute MySQL command to create the database',
+        'error' => 'Database was not created.',
         'success' => FALSE,
       ];
     }
