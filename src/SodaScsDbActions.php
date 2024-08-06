@@ -324,10 +324,10 @@ class SodaScsDbActions {
     $dbRootPassword = $this->settings->get('dbRootPassword');
 
     // Check if the user owns any databases
-    $checkUserDatabasesCommand = "mysql -h $dbHost -uroot -p$dbRootPassword -e 'SELECT SCHEMA_NAME FROM INFORMATION_SCHEMA.SCHEMATA WHERE SCHEMA_NAME IN (SELECT DISTINCT table_schema FROM information_schema.tables WHERE table_schema NOT IN (\"information_schema\", \"mysql\", \"performance_schema\", \"sys\") AND table_schema = \"$dbUser\");'";
-    $userDatabases = shell_exec($checkUserDatabasesCommand);
+    $checkUserDatabasesCommand = "mysql -h $dbHost -uroot -p$dbRootPassword -e 'SELECT SCHEMA_NAME FROM INFORMATION_SCHEMA.SCHEMATA WHERE SCHEMA_NAME IN (SELECT DISTINCT table_schema FROM information_schema.tables WHERE table_schema NOT IN (\"information_schema\", \"mysql\", \"performance_schema\", \"sys\") AND table_schema = \"$dbUser\");' 2>&1";
+    $userDatabases = exec($checkUserDatabasesCommand, $checkUserDatabasesOutput, $checkUserDatabasesReturnVar);
 
-    if ($userDatabases === NULL) {
+    if ($checkUserDatabasesReturnVar != 0) {
       // Command failed
       $this->loggerFactory->get('soda_scs_manager')
         ->error('Failed to execute MySQL command to check if user owns any databases. Are the database credentials correct and the select permissions set?');
@@ -339,10 +339,10 @@ class SodaScsDbActions {
       ];
     }
 
-    if (empty(trim($userDatabases))) {
+    if ($checkUserDatabasesOutput == 0) {
       // User does not own any databases, delete the user
       $deleteUserCommand = "mysql -h $dbHost -uroot -p$dbRootPassword -e 'DROP USER \"$dbUser\"@\"%\"; FLUSH PRIVILEGES;'";
-      $deleteUserResult = shell_exec($deleteUserCommand);
+      $deleteUserResult = exec($deleteUserCommand, $deleteUserOutput, $deleteUserReturnVar);
 
       if ($deleteUserResult === NULL) {
         // Command failed
