@@ -72,7 +72,7 @@ class SodaScsManagerServiceController extends ControllerBase {
   public function generateUrl($soda_scs_component): TrustedRedirectResponse {
     // Generate the URL based on the component ID.
     $entity = $this->entityTypeManager->getStorage('soda_scs_component')->load($soda_scs_component);
-    $host = $this->config('soda_scs_manager.settings')->get('scs_host');
+    $host = $this->config('soda_scs_manager.settings')->get('scsHost');
     $subdomain = $entity->get('subdomain')->value;
 
     // Generate the URL.
