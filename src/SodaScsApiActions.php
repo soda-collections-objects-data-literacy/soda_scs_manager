@@ -139,6 +139,7 @@ class SodaScsApiActions {
     switch ($bundle) {
       case 'wisski':
         $options['dbPassword'] = $this->generateRandomPassword();
+        $options['dbPassword'] = 'pass';
         $result = $this->sodaScsDbActions->createDb($options['subdomain'], $options['userName'], $options['dbPassword']);
         if (!$result['success']) {
           break;

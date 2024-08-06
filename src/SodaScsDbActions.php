@@ -213,7 +213,7 @@ class SodaScsDbActions {
       ];
     }
 
-    if ($checkUserCommandResult === 1) {
+    if ($checkUserCommandResult == 0) {
       // User does not exist, create the user and grant privileges
       $createUserCommand = "mysql -h $dbHost -uroot -p$dbRootPassword -e 'CREATE USER \"$dbUser\"@\"%\" IDENTIFIED BY \"$dbUserPassword\"; GRANT ALL PRIVILEGES ON $dbName.* TO \"$dbUser\"@\"%\"; FLUSH PRIVILEGES;' 2>&1";
       $createUserCommandResult = exec($createUserCommand, $createUserCommandOutput, $createUserReturnVar);
