@@ -365,7 +365,7 @@ class SodaScsApiActions {
           'env' => $env,
           'name' => $options['subdomain'],
           'repositoryAuthentication' => FALSE,
-          'repositoryURL' => 'https://github.com/rnsrk/scs-manager-stacks.git',
+          'repositoryURL' => 'https://github.com/rnsrk/soda_scs_manager_stacks.git',
           'swarmID' => $this->settings->get('wisski')['portainerOptions']['swarmId'],
         ]),
       ];
