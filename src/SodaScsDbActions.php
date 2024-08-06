@@ -217,6 +217,18 @@ class SodaScsDbActions {
       // User does not exist, create the user and grant privileges
       $createUserCommand = "mysql -h $dbHost -uroot -p$dbRootPassword -e 'CREATE USER \"$dbUser\"@\"%\" IDENTIFIED BY \"$dbUserPassword\"; GRANT ALL PRIVILEGES ON $dbName.* TO \"$dbUser\"@\"%\"; FLUSH PRIVILEGES;'";
       shell_exec($createUserCommand);
+
+      if ($userExists === NULL) {
+        // Command failed
+        $this->loggerFactory->get('soda_scs_manager')
+          ->error('Failed to execute MySQL command to create user. Are the database credentials correct and the create permissions available?');
+        $this->messenger->addError($this->stringTranslation->translate('Failed to execute MySQL command to create the user. See logs for more information.'));
+        return [
+          'message' => t('Could not create user %s', ['@dbUser' => $dbUser]),
+          'error' => 'Failed to execute MySQL command to create the user',
+          'success' => FALSE,
+        ];
+      }
     }
 
     // Create the database
