@@ -233,10 +233,24 @@ class SodaScsDbActions {
 
     // Create the database
     $createDbCommand = "mysql -h $dbHost -uroot -p$dbRootPassword -e 'CREATE DATABASE $dbName;'";
-    $databaseCreated = shell_exec($createDbCommand);
+    shell_exec($createDbCommand);
 
-    if ($databaseCreated === NULL) {
-      // Command failed
+    // Check if the database was created
+    $checkDbCommand = "mysql -h $dbHost -uroot -p$dbRootPassword -e 'SHOW DATABASES LIKE \"$dbName\";'";
+    $databaseCreated = shell_exec($checkDbCommand);
+
+    if (str_contains($databaseCreated, $dbName)) {
+      // Database was created successfully
+      return [
+        'message' => t('Database %s for %s created successfully', [
+          '@dbName' => $dbName,
+          '@dbUser' => $dbUser,
+        ]),
+        'error' => NULL,
+        'success' => TRUE,
+      ];
+    } else {
+      // Database creation failed
       $this->loggerFactory->get('soda_scs_manager')
         ->error('Failed to execute MySQL command to create database. Are the database credentials correct and the create permissions available?');
       $this->messenger->addError($this->stringTranslation->translate('Failed to execute MySQL command to create the database. See logs for more information.'));
@@ -247,17 +261,6 @@ class SodaScsDbActions {
         ]),
         'error' => 'Failed to execute MySQL command to create the database',
         'success' => FALSE,
-      ];
-    }
-    else {
-      // Command succeeded
-      return [
-        'message' => t('Database %s for %s created successfully', [
-          '@dbName' => $dbName,
-          '@dbUser' => $dbUser,
-        ]),
-        'error' => NULL,
-        'success' => TRUE,
       ];
     }
   }
