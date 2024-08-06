@@ -340,11 +340,11 @@ class SodaScsApiActions {
 
       $env = [
         ["name" => "DB_DRIVER", "value" => "mysql"],
-        ["name" => "DB_HOST", "value" => $this->settings->get()['dbHost']],
+        ["name" => "DB_HOST", "value" => $this->settings->get('dbHost')],
         ["name" => "DB_NAME", "value" => $options['subdomain']],
         ["name" => "DB_PASSWORD", "value" => $options['dbPassword']],
         ["name" => "DB_USER", "value" => $options['userName']],
-        ["name" => "DOMAIN", "value" => "dena-dev.de"],
+        ["name" => "DOMAIN", "value" => $this->settings->get('scsHost')],
         ["name" => "DRUPAL_USER", "value" => "admin"],
         ["name" => "DRUPAL_PASSWORD", "value" => "admin"],
         ["name" => "SERVICE_NAME", "value" => $options['subdomain']],
