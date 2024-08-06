@@ -198,10 +198,10 @@ class SodaScsDbActions {
     $dbRootPassword = $this->settings->get('dbRootPassword');
 
     // Check if the user exists
-    $checkUserCommand = "mysql -h $dbHost -uroot -p$dbRootPassword -e 'SELECT EXISTS(SELECT 1 FROM mysql.user WHERE user = \"$dbUser\");'";
-    $userExists = shell_exec($checkUserCommand);
+    $checkUserCommand = "mysql -h $dbHost -uroot -p$dbRootPassword -e 'SELECT EXISTS(SELECT 1 FROM mysql.user WHERE user = \"$dbUser\");' 2>&1";
+    exec($checkUserCommand, $checkUserCommandOutput, $checkUserReturnVar);
 
-    if ($userExists === NULL) {
+    if ($checkUserCommandOutput[1] === 0) {
       // Command failed
       $this->loggerFactory->get('soda_scs_manager')
         ->error('Failed to execute MySQL command to check if user exists. Are the database credentials correct and the select permissions available?');
@@ -213,12 +213,12 @@ class SodaScsDbActions {
       ];
     }
 
-    if (!str_contains($userExists, '1')) {
+    if ($checkUserCommandOutput[1] === 1) {
       // User does not exist, create the user and grant privileges
-      $createUserCommand = "mysql -h $dbHost -uroot -p$dbRootPassword -e 'CREATE USER \"$dbUser\"@\"%\" IDENTIFIED BY \"$dbUserPassword\"; GRANT ALL PRIVILEGES ON $dbName.* TO \"$dbUser\"@\"%\"; FLUSH PRIVILEGES;'";
-      shell_exec($createUserCommand);
+      $createUserCommand = "mysql -h $dbHost -uroot -p$dbRootPassword -e 'CREATE USER \"$dbUser\"@\"%\" IDENTIFIED BY \"$dbUserPassword\"; GRANT ALL PRIVILEGES ON $dbName.* TO \"$dbUser\"@\"%\"; FLUSH PRIVILEGES;' 2>&1";
+      exec($createUserCommand, $createUserCommandOutput, $createUserReturnVar);
 
-      if ($userExists === NULL) {
+      if ($createUserCommandOutput === NULL) {
         // Command failed
         $this->loggerFactory->get('soda_scs_manager')
           ->error('Failed to execute MySQL command to create user. Are the database credentials correct and the create permissions available?');
