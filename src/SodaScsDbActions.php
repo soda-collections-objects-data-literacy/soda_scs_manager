@@ -320,8 +320,8 @@ class SodaScsDbActions {
   }
 
   public function cleanDbUser(string $dbUser) {
-    $dbHost = $this->settings->get('db_host');
-    $dbRootPassword = $this->settings->get('db_root_password');
+    $dbHost = $this->settings->get('dbHost');
+    $dbRootPassword = $this->settings->get('dbRootPassword');
 
     // Check if the user owns any databases
     $checkUserDatabasesCommand = "mysql -h $dbHost -uroot -p$dbRootPassword -e 'SELECT SCHEMA_NAME FROM INFORMATION_SCHEMA.SCHEMATA WHERE SCHEMA_NAME IN (SELECT DISTINCT table_schema FROM information_schema.tables WHERE table_schema NOT IN (\"information_schema\", \"mysql\", \"performance_schema\", \"sys\") AND table_schema = \"$dbUser\");'";
