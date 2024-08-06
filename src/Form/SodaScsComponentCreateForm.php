@@ -118,7 +118,8 @@ class SodaScsComponentCreateForm extends ContentEntityForm {
     $options = [
       'subdomain' => $entity->get('subdomain')->value,
       'project' => 'my_project',
-      'user' => \Drupal::currentUser()->id(),
+      'userId' => $entity->getOwner()->id(),
+      'userName' => $entity->getOwner()->getAccountName(),
     ];
 
     $entity->set('user', $options['user']);
