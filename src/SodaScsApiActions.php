@@ -182,16 +182,22 @@ class SodaScsApiActions {
   public function deleteComponent($bundle, $options): array {
     switch ($bundle) {
       case 'wisski':
-        $deleteDatabaseResult = $this->sodaScsDbActions->deleteDb($options['subdomain'], $options['userName']);
-        if (!$deleteDatabaseResult['success']) {
-          return $deleteDatabaseResult;
+        $result = $this->sodaScsDbActions->deleteDb($options['subdomain'], $options['userName']);
+        if (!$result['success']) {
+          return $result;
         }
         break;
       default:
         $restMethod = 'GET';
+        $result = [
+          "message" => 'dummy',
+          "data" => [],
+          'success' => FALSE,
+          'error' => 'dummy'
+        ];
         break;
     }
-    return [];
+    return $result;
   }
 
   public function makeRequest($request): array {

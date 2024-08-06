@@ -293,8 +293,8 @@ class SodaScsDbActions {
    *  Success result.
    */
   public function deleteDb(string $dbName, string $dbUser): array {
-    $dbHost = $this->settings->get('db_host');
-    $dbRootPassword = $this->settings->get('db_root_password');
+    $dbHost = $this->settings->get('dbHost');
+    $dbRootPassword = $this->settings->get('dbRootPassword');
     // Delete the database
     $shellResult = shell_exec("mysql -h $dbHost -uroot -p$dbRootPassword -e 'DROP DATABASE $dbName; FLUSH PRIVILEGES;'");
 
