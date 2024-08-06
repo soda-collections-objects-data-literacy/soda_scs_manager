@@ -287,9 +287,9 @@ class SodaScsDbActions {
     $shellResult = shell_exec("mysql -h $dbHost -uroot -p$dbRootPassword -e 'DROP DATABASE $dbName; FLUSH PRIVILEGES;'");
 
     // Check if the database was created
-    $checkDbCommand = "mysql -h $dbHost -uroot -p$dbRootPassword -e 'SHOW DATABASES LIKE \"$dbName\";'";
-    $databaseExists = shell_exec($checkDbCommand);
-    if (str_contains($databaseExists, $dbName)) {
+    $checkDbCommand = "mysql -h $dbHost -uroot -p$dbRootPassword -e 'SHOW DATABASES LIKE \"$dbName\";' 2>&1";
+    exec($checkDbCommand, $databaseExists, $checkDbReturnVar);
+    if ($databaseExists[1] === $dbName) {
       // Command failed
       $this->loggerFactory->get('soda_scs_manager')
         ->error('Failed to execute MySQL command to delete database. Are the database credentials correct and the delete permissions set?');
