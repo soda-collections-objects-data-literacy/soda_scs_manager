@@ -337,7 +337,7 @@ class SodaScsApiActions {
         ["name" => "DB_HOST", "value" => $this->settings->get()['dbHost']],
         ["name" => "DB_NAME", "value" => $options['subdomain']],
         ["name" => "DB_PASSWORD", "value" => $options['dbPassword']],
-        ["name" => "DB_USER", "value" => $options['user']],
+        ["name" => "DB_USER", "value" => $options['userName']],
         ["name" => "DOMAIN", "value" => "dena-dev.de"],
         ["name" => "DRUPAL_USER", "value" => "admin"],
         ["name" => "DRUPAL_PASSWORD", "value" => "admin"],
