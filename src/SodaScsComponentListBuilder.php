@@ -40,7 +40,7 @@ class SodaScsComponentListBuilder extends EntityListBuilder {
 
     $row['type'] = $bundle;
     $row['subdomain'] = $entity->get('subdomain')->value;
-    $row['status'] =\Drupal::service('soda_scs_manager.api.actions')->crudComponent($entity->bundle(), $action, $options);
+    $row['status'] =\Drupal::service('soda_scs_manager.api.actions')->readComponent($entity->bundle(), $options);
     return $row + parent::buildRow($entity);
   }
 

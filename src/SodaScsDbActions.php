@@ -34,6 +34,7 @@ class SodaScsDbActions {
    * @var \Drupal\Core\Config\Config
    */
   protected Config $settings;
+
   /**
    * The string translation service.
    *
@@ -81,8 +82,10 @@ class SodaScsDbActions {
         ])
         ->execute();
       return TRUE;
-    } catch (\Exception $e) {
-      $this->loggerFactory->get('soda_scs_manager')->error('Failed to create service: ' . $e->getMessage());
+    }
+    catch (\Exception $e) {
+      $this->loggerFactory->get('soda_scs_manager')
+        ->error('Failed to create service: ' . $e->getMessage());
       $this->messenger->addError($this->stringTranslation->translate('Failed to create service.'));
       return FALSE;
     }
@@ -104,8 +107,10 @@ class SodaScsDbActions {
         ->condition($by, $id)
         ->execute();
       return $query->fetchAssoc();
-    } catch (\Exception $e) {
-      $this->loggerFactory->get('soda_scs_manager')->error('Failed to fetch service: ' . $e->getMessage());
+    }
+    catch (\Exception $e) {
+      $this->loggerFactory->get('soda_scs_manager')
+        ->error('Failed to fetch service: ' . $e->getMessage());
       $this->messenger->addError($this->stringTranslation->translate('Failed to fetch service.'));
       return FALSE;
     }
@@ -125,7 +130,7 @@ class SodaScsDbActions {
    * @return bool
    *   Success result.
    */
-  public function updateService(string $serviceUuid, string|NULL $description = NULL, int|NULL $status = NULL): bool {
+  public function updateService(string $serviceUuid, string|null $description = NULL, int|null $status = NULL): bool {
     if ($description === NULL && $status === NULL) {
       return FALSE;
     }
@@ -142,10 +147,12 @@ class SodaScsDbActions {
         ->condition('id', $serviceUuid)
         ->execute();
       return TRUE;
-    } catch (\Exception $e) {
-      $this->loggerFactory->get('soda_scs_manager')->error('Failed to update service: ' . $e->getMessage());
+    }
+    catch (\Exception $e) {
+      $this->loggerFactory->get('soda_scs_manager')
+        ->error('Failed to update service: ' . $e->getMessage());
       $this->messenger->addError($this->stringTranslation->translate('Failed to update service.'));
-      RETURN FALSE;
+      return FALSE;
     }
   }
 
@@ -164,8 +171,10 @@ class SodaScsDbActions {
         ->condition('id', $serviceUuid)
         ->execute();
       return TRUE;
-    } catch (\Exception $e) {
-      $this->loggerFactory->get('soda_scs_manager')->error('Failed to delete service: ' . $e->getMessage());
+    }
+    catch (\Exception $e) {
+      $this->loggerFactory->get('soda_scs_manager')
+        ->error('Failed to delete service: ' . $e->getMessage());
       $this->messenger->addError($this->stringTranslation->translate('Failed to delete service.'));
       return FALSE;
     }
@@ -187,22 +196,163 @@ class SodaScsDbActions {
   public function createDb(string $dbName, string $dbUser, string $dbUserPassword): array {
     $dbHost = $this->settings->get('db_host');
     $dbRootPassword = $this->settings->get('db_root_password');
-    try {
-      // Create the database
-      $shellResult = shell_exec("mysql -h $dbHost -uroot -p$dbRootPassword -e 'CREATE DATABASE $dbName; CREATE USER \"$dbUser\"@\"%\" IDENTIFIED BY \"$dbUserPassword\"; GRANT ALL PRIVILEGES ON $dbName.* TO \"$dbUser\"@\"%\"; FLUSH PRIVILEGES;'");
 
+    // Check if the user exists
+    $checkUserCommand = "mysql -h $dbHost -uroot -p$dbRootPassword -e 'SELECT EXISTS(SELECT 1 FROM mysql.user WHERE user = \"$dbUser\");'";
+    $userExists = shell_exec($checkUserCommand);
+
+    if ($userExists === NULL) {
+      // Command failed
+      $this->loggerFactory->get('soda_scs_manager')
+        ->error('Failed to execute MySQL command to check if user exists. Are the database credentials correct and the select permissions available?');
+      $this->messenger->addError($this->stringTranslation->translate('Failed to execute MySQL command to check if the user exists. See logs for more information.'));
       return [
-        'shellResult' => $shellResult,
-        'error' => NULL,
-        'success' => TRUE
+        'message' => t('Could not check if user %s exists', ['@dbUser' => $dbUser]),
+        'error' => 'Failed to execute MySQL command to check if the user exists',
+        'success' => FALSE,
       ];
-    } catch (\Exception $e) {
-      $this->loggerFactory->get('soda_scs_manager')->error('Failed to create database: ' . $e->getMessage());
-      $this->messenger->addError($this->stringTranslation->translate('Failed to create database.'));
+    }
+
+    if (!str_contains($userExists, '1')) {
+      // User does not exist, create the user and grant privileges
+      $createUserCommand = "mysql -h $dbHost -uroot -p$dbRootPassword -e 'CREATE USER \"$dbUser\"@\"%\" IDENTIFIED BY \"$dbUserPassword\"; GRANT ALL PRIVILEGES ON $dbName.* TO \"$dbUser\"@\"%\"; FLUSH PRIVILEGES;'";
+      shell_exec($createUserCommand);
+    }
+
+    // Create the database
+    $createDbCommand = "mysql -h $dbHost -uroot -p$dbRootPassword -e 'CREATE DATABASE $dbName;'";
+    $databaseCreated = shell_exec($createDbCommand);
+
+    if ($databaseCreated === NULL) {
+      // Command failed
+      $this->loggerFactory->get('soda_scs_manager')
+        ->error('Failed to execute MySQL command to create database. Are the database credentials correct and the create permissions available?');
+      $this->messenger->addError($this->stringTranslation->translate('Failed to execute MySQL command to create the database. See logs for more information.'));
       return [
-        'shellResult' => NULL,
-        'error' => $e->getMessage(),
-        'success' => FALSE];
+        'message' => t('Could not create database %s for %s', [
+          '@dbName' => $dbName,
+          '@dbUser' => $dbUser,
+        ]),
+        'error' => 'Failed to execute MySQL command to create the database',
+        'success' => FALSE,
+      ];
+    }
+    else {
+      // Command succeeded
+      return [
+        'message' => t('Database %s for %s created successfully', [
+          '@dbName' => $dbName,
+          '@dbUser' => $dbUser,
+        ]),
+        'error' => NULL,
+        'success' => TRUE,
+      ];
     }
   }
+
+  public function readDb() {}
+
+  public function updateDb() {}
+
+  /**
+   * Deletes a database.
+   *
+   * @param string $dbName
+   *   The name of the database.
+   * @param string $dbUser
+   *   The name of the database user.
+   *
+   * @return array
+   *  Success result.
+   */
+  public function deleteDb(string $dbName, string $dbUser): array {
+    $dbHost = $this->settings->get('db_host');
+    $dbRootPassword = $this->settings->get('db_root_password');
+    // Delete the database
+    $shellResult = shell_exec("mysql -h $dbHost -uroot -p$dbRootPassword -e 'DROP DATABASE $dbName; FLUSH PRIVILEGES;'");
+    if ($shellResult === NULL) {
+      // Command failed
+      $this->loggerFactory->get('soda_scs_manager')
+        ->error('Failed to execute MySQL command to delete database. Are the database credentials correct and the delete permissions set?');
+      $this->messenger->addError($this->stringTranslation->translate('Failed to execute MySQL command to delete the database. See logs for more information.'));
+      return [
+        'message' => t('Could not delete database %s for %s', [
+          '@dbName' => $dbName,
+          '@dbUser' => $dbUser,
+        ]),
+        'error' => 'Failed to execute MySQL command to delete the database',
+        'success' => FALSE,
+      ];
+    }
+    else {
+      // Check if the user owns any databases
+      $cleanUserResult = $this->cleanDbUser($dbUser);
+      // Command succeeded
+      return [
+        'message' => t('Database %s for %s deleted successfully. %s', [
+          '@dbName' => $dbName,
+          '@dbUser' => $dbUser,
+          '@cleanUserResult' => $cleanUserResult['message'],
+        ]),
+        'error' => NULL,
+        'success' => TRUE,
+      ];
+    }
+  }
+
+  public function cleanDbUser(string $dbUser) {
+    $dbHost = $this->settings->get('db_host');
+    $dbRootPassword = $this->settings->get('db_root_password');
+
+    // Check if the user owns any databases
+    $checkUserDatabasesCommand = "mysql -h $dbHost -uroot -p$dbRootPassword -e 'SELECT SCHEMA_NAME FROM INFORMATION_SCHEMA.SCHEMATA WHERE SCHEMA_NAME IN (SELECT DISTINCT table_schema FROM information_schema.tables WHERE table_schema NOT IN (\"information_schema\", \"mysql\", \"performance_schema\", \"sys\") AND table_schema = \"$dbUser\");'";
+    $userDatabases = shell_exec($checkUserDatabasesCommand);
+
+    if ($userDatabases === NULL) {
+      // Command failed
+      $this->loggerFactory->get('soda_scs_manager')
+        ->error('Failed to execute MySQL command to check if user owns any databases. Are the database credentials correct and the select permissions set?');
+      $this->messenger->addError($this->stringTranslation->translate('Failed to execute MySQL command to check if the user owns any databases. See logs for more information.'));
+      return [
+        'message' => t('Could not check if user %s owns any databases', ['@dbUser' => $dbUser]),
+        'error' => 'Failed to execute MySQL command to check if the user owns any databases',
+        'success' => FALSE,
+      ];
+    }
+
+    if (empty(trim($userDatabases))) {
+      // User does not own any databases, delete the user
+      $deleteUserCommand = "mysql -h $dbHost -uroot -p$dbRootPassword -e 'DROP USER \"$dbUser\"@\"%\"; FLUSH PRIVILEGES;'";
+      $deleteUserResult = shell_exec($deleteUserCommand);
+
+      if ($deleteUserResult === NULL) {
+        // Command failed
+        $this->loggerFactory->get('soda_scs_manager')
+          ->error('Failed to execute MySQL command to delete user. Are the database credentials correct and the delete permissions set?');
+        $this->messenger->addError($this->stringTranslation->translate('Failed to execute MySQL command to delete the user. See logs for more information.'));
+        return [
+          'message' => t('Could not delete user %s. See logs for more.', ['@dbUser' => $dbUser]),
+          'error' => 'Failed to execute MySQL command to delete the user',
+          'success' => FALSE,
+        ];
+      }
+      else {
+        // Command succeeded
+        return [
+          'message' => t('User %s has no databases left and was deleted.', ['@dbUser' => $dbUser]),
+          'error' => NULL,
+          'success' => TRUE,
+        ];
+      }
+    }
+    else {
+      // User owns databases, do not delete
+      return [
+        'message' => t('User %s owns databases and will not be deleted', ['@dbUser' => $dbUser]),
+        'error' => NULL,
+        'success' => TRUE,
+      ];
+    }
+  }
+
 }

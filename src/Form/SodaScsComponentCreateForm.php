@@ -118,10 +118,9 @@ class SodaScsComponentCreateForm extends ContentEntityForm {
     $options = [
       'subdomain' => $entity->get('subdomain')->value,
       'project' => 'my_project',
+      'user' => \Drupal::currentUser()->id(),
     ];
 
-    // Set the user, created/updated time, and label.
-    $options['user'] =  \Drupal::currentUser()->id();
     $entity->set('user', $options['user']);
 
     if ($entity->isNew()) {
@@ -137,9 +136,9 @@ class SodaScsComponentCreateForm extends ContentEntityForm {
     $entity->set('imageUrl', $bundle->getImageUrl());
 
     // Make request to component
-    $response = $this->sodaScsApiActions->crudComponent($this->entity->bundle(),'create', $options);
+    $createComponentResult = $this->sodaScsApiActions->createComponent($this->entity->bundle(), $options);
 
-    if ($response['success'] == 'false') {
+    if (!$createComponentResult['success']) {
       $this->messenger()->addMessage($this->t('The @label component for @username could not be created. See logs for more details.', [
         '@label' => $entity->label(),
         '@username' => \Drupal::currentUser()->getDisplayName(),
@@ -148,7 +147,7 @@ class SodaScsComponentCreateForm extends ContentEntityForm {
     }
 
     // Set the external ID.
-    $entity->set('externalId', $response['id']);
+    $entity->set('externalId', $createComponentResult['data']['id']);
 
     $status = $entity->save();
 

@@ -82,16 +82,25 @@ class SodaScsComponentDeleteForm extends ContentEntityDeleteForm {
     $entity = $this->entity;
     $bundle = $entity->bundle();
     $options = [
-      'user' => $entity->get('user')->value,
+      'userId' => $entity->getOwner()->id(),
+      'userName' => $entity->getOwner()->getAccountName(),
       'subdomain' => $entity->get('subdomain')->value,
       'externalId' => $entity->get('externalId')->value,
     ];
-    $this->sodaScsApiActions->crudComponent($bundle,'delete', $options);
+    $deleteComponentResult = $this->sodaScsApiActions->deleteComponent($bundle, $options);
+
+    if (!$deleteComponentResult['success']) {
+      \Drupal::messenger()->addError($this->t('Failed to delete component @label. See logs for more information.', ['@label' => $this->entity->label()]));
+      #UNCOMMENT_LATERreturn;
+    }
     // Call the parent submit handler to delete the entity.
     parent::submitForm($form, $form_state);
 
     // Add custom logic after deletion.
     \Drupal::messenger()->addMessage($this->t('Component @label has been deleted.', ['@label' => $this->entity->label()]));
+
+    // Redirect to the desk.
+    $form_state->setRedirect('soda_scs_manager.desk');
   }
 
 }
