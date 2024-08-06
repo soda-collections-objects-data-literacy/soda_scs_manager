@@ -110,6 +110,7 @@ class SodaScsComponentCreateForm extends ContentEntityForm {
   public function save(array $form, FormStateInterface $form_state): void {
 
     // Get the entity and bundle.
+    /** @var \Drupal\soda_scs_manager\Entity\SodaScsComponent $entity */
     $entity = $this->entity;
     /** @var \Drupal\soda_scs_manager\Entity\SodaScsComponentBundle $bundle */
     $bundle = \Drupal::service('entity_type.manager')->getStorage('soda_scs_component_bundle')->load($this->entity->bundle());
@@ -118,11 +119,11 @@ class SodaScsComponentCreateForm extends ContentEntityForm {
     $options = [
       'subdomain' => $entity->get('subdomain')->value,
       'project' => 'my_project',
-      'userId' => $entity->getOwner()->id(),
-      'userName' => $entity->getOwner()->getAccountName(),
+      'userId' => \Drupal::currentUser()->id(),
+      'userName' => \Drupal::currentUser()->getDisplayName(),
     ];
 
-    $entity->set('user', $options['user']);
+    $entity->set('user', $options['userId']);
 
     if ($entity->isNew()) {
       $entity->set('created', time());
