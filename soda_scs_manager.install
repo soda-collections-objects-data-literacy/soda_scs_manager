@@ -2,7 +2,6 @@
 
 use Drupal\Core\File\FileSystemInterface;
 
-
 /**
  * Implements hook_schema().
  */
@@ -32,6 +31,64 @@ function soda_scs_manager_schema() {
     'primary key' => ['component_id'],
   ];
 
+  $schema['soda_scs_manager__service_user_data'] = [
+    'description' => 'Table for SODa SCS service users management.',
+    'fields' => [
+      'id' => [
+        'description' => 'The primary key.',
+        'type' => 'serial',
+        'not null' => TRUE,
+      ],
+      'scs_user_id' => [
+        'description' => 'The user ID.',
+        'type' => 'int',
+        'size' => 'tiny',
+        'not null' => TRUE,
+      ],
+      'stack_host' => [
+        'description' => 'The host name.',
+        'type' => 'varchar',
+        'length' => 255,
+      ],
+      'stack_id' => [
+        'description' => 'The bundle name.',
+        'type' => 'varchar',
+        'length' => 255,
+      ],
+      'service_name' => [
+        'description' => 'The service name.',
+        'type' => 'varchar',
+        'length' => 255,
+        'not null' => TRUE,
+      ],
+      'service_entity_type' => [
+        'description' => 'The entity type.',
+        'type' => 'varchar',
+        'length' => 255,
+        'not null' => TRUE,
+      ],
+      'service_entity_name' => [
+        'description' => 'The entity name.',
+        'type' => 'varchar',
+        'length' => 255,
+        'not null' => TRUE,
+      ],
+      'service_user_name' => [
+        'description' => 'The service user name.',
+        'type' => 'varchar',
+        'length' => 255,
+        'not null' => TRUE,
+      ],
+      'service_user_password' => [
+        'description' => 'The service password.',
+        'type' => 'varchar',
+        'length' => 255,
+        'not null' => TRUE,
+      ],
+    ],
+    'primary key' => ['id'],
+  ];
+
   return $schema;
 }
 
@@ -39,7 +96,8 @@ function soda_scs_manager_schema() {
  * Implements hook_install().
  */
 function soda_scs_manager_install() {
-  $source_directory = \Drupal::service('extension.list.module')->getPath('soda_scs_manager') . '/assets/images';
+  $source_directory = \Drupal::service('extension.list.module')
+      ->getPath('soda_scs_manager') . '/assets/images';
   $destination_directory = 'public://soda_scs_manager/bundle_images';
 
   $file_system = \Drupal::service('file_system');

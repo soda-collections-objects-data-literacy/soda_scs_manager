@@ -137,11 +137,11 @@ class SodaScsComponentCreateForm extends ContentEntityForm {
     $entity->set('description', $bundle->getDescription());
     $entity->set('imageUrl', $bundle->getImageUrl());
 
-    // Make request to component
-    $createComponentResult = $this->sodaScsApiActions->createComponent($this->entity->bundle(), $options);
+    // Create external stack
+    $createComponentResult = $this->sodaScsApiActions->createStack($this->entity->bundle(), $options);
 
     if (!$createComponentResult['success']) {
-      $this->messenger()->addMessage($this->t('The @label component for @username could not be created. See logs for more details.', [
+      $this->messenger()->addMessage($this->t("Cannot create component \"@label\". See logs for more details.", [
         '@label' => $entity->label(),
         '@username' => \Drupal::currentUser()->getDisplayName(),
       ]), 'error');
@@ -149,7 +149,7 @@ class SodaScsComponentCreateForm extends ContentEntityForm {
     }
 
     // Set the external ID.
-    $entity->set('externalId', $createComponentResult['data']['id']);
+    $entity->set('externalId', $createComponentResult['data']['portainerResponse']['data']['Id']);
 
     $status = $entity->save();
 

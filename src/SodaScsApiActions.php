@@ -2,6 +2,8 @@
 
 namespace Drupal\soda_scs_manager;
 
+use Drupal\soda_scs_manager\Exception\SodaScsDatabaseException;
+use Drupal\soda_scs_manager\Exception\SodaScsRequestException;
 use GuzzleHttp\Exception\GuzzleException;
 use Symfony\Component\HttpFoundation\RequestStack;
 use Drupal\Core\Config\Config;
@@ -12,10 +14,11 @@ use Drupal\Core\Language\LanguageManagerInterface;
 use Drupal\Core\Logger\LoggerChannelFactoryInterface;
 use Drupal\Core\Mail\MailManagerInterface;
 use Drupal\Core\Messenger\MessengerInterface;
-use Drupal\soda_scs_manager\SodaScsDbActions;
 use Drupal\Core\StringTranslation\TranslationInterface;
 use Drupal\Core\Template\TwigEnvironment;
+use Drupal\Core\TypedData\Exception\MissingDataException;
 use GuzzleHttp\ClientInterface;
+
 
 /**
  * Handles the communication with the SCS user manager daemon.
@@ -135,27 +138,86 @@ class SodaScsApiActions {
     $this->twig = $twig;
   }
 
-  public function createComponent($bundle, $options): array {
+  /**
+   * Creates a component.
+   *
+   * @param string $bundle
+   *   The bundle of the component.
+   * @param array $options
+   *   The options for the component.
+   *
+   * @return array
+   *   The result of the request.
+   *
+   */
+  public function createStack(string $bundle, array $options): array {
     switch ($bundle) {
       case 'wisski':
-        $options['dbPassword'] = $this->generateRandomPassword();
-        $options['dbPassword'] = 'pass';
-        $result = $this->sodaScsDbActions->createDb($options['subdomain'], $options['userName'], $options['dbPassword']);
-        if (!$result['success']) {
-          break;
-        }
-        $result = $this->buildPortainerCreateRequest($options);
-        if (!$result['success']) {
-          break;
-        }
-        $result = $this->makeRequest($result);
-        if (!$result['success']) {
-          break;
-        }
-        break;
-      default:
+          try {
+            $createDbResult = $this->sodaScsDbActions->createDb($options['subdomain'], $options['userId']);
+          } catch (MissingDataException $e) {
+            $this->loggerFactory->get('soda_scs_manager')
+              ->error("Cannot create database. @error", [
+                '@error' => $e->getMessage(),
+              ]);
+            $this->messenger->addError(t("Cannot create database. See logs for more details."));
+            return [
+              'message' => 'Cannot create database.',
+              'data' => [
+                'createDbResult' => NULL,
+                'portainerResponse' => NULL,
+              ],
+              'success' => FALSE,
+              'error' => $e->getMessage(),
+            ];
+          }
+          try {
+            $portainerCreateRequest = $this->buildPortainerCreateRequest($options);
+            $portainerResponse = $this->makeRequest($portainerCreateRequest);
+          } catch (MissingDataException $e) {
+            $this->loggerFactory->get('soda_scs_manager')
+              ->error("Cannot assemble Request: @error", [
+                '@error' => $e->getMessage(),
+              ]);
+            $this->messenger->addError(t("Cannot assemble request. See logs for more details."));
+            return [
+              'message' => 'Cannot assemble Request.',
+              'data' => [
+                'createDbResult' => $createDbResult,
+                'portainerResponse' => NULL,
+              ],
+              'success' => FALSE,
+              'error' => $e->getMessage(),
+            ];
+          } catch (SodaScsRequestException $e) {
+            $this->loggerFactory->get('soda_scs_manager')
+              ->error("Request response with error: @error", [
+                '@error' => $e->getMessage(),
+              ]);
+            $this->messenger->addError(t("Request error. See logs for more details."));
+            return [
+              'message' => 'Request failed with exception: ' . $e->getMessage(),
+              'data' => [
+                'createDbResult' => $createDbResult,
+                'portainerResponse' => NULL,
+              ],
+              'success' => FALSE,
+              'error' => $e->getMessage(),
+            ];
+          }
+          return [
+            'message' => 'Component created',
+            'data' => [
+              'createDbResult' => $createDbResult,
+              'portainerResponse' => $portainerResponse,
+            ],
+            'success' => TRUE,
+            'error' => NULL,
+          ];
+
+        default:
         $restMethod = 'GET';
-        return [
+        $result = [
           "message" => 'dummy',
           "data" => [],
           'success' => FALSE,
@@ -166,7 +228,7 @@ class SodaScsApiActions {
     return $result;
   }
 
-  public function readComponent() {
+  public function readStack() {
     return  [
       'message' => 'Component read',
       'data' => [],
@@ -176,11 +238,11 @@ class SodaScsApiActions {
 
   }
 
-  public function updateComponent() {
+  public function updateStack() {
 
   }
 
-  public function deleteComponent($bundle, $options): array {
+  public function deleteStack($bundle, $options): array {
     switch ($bundle) {
       case 'wisski':
         $result = $this->sodaScsDbActions->deleteDb($options['subdomain'], $options['userName']);
@@ -201,6 +263,12 @@ class SodaScsApiActions {
     return $result;
   }
 
+  /**
+   * @param $request
+   *
+   * @return array
+   * @throws SodaScsRequestException
+   */
   public function makeRequest($request): array {
     try {
       // Send the GET request using the `drupal_http_request()` function.
@@ -220,18 +288,6 @@ class SodaScsApiActions {
           'error' => NULL,
           ];
       }
-      if ($response->getStatusCode() == 404) {
-        // Request successful, handle the data in $response->data.
-        $resultArray = json_decode($response->getBody()->getContents(), TRUE);
-        $this->messenger
-          ->addError($this->stringTranslation->translate('@message', ['@message' => $resultArray['message']]));
-        return [
-          'message' => 'Request failed with code: ' . $response->getStatusCode(),
-          'data' => $resultArray,
-          'success' => TRUE,
-          'error' => NULL,
-          ];
-      }
       else {
         // Request failed, handle the error.
         return [
@@ -244,21 +300,10 @@ class SodaScsApiActions {
     }
     catch (GuzzleException $e) {
       // Request failed, handle the error.
-      $this->loggerFactory
-        ->get('soda_scs_manager')
-        ->error('Request failed with exception: ' . $e->getMessage());
-      $this->messenger
-        ->addError($this->stringTranslation->translate('Can not communicate with the SCS user manager daemon. Try again later or contact @email.',
-          [
-            '@email'
-            => $this->ADMIN_EMAIL,
-          ]));
-      return [
-        "message" => 'Request failed with exception.',
-        "data" => [],
-        'success' => FALSE,
-        'error' => $e->getMessage(),
-      ];
+      throw new SodaScsRequestException(t('Request to container manager failed with code @code: @error', [
+        '@code' => $e->getCode(),
+        '@error' => htmlspecialchars($e->getMessage(), ENT_QUOTES, 'UTF-8')
+      ]), 0, $e);
     }
   }
 
@@ -322,19 +367,20 @@ class SodaScsApiActions {
    * @param array $options
    *
    * @return array
+   *
+   * @throws \Drupal\Core\TypedData\Exception\MissingDataException
    */
   public function buildPortainerCreateRequest(array $options): array {
-    try {
       $url = $this->settings->get('wisski')['routes']['createUrl'];
       if (empty($url)) {
-        throw new \Exception('Create URL setting is not set.');
+        throw new MissingDataException('Create URL setting is not set.');
       }
 
       $queryParams = [
         'endpointId' => $this->settings->get('wisski')['portainerOptions']['endpoint'],
       ];
       if (empty($queryParams['endpointId'])) {
-        throw new \Exception('Endpoint ID setting is not set.');
+        throw new MissingDataException('Endpoint ID setting is not set.');
       }
 
       $route = $url . '?' . http_build_query($queryParams);
@@ -354,10 +400,9 @@ class SodaScsApiActions {
 
       foreach ($env as $variable) {
         if (empty($variable['value'])) {
-          throw new \Exception($variable['name'] . ' setting is not set.');
+          throw new MissingDataException($variable['name'] . ' setting is not set.');
         }
       }
-
       return [
         'success' => TRUE,
         'method' => 'POST',
@@ -376,22 +421,5 @@ class SodaScsApiActions {
           'swarmID' => $this->settings->get('wisski')['portainerOptions']['swarmId'],
         ]),
       ];
-    } catch (\Exception $exception) {
-      $this->loggerFactory
-        ->get('soda_scs_manager')
-        ->error('Could not construct portainer request: ' . $exception->getMessage());
-      $this->messenger
-        ->addError($this->stringTranslation->translate('Could not construct portainer request. See logs for more.'));
-    }
-    return ['success'  => FALSE];
   }
-
-  function generateRandomPassword(): string {
-    $password = '';
-    while (strlen($password) < 32) {
-      $password .= base_convert(random_int(0, 35), 10, 36);
-    }
-    return substr($password, 0, 32);
-  }
-
 }
