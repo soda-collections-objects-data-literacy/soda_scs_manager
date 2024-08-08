@@ -385,6 +385,18 @@ class SodaScsApiActions {
 
       $route = $url . '?' . http_build_query($queryParams);
 
+      $conditions = [
+        'scs_user_id' => $options['userId'],
+        'service_name' => 'mariadb',
+        'service_entity_type' => 'database',
+        'service_entity_name' => $options['subdomain'],
+        'service_username' => $options['userName'],
+      ];
+
+      $serviceData = $this->sodaScsDbActions->queryServiceData($conditions);
+
+      $options['dbPassword'] = $serviceData['result']['service_user_password'];
+
       $env = [
         ["name" => "DB_DRIVER", "value" => "mysql"],
         ["name" => "DB_HOST", "value" => $this->settings->get('dbHost')],
