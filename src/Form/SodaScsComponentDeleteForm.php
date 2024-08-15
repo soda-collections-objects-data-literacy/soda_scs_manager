@@ -12,6 +12,7 @@ use Drupal\Core\Entity\ContentEntityDeleteForm;
 use Drupal\Core\Form\FormStateInterface;
 use Drupal\soda_scs_manager\SodaScsApiActions;
 use Drupal\Core\Entity\EntityTypeManagerInterface;
+use Drush\Drush;
 
 /**
  * Provides a form for deleting Soda SCS Component entities.
@@ -81,23 +82,27 @@ class SodaScsComponentDeleteForm extends ContentEntityDeleteForm {
     /** @var \Drupal\soda_scs_manager\Entity\SodaScsComponent $entity */
     $entity = $this->entity;
     $bundle = $entity->bundle();
+    
+    $serviceKeyId = $entity->get('serviceKey')->target_id;
+    /** @var \Drupal\soda_scs_manager\Entity\SodaScsServiceKey $serviceKey */
+    $serviceKey = \Drupal::entityTypeManager()->getStorage('soda_scs_service_key')->load($serviceKeyId);
+    $servicePassword = $serviceKey->get('servicePassword')->value;
     $options = [
       'userId' => $entity->getOwner()->id(),
       'userName' => $entity->getOwner()->getAccountName(),
       'subdomain' => $entity->get('subdomain')->value,
       'externalId' => $entity->get('externalId')->value,
+      'servicePassword' => $servicePassword,
     ];
+    // Delete the whole stack with database
     $deleteComponentResult = $this->sodaScsApiActions->deleteStack($bundle, $options);
 
     if (!$deleteComponentResult['success']) {
       \Drupal::messenger()->addError($this->t('Failed to delete component @label. See logs for more information.', ['@label' => $this->entity->label()]));
-      #UNCOMMENT_LATERreturn;
+      return;
     }
     // Call the parent submit handler to delete the entity.
     parent::submitForm($form, $form_state);
-
-    // Add custom logic after deletion.
-    \Drupal::messenger()->addMessage($this->t('Component @label has been deleted.', ['@label' => $this->entity->label()]));
 
     // Redirect to the desk.
     $form_state->setRedirect('soda_scs_manager.desk');

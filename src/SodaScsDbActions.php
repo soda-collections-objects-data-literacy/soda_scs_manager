@@ -50,7 +50,7 @@ class SodaScsDbActions {
    */
   protected MessengerInterface $messenger;
 
-  public function __construct(ConfigFactoryInterface $configFactory, Connection $database, LoggerChannelFactoryInterface $loggerFactory, MessengerInterface $messenger, TranslationInterface $stringTranslation,) {
+  public function __construct(ConfigFactoryInterface $configFactory, Connection $database, LoggerChannelFactoryInterface $loggerFactory, MessengerInterface $messenger, TranslationInterface $stringTranslation) {
     $this->settings = $configFactory
       ->getEditable('soda_scs_manager.settings');
     $this->database = $database;
@@ -72,7 +72,7 @@ class SodaScsDbActions {
    *
    * @throws MissingDataException
    */
-  public function createDb(string $dbName, int $dbUserId): array {
+  public function createDb(string $dbName, int $dbUserId, string $dbUserPassword): array {
     // All settings available?
 
     // Username.
@@ -102,9 +102,9 @@ class SodaScsDbActions {
 
     if ($checkDbExistsResult['result']) {
       // Database already exists
-      $this->messenger->addError(t('Database already exists. See logs for more details.'));
+      $this->messenger->addError($this->stringTranslation->translate('Database already exists. See logs for more details.'));
       return [
-        'message' => t("Database \"@dbName\" already exists. Pick another name.", ['@dbName' => $dbName]),
+        'message' => $this->stringTranslation->translate("Database \"@dbName\" already exists. Pick another name.", ['@dbName' => $dbName]),
         'data' => [],
         'error' => NULL,
         'success' => FALSE,
@@ -119,12 +119,9 @@ class SodaScsDbActions {
       return $this->handleCommandFailure($checkDbUserExistsResult, 'check if user', $dbUserName);
     }
 
-
-
     if ($checkDbUserExistsResult['result'] == 0) {
       // Database user does not exist
       // Create the database user
-      $dbUserPassword = $this->generateRandomPassword();
       $createDbUserResult = $this->createDbUser($dbUserName, $dbUserPassword);
 
       // Command failed
@@ -132,63 +129,7 @@ class SodaScsDbActions {
         return $this->handleCommandFailure($createDbUserResult, 'create user', $dbUserName);
       }
 
-    } else {
-      // Database user does exist
-      // Check if current user is the same user for the database service
-      $conditions = [
-        'scs_user_id' => $dbUserId,
-        'stack_host' => $dbHost,
-        'service_name' => 'mariadb',
-        'service_entity_type' => 'database',
-        'service_entity_name' => $dbName,
-      ];
-      $serviceData = $this->queryServiceData($conditions);
-
-      // Command failed
-      if ($serviceData['execStatus'] != 0) {
-        return $this->handleCommandFailure($serviceData, 'query service data for', implode(', ', $conditions));
-      }
-
-      if (isset($serviceData['service_username']) && $serviceData['service_username'] != $dbUserName) {
-        // User is not the same as the service user
-        $this->messenger->addError(t('Scs user is not the same as the service user. See logs for more details.'));
-        $this->loggerFactory->get('soda_scs_manager')
-          ->error(t("User \"@currentUser\" is not the same as the service user \"serviceUser\". Cannot grant privileges."), [
-            '@currentUser' => $dbUserName,
-            '@serviceUser' => $serviceData['service_username'],
-          ]);
-        return [
-          'message' => t("User is not the same as the service user. Cannot create database or grant privileges."),
-          'data' => [],
-          'error' => NULL,
-          'success' => FALSE,
-        ];
-      }
-
-      // Get password for SCS service user
-      $conditions = [
-        'scs_user_id' => $dbUserId,
-        'stack_host' => $dbHost,
-        'service_name' => 'mariadb',
-        'service_entity_type' => 'database',
-      ];
-      $serviceData = $this->queryServiceData($conditions);
-      $dbUserPassword = $serviceData['result']['service_user_password'];
     }
-
-    // Insert user service data
-    $this->insertUserServiceData([
-      'scsUserId' => $dbUserId,
-      'stackHost' => $dbHost,
-      'stackId' => NULL,
-      'serviceName' => 'mariadb',
-      'serviceEntityType' => 'database',
-      'serviceEntityName' => NULL,
-      'serviceUsername' => $dbUserName,
-      'serviceUserPassword' => $dbUserPassword,
-    ]);
-
-
 
     // Grant rights to the database user
     $grantRights2DbResult = $this->grantRights2DbUser($dbUserName, $dbName, ['ALL']);
@@ -199,7 +140,7 @@ class SodaScsDbActions {
     }
 
     // Create the database
-    $createDbCommand = "mysql -h $dbHost -uroot -p$dbRootPassword -e 'CREATE DATABASE $dbName;'";
+    $createDbCommand = "mysql -h $dbHost -uroot -p$dbRootPassword -e 'CREATE DATABASE $dbName;' 2>&1";
     $dbCreated = exec($createDbCommand, $createDbOutput, $createDbReturnVar);
 
     // Command failed
@@ -208,22 +149,9 @@ class SodaScsDbActions {
         'command' => $createDbCommand,
         'execStatus' => $createDbReturnVar,
         'output' => $createDbOutput,
-        'result' => $dbCreated
+        'result' => $dbCreated,
       ], 'create database', $dbName);
     }
-
-    // Command succeeded
-    $this->updateUserServiceData(
-      [
-      'service_entity_name' => $dbName
-      ],
-      [
-        'scs_user_id' => $dbUserId,
-        'stack_host' => $dbHost,
-        'service_name' => 'mariadb',
-        'service_entity_type' => 'database',
-      ]
-    );
 
     return [
       'command' => $createDbCommand,
@@ -269,7 +197,7 @@ class SodaScsDbActions {
    *
    * @param string $dbName
    *   The name of the database.
-   * @param string $dbUser
+   * @param string $dbUsername
    *   The name of the database user.
    *
    * @return array
@@ -277,29 +205,63 @@ class SodaScsDbActions {
    *
    * @throws MissingDataException
    */
-  public function deleteDb(string $dbName, string $dbUser): array {
+  public function deleteDb(string $dbName, string $dbUsername, string $dbUserPassword): array {
     // Database host.
     $dbHost = $this->settings->get('dbHost');
     if (empty($dbHost)) {
       throw new MissingDataException('Database Host setting missing');
     }
 
-    // Database root password.
-    $dbRootPassword = $this->settings->get('dbRootPassword');
-    if (empty($dbRootPassword)) {
-      throw new MissingDataException('Database root password setting missing');
+    // Check if the database exists.
+    $checkDbExistsResult = $this->checkDbExists($dbName);
+
+    // Command failed.
+    if ($checkDbExistsResult['execStatus'] != 0) {
+      return $this->handleCommandFailure($checkDbExistsResult, 'check if database', $dbName);
     }
 
-    // Delete the database
-    $deleteDbCommand = "mysql -h $dbHost -uroot -p$dbRootPassword -e 'DROP DATABASE $dbName; FLUSH PRIVILEGES;'";
-    $dbDeleted = exec($deleteDbCommand, $deleteDbOutput, $deleteDbReturnVar);
+    if (!$checkDbExistsResult['result']) {
+      // Database already deleted
+      $this->messenger->addError($this->stringTranslation->translate('Database could not be found. See logs for details.'));
+      return [
+        'message' => $this->stringTranslation->translate("Database \"@dbName\" database could not be found.", ['@dbName' => $dbName]),
+        'data' => [],
+        'error' => NULL,
+        'success' => TRUE,
+      ];
+    }
 
+    // Get database credentials
+    $conditions = [
+      'service_host' => $dbHost,
+      'service_name' => 'mariadb',
+      'service_entity_type' => 'database',
+      'service_entity_name' => $dbName,
+      'service_username' => $dbUsername,
+    ];
+
+    // Delete the database
+    $deleteDbCommand = "mysql -h$dbHost -u$dbUsername -p$dbUserPassword -e 'DROP DATABASE $dbName;' 2>&1";
+    $dbDeleted = exec($deleteDbCommand, $deleteDbOutput, $deleteDbReturnVar);
+    if (is_array($deleteDbOutput)) {
+      $deleteDbOutput = implode(", ", $deleteDbOutput);
+    }
+    // Command failed
+    if ($deleteDbReturnVar != 0) {
+      return $this->handleCommandFailure([
+        'command' => $deleteDbCommand,
+        'execStatus' => $deleteDbReturnVar,
+        'output' => $deleteDbOutput,
+        'result' => $dbDeleted,
+      ], 'delete database', $dbName);
+    }
+    $this->flushPrivileges();
 
     return [
-      'command' => $deleteDbCommand,
-      'execStatus' => $deleteDbReturnVar,
-      'output' => $deleteDbOutput,
-      'result' => $dbDeleted,
+      'message' =>  $this->stringTranslation->translate('Delete database @dbName.', ['@dbName' => $dbName]),
+      'data' => [],
+      'error' => NULL,
+      'success' => TRUE,
     ];
   }
 
@@ -331,6 +293,48 @@ class SodaScsDbActions {
     ];
   }
 
+  public function getUsersFromDb($uid = NULL): array {
+    try {
+      $driver = $this->database->driver();
+      $query = $this->database->select('users_field_data', 'ufd');
+      $query->fields('ufd', ['uid', 'name', 'mail']);
+      $query->join('user__roles', 'ur', 'ufd.uid = ur.entity_id');
+      $query->addField('ufd', 'status', 'enabled');
+      if ($driver == 'mysql') {
+        $query->addExpression('GROUP_CONCAT(ur.roles_target_id)', 'role');
+      }
+      elseif ($driver == 'pgsql') {
+        $query->addExpression('STRING_AGG(ur.roles_target_id, \',\')', 'role');
+      }
+      $query->groupBy('ufd.uid');
+      $query->groupBy('ufd.name');
+      $query->groupBy('ufd.mail');
+      $query->groupBy('ufd.status');
+      $query->orderBy('ufd.name', 'ASC');
+
+      if ($uid) {
+        $query->condition('ufd.uid', $uid, '=');
+      }
+
+      $users = $query->execute()->fetchAll(\PDO::FETCH_ASSOC);
+
+      foreach ($users as $index => $user) {
+        $users[$index]['role'] = explode(',', $user['role']);
+      }
+
+      return $users;
+    }
+    catch (\Exception $e) {
+      // Request failed, handle the error.
+      $this->loggerFactory
+        ->get('soda_scs_manager')
+        ->error('Request failed with exception: ' . $e->getMessage());
+      $this->messenger
+        ->addError($this->stringTranslation->translate('Can not communicate with the SCS user manager daemon. Try again later or contact cloud@wiss-ki.eu.'));
+      return [];
+    }
+  }
+
   /**
    * Checks if a database user exists.
    *
@@ -357,6 +361,20 @@ class SodaScsDbActions {
   }
 
   /**
+   * Gets the users from the Drupal database and Distillery.
+   *
+   * @param int $uid
+   * The user ID to get.
+   *
+   * @return array
+   * The users.
+   *
+   * @throws \Exception
+   * If the request fails.
+   */
+
+
+  /**
    * Grants rights to a database user.
    *
    * @param string $dbUser
@@ -378,6 +396,26 @@ class SodaScsDbActions {
       'output' => $grantRightsCommandOutput,
       'result' => $grantRightsCommandResult,
     ];
+  }
+
+  /**
+   * Flush the database privileges.
+   *
+   * @return array
+   */
+  public function flushPrivileges(): array {
+    $dbHost = $this->settings->get('dbHost');
+    $dbRootPassword = $this->settings->get('dbRootPassword');
+
+    $flushPrivilegesCommand = "mysql -h $dbHost -uroot -p$dbRootPassword -e 'FLUSH PRIVILEGES;' 2>&1";
+    $flushPrivilegesCommandResult = exec($flushPrivilegesCommand, $grantRightsCommandOutput, $grantRightsCommandReturnVar);
+    return [
+      'command' => $flushPrivilegesCommand,
+      'execStatus' => $grantRightsCommandReturnVar,
+      'output' => $grantRightsCommandOutput,
+      'result' => $flushPrivilegesCommandResult,
+    ];
+
   }
 
   /**
@@ -403,7 +441,7 @@ class SodaScsDbActions {
         ->error('Failed to execute MySQL command to check if user owns any databases. Are the database credentials correct and the select permissions set?');
       $this->messenger->addError($this->stringTranslation->translate('Failed to execute MySQL command to check if the user owns any databases. See logs for more details.'));
       return [
-        'message' => t('Could not check if user %s owns any databases', ['@dbUser' => $dbUser]),
+        'message' => $this->stringTranslation->translate('Could not check if user %s owns any databases', ['@dbUser' => $dbUser]),
         'error' => 'Failed to execute MySQL command to check if the user owns any databases',
         'success' => FALSE,
       ];
@@ -420,15 +458,17 @@ class SodaScsDbActions {
           ->error('Failed to execute MySQL command to delete user. Are the database credentials correct and the delete permissions set?');
         $this->messenger->addError($this->stringTranslation->translate('Failed to execute MySQL command to delete the user. See logs for more details.'));
         return [
-          'message' => t('Could not delete user @dbUser. See logs for more.', ['@dbUser' => $dbUser]),
+          'message' => $this->stringTranslation->translate('Could not delete user @dbUser. See logs for more.', ['@dbUser' => $dbUser]),
           'error' => 'Failed to execute MySQL command to delete the user',
           'success' => FALSE,
         ];
       }
+
+
       else {
         // Command succeeded
         return [
-          'message' => t('User @dbUser has no databases left and was deleted.', ['@dbUser' => $dbUser]),
+          'message' => $this->stringTranslation->translate('User @dbUser has no databases left and was deleted.', ['@dbUser' => $dbUser]),
           'error' => NULL,
           'success' => TRUE,
         ];
@@ -437,7 +477,7 @@ class SodaScsDbActions {
     else {
       // User owns databases, do not delete
       return [
-        'message' => t('User @dbUser owns databases and will not be deleted', ['@dbUser' => $dbUser]),
+        'message' => $this->stringTranslation->translate('User @dbUser owns databases and will not be deleted', ['@dbUser' => $dbUser]),
         'error' => NULL,
         'success' => TRUE,
       ];
@@ -445,167 +485,25 @@ class SodaScsDbActions {
   }
 
   private function handleCommandFailure(array $commandResult, string $action, string $entityName): array {
+    if (is_array($commandResult['output'])) {
+      $commandResult['output'] = implode(', ', $commandResult['output']);
+    }
     $this->loggerFactory->get('soda_scs_manager')
-      ->error(t("Failed to execute MySQL command \"@command\" to @action \"@entityName\". Error: @error", [
+      ->error($this->stringTranslation->translate("Failed to execute MySQL command \"@command\" to @action \"@entityName\". Error: @error", [
         '@action' => $action,
         '@command' => $commandResult['command'],
         '@entityName' => $entityName,
         '@error' => $commandResult['output'],
       ]));
-    $this->messenger->addError(t("Failed to execute MySQL command to @action. See logs for more details.", ['@action' => $action]));
+    $this->messenger->addError($this->stringTranslation->translate("Failed to execute MySQL command to @action. See logs for more details.", ['@action' => $action]));
     return [
-      'message' => t("Cannot @action \"@$entityName\". See log for details.", [
+      'message' => $this->stringTranslation->translate("Cannot @action \"@$entityName\". See log for details.", [
         '@action' => $action,
         '@entityName' => $entityName]),
       'data' => [],
       'error' => $commandResult['output'],
       'success' => FALSE,
     ];
-  }
-
-  /**
-   * Insert new user with service credentials.
-   *
-   *
-   * @param array $data
-   *
-   * @return array
-   */
-  public function insertUserServiceData(array $data): array {
-    try {
-      $this->database->insert('soda_scs_manager__user_service_data')
-        ->fields([
-          'scs_user_id' => $data['scsUserId'],
-          'stack_host' => $data['stackHost'],
-          'stack_id' => $data['stackId'],
-          'service_name' => $data['serviceName'],
-          'service_entity_type' => $data['serviceEntityType'],
-          'service_entity_name' => $data['serviceEntityName'],
-          'service_username' => $data['serviceUsername'],
-          'service_user_password' => $data['serviceUserPassword'],
-        ])
-        ->execute();
-
-      return [
-        'message' => t('User service data for user @userId has been inserted successfully.', ['@userId' => $data['serviceUsername']]),
-        'error' => NULL,
-        'success' => TRUE,
-      ];
-    }
-    catch (\Exception $e) {
-      $this->loggerFactory->get('soda_scs_manager')
-        ->error('Failed to insert user service data: ' . $e->getMessage());
-      $this->messenger->addError($this->stringTranslation->translate('Failed to insert user service data. See logs for more details.'));
-      return [
-        'message' => t('Could not insert user service data for user @userId', ['@userId' => $data['serviceUsername']]),
-        'error' => 'Failed to insert user service data',
-        'success' => FALSE,
-      ];
-    }
-  }
-
-  /**
-   * Query service data.
-   *
-   * @param array $conditions
-   *  The conditions to query the service data.
-   *  scs_user_id: int (1)
-   *  stack_host: string (db.example.org)
-   *  stack_id: int (38)
-   *  service_name: string (mariadb)
-   *  service_entity_type: string (database)
-   *  service_entity_name: string (my_database)
-   *  service_username: string (my_user)
-   *  service_user_password: string (my_password)
-   *
-   * @return array|bool
-   */
-  public function queryServiceData(array $conditions): array|bool {
-    $query = $this->database->select('soda_scs_manager__user_service_data', 'usd')
-      ->fields('usd');
-    foreach ($conditions as $field => $value) {
-      $query->condition($field, $value);
-    }
-    try {
-      $result = $query->execute()->fetchAssoc();
-      return [
-        'command' => $query->__toString(),
-        'execStatus' => 0,
-        'output' => NULL,
-        'result' => $result,
-        ];
-    }
-    catch (\Exception $e) {
-      $this->loggerFactory->get('soda_scs_manager')
-        ->error(t('Failed to query service data. Query: @query. Error: @error ', ['@query' => $query->__toString(), '@error' => $e->getMessage()]));
-      $this->messenger->addError($this->stringTranslation->translate('Failed to query service data. See logs for more details.'));
-      return [
-        'command' => $query->__toString(),
-        'execStatus' => 1,
-        'output' => NULL,
-        'result' => NULL,
-      ];
-    }
-  }
-
-  /**
-   * Updates the user service data.
-   *
-   * @param array $fields
-   *   Fields/values pairs to update.
-   * @param array $conditions
-   *   Conditions for rows
-   *
-   * @return array
-   */
-  public function updateUserServiceData(array $fields, array $conditions): array {
-    try {
-      $query = $this->database->update('soda_scs_manager__user_service_data');
-
-      // Add fields to update
-      foreach ($fields as $field => $value) {
-        $query->fields([$field => $value]);
-      }
-
-      // Add conditions
-      foreach ($conditions as $field => $value) {
-        $query->condition($field, $value);
-      }
-
-      // Execute the update query
-      $result = $query->execute();
-
-      return [
-        'message' => t('User service data updated successfully.'),
-        'error' => NULL,
-        'success' => TRUE,
-        'result' => $result,
-      ];
-    }
-    catch (\Exception $e) {
-      $this->loggerFactory->get('soda_scs_manager')
-        ->error('Failed to update user service data: ' . $e->getMessage());
-      $this->messenger->addError($this->stringTranslation->translate('Failed to update user service data. See logs for more details.'));
-      return [
-        'message' => t('Could not update user service data.'),
-        'error' => 'Failed to update user service data',
-        'success' => FALSE,
-        'result' => NULL
-      ];
-    }
-  }
-
-  /**
-   * Generates a random password.
-   *
-   * @return string
-   */
-  function generateRandomPassword(): string {
-    $password = '';
-    while (strlen($password) < 32) {
-      $password .= base_convert(random_int(0, 35), 10, 36);
-    }
-    return substr($password, 0, 32);
   }
 
   public function getUserNameById(int $userId): ?string {

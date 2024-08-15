@@ -45,10 +45,15 @@ function soda_scs_manager_schema() {
         'size' => 'tiny',
         'not null' => TRUE,
       ],
-      'stack_host' => [
+      'service_host' => [
         'description' => 'The host name.',
         'type' => 'varchar',
         'length' => 255,
+      ],
+      'service_port' => [
+        'description' => 'The port name.',
+        'type' => 'int',
+        'size' => 'tiny',
       ],
       'stack_id' => [
         'description' => 'The bundle name.',

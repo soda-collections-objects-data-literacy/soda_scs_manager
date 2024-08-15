@@ -26,6 +26,7 @@ use Drupal\soda_scs_manager\SodaScsComponentInterface;
  *   },
  *   bundle_entity_type = "soda_scs_component_bundle",
  *   base_table = "soda_scs_component",
+ *   data_table = "soda_scs_component_field_data",
  *   admin_permission = "administer soda scs component entities",
  *   entity_keys = {
  *     "id" = "id",
@@ -328,10 +329,18 @@ public function setDescription($description) {
         'weight' => 60,
       ]);
 
-    $fields['serviceProcessUuid'] = BaseFieldDefinition::create('string')
-      ->setLabel(new TranslatableMarkup('Service Process UUID'))
-      ->setDescription(new TranslatableMarkup('The UUID of the process.'))
+      $fields['serviceKey'] = BaseFieldDefinition::create('entity_reference')
+      ->setLabel(new TranslatableMarkup('Service Key'))
+      ->setDescription(new TranslatableMarkup('The service key of the SODa SCS Component.'))
+      ->setSetting('target_type', 'soda_scs_service_key')
+      ->setSetting('handler', 'default')
       ->setReadOnly(TRUE)
+      ->setDisplayConfigurable('view', TRUE)
+      ->setDisplayOptions('view', [
+        'label' => 'above',
+        'type' => 'entity_reference_label',
+        'weight' => 0,
+      ])
       ->setDisplayConfigurable('view', TRUE);
 
     $fields['updated'] = BaseFieldDefinition::create('changed')

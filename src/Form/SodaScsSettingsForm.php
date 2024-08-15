@@ -158,6 +158,24 @@ class SodaScsSettingsForm extends ConfigFormBase {
       '#default_value' => $this->config('soda_scs_manager.settings')->get('wisski')['routes']['createUrl'] ?? '',
     ];
 
+    $form['wisski']['routes']['readOneUrl'] = [
+      '#type' => 'textfield',
+      '#title' => $this->t('Read one route path'),
+      '#default_value' => $this->config('soda_scs_manager.settings')->get('wisski')['routes']['readOneUrl'] ?? '',
+    ];
+
+    $form['wisski']['routes']['readAllUrl'] = [
+      '#type' => 'textfield',
+      '#title' => $this->t('Read all route path'),
+      '#default_value' => $this->config('soda_scs_manager.settings')->get('wisski')['routes']['readAllUrl'] ?? '',
+    ];
+
+    $form['wisski']['routes']['updateUrl'] = [
+      '#type' => 'textfield',
+      '#title' => $this->t('Update route path'),
+      '#default_value' => $this->config('soda_scs_manager.settings')->get('wisski')['routes']['updateUrl'] ?? '',
+    ];
+
     $form['wisski']['routes']['deleteUrl'] = [
       '#type' => 'textfield',
       '#title' => $this->t('Delete route path'),

@@ -2,6 +2,8 @@
 
 namespace Drupal\soda_scs_manager\Exception;
 
+use GuzzleHttp\Exception\GuzzleException;
+
 use Exception;
 
 /**
@@ -16,10 +18,10 @@ class SodaScsRequestException extends Exception {
    *   The exception message.
    * @param int $code
    *   The exception code.
-   * @param \Exception|null $previous
+   * @param \Exception|GuzzleException|null $previous
    *   The previous exception used for the exception chaining.
    */
-  public function __construct(string $message = "", int $code = 0, Exception $previous = NULL) {
+  public function __construct(string $message = "", int $code = 0, Exception|GuzzleException $previous = NULL) {
     parent::__construct($message, $code, $previous);
   }
 

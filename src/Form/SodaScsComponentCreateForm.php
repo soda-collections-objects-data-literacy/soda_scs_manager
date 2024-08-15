@@ -2,6 +2,7 @@
 
 namespace Drupal\soda_scs_manager\Form;
 
+use Drupal;
 use Drupal\Core\Database\Database;
 use Drupal\Core\Entity\ContentEntityForm;
 use Drupal\Core\Form\FormStateInterface;
@@ -115,12 +116,38 @@ class SodaScsComponentCreateForm extends ContentEntityForm {
     /** @var \Drupal\soda_scs_manager\Entity\SodaScsComponentBundle $bundle */
     $bundle = \Drupal::service('entity_type.manager')->getStorage('soda_scs_component_bundle')->load($this->entity->bundle());
 
+
+    // Check if the service key for this bundle and user already exists.
+    $userId = \Drupal::currentUser()->id();
+    $serviceKeys = \Drupal::entityTypeManager()->getStorage('soda_scs_service_key')->loadByProperties([
+      'bundle' => $bundle->id(), 'user' => $userId,
+    ]);
+
+    if (empty($serviceKeys)) {
+      $servicePassword = $this->sodaScsApiActions->generateRandomPassword();
+      // Create a new service key entity.
+      /** @var \Drupal\soda_scs_manager\Entity\SodaScsServiceKey $serviceKey */
+      $serviceKey = \Drupal::entityTypeManager()->getStorage('soda_scs_service_key')->create([
+        'label' => $entity->label() . ' - ' . $bundle->label() . ' service key',
+        'servicePassword' => $servicePassword,
+        'bundle' => $bundle->id(),
+        'user' => \Drupal::currentUser()->id(),
+      ]);
+      $serviceKey->save();
+      $entity->set('serviceKey', $serviceKey);
+    } else {
+      /** @var \Drupal\soda_scs_manager\Entity\SodaScsServiceKey $serviceKey */
+      $serviceKey = reset($serviceKeys);
+      $entity->set('serviceKey', $serviceKey);
+      $servicePassword = $serviceKey->get('servicePassword')->value;
+    }
     // Create options array for the API call.
     $options = [
       'subdomain' => $entity->get('subdomain')->value,
       'project' => 'my_project',
       'userId' => \Drupal::currentUser()->id(),
       'userName' => \Drupal::currentUser()->getDisplayName(),
+      'servicePassword' => $servicePassword,
     ];
 
     $entity->set('user', $options['userId']);
@@ -140,6 +167,7 @@ class SodaScsComponentCreateForm extends ContentEntityForm {
     // Create external stack
     $createComponentResult = $this->sodaScsApiActions->createStack($this->entity->bundle(), $options);
 
+
     if (!$createComponentResult['success']) {
       $this->messenger()->addMessage($this->t("Cannot create component \"@label\". See logs for more details.", [
         '@label' => $entity->label(),
@@ -152,6 +180,9 @@ class SodaScsComponentCreateForm extends ContentEntityForm {
     $entity->set('externalId', $createComponentResult['data']['portainerResponse']['data']['Id']);
 
     $status = $entity->save();
+
+    $serviceKey->set('scsComponent', [$entity->id()]);
+    $serviceKey->save();
 
     // Check if the entity was saved.
     if ($status) {
@@ -166,13 +197,6 @@ class SodaScsComponentCreateForm extends ContentEntityForm {
         '@username' => \Drupal::currentUser()->getDisplayName(),
       ]), 'error');
     }
-
-    $options = [
-        'user' => \Drupal::currentUser()->getDisplayName(),
-        'subdomain' => $entity->get('subdomain')->value,
-        'project' => 'my_project',
-    ];
-
 
     // Redirect to the components page.
     $form_state->setRedirect('soda_scs_manager.desk');

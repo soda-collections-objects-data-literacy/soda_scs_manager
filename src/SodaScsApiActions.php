@@ -2,7 +2,6 @@
 
 namespace Drupal\soda_scs_manager;
 
-use Drupal\soda_scs_manager\Exception\SodaScsDatabaseException;
 use Drupal\soda_scs_manager\Exception\SodaScsRequestException;
 use GuzzleHttp\Exception\GuzzleException;
 use Symfony\Component\HttpFoundation\RequestStack;
@@ -154,13 +153,14 @@ class SodaScsApiActions {
     switch ($bundle) {
       case 'wisski':
           try {
-            $createDbResult = $this->sodaScsDbActions->createDb($options['subdomain'], $options['userId']);
+            // Create Drupal database.
+            $createDbResult = $this->sodaScsDbActions->createDb($options['subdomain'], $options['userId'], $options['servicePassword']);
           } catch (MissingDataException $e) {
             $this->loggerFactory->get('soda_scs_manager')
               ->error("Cannot create database. @error", [
                 '@error' => $e->getMessage(),
               ]);
-            $this->messenger->addError(t("Cannot create database. See logs for more details."));
+            $this->messenger->addError($this->stringTranslation->translate("Cannot create database. See logs for more details."));
             return [
               'message' => 'Cannot create database.',
               'data' => [
@@ -172,6 +172,7 @@ class SodaScsApiActions {
             ];
           }
           try {
+            // Create Drupal instance.
             $portainerCreateRequest = $this->buildPortainerCreateRequest($options);
             $portainerResponse = $this->makeRequest($portainerCreateRequest);
           } catch (MissingDataException $e) {
@@ -179,7 +180,7 @@ class SodaScsApiActions {
               ->error("Cannot assemble Request: @error", [
                 '@error' => $e->getMessage(),
               ]);
-            $this->messenger->addError(t("Cannot assemble request. See logs for more details."));
+            $this->messenger->addError($this->stringTranslation->translate("Cannot assemble request. See logs for more details."));
             return [
               'message' => 'Cannot assemble Request.',
               'data' => [
@@ -194,7 +195,7 @@ class SodaScsApiActions {
               ->error("Request response with error: @error", [
                 '@error' => $e->getMessage(),
               ]);
-            $this->messenger->addError(t("Request error. See logs for more details."));
+            $this->messenger->addError($this->stringTranslation->translate("Request error. See logs for more details."));
             return [
               'message' => 'Request failed with exception: ' . $e->getMessage(),
               'data' => [
@@ -228,7 +229,52 @@ class SodaScsApiActions {
     return $result;
   }
 
-  public function readStack() {
+  /**
+   * Get all stacks of a bundle.
+   *
+   * @param $bundle
+   * @param $options
+   *
+   * @return array
+   */
+  public function getStacks($bundle, $options): array {
+    switch ($bundle) {
+      case 'wisski':
+        try {
+          // Build request.
+          $portainerGetStacksRequest = $this->buildPortainerGetStacksRequest($options);
+          $portainerResponse = $this->makeRequest($portainerGetStacksRequest);
+        }
+        catch (SodaScsRequestException $e) {
+          $this->loggerFactory->get('soda_scs_manager')
+            ->error("Request response with error: @error", [
+              '@error' => $e->getMessage(),
+            ]);
+          $this->messenger->addError($this->stringTranslation->translate("Request error. See logs for more details."));
+          return [
+            'message' => 'Request failed with exception: ' . $e->getMessage(),
+            'data' => [
+              'portainerResponse' => NULL,
+            ],
+            'success' => FALSE,
+            'error' => $e->getMessage(),
+          ];
+        }
+        return [
+          'message' => 'Got all stacks',
+          'data' => [
+            'portainerResponse' => $portainerResponse,
+          ],
+          'success' => TRUE,
+          'error' => NULL,
+        ];
+        break;
+      default:
+        return [];
+    }
+  }
+  public function readStack($bundle, array $options): array {
+
     return  [
       'message' => 'Component read',
       'data' => [],
@@ -245,10 +291,71 @@ class SodaScsApiActions {
   public function deleteStack($bundle, $options): array {
     switch ($bundle) {
       case 'wisski':
-        $result = $this->sodaScsDbActions->deleteDb($options['subdomain'], $options['userName']);
-        if (!$result['success']) {
-          return $result;
+        try {
+          // Delete Drupal database.
+          $deleteDbResult = $this->sodaScsDbActions->deleteDb($options['subdomain'], $options['userName'], $options['servicePassword']);
+        } catch (MissingDataException $e) {
+          $this->loggerFactory->get('soda_scs_manager')
+            ->error("Cannot delete database. @error", [
+              '@error' => $e->getMessage(),
+            ]);
+          $this->messenger->addError($this->stringTranslation->translate("Cannot delete database. See logs for more details."));
+          return [
+            'message' => 'Cannot create database.',
+            'data' => [
+              'deleteDbResult' => NULL,
+              'portainerResponse' => NULL,
+            ],
+            'success' => FALSE,
+            'error' => $e->getMessage(),
+          ];
         }
+        try {
+          // Delete Drupal instance.
+          $portainerCreateRequest = $this->buildPortainerDeleteRequest($options);
+          $portainerResponse = $this->makeRequest($portainerCreateRequest);
+
+
+        } catch (MissingDataException $e) {
+          $this->loggerFactory->get('soda_scs_manager')
+            ->error("Cannot assemble Request: @error", [
+              '@error' => $e->getMessage(),
+            ]);
+          $this->messenger->addError($this->stringTranslation->translate("Cannot assemble request. See logs for more details."));
+          return [
+            'message' => 'Cannot assemble Request.',
+            'data' => [
+              'DeleteDbResult' => $deleteDbResult,
+              'portainerResponse' => NULL,
+            ],
+            'success' => FALSE,
+            'error' => $e->getMessage(),
+          ];
+        } catch (SodaScsRequestException $e) {
+          $this->loggerFactory->get('soda_scs_manager')
+            ->error("Request response with error: @error", [
+              '@error' => $e->getMessage(),
+            ]);
+          $this->messenger->addError($this->stringTranslation->translate("Request error. See logs for more details."));
+          return [
+            'message' => 'Request failed with exception: ' . $e->getMessage(),
+            'data' => [
+              'DeleteDbResult' => $deleteDbResult,
+              'portainerResponse' => NULL,
+            ],
+            'success' => FALSE,
+            'error' => $e->getMessage(),
+          ];
+        }
+        return [
+          'message' => 'Component deleted',
+          'data' => [
+            'deleteDbResult' => $deleteDbResult,
+            'portainerResponse' => $portainerResponse,
+          ],
+          'success' => TRUE,
+          'error' => NULL,
+        ];
         break;
       default:
         $restMethod = 'GET';
@@ -271,11 +378,14 @@ class SodaScsApiActions {
    */
   public function makeRequest($request): array {
     try {
-      // Send the GET request using the `drupal_http_request()` function.
-      $response = $this->httpClient->request($request['method'], $request['route'], [
-        'headers' => $request['headers'],
-        'body' => $request['body'],
-      ]);
+      // Assemble options.
+      $options['headers'] = $request['headers'];
+      if (isset($request['body'])) {
+        $options['body'] = $request['body'];
+      }
+
+      // Send the GET request.
+      $response = $this->httpClient->request($request['method'], $request['route'], $options);
 
       // Check the response and handle the data accordingly.
       if ($response->getStatusCode() == 200 || $response->getStatusCode() == 201) {
@@ -300,7 +410,7 @@ class SodaScsApiActions {
     }
     catch (GuzzleException $e) {
       // Request failed, handle the error.
-      throw new SodaScsRequestException(t('Request to container manager failed with code @code: @error', [
+      throw new SodaScsRequestException($this->stringTranslation->translate('Request to container manager failed with code @code: @error', [
         '@code' => $e->getCode(),
         '@error' => htmlspecialchars($e->getMessage(), ENT_QUOTES, 'UTF-8')
       ]), 0, $e);
@@ -308,61 +418,7 @@ class SodaScsApiActions {
   }
 
   /**
-   * Gets the users from the Drupal database and Distillery.
-   *
-   * @param int $uid
-   * The user ID to get.
-   *
-   * @return array
-   * The users.
-   *
-   * @throws \Exception
-   * If the request fails.
-   */
-  public function getUsersFromDb($uid = NULL): array {
-    try {
-      $driver = $this->database->driver();
-      $query = $this->database->select('users_field_data', 'ufd');
-      $query->fields('ufd', ['uid', 'name', 'mail']);
-      $query->join('user__roles', 'ur', 'ufd.uid = ur.entity_id');
-      $query->addField('ufd', 'status', 'enabled');
-      if ($driver == 'mysql') {
-        $query->addExpression('GROUP_CONCAT(ur.roles_target_id)', 'role');
-      }
-      elseif ($driver == 'pgsql') {
-        $query->addExpression('STRING_AGG(ur.roles_target_id, \',\')', 'role');
-      }
-      $query->groupBy('ufd.uid');
-      $query->groupBy('ufd.name');
-      $query->groupBy('ufd.mail');
-      $query->groupBy('ufd.status');
-      $query->orderBy('ufd.name', 'ASC');
-
-      if ($uid) {
-        $query->condition('ufd.uid', $uid, '=');
-      }
-
-      $users = $query->execute()->fetchAll(\PDO::FETCH_ASSOC);
-
-      foreach ($users as $index => $user) {
-        $users[$index]['role'] = explode(',', $user['role']);
-      }
-
-      return $users;
-    }
-    catch (\Exception $e) {
-      // Request failed, handle the error.
-      $this->loggerFactory
-        ->get('soda_scs_manager')
-        ->error('Request failed with exception: ' . $e->getMessage());
-      $this->messenger
-        ->addError($this->stringTranslation->translate('Can not communicate with the SCS user manager daemon. Try again later or contact cloud@wiss-ki.eu.'));
-      return [];
-    }
-  }
-
-  /**
-   * Builds the request for the Portainer service API.
+   * Builds the create request for the Portainer service API.
    *
    * @param array $options
    *
@@ -385,29 +441,17 @@ class SodaScsApiActions {
 
       $route = $url . '?' . http_build_query($queryParams);
 
-      $conditions = [
-        'scs_user_id' => $options['userId'],
-        'service_name' => 'mariadb',
-        'service_entity_type' => 'database',
-        'service_entity_name' => $options['subdomain'],
-        'service_username' => $options['userName'],
-      ];
-
-      $serviceData = $this->sodaScsDbActions->queryServiceData($conditions);
-
-      $options['dbPassword'] = $serviceData['result']['service_user_password'];
-
       $env = [
         ["name" => "DB_DRIVER", "value" => "mysql"],
         ["name" => "DB_HOST", "value" => $this->settings->get('dbHost')],
         ["name" => "DB_NAME", "value" => $options['subdomain']],
-        ["name" => "DB_PASSWORD", "value" => $options['dbPassword']],
+        ["name" => "DB_PASSWORD", "value" => $options['servicePassword']],
         ["name" => "DB_USER", "value" => $options['userName']],
         ["name" => "DOMAIN", "value" => $this->settings->get('scsHost')],
-        ["name" => "DRUPAL_USER", "value" => "admin"],
-        ["name" => "DRUPAL_PASSWORD", "value" => "admin"],
+        ["name" => "DRUPAL_USER", "value" => $options['userName']],
+        ["name" => "DRUPAL_PASSWORD", "value" => $options['servicePassword']],
         ["name" => "SERVICE_NAME", "value" => $options['subdomain']],
-        ["name" => "SITE_NAME", "value" => "Drupal"],
+        ["name" => "SITE_NAME", "value" => $options['subdomain']],
       ];
 
       foreach ($env as $variable) {
@@ -433,5 +477,106 @@ class SodaScsApiActions {
           'swarmID' => $this->settings->get('wisski')['portainerOptions']['swarmId'],
         ]),
       ];
+  }
+
+  /**
+   * Builds the create request for the Portainer service API.
+   *
+   * @param array $options
+   *
+   * @return array
+   *
+   */
+  public function buildPortainerReadRequest(array $options): array {
+    return [];
+  }
+
+  /**
+   * Build request to get all stacks.
+   *
+   * @param $options
+   *
+   * @return array
+   * @throws \Drupal\Core\TypedData\Exception\MissingDataException
+   */
+  public function buildPortainerGetStacksRequest($options): array {
+    $route = $this->settings->get('wisski')['routes']['readAllUrl'];
+    if (empty($route)) {
+      throw new MissingDataException('Read all URL setting is not set.');
+    }
+
+    return [
+      'success' => TRUE,
+      'method' => 'GET',
+      'route' => $route,
+      'headers' => [
+        'Content-Type' => 'application/json',
+        'Accept' => 'application/json',
+        'X-API-Key' => $this->settings->get('wisski')['portainerOptions']['authenticationToken'],
+      ],
+    ];
+}
+  /**
+   * Builds the update request for the Portainer service API.
+   *
+   * @param array $options
+   *
+   * @return array
+   */
+  public function buildPortainerUpdateRequest(array $options): array {
+    return [];
+  }
+
+  /**
+   * Builds the delete request for the Portainer service API.
+   *
+   * @param array $options
+   *
+   * @return array
+   *
+   * @throws MissingDataException
+   */
+  public function buildPortainerDeleteRequest(array $options): array {
+    $url = $this->settings->get('wisski')['routes']['deleteUrl'];
+    if (empty($url)) {
+      throw new MissingDataException('Delete URL setting is not set.');
+    }
+
+    $queryParams = [
+      'endpointId' => $this->settings->get('wisski')['portainerOptions']['endpoint'],
+    ];
+    if (empty($queryParams['endpointId'])) {
+      throw new MissingDataException('Endpoint ID setting is not set.');
+    }
+
+    if (empty($options['externalId'])) {
+      throw new MissingDataException('Stack ID setting is not set.');
+    }
+
+    $route = $url . $options['externalId'] . '?' . http_build_query($queryParams);
+
+    return [
+      'success' => TRUE,
+      'method' => 'DELETE',
+      'route' => $route,
+      'headers' => [
+        'Content-Type' => 'application/json',
+        'Accept' => 'application/json',
+        'X-API-Key' => $this->settings->get('wisski')['portainerOptions']['authenticationToken'],
+      ],
+    ];
+  }
+
+  /**
+   * Generates a random password.
+   *
+   * @return string
+   */
+  function generateRandomPassword(): string {
+    $password = '';
+    while (strlen($password) < 32) {
+      $password .= base_convert(random_int(0, 35), 10, 36);
+    }
+    return substr($password, 0, 32);
   }
 }
