@@ -3,4 +3,4 @@ type: module
 description: 'Sammlungen, Objekte, Datenkompetenzen Semantic Coworking Space Manager (SODa SCS Manager) module for managing SCS components.'
 package: SODa SCS
 configure: soda_scs_manager.settings
-core_version_requirement: ^10
+core_version_requirement: ^10 | ^11

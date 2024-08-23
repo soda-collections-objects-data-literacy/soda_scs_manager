@@ -447,11 +447,17 @@ class SodaScsApiActions {
         ["name" => "DB_NAME", "value" => $options['subdomain']],
         ["name" => "DB_PASSWORD", "value" => $options['servicePassword']],
         ["name" => "DB_USER", "value" => $options['userName']],
+        ["name" => "DEFAULT_GRAPH", "value" => 'http://' . $this->settings->get($options['subdomain']) . '.' . $this->settings->get('scsHost') . '/contents/' ],
         ["name" => "DOMAIN", "value" => $this->settings->get('scsHost')],
         ["name" => "DRUPAL_USER", "value" => $options['userName']],
         ["name" => "DRUPAL_PASSWORD", "value" => $options['servicePassword']],
         ["name" => "SERVICE_NAME", "value" => $options['subdomain']],
         ["name" => "SITE_NAME", "value" => $options['subdomain']],
+        ["name" => "TS_PASSWORD", "value" => $options['servicePassword']],
+        ["name" => "TS_READ_URL", "value" => 'https://' . $this->settings->get('tsHost') . '/repository/default'],
+        ["name" => "TS_REPOSITORY", "value" => $options['subdomain']],
+        ["name" => "TS_USERNAME", "value" => $options['userName']],
+        ["name" => "TS_WRITE_URL", "value" => 'https://' . $this->settings->get('tsHost') . '/repository/default/statements'],
       ];
 
       foreach ($env as $variable) {
@@ -469,11 +475,11 @@ class SodaScsApiActions {
           'X-API-Key' => $this->settings->get('wisski')['portainerOptions']['authenticationToken'],
         ],
         'body' => json_encode([
-          'composeFile' => 'drupal10.3-php8.2-apache-bookworm-vanilla/traefik/external_db/docker-compose.yml',
+          'composeFile' => 'drupal/11.0/php8.3/apache-bookworm/wisski/dev/traefik/external_db/docker-compose.yml',
           'env' => $env,
           'name' => $options['subdomain'],
           'repositoryAuthentication' => FALSE,
-          'repositoryURL' => 'https://github.com/rnsrk/soda_scs_manager_stacks.git',
+          'repositoryURL' => 'https://github.com/soda-collections-objects-data-literacy/soda_scs_manager_stacks.git',
           'swarmID' => $this->settings->get('wisski')['portainerOptions']['swarmId'],
         ]),
       ];

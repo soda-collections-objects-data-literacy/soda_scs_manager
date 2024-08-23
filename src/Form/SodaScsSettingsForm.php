@@ -2,8 +2,6 @@
 
 namespace Drupal\soda_scs_manager\Form;
 
-use Drupal\Core\Ajax\AjaxResponse;
-use Drupal\Core\Ajax\HtmlCommand;
 use Drupal\Core\Form\ConfigFormBase;
 use Drupal\Core\Form\FormStateInterface;
 
@@ -84,9 +82,37 @@ class SodaScsSettingsForm extends ConfigFormBase {
       '#default_value' => $this->config('soda_scs_manager.settings')->get('dbPort'),
     ];
     $form['database']['fields']['dbRootPassword'] = [
-      '#type' => 'password',
+      '#type' => 'textfield',
       '#title' => $this->t('Root password'),
       '#default_value' => $this->config('soda_scs_manager.settings')->get('dbRootPassword'),
+    ];
+
+    // Database settings tab.
+    $form['triplestore'] = [
+      '#type' => 'details',
+      '#title' => $this->t('Triplestore settings'),
+      '#group' => 'tabs',
+    ];
+
+    $form['triplestore']['fields'] = [
+      '#type' => 'fieldset',
+      '#title' => $this->t('General settings'),
+    ];
+
+    $form['triplestore']['fields']['tsHost'] = [
+      '#type' => 'textfield',
+      '#title' => $this->t('Triplestore host'),
+      '#default_value' => $this->config('soda_scs_manager.settings')->get('tsHost'),
+    ];
+    $form['triplestore']['fields']['tsPort'] = [
+      '#type' => 'textfield',
+      '#title' => $this->t('Tripelstore port'),
+      '#default_value' => $this->config('soda_scs_manager.settings')->get('tsPort'),
+    ];
+    $form['triplestore']['fields']['tsAdminPassword'] = [
+      '#type' => 'textfield',
+      '#title' => $this->t('TS admin password'),
+      '#default_value' => $this->config('soda_scs_manager.settings')->get('tsAdminPassword'),
     ];
 
     // WissKI bundle settings tab.
@@ -198,6 +224,9 @@ class SodaScsSettingsForm extends ConfigFormBase {
       ->set('dbHost', $form_state->getValue('dbHost'))
       ->set('dbPort', $form_state->getValue('dbPort'))
       ->set('dbRootPassword', $form_state->getValue('dbRootPassword'))
+      ->set('tsHost', $form_state->getValue('tsHost'))
+      ->set('tsPort', $form_state->getValue('tsPort'))
+      ->set('tsAdminPassword', $form_state->getValue('tsAdminPassword'))
       ->set('wisski', $form_state->getValue('wisski'))
       ->save();
     parent::submitForm($form, $form_state);
