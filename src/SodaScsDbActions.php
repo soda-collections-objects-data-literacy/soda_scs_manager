@@ -12,6 +12,8 @@ use Drupal\Core\TypedData\Exception\MissingDataException;
 
 /**
  * Handles the communication with the SCS user manager daemon.
+ * 
+ * @todo Sanitise MYSQL mysql commands, no create, drop etc.
  */
 class SodaScsDbActions {
 

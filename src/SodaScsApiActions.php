@@ -174,6 +174,7 @@ class SodaScsApiActions {
           try {
             // Create Drupal instance.
             $portainerCreateRequest = $this->buildPortainerCreateRequest($options);
+            dpm($portainerCreateRequest);
             $portainerResponse = $this->makeRequest($portainerCreateRequest);
           } catch (MissingDataException $e) {
             $this->loggerFactory->get('soda_scs_manager')
@@ -192,8 +193,9 @@ class SodaScsApiActions {
             ];
           } catch (SodaScsRequestException $e) {
             $this->loggerFactory->get('soda_scs_manager')
-              ->error("Request response with error: @error", [
+              ->error("Request response with error: @error\n Stack trace:@trace\n", [
                 '@error' => $e->getMessage(),
+                '@trace' => $e->getTraceAsString(),
               ]);
             $this->messenger->addError($this->stringTranslation->translate("Request error. See logs for more details."));
             return [
@@ -385,6 +387,7 @@ class SodaScsApiActions {
       }
 
       // Send the GET request.
+      
       $response = $this->httpClient->request($request['method'], $request['route'], $options);
 
       // Check the response and handle the data accordingly.
@@ -412,7 +415,7 @@ class SodaScsApiActions {
       // Request failed, handle the error.
       throw new SodaScsRequestException($this->stringTranslation->translate('Request to container manager failed with code @code: @error', [
         '@code' => $e->getCode(),
-        '@error' => htmlspecialchars($e->getMessage(), ENT_QUOTES, 'UTF-8')
+        '@error' => $e->getResponse()->getBody()->getContents()
       ]), 0, $e);
     }
   }
@@ -447,17 +450,18 @@ class SodaScsApiActions {
         ["name" => "DB_NAME", "value" => $options['subdomain']],
         ["name" => "DB_PASSWORD", "value" => $options['servicePassword']],
         ["name" => "DB_USER", "value" => $options['userName']],
-        ["name" => "DEFAULT_GRAPH", "value" => 'http://' . $this->settings->get($options['subdomain']) . '.' . $this->settings->get('scsHost') . '/contents/' ],
+        ["name" => "DEFAULT_GRAPH", "value" => sprintf('http://%s.%s/contents/', $options['subdomain'], $this->settings->get('scsHost'))],
         ["name" => "DOMAIN", "value" => $this->settings->get('scsHost')],
         ["name" => "DRUPAL_USER", "value" => $options['userName']],
         ["name" => "DRUPAL_PASSWORD", "value" => $options['servicePassword']],
         ["name" => "SERVICE_NAME", "value" => $options['subdomain']],
         ["name" => "SITE_NAME", "value" => $options['subdomain']],
         ["name" => "TS_PASSWORD", "value" => $options['servicePassword']],
-        ["name" => "TS_READ_URL", "value" => 'https://' . $this->settings->get('tsHost') . '/repository/default'],
+        ["name" => "TS_READ_URL", "value" => 'https://' . $this->settings->get('tsHost') . '/repository/' . $options['subdomain']],
         ["name" => "TS_REPOSITORY", "value" => $options['subdomain']],
         ["name" => "TS_USERNAME", "value" => $options['userName']],
-        ["name" => "TS_WRITE_URL", "value" => 'https://' . $this->settings->get('tsHost') . '/repository/default/statements'],
+        ["name" => "TS_WRITE_URL", "value" => 'https://' . $this->settings->get('tsHost') . '/repository/' . $options['subdomain'] . '/statements'],
+        ["name" => "WISSKI_BASE_IMAGE_VERSION", "value" => '1.x'],
       ];
 
       foreach ($env as $variable) {
@@ -475,11 +479,11 @@ class SodaScsApiActions {
           'X-API-Key' => $this->settings->get('wisski')['portainerOptions']['authenticationToken'],
         ],
         'body' => json_encode([
-          'composeFile' => 'drupal/11.0/php8.3/apache-bookworm/wisski/dev/traefik/external_db/docker-compose.yml',
+          'composeFile' => 'docker-compose.yml',
           'env' => $env,
           'name' => $options['subdomain'],
           'repositoryAuthentication' => FALSE,
-          'repositoryURL' => 'https://github.com/soda-collections-objects-data-literacy/soda_scs_manager_stacks.git',
+          'repositoryURL' => 'https://github.com/soda-collections-objects-data-literacy/wisski-base-stack.git',
           'swarmID' => $this->settings->get('wisski')['portainerOptions']['swarmId'],
         ]),
       ];
