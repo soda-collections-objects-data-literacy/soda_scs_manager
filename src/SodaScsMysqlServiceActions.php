@@ -398,10 +398,12 @@ class SodaScsMysqlServiceActions implements SodaScsServiceActionsInterface {
    * If the user does not own any databases, the user is deleted.
    *
    * @param string $dbUser
+   * 
+   * @param string $dbUserPassword
    *
    * @return array
    */
-  public function cleanServiceUsers(string $dbUser) {
+  public function cleanServiceUsers(string $dbUser, string $dbUserPassword = NULL): array {
     if ($dbUser == 'root') {
       return [
         'message' => $this->stringTranslation->translate('Can not delete the root user'),
@@ -412,13 +414,13 @@ class SodaScsMysqlServiceActions implements SodaScsServiceActionsInterface {
 
 
     // Check if the user owns any databases
-    $userOwnsAnyDatabasesResult = $this->userOwnsAnyDatabases($dbUser);
+    $userOwnsAnyDatabasesResult = $this->userOwnsAnyDatabases($dbUser, $dbUserPassword);
 
     if ($userOwnsAnyDatabasesResult['execStatus'] != 0) {
       return $this->handleCommandFailure($userOwnsAnyDatabasesResult, 'check if user owns any databases', $dbUser);
     } 
 
-    if ($userOwnsAnyDatabasesResult['result'] > 0) {
+    if ($userOwnsAnyDatabasesResult['result'] > 1) {
       return [
         'message' => $this->stringTranslation->translate('User owns databases'),
         'error' => NULL,
@@ -439,12 +441,11 @@ class SodaScsMysqlServiceActions implements SodaScsServiceActionsInterface {
     ];
   }
 
-  public function userOwnsAnyDatabases(string $dbUser) {
+  public function userOwnsAnyDatabases(string $dbUser, string $userPassword) {
     $dbHost = $this->settings->get('dbHost');
-    $dbRootPassword = $this->settings->get('dbRootPassword');
 
     // Check if the user owns any databases
-    $userOwnsAnyDatabasesCommand = "mysql -h $dbHost -uroot -p$dbRootPassword -e 'SELECT count(*) FROM (SELECT DISTINCT TABLE_SCHEMA FROM information_schema.SCHEMA_PRIVILEGES WHERE GRANTEE LIKE(\"$dbUser\"@\"%\") GROUP BY TABLE_SCHEMA) AS baseview;' 2>&1";
+    $userOwnsAnyDatabasesCommand = "mysql -h$dbHost -u$dbUser -p$userPassword -e 'SELECT COUNT(*) FROM information_schema.SCHEMATA;' 2>&1";
     $userOwnsAnyDatabasesCommandResult = exec($userOwnsAnyDatabasesCommand, $userOwnsAnyDatabasesOutput, $userOwnsAnyDatabasesReturnVar);
     return [
       'command' => $userOwnsAnyDatabasesCommand,

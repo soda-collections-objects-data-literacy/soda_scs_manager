@@ -168,10 +168,13 @@ class SodaScsWisskiComponentActions implements SodaScsComponentActionsInterface 
       ];
     }
     
-      $portainerResponse = $this->sodaScsPortainerServiceActions->makeRequest($portainerCreateRequest);
+      $requestResult = $this->sodaScsPortainerServiceActions->makeRequest($portainerCreateRequest);
       
+      if ($requestResult['success'] === FALSE) {
+        return $requestResult;
+      }
       // Set the external ID.
-      $component->set('externalId', $portainerResponse['Id']);
+      $component->set('externalId', $requestResult['data']['portainerResponse']['Id']);
       
       // Save the component.
       $component->save();
@@ -182,7 +185,7 @@ class SodaScsWisskiComponentActions implements SodaScsComponentActionsInterface 
       return [
         'message' => 'Created WissKI component.',
         'data' => [
-          'portainerResponse' => $portainerResponse,
+          'portainerResponse' => $requestResult,
         ],
         'success' => TRUE,
         'error' => NULL,
@@ -240,7 +243,14 @@ class SodaScsWisskiComponentActions implements SodaScsComponentActionsInterface 
       ];
     } try {
       /** @var array $portainerResponse */
-      $portainerResponse = $this->sodaScsPortainerServiceActions->makeRequest($portainerDeleteRequest);
+      $requestResult = $this->sodaScsPortainerServiceActions->makeRequest($portainerDeleteRequest);
+      if (!$requestResult['success']) {
+        $this->loggerFactory->get('soda_scs_manager')->error("Could not delete WissKI stack at portainer. error: @error", [
+          '@error' => $requestResult['error'],
+        ]);
+        $this->messenger->addError($this->stringTranslation->translate("Could not delete WissKI stack at portainer, but will delete the component anyway. See logs for more details."));
+      }
+      $component->delete();
       return [
         'message' => 'Deleted WissKI component.',
         'data' => [

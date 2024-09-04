@@ -284,7 +284,11 @@ class SodaScsSqlComponentActions implements SodaScsComponentActionsInterface {
           $this->messenger->addError($this->stringTranslation->translate("Cannot delete database. See logs for more details."));
         }
         try {
-          $cleanDatabaseUsers = $this->sodaScsMysqlServiceActions->cleanServiceUsers($component->getOwner()->getDisplayName());
+          // GetServiceKey
+          /** @var \Drupal\soda_scs_manager\Entity\SodaScsServiceKeyInterface $sqlServiceKey */
+          $sqlServiceKey = $this->entityTypeManager->getStorage('soda_scs_service_key')->load($component->get('serviceKey')->target_id);
+          $dbUserPassword = $sqlServiceKey->get('servicePassword')->value;
+          $cleanDatabaseUsers = $this->sodaScsMysqlServiceActions->cleanServiceUsers($component->getOwner()->getDisplayName(), $dbUserPassword);
         } catch (MissingDataException $e) {
           $this->loggerFactory->get('soda_scs_manager')
           ->error("Cannot clean database users. @error", [

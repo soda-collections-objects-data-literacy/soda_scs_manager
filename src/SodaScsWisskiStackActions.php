@@ -201,6 +201,9 @@ class SodaScsWisskiStackActions implements SodaScsStackActionsInterface {
   /**
    * Create a WissKI stack.
    * 
+   * A WissKI stack consists of a WissKI, SQL and Triplestore component.
+   * We try to create one after another. 
+   * 
    * @param \Drupal\soda_scs_manager\Entity\SodaScsComponentInterface $component
    *   The component
    *  

@@ -124,10 +124,12 @@ interface SodaScsServiceActionsInterface  {
    * If the user does not own any services, the user will be deleted.
    *
    * @param string $user
+   * 
+   * @param string $userPassword
    *
    * @return array
    */
-  public function cleanServiceUsers(string $user);
+  public function cleanServiceUsers(string $user, string $userPassword = NULL): array;
 
   /**
    * Checks handle shell command failure.

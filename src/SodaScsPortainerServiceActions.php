@@ -163,9 +163,10 @@ class SodaScsPortainerServiceActions implements SodaScsServiceRequestInterface {
       // Send the request.
       try {
         $response = $this->httpClient->request($request['method'], $request['route'], $options);
+        $response = json_decode($response->getBody()->getContents(), TRUE);
 
         return [
-          'message' => 'Make request',
+          'message' => 'Request succeeded',
           'data' => [
             'portainerResponse' => $response,
           ],

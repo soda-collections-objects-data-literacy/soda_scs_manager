@@ -32,6 +32,7 @@ services:
       - '@http_client'
       - '@logger.factory'
       - '@messenger'
+      - '@soda_scs_manager.component.helpers'
       - '@soda_scs_manager.portainer_service.actions'
       - '@soda_scs_manager.mysql_service.actions'
       - '@soda_scs_manager.service_key.actions'
