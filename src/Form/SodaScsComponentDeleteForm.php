@@ -5,14 +5,11 @@ namespace Drupal\soda_scs_manager\Form;
 use Drupal\Component\Datetime\TimeInterface;
 use Drupal\Core\Entity\EntityRepositoryInterface;
 use Drupal\Core\Entity\EntityTypeBundleInfoInterface;
-use Drupal\Core\Routing\RouteMatchInterface;
 use Drupal\Core\Url;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 use Drupal\Core\Entity\ContentEntityDeleteForm;
 use Drupal\Core\Form\FormStateInterface;
-use Drupal\soda_scs_manager\SodaScsApiActions;
-use Drupal\Core\Entity\EntityTypeManagerInterface;
-use Drush\Drush;
+use Drupal\soda_scs_manager\SodaScsStackActionsInterface;
 
 /**
  * Provides a form for deleting Soda SCS Component entities.
@@ -22,9 +19,9 @@ class SodaScsComponentDeleteForm extends ContentEntityDeleteForm {
   /**
    * The Soda SCS API Actions service.
    *
-   * @var \Drupal\soda_scs_manager\SodaScsApiActions
+   * @var \Drupal\soda_scs_manager\SodaScsStackActionsInterface
    */
-  protected SodaScsApiActions $sodaScsApiActions;
+  protected SodaScsStackActionsInterface $sodaScsStackActions;
 
   /**
    * Constructs a new SodaScsComponentCreateForm.
@@ -32,12 +29,12 @@ class SodaScsComponentDeleteForm extends ContentEntityDeleteForm {
    * @param \Drupal\soda_scs_manager\SodaScsApiActions $sodaScsApiActions
    *   The Soda SCS API Actions service.
    */
-  public function __construct(EntityRepositoryInterface $entity_repository, EntityTypeBundleInfoInterface $entity_type_bundle_info, TimeInterface $time, SodaScsApiActions $sodaScsApiActions) {
+  public function __construct(EntityRepositoryInterface $entity_repository, EntityTypeBundleInfoInterface $entity_type_bundle_info, TimeInterface $time, SodaScsStackActionsInterface $sodaScsStackActions) {
     parent::__construct($entity_repository, $entity_type_bundle_info, $time);
     $this->entityRepository = $entity_repository;
     $this->entityTypeBundleInfo = $entity_type_bundle_info;
     $this->time = $time;
-    $this->sodaScsApiActions = $sodaScsApiActions;
+    $this->sodaScsStackActions = $sodaScsStackActions;
   }
 
   public static function create(ContainerInterface $container) {
@@ -45,7 +42,7 @@ class SodaScsComponentDeleteForm extends ContentEntityDeleteForm {
       $container->get('entity.repository'),
       $container->get('entity_type.bundle.info'),
       $container->get('datetime.time'),
-      $container->get('soda_scs_manager.api.actions')
+      $container->get('soda_scs_manager.stack.actions')
     );
   }
 
@@ -80,29 +77,18 @@ class SodaScsComponentDeleteForm extends ContentEntityDeleteForm {
 
     // Construct properties.
     /** @var \Drupal\soda_scs_manager\Entity\SodaScsComponent $entity */
-    $entity = $this->entity;
-    $bundle = $entity->bundle();
-    
-    $serviceKeyId = $entity->get('serviceKey')->target_id;
-    /** @var \Drupal\soda_scs_manager\Entity\SodaScsServiceKey $serviceKey */
-    $serviceKey = \Drupal::entityTypeManager()->getStorage('soda_scs_service_key')->load($serviceKeyId);
-    $servicePassword = $serviceKey->get('servicePassword')->value;
-    $options = [
-      'userId' => $entity->getOwner()->id(),
-      'userName' => $entity->getOwner()->getAccountName(),
-      'subdomain' => $entity->get('subdomain')->value,
-      'externalId' => $entity->get('externalId')->value,
-      'servicePassword' => $servicePassword,
-    ];
+    $component = $this->entity;
+
     // Delete the whole stack with database
-    $deleteComponentResult = $this->sodaScsApiActions->deleteStack($bundle, $options);
+    $deleteComponentResult = $this->sodaScsStackActions->deleteStack($component);
 
     if (!$deleteComponentResult['success']) {
       \Drupal::messenger()->addError($this->t('Failed to delete component @label. See logs for more information.', ['@label' => $this->entity->label()]));
       return;
     }
     // Call the parent submit handler to delete the entity.
-    parent::submitForm($form, $form_state);
+    // We don't do this here.
+    #parent::submitForm($form, $form_state);
 
     // Redirect to the desk.
     $form_state->setRedirect('soda_scs_manager.desk');

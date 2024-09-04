@@ -2,11 +2,11 @@
 
 namespace Drupal\soda_scs_manager\Form;
 
-use Drupal;
-use Drupal\Core\Database\Database;
+use Drupal\Core\Config\Config;
+use Drupal\Core\Config\ConfigFactoryInterface;
 use Drupal\Core\Entity\ContentEntityForm;
 use Drupal\Core\Form\FormStateInterface;
-use Drupal\soda_scs_manager\SodaScsApiActions;
+use Drupal\soda_scs_manager\SodaScsStackActions;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 use Drupal\Core\Entity\EntityRepositoryInterface;
 use Drupal\Core\Entity\EntityTypeBundleInfoInterface;
@@ -31,30 +31,40 @@ class SodaScsComponentCreateForm extends ContentEntityForm {
   /**
    * The Soda SCS API Actions service.
    *
-   * @var \Drupal\soda_scs_manager\SodaScsApiActions
+   * @var \Drupal\soda_scs_manager\SodaScsStackActions
    */
-  protected SodaScsApiActions $sodaScsApiActions;
+  protected SodaScsStackActions $sodaScsStackActions;
+
+
+  /**
+   * The settings config.
+   *
+   * @var \Drupal\Core\Config\Config
+   */
+  protected Config $settings;
 
   /**
    * Constructs a new SodaScsComponentCreateForm.
    *
-   * @param \Drupal\soda_scs_manager\SodaScsApiActions $sodaScsApiActions
+   * @param \Drupal\soda_scs_manager\SodaScsStackActions $sodaScsStackActions
    *   The Soda SCS API Actions service.
    */
-  public function __construct(EntityRepositoryInterface $entity_repository, EntityTypeBundleInfoInterface $entity_type_bundle_info, TimeInterface $time, SodaScsApiActions $sodaScsApiActions) {
+  public function __construct(EntityRepositoryInterface $entity_repository, EntityTypeBundleInfoInterface $entity_type_bundle_info, ConfigFactoryInterface $configFactory, TimeInterface $time, SodaScsStackActions $sodaScsStackActions) {
     parent::__construct($entity_repository, $entity_type_bundle_info, $time);
     $this->entityRepository = $entity_repository;
     $this->entityTypeBundleInfo = $entity_type_bundle_info;
+    $this->settings = $configFactory->getEditable('soda_scs_manager.settings');
     $this->time = $time;
-    $this->sodaScsApiActions = $sodaScsApiActions;
+    $this->sodaScsStackActions = $sodaScsStackActions;
   }
 
   public static function create(ContainerInterface $container) {
     return new static(
       $container->get('entity.repository'),
       $container->get('entity_type.bundle.info'),
+      $container->get('config.factory'),
       $container->get('datetime.time'),
-      $container->get('soda_scs_manager.api.actions')
+      $container->get('soda_scs_manager.stack.actions')
     );
   }
 
@@ -110,92 +120,30 @@ class SodaScsComponentCreateForm extends ContentEntityForm {
    */
   public function save(array $form, FormStateInterface $form_state): void {
 
-    // Get the entity and bundle.
-    /** @var \Drupal\soda_scs_manager\Entity\SodaScsComponent $entity */
-    $entity = $this->entity;
-    /** @var \Drupal\soda_scs_manager\Entity\SodaScsComponentBundle $bundle */
-    $bundle = \Drupal::service('entity_type.manager')->getStorage('soda_scs_component_bundle')->load($this->entity->bundle());
-
-
-    // Check if the service key for this bundle and user already exists.
-    $userId = \Drupal::currentUser()->id();
-    $serviceKeys = \Drupal::entityTypeManager()->getStorage('soda_scs_service_key')->loadByProperties([
-      'bundle' => $bundle->id(), 'user' => $userId,
-    ]);
-
-    if (empty($serviceKeys)) {
-      $servicePassword = $this->sodaScsApiActions->generateRandomPassword();
-      // Create a new service key entity.
-      /** @var \Drupal\soda_scs_manager\Entity\SodaScsServiceKey $serviceKey */
-      $serviceKey = \Drupal::entityTypeManager()->getStorage('soda_scs_service_key')->create([
-        'label' => $entity->label() . ' - ' . $bundle->label() . ' service key',
-        'servicePassword' => $servicePassword,
-        'bundle' => $bundle->id(),
-        'user' => \Drupal::currentUser()->id(),
-      ]);
-      $serviceKey->save();
-      $entity->set('serviceKey', $serviceKey);
-    } else {
-      /** @var \Drupal\soda_scs_manager\Entity\SodaScsServiceKey $serviceKey */
-      $serviceKey = reset($serviceKeys);
-      $entity->set('serviceKey', $serviceKey);
-      $servicePassword = $serviceKey->get('servicePassword')->value;
-    }
-    // Create options array for the API call.
-    $options = [
-      'subdomain' => $entity->get('subdomain')->value,
-      'project' => 'my_project',
-      'userId' => \Drupal::currentUser()->id(),
-      'userName' => \Drupal::currentUser()->getDisplayName(),
-      'servicePassword' => $servicePassword,
-    ];
-
-    $entity->set('user', $options['userId']);
-
-    if ($entity->isNew()) {
-      $entity->set('created', time());
-    } else {
-      $entity->set('updated', time());
-    }
-
-    $entity->set('label', $options['subdomain'] . '.' . $this->config('soda_scs_manager.settings')->get('scsHost'));
-
-    // Set the information coming from the bundle.
-    $entity->set('description', $bundle->getDescription());
-    $entity->set('imageUrl', $bundle->getImageUrl());
+    // We call it component here.
+    /** @var \Drupal\soda_scs_manager\Entity\SodaScsComponentInterface $component */
+    $component = $this->entity;
+    $component->set('bundle', $this->entity->bundle());
+    $component->set('created', $this->time->getRequestTime());
+    $component->set('updated', $this->time->getRequestTime());
+    $component->set('user', \Drupal::currentUser()->id());
+    $subdomain = reset($form_state->getValue('subdomain'))['value'];
+    $component->set('label', $subdomain . '.' . $this->settings->get('scsHost'));
+    $component->set('subdomain',$subdomain);
+    /** @var \Drupal\soda_scs_manager\Entity\SodaScsComponentBundleInterface $bundle */
+    $bundle = $this->entityTypeManager->getStorage('soda_scs_component_bundle')->load($this->entity->bundle());
+    $component->set('description', $bundle->getDescription());
+    $component->set('imageUrl', $bundle->getImageUrl());
 
     // Create external stack
-    $createComponentResult = $this->sodaScsApiActions->createStack($this->entity->bundle(), $options);
-
+    $createComponentResult = $this->sodaScsStackActions->createStack($component);
 
     if (!$createComponentResult['success']) {
       $this->messenger()->addMessage($this->t("Cannot create component \"@label\". See logs for more details.", [
-        '@label' => $entity->label(),
+        '@label' => $this->entity->label(),
         '@username' => \Drupal::currentUser()->getDisplayName(),
       ]), 'error');
       return;
-    }
-
-    // Set the external ID.
-    $entity->set('externalId', $createComponentResult['data']['portainerResponse']['data']['Id']);
-
-    $status = $entity->save();
-
-    $serviceKey->set('scsComponent', [$entity->id()]);
-    $serviceKey->save();
-
-    // Check if the entity was saved.
-    if ($status) {
-      // Setting a message with the entity label
-      $this->messenger()->addMessage($this->t('The @label component for @username has been created.', [
-        '@label' => $entity->label(),
-        '@username' => \Drupal::currentUser()->getDisplayName(),
-      ]));
-    } else {
-      $this->messenger()->addMessage($this->t('The @label component for @username could not be created.', [
-        '@label' => $entity->label(),
-        '@username' => \Drupal::currentUser()->getDisplayName(),
-      ]), 'error');
     }
 
     // Redirect to the components page.

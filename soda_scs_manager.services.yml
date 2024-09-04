@@ -1,24 +1,113 @@
+# @todo clean unnessary service arguments
 services:
-  soda_scs_manager.api.actions:
-    class: Drupal\soda_scs_manager\SodaScsApiActions
+  # Component actions
+  soda_scs_manager.component.helpers:
+    class: Drupal\soda_scs_manager\SodaScsComponentHelpers
+
+  soda_scs_manager.sql_component.actions:
+    class: Drupal\soda_scs_manager\SodaScsSqlComponentActions
     arguments:
       - '@config.factory'
       - '@database'
+      - '@entity_type.manager'
       - '@http_client'
-      - '@language_manager'
       - '@logger.factory'
-      - '@plugin.manager.mail'
       - '@messenger'
-      - '@request_stack'
-      - '@soda_scs_manager.db.actions'
+      - '@soda_scs_manager.mysql_service.actions'
+      - '@soda_scs_manager.service_key.actions'
       - '@string_translation'
-      - '@twig'
-  soda_scs_manager.db.actions:
-    class: Drupal\soda_scs_manager\SodaScsDbActions
+
+  soda_scs_manager.triplestore_component.actions:
+    class: Drupal\soda_scs_manager\SodaScsTriplestoreComponentActions
+    arguments:
+      - '@config.factory'
+      - '@entity_type.manager'
+
+  soda_scs_manager.wisski_component.actions:
+    class: Drupal\soda_scs_manager\SodaScsWisskiComponentActions
     arguments:
       - '@config.factory'
       - '@database'
+      - '@entity_type.manager'
+      - '@http_client'
+      - '@logger.factory'
+      - '@messenger'
+      - '@soda_scs_manager.portainer_service.actions'
+      - '@soda_scs_manager.mysql_service.actions'
+      - '@soda_scs_manager.service_key.actions'
+      - '@string_translation'
+
+  # Service key actions
+  soda_scs_manager.service_key.actions:
+    class: Drupal\soda_scs_manager\SodaScsServiceKeyActions
+    arguments:
+      - '@entity_type.manager'
+
+  # Service actions
+  soda_scs_manager.mysql_service.actions:
+    class: Drupal\soda_scs_manager\SodaScsMysqlServiceActions
+    arguments:
+      - '@config.factory'
+      - '@database'
+      - '@entity_type.manager'
       - '@logger.factory'
       - '@messenger'
       - '@string_translation'
 
+  soda_scs_manager.portainer_service.actions:
+      class: Drupal\soda_scs_manager\SodaScsPortainerServiceActions
+      arguments:
+        - '@config.factory'
+        - '@database'
+        - '@entity_type.manager'
+        - '@http_client'
+        - '@language_manager'
+        - '@logger.factory'
+        - '@plugin.manager.mail'
+        - '@messenger'
+        - '@request_stack'
+        - '@soda_scs_manager.mysql_service.actions'
+        - '@string_translation'
+        - '@twig'
+# Stack actions
+  soda_scs_manager.stack.actions:
+    class: Drupal\soda_scs_manager\SodaScsStackActions
+    arguments:
+      - '@soda_scs_manager.sql_stack.actions'
+      - '@soda_scs_manager.wisski_stack.actions'
+
+  soda_scs_manager.sql_stack.actions:
+    class: Drupal\soda_scs_manager\SodaScsSqlStackActions
+    arguments:
+      - '@config.factory'
+      - '@database'
+      - '@entity_type.manager'
+      - '@logger.factory'
+      - '@messenger'
+      - '@soda_scs_manager.sql_component.actions'
+      - '@soda_scs_manager.mysql_service.actions'
+      - '@soda_scs_manager.service_key.actions'
+      - '@soda_scs_manager.portainer_service.actions'
+      - '@soda_scs_manager.triplestore_component.actions'
+      - '@soda_scs_manager.wisski_component.actions'
+      - '@string_translation'
+
+  soda_scs_manager.triplestore_stack.actions:
+    class: Drupal\soda_scs_manager\SodaScsTriplestoreStackActions
+
+  soda_scs_manager.wisski_stack.actions:
+    class: Drupal\soda_scs_manager\SodaScsWisskiStackActions
+    arguments:
+      - '@config.factory'
+      - '@database'
+      - '@entity_type.manager'
+      - '@logger.factory'
+      - '@messenger'
+      - '@soda_scs_manager.component.helpers'
+      - '@soda_scs_manager.sql_component.actions'
+      - '@soda_scs_manager.mysql_service.actions'
+      - '@soda_scs_manager.service_key.actions'
+      - '@soda_scs_manager.portainer_service.actions'
+      - '@soda_scs_manager.triplestore_component.actions'
+      - '@soda_scs_manager.wisski_component.actions'
+      - '@string_translation'

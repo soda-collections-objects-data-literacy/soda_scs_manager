@@ -17,13 +17,7 @@ use Drupal\file\Entity\File;
 class SodaScsManagerController extends ControllerBase {
 
   /**
-   * @var \Drupal\soda_scs_manager\SodaScsApiActions
-   *  The SODa SCS Manager API actions service.
-   */
-  protected SodaScsApiActions $ApiActions;
 
-
-  /**
    * Class constructor.
    *
    * @param \Drupal\soda_scs_manager\SodaScsApiActions $ApiActions
@@ -32,8 +26,7 @@ class SodaScsManagerController extends ControllerBase {
    * @param \Drupal\soda_scs_manager\DbActions $dbActions
    *  The SODa SCS Manager database actions service.
    */
-  public function __construct(SodaScsApiActions $ApiActions, EntityTypeManagerInterface $entityTypeManager) {
-    $this->ApiActions = $ApiActions;
+  public function __construct( EntityTypeManagerInterface $entityTypeManager) {
     $this->entityTypeManager = $entityTypeManager;
   }
 
@@ -45,7 +38,6 @@ class SodaScsManagerController extends ControllerBase {
    */
   public static function create(ContainerInterface $container) {
     return new static(
-      $container->get('soda_scs_manager.api.actions'),
       $container->get('entity_type.manager')
     );
   }
@@ -172,7 +164,6 @@ class SodaScsManagerController extends ControllerBase {
   public function healthcheckPage(): array {
     return [
       '#theme' => 'soda_scs_manager_healthcheck_page',
-      //'#healthCheck' => $this->ApiActions->healthCheck(),
     ];
   }
 
