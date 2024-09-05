@@ -4,23 +4,20 @@ namespace Drupal\soda_scs_manager;
 
 use Drupal\Core\Entity\EntityInterface;
 use Drupal\Core\Entity\EntityListBuilder;
-use Drupal\Core\Url;
 use Drupal\Core\Link;
-use Drupal\soda_scs_manager\SodaScsApiActions;
+use Drupal\Core\Url;
 
 /**
  * Defines a class to build a listing of SODa SCS Component entities.
  *
  * @ingroup soda_scs_manager
  */
-class SodaScsComponentListBuilder extends EntityListBuilder
-{
+class SodaScsComponentListBuilder extends EntityListBuilder {
 
   /**
    * {@inheritdoc}
    */
-  public function buildHeader()
-  {
+  public function buildHeader() {
     $header['type'] = $this->t('Type');
     $header['subdomain'] = $this->t('Domain');
     $header['status'] = $this->t('Status');
@@ -31,8 +28,7 @@ class SodaScsComponentListBuilder extends EntityListBuilder
   /**
    * {@inheritdoc}
    */
-  public function buildRow(EntityInterface $entity)
-  {
+  public function buildRow(EntityInterface $entity) {
     $bundle = $entity->bundle();
     $action = 'status';
     $options = [
@@ -50,8 +46,7 @@ class SodaScsComponentListBuilder extends EntityListBuilder
   /**
    * {@inheritdoc}
    */
-  protected function getDefaultOperations(EntityInterface $entity)
-  {
+  protected function getDefaultOperations(EntityInterface $entity) {
     $operations = parent::getDefaultOperations($entity);
     // Add custom operations.
     $operations['create'] = [
@@ -80,10 +75,10 @@ class SodaScsComponentListBuilder extends EntityListBuilder
   /**
    * {@inheritdoc}
    */
-  public function render()
-  {
+  public function render() {
     $build = parent::render();
     $build['table']['#prefix'] = Link::fromTextAndUrl($this->t('Add bundle'), Url::fromRoute('entity.soda_scs_component_bundle.add_form'))->toString();
     return $build;
   }
+
 }
