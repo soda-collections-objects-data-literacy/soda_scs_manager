@@ -3,6 +3,8 @@ services:
   # Component actions
   soda_scs_manager.component.helpers:
     class: Drupal\soda_scs_manager\SodaScsComponentHelpers
+    arguments:
+      - '@string_translation'
 
   soda_scs_manager.sql_component.actions:
     class: Drupal\soda_scs_manager\SodaScsSqlComponentActions
