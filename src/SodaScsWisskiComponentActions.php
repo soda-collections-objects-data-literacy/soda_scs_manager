@@ -260,7 +260,7 @@ class SodaScsWisskiComponentActions implements SodaScsComponentActionsInterface
       return [
         'message' => 'Deleted WissKI component.',
         'data' => [
-          'portainerResponse' => $portainerResponse,
+          'portainerResponse' => $requestResult,
         ],
         'success' => TRUE,
         'error' => NULL,
