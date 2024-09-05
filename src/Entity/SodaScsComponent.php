@@ -302,9 +302,11 @@ class SodaScsComponent extends ContentEntityBase implements SodaScsComponentInte
       ])
       ->setDisplayConfigurable('view', FALSE);
 
+    // @todo Implement the reuse of dangling components  
     $fields['referencedComponents'] = BaseFieldDefinition::create('entity_reference')
       ->setLabel(new TranslatableMarkup('Connect with dangling component(s)'))
       ->setSetting('target_type', 'soda_scs_component')
+      //->setSetting('handler', 'default:exclude_referenced')
       ->setSetting('handler', 'default')
       ->setRequired(FALSE)
       ->setReadOnly(FALSE)
@@ -314,12 +316,17 @@ class SodaScsComponent extends ContentEntityBase implements SodaScsComponentInte
       ->setDisplayOptions('form', [
         'type' => 'options_buttons',
         'weight' => 0,
-        'settings' => []
+        //'settings' => [
+        //  'match_operator' => 'NOT EXISTS',
+        //  'match_fields' => [
+        //    'referencedComponents' => 'id',
+        //  ],
+        //]
       ])
-      ->setDisplayOptions('view', [
-        'label' => 'above',
-        'type' => 'entity_reference_label',
-      ])
+      //->setDisplayOptions('view', [
+      //  'label' => 'above',
+      //  'type' => 'entity_reference_label',
+      //])
       ->setDisplayConfigurable('view', FALSE);
 
     $fields['created'] = BaseFieldDefinition::create('created')
