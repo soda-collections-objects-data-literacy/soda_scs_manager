@@ -2,7 +2,6 @@
 
 namespace Drupal\soda_scs_manager;
 
-
 use Drupal\Core\Config\Config;
 use Drupal\Core\Config\ConfigFactoryInterface;
 use Drupal\Core\DependencyInjection\DependencySerializationTrait;
@@ -12,34 +11,31 @@ use Drupal\Core\Messenger\MessengerInterface;
 use Drupal\Core\StringTranslation\TranslationInterface;
 use Drupal\Core\TypedData\Exception\MissingDataException;
 use Drupal\soda_scs_manager\Entity\SodaScsComponentInterface;
-use Drupal\soda_scs_manager\SodaScsComponentActionsInterface;
-use Drupal\soda_scs_manager\SodaScsServiceKeyActions;
-use Drupal\soda_scs_manager\SodaScsServiceRequestInterface;
+
 /**
  * Handles the communication with the SCS user manager daemon.
  */
-class SodaScsTriplestoreComponentActions implements SodaScsComponentActionsInterface
-{
+class SodaScsTriplestoreComponentActions implements SodaScsComponentActionsInterface {
 
   use DependencySerializationTrait;
 
   /**
    * The entity type manager.
-   * 
+   *
    * @var \Drupal\Core\Entity\EntityTypeManagerInterface
    */
   protected EntityTypeManagerInterface $entityTypeManager;
 
   /**
    * The logger factory.
-   * 
+   *
    * @var \Drupal\Core\Logger\LoggerChannelFactoryInterface
    */
   protected LoggerChannelFactoryInterface $loggerFactory;
 
   /**
    * The messenger service.
-   * 
+   *
    * @var \Drupal\Core\Messenger\MessengerInterface
    */
   protected MessengerInterface $messenger;
@@ -81,7 +77,7 @@ class SodaScsTriplestoreComponentActions implements SodaScsComponentActionsInter
     LoggerChannelFactoryInterface $loggerFactory,
     MessengerInterface $messenger,
     SodaScsServiceRequestInterface $sodaScsOpenGdbServiceActions,
-    TranslationInterface $stringTranslation
+    TranslationInterface $stringTranslation,
   ) {
     // Services from container.
     $settings = $configFactory
@@ -96,13 +92,14 @@ class SodaScsTriplestoreComponentActions implements SodaScsComponentActionsInter
 
   /**
    * Create Triplestore Component.
-   * 
+   *
    * @param \Drupal\soda_scs_manager\Entity\SodaScsComponentInterface $component
-   * 
+   *   The SODa SCS component.
+   *
    * @return array
+   *   The created component.
    */
-  public function createComponent(SodaScsComponentInterface $component): array
-  {
+  public function createComponent(SodaScsComponentInterface $component): array {
     try {
       // Create service key if it does not exist.
       $triplestoreComponentServiceKey = $this->sodaScsServiceKeyActions->getServiceKey($component) ?? $this->sodaScsServiceKeyActions->createServiceKey($component);
@@ -118,7 +115,8 @@ class SodaScsTriplestoreComponentActions implements SodaScsComponentActionsInter
       ];
       // Create Drupal instance.
       $openGdbCreateRequest = $this->sodaScsOpenGdbServiceActions->buildCreateRequest($requestParams);
-    } catch (MissingDataException $e) {
+    }
+    catch (MissingDataException $e) {
       $this->loggerFactory->get('soda_scs_manager')
         ->error("Cannot assemble Request: @error", [
           '@error' => $e->getMessage(),
@@ -158,18 +156,43 @@ class SodaScsTriplestoreComponentActions implements SodaScsComponentActionsInter
     ];
   }
 
-  public function getComponent(SodaScsComponentInterface $component): array
-  {
+  /**
+   * Read all WissKI components.
+   *
+   * @param \Drupal\soda_scs_manager\Entity\SodaScsComponentInterface $component
+   *   The SODa SCS component.
+   *
+   * @return array
+   *   The result array of the created component.
+   */
+  public function getComponent(SodaScsComponentInterface $component): array {
     return [];
   }
 
-  public function updateComponent(SodaScsComponentInterface $component): array
-  {
+  /**
+   * Update WissKI component.
+   *
+   * @param \Drupal\soda_scs_manager\Entity\SodaScsComponentInterface $component
+   *   The SODa SCS component.
+   *
+   * @return array
+   *   The result array of the created component.
+   */
+  public function updateComponent(SodaScsComponentInterface $component): array {
     return [];
   }
 
-  public function deleteComponent(SodaScsComponentInterface $component): array
-  {
+  /**
+   * Delete WissKI component.
+   *
+   * @param \Drupal\soda_scs_manager\Entity\SodaScsComponentInterface $component
+   *   The SODa SCS component.
+   *
+   * @return array
+   *   The result array of the created component.
+   */
+  public function deleteComponent(SodaScsComponentInterface $component): array {
     return [];
   }
+
 }

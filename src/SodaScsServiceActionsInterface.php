@@ -4,16 +4,19 @@ namespace Drupal\soda_scs_manager;
 
 use Drupal\soda_scs_manager\Entity\SodaScsComponentInterface;
 
-interface SodaScsServiceActionsInterface
-{
+/**
+ * Interface for SODa SCS Service actions.
+ */
+interface SodaScsServiceActionsInterface {
 
   /**
    * Creates a new service.
    *
    * @param \Drupal\soda_scs_manager\Entity\SodaScsComponentInterface $component
-   * 
+   *   The SODa SCS component.
+   *
    * @return array
-   *  Success result.
+   *   Success result.
    *
    * @throws MissingDataException
    */
@@ -26,15 +29,12 @@ interface SodaScsServiceActionsInterface
    *   The name of the service.
    *
    * @return array
-   *  Command, execution status (0 = success >0 = failure) and last line of
-   *
+   *   Command, execution status (0 = success >0 = failure) and last line of
    */
   public function existService(string $name): array;
 
   /**
    * Updates a service.
-   * 
-   * @return void
    */
   public function updateService();
 
@@ -42,13 +42,15 @@ interface SodaScsServiceActionsInterface
    * Deletes a service.
    *
    * @param \Drupal\soda_scs_manager\Entity\SodaScsComponentInterface $component
+   *   The SODa SCS component.
    *
    * @return array
-   *  Success result.
+   *   Success result.
    *
    * @throws MissingDataException
    */
   public function deleteService(SodaScsComponentInterface $component): array;
+
   /**
    * Creates a new service user.
    *
@@ -58,20 +60,19 @@ interface SodaScsServiceActionsInterface
    *   The password of the service user.
    *
    * @return array
-   *  Command, execution status (0 = success >0 = failure) and last line of
+   *   Command, execution status (0 = success >0 = failure) and last line of
    *   output as result.
-   *
    */
   public function createServiceUser(string $user, string $userPassword): array;
 
-
   /**
    * Gets the user from the Drupal service and Distillery.
-   * 
+   *
    * @param int $uid
    *   The id of the drupal user.
-   * 
+   *
    * @return array
+   *   The user.
    */
   public function getServiceUser($uid = NULL): array;
 
@@ -82,7 +83,7 @@ interface SodaScsServiceActionsInterface
    *   The name of the service user.
    *
    * @return array
-   *  Command, execution status (0 = success >0 = failure) and last line of
+   *   Command, execution status (0 = success >0 = failure) and last line of
    *   output as result.
    */
   public function existServiceUser(string $user): array;
@@ -100,15 +101,18 @@ interface SodaScsServiceActionsInterface
    * If the request fails.
    */
 
-
   /**
    * Grants rights to a service user.
    *
    * @param string $user
+   *   The name of the service user.
    * @param string $name
+   *   The name of the service.
    * @param array $rights
+   *   The rights to grant.
    *
    * @return array
+   *   Result information with command.
    */
   public function grantServiceRights(string $user, string $name, array $rights): array;
 
@@ -116,6 +120,7 @@ interface SodaScsServiceActionsInterface
    * Flush the service privileges.
    *
    * @return array
+   *   Success result.
    */
   public function flushPrivileges(): array;
 
@@ -125,25 +130,34 @@ interface SodaScsServiceActionsInterface
    * If the user does not own any services, the user will be deleted.
    *
    * @param string $user
-   * 
+   *   The name of the service user.
    * @param string $userPassword
+   *   The password of the service user.
    *
    * @return array
+   *   Result information with command, return
+   *   status (>0 = failed or 0 = success), output (array)
+   *   and result (last line of output).
    */
   public function cleanServiceUsers(string $user, string $userPassword = NULL): array;
 
   /**
    * Checks handle shell command failure.
-   * 
+   *
    * @param array $commandResult
    *   The command result.
    * @param string $action
    *   The action.
    * @param string $entityName
    *   The entity name.
-   * 
+   *
    * @return array
-   *   The command result.
+   *   Result information with
+   *   - string message,
+   *   - array data
+   *   - array error
+   *   - boolean success.
    */
   public function handleCommandFailure(array $commandResult, string $action, string $entityName): array;
+
 }

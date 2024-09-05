@@ -7,14 +7,11 @@ use Drupal\Core\Logger\LoggerChannelFactoryInterface;
 use Drupal\Core\Messenger\MessengerInterface;
 use Drupal\Core\StringTranslation\TranslationInterface;
 use Drupal\soda_scs_manager\Entity\SodaScsComponentInterface;
-use Drupal\soda_scs_manager\SodaScsComponentActionsInterface;
-use Drupal\soda_scs_manager\SodaScsStackActionsInterface;
 
 /**
- * Handles the communication with the SCS user manager daemon for triplestore stacks.
+ * Handles the triplestore stack actions.
  */
-class SodaScsTriplestoreStackActions implements SodaScsStackActionsInterface
-{
+class SodaScsTriplestoreStackActions implements SodaScsStackActionsInterface {
 
   use DependencySerializationTrait;
 
@@ -34,9 +31,9 @@ class SodaScsTriplestoreStackActions implements SodaScsStackActionsInterface
 
   /**
    * The SCS triplestore actions service.
-   * 
+   *
    * @var \Drupal\soda_scs_manager\SodaScsComponentActionsInterface
-   */ 
+   */
   protected SodaScsComponentActionsInterface $sodaScsTriplestoreComponentActions;
 
   /**
@@ -64,16 +61,16 @@ class SodaScsTriplestoreStackActions implements SodaScsStackActionsInterface
 
   /**
    * Create a triplestore stack.
-   * 
+   *
    * @param \Drupal\soda_scs_manager\Entity\SodaScsComponentInterface $component
-   *   The component
-   *  
+   *   The component.
+   *
    * @return array
-   * 
+   *   The result.
+   *
    * @throws \Exception
    */
-  public function createStack(SodaScsComponentInterface $component): array
-  {
+  public function createStack(SodaScsComponentInterface $component): array {
     try {
       // Create the SQL component.
       $triplestoreComponentCreateResult = $this->sodaScsTriplestoreComponentActions->createComponent($component);
@@ -85,7 +82,7 @@ class SodaScsTriplestoreStackActions implements SodaScsStackActionsInterface
             'triplestoreComponentCreateResult' => $triplestoreComponentCreateResult,
           ],
           'success' => FALSE,
-          'error' =>  $triplestoreComponentCreateResult['error'],
+          'error' => $triplestoreComponentCreateResult['error'],
         ];
       }
       return [
@@ -94,10 +91,11 @@ class SodaScsTriplestoreStackActions implements SodaScsStackActionsInterface
           'triplestoreComponentCreateResult' => $triplestoreComponentCreateResult,
         ],
         'success' => FALSE,
-        'error' =>  $triplestoreComponentCreateResult['error'],
+        'error' => $triplestoreComponentCreateResult['error'],
       ];
 
-    } catch (\Exception $e) {
+    }
+    catch (\Exception $e) {
       $this->loggerFactory->get('soda_scs_manager')->error("Triplestore component creation exists with error: @error trace: @trace", [
         '@error' => $e->getMessage(),
         '@trace' => $e->getTraceAsString(),
@@ -109,59 +107,65 @@ class SodaScsTriplestoreStackActions implements SodaScsStackActionsInterface
           'triplestoreComponentCreateResult' => NULL,
         ],
         'success' => FALSE,
-        'error' =>  $e,
+        'error' => $e,
       ];
     }
   }
 
   /**
    * Read all triplestore stacks.
-   * 
-   * @param $bundle
-   * @param $options
-   * 
+   *
+   * @param string $bundle
+   *   The bundle.
+   * @param array $options
+   *   The options.
+   *
    * @return array
+   *   The result array.
    */
-  public function getStacks($bundle, $options): array
-  {
+  public function getStacks($bundle, $options): array {
     return [];
   }
 
   /**
    * Read a triplestore stack.
-   * 
+   *
    * @param Drupal\soda_scs_manager\Entity\SodaScsComponentInterface $component
-   * 
+   *   The component.
+   *
    * @return array
+   *   The result.
    */
-  public function getStack($component): array
-  {
+  public function getStack($component): array {
     return [];
   }
 
   /**
    * Update a triplestore stack.
-   * 
-   * @param $component
-   * 
+   *
+   * @param \Drupal\soda_scs_manager\Entity\SodaScsComponentInterface $component
+   *   The component.
+   *
    * @return array
+   *   The result.
    */
-  public function updateStack($component): array
-  {
+  public function updateStack($component): array {
     return [];
   }
 
   /**
    * Delete a triplestore stack.
-   * 
+   *
    * @param \Drupal\soda_scs_manager\Entity\SodaScsComponentInterface $component
-   * 
+   *   The component.
+   *
    * @throws \Drupal\Core\TypedData\Exception\MissingDataException
-   * 
+   *
    * @return array
+   *   The result.
    */
-  public function deleteStack(SodaScsComponentInterface $component): array
-  {
+  public function deleteStack(SodaScsComponentInterface $component): array {
     return [];
   }
+
 }

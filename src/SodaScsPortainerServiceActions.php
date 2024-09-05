@@ -2,7 +2,6 @@
 
 namespace Drupal\soda_scs_manager;
 
-use Symfony\Component\HttpFoundation\RequestStack;
 use Drupal\Core\Config\Config;
 use Drupal\Core\Config\ConfigFactoryInterface;
 use Drupal\Core\Database\Connection;
@@ -15,15 +14,14 @@ use Drupal\Core\Messenger\MessengerInterface;
 use Drupal\Core\StringTranslation\TranslationInterface;
 use Drupal\Core\Template\TwigEnvironment;
 use Drupal\Core\TypedData\Exception\MissingDataException;
-use Drupal\soda_scs_manager\SodaScsServiceRequestInterface;
 use GuzzleHttp\ClientInterface;
 use GuzzleHttp\Exception\ClientException;
+use Symfony\Component\HttpFoundation\RequestStack;
 
 /**
  * Handles the communication with the SCS user manager daemon.
  */
-class SodaScsPortainerServiceActions implements SodaScsServiceRequestInterface
-{
+class SodaScsPortainerServiceActions implements SodaScsServiceRequestInterface {
 
   use DependencySerializationTrait;
 
@@ -36,7 +34,7 @@ class SodaScsPortainerServiceActions implements SodaScsServiceRequestInterface
 
   /**
    * The entity type manager.
-   * 
+   *
    * @var \Drupal\Core\Entity\EntityTypeManagerInterface
    */
   protected $entityTypeManager;
@@ -126,7 +124,7 @@ class SodaScsPortainerServiceActions implements SodaScsServiceRequestInterface
     RequestStack $requestStack,
     SodaScsMysqlServiceActions $sodaScsMysqlServiceActions,
     TranslationInterface $stringTranslation,
-    TwigEnvironment $twig
+    TwigEnvironment $twig,
   ) {
     // Services from container.
     $settings = $configFactory
@@ -145,26 +143,24 @@ class SodaScsPortainerServiceActions implements SodaScsServiceRequestInterface
     $this->twig = $twig;
   }
 
-
-
   /**
    * Make request.
-   * 
-   * @param $request
+   *
+   * @param array $request
+   *   The request array.
    *
    * @return array
-   * 
+   *   The response array.
    */
-  public function makeRequest($request): array
-  {
-    // Assemble options.
-    $options['headers'] = $request['headers'];
+  public function makeRequest($request): array {
+    // Assemble requestParams.
+    $requestParams['headers'] = $request['headers'];
     if (isset($request['body'])) {
-      $options['body'] = $request['body'];
+      $requestParams['body'] = $request['body'];
     }
     // Send the request.
     try {
-      $response = $this->httpClient->request($request['method'], $request['route'], $options);
+      $response = $this->httpClient->request($request['method'], $request['route'], $requestParams);
       $response = json_decode($response->getBody()->getContents(), TRUE);
 
       return [
@@ -175,7 +171,8 @@ class SodaScsPortainerServiceActions implements SodaScsServiceRequestInterface
         'success' => TRUE,
         'error' => '',
       ];
-    } catch (ClientException $e) {
+    }
+    catch (ClientException $e) {
       $this->loggerFactory->get('soda_scs_manager')->error("Portainer request failed with code @code error: @error trace @trace", [
         '@code' => $e->getCode(),
         '@error' => $e->getMessage(),
@@ -193,18 +190,18 @@ class SodaScsPortainerServiceActions implements SodaScsServiceRequestInterface
     ];
   }
 
-
   /**
    * Builds the create request for the Portainer service API.
    *
-   * @param array $options
+   * @param array $requestParams
+   *   The request params.
    *
    * @return array
+   *   The request array.
    *
    * @throws \Drupal\Core\TypedData\Exception\MissingDataException
    */
-  public function buildCreateRequest(array $options): array
-  {
+  public function buildCreateRequest(array $requestParams): array {
     $url = $this->settings->get('wisski')['routes']['createUrl'];
     if (empty($url)) {
       throw new MissingDataException('Create URL setting is not set.');
@@ -220,24 +217,82 @@ class SodaScsPortainerServiceActions implements SodaScsServiceRequestInterface
     $route = $url . '?' . http_build_query($queryParams);
 
     $env = [
-      ["name" => "DB_DRIVER", "value" => "mysql"],
-      ["name" => "DB_HOST", "value" => $this->settings->get('dbHost')],
-      ["name" => "DB_NAME", "value" => $options['subdomain'] . '-db'],
-      ["name" => "DB_PASSWORD", "value" => $options['sqlServicePassword']],
-      ["name" => "DB_USER", "value" => $options['userName']],
-      ["name" => "DEFAULT_GRAPH", "value" => sprintf('http://%s.%s/contents/', $options['subdomain'], $this->settings->get('scsHost'))],
-      ["name" => "DOMAIN", "value" => $this->settings->get('scsHost')],
-      ["name" => "DRUPAL_USER", "value" => $options['userName']],
-      ["name" => "DRUPAL_PASSWORD", "value" => $options['wisskiServicePassword']],
-      ["name" => "SERVICE_NAME", "value" => $options['subdomain']],
-      ["name" => "SITE_NAME", "value" => $options['subdomain']],
-      ["name" => "TS_PASSWORD", "value" => $options['triplestoreServicePassword']],
-      ["name" => "TS_READ_URL", "value" => 'https://' . $this->settings->get('tsHost') . '/repository/' . $options['subdomain'] . '-ts'],
-      ["name" => "TS_REPOSITORY", "value" => $options['subdomain']],
-      ["name" => "TS_USERNAME", "value" => $options['userName']],
-      ["name" => "TS_WRITE_URL", "value" => 'https://' . $this->settings->get('tsHost') . '/repository/' . $options['subdomain'] . '-ts' . '/statements'],
-      ["name" => "WISSKI_BASE_IMAGE_VERSION", "value" => '1.x'],
-      ["name" => "WISSKI_BASE_RECIPE_VERSION", "value" => '1.x-dev'],
+      [
+        "name" => "DB_DRIVER",
+        "value" => "mysql",
+      ],
+      [
+        "name" => "DB_HOST",
+        "value" => $this->settings->get('dbHost'),
+      ],
+      [
+        "name" => "DB_NAME",
+        "value" => $requestParams['subdomain'] . '-db',
+      ],
+      [
+        "name" => "DB_PASSWORD",
+        "value" => $requestParams['sqlServicePassword'],
+      ],
+      [
+        "name" => "DB_USER",
+        "value" => $requestParams['userName'],
+      ],
+      [
+        "name" => "DEFAULT_GRAPH",
+        // @todo whats the best way of concat strings with vars?
+        "value" => sprintf(
+        'http://%s.%s/contents/',
+        $requestParams['subdomain'],
+        $this->settings->get('scsHost')),
+      ],
+      [
+        "name" => "DOMAIN",
+        "value" => $this->settings->get('scsHost'),
+      ],
+      [
+        "name" => "DRUPAL_USER",
+        "value" => $requestParams['userName'],
+      ],
+      [
+        "name" => "DRUPAL_PASSWORD",
+        "value" => $requestParams['wisskiServicePassword'],
+      ],
+      [
+        "name" => "SERVICE_NAME",
+        "value" => $requestParams['subdomain'],
+      ],
+      [
+        "name" => "SITE_NAME",
+        "value" => $requestParams['subdomain'],
+      ],
+      [
+        "name" => "TS_PASSWORD",
+        "value" => $requestParams['triplestoreServicePassword'],
+      ],
+      [
+        "name" => "TS_READ_URL",
+        "value" => 'https://' . $this->settings->get('tsHost') . '/repository/' . $requestParams['subdomain'] . '-ts',
+      ],
+      [
+        "name" => "TS_REPOSITORY",
+        "value" => $requestParams['subdomain'],
+      ],
+      [
+        "name" => "TS_USERNAME",
+        "value" => $requestParams['userName'],
+      ],
+      [
+        "name" => "TS_WRITE_URL",
+        "value" => 'https://' . $this->settings->get('tsHost') . '/repository/' . $requestParams['subdomain'] . '-ts' . '/statements',
+      ],
+      [
+        "name" => "WISSKI_BASE_IMAGE_VERSION",
+        "value" => '1.x',
+      ],
+      [
+        "name" => "WISSKI_BASE_RECIPE_VERSION",
+        "value" => '1.x-dev',
+      ],
     ];
 
     foreach ($env as $variable) {
@@ -257,7 +312,7 @@ class SodaScsPortainerServiceActions implements SodaScsServiceRequestInterface
       'body' => json_encode([
         'composeFile' => 'docker-compose.yml',
         'env' => $env,
-        'name' => $options['subdomain'],
+        'name' => $requestParams['subdomain'],
         'repositoryAuthentication' => FALSE,
         'repositoryURL' => 'https://github.com/soda-collections-objects-data-literacy/wisski-base-stack.git',
         'swarmID' => $this->settings->get('wisski')['portainerOptions']['swarmId'],
@@ -268,26 +323,28 @@ class SodaScsPortainerServiceActions implements SodaScsServiceRequestInterface
   /**
    * Builds the create request for the Portainer service API.
    *
-   * @param array $options
+   * @param array $requestParams
+   *   An array of request parameters.
    *
    * @return array
-   *
+   *   The request array for the makeRequest function.
    */
-  public function buildReadRequest(array $options): array
-  {
+  public function buildReadRequest(array $requestParams): array {
     return [];
   }
 
   /**
    * Build request to get all stacks.
    *
-   * @param $options
+   * @param array $requestParams
+   *   The request parameters.
    *
    * @return array
+   *   The request array for the makeRequest function.
+   *
    * @throws \Drupal\Core\TypedData\Exception\MissingDataException
    */
-  public function buildGetRequest($options): array
-  {
+  public function buildGetRequest($requestParams): array {
     $route = $this->settings->get('wisski')['routes']['readAllUrl'];
     if (empty($route)) {
       throw new MissingDataException('Read all URL setting is not set.');
@@ -304,15 +361,17 @@ class SodaScsPortainerServiceActions implements SodaScsServiceRequestInterface
       ],
     ];
   }
+
   /**
    * Builds the update request for the Portainer service API.
    *
-   * @param array $options
+   * @param array $requestParams
+   *   The request parameters.
    *
    * @return array
+   *   The request array for the makeRequest function.
    */
-  public function buildUpdateRequest(array $options): array
-  {
+  public function buildUpdateRequest(array $requestParams): array {
     return [];
   }
 
@@ -320,13 +379,14 @@ class SodaScsPortainerServiceActions implements SodaScsServiceRequestInterface
    * Builds the delete request for the Portainer service API.
    *
    * @param array $queryParams
+   *   The query parameters.
    *
    * @return array
+   *   The request array for the makeRequest function.
    *
-   * @throws MissingDataException
+   * @throws \Drupal\Core\TypedData\Exception\MissingDataException
    */
-  public function buildDeleteRequest(array $queryParams): array
-  {
+  public function buildDeleteRequest(array $queryParams): array {
     $url = $this->settings->get('wisski')['routes']['deleteUrl'];
     if (empty($url)) {
       throw new MissingDataException('Delete URL setting is not set.');
@@ -355,4 +415,5 @@ class SodaScsPortainerServiceActions implements SodaScsServiceRequestInterface
       ],
     ];
   }
+
 }

@@ -482,7 +482,11 @@ class SodaScsMysqlServiceActions implements SodaScsServiceActionsInterface {
    *   The entity name.
    *
    * @return array
-   *   The command result.
+   *   Result information with
+   *   - string message,
+   *   - array data
+   *   - array error
+   *   - boolean success.
    */
   public function handleCommandFailure(array $commandResult, string $action, string $entityName): array {
     if (is_array($commandResult['output'])) {

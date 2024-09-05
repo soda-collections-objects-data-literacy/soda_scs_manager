@@ -2,89 +2,95 @@
 
 namespace Drupal\soda_scs_manager;
 
-use Drupal\soda_scs_manager\Exception\SodaScsRequestException;
-use Drupal\Core\TypedData\Exception\MissingDataException;
-
 /**
  * Handles the communication with the SCS user manager daemon.
  */
-class SodaScsOpenGdpServiceActions implements SodaScsServiceRequestInterface
-{
+class SodaScsOpenGdpServiceActions implements SodaScsServiceRequestInterface {
 
   /**
    * Builds the create request for the OpenGDB service API.
    *
-   * @param array $options
+   * @param array $requestParams
+   *   The request parameters.
    *
    * @return array
+   *   The request array for the makeRequest function.
    *
    * @throws \Drupal\Core\TypedData\Exception\MissingDataException
    */
-  public function buildCreateRequest(array $options): array
-  {
+  public function buildCreateRequest(array $requestParams): array {
     return [];
   }
 
   /**
    * Builds the create request for the OpenGDB service API.
    *
-   * @param array $options
+   * @param array $requestParams
+   *   The request parameters.
    *
    * @return array
-   *
+   *   The request array for the makeRequest function.
    */
-  public function buildReadRequest(array $options): array
-  {
+  public function buildReadRequest(array $requestParams): array {
     return [];
   }
 
   /**
    * Build request to get all stacks.
    *
-   * @param $options
+   * @param array $requestParams
+   *   The request parameters.
    *
    * @return array
+   *   The request array for the makeRequest function.
+   *
    * @throws \Drupal\Core\TypedData\Exception\MissingDataException
    */
-  public function buildGetRequest($options): array
-  {
+  public function buildGetRequest($requestParams): array {
     return [];
   }
+
   /**
    * Builds the update request for the OpenGDB service API.
    *
-   * @param array $options
+   * @param array $requestParams
+   *   The request parameters.
    *
    * @return array
+   *   The request array for the makeRequest function.
    */
-  public function buildUpdateRequest(array $options): array
-  {
+  public function buildUpdateRequest(array $requestParams): array {
     return [];
   }
 
   /**
    * Builds the delete request for the OpenGDB service API.
    *
-   * @param array $options
+   * @param array $requestParams
+   *   The request parameters.
    *
    * @return array
+   *   The request array for the makeRequest function.
    *
-   * @throws MissingDataException
+   * @throws \Drupal\Core\TypedData\Exception\MissingDataException
    */
-  public function buildDeleteRequest(array $options): array
-  {
+  public function buildDeleteRequest(array $requestParams): array {
     return [];
   }
 
   /**
-   * @param $request
+   * Make the API request.
+   *
+   * @param array $request
+   *   The request array for the makeRequest function.
    *
    * @return array
-   * 
-   * @throws SodaScsRequestException
+   *   The request array for the makeRequest function.
+   *
+   * @throws \Drupal\soda_scs_manager\Exception\SodaScsRequestException
    */
-  public function makeRequest($request): array
-  {
+  public function makeRequest($request): array {
     return [];
   }
+
 }

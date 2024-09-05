@@ -2,7 +2,6 @@
 
 namespace Drupal\soda_scs_manager;
 
-
 use Drupal\Core\Config\Config;
 use Drupal\Core\Config\ConfigFactoryInterface;
 use Drupal\Core\Database\Connection;
@@ -12,17 +11,13 @@ use Drupal\Core\Logger\LoggerChannelFactoryInterface;
 use Drupal\Core\Messenger\MessengerInterface;
 use Drupal\Core\StringTranslation\TranslationInterface;
 use Drupal\Core\TypedData\Exception\MissingDataException;
-use Drupal\soda_scs_manager\SodaScsComponentActionsInterface;
 use Drupal\soda_scs_manager\Entity\SodaScsComponentInterface;
-use Drupal\soda_scs_manager\SodaScsMysqlServiceActions;
-use Drupal\soda_scs_manager\SodaScsServiceKeyActions;
 use GuzzleHttp\ClientInterface;
 
 /**
  * Handles the communication with the SCS user manager daemon.
  */
-class SodaScsSqlComponentActions implements SodaScsComponentActionsInterface
-{
+class SodaScsSqlComponentActions implements SodaScsComponentActionsInterface {
 
   use DependencySerializationTrait;
 
@@ -35,7 +30,7 @@ class SodaScsSqlComponentActions implements SodaScsComponentActionsInterface
 
   /**
    * The entity type manager.
-   * 
+   *
    * @var \Drupal\Core\Entity\EntityTypeManagerInterface
    */
   protected $entityTypeManager;
@@ -119,15 +114,16 @@ class SodaScsSqlComponentActions implements SodaScsComponentActionsInterface
 
   /**
    * Create SQL.
-   * 
+   *
    * @param \Drupal\soda_scs_manager\Entity\SodaScsComponentInterface $component
-   * 
+   *   The SQL component to create.
+   *
    * @return array
+   *   The result array with the created component.
    */
-  public function createComponent(SodaScsComponentInterface $component): array
-  {
+  public function createComponent(SodaScsComponentInterface $component): array {
     try {
-      //Create a new SODa SCS database component.  
+      // Create a new SODa SCS database component.
       /** @var \Drupal\soda_scs_manager\Entity\SodaScsComponentBundleInterface $bundle */
       $bundle = $this->entityTypeManager->getStorage('soda_scs_component_bundle')->load('sql');
       $subdomain = $component->get('subdomain')->value . '-db';
@@ -137,7 +133,7 @@ class SodaScsSqlComponentActions implements SodaScsComponentActionsInterface
           'label' => $subdomain . '.' . $this->settings->get('scsHost') . ' (SQL Database)',
           'subdomain' => $subdomain,
           'user'  => $component->get('user')->target_id,
-          'description' =>  $bundle->getDescription(),
+          'description' => $bundle->getDescription(),
           'imageUrl' => $bundle->getImageUrl(),
         ]
       );
@@ -148,9 +144,7 @@ class SodaScsSqlComponentActions implements SodaScsComponentActionsInterface
       /** @var \Drupal\soda_scs_manager\Entity\SodaScsComponentInterface $sqlComponent */
       $sqlComponent->set('serviceKey', $sqlServiceKeyEntity);
 
-
       // All settings available?
-
       // Username.
       $dbUserName = $component->getOwner()->getDisplayName();
       if (!$dbUserName) {
@@ -179,36 +173,36 @@ class SodaScsSqlComponentActions implements SodaScsComponentActionsInterface
       }
 
       if ($checkDbExistsResult['result']) {
-        // Database already exists
+        // Database already exists.
         $this->messenger->addError($this->stringTranslation->translate('Database already exists. See logs for more details.'));
         return [];
       }
 
-      // Check if the user exists
+      // Check if the user exists.
       $checkDbUserExistsResult = $this->sodaScsMysqlServiceActions->existServiceUser($dbUserName);
 
-      // Command failed
+      // Command failed.
       if ($checkDbUserExistsResult['execStatus'] != 0) {
         return $this->sodaScsMysqlServiceActions->handleCommandFailure($checkDbUserExistsResult, 'check if user', $dbUserName);
       }
 
       if ($checkDbUserExistsResult['result'] == 0) {
         // Database user does not exist
-        // Create the database user
+        // Create the database user.
         /** @var \Drupal\soda_scs_manager\Entity\SodaScsServiceKeyInterface $sqlServiceKeyEntity */
         $userPassword = $sqlServiceKeyEntity->get('servicePassword')->value;
         $createDbUserResult = $this->sodaScsMysqlServiceActions->createServiceUser($dbUserName, $userPassword);
 
-        // Command failed
+        // Command failed.
         if ($createDbUserResult['execStatus'] != 0) {
           return $this->sodaScsMysqlServiceActions->handleCommandFailure($createDbUserResult, 'create user', $dbUserName);
         }
       }
 
-      // Grant rights to the database user
+      // Grant rights to the database user.
       $grantRights2DbResult = $this->sodaScsMysqlServiceActions->grantServiceRights($dbUserName, $dbName, ['ALL PRIVILEGES']);
 
-      // Command failed
+      // Command failed.
       if ($grantRights2DbResult['execStatus'] != 0) {
         return $this->sodaScsMysqlServiceActions->handleCommandFailure($grantRights2DbResult, 'grant rights to user', 'user', 'dbUser');
       }
@@ -228,7 +222,8 @@ class SodaScsSqlComponentActions implements SodaScsComponentActionsInterface
         'success' => TRUE,
         'error' => FALSE,
       ];
-    } catch (MissingDataException $e) {
+    }
+    catch (MissingDataException $e) {
       $this->loggerFactory->get('soda_scs_manager')
         ->error("Cannot create database. @error", [
           '@error' => $e->getMessage(),
@@ -243,44 +238,47 @@ class SodaScsSqlComponentActions implements SodaScsComponentActionsInterface
     }
   }
 
-
   /**
    * Retrieves a SQL component.
    *
-   * @param SodaScsComponentInterface $component The SQL component to retrieve.
+   * @param \Drupal\soda_scs_manager\Entity\SodaScsComponentInterface $component
+   *   The SQL component to retrieve.
    *
    * @return array
+   *   The result array with the SQL component.
    */
-  public function getComponent(SodaScsComponentInterface $component): array
-  {
+  public function getComponent(SodaScsComponentInterface $component): array {
     return [];
   }
 
   /**
    * Updates a SQL component.
    *
-   * @param SodaScsComponentInterface $component The SQL component to update.
-   * 
+   * @param \Drupal\soda_scs_manager\Entity\SodaScsComponentInterface $component
+   *   The SQL component to update.
+   *
    * @return array
+   *   The result array with the updated SQL component.
    */
-  public function updateComponent(SodaScsComponentInterface $component): array
-  {
+  public function updateComponent(SodaScsComponentInterface $component): array {
     return [];
   }
 
   /**
    * Deletes a SQL component.
    *
-   * @param SodaScsComponentInterface $component The SQL component to delete.
-   * 
+   * @param \Drupal\soda_scs_manager\Entity\SodaScsComponentInterface $component
+   *   The SQL component to delete.
+   *
    * @return array
+   *   The result array with the deleted SQL component.
    */
-  public function deleteComponent(SodaScsComponentInterface $component): array
-  {
+  public function deleteComponent(SodaScsComponentInterface $component): array {
     try {
       $deleteDbResult = $this->sodaScsMysqlServiceActions->deleteService($component);
       $component->delete();
-    } catch (MissingDataException $e) {
+    }
+    catch (MissingDataException $e) {
       $this->loggerFactory->get('soda_scs_manager')
         ->error("Cannot delete database: @error trace: @trace", [
           '@error' => $e->getMessage(),
@@ -289,12 +287,13 @@ class SodaScsSqlComponentActions implements SodaScsComponentActionsInterface
       $this->messenger->addError($this->stringTranslation->translate("Cannot delete database. See logs for more details."));
     }
     try {
-      // GetServiceKey
+      // GetServiceKey.
       /** @var \Drupal\soda_scs_manager\Entity\SodaScsServiceKeyInterface $sqlServiceKey */
       $sqlServiceKey = $this->entityTypeManager->getStorage('soda_scs_service_key')->load($component->get('serviceKey')->target_id);
       $dbUserPassword = $sqlServiceKey->get('servicePassword')->value;
       $cleanDatabaseUsers = $this->sodaScsMysqlServiceActions->cleanServiceUsers($component->getOwner()->getDisplayName(), $dbUserPassword);
-    } catch (MissingDataException $e) {
+    }
+    catch (MissingDataException $e) {
       $this->loggerFactory->get('soda_scs_manager')
         ->error("Cannot clean database users. @error", [
           '@error' => $e->getMessage(),
@@ -304,7 +303,7 @@ class SodaScsSqlComponentActions implements SodaScsComponentActionsInterface
         'message' => 'Cannot clean database. users',
         'data' => [
           'deleteDbResult' => $deleteDbResult,
-          'cleanDatabaseUsers' => $cleanDatabaseUsers
+          'cleanDatabaseUsers' => $cleanDatabaseUsers,
         ],
         'success' => FALSE,
         'error' => $e->getMessage(),
@@ -314,10 +313,11 @@ class SodaScsSqlComponentActions implements SodaScsComponentActionsInterface
       'message' => 'SQL component deleted, users cleaned',
       'data' => [
         'deleteDbResult' => $deleteDbResult,
-        'cleanDatabaseUsers' => $cleanDatabaseUsers
+        'cleanDatabaseUsers' => $cleanDatabaseUsers,
       ],
       'success' => TRUE,
       'error' => NULL,
     ];
   }
+
 }

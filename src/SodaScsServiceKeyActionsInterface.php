@@ -7,32 +7,36 @@ use Drupal\soda_scs_manager\Entity\SodaScsServiceKeyInterface;
 /**
  * Handles the communication with the SCS user manager daemon.
  */
-interface SodaScsServiceKeyActionsInterface
-{
+interface SodaScsServiceKeyActionsInterface {
 
   /**
    * Generates a random password.
    *
    * @return string
+   *   Randomly generated password.
    */
-  function generateRandomPassword(): string;
+  public function generateRandomPassword(): string;
 
   /**
    * Creates a new Service Key entity.
    *
    * @param \Drupal\soda_scs_manager\Entity\SodaScsService $component
    *   The service entity.
-   * 
+   *
    * @return \Drupal\soda_scs_manager\Entity\SodaScsServiceKeyInterface
+   *   The created service key.
    */
-  function createServiceKey($component): SodaScsServiceKeyInterface;
+  public function createServiceKey($component): SodaScsServiceKeyInterface;
 
   /**
    * Get an existing Service Key entity.
-   * 
+   *
    * @param \Drupal\soda_scs_manager\Entity\SodaScsService $component
-   * 
+   *   The service entity.
+   *
    * @return \Drupal\soda_scs_manager\Entity\SodaScsServiceKeyInterface|null
+   *   The existing service key.
    */
-  function getServiceKey($component): ?SodaScsServiceKeyInterface;
+  public function getServiceKey($component): ?SodaScsServiceKeyInterface;
+
 }
