@@ -309,20 +309,20 @@ class SodaScsComponent extends ContentEntityBase implements SodaScsComponentInte
       //->setSetting('handler', 'default:exclude_referenced')
       ->setSetting('handler', 'default')
       ->setRequired(FALSE)
-      ->setReadOnly(FALSE)
+      ->setReadOnly(TRUE)
       ->setTranslatable(FALSE)
       ->setCardinality(FieldStorageDefinitionInterface::CARDINALITY_UNLIMITED)
       ->setDisplayConfigurable('form', FALSE)
-      ->setDisplayOptions('form', [
-        'type' => 'options_buttons',
-        'weight' => 0,
+      //->setDisplayOptions('form', [
+      //  'type' => 'options_buttons',
+      //  'weight' => 0,
         //'settings' => [
         //  'match_operator' => 'NOT EXISTS',
         //  'match_fields' => [
         //    'referencedComponents' => 'id',
         //  ],
         //]
-      ])
+      //])
       //->setDisplayOptions('view', [
       //  'label' => 'above',
       //  'type' => 'entity_reference_label',
