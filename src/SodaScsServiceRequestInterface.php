@@ -13,7 +13,7 @@ interface SodaScsServiceRequestInterface
 {
 
   /**
-   * Builds the create request for the Portainer service API.
+   * Builds the create request for the REST service API.
    *
    * @param array $options
    *
@@ -24,7 +24,7 @@ interface SodaScsServiceRequestInterface
   public function buildCreateRequest(array $options): array;
 
   /**
-   * Builds the create request for the Portainer service API.
+   * Builds the create request for the REST service API.
    *
    * @param array $options
    *
@@ -43,7 +43,7 @@ interface SodaScsServiceRequestInterface
    */
   public function buildGetRequest($options): array;
   /**
-   * Builds the update request for the Portainer service API.
+   * Builds the update request for the REST service API.
    *
    * @param array $options
    *
@@ -52,7 +52,7 @@ interface SodaScsServiceRequestInterface
   public function buildUpdateRequest(array $options): array;
 
   /**
-   * Builds the delete request for the Portainer service API.
+   * Builds the delete request for the REST service API.
    *
    * @param array $options
    *
@@ -63,6 +63,8 @@ interface SodaScsServiceRequestInterface
   public function buildDeleteRequest(array $options): array;
 
   /**
+   * Make the API request.
+   * 
    * @param $request
    *
    * @return array
