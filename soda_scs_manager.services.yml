@@ -55,6 +55,12 @@ services:
       - '@messenger'
       - '@string_translation'
 
+  soda_scs_manager.opengdp_service.actions:
+    class: Drupal\soda_scs_manager\SodaScsOpenGdpServiceActions
+    arguments:
+      - '@config.factory'
+      
+
   soda_scs_manager.portainer_service.actions:
       class: Drupal\soda_scs_manager\SodaScsPortainerServiceActions
       arguments:
