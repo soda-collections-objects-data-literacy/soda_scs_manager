@@ -8,7 +8,8 @@ use Drupal\soda_scs_manager\Entity\SodaScsComponent;
 /**
  * A Drush command file.
  */
-class CheckDescriptionCommand extends DrushCommands {
+class CheckDescriptionCommand extends DrushCommands
+{
 
   /**
    * Check the description field of all SodaScsComponent entities.
@@ -16,7 +17,8 @@ class CheckDescriptionCommand extends DrushCommands {
    * @command soda_scs_manager:check-description
    * @aliases check-description
    */
-  public function checkDescription() {
+  public function checkDescription()
+  {
     $storage = \Drupal::entityTypeManager()->getStorage('soda_scs_component');
     $entity_ids = $storage->getQuery()
       ->accessCheck(TRUE) // Explicitly set access check
@@ -37,5 +39,4 @@ class CheckDescriptionCommand extends DrushCommands {
 
     $this->logger()->success(dt('Description check completed.'));
   }
-
 }

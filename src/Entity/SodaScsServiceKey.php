@@ -50,23 +50,25 @@ use Drupal\user\UserInterface;
  * )
  */
 
-class SodaScsServiceKey extends ContentEntityBase implements SodaScsServiceKeyInterface {
+class SodaScsServiceKey extends ContentEntityBase implements SodaScsServiceKeyInterface
+{
 
   use EntityOwnerTrait;
-    /**
-     * The entity relation to the Soda SCS Component.
-     * 
-     * @var \Drupal\Core\Entity\ContentEntityInterface
-     */
-    protected $component;
+  /**
+   * The entity relation to the Soda SCS Component.
+   * 
+   * @var \Drupal\Core\Entity\ContentEntityInterface
+   */
+  protected $component;
 
-    /**
+  /**
    * Get the owner of the SODa SCS Component.
    *
    * @return \Drupal\user\Entity\User
    * The owner of the SODa SCS Component.
    */
-  public function getOwner() {
+  public function getOwner()
+  {
     return $this->get('user')->entity;
   }
 
@@ -105,30 +107,34 @@ class SodaScsServiceKey extends ContentEntityBase implements SodaScsServiceKeyIn
    * 
    * @return $this
    */
-  public function setOwnerId($uid): self {
+  public function setOwnerId($uid): self
+  {
     $this->set('user', $this->get('user')->target_id);
     return $this;
   }
 
 
-    /**
-     * Get the Soda SCS Component.
-     */
-    public function getComponent() {
-        return $this->get('component')->entity;
-    }
+  /**
+   * Get the Soda SCS Component.
+   */
+  public function getComponent()
+  {
+    return $this->get('component')->entity;
+  }
 
-    /**
-     * Set the Soda SCS Component.
-     */
-    public function setComponent($component) {
-        $this->set('component', $component);
-    }
+  /**
+   * Set the Soda SCS Component.
+   */
+  public function setComponent($component)
+  {
+    $this->set('component', $component);
+  }
 
-    /**
+  /**
    * {@inheritdoc}
    */
-  public static function baseFieldDefinitions(EntityTypeInterface $entity_type) {
+  public static function baseFieldDefinitions(EntityTypeInterface $entity_type)
+  {
     $fields = parent::baseFieldDefinitions($entity_type);
 
     $fields['bundle'] = BaseFieldDefinition::create('entity_reference')
@@ -140,10 +146,10 @@ class SodaScsServiceKey extends ContentEntityBase implements SodaScsServiceKeyIn
       ->setDisplayConfigurable('view', TRUE);
 
     $fields['id'] = BaseFieldDefinition::create('integer')
-    ->setLabel(new TranslatableMarkup('ID'))
-    ->setDescription(new TranslatableMarkup('The ID of the SCS component entity.'))
-    ->setReadOnly(TRUE)
-    ->setDisplayConfigurable('view', TRUE);
+      ->setLabel(new TranslatableMarkup('ID'))
+      ->setDescription(new TranslatableMarkup('The ID of the SCS component entity.'))
+      ->setReadOnly(TRUE)
+      ->setDisplayConfigurable('view', TRUE);
 
     $fields['label'] = BaseFieldDefinition::create('string')
       ->setLabel(new TranslatableMarkup('Label'))
@@ -156,7 +162,7 @@ class SodaScsServiceKey extends ContentEntityBase implements SodaScsServiceKeyIn
         'type' => 'string',
         'weight' => 0,
       ]);
-    
+
     $fields['scsComponent'] = BaseFieldDefinition::create('entity_reference')
       ->setLabel(new TranslatableMarkup('SODa SCS Component'))
       ->setSetting('target_type', 'soda_scs_component')
@@ -191,7 +197,7 @@ class SodaScsServiceKey extends ContentEntityBase implements SodaScsServiceKeyIn
       ])
       ->setDisplayConfigurable('view', TRUE);
 
-      $fields['user'] = BaseFieldDefinition::create('entity_reference')
+    $fields['user'] = BaseFieldDefinition::create('entity_reference')
       ->setLabel(new TranslatableMarkup('User'))
       ->setSetting('target_type', 'user')
       ->setSetting('handler', 'default')
@@ -199,12 +205,11 @@ class SodaScsServiceKey extends ContentEntityBase implements SodaScsServiceKeyIn
       ->setRequired(TRUE)
       ->setReadOnly(TRUE);
 
-      $fields['uuid'] = BaseFieldDefinition::create('uuid')
+    $fields['uuid'] = BaseFieldDefinition::create('uuid')
       ->setLabel(new TranslatableMarkup('UUID'))
       ->setDescription(new TranslatableMarkup('The UUID of the SODa SCS Component entity.'))
       ->setReadOnly(TRUE);
 
-      return $fields;
-
+    return $fields;
   }
 }

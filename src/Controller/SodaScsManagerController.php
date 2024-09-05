@@ -14,7 +14,8 @@ use Drupal\file\Entity\File;
 /**
  * The SODa SCS Manager info controller.
  */
-class SodaScsManagerController extends ControllerBase {
+class SodaScsManagerController extends ControllerBase
+{
 
   /**
 
@@ -26,7 +27,8 @@ class SodaScsManagerController extends ControllerBase {
    * @param \Drupal\soda_scs_manager\DbActions $dbActions
    *  The SODa SCS Manager database actions service.
    */
-  public function __construct( EntityTypeManagerInterface $entityTypeManager) {
+  public function __construct(EntityTypeManagerInterface $entityTypeManager)
+  {
     $this->entityTypeManager = $entityTypeManager;
   }
 
@@ -36,23 +38,25 @@ class SodaScsManagerController extends ControllerBase {
    * @param \Symfony\Component\DependencyInjection\ContainerInterface $container
    *   The class container.
    */
-  public static function create(ContainerInterface $container) {
+  public static function create(ContainerInterface $container)
+  {
     return new static(
       $container->get('entity_type.manager')
     );
   }
 
-/**
- * Page for API documentation.
- *
- * @return \Symfony\Component\HttpFoundation\Response
- *  The response object.
- *
- * @throws \Exception
- * If the spec file is not found.
- *
- */
-  public function apiSpec() {
+  /**
+   * Page for API documentation.
+   *
+   * @return \Symfony\Component\HttpFoundation\Response
+   *  The response object.
+   *
+   * @throws \Exception
+   * If the spec file is not found.
+   *
+   */
+  public function apiSpec()
+  {
     $spec_url = Url::fromUri('base:/modules/custom/soda-scs-manager/spec/soda-scs-api-spec.yaml')->toString();
 
     return [
@@ -73,14 +77,15 @@ class SodaScsManagerController extends ControllerBase {
    * @return array
    *   The page build array.
    */
-  public function usersPage(): array {
+  public function usersPage(): array
+  {
     $options['user'] = \Drupal::currentUser()->id();
     // If the user is not an admin, filter the accounts to only include their own.
     #$components = $this->dbActions->listComponents($options['uid']);
     return [
       '#theme' => 'users_page',
       '#users' => [],
-      ];
+    ];
   }
 
   /**
@@ -89,12 +94,12 @@ class SodaScsManagerController extends ControllerBase {
    * @return array
    *   The page build array.
    */
-  public function deskPage(): array {
+  public function deskPage(): array
+  {
     $current_user = \Drupal::currentUser();
     try {
       $storage = $this->entityTypeManager->getStorage('soda_scs_component');
-    }
-    catch (InvalidPluginDefinitionException|PluginNotFoundException $e) {
+    } catch (InvalidPluginDefinitionException | PluginNotFoundException $e) {
       /** @todo Handle exception properly. */
       return [];
     }
@@ -117,7 +122,7 @@ class SodaScsManagerController extends ControllerBase {
     return [
       '#theme' => 'components_page',
       '#componentsByUser' => $componentsByUser,
-      ];
+    ];
   }
 
   /**
@@ -125,7 +130,8 @@ class SodaScsManagerController extends ControllerBase {
    *
    * @return array
    */
-  public function storePage() {
+  public function storePage()
+  {
 
     // Create the build array
     $build = [
@@ -161,10 +167,10 @@ class SodaScsManagerController extends ControllerBase {
 
 
   // @todo Implement healthcheckPage().
-  public function healthcheckPage(): array {
+  public function healthcheckPage(): array
+  {
     return [
       '#theme' => 'soda_scs_manager_healthcheck_page',
     ];
   }
-
 }

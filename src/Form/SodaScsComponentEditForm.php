@@ -9,7 +9,8 @@ use Drupal\Core\Entity\Entity\EntityFormDisplay;
 /**
  * Form controller for the ScsComponent entity edit form.
  */
-class SodaScsComponentEditForm extends ContentEntityForm {
+class SodaScsComponentEditForm extends ContentEntityForm
+{
 
   /**
    * The entity being used by this form.
@@ -35,7 +36,8 @@ class SodaScsComponentEditForm extends ContentEntityForm {
   /**
    * {@inheritdoc}
    */
-  public function form_id(): string {
+  public function form_id(): string
+  {
     return 'soda_scs_component_edit_form';
   }
 
@@ -43,14 +45,15 @@ class SodaScsComponentEditForm extends ContentEntityForm {
   /**
    * {@inheritdoc}
    */
-  public function buildForm(array $form, FormStateInterface $form_state) {
+  public function buildForm(array $form, FormStateInterface $form_state)
+  {
     $form = parent::buildForm($form, $form_state);
     $entity = $this->entity;
     $bundle = $entity->bundle();
     $entityTypeId = $entity->getEntityTypeId();
 
     $form['#attached']['library'][] = 'soda_scs_manager/globalStyling';
-    $form ['actions']['delete'] = [];
+    $form['actions']['delete'] = [];
 
     return $form;
   }
@@ -59,7 +62,8 @@ class SodaScsComponentEditForm extends ContentEntityForm {
    * {@inheritdoc}
    * @throws \Drupal\Core\Entity\EntityStorageException
    */
-  public function save(array $form, FormStateInterface $form_state): void {
+  public function save(array $form, FormStateInterface $form_state): void
+  {
     parent::save($form, $form_state);
 
     // Redirect to the components page.

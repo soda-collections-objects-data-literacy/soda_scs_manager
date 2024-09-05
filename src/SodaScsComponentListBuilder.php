@@ -13,12 +13,14 @@ use Drupal\soda_scs_manager\SodaScsApiActions;
  *
  * @ingroup soda_scs_manager
  */
-class SodaScsComponentListBuilder extends EntityListBuilder {
+class SodaScsComponentListBuilder extends EntityListBuilder
+{
 
   /**
    * {@inheritdoc}
    */
-  public function buildHeader() {
+  public function buildHeader()
+  {
     $header['type'] = $this->t('Type');
     $header['subdomain'] = $this->t('Domain');
     $header['status'] = $this->t('Status');
@@ -29,7 +31,8 @@ class SodaScsComponentListBuilder extends EntityListBuilder {
   /**
    * {@inheritdoc}
    */
-  public function buildRow(EntityInterface $entity) {
+  public function buildRow(EntityInterface $entity)
+  {
     $bundle = $entity->bundle();
     $action = 'status';
     $options = [
@@ -40,14 +43,15 @@ class SodaScsComponentListBuilder extends EntityListBuilder {
 
     $row['type'] = $bundle;
     $row['subdomain'] = $entity->get('subdomain')->value;
-    $row['status'] =\Drupal::service('soda_scs_manager.api.actions')->readComponent($entity->bundle(), $options);
+    $row['status'] = \Drupal::service('soda_scs_manager.api.actions')->readComponent($entity->bundle(), $options);
     return $row + parent::buildRow($entity);
   }
 
   /**
    * {@inheritdoc}
    */
-  protected function getDefaultOperations(EntityInterface $entity) {
+  protected function getDefaultOperations(EntityInterface $entity)
+  {
     $operations = parent::getDefaultOperations($entity);
     // Add custom operations.
     $operations['create'] = [
@@ -76,11 +80,10 @@ class SodaScsComponentListBuilder extends EntityListBuilder {
   /**
    * {@inheritdoc}
    */
-  public function render() {
+  public function render()
+  {
     $build = parent::render();
     $build['table']['#prefix'] = Link::fromTextAndUrl($this->t('Add bundle'), Url::fromRoute('entity.soda_scs_component_bundle.add_form'))->toString();
     return $build;
   }
-
-
 }

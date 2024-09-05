@@ -10,7 +10,8 @@ use Drupal\file\Upload\FormFileUploadHandler;
 /**
  * Class ScsComponentBundleForm.
  */
-class SodaScsComponentBundleForm extends EntityForm {
+class SodaScsComponentBundleForm extends EntityForm
+{
 
   /**
    * The entity being used by this form.
@@ -22,7 +23,8 @@ class SodaScsComponentBundleForm extends EntityForm {
   /**
    * {@inheritdoc}
    */
-  public function buildForm(array $form, FormStateInterface $form_state) {
+  public function buildForm(array $form, FormStateInterface $form_state)
+  {
     $form = parent::buildForm($form, $form_state);
 
     $entity = $this->entity;
@@ -80,7 +82,8 @@ class SodaScsComponentBundleForm extends EntityForm {
   /**
    * {@inheritdoc}
    */
-  public function save(array $form, FormStateInterface $form_state) {
+  public function save(array $form, FormStateInterface $form_state)
+  {
     parent::save($form, $form_state);
     /**
     $entity = $this->entity;
@@ -116,7 +119,8 @@ class SodaScsComponentBundleForm extends EntityForm {
      **/
   }
 
-  public function submitForm(array &$form, FormStateInterface $form_state) {
+  public function submitForm(array &$form, FormStateInterface $form_state)
+  {
     parent::submitForm($form, $form_state);
   }
 }

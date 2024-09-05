@@ -13,7 +13,8 @@ use Symfony\Component\DependencyInjection\ContainerInterface;
 /**
  * WissKI cloud create account form.
  */
-class UserCreateForm extends FormBase {
+class UserCreateForm extends FormBase
+{
 
   /**
    * The config factory service.
@@ -53,7 +54,8 @@ class UserCreateForm extends FormBase {
   /**
    * {@inheritdoc}
    */
-  public function getFormId(): string {
+  public function getFormId(): string
+  {
     return 'soda_scs_manager_create';
   }
 
@@ -69,7 +71,8 @@ class UserCreateForm extends FormBase {
    * @param \Drupal\soda_scs_manager\WisskiCloudAccountManagerDaemonApiActions $wisskiCloudAccountManagerDaemonApiActions
    *   The WissKi Cloud account manager daemon API actions service.
    */
-  public function __construct(ConfigFactoryInterface $configFactory, EmailValidatorInterface $emailValidator, MessengerInterface $messenger, WisskiCloudAccountManagerDaemonApiActions $wisskiCloudAccountManagerDaemonApiActions) {
+  public function __construct(ConfigFactoryInterface $configFactory, EmailValidatorInterface $emailValidator, MessengerInterface $messenger, WisskiCloudAccountManagerDaemonApiActions $wisskiCloudAccountManagerDaemonApiActions)
+  {
     $this->configFactory = $configFactory;
     $settings = $configFactory
       ->getEditable('soda_scs_manager.settings');
@@ -85,7 +88,8 @@ class UserCreateForm extends FormBase {
    * @param \Symfony\Component\DependencyInjection\ContainerInterface $container
    *   The class container.
    */
-  public static function create(ContainerInterface $container) {
+  public static function create(ContainerInterface $container)
+  {
     return new static(
       $container->get('config.factory'),
       $container->get('email.validator'),
@@ -97,7 +101,8 @@ class UserCreateForm extends FormBase {
   /**
    * {@inheritdoc}
    */
-  public function buildForm(array $form, FormStateInterface $form_state) {
+  public function buildForm(array $form, FormStateInterface $form_state)
+  {
     $form['person_name'] = [
       '#type' => 'textfield',
       '#title' => $this->t('Person name'),
@@ -164,7 +169,8 @@ class UserCreateForm extends FormBase {
   /**
    * {@inheritdoc}
    */
-  public function validateForm(array &$form, FormStateInterface $form_state): void {
+  public function validateForm(array &$form, FormStateInterface $form_state): void
+  {
     // Check if account data is already in use.
     // @todo Check if username is WissKI Cloud accounts, i.e add direct by admin?.
     $dataToCheck['username'] = $form_state->getValue('username');
@@ -191,7 +197,7 @@ class UserCreateForm extends FormBase {
     }
 
     // Check if username is unique
-    $userFromUsername = \Drupal::entityTypeManager()->getStorage('user')->loadByProperties(['name' =>$dataToCheck['username']]);
+    $userFromUsername = \Drupal::entityTypeManager()->getStorage('user')->loadByProperties(['name' => $dataToCheck['username']]);
     if (!empty($userFromUsername)) {
       $form_state->setErrorByName('username', $this->t('The username is already taken.'));
     }
@@ -231,7 +237,8 @@ class UserCreateForm extends FormBase {
   /**
    * {@inheritdoc}
    */
-  public function submitForm(array &$form, FormStateInterface $form_state): void {
+  public function submitForm(array &$form, FormStateInterface $form_state): void
+  {
     try {
       $field = $form_state->getValues();
 
@@ -247,12 +254,10 @@ class UserCreateForm extends FormBase {
 
       $this->messenger()
         ->addMessage($this->t('The account data has been successfully saved, please check your email for validation!'));
-    }
-    catch (\Exception $ex) {
+    } catch (\Exception $ex) {
       $this->messenger()
         ->addError($this->t('The account data could not be saved, please try again later or write an email to cloud@wiss-ki.eu.'));
       $this->logger('soda_scs_manager')->error($ex->getMessage());
     }
   }
-
 }

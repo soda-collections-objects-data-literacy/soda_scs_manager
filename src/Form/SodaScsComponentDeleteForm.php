@@ -14,7 +14,8 @@ use Drupal\soda_scs_manager\SodaScsStackActionsInterface;
 /**
  * Provides a form for deleting Soda SCS Component entities.
  */
-class SodaScsComponentDeleteForm extends ContentEntityDeleteForm {
+class SodaScsComponentDeleteForm extends ContentEntityDeleteForm
+{
 
   /**
    * The Soda SCS API Actions service.
@@ -29,7 +30,8 @@ class SodaScsComponentDeleteForm extends ContentEntityDeleteForm {
    * @param \Drupal\soda_scs_manager\SodaScsApiActions $sodaScsApiActions
    *   The Soda SCS API Actions service.
    */
-  public function __construct(EntityRepositoryInterface $entity_repository, EntityTypeBundleInfoInterface $entity_type_bundle_info, TimeInterface $time, SodaScsStackActionsInterface $sodaScsStackActions) {
+  public function __construct(EntityRepositoryInterface $entity_repository, EntityTypeBundleInfoInterface $entity_type_bundle_info, TimeInterface $time, SodaScsStackActionsInterface $sodaScsStackActions)
+  {
     parent::__construct($entity_repository, $entity_type_bundle_info, $time);
     $this->entityRepository = $entity_repository;
     $this->entityTypeBundleInfo = $entity_type_bundle_info;
@@ -37,7 +39,8 @@ class SodaScsComponentDeleteForm extends ContentEntityDeleteForm {
     $this->sodaScsStackActions = $sodaScsStackActions;
   }
 
-  public static function create(ContainerInterface $container) {
+  public static function create(ContainerInterface $container)
+  {
     return new static(
       $container->get('entity.repository'),
       $container->get('entity_type.bundle.info'),
@@ -49,7 +52,8 @@ class SodaScsComponentDeleteForm extends ContentEntityDeleteForm {
   /**
    * {@inheritdoc}
    */
-  public function form_id() {
+  public function form_id()
+  {
     return 'soda_scs_manager_component_delete_form';
   }
 
@@ -57,21 +61,24 @@ class SodaScsComponentDeleteForm extends ContentEntityDeleteForm {
   /**
    * {@inheritdoc}
    */
-  public function getQuestion() {
+  public function getQuestion()
+  {
     return $this->t('Are you sure you want to delete component: @label?', ['@label' => $this->entity->label()]);
   }
 
   /**
    * {@inheritdoc}
    */
-  public function getCancelUrl() {
+  public function getCancelUrl()
+  {
     return new Url('soda_scs_manager.desk');
   }
 
   /**
    * {@inheritdoc}
    */
-  public function submitForm(array &$form, FormStateInterface $form_state) {
+  public function submitForm(array &$form, FormStateInterface $form_state)
+  {
     // Add custom logic before deletion.
     \Drupal::logger('soda_scs_manager')->notice('Deleting component: @label', ['@label' => $this->entity->label()]);
 
@@ -93,5 +100,4 @@ class SodaScsComponentDeleteForm extends ContentEntityDeleteForm {
     // Redirect to the desk.
     $form_state->setRedirect('soda_scs_manager.desk');
   }
-
 }

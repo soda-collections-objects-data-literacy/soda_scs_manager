@@ -4,9 +4,10 @@ namespace Drupal\soda_scs_manager;
 
 use Drupal\soda_scs_manager\Entity\SodaScsComponentInterface;
 
-interface SodaScsComponentActionsInterface {
+interface SodaScsComponentActionsInterface
+{
 
-   /**
+  /**
    * Create SODa SCS Component.
    * 
    * @param \Drupal\soda_scs_manager\Entity\SodaScsComponentInterface $component

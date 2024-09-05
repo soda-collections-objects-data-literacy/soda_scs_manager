@@ -29,7 +29,8 @@ use GuzzleHttp\ClientInterface;
 /**
  * Handles the communication with the SCS user manager daemon.
  */
-class SodaScsWisskiStackActions implements SodaScsStackActionsInterface {
+class SodaScsWisskiStackActions implements SodaScsStackActionsInterface
+{
 
   use DependencySerializationTrait;
 
@@ -131,7 +132,7 @@ class SodaScsWisskiStackActions implements SodaScsStackActionsInterface {
    * @var \Drupal\soda_scs_manager\SodaScsServiceKeyActionsInterface
    */
   protected SodaScsServiceKeyActionsInterface $sodaScsServiceKeyActions;
-  
+
   /**
    * The SCS triplestore actions service.
    *
@@ -196,7 +197,7 @@ class SodaScsWisskiStackActions implements SodaScsStackActionsInterface {
     $this->stringTranslation = $stringTranslation;
   }
 
-  
+
 
   /**
    * Create a WissKI stack.
@@ -211,35 +212,35 @@ class SodaScsWisskiStackActions implements SodaScsStackActionsInterface {
    * 
    * @throws \Exception
    */
-  public function createStack(SodaScsComponentInterface $component): array {
+  public function createStack(SodaScsComponentInterface $component): array
+  {
     try {
-    $sqlComponentCreateResult = $this->sodaScsSqlComponentActions->createComponent($component);
+      $sqlComponentCreateResult = $this->sodaScsSqlComponentActions->createComponent($component);
 
-    if (!$sqlComponentCreateResult['success']) {
-      return [
-        'message' => 'Could not create database component.',
-        'data' => [
-          'sqlComponentCreateResult' => $sqlComponentCreateResult,
-        ],
-        'success' => FALSE,
-        'error' =>  $sqlComponentCreateResult['error'],
-      ];
-    }
-    $sqlComponent = $sqlComponentCreateResult['data']['sqlComponent'];
-    
-    $component->set('referencedComponents', $sqlComponent->id());
+      if (!$sqlComponentCreateResult['success']) {
+        return [
+          'message' => 'Could not create database component.',
+          'data' => [
+            'sqlComponentCreateResult' => $sqlComponentCreateResult,
+          ],
+          'success' => FALSE,
+          'error' =>  $sqlComponentCreateResult['error'],
+        ];
+      }
+      $sqlComponent = $sqlComponentCreateResult['data']['sqlComponent'];
+
+      $component->set('referencedComponents', $sqlComponent->id());
     } catch (\Exception $e) {
       $this->loggerFactory->get('soda_scs_manager')->error("Database component exists with error: @error", [
         '@error' => $e->getMessage(),
       ]);
       $this->messenger->addError($this->stringTranslation->translate("Could not create database component. See logs for more details."));
     }
-  
+
     try {
-    #$triplestoreComponentCreateResult = $this->sodaScsTriplestoreComponentActions->createComponent($component);
-    #$triplestoreComponent = $triplestoreComponentCreateResult['data']['triplestoreComponent'];
-    $triplestoreComponentCreateResult = ['success' => TRUE];
-    
+      #$triplestoreComponentCreateResult = $this->sodaScsTriplestoreComponentActions->createComponent($component);
+      #$triplestoreComponent = $triplestoreComponentCreateResult['data']['triplestoreComponent'];
+      $triplestoreComponentCreateResult = ['success' => TRUE];
     } catch (\Exception $e) {
       $this->loggerFactory->get('soda_scs_manager')->error("Triplestore creation exists with error: @error", [
         '@error' => $e->getMessage(),
@@ -260,14 +261,14 @@ class SodaScsWisskiStackActions implements SodaScsStackActionsInterface {
       ]);
       $this->messenger->addError($this->stringTranslation->translate("Could not create WissKI. See logs for more details."));
     }
-    
+
     try {
       $sqlComponent->set('referencedComponents', $component->id());
       $sqlComponent->save();
 
       #$triplestoreComponent->set('referencedComponents', $component->id());
       #$triplestoreComponent->save();
-      
+
       return [
         'message' => 'Successfully created WissKI stack.',
         'data' => [
@@ -279,7 +280,6 @@ class SodaScsWisskiStackActions implements SodaScsStackActionsInterface {
         'error' => FALSE
       ];
     } catch (MissingDataException $e) {
-      
     }
   }
 
@@ -291,7 +291,8 @@ class SodaScsWisskiStackActions implements SodaScsStackActionsInterface {
    * 
    * @return array
    */
-  public function getStacks($bundle, $options): array {
+  public function getStacks($bundle, $options): array
+  {
     return [];
   }
 
@@ -302,17 +303,15 @@ class SodaScsWisskiStackActions implements SodaScsStackActionsInterface {
    * 
    * @return array
    */
-  public function getStack($component): array {
+  public function getStack($component): array
+  {
     try {
       // Build request.
       // @todo set request params
-      $requestParams = [
-        
-      ];
+      $requestParams = [];
       $portainerGetStacksRequest = $this->sodaScsPortainerServiceActions->buildGetRequest($requestParams);
       $portainerResponse = $this->sodaScsPortainerServiceActions->makeRequest($portainerGetStacksRequest);
-    }
-    catch (SodaScsRequestException $e) {
+    } catch (SodaScsRequestException $e) {
       $this->loggerFactory->get('soda_scs_manager')
         ->error("Request response with error: @error", [
           '@error' => $e->getMessage(),
@@ -361,10 +360,11 @@ class SodaScsWisskiStackActions implements SodaScsStackActionsInterface {
    * 
    * @return array
    */
-  public function deleteStack(SodaScsComponentInterface $component): array {
+  public function deleteStack(SodaScsComponentInterface $component): array
+  {
     try {
       // Try to delete Drupal database.
-      
+
       // Get referenced SQL component.
       $sqlComponent = $this->sodaScsComponentHelpers->retrieveReferencedComponent($component, 'sql');
       // Delete SQL component.
@@ -386,8 +386,7 @@ class SodaScsWisskiStackActions implements SodaScsStackActionsInterface {
         'success' => FALSE,
         'error' => $e->getMessage(),
       ];
-    }
-    catch (SodaScsComponentException $e) {
+    } catch (SodaScsComponentException $e) {
       // If component does not exist, we cannot delete the database.
       $this->loggerFactory->get('soda_scs_manager')->error("Cannot delete database. @error", [
         '@error' => $e->getMessage(),
@@ -409,7 +408,8 @@ class SodaScsWisskiStackActions implements SodaScsStackActionsInterface {
         'data' => [
           'deleteDatabaseResult' => $deleteDatabaseResult,
           'deleteWisskiResult' => NULL,
-          'deleteTriplestoreResult' => NULL,],
+          'deleteTriplestoreResult' => NULL,
+        ],
         'success' => FALSE,
         'error' => $e->getMessage(),
       ];
@@ -444,5 +444,4 @@ class SodaScsWisskiStackActions implements SodaScsStackActionsInterface {
       'error' => NULL,
     ];
   }
-
 }

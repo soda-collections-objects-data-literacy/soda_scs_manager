@@ -9,7 +9,8 @@ use Drupal\soda_scs_manager\Entity\SodaScsServiceKeyInterface;
 /**
  * Handles the communication with the SCS user manager daemon.
  */
-class SodaScsServiceKeyActions implements SodaScsServiceKeyActionsInterface {
+class SodaScsServiceKeyActions implements SodaScsServiceKeyActionsInterface
+{
 
   use DependencySerializationTrait;
 
@@ -34,7 +35,8 @@ class SodaScsServiceKeyActions implements SodaScsServiceKeyActionsInterface {
    *
    * @return string
    */
-  function generateRandomPassword(): string {
+  function generateRandomPassword(): string
+  {
     $password = '';
     while (strlen($password) < 32) {
       $password .= base_convert(random_int(0, 35), 10, 36);
@@ -50,7 +52,8 @@ class SodaScsServiceKeyActions implements SodaScsServiceKeyActionsInterface {
    * 
    * @return \Drupal\soda_scs_manager\Entity\SodaScsServiceKeyInterface
    */
-  function createServiceKey($component): SodaScsServiceKeyInterface {
+  function createServiceKey($component): SodaScsServiceKeyInterface
+  {
     $serviceKey = $this->entityTypeManager->getStorage('soda_scs_service_key')->create([
       'label' => $component->get('bundle')->target_id . ' service key' . ' owned by ' . $component->getOwner()->getDisplayName(),
       'servicePassword' => $this->generateRandomPassword(),
@@ -69,7 +72,8 @@ class SodaScsServiceKeyActions implements SodaScsServiceKeyActionsInterface {
    * 
    * @return \Drupal\soda_scs_manager\Entity\SodaScsServiceKeyInterface|null
    */
-  function getServiceKey($component): ?SodaScsServiceKeyInterface {
+  function getServiceKey($component): ?SodaScsServiceKeyInterface
+  {
     /** @var \Drupal\soda_scs_manager\Entity\SodaScsServiceKeyInterface $serviceKeys */
     $serviceKey = $this->entityTypeManager->getStorage('soda_scs_service_key')->loadByProperties([
       'bundle' => $component->get('bundle')->target_id,

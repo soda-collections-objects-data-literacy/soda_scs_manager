@@ -16,7 +16,8 @@ use Drupal\soda_scs_manager\SodaScsServiceKeyActions;
 /**
  * Handles the communication with the SCS user manager daemon.
  */
-class SodaScsTriplestoreComponentActions implements SodaScsComponentActionsInterface {
+class SodaScsTriplestoreComponentActions implements SodaScsComponentActionsInterface
+{
 
   use DependencySerializationTrait;
 
@@ -62,7 +63,6 @@ class SodaScsTriplestoreComponentActions implements SodaScsComponentActionsInter
     $settings = $configFactory
       ->getEditable('soda_scs_manager.settings');
     $this->entityTypeManager = $entityTypeManager;
-
   }
 
 
@@ -73,7 +73,8 @@ class SodaScsTriplestoreComponentActions implements SodaScsComponentActionsInter
    * 
    * @return array
    */
-  public function createComponent(SodaScsComponentInterface $component): array {
+  public function createComponent(SodaScsComponentInterface $component): array
+  {
     $triplestoreEntity = $this->entityTypeManager->getStorage('soda_scs_component')->create(
       [
         'label' => $component->label() . ' Triplestore',
@@ -86,16 +87,18 @@ class SodaScsTriplestoreComponentActions implements SodaScsComponentActionsInter
     return [];
   }
 
-  public function getComponent(SodaScsComponentInterface $component): array {
+  public function getComponent(SodaScsComponentInterface $component): array
+  {
     return [];
   }
 
-public function updateComponent(SodaScsComponentInterface $component): array {
+  public function updateComponent(SodaScsComponentInterface $component): array
+  {
     return [];
   }
 
-  public function deleteComponent(SodaScsComponentInterface $component): array {
-      return [];
+  public function deleteComponent(SodaScsComponentInterface $component): array
+  {
+    return [];
   }
-
 }

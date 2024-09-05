@@ -12,15 +12,16 @@ use Symfony\Component\Routing\Route;
  * @see Drupal\Core\Entity\Routing\AdminHtmlRouteProvider
  * @see Drupal\Core\Entity\Routing\DefaultHtmlRouteProvider
  */
-class SodaScsComponentBundleHtmlRouteProvider extends AdminHtmlRouteProvider {
+class SodaScsComponentBundleHtmlRouteProvider extends AdminHtmlRouteProvider
+{
 
   /**
    * {@inheritdoc}
    */
-  public function getRoutes(EntityTypeInterface $entity_type) {
+  public function getRoutes(EntityTypeInterface $entity_type)
+  {
     $collection = parent::getRoutes($entity_type);
 
     return $collection;
   }
-
 }

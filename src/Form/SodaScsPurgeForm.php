@@ -8,7 +8,8 @@ use Drupal\Core\Form\FormStateInterface;
 use Drupal\soda_scs_manager\SodaScsApiActions;
 use Drupal\Core\Url;
 
-class SodaScsPurgeForm extends ConfirmFormBase {
+class SodaScsPurgeForm extends ConfirmFormBase
+{
 
   /**
    * @var \Drupal\soda_scs_manager\SodaScsApiActions
@@ -19,7 +20,8 @@ class SodaScsPurgeForm extends ConfirmFormBase {
   /**
    * {@inheritdoc}
    */
-  public function getFormId() {
+  public function getFormId()
+  {
     return 'soda_scs_manager_purge_form';
   }
 
@@ -29,7 +31,8 @@ class SodaScsPurgeForm extends ConfirmFormBase {
    * @param \Drupal\soda_scs_manager\WisskiCloudAccountManagerDaemonApiActions $sodaScsApiActions
    *   The WissKi Cloud account manager daemon API actions service.
    */
-  public function __construct(SodaScsApiActions $sodaScsApiActions) {
+  public function __construct(SodaScsApiActions $sodaScsApiActions)
+  {
     $this->sodaScsApiActions = $sodaScsApiActions;
   }
 
@@ -39,7 +42,8 @@ class SodaScsPurgeForm extends ConfirmFormBase {
    * @param \Symfony\Component\DependencyInjection\ContainerInterface $container
    *   The class container.
    */
-  public static function create(ContainerInterface $container) {
+  public static function create(ContainerInterface $container)
+  {
     return new static(
       $container->get('soda_scs_manager.daemon_api.actions'),
     );
@@ -48,35 +52,40 @@ class SodaScsPurgeForm extends ConfirmFormBase {
   /**
    * {@inheritdoc}
    */
-  public function getQuestion() {
+  public function getQuestion()
+  {
     return $this->t('Do you really want to purge your WissKI Cloud account?');
   }
 
   /**
    * {@inheritdoc}
    */
-  public function getCancelUrl() {
+  public function getCancelUrl()
+  {
     return Url::fromRoute('soda_scs_manager.settings');
   }
 
   /**
    * {@inheritdoc}
    */
-  public function getDescription() {
+  public function getDescription()
+  {
     return $this->t('This will delete your WissKI Cloud account, your Drupal user, your WissKI Cloud instance and all data associated with it. This action cannot be undone.');
   }
 
   /**
    * {@inheritdoc}
    */
-  public function getConfirmText() {
+  public function getConfirmText()
+  {
     return $this->t('Purge');
   }
 
   /**
    * {@inheritdoc}
    */
-  public function buildForm(array $form, FormStateInterface $form_state) {
+  public function buildForm(array $form, FormStateInterface $form_state)
+  {
     $form = parent::buildForm($form, $form_state);
     $aid = \Drupal::routeMatch()->getParameter('aid');
     $account = $this->sodaScsApiActions->getAccounts($aid)[0];
@@ -94,12 +103,12 @@ class SodaScsPurgeForm extends ConfirmFormBase {
   /**
    * {@inheritdoc}
    */
-  public function submitForm(array &$form, FormStateInterface $form_state) {
+  public function submitForm(array &$form, FormStateInterface $form_state)
+  {
 
     $aid = \Drupal::routeMatch()->getParameter('aid');
     $this->sodaScsApiActions->purgeAccount($aid);
 
     $form_state->setRedirect('soda_scs_manager.users');
   }
-
 }

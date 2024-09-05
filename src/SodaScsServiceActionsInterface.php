@@ -4,9 +4,10 @@ namespace Drupal\soda_scs_manager;
 
 use Drupal\soda_scs_manager\Entity\SodaScsComponentInterface;
 
-interface SodaScsServiceActionsInterface  {
+interface SodaScsServiceActionsInterface
+{
 
-   /**
+  /**
    * Creates a new service.
    *
    * @param \Drupal\soda_scs_manager\Entity\SodaScsComponentInterface $component
@@ -29,7 +30,7 @@ interface SodaScsServiceActionsInterface  {
    *
    */
   public function existService(string $name): array;
-  
+
   /**
    * Updates a service.
    * 
@@ -145,5 +146,4 @@ interface SodaScsServiceActionsInterface  {
    *   The command result.
    */
   public function handleCommandFailure(array $commandResult, string $action, string $entityName): array;
-
 }

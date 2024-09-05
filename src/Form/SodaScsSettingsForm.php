@@ -11,19 +11,22 @@ use Drupal\Core\Form\FormStateInterface;
  * Route and authentication settings for every service
  * as defined in the SODa SCS Component bundles.
  */
-class SodaScsSettingsForm extends ConfigFormBase {
+class SodaScsSettingsForm extends ConfigFormBase
+{
 
   /**
    * {@inheritdoc}
    */
-  public function getFormId(): string {
+  public function getFormId(): string
+  {
     return 'soda_scs_manager_settings_form';
   }
 
   /**
    * {@inheritdoc}
    */
-  protected function getEditableConfigNames(): array {
+  protected function getEditableConfigNames(): array
+  {
     return [
       'soda_scs_manager.settings',
     ];
@@ -32,7 +35,8 @@ class SodaScsSettingsForm extends ConfigFormBase {
   /**
    * {@inheritdoc}
    */
-  public function buildForm(array $form, FormStateInterface $form_state): array {
+  public function buildForm(array $form, FormStateInterface $form_state): array
+  {
     $form = parent::buildForm($form, $form_state);
     $form_state->setCached(FALSE);
 
@@ -214,7 +218,8 @@ class SodaScsSettingsForm extends ConfigFormBase {
   /**
    * {@inheritdoc}
    */
-  public function submitForm(array &$form, FormStateInterface $form_state): void {
+  public function submitForm(array &$form, FormStateInterface $form_state): void
+  {
     $wisski_values = $form_state->getValue('wisski');
 
     // Save the configuration.
@@ -231,7 +236,4 @@ class SodaScsSettingsForm extends ConfigFormBase {
       ->save();
     parent::submitForm($form, $form_state);
   }
-
-
-
 }

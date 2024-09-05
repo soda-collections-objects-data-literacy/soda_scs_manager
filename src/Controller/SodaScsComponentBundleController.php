@@ -13,15 +13,16 @@ use Drupal\file\Entity\File;
 /**
  * Class ComponentBundleController.
  */
-class SodaScsComponentBundleController extends ControllerBase {
+class SodaScsComponentBundleController extends ControllerBase
+{
 
-/**
- * Title callback
- *
- * @return string
- */
-  public function title(): string {
+  /**
+   * Title callback
+   *
+   * @return string
+   */
+  public function title(): string
+  {
     return $this->t('Component Bundles');
   }
-
 }

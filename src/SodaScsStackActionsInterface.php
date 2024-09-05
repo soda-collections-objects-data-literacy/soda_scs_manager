@@ -8,7 +8,8 @@ use Drupal\soda_scs_manager\Entity\SodaScsComponentInterface;
 /**
  * Handles the communication with the SCS user manager daemon.
  */
-interface SodaScsStackActionsInterface {
+interface SodaScsStackActionsInterface
+{
 
 
   /**
@@ -41,7 +42,7 @@ interface SodaScsStackActionsInterface {
    * 
    * @return array
    */
-  public function getStack($component): array ;
+  public function getStack($component): array;
 
   /**
    * Update a stack.
@@ -50,7 +51,7 @@ interface SodaScsStackActionsInterface {
    * 
    * @return array
    */
-  public function updateStack($component): array ;
+  public function updateStack($component): array;
 
   /**
    * Delete a stack.
@@ -59,6 +60,5 @@ interface SodaScsStackActionsInterface {
    * 
    * @return array
    */
-  public function deleteStack(SodaScsComponentInterface $component): array ;
-
+  public function deleteStack(SodaScsComponentInterface $component): array;
 }

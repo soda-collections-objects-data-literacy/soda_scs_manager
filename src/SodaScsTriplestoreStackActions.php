@@ -9,18 +9,15 @@ use Drupal\soda_scs_manager\SodaScsStackActionsInterface;
 /**
  * Handles the communication with the SCS user manager daemon for triplestore stacks.
  */
-class SodaScsTriplestoreStackActions implements SodaScsStackActionsInterface {
+class SodaScsTriplestoreStackActions implements SodaScsStackActionsInterface
+{
 
   use DependencySerializationTrait;
 
   /**
    * Class constructor.
    */
-  public function __construct(
-
-  ) {
-
-  }
+  public function __construct() {}
 
   /**
    * Create a triplestore stack.
@@ -32,7 +29,8 @@ class SodaScsTriplestoreStackActions implements SodaScsStackActionsInterface {
    * 
    * @throws \Exception
    */
-  public function createStack(SodaScsComponentInterface $component): array {
+  public function createStack(SodaScsComponentInterface $component): array
+  {
     return [];
   }
 
@@ -44,7 +42,8 @@ class SodaScsTriplestoreStackActions implements SodaScsStackActionsInterface {
    * 
    * @return array
    */
-  public function getStacks($bundle, $options): array {
+  public function getStacks($bundle, $options): array
+  {
     return [];
   }
 
@@ -55,7 +54,8 @@ class SodaScsTriplestoreStackActions implements SodaScsStackActionsInterface {
    * 
    * @return array
    */
-  public function getStack($component): array {
+  public function getStack($component): array
+  {
     return [];
   }
 
@@ -80,7 +80,8 @@ class SodaScsTriplestoreStackActions implements SodaScsStackActionsInterface {
    * 
    * @return array
    */
-  public function deleteStack(SodaScsComponentInterface $component): array {
+  public function deleteStack(SodaScsComponentInterface $component): array
+  {
     return [];
   }
 }

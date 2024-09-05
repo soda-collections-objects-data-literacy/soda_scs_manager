@@ -9,26 +9,30 @@ use Drupal\Core\Url;
 /**
  * Builds the form to delete SCS Component Bundle entities.
  */
-class SodaScsComponentBundleDeleteForm extends EntityConfirmFormBase {
+class SodaScsComponentBundleDeleteForm extends EntityConfirmFormBase
+{
 
   /**
    * {@inheritdoc}
    */
-  public function getQuestion() {
+  public function getQuestion()
+  {
     return $this->t('Are you sure you want to delete %name? component type?', ['%name' => $this->entity->label()]);
   }
 
   /**
    * {@inheritdoc}
    */
-  public function getCancelUrl() {
+  public function getCancelUrl()
+  {
     return new Url('entity.soda_scs_component_bundle.desk');
   }
 
   /**
    * {@inheritdoc}
    */
-  public function submitForm(array &$form, FormStateInterface $form_state) {
+  public function submitForm(array &$form, FormStateInterface $form_state)
+  {
     $this->entity->delete();
 
     $this->messenger()->addMessage(
@@ -40,5 +44,4 @@ class SodaScsComponentBundleDeleteForm extends EntityConfirmFormBase {
 
     $form_state->setRedirectUrl($this->getCancelUrl());
   }
-
 }

@@ -9,7 +9,8 @@ use Psr\Http\Message\ResponseInterface;
 /**
  * Handles the communication with the SCS user manager daemon.
  */
-interface SodaScsServiceRequestInterface {  
+interface SodaScsServiceRequestInterface
+{
 
   /**
    * Builds the create request for the Portainer service API.

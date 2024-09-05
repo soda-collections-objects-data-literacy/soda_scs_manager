@@ -4,7 +4,8 @@ namespace Drupal\soda_scs_manager\Controller;
 
 use Symfony\Component\HttpFoundation\BinaryFileResponse;
 
-class SodaScsAssetController {
+class SodaScsAssetController
+{
 
   /**
    * Load an image asset.
@@ -15,7 +16,8 @@ class SodaScsAssetController {
    * @return \Symfony\Component\HttpFoundation\BinaryFileResponse
    *  The response object.
    */
-  public function loadImage($asset) {
+  public function loadImage($asset)
+  {
     $module_handler = \Drupal::service('module_handler');
     $module_path = $module_handler->getModule('soda_scs_manager')->getPath();
     $file = "$module_path/assets/images/$asset";
@@ -31,7 +33,8 @@ class SodaScsAssetController {
    * @return \Symfony\Component\HttpFoundation\BinaryFileResponse
    *  The response object.
    */
-  public function loadSpec() {
+  public function loadSpec()
+  {
     $module_handler = \Drupal::service('module_handler');
     $module_path = $module_handler->getModule('soda_scs_manager')->getPath();
     $file = "$module_path/spec/soda-scs-api-spec.yaml";

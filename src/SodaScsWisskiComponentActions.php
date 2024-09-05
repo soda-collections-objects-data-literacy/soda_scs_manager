@@ -22,52 +22,53 @@ use Exception;
 use GuzzleHttp\ClientInterface;
 
 /**
-* Handles the communication with the SCS user manager daemon.
-*/
-class SodaScsWisskiComponentActions implements SodaScsComponentActionsInterface {
-  
+ * Handles the communication with the SCS user manager daemon.
+ */
+class SodaScsWisskiComponentActions implements SodaScsComponentActionsInterface
+{
+
   use DependencySerializationTrait;
-  
+
   /**
-  * The database.
-  *
-  * @var \Drupal\Core\Database\Connection
-  */
+   * The database.
+   *
+   * @var \Drupal\Core\Database\Connection
+   */
   protected Connection $database;
-  
+
   /**
-  * The entity type manager.
-  * 
-  * @var \Drupal\Core\Entity\EntityTypeManagerInterface
-  */
+   * The entity type manager.
+   * 
+   * @var \Drupal\Core\Entity\EntityTypeManagerInterface
+   */
   protected $entityTypeManager;
-  
+
   /**
-  * The HTTP client.
-  *
-  * @var \GuzzleHttp\ClientInterface
-  */
+   * The HTTP client.
+   *
+   * @var \GuzzleHttp\ClientInterface
+   */
   protected ClientInterface $httpClient;
-  
+
   /**
-  * The logger factory.
-  *
-  * @var \Drupal\Core\Logger\LoggerChannelFactoryInterface
-  */
+   * The logger factory.
+   *
+   * @var \Drupal\Core\Logger\LoggerChannelFactoryInterface
+   */
   protected LoggerChannelFactoryInterface $loggerFactory;
-  
+
   /**
-  * The messenger service.
-  *
-  * @var \Drupal\Core\Messenger\MessengerInterface
-  */
+   * The messenger service.
+   *
+   * @var \Drupal\Core\Messenger\MessengerInterface
+   */
   protected MessengerInterface $messenger;
-  
+
   /**
-  * The settings config.
-  *
-  * @var \Drupal\Core\Config\Config
-  */
+   * The settings config.
+   *
+   * @var \Drupal\Core\Config\Config
+   */
   protected Config $settings;
 
   /**
@@ -76,42 +77,43 @@ class SodaScsWisskiComponentActions implements SodaScsComponentActionsInterface 
    * @var \Drupal\soda_scs_manager\SodaScsComponentHelpers
    */
   protected SodaScsComponentHelpers $sodaScsComponentHelpers;
-  
+
   /**
-  * The SCS Portainer actions service.
-  * 
-  * @var \Drupal\soda_scs_manager\SodaScsServiceRequestInterface
-  */
+   * The SCS Portainer actions service.
+   * 
+   * @var \Drupal\soda_scs_manager\SodaScsServiceRequestInterface
+   */
   protected SodaScsServiceRequestInterface $sodaScsPortainerServiceActions;
-  
+
   /**
-  * The SCS database actions service.
-  *
-  * @var \Drupal\soda_scs_manager\SodaScsServiceActionsInterface
-  */
+   * The SCS database actions service.
+   *
+   * @var \Drupal\soda_scs_manager\SodaScsServiceActionsInterface
+   */
   protected SodaScsServiceActionsInterface $sodaScsSqlServiceActions;
-  
+
   /**
-  * The SCS Service Key actions service.
-  *
-  * @var \Drupal\soda_scs_manager\SodaScsServiceKeyActionsInterface
-  */
+   * The SCS Service Key actions service.
+   *
+   * @var \Drupal\soda_scs_manager\SodaScsServiceKeyActionsInterface
+   */
   protected SodaScsServiceKeyActionsInterface $sodaScsServiceKeyActions;
-  
+
   /**
-  * The string translation service.
-  *
-  * @var \Drupal\Core\StringTranslation\TranslationInterface
-  */
+   * The string translation service.
+   *
+   * @var \Drupal\Core\StringTranslation\TranslationInterface
+   */
   protected TranslationInterface $stringTranslation;
-  
+
   /**
-  * Class constructor.
-  */
-  public function __construct(ConfigFactoryInterface $configFactory, Connection $database, EntityTypeManagerInterface $entityTypeManager, ClientInterface $httpClient, LoggerChannelFactoryInterface $loggerFactory, MessengerInterface $messenger, SodaScsComponentHelpers $sodaScsComponentHelpers, SodaScsServiceRequestInterface $sodaScsPortainerServiceActions, SodaScsServiceActionsInterface $sodaScsSqlServiceActions, SodaScsServiceKeyActions $sodaScsServiceKeyActions, TranslationInterface $stringTranslation, ){
+   * Class constructor.
+   */
+  public function __construct(ConfigFactoryInterface $configFactory, Connection $database, EntityTypeManagerInterface $entityTypeManager, ClientInterface $httpClient, LoggerChannelFactoryInterface $loggerFactory, MessengerInterface $messenger, SodaScsComponentHelpers $sodaScsComponentHelpers, SodaScsServiceRequestInterface $sodaScsPortainerServiceActions, SodaScsServiceActionsInterface $sodaScsSqlServiceActions, SodaScsServiceKeyActions $sodaScsServiceKeyActions, TranslationInterface $stringTranslation,)
+  {
     // Services from container.
     $settings = $configFactory
-    ->getEditable('soda_scs_manager.settings');
+      ->getEditable('soda_scs_manager.settings');
     $this->database = $database;
     $this->entityTypeManager = $entityTypeManager;
     $this->httpClient = $httpClient;
@@ -124,22 +126,23 @@ class SodaScsWisskiComponentActions implements SodaScsComponentActionsInterface 
     $this->sodaScsServiceKeyActions = $sodaScsServiceKeyActions;
     $this->stringTranslation = $stringTranslation;
   }
-  
+
   /**
-  * Create SODa SCS Component.
-  * 
-  * @param \Drupal\soda_scs_manager\Entity\SodaScsComponentInterface $component
-  * 
-  * @return array
-  */
-  public function createComponent(SodaScsComponentInterface $component): array {
+   * Create SODa SCS Component.
+   * 
+   * @param \Drupal\soda_scs_manager\Entity\SodaScsComponentInterface $component
+   * 
+   * @return array
+   */
+  public function createComponent(SodaScsComponentInterface $component): array
+  {
     try {
       // Create service key if it does not exist.
       $wisskiComponentServiceKey = $this->sodaScsServiceKeyActions->getServiceKey($component) ?? $this->sodaScsServiceKeyActions->createServiceKey($component);
-      
+
       $sqlComponent = $this->sodaScsComponentHelpers->retrieveReferencedComponent($component, 'sql');
       $sqlComponentServiceKey = $this->sodaScsServiceKeyActions->getServiceKey($sqlComponent) ?? $this->sodaScsServiceKeyActions->createServiceKey($sqlComponent);
-    
+
       $component->set('serviceKey', $wisskiComponentServiceKey);
       $requestParams = [
         'subdomain' => $component->get('subdomain')->value,
@@ -154,9 +157,9 @@ class SodaScsWisskiComponentActions implements SodaScsComponentActionsInterface 
       $portainerCreateRequest = $this->sodaScsPortainerServiceActions->buildCreateRequest($requestParams);
     } catch (MissingDataException $e) {
       $this->loggerFactory->get('soda_scs_manager')
-      ->error("Cannot assemble Request: @error", [
-        '@error' => $e->getMessage(),
-      ]);
+        ->error("Cannot assemble Request: @error", [
+          '@error' => $e->getMessage(),
+        ]);
       $this->messenger->addError($this->stringTranslation->translate("Cannot assemble request. See logs for more details."));
       return [
         'message' => 'Cannot assemble Request.',
@@ -167,68 +170,70 @@ class SodaScsWisskiComponentActions implements SodaScsComponentActionsInterface 
         'error' => $e->getMessage(),
       ];
     }
-    
-      $requestResult = $this->sodaScsPortainerServiceActions->makeRequest($portainerCreateRequest);
-      
-      if ($requestResult['success'] === FALSE) {
-        return $requestResult;
-      }
-      // Set the external ID.
-      $component->set('externalId', $requestResult['data']['portainerResponse']['Id']);
-      
-      // Save the component.
-      $component->save();
-      
-      $wisskiComponentServiceKey->set('scsComponent', [$component->id()]);
-      $wisskiComponentServiceKey->save();
-      
-      return [
-        'message' => 'Created WissKI component.',
-        'data' => [
-          'portainerResponse' => $requestResult,
-        ],
-        'success' => TRUE,
-        'error' => NULL,
-      ];
+
+    $requestResult = $this->sodaScsPortainerServiceActions->makeRequest($portainerCreateRequest);
+
+    if ($requestResult['success'] === FALSE) {
+      return $requestResult;
+    }
+    // Set the external ID.
+    $component->set('externalId', $requestResult['data']['portainerResponse']['Id']);
+
+    // Save the component.
+    $component->save();
+
+    $wisskiComponentServiceKey->set('scsComponent', [$component->id()]);
+    $wisskiComponentServiceKey->save();
+
+    return [
+      'message' => 'Created WissKI component.',
+      'data' => [
+        'portainerResponse' => $requestResult,
+      ],
+      'success' => TRUE,
+      'error' => NULL,
+    ];
   }
-  
-  
-  
+
+
+
   /**
-  * Retrieves a SODa SCS Component component.
-  *
-  * @param SodaScsComponentInterface $component The SODa SCS Component component to retrieve.
-  *
-  * @return array
-  */
-  public function getComponent(SodaScsComponentInterface $component): array {
+   * Retrieves a SODa SCS Component component.
+   *
+   * @param SodaScsComponentInterface $component The SODa SCS Component component to retrieve.
+   *
+   * @return array
+   */
+  public function getComponent(SodaScsComponentInterface $component): array
+  {
     return [];
   }
-  
+
   /**
-  * Updates a SODa SCS Component component.
-  *
-  * @param SodaScsComponentInterface $component The SODa SCS Component component to update.
-  * 
-  * @return array
-  */
-  public function updateComponent(SodaScsComponentInterface $component): array {
+   * Updates a SODa SCS Component component.
+   *
+   * @param SodaScsComponentInterface $component The SODa SCS Component component to update.
+   * 
+   * @return array
+   */
+  public function updateComponent(SodaScsComponentInterface $component): array
+  {
     return [];
   }
-  
+
   /**
-  * Deletes a SODa SCS Component component.
-  *
-  * @param SodaScsComponentInterface $component The SODa SCS Component component to delete.
-  * 
-  * @return array
-  */
-  public function deleteComponent(SodaScsComponentInterface $component): array {
+   * Deletes a SODa SCS Component component.
+   *
+   * @param SodaScsComponentInterface $component The SODa SCS Component component to delete.
+   * 
+   * @return array
+   */
+  public function deleteComponent(SodaScsComponentInterface $component): array
+  {
     try {
       $queryParams['externalId'] = $component->get('externalId')->value;
       $portainerDeleteRequest = $this->sodaScsPortainerServiceActions->buildDeleteRequest($queryParams);
-    } 
-    catch (MissingDataException $e) {
+    } catch (MissingDataException $e) {
       $this->loggerFactory->get('soda_scs_manager')->error("Cannot assemble WissKI delete request: @error", [
         '@error' => $e->getMessage(),
       ]);
@@ -241,7 +246,8 @@ class SodaScsWisskiComponentActions implements SodaScsComponentActionsInterface 
         'success' => FALSE,
         'error' => $e->getMessage(),
       ];
-    } try {
+    }
+    try {
       /** @var array $portainerResponse */
       $requestResult = $this->sodaScsPortainerServiceActions->makeRequest($portainerDeleteRequest);
       if (!$requestResult['success']) {

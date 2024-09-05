@@ -13,7 +13,8 @@ use Symfony\Component\HttpFoundation\JsonResponse;
 /**
  * The SODa SCS Manager service controller.
  */
-class SodaScsManagerServiceController extends ControllerBase {
+class SodaScsManagerServiceController extends ControllerBase
+{
 
   /**
    * @var \Drupal\soda_scs_manager\SodaScsApiActions
@@ -24,7 +25,8 @@ class SodaScsManagerServiceController extends ControllerBase {
   /**
    * Class constructor
    */
-  public function __construct(SodaScsApiActions $sodaScsApiActions, EntityTypeManagerInterface $entityTypeManager) {
+  public function __construct(SodaScsApiActions $sodaScsApiActions, EntityTypeManagerInterface $entityTypeManager)
+  {
     $this->sodaScsApiActions = $sodaScsApiActions;
     $this->entityTypeManager = $entityTypeManager;
   }
@@ -32,7 +34,8 @@ class SodaScsManagerServiceController extends ControllerBase {
   /**
    * Populate the reachable variables from services.
    */
-  public static function create(ContainerInterface $container) {
+  public static function create(ContainerInterface $container)
+  {
     return new static(
       $container->get('soda_scs_manager.api.actions'),
       $container->get('entity_type.manager')
@@ -48,7 +51,8 @@ class SodaScsManagerServiceController extends ControllerBase {
    * @return \Symfony\Component\HttpFoundation\JsonResponse
    *   The JSON response.
    */
-  public function componentStatus($componentId) {
+  public function componentStatus($componentId)
+  {
     // Get component info
     $component = $this->entityTypeManager->getStorage('soda_scs_component')->load($componentId);
     $bundle = $component->bundle();
@@ -69,7 +73,8 @@ class SodaScsManagerServiceController extends ControllerBase {
    * @return TrustedRedirectResponse
    *  The redirect response.
    */
-  public function generateUrl($soda_scs_component): TrustedRedirectResponse {
+  public function generateUrl($soda_scs_component): TrustedRedirectResponse
+  {
     // Generate the URL based on the component ID.
     $entity = $this->entityTypeManager->getStorage('soda_scs_component')->load($soda_scs_component);
     $host = $this->config('soda_scs_manager.settings')->get('scsHost');
@@ -81,5 +86,4 @@ class SodaScsManagerServiceController extends ControllerBase {
     // Redirect to the generated URL.
     return new TrustedRedirectResponse($url);
   }
-
 }

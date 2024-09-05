@@ -50,27 +50,28 @@ use Symfony\Component\Yaml\Yaml;
  *   }
  * )
  */
-class SodaScsComponentBundle extends ConfigEntityBundleBase {
+class SodaScsComponentBundle extends ConfigEntityBundleBase
+{
 
   /**
-  * The description of the ComponentBundle.
-  *
-  * @var string
-  */
+   * The description of the ComponentBundle.
+   *
+   * @var string
+   */
   protected $description;
 
   /**
-  * The ComponentBundle ID.
-  *
-  * @var string
-  */
+   * The ComponentBundle ID.
+   *
+   * @var string
+   */
   protected $id;
 
   /**
-  * The Image of the ComponentBundle.
-  *
-  * @var string
-  */
+   * The Image of the ComponentBundle.
+   *
+   * @var string
+   */
   protected $imageUrl;
 
   /**
@@ -81,10 +82,10 @@ class SodaScsComponentBundle extends ConfigEntityBundleBase {
   protected $isDefaultRevision;
 
   /**
-  * The ComponentBundle label.
-  *
-  * @var string
-  */
+   * The ComponentBundle label.
+   *
+   * @var string
+   */
   protected $label;
 
   /**
@@ -106,7 +107,8 @@ class SodaScsComponentBundle extends ConfigEntityBundleBase {
   /**
    * {@inheritdoc}
    */
-  public function isDefaultRevision() {
+  public function isDefaultRevision()
+  {
     return $this->isDefaultRevision;
   }
 
@@ -116,32 +118,34 @@ class SodaScsComponentBundle extends ConfigEntityBundleBase {
    * @return string
    *   The description of the ComponentBundle.
    */
-  public function getDescription() {
+  public function getDescription()
+  {
     return $this->description;
   }
 
   /**
-  * Sets the description of the ComponentBundle.
-  *
-  * @param string $description
-  *   The description of the ComponentBundle.
-  *
-  * @return $this
-  */
-  public function setDescription($description): self {
+   * Sets the description of the ComponentBundle.
+   *
+   * @param string $description
+   *   The description of the ComponentBundle.
+   *
+   * @return $this
+   */
+  public function setDescription($description): self
+  {
     $this->description = $description;
     return $this;
   }
 
   /**
-  * Returns the image of the ComponentBundle.
-  *
-  * @return string
-  *   The image of the ComponentBundle.
-  */
-  public function getImageUrl(): string {
+   * Returns the image of the ComponentBundle.
+   *
+   * @return string
+   *   The image of the ComponentBundle.
+   */
+  public function getImageUrl(): string
+  {
     return $this->imageUrl;
-
   }
 
   /**
@@ -152,7 +156,8 @@ class SodaScsComponentBundle extends ConfigEntityBundleBase {
    *
    * @return $this
    */
-  public function setImageUrl($imageUrl): self {
+  public function setImageUrl($imageUrl): self
+  {
     $this->imageUrl = $imageUrl;
     return $this;
   }
