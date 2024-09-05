@@ -14,8 +14,7 @@ use Drupal\Core\TypedData\Exception\MissingDataException;
 use Drupal\soda_scs_manager\Entity\SodaScsComponentInterface;
 use Drupal\soda_scs_manager\SodaScsComponentActionsInterface;
 use Drupal\soda_scs_manager\SodaScsServiceKeyActions;
-use Entity;
-
+use Drupal\soda_scs_manager\SodaScsServiceRequestInterface;
 /**
  * Handles the communication with the SCS user manager daemon.
  */
@@ -91,7 +90,7 @@ class SodaScsTriplestoreComponentActions implements SodaScsComponentActionsInter
     $this->loggerFactory = $loggerFactory;
     $this->messenger = $messenger;
     $this->settings = $settings;
-    $this->sodaScsServiceKeyActions = $sodaScsOpenGdbServiceActions;
+    $this->sodaScsOpenGdbServiceActions = $sodaScsOpenGdbServiceActions;
     $this->stringTranslation = $stringTranslation;
   }
 
