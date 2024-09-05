@@ -22,6 +22,10 @@ services:
     arguments:
       - '@config.factory'
       - '@entity_type.manager'
+      - '@logger.factory'
+      - '@messenger'
+      - '@soda_scs_manager.opengdp_service.actions'
+      - '@string_translation'
 
   soda_scs_manager.wisski_component.actions:
     class: Drupal\soda_scs_manager\SodaScsWisskiComponentActions
@@ -59,7 +63,6 @@ services:
     class: Drupal\soda_scs_manager\SodaScsOpenGdpServiceActions
     arguments:
       - '@config.factory'
-      
 
   soda_scs_manager.portainer_service.actions:
       class: Drupal\soda_scs_manager\SodaScsPortainerServiceActions
@@ -76,6 +79,7 @@ services:
         - '@soda_scs_manager.mysql_service.actions'
         - '@string_translation'
         - '@twig'
+
 # Stack actions
   soda_scs_manager.stack.actions:
     class: Drupal\soda_scs_manager\SodaScsStackActions
