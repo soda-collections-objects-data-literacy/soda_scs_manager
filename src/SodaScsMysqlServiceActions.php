@@ -7,20 +7,18 @@ use Drupal\Core\Config\ConfigFactoryInterface;
 use Drupal\Core\Database\Connection;
 use Drupal\Core\Entity\EntityTypeManagerInterface;
 use Drupal\Core\Logger\LoggerChannelFactoryInterface;
+use Drupal\Core\Messenger\MessengerInterface;
 use Drupal\Core\StringTranslation\StringTranslationTrait;
 use Drupal\Core\StringTranslation\TranslationInterface;
-use Drupal\Core\Messenger\MessengerInterface;
 use Drupal\Core\TypedData\Exception\MissingDataException;
 use Drupal\soda_scs_manager\Entity\SodaScsComponentInterface;
-use Drupal\soda_scs_manager\SodaScsServiceActionsInterface;
 
 /**
  * Handles the communication with the SCS user manager daemon.
- * 
+ *
  * @todo Sanitise mysql commands, no create, drop etc.
  */
-class SodaScsMysqlServiceActions implements SodaScsServiceActionsInterface
-{
+class SodaScsMysqlServiceActions implements SodaScsServiceActionsInterface {
 
   use StringTranslationTrait;
 
@@ -33,7 +31,7 @@ class SodaScsMysqlServiceActions implements SodaScsServiceActionsInterface
 
   /**
    * The entity type manager.
-   * 
+   *
    * @var \Drupal\Core\Entity\EntityTypeManagerInterface
    */
   protected EntityTypeManagerInterface $entityTypeManager;
@@ -53,13 +51,6 @@ class SodaScsMysqlServiceActions implements SodaScsServiceActionsInterface
   protected Config $settings;
 
   /**
-   * The string translation service.
-   *
-   * @var \Drupal\Core\StringTranslation\TranslationInterface
-   */
-  protected TranslationInterface $stringTranslation;
-
-  /**
    * The messenger service.
    *
    * @var \Drupal\Core\Messenger\MessengerInterface
@@ -72,7 +63,7 @@ class SodaScsMysqlServiceActions implements SodaScsServiceActionsInterface
     EntityTypeManagerInterface $entityTypeManager,
     LoggerChannelFactoryInterface $loggerFactory,
     MessengerInterface $messenger,
-    TranslationInterface $stringTranslation
+    TranslationInterface $stringTranslation,
   ) {
     $this->settings = $configFactory
       ->getEditable('soda_scs_manager.settings');
@@ -86,15 +77,15 @@ class SodaScsMysqlServiceActions implements SodaScsServiceActionsInterface
   /**
    * Creates a new database.
    *
-   * @param SodaScsComponentInterface $component.
+   * @param \Drupal\soda_scs_manager\Entity\SodaScsComponentInterface $component
+   *   The SODa SCS component.
    *
    * @return array
-   *  Success result.
+   *   Success result.
    *
-   * @throws MissingDataException
+   * @throws \Drupal\Core\TypedData\Exception\MissingDataException
    */
-  public function createService(SodaScsComponentInterface $component): array
-  {
+  public function createService(SodaScsComponentInterface $component): array {
 
     // Username.
     $dbUserName = $component->getOwner()->getDisplayName();
@@ -115,11 +106,11 @@ class SodaScsMysqlServiceActions implements SodaScsServiceActionsInterface
 
     $dbName = $component->get('subdomain')->value;
 
-    // Create the database
+    // Create the database.
     $createDbCommand = "mysql -h $dbHost -uroot -p$dbRootPassword -e 'CREATE DATABASE `$dbName`;' 2>&1";
     $dbCreated = exec($createDbCommand, $createDbOutput, $createDbReturnVar);
 
-    // Command failed
+    // Command failed.
     if ($createDbReturnVar != 0) {
       return $this->handleCommandFailure([
         'command' => $createDbCommand,
@@ -144,19 +135,17 @@ class SodaScsMysqlServiceActions implements SodaScsServiceActionsInterface
    *   The name of the database.
    *
    * @return array
-   *  Command, execution status (0 = success >0 = failure) and last line of
-   *
+   *   Command, execution status (0 = success >0 = failure) and last line of
    */
-  public function existService(string $name): array
-  {
+  public function existService(string $name): array {
     $dbHost = $this->settings->get('dbHost');
     $dbRootPassword = $this->settings->get('dbRootPassword');
 
-    // Check if the database exists
+    // Check if the database exists.
     $checkDbCommand = "mysql -h $dbHost -uroot -p$dbRootPassword -e 'SHOW DATABASES LIKE \"$name\";' 2>&1";
     exec($checkDbCommand, $databaseExists, $checkDbReturnVar);
 
-    // Check if the output contains the database name
+    // Check if the output contains the database name.
     $dbExists = !empty($databaseExists) && in_array($name, $databaseExists);
 
     return [
@@ -167,20 +156,23 @@ class SodaScsMysqlServiceActions implements SodaScsServiceActionsInterface
     ];
   }
 
+  /**
+   * Updates a database.
+   */
   public function updateService() {}
 
   /**
    * Deletes a database.
    *
-   * @param Drupal\soda_scs_manager\Entity\SodaScsComponentInterface $component.
+   * @param Drupal\soda_scs_manager\Entity\SodaScsComponentInterface $component
+   *   The SODa SCS component.
    *
    * @return array
-   *  Success result.
+   *   Success result.
    *
-   * @throws MissingDataException
+   * @throws \Drupal\Core\TypedData\Exception\MissingDataException
    */
-  public function deleteService(SodaScsComponentInterface $component): array
-  {
+  public function deleteService(SodaScsComponentInterface $component): array {
     $dbName = $component->get('subdomain')->value;
     $dbUsername = $component->getOwner()->getDisplayName();
 
@@ -203,32 +195,23 @@ class SodaScsMysqlServiceActions implements SodaScsServiceActionsInterface
     }
 
     if (!$checkDbExistsResult['result']) {
-      // Database already deleted
+      // Database already deleted.
       $this->messenger->addError($this->t('Database could not be found. See logs for details.'));
       return [
-        'message' => $this->t("Database \"@name\" database could not be found.", ['@name' => $dbName]),
+        'message' => $this->t("Database @name database could not be found.", ['@name' => $dbName]),
         'data' => [],
         'error' => NULL,
         'success' => TRUE,
       ];
     }
 
-    // Get database credentials
-    $conditions = [
-      'service_host' => $dbHost,
-      'service_name' => 'mariadb',
-      'service_entity_type' => 'database',
-      'service_entity_name' => $dbName,
-      'service_username' => $dbUsername,
-    ];
-
-    // Delete the database
+    // Delete the database.
     $deleteDbCommand = "mysql -h$dbHost -u$dbUsername -p$dbUserPassword -e 'DROP DATABASE `$dbName`;' 2>&1";
     $dbDeleted = exec($deleteDbCommand, $deleteDbOutput, $deleteDbReturnVar);
     if (is_array($deleteDbOutput)) {
       $deleteDbOutput = implode(", ", $deleteDbOutput);
     }
-    // Command failed
+    // Command failed.
     if ($deleteDbReturnVar != 0) {
       return $this->handleCommandFailure([
         'command' => $deleteDbCommand,
@@ -240,7 +223,7 @@ class SodaScsMysqlServiceActions implements SodaScsServiceActionsInterface
     $this->flushPrivileges();
 
     return [
-      'message' =>  $this->t('Delete database @name.', ['@name' => $dbName]),
+      'message' => $this->t('Delete database @name.', ['@name' => $dbName]),
       'data' => [],
       'error' => NULL,
       'success' => TRUE,
@@ -256,12 +239,10 @@ class SodaScsMysqlServiceActions implements SodaScsServiceActionsInterface
    *   The password of the database user.
    *
    * @return array
-   *  Command, execution status (0 = success >0 = failure) and last line of
+   *   Command, execution status (0 = success >0 = failure) and last line of
    *   output as result.
-   *
    */
-  public function createServiceUser(string $dbUser, string $dbUserPassword): array
-  {
+  public function createServiceUser(string $dbUser, string $dbUserPassword): array {
     $dbHost = $this->settings->get('dbHost');
     $dbRootPassword = $this->settings->get('dbRootPassword');
 
@@ -276,8 +257,10 @@ class SodaScsMysqlServiceActions implements SodaScsServiceActionsInterface
     ];
   }
 
-  public function getServiceUser($uid = NULL): array
-  {
+  /**
+   * Retrieves a database user.
+   */
+  public function getServiceUser($uid = NULL): array {
     try {
       $driver = $this->database->driver();
       $query = $this->database->select('users_field_data', 'ufd');
@@ -286,7 +269,8 @@ class SodaScsMysqlServiceActions implements SodaScsServiceActionsInterface
       $query->addField('ufd', 'status', 'enabled');
       if ($driver == 'mysql') {
         $query->addExpression('GROUP_CONCAT(ur.roles_target_id)', 'role');
-      } elseif ($driver == 'pgsql') {
+      }
+      elseif ($driver == 'pgsql') {
         $query->addExpression('STRING_AGG(ur.roles_target_id, \',\')', 'role');
       }
       $query->groupBy('ufd.uid');
@@ -306,7 +290,8 @@ class SodaScsMysqlServiceActions implements SodaScsServiceActionsInterface
       }
 
       return $users;
-    } catch (\Exception $e) {
+    }
+    catch (\Exception $e) {
       // Request failed, handle the error.
       $this->loggerFactory
         ->get('soda_scs_manager')
@@ -324,15 +309,14 @@ class SodaScsMysqlServiceActions implements SodaScsServiceActionsInterface
    *   The name of the database user.
    *
    * @return array
-   *  Command, execution status (0 = success >0 = failure) and last line of
+   *   Command, execution status (0 = success >0 = failure) and last line of
    *   output as result.
    */
-  public function existServiceUser(string $dbUser): array
-  {
+  public function existServiceUser(string $dbUser): array {
     $dbHost = $this->settings->get('dbHost');
     $dbRootPassword = $this->settings->get('dbRootPassword');
 
-    // Check if the user exists
+    // Check if the user exists.
     $checkUserCommand = "mysql -h $dbHost -uroot -p$dbRootPassword -e 'SELECT EXISTS(SELECT 1 FROM mysql.user WHERE user = \"$dbUser\");' 2>&1";
     $dbUserRead = exec($checkUserCommand, $checkUserCommandOutput, $checkUserReturnVar);
     return [
@@ -356,18 +340,22 @@ class SodaScsMysqlServiceActions implements SodaScsServiceActionsInterface
    * If the request fails.
    */
 
-
   /**
    * Grants rights to a database user.
    *
    * @param string $dbUser
+   *   The name of the database user.
    * @param string $name
+   *   The name of the database.
    * @param array $rights
+   *   The rights to grant.
    *
    * @return array
+   *   Result information with command, return
+   *   status (>0 = failed or 0 = success), output (array)
+   *   and result (last line of output).
    */
-  public function grantServiceRights(string $dbUser, string $name, array $rights): array
-  {
+  public function grantServiceRights(string $dbUser, string $name, array $rights): array {
     $dbHost = $this->settings->get('dbHost');
     $dbRootPassword = $this->settings->get('dbRootPassword');
     $rights = implode(', ', $rights);
@@ -386,9 +374,11 @@ class SodaScsMysqlServiceActions implements SodaScsServiceActionsInterface
    * Flush the database privileges.
    *
    * @return array
+   *   Result information with command, return
+   *   status (>0 = failed or 0 = success), output (array)
+   *   and result (last line of output).
    */
-  public function flushPrivileges(): array
-  {
+  public function flushPrivileges(): array {
     $dbHost = $this->settings->get('dbHost');
     $dbRootPassword = $this->settings->get('dbRootPassword');
 
@@ -408,13 +398,16 @@ class SodaScsMysqlServiceActions implements SodaScsServiceActionsInterface
    * If the user does not own any databases, the user is deleted.
    *
    * @param string $dbUser
-   * 
+   *   The name of the database user.
    * @param string $dbUserPassword
+   *   The password of the database user.
    *
    * @return array
+   *   Result information with command, return
+   *   status (>0 = failed or 0 = success), output (array)
+   *   and result (last line of output).
    */
-  public function cleanServiceUsers(string $dbUser, string $dbUserPassword = NULL): array
-  {
+  public function cleanServiceUsers(string $dbUser, string $dbUserPassword = NULL): array {
     if ($dbUser == 'root') {
       return [
         'message' => $this->t('Can not delete the root user'),
@@ -423,8 +416,7 @@ class SodaScsMysqlServiceActions implements SodaScsServiceActionsInterface
       ];
     }
 
-
-    // Check if the user owns any databases
+    // Check if the user owns any databases.
     $userOwnsAnyDatabasesResult = $this->userOwnsAnyDatabases($dbUser, $dbUserPassword);
 
     if ($userOwnsAnyDatabasesResult['execStatus'] != 0) {
@@ -452,11 +444,23 @@ class SodaScsMysqlServiceActions implements SodaScsServiceActionsInterface
     ];
   }
 
-  public function userOwnsAnyDatabases(string $dbUser, string $userPassword)
-  {
+  /**
+   * Checks if a database user owns any databases.
+   *
+   * @param string $dbUser
+   *   The name of the database user.
+   * @param string $userPassword
+   *   The password of the database user.
+   *
+   * @return array
+   *   Result information with command, return
+   *   status (>0 = failed or 0 = success), output (array)
+   *   and result (last line of output).
+   */
+  public function userOwnsAnyDatabases(string $dbUser, string $userPassword) {
     $dbHost = $this->settings->get('dbHost');
 
-    // Check if the user owns any databases
+    // Check if the user owns any databases.
     $userOwnsAnyDatabasesCommand = "mysql -h$dbHost -u$dbUser -p$userPassword -e 'SELECT COUNT(*) FROM information_schema.SCHEMATA;' 2>&1";
     $userOwnsAnyDatabasesCommandResult = exec($userOwnsAnyDatabasesCommand, $userOwnsAnyDatabasesOutput, $userOwnsAnyDatabasesReturnVar);
     return [
@@ -469,24 +473,23 @@ class SodaScsMysqlServiceActions implements SodaScsServiceActionsInterface
 
   /**
    * Checks handle shell command failure.
-   * 
+   *
    * @param array $commandResult
    *   The command result.
    * @param string $action
    *   The action.
    * @param string $entityName
    *   The entity name.
-   * 
+   *
    * @return array
    *   The command result.
    */
-  public function handleCommandFailure(array $commandResult, string $action, string $entityName): array
-  {
+  public function handleCommandFailure(array $commandResult, string $action, string $entityName): array {
     if (is_array($commandResult['output'])) {
       $commandResult['output'] = implode(', ', $commandResult['output']);
     }
     $this->loggerFactory->get('soda_scs_manager')
-      ->error($this->t("Failed to execute MySQL command \"@command\" to @action \"@entityName\". Error: @error", [
+      ->error($this->t("Failed to execute MySQL command @command to @action @entityName. Error: @error", [
         '@action' => $action,
         '@command' => $commandResult['command'],
         '@entityName' => $entityName,
@@ -494,9 +497,9 @@ class SodaScsMysqlServiceActions implements SodaScsServiceActionsInterface
       ]));
     $this->messenger->addError($this->t("Failed to execute MySQL command to @action. See logs for more details.", ['@action' => $action]));
     return [
-      'message' => $this->t("Cannot @action \"@$entityName\". See log for details.", [
+      'message' => $this->t("Cannot @action @entityName. See log for details.", [
         '@action' => $action,
-        '@entityName' => $entityName
+        '@entityName' => $entityName,
       ]),
       'data' => [],
       'error' => $commandResult['output'],
@@ -504,11 +507,21 @@ class SodaScsMysqlServiceActions implements SodaScsServiceActionsInterface
     ];
   }
 
-  public function deleteServiceUser($dbUser)
-  {
+  /**
+   * Delete database user.
+   *
+   * @param string $dbUser
+   *   The name of the database user.
+   *
+   * @return array
+   *   Result information with command, return
+   *   status (>0 = failed or 0 = success), output (array)
+   *   and result (last line of output).
+   */
+  public function deleteServiceUser($dbUser) {
     $dbHost = $this->settings->get('dbHost');
     $dbRootPassword = $this->settings->get('dbRootPassword');
-    // User does not own any databases, delete the user
+    // User does not own any databases, delete the user.
     $deleteUserCommand = "mysql -h $dbHost -uroot -p$dbRootPassword -e 'DROP USER `$dbUser`@`%`; FLUSH PRIVILEGES;'";
     $deleteUserCommandResult = exec($deleteUserCommand, $deleteUserOutput, $deleteUserReturnVar);
     return [
@@ -518,4 +531,5 @@ class SodaScsMysqlServiceActions implements SodaScsServiceActionsInterface
       'result' => $deleteUserCommandResult,
     ];
   }
+
 }
