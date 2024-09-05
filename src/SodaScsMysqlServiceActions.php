@@ -7,6 +7,7 @@ use Drupal\Core\Config\ConfigFactoryInterface;
 use Drupal\Core\Database\Connection;
 use Drupal\Core\Entity\EntityTypeManagerInterface;
 use Drupal\Core\Logger\LoggerChannelFactoryInterface;
+use Drupal\Core\StringTranslation\StringTranslationTrait;
 use Drupal\Core\StringTranslation\TranslationInterface;
 use Drupal\Core\Messenger\MessengerInterface;
 use Drupal\Core\TypedData\Exception\MissingDataException;
@@ -20,6 +21,8 @@ use Drupal\soda_scs_manager\SodaScsServiceActionsInterface;
  */
 class SodaScsMysqlServiceActions implements SodaScsServiceActionsInterface
 {
+
+  use StringTranslationTrait;
 
   /**
    * The database connection.
@@ -201,9 +204,9 @@ class SodaScsMysqlServiceActions implements SodaScsServiceActionsInterface
 
     if (!$checkDbExistsResult['result']) {
       // Database already deleted
-      $this->messenger->addError($this->stringTranslation->translate('Database could not be found. See logs for details.'));
+      $this->messenger->addError($this->t('Database could not be found. See logs for details.'));
       return [
-        'message' => $this->stringTranslation->translate("Database \"@name\" database could not be found.", ['@name' => $dbName]),
+        'message' => $this->t("Database \"@name\" database could not be found.", ['@name' => $dbName]),
         'data' => [],
         'error' => NULL,
         'success' => TRUE,
@@ -237,7 +240,7 @@ class SodaScsMysqlServiceActions implements SodaScsServiceActionsInterface
     $this->flushPrivileges();
 
     return [
-      'message' =>  $this->stringTranslation->translate('Delete database @name.', ['@name' => $dbName]),
+      'message' =>  $this->t('Delete database @name.', ['@name' => $dbName]),
       'data' => [],
       'error' => NULL,
       'success' => TRUE,
@@ -309,7 +312,7 @@ class SodaScsMysqlServiceActions implements SodaScsServiceActionsInterface
         ->get('soda_scs_manager')
         ->error('Request failed with exception: ' . $e->getMessage());
       $this->messenger
-        ->addError($this->stringTranslation->translate('Can not communicate with the SCS user manager daemon.'));
+        ->addError($this->t('Can not communicate with the SCS user manager daemon.'));
       return [];
     }
   }
@@ -414,7 +417,7 @@ class SodaScsMysqlServiceActions implements SodaScsServiceActionsInterface
   {
     if ($dbUser == 'root') {
       return [
-        'message' => $this->stringTranslation->translate('Can not delete the root user'),
+        'message' => $this->t('Can not delete the root user'),
         'error' => NULL,
         'success' => FALSE,
       ];
@@ -430,7 +433,7 @@ class SodaScsMysqlServiceActions implements SodaScsServiceActionsInterface
 
     if ($userOwnsAnyDatabasesResult['result'] > 1) {
       return [
-        'message' => $this->stringTranslation->translate('User owns databases'),
+        'message' => $this->t('User owns databases'),
         'error' => NULL,
         'success' => TRUE,
       ];
@@ -443,7 +446,7 @@ class SodaScsMysqlServiceActions implements SodaScsServiceActionsInterface
     }
 
     return [
-      'message' => $this->stringTranslation->translate('User owned no databases, and was deleted'),
+      'message' => $this->t('User owned no databases, and was deleted'),
       'error' => NULL,
       'success' => TRUE,
     ];
@@ -483,15 +486,15 @@ class SodaScsMysqlServiceActions implements SodaScsServiceActionsInterface
       $commandResult['output'] = implode(', ', $commandResult['output']);
     }
     $this->loggerFactory->get('soda_scs_manager')
-      ->error($this->stringTranslation->translate("Failed to execute MySQL command \"@command\" to @action \"@entityName\". Error: @error", [
+      ->error($this->t("Failed to execute MySQL command \"@command\" to @action \"@entityName\". Error: @error", [
         '@action' => $action,
         '@command' => $commandResult['command'],
         '@entityName' => $entityName,
         '@error' => $commandResult['output'],
       ]));
-    $this->messenger->addError($this->stringTranslation->translate("Failed to execute MySQL command to @action. See logs for more details.", ['@action' => $action]));
+    $this->messenger->addError($this->t("Failed to execute MySQL command to @action. See logs for more details.", ['@action' => $action]));
     return [
-      'message' => $this->stringTranslation->translate("Cannot @action \"@$entityName\". See log for details.", [
+      'message' => $this->t("Cannot @action \"@$entityName\". See log for details.", [
         '@action' => $action,
         '@entityName' => $entityName
       ]),

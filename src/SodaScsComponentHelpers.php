@@ -2,11 +2,19 @@
 
 namespace Drupal\soda_scs_manager;
 
+use Drupal\Core\StringTranslation\StringTranslationTrait;
+use Drupal\Core\StringTranslation\TranslationInterface;
 use Drupal\soda_scs_manager\Entity\SodaScsComponentInterface;
 use Drupal\soda_scs_manager\Exception\SodaScsComponentException;
 
 class SodaScsComponentHelpers
 {
+  use StringTranslationTrait;
+
+  public function __construct(TranslationInterface $stringTranslation)
+  {
+    $this->stringTranslation = $stringTranslation;
+  }
 
   /**
    * Retrieves a referenced component of a given bundle.
@@ -21,6 +29,8 @@ class SodaScsComponentHelpers
    */
   public function retrieveReferencedComponent(SodaScsComponentInterface $component, string $bundle): SodaScsComponentInterface
   {
+
+
     /** @var \Drupal\Core\Field\EntityReferenceFieldItemListInterface $referencedComponentsItemList */
     $referencedComponentsItemList = $component->get('referencedComponents');
     $referencedComponents = $referencedComponentsItemList->referencedEntities();
@@ -29,7 +39,7 @@ class SodaScsComponentHelpers
     });
     $referencedComponent = !empty($components) ? reset($components) : null;
     if (!$referencedComponent) {
-      throw new SodaScsComponentException('Could not find SQL component.', 1, NULL);
+      throw new SodaScsComponentException($this->t('Could not find %bundle component.', ['%bundle' => $bundle]), 1, NULL);
     }
     return $referencedComponent;
   }
