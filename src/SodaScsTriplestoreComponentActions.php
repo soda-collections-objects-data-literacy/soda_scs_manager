@@ -77,6 +77,7 @@ class SodaScsTriplestoreComponentActions implements SodaScsComponentActionsInter
     LoggerChannelFactoryInterface $loggerFactory,
     MessengerInterface $messenger,
     SodaScsServiceRequestInterface $sodaScsOpenGdbServiceActions,
+    SodaScsServiceKeyActions $sodaScsServiceKeyActions,
     TranslationInterface $stringTranslation,
   ) {
     // Services from container.
@@ -87,6 +88,7 @@ class SodaScsTriplestoreComponentActions implements SodaScsComponentActionsInter
     $this->messenger = $messenger;
     $this->settings = $settings;
     $this->sodaScsOpenGdbServiceActions = $sodaScsOpenGdbServiceActions;
+    $this->sodaScsServiceKeyActions = $sodaScsServiceKeyActions;
     $this->stringTranslation = $stringTranslation;
   }
 
@@ -111,7 +113,7 @@ class SodaScsTriplestoreComponentActions implements SodaScsComponentActionsInter
         'project' => 'my_project',
         'userId' => $component->getOwnerId(),
         'userName' => $component->getOwner()->getDisplayName(),
-        'triplestoreServicePassword' => $triplestoreComponentServiceKey->get('password')->value,
+        'triplestoreServicePassword' => $triplestoreComponentServiceKey->get('servicePassword')->value,
       ];
       // Create Drupal instance.
       $openGdbCreateRequest = $this->sodaScsOpenGdbServiceActions->buildCreateRequest($requestParams);

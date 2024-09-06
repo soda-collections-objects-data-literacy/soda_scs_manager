@@ -27,6 +27,7 @@ services:
       - '@logger.factory'
       - '@messenger'
       - '@soda_scs_manager.opengdp_service.actions'
+      - '@soda_scs_manager.service_key.actions'
       - '@string_translation'
 
   soda_scs_manager.wisski_component.actions:
@@ -65,6 +66,10 @@ services:
     class: Drupal\soda_scs_manager\SodaScsOpenGdpServiceActions
     arguments:
       - '@config.factory'
+      - '@http_client'
+      - '@logger.factory'
+      - '@messenger'
+      - '@string_translation'
 
   soda_scs_manager.portainer_service.actions:
       class: Drupal\soda_scs_manager\SodaScsPortainerServiceActions
@@ -87,6 +92,7 @@ services:
     class: Drupal\soda_scs_manager\SodaScsStackActions
     arguments:
       - '@soda_scs_manager.sql_stack.actions'
+      - '@soda_scs_manager.triplestore_stack.actions'
       - '@soda_scs_manager.wisski_stack.actions'
 
   soda_scs_manager.sql_stack.actions:
@@ -99,6 +105,11 @@ services:
 
   soda_scs_manager.triplestore_stack.actions:
     class: Drupal\soda_scs_manager\SodaScsTriplestoreStackActions
+    arguments:
+      - '@logger.factory'
+      - '@messenger'
+      - '@soda_scs_manager.triplestore_component.actions'
+      - '@string_translation'
 
   soda_scs_manager.wisski_stack.actions:
     class: Drupal\soda_scs_manager\SodaScsWisskiStackActions

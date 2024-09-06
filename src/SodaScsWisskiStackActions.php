@@ -230,8 +230,8 @@ class SodaScsWisskiStackActions implements SodaScsStackActionsInterface {
     }
 
     try {
-      // $triplestoreComponentCreateResult = $this->sodaScsTriplestoreComponentActions->createComponent($component);
-      // $triplestoreComponent = $triplestoreComponentCreateResult['data']['triplestoreComponent'];
+      $triplestoreComponentCreateResult = $this->sodaScsTriplestoreComponentActions->createComponent($component);
+      $triplestoreComponent = $triplestoreComponentCreateResult['data']['triplestoreComponent'];
       $triplestoreComponentCreateResult = ['success' => TRUE];
     }
     catch (\Exception $e) {
@@ -261,8 +261,9 @@ class SodaScsWisskiStackActions implements SodaScsStackActionsInterface {
       $sqlComponent->set('referencedComponents', $component->id());
       $sqlComponent->save();
 
-      // $triplestoreComponent->set('referencedComponents', $component->id());
-      // $triplestoreComponent->save();
+      $triplestoreComponent->set('referencedComponents', $component->id());
+      $triplestoreComponent->save();
+
       return [
         'message' => 'Successfully created WissKI stack.',
         'data' => [

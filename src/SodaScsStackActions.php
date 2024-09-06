@@ -21,6 +21,13 @@ class SodaScsStackActions implements SodaScsStackActionsInterface {
   protected SodaScsStackActionsInterface $sodaScsSqlStackActions;
 
   /**
+   * The SCS triplestore actions service.
+   *
+   * @var \Drupal\soda_scs_manager\SodaScsStackActionsInterface
+   */
+  protected SodaScsStackActionsInterface $sodaScsTriplestoreStackActions;
+
+  /**
    * The SCS wisski actions service.
    *
    * @var \Drupal\soda_scs_manager\SodaScsStackActionsInterface
@@ -30,8 +37,9 @@ class SodaScsStackActions implements SodaScsStackActionsInterface {
   /**
    * Class constructor.
    */
-  public function __construct(SodaScsStackActionsInterface $sodaScsSqlStackActions, SodaScsStackActionsInterface $sodaScsWisskiStackActions) {
+  public function __construct(SodaScsStackActionsInterface $sodaScsSqlStackActions, SodaScsStackActionsInterface $sodaScsTriplestoreStackActions, SodaScsStackActionsInterface $sodaScsWisskiStackActions) {
     $this->sodaScsSqlStackActions = $sodaScsSqlStackActions;
+    $this->sodaScsTriplestoreStackActions = $sodaScsTriplestoreStackActions;
     $this->sodaScsWisskiStackActions = $sodaScsWisskiStackActions;
   }
 
@@ -51,6 +59,12 @@ class SodaScsStackActions implements SodaScsStackActionsInterface {
     switch ($component->bundle()) {
       case 'wisski':
         return $this->sodaScsWisskiStackActions->createStack($component);
+
+      case 'sql':
+        return $this->sodaScsSqlStackActions->createStack($component);
+
+      case 'triplestore':
+        return $this->sodaScsTriplestoreStackActions->createStack($component);
 
       default:
         return [];
