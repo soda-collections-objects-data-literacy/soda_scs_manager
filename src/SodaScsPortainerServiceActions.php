@@ -227,7 +227,7 @@ class SodaScsPortainerServiceActions implements SodaScsServiceRequestInterface {
       ],
       [
         "name" => "DB_NAME",
-        "value" => $requestParams['subdomain'] . '-db',
+        "value" => $requestParams['subdomain'],
       ],
       [
         "name" => "DB_PASSWORD",
@@ -271,7 +271,7 @@ class SodaScsPortainerServiceActions implements SodaScsServiceRequestInterface {
       ],
       [
         "name" => "TS_READ_URL",
-        "value" => 'https://' . $this->settings->get('tsHost') . '/repository/' . $requestParams['subdomain'] . '-ts',
+        "value" => 'https://' . $this->settings->get('tsHost') . '/repository/' . $requestParams['subdomain'],
       ],
       [
         "name" => "TS_REPOSITORY",
@@ -283,7 +283,7 @@ class SodaScsPortainerServiceActions implements SodaScsServiceRequestInterface {
       ],
       [
         "name" => "TS_WRITE_URL",
-        "value" => 'https://' . $this->settings->get('tsHost') . '/repository/' . $requestParams['subdomain'] . '-ts' . '/statements',
+        "value" => 'https://' . $this->settings->get('tsHost') . '/repository/' . $requestParams['subdomain'] . '/statements',
       ],
       [
         "name" => "WISSKI_BASE_IMAGE_VERSION",
