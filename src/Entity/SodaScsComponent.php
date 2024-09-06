@@ -2,16 +2,14 @@
 
 namespace Drupal\soda_scs_manager\Entity;
 
-use Drupal;
 use Drupal\Core\Entity\ContentEntityBase;
 use Drupal\Core\Entity\EntityInterface;
 use Drupal\Core\Entity\EntityTypeInterface;
 use Drupal\Core\Field\BaseFieldDefinition;
+use Drupal\Core\Field\FieldStorageDefinitionInterface;
 use Drupal\Core\StringTranslation\TranslatableMarkup;
-use Drupal\soda_scs_manager\Entity\SodaScsComponentInterface;
 use Drupal\user\EntityOwnerTrait;
 use Drupal\user\UserInterface;
-use Drupal\Core\Field\FieldStorageDefinitionInterface;
 
 /**
  * @ContentEntityType(
@@ -64,8 +62,7 @@ use Drupal\Core\Field\FieldStorageDefinitionInterface;
  *
  * )
  */
-class SodaScsComponent extends ContentEntityBase implements SodaScsComponentInterface
-{
+class SodaScsComponent extends ContentEntityBase implements SodaScsComponentInterface {
 
   use EntityOwnerTrait;
 
@@ -91,7 +88,6 @@ class SodaScsComponent extends ContentEntityBase implements SodaScsComponentInte
    * may have to parse it.
    *
    * @var string
-   *
    */
   protected string $externalId;
 
@@ -135,17 +131,13 @@ class SodaScsComponent extends ContentEntityBase implements SodaScsComponentInte
    */
   protected string $uuid;
 
-
-
-
   /**
    * Returns the description of the SODa SCS Component.
    *
    * @return string
    *   The description of the SODa SCS Component.
    */
-  public function getDescription(EntityInterface $entity)
-  {
+  public function getDescription(EntityInterface $entity) {
     return $this->description;
   }
 
@@ -157,8 +149,7 @@ class SodaScsComponent extends ContentEntityBase implements SodaScsComponentInte
    *
    * @return $this
    */
-  public function setDescription($description)
-  {
+  public function setDescription($description) {
     $this->description = $description;
     return $this;
   }
@@ -169,8 +160,7 @@ class SodaScsComponent extends ContentEntityBase implements SodaScsComponentInte
    * @return string
    *   The image of the SODa SCS Component.
    */
-  public function getImageUrl()
-  {
+  public function getImageUrl() {
     return $this->imageUrl;
   }
 
@@ -182,8 +172,7 @@ class SodaScsComponent extends ContentEntityBase implements SodaScsComponentInte
    *
    * @return $this
    */
-  public function setImageUrl($imageUrl)
-  {
+  public function setImageUrl($imageUrl) {
     $this->imageUrl = $imageUrl;
     return $this;
   }
@@ -194,8 +183,7 @@ class SodaScsComponent extends ContentEntityBase implements SodaScsComponentInte
    * @return string
    *   The label of the SODa SCS Component.
    */
-  public function getLabel()
-  {
+  public function getLabel() {
     return $this->label;
   }
 
@@ -203,12 +191,11 @@ class SodaScsComponent extends ContentEntityBase implements SodaScsComponentInte
    * Sets the label of the SODa SCS Component.
    *
    * @param string $label
+   *   The label of the SODa SCS Component.
    *
    * @return $this
    */
-
-  public function setLabel($label)
-  {
+  public function setLabel($label) {
     $this->label = $label;
     return $this;
   }
@@ -217,73 +204,52 @@ class SodaScsComponent extends ContentEntityBase implements SodaScsComponentInte
    * Get the owner of the SODa SCS Component.
    *
    * @return \Drupal\user\Entity\User
-   * The owner of the SODa SCS Component.
+   *   The owner of the SODa SCS Component.
    */
-  public function getOwner()
-  {
+  public function getOwner() {
     return $this->get('user')->entity;
   }
 
-
   /**
    * Get the owner ID of the SODa SCS Component.
-   * 
+   *
    * @return int
    *   The owner ID of the SODa SCS Component.
    */
-  public function getOwnerId()
-  {
+  public function getOwnerId() {
     return $this->get('user')->target_id;
   }
 
   /**
    * Set the owner of the SODa SCS Component.
-   * 
+   *
    * @param \Drupal\user\Entity\User $account
-   *  The owner of the SODa SCS Component.
-   * 
+   *   The owner of the SODa SCS Component.
+   *
    * @return $this
    */
-  public function setOwner(UserInterface $account)
-  {
+  public function setOwner(UserInterface $account) {
     $this->set('user', $account);
     return $this;
   }
 
-
   /**
    * Set the owner ID of the SODa SCS Component.
-   * 
+   *
    * @param int $uid
-   *  The owner ID of the SODa SCS Component.
-   * 
+   *   The owner ID of the SODa SCS Component.
+   *
    * @return $this
    */
-  public function setOwnerId($uid): self
-  {
+  public function setOwnerId($uid): self {
     $this->set('user', $this->get('user')->target_id);
     return $this;
   }
 
-
-  /**
-   * Parse the API options of the SODa SCS Component.
-   *
-   * @return array
-   *  The parsed API options of the SODa SCS Component.
-   */
-  public function parseOptions()
-  {
-    #$options = file_get_contents($this->optionsUrl);
-    #return Yaml::parseFile($options);
-  }
-
-
   /**
    * {@inheritdoc}
    */
-  public static function baseFieldDefinitions(EntityTypeInterface $entity_type)
-  {
+  public static function baseFieldDefinitions(EntityTypeInterface $entity_type) {
     // Fetch any existing base field definitions from the parent class.
     $fields = parent::baseFieldDefinitions($entity_type);
 
@@ -298,35 +264,20 @@ class SodaScsComponent extends ContentEntityBase implements SodaScsComponentInte
       ->setDisplayOptions('view', [
         'label' => 'above',
         'type' => 'entity_reference_label',
-        'weight' => 0,
+        'weight' => 1,
       ])
       ->setDisplayConfigurable('view', FALSE);
 
-    // @todo Implement the reuse of dangling components  
+    // @todo Implement the reuse of dangling components
     $fields['referencedComponents'] = BaseFieldDefinition::create('entity_reference')
       ->setLabel(new TranslatableMarkup('Connect with dangling component(s)'))
       ->setSetting('target_type', 'soda_scs_component')
-      //->setSetting('handler', 'default:exclude_referenced')
       ->setSetting('handler', 'default')
       ->setRequired(FALSE)
       ->setReadOnly(TRUE)
       ->setTranslatable(FALSE)
       ->setCardinality(FieldStorageDefinitionInterface::CARDINALITY_UNLIMITED)
       ->setDisplayConfigurable('form', FALSE)
-      //->setDisplayOptions('form', [
-      //  'type' => 'options_buttons',
-      //  'weight' => 0,
-        //'settings' => [
-        //  'match_operator' => 'NOT EXISTS',
-        //  'match_fields' => [
-        //    'referencedComponents' => 'id',
-        //  ],
-        //]
-      //])
-      //->setDisplayOptions('view', [
-      //  'label' => 'above',
-      //  'type' => 'entity_reference_label',
-      //])
       ->setDisplayConfigurable('view', FALSE);
 
     $fields['created'] = BaseFieldDefinition::create('created')
@@ -340,33 +291,33 @@ class SodaScsComponent extends ContentEntityBase implements SodaScsComponentInte
       ->setDisplayOptions('view', [
         'label' => 'above',
         'type' => 'timestamp',
-        'weight' => 30,
+        'weight' => 7,
       ]);
 
     $fields['description'] = BaseFieldDefinition::create('text_long')
       ->setLabel(new TranslatableMarkup('Description'))
       ->setDescription(new TranslatableMarkup('The description of the SODa SCS Component.'))
       ->setRequired(FALSE)
-      ->setReadOnly(FALSE)
+      ->setReadOnly(TRUE)
       ->setTranslatable(TRUE)
       ->setDisplayConfigurable('form', FALSE)
       ->setDisplayOptions('form', [
         'type' => 'text_textarea',
-        'weight' => 40,
+        'label' => 'above',
+        'region' => 'hidden',
+        'weight' => 3,
         'settings' => [
           'rows' => 10,
           'cols' => 100,
           'format' => 'full_html',
-        ]
+        ],
       ])
       ->setDisplayConfigurable('view', FALSE)
       ->setDisplayOptions('view', [
         'label' => 'above',
         'type' => 'text_default',
-        'weight' => 50,
+        'weight' => 3,
       ]);
-
-
 
     $fields['externalId'] = BaseFieldDefinition::create('string')
       ->setLabel(new TranslatableMarkup('External ID'))
@@ -375,13 +326,7 @@ class SodaScsComponent extends ContentEntityBase implements SodaScsComponentInte
       ->setReadOnly(TRUE)
       ->setTranslatable(FALSE)
       ->setDisplayConfigurable('form', FALSE)
-      ->setDisplayConfigurable('view', FALSE)
-      ->setDisplayOptions('view', [
-        'label' => 'above',
-        'type' => 'string',
-        'weight' => 20,
-      ]);
-
+      ->setDisplayConfigurable('view', FALSE);
 
     $fields['id'] = BaseFieldDefinition::create('integer')
       ->setLabel(new TranslatableMarkup('ID'))
@@ -390,13 +335,7 @@ class SodaScsComponent extends ContentEntityBase implements SodaScsComponentInte
       ->setReadOnly(TRUE)
       ->setTranslatable(FALSE)
       ->setDisplayConfigurable('form', FALSE)
-      ->setDisplayConfigurable('view', FALSE)
-      ->setDisplayOptions('view', [
-        'label' => 'above',
-        'type' => 'integer',
-        'weight' => -10,
-      ]);
-
+      ->setDisplayConfigurable('view', FALSE);
 
     $fields['imageUrl'] = BaseFieldDefinition::create('string')
       ->setLabel(new TranslatableMarkup('Image'))
@@ -450,17 +389,18 @@ class SodaScsComponent extends ContentEntityBase implements SodaScsComponentInte
       ->setTranslatable(TRUE)
       ->setSettings([
         'default_value' => '',
-        'text_processing' => TRUE, // Enable text processing for HTML
+    // Enable text processing for HTML.
+        'text_processing' => TRUE,
       ])
       ->setDisplayConfigurable('view', FALSE)
       ->setDisplayOptions('form', [
         'type' => 'text_textarea',
-        'weight' => 0,
+        'weight' => 10,
       ])
       ->setDisplayOptions('view', [
         'label' => 'above',
         'type' => 'text_default',
-        'weight' => 60,
+        'weight' => 10,
       ]);
 
     $fields['serviceKey'] = BaseFieldDefinition::create('entity_reference')
@@ -475,7 +415,7 @@ class SodaScsComponent extends ContentEntityBase implements SodaScsComponentInte
       ->setDisplayOptions('view', [
         'label' => 'above',
         'type' => 'entity_reference_label',
-        'weight' => 0,
+        'weight' => 6,
       ])
       ->setDisplayConfigurable('form', FALSE);
 
@@ -502,24 +442,27 @@ class SodaScsComponent extends ContentEntityBase implements SodaScsComponentInte
       ->setDisplayOptions('view', [
         'label' => 'above',
         'type' => 'timestamp',
-        'weight' => 40,
+        'weight' => 8,
       ]);
 
-
+    $userRefHidden = self::isAdmin() ? 'default' : 'hidden';
     $fields['user'] = BaseFieldDefinition::create('entity_reference')
       ->setLabel(new TranslatableMarkup('Owned by'))
       ->setDescription(new TranslatableMarkup('The user ID of the author of the SODa SCS Component.'))
       ->setSetting('target_type', 'user')
+      ->setSetting('handler', 'default:user_reference')
       ->setRequired(TRUE)
       ->setReadOnly(FALSE)
       ->setTranslatable(FALSE)
       ->setCardinality(1)
-      ->setDefaultValue(Drupal::currentUser()->id())
+      ->setDefaultValueCallback('\Drupal\soda_scs_manager\Entity\SodaScsComponent::getDefaultUserId')
       ->setDisplayConfigurable('form', FALSE)
       ->setDisplayOptions('form', [
         'type' => 'options_buttons',
-        'weight' => 0,
-        'settings' => []
+        'weight' => 9,
+        'settings' => [
+          'region' => $userRefHidden,
+        ],
       ])
       ->setDisplayConfigurable('view', FALSE)
       ->setDisplayOptions('view', [
@@ -537,7 +480,28 @@ class SodaScsComponent extends ContentEntityBase implements SodaScsComponentInte
       ->setReadOnly(TRUE)
       ->setTranslatable(FALSE);
 
-
     return $fields;
   }
+
+  /**
+   * Get the default user ID.
+   *
+   * @return int
+   *   The default user ID.
+   */
+  public static function getDefaultUserId() {
+    return \Drupal::currentUser()->isAnonymous() ? NULL : \Drupal::currentUser()->id();
+  }
+
+  /**
+   * Check if the current user is an admin.
+   *
+   * @return bool
+   *   TRUE if the current user is an admin, FALSE otherwise.
+   */
+  public static function isAdmin() {
+    return \Drupal::currentUser()->hasPermission('administer sodasc components');
+
+  }
+
 }
