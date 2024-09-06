@@ -26,4 +26,21 @@ class UserReferenceSelection extends DefaultSelection {
     return $query;
   }
 
+  /**
+   * {@inheritdoc}
+   */
+  public static function createInstance($container, array $configuration, $plugin_id, $plugin_definition) {
+    return new static(
+      $configuration,
+      $plugin_id,
+      $plugin_definition,
+      $container->get('entity_type.manager'),
+      $container->get('module_handler'),
+      $container->get('current_user'),
+      $container->get('core.entity_field.manager'),
+      $container->get('core.entity_type.bundle.info'),
+      $container->get('core.entity_type.repository')
+    );
+  }
+
 }
