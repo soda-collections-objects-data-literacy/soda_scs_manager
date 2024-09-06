@@ -126,7 +126,7 @@ class SodaScsSqlComponentActions implements SodaScsComponentActionsInterface {
       // Create a new SODa SCS database component.
       /** @var \Drupal\soda_scs_manager\Entity\SodaScsComponentBundleInterface $bundle */
       $bundle = $this->entityTypeManager->getStorage('soda_scs_component_bundle')->load('sql');
-      $subdomain = $component->get('subdomain')->value . '-db';
+      $subdomain = $component->get('subdomain')->value;
       $sqlComponent = $this->entityTypeManager->getStorage('soda_scs_component')->create(
         [
           'bundle' => 'sql',
@@ -163,7 +163,7 @@ class SodaScsSqlComponentActions implements SodaScsComponentActionsInterface {
         throw new MissingDataException('Database root password setting missing');
       }
 
-      $dbName = $component->get('subdomain')->value . '-db';
+      $dbName = $component->get('subdomain')->value;
       // Check if the database exists.
       $checkDbExistsResult = $this->sodaScsMysqlServiceActions->existService($dbName);
 
