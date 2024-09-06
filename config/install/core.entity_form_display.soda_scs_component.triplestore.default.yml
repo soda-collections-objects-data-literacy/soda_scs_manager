@@ -3,6 +3,7 @@ status: true
 dependencies:
   config:
     - field.field.soda_scs_component.triplestore.field_read_url
+    - field.field.soda_scs_component.triplestore.field_write_url
     - soda_scs_manager.soda_scs_component_bundle.triplestore
 id: soda_scs_component.triplestore.default
 targetEntityType: soda_scs_component
@@ -17,4 +18,14 @@ content:
       size: 60
       placeholder: ''
     third_party_settings: {  }
-hidden: {  }
+  field_read_url:
+    type: string_textfield
+    weight: 0
+    region: content
+    settings:
+      size: 60
+      placeholder: ''
+    third_party_settings: {  }
+hidden:
+  field_read_url: true
+  field_write_url: true

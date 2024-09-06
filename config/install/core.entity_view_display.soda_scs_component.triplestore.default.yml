@@ -3,7 +3,12 @@ status: true
 dependencies:
   config:
     - field.field.soda_scs_component.triplestore.field_read_url
+    - field.field.soda_scs_component.triplestore.field_write_url
     - soda_scs_manager.soda_scs_component_bundle.triplestore
+  module:
+    - text
+    - user
+    - wisski_adapter_sparql11_pb
 id: soda_scs_component.triplestore.default
 targetEntityType: soda_scs_component
 bundle: triplestore
@@ -17,8 +22,15 @@ content:
     third_party_settings: {  }
     weight: 0
     region: content
-hidden:
-  bundle: true
-  created: true
-  id: true
-  label: true
+  field_write_url:
+    type: string
+    label: above
+    settings:
+      link_to_entity: false
+    third_party_settings: {  }
+    weight: 31
+    region: content
+    third_party_settings: {  }
+    weight: 10
+    region: content
+hidden: {  }

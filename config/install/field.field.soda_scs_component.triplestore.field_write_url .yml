@@ -2,15 +2,15 @@ langcode: en
 status: true
 dependencies:
   config:
-    - field.storage.soda_scs_component.field_read_url
+    - field.storage.soda_scs_component.field_write_url
     - soda_scs_manager.soda_scs_component_bundle.triplestore
-id: soda_scs_component.triplestore.field_read_url
-field_name: field_read_url
+id: soda_scs_component.triplestore.field_write_url
+field_name: field_write_url
 entity_type: soda_scs_component
 bundle: triplestore
-label: 'Read URL'
+label: 'Write URL'
 description: ''
-required: true
+required: false
 translatable: false
 default_value: {  }
 default_value_callback: ''

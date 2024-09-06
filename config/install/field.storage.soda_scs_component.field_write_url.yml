@@ -3,8 +3,8 @@ status: true
 dependencies:
   module:
     - soda_scs_manager
-id: soda_scs_component.field_read_url
-field_name: field_read_url
+id: soda_scs_component.field_write_url
+field_name: field_write_url
 entity_type: soda_scs_component
 type: string
 settings:
