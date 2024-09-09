@@ -46,6 +46,14 @@ class SodaScsComponentCreateForm extends ContentEntityForm {
   /**
    * Constructs a new SodaScsComponentCreateForm.
    *
+   * @param Drupal\Core\Entity\EntityRepositoryInterface $entity_repository
+   *   The entity repository.
+   * @param Drupal\Core\Entity\EntityTypeBundleInfoInterface $entity_type_bundle_info
+   *   The entity type bundle info.
+   * @param \Drupal\Core\Config\ConfigFactoryInterface $configFactory
+   *   The config factory.
+   * @param \Drupal\Component\Datetime\TimeInterface $time
+   *   The time service.
    * @param \Drupal\soda_scs_manager\SodaScsStackActions $sodaScsStackActions
    *   The Soda SCS API Actions service.
    */
@@ -59,7 +67,7 @@ class SodaScsComponentCreateForm extends ContentEntityForm {
   }
 
   /**
-   *
+   * {@inheritdoc}
    */
   public static function create(ContainerInterface $container) {
     return new static(
@@ -74,7 +82,7 @@ class SodaScsComponentCreateForm extends ContentEntityForm {
   /**
    * {@inheritdoc}
    */
-  public function form_id(): string {
+  public function getFormId(): string {
     return 'soda_scs_component_create_form';
   }
 
