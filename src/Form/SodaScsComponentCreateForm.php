@@ -8,7 +8,6 @@ use Drupal\Core\Config\ConfigFactoryInterface;
 use Drupal\Core\Entity\ContentEntityForm;
 use Drupal\Core\Entity\EntityRepositoryInterface;
 use Drupal\Core\Entity\EntityTypeBundleInfoInterface;
-use Drupal\Core\Entity\EntityTypeManagerInterface;
 use Drupal\Core\Form\FormStateInterface;
 use Drupal\Core\Session\AccountProxyInterface;
 use Drupal\soda_scs_manager\SodaScsStackActions;
@@ -159,7 +158,7 @@ class SodaScsComponentCreateForm extends ContentEntityForm {
     $createComponentResult = $this->sodaScsStackActions->createStack($component);
 
     if (!$createComponentResult['success']) {
-      $this->messenger()->addMessage($this->t("Cannot create component \"@label\". See logs for more details.", [
+      $this->messenger()->addMessage($this->t('Cannot create component "@label". See logs for more details.', [
         '@label' => $this->entity->label(),
         '@username' => $this->currentUser->getAccount()->getDisplayName(),
       ]), 'error');
