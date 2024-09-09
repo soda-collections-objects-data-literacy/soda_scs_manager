@@ -5,6 +5,7 @@ namespace Drupal\soda_scs_manager;
 use Drupal\Core\DependencyInjection\DependencySerializationTrait;
 use Drupal\Core\Logger\LoggerChannelFactoryInterface;
 use Drupal\Core\Messenger\MessengerInterface;
+use Drupal\Core\StringTranslation\StringTranslationTrait;
 use Drupal\Core\StringTranslation\TranslationInterface;
 use Drupal\soda_scs_manager\Entity\SodaScsComponentInterface;
 
@@ -14,6 +15,7 @@ use Drupal\soda_scs_manager\Entity\SodaScsComponentInterface;
 class SodaScsTriplestoreStackActions implements SodaScsStackActionsInterface {
 
   use DependencySerializationTrait;
+  use StringTranslationTrait;
 
   /**
    * The logger factory.
@@ -35,13 +37,6 @@ class SodaScsTriplestoreStackActions implements SodaScsStackActionsInterface {
    * @var \Drupal\soda_scs_manager\SodaScsComponentActionsInterface
    */
   protected SodaScsComponentActionsInterface $sodaScsTriplestoreComponentActions;
-
-  /**
-   * The string translation service.
-   *
-   * @var \Drupal\Core\StringTranslation\TranslationInterface
-   */
-  protected TranslationInterface $stringTranslation;
 
   /**
    * Class constructor.
@@ -77,7 +72,7 @@ class SodaScsTriplestoreStackActions implements SodaScsStackActionsInterface {
 
       if (!$triplestoreComponentCreateResult['success']) {
         return [
-          'message' => 'Could not create triplestore component.',
+          'message' => $this->t('Could not create triplestore stack: %message', ['%message' => $triplestoreComponentCreateResult['message']]),
           'data' => [
             'triplestoreComponentCreateResult' => $triplestoreComponentCreateResult,
           ],
@@ -86,12 +81,12 @@ class SodaScsTriplestoreStackActions implements SodaScsStackActionsInterface {
         ];
       }
       return [
-        'message' => 'Could not create triplestore component.',
+        'message' => $this->t('Created triplestore stack: %message', ['%message' => $triplestoreComponentCreateResult['message']]),
         'data' => [
           'triplestoreComponentCreateResult' => $triplestoreComponentCreateResult,
         ],
-        'success' => FALSE,
-        'error' => $triplestoreComponentCreateResult['error'],
+        'success' => TRUE,
+        'error' => NULL,
       ];
 
     }
@@ -102,7 +97,7 @@ class SodaScsTriplestoreStackActions implements SodaScsStackActionsInterface {
       ]);
       $this->messenger->addError($this->stringTranslation->translate("Could not create triplestore component. See logs for more details."));
       return [
-        'message' => 'Could not create triplestore component.',
+        'message' => $this->t('Could not create stack: %message', ['%message' => $e->getMessage()]),
         'data' => [
           'triplestoreComponentCreateResult' => NULL,
         ],
@@ -165,7 +160,45 @@ class SodaScsTriplestoreStackActions implements SodaScsStackActionsInterface {
    *   The result.
    */
   public function deleteStack(SodaScsComponentInterface $component): array {
-    return [];
+    try {
+      // Create the SQL component.
+      $triplestoreComponentDeleteResult = $this->sodaScsTriplestoreComponentActions->deleteComponent($component);
+
+      if (!$triplestoreComponentDeleteResult['success']) {
+        return [
+          'message' => 'Could not delete triplestore component.',
+          'data' => [
+            'triplestoreComponentDeleteResult' => $triplestoreComponentDeleteResult,
+          ],
+          'success' => FALSE,
+          'error' => $triplestoreComponentDeleteResult['error'],
+        ];
+      }
+      return [
+        'message' => 'Deleted triplestore component.',
+        'data' => [
+          'triplestoreComponentDeleteResult' => $triplestoreComponentDeleteResult,
+        ],
+        'success' => TRUE,
+        'error' => NULL,
+      ];
+
+    }
+    catch (\Exception $e) {
+      $this->loggerFactory->get('soda_scs_manager')->error("Triplestore component deletion exists with error: @error trace: @trace", [
+        '@error' => $e->getMessage(),
+        '@trace' => $e->getTraceAsString(),
+      ]);
+      $this->messenger->addError($this->stringTranslation->translate("Could not delete triplestore component. See logs for more details."));
+      return [
+        'message' => 'Could not delete triplestore component.',
+        'data' => [
+          'triplestoreComponentDeleteResult' => NULL,
+        ],
+        'success' => FALSE,
+        'error' => $e,
+      ];
+    }
   }
 
 }

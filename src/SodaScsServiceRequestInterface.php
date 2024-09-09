@@ -29,7 +29,7 @@ interface SodaScsServiceRequestInterface {
    * @return array
    *   The read request.
    */
-  public function buildReadRequest(array $requestParams): array;
+  public function buildGetAllRequest(array $requestParams): array;
 
   /**
    * Build request to get all stacks.

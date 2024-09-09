@@ -329,7 +329,7 @@ class SodaScsPortainerServiceActions implements SodaScsServiceRequestInterface {
    * @return array
    *   The request array for the makeRequest function.
    */
-  public function buildReadRequest(array $requestParams): array {
+  public function buildGetAllRequest(array $requestParams): array {
     return [];
   }
 

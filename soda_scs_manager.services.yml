@@ -94,6 +94,7 @@ services:
       - '@soda_scs_manager.sql_stack.actions'
       - '@soda_scs_manager.triplestore_stack.actions'
       - '@soda_scs_manager.wisski_stack.actions'
+      - '@string_translation'
 
   soda_scs_manager.sql_stack.actions:
     class: Drupal\soda_scs_manager\SodaScsSqlStackActions

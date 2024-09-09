@@ -73,24 +73,40 @@ class SodaScsOpenGdpServiceActions implements SodaScsServiceRequestInterface {
    * @throws \Drupal\Core\TypedData\Exception\MissingDataException
    */
   public function buildCreateRequest(array $requestParams): array {
-    $requestParams = [
-      'queryParams' => [],
-      'routeParams' => [],
-      'body' => [
-        'subdomain' => 'mutant',
-        'title' => 'my mutant',
-        'publicRead' => FALSE,
-        'publicWrite' => FALSE,
-      ],
-    ];
-    $url = $this->settings->get('triplestore')['routes']['repository']['createUrl'];
+    switch ($requestParams['type']) {
+      case 'repository':
+        $url = $this->settings->get('triplestore')['routes']['repository']['createUrl'];
+        $body = json_encode([
+          'id' => $requestParams['body']['subdomain'],
+          'title' => $requestParams['body']['title'],
+          "publicRead" => $requestParams['body']['publicRead'],
+          "publicWrite" => $requestParams['body']['publicWrite'],
+        ]);
+        break;
+
+      case 'user':
+        $url = $this->settings->get('triplestore')['routes']['user']['createUrl'];
+        $body = json_encode([
+          'password' => $requestParams['body']['password'],
+          "grantedAuthorities" => [
+            "ROLE_USER",
+            "READ_REPO_" . $requestParams['body']['subdomain'],
+            "WRITE_REPO_" . $requestParams['body']['subdomain'],
+          ],
+        ]);
+        break;
+
+      default:
+        $url = '';
+        $body = json_encode([]);
+
+    }
+
     if (empty($url)) {
       throw new MissingDataException('Create URL setting is not set.');
     }
 
-    $queryParams = $requestParams['queryParams'];
-
-    $route = $url . implode('/', $requestParams['routeParams']) . '?' . http_build_query($queryParams);
+    $route = $url . implode('/', $requestParams['routeParams']) . '?' . http_build_query($requestParams['queryParams']);
 
     return [
       'success' => TRUE,
@@ -101,12 +117,7 @@ class SodaScsOpenGdpServiceActions implements SodaScsServiceRequestInterface {
         'Accept' => 'application/json',
         'Authorization' => 'Basic ' . base64_encode($this->settings->get('triplestore')['openGdpSettings']['adminUsername'] . ':' . $this->settings->get('triplestore')['openGdpSettings']['adminPassword']),
       ],
-      'body' => json_encode([
-        'id' => $requestParams['body']['subdomain'],
-        'title' => $requestParams['body']['title'],
-        "publicRead" => $requestParams['body']['publicRead'],
-        "publicWrite" => $requestParams['body']['publicWrite'],
-      ]),
+      'body' => $body,
     ];
   }
 
@@ -119,7 +130,7 @@ class SodaScsOpenGdpServiceActions implements SodaScsServiceRequestInterface {
    * @return array
    *   The request array for the makeRequest function.
    */
-  public function buildReadRequest(array $requestParams): array {
+  public function buildGetAllRequest(array $requestParams): array {
     return [];
   }
 
@@ -135,7 +146,36 @@ class SodaScsOpenGdpServiceActions implements SodaScsServiceRequestInterface {
    * @throws \Drupal\Core\TypedData\Exception\MissingDataException
    */
   public function buildGetRequest($requestParams): array {
-    return [];
+    switch ($requestParams['type']) {
+      case 'repository':
+        $url = $this->settings->get('triplestore')['routes']['repository']['readOneUrl'];
+        break;
+
+      case 'user':
+        $url = $this->settings->get('triplestore')['routes']['user']['readOneUrl'];
+        break;
+
+      default:
+        $url = '';
+
+    }
+
+    if (empty($url)) {
+      throw new MissingDataException('Get URL setting is not set.');
+    }
+
+    $route = $url . implode('/', $requestParams['routeParams']) . '?' . http_build_query($requestParams['queryParams']);
+
+    return [
+      'success' => TRUE,
+      'method' => 'GET',
+      'route' => $route,
+      'headers' => [
+        'Content-Type' => 'application/json',
+        'Accept' => 'application/json',
+        'Authorization' => 'Basic ' . base64_encode($this->settings->get('triplestore')['openGdpSettings']['adminUsername'] . ':' . $this->settings->get('triplestore')['openGdpSettings']['adminPassword']),
+      ],
+    ];
   }
 
   /**
@@ -148,7 +188,40 @@ class SodaScsOpenGdpServiceActions implements SodaScsServiceRequestInterface {
    *   The request array for the makeRequest function.
    */
   public function buildUpdateRequest(array $requestParams): array {
-    return [];
+    switch ($requestParams['type']) {
+      case 'repository':
+        $url = $this->settings->get('triplestore')['routes']['repository']['updateUrl'];
+        $body = json_encode($requestParams['body']);
+        break;
+
+      case 'user':
+        $url = $this->settings->get('triplestore')['routes']['user']['updateUrl'];
+        $body = json_encode($requestParams['body']);
+        break;
+
+      default:
+        $url = '';
+        $body = json_encode([]);
+
+    }
+
+    if (empty($url)) {
+      throw new MissingDataException('Get URL setting is not set.');
+    }
+
+    $route = $url . implode('/', $requestParams['routeParams']) . '?' . http_build_query($requestParams['queryParams']);
+
+    return [
+      'success' => TRUE,
+      'method' => 'PUT',
+      'route' => $route,
+      'headers' => [
+        'Content-Type' => 'application/json',
+        'Accept' => 'application/json',
+        'Authorization' => 'Basic ' . base64_encode($this->settings->get('triplestore')['openGdpSettings']['adminUsername'] . ':' . $this->settings->get('triplestore')['openGdpSettings']['adminPassword']),
+      ],
+      'body' => $body,
+    ];
   }
 
   /**
@@ -163,7 +236,37 @@ class SodaScsOpenGdpServiceActions implements SodaScsServiceRequestInterface {
    * @throws \Drupal\Core\TypedData\Exception\MissingDataException
    */
   public function buildDeleteRequest(array $requestParams): array {
-    return [];
+    // @todo May use $requestParams['type'] if there is no other logic.
+    switch ($requestParams['type']) {
+      case 'repository':
+        $url = $this->settings->get('triplestore')['routes']['repository']['deleteUrl'];
+        break;
+
+      case 'user':
+        $url = $this->settings->get('triplestore')['routes']['user']['deleteUrl'];
+        break;
+
+      default:
+        $url = '';
+
+    }
+
+    if (empty($url)) {
+      throw new MissingDataException('Delete URL setting is not set.');
+    }
+
+    $route = $url . implode('/', $requestParams['routeParams']) . '?' . http_build_query($requestParams['queryParams']);
+
+    return [
+      'success' => TRUE,
+      'method' => 'DELETE',
+      'route' => $route,
+      'headers' => [
+        'Content-Type' => 'application/json',
+        'Accept' => 'application/json',
+        'Authorization' => 'Basic ' . base64_encode($this->settings->get('triplestore')['openGdpSettings']['adminUsername'] . ':' . $this->settings->get('triplestore')['openGdpSettings']['adminPassword']),
+      ],
+    ];
   }
 
   /**
@@ -189,7 +292,7 @@ class SodaScsOpenGdpServiceActions implements SodaScsServiceRequestInterface {
       $response = json_decode($response->getBody()->getContents(), TRUE);
 
       return [
-        'message' => 'Request succeeded',
+        'message' => 'Request succeeded.',
         'data' => [
           'openGdbResponse' => $response,
         ],
@@ -198,6 +301,7 @@ class SodaScsOpenGdpServiceActions implements SodaScsServiceRequestInterface {
       ];
     }
     catch (ClientException $e) {
+      // @todo Implement tracing in every logger.
       $this->loggerFactory->get('soda_scs_manager')->error("OpenGDB request failed with code @code error: @error trace @trace", [
         '@code' => $e->getCode(),
         '@error' => $e->getMessage(),

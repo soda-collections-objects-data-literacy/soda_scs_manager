@@ -141,6 +141,13 @@ class SodaScsSettingsForm extends ConfigFormBase {
       '#default_value' => $this->t('Check health'),
     ];
 
+    // Repository routes.
+    $form['triplestore']['routes']['repository'] = [
+      '#type' => 'fieldset',
+      '#attributes' => ['id' => 'soda-scs--routes-subform--repository'],
+      '#title' => 'Repository routes',
+    ];
+
     $form['triplestore']['routes']['repository']['createUrl'] = [
       '#type' => 'textfield',
       '#title' => $this->t('Create route path'),
@@ -169,6 +176,43 @@ class SodaScsSettingsForm extends ConfigFormBase {
       '#type' => 'textfield',
       '#title' => $this->t('Delete route path'),
       '#default_value' => $this->config('soda_scs_manager.settings')->get('triplestore')['routes']['repository']['deleteUrl'] ?? '',
+    ];
+
+    // User routes.
+    $form['triplestore']['routes']['user'] = [
+      '#type' => 'fieldset',
+      '#attributes' => ['id' => 'soda-scs--routes-subform--user'],
+      '#title' => 'User routes',
+    ];
+
+    $form['triplestore']['routes']['user']['createUrl'] = [
+      '#type' => 'textfield',
+      '#title' => $this->t('Create route path'),
+      '#default_value' => $this->config('soda_scs_manager.settings')->get('triplestore')['routes']['user']['createUrl'] ?? '',
+    ];
+
+    $form['triplestore']['routes']['user']['readOneUrl'] = [
+      '#type' => 'textfield',
+      '#title' => $this->t('Read one route path'),
+      '#default_value' => $this->config('soda_scs_manager.settings')->get('triplestore')['routes']['user']['readOneUrl'] ?? '',
+    ];
+
+    $form['triplestore']['routes']['user']['readAllUrl'] = [
+      '#type' => 'textfield',
+      '#title' => $this->t('Read all route path'),
+      '#default_value' => $this->config('soda_scs_manager.settings')->get('triplestore')['routes']['user']['readAllUrl'] ?? '',
+    ];
+
+    $form['triplestore']['routes']['user']['updateUrl'] = [
+      '#type' => 'textfield',
+      '#title' => $this->t('Update route path'),
+      '#default_value' => $this->config('soda_scs_manager.settings')->get('triplestore')['routes']['user']['updateUrl'] ?? '',
+    ];
+
+    $form['triplestore']['routes']['user']['deleteUrl'] = [
+      '#type' => 'textfield',
+      '#title' => $this->t('Delete route path'),
+      '#default_value' => $this->config('soda_scs_manager.settings')->get('triplestore')['routes']['user']['deleteUrl'] ?? '',
     ];
 
     // WissKI bundle settings tab.

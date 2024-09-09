@@ -3,6 +3,8 @@
 namespace Drupal\soda_scs_manager;
 
 use Drupal\Core\DependencyInjection\DependencySerializationTrait;
+use Drupal\Core\StringTranslation\StringTranslationTrait;
+use Drupal\Core\StringTranslation\TranslationInterface;
 use Drupal\soda_scs_manager\Entity\SodaScsComponentInterface;
 
 /**
@@ -11,6 +13,7 @@ use Drupal\soda_scs_manager\Entity\SodaScsComponentInterface;
 class SodaScsStackActions implements SodaScsStackActionsInterface {
 
   use DependencySerializationTrait;
+  use StringTranslationTrait;
 
 
   /**
@@ -37,10 +40,11 @@ class SodaScsStackActions implements SodaScsStackActionsInterface {
   /**
    * Class constructor.
    */
-  public function __construct(SodaScsStackActionsInterface $sodaScsSqlStackActions, SodaScsStackActionsInterface $sodaScsTriplestoreStackActions, SodaScsStackActionsInterface $sodaScsWisskiStackActions) {
+  public function __construct(SodaScsStackActionsInterface $sodaScsSqlStackActions, SodaScsStackActionsInterface $sodaScsTriplestoreStackActions, SodaScsStackActionsInterface $sodaScsWisskiStackActions, TranslationInterface $stringTranslation) {
     $this->sodaScsSqlStackActions = $sodaScsSqlStackActions;
     $this->sodaScsTriplestoreStackActions = $sodaScsTriplestoreStackActions;
     $this->sodaScsWisskiStackActions = $sodaScsWisskiStackActions;
+    $this->stringTranslation = $stringTranslation;
   }
 
   /**
@@ -139,6 +143,7 @@ class SodaScsStackActions implements SodaScsStackActionsInterface {
    *   The result of the request.
    */
   public function deleteStack(SodaScsComponentInterface $component): array {
+    // @todo slim down if there is no more logic
     switch ($component->bundle()) {
       case 'wisski':
         return $this->sodaScsWisskiStackActions->deleteStack($component);
@@ -146,12 +151,15 @@ class SodaScsStackActions implements SodaScsStackActionsInterface {
       case 'sql':
         return $this->sodaScsSqlStackActions->deleteStack($component);
 
+      case 'triplestore':
+        return $this->sodaScsTriplestoreStackActions->deleteStack($component);
+
       default:
         return [
-          'message' => 'Component not deleted',
+          'message' => $this->t('Could not delete stack of type %bundle.'), ['%bundle' => $component->get('bundle')->value],
           'data' => [],
           'success' => FALSE,
-          'error' => NULL,
+          'error' => 'Component type not supported for deletion.',
         ];
     }
   }
