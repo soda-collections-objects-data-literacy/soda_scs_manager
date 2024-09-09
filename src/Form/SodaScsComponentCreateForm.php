@@ -8,7 +8,9 @@ use Drupal\Core\Config\ConfigFactoryInterface;
 use Drupal\Core\Entity\ContentEntityForm;
 use Drupal\Core\Entity\EntityRepositoryInterface;
 use Drupal\Core\Entity\EntityTypeBundleInfoInterface;
+use Drupal\Core\Entity\EntityTypeManagerInterface;
 use Drupal\Core\Form\FormStateInterface;
+use Drupal\Core\Session\AccountProxyInterface;
 use Drupal\soda_scs_manager\SodaScsStackActions;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 
@@ -28,13 +30,13 @@ use Symfony\Component\DependencyInjection\ContainerInterface;
  */
 class SodaScsComponentCreateForm extends ContentEntityForm {
 
-  /**
-   * The Soda SCS API Actions service.
-   *
-   * @var \Drupal\soda_scs_manager\SodaScsStackActions
-   */
-  protected SodaScsStackActions $sodaScsStackActions;
 
+  /**
+   * The current user.
+   *
+   * @var \Drupal\Core\Session\AccountProxyInterface
+   */
+  protected AccountProxyInterface $currentUser;
 
   /**
    * The settings config.
@@ -44,8 +46,17 @@ class SodaScsComponentCreateForm extends ContentEntityForm {
   protected Config $settings;
 
   /**
+   * The Soda SCS API Actions service.
+   *
+   * @var \Drupal\soda_scs_manager\SodaScsStackActions
+   */
+  protected SodaScsStackActions $sodaScsStackActions;
+
+  /**
    * Constructs a new SodaScsComponentCreateForm.
    *
+   * @param \Drupal\Core\Session\AccountProxyInterface $currentUser
+   *   The current user.
    * @param Drupal\Core\Entity\EntityRepositoryInterface $entity_repository
    *   The entity repository.
    * @param Drupal\Core\Entity\EntityTypeBundleInfoInterface $entity_type_bundle_info
@@ -57,12 +68,17 @@ class SodaScsComponentCreateForm extends ContentEntityForm {
    * @param \Drupal\soda_scs_manager\SodaScsStackActions $sodaScsStackActions
    *   The Soda SCS API Actions service.
    */
-  public function __construct(EntityRepositoryInterface $entity_repository, EntityTypeBundleInfoInterface $entity_type_bundle_info, ConfigFactoryInterface $configFactory, TimeInterface $time, SodaScsStackActions $sodaScsStackActions) {
+  public function __construct(
+    AccountProxyInterface $currentUser,
+    EntityRepositoryInterface $entity_repository,
+    EntityTypeBundleInfoInterface $entity_type_bundle_info,
+    ConfigFactoryInterface $configFactory,
+    TimeInterface $time,
+    SodaScsStackActions $sodaScsStackActions,
+  ) {
     parent::__construct($entity_repository, $entity_type_bundle_info, $time);
-    $this->entityRepository = $entity_repository;
-    $this->entityTypeBundleInfo = $entity_type_bundle_info;
+    $this->currentUser = $currentUser;
     $this->settings = $configFactory->getEditable('soda_scs_manager.settings');
-    $this->time = $time;
     $this->sodaScsStackActions = $sodaScsStackActions;
   }
 
@@ -71,11 +87,13 @@ class SodaScsComponentCreateForm extends ContentEntityForm {
    */
   public static function create(ContainerInterface $container) {
     return new static(
+      $container->get('current_user'),
       $container->get('entity.repository'),
       $container->get('entity_type.bundle.info'),
       $container->get('config.factory'),
       $container->get('datetime.time'),
-      $container->get('soda_scs_manager.stack.actions')
+      $container->get('soda_scs_manager.stack.actions'),
+
     );
   }
 
@@ -91,7 +109,8 @@ class SodaScsComponentCreateForm extends ContentEntityForm {
    */
   public function buildForm(array $form, FormStateInterface $form_state) {
     // Get the bundle of the entity.
-    $bundle = \Drupal::service('entity_type.manager')->getStorage('soda_scs_component_bundle')->load($this->entity->bundle());
+    /** @var \Drupal\soda_scs_manager\Entity\SodaScsComponentBundle $bundle */
+    $bundle = $this->entityTypeManager->getStorage('soda_scs_component_bundle')->load($this->entity->bundle());
 
     // Build the form.
     $form = parent::buildForm($form, $form_state);
@@ -127,7 +146,7 @@ class SodaScsComponentCreateForm extends ContentEntityForm {
     $component->set('bundle', $this->entity->bundle());
     $component->set('created', $this->time->getRequestTime());
     $component->set('updated', $this->time->getRequestTime());
-    $component->set('user', \Drupal::currentUser()->id());
+    $component->set('user', $this->currentUser->getAccount()->id());
     $subdomain = reset($form_state->getValue('subdomain'))['value'];
     $component->set('label', $subdomain . '.' . $this->settings->get('scsHost'));
     $component->set('subdomain', $subdomain);
@@ -142,7 +161,7 @@ class SodaScsComponentCreateForm extends ContentEntityForm {
     if (!$createComponentResult['success']) {
       $this->messenger()->addMessage($this->t("Cannot create component \"@label\". See logs for more details.", [
         '@label' => $this->entity->label(),
-        '@username' => \Drupal::currentUser()->getDisplayName(),
+        '@username' => $this->currentUser->getAccount()->getDisplayName(),
       ]), 'error');
       return;
     }
