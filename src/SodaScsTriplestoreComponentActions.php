@@ -238,7 +238,7 @@ class SodaScsTriplestoreComponentActions implements SodaScsComponentActionsInter
                 "EXECUTE_COUNT" => TRUE,
                 "IGNORE_SHARED_QUERIES" => FALSE,
               ],
-              //"dateUpdated" => \Drupal::time()->getRequestTime(),
+              // "dateUpdated" => \Drupal::time()->getRequestTime(),
             ],
           ];
           $openGdbUpdateUserRequest = $this->sodaScsOpenGdbServiceActions->buildUpdateRequest($updateUserRequestParams);
@@ -338,56 +338,182 @@ class SodaScsTriplestoreComponentActions implements SodaScsComponentActionsInter
    */
   public function deleteComponent(SodaScsComponentInterface $component): array {
 
-    $requestParams = [
-      'type' => 'repository',
-      'queryParams' => [],
-      'routeParams' => [$component->get('subdomain')->value],
-      'body' => [],
-    ];
+    try {
+      $username = $component->getOwner()->getAccountName();
+      $subdomain = $component->get('subdomain')->value;
+      $requestParams = [
+        'type' => 'repository',
+        'queryParams' => [],
+        'routeParams' => [$subdomain],
+        'body' => [],
+      ];
 
-    $openGdbDeleteRequest = $this->sodaScsOpenGdbServiceActions->buildDeleteRequest($requestParams);
-    $openGdbResponse = $this->sodaScsOpenGdbServiceActions->makeRequest($openGdbDeleteRequest);
+      $openGdbDeleteRepositoryRequest = $this->sodaScsOpenGdbServiceActions->buildDeleteRequest($requestParams);
+      $openGdbDeleteRepositoryResponse = $this->sodaScsOpenGdbServiceActions->makeRequest($openGdbDeleteRepositoryRequest);
 
-    if (!$openGdbResponse['success']) {
-
-      /** @var \GuzzleHttp\Exception\ClientException $clientException */
-      $clientException = $openGdbResponse['data']['openGdbResponse'];
-      if ($clientException->getResponse()->getStatusCode() === 404) {
-
-        $component->delete();
-        return [
-          'message' => 'Could not find triplestore repository in OpenGDB. Deleted component.',
-          'data' => [
-            'openGdbResponse' => $openGdbResponse,
-          ],
-          'success' => TRUE,
-          'error' => $openGdbResponse['error'],
-        ];
+      if (!$openGdbDeleteRepositoryResponse['success']) {
+        /** @var \GuzzleHttp\Exception\ClientException $clientException */
+        $clientException = $openGdbDeleteRepositoryResponse['data']['openGdbResponse'];
+        if (!$clientException->getResponse()->getStatusCode() === 404) {
+          return [
+            'message' => 'Could not delete triplestore component.',
+            'data' => [
+              'openGdbResponse' => $openGdbDeleteRepositoryResponse,
+              'openGdbUpdateUserResponse' => NULL,
+              'openGdbGetUserResponse' => NULL,
+              'openGdbDeleteUserResponse' => NULL,
+            ],
+            'success' => FALSE,
+            'error' => $openGdbDeleteRepositoryResponse['error'],
+          ];
+        }
       }
-      else {
+    }
+    catch (\Exception $e) {
+      return [
+        'message' => $this->t('Could not delete triplestore component %component', ['%component' => $subdomain]),
+        'data' => [
+          'openGdbDeleteRepositoryResponse' => $openGdbDeleteRepositoryResponse,
+          'openGdbUpdateUserResponse' => NULL,
+          'openGdbGetUserResponse' => NULL,
+          'openGdbDeleteUserResponse' => NULL,
+        ],
+        'success' => FALSE,
+        'error' => $e->getMessage(),
+      ];
+    }
+    try {
+      $requestParams = [
+        'type' => 'user',
+        'queryParams' => [],
+        'routeParams' => [$username],
+        'body' => [],
+      ];
+
+      $openGdbGetUserRequest = $this->sodaScsOpenGdbServiceActions->buildGetRequest($requestParams);
+      $openGdbGetUserResponse = $this->sodaScsOpenGdbServiceActions->makeRequest($openGdbGetUserRequest);
+      if (!$openGdbGetUserResponse['success']) {
+        /** @var \GuzzleHttp\Exception\ClientException $clientException */
+        $clientException = $openGdbGetUserResponse['data']['openGdbResponse'];
+        if (!$clientException->getResponse()->getStatusCode() === 404) {
+
+          return [
+            'message' => 'Could not get User information for triplestore component.',
+            'data' => [
+              'openGdbResponse' => $openGdbGetUserResponse,
+              'openGdbUpdateUserResponse' => NULL,
+              'openGdbGetUserResponse' => $clientException,
+              'openGdbDeleteUserResponse' => NULL,
+            ],
+            'success' => FALSE,
+            'error' => $openGdbGetUserResponse['error'],
+          ];
+        }
+      }
+    }
+    catch (\Exception $e) {
+      return [
+        'message' => $this->t('Could not delete triplestore component %component', ['%component' => $subdomain]),
+        'data' => [
+          'openGdbDeleteRepositoryResponse' => $openGdbDeleteRepositoryResponse,
+          'openGdbUpdateUserResponse' => NULL,
+          'openGdbGetUserResponse' => NULL,
+          'openGdbDeleteUserResponse' => NULL,
+        ],
+        'success' => FALSE,
+        'error' => $e->getMessage(),
+      ];
+    }
+
+    $authorities = $openGdbGetUserResponse['data']['openGdbResponse']['grantedAuthorities'];
+    if ($authorities > 3) {
+
+      try {
+        $authorities = array_filter($authorities, function ($authority) use ($subdomain) {
+          return !in_array($authority, [
+            "READ_REPO_$subdomain",
+            "WRITE_REPO_$subdomain",
+          ]);
+        });
+
+        $updateUserRequestParams = [
+          'type' => 'user',
+          'queryParams' => [],
+          'routeParams' => [$username],
+          'body' => [
+
+            'grantedAuthorities' => $authorities,
+            "appSettings" => [
+              "DEFAULT_INFERENCE" => TRUE,
+              "DEFAULT_SAMEAS" => TRUE,
+              "DEFAULT_VIS_GRAPH_SCHEMA" => TRUE,
+              "EXECUTE_COUNT" => TRUE,
+              "IGNORE_SHARED_QUERIES" => FALSE,
+            ],
+              // "dateUpdated" => \Drupal::time()->getRequestTime(),
+          ],
+        ];
+
+        $openGdbUpdateUserRequest = $this->sodaScsOpenGdbServiceActions->buildUpdateRequest($updateUserRequestParams);
+        $openGdbUpdateUserResponse = $this->sodaScsOpenGdbServiceActions->makeRequest($openGdbUpdateUserRequest);
+        $openGdbDeleteUserResponse = NULL;
+
+      }
+      catch (\Exception $e) {
+
         return [
-          'message' => 'Could not delete triplestore component.',
+          'message' => $this->t('Could not delete triplestore component %component', ['%component' => $subdomain]),
           'data' => [
-            'openGdbResponse' => $openGdbResponse,
+            'openGdbDeleteRepositoryResponse' => $openGdbDeleteRepositoryResponse,
+            'openGdbGetUserResponse' => $openGdbGetUserResponse,
+            'openGdbUpdateUserResponse' => NULL,
+            'openGdbDeleteUserResponse' => NULL,
           ],
           'success' => FALSE,
-          'error' => $openGdbResponse['error'],
+          'error' => $e->getMessage(),
         ];
       }
     }
+    elseif ($authorities === 3) {
 
+      try {
+        $deleteUserRequestParams = [
+          'type' => 'user',
+          'queryParams' => [],
+          'routeParams' => [$username],
+          'body' => [],
+        ];
+
+        $openGdbDeleteUserRequest = $this->sodaScsOpenGdbServiceActions->buildDeleteRequest($deleteUserRequestParams);
+        $openGdbDeleteUserResponse = $this->sodaScsOpenGdbServiceActions->makeRequest($openGdbDeleteUserRequest);
+        $openGdbUpdateUserResponse = NULL;
+      }
+      catch (\Exception $e) {
+        return [
+          'message' => $this->t('Could not delete OpenGDB user %username', ['%username' => $username]),
+          'data' => [
+            'openGdbDeleteRepositoryResponse' => $openGdbDeleteRepositoryResponse,
+            'openGdbGetUserResponse' => $openGdbGetUserResponse,
+            'openGdbUpdateUserResponse' => NULL,
+            'openGdbDeleteUserResponse' => NULL,
+          ],
+          'success' => FALSE,
+          'error' => $e->getMessage(),
+        ];
+      }
+    }
+    $component->delete();
     return [
-      'message' => $this->t('%response Deleted repository %repository from OpenGDB', [
-        '%response' => $openGdbResponse,
-        '%repository' => $component->get('subdomain')->value,
-      ]),
+      'message' => $this->t('Deleted triplestore component %component', ['%component' => $subdomain]),
       'data' => [
-        'openGdbResponse' => $openGdbResponse,
+        'openGdbDeleteRepositoryResponse' => $openGdbDeleteRepositoryResponse,
+        'openGdbGetUserResponse' => $openGdbGetUserResponse,
+        'openGdbUpdateUserResponse' => $openGdbUpdateUserResponse,
+        'openGdbDeleteUserResponse' => $openGdbDeleteUserResponse,
       ],
       'success' => TRUE,
       'error' => NULL,
     ];
-
   }
 
 }
