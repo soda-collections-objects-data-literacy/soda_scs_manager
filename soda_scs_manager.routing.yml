@@ -150,17 +150,13 @@ entity.soda_scs_service_key.canonical:
       soda_scs_service_key:
         type: entity:soda_scs_service_key
   requirements:
-    _access: 'TRUE'
+    _custom_access: '\Drupal\soda_scs_manager\Controller\SodaScsAccessController::accessServiceKey'
 
 entity.soda_scs_service_key.add_form:
   path: '/soda-scs-manager/service-key/add'
   defaults:
     _entity_form: 'soda_scs_service_key.add'
     _title: 'Add SODa SCS Service Key'
-  options:
-    parameters:
-      soda_scs_service_key_bundle:
-        type: entity:soda_scs_service_key
   requirements:
     _access: 'TRUE'
 
@@ -169,16 +165,24 @@ entity.soda_scs_service_key.edit_form:
   defaults:
     _entity_form: 'soda_scs_service_key.edit'
     _title: 'Edit SODa SCS Service Key'
+  options:
+    parameters:
+      soda_scs_service_key:
+        type: entity:soda_scs_service_key
   requirements:
-    _access: 'TRUE'
+    _custom_access: '\Drupal\soda_scs_manager\Controller\SodaScsAccessController::accessServiceKey'
 
 entity.soda_scs_service_key.delete_form:
   path: '/soda-scs-manager/service-key/{soda_scs_service_key}/delete'
   defaults:
     _entity_form: 'soda_scs_service_key.delete'
     _title: 'Delete SODa SCS Service Key'
+  options:
+    parameters:
+      soda_scs_service_key:
+        type: entity:soda_scs_service_key
   requirements:
-    _access: 'TRUE'
+    _custom_access: '\Drupal\soda_scs_manager\Controller\SodaScsAccessController::accessServiceKey'
 
 entity.soda_scs_service_key.collection:
   path: '/soda-scs-manager/service-key/list'
@@ -186,7 +190,7 @@ entity.soda_scs_service_key.collection:
     _entity_list: 'soda_scs_service_key'
     _title: 'SODa SCS Service Keys'
   requirements:
-    _access: 'TRUE'
+    _custom_access: '\Drupal\soda_scs_manager\Controller\SodaScsAccessController::accessServiceKey'
 
 # Pages
 
