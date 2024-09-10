@@ -285,6 +285,16 @@ class SodaScsSqlComponentActions implements SodaScsComponentActionsInterface {
           '@trace' => $e->getTraceAsString(),
         ]);
       $this->messenger->addError($this->stringTranslation->translate("Cannot delete database. See logs for more details."));
+
+      return [
+        'message' => 'Cannot delete database.',
+        'data' => [
+          'deleteDbResult' => NULL,
+          'cleanDatabaseUsers' => NULL,
+        ],
+        'success' => FALSE,
+        'error' => $e->getMessage(),
+      ];
     }
     try {
       // GetServiceKey.

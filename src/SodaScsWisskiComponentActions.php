@@ -129,13 +129,32 @@ class SodaScsWisskiComponentActions implements SodaScsComponentActionsInterface 
    */
   public function createComponent(SodaScsComponentInterface $component): array {
     try {
+      // Create WissKI component.
+      /** @var \Drupal\soda_scs_manager\Entity\SodaScsComponentBundleInterface $bundle */
+      $bundle = $this->entityTypeManager->getStorage('soda_scs_component_bundle')->load('sql');
+      $subdomain = $component->get('subdomain')->value;
+      /** @var \Drupal\soda_scs_manager\Entity\SodaScsComponentInterface $wisskiComponent */
+      $wisskiComponent = $this->entityTypeManager->getStorage('soda_scs_component')->create(
+        [
+          'bundle' => 'wisski',
+          'label' => $subdomain . '.' . $this->settings->get('scsHost') . ' (WissKI Environment)',
+          'subdomain' => $subdomain,
+          'user'  => $component->get('user')->target_id,
+          'description' => $bundle->getDescription(),
+          'imageUrl' => $bundle->getImageUrl(),
+          'referencedComponents' => $component->get('referencedComponents')->getValue(),
+        ]
+      );
       // Create service key if it does not exist.
-      $wisskiComponentServiceKey = $this->sodaScsServiceKeyActions->getServiceKey($component) ?? $this->sodaScsServiceKeyActions->createServiceKey($component);
+      $wisskiComponentServiceKey = $this->sodaScsServiceKeyActions->getServiceKey($wisskiComponent) ?? $this->sodaScsServiceKeyActions->createServiceKey($component);
 
-      $sqlComponent = $this->sodaScsComponentHelpers->retrieveReferencedComponent($component, 'sql');
+      $sqlComponent = $this->sodaScsComponentHelpers->retrieveReferencedComponent($wisskiComponent, 'sql');
       $sqlComponentServiceKey = $this->sodaScsServiceKeyActions->getServiceKey($sqlComponent) ?? $this->sodaScsServiceKeyActions->createServiceKey($sqlComponent);
 
-      $component->set('serviceKey', $wisskiComponentServiceKey);
+      $triplestoreComponent = $this->sodaScsComponentHelpers->retrieveReferencedComponent($wisskiComponent, 'triplestore');
+      $triplestoreComponentServiceKey = $this->sodaScsServiceKeyActions->getServiceKey($triplestoreComponent) ?? $this->sodaScsServiceKeyActions->createServiceKey($triplestoreComponent);
+
+      $wisskiComponent->set('serviceKey', $wisskiComponentServiceKey);
       $requestParams = [
         'subdomain' => $component->get('subdomain')->value,
         'project' => 'my_project',
@@ -143,7 +162,7 @@ class SodaScsWisskiComponentActions implements SodaScsComponentActionsInterface 
         'userName' => $component->getOwner()->getDisplayName(),
         'wisskiServicePassword' => $wisskiComponentServiceKey->get('servicePassword')->value,
         'sqlServicePassword' => $sqlComponentServiceKey->get('servicePassword')->value,
-        'triplestoreServicePassword' => 'supersecurepassword',
+        'triplestoreServicePassword' => $triplestoreComponentServiceKey,
       ];
       // Create Drupal instance.
       $portainerCreateRequest = $this->sodaScsPortainerServiceActions->buildCreateRequest($requestParams);
@@ -164,16 +183,24 @@ class SodaScsWisskiComponentActions implements SodaScsComponentActionsInterface 
       ];
     }
 
-    $requestResult = $this->sodaScsPortainerServiceActions->makeRequest($portainerCreateRequest);
+    $portainerCreateRequestResult = $this->sodaScsPortainerServiceActions->makeRequest($portainerCreateRequest);
 
-    if ($requestResult['success'] === FALSE) {
-      return $requestResult;
+    if (!$portainerCreateRequestResult['success']) {
+      return [
+        'message' => 'Portainer request failed.',
+        'data' => [
+          'wisskiComponent' => NULL,
+          'portainerCreateRequestResult' => $portainerCreateRequestResult,
+        ],
+        'success' => FALSE,
+        'error' => $portainerCreateRequestResult['error'],
+      ];
     }
     // Set the external ID.
-    $component->set('externalId', $requestResult['data']['portainerResponse']['Id']);
+    $wisskiComponent->set('externalId', $portainerCreateRequestResult['data']['portainerResponse']['Id']);
 
     // Save the component.
-    $component->save();
+    $wisskiComponent->save();
 
     $wisskiComponentServiceKey->set('scsComponent', [$component->id()]);
     $wisskiComponentServiceKey->save();
@@ -181,7 +208,9 @@ class SodaScsWisskiComponentActions implements SodaScsComponentActionsInterface 
     return [
       'message' => 'Created WissKI component.',
       'data' => [
-        'portainerResponse' => $requestResult,
+        'wisskiComponent' => $wisskiComponent,
+        'portainerCreateRequestResult' => $portainerCreateRequestResult,
+
       ],
       'success' => TRUE,
       'error' => NULL,
@@ -232,7 +261,7 @@ class SodaScsWisskiComponentActions implements SodaScsComponentActionsInterface 
       $this->loggerFactory->get('soda_scs_manager')->error("Cannot assemble WissKI delete request: @error", [
         '@error' => $e->getMessage(),
       ]);
-      $this->messenger->addError($this->stringTranslation->translate("Cannot WissKI assemble delete request. See logs for more details."));
+      $this->messenger->addError($this->stringTranslation->translate("Cannot assemble WissKI component delete request. See logs for more details."));
       return [
         'message' => 'Cannot assemble Request.',
         'data' => [
