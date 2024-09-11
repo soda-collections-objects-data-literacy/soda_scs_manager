@@ -235,7 +235,7 @@ class SodaScsWisskiComponentActions implements SodaScsComponentActionsInterface 
     ];
   }
 
-   /**
+  /**
    * Get all WissKI Components.
    *
    * @return array
