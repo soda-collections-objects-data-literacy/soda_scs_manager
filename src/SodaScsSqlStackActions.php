@@ -8,6 +8,7 @@ use Drupal\Core\Messenger\MessengerInterface;
 use Drupal\Core\StringTranslation\TranslationInterface;
 use Drupal\Core\TypedData\Exception\MissingDataException;
 use Drupal\soda_scs_manager\Entity\SodaScsStackInterface;
+use Drupal\soda_scs_manager\Exception\SodaScsComponentException;
 
 /**
  * Handles the communication with the SCS user manager daemon.
@@ -107,8 +108,8 @@ class SodaScsSqlStackActions implements SodaScsStackActionsInterface {
         'data' => [
           'sqlComponentCreateResult' => $sqlComponentCreateResult,
         ],
-        'success' => FALSE,
-        'error' => $sqlComponentCreateResult['error'],
+        'success' => TRUE,
+        'error' => NULL,
       ];
 
     }
@@ -201,7 +202,12 @@ class SodaScsSqlStackActions implements SodaScsStackActionsInterface {
     try {
       // Delete Drupal database.
       $sqlComponent = $this->sodaScsStackHelpers->retrieveIncludedComponent($stack, 'sql');
-      $deleteDbResult = $this->sodaScsSqlComponentActions->deleteComponent($sqlComponent);
+      if ($sqlComponent) {
+        $deleteDbResult = $this->sodaScsSqlComponentActions->deleteComponent($sqlComponent);
+      }
+      else {
+        $deleteDbResult = NULL;
+      }
     }
     catch (MissingDataException $e) {
       $this->loggerFactory->get('soda_scs_manager')
@@ -217,6 +223,16 @@ class SodaScsSqlStackActions implements SodaScsStackActionsInterface {
         'success' => FALSE,
         'error' => $e->getMessage(),
       ];
+    }
+    catch (SodaScsComponentException $e) {
+      $this->messenger->addError($this->stringTranslation->translate("Cannot delete database. See logs for more details."));
+      if ($e->getCode() == 1) {
+        // If component does not exist, we cannot delete the database.
+        $this->loggerFactory->get('soda_scs_manager')->error("Cannot delete database. @error Clean reference in stack.", [
+          '@error' => $e->getMessage(),
+        ]);
+        $this->sodaScsStackHelpers->cleanIncludedComponents($stack);
+      }
     }
     $stack->delete();
     return [

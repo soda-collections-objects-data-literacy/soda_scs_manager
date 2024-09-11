@@ -77,7 +77,7 @@ class SodaScsTriplestoreStackActions implements SodaScsStackActionsInterface {
    */
   public function createStack(SodaScsStackInterface $stack): array {
     try {
-      // Create the SQL component.
+      // Create the Triplestore component.
       $triplestoreComponentCreateResult = $this->sodaScsTriplestoreComponentActions->createComponent($stack);
 
       if (!$triplestoreComponentCreateResult['success']) {
@@ -118,7 +118,7 @@ class SodaScsTriplestoreStackActions implements SodaScsStackActionsInterface {
   }
 
   /**
-   * Read all triplestore stacks.
+   * Read all Triplestore stacks.
    *
    * @param string $bundle
    *   The bundle.
@@ -172,9 +172,9 @@ class SodaScsTriplestoreStackActions implements SodaScsStackActionsInterface {
   public function deleteStack(SodaScsStackInterface $stack): array {
     try {
 
-      $sqlComponent = $this->sodaScsStackHelpers->retrieveIncludedComponent($stack, 'sql');
-      // Create the SQL component.
-      $triplestoreComponentDeleteResult = $this->sodaScsTriplestoreComponentActions->deleteComponent($sqlComponent);
+      $triplestoreComponent = $this->sodaScsStackHelpers->retrieveIncludedComponent($stack, 'triplestore');
+      // Create the Triplestore component.
+      $triplestoreComponentDeleteResult = $this->sodaScsTriplestoreComponentActions->deleteComponent($triplestoreComponent);
 
       if (!$triplestoreComponentDeleteResult['success']) {
         return [
