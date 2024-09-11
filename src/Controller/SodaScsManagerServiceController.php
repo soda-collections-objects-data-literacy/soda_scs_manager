@@ -5,10 +5,8 @@ namespace Drupal\soda_scs_manager\Controller;
 use Drupal\Core\Controller\ControllerBase;
 use Drupal\Core\Entity\EntityTypeManagerInterface;
 use Drupal\Core\Routing\TrustedRedirectResponse;
-use Drupal\soda_scs_manager\SodaScsStackActions;
 use Drupal\soda_scs_manager\SodaScsStackActionsInterface;
 use Symfony\Component\DependencyInjection\ContainerInterface;
-use Symfony\Component\HttpFoundation\JsonResponse;
 
 /**
  * The SODa SCS Manager service controller.
@@ -16,8 +14,9 @@ use Symfony\Component\HttpFoundation\JsonResponse;
 class SodaScsManagerServiceController extends ControllerBase {
 
   /**
+   * The SODa SCS Manager API actions service.
+   *
    * @var \Drupal\soda_scs_manager\SodaScsStackActionsInterface
-   *  The SODa SCS Manager API actions service.
    */
   protected SodaScsStackActionsInterface $sodaScsStackActions;
 

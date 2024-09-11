@@ -12,6 +12,8 @@ use Drupal\user\EntityOwnerTrait;
 use Drupal\user\UserInterface;
 
 /**
+ * SODa SCS Component.
+ *
  * @ContentEntityType(
  *   id = "soda_scs_component",
  *   label = @Translation("SODa SCS Component"),
@@ -59,7 +61,6 @@ use Drupal\user\UserInterface;
  *    "updated",
  *    "user",
  *    }
- *
  * )
  */
 class SodaScsComponent extends ContentEntityBase implements SodaScsComponentInterface {
@@ -477,7 +478,6 @@ class SodaScsComponent extends ContentEntityBase implements SodaScsComponentInte
         'type' => 'author',
         'weight' => 20,
       ])
-
       ->setDisplayConfigurable('form', FALSE);
 
     $fields['uuid'] = BaseFieldDefinition::create('uuid')

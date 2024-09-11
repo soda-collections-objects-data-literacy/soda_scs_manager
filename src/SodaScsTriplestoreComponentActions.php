@@ -12,6 +12,7 @@ use Drupal\Core\StringTranslation\StringTranslationTrait;
 use Drupal\Core\StringTranslation\TranslationInterface;
 use Drupal\Core\TypedData\Exception\MissingDataException;
 use Drupal\soda_scs_manager\Entity\SodaScsComponentInterface;
+use Drupal\soda_scs_manager\Entity\SodaScsStackInterface;
 
 /**
  * Handles the communication with the SCS user manager daemon.
@@ -90,19 +91,40 @@ class SodaScsTriplestoreComponentActions implements SodaScsComponentActionsInter
   /**
    * Create Triplestore Component.
    *
-   * @param \Drupal\soda_scs_manager\Entity\SodaScsComponentInterface $component
-   *   The SODa SCS component.
+   * @param \Drupal\soda_scs_manager\Entity\SodaScsStackInterface $stack
+   *   The SODa SCS stack entity.
    *
    * @return array
    *   The created component.
    */
-  public function createComponent(SodaScsComponentInterface $component): array {
+  public function createComponent(SodaScsStackInterface $stack): array {
     try {
+
+      // Create Triplestore component.
+      /** @var \Drupal\soda_scs_manager\Entity\SodaScsComponentBundleInterface $bundle */
+      $bundle = $this->entityTypeManager->getStorage('soda_scs_component_bundle')->load('triplestore');
+      $subdomain = $stack->get('subdomain')->value;
+      /** @var \Drupal\soda_scs_manager\Entity\SodaScsComponentInterface $triplestoreComponent */
+      $triplestoreComponent = $this->entityTypeManager->getStorage('soda_scs_component')->create(
+        [
+          'bundle' => 'triplestore',
+          'label' => $subdomain . '.' . $this->settings->get('scsHost') . ' (Triplestore)',
+          'subdomain' => $subdomain,
+          'user'  => $stack->getOwner(),
+          'description' => $bundle->getDescription(),
+          'imageUrl' => $bundle->getImageUrl(),
+        ]
+      );
       // Create service key if it does not exist.
-      $triplestoreComponentServiceKey = $this->sodaScsServiceKeyActions->getServiceKey($component) ?? $this->sodaScsServiceKeyActions->createServiceKey($component);
-      $component->set('serviceKey', $triplestoreComponentServiceKey);
-      $userName = $component->getOwner()->getDisplayName();
-      $subDomain = $component->get('subdomain')->value;
+      $keyProps = [
+        'bundle'  => 'triplestore',
+        'userId'    => $stack->getOwnerId(),
+      ];
+
+      $triplestoreComponentServiceKey = $this->sodaScsServiceKeyActions->getServiceKey($keyProps) ?? $this->sodaScsServiceKeyActions->createServiceKey($keyProps);
+      $triplestoreComponent->set('serviceKey', $triplestoreComponentServiceKey);
+      $username = $triplestoreComponent->getOwner()->getDisplayName();
+      $subDomain = $triplestoreComponent->get('subdomain')->value;
       // Build repo request.
       $createRepoRequestParams = [
         'type' => 'repository',
@@ -110,7 +132,7 @@ class SodaScsTriplestoreComponentActions implements SodaScsComponentActionsInter
         'routeParams' => [],
         'body' => [
           'subdomain' => $subDomain,
-          'title' => $component->get('label')->value,
+          'title' => $triplestoreComponent->label(),
           'publicRead' => FALSE,
           'publicWrite' => FALSE,
         ],
@@ -139,7 +161,7 @@ class SodaScsTriplestoreComponentActions implements SodaScsComponentActionsInter
       $getUserRequestParams = [
         'type' => 'user',
         'queryParams' => [],
-        'routeParams' => [$component->getOwner()->getDisplayName()],
+        'routeParams' => [$triplestoreComponent->getOwner()->getDisplayName()],
       ];
 
       $openGdbgetUserRequest = $this->sodaScsOpenGdbServiceActions->buildGetRequest($getUserRequestParams);
@@ -154,7 +176,7 @@ class SodaScsTriplestoreComponentActions implements SodaScsComponentActionsInter
             $createUserRequestParams = [
               'type' => 'user',
               'queryParams' => [],
-              'routeParams' => [$userName],
+              'routeParams' => [$username],
               'body' => [
                 'password' => $triplestoreComponentServiceKey->get('servicePassword')->value,
                 'grantedAuthorities' => [
@@ -169,7 +191,7 @@ class SodaScsTriplestoreComponentActions implements SodaScsComponentActionsInter
                   "EXECUTE_COUNT" => TRUE,
                   "IGNORE_SHARED_QUERIES" => FALSE,
                 ],
-                "dateCreated" => $component->get('created')->value,
+                "dateCreated" => $triplestoreComponent->get('created')->value,
               ],
             ];
             $openGdbCreateUserRequest = $this->sodaScsOpenGdbServiceActions->buildCreateRequest($createUserRequestParams);
@@ -220,7 +242,7 @@ class SodaScsTriplestoreComponentActions implements SodaScsComponentActionsInter
           $updateUserRequestParams = [
             'type' => 'user',
             'queryParams' => [],
-            'routeParams' => [$userName],
+            'routeParams' => [$username],
             'body' => [
 
               'grantedAuthorities' => array_merge(
@@ -282,14 +304,15 @@ class SodaScsTriplestoreComponentActions implements SodaScsComponentActionsInter
     }
 
     // Save the component.
-    $component->save();
+    $triplestoreComponent->save();
 
-    $triplestoreComponentServiceKey->set('scsComponent', [$component->id()]);
+    $triplestoreComponentServiceKey->set('scsComponent', [$triplestoreComponent->id()]);
     $triplestoreComponentServiceKey->save();
 
     return [
       'message' => $this->t('Created triplestore component %subdomain.', ['%subdomain' => $subDomain]),
       'data' => [
+        'triplestoreComponent' => $triplestoreComponent,
         'createRepoResponse' => $createRepoResponse,
         'getUserResponse' => $getUserResponse,
         'createUserResponse' => $createUserResponse,
@@ -302,7 +325,17 @@ class SodaScsTriplestoreComponentActions implements SodaScsComponentActionsInter
   }
 
   /**
-   * Read all WissKI components.
+   * Get all Triplestore Components.
+   *
+   * @return array
+   *   The result array with the Triplestore components.
+   */
+  public function getComponents(): array {
+    return [];
+  }
+
+  /**
+   * Read all Triplestore components.
    *
    * @param \Drupal\soda_scs_manager\Entity\SodaScsComponentInterface $component
    *   The SODa SCS component.
@@ -315,7 +348,7 @@ class SodaScsTriplestoreComponentActions implements SodaScsComponentActionsInter
   }
 
   /**
-   * Update WissKI component.
+   * Update Triplestore component.
    *
    * @param \Drupal\soda_scs_manager\Entity\SodaScsComponentInterface $component
    *   The SODa SCS component.
@@ -328,7 +361,7 @@ class SodaScsTriplestoreComponentActions implements SodaScsComponentActionsInter
   }
 
   /**
-   * Delete WissKI component.
+   * Delete Triplestore component.
    *
    * @param \Drupal\soda_scs_manager\Entity\SodaScsComponentInterface $component
    *   The SODa SCS component.

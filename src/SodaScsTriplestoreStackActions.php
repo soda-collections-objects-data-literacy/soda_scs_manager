@@ -8,6 +8,7 @@ use Drupal\Core\Messenger\MessengerInterface;
 use Drupal\Core\StringTranslation\StringTranslationTrait;
 use Drupal\Core\StringTranslation\TranslationInterface;
 use Drupal\soda_scs_manager\Entity\SodaScsComponentInterface;
+use Drupal\soda_scs_manager\Entity\SodaScsStackInterface;
 
 /**
  * Handles the triplestore stack actions.
@@ -32,6 +33,13 @@ class SodaScsTriplestoreStackActions implements SodaScsStackActionsInterface {
   protected MessengerInterface $messenger;
 
   /**
+   * The SCS stack helpers service.
+   *
+   * @var \Drupal\soda_scs_manager\SodaScsStackHelpers
+   */
+  protected SodaScsStackHelpers $sodaScsStackHelpers;
+
+  /**
    * The SCS triplestore actions service.
    *
    * @var \Drupal\soda_scs_manager\SodaScsComponentActionsInterface
@@ -44,12 +52,14 @@ class SodaScsTriplestoreStackActions implements SodaScsStackActionsInterface {
   public function __construct(
     LoggerChannelFactoryInterface $loggerFactory,
     MessengerInterface $messenger,
+    SodaScsStackHelpers $sodaScsStackHelpers,
     SodaScsComponentActionsInterface $sodaScsTriplestoreComponentActions,
     TranslationInterface $stringTranslation,
   ) {
     // Services from container.
     $this->loggerFactory = $loggerFactory;
     $this->messenger = $messenger;
+    $this->sodaScsStackHelpers = $sodaScsStackHelpers;
     $this->sodaScsTriplestoreComponentActions = $sodaScsTriplestoreComponentActions;
     $this->stringTranslation = $stringTranslation;
   }
@@ -57,7 +67,7 @@ class SodaScsTriplestoreStackActions implements SodaScsStackActionsInterface {
   /**
    * Create a triplestore stack.
    *
-   * @param \Drupal\soda_scs_manager\Entity\SodaScsComponentInterface $component
+   * @param \Drupal\soda_scs_manager\Entity\SodaScsStackInterface $stack
    *   The component.
    *
    * @return array
@@ -65,10 +75,10 @@ class SodaScsTriplestoreStackActions implements SodaScsStackActionsInterface {
    *
    * @throws \Exception
    */
-  public function createStack(SodaScsComponentInterface $component): array {
+  public function createStack(SodaScsStackInterface $stack): array {
     try {
       // Create the SQL component.
-      $triplestoreComponentCreateResult = $this->sodaScsTriplestoreComponentActions->createComponent($component);
+      $triplestoreComponentCreateResult = $this->sodaScsTriplestoreComponentActions->createComponent($stack);
 
       if (!$triplestoreComponentCreateResult['success']) {
         return [
@@ -151,18 +161,20 @@ class SodaScsTriplestoreStackActions implements SodaScsStackActionsInterface {
   /**
    * Delete a triplestore stack.
    *
-   * @param \Drupal\soda_scs_manager\Entity\SodaScsComponentInterface $component
-   *   The component.
+   * @param \Drupal\soda_scs_manager\Entity\SodaScsStackInterface $stack
+   *   The SODa SCS Stack entity.
    *
    * @throws \Drupal\Core\TypedData\Exception\MissingDataException
    *
    * @return array
    *   The result.
    */
-  public function deleteStack(SodaScsComponentInterface $component): array {
+  public function deleteStack(SodaScsStackInterface $stack): array {
     try {
+
+      $sqlComponent = $this->sodaScsStackHelpers->retrieveIncludedComponent($stack, 'sql');
       // Create the SQL component.
-      $triplestoreComponentDeleteResult = $this->sodaScsTriplestoreComponentActions->deleteComponent($component);
+      $triplestoreComponentDeleteResult = $this->sodaScsTriplestoreComponentActions->deleteComponent($sqlComponent);
 
       if (!$triplestoreComponentDeleteResult['success']) {
         return [

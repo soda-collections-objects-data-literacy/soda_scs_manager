@@ -63,7 +63,7 @@ class SodaScsComponentBundleForm extends EntityForm
     $form['image_set']['image_upload'] = [
       '#type' => 'managed_file',
       '#title' => $this->t('Image Upload'),
-      '#upload_location' => 'public://soda_scs_manager/bundle_images',
+      '#upload_location' => 'public://soda_scs_manager/images',
       '#upload_validators' => [
         'file_validate_extensions' => ['png jpg jpeg svg'],
       ],

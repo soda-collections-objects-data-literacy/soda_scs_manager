@@ -235,7 +235,7 @@ class SodaScsPortainerServiceActions implements SodaScsServiceRequestInterface {
       ],
       [
         "name" => "DB_USER",
-        "value" => $requestParams['userName'],
+        "value" => $requestParams['username'],
       ],
       [
         "name" => "DEFAULT_GRAPH",
@@ -251,7 +251,7 @@ class SodaScsPortainerServiceActions implements SodaScsServiceRequestInterface {
       ],
       [
         "name" => "DRUPAL_USER",
-        "value" => $requestParams['userName'],
+        "value" => $requestParams['username'],
       ],
       [
         "name" => "DRUPAL_PASSWORD",
@@ -279,7 +279,7 @@ class SodaScsPortainerServiceActions implements SodaScsServiceRequestInterface {
       ],
       [
         "name" => "TS_USERNAME",
-        "value" => $requestParams['userName'],
+        "value" => $requestParams['username'],
       ],
       [
         "name" => "TS_WRITE_URL",

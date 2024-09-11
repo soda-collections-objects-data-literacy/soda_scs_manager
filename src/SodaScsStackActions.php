@@ -5,7 +5,7 @@ namespace Drupal\soda_scs_manager;
 use Drupal\Core\DependencyInjection\DependencySerializationTrait;
 use Drupal\Core\StringTranslation\StringTranslationTrait;
 use Drupal\Core\StringTranslation\TranslationInterface;
-use Drupal\soda_scs_manager\Entity\SodaScsComponentInterface;
+use Drupal\soda_scs_manager\Entity\SodaScsStackInterface;
 
 /**
  * Handles the communication with the SCS user manager daemon.
@@ -53,22 +53,22 @@ class SodaScsStackActions implements SodaScsStackActionsInterface {
    * A stack consists of one or more components.
    * We sort by bundle.
    *
-   * @param \Drupal\soda_scs_manager\Entity\SodaScsComponentInterface $component
-   *   The component.
+   * @param \Drupal\soda_scs_manager\Entity\SodaScsStackInterface $stack
+   *   The SODa SCS Stack entity.
    *
    * @return array
    *   The result of the request.
    */
-  public function createStack(SodaScsComponentInterface $component): array {
-    switch ($component->bundle()) {
+  public function createStack(SodaScsStackInterface $stack): array {
+    switch ($stack->getType()) {
       case 'wisski':
-        return $this->sodaScsWisskiStackActions->createStack($component);
+        return $this->sodaScsWisskiStackActions->createStack($stack);
 
       case 'sql':
-        return $this->sodaScsSqlStackActions->createStack($component);
+        return $this->sodaScsSqlStackActions->createStack($stack);
 
       case 'triplestore':
-        return $this->sodaScsTriplestoreStackActions->createStack($component);
+        return $this->sodaScsTriplestoreStackActions->createStack($stack);
 
       default:
         return [];
@@ -136,27 +136,27 @@ class SodaScsStackActions implements SodaScsStackActionsInterface {
   /**
    * Deletes a stack.
    *
-   * @param \Drupal\soda_scs_manager\Entity\SodaScsComponentInterface $component
+   * @param \Drupal\soda_scs_manager\Entity\SodaScsStackInterface $stack
    *   The component.
    *
    * @return array
    *   The result of the request.
    */
-  public function deleteStack(SodaScsComponentInterface $component): array {
+  public function deleteStack(SodaScsStackInterface $stack): array {
     // @todo slim down if there is no more logic
-    switch ($component->bundle()) {
+    switch ($stack->getType()) {
       case 'wisski':
-        return $this->sodaScsWisskiStackActions->deleteStack($component);
+        return $this->sodaScsWisskiStackActions->deleteStack($stack);
 
       case 'sql':
-        return $this->sodaScsSqlStackActions->deleteStack($component);
+        return $this->sodaScsSqlStackActions->deleteStack($stack);
 
       case 'triplestore':
-        return $this->sodaScsTriplestoreStackActions->deleteStack($component);
+        return $this->sodaScsTriplestoreStackActions->deleteStack($stack);
 
       default:
         return [
-          'message' => $this->t('Could not delete stack of type %bundle.'), ['%bundle' => $component->get('bundle')->value],
+          'message' => $this->t('Could not delete stack of type %bundle.'), ['%bundle' => $stack->getType()],
           'data' => [],
           'success' => FALSE,
           'error' => 'Component type not supported for deletion.',

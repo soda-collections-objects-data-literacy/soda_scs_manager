@@ -3,10 +3,10 @@
 namespace Drupal\soda_scs_manager\Entity;
 
 use Drupal\Core\Config\Entity\ConfigEntityBundleBase;
-use Drupal\file\Entity\File;
-use Symfony\Component\Yaml\Yaml;
 
 /**
+ * Defines the SODa SCS Component Bundle entity.
+ *
  * @ConfigEntityType(
  *   id = "soda_scs_component_bundle",
  *   label = @Translation("SODa SCS Component Bundle"),
@@ -50,8 +50,7 @@ use Symfony\Component\Yaml\Yaml;
  *   }
  * )
  */
-class SodaScsComponentBundle extends ConfigEntityBundleBase
-{
+class SodaScsComponentBundle extends ConfigEntityBundleBase implements SodaScsComponentBundleInterface {
 
   /**
    * The description of the ComponentBundle.
@@ -95,8 +94,6 @@ class SodaScsComponentBundle extends ConfigEntityBundleBase
    */
   protected $optionsUrl;
 
-
-
   /**
    * The uuid of the ComponentBundle.
    *
@@ -107,8 +104,7 @@ class SodaScsComponentBundle extends ConfigEntityBundleBase
   /**
    * {@inheritdoc}
    */
-  public function isDefaultRevision()
-  {
+  public function isDefaultRevision() {
     return $this->isDefaultRevision;
   }
 
@@ -118,8 +114,7 @@ class SodaScsComponentBundle extends ConfigEntityBundleBase
    * @return string
    *   The description of the ComponentBundle.
    */
-  public function getDescription()
-  {
+  public function getDescription() {
     return $this->description;
   }
 
@@ -131,8 +126,7 @@ class SodaScsComponentBundle extends ConfigEntityBundleBase
    *
    * @return $this
    */
-  public function setDescription($description): self
-  {
+  public function setDescription($description): self {
     $this->description = $description;
     return $this;
   }
@@ -143,8 +137,7 @@ class SodaScsComponentBundle extends ConfigEntityBundleBase
    * @return string
    *   The image of the ComponentBundle.
    */
-  public function getImageUrl(): string
-  {
+  public function getImageUrl(): string {
     return $this->imageUrl;
   }
 
@@ -156,9 +149,9 @@ class SodaScsComponentBundle extends ConfigEntityBundleBase
    *
    * @return $this
    */
-  public function setImageUrl($imageUrl): self
-  {
+  public function setImageUrl($imageUrl): self {
     $this->imageUrl = $imageUrl;
     return $this;
   }
+
 }

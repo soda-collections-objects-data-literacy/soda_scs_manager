@@ -2,13 +2,10 @@
 
 namespace Drupal\soda_scs_manager\Exception;
 
-use Exception;
-
 /**
  * Custom exception for component-related errors in the Soda SCS Manager module.
  */
-class SodaScsComponentException extends Exception
-{
+class SodaScsComponentException extends \Exception {
 
   /**
    * Constructs a new ComponentException.
@@ -20,8 +17,8 @@ class SodaScsComponentException extends Exception
    * @param \Exception|null $previous
    *   The previous exception used for the exception chaining.
    */
-  public function __construct(string $message = "", int $code = 0, Exception $previous = NULL)
-  {
+  public function __construct(string $message = "", int $code = 0, \Exception $previous = NULL) {
     parent::__construct($message, $code, $previous);
   }
+
 }

@@ -46,18 +46,18 @@ class SodaScsServiceKeyActions implements SodaScsServiceKeyActionsInterface {
   /**
    * Creates a new Service Key.
    *
-   * @param \Drupal\soda_scs_manager\Entity\SodaScsComponentInterface $component
-   *   The service component.
+   * @param array $props
+   *   The service key properties.
    *
    * @return \Drupal\soda_scs_manager\Entity\SodaScsServiceKeyInterface
    *   The created service key.
    */
-  public function createServiceKey($component): SodaScsServiceKeyInterface {
+  public function createServiceKey(array $props): SodaScsServiceKeyInterface {
     $serviceKey = $this->entityTypeManager->getStorage('soda_scs_service_key')->create([
-      'label' => $component->get('bundle')->target_id . ' service key' . ' owned by ' . $component->getOwner()->getDisplayName(),
+      'label' => $props['bundle'] . ' service key' . ' owned by ' . $props['user']->getDisplayName(),
       'servicePassword' => $this->generateRandomPassword(),
-      'bundle' => $component->get('bundle')->target_id,
-      'user' => $component->getOwnerId(),
+      'bundle' => $props['bundle'],
+      'user' => $props['userId'],
     ]);
     $serviceKey->save();
     return $serviceKey;
@@ -66,17 +66,17 @@ class SodaScsServiceKeyActions implements SodaScsServiceKeyActionsInterface {
   /**
    * Loads an existing Service Key.
    *
-   * @param \Drupal\soda_scs_manager\Entity\SodaScsComponentInterface $component
-   *   The service component.
+   * @param array $props
+   *   The service key properties.
    *
    * @return \Drupal\soda_scs_manager\Entity\SodaScsServiceKeyInterface|null
    *   The existing service key.
    */
-  public function getServiceKey($component): ?SodaScsServiceKeyInterface {
+  public function getServiceKey(array $props): ?SodaScsServiceKeyInterface {
     /** @var \Drupal\soda_scs_manager\Entity\SodaScsServiceKeyInterface $serviceKeys */
     $serviceKey = $this->entityTypeManager->getStorage('soda_scs_service_key')->loadByProperties([
-      'bundle' => $component->get('bundle')->target_id,
-      'user' => $component->getOwnerId(),
+      'bundle' => $props['bundle'],
+      'user' => $props['userId'],
     ]);
 
     return $serviceKey ? reset($serviceKey) : NULL;

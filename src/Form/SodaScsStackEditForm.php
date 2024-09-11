@@ -8,7 +8,7 @@ use Drupal\Core\Form\FormStateInterface;
 /**
  * Form controller for the ScsComponent entity edit form.
  */
-class SodaScsComponentEditForm extends ContentEntityForm {
+class SodaScsStackEditForm extends ContentEntityForm {
 
   /**
    * The entity being used by this form.
@@ -35,7 +35,7 @@ class SodaScsComponentEditForm extends ContentEntityForm {
    * {@inheritdoc}
    */
   public function getFormId(): string {
-    return 'soda_scs__manager_component_edit_form';
+    return 'soda_scs_manager_stack_edit_form';
   }
 
   /**
@@ -43,9 +43,6 @@ class SodaScsComponentEditForm extends ContentEntityForm {
    */
   public function buildForm(array $form, FormStateInterface $form_state) {
     $form = parent::buildForm($form, $form_state);
-    $entity = $this->entity;
-    $bundle = $entity->bundle();
-    $entityTypeId = $entity->getEntityTypeId();
 
     $form['#attached']['library'][] = 'soda_scs_manager/globalStyling';
     $form['actions']['delete'] = [];

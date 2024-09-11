@@ -2,6 +2,7 @@
 
 namespace Drupal\soda_scs_manager\Form;
 
+use Drupal;
 use Drupal\Component\Datetime\TimeInterface;
 use Drupal\Core\Config\Config;
 use Drupal\Core\Config\ConfigFactoryInterface;
@@ -10,6 +11,7 @@ use Drupal\Core\Entity\EntityRepositoryInterface;
 use Drupal\Core\Entity\EntityTypeBundleInfoInterface;
 use Drupal\Core\Form\FormStateInterface;
 use Drupal\Core\Session\AccountProxyInterface;
+use Drupal\soda_scs_manager\Entity\SodaScsComponentBundleInterface;
 use Drupal\soda_scs_manager\SodaScsStackActions;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 
@@ -27,7 +29,14 @@ use Symfony\Component\DependencyInjection\ContainerInterface;
  * - image: The image of the entity (comes from bundle).
  * and redirects to the components page.
  */
-class SodaScsComponentCreateForm extends ContentEntityForm {
+class SodaScsStackCreateForm extends ContentEntityForm {
+
+  /**
+   * The SODa SCS Component Bundle.
+   *
+   * @var \Drupal\soda_scs_manager\Entity\SodaScsComponentBundleInterface
+   */
+  protected SodaScsComponentBundleInterface $bundle;
 
 
   /**
@@ -56,9 +65,9 @@ class SodaScsComponentCreateForm extends ContentEntityForm {
    *
    * @param \Drupal\Core\Session\AccountProxyInterface $currentUser
    *   The current user.
-   * @param Drupal\Core\Entity\EntityRepositoryInterface $entity_repository
+   * @param \Drupal\Core\Entity\EntityRepositoryInterface $entity_repository
    *   The entity repository.
-   * @param Drupal\Core\Entity\EntityTypeBundleInfoInterface $entity_type_bundle_info
+   * @param \Drupal\Core\Entity\EntityTypeBundleInfoInterface $entity_type_bundle_info
    *   The entity type bundle info.
    * @param \Drupal\Core\Config\ConfigFactoryInterface $configFactory
    *   The config factory.
@@ -100,32 +109,30 @@ class SodaScsComponentCreateForm extends ContentEntityForm {
    * {@inheritdoc}
    */
   public function getFormId(): string {
-    return 'soda_scs_manager_component_create_form';
+    return 'soda_scs_manager_stack_create_form';
   }
 
   /**
    * {@inheritdoc}
    */
-  public function buildForm(array $form, FormStateInterface $form_state) {
-    // Get the bundle of the entity.
-    /** @var \Drupal\soda_scs_manager\Entity\SodaScsComponentBundle $bundle */
-    $bundle = $this->entityTypeManager->getStorage('soda_scs_component_bundle')->load($this->entity->bundle());
+  public function buildForm(array $form, FormStateInterface $form_state, SodaScsComponentBundleInterface $soda_scs_component_bundle = NULL) {
 
+    $this->bundle = $soda_scs_component_bundle;
     // Build the form.
     $form = parent::buildForm($form, $form_state);
 
     // Add the bundle description.
     $form['info'] = [
       '#type' => 'item',
-      '#markup' => $bundle->getDescription(),
+      '#markup' => $soda_scs_component_bundle->getDescription(),
     ];
 
     // Change the title of the page.
-    $form['#title'] = $this->t('Create a new @component', ['@component' => $bundle->label()]);
+    $form['#title'] = $this->t('Create a new @stack stack.', ['@stack' => $soda_scs_component_bundle->label()]);
 
     // Change the label of the submit button.
-    $form['actions']['submit']['#value'] = $this->t('CREATE COMPONENT');
-    $form['actions']['submit']['#attributes']['class'][] = 'soda-scs-component--component--form-submit';
+    $form['actions']['submit']['#value'] = $this->t('CREATE STACK');
+    $form['actions']['submit']['#attributes']['class'][] = 'soda-scs-stack--stack--form-submit';
 
     $form['#attached']['library'][] = 'soda_scs_manager/globalStyling';
 
@@ -139,26 +146,22 @@ class SodaScsComponentCreateForm extends ContentEntityForm {
    */
   public function save(array $form, FormStateInterface $form_state): void {
 
-    // We call it component here.
-    /** @var \Drupal\soda_scs_manager\Entity\SodaScsComponentInterface $component */
-    $component = $this->entity;
-    $component->set('bundle', $this->entity->bundle());
-    $component->set('created', $this->time->getRequestTime());
-    $component->set('updated', $this->time->getRequestTime());
-    $component->set('user', $this->currentUser->getAccount()->id());
+    // We call it stack here.
+    /** @var \Drupal\soda_scs_manager\Entity\SodaScsStackInterface $component */
+    $stack = $this->entity;
+    $stack->set('type', $this->bundle->id());
+    $stack->set('created', $this->time->getRequestTime());
+    $stack->set('updated', $this->time->getRequestTime());
+    $stack->set('user', $this->currentUser->getAccount()->id());
     $subdomain = reset($form_state->getValue('subdomain'))['value'];
-    $component->set('label', $subdomain . '.' . $this->settings->get('scsHost'));
-    $component->set('subdomain', $subdomain);
-    /** @var \Drupal\soda_scs_manager\Entity\SodaScsComponentBundleInterface $bundle */
-    $bundle = $this->entityTypeManager->getStorage('soda_scs_component_bundle')->load($this->entity->bundle());
-    $component->set('description', $bundle->getDescription());
-    $component->set('imageUrl', $bundle->getImageUrl());
+    $stack->set('label', $subdomain . '.' . $this->settings->get('scsHost') . ' Stack');
+    $stack->set('subdomain', $subdomain);
 
     // Create external stack.
-    $createComponentResult = $this->sodaScsStackActions->createStack($component);
+    $createStackResult = $this->sodaScsStackActions->createStack($stack);
 
-    if (!$createComponentResult['success']) {
-      $this->messenger()->addMessage($this->t('Cannot create component "@label". See logs for more details.', [
+    if (!$createStackResult['success']) {
+      $this->messenger()->addMessage($this->t('Cannot create stack "@label". See logs for more details.', [
         '@label' => $this->entity->label(),
         '@username' => $this->currentUser->getAccount()->getDisplayName(),
       ]), 'error');

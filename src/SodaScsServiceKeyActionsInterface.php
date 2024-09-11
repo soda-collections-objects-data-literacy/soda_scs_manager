@@ -20,23 +20,23 @@ interface SodaScsServiceKeyActionsInterface {
   /**
    * Creates a new Service Key entity.
    *
-   * @param \Drupal\soda_scs_manager\Entity\SodaScsService $component
-   *   The service entity.
+   * @param array $props
+   *   The service key properties.
    *
    * @return \Drupal\soda_scs_manager\Entity\SodaScsServiceKeyInterface
    *   The created service key.
    */
-  public function createServiceKey($component): SodaScsServiceKeyInterface;
+  public function createServiceKey(array $props): SodaScsServiceKeyInterface;
 
   /**
    * Get an existing Service Key entity.
    *
-   * @param \Drupal\soda_scs_manager\Entity\SodaScsService $component
-   *   The service entity.
+   * @param array $props
+   *   The service key properties.
    *
    * @return \Drupal\soda_scs_manager\Entity\SodaScsServiceKeyInterface|null
    *   The existing service key.
    */
-  public function getServiceKey($component): ?SodaScsServiceKeyInterface;
+  public function getServiceKey(array $props): ?SodaScsServiceKeyInterface;
 
 }

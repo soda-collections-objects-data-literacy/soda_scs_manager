@@ -39,7 +39,6 @@ class SodaScsComponentListBuilder extends EntityListBuilder {
 
     $row['type'] = $bundle;
     $row['subdomain'] = $entity->get('subdomain')->value;
-    $row['status'] = \Drupal::service('soda_scs_manager.api.actions')->readComponent($entity->bundle(), $options);
     return $row + parent::buildRow($entity);
   }
 
@@ -71,8 +70,7 @@ class SodaScsComponentListBuilder extends EntityListBuilder {
     ];
     $operations['delete'] = [
       'title' => $this->t('Delete'),
-      'url' => Url::fromRoute('soda_scs_manager.service.action',
-        ['soda_scs_component_id' => $entity->id(), 'action' => 'delete']),
+      'url' => Url::fromRoute('entity.soda_scs_component.delete_form', ['soda_scs_component' => $entity->id()]),
     ];
     return $operations;
   }

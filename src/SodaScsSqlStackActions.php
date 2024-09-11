@@ -7,7 +7,7 @@ use Drupal\Core\Logger\LoggerChannelFactoryInterface;
 use Drupal\Core\Messenger\MessengerInterface;
 use Drupal\Core\StringTranslation\TranslationInterface;
 use Drupal\Core\TypedData\Exception\MissingDataException;
-use Drupal\soda_scs_manager\Entity\SodaScsComponentInterface;
+use Drupal\soda_scs_manager\Entity\SodaScsStackInterface;
 
 /**
  * Handles the communication with the SCS user manager daemon.
@@ -31,6 +31,13 @@ class SodaScsSqlStackActions implements SodaScsStackActionsInterface {
   protected MessengerInterface $messenger;
 
   /**
+   * The SCS stack helpers service.
+   *
+   * @var \Drupal\soda_scs_manager\SodaScsStackHelpers
+   */
+  protected SodaScsStackHelpers $sodaScsStackHelpers;
+
+  /**
    * The SCS database actions service.
    *
    * @var \Drupal\soda_scs_manager\SodaScsComponentActionsInterface
@@ -51,19 +58,21 @@ class SodaScsSqlStackActions implements SodaScsStackActionsInterface {
     LoggerChannelFactoryInterface $loggerFactory,
     MessengerInterface $messenger,
     SodaScsComponentActionsInterface $sodaScsSqlComponentActions,
+    SodaScsStackHelpers $sodaScsStackHelpers,
     TranslationInterface $stringTranslation,
   ) {
     // Services from container.
     $this->loggerFactory = $loggerFactory;
     $this->messenger = $messenger;
     $this->sodaScsSqlComponentActions = $sodaScsSqlComponentActions;
+    $this->sodaScsStackHelpers = $sodaScsStackHelpers;
     $this->stringTranslation = $stringTranslation;
   }
 
   /**
    * Create a SQL stack.
    *
-   * @param \Drupal\soda_scs_manager\Entity\SodaScsComponentInterface $component
+   * @param \Drupal\soda_scs_manager\Entity\SodaScsStackInterface $stack
    *   The component.
    *
    * @return array
@@ -77,10 +86,10 @@ class SodaScsSqlStackActions implements SodaScsStackActionsInterface {
    *
    * @throws \Exception
    */
-  public function createStack(SodaScsComponentInterface $component): array {
+  public function createStack(SodaScsStackInterface $stack): array {
     try {
       // Create the SQL component.
-      $sqlComponentCreateResult = $this->sodaScsSqlComponentActions->createComponent($component);
+      $sqlComponentCreateResult = $this->sodaScsSqlComponentActions->createComponent($stack);
 
       if (!$sqlComponentCreateResult['success']) {
         return [
@@ -141,7 +150,7 @@ class SodaScsSqlStackActions implements SodaScsStackActionsInterface {
   /**
    * Read a SQL stack.
    *
-   * @param Drupal\soda_scs_manager\Entity\SodaScsComponentInterface $component
+   * @param Drupal\soda_scs_manager\Entity\SodaScsStackInterface $stack
    *   The component.
    *
    * @return array
@@ -151,14 +160,14 @@ class SodaScsSqlStackActions implements SodaScsStackActionsInterface {
    *   'success' => TRUE|FALSE
    *   'error' => \Exception
    */
-  public function getStack($component): array {
+  public function getStack($stack): array {
     return [];
   }
 
   /**
    * Update stack.
    *
-   * @param \Drupal\soda_scs_manager\Entity\SodaScsComponentInterface $component
+   * @param \Drupal\soda_scs_manager\Entity\SodaScsStackInterface $stack
    *   The component.
    *
    * @return array
@@ -168,14 +177,14 @@ class SodaScsSqlStackActions implements SodaScsStackActionsInterface {
    *   'success' => TRUE|FALSE
    *   'error' => \Exception
    */
-  public function updateStack($component): array {
+  public function updateStack($stack): array {
     return [];
   }
 
   /**
    * Delete a SQL stack.
    *
-   * @param \Drupal\soda_scs_manager\Entity\SodaScsComponentInterface $component
+   * @param \Drupal\soda_scs_manager\Entity\SodaScsStackInterface $stack
    *   The component.
    *
    * @return array
@@ -187,10 +196,11 @@ class SodaScsSqlStackActions implements SodaScsStackActionsInterface {
    *
    * @throws \Drupal\Core\TypedData\Exception\MissingDataException
    */
-  public function deleteStack(SodaScsComponentInterface $component): array {
+  public function deleteStack(SodaScsStackInterface $stack): array {
     try {
       // Delete Drupal database.
-      $deleteDbResult = $this->sodaScsSqlComponentActions->deleteComponent($component);
+      $sqlComponent = $this->sodaScsStackHelpers->retrieveIncludedComponent($stack, 'sql');
+      $deleteDbResult = $this->sodaScsSqlComponentActions->deleteComponent($sqlComponent);
     }
     catch (MissingDataException $e) {
       $this->loggerFactory->get('soda_scs_manager')

@@ -2,7 +2,7 @@
 
 namespace Drupal\soda_scs_manager;
 
-use Drupal\soda_scs_manager\Entity\SodaScsComponentInterface;
+use Drupal\soda_scs_manager\Entity\SodaScsStackInterface;
 
 /**
  * Handles the communication with the SCS user manager daemon.
@@ -10,17 +10,17 @@ use Drupal\soda_scs_manager\Entity\SodaScsComponentInterface;
 interface SodaScsStackActionsInterface {
 
   /**
-   * Creates a component.
+   * Creates a stack.
    *
-   * @param \Drupal\soda_scs_manager\Entity\SodaScsComponentInterface $component
-   *   The component.
+   * @param \Drupal\soda_scs_manager\Entity\SodaScsStackInterface $stack
+   *   The stack.
    *
    * @return array
    *   The result of the request.
    *
    * @throws \Exception
    */
-  public function createStack(SodaScsComponentInterface $component): array;
+  public function createStack(SodaScsStackInterface $stack): array;
 
   /**
    * Get all stacks of a bundle.
@@ -38,34 +38,34 @@ interface SodaScsStackActionsInterface {
   /**
    * Read a stack.
    *
-   * @param Drupal\soda_scs_manager\Entity\SodaScsComponentInterface $component
-   *   The component.
+   * @param Drupal\soda_scs_manager\Entity\SodaScsStackInterface $stack
+   *   The stack.
    *
    * @return array
    *   The result of the request.
    */
-  public function getStack($component): array;
+  public function getStack($stack): array;
 
   /**
    * Update a stack.
    *
-   * @param Drupal\soda_scs_manager\Entity\SodaScsComponentInterface $component
-   *   The component.
+   * @param Drupal\soda_scs_manager\Entity\SodaScsStackInterface $stack
+   *   The stack.
    *
    * @return array
    *   The result of the request.
    */
-  public function updateStack($component): array;
+  public function updateStack($stack): array;
 
   /**
    * Delete a stack.
    *
-   * @param \Drupal\soda_scs_manager\Entity\SodaScsComponentInterface $component
-   *   The component.
+   * @param \Drupal\soda_scs_manager\Entity\SodaScsStackInterface $stack
+   *   The stack.
    *
    * @return array
    *   The result of the request.
    */
-  public function deleteStack(SodaScsComponentInterface $component): array;
+  public function deleteStack(SodaScsStackInterface $stack): array;
 
 }

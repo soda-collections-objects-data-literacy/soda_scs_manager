@@ -4,4 +4,4 @@ dependencies: {  }
 id: wisski
 label: WissKI
 description: 'WissKI Instance'
-imageUrl: 'public://soda_scs_manager/bundle_images/wisski.svg'
+imageUrl: 'public://soda_scs_manager/images/wisski.svg'

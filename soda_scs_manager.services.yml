@@ -1,9 +1,19 @@
 # @todo clean unnessary service arguments
 services:
-  # Component actions
-  soda_scs_manager.component.helpers:
-    class: Drupal\soda_scs_manager\SodaScsComponentHelpers
+  # Helpers
+  soda_scs_manager.stack.helpers:
+    class: Drupal\soda_scs_manager\SodaScsStackHelpers
     arguments:
+      - '@messenger'
+      - '@string_translation'
+
+  # Component actions
+  soda_scs_manager.component.actions:
+    class: Drupal\soda_scs_manager\SodaScsComponentActions
+    arguments:
+      - '@soda_scs_manager.sql_component.actions'
+      - '@soda_scs_manager.triplestore_component.actions'
+      - '@soda_scs_manager.wisski_component.actions'
       - '@string_translation'
 
   soda_scs_manager.sql_component.actions:
@@ -39,7 +49,7 @@ services:
       - '@http_client'
       - '@logger.factory'
       - '@messenger'
-      - '@soda_scs_manager.component.helpers'
+      - '@soda_scs_manager.stack.helpers'
       - '@soda_scs_manager.portainer_service.actions'
       - '@soda_scs_manager.mysql_service.actions'
       - '@soda_scs_manager.service_key.actions'
@@ -102,6 +112,7 @@ services:
       - '@logger.factory'
       - '@messenger'
       - '@soda_scs_manager.sql_component.actions'
+      - '@soda_scs_manager.stack.helpers'
       - '@string_translation'
 
   soda_scs_manager.triplestore_stack.actions:
@@ -109,6 +120,7 @@ services:
     arguments:
       - '@logger.factory'
       - '@messenger'
+      - '@soda_scs_manager.stack.helpers'
       - '@soda_scs_manager.triplestore_component.actions'
       - '@string_translation'
 
@@ -120,7 +132,7 @@ services:
       - '@entity_type.manager'
       - '@logger.factory'
       - '@messenger'
-      - '@soda_scs_manager.component.helpers'
+      - '@soda_scs_manager.stack.helpers'
       - '@soda_scs_manager.sql_component.actions'
       - '@soda_scs_manager.mysql_service.actions'
       - '@soda_scs_manager.service_key.actions'

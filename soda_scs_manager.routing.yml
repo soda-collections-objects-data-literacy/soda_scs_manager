@@ -87,6 +87,57 @@ entity.soda_scs_component_bundle.collection:
   requirements:
     _access: 'TRUE'
 
+# Soda SCS Stack Entities
+
+entity.soda_scs_stack.canonical:
+  path: '/soda-scs-manager/stack/{soda_scs_stack}'
+  defaults:
+    _entity_view: 'soda_scs_stack.default'
+    _title: 'Stack'
+  options:
+    parameters:
+      soda_scs_stack:
+        type: entity:soda_scs_stack
+  requirements:
+    _access: 'TRUE'
+
+entity.soda_scs_stack.add_form:
+  path: '/soda-scs-manager/stack/{soda_scs_component_bundle}/add'
+  defaults:
+    _entity_form: 'soda_scs_stack.add'
+    _title: 'Add Stack'
+  options:
+    parameters:
+      soda_scs_component_bundle:
+        type: entity:soda_scs_component_bundle
+  requirements:
+    _access: 'TRUE'
+
+entity.soda_scs_stack.edit_form:
+  path: '/soda-scs-manager/stack/{soda_scs_stack}/edit'
+  defaults:
+    _entity_form: 'soda_scs_stack.edit'
+    _title: 'Edit Stack'
+  requirements:
+    _access: 'TRUE'
+
+entity.soda_scs_stack.delete_form:
+  path: '/soda-scs-manager/stack/{soda_scs_stack}/delete'
+  defaults:
+    _entity_form: 'soda_scs_stack.delete'
+    _title: 'Delete Stack'
+  requirements:
+    _access: 'TRUE'
+
+
+entity.soda_scs_stack.collection:
+  path: '/soda-scs-manager/stack/list'
+  defaults:
+    _entity_list: 'soda_scs_stack'
+    _title: 'Stacks'
+  requirements:
+    _access: 'TRUE'
+
 # Soda SCS Component Entities
 
 entity.soda_scs_component.canonical:
@@ -198,7 +249,7 @@ soda_scs_manager.desk:
   path: '/soda-scs-manager/desk'
   defaults:
     _controller: '\Drupal\soda_scs_manager\Controller\SodaScsManagerController::deskPage'
-    _title:  'Components managing page'
+    _title:  'Your stacks'
   requirements:
     _access: 'TRUE'
 

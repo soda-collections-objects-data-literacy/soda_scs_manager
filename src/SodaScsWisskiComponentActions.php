@@ -12,6 +12,7 @@ use Drupal\Core\Messenger\MessengerInterface;
 use Drupal\Core\StringTranslation\TranslationInterface;
 use Drupal\Core\TypedData\Exception\MissingDataException;
 use Drupal\soda_scs_manager\Entity\SodaScsComponentInterface;
+use Drupal\soda_scs_manager\Entity\SodaScsStackInterface;
 use GuzzleHttp\ClientInterface;
 
 /**
@@ -64,11 +65,11 @@ class SodaScsWisskiComponentActions implements SodaScsComponentActionsInterface 
   protected Config $settings;
 
   /**
-   * The SCS component helpers service.
+   * The SCS stack helpers service.
    *
-   * @var \Drupal\soda_scs_manager\SodaScsComponentHelpers
+   * @var \Drupal\soda_scs_manager\SodaScsStackHelpers
    */
-  protected SodaScsComponentHelpers $sodaScsComponentHelpers;
+  protected SodaScsStackHelpers $sodaScsStackHelpers;
 
   /**
    * The SCS Portainer actions service.
@@ -101,7 +102,7 @@ class SodaScsWisskiComponentActions implements SodaScsComponentActionsInterface 
   /**
    * Class constructor.
    */
-  public function __construct(ConfigFactoryInterface $configFactory, Connection $database, EntityTypeManagerInterface $entityTypeManager, ClientInterface $httpClient, LoggerChannelFactoryInterface $loggerFactory, MessengerInterface $messenger, SodaScsComponentHelpers $sodaScsComponentHelpers, SodaScsServiceRequestInterface $sodaScsPortainerServiceActions, SodaScsServiceActionsInterface $sodaScsSqlServiceActions, SodaScsServiceKeyActions $sodaScsServiceKeyActions, TranslationInterface $stringTranslation,) {
+  public function __construct(ConfigFactoryInterface $configFactory, Connection $database, EntityTypeManagerInterface $entityTypeManager, ClientInterface $httpClient, LoggerChannelFactoryInterface $loggerFactory, MessengerInterface $messenger, SodaScsStackHelpers $sodaScsStackHelpers, SodaScsServiceRequestInterface $sodaScsPortainerServiceActions, SodaScsServiceActionsInterface $sodaScsSqlServiceActions, SodaScsServiceKeyActions $sodaScsServiceKeyActions, TranslationInterface $stringTranslation,) {
     // Services from container.
     $settings = $configFactory
       ->getEditable('soda_scs_manager.settings');
@@ -111,7 +112,7 @@ class SodaScsWisskiComponentActions implements SodaScsComponentActionsInterface 
     $this->loggerFactory = $loggerFactory;
     $this->messenger = $messenger;
     $this->settings = $settings;
-    $this->sodaScsComponentHelpers = $sodaScsComponentHelpers;
+    $this->sodaScsStackHelpers = $sodaScsStackHelpers;
     $this->sodaScsPortainerServiceActions = $sodaScsPortainerServiceActions;
     $this->sodaScsSqlServiceActions = $sodaScsSqlServiceActions;
     $this->sodaScsServiceKeyActions = $sodaScsServiceKeyActions;
@@ -121,48 +122,65 @@ class SodaScsWisskiComponentActions implements SodaScsComponentActionsInterface 
   /**
    * Create SODa SCS Component.
    *
-   * @param \Drupal\soda_scs_manager\Entity\SodaScsComponentInterface $component
+   * @param \Drupal\soda_scs_manager\Entity\SodaScsStackInterface $stack
    *   The SODa SCS component.
    *
    * @return array
    *   The SODa SCS component.
    */
-  public function createComponent(SodaScsComponentInterface $component): array {
+  public function createComponent(SodaScsStackInterface $stack): array {
     try {
       // Create WissKI component.
       /** @var \Drupal\soda_scs_manager\Entity\SodaScsComponentBundleInterface $bundle */
       $bundle = $this->entityTypeManager->getStorage('soda_scs_component_bundle')->load('sql');
-      $subdomain = $component->get('subdomain')->value;
+      $subdomain = $stack->get('subdomain')->value;
       /** @var \Drupal\soda_scs_manager\Entity\SodaScsComponentInterface $wisskiComponent */
       $wisskiComponent = $this->entityTypeManager->getStorage('soda_scs_component')->create(
         [
           'bundle' => 'wisski',
           'label' => $subdomain . '.' . $this->settings->get('scsHost') . ' (WissKI Environment)',
           'subdomain' => $subdomain,
-          'user'  => $component->get('user')->target_id,
+          'user'  => $stack->getOwner(),
           'description' => $bundle->getDescription(),
           'imageUrl' => $bundle->getImageUrl(),
-          'referencedComponents' => $component->get('referencedComponents')->getValue(),
         ]
       );
+
+      $keyProps = [
+        'bundle'  => 'wisski',
+        'userId'  => $stack->getOwnerId(),
+      ];
+
       // Create service key if it does not exist.
-      $wisskiComponentServiceKey = $this->sodaScsServiceKeyActions->getServiceKey($wisskiComponent) ?? $this->sodaScsServiceKeyActions->createServiceKey($component);
+      $wisskiComponentServiceKey = $this->sodaScsServiceKeyActions->getServiceKey($keyProps) ?? $this->sodaScsServiceKeyActions->createServiceKey($keyProps);
 
-      $sqlComponent = $this->sodaScsComponentHelpers->retrieveReferencedComponent($wisskiComponent, 'sql');
-      $sqlComponentServiceKey = $this->sodaScsServiceKeyActions->getServiceKey($sqlComponent) ?? $this->sodaScsServiceKeyActions->createServiceKey($sqlComponent);
+      $sqlComponent = $this->sodaScsStackHelpers->retrieveIncludedComponent($stack, 'sql');
 
-      $triplestoreComponent = $this->sodaScsComponentHelpers->retrieveReferencedComponent($wisskiComponent, 'triplestore');
-      $triplestoreComponentServiceKey = $this->sodaScsServiceKeyActions->getServiceKey($triplestoreComponent) ?? $this->sodaScsServiceKeyActions->createServiceKey($triplestoreComponent);
+      $sqlKeyProps = [
+        'bundle'  => 'sql',
+        'userId'  => $sqlComponent->getOwnerId(),
+      ];
+
+      $sqlComponentServiceKey = $this->sodaScsServiceKeyActions->getServiceKey($sqlKeyProps) ?? $this->sodaScsServiceKeyActions->createServiceKey($sqlKeyProps);
+
+      $triplestoreComponent = $this->sodaScsStackHelpers->retrieveIncludedComponent($stack, 'triplestore');
+
+      $triplestoreKeyProps = [
+        'bundle'  => 'triplestore',
+        'userId'  => $triplestoreComponent->getOwnerId(),
+      ];
+
+      $triplestoreComponentServiceKey = $this->sodaScsServiceKeyActions->getServiceKey($triplestoreKeyProps) ?? $this->sodaScsServiceKeyActions->createServiceKey($triplestoreKeyProps);
 
       $wisskiComponent->set('serviceKey', $wisskiComponentServiceKey);
       $requestParams = [
-        'subdomain' => $component->get('subdomain')->value,
+        'subdomain' => $wisskiComponent->get('subdomain')->value,
         'project' => 'my_project',
-        'userId' => $component->getOwnerId(),
-        'userName' => $component->getOwner()->getDisplayName(),
+        'userId' => $wisskiComponent->getOwnerId(),
+        'username' => $wisskiComponent->getOwner()->getDisplayName(),
         'wisskiServicePassword' => $wisskiComponentServiceKey->get('servicePassword')->value,
         'sqlServicePassword' => $sqlComponentServiceKey->get('servicePassword')->value,
-        'triplestoreServicePassword' => $triplestoreComponentServiceKey,
+        'triplestoreServicePassword' => $triplestoreComponentServiceKey->get('servicePassword')->value,
       ];
       // Create Drupal instance.
       $portainerCreateRequest = $this->sodaScsPortainerServiceActions->buildCreateRequest($requestParams);
@@ -202,7 +220,7 @@ class SodaScsWisskiComponentActions implements SodaScsComponentActionsInterface 
     // Save the component.
     $wisskiComponent->save();
 
-    $wisskiComponentServiceKey->set('scsComponent', [$component->id()]);
+    $wisskiComponentServiceKey->set('scsComponent', [$wisskiComponent->id()]);
     $wisskiComponentServiceKey->save();
 
     return [
@@ -217,8 +235,18 @@ class SodaScsWisskiComponentActions implements SodaScsComponentActionsInterface 
     ];
   }
 
+   /**
+   * Get all WissKI Components.
+   *
+   * @return array
+   *   The result array with the WissKI components.
+   */
+  public function getComponents(): array {
+    return [];
+  }
+
   /**
-   * Retrieves a SODa SCS Component component.
+   * Retrieves a SODa SCS WissKI component.
    *
    * @param \Drupal\soda_scs_manager\Entity\SodaScsComponentInterface $component
    *   The SODa SCS Component component to retrieve.

@@ -1,0 +1,14 @@
+<div>
+  {% if stacksByUser is not empty %}
+    {% for username, stacks in stacksByUser %}
+      <h2>Stacks of User {{ username }}</h2>
+      <div class="d-flex">
+        {% for stack in stacks %}
+          {% include 'stack-card.html.twig' with {stack: stack} %}
+        {% endfor %}
+      </div>
+    {% endfor %}
+  {% else %}
+    <p>No stacks found.</p>
+  {% endif %}
+</div>

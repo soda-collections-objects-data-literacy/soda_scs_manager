@@ -1,12 +1,19 @@
 <?php
-use Drupal\block\Entity\Block;
+
+/**
+ * @file
+ * Functions for the soda_scs_manager module.
+ */
+
+use Drupal\Core\Entity\Display\EntityViewDisplayInterface;
+use Drupal\Core\Entity\EntityInterface;
+use Drupal\Core\Routing\RouteMatchInterface;
 use Drupal\Core\StringTranslation\TranslatableMarkup;
-use \Drupal\system\SystemManager;
 
 /**
  * Implements hook_help().
  */
-function soda_scs_manager_help($route_name, \Drupal\Core\Routing\RouteMatchInterface $route_match) {
+function soda_scs_manager_help($route_name, RouteMatchInterface $route_match) {
   $output = '';
 
   switch ($route_name) {
@@ -27,15 +34,27 @@ function soda_scs_manager_help($route_name, \Drupal\Core\Routing\RouteMatchInter
   return $output;
 }
 
-
 /**
  * Implements hook_theme().
  */
 function soda_scs_manager_theme($existing, $type, $theme, $path) {
   return [
+    // Bundles.
     'bundle_card' => [
       'variables' => ['title' => NULL, 'description' => NULL, 'url' => NULL, 'image_url' => NULL],
     ],
+    // Stacks.
+    'stack_card' => [
+      'variables' => [
+        'stack' => NULL,
+      ],
+    ],
+    'stacks_page' => [
+      'variables' => [
+        'stacksByUser' => NULL,
+      ],
+    ],
+    // Components.
     'component_card' => [
       'variables' => [
         'component' => NULL,
@@ -49,18 +68,21 @@ function soda_scs_manager_theme($existing, $type, $theme, $path) {
     'components_overview_page' => [
       'variables' => [
         'accounts' => NULL,
-        'healthCheck' => NULL,],
+        'healthCheck' => NULL,
+      ],
     ],
     'components_add_page' => [
       'variables' => [
         'accounts' => NULL,
-        'healthCheck' => NULL,],
+        'healthCheck' => NULL,
+      ],
     ],
     'component_status' => [
       'variables' => [
         'component' => NULL,
       ],
     ],
+    // Pages.
     'health_page' => [
       'variables' => ['healthCheck' => NULL],
     ],
@@ -72,28 +94,12 @@ function soda_scs_manager_theme($existing, $type, $theme, $path) {
 }
 
 /**
- * Implements hook_requirements().
- */
-function soda_scs_manager_requirements($phase) {
-  $requirements = [];
-  if ($phase == 'install' || $phase == 'runtime') {
-    $theme_list = \Drupal::service('theme_handler')->listInfo();
-    if (!isset($theme_list['bootstrap5'])) {
-      $requirements['soda_scs_manager_theme'] = [
-          'severity' => SystemManager::REQUIREMENT_ERROR,
-
-      ];
-    }
-  }
-  return $requirements;
-}
-
-/**
  * Implements hook_ENTITY_TYPE_view() for soda_scs_component entities.
  */
-function soda_scs_manager_soda_scs_component_view(array &$build, \Drupal\Core\Entity\EntityInterface $entity, \Drupal\Core\Entity\Display\EntityViewDisplayInterface $display, $view_mode) {
+function soda_scs_manager_soda_scs_component_view(array &$build, EntityInterface $entity, EntityViewDisplayInterface $display, $view_mode) {
   if ($entity->getEntityTypeId() === 'soda_scs_component') {
     // Check if the imageUrl field has a value.
+    /** @var \Drupal\soda_scs_manager\Entity\SodaScsComponentInterface $entity */
     if ($imageUrl = $entity->get('imageUrl')->value) {
       $imageUrl = Drupal::service('file_url_generator')->generateAbsoluteString($imageUrl);
       $build['#attached']['library'][] = 'soda_scs_manager/globalStyling';
@@ -103,12 +109,9 @@ function soda_scs_manager_soda_scs_component_view(array &$build, \Drupal\Core\En
         '#markup' => '<img class="img-thumbnail soda-scs-manager--img--thumbnail" src="' . $imageUrl . '" alt="Image description" />',
         // Ensure proper sanitization of the URL.
         '#allowed_tags' => ['img'],
-        '#weight' => 10, // Adjust the weight as needed.
+      // Adjust the weight as needed.
+        '#weight' => 10,
       ];
     }
   }
 }
-
-/**
- * @todo add status block programmatically.
- */

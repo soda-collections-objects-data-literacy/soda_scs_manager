@@ -12,6 +12,7 @@ use Drupal\Core\Messenger\MessengerInterface;
 use Drupal\Core\StringTranslation\TranslationInterface;
 use Drupal\Core\TypedData\Exception\MissingDataException;
 use Drupal\soda_scs_manager\Entity\SodaScsComponentInterface;
+use Drupal\soda_scs_manager\Entity\SodaScsStackInterface;
 use GuzzleHttp\ClientInterface;
 
 /**
@@ -115,38 +116,43 @@ class SodaScsSqlComponentActions implements SodaScsComponentActionsInterface {
   /**
    * Create SQL.
    *
-   * @param \Drupal\soda_scs_manager\Entity\SodaScsComponentInterface $component
+   * @param \Drupal\soda_scs_manager\Entity\SodaScsStackInterface $stack
    *   The SQL component to create.
    *
    * @return array
    *   The result array with the created component.
    */
-  public function createComponent(SodaScsComponentInterface $component): array {
+  public function createComponent(SodaScsStackInterface $stack): array {
     try {
       // Create a new SODa SCS database component.
       /** @var \Drupal\soda_scs_manager\Entity\SodaScsComponentBundleInterface $bundle */
       $bundle = $this->entityTypeManager->getStorage('soda_scs_component_bundle')->load('sql');
-      $subdomain = $component->get('subdomain')->value;
+      $subdomain = $stack->get('subdomain')->value;
       $sqlComponent = $this->entityTypeManager->getStorage('soda_scs_component')->create(
         [
           'bundle' => 'sql',
           'label' => $subdomain . '.' . $this->settings->get('scsHost') . ' (SQL Database)',
           'subdomain' => $subdomain,
-          'user'  => $component->get('user')->target_id,
+          'user'  => $stack->get('user')->target_id,
           'description' => $bundle->getDescription(),
           'imageUrl' => $bundle->getImageUrl(),
         ]
       );
 
+      $keyProps = [
+        'bundle'  => 'sql',
+        'userId'  => $stack->getOwnerId(),
+      ];
+
       // Create service key if it does not exist.
-      $sqlServiceKeyEntity = $this->sodaScsServiceKeyActions->getServiceKey($sqlComponent) ?? $this->sodaScsServiceKeyActions->createServiceKey($sqlComponent);
+      $sqlServiceKeyEntity = $this->sodaScsServiceKeyActions->getServiceKey($keyProps) ?? $this->sodaScsServiceKeyActions->createServiceKey($keyProps);
 
       /** @var \Drupal\soda_scs_manager\Entity\SodaScsComponentInterface $sqlComponent */
       $sqlComponent->set('serviceKey', $sqlServiceKeyEntity);
 
       // All settings available?
       // Username.
-      $dbUserName = $component->getOwner()->getDisplayName();
+      $dbUserName = $stack->getOwner()->getDisplayName();
       if (!$dbUserName) {
         throw new MissingDataException('User name not found');
       }
@@ -163,7 +169,7 @@ class SodaScsSqlComponentActions implements SodaScsComponentActionsInterface {
         throw new MissingDataException('Database root password setting missing');
       }
 
-      $dbName = $component->get('subdomain')->value;
+      $dbName = $stack->get('subdomain')->value;
       // Check if the database exists.
       $checkDbExistsResult = $this->sodaScsMysqlServiceActions->existService($dbName);
 
@@ -236,6 +242,16 @@ class SodaScsSqlComponentActions implements SodaScsComponentActionsInterface {
         'error' => $e->getMessage(),
       ];
     }
+  }
+
+  /**
+   * Get all SQL Components.
+   *
+   * @return array
+   *   The result array with the SQL components.
+   */
+  public function getComponents(): array {
+    return [];
   }
 
   /**

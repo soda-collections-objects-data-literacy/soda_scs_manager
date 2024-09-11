@@ -8,27 +8,20 @@ use Drupal\Core\Entity\EntityRepositoryInterface;
 use Drupal\Core\Entity\EntityTypeBundleInfoInterface;
 use Drupal\Core\Form\FormStateInterface;
 use Drupal\Core\Url;
-use Drupal\soda_scs_manager\SodaScsComponentActionsInterface;
+use Drupal\soda_scs_manager\SodaScsStackActionsInterface;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 
 /**
- * Provides a form for deleting Soda SCS Component entities.
+ * Provides a form for deleting Soda SCS Stack entities.
  */
-class SodaScsComponentDeleteForm extends ContentEntityDeleteForm {
+class SodaScsStackDeleteForm extends ContentEntityDeleteForm {
 
   /**
    * The Soda SCS API Actions service.
    *
-   * @var \Drupal\soda_scs_manager\SodaScsComponentActionsInterface
+   * @var \Drupal\soda_scs_manager\SodaScsStackActionsInterface
    */
-  protected SodaScsComponentActionsInterface $sodaScsStackActions;
-
-  /**
-   * The Soda SCS API Actions service.
-   *
-   * @var \Drupal\soda_scs_manager\SodaScsComponentActionsInterface
-   */
-  protected SodaScsComponentActionsInterface $sodaScsComponentActions;
+  protected SodaScsStackActionsInterface $sodaScsStackActions;
 
   /**
    * Constructs a new SodaScsStackDeleteForm.
@@ -39,15 +32,15 @@ class SodaScsComponentDeleteForm extends ContentEntityDeleteForm {
    *   The entity type bundle info.
    * @param Drupal\Component\Datetime\TimeInterface $time
    *   The time service.
-   * @param \Drupal\soda_scs_manager\SodaScsComponentActionsInterface $sodaScsComponentActions
+   * @param \Drupal\soda_scs_manager\SodaScsStackActionsInterface $sodaScsStackActions
    *   The Soda SCS API Actions service.
    */
-  public function __construct(EntityRepositoryInterface $entity_repository, EntityTypeBundleInfoInterface $entity_type_bundle_info, TimeInterface $time, SodaScsComponentActionsInterface $sodaScsComponentActions) {
+  public function __construct(EntityRepositoryInterface $entity_repository, EntityTypeBundleInfoInterface $entity_type_bundle_info, TimeInterface $time, SodaScsStackActionsInterface $sodaScsStackActions) {
     parent::__construct($entity_repository, $entity_type_bundle_info, $time);
     $this->entityRepository = $entity_repository;
     $this->entityTypeBundleInfo = $entity_type_bundle_info;
     $this->time = $time;
-    $this->sodaScsComponentActions = $sodaScsComponentActions;
+    $this->sodaScsStackActions = $sodaScsStackActions;
   }
 
   /**
@@ -58,7 +51,7 @@ class SodaScsComponentDeleteForm extends ContentEntityDeleteForm {
       $container->get('entity.repository'),
       $container->get('entity_type.bundle.info'),
       $container->get('datetime.time'),
-      $container->get('soda_scs_manager.component.actions')
+      $container->get('soda_scs_manager.stack.actions')
     );
   }
 
@@ -66,7 +59,7 @@ class SodaScsComponentDeleteForm extends ContentEntityDeleteForm {
    * {@inheritdoc}
    */
   public function getFormId() {
-    return 'soda_scs_manager_component_delete_form';
+    return 'soda_scs_manager_stack_delete_form';
   }
 
   /**
@@ -95,7 +88,7 @@ class SodaScsComponentDeleteForm extends ContentEntityDeleteForm {
     $component = $this->entity;
 
     // Delete the whole stack with database.
-    $deleteComponentResult = $this->sodaScsComponentActions->deleteComponent($component);
+    $deleteComponentResult = $this->sodaScsStackActions->deleteStack($component);
 
     if (!$deleteComponentResult['success']) {
       \Drupal::messenger()->addError($this->t('%message See logs for more information.', [
