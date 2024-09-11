@@ -101,6 +101,7 @@ class SodaScsSqlStackActions implements SodaScsStackActionsInterface {
           'error' => $sqlComponentCreateResult['error'],
         ];
       }
+      $stack->save();
       return [
         'message' => 'Could not create database component.',
         'data' => [
@@ -217,6 +218,7 @@ class SodaScsSqlStackActions implements SodaScsStackActionsInterface {
         'error' => $e->getMessage(),
       ];
     }
+    $stack->delete();
     return [
       'message' => 'Component deleted',
       'data' => [

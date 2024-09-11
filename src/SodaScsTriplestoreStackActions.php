@@ -90,6 +90,7 @@ class SodaScsTriplestoreStackActions implements SodaScsStackActionsInterface {
           'error' => $triplestoreComponentCreateResult['error'],
         ];
       }
+      $stack->save();
       return [
         'message' => $this->t('Created triplestore stack: %message', ['%message' => $triplestoreComponentCreateResult['message']]),
         'data' => [
@@ -98,7 +99,6 @@ class SodaScsTriplestoreStackActions implements SodaScsStackActionsInterface {
         'success' => TRUE,
         'error' => NULL,
       ];
-
     }
     catch (\Exception $e) {
       $this->loggerFactory->get('soda_scs_manager')->error("Triplestore component creation exists with error: @error trace: @trace", [
@@ -186,6 +186,7 @@ class SodaScsTriplestoreStackActions implements SodaScsStackActionsInterface {
           'error' => $triplestoreComponentDeleteResult['error'],
         ];
       }
+      $stack->delete();
       return [
         'message' => 'Deleted triplestore component.',
         'data' => [
