@@ -150,6 +150,7 @@ class SodaScsWisskiComponentActions implements SodaScsComponentActionsInterface 
       $keyProps = [
         'bundle'  => 'wisski',
         'userId'  => $entity->getOwnerId(),
+        'username' => $entity->getOwner()->getDisplayName(),
       ];
       $wisskiComponentServiceKey = $this->sodaScsServiceKeyActions->getServiceKey($keyProps) ?? $this->sodaScsServiceKeyActions->createServiceKey($keyProps);
       $wisskiComponent->set('serviceKey', $wisskiComponentServiceKey);

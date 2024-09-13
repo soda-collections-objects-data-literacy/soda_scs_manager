@@ -119,6 +119,7 @@ class SodaScsTriplestoreComponentActions implements SodaScsComponentActionsInter
       $keyProps = [
         'bundle'  => 'triplestore',
         'userId'    => $entity->getOwnerId(),
+        'username' => $entity->getOwner()->getDisplayName(),
       ];
 
       $triplestoreComponentServiceKey = $this->sodaScsServiceKeyActions->getServiceKey($keyProps) ?? $this->sodaScsServiceKeyActions->createServiceKey($keyProps);

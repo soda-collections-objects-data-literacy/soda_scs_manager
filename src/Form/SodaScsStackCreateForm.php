@@ -149,7 +149,7 @@ class SodaScsStackCreateForm extends ContentEntityForm {
     // We call it stack here.
     /** @var \Drupal\soda_scs_manager\Entity\SodaScsStackInterface $component */
     $stack = $this->entity;
-    $stack->set('type', $this->bundle->id());
+    $stack->set('bundle', $this->bundle->id());
     $stack->set('created', $this->time->getRequestTime());
     $stack->set('updated', $this->time->getRequestTime());
     $stack->set('user', $this->currentUser->getAccount()->id());

@@ -133,7 +133,7 @@ class SodaScsSqlComponentActions implements SodaScsComponentActionsInterface {
           'bundle' => 'sql',
           'label' => $subdomain . '.' . $this->settings->get('scsHost') . ' (SQL Database)',
           'subdomain' => $subdomain,
-          'user'  => $entity->get('user')->target_id,
+          'user'  => $entity->getOwnerId(),
           'description' => $bundle->getDescription(),
           'imageUrl' => $bundle->getImageUrl(),
         ]
@@ -142,6 +142,7 @@ class SodaScsSqlComponentActions implements SodaScsComponentActionsInterface {
       $keyProps = [
         'bundle'  => 'sql',
         'userId'  => $entity->getOwnerId(),
+        'username' => $entity->getOwner()->getDisplayName(),
       ];
 
       // Create service key if it does not exist.

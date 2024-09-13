@@ -140,13 +140,13 @@ class SodaScsStack extends ContentEntityBase implements SodaScsStackInterface {
   /**
    * Set the type of the Soda SCS Stack.
    *
-   * @param string $type
+   * @param string $bundle
    *   The type of the Soda SCS Stack.
    *
    * @return $this
    */
-  public function setBundle($type) {
-    $this->set('bundle', $type);
+  public function setBundle($bundle) {
+    $this->set('bundle', $bundle);
     return $this;
   }
 
