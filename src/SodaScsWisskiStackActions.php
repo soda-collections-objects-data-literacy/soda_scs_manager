@@ -488,7 +488,7 @@ class SodaScsWisskiStackActions implements SodaScsStackActionsInterface {
       $triplestoreComponent = $this->sodaScsStackHelpers->retrieveIncludedComponent($stack, 'triplestore');
       if ($triplestoreComponent) {
         // Delete SQL component.
-        $deletetriplestoreResult = $this->sodaScsSqlComponentActions->deleteComponent($triplestoreComponent);
+        $deletetriplestoreResult = $this->sodaScsTriplestoreComponentActions->deleteComponent($triplestoreComponent);
         // Remove the includedComponent from the stack field includedComponents.
         $this->sodaScsStackHelpers->removeIncludedComponentValue($stack, $triplestoreComponent);
       }

@@ -63,16 +63,16 @@ interface SodaScsStackInterface extends ContentEntityInterface, EntityOwnerInter
    * @return string
    *   The type of the Soda SCS Stack.
    */
-  public function getType();
+  public function getBundle();
 
   /**
-   * Set the type of the Soda SCS Stack.
+   * Set the bundle of the Soda SCS Stack.
    *
-   * @param string $type
-   *   The type of the Soda SCS Stack.
+   * @param string $bundle
+   *   The bundle of the Soda SCS Stack.
    *
    * @return $this
    */
-  public function setType($type);
+  public function setBundle($bundle);
 
 }

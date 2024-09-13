@@ -133,8 +133,8 @@ class SodaScsStack extends ContentEntityBase implements SodaScsStackInterface {
    * @return string
    *   The type of the Soda SCS Stack.
    */
-  public function getType() {
-    return $this->get('type')->value;
+  public function getBundle() {
+    return $this->get('bundle')->value;
   }
 
   /**
@@ -145,8 +145,8 @@ class SodaScsStack extends ContentEntityBase implements SodaScsStackInterface {
    *
    * @return $this
    */
-  public function setType($type) {
-    $this->set('type', $type);
+  public function setBundle($type) {
+    $this->set('bundle', $type);
     return $this;
   }
 
@@ -213,6 +213,10 @@ class SodaScsStack extends ContentEntityBase implements SodaScsStackInterface {
         'weight' => 0,
       ]);
 
+    $fields['langcode'] = BaseFieldDefinition::create('language')
+      ->setLabel(t('Language code'))
+      ->setDescription(t('The node language code.'));
+
     // @todo Insure to have only dangling components as references.
     $fields['includedComponents'] = BaseFieldDefinition::create('entity_reference')
       ->setLabel(new TranslatableMarkup('Included components'))
@@ -220,6 +224,11 @@ class SodaScsStack extends ContentEntityBase implements SodaScsStackInterface {
       ->setSetting('handler', 'default')
       ->setCardinality(FieldStorageDefinitionInterface::CARDINALITY_UNLIMITED)
       ->setDisplayConfigurable('view', TRUE)
+      ->setDisplayOptions('view', [
+        'label' => 'above',
+        'type' => 'entity_reference_label',
+        'weight' => 2,
+      ])
       ->setDisplayConfigurable('form', TRUE);
 
     $fields['subdomain'] = BaseFieldDefinition::create('string')
@@ -247,7 +256,7 @@ class SodaScsStack extends ContentEntityBase implements SodaScsStackInterface {
       $carry[$bundle->id()] = $bundle->label();
       return $carry;
     }, []);
-    $fields['type'] = BaseFieldDefinition::create('list_string')
+    $fields['bundle'] = BaseFieldDefinition::create('list_string')
       ->setLabel(new TranslatableMarkup('Bundle'))
       ->setSetting('allowed_values', $bundle_options)
       ->setCardinality(1)

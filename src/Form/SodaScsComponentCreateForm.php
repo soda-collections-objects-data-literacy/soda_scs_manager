@@ -10,7 +10,8 @@ use Drupal\Core\Entity\EntityRepositoryInterface;
 use Drupal\Core\Entity\EntityTypeBundleInfoInterface;
 use Drupal\Core\Form\FormStateInterface;
 use Drupal\Core\Session\AccountProxyInterface;
-use Drupal\soda_scs_manager\SodaScsStackActions;
+use Drupal\soda_scs_manager\SodaScsComponentActionsInterface;
+use Drupal\soda_scs_manager\SodaScsServiceRequestInterface;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 
 /**
@@ -47,9 +48,16 @@ class SodaScsComponentCreateForm extends ContentEntityForm {
   /**
    * The Soda SCS API Actions service.
    *
-   * @var \Drupal\soda_scs_manager\SodaScsStackActions
+   * @var \Drupal\soda_scs_manager\SodaScsServiceRequestInterface
    */
-  protected SodaScsStackActions $sodaScsStackActions;
+  protected SodaScsServiceRequestInterface $sodaScsDockerRegistryServiceActions;
+
+  /**
+   * The Soda SCS API Actions service.
+   *
+   * @var \Drupal\soda_scs_manager\SodaScsComponentActionsInterface
+   */
+  protected SodaScsComponentActionsInterface $sodaScsComponentActions;
 
   /**
    * Constructs a new SodaScsComponentCreateForm.
@@ -64,7 +72,9 @@ class SodaScsComponentCreateForm extends ContentEntityForm {
    *   The config factory.
    * @param \Drupal\Component\Datetime\TimeInterface $time
    *   The time service.
-   * @param \Drupal\soda_scs_manager\SodaScsStackActions $sodaScsStackActions
+   * @param \Drupal\soda_scs_manager\SodaScsServiceRequestInterface $sodaScsDockerRegistryServiceActions
+   *   The Soda SCS API Actions service.
+   * @param \Drupal\soda_scs_manager\SodaScsComponentActionsInterface $sodaScsComponentActions
    *   The Soda SCS API Actions service.
    */
   public function __construct(
@@ -73,12 +83,14 @@ class SodaScsComponentCreateForm extends ContentEntityForm {
     EntityTypeBundleInfoInterface $entity_type_bundle_info,
     ConfigFactoryInterface $configFactory,
     TimeInterface $time,
-    SodaScsStackActions $sodaScsStackActions,
+    SodaScsServiceRequestInterface $sodaScsDockerRegistryServiceActions,
+    SodaScsComponentActionsInterface $sodaScsComponentActions,
   ) {
     parent::__construct($entity_repository, $entity_type_bundle_info, $time);
     $this->currentUser = $currentUser;
     $this->settings = $configFactory->getEditable('soda_scs_manager.settings');
-    $this->sodaScsStackActions = $sodaScsStackActions;
+    $this->sodaScsDockerRegistryServiceActions = $sodaScsDockerRegistryServiceActions;
+    $this->sodaScsComponentActions = $sodaScsComponentActions;
   }
 
   /**
@@ -91,8 +103,8 @@ class SodaScsComponentCreateForm extends ContentEntityForm {
       $container->get('entity_type.bundle.info'),
       $container->get('config.factory'),
       $container->get('datetime.time'),
+      $container->get('soda_scs_manager.docker_registry_service.actions'),
       $container->get('soda_scs_manager.stack.actions'),
-
     );
   }
 
@@ -122,6 +134,16 @@ class SodaScsComponentCreateForm extends ContentEntityForm {
 
     // Change the title of the page.
     $form['#title'] = $this->t('Create a new @component', ['@component' => $bundle->label()]);
+
+    $form['version'] = [
+      '#type' => 'select',
+      '#title' => $this->t('Version'),
+      '#options' => [
+        'latest' => $this->t('Development version'),
+        'stable' => $this->t('Latest Stable version'),
+      ],
+      '#required' => TRUE,
+    ];
 
     // Change the label of the submit button.
     $form['actions']['submit']['#value'] = $this->t('CREATE COMPONENT');
@@ -155,7 +177,7 @@ class SodaScsComponentCreateForm extends ContentEntityForm {
     $component->set('imageUrl', $bundle->getImageUrl());
 
     // Create external stack.
-    $createComponentResult = $this->sodaScsStackActions->createStack($component);
+    $createComponentResult = $this->sodaScsComponentActions->createComponent($component);
 
     if (!$createComponentResult['success']) {
       $this->messenger()->addMessage($this->t('Cannot create component "@label". See logs for more details.', [

@@ -3,3 +3,8 @@ globalStyling:
   css:
     theme:
       css/style.css: {}
+
+security:
+  version: 1.x
+  js:
+    js/shadowServiceKeys.js: {}

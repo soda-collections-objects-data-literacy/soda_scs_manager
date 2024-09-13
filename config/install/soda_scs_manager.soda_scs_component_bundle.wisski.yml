@@ -3,5 +3,5 @@ status: true
 dependencies: {  }
 id: wisski
 label: WissKI
-description: 'WissKI Instance'
+description: "WissKI (Wissenschaftliche Kommunikationsinfrastruktur - Scientific Communication Infrastructure) is a virtual research environment and linked open data management software. Beneath the fundamental possibilities to create, read, edit and delete content, WissKI offers solutions for all tasks of the research data lifecycle and help users to produce and publish FAIR data. Furthermore, users can create revisions and translations, open the access to the data with a wide range of interfaces and integration options, but also restrict it via detailed rights management. The linked open data is stored in an external triple store, reachable trough own endpoints and therefore is independent from Drupal or WissKI's architecture. The data modelling follows an ontological approach, preferably, but not exclusively according to the CIDOC CRM. As part of the open source content management system Drupal, WissKI provides all the advantages of an constantly maintained and developed webapp. Last but not least, the basic functions of WissKI can be extended with a variety of Drupal modules. This turns WissKI to a full-featured research data management software - suitable for a wide range of application areas."
 imageUrl: 'public://soda_scs_manager/images/wisski.svg'

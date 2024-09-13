@@ -54,22 +54,22 @@ class SodaScsComponentActions implements SodaScsComponentActionsInterface {
    * A stack consists of one or more components.
    * We sort by bundle.
    *
-   * @param \Drupal\soda_scs_manager\Entity\SodaScsStackInterface $stack
+   * @param \Drupal\soda_scs_manager\Entity\SodaScsStackInterface|Drupal\soda_scs_manager\Entity\SodaScsComponentInterface $entity
    *   The SODa SCS Component entity.
    *
    * @return array
    *   The result of the request.
    */
-  public function createComponent(SodaScsStackInterface $stack): array {
-    switch ($stack->getType()) {
+  public function createComponent(SodaScsStackInterface|SodaScsComponentInterface $entity): array {
+    switch ($entity->getBundle()) {
       case 'wisski':
-        return $this->sodaScsWisskiComponentActions->createComponent($stack);
+        return $this->sodaScsWisskiComponentActions->createComponent($entity);
 
       case 'sql':
-        return $this->sodaScsSqlComponentActions->createComponent($stack);
+        return $this->sodaScsSqlComponentActions->createComponent($entity);
 
       case 'triplestore':
-        return $this->sodaScsTriplestoreComponentActions->createComponent($stack);
+        return $this->sodaScsTriplestoreComponentActions->createComponent($entity);
 
       default:
         return [];
@@ -132,6 +132,8 @@ class SodaScsComponentActions implements SodaScsComponentActionsInterface {
    *
    * @return array
    *   The result of the request.
+   *
+   * @todo Check if referenced components are deleted as well.
    */
   public function deleteComponent(SodaScsComponentInterface $component): array {
     // @todo slim down if there is no more logic

@@ -33,7 +33,7 @@ class SodaScsManagerServiceController extends ControllerBase {
    */
   public static function create(ContainerInterface $container) {
     return new static(
-      $container->get('soda_scs_manager.api.actions'),
+      $container->get('soda_scs_manager.stack.actions'),
       $container->get('entity_type.manager')
     );
   }
@@ -41,15 +41,15 @@ class SodaScsManagerServiceController extends ControllerBase {
   /**
    * Generate a URL based on the component ID.
    *
-   * @param \Drupal\soda_scs_manager\Entity\SodaScsComponentInterface $component
-   *   The SODa SCS component.
+   * @param Drupal\soda_scs_manager\Entity\SodaScsComponentInterface $soda_scs_component
+   *   The SODa SCS Component entity.
    *
    * @return \Drupal\Core\Routing\TrustedRedirectResponse
    *   The redirect response.
    */
-  public function generateUrl($component): TrustedRedirectResponse {
+  public function generateUrl($soda_scs_component): TrustedRedirectResponse {
     $host = $this->config('soda_scs_manager.settings')->get('scsHost');
-    $subdomain = $component->get('subdomain')->value;
+    $subdomain = $soda_scs_component->get('subdomain')->value;
 
     // Generate the URL.
     $url = 'https://' . $subdomain . '.' . $host;

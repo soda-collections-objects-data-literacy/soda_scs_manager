@@ -7,6 +7,17 @@ services:
       - '@messenger'
       - '@string_translation'
 
+  # Docker registry actions
+
+  soda_scs_manager.docker_registry_service.actions:
+    class: Drupal\soda_scs_manager\SodaScsDockerRegistryServiceActions
+    arguments:
+      - '@config.factory'
+      - '@http_client'
+      - '@logger.factory'
+      - '@messenger'
+      - '@string_translation'
+
   # Component actions
   soda_scs_manager.component.actions:
     class: Drupal\soda_scs_manager\SodaScsComponentActions

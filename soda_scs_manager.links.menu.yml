@@ -1,10 +1,20 @@
-
-soda_scs_manager.admin:
+soda_scs_manager.bundle.admin:
   title: 'SODa SCS Component Bundles'
   description: 'Manage SODa SCS Component Bundles'
   parent: system.admin_structure
   route_name: entity.soda_scs_component_bundle.collection
   weight: 100
+  requirements:
+    _permission: 'soda scs manager admin'
+
+soda_scs_manager.service_key.admin:
+  title: 'SODa SCS Service Keys'
+  description: 'Manage SODa SCS Service Keys'
+  parent: system.admin_structure
+  route_name: entity.soda_scs_service_key.collection
+  weight: 100
+  requirements:
+    _permission: 'soda scs manager user'
 
 soda_scs_manager.users_page:
     title: 'SODa SCS manager users page'

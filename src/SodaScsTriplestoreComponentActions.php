@@ -91,26 +91,26 @@ class SodaScsTriplestoreComponentActions implements SodaScsComponentActionsInter
   /**
    * Create Triplestore Component.
    *
-   * @param \Drupal\soda_scs_manager\Entity\SodaScsStackInterface $stack
-   *   The SODa SCS stack entity.
+   * @param \Drupal\soda_scs_manager\Entity\SodaScsStackInterface|\Drupal\soda_scs_manager\Entity\SodaScsComponentInterface $entity
+   *   The SODa SCS entity.
    *
    * @return array
    *   The created component.
    */
-  public function createComponent(SodaScsStackInterface $stack): array {
+  public function createComponent(SodaScsStackInterface|SodaScsComponentInterface $entity): array {
     try {
 
       // Create Triplestore component.
       /** @var \Drupal\soda_scs_manager\Entity\SodaScsComponentBundleInterface $bundle */
       $bundle = $this->entityTypeManager->getStorage('soda_scs_component_bundle')->load('triplestore');
-      $subdomain = $stack->get('subdomain')->value;
+      $subdomain = $entity->get('subdomain')->value;
       /** @var \Drupal\soda_scs_manager\Entity\SodaScsComponentInterface $triplestoreComponent */
       $triplestoreComponent = $this->entityTypeManager->getStorage('soda_scs_component')->create(
         [
           'bundle' => 'triplestore',
           'label' => $subdomain . '.' . $this->settings->get('scsHost') . ' (Triplestore)',
           'subdomain' => $subdomain,
-          'user'  => $stack->getOwner(),
+          'user'  => $entity->getOwner(),
           'description' => $bundle->getDescription(),
           'imageUrl' => $bundle->getImageUrl(),
         ]
@@ -118,7 +118,7 @@ class SodaScsTriplestoreComponentActions implements SodaScsComponentActionsInter
       // Create service key if it does not exist.
       $keyProps = [
         'bundle'  => 'triplestore',
-        'userId'    => $stack->getOwnerId(),
+        'userId'    => $entity->getOwnerId(),
       ];
 
       $triplestoreComponentServiceKey = $this->sodaScsServiceKeyActions->getServiceKey($keyProps) ?? $this->sodaScsServiceKeyActions->createServiceKey($keyProps);
@@ -306,7 +306,7 @@ class SodaScsTriplestoreComponentActions implements SodaScsComponentActionsInter
     // Save the component.
     $triplestoreComponent->save();
 
-    $triplestoreComponentServiceKey->set('scsComponent', [$triplestoreComponent->id()]);
+    $triplestoreComponentServiceKey->scsComponent[] = $triplestoreComponent->id();
     $triplestoreComponentServiceKey->save();
 
     return [

@@ -13,13 +13,13 @@ interface SodaScsComponentActionsInterface {
   /**
    * Create SODa SCS Component.
    *
-   * @param \Drupal\soda_scs_manager\Entity\SodaScsStackInterface $component
-   *   The SODa SCS Component. Components are always part of a stack.
+   * @param \Drupal\soda_scs_manager\Entity\SodaScsStackInterface|\Drupal\soda_scs_manager\Entity\SodaScsComponentInterface $entity
+   *   The SODa SCS entity.
    *
    * @return array
    *   Result information with the created component.
    */
-  public function createComponent(SodaScsStackInterface $stack): array;
+  public function createComponent(SodaScsStackInterface|SodaScsComponentInterface $entity): array;
 
   /**
    * Get all SODa SCS Component.

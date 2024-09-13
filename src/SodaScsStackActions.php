@@ -60,7 +60,7 @@ class SodaScsStackActions implements SodaScsStackActionsInterface {
    *   The result of the request.
    */
   public function createStack(SodaScsStackInterface $stack): array {
-    switch ($stack->getType()) {
+    switch ($stack->getBundle()) {
       case 'wisski':
         return $this->sodaScsWisskiStackActions->createStack($stack);
 
@@ -144,7 +144,7 @@ class SodaScsStackActions implements SodaScsStackActionsInterface {
    */
   public function deleteStack(SodaScsStackInterface $stack): array {
     // @todo slim down if there is no more logic
-    switch ($stack->getType()) {
+    switch ($stack->getBundle()) {
       case 'wisski':
         return $this->sodaScsWisskiStackActions->deleteStack($stack);
 
@@ -156,7 +156,7 @@ class SodaScsStackActions implements SodaScsStackActionsInterface {
 
       default:
         return [
-          'message' => $this->t('Could not delete stack of type %bundle.'), ['%bundle' => $stack->getType()],
+          'message' => $this->t('Could not delete stack of type %bundle.'), ['%bundle' => $stack->getBundle()],
           'data' => [],
           'success' => FALSE,
           'error' => 'Component type not supported for deletion.',

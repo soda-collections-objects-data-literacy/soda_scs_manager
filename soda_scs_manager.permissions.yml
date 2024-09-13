@@ -3,6 +3,6 @@ soda scs manager admin:
   description: 'Administer SODa SCS Manager Settings and Accounts'
   restrict access: true
 
-soda scs manager editor:
-  title: 'Edit entities and bundles'
-  description: 'Edit SODa SCS Manager entities and bundles'
+soda scs manager user:
+  title: 'SODa SCS Manager user'
+  description: 'Create and edit SODa SCS Stacks and Components'

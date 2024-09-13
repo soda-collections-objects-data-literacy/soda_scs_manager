@@ -24,7 +24,7 @@ entity.soda_scs_component.service_link:
   weight: 100
   options:
     parameters:
-      component: { type: 'entity:component' }
+      soda_scs_component: { type: soda_scs_component }
     attributes:
       target: '_blank'
       class: ['soda-scs-manager--service-link']

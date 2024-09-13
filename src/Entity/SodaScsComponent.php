@@ -307,11 +307,6 @@ class SodaScsComponent extends ContentEntityBase implements SodaScsComponentInte
         'label' => 'above',
         'region' => 'hidden',
         'weight' => 3,
-        'settings' => [
-          'rows' => 10,
-          'cols' => 100,
-          'format' => 'full_html',
-        ],
       ])
       ->setDisplayConfigurable('view', FALSE)
       ->setDisplayOptions('view', [
@@ -344,12 +339,13 @@ class SodaScsComponent extends ContentEntityBase implements SodaScsComponentInte
       ->setRequired(FALSE)
       ->setReadOnly(TRUE)
       ->setTranslatable(FALSE)
-      ->setDisplayConfigurable('view', TRUE)
+      ->setDisplayConfigurable('view', FALSE)
       ->setDisplayOptions('view', [
         'label' => 'hidden',
         'type' => 'image',
         'weight' => 10,
-      ]);
+      ])
+      ->setDisplayConfigurable('form', FALSE);
 
     $fields['label'] = BaseFieldDefinition::create('string')
       ->setLabel(new TranslatableMarkup('Label'))
@@ -375,9 +371,6 @@ class SodaScsComponent extends ContentEntityBase implements SodaScsComponentInte
       ->setDisplayOptions('form', [
         'type' => 'string_textfield',
         'weight' => 1,
-        'settings' => [
-          'region' => 'header',
-        ],
       ])
       ->setDisplayOptions('view', [
         'label' => 'above',
@@ -385,25 +378,16 @@ class SodaScsComponent extends ContentEntityBase implements SodaScsComponentInte
         'weight' => 1,
       ]);
 
-    $notesRegion = self::isAdmin() ? ['region' => 'body', 'subregion' => 'Column 2'] : 'default';
     $fields['notes'] = BaseFieldDefinition::create('string_long')
       ->setLabel(new TranslatableMarkup('Notes'))
       ->setDescription(new TranslatableMarkup('Notes about the SODa SCS Component.'))
       ->setRequired(FALSE)
       ->setReadOnly(FALSE)
       ->setTranslatable(TRUE)
-      ->setSettings([
-        'default_value' => '',
-    // No HTML.
-        'text_processing' => FALSE,
-      ])
       ->setDisplayConfigurable('view', FALSE)
       ->setDisplayOptions('form', [
         'type' => 'string_textfield',
         'weight' => 10,
-        'region' => 'body',
-        'sub_region' => 'Column 2',
-        'settings' => $notesRegion,
       ])
       ->setDisplayOptions('view', [
         'label' => 'above',
@@ -419,13 +403,14 @@ class SodaScsComponent extends ContentEntityBase implements SodaScsComponentInte
       ->setRequired(TRUE)
       ->setReadOnly(FALSE)
       ->setTranslatable(FALSE)
+      ->setCardinality(1)
+      ->setDisplayConfigurable('form', FALSE)
       ->setDisplayConfigurable('view', FALSE)
       ->setDisplayOptions('view', [
         'label' => 'above',
-        'type' => 'entity_reference_label',
-        'weight' => 6,
-      ])
-      ->setDisplayConfigurable('form', FALSE);
+        'type' => 'string',
+        'weight' => 5,
+      ]);
 
     $fields['status'] = BaseFieldDefinition::create('boolean')
       ->setLabel(new TranslatableMarkup('Status'))
@@ -453,7 +438,7 @@ class SodaScsComponent extends ContentEntityBase implements SodaScsComponentInte
         'weight' => 8,
       ]);
 
-    $userRefHidden = self::isAdmin() ? ['region' => 'body', 'subregion' => 'Column 1'] : 'hidden';
+    $userRefHidden = self::isAdmin() ? ['region' => 'body'] : ['region' => 'hidden'];
     $fields['user'] = BaseFieldDefinition::create('entity_reference')
       ->setLabel(new TranslatableMarkup('Owned by'))
       ->setDescription(new TranslatableMarkup('The user ID of the author of the SODa SCS Component.'))
@@ -468,8 +453,6 @@ class SodaScsComponent extends ContentEntityBase implements SodaScsComponentInte
       ->setDisplayOptions('form', [
         'type' => 'options_buttons',
         'weight' => 9,
-        'region' => 'body',
-        'sub_region' => 'Column 1',
         'settings' => $userRefHidden,
       ])
       ->setDisplayConfigurable('view', FALSE)
@@ -477,8 +460,7 @@ class SodaScsComponent extends ContentEntityBase implements SodaScsComponentInte
         'label' => 'above',
         'type' => 'author',
         'weight' => 20,
-      ])
-      ->setDisplayConfigurable('form', FALSE);
+      ]);
 
     $fields['uuid'] = BaseFieldDefinition::create('uuid')
       ->setLabel(new TranslatableMarkup('UUID'))
@@ -486,6 +468,10 @@ class SodaScsComponent extends ContentEntityBase implements SodaScsComponentInte
       ->setRequired(TRUE)
       ->setReadOnly(TRUE)
       ->setTranslatable(FALSE);
+
+    $fields['langcode'] = BaseFieldDefinition::create('language')
+      ->setLabel(t('Language code'))
+      ->setDescription(t('The node language code.'));
 
     return $fields;
   }
