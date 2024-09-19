@@ -3,6 +3,7 @@
 namespace Drupal\soda_scs_manager\Entity;
 
 use Drupal\Core\Config\Entity\ConfigEntityBundleBase;
+use Drupal\soda_scs_manager\Entity\SodaScsComponentBundleInterface;
 
 /**
  * Defines the SODa SCS Component Bundle entity.

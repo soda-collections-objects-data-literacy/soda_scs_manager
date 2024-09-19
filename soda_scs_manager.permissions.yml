@@ -6,3 +6,16 @@ soda scs manager admin:
 soda scs manager user:
   title: 'SODa SCS Manager user'
   description: 'Create and edit SODa SCS Stacks and Components'
+
+administer soda scs component types:
+  title: 'Administer SODa SCS Component types'
+  description: 'Maintain the types SODa SCS Component entity.'
+  restrict access: true
+view soda scs component:
+  title: 'View SODa SCS Component'
+edit soda scs component:
+  title: 'Edit SODa SCS Component'
+delete soda scs component:
+  title: 'Delete SODa SCS Component'
+create soda scs component:
+  title: 'Create SODa SCS Component'

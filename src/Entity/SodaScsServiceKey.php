@@ -7,6 +7,7 @@ use Drupal\Core\Entity\EntityTypeInterface;
 use Drupal\Core\Field\BaseFieldDefinition;
 use Drupal\Core\Field\FieldStorageDefinitionInterface;
 use Drupal\Core\StringTranslation\TranslatableMarkup;
+use Drupal\soda_scs_manager\Entity\SodaScsServiceKeyInterface;
 use Drupal\user\EntityOwnerTrait;
 use Drupal\user\UserInterface;
 

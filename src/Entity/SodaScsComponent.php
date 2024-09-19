@@ -8,6 +8,7 @@ use Drupal\Core\Entity\EntityTypeInterface;
 use Drupal\Core\Field\BaseFieldDefinition;
 use Drupal\Core\Field\FieldStorageDefinitionInterface;
 use Drupal\Core\StringTranslation\TranslatableMarkup;
+use Drupal\soda_scs_manager\Entity\SodaScsComponentInterface;
 use Drupal\user\EntityOwnerTrait;
 use Drupal\user\UserInterface;
 
@@ -26,7 +27,7 @@ use Drupal\user\UserInterface;
  *       "edit" = "Drupal\soda_scs_manager\Form\SodaScsComponentEditForm",
  *       "delete" = "\Drupal\soda_scs_manager\Form\SodaScsComponentDeleteForm",
  *     },
- *     "access" = "Drupal\Core\Entity\EntityAccessControlHandler",
+ *     "access" = "Drupal\soda_scs_manager\SodaScsComponentAccessControlHandler",
  *   },
  *   bundle_entity_type = "soda_scs_component_bundle",
  *   base_table = "soda_scs_component",
