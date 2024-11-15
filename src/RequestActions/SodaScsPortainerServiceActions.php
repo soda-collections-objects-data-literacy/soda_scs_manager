@@ -281,7 +281,7 @@ class SodaScsPortainerServiceActions implements SodaScsServiceRequestInterface {
       ],
       [
         "name" => "TS_READ_URL",
-        "value" => 'https://' . $this->settings->get('tsHost') . '/repositories/' . $requestParams['subdomain'],
+        "value" => 'https://' . $this->settings->get('triplestore')['openGdpSettings']['host'] . '/repositories/' . $requestParams['subdomain'],
       ],
       [
         "name" => "TS_REPOSITORY",
@@ -293,7 +293,7 @@ class SodaScsPortainerServiceActions implements SodaScsServiceRequestInterface {
       ],
       [
         "name" => "TS_WRITE_URL",
-        "value" => 'https://' . $this->settings->get('tsHost') . '/repositories/' . $requestParams['subdomain'] . '/statements',
+        "value" => 'https://' . $this->settings->get('triplestore')['openGdpSettings']['host'] . '/repositories/' . $requestParams['subdomain'] . '/statements',
       ],
       [
         "name" => "WISSKI_BASE_IMAGE_VERSION",
