@@ -5,7 +5,7 @@ namespace Drupal\soda_scs_manager\Controller;
 use Drupal\Core\Controller\ControllerBase;
 use Drupal\Core\Entity\EntityTypeManagerInterface;
 use Drupal\Core\Routing\TrustedRedirectResponse;
-use Drupal\soda_scs_manager\SodaScsStackActionsInterface;
+use Drupal\soda_scs_manager\StackActions\SodaScsStackActionsInterface;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 
 /**

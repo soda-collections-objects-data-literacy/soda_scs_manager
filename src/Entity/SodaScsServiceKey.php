@@ -7,7 +7,6 @@ use Drupal\Core\Entity\EntityTypeInterface;
 use Drupal\Core\Field\BaseFieldDefinition;
 use Drupal\Core\Field\FieldStorageDefinitionInterface;
 use Drupal\Core\StringTranslation\TranslatableMarkup;
-use Drupal\soda_scs_manager\Entity\SodaScsServiceKeyInterface;
 use Drupal\user\EntityOwnerTrait;
 use Drupal\user\UserInterface;
 
@@ -20,7 +19,7 @@ use Drupal\user\UserInterface;
  *   handlers = {
  *     "storage" = "Drupal\Core\Entity\Sql\SqlContentEntityStorage",
  *     "view_builder" = "Drupal\Core\Entity\EntityViewBuilder",
- *     "list_builder" = "Drupal\soda_scs_manager\SodaScsServiceKeyListBuilder",
+ *     "list_builder" = "Drupal\soda_scs_manager\ListBuilder\SodaScsServiceKeyListBuilder",
  *     "views_data" = "Drupal\views\EntityViewsData",
  *     "translation" = "Drupal\content_translation\ContentTranslationHandler",
  *     "access" = "Drupal\Core\Entity\EntityAccessControlHandler",
@@ -34,8 +33,17 @@ use Drupal\user\UserInterface;
  *       "html" = "Drupal\Core\Entity\Routing\DefaultHtmlRouteProvider",
  *     },
  *   },
+ *   links = {
+ *     "canonical" = "/soda-scs-manager/service-key/{soda_scs_service_key}",
+ *     "add-form" = "/soda-scs-manager/service-key/add",
+ *     "edit-form" = "/soda-scs-manager/service-key/{soda_scs_service_key}/edit",
+ *     "delete-form" = "/soda-scs-manager/service-key/{soda_scs_service_key}/delete",
+ *     "collection" = "/soda-scs-manager/service-key/list",
+ *   },
  *   base_table = "soda_scs_service_key",
  *   data_table = "soda_scs_service_key_field_data",
+ *   field_ui_base_route = "entity.soda_scs_service_key.edit_form",
+ *   fieldable = TRUE,
  *   entity_keys = {
  *     "id" = "id",
  *     "uuid" = "uuid",

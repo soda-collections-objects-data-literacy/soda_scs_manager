@@ -2,7 +2,7 @@
 services:
   # Helpers
   soda_scs_manager.stack.helpers:
-    class: Drupal\soda_scs_manager\SodaScsStackHelpers
+    class: Drupal\soda_scs_manager\Helpers\SodaScsStackHelpers
     arguments:
       - '@messenger'
       - '@string_translation'
@@ -10,7 +10,7 @@ services:
   # Docker registry actions
 
   soda_scs_manager.docker_registry_service.actions:
-    class: Drupal\soda_scs_manager\SodaScsDockerRegistryServiceActions
+    class: Drupal\soda_scs_manager\RequestActions\SodaScsDockerRegistryServiceActions
     arguments:
       - '@config.factory'
       - '@http_client'
@@ -20,7 +20,7 @@ services:
 
   # Component actions
   soda_scs_manager.component.actions:
-    class: Drupal\soda_scs_manager\SodaScsComponentActions
+    class: Drupal\soda_scs_manager\ComponentActions\SodaScsComponentActions
     arguments:
       - '@soda_scs_manager.sql_component.actions'
       - '@soda_scs_manager.triplestore_component.actions'
@@ -28,7 +28,7 @@ services:
       - '@string_translation'
 
   soda_scs_manager.sql_component.actions:
-    class: Drupal\soda_scs_manager\SodaScsSqlComponentActions
+    class: Drupal\soda_scs_manager\ComponentActions\SodaScsSqlComponentActions
     arguments:
       - '@config.factory'
       - '@database'
@@ -41,7 +41,7 @@ services:
       - '@string_translation'
 
   soda_scs_manager.triplestore_component.actions:
-    class: Drupal\soda_scs_manager\SodaScsTriplestoreComponentActions
+    class: Drupal\soda_scs_manager\ComponentActions\SodaScsTriplestoreComponentActions
     arguments:
       - '@config.factory'
       - '@entity_type.manager'
@@ -52,7 +52,7 @@ services:
       - '@string_translation'
 
   soda_scs_manager.wisski_component.actions:
-    class: Drupal\soda_scs_manager\SodaScsWisskiComponentActions
+    class: Drupal\soda_scs_manager\ComponentActions\SodaScsWisskiComponentActions
     arguments:
       - '@config.factory'
       - '@database'
@@ -68,13 +68,13 @@ services:
 
   # Service key actions
   soda_scs_manager.service_key.actions:
-    class: Drupal\soda_scs_manager\SodaScsServiceKeyActions
+    class: Drupal\soda_scs_manager\ServiceKeyActions\SodaScsServiceKeyActions
     arguments:
       - '@entity_type.manager'
 
   # Service actions
   soda_scs_manager.mysql_service.actions:
-    class: Drupal\soda_scs_manager\SodaScsMysqlServiceActions
+    class: Drupal\soda_scs_manager\ServiceActions\SodaScsMysqlServiceActions
     arguments:
       - '@config.factory'
       - '@database'
@@ -84,7 +84,7 @@ services:
       - '@string_translation'
 
   soda_scs_manager.opengdp_service.actions:
-    class: Drupal\soda_scs_manager\SodaScsOpenGdpServiceActions
+    class: Drupal\soda_scs_manager\RequestActions\SodaScsOpenGdpServiceActions
     arguments:
       - '@config.factory'
       - '@http_client'
@@ -93,7 +93,7 @@ services:
       - '@string_translation'
 
   soda_scs_manager.portainer_service.actions:
-      class: Drupal\soda_scs_manager\SodaScsPortainerServiceActions
+      class: Drupal\soda_scs_manager\RequestActions\SodaScsPortainerServiceActions
       arguments:
         - '@config.factory'
         - '@database'
@@ -110,7 +110,7 @@ services:
 
 # Stack actions
   soda_scs_manager.stack.actions:
-    class: Drupal\soda_scs_manager\SodaScsStackActions
+    class: Drupal\soda_scs_manager\StackActions\SodaScsStackActions
     arguments:
       - '@soda_scs_manager.sql_stack.actions'
       - '@soda_scs_manager.triplestore_stack.actions'
@@ -118,7 +118,7 @@ services:
       - '@string_translation'
 
   soda_scs_manager.sql_stack.actions:
-    class: Drupal\soda_scs_manager\SodaScsSqlStackActions
+    class: Drupal\soda_scs_manager\StackActions\SodaScsSqlStackActions
     arguments:
       - '@logger.factory'
       - '@messenger'
@@ -127,7 +127,7 @@ services:
       - '@string_translation'
 
   soda_scs_manager.triplestore_stack.actions:
-    class: Drupal\soda_scs_manager\SodaScsTriplestoreStackActions
+    class: Drupal\soda_scs_manager\StackActions\SodaScsTriplestoreStackActions
     arguments:
       - '@logger.factory'
       - '@messenger'
@@ -136,7 +136,7 @@ services:
       - '@string_translation'
 
   soda_scs_manager.wisski_stack.actions:
-    class: Drupal\soda_scs_manager\SodaScsWisskiStackActions
+    class: Drupal\soda_scs_manager\StackActions\SodaScsWisskiStackActions
     arguments:
       - '@config.factory'
       - '@database'

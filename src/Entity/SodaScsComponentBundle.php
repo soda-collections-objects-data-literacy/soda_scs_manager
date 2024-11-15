@@ -15,7 +15,7 @@ use Drupal\soda_scs_manager\Entity\SodaScsComponentBundleInterface;
  *   label_singular = @Translation("SODa SCS Component Bundle"),
  *   label_plural = @Translation("SODa SCS Component Bundles"),
  *   handlers = {
- *     "list_builder" = "Drupal\soda_scs_manager\SodaScsComponentBundleListBuilder",
+ *     "list_builder" = "Drupal\soda_scs_manager\ListBuilder\SodaScsComponentBundleListBuilder",
  *     "view_builder" = "Drupal\Core\Entity\EntityViewBuilder",
  *     "form" = {
  *       "default" = "Drupal\soda_scs_manager\Form\SodaScsComponentBundleForm",
@@ -52,55 +52,6 @@ use Drupal\soda_scs_manager\Entity\SodaScsComponentBundleInterface;
  * )
  */
 class SodaScsComponentBundle extends ConfigEntityBundleBase implements SodaScsComponentBundleInterface {
-
-  /**
-   * The description of the ComponentBundle.
-   *
-   * @var string
-   */
-  protected $description;
-
-  /**
-   * The ComponentBundle ID.
-   *
-   * @var string
-   */
-  protected $id;
-
-  /**
-   * The Image of the ComponentBundle.
-   *
-   * @var string
-   */
-  protected $imageUrl;
-
-  /**
-   * The default revision of the ComponentBundle.
-   *
-   * @var bool
-   */
-  protected $isDefaultRevision;
-
-  /**
-   * The ComponentBundle label.
-   *
-   * @var string
-   */
-  protected $label;
-
-  /**
-   * The options of the ComponentBundle.
-   *
-   * @var string
-   */
-  protected $optionsUrl;
-
-  /**
-   * The uuid of the ComponentBundle.
-   *
-   * @var string
-   */
-  protected $uuid;
 
   /**
    * {@inheritdoc}

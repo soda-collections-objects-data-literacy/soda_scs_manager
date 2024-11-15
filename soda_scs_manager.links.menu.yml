@@ -16,6 +16,15 @@ entity.soda_scs_component.collection:
   requirements:
     _permission: 'soda scs manager admin'
 
+entity.soda_scs_stack.collection:
+  title: 'SODa SCS Stacks'
+  description: 'Manage SODa SCS Stacks'
+  parent: system.admin_structure
+  route_name: entity.soda_scs_stack.collection
+  weight: 100
+  requirements:
+    _permission: 'soda scs manager admin'
+
 soda_scs_manager.service_key.admin:
   title: 'SODa SCS Service Keys'
   description: 'Manage SODa SCS Service Keys'

@@ -8,3 +8,12 @@ security:
   version: 1.x
   js:
     js/shadowServiceKeys.js: {}
+  dependencies:
+    - drupal/core
+    - drupal/once
+    - drupal/jquery
+
+clipboardjs:
+  version: 1.x
+  js:
+    /libraries/clipboardjs/dist/clipboard.min.js: {}

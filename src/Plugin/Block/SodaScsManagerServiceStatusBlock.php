@@ -5,8 +5,8 @@ namespace Drupal\soda_scs_manager\Plugin\Block;
 use Drupal\Core\Block\BlockBase;
 use Drupal\Core\Block\BlockPluginInterface;
 use Drupal\Core\Plugin\ContainerFactoryPluginInterface;
-use Symfony\Component\DependencyInjection\ContainerInterface;
 use GuzzleHttp\ClientInterface;
+use Symfony\Component\DependencyInjection\ContainerInterface;
 
 /**
  * Provides a 'Service Status' Block.
@@ -59,8 +59,6 @@ class SodaScsManagerServiceStatusBlock extends BlockBase implements BlockPluginI
    * {@inheritdoc}
    */
   public function build() {
-    #$status = $this->checkServiceStatus();
-    $status = TRUE;
     return [
       '#theme' => 'component_status',
       '#attached' => [

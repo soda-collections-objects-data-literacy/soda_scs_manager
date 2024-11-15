@@ -8,7 +8,7 @@ use Drupal\Core\Entity\EntityRepositoryInterface;
 use Drupal\Core\Entity\EntityTypeBundleInfoInterface;
 use Drupal\Core\Form\FormStateInterface;
 use Drupal\Core\Url;
-use Drupal\soda_scs_manager\SodaScsComponentActionsInterface;
+use Drupal\soda_scs_manager\ComponentActions\SodaScsComponentActionsInterface;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 
 /**

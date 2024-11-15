@@ -7,7 +7,6 @@ use Drupal\Core\Entity\EntityTypeInterface;
 use Drupal\Core\Field\BaseFieldDefinition;
 use Drupal\Core\Field\FieldStorageDefinitionInterface;
 use Drupal\Core\StringTranslation\TranslatableMarkup;
-use Drupal\soda_scs_manager\Entity\SodaScsStackInterface;
 use Drupal\user\EntityOwnerTrait;
 use Drupal\user\UserInterface;
 
@@ -20,7 +19,7 @@ use Drupal\user\UserInterface;
  *   handlers = {
  *     "storage" = "Drupal\Core\Entity\Sql\SqlContentEntityStorage",
  *     "view_builder" = "Drupal\Core\Entity\EntityViewBuilder",
- *     "list_builder" = "Drupal\Core\Entity\EntityListBuilder",
+ *     "list_builder" = "Drupal\soda_scs_manager\ListBuilder\SodaScsStackListBuilder",
  *     "views_data" = "Drupal\views\EntityViewsData",
  *     "translation" = "Drupal\content_translation\ContentTranslationHandler",
  *     "access" = "Drupal\Core\Entity\EntityAccessControlHandler",
@@ -43,6 +42,8 @@ use Drupal\user\UserInterface;
  *   },
  *   base_table = "soda_scs_stack",
  *   data_table = "soda_scs_stack_field_data",
+ *   field_ui_base_route = "entity.soda_scs_component_bundle.edit_form",
+ *   fieldable = TRUE,
  *   entity_keys = {
  *     "id" = "id",
  *     "uuid" = "uuid",
@@ -157,6 +158,18 @@ class SodaScsStack extends ContentEntityBase implements SodaScsStackInterface {
   public static function baseFieldDefinitions(EntityTypeInterface $entity_type) {
     $fields = parent::baseFieldDefinitions($entity_type);
 
+    $bundle_options = array_reduce(SodaScsComponentBundle::loadMultiple(), function ($carry, $bundle) {
+      $carry[$bundle->id()] = $bundle->label();
+      return $carry;
+    }, []);
+    $fields['bundle'] = BaseFieldDefinition::create('list_string')
+      ->setLabel(new TranslatableMarkup('Bundle'))
+      ->setSetting('allowed_values', $bundle_options)
+      ->setCardinality(1)
+      ->setRequired(TRUE)
+      ->setReadOnly(TRUE)
+      ->setDisplayConfigurable('view', TRUE);
+
     $fields['created'] = BaseFieldDefinition::create('created')
       ->setLabel(new TranslatableMarkup('Created'))
       ->setDescription(new TranslatableMarkup('The time that the SODa SCS Component was created.'))
@@ -196,11 +209,48 @@ class SodaScsStack extends ContentEntityBase implements SodaScsStackInterface {
         'weight' => 3,
       ]);
 
+    $fields['flavours'] = BaseFieldDefinition::create('list_string')
+      ->setLabel(new TranslatableMarkup('Flavour'))
+      ->setDescription(new TranslatableMarkup('The flavour of the SODa SCS Component.'))
+      ->setDisplayConfigurable('form', FALSE)
+      ->setDisplayConfigurable('view', FALSE)
+      ->setDisplayOptions('form', [
+        'type' => 'options_buttons',
+        'weight' => 4,
+      ])
+      ->setCardinality(FieldStorageDefinitionInterface::CARDINALITY_UNLIMITED)
+      ->setDisplayOptions('view', [
+        'label' => 'above',
+        'type' => 'checklist',
+        'weight' => 4,
+      ])
+      ->setSetting('allowed_values', [
+        'sweet' => 'Add default data model',
+        'fruity' => '2D',
+        'malty' => '3D',
+        'woody' => 'Provenance',
+        'herbal' => 'Conservation and Restoration',
+      ]);
+
     $fields['id'] = BaseFieldDefinition::create('integer')
       ->setLabel(new TranslatableMarkup('ID'))
       ->setDescription(new TranslatableMarkup('The ID of the SCS component entity.'))
       ->setReadOnly(TRUE)
       ->setDisplayConfigurable('view', TRUE);
+
+    $fields['imageUrl'] = BaseFieldDefinition::create('string')
+      ->setLabel(new TranslatableMarkup('Image'))
+      ->setDescription(new TranslatableMarkup('The image of the SODa SCS Stack.'))
+      ->setRequired(FALSE)
+      ->setReadOnly(TRUE)
+      ->setTranslatable(FALSE)
+      ->setDisplayConfigurable('form', FALSE)
+      ->setDisplayConfigurable('view', FALSE)
+      ->setDisplayOptions('view', [
+        'label' => 'hidden',
+        'type' => 'image',
+        'weight' => 0,
+      ]);
 
     $fields['label'] = BaseFieldDefinition::create('string')
       ->setLabel(new TranslatableMarkup('Label'))
@@ -241,29 +291,14 @@ class SodaScsStack extends ContentEntityBase implements SodaScsStackInterface {
       ->setCardinality(1)
       ->setDisplayConfigurable('view', FALSE)
       ->setDisplayOptions('form', [
-        'type' => 'string_textfield',
+        'type' => 'text_default',
         'weight' => 1,
-        'settings' => [
-          'region' => 'header',
-        ],
       ])
       ->setDisplayOptions('view', [
         'label' => 'above',
         'type' => 'string',
         'weight' => 1,
       ]);
-
-    $bundle_options = array_reduce(SodaScsComponentBundle::loadMultiple(), function ($carry, $bundle) {
-      $carry[$bundle->id()] = $bundle->label();
-      return $carry;
-    }, []);
-    $fields['bundle'] = BaseFieldDefinition::create('list_string')
-      ->setLabel(new TranslatableMarkup('Bundle'))
-      ->setSetting('allowed_values', $bundle_options)
-      ->setCardinality(1)
-      ->setRequired(TRUE)
-      ->setReadOnly(TRUE)
-      ->setDisplayConfigurable('view', TRUE);
 
     $fields['updated'] = BaseFieldDefinition::create('changed')
       ->setLabel(new TranslatableMarkup('Updated'))

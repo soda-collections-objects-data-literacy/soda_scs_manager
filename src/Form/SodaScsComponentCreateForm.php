@@ -10,8 +10,8 @@ use Drupal\Core\Entity\EntityRepositoryInterface;
 use Drupal\Core\Entity\EntityTypeBundleInfoInterface;
 use Drupal\Core\Form\FormStateInterface;
 use Drupal\Core\Session\AccountProxyInterface;
-use Drupal\soda_scs_manager\SodaScsComponentActionsInterface;
-use Drupal\soda_scs_manager\SodaScsServiceRequestInterface;
+use Drupal\soda_scs_manager\ComponentActions\SodaScsComponentActionsInterface;
+use Drupal\soda_scs_manager\RequestActions\SodaScsServiceRequestInterface;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 
 /**
@@ -152,6 +152,81 @@ class SodaScsComponentCreateForm extends ContentEntityForm {
     $form['#attached']['library'][] = 'soda_scs_manager/globalStyling';
 
     return $form;
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function validateForm(array &$form, FormStateInterface $form_state) {
+
+    parent::validateForm($form, $form_state);
+    $subdomain = $form_state->getValue('subdomain');
+
+    $pattern = '/^[a-z0-9-_]+$/';
+
+    if (!preg_match($pattern, $subdomain)) {
+      $form_state->setErrorByName('subdomain', $this->t('The subdomain can only contain small letters, digits, minus, and underscore'));
+    }
+
+    $disallowed_words = [
+      "all",
+      "alter",
+      "and",
+      "any",
+      "between",
+      "case",
+      "create",
+      "delete",
+      "drop",
+      "else",
+      "end",
+      "exists",
+      "false",
+      "from",
+      "group",
+      "having",
+      "if",
+      "in",
+      "insert",
+      "is",
+      "join",
+      "like",
+      "limit",
+      "not",
+      "null",
+      "offset",
+      "order",
+      "or",
+      "regexp",
+      "rlike",
+      "select",
+      "some",
+      "then",
+      "truncate",
+      "true",
+      "union",
+      "update",
+      "where",
+      "when",
+      "xor",
+    ];
+
+    // Check if the subdomain contains any disallowed words.
+    foreach ($disallowed_words as $word) {
+
+      if ($subdomain === $disallowed_words) {
+        $form_state->setErrorByName('subdomain', t('The subdomain cannot contain the word "@word"', ['@word' => $word]));
+      }
+    }
+
+    // Check if the subdomain is already in use by another SodaScsComponent entity.
+    $entity_query = \Drupal::entityQuery('soda_scs_component');
+    $entity_query->condition('subdomain', $subdomain);
+    $existing_entities = $entity_query->execute();
+
+    if (!empty($existing_entities)) {
+      $form_state->setErrorByName('subdomain', $this->t('The subdomain is already in use by another Soda SCS Component entity'));
+    }
   }
 
   /**

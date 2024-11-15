@@ -43,9 +43,6 @@ class SodaScsComponentEditForm extends ContentEntityForm {
    */
   public function buildForm(array $form, FormStateInterface $form_state) {
     $form = parent::buildForm($form, $form_state);
-    $entity = $this->entity;
-    $bundle = $entity->bundle();
-    $entityTypeId = $entity->getEntityTypeId();
 
     $form['#attached']['library'][] = 'soda_scs_manager/globalStyling';
     $form['actions']['delete'] = [];

@@ -5,7 +5,7 @@ namespace Drupal\soda_scs_manager\Plugin\EntityReferenceSelection;
 use Drupal\Core\Entity\Plugin\EntityReferenceSelection\DefaultSelection;
 
 /**
- * Provides entity reference selections that exclude already referenced entities.
+ * Reference selections that exclude already referenced entities.
  *
  * @EntityReferenceSelection(
  *   id = "default:exclude_referenced",
@@ -15,8 +15,7 @@ use Drupal\Core\Entity\Plugin\EntityReferenceSelection\DefaultSelection;
  *   weight = 1
  * )
  */
-class ExcludeReferencedSelection extends DefaultSelection 
-{
+class ExcludeReferencedSelection extends DefaultSelection {
 
   /**
    * {@inheritdoc}
