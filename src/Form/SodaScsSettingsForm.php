@@ -141,6 +141,18 @@ class SodaScsSettingsForm extends ConfigFormBase {
       '#default_value' => $this->t('Check health'),
     ];
 
+    $form['triplestore']['routes']['token'] = [
+      '#type' => 'fieldset',
+      '#attributes' => ['id' => 'soda-scs--routes-subform--token'],
+      '#title' => 'Token route',
+    ];
+
+    $form['triplestore']['routes']['token']['tokenUrl'] = [
+      '#type' => 'textfield',
+      '#title' => $this->t('Triplestore authentification token URL'),
+      '#default_value' => $this->config('soda_scs_manager.settings')->get('triplestore')['routes']['token']['tokenUrl'] ?? '',
+    ];
+
     // Repository routes.
     $form['triplestore']['routes']['repository'] = [
       '#type' => 'fieldset',

@@ -94,14 +94,15 @@ entity.soda_scs_stack.canonical:
     _permission: 'soda scs manager user'
 
 entity.soda_scs_stack.add_form:
-  path: '/soda-scs-manager/stack/{soda_scs_component_bundle}/add'
+  #path: '/soda-scs-manager/stack/{soda_scs_component_bundle}/add'
+  path: '/soda-scs-manager/stack/{bundle}/add'
   defaults:
     _entity_form: 'soda_scs_stack.add'
     _title: 'Add Stack'
   options:
     parameters:
-      soda_scs_component_bundle:
-        type: entity:soda_scs_component_bundle
+      bundle:
+        type: entity:soda_scs_stack_bundle
   requirements:
     _permission: 'soda scs manager user'
 

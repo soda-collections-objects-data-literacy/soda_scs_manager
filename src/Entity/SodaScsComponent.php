@@ -353,7 +353,7 @@ class SodaScsComponent extends ContentEntityBase implements SodaScsComponentInte
       ->setDescription(new TranslatableMarkup('The service key associated with this component.'))
       ->setSetting('target_type', 'soda_scs_service_key')
       ->setSetting('handler', 'default')
-      ->setCardinality(1)
+      ->setCardinality(FieldStorageDefinitionInterface::CARDINALITY_UNLIMITED)
       ->setRequired(TRUE)
       ->setDisplayConfigurable('view', TRUE)
       ->setDisplayOptions('view', [

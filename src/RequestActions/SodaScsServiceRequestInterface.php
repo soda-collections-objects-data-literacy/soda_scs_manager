@@ -69,6 +69,17 @@ interface SodaScsServiceRequestInterface {
   public function buildDeleteRequest(array $requestParams): array;
 
   /**
+   * Build token request.
+   *
+   * @param array $requestParams
+   *   The request parameters.
+   *
+   * @return array
+   *   The request array for the makeRequest function.
+   */
+  public function buildTokenRequest(array $requestParams): array;
+
+  /**
    * Make the API request.
    *
    * @param array $request

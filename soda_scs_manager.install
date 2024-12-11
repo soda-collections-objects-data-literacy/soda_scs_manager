@@ -30,6 +30,21 @@ function soda_scs_manager_install() {
     $destination = $destination_directory . '/' . $file->filename;
     $file_system->copy($file->uri, $destination, FileExists::Replace);
   }
+
+  /**
+  \Drupal::messenger()->addStatus(__FUNCTION__);
+
+  $efm = \Drupal::service('entity_field.manager');
+  $base_fields = $efm->getFieldStorageDefinitions('soda_scs_stack', 'wisski_stack');
+  // This gets all fields defined for the bundle, including base fields.
+  $type_fields = $efm->getFieldDefinitions('soda_scs_stack', 'wisski_stack');
+  // This gets us the list of fields defined by the bundle.
+  $bundle_fields = array_diff(array_keys($type_fields), array_keys($base_fields));
+  foreach ($bundle_fields as $id => $field_name) {
+    \Drupal::entityDefinitionUpdateManager()->installFieldStorageDefinition($field_name, 'soda_scs_stack', 'soda_scs_manager', $type_fields[$field_name]);
+  }
+  */
+
 }
 
 /**

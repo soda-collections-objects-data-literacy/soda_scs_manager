@@ -53,10 +53,14 @@ class SodaScsServiceKeyActions implements SodaScsServiceKeyActionsInterface {
    *   The created service key.
    */
   public function createServiceKey(array $props): SodaScsServiceKeyInterface {
+
+    $servicePassword = ($props['type'] === 'token') ? $props['token'] : $this->generateRandomPassword();
+
     $serviceKey = $this->entityTypeManager->getStorage('soda_scs_service_key')->create([
       'label' => $props['bundle'] . ' service key' . ' owned by ' . $props['username'],
-      'servicePassword' => $this->generateRandomPassword(),
+      'servicePassword' => $servicePassword,
       'bundle' => $props['bundle'],
+      'type' => $props['type'],
       'user' => $props['userId'],
     ]);
     $serviceKey->save();
@@ -77,6 +81,7 @@ class SodaScsServiceKeyActions implements SodaScsServiceKeyActionsInterface {
     $serviceKey = $this->entityTypeManager->getStorage('soda_scs_service_key')->loadByProperties([
       'bundle' => $props['bundle'],
       'user' => $props['userId'],
+      'type' => $props['type'],
     ]);
 
     return $serviceKey ? reset($serviceKey) : NULL;

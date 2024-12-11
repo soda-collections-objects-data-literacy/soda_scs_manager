@@ -16,13 +16,21 @@ use Drupal\user\UserInterface;
  * @ContentEntityType(
  *   id = "soda_scs_stack",
  *   label = @Translation("Stack"),
+ *   label_collection = @Translation("Stacks"),
+ *   label_singular = @Translation("Stack"),
+ *   label_plural = @Translation("Stacks"),
+ *   label_count = @PluralTranslation(
+ *     singular = "@count Stacks",
+ *     plural = "@count Stacks",
+ *   ),
+ *   bundle_label = @Translation("Stack type"),
  *   handlers = {
  *     "storage" = "Drupal\Core\Entity\Sql\SqlContentEntityStorage",
  *     "view_builder" = "Drupal\Core\Entity\EntityViewBuilder",
  *     "list_builder" = "Drupal\soda_scs_manager\ListBuilder\SodaScsStackListBuilder",
  *     "views_data" = "Drupal\views\EntityViewsData",
  *     "translation" = "Drupal\content_translation\ContentTranslationHandler",
- *     "access" = "Drupal\Core\Entity\EntityAccessControlHandler",
+ *     "access" = "Drupal\soda_scs_manager\Access\SodaScsStackAccessControlHandler",
  *     "form" = {
  *       "default" = "Drupal\soda_scs_manager\Form\SodaScsStackCreateForm",
  *       "add" = "Drupal\soda_scs_manager\Form\SodaScsStackCreateForm",
@@ -30,12 +38,12 @@ use Drupal\user\UserInterface;
  *       "delete" = "\Drupal\soda_scs_manager\Form\SodaScsStackDeleteForm",
  *     },
  *     "route_provider" = {
- *       "html" = "Drupal\Core\Entity\Routing\DefaultHtmlRouteProvider",
+ *       "html" = "Drupal\Core\Entity\Routing\AdminHtmlRouteProvider",
  *     },
  *   },
  *   links = {
  *     "canonical" = "/soda-scs-manager/stack/{soda_scs_stack}",
- *     "add-form" = "/soda-scs-manager/stack/add",
+ *     "add-form" = "/soda-scs-manager/stack/add/{bundle}",
  *     "edit-form" = "/soda-scs-manager/stack/{soda_scs_stack}/edit",
  *     "delete-form" = "/soda-scs-manager/stack/{soda_scs_stack}/delete",
  *     "collection" = "/soda-scs-manager/stacks",
@@ -46,8 +54,10 @@ use Drupal\user\UserInterface;
  *   fieldable = TRUE,
  *   entity_keys = {
  *     "id" = "id",
+ *     "bundle" = "bundle",
  *     "uuid" = "uuid",
  *     "label" = "label",
+ *     "owner" = "uid",
  *   },
  *   config_export = {
  *     "id",
@@ -209,29 +219,6 @@ class SodaScsStack extends ContentEntityBase implements SodaScsStackInterface {
         'weight' => 3,
       ]);
 
-    $fields['flavours'] = BaseFieldDefinition::create('list_string')
-      ->setLabel(new TranslatableMarkup('Flavour'))
-      ->setDescription(new TranslatableMarkup('The flavour of the SODa SCS Component.'))
-      ->setDisplayConfigurable('form', FALSE)
-      ->setDisplayConfigurable('view', FALSE)
-      ->setDisplayOptions('form', [
-        'type' => 'options_buttons',
-        'weight' => 4,
-      ])
-      ->setCardinality(FieldStorageDefinitionInterface::CARDINALITY_UNLIMITED)
-      ->setDisplayOptions('view', [
-        'label' => 'above',
-        'type' => 'checklist',
-        'weight' => 4,
-      ])
-      ->setSetting('allowed_values', [
-        'sweet' => 'Add default data model',
-        'fruity' => '2D',
-        'malty' => '3D',
-        'woody' => 'Provenance',
-        'herbal' => 'Conservation and Restoration',
-      ]);
-
     $fields['id'] = BaseFieldDefinition::create('integer')
       ->setLabel(new TranslatableMarkup('ID'))
       ->setDescription(new TranslatableMarkup('The ID of the SCS component entity.'))
@@ -346,6 +333,27 @@ class SodaScsStack extends ContentEntityBase implements SodaScsStackInterface {
 
     return $fields;
 
+  }
+
+  /**
+   * Define bundle field definitions.
+   */
+  public static function bundleFieldDefinitions(EntityTypeInterface $entity_type, $bundle, array $base_field_definitions) {
+    // Fields to be shared by all bundles go here.
+    $definitions = [];
+
+    // Then add fields from the bundle in the current instance.
+    $bundles = \Drupal::service('entity_type.bundle.info')->getBundleInfo('soda_scs_stack');
+    foreach ($bundles as $key => $values) {
+      if ($bundle == $key) {
+        // Get a string we can call bundleFieldDefinitions() on that Drupal will
+        // be able to find, like
+        // "\Drupal\my_module\Entity\Bundle\MyBundleClass".
+        $qualified_class = '\\' . $values['class'];
+        $definitions = $qualified_class::bundleFieldDefinitions($entity_type, $bundle, []);
+      }
+    }
+    return $definitions;
   }
 
   /**

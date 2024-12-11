@@ -3,29 +3,34 @@
 namespace Drupal\soda_scs_manager\Access;
 
 use Drupal\Core\Access\AccessResult;
+use Drupal\Core\Entity\EntityAccessControlHandler;
+use Drupal\Core\Entity\EntityInterface;
 use Drupal\Core\Session\AccountInterface;
-use Drupal\soda_scs_manager\Entity\SodaScsServiceKey;
 
 /**
- * Controller that manages access to SCS manager routes.
+ * Access control handler for the Service Key entity type.
+ *
+ * @see \Drupal\soda_scs_manager\Entity\SodaScsServiceKey
+ *
+ * @ingroup soda_scs_manager
  */
-class SodaScsServiceKeyAccessControlHandler {
+final class SodaScsServiceKeyAccessControlHandler extends EntityAccessControlHandler {
 
   /**
-   * For accessing service key routes.
-   *
-   * @param \Drupal\Core\Session\AccountInterface $account
-   *   Account that preformed the request.
-   * @param \Drupal\soda_scs_manager\Entity\SodaScsServiceKey $soda_scs_service_key
-   *   The Service key that the user is trying to access.
-   *
-   * @return \Drupal\Core\Access\AccessResult
-   *   Wether or not the user is allowed to access the route.
+   * {@inheritdoc}
    */
-  public function accessServiceKey(AccountInterface $account, SodaScsServiceKey $soda_scs_service_key): AccessResult {
-    /** @var \Drupal\user\Entity\User */
-    $user = $soda_scs_service_key->get('user')->entity;
-    return AccessResult::allowedIf($account->getAccountName() == $user->getAccountName());
+  protected function checkAccess(EntityInterface $entity, $operation, AccountInterface $account): AccessResult {
+    if ($account->hasPermission($this->entityType->getAdminPermission())) {
+      return AccessResult::allowed()->cachePerPermissions();
+    }
+
+    return match($operation) {
+      'create' => AccessResult::allowedIfHasPermission($account, 'create soda scs service key'),
+      'view' => AccessResult::allowedIfHasPermission($account, 'view soda scs service key'),
+      'update' => AccessResult::allowedIfHasPermission($account, 'edit soda scs service key'),
+      'delete' => AccessResult::allowedIfHasPermission($account, 'delete soda scs service key'),
+      default => AccessResult::neutral(),
+    };
   }
 
 }

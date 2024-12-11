@@ -188,6 +188,15 @@ class SodaScsServiceKey extends ContentEntityBase implements SodaScsServiceKeyIn
       ])
       ->setDisplayConfigurable('view', FALSE);
 
+    $fields['type'] = BaseFieldDefinition::create('string')
+      ->setLabel(new TranslatableMarkup('Type'))
+      ->setDescription(new TranslatableMarkup('The type of the service key.'))
+      ->setCardinality(1)
+      ->setRequired(TRUE)
+      ->setReadOnly(TRUE)
+      ->setDisplayConfigurable('view', FALSE)
+      ->setDisplayConfigurable('form', FALSE);
+
     $fields['user'] = BaseFieldDefinition::create('entity_reference')
       ->setLabel(new TranslatableMarkup('User'))
       ->setSetting('target_type', 'user')

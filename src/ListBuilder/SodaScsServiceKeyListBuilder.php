@@ -22,6 +22,7 @@ class SodaScsServiceKeyListBuilder extends EntityListBuilder {
     $header['component'] = $this->t('Component');
     $header['bundle'] = $this->t('bundle');
     $header['owner'] = $this->t('Owner');
+    $header['type'] = $this->t('Type');
     $header['password'] = $this->t('Password');
     $header['operations'] = $this->t('Operations');
     return $header + parent::buildHeader();
@@ -53,6 +54,7 @@ class SodaScsServiceKeyListBuilder extends EntityListBuilder {
       $row['scsComponent'] = Markup::create($linksString);
       $row['bundle'] = $entity->get('bundle')->target_id;
       $row['owner'] = $entity->getOwner()->getDisplayName();
+      $row['type'] = $entity->get('type')->value;
       $row['servicePassword'] = [
         'data' => $entity->get('servicePassword')->value,
         'class' => ['soda-scs-manager--service-password'],
@@ -67,7 +69,6 @@ class SodaScsServiceKeyListBuilder extends EntityListBuilder {
   public function render() {
     $build = parent::render();
     $build['table']['#attached']['library'][] = 'soda_scs_manager/security';
-    $build['table']['#attached']['library'][] = 'soda_scs_manager/clipboardjs';
     return $build;
   }
 

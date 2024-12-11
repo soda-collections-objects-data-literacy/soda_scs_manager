@@ -1,3 +1,5 @@
+# Administration
+
 soda scs manager admin:
   title: 'Administer SODa SCS Manager'
   description: 'Administer SODa SCS Manager Settings and Accounts'
@@ -5,17 +7,49 @@ soda scs manager admin:
 
 soda scs manager user:
   title: 'SODa SCS Manager user'
-  description: 'Create and edit SODa SCS Stacks and Components'
+  description: 'Administer own Stacks, Components and Service Keys'
 
 administer soda scs component types:
   title: 'Administer SODa SCS Component types'
   description: 'Maintain the types SODa SCS Component entity.'
   restrict access: true
-view soda scs component:
-  title: 'View SODa SCS Component'
-edit soda scs component:
-  title: 'Edit SODa SCS Component'
-delete soda scs component:
-  title: 'Delete SODa SCS Component'
+
+# SCS Component Permissions
+
 create soda scs component:
   title: 'Create SODa SCS Component'
+
+view soda scs component:
+  title: 'View SODa SCS Component'
+
+edit soda scs component:
+  title: 'Edit SODa SCS Component'
+
+delete soda scs component:
+  title: 'Delete SODa SCS Component'
+
+# SCS Stack Permissions
+create soda scs stack:
+  title: 'Create SODa SCS Stack'
+
+edit soda scs stack:
+  title: 'Edit SODa SCS Stack'
+
+view soda scs stack:
+  title: 'View SODa SCS Stack'
+
+delete soda scs stack:
+  title: 'Delete SODa SCS Stack'
+
+# SCS Service Key Permissions
+create soda scs service key:
+  title: 'Create SODa SCS Service Key'
+
+edit soda scs service key:
+  title: 'Edit SODa SCS Service Key'
+
+view soda scs service key:
+  title: 'View SODa SCS Service Key'
+
+delete soda scs service key:
+  title: 'Delete SODa SCS Service Key'

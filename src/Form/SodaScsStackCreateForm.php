@@ -11,6 +11,7 @@ use Drupal\Core\Entity\EntityTypeBundleInfoInterface;
 use Drupal\Core\Form\FormStateInterface;
 use Drupal\Core\Session\AccountProxyInterface;
 use Drupal\soda_scs_manager\Entity\SodaScsComponentBundleInterface;
+use Drupal\soda_scs_manager\Entity\SodaScsStackInterface;
 use Drupal\soda_scs_manager\StackActions\SodaScsStackActionsInterface;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 
@@ -31,11 +32,11 @@ use Symfony\Component\DependencyInjection\ContainerInterface;
 class SodaScsStackCreateForm extends ContentEntityForm {
 
   /**
-   * The SODa SCS Component Bundle.
+   * The SODa SCS Stack bundle.
    *
-   * @var \Drupal\soda_scs_manager\Entity\SodaScsComponentBundleInterface
+   * @var string
    */
-  protected SodaScsComponentBundleInterface $bundle;
+  protected string $bundle;
 
 
   /**
@@ -114,20 +115,21 @@ class SodaScsStackCreateForm extends ContentEntityForm {
   /**
    * {@inheritdoc}
    */
-  public function buildForm(array $form, FormStateInterface $form_state, SodaScsComponentBundleInterface $soda_scs_component_bundle = NULL) {
+  public function buildForm(array $form, FormStateInterface $form_state, string $bundle = NULL) {
 
-    $this->bundle = $soda_scs_component_bundle;
+    $this->bundle = $bundle;
+    $bundles = \Drupal::service('entity_type.bundle.info')->getBundleInfo('soda_scs_stack');
     // Build the form.
     $form = parent::buildForm($form, $form_state);
 
     // Add the bundle description.
-    $form['info'] = [
-      '#type' => 'item',
-      '#markup' => $soda_scs_component_bundle->getDescription(),
-    ];
+    #$form['info'] = [
+    #  '#type' => 'item',
+    #  '#markup' => $this->bundle->getDescription(),
+    #];
 
     // Change the title of the page.
-    $form['#title'] = $this->t('Create a new @stack stack.', ['@stack' => $soda_scs_component_bundle->label()]);
+    #$form['#title'] = $this->t('Create a new @stack stack.', ['@stack' => $this->stackType->label()]);
 
     // Change the label of the submit button.
     $form['actions']['submit']['#value'] = $this->t('CREATE STACK');
@@ -225,7 +227,7 @@ class SodaScsStackCreateForm extends ContentEntityForm {
     /** @var \Drupal\soda_scs_manager\Entity\SodaScsStackInterface $component */
     $stack = $this->entity;
     /** @var \Drupal\soda_scs_manager\Entity\SodaScsComponentBundleInterface $bundle */
-    $stack->set('bundle', $this->bundle->id());
+    $stack->set('bundle', $this->bundle);
     $stack->set('created', $this->time->getRequestTime());
     $stack->set('updated', $this->time->getRequestTime());
     $stack->set('user', $this->currentUser->getAccount()->id());

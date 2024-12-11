@@ -143,6 +143,7 @@ class SodaScsSqlComponentActions implements SodaScsComponentActionsInterface {
 
       $keyProps = [
         'bundle'  => 'sql',
+        'type'  => 'password',
         'userId'  => $entity->getOwnerId(),
         'username' => $entity->getOwner()->getDisplayName(),
       ];

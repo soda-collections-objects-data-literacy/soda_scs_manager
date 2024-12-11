@@ -94,12 +94,13 @@ class SodaScsStackDeleteForm extends ContentEntityDeleteForm {
       \Drupal::messenger()->addError($this->t('%message See logs for more information.', [
         '%message' => $deleteComponentResult['message'],
       ]));
-      \Drupal::logger('soda_scs_manager')->error('%message %error ', [
+      \Drupal::logger('soda_scs_manager')->error('%message %error %trace', [
         '%message' => $deleteComponentResult['message'],
         '%error' => $deleteComponentResult['error'],
       ]);
       return;
     }
+
     $this->messenger()->addStatus($deleteComponentResult['message']);
     // Call the parent submit handler to delete the entity.
     // We don't do this here.

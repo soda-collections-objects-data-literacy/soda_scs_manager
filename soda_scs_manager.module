@@ -7,8 +7,11 @@
 
 use Drupal\Core\Entity\Display\EntityViewDisplayInterface;
 use Drupal\Core\Entity\EntityInterface;
+use Drupal\Core\Entity\EntityTypeInterface;
 use Drupal\Core\Routing\RouteMatchInterface;
 use Drupal\Core\StringTranslation\TranslatableMarkup;
+use Drupal\soda_scs_manager\Entity\Bundle\SodaScsWisskiStack;
+use Drupal\user\UserInterface;
 
 /**
  * Implements hook_help().
@@ -113,5 +116,89 @@ function soda_scs_manager_soda_scs_component_view(array &$build, EntityInterface
         '#weight' => 10,
       ];
     }
+  }
+}
+
+/**
+ * Implements hook_user_insert().
+ */
+function soda_scs_manager_user_insert(UserInterface $user) {
+  // Get the role ID of the custom role.
+  $role_id = 'scs_user';
+
+  // Assign the custom role to the new user.
+  $user->addRole($role_id);
+
+  // Save the updated user.
+  $user->save();
+
+  // Ensure the role exists and has the required permissions.
+  soda_scs_manager_ensure_scs_user_role();
+}
+
+/**
+ * Ensure the scs_user role exists and has the required permissions.
+ */
+function soda_scs_manager_ensure_scs_user_role() {
+  // Get the role storage.
+  $role_storage = \Drupal::entityTypeManager()->getStorage('user_role');
+
+  // Create the custom role if it doesn't exist.
+  if (!$role_storage->load('scs_user')) {
+    $role = $role_storage->create(['id' => 'scs_user', 'label' => 'scs_user']);
+    $role->save();
+  }
+
+  // Assign the required permissions to the custom role.
+  $permissions = [
+    'soda scs manager user',
+    'create soda scs stack',
+    'view soda scs stack',
+    'delete soda scs stack',
+    'create soda scs component',
+    'view soda scs component',
+    'delete soda scs component',
+    'create soda scs service key',
+    'view soda scs service key',
+    'delete soda scs service key',
+  ];
+
+  user_role_grant_permissions('scs_user', $permissions);
+}
+
+/**
+ * Implements hook_entity_bundle_info().
+ */
+function soda_scs_manager_entity_bundle_info() {
+  $bundles['soda_scs_stack']['wisski_stack'] = [
+    'label' => t('WissKI Stack'),
+    'class' => SodaScsWisskiStack::class,
+    'description' => t('WissKI (Wissenschaftliche Kommunikationsinfrastruktur - Scientific Communication Infrastructure) is a virtual research environment and linked open data management software. Beneath the fundamental possibilities to create, read, edit and delete content, WissKI offers solutions for all tasks of the research data lifecycle and help users to produce and publish FAIR data. Furthermore, users can create revisions and translations, open the access to the data with a wide range of interfaces and integration options, but also restrict it via detailed rights management. The linked open data is stored in an external triple store, reachable trough own endpoints and therefore is independent from Drupal or WissKI\'s architecture. The data modelling follows an ontological approach, preferably, but not exclusively according to the CIDOC CRM. As part of the open source content management system Drupal, WissKI provides all the advantages of an constantly maintained and developed webapp. Last but not least, the basic functions of WissKI can be extended with a variety of Drupal modules. This turns WissKI to a full-featured research data management software - suitable for a wide range of application areas.'),
+    'imageUrl' => 'public://soda_scs_manager/images/wisski-stack.svg',
+    // You can also add other attributes you find useful.
+  ];
+
+  return $bundles;
+}
+
+/**
+ * Implements hook_entity_field_storage_info().
+ *
+ * Defines storage for all bundle fields.
+ */
+function soda_scs_manager_entity_field_storage_info(EntityTypeInterface $entity_type) {
+  if ($entity_type->id() == 'soda_scs_stack') {
+    $definitions = [];
+    $bundles = \Drupal::service('entity_type.bundle.info')->getBundleInfo('soda_scs_stack');
+    foreach ($bundles as $bundle_id => $bundle_info) {
+      if (isset($bundle_info['class'])) {
+        $class = '\\' . $bundle_info['class'];
+        if (class_exists($class)) {
+          $bundle_defs = $class::bundleFieldDefinitions($entity_type, $bundle_id, []);
+          array_merge($definitions, $bundle_defs);
+        }
+      }
+    }
+    return $definitions;
   }
 }

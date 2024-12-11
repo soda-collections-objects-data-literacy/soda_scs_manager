@@ -280,6 +280,10 @@ class SodaScsPortainerServiceActions implements SodaScsServiceRequestInterface {
         "value" => $requestParams['triplestoreServicePassword'],
       ],
       [
+        "name" => "TS_TOKEN",
+        "value" => $requestParams['triplestoreServiceToken'],
+      ],
+      [
         "name" => "TS_READ_URL",
         "value" => 'https://' . $this->settings->get('triplestore')['openGdpSettings']['host'] . '/repositories/' . $requestParams['subdomain'],
       ],
@@ -448,6 +452,19 @@ class SodaScsPortainerServiceActions implements SodaScsServiceRequestInterface {
         'X-API-Key' => $this->settings->get('wisski')['portainerOptions']['authenticationToken'],
       ],
     ];
+  }
+
+  /**
+   * Build token request.
+   *
+   * @param array $requestParams
+   *   The request parameters.
+   *
+   * @return array
+   *   The request array for the makeRequest function.
+   */
+  public function buildTokenRequest(array $requestParams): array {
+    return [];
   }
 
 }

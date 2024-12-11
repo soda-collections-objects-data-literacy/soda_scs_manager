@@ -154,6 +154,7 @@ class SodaScsWisskiComponentActions implements SodaScsComponentActionsInterface 
       // Create service key if it does not exist.
       $keyProps = [
         'bundle'  => 'wisski',
+        'type'  => 'password',
         'userId'  => $entity->getOwnerId(),
         'username' => $entity->getOwner()->getDisplayName(),
       ];
@@ -168,7 +169,7 @@ class SodaScsWisskiComponentActions implements SodaScsComponentActionsInterface 
           'user'  => $entity->getOwner(),
           'description' => $bundle->getDescription(),
           'imageUrl' => $bundle->getImageUrl(),
-          'serviceKey' => $wisskiComponentServiceKey->id(),
+          'serviceKey' => [$wisskiComponentServiceKey->id()],
           'flavours' => $entity->get('flavours')->value,
         ]
       );
@@ -177,19 +178,29 @@ class SodaScsWisskiComponentActions implements SodaScsComponentActionsInterface 
 
       $sqlKeyProps = [
         'bundle'  => 'sql',
+        'type'  => 'password',
         'userId'  => $sqlComponent->getOwnerId(),
       ];
 
-      $sqlComponentServiceKey = $this->sodaScsServiceKeyActions->getServiceKey($sqlKeyProps) ?? $this->sodaScsServiceKeyActions->createServiceKey($sqlKeyProps);
+      $sqlComponentServiceKey = $this->sodaScsServiceKeyActions->getServiceKey($sqlKeyProps) ?? throw new \Exception('SQL service key not found.');
 
       $triplestoreComponent = $this->sodaScsStackHelpers->retrieveIncludedComponent($entity, 'triplestore');
 
       $triplestoreKeyProps = [
         'bundle'  => 'triplestore',
+        'type'  => 'password',
         'userId'  => $triplestoreComponent->getOwnerId(),
       ];
 
-      $triplestoreComponentServiceKey = $this->sodaScsServiceKeyActions->getServiceKey($triplestoreKeyProps) ?? $this->sodaScsServiceKeyActions->createServiceKey($triplestoreKeyProps);
+      $triplestoreComponentServicePassword = $this->sodaScsServiceKeyActions->getServiceKey($triplestoreKeyProps) ?? throw new \Exception('Triplestore service password not found.');
+
+      $triplestoreTokenProps = [
+        'bundle'  => 'triplestore',
+        'type'  => 'token',
+        'userId'  => $triplestoreComponent->getOwnerId(),
+      ];
+
+      $triplestoreComponentServiceToken = $this->sodaScsServiceKeyActions->getServiceKey($triplestoreTokenProps) ?? throw new \Exception('Triplestore service token not found.');
 
       $flavours_array = $wisskiComponent->get('flavours')->getValue();
 
@@ -207,7 +218,8 @@ class SodaScsWisskiComponentActions implements SodaScsComponentActionsInterface 
         'username' => $wisskiComponent->getOwner()->getDisplayName(),
         'wisskiServicePassword' => $wisskiComponentServiceKey->get('servicePassword')->value,
         'sqlServicePassword' => $sqlComponentServiceKey->get('servicePassword')->value,
-        'triplestoreServicePassword' => $triplestoreComponentServiceKey->get('servicePassword')->value,
+        'triplestoreServicePassword' => $triplestoreComponentServicePassword->get('servicePassword')->value,
+        'triplestoreServiceToken' => $triplestoreComponentServiceToken->get('servicePassword')->value,
         'flavours' => $flavours,
       ];
       // Create Drupal instance.

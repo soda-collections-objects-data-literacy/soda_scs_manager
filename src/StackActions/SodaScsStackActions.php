@@ -61,13 +61,13 @@ class SodaScsStackActions implements SodaScsStackActionsInterface {
    */
   public function createStack(SodaScsStackInterface $stack): array {
     switch ($stack->getBundle()) {
-      case 'wisski':
+      case 'wisski_stack':
         return $this->sodaScsWisskiStackActions->createStack($stack);
 
-      case 'sql':
+      case 'sql_stack':
         return $this->sodaScsSqlStackActions->createStack($stack);
 
-      case 'triplestore':
+      case 'triplestore_stack':
         return $this->sodaScsTriplestoreStackActions->createStack($stack);
 
       default:
@@ -125,7 +125,7 @@ class SodaScsStackActions implements SodaScsStackActionsInterface {
    */
   public function updateStack($component): array {
     switch ($component->bundle()) {
-      case 'wisski':
+      case 'wisski_stack':
         return $this->sodaScsWisskiStackActions->updateStack($component);
 
       default:
@@ -145,18 +145,19 @@ class SodaScsStackActions implements SodaScsStackActionsInterface {
   public function deleteStack(SodaScsStackInterface $stack): array {
     // @todo slim down if there is no more logic
     switch ($stack->getBundle()) {
-      case 'wisski':
+      case 'wisski_stack':
         return $this->sodaScsWisskiStackActions->deleteStack($stack);
 
-      case 'sql':
+      case 'sql_stack':
         return $this->sodaScsSqlStackActions->deleteStack($stack);
 
-      case 'triplestore':
+      case 'triplestore_stack':
         return $this->sodaScsTriplestoreStackActions->deleteStack($stack);
 
+      /* @todo Better error handling with trace info. */
       default:
         return [
-          'message' => $this->t('Could not delete stack of type %bundle.'), ['%bundle' => $stack->getBundle()],
+          'message' => $this->t('Could not delete stack of type %bundle.', ['%bundle' => $stack->getBundle()]),
           'data' => [],
           'success' => FALSE,
           'error' => 'Component type not supported for deletion.',

@@ -152,18 +152,18 @@ class SodaScsManagerController extends ControllerBase {
     ];
 
     // Get all component bundles.
-    $bundles = $this->entityTypeManager->getStorage('soda_scs_component_bundle')->loadMultiple();
+    $bundles = \Drupal::service('entity_type.bundle.info')->getBundleInfo('soda_scs_stack');
 
     /** @var \Drupal\soda_scs_manager\Entity\SodaScsComponentBundle $bundle */
-    foreach ($bundles as $bundle) {
+    foreach ($bundles as $id => $bundle) {
 
       // Add the card to the build array.
       $build['#children'][] = [
         '#theme' => 'bundle_card',
-        '#title' => $this->t('@bundle', ['@bundle' => $bundle->label()]),
-        '#description' => $bundle->getDescription(),
-        '#image_url' => $bundle->getImageUrl(),
-        '#url' => Url::fromRoute('entity.soda_scs_stack.add_form', ['soda_scs_component_bundle' => $bundle->id()]),
+        '#title' => $this->t('@bundle', ['@bundle' => $bundle['label']]),
+        '#description' => $bundle['description'],
+        '#image_url' => $bundle['imageUrl'],
+        '#url' => Url::fromRoute('entity.soda_scs_stack.add_form', ['bundle' => $id]),
         '#attached' => [
           'library' => ['soda_scs_manager/globalStyling'],
         ],

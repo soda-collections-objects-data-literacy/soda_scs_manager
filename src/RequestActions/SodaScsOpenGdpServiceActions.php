@@ -106,7 +106,11 @@ class SodaScsOpenGdpServiceActions implements SodaScsServiceRequestInterface {
       throw new MissingDataException('Create URL setting is not set.');
     }
 
-    $route = $url . implode('/', $requestParams['routeParams']) . '?' . http_build_query($requestParams['queryParams']);
+    $route = $url . implode('/', $requestParams['routeParams']);
+
+    if ($requestParams['queryParams']) {
+      $route .= '?' . http_build_query($requestParams['queryParams']);
+    }
 
     return [
       'success' => TRUE,
@@ -164,7 +168,11 @@ class SodaScsOpenGdpServiceActions implements SodaScsServiceRequestInterface {
       throw new MissingDataException('Get URL setting is not set.');
     }
 
-    $route = $url . implode('/', $requestParams['routeParams']) . '?' . http_build_query($requestParams['queryParams']);
+    $route = $url . implode('/', $requestParams['routeParams']);
+
+    if ($requestParams['queryParams']) {
+      $route .= '?' . http_build_query($requestParams['queryParams']);
+    }
 
     return [
       'success' => TRUE,
@@ -209,7 +217,11 @@ class SodaScsOpenGdpServiceActions implements SodaScsServiceRequestInterface {
       throw new MissingDataException('Get URL setting is not set.');
     }
 
-    $route = $url . implode('/', $requestParams['routeParams']) . '?' . http_build_query($requestParams['queryParams']);
+    $route = $url . implode('/', $requestParams['routeParams']);
+
+    if ($requestParams['queryParams']) {
+      $route .= '?' . http_build_query($requestParams['queryParams']);
+    }
 
     return [
       'success' => TRUE,
@@ -255,7 +267,11 @@ class SodaScsOpenGdpServiceActions implements SodaScsServiceRequestInterface {
       throw new MissingDataException('Delete URL setting is not set.');
     }
 
-    $route = $url . implode('/', $requestParams['routeParams']) . '?' . http_build_query($requestParams['queryParams']);
+    $route = $url . implode('/', $requestParams['routeParams']);
+
+    if ($requestParams['queryParams']) {
+      $route .= '?' . http_build_query($requestParams['queryParams']);
+    }
 
     return [
       'success' => TRUE,
@@ -301,6 +317,7 @@ class SodaScsOpenGdpServiceActions implements SodaScsServiceRequestInterface {
       ];
     }
     catch (ClientException $e) {
+      // @todo User not exist is ok, try to make this no error
       // @todo Implement tracing in every logger.
       $this->loggerFactory->get('soda_scs_manager')->error("OpenGDB request failed with code @code error: @error trace @trace", [
         '@code' => $e->getCode(),
@@ -316,6 +333,33 @@ class SodaScsOpenGdpServiceActions implements SodaScsServiceRequestInterface {
       ],
       'success' => FALSE,
       'error' => $e->getMessage(),
+    ];
+  }
+
+  /**
+   * Build token request.
+   *
+   * @param array $requestParams
+   *   The request parameters.
+   *
+   * @return array
+   *   The request array for the makeRequest function.
+   */
+  public function buildTokenRequest(array $requestParams): array {
+
+    $route = $this->settings->get('triplestore')['routes']['token']['tokenUrl'] ?? throw new MissingDataException('Token URL setting is not set.');
+
+    $body = json_encode($requestParams['body']);
+
+    return [
+      'success' => TRUE,
+      'method' => 'POST',
+      'route' => $route,
+      'headers' => [
+        'Content-Type' => 'application/json',
+        'Accept' => 'application/json',
+      ],
+      'body' => $body,
     ];
   }
 
