@@ -113,6 +113,7 @@ class SodaScsOpenGdpServiceActions implements SodaScsServiceRequestInterface {
     }
 
     return [
+      'type' => $requestParams['type'],
       'success' => TRUE,
       'method' => 'POST',
       'route' => $route,
@@ -175,6 +176,7 @@ class SodaScsOpenGdpServiceActions implements SodaScsServiceRequestInterface {
     }
 
     return [
+      'type' => $requestParams['type'],
       'success' => TRUE,
       'method' => 'GET',
       'route' => $route,
@@ -224,6 +226,7 @@ class SodaScsOpenGdpServiceActions implements SodaScsServiceRequestInterface {
     }
 
     return [
+      'type' => $requestParams['type'],
       'success' => TRUE,
       'method' => 'PUT',
       'route' => $route,
@@ -274,6 +277,7 @@ class SodaScsOpenGdpServiceActions implements SodaScsServiceRequestInterface {
     }
 
     return [
+      'type' => $requestParams['type'],
       'success' => TRUE,
       'method' => 'DELETE',
       'route' => $route,
@@ -318,6 +322,26 @@ class SodaScsOpenGdpServiceActions implements SodaScsServiceRequestInterface {
     }
     catch (ClientException $e) {
       // @todo User not exist is ok, try to make this no error
+      if ($request['type'] === 'user' && $e->getCode() === 404) {
+        $username = array_slice(explode('/', $request['route']), -1)[0];
+        $this->messenger
+          ->addWarning(
+            $this->stringTranslation->translate(
+              "OpenGDB user: @username does not exist. Try to create it for you...",
+              [
+                '@username' => $username,
+              ]
+            )
+          );
+        return [
+          'message' => 'Request succeeded, but user does not exist.',
+          'data' => [
+            'openGdbResponse' => $e,
+          ],
+          'success' => FALSE,
+          'error' => $e->getMessage(),
+        ];
+      }
       // @todo Implement tracing in every logger.
       $this->loggerFactory->get('soda_scs_manager')->error("OpenGDB request failed with code @code error: @error trace @trace", [
         '@code' => $e->getCode(),

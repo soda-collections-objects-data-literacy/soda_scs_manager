@@ -192,6 +192,8 @@ class SodaScsTriplestoreComponentActions implements SodaScsComponentActionsInter
             $createUserResponse = $this->sodaScsOpenGdbServiceActions->makeRequest($openGdbCreateUserRequest);
             $updateUserResponse = NULL;
 
+            $this->messenger->addMessage($this->stringTranslation->translate("Created OpenGDB user: @username", ['@username' => $username]));
+
             if (!$createUserResponse['success']) {
               return [
                 'message' => 'Could not create user.',
