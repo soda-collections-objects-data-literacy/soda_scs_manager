@@ -31,7 +31,7 @@ function soda_scs_manager_install() {
     $file_system->copy($file->uri, $destination, FileExists::Replace);
   }
 
-  /**
+  // Install bundle field definitions.
   \Drupal::messenger()->addStatus(__FUNCTION__);
 
   $efm = \Drupal::service('entity_field.manager');
@@ -43,7 +43,6 @@ function soda_scs_manager_install() {
   foreach ($bundle_fields as $id => $field_name) {
     \Drupal::entityDefinitionUpdateManager()->installFieldStorageDefinition($field_name, 'soda_scs_stack', 'soda_scs_manager', $type_fields[$field_name]);
   }
-  */
 
 }
 
