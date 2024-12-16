@@ -5,7 +5,7 @@ namespace Drupal\soda_scs_manager\Entity\Bundle;
 use Drupal\Core\Entity\EntityTypeInterface;
 use Drupal\Core\Field\FieldStorageDefinitionInterface;
 use Drupal\Core\StringTranslation\TranslatableMarkup;
-use Drupal\entity\BundleFieldDefinition;
+use Drupal\soda_scs_manager\Entity\BundleFieldDefinition;
 use Drupal\soda_scs_manager\Entity\SodaScsStack;
 use Drupal\soda_scs_manager\Entity\SodaScsStackInterface;
 
