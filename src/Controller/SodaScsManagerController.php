@@ -133,6 +133,9 @@ class SodaScsManagerController extends ControllerBase {
     return [
       '#theme' => 'stacks_page',
       '#stacksByUser' => $stacksByUser,
+      '#cache' => [
+        'max-age' => 0,
+      ],
     ];
   }
 

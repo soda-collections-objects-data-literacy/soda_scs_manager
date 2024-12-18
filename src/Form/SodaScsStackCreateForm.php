@@ -122,15 +122,6 @@ class SodaScsStackCreateForm extends ContentEntityForm {
     // Build the form.
     $form = parent::buildForm($form, $form_state);
 
-    // Add the bundle description.
-    #$form['info'] = [
-    #  '#type' => 'item',
-    #  '#markup' => $this->bundle->getDescription(),
-    #];
-
-    // Change the title of the page.
-    #$form['#title'] = $this->t('Create a new @stack stack.', ['@stack' => $this->stackType->label()]);
-
     // Change the label of the submit button.
     $form['actions']['submit']['#value'] = $this->t('CREATE STACK');
     $form['actions']['submit']['#attributes']['class'][] = 'soda-scs-stack--stack--form-submit';

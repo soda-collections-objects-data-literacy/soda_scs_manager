@@ -34,7 +34,6 @@ use Drupal\user\UserInterface;
  *     "form" = {
  *       "default" = "Drupal\soda_scs_manager\Form\SodaScsStackCreateForm",
  *       "add" = "Drupal\soda_scs_manager\Form\SodaScsStackCreateForm",
- *       "edit" = "Drupal\soda_scs_manager\Form\SodaScsStackEditForm",
  *       "delete" = "\Drupal\soda_scs_manager\Form\SodaScsStackDeleteForm",
  *     },
  *     "route_provider" = {
@@ -44,7 +43,6 @@ use Drupal\user\UserInterface;
  *   links = {
  *     "canonical" = "/soda-scs-manager/stack/{soda_scs_stack}",
  *     "add-form" = "/soda-scs-manager/stack/add/{bundle}",
- *     "edit-form" = "/soda-scs-manager/stack/{soda_scs_stack}/edit",
  *     "delete-form" = "/soda-scs-manager/stack/{soda_scs_stack}/delete",
  *     "collection" = "/soda-scs-manager/stacks",
  *   },

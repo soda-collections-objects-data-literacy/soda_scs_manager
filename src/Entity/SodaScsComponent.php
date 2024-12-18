@@ -25,7 +25,6 @@ use Drupal\user\UserInterface;
  *     "form" = {
  *       "default" = "Drupal\soda_scs_manager\Form\SodaScsComponentCreateForm",
  *       "add" = "Drupal\soda_scs_manager\Form\SodaScsComponentCreateForm",
- *       "edit" = "Drupal\soda_scs_manager\Form\SodaScsComponentEditForm",
  *       "delete" = "\Drupal\soda_scs_manager\Form\SodaScsComponentDeleteForm",
  *     },
  *     "access" = "Drupal\soda_scs_manager\Access\SodaScsComponentAccessControlHandler",
@@ -48,7 +47,6 @@ use Drupal\user\UserInterface;
  *   links = {
  *     "canonical" = "/soda-scs-manager/component/{soda_scs_component}",
  *     "add-form" = "/soda-scs-manager/component/add",
- *     "edit-form" = "/soda-scs-manager/component/{soda_scs_component}/edit",
  *     "delete-form" = "/soda-scs-manager/component/{soda_scs_component}/delete",
  *     "collection" = "/soda-scs-manager/components",
  *   },

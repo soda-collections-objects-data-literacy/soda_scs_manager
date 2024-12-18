@@ -170,7 +170,7 @@ class SodaScsWisskiComponentActions implements SodaScsComponentActionsInterface 
           'description' => $bundle->getDescription(),
           'imageUrl' => $bundle->getImageUrl(),
           'serviceKey' => [$wisskiComponentServiceKey->id()],
-          'flavours' => $entity->get('flavours')->value,
+          'flavours' => array_values($entity->get('flavours')->getValue()),
         ]
       );
 
@@ -209,7 +209,7 @@ class SodaScsWisskiComponentActions implements SodaScsComponentActionsInterface 
         $flavours[] = $flavour['value'];
       }
 
-      $flavours = implode(',', $flavours);
+      $flavours = implode(' ', $flavours);
 
       $requestParams = [
         'subdomain' => $wisskiComponent->get('subdomain')->value,

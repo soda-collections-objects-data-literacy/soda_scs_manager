@@ -15,7 +15,6 @@ use Drupal\soda_scs_manager\Entity\SodaScsComponentInterface;
 use Drupal\soda_scs_manager\Entity\SodaScsStackInterface;
 use Drupal\soda_scs_manager\RequestActions\SodaScsServiceRequestInterface;
 use Drupal\soda_scs_manager\ServiceKeyActions\SodaScsServiceKeyActionsInterface;
-use Exception;
 
 /**
  * Handles the communication with the SCS user manager daemon.
@@ -128,6 +127,17 @@ class SodaScsTriplestoreComponentActions implements SodaScsComponentActionsInter
 
       $triplestoreComponentServiceKey = $this->sodaScsServiceKeyActions->getServiceKey($keyProps) ?? $this->sodaScsServiceKeyActions->createServiceKey($keyProps);
       $triplestoreComponent->serviceKey[] = $triplestoreComponentServiceKey;
+
+      $tokenProps = [
+        'bundle'  => 'triplestore',
+        'type'  => 'token',
+        'userId'    => $entity->getOwnerId(),
+        'username' => $entity->getOwner()->getDisplayName(),
+      ];
+
+      if ($triplestoreComponentServiceToken = $this->sodaScsServiceKeyActions->getServiceKey($tokenProps)) {
+        $triplestoreComponent->serviceKey[] = $triplestoreComponentServiceToken;
+      }
 
       $username = $triplestoreComponent->getOwner()->getDisplayName();
       $subdomain = $triplestoreComponent->get('subdomain')->value;
@@ -244,7 +254,7 @@ class SodaScsTriplestoreComponentActions implements SodaScsComponentActionsInter
               $triplestoreComponentServiceToken = $this->sodaScsServiceKeyActions->createServiceKey($tokenProps);
               $triplestoreComponent->serviceKey[] = $triplestoreComponentServiceToken;
             }
-            catch (Exception $e) {
+            catch (\Exception $e) {
               $this->loggerFactory->get('soda_scs_manager')
                 ->error("Cannot assemble Request: @error", [
                   '@error' => $e->getMessage(),
@@ -368,8 +378,11 @@ class SodaScsTriplestoreComponentActions implements SodaScsComponentActionsInter
     // Save the component.
     $triplestoreComponent->save();
 
+    // Save the service key.
     $triplestoreComponentServiceKey->scsComponent[] = $triplestoreComponent->id();
     $triplestoreComponentServiceKey->save();
+
+    // Save the service token.
     $triplestoreComponentServiceToken->scsComponent[] = $triplestoreComponent->id();
     $triplestoreComponentServiceToken->save();
 

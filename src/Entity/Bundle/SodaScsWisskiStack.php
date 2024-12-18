@@ -38,9 +38,9 @@ class SodaScsWisskiStack extends SodaScsStack implements SodaScsStackInterface {
         ->setSetting('allowed_values', [
           'sweet' => 'Add default data model',
           'fruity' => '2D',
-          'malty' => '3D',
-          'woody' => 'Provenance',
-          'herbal' => 'Conservation and Restoration',
+          //'malty' => '3D',
+          //'woody' => 'Provenance',
+          //'herbal' => 'Conservation and Restoration',
         ]);
     }
 
