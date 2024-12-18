@@ -335,6 +335,9 @@ class SodaScsPortainerServiceActions implements SodaScsServiceRequestInterface {
     ];
 
     foreach ($env as $variable) {
+      if ($variable['name'] == "WISSKI_FLAVOURS") {
+        continue;
+      }
       if (empty($variable['value'])) {
         throw new MissingDataException($variable['name'] . ' setting is not set.');
       }

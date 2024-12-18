@@ -383,6 +383,11 @@ class SodaScsTriplestoreComponentActions implements SodaScsComponentActionsInter
     $triplestoreComponentServiceKey->save();
 
     // Save the service token.
+    /* @todo Make sure there is a triplestore component service token. */
+    if (empty($triplestoreComponentServiceToken)) {
+      throw new \Exception('There is now no triplestore component service token.');
+    }
+
     $triplestoreComponentServiceToken->scsComponent[] = $triplestoreComponent->id();
     $triplestoreComponentServiceToken->save();
 

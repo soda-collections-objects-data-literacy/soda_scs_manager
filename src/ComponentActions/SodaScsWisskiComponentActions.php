@@ -169,10 +169,11 @@ class SodaScsWisskiComponentActions implements SodaScsComponentActionsInterface 
           'user'  => $entity->getOwner(),
           'description' => $bundle->getDescription(),
           'imageUrl' => $bundle->getImageUrl(),
-          'serviceKey' => [$wisskiComponentServiceKey->id()],
           'flavours' => array_values($entity->get('flavours')->getValue()),
         ]
       );
+
+      $wisskiComponent->serviceKey[] = $wisskiComponentServiceKey;
 
       $sqlComponent = $this->sodaScsStackHelpers->retrieveIncludedComponent($entity, 'sql');
 

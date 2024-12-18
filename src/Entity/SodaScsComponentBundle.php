@@ -32,6 +32,10 @@ use Drupal\soda_scs_manager\Entity\SodaScsComponentBundleInterface;
  *     "id" = "id",
  *     "label" = "label",
  *     "uuid" = "uuid",
+ *     "bundle" = "bundle",
+ *     "owner" = "user",
+ *     "user_id" = "user",
+ *     "langcode" = "langcode",
  *   },
  *   links = {
  *     "canonical" = "/admin/structure/soda_scs_component_bundle/{soda_scs_component_bundle}",

@@ -50,17 +50,21 @@ use Drupal\user\UserInterface;
  *   data_table = "soda_scs_stack_field_data",
  *   field_ui_base_route = "entity.soda_scs_component_bundle.edit_form",
  *   fieldable = TRUE,
+ *   common_reference_target = TRUE,
  *   entity_keys = {
  *     "id" = "id",
  *     "bundle" = "bundle",
  *     "uuid" = "uuid",
  *     "label" = "label",
- *     "owner" = "uid",
+ *     "owner" = "user",
+ *     "uid" = "user",
+ *     "langcode" = "langcode",
  *   },
  *   config_export = {
  *     "id",
  *     "label",
  *     "uuid",
+ *     "bundle",
  *   }
  * )
  */
@@ -371,7 +375,7 @@ class SodaScsStack extends ContentEntityBase implements SodaScsStackInterface {
    *   TRUE if the current user is an admin, FALSE otherwise.
    */
   public static function isAdmin() {
-    return \Drupal::currentUser()->hasPermission('administer sodasc components');
+    return \Drupal::currentUser()->hasPermission('soda scs manager admin');
 
   }
 

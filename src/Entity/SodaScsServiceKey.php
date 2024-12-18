@@ -44,10 +44,14 @@ use Drupal\user\UserInterface;
  *   data_table = "soda_scs_service_key_field_data",
  *   field_ui_base_route = "entity.soda_scs_service_key.edit_form",
  *   fieldable = TRUE,
+ *   common_reference_target = TRUE,
  *   entity_keys = {
  *     "id" = "id",
  *     "uuid" = "uuid",
  *     "label" = "label",
+ *     "owner" = "user",
+ *     "user_id" = "user",
+ *     "langcode" = "langcode",
  *   },
  *   config_export = {
  *     "id",
