@@ -52,7 +52,7 @@ class SodaScsComponentActions implements SodaScsComponentActionsInterface {
    * Creates a stack.
    *
    * A stack consists of one or more components.
-   * We sort by bundle.
+   * We sort by type.
    *
    * @param \Drupal\soda_scs_manager\Entity\SodaScsStackInterface|Drupal\soda_scs_manager\Entity\SodaScsComponentInterface $entity
    *   The SODa SCS Component entity.
@@ -61,14 +61,14 @@ class SodaScsComponentActions implements SodaScsComponentActionsInterface {
    *   The result of the request.
    */
   public function createComponent(SodaScsStackInterface|SodaScsComponentInterface $entity): array {
-    switch ($entity->getBundle()) {
-      case 'wisski':
+    switch ($entity->bundle()) {
+      case 'soda_scs_wisski_component':
         return $this->sodaScsWisskiComponentActions->createComponent($entity);
 
-      case 'sql':
+      case 'soda_scs_sql_component':
         return $this->sodaScsSqlComponentActions->createComponent($entity);
 
-      case 'triplestore':
+      case 'soda_scs_triplestore_component':
         return $this->sodaScsTriplestoreComponentActions->createComponent($entity);
 
       default:
@@ -116,7 +116,7 @@ class SodaScsComponentActions implements SodaScsComponentActionsInterface {
    */
   public function updateComponent($component): array {
     switch ($component->bundle()) {
-      case 'wisski':
+      case 'soda_scs_wisski_component':
         return $this->sodaScsWisskiComponentActions->updateComponent($component);
 
       default:
@@ -138,13 +138,13 @@ class SodaScsComponentActions implements SodaScsComponentActionsInterface {
   public function deleteComponent(SodaScsComponentInterface $component): array {
     // @todo slim down if there is no more logic
     switch ($component->bundle()) {
-      case 'wisski':
+      case 'soda_scs_wisski_component':
         return $this->sodaScsWisskiComponentActions->deleteComponent($component);
 
-      case 'sql':
+      case 'soda_scs_sql_component':
         return $this->sodaScsSqlComponentActions->deleteComponent($component);
 
-      case 'triplestore':
+      case 'soda_scs_triplestore_component':
         return $this->sodaScsTriplestoreComponentActions->deleteComponent($component);
 
       default:

@@ -18,14 +18,13 @@ class SodaScsComponentViewBuilder extends EntityViewBuilder {
       $build['user'] = [
         '#type' => 'item',
         '#title' => $this->t('Service User:'),
-        '#markup' => $serviceKeyEntity->getOwner()->getDisplayName(),
+        '#markup' => '<span>' . $serviceKeyEntity->getOwner()->getDisplayName() . '</span>',
         '#weight' => 100,
       ];
       $build['password'] = [
         '#type' => 'item',
         '#title' => $this->t('Service Password:'),
-        '#markup' => $servicePassword,
-        '#attributes' => ['class' => ['soda-scs-manager--service-password']],
+        '#markup' => '<span class="soda-scs-manager--service-password">' . $servicePassword . '</span>',
         '#weight' => 100,
       ];
     }

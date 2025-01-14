@@ -2,7 +2,7 @@
   Drupal.behaviors.shadowServiceKeys = {
     attach: function (context, settings) {
       once('shadowServiceKeys', 'html', context).forEach(function () {
-        const passwordElements = context.querySelectorAll('td.soda-scs-manager--service-password');
+        const passwordElements = context.querySelectorAll('.soda-scs-manager--service-password');
         if (passwordElements.length > 0) {
           const shadowValue = '************click_to_view************';
           passwordElements.forEach(function (element) {

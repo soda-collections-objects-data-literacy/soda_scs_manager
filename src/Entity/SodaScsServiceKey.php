@@ -49,8 +49,8 @@ use Drupal\user\UserInterface;
  *     "id" = "id",
  *     "uuid" = "uuid",
  *     "label" = "label",
- *     "owner" = "user",
- *     "user_id" = "user",
+ *     "owner" = "owner",
+ *     "uid" = "owner",
  *     "langcode" = "langcode",
  *   },
  *   config_export = {
@@ -69,52 +69,6 @@ class SodaScsServiceKey extends ContentEntityBase implements SodaScsServiceKeyIn
    * @var \Drupal\Core\Entity\ContentEntityInterface
    */
   protected $component;
-
-  /**
-   * Get the owner of the SODa SCS Component.
-   *
-   * @return \Drupal\user\Entity\User
-   *   The owner of the SODa SCS Component.
-   */
-  public function getOwner() {
-    return $this->get('user')->entity;
-  }
-
-  /**
-   * Get the owner ID of the SODa SCS Component.
-   *
-   * @return int
-   *   The owner ID of the SODa SCS Component.
-   */
-  public function getOwnerId() {
-    return $this->get('user')->target_id;
-  }
-
-  /**
-   * Set the owner of the SODa SCS Component.
-   *
-   * @param \Drupal\user\Entity\User $account
-   *   The owner of the SODa SCS Component.
-   *
-   * @return $this
-   */
-  public function setOwner(UserInterface $account) {
-    $this->set('user', $account);
-    return $this;
-  }
-
-  /**
-   * Set the owner ID of the SODa SCS Component.
-   *
-   * @param int $uid
-   *   The owner ID of the SODa SCS Component.
-   *
-   * @return $this
-   */
-  public function setOwnerId($uid): self {
-    $this->set('user', $this->get('user')->target_id);
-    return $this;
-  }
 
   /**
    * Get the Soda SCS Component.
@@ -136,36 +90,6 @@ class SodaScsServiceKey extends ContentEntityBase implements SodaScsServiceKeyIn
   public static function baseFieldDefinitions(EntityTypeInterface $entity_type) {
     $fields = parent::baseFieldDefinitions($entity_type);
 
-    $fields['bundle'] = BaseFieldDefinition::create('entity_reference')
-      ->setLabel(new TranslatableMarkup('Bundle'))
-      ->setSetting('target_type', 'soda_scs_component_bundle')
-      ->setCardinality(1)
-      ->setRequired(TRUE)
-      ->setReadOnly(TRUE)
-      ->setDisplayConfigurable('view', FALSE);
-
-    $fields['id'] = BaseFieldDefinition::create('integer')
-      ->setLabel(new TranslatableMarkup('ID'))
-      ->setDescription(new TranslatableMarkup('The ID of the SCS component entity.'))
-      ->setReadOnly(TRUE)
-      ->setDisplayConfigurable('view', FALSE);
-
-    $fields['label'] = BaseFieldDefinition::create('string')
-      ->setLabel(new TranslatableMarkup('Label'))
-      ->setDescription(new TranslatableMarkup('The name of the service key.'))
-      ->setRequired(TRUE)
-      ->setTranslatable(TRUE)
-      ->setDisplayConfigurable('view', FALSE)
-      ->setDisplayOptions('view', [
-        'label' => 'hidden',
-        'type' => 'string',
-        'weight' => 0,
-      ]);
-
-    $fields['langcode'] = BaseFieldDefinition::create('language')
-      ->setLabel(t('Language code'))
-      ->setDescription(t('The node language code.'));
-
     $fields['scsComponent'] = BaseFieldDefinition::create('entity_reference')
       ->setLabel(new TranslatableMarkup('SODa SCS Component'))
       ->setSetting('target_type', 'soda_scs_component')
@@ -178,6 +102,19 @@ class SodaScsServiceKey extends ContentEntityBase implements SodaScsServiceKeyIn
       ])
       ->setDisplayConfigurable('view', FALSE)
       ->setDisplayConfigurable('form', FALSE);
+
+    $fields['scsComponentBundle'] = BaseFieldDefinition::create('string')
+      ->setLabel(new TranslatableMarkup('SODa SCS Component Bundle'))
+      ->setDescription(new TranslatableMarkup('The bundle of the SODa SCS Component.'))
+      ->setCardinality(1)
+      ->setRequired(TRUE)
+      ->setReadOnly(TRUE)
+      ->setDisplayOptions('view', [
+        'label' => 'above',
+        'type' => 'string',
+        'weight' => 0,
+      ])
+      ->setDisplayConfigurable('view', FALSE);
 
     $fields['servicePassword'] = BaseFieldDefinition::create('string')
       ->setLabel(new TranslatableMarkup('Password'))
@@ -201,19 +138,12 @@ class SodaScsServiceKey extends ContentEntityBase implements SodaScsServiceKeyIn
       ->setDisplayConfigurable('view', FALSE)
       ->setDisplayConfigurable('form', FALSE);
 
-    $fields['user'] = BaseFieldDefinition::create('entity_reference')
-      ->setLabel(new TranslatableMarkup('User'))
+    $fields['owner'] = BaseFieldDefinition::create('entity_reference')
+      ->setLabel(new TranslatableMarkup('Owner'))
       ->setSetting('target_type', 'user')
       ->setSetting('handler', 'default')
       ->setCardinality(1)
       ->setRequired(TRUE)
-      ->setReadOnly(TRUE)
-      ->setDisplayConfigurable('view', FALSE)
-      ->setDisplayConfigurable('form', FALSE);
-
-    $fields['uuid'] = BaseFieldDefinition::create('uuid')
-      ->setLabel(new TranslatableMarkup('UUID'))
-      ->setDescription(new TranslatableMarkup('The UUID of the SODa SCS Component entity.'))
       ->setReadOnly(TRUE)
       ->setDisplayConfigurable('view', FALSE)
       ->setDisplayConfigurable('form', FALSE);

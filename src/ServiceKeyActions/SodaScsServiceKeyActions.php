@@ -59,9 +59,9 @@ class SodaScsServiceKeyActions implements SodaScsServiceKeyActionsInterface {
     $serviceKey = $this->entityTypeManager->getStorage('soda_scs_service_key')->create([
       'label' => $props['bundle'] . ' service key' . ' owned by ' . $props['username'],
       'servicePassword' => $servicePassword,
-      'bundle' => $props['bundle'],
+      'scsComponentBundle' => $props['bundle'],
       'type' => $props['type'],
-      'user' => $props['userId'],
+      'owner' => $props['userId'],
     ]);
     $serviceKey->save();
     return $serviceKey;
@@ -79,8 +79,8 @@ class SodaScsServiceKeyActions implements SodaScsServiceKeyActionsInterface {
   public function getServiceKey(array $props): ?SodaScsServiceKeyInterface {
     /** @var \Drupal\soda_scs_manager\Entity\SodaScsServiceKeyInterface $serviceKeys */
     $serviceKey = $this->entityTypeManager->getStorage('soda_scs_service_key')->loadByProperties([
-      'bundle' => $props['bundle'],
-      'user' => $props['userId'],
+      'scsComponentBundle' => $props['bundle'],
+      'owner' => $props['userId'],
       'type' => $props['type'],
     ]);
 

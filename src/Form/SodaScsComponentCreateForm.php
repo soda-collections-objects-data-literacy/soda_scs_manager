@@ -121,7 +121,7 @@ class SodaScsComponentCreateForm extends ContentEntityForm {
   public function buildForm(array $form, FormStateInterface $form_state) {
     // Get the bundle of the entity.
     /** @var \Drupal\soda_scs_manager\Entity\SodaScsComponentBundle $bundle */
-    $bundle = $this->entityTypeManager->getStorage('soda_scs_component_bundle')->load($this->entity->bundle());
+    $bundle = $this->entityTypeManager->getStorage('soda_scs_component')->load($this->entity->bundle());
 
     // Build the form.
     $form = parent::buildForm($form, $form_state);
@@ -242,12 +242,12 @@ class SodaScsComponentCreateForm extends ContentEntityForm {
     $component->set('bundle', $this->entity->bundle());
     $component->set('created', $this->time->getRequestTime());
     $component->set('updated', $this->time->getRequestTime());
-    $component->set('user', $this->currentUser->getAccount()->id());
+    $component->set('owner', $this->currentUser->getAccount()->id());
     $subdomain = reset($form_state->getValue('subdomain'))['value'];
     $component->set('label', $subdomain . '.' . $this->settings->get('scsHost'));
     $component->set('subdomain', $subdomain);
     /** @var \Drupal\soda_scs_manager\Entity\SodaScsComponentBundleInterface $bundle */
-    $bundle = $this->entityTypeManager->getStorage('soda_scs_component_bundle')->load($this->entity->bundle());
+    $bundle = $this->entityTypeManager->getStorage('soda_scs_component')->load($this->entity->bundle());
     $component->set('description', $bundle->getDescription());
     $component->set('imageUrl', $bundle->getImageUrl());
 

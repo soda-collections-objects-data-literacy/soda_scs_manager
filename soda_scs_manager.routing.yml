@@ -1,13 +1,3 @@
-# APi Spec
-
-soda_scs_manager.api_spec:
-  path: '/soda-scs-manager/api-spec'
-  defaults:
-    _controller: '\Drupal\soda_scs_manager\Controller\SodaScsManagerController::apiSpec'
-    _title: 'API Spec'
-  requirements:
-    _permission: 'soda scs manager admin'
-
 # Assets
 
 soda_scs_manager.assets:
@@ -17,67 +7,6 @@ soda_scs_manager.assets:
   requirements:
     asset: '.*'
     _access: 'TRUE'
-
-soda_scs_manager.spec:
-  path: '/soda-scs-manager/spec/soda-scs-api-spec.yaml'
-  defaults:
-    _controller: '\Drupal\soda_scs_manager\Controller\SodaScsAssetController::loadSpec'
-  requirements:
-    _access: 'TRUE'
-
-# Bundles
-
-entity.soda_scs_component_bundle.canonical:
-  path: '/admin/structure/soda-scs-component-bundle/{soda_scs_component_bundle}'
-  defaults:
-    _entity_view: 'soda_scs_component_bundle.default'
-    _title_callback: '\Drupal\soda_scs_manager\Controller\SodaScsComponentBundleController::title'
-  options:
-    parameters:
-      soda_scs_component_bundle:
-        type: entity:soda_scs_component_bundle
-  requirements:
-    _permission: 'soda scs manager admin'
-
-entity.soda_scs_component_bundle.add_form:
-  path: '/admin/structure/soda-scs-component-bundle/add'
-  defaults:
-    _entity_form: 'soda_scs_component_bundle.add'
-    _title: 'Add SODa SCS Component Bundle'
-  requirements:
-    _permission: 'soda scs manager admin'
-
-entity.soda_scs_component_bundle.edit_form:
-  path: '/admin/structure/soda-scs-component-bundle/{soda_scs_component_bundle}/edit'
-  defaults:
-    _entity_form: 'soda_scs_component_bundle.default'
-    _title: 'Edit SODa SCS Component Bundle'
-  options:
-    parameters:
-      soda_scs_component_bundle:
-        type: entity:soda_scs_component_bundle
-  requirements:
-    _permission: 'soda scs manager admin'
-
-entity.soda_scs_component_bundle.delete_form:
-  path: '/admin/structure/soda-scs-component-bundle/{soda_scs_component_bundle}/delete'
-  defaults:
-    _entity_form: 'soda_scs_component_bundle.delete'
-    _title: 'Delete SODa SCS Component Bundle'
-  options:
-    parameters:
-      soda_scs_component_bundle:
-        type: entity:soda_scs_component_bundle
-  requirements:
-    _permission: 'soda scs manager admin'
-
-entity.soda_scs_component_bundle.collection:
-  path: '/admin/structure/soda-scs-component-bundle'
-  defaults:
-    _entity_list: 'soda_scs_component_bundle'
-    _title: 'SODa SCS Component Bundles'
-  requirements:
-    _permission: 'soda scs manager admin'
 
 # Soda SCS Stack Entities
 
@@ -94,29 +23,12 @@ entity.soda_scs_stack.canonical:
     _permission: 'soda scs manager user'
 
 entity.soda_scs_stack.add_form:
-  #path: '/soda-scs-manager/stack/{soda_scs_component_bundle}/add'
-  path: '/soda-scs-manager/stack/{bundle}/add'
+  path: '/soda-scs-manager/stack/add/{bundle}'
   defaults:
     _entity_form: 'soda_scs_stack.add'
     _title: 'Add Stack'
-  options:
-    parameters:
-      bundle:
-        type: entity:soda_scs_stack_bundle
   requirements:
     _permission: 'soda scs manager user'
-
-# entity.soda_scs_stack.edit_form:
-#   path: '/soda-scs-manager/stack/{soda_scs_stack}/edit'
-#   defaults:
-#     _entity_form: 'soda_scs_stack.edit'
-#     _title: 'Edit Stack'
-#   options:
-#     parameters:
-#       soda_scs_stack:
-#         type: entity:soda_scs_stack
-#   requirements:
-#     _permission: 'soda scs manager user'
 
 entity.soda_scs_stack.delete_form:
   path: '/soda-scs-manager/stack/{soda_scs_stack}/delete'
@@ -161,21 +73,9 @@ entity.soda_scs_component.add_form:
   options:
     parameters:
       soda_scs_component_bundle:
-        type: entity:soda_scs_component_bundle
+        type: entity:soda_scs_component
   requirements:
     _permission: 'soda scs manager user'
-
-#entity.soda_scs_component.edit_form:
-#  path: '/admin/structure/soda-scs-component/{soda_scs_component}/edit'
-#  defaults:
-#    _entity_form: 'soda_scs_component.edit'
-#    _title: 'Edit ScsComponent'
-#  options:
-#    parameters:
-#      soda_scs_component:
-#        type: entity:soda_scs_component
-#  requirements:
-#    _permission: 'soda scs manager user'
 
 entity.soda_scs_component.delete_form:
   path: '/admin/structure/soda-scs-component/{soda_scs_component}/delete'
@@ -219,18 +119,6 @@ entity.soda_scs_service_key.add_form:
     _title: 'Add SODa SCS Service Key'
   requirements:
     _permission: 'soda scs manager admin'
-
-# entity.soda_scs_service_key.edit_form:
-#   path: '/soda-scs-manager/service-key/{soda_scs_service_key}/edit'
-#   defaults:
-#     _entity_form: 'soda_scs_service_key.edit'
-#     _title: 'Edit SODa SCS Service Key'
-#   options:
-#     parameters:
-#       soda_scs_service_key:
-#         type: entity:soda_scs_service_key
-#   requirements:
-#     _custom_access: '\Drupal\soda_scs_manager\Access\SodaScsServiceKeyAccessControlHandler::accessServiceKey'
 
 entity.soda_scs_service_key.delete_form:
   path: '/soda-scs-manager/service-key/{soda_scs_service_key}/delete'

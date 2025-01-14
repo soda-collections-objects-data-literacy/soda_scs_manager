@@ -20,11 +20,10 @@ class SodaScsServiceKeyListBuilder extends EntityListBuilder {
    */
   public function buildHeader() {
     $header['component'] = $this->t('Component');
-    $header['bundle'] = $this->t('bundle');
+    $header['bundle'] = $this->t('Bundle');
     $header['owner'] = $this->t('Owner');
     $header['type'] = $this->t('Type');
     $header['password'] = $this->t('Password');
-    $header['operations'] = $this->t('Operations');
     return $header + parent::buildHeader();
   }
 
@@ -52,7 +51,7 @@ class SodaScsServiceKeyListBuilder extends EntityListBuilder {
 
       // Markup::create to ensure the HTML is not escaped.
       $row['scsComponent'] = Markup::create($linksString);
-      $row['bundle'] = $entity->get('bundle')->target_id;
+      $row['scsComponentBundle'] = $entity->get('scsComponentBundle')->value;
       $row['owner'] = $entity->getOwner()->getDisplayName();
       $row['type'] = $entity->get('type')->value;
       $row['servicePassword'] = [
@@ -70,6 +69,23 @@ class SodaScsServiceKeyListBuilder extends EntityListBuilder {
     $build = parent::render();
     $build['table']['#attached']['library'][] = 'soda_scs_manager/security';
     return $build;
+  }
+
+  /**
+   * {@inheritdoc}
+   *
+   * @todo Why I have to do this, this should be in the parent class
+   */
+  public function buildOperations(EntityInterface $entity) {
+    $operations = parent::buildOperations($entity);
+
+    $operations['#links']['delete'] = [
+      'title' => $this->t('Delete'),
+      'weight' => 100,
+      'url' => Url::fromRoute('entity.soda_scs_service_key.delete_form', ['soda_scs_service_key' => $entity->id()]),
+    ];
+
+    return $operations;
   }
 
 }

@@ -1,8 +1,15 @@
 # SODa SCS Manager
 
 ## Introduction
-Component: An instance of app, like WissKI, SQL-Database or RDF4J-Triplestore. 
-Service: External Provider API, i.e. to Portainer, OpenGDB service.
-Stack: A tool environment like WissKI, Database and Triplestore.
+The SODa SCS Manager module is part of the [SODa Semantic Co-Working Space](https://zenodo.org/records/14627710) of the [SODa project](https://sammlungen.io).
+It extends the Drupal framework with an administration panel for the SODa Semantic Co-Working Space.
+
+## Roadmap
+- [ ] harmonise Entity/Bundle Definitions ["the modern way"](https://www.drupal.org/docs/create-custom-content-types-with-bundle-classes)
+- [ ] Healtchecks for running components
+- [ ] Favour 3D
+- [ ] Flavour conservation and restauration
+- [ ] Documentation
 
 ## License
+[GNU General Public Licence 3](https://www.gnu.org/licenses/gpl-3.0.html)

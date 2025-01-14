@@ -10,8 +10,6 @@ use Drupal\Core\Entity\EntityRepositoryInterface;
 use Drupal\Core\Entity\EntityTypeBundleInfoInterface;
 use Drupal\Core\Form\FormStateInterface;
 use Drupal\Core\Session\AccountProxyInterface;
-use Drupal\soda_scs_manager\Entity\SodaScsComponentBundleInterface;
-use Drupal\soda_scs_manager\Entity\SodaScsStackInterface;
 use Drupal\soda_scs_manager\StackActions\SodaScsStackActionsInterface;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 
@@ -118,12 +116,12 @@ class SodaScsStackCreateForm extends ContentEntityForm {
   public function buildForm(array $form, FormStateInterface $form_state, string $bundle = NULL) {
 
     $this->bundle = $bundle;
-    $bundles = \Drupal::service('entity_type.bundle.info')->getBundleInfo('soda_scs_stack');
     // Build the form.
     $form = parent::buildForm($form, $form_state);
 
+    $a = 1;
     if (!\Drupal::currentUser()->hasPermission('soda scs manager admin')) {
-      $form['user']['#access'] = FALSE;
+      $form['owner']['#access'] = FALSE;
     }
 
     // Change the label of the submit button.
@@ -225,7 +223,7 @@ class SodaScsStackCreateForm extends ContentEntityForm {
     $stack->set('bundle', $this->bundle);
     $stack->set('created', $this->time->getRequestTime());
     $stack->set('updated', $this->time->getRequestTime());
-    $stack->set('user', $this->currentUser->getAccount()->id());
+    $stack->set('owner', $this->currentUser->getAccount()->id());
     $subdomain = reset($form_state->getValue('subdomain'))['value'];
     $stack->set('label', $subdomain . '.' . $this->settings->get('scsHost') . ' Stack');
     $stack->set('subdomain', $subdomain);

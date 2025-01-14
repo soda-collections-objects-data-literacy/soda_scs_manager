@@ -7,11 +7,11 @@ use Drupal\Core\Entity\EntityTypeInterface;
 use Drupal\Core\Field\BaseFieldDefinition;
 use Drupal\Core\Field\FieldStorageDefinitionInterface;
 use Drupal\Core\StringTranslation\TranslatableMarkup;
+use Drupal\soda_scs_manager\Entity\Bundle\SodaScsComponentBundle;
 use Drupal\user\EntityOwnerTrait;
-use Drupal\user\UserInterface;
 
 /**
- * Defines the ComponentCredentials entity.
+ * Defines the Soda SCS Stack entity.
  *
  * @ContentEntityType(
  *   id = "soda_scs_stack",
@@ -48,7 +48,7 @@ use Drupal\user\UserInterface;
  *   },
  *   base_table = "soda_scs_stack",
  *   data_table = "soda_scs_stack_field_data",
- *   field_ui_base_route = "entity.soda_scs_component_bundle.edit_form",
+ *   field_ui_base_route = "entity.soda_scs_stack.edit_form",
  *   fieldable = TRUE,
  *   common_reference_target = TRUE,
  *   entity_keys = {
@@ -56,9 +56,9 @@ use Drupal\user\UserInterface;
  *     "bundle" = "bundle",
  *     "uuid" = "uuid",
  *     "label" = "label",
- *     "owner" = "user",
- *     "uid" = "user",
+ *     "uid" = "owner",
  *     "langcode" = "langcode",
+ *     "owner" = "owner",
  *   },
  *   config_export = {
  *     "id",
@@ -96,91 +96,10 @@ class SodaScsStack extends ContentEntityBase implements SodaScsStackInterface {
   }
 
   /**
-   * Get the owner of the SODa SCS Component.
-   *
-   * @return \Drupal\user\Entity\User
-   *   The owner of the SODa SCS Component.
-   */
-  public function getOwner() {
-    return $this->get('user')->entity;
-  }
-
-  /**
-   * Get the owner ID of the SODa SCS Component.
-   *
-   * @return int
-   *   The owner ID of the SODa SCS Component.
-   */
-  public function getOwnerId() {
-    return $this->get('user')->target_id;
-  }
-
-  /**
-   * Set the owner of the SODa SCS Component.
-   *
-   * @param \Drupal\user\Entity\User $account
-   *   The owner of the SODa SCS Component.
-   *
-   * @return $this
-   */
-  public function setOwner(UserInterface $account) {
-    $this->set('user', $account);
-    return $this;
-  }
-
-  /**
-   * Set the owner ID of the SODa SCS Component.
-   *
-   * @param int $uid
-   *   The owner ID of the SODa SCS Component.
-   *
-   * @return $this
-   */
-  public function setOwnerId($uid): self {
-    $this->set('user', $this->get('user')->target_id);
-    return $this;
-  }
-
-  /**
-   * Get the type of the Soda SCS Stack.
-   *
-   * @return string
-   *   The type of the Soda SCS Stack.
-   */
-  public function getBundle() {
-    return $this->get('bundle')->value;
-  }
-
-  /**
-   * Set the type of the Soda SCS Stack.
-   *
-   * @param string $bundle
-   *   The type of the Soda SCS Stack.
-   *
-   * @return $this
-   */
-  public function setBundle($bundle) {
-    $this->set('bundle', $bundle);
-    return $this;
-  }
-
-  /**
    * {@inheritdoc}
    */
   public static function baseFieldDefinitions(EntityTypeInterface $entity_type) {
     $fields = parent::baseFieldDefinitions($entity_type);
-
-    $bundle_options = array_reduce(SodaScsComponentBundle::loadMultiple(), function ($carry, $bundle) {
-      $carry[$bundle->id()] = $bundle->label();
-      return $carry;
-    }, []);
-    $fields['bundle'] = BaseFieldDefinition::create('list_string')
-      ->setLabel(new TranslatableMarkup('Bundle'))
-      ->setSetting('allowed_values', $bundle_options)
-      ->setCardinality(1)
-      ->setRequired(TRUE)
-      ->setReadOnly(TRUE)
-      ->setDisplayConfigurable('view', TRUE);
 
     $fields['created'] = BaseFieldDefinition::create('created')
       ->setLabel(new TranslatableMarkup('Created'))
@@ -221,12 +140,6 @@ class SodaScsStack extends ContentEntityBase implements SodaScsStackInterface {
         'weight' => 3,
       ]);
 
-    $fields['id'] = BaseFieldDefinition::create('integer')
-      ->setLabel(new TranslatableMarkup('ID'))
-      ->setDescription(new TranslatableMarkup('The ID of the SCS component entity.'))
-      ->setReadOnly(TRUE)
-      ->setDisplayConfigurable('view', TRUE);
-
     $fields['imageUrl'] = BaseFieldDefinition::create('string')
       ->setLabel(new TranslatableMarkup('Image'))
       ->setDescription(new TranslatableMarkup('The image of the SODa SCS Stack.'))
@@ -241,22 +154,6 @@ class SodaScsStack extends ContentEntityBase implements SodaScsStackInterface {
         'weight' => 0,
       ]);
 
-    $fields['label'] = BaseFieldDefinition::create('string')
-      ->setLabel(new TranslatableMarkup('Label'))
-      ->setDescription(new TranslatableMarkup('The name of the Stack.'))
-      ->setRequired(TRUE)
-      ->setTranslatable(TRUE)
-      ->setDisplayConfigurable('view', TRUE)
-      ->setDisplayOptions('view', [
-        'label' => 'hidden',
-        'type' => 'string',
-        'weight' => 0,
-      ]);
-
-    $fields['langcode'] = BaseFieldDefinition::create('language')
-      ->setLabel(t('Language code'))
-      ->setDescription(t('The node language code.'));
-
     // @todo Insure to have only dangling components as references.
     $fields['includedComponents'] = BaseFieldDefinition::create('entity_reference')
       ->setLabel(new TranslatableMarkup('Included components'))
@@ -270,6 +167,40 @@ class SodaScsStack extends ContentEntityBase implements SodaScsStackInterface {
         'weight' => 2,
       ])
       ->setDisplayConfigurable('form', TRUE);
+
+    $fields['label'] = BaseFieldDefinition::create('string')
+      ->setLabel(new TranslatableMarkup('Label'))
+      ->setDescription(new TranslatableMarkup('The label of the SODa SCS Component.'))
+      ->setRequired(TRUE)
+      ->setReadOnly(TRUE)
+      ->setTranslatable(FALSE)
+      ->setCardinality(1)
+      ->setDisplayConfigurable('form', FALSE)
+      ->setDisplayConfigurable('view', FALSE)
+      ->setDisplayOptions('view', [
+        'label' => 'above',
+        'type' => 'string',
+        'weight' => 0,
+      ]);
+
+    $fields['owner'] = BaseFieldDefinition::create('entity_reference')
+      ->setLabel(new TranslatableMarkup('Owner'))
+      ->setDescription(new TranslatableMarkup('The owner of the SODa SCS Component.'))
+      ->setSetting('target_type', 'user')
+      ->setSetting('handler', 'default')
+      ->setRequired(TRUE)
+      ->setReadOnly(FALSE)
+      ->setDisplayConfigurable('form', FALSE)
+      ->setDisplayConfigurable('view', FALSE)
+      ->setDisplayOptions('view', [
+        'label' => 'above',
+        'type' => 'entity_reference_label',
+        'weight' => 0,
+      ])
+      ->setDisplayOptions('form', [
+        'type' => 'options_buttons',
+        'weight' => 0,
+      ]);
 
     $fields['subdomain'] = BaseFieldDefinition::create('string')
       ->setLabel(new TranslatableMarkup('Subdomain'))
@@ -301,37 +232,6 @@ class SodaScsStack extends ContentEntityBase implements SodaScsStackInterface {
         'type' => 'timestamp',
         'weight' => 8,
       ]);
-
-    $userRefHidden = self::isAdmin() ? 'body' : 'hidden';
-    $fields['user'] = BaseFieldDefinition::create('entity_reference')
-      ->setLabel(new TranslatableMarkup('Owned by'))
-      ->setDescription(new TranslatableMarkup('The user ID of the author of the SODa SCS Component.'))
-      ->setSetting('target_type', 'user')
-      ->setSetting('handler', 'default:user_reference')
-      ->setRequired(TRUE)
-      ->setReadOnly(FALSE)
-      ->setTranslatable(FALSE)
-      ->setCardinality(1)
-      ->setDefaultValueCallback('\Drupal\soda_scs_manager\Entity\SodaScsStack::getDefaultUserId')
-      ->setDisplayConfigurable('form', FALSE)
-      ->setDisplayOptions('form', [
-        'type' => 'options_buttons',
-        'weight' => 9,
-        'settings' => [
-          'region' => $userRefHidden,
-        ],
-      ])
-      ->setDisplayConfigurable('view', FALSE)
-      ->setDisplayOptions('view', [
-        'label' => 'above',
-        'type' => 'author',
-        'weight' => 20,
-      ]);
-
-    $fields['uuid'] = BaseFieldDefinition::create('uuid')
-      ->setLabel(new TranslatableMarkup('UUID'))
-      ->setDescription(new TranslatableMarkup('The UUID of the SODa SCS Component entity.'))
-      ->setReadOnly(TRUE);
 
     return $fields;
 

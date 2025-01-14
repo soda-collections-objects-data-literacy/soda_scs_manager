@@ -1,7 +1,7 @@
 langcode: en
 status: true
 dependencies: {  }
-id: sql
+id: soda_scs_sql_component
 label: 'MariaDB SQL Database'
 description: "MariaDB is an open-source relational database management system (RDBMS) that is a fork of MySQL. It was created by the original developers of MySQL after concerns over Oracle's acquisition of MySQL in 2010. MariaDB is designed to be highly compatible with MySQL, meaning that it acts as a drop-in replacement for MySQL, but it includes new features, storage engines, and improvements that are not available in MySQL. Relational databases are used extensively across various disciplines for a wide range of purposes. These databases, which organize data into tables that are related to each other through common fields, are crucial for managing and analyzing large volumes of structured information."
 imageUrl: 'public://soda_scs_manager/images/database.svg'

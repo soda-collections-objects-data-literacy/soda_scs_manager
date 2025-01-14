@@ -126,23 +126,26 @@ class SodaScsSqlComponentActions implements SodaScsComponentActionsInterface {
    */
   public function createComponent(SodaScsStackInterface|SodaScsComponentInterface $entity): array {
     try {
-      // Create a new SODa SCS database component.
-      /** @var \Drupal\soda_scs_manager\Entity\SodaScsComponentBundleInterface $bundle */
-      $bundle = $this->entityTypeManager->getStorage('soda_scs_component_bundle')->load('sql');
+      $sqlComponentBundleInfo = \Drupal::service('entity_type.bundle.info')->getBundleInfo('soda_scs_component')['soda_scs_sql_component'];
+
+      if (!$sqlComponentBundleInfo) {
+        throw new \Exception('SQL component bundle info not found');
+      }
+
       $subdomain = $entity->get('subdomain')->value;
       $sqlComponent = $this->entityTypeManager->getStorage('soda_scs_component')->create(
         [
-          'bundle' => 'sql',
+          'bundle' => 'soda_scs_sql_component',
           'label' => $subdomain . '.' . $this->settings->get('scsHost') . ' (SQL Database)',
           'subdomain' => $subdomain,
-          'user'  => $entity->getOwnerId(),
-          'description' => $bundle->getDescription(),
-          'imageUrl' => $bundle->getImageUrl(),
+          'owner'  => $entity->getOwnerId(),
+          'description' => $sqlComponentBundleInfo['description'],
+          'imageUrl' => $sqlComponentBundleInfo['imageUrl'],
         ]
       );
 
       $keyProps = [
-        'bundle'  => 'sql',
+        'bundle'  => 'soda_scs_sql_component',
         'type'  => 'password',
         'userId'  => $entity->getOwnerId(),
         'username' => $entity->getOwner()->getDisplayName(),

@@ -101,25 +101,26 @@ class SodaScsTriplestoreComponentActions implements SodaScsComponentActionsInter
    */
   public function createComponent(SodaScsStackInterface|SodaScsComponentInterface $entity): array {
     try {
+      $triplestoreComponentBundleInfo = \Drupal::service('entity_type.bundle.info')->getBundleInfo('soda_scs_component')['soda_scs_triplestore_component'];
 
-      // Create Triplestore component.
-      /** @var \Drupal\soda_scs_manager\Entity\SodaScsComponentBundleInterface $bundle */
-      $bundle = $this->entityTypeManager->getStorage('soda_scs_component_bundle')->load('triplestore');
+      if (!$triplestoreComponentBundleInfo) {
+        throw new \Exception('Triplestore component bundle info not found');
+      }
       $subdomain = $entity->get('subdomain')->value;
       /** @var \Drupal\soda_scs_manager\Entity\SodaScsComponentInterface $triplestoreComponent */
       $triplestoreComponent = $this->entityTypeManager->getStorage('soda_scs_component')->create(
         [
-          'bundle' => 'triplestore',
+          'bundle' => 'soda_scs_triplestore_component',
           'label' => $subdomain . '.' . $this->settings->get('scsHost') . ' (Triplestore)',
           'subdomain' => $subdomain,
-          'user'  => $entity->getOwner(),
-          'description' => $bundle->getDescription(),
-          'imageUrl' => $bundle->getImageUrl(),
+          'owner'  => $entity->getOwnerId(),
+          'description' => $triplestoreComponentBundleInfo['description'],
+          'imageUrl' => $triplestoreComponentBundleInfo['image_url'],
         ]
       );
       // Create service key if it does not exist.
       $keyProps = [
-        'bundle'  => 'triplestore',
+        'bundle'  => 'soda_scs_triplestore_component',
         'type'  => 'password',
         'userId'    => $entity->getOwnerId(),
         'username' => $entity->getOwner()->getDisplayName(),
@@ -129,7 +130,7 @@ class SodaScsTriplestoreComponentActions implements SodaScsComponentActionsInter
       $triplestoreComponent->serviceKey[] = $triplestoreComponentServiceKey;
 
       $tokenProps = [
-        'bundle'  => 'triplestore',
+        'bundle'  => 'soda_scs_triplestore_component',
         'type'  => 'token',
         'userId'    => $entity->getOwnerId(),
         'username' => $entity->getOwner()->getDisplayName(),
@@ -245,7 +246,7 @@ class SodaScsTriplestoreComponentActions implements SodaScsComponentActionsInter
                 ];
               }
               $tokenProps = [
-                'bundle'  => 'triplestore',
+                'bundle'  => 'soda_scs_triplestore_component',
                 'type'  => 'token',
                 'token' => $createUserTokenResponse['data']['openGdbResponse']['token'],
                 'userId'    => $entity->getOwnerId(),

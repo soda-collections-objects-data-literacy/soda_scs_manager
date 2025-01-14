@@ -56,31 +56,6 @@ class SodaScsManagerController extends ControllerBase {
   }
 
   /**
-   * Page for API documentation.
-   *
-   * @return \Symfony\Component\HttpFoundation\Response
-   *   The response object.
-   *
-   * @throws \Exception
-   *   If the spec file is not found.
-   */
-  public function apiSpec() {
-    $spec_url = Url::fromUri('base:/modules/custom/soda-scs-manager/spec/soda-scs-api-spec.yaml')->toString();
-
-    return [
-      '#markup' => '<div id="swagger-ui">Swagger UI</div>',
-      '#attached' => [
-        'library' => [
-          'soda_scs_manager/swagger_ui',
-        ],
-        'drupalSettings' => [
-          'swaggerSpecUrl' => $spec_url,
-        ],
-      ],
-    ];
-  }
-
-  /**
    * Page for user management.
    *
    * @return array
@@ -157,7 +132,7 @@ class SodaScsManagerController extends ControllerBase {
     // Get all component bundles.
     $bundles = \Drupal::service('entity_type.bundle.info')->getBundleInfo('soda_scs_stack');
 
-    /** @var \Drupal\soda_scs_manager\Entity\SodaScsComponentBundle $bundle */
+    /** @var \Drupal\soda_scs_manager\Entity\Bundle\SodaScsStackBundle $bundle */
     foreach ($bundles as $id => $bundle) {
 
       // Add the card to the build array.

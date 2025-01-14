@@ -448,7 +448,7 @@ class SodaScsWisskiStackActions implements SodaScsStackActionsInterface {
     try {
       // Try to delete Drupal database.
       // Get referenced SQL component.
-      $sqlComponent = $this->sodaScsStackHelpers->retrieveIncludedComponent($stack, 'sql');
+      $sqlComponent = $this->sodaScsStackHelpers->retrieveIncludedComponent($stack, 'soda_scs_sql_component');
       // Delete SQL component.
       if ($sqlComponent) {
         $deleteDatabaseResult = $this->sodaScsSqlComponentActions->deleteComponent($sqlComponent);

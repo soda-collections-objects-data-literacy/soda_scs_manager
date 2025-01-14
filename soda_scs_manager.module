@@ -10,7 +10,8 @@ use Drupal\Core\Entity\EntityInterface;
 use Drupal\Core\Entity\EntityTypeInterface;
 use Drupal\Core\Routing\RouteMatchInterface;
 use Drupal\Core\StringTranslation\TranslatableMarkup;
-use Drupal\soda_scs_manager\Entity\Bundle\SodaScsWisskiStack;
+use Drupal\soda_scs_manager\Entity\Bundle\SodaScsComponentBundle;
+use Drupal\soda_scs_manager\Entity\Bundle\SodaScsStackBundle;
 use Drupal\user\UserInterface;
 
 /**
@@ -170,12 +171,32 @@ function soda_scs_manager_ensure_scs_user_role() {
  * Implements hook_entity_bundle_info().
  */
 function soda_scs_manager_entity_bundle_info() {
-  $bundles['soda_scs_stack']['wisski_stack'] = [
+  // Components.
+  $bundles['soda_scs_component']['soda_scs_sql_component'] = [
+    'label' => t('SQL Component'),
+    'class' => SodaScsComponentBundle::class,
+    'description' => t('A relational database for storage of structured data.'),
+    'imageUrl' => 'public://soda_scs_manager/images/sql.svg',
+  ];
+  $bundles['soda_scs_component']['soda_scs_triplestore_component'] = [
+    'label' => t('Triplestore Component'),
+    'class' => SodaScsComponentBundle::class,
+    'description' => t('Graph database for storage of RDF data.'),
+    'imageUrl' => 'public://soda_scs_manager/images/triplestore.svg',
+  ];
+
+  $bundles['soda_scs_component']['soda_scs_wisski_component'] = [
+    'label' => t('WissKI Component'),
+    'class' => SodaScsComponentBundle::class,
+    'description' => t('A WissKI Component is a component of a WissKI Stack.'),
+    'imageUrl' => 'public://soda_scs_manager/images/wisski.svg',
+  ];
+  // Stacks.
+  $bundles['soda_scs_stack']['soda_scs_wisski_stack'] = [
     'label' => t('WissKI Stack'),
-    'class' => SodaScsWisskiStack::class,
-    'description' => t('WissKI (Wissenschaftliche Kommunikationsinfrastruktur - Scientific Communication Infrastructure) is a virtual research environment and linked open data management software. Beneath the fundamental possibilities to create, read, edit and delete content, WissKI offers solutions for all tasks of the research data lifecycle and help users to produce and publish FAIR data. Furthermore, users can create revisions and translations, open the access to the data with a wide range of interfaces and integration options, but also restrict it via detailed rights management. The linked open data is stored in an external triple store, reachable trough own endpoints and therefore is independent from Drupal or WissKI\'s architecture. The data modelling follows an ontological approach, preferably, but not exclusively according to the CIDOC CRM. As part of the open source content management system Drupal, WissKI provides all the advantages of an constantly maintained and developed webapp. Last but not least, the basic functions of WissKI can be extended with a variety of Drupal modules. This turns WissKI to a full-featured research data management software - suitable for a wide range of application areas.'),
+    'class' => SodaScsStackBundle::class,
+    'description' => t('A WissKI Stack contains a WissKI, a Triplestore and a Database.'),
     'imageUrl' => 'public://soda_scs_manager/images/wisski-stack.svg',
-    // You can also add other attributes you find useful.
   ];
 
   return $bundles;
@@ -187,15 +208,15 @@ function soda_scs_manager_entity_bundle_info() {
  * Defines storage for all bundle fields.
  */
 function soda_scs_manager_entity_field_storage_info(EntityTypeInterface $entity_type) {
-  if ($entity_type->id() == 'soda_scs_stack') {
+  if (in_array($entity_type->id(), ['soda_scs_component', 'soda_scs_stack'])) {
     $definitions = [];
-    $bundles = \Drupal::service('entity_type.bundle.info')->getBundleInfo('soda_scs_stack');
+    $bundles = \Drupal::service('entity_type.bundle.info')->getBundleInfo($entity_type->id());
     foreach ($bundles as $bundle_id => $bundle_info) {
       if (isset($bundle_info['class'])) {
         $class = '\\' . $bundle_info['class'];
         if (class_exists($class)) {
           $bundle_defs = $class::bundleFieldDefinitions($entity_type, $bundle_id, []);
-          array_merge($definitions, $bundle_defs);
+          $definitions = array_merge($definitions, $bundle_defs);
         }
       }
     }

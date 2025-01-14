@@ -60,18 +60,18 @@ class SodaScsStackActions implements SodaScsStackActionsInterface {
    *   The result of the request.
    */
   public function createStack(SodaScsStackInterface $stack): array {
-    switch ($stack->getBundle()) {
-      case 'wisski_stack':
+    switch ($stack->bundle()) {
+      case 'soda_scs_wisski_stack':
         return $this->sodaScsWisskiStackActions->createStack($stack);
 
-      case 'sql_stack':
+      case 'soda_scs_sql_stack':
         return $this->sodaScsSqlStackActions->createStack($stack);
 
-      case 'triplestore_stack':
+      case 'soda_scs_triplestore_stack':
         return $this->sodaScsTriplestoreStackActions->createStack($stack);
 
       default:
-        return [];
+        throw new \Exception('Component type not supported for creation.');
     }
   }
 
@@ -88,11 +88,11 @@ class SodaScsStackActions implements SodaScsStackActionsInterface {
    */
   public function getStacks($bundle, $options): array {
     switch ($bundle) {
-      case 'wisski':
+      case 'soda_scs_wisski_stack':
         return $this->sodaScsWisskiStackActions->getStacks($bundle, $options);
 
       default:
-        return [];
+        throw new \Exception('Component type not supported.');
     }
   }
 
@@ -106,12 +106,13 @@ class SodaScsStackActions implements SodaScsStackActionsInterface {
    *   The result of the request.
    */
   public function getStack($component): array {
-    return [
-      'message' => 'Component read',
-      'data' => [],
-      'error' => NULL,
-      'success' => TRUE,
-    ];
+    switch ($component->bundle()) {
+      case 'soda_scs_wisski_stack':
+        return $this->sodaScsWisskiStackActions->getStack($component);
+
+      default:
+        throw new \Exception('Component type not supported.');
+    }
   }
 
   /**
@@ -125,11 +126,11 @@ class SodaScsStackActions implements SodaScsStackActionsInterface {
    */
   public function updateStack($component): array {
     switch ($component->bundle()) {
-      case 'wisski_stack':
+      case 'soda_scs_wisski_stack':
         return $this->sodaScsWisskiStackActions->updateStack($component);
 
       default:
-        return [];
+        throw new \Exception('Component type not supported.');
     }
   }
 
@@ -144,24 +145,19 @@ class SodaScsStackActions implements SodaScsStackActionsInterface {
    */
   public function deleteStack(SodaScsStackInterface $stack): array {
     // @todo slim down if there is no more logic
-    switch ($stack->getBundle()) {
-      case 'wisski_stack':
+    switch ($stack->bundle()) {
+      case 'soda_scs_wisski_stack':
         return $this->sodaScsWisskiStackActions->deleteStack($stack);
 
-      case 'sql_stack':
+      case 'soda_scs_sql_stack':
         return $this->sodaScsSqlStackActions->deleteStack($stack);
 
-      case 'triplestore_stack':
+      case 'soda_scs_triplestore_stack':
         return $this->sodaScsTriplestoreStackActions->deleteStack($stack);
 
       /* @todo Better error handling with trace info. */
       default:
-        return [
-          'message' => $this->t('Could not delete stack of type %bundle.', ['%bundle' => $stack->getBundle()]),
-          'data' => [],
-          'success' => FALSE,
-          'error' => 'Component type not supported for deletion.',
-        ];
+        throw new \Exception('Component type not supported.');
     }
   }
 

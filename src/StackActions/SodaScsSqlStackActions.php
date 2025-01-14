@@ -203,7 +203,7 @@ class SodaScsSqlStackActions implements SodaScsStackActionsInterface {
   public function deleteStack(SodaScsStackInterface $stack): array {
     try {
       // Delete Drupal database.
-      $sqlComponent = $this->sodaScsStackHelpers->retrieveIncludedComponent($stack, 'sql');
+      $sqlComponent = $this->sodaScsStackHelpers->retrieveIncludedComponent($stack, 'soda_scs_sql_component');
       if ($sqlComponent) {
         $deleteDbResult = $this->sodaScsSqlComponentActions->deleteComponent($sqlComponent);
       }
