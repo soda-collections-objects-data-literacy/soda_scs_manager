@@ -173,7 +173,7 @@ class SodaScsTriplestoreStackActions implements SodaScsStackActionsInterface {
   public function deleteStack(SodaScsStackInterface $stack): array {
     try {
 
-      $triplestoreComponent = $this->sodaScsStackHelpers->retrieveIncludedComponent($stack, 'triplestore');
+      $triplestoreComponent = $this->sodaScsStackHelpers->retrieveIncludedComponent($stack, 'soda_scs_triplestore_component');
       // Create the Triplestore component.
       $triplestoreComponentDeleteResult = $this->sodaScsTriplestoreComponentActions->deleteComponent($triplestoreComponent);
 

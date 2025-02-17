@@ -1,9 +1,19 @@
 # @todo clean unnessary service arguments
 services:
+
   # Helpers
   soda_scs_manager.stack.helpers:
     class: Drupal\soda_scs_manager\Helpers\SodaScsStackHelpers
     arguments:
+      - '@messenger'
+      - '@string_translation'
+
+  soda_scs_manager.component.helpers:
+    class: Drupal\soda_scs_manager\Helpers\SodaScsComponentHelpers
+    arguments:
+      - '@config.factory'
+      - '@http_client'
+      - '@logger.factory'
       - '@messenger'
       - '@string_translation'
 

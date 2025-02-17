@@ -491,7 +491,7 @@ class SodaScsWisskiStackActions implements SodaScsStackActionsInterface {
     try {
       // Try to delete Drupal database.
       // Get referenced SQL component.
-      $triplestoreComponent = $this->sodaScsStackHelpers->retrieveIncludedComponent($stack, 'triplestore');
+      $triplestoreComponent = $this->sodaScsStackHelpers->retrieveIncludedComponent($stack, 'soda_scs_triplestore_component');
       if ($triplestoreComponent) {
         // Delete SQL component.
         $deletetriplestoreResult = $this->sodaScsTriplestoreComponentActions->deleteComponent($triplestoreComponent);
@@ -525,8 +525,9 @@ class SodaScsWisskiStackActions implements SodaScsStackActionsInterface {
       $this->messenger->addError($this->stringTranslation->translate("Cannot delete triplestore component. See logs for more details."));
       if ($e->getCode() == 1) {
         // If component does not exist, we cannot delete the database.
-        $this->loggerFactory->get('soda_scs_manager')->error("Cannot delete triplestore component. @error Clean reference in Stack.", [
+        $this->loggerFactory->get('soda_scs_manager')->error("Cannot delete triplestore component: @error. Clean reference in Stack. TRACE: @trace", [
           '@error' => $e->getMessage(),
+          '@trace' => $e->getTraceAsString(),
         ]);
         $this->sodaScsStackHelpers->cleanIncludedComponents($stack);
       }
@@ -534,7 +535,7 @@ class SodaScsWisskiStackActions implements SodaScsStackActionsInterface {
 
     try {
       // Get referenced WissKI component.
-      $wisskiComponent = $this->sodaScsStackHelpers->retrieveIncludedComponent($stack, 'wisski');
+      $wisskiComponent = $this->sodaScsStackHelpers->retrieveIncludedComponent($stack, 'soda_scs_wisski_component');
       if ($wisskiComponent) {
         // Delete WissKI component.
         $deleteWisskiResult = $this->sodaScsWisskiComponentActions->deleteComponent($wisskiComponent);

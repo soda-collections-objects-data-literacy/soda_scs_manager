@@ -1,3 +1,13 @@
+# Helpers
+
+soda_scs_manager.component.health_check:
+  path: '/soda-scs-manager/health/{bundle}/{subdomain}'
+  defaults:
+    _controller: '\Drupal\soda_scs_manager\Controller\SodaScsComponentController::componentStatus'
+    _title:  'Component health check'
+  requirements:
+    _permission: 'soda scs manager user'
+
 # Assets
 
 soda_scs_manager.assets:

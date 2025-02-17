@@ -119,7 +119,7 @@ class SodaScsStackCreateForm extends ContentEntityForm {
     // Build the form.
     $form = parent::buildForm($form, $form_state);
 
-    $a = 1;
+    $form['owner']['widget']['#default_value'] = $this->currentUser->id();
     if (!\Drupal::currentUser()->hasPermission('soda scs manager admin')) {
       $form['owner']['#access'] = FALSE;
     }

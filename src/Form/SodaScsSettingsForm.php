@@ -275,21 +275,6 @@ class SodaScsSettingsForm extends ConfigFormBase {
       '#title' => 'Routes for ' . $form_state->getValue('bundle') . ' service',
     ];
 
-    $form['wisski']['routes']['healthCheck'] = [
-      '#type' => 'fieldset',
-      '#attributes' => ['id' => 'soda-scs--routes-subform--health-check'],
-      '#title' => 'Health check route',
-    ];
-    $form['wisski']['routes']['healthCheck']['url'] = [
-      '#type' => 'textfield',
-      '#title' => $this->t('Health check route path'),
-      '#default_value' => $this->config('soda_scs_manager.settings')->get('wisski')['routes']['healthCheck']['url'] ?? '',
-    ];
-    $form['wisski']['routes']['healthCheck']['checkButton'] = [
-      '#type' => 'button',
-      '#default_value' => $this->t('Check health'),
-    ];
-
     $form['wisski']['routes']['createUrl'] = [
       '#type' => 'textfield',
       '#title' => $this->t('Create route path'),
@@ -318,6 +303,28 @@ class SodaScsSettingsForm extends ConfigFormBase {
       '#type' => 'textfield',
       '#title' => $this->t('Delete route path'),
       '#default_value' => $this->config('soda_scs_manager.settings')->get('wisski')['routes']['deleteUrl'] ?? '',
+    ];
+
+    $form['wisski']['instances'] = [
+      '#type' => 'fieldset',
+      '#title' => 'Instances routes for WissKI components',
+    ];
+
+    $form['wisski']['instances']['cloudDomain'] = [
+      '#type' => 'textfield',
+      '#title' => $this->t('Cloud domain'),
+      '#default_value' => $this->config('soda_scs_manager.settings')->get('wisski')['instances']['cloudDomain'] ?? '',
+    ];
+
+    $form['wisski']['instances']['healthCheck'] = [
+      '#type' => 'fieldset',
+      '#attributes' => ['id' => 'soda-scs--routes-subform--health-check'],
+      '#title' => 'Health check route',
+    ];
+    $form['wisski']['instances']['healthCheck']['url'] = [
+      '#type' => 'textfield',
+      '#title' => $this->t('Health check route path'),
+      '#default_value' => $this->config('soda_scs_manager.settings')->get('wisski')['instances']['healthCheck']['url'] ?? '',
     ];
 
     return $form;

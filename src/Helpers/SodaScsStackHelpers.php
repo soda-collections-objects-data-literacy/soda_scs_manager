@@ -47,10 +47,10 @@ class SodaScsStackHelpers implements SodaScsHelpersInterface {
     $includedComponentsItemList = $stack->get('includedComponents');
     $includedComponents = $includedComponentsItemList->referencedEntities();
 
-    $components = array_filter($includedComponents, function ($includedComponent) use ($bundle) {
-      return $includedComponent->bundle->target_id === $bundle;
-    });
-    $includedComponent = !empty($components) ? reset($components) : NULL;
+    $includedComponent = array_values(array_filter($includedComponents, function ($includedComponent) use ($bundle) {
+      $componentBundle = $includedComponent->bundle->get(0)->get('value')->getValue();
+      return $componentBundle === $bundle;
+    }))[0] ?? NULL;
     if (!$includedComponent) {
       throw new SodaScsComponentException('Component not found', 1);
     }

@@ -141,6 +141,7 @@ class SodaScsSqlComponentActions implements SodaScsComponentActionsInterface {
           'owner'  => $entity->getOwnerId(),
           'description' => $sqlComponentBundleInfo['description'],
           'imageUrl' => $sqlComponentBundleInfo['imageUrl'],
+          'health' => 'Unknown',
         ]
       );
 

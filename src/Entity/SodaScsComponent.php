@@ -131,7 +131,7 @@ class SodaScsComponent extends ContentEntityBase implements SodaScsComponentInte
    * {@inheritdoc}
    */
   public static function baseFieldDefinitions(EntityTypeInterface $entity_type) {
-    // Fetch any existing base field definitions from the parent class.
+    // Fetch any existing base field definitions from the parent class (= id, uuid, langcode, bundle).
     $fields = parent::baseFieldDefinitions($entity_type);
 
     $fields['created'] = BaseFieldDefinition::create('created')
@@ -173,6 +173,21 @@ class SodaScsComponent extends ContentEntityBase implements SodaScsComponentInte
       ->setReadOnly(TRUE)
       ->setDisplayConfigurable('form', FALSE)
       ->setDisplayConfigurable('view', FALSE);
+
+    $fields['health'] = BaseFieldDefinition::create('string')
+      ->setLabel(new TranslatableMarkup('Health Status'))
+      ->setDescription(new TranslatableMarkup('The health status of the SODa SCS Component.'))
+      ->setRequired(FALSE)
+      ->setReadOnly(TRUE) // Ensure this is read-only as it will be updated via JavaScript.
+      ->setCardinality(1)
+      ->setDisplayConfigurable('form', FALSE)
+      ->setDisplayConfigurable('view', FALSE)
+      ->setDisplayOptions('view', [
+        'label' => 'above',
+        'type' => 'string',
+        'default_value' => 'Unknown',
+        'weight' => 0,
+      ]);
 
     $fields['imageUrl'] = BaseFieldDefinition::create('string')
       ->setLabel(new TranslatableMarkup('Image'))

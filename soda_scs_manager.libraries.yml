@@ -8,3 +8,8 @@ security:
   version: 1.x
   js:
     js/shadowServiceKeys.js: {}
+
+componentHelpers:
+  version: 1.x
+  js:
+    js/updateHealthStatus.js: {}

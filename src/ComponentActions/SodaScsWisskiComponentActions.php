@@ -172,6 +172,7 @@ class SodaScsWisskiComponentActions implements SodaScsComponentActionsInterface 
           'description' => $wisskiComponentBundleInfo['description'],
           'imageUrl' => $wisskiComponentBundleInfo['image'],
           'flavours' => array_values($entity->get('flavours')->getValue()),
+          'health' => 'Unknown',
         ]
       );
 

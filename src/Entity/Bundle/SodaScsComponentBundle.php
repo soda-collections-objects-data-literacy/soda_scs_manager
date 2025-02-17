@@ -38,7 +38,7 @@ class SodaScsComponentBundle extends SodaScsComponent implements SodaScsComponen
           ])
           /* @todo implement  'malty' => '3D', 'woody' => 'Provenance', 'herbal' => 'Conservation and Restoration'.*/
           ->setSetting('allowed_values', [
-            'sweet' => 'Add default data model',
+            'sweet' => 'default data model',
             'fruity' => '2D',
           ]);
 

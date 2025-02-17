@@ -14,6 +14,18 @@ use Drupal\soda_scs_manager\Entity\Bundle\SodaScsComponentBundle;
 use Drupal\soda_scs_manager\Entity\Bundle\SodaScsStackBundle;
 use Drupal\user\UserInterface;
 
+// This file contains implementations of the following hooks:
+// - hook_help(): implements the user help page for the module.
+// - hook_ENTITY_TYPE_view(): implements the content of the overview page
+//   for soda_scs_component and soda_scs_stack entities.
+// - hook_theme(): implements the theme for several entites and pages.
+// - hook_preprocess(): implements the preprocess function to add
+//   javascript libraries.
+// - hook_user_insert(): implements the functionality that assigns a role to a
+//   newly created user.
+// - hook_bundle_info(): add the additional bundles for the soda_scs_component.
+// - hook_entity_field_storage_info(): Defines storage for all bundle fields.
+
 /**
  * Implements hook_help().
  */
@@ -98,10 +110,40 @@ function soda_scs_manager_theme($existing, $type, $theme, $path) {
 }
 
 /**
+ * Implements hook_preprocess_HOOK().
+ */
+function soda_scs_manager_preprocess_soda_scs_component(array &$variables) {
+  $variables['#attached']['library'][] = 'soda_scs_manager/health_status';
+}
+
+/**
  * Implements hook_ENTITY_TYPE_view() for soda_scs_component entities.
  */
 function soda_scs_manager_soda_scs_component_view(array &$build, EntityInterface $entity, EntityViewDisplayInterface $display, $view_mode) {
   if ($entity->getEntityTypeId() === 'soda_scs_component') {
+    // Check if the imageUrl field has a value.
+    /** @var \Drupal\soda_scs_manager\Entity\SodaScsComponentInterface $entity */
+    if ($imageUrl = $entity->get('imageUrl')->value) {
+      $imageUrl = Drupal::service('file_url_generator')->generateAbsoluteString($imageUrl);
+      $build['#attached']['library'][] = 'soda_scs_manager/globalStyling';
+      // Add a custom render array for the imageUrl field.
+      $build['imageUrl'] = [
+        '#type' => 'markup',
+        '#markup' => '<img class="img-thumbnail soda-scs-manager--img--thumbnail" src="' . $imageUrl . '" alt="Image description" />',
+        // Ensure proper sanitization of the URL.
+        '#allowed_tags' => ['img'],
+      // Adjust the weight as needed.
+        '#weight' => 10,
+      ];
+    }
+  }
+}
+
+/**
+ * Implements hook_ENTITY_TYPE_view() for soda_scs_component entities.
+ */
+function soda_scs_manager_soda_scs_stack_view(array &$build, EntityInterface $entity, EntityViewDisplayInterface $display, $view_mode) {
+  if ($entity->getEntityTypeId() === 'soda_scs_stack') {
     // Check if the imageUrl field has a value.
     /** @var \Drupal\soda_scs_manager\Entity\SodaScsComponentInterface $entity */
     if ($imageUrl = $entity->get('imageUrl')->value) {

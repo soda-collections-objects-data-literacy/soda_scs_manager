@@ -116,6 +116,7 @@ class SodaScsTriplestoreComponentActions implements SodaScsComponentActionsInter
           'owner'  => $entity->getOwnerId(),
           'description' => $triplestoreComponentBundleInfo['description'],
           'imageUrl' => $triplestoreComponentBundleInfo['image_url'],
+          'health' => 'Unknown',
         ]
       );
       // Create service key if it does not exist.
