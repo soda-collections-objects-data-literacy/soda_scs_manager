@@ -28,13 +28,13 @@ class SodaScsStackBundle extends SodaScsStack implements SodaScsStackInterface {
           ->setDisplayConfigurable('view', FALSE)
           ->setDisplayOptions('form', [
             'type' => 'options_buttons',
-            'weight' => 4,
+            'weight' => 50,
           ])
           ->setCardinality(FieldStorageDefinitionInterface::CARDINALITY_UNLIMITED)
           ->setDisplayOptions('view', [
             'label' => 'above',
             'type' => 'checklist',
-            'weight' => 4,
+            'weight' => 50,
           ])
           /* @todo implement  'malty' => '3D', 'woody' => 'Provenance', 'herbal' => 'Conservation and Restoration'.*/
           ->setSetting('allowed_values', [

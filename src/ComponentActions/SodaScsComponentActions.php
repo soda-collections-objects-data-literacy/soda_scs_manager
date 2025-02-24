@@ -16,6 +16,12 @@ class SodaScsComponentActions implements SodaScsComponentActionsInterface {
   use DependencySerializationTrait;
   use StringTranslationTrait;
 
+  /**
+   * The SCS filesystem actions service.
+   *
+   * @var \Drupal\soda_scs_manager\SodaScsComponentActionsInterface
+   */
+  protected SodaScsComponentActionsInterface $sodaScsFilesystemComponentActions;
 
   /**
    * The SCS sql actions service.
@@ -41,7 +47,8 @@ class SodaScsComponentActions implements SodaScsComponentActionsInterface {
   /**
    * Class constructor.
    */
-  public function __construct(SodaScsComponentActionsInterface $sodaScsSqlComponentActions, SodaScsComponentActionsInterface $sodaScsTriplestoreComponentActions, SodaScsComponentActionsInterface $sodaScsWisskiComponentActions, TranslationInterface $stringTranslation) {
+  public function __construct(SodaScsComponentActionsInterface $sodaScsFilesystemComponentActions, SodaScsComponentActionsInterface $sodaScsSqlComponentActions, SodaScsComponentActionsInterface $sodaScsTriplestoreComponentActions, SodaScsComponentActionsInterface $sodaScsWisskiComponentActions, TranslationInterface $stringTranslation) {
+    $this->sodaScsFilesystemComponentActions = $sodaScsFilesystemComponentActions;
     $this->sodaScsSqlComponentActions = $sodaScsSqlComponentActions;
     $this->sodaScsTriplestoreComponentActions = $sodaScsTriplestoreComponentActions;
     $this->sodaScsWisskiComponentActions = $sodaScsWisskiComponentActions;
@@ -62,14 +69,17 @@ class SodaScsComponentActions implements SodaScsComponentActionsInterface {
    */
   public function createComponent(SodaScsStackInterface|SodaScsComponentInterface $entity): array {
     switch ($entity->bundle()) {
-      case 'soda_scs_wisski_component':
-        return $this->sodaScsWisskiComponentActions->createComponent($entity);
+      case 'soda_scs_filesystem_component':
+        return $this->sodaScsFilesystemComponentActions->createComponent($entity);
 
       case 'soda_scs_sql_component':
         return $this->sodaScsSqlComponentActions->createComponent($entity);
 
       case 'soda_scs_triplestore_component':
         return $this->sodaScsTriplestoreComponentActions->createComponent($entity);
+
+      case 'soda_scs_wisski_component':
+        return $this->sodaScsWisskiComponentActions->createComponent($entity);
 
       default:
         return [];
@@ -138,6 +148,8 @@ class SodaScsComponentActions implements SodaScsComponentActionsInterface {
   public function deleteComponent(SodaScsComponentInterface $component): array {
     // @todo slim down if there is no more logic
     switch ($component->bundle()) {
+      case 'soda_scs_filesystem_component':
+        return $this->sodaScsFilesystemComponentActions->deleteComponent($component);
       case 'soda_scs_wisski_component':
         return $this->sodaScsWisskiComponentActions->deleteComponent($component);
 
@@ -149,7 +161,7 @@ class SodaScsComponentActions implements SodaScsComponentActionsInterface {
 
       default:
         return [
-          'message' => $this->t('Could not delete stack of type %bundle.'), ['%bundle' => $component->bundle()],
+          'message' => $this->t('Could not delete component of type @bundle.', ['@bundle' => $component->bundle()]),
           'data' => [],
           'success' => FALSE,
           'error' => 'Component type not supported for deletion.',

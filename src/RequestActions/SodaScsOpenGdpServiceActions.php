@@ -77,7 +77,7 @@ class SodaScsOpenGdpServiceActions implements SodaScsServiceRequestInterface {
       case 'repository':
         $url = $this->settings->get('triplestore')['routes']['repository']['createUrl'];
         $body = json_encode([
-          'id' => $requestParams['body']['subdomain'],
+          'id' => $requestParams['body']['machineName'],
           'title' => $requestParams['body']['title'],
           "publicRead" => $requestParams['body']['publicRead'],
           "publicWrite" => $requestParams['body']['publicWrite'],
@@ -90,8 +90,8 @@ class SodaScsOpenGdpServiceActions implements SodaScsServiceRequestInterface {
           'password' => $requestParams['body']['password'],
           "grantedAuthorities" => [
             "ROLE_USER",
-            "READ_REPO_" . $requestParams['body']['subdomain'],
-            "WRITE_REPO_" . $requestParams['body']['subdomain'],
+            "READ_REPO_" . $requestParams['body']['machineName'],
+            "WRITE_REPO_" . $requestParams['body']['machineName'],
           ],
         ]);
         break;
@@ -177,6 +177,30 @@ class SodaScsOpenGdpServiceActions implements SodaScsServiceRequestInterface {
 
     return [
       'type' => $requestParams['type'],
+      'success' => TRUE,
+      'method' => 'GET',
+      'route' => $route,
+      'headers' => [
+        'Content-Type' => 'application/json',
+        'Accept' => 'application/json',
+        'Authorization' => 'Basic ' . base64_encode($this->settings->get('triplestore')['openGdpSettings']['adminUsername'] . ':' . $this->settings->get('triplestore')['openGdpSettings']['adminPassword']),
+      ],
+    ];
+  }
+
+  /**
+   * Builds the health check request.
+   *
+   * @return array
+   *   The health check request.
+   */
+  public function buildHealthCheckRequest(): array {
+    $route = $this->settings->get('triplestore')['routes']['healthCheck']['url'];
+    if (empty($route)) {
+      throw new MissingDataException('Health check URL setting is not set.');
+    }
+
+    return [
       'success' => TRUE,
       'method' => 'GET',
       'route' => $route,
@@ -326,7 +350,7 @@ class SodaScsOpenGdpServiceActions implements SodaScsServiceRequestInterface {
         $username = array_slice(explode('/', $request['route']), -1)[0];
         $this->messenger
           ->addWarning(
-            $this->stringTranslation->translate(
+            $this->t(
               "OpenGDB user: @username does not exist. Try to create it for you...",
               [
                 '@username' => $username,
@@ -349,7 +373,7 @@ class SodaScsOpenGdpServiceActions implements SodaScsServiceRequestInterface {
         '@trace' => $e->getTraceAsString(),
       ]);
     }
-    $this->messenger->addError($this->stringTranslation->translate("OpenGDB request failed. See logs for more details."));
+    $this->messenger->addError($this->t("OpenGDB request failed. See logs for more details."));
     return [
       'message' => 'Request failed with code @code' . $e->getCode(),
       'data' => [

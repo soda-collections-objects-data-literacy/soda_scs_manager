@@ -7,6 +7,7 @@ use Drupal\Core\Entity\EntityTypeManagerInterface;
 use Drupal\Core\Routing\TrustedRedirectResponse;
 use Drupal\soda_scs_manager\StackActions\SodaScsStackActionsInterface;
 use Symfony\Component\DependencyInjection\ContainerInterface;
+use Drupal\Core\TypedData\Exception\MissingDataException;
 
 /**
  * The SODa SCS Manager service controller.
@@ -48,11 +49,28 @@ class SodaScsManagerServiceController extends ControllerBase {
    *   The redirect response.
    */
   public function generateUrl($soda_scs_component): TrustedRedirectResponse {
-    $host = $this->config('soda_scs_manager.settings')->get('scsHost');
-    $subdomain = $soda_scs_component->get('subdomain')->value;
+    if (empty($this->config('soda_scs_manager.settings')->get('scsHost'))) {
+      throw new MissingDataException('SODa SCS host is not set.');
+    }
 
-    // Generate the URL.
-    $url = 'https://' . $subdomain . '.' . $host;
+    if (empty($this->config('soda_scs_manager.settings')->get('dbManagementHost'))) {
+      throw new MissingDataException('Database management host is not set.');
+    }
+
+    $host = $this->config('soda_scs_manager.settings')->get('scsHost');
+    $management_host = $this->config('soda_scs_manager.settings')->get('dbManagementHost');
+
+    switch ($soda_scs_component->get('bundle')->value) {
+      case 'soda_scs_wisski_component':
+        $machineName = $soda_scs_component->get('machineName')->value;
+        $url = 'https://' . $machineName . '.' . $host;
+        break;
+      case 'soda_scs_sql_component':
+        $url = 'https://' . $management_host;
+        break;
+      default:
+        throw new \Exception('Unknown component type: ' . $soda_scs_component->get('bundle')->value);
+    }
 
     // Redirect to the generated URL.
     return new TrustedRedirectResponse($url);

@@ -32,6 +32,13 @@ class SodaScsComponentCreateForm extends ContentEntityForm {
 
 
   /**
+   * The SODa SCS Component bundle.
+   *
+   * @var string
+   */
+  protected string $bundle;
+
+  /**
    * The current user.
    *
    * @var \Drupal\Core\Session\AccountProxyInterface
@@ -104,7 +111,7 @@ class SodaScsComponentCreateForm extends ContentEntityForm {
       $container->get('config.factory'),
       $container->get('datetime.time'),
       $container->get('soda_scs_manager.docker_registry_service.actions'),
-      $container->get('soda_scs_manager.stack.actions'),
+      $container->get('soda_scs_manager.component.actions'),
     );
   }
 
@@ -118,32 +125,26 @@ class SodaScsComponentCreateForm extends ContentEntityForm {
   /**
    * {@inheritdoc}
    */
-  public function buildForm(array $form, FormStateInterface $form_state) {
-    // Get the bundle of the entity.
-    /** @var \Drupal\soda_scs_manager\Entity\SodaScsComponentBundle $bundle */
-    $bundle = $this->entityTypeManager->getStorage('soda_scs_component')->load($this->entity->bundle());
+  public function buildForm(array $form, FormStateInterface $form_state, string|null $bundle = NULL) {
 
+    $this->bundle = $bundle;
     // Build the form.
     $form = parent::buildForm($form, $form_state);
 
-    // Add the bundle description.
+    $bundle_info = $this->entityTypeBundleInfo->getBundleInfo('soda_scs_component');
+
+    $form['#title'] = $this->t('Create a new @label', ['@label' => $bundle_info[$this->bundle]['label']]);
+
     $form['info'] = [
-      '#type' => 'item',
-      '#markup' => $bundle->getDescription(),
+      '#type' => 'details',
+      '#title' => $this->t('What is that?'),
+      '#value' => $bundle_info[$this->bundle]['description'],
     ];
 
-    // Change the title of the page.
-    $form['#title'] = $this->t('Create a new @component', ['@component' => $bundle->label()]);
-
-    $form['version'] = [
-      '#type' => 'select',
-      '#title' => $this->t('Version'),
-      '#options' => [
-        'latest' => $this->t('Development version'),
-        'stable' => $this->t('Latest Stable version'),
-      ],
-      '#required' => TRUE,
-    ];
+    $form['owner']['widget']['#default_value'] = $this->currentUser->id();
+    if (!\Drupal::currentUser()->hasPermission('soda scs manager admin')) {
+      $form['owner']['#access'] = FALSE;
+    }
 
     // Change the label of the submit button.
     $form['actions']['submit']['#value'] = $this->t('CREATE COMPONENT');
@@ -160,12 +161,12 @@ class SodaScsComponentCreateForm extends ContentEntityForm {
   public function validateForm(array &$form, FormStateInterface $form_state) {
 
     parent::validateForm($form, $form_state);
-    $subdomain = $form_state->getValue('subdomain');
+    $machineName = $form_state->getValue('machineName')[0]['value'];
 
     $pattern = '/^[a-z0-9-_]+$/';
 
-    if (!preg_match($pattern, $subdomain)) {
-      $form_state->setErrorByName('subdomain', $this->t('The subdomain can only contain small letters, digits, minus, and underscore'));
+    if (!preg_match($pattern, $machineName)) {
+      $form_state->setErrorByName('machineName', $this->t('The machineName can only contain small letters, digits, minus, and underscore'));
     }
 
     $disallowed_words = [
@@ -211,21 +212,22 @@ class SodaScsComponentCreateForm extends ContentEntityForm {
       "xor",
     ];
 
-    // Check if the subdomain contains any disallowed words.
+    // Check if the machineName contains any disallowed words.
     foreach ($disallowed_words as $word) {
 
-      if ($subdomain === $disallowed_words) {
-        $form_state->setErrorByName('subdomain', t('The subdomain cannot contain the word "@word"', ['@word' => $word]));
+      if ($machineName === $disallowed_words) {
+        $form_state->setErrorByName('machineName', $this->t('The machineName cannot contain the word "@word"', ['@word' => $word]));
       }
     }
 
-    // Check if the subdomain is already in use by another SodaScsComponent entity.
-    $entity_query = \Drupal::entityQuery('soda_scs_component');
-    $entity_query->condition('subdomain', $subdomain);
+    // Check if the machineName is already in use by another SodaScsComponent entity.
+    $entity_query = \Drupal::entityQuery('soda_scs_component')
+      ->accessCheck(FALSE)
+      ->condition('machineName', $machineName);
     $existing_entities = $entity_query->execute();
 
     if (!empty($existing_entities)) {
-      $form_state->setErrorByName('subdomain', $this->t('The subdomain is already in use by another Soda SCS Component entity'));
+      $form_state->setErrorByName('machineName', $this->t('The machineName is already in use by another Soda SCS Component entity'));
     }
   }
 
@@ -235,21 +237,21 @@ class SodaScsComponentCreateForm extends ContentEntityForm {
    * @throws \Drupal\Core\Entity\EntityStorageException
    */
   public function save(array $form, FormStateInterface $form_state): void {
-
+    $label = $form_state->getValue('label')[0]['value'];
     // We call it component here.
     /** @var \Drupal\soda_scs_manager\Entity\SodaScsComponentInterface $component */
     $component = $this->entity;
     $component->set('bundle', $this->entity->bundle());
     $component->set('created', $this->time->getRequestTime());
     $component->set('updated', $this->time->getRequestTime());
-    $component->set('owner', $this->currentUser->getAccount()->id());
-    $subdomain = reset($form_state->getValue('subdomain'))['value'];
-    $component->set('label', $subdomain . '.' . $this->settings->get('scsHost'));
-    $component->set('subdomain', $subdomain);
+    $component->set('owner', $form_state->getValue('owner'));
+    $machineName = reset($form_state->getValue('machineName'))['value'];
+    $component->setLabel($label);
+    $component->set('machineName', $machineName);
     /** @var \Drupal\soda_scs_manager\Entity\SodaScsComponentBundleInterface $bundle */
-    $bundle = $this->entityTypeManager->getStorage('soda_scs_component')->load($this->entity->bundle());
-    $component->set('description', $bundle->getDescription());
-    $component->set('imageUrl', $bundle->getImageUrl());
+    $bundle_info = $this->entityTypeBundleInfo->getBundleInfo('soda_scs_component')[$this->bundle];
+    $component->set('description', $bundle_info['description']);
+    $component->set('imageUrl', $bundle_info['imageUrl']);
 
     // Create external stack.
     $createComponentResult = $this->sodaScsComponentActions->createComponent($component);

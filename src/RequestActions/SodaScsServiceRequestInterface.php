@@ -42,7 +42,18 @@ interface SodaScsServiceRequestInterface {
    *
    * @throws \Drupal\Core\TypedData\Exception\MissingDataException
    */
-  public function buildGetRequest($requestParams): array;
+  public function buildGetRequest(array $requestParams): array;
+
+  /**
+   * Builds health check request.
+   *
+   * @param array $requestParams
+   *   The request parameters.
+   *
+   * @return array
+   *   The health check request.
+   */
+  public function buildHealthCheckRequest(array $requestParams): array;
 
   /**
    * Builds the update request for the REST service API.

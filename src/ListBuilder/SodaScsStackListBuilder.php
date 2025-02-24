@@ -18,7 +18,7 @@ class SodaScsStackListBuilder extends EntityListBuilder {
    */
   public function buildHeader() {
     $header['type'] = $this->t('Type');
-    $header['subdomain'] = $this->t('Domain');
+    $header['machineName'] = $this->t('Domain');
     $header['operations'] = $this->t('Operations');
     return $header + parent::buildHeader();
   }
@@ -30,7 +30,7 @@ class SodaScsStackListBuilder extends EntityListBuilder {
     /** @var \Drupal\soda_scs_manager\Entity\SodaScsComponentInterface $entity */
     $bundle = $entity->bundle();
     $row['type'] = $bundle;
-    $row['subdomain'] = $entity->get('subdomain')->value;
+    $row['machineName'] = $entity->get('machineName')->value;
     return $row + parent::buildRow($entity);
   }
 

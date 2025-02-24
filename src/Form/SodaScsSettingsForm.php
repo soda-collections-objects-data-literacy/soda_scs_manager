@@ -87,6 +87,12 @@ class SodaScsSettingsForm extends ConfigFormBase {
       '#default_value' => $this->config('soda_scs_manager.settings')->get('dbRootPassword'),
     ];
 
+    $form['database']['fields']['dbManagementHost'] = [
+      '#type' => 'textfield',
+      '#title' => $this->t('Management host'),
+      '#default_value' => $this->config('soda_scs_manager.settings')->get('dbManagementHost'),
+    ];
+
     // Triplestore settings tab.
     $form['triplestore'] = [
       '#type' => 'details',
@@ -129,17 +135,23 @@ class SodaScsSettingsForm extends ConfigFormBase {
     $form['triplestore']['routes']['healthCheck'] = [
       '#type' => 'fieldset',
       '#attributes' => ['id' => 'soda-scs--routes-subform--health-check'],
-      '#title' => 'Health check route',
+      '#title' => 'Service health check route',
     ];
     $form['triplestore']['routes']['healthCheck']['url'] = [
       '#type' => 'textfield',
-      '#title' => $this->t('Health check route path'),
+      '#title' => $this->t('Service health check route path'),
       '#default_value' => $this->config('soda_scs_manager.settings')->get('triplestore')['routes']['healthCheck']['url'] ?? '',
     ];
-    $form['triplestore']['routes']['healthCheck']['checkButton'] = [
+
+    $form['triplestore']['routes']['healthCheck']['check'] = [
       '#type' => 'button',
-      '#default_value' => $this->t('Check health'),
+      '#value' => $this->t('Check'),
+      '#ajax' => [
+        'callback' => [static::class, 'healthCheck'],
+        'wrapper' => 'soda-scs--routes-subform--health-check',
+      ],
     ];
+
 
     $form['triplestore']['routes']['token'] = [
       '#type' => 'fieldset',
@@ -227,6 +239,22 @@ class SodaScsSettingsForm extends ConfigFormBase {
       '#default_value' => $this->config('soda_scs_manager.settings')->get('triplestore')['routes']['user']['deleteUrl'] ?? '',
     ];
 
+    $form['triplestore']['repositories'] = [
+      '#type' => 'fieldset',
+      '#title' => 'Instances routes for Triplestore components',
+    ];
+
+    $form['triplestore']['repositories']['healthCheck'] = [
+      '#type' => 'fieldset',
+      '#attributes' => ['id' => 'soda-scs--routes-subform--health-check'],
+      '#title' => 'Health check route',
+    ];
+    $form['triplestore']['repositories']['healthCheck']['url'] = [
+      '#type' => 'textfield',
+      '#title' => $this->t('Health check route path'),
+      '#default_value' => $this->config('soda_scs_manager.settings')->get('triplestore')['repositories']['healthCheck']['url'] ?? '',
+    ];
+
     // WissKI bundle settings tab.
     $form['wisski'] = [
       '#type' => 'details',
@@ -275,6 +303,39 @@ class SodaScsSettingsForm extends ConfigFormBase {
       '#title' => 'Routes for ' . $form_state->getValue('bundle') . ' service',
     ];
 
+    $form['wisski']['routes']['healthCheck'] = [
+      '#type' => 'fieldset',
+      '#attributes' => ['id' => 'soda-scs--routes-subform--health-check'],
+      '#title' => 'Service health check route',
+    ];
+    $form['wisski']['routes']['healthCheck']['url'] = [
+      '#type' => 'textfield',
+      '#title' => $this->t('Service health check route path'),
+      '#default_value' => $this->config('soda_scs_manager.settings')->get('wisski')['routes']['healthCheck']['url'] ?? '',
+    ];
+
+    $form['wisski']['routes']['healthCheck']['check'] = [
+      '#type' => 'button',
+      '#value' => $this->t('Check'),
+      '#ajax' => [
+        'callback' => [static::class, 'healthCheck'],
+        'wrapper' => 'soda-scs--routes-subform--health-check',
+      ],
+    ];
+
+    $form['wisski']['routes']['dockerApi'] = [
+      '#type' => 'fieldset',
+      '#attributes' => ['id' => 'soda-scs--routes-subform--docker-api'],
+      '#title' => 'Docker API route',
+    ];
+
+    $form['wisski']['routes']['dockerApi']['url'] = [
+      '#type' => 'textfield',
+      '#title' => $this->t('Docker API route path'),
+      '#default_value' => $this->config('soda_scs_manager.settings')->get('wisski')['routes']['dockerApi'] ?? '',
+    ];
+
+
     $form['wisski']['routes']['createUrl'] = [
       '#type' => 'textfield',
       '#title' => $this->t('Create route path'),
@@ -310,12 +371,6 @@ class SodaScsSettingsForm extends ConfigFormBase {
       '#title' => 'Instances routes for WissKI components',
     ];
 
-    $form['wisski']['instances']['cloudDomain'] = [
-      '#type' => 'textfield',
-      '#title' => $this->t('Cloud domain'),
-      '#default_value' => $this->config('soda_scs_manager.settings')->get('wisski')['instances']['cloudDomain'] ?? '',
-    ];
-
     $form['wisski']['instances']['healthCheck'] = [
       '#type' => 'fieldset',
       '#attributes' => ['id' => 'soda-scs--routes-subform--health-check'],
@@ -340,6 +395,7 @@ class SodaScsSettingsForm extends ConfigFormBase {
       ->set('scsHost', $form_state->getValue('scsHost'))
       ->set('dbHost', $form_state->getValue('dbHost'))
       ->set('dbPort', $form_state->getValue('dbPort'))
+      ->set('dbManagementHost', $form_state->getValue('dbManagementHost'))
       ->set('dbRootPassword', $form_state->getValue('dbRootPassword'))
       ->set('triplestore', $form_state->getValue('triplestore'))
       ->set('wisski', $form_state->getValue('wisski'))

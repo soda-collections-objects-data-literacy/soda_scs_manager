@@ -69,7 +69,7 @@ use Drupal\user\EntityOwnerTrait;
  *    "imageUrl",
  *    "label",
  *    "langcode",
- *    "subdomain",
+ *    "machineName",
  *    "uuid",
  *    "updated",
  *    "owner",
@@ -127,6 +127,31 @@ class SodaScsComponent extends ContentEntityBase implements SodaScsComponentInte
     return $this;
   }
 
+  
+  /**
+   * Returns the label of the SODa SCS Component.
+   *
+   * @return string
+   *   The label of the SODa SCS Component.
+   */
+  public function getLabel() {
+    return $this->label;
+  }
+
+  /**
+   * Sets the label of the SODa SCS Component.
+   *
+   * @param string $label
+   *   The label of the SODa SCS Component.
+   *
+   * @return $this
+   */
+  public function setLabel($label) {
+    $this->label = $label;
+    return $this;
+  }
+
+
   /**
    * {@inheritdoc}
    */
@@ -144,7 +169,7 @@ class SodaScsComponent extends ContentEntityBase implements SodaScsComponentInte
       ->setDisplayOptions('view', [
         'label' => 'above',
         'type' => 'timestamp',
-        'weight' => 7,
+        'weight' => 70,
       ]);
 
     $fields['description'] = BaseFieldDefinition::create('text_long')
@@ -206,14 +231,19 @@ class SodaScsComponent extends ContentEntityBase implements SodaScsComponentInte
       ->setLabel(new TranslatableMarkup('Label'))
       ->setDescription(new TranslatableMarkup('The label of the SODa SCS Component.'))
       ->setRequired(TRUE)
-      ->setReadOnly(TRUE)
+      ->setReadOnly(FALSE)
       ->setDisplayConfigurable('view', FALSE)
       ->setDisplayOptions('view', [
-        'label' => 'above',
+        'label' => 'hidden',
         'type' => 'string',
-        'weight' => 0,
+        'weight' => 10,
       ])
-      ->setDisplayConfigurable('form', FALSE);
+      ->setDisplayConfigurable('form', FALSE)
+      ->setDisplayOptions('form', [
+        'type' => 'string_textfield',
+        'weight' => 10,
+      ]);
+      
 
     $fields['notes'] = BaseFieldDefinition::create('string_long')
       ->setLabel(new TranslatableMarkup('Notes'))
@@ -223,12 +253,12 @@ class SodaScsComponent extends ContentEntityBase implements SodaScsComponentInte
       ->setDisplayConfigurable('view', FALSE)
       ->setDisplayOptions('form', [
         'type' => 'string_textarea',
-        'weight' => 10,
+        'weight' => 50,
       ])
       ->setDisplayOptions('view', [
         'label' => 'above',
         'type' => 'text_default',
-        'weight' => 10,
+        'weight' => 50,
       ]);
 
     $fields['owner'] = BaseFieldDefinition::create('entity_reference')
@@ -237,13 +267,17 @@ class SodaScsComponent extends ContentEntityBase implements SodaScsComponentInte
       ->setSetting('target_type', 'user')
       ->setSetting('handler', 'default')
       ->setRequired(TRUE)
-      ->setReadOnly(TRUE)
+      ->setReadOnly(FALSE)
       ->setDisplayConfigurable('form', FALSE)
       ->setDisplayConfigurable('view', FALSE)
       ->setDisplayOptions('view', [
         'label' => 'above',
         'type' => 'entity_reference_label',
-        'weight' => 0,
+        'weight' => 40,
+      ])
+      ->setDisplayOptions('form', [
+        'type' => 'options_buttons',
+        'weight' => 40,
       ]);
 
     // @todo Implement the reuse of dangling components
@@ -260,7 +294,7 @@ class SodaScsComponent extends ContentEntityBase implements SodaScsComponentInte
       ->setDisplayOptions('view', [
         'label' => 'above',
         'type' => 'entity_reference_label',
-        'weight' => 0,
+        'weight' => 30,
       ]);
 
     $fields['serviceKey'] = BaseFieldDefinition::create('entity_reference')
@@ -274,8 +308,8 @@ class SodaScsComponent extends ContentEntityBase implements SodaScsComponentInte
       ->setDisplayConfigurable('view', FALSE)
       ->setDisplayOptions('view', [
         'label' => 'above',
-        'type' => 'entity_reference_label',
-        'weight' => 0,
+        'type' => 'entity_reference_entity_view',
+        'weight' => 60,
       ]);
 
     $fields['status'] = BaseFieldDefinition::create('boolean')
@@ -290,16 +324,16 @@ class SodaScsComponent extends ContentEntityBase implements SodaScsComponentInte
         'weight' => 30,
       ]);
 
-    $fields['subdomain'] = BaseFieldDefinition::create('string')
-      ->setLabel(new TranslatableMarkup('Subdomain'))
-      ->setDescription(new TranslatableMarkup('Used for "subdomain".soda-scs.org.'))
+    $fields['machineName'] = BaseFieldDefinition::create('string')
+      ->setLabel(new TranslatableMarkup('Machine Name'))
+      ->setDescription(new TranslatableMarkup('The machine name of the SODa SCS Component. Use only letters, numbers, minus and underscores.'))
       ->setRequired(TRUE)
       ->setReadOnly(TRUE)
       ->setCardinality(1)
       ->setDisplayConfigurable('view', FALSE)
       ->setDisplayOptions('form', [
         'type' => 'string_textfield',
-        'weight' => 1,
+        'weight' => 20,
       ]);
 
     $fields['updated'] = BaseFieldDefinition::create('changed')
@@ -311,7 +345,7 @@ class SodaScsComponent extends ContentEntityBase implements SodaScsComponentInte
       ->setDisplayOptions('view', [
         'label' => 'above',
         'type' => 'timestamp',
-        'weight' => 8,
+        'weight' => 70,
       ]);
 
     return $fields;

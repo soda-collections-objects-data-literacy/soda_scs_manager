@@ -160,4 +160,19 @@ interface SodaScsServiceActionsInterface {
    */
   public function handleCommandFailure(array $commandResult, string $action, string $entityName): array;
 
+/**
+   * Checks if a user has read and write access to a database.
+   *
+   * @param string $dbUser
+   *   The name of the database user.
+   * @param string $dbName
+   *   The name of the database.
+   * @param string $dbUserPassword
+   *   The password of the database user.
+   *
+   * @return bool
+   *   TRUE if the user has read and write access to the database.
+   */
+  public function userHasReadWriteAccessToDatabase(string $dbUser, string $dbName, string $dbUserPassword): bool;
+
 }

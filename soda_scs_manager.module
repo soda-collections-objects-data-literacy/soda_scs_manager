@@ -214,6 +214,41 @@ function soda_scs_manager_ensure_scs_user_role() {
  */
 function soda_scs_manager_entity_bundle_info() {
   // Components.
+  $bundles['soda_scs_component']['soda_scs_diagrams_net_component'] = [
+    'label' => t('Diagrams.net Component'),
+    'class' => SodaScsComponentBundle::class,
+    'description' => t('A diagramming tool for visualizing data structures.'),
+    'imageUrl' => 'public://soda_scs_manager/images/diagramsnet.svg',
+  ];
+
+  $bundles['soda_scs_component']['soda_scs_jupyter_component'] = [
+    'label' => t('Jupyter Component'),
+    'class' => SodaScsComponentBundle::class,
+    'description' => t('A Jupyter web IDE for coding in Python.'),
+    'imageUrl' => 'public://soda_scs_manager/images/jupyternotebook.svg',
+  ];
+
+  $bundles['soda_scs_component']['soda_scs_filesystem_component'] = [
+    'label' => t('Filesystem Component'),
+    'class' => SodaScsComponentBundle::class,
+    'description' => t('A filesystem for storage of structured data.'),
+    'imageUrl' => 'public://soda_scs_manager/images/filesystem.svg',
+  ];
+
+  $bundles['soda_scs_component']['soda_scs_open_refine_component'] = [
+    'label' => t('Open Refine Component'),
+    'class' => SodaScsComponentBundle::class,
+    'description' => t('An open source web-based tool for data curation and editing.'),
+    'imageUrl' => 'public://soda_scs_manager/images/openrefine.svg',
+  ];
+
+  $bundles['soda_scs_component']['soda_scs_office_component'] = [
+    'label' => t('Office Component'),
+    'class' => SodaScsComponentBundle::class,
+    'description' => t('A web-based tool for creating and editing documents.'),
+    'imageUrl' => 'public://soda_scs_manager/images/office.svg',
+  ];
+
   $bundles['soda_scs_component']['soda_scs_sql_component'] = [
     'label' => t('SQL Component'),
     'class' => SodaScsComponentBundle::class,
@@ -225,6 +260,13 @@ function soda_scs_manager_entity_bundle_info() {
     'class' => SodaScsComponentBundle::class,
     'description' => t('Graph database for storage of RDF data.'),
     'imageUrl' => 'public://soda_scs_manager/images/triplestore.svg',
+  ];
+
+  $bundles['soda_scs_component']['soda_scs_webprotege_component'] = [
+    'label' => t('WebProtégé Component'),
+    'class' => SodaScsComponentBundle::class,
+    'description' => t('A web-based tool for creating and editing OWL ontologies.'),
+    'imageUrl' => 'public://soda_scs_manager/images/protege.svg',
   ];
 
   $bundles['soda_scs_component']['soda_scs_wisski_component'] = [

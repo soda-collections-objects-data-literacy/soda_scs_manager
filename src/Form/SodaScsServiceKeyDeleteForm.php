@@ -32,15 +32,12 @@ class SodaScsServiceKeyDeleteForm extends ContentEntityDeleteForm {
    *   The entity type bundle info.
    * @param Drupal\Component\Datetime\TimeInterface $time
    *   The time service.
-   * @param \Drupal\soda_scs_manager\SodaScsStackActionsInterface $sodaScsStackActions
-   *   The Soda SCS API Actions service.
    */
-  public function __construct(EntityRepositoryInterface $entity_repository, EntityTypeBundleInfoInterface $entity_type_bundle_info, TimeInterface $time, SodaScsStackActionsInterface $sodaScsStackActions) {
+  public function __construct(EntityRepositoryInterface $entity_repository, EntityTypeBundleInfoInterface $entity_type_bundle_info, TimeInterface $time) {
     parent::__construct($entity_repository, $entity_type_bundle_info, $time);
     $this->entityRepository = $entity_repository;
     $this->entityTypeBundleInfo = $entity_type_bundle_info;
     $this->time = $time;
-    $this->sodaScsStackActions = $sodaScsStackActions;
   }
 
   /**
@@ -51,7 +48,6 @@ class SodaScsServiceKeyDeleteForm extends ContentEntityDeleteForm {
       $container->get('entity.repository'),
       $container->get('entity_type.bundle.info'),
       $container->get('datetime.time'),
-      $container->get('soda_scs_manager.stack.actions')
     );
   }
 
@@ -73,7 +69,7 @@ class SodaScsServiceKeyDeleteForm extends ContentEntityDeleteForm {
    * {@inheritdoc}
    */
   public function getCancelUrl() {
-    return new Url('soda_scs_manager.desk');
+    return new Url('entity.soda_scs_service_key.collection');
   }
 
   /**
@@ -88,7 +84,7 @@ class SodaScsServiceKeyDeleteForm extends ContentEntityDeleteForm {
     $serviceKey = $this->entity;
 
     // Delete the whole stack with database.
-    $deleteServiceKeyResult = $this->sodaScsStackActions->deleteStack($serviceKey);
+    $deleteServiceKeyResult = $serviceKey->delete();
 
     if (!$deleteServiceKeyResult['success']) {
       \Drupal::messenger()->addError($this->t('%message See logs for more information.', [

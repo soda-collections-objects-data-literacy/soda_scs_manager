@@ -10,6 +10,7 @@ use Drupal\Core\Entity\EntityTypeManagerInterface;
 use Drupal\Core\Logger\LoggerChannelFactoryInterface;
 use Drupal\Core\Messenger\MessengerInterface;
 use Drupal\Core\StringTranslation\TranslationInterface;
+use Drupal\Core\StringTranslation\StringTranslationTrait;
 use Drupal\Core\TypedData\Exception\MissingDataException;
 use Drupal\soda_scs_manager\Entity\SodaScsComponentInterface;
 use Drupal\soda_scs_manager\Entity\SodaScsStackInterface;
@@ -25,6 +26,7 @@ use GuzzleHttp\ClientInterface;
 class SodaScsWisskiComponentActions implements SodaScsComponentActionsInterface {
 
   use DependencySerializationTrait;
+  use StringTranslationTrait;
 
   /**
    * The database.
@@ -97,13 +99,6 @@ class SodaScsWisskiComponentActions implements SodaScsComponentActionsInterface 
   protected SodaScsServiceKeyActionsInterface $sodaScsServiceKeyActions;
 
   /**
-   * The string translation service.
-   *
-   * @var \Drupal\Core\StringTranslation\TranslationInterface
-   */
-  protected TranslationInterface $stringTranslation;
-
-  /**
    * Class constructor.
    */
   public function __construct(
@@ -151,7 +146,7 @@ class SodaScsWisskiComponentActions implements SodaScsComponentActionsInterface 
       if (!$wisskiComponentBundleInfo) {
         throw new \Exception('WissKI component bundle info not found');
       }
-      $subdomain = $entity->get('subdomain')->value;
+      $machineName = $entity->get('machineName')->value;
 
       // Create service key if it does not exist.
       $keyProps = [
@@ -166,11 +161,11 @@ class SodaScsWisskiComponentActions implements SodaScsComponentActionsInterface 
       $wisskiComponent = $this->entityTypeManager->getStorage('soda_scs_component')->create(
         [
           'bundle' => 'soda_scs_wisski_component',
-          'label' => $subdomain . '.' . $this->settings->get('scsHost') . ' (WissKI Environment)',
-          'subdomain' => $subdomain,
+          'label' => $entity->get('label')->value . ' (WissKI Environment)',
+          'machineName' => $machineName,
           'owner'  => $entity->getOwner(),
           'description' => $wisskiComponentBundleInfo['description'],
-          'imageUrl' => $wisskiComponentBundleInfo['image'],
+          'imageUrl' => $wisskiComponentBundleInfo['imageUrl'],
           'flavours' => array_values($entity->get('flavours')->getValue()),
           'health' => 'Unknown',
         ]
@@ -216,7 +211,7 @@ class SodaScsWisskiComponentActions implements SodaScsComponentActionsInterface 
       $flavours = implode(' ', $flavours);
 
       $requestParams = [
-        'subdomain' => $wisskiComponent->get('subdomain')->value,
+        'machineName' => $wisskiComponent->get('machineName')->value,
         'project' => 'my_project',
         'userId' => $wisskiComponent->getOwnerId(),
         'username' => $wisskiComponent->getOwner()->getDisplayName(),
@@ -234,7 +229,7 @@ class SodaScsWisskiComponentActions implements SodaScsComponentActionsInterface 
         ->error("Cannot assemble Request: @error", [
           '@error' => $e->getMessage(),
         ]);
-      $this->messenger->addError($this->stringTranslation->translate("Cannot assemble request. See logs for more details."));
+      $this->messenger->addError($this->t("Cannot assemble request. See logs for more details."));
       return [
         'message' => 'Cannot assemble Request.',
         'data' => [
@@ -333,7 +328,7 @@ class SodaScsWisskiComponentActions implements SodaScsComponentActionsInterface 
       $this->loggerFactory->get('soda_scs_manager')->error("Cannot assemble WissKI delete request: @error", [
         '@error' => $e->getMessage(),
       ]);
-      $this->messenger->addError($this->stringTranslation->translate("Cannot assemble WissKI component delete request. See logs for more details."));
+      $this->messenger->addError($this->t("Cannot assemble WissKI component delete request. See logs for more details."));
       return [
         'message' => 'Cannot assemble Request.',
         'data' => [
@@ -350,7 +345,7 @@ class SodaScsWisskiComponentActions implements SodaScsComponentActionsInterface 
         $this->loggerFactory->get('soda_scs_manager')->error("Could not delete WissKI stack at portainer. error: @error", [
           '@error' => $requestResult['error'],
         ]);
-        $this->messenger->addError($this->stringTranslation->translate("Could not delete WissKI stack at portainer, but will delete the component anyway. See logs for more details."));
+        $this->messenger->addError($this->t("Could not delete WissKI stack at portainer, but will delete the component anyway. See logs for more details."));
       }
       $component->delete();
       return [
@@ -366,7 +361,7 @@ class SodaScsWisskiComponentActions implements SodaScsComponentActionsInterface 
       $this->loggerFactory->get('soda_scs_manager')->error("Cannot delete WissKI component: @error", [
         '@error' => $e->getMessage(),
       ]);
-      $this->messenger->addError($this->stringTranslation->translate("Cannot delete WissKI component. See logs for more details."));
+      $this->messenger->addError($this->t("Cannot delete WissKI component. See logs for more details."));
       return [
         'message' => 'Cannot delete WissKI component.',
         'data' => [

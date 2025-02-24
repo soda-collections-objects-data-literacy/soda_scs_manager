@@ -78,7 +78,49 @@ class SodaScsManagerController extends ControllerBase {
    * @return array
    *   The page build array.
    */
-  public function deskPage(): array {
+  public function componentDeskPage(): array {
+    $current_user = $this->currentUser();
+    try {
+      $storage = $this->entityTypeManager->getStorage('soda_scs_component');
+    }
+    catch (InvalidPluginDefinitionException | PluginNotFoundException $e) {
+      // @todo Handle exception properly. */
+      return [];
+    }
+    if ($current_user->hasPermission('manage soda scs manager')) {
+      // If the user has the 'manage soda scs manager' permission,
+      // load all components.
+      /** @var \Drupal\soda_scs_manager\Entity\SodaScsComponent $components */
+      $components = $storage->loadMultiple();
+    }
+    else {
+      // If the user does not have the 'manage soda scs manager'
+      // permission, only load their own components.
+      $components = $storage->loadByProperties(['user' => $current_user->id()]);
+    }
+
+    $componentsByUser = [];
+    /** @var \Drupal\soda_scs_manager\Entity\SodaScsComponentInterface $component */
+    foreach ($components as $component) {
+      $username = $component->getOwner()->getDisplayName();
+      $componentsByUser[$username][] = $component;
+    }
+    return [
+      '#theme' => 'components_page',
+      '#componentsByUser' => $componentsByUser,
+      '#cache' => [
+        'max-age' => 0,
+      ],
+    ];
+  }
+
+    /**
+   * Page for component management.
+   *
+   * @return array
+   *   The page build array.
+   */
+  public function stackDeskPage(): array {
     $current_user = $this->currentUser();
     try {
       $storage = $this->entityTypeManager->getStorage('soda_scs_stack');
@@ -90,18 +132,18 @@ class SodaScsManagerController extends ControllerBase {
     if ($current_user->hasPermission('manage soda scs manager')) {
       // If the user has the 'manage soda scs manager' permission,
       // load all components.
-      /** @var \Drupal\soda_scs_manager\Entity\SodaScsComponent $components */
-      $stacks = $storage->loadMultiple();
+      /** @var \Drupal\soda_scs_manager\Entity\SodaScsStack $stack */
+      $stack = $storage->loadMultiple();
     }
     else {
       // If the user does not have the 'manage soda scs manager'
       // permission, only load their own components.
-      $stacks = $storage->loadByProperties(['user' => $current_user->id()]);
+      $stack = $storage->loadByProperties(['user' => $current_user->id()]);
     }
 
     $stacksByUser = [];
     /** @var \Drupal\soda_scs_manager\Entity\SodaScsStackInterface $stack */
-    foreach ($stacks as $stack) {
+    foreach ($stack as $stack) {
       $username = $stack->getOwner()->getDisplayName();
       $stacksByUser[$username][] = $stack;
     }
@@ -115,12 +157,49 @@ class SodaScsManagerController extends ControllerBase {
   }
 
   /**
-   * Display the markup.
+   * List the available components.
    *
    * @return array
    *   The page build array.
    */
-  public function storePage() {
+  public function componentStorePage() {
+
+    // Create the build array.
+    $build = [
+      '#theme' => 'container',
+      '#attributes' => ['class' => 'row row-cols-1 row-cols-md-4 g-4'],
+      '#children' => [],
+    ];
+
+    // Get all component bundles.
+    $bundles = \Drupal::service('entity_type.bundle.info')->getBundleInfo('soda_scs_component');
+
+    /** @var \Drupal\soda_scs_manager\Entity\Bundle\SodaScsStackBundle $bundle */
+    foreach ($bundles as $id => $bundle) {
+
+      // Add the card to the build array.
+      $build['#children'][] = [
+        '#theme' => 'bundle_card',
+        '#title' => $this->t('@bundle', ['@bundle' => $bundle['label']]),
+        '#description' => $bundle['description'],
+        '#image_url' => $bundle['imageUrl'],
+        '#url' => Url::fromRoute('entity.soda_scs_component.add_form', ['bundle' => $id]),
+        '#attached' => [
+          'library' => ['soda_scs_manager/globalStyling'],
+        ],
+      ];
+    }
+
+    return $build;
+  }
+
+  /**
+   * List the available stacks.
+   *
+   * @return array
+   *   The page build array.
+   */
+  public function stackStorePage() {
 
     // Create the build array.
     $build = [

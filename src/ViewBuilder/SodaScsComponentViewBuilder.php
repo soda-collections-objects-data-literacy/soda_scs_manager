@@ -72,27 +72,9 @@ class SodaScsComponentViewBuilder extends EntityViewBuilder {
   public function build(array $build) {
     $build = parent::build($build);
 
-    $serviceKeyEntity = $build['#soda_scs_component']->get('serviceKey')->entity;
-    if (!empty($serviceKeyEntity)) {
-      $servicePassword = $serviceKeyEntity->get('servicePassword')->value;
-      $build['user'] = [
-        '#type' => 'item',
-        '#title' => $this->t('Service User:'),
-        '#markup' => '<span>' . $serviceKeyEntity->getOwner()->getDisplayName() . '</span>',
-        '#weight' => 100,
-      ];
-      $build['password'] = [
-        '#type' => 'item',
-        '#title' => $this->t('Service Password:'),
-        '#markup' => '<span class="soda-scs-manager--service-password">' . $servicePassword . '</span>',
-        '#weight' => 100,
-      ];
-    }
-
     $build['#attached']['library'][] = 'soda_scs_manager/security';
     $build['#attached']['library'][] = 'soda_scs_manager/componentHelpers';
-    $test = $build['#soda_scs_component']->get('bundle')->getValue()[0]['value'];
-    $build['#attached']['drupalSettings']['componentInfo']['healthUrl'] = '/soda-scs-manager/health/' . $build['#soda_scs_component']->get('bundle')->getValue()[0]['value'] . '/' . $build['#soda_scs_component']->get('subdomain')->getValue()[0]['value'];
+    $build['#attached']['drupalSettings']['componentInfo']['healthUrl'] = '/soda-scs-manager/health/' . $build['#soda_scs_component']->id();
 
     return $build;
   }

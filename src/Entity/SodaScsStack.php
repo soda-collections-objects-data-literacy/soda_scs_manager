@@ -96,6 +96,32 @@ class SodaScsStack extends ContentEntityBase implements SodaScsStackInterface {
   }
 
   /**
+   * Set the label.
+   *
+   * @param string $label
+   *   The label.
+   *
+   * @return \Drupal\soda_scs_manager\Entity\SodaScsStackInterface
+   *   The called object.
+   */
+  public function setLabel($label) {
+    $this->set('label', $label);
+    return $this;
+  }
+
+  /**
+   * Get the label.
+   *
+   * @return string
+   *   The label.
+   */
+  public function getLabel() {
+    return $this->get('label')->value;
+  }
+
+
+
+  /**
    * {@inheritdoc}
    */
   public static function baseFieldDefinitions(EntityTypeInterface $entity_type) {
@@ -176,16 +202,20 @@ class SodaScsStack extends ContentEntityBase implements SodaScsStackInterface {
       ->setTranslatable(FALSE)
       ->setCardinality(1)
       ->setDisplayConfigurable('form', FALSE)
+      ->setDisplayOptions('form', [
+        'type' => 'string',
+        'weight' => 0,
+      ])
       ->setDisplayConfigurable('view', FALSE)
       ->setDisplayOptions('view', [
         'label' => 'above',
         'type' => 'string',
-        'weight' => 0,
+        'weight' => 10,
       ]);
 
     $fields['owner'] = BaseFieldDefinition::create('entity_reference')
       ->setLabel(new TranslatableMarkup('Owner'))
-      ->setDescription(new TranslatableMarkup('The owner of the SODa SCS Component.'))
+      ->setDescription(new TranslatableMarkup('The owner of the SODa SCS Stack.'))
       ->setSetting('target_type', 'user')
       ->setSetting('handler', 'default')
       ->setRequired(TRUE)
@@ -195,16 +225,16 @@ class SodaScsStack extends ContentEntityBase implements SodaScsStackInterface {
       ->setDisplayOptions('view', [
         'label' => 'above',
         'type' => 'entity_reference_label',
-        'weight' => 0,
+        'weight' => 30,
       ])
       ->setDisplayOptions('form', [
         'type' => 'options_buttons',
-        'weight' => 0,
+        'weight' => 30,
       ]);
 
-    $fields['subdomain'] = BaseFieldDefinition::create('string')
-      ->setLabel(new TranslatableMarkup('Subdomain'))
-      ->setDescription(new TranslatableMarkup('Used for "subdomain".soda-scs.org.'))
+    $fields['machineName'] = BaseFieldDefinition::create('string')
+      ->setLabel(new TranslatableMarkup('machineName'))
+      ->setDescription(new TranslatableMarkup('Used for "machineName".soda-scs.org.'))
       ->setRequired(TRUE)
       ->setReadOnly(TRUE)
       ->setTranslatable(FALSE)
@@ -212,12 +242,12 @@ class SodaScsStack extends ContentEntityBase implements SodaScsStackInterface {
       ->setDisplayConfigurable('view', FALSE)
       ->setDisplayOptions('form', [
         'type' => 'text_default',
-        'weight' => 1,
+        'weight' => 20,
       ])
       ->setDisplayOptions('view', [
         'label' => 'above',
         'type' => 'string',
-        'weight' => 1,
+        'weight' => 20,
       ]);
 
     $fields['updated'] = BaseFieldDefinition::create('changed')

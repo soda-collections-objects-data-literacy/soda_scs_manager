@@ -16,19 +16,26 @@ use Drupal\user\UserInterface;
  * @ContentEntityType(
  *   id = "soda_scs_service_key",
  *   label = @Translation("Service Key"),
+ *   label_collection = @Translation("Service Keys"),
+ *   label_singular = @Translation("Service Key"),
+ *   label_plural = @Translation("Service Keys"),
+ *   label_count = @PluralTranslation(
+ *     singular = "@count Service Key",
+ *     plural = "@count Service Keys",
+ *   ),
  *   handlers = {
  *     "storage" = "Drupal\Core\Entity\Sql\SqlContentEntityStorage",
  *     "view_builder" = "Drupal\Core\Entity\EntityViewBuilder",
  *     "list_builder" = "Drupal\soda_scs_manager\ListBuilder\SodaScsServiceKeyListBuilder",
  *     "views_data" = "Drupal\views\EntityViewsData",
  *     "translation" = "Drupal\content_translation\ContentTranslationHandler",
- *     "access" = "Drupal\Core\Entity\EntityAccessControlHandler",
  *     "form" = {
- *       "default" = "Drupal\Core\Entity\ContentEntityForm",
+ *       "default" = "Drupal\soda_scs_manager\Form\SodaScsServiceKeyCreateForm",
  *       "add" = "Drupal\Core\Entity\ContentEntityForm",
- *       "edit" = "Drupal\Core\Entity\ContentEntityForm",
- *       "delete" = "Drupal\Core\Entity\ContentEntityDeleteForm",
+ *       "edit" = "Drupal\soda_scs_manager\Form\SodaScsServiceKeyEditForm",
+ *       "delete" = "Drupal\soda_scs_manager\Form\SodaScsServiceKeyDeleteForm",
  *     },
+ *     "access" = "Drupal\soda_scs_manager\Access\SodaScsServiceKeyAccessControlHandler",
  *     "route_provider" = {
  *       "html" = "Drupal\Core\Entity\Routing\DefaultHtmlRouteProvider",
  *     },
@@ -42,6 +49,7 @@ use Drupal\user\UserInterface;
  *   },
  *   base_table = "soda_scs_service_key",
  *   data_table = "soda_scs_service_key_field_data",
+ *   admin_permission = "administer soda scs service key entities",
  *   field_ui_base_route = "entity.soda_scs_service_key.edit_form",
  *   fieldable = TRUE,
  *   common_reference_target = TRUE,
@@ -57,6 +65,12 @@ use Drupal\user\UserInterface;
  *     "id",
  *     "label",
  *     "uuid",
+ *     "scsComponent",
+ *     "scsComponentBundle",
+ *     "owner",
+ *     "langcode",
+ *     "type",
+ * 
  *   }
  * )
  */
@@ -90,16 +104,20 @@ class SodaScsServiceKey extends ContentEntityBase implements SodaScsServiceKeyIn
   public static function baseFieldDefinitions(EntityTypeInterface $entity_type) {
     $fields = parent::baseFieldDefinitions($entity_type);
 
+    $fields['label'] = BaseFieldDefinition::create('string')
+      ->setLabel(new TranslatableMarkup('Label'))
+      ->setRequired(TRUE)
+      ->setReadOnly(TRUE)
+      ->setDisplayConfigurable('view', FALSE)
+      ->setDisplayConfigurable('form', FALSE);
+
+
+
     $fields['scsComponent'] = BaseFieldDefinition::create('entity_reference')
       ->setLabel(new TranslatableMarkup('SODa SCS Component'))
       ->setSetting('target_type', 'soda_scs_component')
       ->setSetting('handler', 'default')
       ->setCardinality(FieldStorageDefinitionInterface::CARDINALITY_UNLIMITED)
-      ->setDisplayOptions('view', [
-        'label' => 'above',
-        'type' => 'entity_reference_label',
-        'weight' => 0,
-      ])
       ->setDisplayConfigurable('view', FALSE)
       ->setDisplayConfigurable('form', FALSE);
 
@@ -109,11 +127,6 @@ class SodaScsServiceKey extends ContentEntityBase implements SodaScsServiceKeyIn
       ->setCardinality(1)
       ->setRequired(TRUE)
       ->setReadOnly(TRUE)
-      ->setDisplayOptions('view', [
-        'label' => 'above',
-        'type' => 'string',
-        'weight' => 0,
-      ])
       ->setDisplayConfigurable('view', FALSE);
 
     $fields['servicePassword'] = BaseFieldDefinition::create('string')
@@ -125,7 +138,9 @@ class SodaScsServiceKey extends ContentEntityBase implements SodaScsServiceKeyIn
       ->setDisplayOptions('view', [
         'label' => 'above',
         'type' => 'string',
-        'weight' => 0,
+        'weight' => 10,
+        'css_class' => 'soda-scs-manager-service-password',
+        
       ])
       ->setDisplayConfigurable('view', FALSE);
 
@@ -136,6 +151,11 @@ class SodaScsServiceKey extends ContentEntityBase implements SodaScsServiceKeyIn
       ->setRequired(TRUE)
       ->setReadOnly(TRUE)
       ->setDisplayConfigurable('view', FALSE)
+      ->setDisplayOptions('view', [
+        'label' => 'above',
+        'type' => 'string',
+        'weight' => 0,
+      ])
       ->setDisplayConfigurable('form', FALSE);
 
     $fields['owner'] = BaseFieldDefinition::create('entity_reference')

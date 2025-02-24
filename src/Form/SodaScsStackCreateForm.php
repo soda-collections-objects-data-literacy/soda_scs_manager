@@ -113,11 +113,15 @@ class SodaScsStackCreateForm extends ContentEntityForm {
   /**
    * {@inheritdoc}
    */
-  public function buildForm(array $form, FormStateInterface $form_state, string $bundle = NULL) {
+  public function buildForm(array $form, FormStateInterface $form_state, string|null $bundle = NULL) {
 
     $this->bundle = $bundle;
     // Build the form.
     $form = parent::buildForm($form, $form_state);
+
+    $bundle_info = $this->entityTypeBundleInfo->getBundleInfo('soda_scs_stack');
+
+    $form['#title'] = $this->t('Create a new @label', ['@label' => $bundle_info[$this->bundle]['label']]);
 
     $form['owner']['widget']['#default_value'] = $this->currentUser->id();
     if (!\Drupal::currentUser()->hasPermission('soda scs manager admin')) {
@@ -139,12 +143,12 @@ class SodaScsStackCreateForm extends ContentEntityForm {
   public function validateForm(array &$form, FormStateInterface $form_state) {
 
     parent::validateForm($form, $form_state);
-    $subdomain = $form_state->getValue('subdomain')[0]['value'];
+    $machineName = $form_state->getValue('machineName')[0]['value'];
 
     $pattern = '/^[a-z0-9-]+$/';
 
-    if (!preg_match($pattern, $subdomain)) {
-      $form_state->setErrorByName('subdomain', $this->t('The subdomain can only contain small letters, digits, and minus.'));
+    if (!preg_match($pattern, $machineName)) {
+      $form_state->setErrorByName('machineName', $this->t('The machineName can only contain small letters, digits, and minus.'));
     }
 
     $disallowed_words = [
@@ -190,22 +194,22 @@ class SodaScsStackCreateForm extends ContentEntityForm {
       "xor",
     ];
 
-    // Check if the subdomain contains any disallowed words.
+    // Check if the machineName contains any disallowed words.
     foreach ($disallowed_words as $word) {
 
-      if ($subdomain === $disallowed_words) {
-        $form_state->setErrorByName('subdomain', $this->t('The subdomain cannot contain the word "@word"', ['@word' => $word]));
+      if ($machineName === $disallowed_words) {
+        $form_state->setErrorByName('machineName', $this->t('The machineName cannot contain the word "@word"', ['@word' => $word]));
       }
     }
 
-    // Check if the subdomain is already in use by another SodaScsComponent entity.
+    // Check if the machineName is already in use by another SodaScsComponent entity.
     $entity_query = \Drupal::entityQuery('soda_scs_component')
       ->accessCheck(FALSE)
-      ->condition('subdomain', $subdomain);
+      ->condition('machineName', $machineName);
     $existing_entities = $entity_query->execute();
 
     if (!empty($existing_entities)) {
-      $form_state->setErrorByName('subdomain', $this->t('The subdomain is already in use by another Soda SCS Component entity'));
+      $form_state->setErrorByName('machineName', $this->t('The machineName is already in use by another Soda SCS Component entity'));
     }
   }
 
@@ -217,16 +221,16 @@ class SodaScsStackCreateForm extends ContentEntityForm {
   public function save(array $form, FormStateInterface $form_state): void {
 
     // We call it stack here.
-    /** @var \Drupal\soda_scs_manager\Entity\SodaScsStackInterface $component */
+    /** @var \Drupal\soda_scs_manager\Entity\SodaScsStackInterface $stack */
     $stack = $this->entity;
     /** @var \Drupal\soda_scs_manager\Entity\SodaScsComponentBundleInterface $bundle */
     $stack->set('bundle', $this->bundle);
     $stack->set('created', $this->time->getRequestTime());
     $stack->set('updated', $this->time->getRequestTime());
     $stack->set('owner', $this->currentUser->getAccount()->id());
-    $subdomain = reset($form_state->getValue('subdomain'))['value'];
-    $stack->set('label', $subdomain . '.' . $this->settings->get('scsHost') . ' Stack');
-    $stack->set('subdomain', $subdomain);
+    $machineName = reset($form_state->getValue('machineName'))['value'];
+    $stack->setLabel($form_state->getValue('label')[0]['value'] . ' (WissKI Stack)');
+    $stack->set('machineName', $machineName);
 
     // Create external stack.
     $createStackResult = $this->sodaScsStackActions->createStack($stack);

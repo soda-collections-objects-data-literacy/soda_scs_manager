@@ -5,6 +5,7 @@ namespace Drupal\soda_scs_manager\StackActions;
 use Drupal\Core\DependencyInjection\DependencySerializationTrait;
 use Drupal\Core\Logger\LoggerChannelFactoryInterface;
 use Drupal\Core\Messenger\MessengerInterface;
+use Drupal\Core\StringTranslation\StringTranslationTrait;
 use Drupal\Core\StringTranslation\TranslationInterface;
 use Drupal\Core\TypedData\Exception\MissingDataException;
 use Drupal\soda_scs_manager\ComponentActions\SodaScsComponentActionsInterface;
@@ -18,6 +19,7 @@ use Drupal\soda_scs_manager\Helpers\SodaScsHelpersInterface;
 class SodaScsSqlStackActions implements SodaScsStackActionsInterface {
 
   use DependencySerializationTrait;
+  use StringTranslationTrait;
 
   /**
    * The logger factory.
@@ -48,13 +50,6 @@ class SodaScsSqlStackActions implements SodaScsStackActionsInterface {
   protected SodaScsComponentActionsInterface $sodaScsSqlComponentActions;
 
   /**
-   * The string translation service.
-   *
-   * @var \Drupal\Core\StringTranslation\TranslationInterface
-   */
-  protected TranslationInterface $stringTranslation;
-
-  /**
    * Class constructor.
    */
   public function __construct(
@@ -62,14 +57,12 @@ class SodaScsSqlStackActions implements SodaScsStackActionsInterface {
     MessengerInterface $messenger,
     SodaScsComponentActionsInterface $sodaScsSqlComponentActions,
     SodaScsHelpersInterface $sodaScsStackHelpers,
-    TranslationInterface $stringTranslation,
   ) {
     // Services from container.
     $this->loggerFactory = $loggerFactory;
     $this->messenger = $messenger;
     $this->sodaScsSqlComponentActions = $sodaScsSqlComponentActions;
     $this->sodaScsStackHelpers = $sodaScsStackHelpers;
-    $this->stringTranslation = $stringTranslation;
   }
 
   /**
@@ -120,7 +113,7 @@ class SodaScsSqlStackActions implements SodaScsStackActionsInterface {
         '@error' => $e->getMessage(),
         '@trace' => $e->getTraceAsString(),
       ]);
-      $this->messenger->addError($this->stringTranslation->translate("Could not create database component. See logs for more details."));
+      $this->messenger->addError($this->t("Could not create database component. See logs for more details."));
       return [
         'message' => 'Could not create database component.',
         'data' => [
@@ -216,7 +209,7 @@ class SodaScsSqlStackActions implements SodaScsStackActionsInterface {
         ->error("Cannot delete database. @error", [
           '@error' => $e->getMessage(),
         ]);
-      $this->messenger->addError($this->stringTranslation->translate("Cannot delete database. See logs for more details."));
+      $this->messenger->addError($this->t("Cannot delete database. See logs for more details."));
       return [
         'message' => 'Cannot delete database.',
         'data' => [
@@ -227,7 +220,7 @@ class SodaScsSqlStackActions implements SodaScsStackActionsInterface {
       ];
     }
     catch (SodaScsComponentException $e) {
-      $this->messenger->addError($this->stringTranslation->translate("Cannot delete database. See logs for more details."));
+      $this->messenger->addError($this->t("Cannot delete database. See logs for more details."));
       if ($e->getCode() == 1) {
         // If component does not exist, we cannot delete the database.
         $this->loggerFactory->get('soda_scs_manager')->error("Cannot delete database. @error Clean reference in stack.", [

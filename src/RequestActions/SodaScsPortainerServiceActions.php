@@ -12,6 +12,7 @@ use Drupal\Core\Logger\LoggerChannelFactoryInterface;
 use Drupal\Core\Mail\MailManagerInterface;
 use Drupal\Core\Messenger\MessengerInterface;
 use Drupal\Core\StringTranslation\TranslationInterface;
+use Drupal\Core\StringTranslation\StringTranslationTrait;
 use Drupal\Core\Template\TwigEnvironment;
 use Drupal\Core\TypedData\Exception\MissingDataException;
 use Drupal\soda_scs_manager\ServiceActions\SodaScsServiceActionsInterface;
@@ -25,6 +26,7 @@ use Symfony\Component\HttpFoundation\RequestStack;
 class SodaScsPortainerServiceActions implements SodaScsServiceRequestInterface {
 
   use DependencySerializationTrait;
+  use StringTranslationTrait;
 
   /**
    * The database.
@@ -95,13 +97,6 @@ class SodaScsPortainerServiceActions implements SodaScsServiceRequestInterface {
    * @var \Drupal\soda_scs_manager\ServiceActions\SodaScsServiceActionsInterface
    */
   protected SodaScsServiceActionsInterface $sodaScsMysqlServiceActions;
-
-  /**
-   * The string translation service.
-   *
-   * @var \Drupal\Core\StringTranslation\TranslationInterface
-   */
-  protected TranslationInterface $stringTranslation;
 
   /**
    * The Twig renderer.
@@ -179,8 +174,8 @@ class SodaScsPortainerServiceActions implements SodaScsServiceRequestInterface {
         '@error' => $e->getMessage(),
         '@trace' => $e->getTraceAsString(),
       ]);
-    }
-    $this->messenger->addError($this->stringTranslation->translate("Portainer request failed. See logs for more details."));
+    }         
+    $this->messenger->addError($this->t("Portainer request failed. See logs for more details."));
     return [
       'message' => 'Request failed with code @code' . $e->getCode(),
       'data' => [
@@ -218,9 +213,9 @@ class SodaScsPortainerServiceActions implements SodaScsServiceRequestInterface {
     $route = $url . '?' . http_build_query($queryParams);
 
     // URLs with underscores are not supported.
-    $defaultGraphSubdomain = str_replace('_', '-', $requestParams['subdomain']);
+    $defaultGraphmachineName = str_replace('_', '-', $requestParams['machineName']);
 
-    $trustedHost = str_replace('.', '\.', $requestParams['subdomain'] . '.' . $this->settings->get('scsHost'));
+    $trustedHost = str_replace('.', '\.', $requestParams['machineName'] . '.' . $this->settings->get('scsHost'));
 
     $env = [
       [
@@ -233,7 +228,7 @@ class SodaScsPortainerServiceActions implements SodaScsServiceRequestInterface {
       ],
       [
         "name" => "DB_NAME",
-        "value" => $requestParams['subdomain'],
+        "value" => $requestParams['machineName'],
       ],
       [
         "name" => "DB_PASSWORD",
@@ -248,7 +243,7 @@ class SodaScsPortainerServiceActions implements SodaScsServiceRequestInterface {
         // @todo whats the best way of concat strings with vars?
         "value" => sprintf(
         'http://%s.%s/contents/',
-        $defaultGraphSubdomain,
+        $defaultGraphmachineName,
         $this->settings->get('scsHost')),
       ],
       [
@@ -269,11 +264,11 @@ class SodaScsPortainerServiceActions implements SodaScsServiceRequestInterface {
       ],
       [
         "name" => "SERVICE_NAME",
-        "value" => $requestParams['subdomain'],
+        "value" => $requestParams['machineName'],
       ],
       [
         "name" => "SITE_NAME",
-        "value" => $requestParams['subdomain'],
+        "value" => $requestParams['machineName'],
       ],
       [
         "name" => "TS_PASSWORD",
@@ -285,11 +280,11 @@ class SodaScsPortainerServiceActions implements SodaScsServiceRequestInterface {
       ],
       [
         "name" => "TS_READ_URL",
-        "value" => 'https://' . $this->settings->get('triplestore')['openGdpSettings']['host'] . '/repositories/' . $requestParams['subdomain'],
+        "value" => 'https://' . $this->settings->get('triplestore')['openGdpSettings']['host'] . '/repositories/' . $requestParams['machineName'],
       ],
       [
         "name" => "TS_REPOSITORY",
-        "value" => $requestParams['subdomain'],
+        "value" => $requestParams['machineName'],
       ],
       [
         "name" => "TS_USERNAME",
@@ -297,7 +292,7 @@ class SodaScsPortainerServiceActions implements SodaScsServiceRequestInterface {
       ],
       [
         "name" => "TS_WRITE_URL",
-        "value" => 'https://' . $this->settings->get('triplestore')['openGdpSettings']['host'] . '/repositories/' . $requestParams['subdomain'] . '/statements',
+        "value" => 'https://' . $this->settings->get('triplestore')['openGdpSettings']['host'] . '/repositories/' . $requestParams['machineName'] . '/statements',
       ],
       [
         "name" => "WISSKI_BASE_IMAGE_VERSION",
@@ -354,7 +349,7 @@ class SodaScsPortainerServiceActions implements SodaScsServiceRequestInterface {
       'body' => json_encode([
         'composeFile' => 'docker-compose.yml',
         'env' => $env,
-        'name' => $requestParams['subdomain'],
+        'name' => $requestParams['machineName'],
         'repositoryAuthentication' => FALSE,
         'repositoryURL' => 'https://github.com/soda-collections-objects-data-literacy/wisski-base-stack.git',
       ]),
@@ -469,5 +464,32 @@ class SodaScsPortainerServiceActions implements SodaScsServiceRequestInterface {
   public function buildTokenRequest(array $requestParams): array {
     return [];
   }
+
+  /**
+   * Portainer instance health check.
+   *
+   * @return array
+   *   The request array for the makeRequest function.
+   */
+  public function buildHealthCheckRequest(): array {
+    if (empty($this->settings->get('wisski')['portainerOptions']['host'])) {
+      throw new MissingDataException('Portainer host setting is not set.');
+    }
+    if (empty($this->settings->get('wisski')['routes']['healthCheck']['url'])) {
+      throw new MissingDataException('Portainer health check endpoint setting is not set.');
+    }
+
+    $route = 'https://' .$this->settings->get('wisski')['portainerOptions']['host'] . $this->settings->get('wisski')['routes']['healthCheck']['url'];
+    return [
+      'success' => TRUE,
+      'method' => 'POST',
+      'route' => $route,
+      'headers' => [
+        'Content-Type' => 'application/json',
+        'Accept' => 'application/json',
+        'X-API-Key' => $this->settings->get('wisski')['portainerOptions']['authenticationToken'],
+      ],
+    ];
+  } 
 
 }

@@ -1,6 +1,5 @@
 # @todo clean unnessary service arguments
 services:
-
   # Helpers
   soda_scs_manager.stack.helpers:
     class: Drupal\soda_scs_manager\Helpers\SodaScsStackHelpers
@@ -13,9 +12,16 @@ services:
     arguments:
       - '@config.factory'
       - '@http_client'
+      - '@entity_type.manager'
       - '@logger.factory'
       - '@messenger'
       - '@string_translation'
+      - '@soda_scs_manager.docker_volumes_service.actions'
+      - '@soda_scs_manager.opengdp_service.actions'
+      - '@soda_scs_manager.portainer_service.actions'
+      - '@soda_scs_manager.sql_service.actions'
+      - '@soda_scs_manager.triplestore_component.actions'
+      - '@soda_scs_manager.wisski_component.actions'
 
   # Docker registry actions
 
@@ -32,9 +38,27 @@ services:
   soda_scs_manager.component.actions:
     class: Drupal\soda_scs_manager\ComponentActions\SodaScsComponentActions
     arguments:
+      - '@soda_scs_manager.filesystem_component.actions'
       - '@soda_scs_manager.sql_component.actions'
       - '@soda_scs_manager.triplestore_component.actions'
       - '@soda_scs_manager.wisski_component.actions'
+      - '@string_translation'
+
+  soda_scs_manager.filesystem_component.actions:
+    class: Drupal\soda_scs_manager\ComponentActions\SodaScsFilesystemComponentActions
+    arguments:
+      - '@config.factory'
+      - '@database'
+      - '@entity_type.bundle.info'
+      - '@entity_type.manager'
+      - '@http_client'
+      - '@logger.factory'
+      - '@messenger'
+      - '@soda_scs_manager.docker_volumes_service.actions'
+      - '@soda_scs_manager.portainer_service.actions'
+      - '@soda_scs_manager.service_key.actions'
+      - '@soda_scs_manager.sql_service.actions'
+      - '@soda_scs_manager.stack.helpers'
       - '@string_translation'
 
   soda_scs_manager.sql_component.actions:
@@ -46,7 +70,7 @@ services:
       - '@http_client'
       - '@logger.factory'
       - '@messenger'
-      - '@soda_scs_manager.mysql_service.actions'
+      - '@soda_scs_manager.sql_service.actions'
       - '@soda_scs_manager.service_key.actions'
       - '@string_translation'
 
@@ -72,7 +96,7 @@ services:
       - '@messenger'
       - '@soda_scs_manager.stack.helpers'
       - '@soda_scs_manager.portainer_service.actions'
-      - '@soda_scs_manager.mysql_service.actions'
+      - '@soda_scs_manager.sql_service.actions'
       - '@soda_scs_manager.service_key.actions'
       - '@string_translation'
 
@@ -83,15 +107,21 @@ services:
       - '@entity_type.manager'
 
   # Service actions
-  soda_scs_manager.mysql_service.actions:
-    class: Drupal\soda_scs_manager\ServiceActions\SodaScsMysqlServiceActions
+  soda_scs_manager.docker_volumes_service.actions:
+    class: Drupal\soda_scs_manager\RequestActions\SodaScsDockerVolumesServiceActions
     arguments:
-      - '@config.factory'
-      - '@database'
-      - '@entity_type.manager'
-      - '@logger.factory'
-      - '@messenger'
-      - '@string_translation'
+        - '@config.factory'
+        - '@database'
+        - '@entity_type.manager'
+        - '@http_client'
+        - '@language_manager'
+        - '@logger.factory'
+        - '@messenger'
+        - '@request_stack'
+        - '@soda_scs_manager.sql_service.actions'
+        - '@string_translation'
+        - '@twig'
+
 
   soda_scs_manager.opengdp_service.actions:
     class: Drupal\soda_scs_manager\RequestActions\SodaScsOpenGdpServiceActions
@@ -114,9 +144,19 @@ services:
         - '@plugin.manager.mail'
         - '@messenger'
         - '@request_stack'
-        - '@soda_scs_manager.mysql_service.actions'
+        - '@soda_scs_manager.sql_service.actions'
         - '@string_translation'
         - '@twig'
+
+  soda_scs_manager.sql_service.actions:
+    class: Drupal\soda_scs_manager\ServiceActions\SodaScsSqlServiceActions
+    arguments:
+      - '@config.factory'
+      - '@database'
+      - '@entity_type.manager'
+      - '@logger.factory'
+      - '@messenger'
+      - '@string_translation'
 
 # Stack actions
   soda_scs_manager.stack.actions:
@@ -155,7 +195,7 @@ services:
       - '@messenger'
       - '@soda_scs_manager.stack.helpers'
       - '@soda_scs_manager.sql_component.actions'
-      - '@soda_scs_manager.mysql_service.actions'
+      - '@soda_scs_manager.sql_service.actions'
       - '@soda_scs_manager.service_key.actions'
       - '@soda_scs_manager.portainer_service.actions'
       - '@soda_scs_manager.triplestore_component.actions'

@@ -21,6 +21,7 @@ class SodaScsServiceKeyListBuilder extends EntityListBuilder {
   public function buildHeader() {
     $header['component'] = $this->t('Component');
     $header['bundle'] = $this->t('Bundle');
+    $header['id'] = $this->t('Id');
     $header['owner'] = $this->t('Owner');
     $header['type'] = $this->t('Type');
     $header['password'] = $this->t('Password');
@@ -52,6 +53,7 @@ class SodaScsServiceKeyListBuilder extends EntityListBuilder {
       // Markup::create to ensure the HTML is not escaped.
       $row['scsComponent'] = Markup::create($linksString);
       $row['scsComponentBundle'] = $entity->get('scsComponentBundle')->value;
+      $row['id'] = $entity->id();
       $row['owner'] = $entity->getOwner()->getDisplayName();
       $row['type'] = $entity->get('type')->value;
       $row['servicePassword'] = [

@@ -1,7 +1,7 @@
 # Helpers
 
 soda_scs_manager.component.health_check:
-  path: '/soda-scs-manager/health/{bundle}/{subdomain}'
+  path: '/soda-scs-manager/health/{component_id}'
   defaults:
     _controller: '\Drupal\soda_scs_manager\Controller\SodaScsComponentController::componentStatus'
     _title:  'Component health check'
@@ -64,7 +64,7 @@ entity.soda_scs_stack.collection:
 # Soda SCS Component Entities
 
 entity.soda_scs_component.canonical:
-  path: '/admin/structure/soda-scs-component/{soda_scs_component}'
+  path: '/soda-scs-manager/component/{soda_scs_component}'
   defaults:
     _entity_view: 'soda_scs_component.default'
     _title: 'ScsComponent'
@@ -76,19 +76,15 @@ entity.soda_scs_component.canonical:
     _permission: 'soda scs manager user'
 
 entity.soda_scs_component.add_form:
-  path: '/admin/structure/soda-scs-component/{soda_scs_component_bundle}/add'
+  path: '/soda-scs-manager/component/add/{bundle}'
   defaults:
     _entity_form: 'soda_scs_component.add'
     _title: 'Add ScsComponent'
-  options:
-    parameters:
-      soda_scs_component_bundle:
-        type: entity:soda_scs_component
   requirements:
     _permission: 'soda scs manager user'
 
 entity.soda_scs_component.delete_form:
-  path: '/admin/structure/soda-scs-component/{soda_scs_component}/delete'
+  path: '/soda-scs-manager/component/{soda_scs_component}/delete'
   defaults:
     _entity_form: 'soda_scs_component.delete'
     _title: 'Delete ScsComponent'
@@ -101,7 +97,7 @@ entity.soda_scs_component.delete_form:
 
 
 entity.soda_scs_component.collection:
-  path: '/admin/structure/soda-scs-component/list'
+  path: '/soda-scs-manager/components'
   defaults:
     _entity_list: 'soda_scs_component'
     _title: 'Soda SCS Components'
@@ -119,8 +115,6 @@ entity.soda_scs_service_key.canonical:
     parameters:
       soda_scs_service_key:
         type: entity:soda_scs_service_key
-  requirements:
-    _custom_access: '\Drupal\soda_scs_manager\Access\SodaScsServiceKeyAccessControlHandler::accessServiceKey'
 
 entity.soda_scs_service_key.add_form:
   path: '/soda-scs-manager/service-key/add'
@@ -128,7 +122,7 @@ entity.soda_scs_service_key.add_form:
     _entity_form: 'soda_scs_service_key.add'
     _title: 'Add SODa SCS Service Key'
   requirements:
-    _permission: 'soda scs manager admin'
+    _permission: 'soda scs manager user'
 
 entity.soda_scs_service_key.delete_form:
   path: '/soda-scs-manager/service-key/{soda_scs_service_key}/delete'
@@ -140,7 +134,7 @@ entity.soda_scs_service_key.delete_form:
       soda_scs_service_key:
         type: entity:soda_scs_service_key
   requirements:
-    _custom_access: '\Drupal\soda_scs_manager\Access\SodaScsServiceKeyAccessControlHandler::accessServiceKey'
+    _permission: 'soda scs manager user'
 
 entity.soda_scs_service_key.collection:
   path: '/soda-scs-manager/service-key/list'
@@ -150,13 +144,75 @@ entity.soda_scs_service_key.collection:
   requirements:
     _permission: 'soda scs manager admin'
 
+# SODa SCS Project Entities
+
+entity.soda_scs_project.canonical:
+  path: '/soda-scs-manager/project/{soda_scs_project}'
+  defaults:
+    _entity_view: 'soda_scs_project.default'
+    _title: 'SODa SCS Project'
+  options:
+    parameters:
+      soda_scs_project:
+        type: entity:soda_scs_project
+  requirements:
+    _permission: 'soda scs manager user'
+
+entity.soda_scs_project.add_form:
+  path: '/soda-scs-manager/project/add'
+  defaults:
+    _entity_form: 'soda_scs_project.add'
+    _title: 'Add SODa SCS Project'
+  requirements:
+    _permission: 'soda scs manager user'
+
+entity.soda_scs_project.delete_form:
+  path: '/soda-scs-manager/project/{soda_scs_project}/delete'
+  defaults:
+    _entity_form: 'soda_scs_project.delete'
+    _title: 'Delete SODa SCS Project'
+  options:
+    parameters:
+      soda_scs_project:
+        type: entity:soda_scs_project
+  requirements:
+    _permission: 'soda scs manager user'
+
+entity.soda_scs_project.collection:
+  path: '/soda-scs-manager/projects'
+  defaults:
+    _entity_list: 'soda_scs_project'
+    _title: 'SODa SCS Projects'
+  requirements:
+    _permission: 'soda scs manager user'
+
 # Pages
 
 soda_scs_manager.desk:
   path: '/soda-scs-manager/desk'
   defaults:
-    _controller: '\Drupal\soda_scs_manager\Controller\SodaScsManagerController::deskPage'
+    _controller: '\Drupal\soda_scs_manager\Controller\SodaScsManagerController::stackDeskPage'
     _title:  'Your stacks'
+  requirements:
+    _permission: 'soda scs manager user'
+  options:
+    no_cache: TRUE
+
+soda_scs_manager.desk.stacks:
+  path: '/soda-scs-manager/desk/stacks'
+  defaults:
+    _controller: '\Drupal\soda_scs_manager\Controller\SodaScsManagerController::stackDeskPage'
+    _title:  'Your stacks'
+  requirements:
+    _permission: 'soda scs manager user'
+  options:
+    no_cache: TRUE
+
+soda_scs_manager.desk.components:
+  path: '/soda-scs-manager/desk/components'
+  defaults:
+    _controller: '\Drupal\soda_scs_manager\Controller\SodaScsManagerController::componentDeskPage'
+    _title:  'Your components'
   requirements:
     _permission: 'soda scs manager user'
   options:
@@ -165,7 +221,23 @@ soda_scs_manager.desk:
 soda_scs_manager.store:
   path: '/soda-scs-manager/store'
   defaults:
-    _controller: '\Drupal\soda_scs_manager\Controller\SodaScsManagerController::storePage'
+    _controller: '\Drupal\soda_scs_manager\Controller\SodaScsManagerController::stackStorePage'
+    _title: 'Store'
+  requirements:
+    _permission: 'soda scs manager user'
+
+soda_scs_manager.store.stacks:
+  path: '/soda-scs-manager/store/stacks'
+  defaults:
+    _controller: '\Drupal\soda_scs_manager\Controller\SodaScsManagerController::stackStorePage'
+    _title: 'Store'
+  requirements:
+    _permission: 'soda scs manager user'
+
+soda_scs_manager.store.components:
+  path: '/soda-scs-manager/store/components'
+  defaults:
+    _controller: '\Drupal\soda_scs_manager\Controller\SodaScsManagerController::componentStorePage'
     _title: 'Store'
   requirements:
     _permission: 'soda scs manager user'
@@ -181,6 +253,7 @@ soda_scs_manager.service_link:
         type: entity:soda_scs_component
   requirements:
     _permission: 'soda scs manager user'
+    _custom_access: '\Drupal\soda_scs_manager\Access\SodaScsLinksTasksAccessControlHandler::accessServiceLink'
 
 soda_scs_manager.settings:
   path: '/admin/config/soda-scs-manager/settings'

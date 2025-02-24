@@ -10,6 +10,7 @@ use Drupal\Core\Entity\EntityTypeManagerInterface;
 use Drupal\Core\Logger\LoggerChannelFactoryInterface;
 use Drupal\Core\Messenger\MessengerInterface;
 use Drupal\Core\StringTranslation\TranslationInterface;
+use Drupal\Core\StringTranslation\StringTranslationTrait;
 use Drupal\Core\TypedData\Exception\MissingDataException;
 use Drupal\soda_scs_manager\Entity\SodaScsComponentInterface;
 use Drupal\soda_scs_manager\Entity\SodaScsStackInterface;
@@ -23,6 +24,7 @@ use GuzzleHttp\ClientInterface;
 class SodaScsSqlComponentActions implements SodaScsComponentActionsInterface {
 
   use DependencySerializationTrait;
+  use StringTranslationTrait;
 
   /**
    * The database.
@@ -81,13 +83,6 @@ class SodaScsSqlComponentActions implements SodaScsComponentActionsInterface {
   protected SodaScsServiceKeyActionsInterface $sodaScsServiceKeyActions;
 
   /**
-   * The string translation service.
-   *
-   * @var \Drupal\Core\StringTranslation\TranslationInterface
-   */
-  protected TranslationInterface $stringTranslation;
-
-  /**
    * Class constructor.
    */
   public function __construct(
@@ -132,12 +127,12 @@ class SodaScsSqlComponentActions implements SodaScsComponentActionsInterface {
         throw new \Exception('SQL component bundle info not found');
       }
 
-      $subdomain = $entity->get('subdomain')->value;
+      $machineName = $entity->get('machineName')->value;
       $sqlComponent = $this->entityTypeManager->getStorage('soda_scs_component')->create(
         [
           'bundle' => 'soda_scs_sql_component',
-          'label' => $subdomain . '.' . $this->settings->get('scsHost') . ' (SQL Database)',
-          'subdomain' => $subdomain,
+          'label' => $entity->get('label')->value . ' (SQL Database)',
+          'machineName' => $machineName,
           'owner'  => $entity->getOwnerId(),
           'description' => $sqlComponentBundleInfo['description'],
           'imageUrl' => $sqlComponentBundleInfo['imageUrl'],
@@ -177,7 +172,7 @@ class SodaScsSqlComponentActions implements SodaScsComponentActionsInterface {
         throw new MissingDataException('Database root password setting missing');
       }
 
-      $dbName = $entity->get('subdomain')->value;
+      $dbName = $entity->get('machineName')->value;
       // Check if the database exists.
       $checkDbExistsResult = $this->sodaScsMysqlServiceActions->existService($dbName);
 
@@ -188,7 +183,7 @@ class SodaScsSqlComponentActions implements SodaScsComponentActionsInterface {
 
       if ($checkDbExistsResult['result']) {
         // Database already exists.
-        $this->messenger->addError($this->stringTranslation->translate('Database already exists. See logs for more details.'));
+        $this->messenger->addError($this->t('Database already exists. See logs for more details.'));
         return [];
       }
 
@@ -249,7 +244,7 @@ class SodaScsSqlComponentActions implements SodaScsComponentActionsInterface {
         ->error("Cannot create database. @error", [
           '@error' => $e->getMessage(),
         ]);
-      $this->messenger->addError($this->stringTranslation->translate("Cannot create database. See logs for more details."));
+      $this->messenger->addError($this->t("Cannot create database. See logs for more details."));
       return [
         'message' => 'Cannot create database.',
         'data' => NULL,
@@ -315,7 +310,7 @@ class SodaScsSqlComponentActions implements SodaScsComponentActionsInterface {
           '@error' => $e->getMessage(),
           '@trace' => $e->getTraceAsString(),
         ]);
-      $this->messenger->addError($this->stringTranslation->translate("Cannot delete database. See logs for more details."));
+      $this->messenger->addError($this->t("Cannot delete database. See logs for more details."));
 
       return [
         'message' => 'Cannot delete database.',
@@ -339,7 +334,7 @@ class SodaScsSqlComponentActions implements SodaScsComponentActionsInterface {
         ->error("Cannot clean database users. @error", [
           '@error' => $e->getMessage(),
         ]);
-      $this->messenger->addError($this->stringTranslation->translate("Cannot clean database users. See logs for more details."));
+      $this->messenger->addError($this->t("Cannot clean database users. See logs for more details."));
       return [
         'message' => 'Cannot clean database. users',
         'data' => [

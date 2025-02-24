@@ -8,6 +8,7 @@ use Drupal\Core\DependencyInjection\DependencySerializationTrait;
 use Drupal\Core\Logger\LoggerChannelFactoryInterface;
 use Drupal\Core\Messenger\MessengerInterface;
 use Drupal\Core\StringTranslation\TranslationInterface;
+use Drupal\Core\StringTranslation\StringTranslationTrait;
 use Drupal\Core\TypedData\Exception\MissingDataException;
 use GuzzleHttp\ClientInterface;
 use GuzzleHttp\Exception\ClientException;
@@ -18,8 +19,7 @@ use GuzzleHttp\Exception\ClientException;
 class SodaScsDockerRegistryServiceActions implements SodaScsServiceRequestInterface {
 
   use DependencySerializationTrait;
-
-
+  use StringTranslationTrait;
   /**
    * The HTTP client.
    *
@@ -47,13 +47,6 @@ class SodaScsDockerRegistryServiceActions implements SodaScsServiceRequestInterf
    * @var \Drupal\Core\Config\Config
    */
   protected Config $settings;
-
-  /**
-   * The string translation service.
-   *
-   * @var \Drupal\Core\StringTranslation\TranslationInterface
-   */
-  protected TranslationInterface $stringTranslation;
 
   /**
    * Class constructor.
@@ -111,7 +104,7 @@ class SodaScsDockerRegistryServiceActions implements SodaScsServiceRequestInterf
         '@trace' => $e->getTraceAsString(),
       ]);
     }
-    $this->messenger->addError($this->stringTranslation->translate("Portainer request failed. See logs for more details."));
+    $this->messenger->addError($this->t("Portainer request failed. See logs for more details."));
     return [
       'message' => 'Request failed with code @code' . $e->getCode(),
       'data' => [
@@ -166,6 +159,31 @@ class SodaScsDockerRegistryServiceActions implements SodaScsServiceRequestInterf
     $route = str_replace('{package_id}', $requestParams['packageId'], $route);
     if (empty($route)) {
       throw new MissingDataException('Get URL setting is not set.');
+    }
+
+    return [
+      'success' => TRUE,
+      'method' => 'GET',
+      'route' => $route,
+      'headers' => [
+        'Content-Type' => 'application/json',
+        'Accept' => 'application/json',
+      ],
+    ];
+  }
+
+  /**
+   * Builds the health check request.
+   *
+   * @return array
+   *   The health check request.
+   *
+   * @throws \Drupal\Core\TypedData\Exception\MissingDataException
+   */
+  public function buildHealthCheckRequest(): array {
+    $route = $this->settings->get('dockerRegistry')['routes']['healthCheck']['url'];
+    if (empty($route)) {
+      throw new MissingDataException('Health check URL setting is not set.');
     }
 
     return [

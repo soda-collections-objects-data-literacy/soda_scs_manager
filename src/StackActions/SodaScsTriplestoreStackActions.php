@@ -106,7 +106,7 @@ class SodaScsTriplestoreStackActions implements SodaScsStackActionsInterface {
         '@error' => $e->getMessage(),
         '@trace' => $e->getTraceAsString(),
       ]);
-      $this->messenger->addError($this->stringTranslation->translate("Could not create triplestore component. See logs for more details."));
+      $this->messenger->addError($this->t("Could not create triplestore component. See logs for more details."));
       return [
         'message' => $this->t('Could not create stack: %message', ['%message' => $e->getMessage()]),
         'data' => [
@@ -203,7 +203,7 @@ class SodaScsTriplestoreStackActions implements SodaScsStackActionsInterface {
         '@error' => $e->getMessage(),
         '@trace' => $e->getTraceAsString(),
       ]);
-      $this->messenger->addError($this->stringTranslation->translate("Could not delete triplestore component. See logs for more details."));
+      $this->messenger->addError($this->t("Could not delete triplestore component. See logs for more details."));
       return [
         'message' => 'Could not delete triplestore component.',
         'data' => [

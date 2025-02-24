@@ -18,7 +18,7 @@ use Drupal\soda_scs_manager\Entity\SodaScsComponentInterface;
  *
  * @todo Sanitise mysql commands, no create, drop etc.
  */
-class SodaScsMysqlServiceActions implements SodaScsServiceActionsInterface {
+class SodaScsSqlServiceActions implements SodaScsServiceActionsInterface {
 
   use StringTranslationTrait;
 
@@ -104,7 +104,7 @@ class SodaScsMysqlServiceActions implements SodaScsServiceActionsInterface {
       throw new MissingDataException('Database root password setting missing');
     }
 
-    $dbName = $component->get('subdomain')->value;
+    $dbName = $component->get('machineName')->value;
 
     // Create the database.
     $createDbCommand = "mysql -h $dbHost -uroot -p$dbRootPassword -e 'CREATE DATABASE `$dbName`;' 2>&1";
@@ -173,7 +173,7 @@ class SodaScsMysqlServiceActions implements SodaScsServiceActionsInterface {
    * @throws \Drupal\Core\TypedData\Exception\MissingDataException
    */
   public function deleteService(SodaScsComponentInterface $component): array {
-    $dbName = $component->get('subdomain')->value;
+    $dbName = $component->get('machineName')->value;
     $dbUsername = $component->getOwner()->getDisplayName();
 
     /** @var \Drupal\soda_scs_manager\Entity\SodaScsServiceKeyInterface $serviceKey */
@@ -470,6 +470,61 @@ class SodaScsMysqlServiceActions implements SodaScsServiceActionsInterface {
       'result' => $userOwnsAnyDatabasesCommandResult,
     ];
   }
+
+  
+  /**
+   * Checks if a user has read and write access to a database.
+   *
+   * @param string $dbUser
+   *   The name of the database user.
+   * @param string $dbName
+   *   The name of the database.
+   * @param string $dbUserPassword
+   *   The password of the database user.
+   *
+   * @return bool
+   *   TRUE if the user has read and write access to the database.
+   */
+  /**
+   * Checks if a user has read and write access to a database.
+   *
+   * @param string $dbUser
+   *   The name of the database user.
+   * @param string $dbName
+   *   The name of the database.
+   * @param string $dbUserPassword
+   *   The password of the database user.
+   *
+   * @return bool
+   *   TRUE if the user has read and write access to the database.
+   */
+  public function userHasReadWriteAccessToDatabase(string $dbUser, string $dbName, string $dbUserPassword): bool {
+    $dbHost = $this->settings->get('dbHost');
+
+    $checkPrivilegesCommand = "mysql -h $dbHost -u$dbUser -p$dbUserPassword -e 'SHOW GRANTS FOR \"$dbUser\"@\"%\";' 2>&1";
+    $checkPrivilegesCommandResult = exec($checkPrivilegesCommand, $checkPrivilegesCommandOutput, $checkPrivilegesCommandReturnVar);
+
+    if ($checkPrivilegesCommandReturnVar != 0) {
+      throw new \Exception("Failed to check privileges for user $dbUser on database $dbName");
+    }
+
+    $grants = [];
+    foreach ($checkPrivilegesCommandOutput as $line) {
+      if (strpos($line, $dbName) !== FALSE) {
+        $grants[] = $line;
+      }
+    }
+
+    $privileges = implode("\n", $grants);
+    $hasAllPrivileges = strpos($privileges, "GRANT ALL") !== FALSE;
+    $hasSelectPrivilege = strpos($privileges, "GRANT SELECT") !== FALSE;
+    $hasInsertPrivilege = strpos($privileges, "GRANT INSERT") !== FALSE;
+    $hasUpdatePrivilege = strpos($privileges, "GRANT UPDATE") !== FALSE;
+    $hasDeletePrivilege = strpos($privileges, "GRANT DELETE") !== FALSE;
+
+    return (($hasSelectPrivilege && ($hasInsertPrivilege && $hasUpdatePrivilege && $hasDeletePrivilege))) || $hasAllPrivileges;
+  }
+
 
   /**
    * Checks handle shell command failure.

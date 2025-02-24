@@ -106,16 +106,16 @@ class SodaScsTriplestoreComponentActions implements SodaScsComponentActionsInter
       if (!$triplestoreComponentBundleInfo) {
         throw new \Exception('Triplestore component bundle info not found');
       }
-      $subdomain = $entity->get('subdomain')->value;
+      $machineName = $entity->get('machineName')->value;
       /** @var \Drupal\soda_scs_manager\Entity\SodaScsComponentInterface $triplestoreComponent */
       $triplestoreComponent = $this->entityTypeManager->getStorage('soda_scs_component')->create(
         [
           'bundle' => 'soda_scs_triplestore_component',
-          'label' => $subdomain . '.' . $this->settings->get('scsHost') . ' (Triplestore)',
-          'subdomain' => $subdomain,
+          'label' => $entity->get('label')->value . ' (Triplestore)',
+          'machineName' => $machineName,
           'owner'  => $entity->getOwnerId(),
           'description' => $triplestoreComponentBundleInfo['description'],
-          'imageUrl' => $triplestoreComponentBundleInfo['image_url'],
+          'imageUrl' => $triplestoreComponentBundleInfo['imageUrl'],
           'health' => 'Unknown',
         ]
       );
@@ -142,14 +142,14 @@ class SodaScsTriplestoreComponentActions implements SodaScsComponentActionsInter
       }
 
       $username = $triplestoreComponent->getOwner()->getDisplayName();
-      $subdomain = $triplestoreComponent->get('subdomain')->value;
+      $machineName = $triplestoreComponent->get('machineName')->value;
       // Build repo request.
       $createRepoRequestParams = [
         'type' => 'repository',
         'queryParams' => [],
         'routeParams' => [],
         'body' => [
-          'subdomain' => $subdomain,
+          'machineName' => $machineName,
           'title' => $triplestoreComponent->label(),
           'publicRead' => FALSE,
           'publicWrite' => FALSE,
@@ -197,14 +197,14 @@ class SodaScsTriplestoreComponentActions implements SodaScsComponentActionsInter
               'routeParams' => [$username],
               'body' => [
                 'password' => $triplestoreComponentServiceKey->get('servicePassword')->value,
-                'subdomain' => $subdomain,
+                'machineName' => $machineName,
               ],
             ];
             $openGdbCreateUserRequest = $this->sodaScsOpenGdbServiceActions->buildCreateRequest($createUserRequestParams);
             $createUserResponse = $this->sodaScsOpenGdbServiceActions->makeRequest($openGdbCreateUserRequest);
             $updateUserResponse = NULL;
 
-            $this->messenger->addMessage($this->stringTranslation->translate("Created OpenGDB user: @username", ['@username' => $username]));
+            $this->messenger->addMessage($this->t("Created OpenGDB user: @username", ['@username' => $username]));
 
             if (!$createUserResponse['success']) {
               return [
@@ -324,8 +324,8 @@ class SodaScsTriplestoreComponentActions implements SodaScsComponentActionsInter
                 $readRightsBefore,
                 $writeRightsBefore,
                 [
-                  "READ_REPO_$subdomain",
-                  "WRITE_REPO_$subdomain",
+                  "READ_REPO_$machineName",
+                  "WRITE_REPO_$machineName",
                 ]),
               "appSettings" => [
                 "DEFAULT_INFERENCE" => TRUE,
@@ -394,7 +394,7 @@ class SodaScsTriplestoreComponentActions implements SodaScsComponentActionsInter
     $triplestoreComponentServiceToken->save();
 
     return [
-      'message' => $this->t('Created triplestore component %subdomain.', ['%subdomain' => $subdomain]),
+      'message' => $this->t('Created triplestore component %machineName.', ['%machineName' => $machineName]),
       'data' => [
         'triplestoreComponent' => $triplestoreComponent,
         'createRepoResponse' => $createRepoResponse,
@@ -457,11 +457,11 @@ class SodaScsTriplestoreComponentActions implements SodaScsComponentActionsInter
 
     try {
       $username = $component->getOwner()->getAccountName();
-      $subdomain = $component->get('subdomain')->value;
+      $machineName = $component->get('machineName')->value;
       $requestParams = [
         'type' => 'repository',
         'queryParams' => [],
-        'routeParams' => [$subdomain],
+        'routeParams' => [$machineName],
         'body' => [],
       ];
 
@@ -488,7 +488,7 @@ class SodaScsTriplestoreComponentActions implements SodaScsComponentActionsInter
     }
     catch (\Exception $e) {
       return [
-        'message' => $this->t('Could not delete triplestore component %component', ['%component' => $subdomain]),
+        'message' => $this->t('Could not delete triplestore component %component', ['%component' => $machineName]),
         'data' => [
           'openGdbDeleteRepositoryResponse' => $openGdbDeleteRepositoryResponse,
           'openGdbUpdateUserResponse' => NULL,
@@ -530,7 +530,7 @@ class SodaScsTriplestoreComponentActions implements SodaScsComponentActionsInter
     }
     catch (\Exception $e) {
       return [
-        'message' => $this->t('Could not delete triplestore component %component', ['%component' => $subdomain]),
+        'message' => $this->t('Could not delete triplestore component %component', ['%component' => $machineName]),
         'data' => [
           'openGdbDeleteRepositoryResponse' => $openGdbDeleteRepositoryResponse,
           'openGdbUpdateUserResponse' => NULL,
@@ -546,10 +546,10 @@ class SodaScsTriplestoreComponentActions implements SodaScsComponentActionsInter
     if ($authorities > 3) {
 
       try {
-        $authorities = array_filter($authorities, function ($authority) use ($subdomain) {
+        $authorities = array_filter($authorities, function ($authority) use ($machineName) {
           return !in_array($authority, [
-            "READ_REPO_$subdomain",
-            "WRITE_REPO_$subdomain",
+            "READ_REPO_$machineName",
+            "WRITE_REPO_$machineName",
           ]);
         });
 
@@ -579,7 +579,7 @@ class SodaScsTriplestoreComponentActions implements SodaScsComponentActionsInter
       catch (\Exception $e) {
 
         return [
-          'message' => $this->t('Could not delete triplestore component %component', ['%component' => $subdomain]),
+          'message' => $this->t('Could not delete triplestore component %component', ['%component' => $machineName]),
           'data' => [
             'openGdbDeleteRepositoryResponse' => $openGdbDeleteRepositoryResponse,
             'openGdbGetUserResponse' => $openGdbGetUserResponse,
@@ -621,7 +621,7 @@ class SodaScsTriplestoreComponentActions implements SodaScsComponentActionsInter
     }
     $component->delete();
     return [
-      'message' => $this->t('Deleted triplestore component %component', ['%component' => $subdomain]),
+      'message' => $this->t('Deleted triplestore component %component', ['%component' => $machineName]),
       'data' => [
         'openGdbDeleteRepositoryResponse' => $openGdbDeleteRepositoryResponse,
         'openGdbGetUserResponse' => $openGdbGetUserResponse,
