@@ -99,13 +99,6 @@ class SodaScsComponentDeleteForm extends ContentEntityDeleteForm {
     $deleteComponentResult = $this->sodaScsComponentActions->deleteComponent($component);
 
     if (!$deleteComponentResult['success']) {
-      \Drupal::messenger()->addError($this->t('%message See logs for more information.', [
-        '%message' => $deleteComponentResult['message'],
-      ]));
-      \Drupal::logger('soda_scs_manager')->error('%message %error ', [
-        '%message' => $deleteComponentResult['message'],
-        '%error' => $deleteComponentResult['error'],
-      ]);
       return;
     }
     $this->messenger()->addStatus($deleteComponentResult['message']);

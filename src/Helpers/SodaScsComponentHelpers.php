@@ -67,6 +67,13 @@ class SodaScsComponentHelpers {
   protected SodaScsServiceRequestInterface $dockerVolumesServiceActions;
 
   /**
+   * The OpenGDP service actions.
+   *
+   * @var \Drupal\soda_scs_manager\ServiceActions\SodaScsServiceRequestInterface
+   */
+  protected SodaScsServiceRequestInterface $openGdpServiceActions;
+
+  /**
    * The Portainer service actions.
    *
    * @var \Drupal\soda_scs_manager\ServiceActions\SodaScsServiceRequestInterface
@@ -80,20 +87,6 @@ class SodaScsComponentHelpers {
    */
   protected SodaScsServiceActionsInterface $sqlServiceActions;
 
-  /**
-   * The Triplestore service actions.
-   *
-   * @var \Drupal\soda_scs_manager\ServiceActions\SodaScsServiceRequestInterface
-   */
-  protected SodaScsServiceRequestInterface $triplestoreServiceActions;
-
-  /**
-   * The Wisski service actions.
-   *
-   * @var \Drupal\soda_scs_manager\ServiceActions\SodaScsServiceRequestInterface
-   */
-  protected SodaScsServiceRequestInterface $wisskiServiceActions;
-
   public function __construct(
     ConfigFactoryInterface $configFactory,
     ClientInterface $httpClient,
@@ -102,10 +95,9 @@ class SodaScsComponentHelpers {
     MessengerInterface $messenger,
     TranslationInterface $stringTranslation,
     SodaScsServiceRequestInterface $dockerVolumesServiceActions,
+    SodaScsServiceRequestInterface $openGdpServiceActions,
     SodaScsServiceRequestInterface $portainerServiceActions,
     SodaScsServiceActionsInterface $sqlServiceActions,
-    SodaScsServiceRequestInterface $triplestoreServiceActions,
-    SodaScsServiceRequestInterface $wisskiServiceActions,
 
   ) {
     // Services from container.
@@ -117,10 +109,9 @@ class SodaScsComponentHelpers {
     $this->messenger = $messenger;
     $this->stringTranslation = $stringTranslation;
     $this->dockerVolumesServiceActions = $dockerVolumesServiceActions;
+    $this->openGdpServiceActions = $openGdpServiceActions;
     $this->portainerServiceActions = $portainerServiceActions;
     $this->sqlServiceActions = $sqlServiceActions;
-    $this->triplestoreServiceActions = $triplestoreServiceActions;
-    $this->wisskiServiceActions = $wisskiServiceActions;
   }
 
   /**
@@ -161,31 +152,65 @@ class SodaScsComponentHelpers {
    * Check filesystem health.
    */
   public function checkFilesystemHealth(string $machineName) {
+
+    # Check if Portainer service is available.
+    try {
+      $requestParams = [
+        'machineName' => $machineName,
+      ];
+      $healthRequest = $this->portainerServiceActions->buildHealthCheckRequest($requestParams);
+      $healthRequestResult = $this->portainerServiceActions->makeRequest($healthRequest);
+      if ($healthRequestResult['statusCode'] != 200) {
+        return [
+          "message" => 'Portainer is not available.',
+          'code' => $healthRequestResult['statusCode'],
+          'data' => $healthRequestResult['data'],
+          'success' => FALSE,
+          'error' => $healthRequestResult['error'],
+        ];
+      } 
+    }
+    catch (\Exception $e) {
+      return [
+        "message" => 'Portainer is not available.',
+        'code' => $e->getCode(),
+        'success' => FALSE,
+        'data' => $e,
+        'error' => $e->getMessage(),
+      ];
+    }
+
     try {
       $requestParams = [
         'machineName' => $machineName,
       ];
       $healthRequest = $this->dockerVolumesServiceActions->buildHealthCheckRequest($requestParams);
       $healthRequestResult = $this->dockerVolumesServiceActions->makeRequest($healthRequest);
-      if ($healthRequestResult['code'] != 200) {
+      if ($healthRequestResult['statusCode'] != 200) {
         return [
-          "message" => 'Filesystem health check is not available: ' . $healthRequestResult['error'],
-          'code' => $healthRequestResult['code'],
+          "message" => 'Filesystem is not available.',
+          'code' => $healthRequestResult['statusCode'],
+          'data' => $healthRequestResult['data'],
           'success' => FALSE,
+          'error' => $healthRequestResult['error'],
         ];
       } else {
         return [
-          "message" => $this->t("Filesystem health check is available.", ),
-          'code' => 200,
+          "message" => $this->t("Filesystem is available.", ),
+          'code' => $healthRequestResult['statusCode'],
+          'data' => $healthRequestResult['data'],
           'success' => TRUE,
+          'error' => '',
         ];
       }
     }
     catch (\Exception $e) {
       return [
-        "message" => 'Filesystem health check is not available: ' . $e->getMessage(),
+        "message" => 'Filesystem is not available.',
         'code' => $e->getCode(),
         'success' => FALSE,
+        'data' => $e,
+        'error' => $e->getMessage(),
       ];
     }
   }

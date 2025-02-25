@@ -284,6 +284,38 @@ class SodaScsFilesystemComponentActions implements SodaScsComponentActionsInterf
     ];
     $bundleLabel = $this->entityTypeBundleInfo->getBundleInfo('soda_scs_component')[$component->bundle()]['label'];
     try {
+      $portainerHealthCheckRequest = $this->sodaScsPortainerServiceActions->buildHealthCheckRequest($queryParams);
+      $portainerHealthCheckResult = $this->sodaScsPortainerServiceActions->makeRequest($portainerHealthCheckRequest);
+    }
+    catch (\Exception $e) {
+      $this->loggerFactory->get('soda_scs_manager')->error("Cannot check portainer health: @error", [
+        '@error' => $e->getMessage(),
+      ]);
+      $this->messenger->addError($this->t("Cannot check portainer health. See logs for more details.", []));
+      return [
+        'message' => 'Cannot check portainer health.',
+        'data' => [
+          'dockerResponse' => NULL,
+        ],
+        'success' => FALSE,
+        'error' => $e->getMessage(),
+      ];
+    }
+
+    if ($portainerHealthCheckResult['success'] === FALSE) {
+      $this->messenger->addError($this->t("Portainer is not healthy. Cannot delete anything.", []));
+      return [
+        'message' => 'Portainer is not healthy.',
+        'data' => [
+          'portainerResponse' => $portainerHealthCheckResult['data'],
+        ],
+        'success' => FALSE,
+        'error' => $portainerHealthCheckResult['error'],
+      ];
+    }
+
+
+    try {
       $dockerVolumeDeleteRequest = $this->sodaScsDockerVolumesServiceActions->buildDeleteRequest($queryParams);
     }
     catch (MissingDataException $e) {
@@ -304,20 +336,21 @@ class SodaScsFilesystemComponentActions implements SodaScsComponentActionsInterf
       ];
     }
     try {
-      /** @var array $dockerResponse */
       $requestResult = $this->sodaScsDockerVolumesServiceActions->makeRequest($dockerVolumeDeleteRequest);
       if (!$requestResult['success']) {
-        $this->loggerFactory->get('soda_scs_manager')->error("Could not delete @bundle component. error: @error", [
+        $this->loggerFactory->get('soda_scs_manager')->error($this->t("Could not delete @bundle. error: @error", [
           '@bundle' => $component->bundle(),
           '@error' => $requestResult['error'],
-        ]);
-        $this->messenger->addError($this->t("Could not delete @bundle component, but will delete the component anyway. See logs for more details.", [
+        ]));
+        $this->messenger->addError($this->t("Could not delete  @bundle, but will delete the component anyway. See logs for more details.", [
           '@bundle' => $bundleLabel,
         ]));
+
       }
+
       $component->delete();
       return [
-        'message' => $this->t('Deleted @bundle component.', [
+        'message' => $this->t('Deleted @bundle.', [
           '@bundle' => $bundleLabel,
         ]),
         'data' => [
@@ -328,15 +361,19 @@ class SodaScsFilesystemComponentActions implements SodaScsComponentActionsInterf
       ];
     }
     catch (\Exception $e) {
-      $this->loggerFactory->get('soda_scs_manager')->error($this->t("Could not delete @bundle component: @error", [
+      $this->loggerFactory->get('soda_scs_manager')->error($this->t("Could not delete @bundle: @error", [
         '@bundle' => $bundleLabel,
         '@error' => $e->getMessage(),
       ]));
-      $this->messenger->addError($this->t("Could not delete @bundle component. See logs for more details.", [
+      $this->messenger->addError($this->t("Could not delete @bundle. See logs for more details.", [
         '@bundle' => $bundleLabel,
       ]));
+      
+
       return [
-        'message' => 'Could not delete @bundle component.',
+        'message' => $this->t('Could not delete @bundle.', [
+          '@bundle' => $bundleLabel,
+        ]),
         'data' => [
           'dockerResponse' => NULL,
         ],

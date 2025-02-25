@@ -16,6 +16,7 @@ use Drupal\Core\StringTranslation\StringTranslationTrait;
 use Drupal\Core\Template\TwigEnvironment;
 use Drupal\Core\TypedData\Exception\MissingDataException;
 use Drupal\soda_scs_manager\ServiceActions\SodaScsServiceActionsInterface;
+use Drupal\soda_scs_manager\RequestActions\SodaScsServiceRequestInterface;
 use GuzzleHttp\ClientInterface;
 use GuzzleHttp\Exception\ClientException;
 use Symfony\Component\HttpFoundation\RequestStack;
@@ -92,11 +93,18 @@ class SodaScsDockerVolumesServiceActions implements SodaScsServiceRequestInterfa
   protected Config $settings;
 
   /**
+   * The SCS portainer actions service.
+   *
+   * @var \Drupal\soda_scs_manager\RequestActions\SodaScsServiceRequestInterface
+   */
+  protected SodaScsServiceRequestInterface $sodaScsPortainerServiceActions;
+
+  /**
    * The SCS database actions service.
    *
    * @var \Drupal\soda_scs_manager\ServiceActions\SodaScsServiceActionsInterface
    */
-  protected SodaScsServiceActionsInterface $sodaScsMysqlServiceActions;
+  protected SodaScsServiceActionsInterface $sodaScsSqlServiceActions;
 
 
   /**
@@ -118,7 +126,8 @@ class SodaScsDockerVolumesServiceActions implements SodaScsServiceRequestInterfa
     LoggerChannelFactoryInterface $loggerFactory,
     MessengerInterface $messenger,
     RequestStack $requestStack,
-    SodaScsServiceActionsInterface $sodaScsMysqlServiceActions,
+    SodaScsServiceRequestInterface $sodaScsPortainerServiceActions,
+    SodaScsServiceActionsInterface $sodaScsSqlServiceActions,
     TranslationInterface $stringTranslation,
     TwigEnvironment $twig,
   ) {
@@ -133,7 +142,8 @@ class SodaScsDockerVolumesServiceActions implements SodaScsServiceRequestInterfa
     $this->messenger = $messenger;
     $this->requestStack = $requestStack;
     $this->settings = $settings;
-    $this->sodaScsMysqlServiceActions = $sodaScsMysqlServiceActions;
+    $this->sodaScsPortainerServiceActions = $sodaScsPortainerServiceActions;
+    $this->sodaScsSqlServiceActions = $sodaScsSqlServiceActions;
     $this->stringTranslation = $stringTranslation;
     $this->twig = $twig;
   }
@@ -155,9 +165,8 @@ class SodaScsDockerVolumesServiceActions implements SodaScsServiceRequestInterfa
     }
     // Send the request.
     try {
+     
       $response = $this->httpClient->request($request['method'], $request['route'], $requestParams);
-      $response = json_decode($response->getBody()->getContents(), TRUE);
-
       return [
         'message' => 'Request succeeded',
         'data' => [
@@ -165,24 +174,20 @@ class SodaScsDockerVolumesServiceActions implements SodaScsServiceRequestInterfa
         ],
         'success' => TRUE,
         'error' => '',
+        'statusCode' => $response->getStatusCode(),
       ];
     }
-    catch (ClientException $e) {
-      $this->loggerFactory->get('soda_scs_manager')->error("Portainer request failed with code @code error: @error trace @trace", [
-        '@code' => $e->getCode(),
-        '@error' => $e->getMessage(),
-        '@trace' => $e->getTraceAsString(),
-      ]);
+    catch (\Exception $e) {
+      return [
+        'message' => 'Request failed',
+        'data' => [
+          'portainerResponse' => $e,
+        ],
+        'success' => FALSE,
+        'error' => $e->getMessage(),
+        'statusCode' => $e->getCode(),
+      ];
     }
-    $this->messenger->addError($this->t("Portainer request failed. See logs for more details."));
-    return [
-      'message' => 'Request failed with code @code' . $e->getCode(),
-      'data' => [
-        'portainerResponse' => $e,
-      ],
-      'success' => FALSE,
-      'error' => $e->getMessage(),
-    ];
   }
 
 
@@ -207,9 +212,8 @@ class SodaScsDockerVolumesServiceActions implements SodaScsServiceRequestInterfa
    *   The request array for the makeRequest function.
    */
   public function buildHealthCheckRequest(array $requestParams): array {
-    $health = $this->buildGetRequest($requestParams);
-
-    return $health;
+    $healthRequest = $this->buildGetRequest($requestParams);
+    return $healthRequest;
   }
 
   /**
@@ -224,18 +228,56 @@ class SodaScsDockerVolumesServiceActions implements SodaScsServiceRequestInterfa
    * @throws \Drupal\Core\TypedData\Exception\MissingDataException
    */
   public function buildCreateRequest(array $requestParams): array {
-    if (empty($this->settings->get('wisski')['routes']['dockerApi']['url'])) {
-      throw new MissingDataException('Docker API URL setting is not set.');
+    if (empty($this->settings->get('portainer')['portainerOptions']['host'])) {
+      throw new MissingDataException('Portainer host setting is not set.');
+    } else {
+      $portainerHostRoute = $this->settings->get('portainer')['portainerOptions']['host'];
     }
 
-    $route = 'https://' . $this->settings->get('wisski')['portainerOptions']['host'] . $this->settings->get('wisski')['routes']['dockerApi']['url'] . '/volumes/create';
+    if (empty($this->settings->get('portainer')['portainerOptions']['authenticationToken'])) {
+      throw new MissingDataException('Portainer authentication token setting is not set.');
+    } else {
+      $portainerAuthenticationTokenRoute = $this->settings->get('portainer')['portainerOptions']['authenticationToken'];
+    }
+
+    if(empty($this->settings->get('portainer')['portainerOptions']['endpointId'])) {
+      throw new MissingDataException('Portainer endpoint setting is not set.');
+    } else {
+      $portainerEndpointId = $this->settings->get('portainer')['portainerOptions']['endpointId'];
+    }
+
+    if (empty($this->settings->get('portainer')['routes']['endpoints']['baseUrl'])) {
+      throw new MissingDataException('Portainer endpoints base URL setting is not set.');
+    } else {
+      $portainerEndpointsBaseUrlRoute = $this->settings->get('portainer')['routes']['endpoints']['baseUrl'];
+    }
+
+    if (empty($this->settings->get('portainer')['routes']['endpoints']['dockerApi']['baseUrl'])) {
+      throw new MissingDataException('Docker API URL setting is not set.');
+    } else {
+      $dockerApiBaseUrlRoute = $this->settings->get('portainer')['routes']['endpoints']['dockerApi']['baseUrl'];
+    }
+
+    if (empty($this->settings->get('portainer')['routes']['endpoints']['dockerApi']['volumes']['baseUrl'])) {
+      throw new MissingDataException('Docker API volumes URL setting is not set.');
+    } else {
+      $dockerApiVolumesBaseUrlRoute = $this->settings->get('portainer')['routes']['endpoints']['dockerApi']['volumes']['baseUrl'];
+    }
+
+    if (empty($this->settings->get('portainer')['routes']['endpoints']['dockerApi']['volumes']['crud']['createUrl'])) {
+      throw new MissingDataException('Docker API volumes create URL setting is not set.');
+    } else {
+      $dockerApiVolumesCreateUrlRoute = $this->settings->get('portainer')['routes']['endpoints']['dockerApi']['volumes']['crud']['createUrl'];
+    }
+
+    $route = $portainerHostRoute . $portainerEndpointsBaseUrlRoute . str_replace('{endpointId}', $portainerEndpointId, $dockerApiBaseUrlRoute) . $dockerApiVolumesBaseUrlRoute . $dockerApiVolumesCreateUrlRoute;
     return [
       'method' => 'POST',
       'route' => $route,
       'headers' => [
         'Content-Type' => 'application/json',
         'Accept' => 'application/json',
-        'X-API-Key' => $this->settings->get('wisski')['portainerOptions']['authenticationToken'],
+        'X-API-Key' => $portainerAuthenticationTokenRoute,
       ],
       'body' => json_encode(
         [

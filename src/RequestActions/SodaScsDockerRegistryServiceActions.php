@@ -174,13 +174,16 @@ class SodaScsDockerRegistryServiceActions implements SodaScsServiceRequestInterf
 
   /**
    * Builds the health check request.
+   * 
+   * @param array $requestParams
+   *   The request parameters.
    *
    * @return array
    *   The health check request.
    *
    * @throws \Drupal\Core\TypedData\Exception\MissingDataException
    */
-  public function buildHealthCheckRequest(): array {
+  public function buildHealthCheckRequest(array $requestParams): array {
     $route = $this->settings->get('dockerRegistry')['routes']['healthCheck']['url'];
     if (empty($route)) {
       throw new MissingDataException('Health check URL setting is not set.');

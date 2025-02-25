@@ -194,7 +194,7 @@ class SodaScsOpenGdpServiceActions implements SodaScsServiceRequestInterface {
    * @return array
    *   The health check request.
    */
-  public function buildHealthCheckRequest(): array {
+  public function buildHealthCheckRequest(array $requestParams): array {
     $route = $this->settings->get('triplestore')['routes']['healthCheck']['url'];
     if (empty($route)) {
       throw new MissingDataException('Health check URL setting is not set.');

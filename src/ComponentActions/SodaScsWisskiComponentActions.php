@@ -249,12 +249,14 @@ class SodaScsWisskiComponentActions implements SodaScsComponentActionsInterface 
           'wisskiComponent' => NULL,
           'portainerCreateRequestResult' => $portainerCreateRequestResult,
         ],
+        'statusCode' => $portainerCreateRequestResult['statusCode'],
         'success' => FALSE,
         'error' => $portainerCreateRequestResult['error'],
       ];
     }
+    $portainerResponsePayload = json_decode($portainerCreateRequestResult['data']['portainerResponse']->getBody()->getContents(), TRUE);
     // Set the external ID.
-    $wisskiComponent->set('externalId', $portainerCreateRequestResult['data']['portainerResponse']['Id']);
+    $wisskiComponent->set('externalId', $portainerResponsePayload['Id']);
 
     // Save the component.
     $wisskiComponent->save();
@@ -320,8 +322,30 @@ class SodaScsWisskiComponentActions implements SodaScsComponentActionsInterface 
    *   The result array of the created component.
    */
   public function deleteComponent(SodaScsComponentInterface $component): array {
+    $queryParams['externalId'] = $component->get('externalId')->value;
+    try{
+      $portainerGetRequest = $this->sodaScsPortainerServiceActions->buildGetRequest($queryParams);
+      $portainerGetResponse = $this->sodaScsPortainerServiceActions->makeRequest($portainerGetRequest);
+      if (!$portainerGetResponse['success']) {
+        throw new \Exception($this->t('Cannot get @component at portainer.', ['@component' => $component->id()]));
+      }
+      $portainerResponsePayload = json_decode($portainerGetResponse['data']['portainerResponse']->getBody()->getContents(), TRUE);
+    }
+    catch (\Exception $e) {
+      $this->loggerFactory->get('soda_scs_manager')->error("Cannot get WissKI component @component at portainer: @error", [
+        '@component' => $component->id(),
+        '@error' => $e->getMessage(),
+      ]);
+      $this->messenger->addError($this->t("Cannot get WissKI component @component at portainer. See logs for more details.", ['@component' => $component->id()]));
+      return [
+        'message' => 'Cannot get WissKI component at portainer.',
+        'data' => [],
+        'success' => FALSE,
+        'error' => $e->getMessage(),
+        'statusCode' => $e->getCode(),
+      ];
+    }
     try {
-      $queryParams['externalId'] = $component->get('externalId')->value;
       $portainerDeleteRequest = $this->sodaScsPortainerServiceActions->buildDeleteRequest($queryParams);
     }
     catch (MissingDataException $e) {
@@ -336,6 +360,7 @@ class SodaScsWisskiComponentActions implements SodaScsComponentActionsInterface 
         ],
         'success' => FALSE,
         'error' => $e->getMessage(),
+        'statusCode' => $e->getCode(),
       ];
     }
     try {
@@ -348,6 +373,7 @@ class SodaScsWisskiComponentActions implements SodaScsComponentActionsInterface 
         $this->messenger->addError($this->t("Could not delete WissKI stack at portainer, but will delete the component anyway. See logs for more details."));
       }
       $component->delete();
+      
       return [
         'message' => 'Deleted WissKI component.',
         'data' => [
@@ -355,6 +381,7 @@ class SodaScsWisskiComponentActions implements SodaScsComponentActionsInterface 
         ],
         'success' => TRUE,
         'error' => NULL,
+        'statusCode' => $requestResult['statusCode'],
       ];
     }
     catch (\Exception $e) {
@@ -369,6 +396,7 @@ class SodaScsWisskiComponentActions implements SodaScsComponentActionsInterface 
         ],
         'success' => FALSE,
         'error' => $e->getMessage(),
+        'statusCode' => $e->getCode(),
       ];
     }
   }

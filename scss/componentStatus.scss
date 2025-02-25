@@ -59,6 +59,15 @@
   width: 100%;
 }
 
+.soda-scs-manager--component-status--api-error {
+  position: relative;
+  &::after {
+    content: url("../assets/images/question-circle.svg");
+    margin-left: 0.2rem;
+    display: inline-block;
+  }
+}
+
 .btn {
   padding: 10px 20px;
   font-size: 16px;

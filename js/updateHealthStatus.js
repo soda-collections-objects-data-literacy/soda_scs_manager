@@ -20,12 +20,14 @@
               $("div.field--name-health div.field__item .dot").remove();
               $("div.field--name-health div.field__item").text('Running')
             } else {
-              $("div.field--name-health div.field__item").text('Not (yet) reachable')
+              $("div.field--name-health div.field__item").text($data[0]['status']['message'])
+              $("div.field--name-health div.field__label").addClass('soda-scs-manager--component-status--api-error').attr('title', $data[0]['status']['error']);
             }
 
 
           }).fail(function (jqXHR, textStatus, errorThrown) {
-            $("div.field--name-health div.field__item").text('Not (yet) reachable')
+            $("div.field--name-health div.field__item").text($data[0]['status']['message']);
+            $("div.field--name-health div.field__label").addClass('soda-scs-manager--component-status--api-error').attr('title', 'Health controller has internal error or is not reachable');
           });
         }, 3000)
       });

@@ -20,8 +20,6 @@ services:
       - '@soda_scs_manager.opengdp_service.actions'
       - '@soda_scs_manager.portainer_service.actions'
       - '@soda_scs_manager.sql_service.actions'
-      - '@soda_scs_manager.triplestore_component.actions'
-      - '@soda_scs_manager.wisski_component.actions'
 
   # Docker registry actions
 
@@ -118,6 +116,7 @@ services:
         - '@logger.factory'
         - '@messenger'
         - '@request_stack'
+        - '@soda_scs_manager.portainer_service.actions'
         - '@soda_scs_manager.sql_service.actions'
         - '@string_translation'
         - '@twig'

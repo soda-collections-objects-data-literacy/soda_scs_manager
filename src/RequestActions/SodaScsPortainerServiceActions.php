@@ -17,7 +17,10 @@ use Drupal\Core\Template\TwigEnvironment;
 use Drupal\Core\TypedData\Exception\MissingDataException;
 use Drupal\soda_scs_manager\ServiceActions\SodaScsServiceActionsInterface;
 use GuzzleHttp\ClientInterface;
-use GuzzleHttp\Exception\ClientException;
+use GuzzleHttp\Exception\{ClientException, RequestException};
+
+
+
 use Symfony\Component\HttpFoundation\RequestStack;
 
 /**
@@ -157,33 +160,28 @@ class SodaScsPortainerServiceActions implements SodaScsServiceRequestInterface {
     // Send the request.
     try {
       $response = $this->httpClient->request($request['method'], $request['route'], $requestParams);
-      $response = json_decode($response->getBody()->getContents(), TRUE);
 
       return [
         'message' => 'Request succeeded',
         'data' => [
           'portainerResponse' => $response,
         ],
+        'statusCode' => $response->getStatusCode(),
         'success' => TRUE,
         'error' => '',
       ];
     }
-    catch (ClientException $e) {
-      $this->loggerFactory->get('soda_scs_manager')->error("Portainer request failed with code @code error: @error trace @trace", [
-        '@code' => $e->getCode(),
-        '@error' => $e->getMessage(),
-        '@trace' => $e->getTraceAsString(),
-      ]);
-    }         
-    $this->messenger->addError($this->t("Portainer request failed. See logs for more details."));
-    return [
-      'message' => 'Request failed with code @code' . $e->getCode(),
-      'data' => [
-        'portainerResponse' => $e,
-      ],
-      'success' => FALSE,
-      'error' => $e->getMessage(),
-    ];
+    catch (\Exception $e) {
+      return [
+        'message' => $this->t('Request failed with code @code', ['@code' => $e->getCode()]),
+        'data' => [
+          'portainerResponse' => $e,
+        ],
+        'statusCode' => $e->getCode(),
+        'success' => FALSE,
+        'error' => $e->getMessage(),
+      ];
+    }
   }
 
   /**
@@ -198,19 +196,27 @@ class SodaScsPortainerServiceActions implements SodaScsServiceRequestInterface {
    * @throws \Drupal\Core\TypedData\Exception\MissingDataException
    */
   public function buildCreateRequest(array $requestParams): array {
-    $url = $this->settings->get('wisski')['routes']['createUrl'];
-    if (empty($url)) {
-      throw new MissingDataException('Create URL setting is not set.');
+    if (empty($this->settings->get('portainer')['portainerOptions']['host'])) {
+      throw new MissingDataException('Portainer host setting is not set.');
     }
 
-    $queryParams = [
-      'endpointId' => $this->settings->get('wisski')['portainerOptions']['endpoint'],
-    ];
-    if (empty($queryParams['endpointId'])) {
+    if (empty($this->settings->get('portainer')['routes']['stack']['baseUrl'])) {
+      throw new MissingDataException('Stack create URL setting is not set.');
+    }
+
+    if (empty($this->settings->get('portainer')['routes']['stack']['crud']['createUrl'])) {
+      throw new MissingDataException('Stack create URL setting is not set.');
+    }
+
+    if (empty($this->settings->get('portainer')['portainerOptions']['endpoint'])) {
       throw new MissingDataException('Endpoint ID setting is not set.');
+    } else {
+      $queryParams = [
+        'endpointId' => $this->settings->get('portainer')['portainerOptions']['endpoint'],
+      ];
     }
 
-    $route = $url . '?' . http_build_query($queryParams);
+    $route = $this->settings->get('portainer')['portainerOptions']['host'] . $this->settings->get('portainer')['routes']['stack']['baseUrl'] . $this->settings->get('portainer')['routes']['stack']['crud']['createUrl'] . '?' . http_build_query($queryParams);
 
     // URLs with underscores are not supported.
     $defaultGraphmachineName = str_replace('_', '-', $requestParams['machineName']);
@@ -242,7 +248,7 @@ class SodaScsPortainerServiceActions implements SodaScsServiceRequestInterface {
         "name" => "DEFAULT_GRAPH",
         // @todo whats the best way of concat strings with vars?
         "value" => sprintf(
-        'http://%s.%s/contents/',
+        '%s.%s/contents/',
         $defaultGraphmachineName,
         $this->settings->get('scsHost')),
       ],
@@ -280,7 +286,7 @@ class SodaScsPortainerServiceActions implements SodaScsServiceRequestInterface {
       ],
       [
         "name" => "TS_READ_URL",
-        "value" => 'https://' . $this->settings->get('triplestore')['openGdpSettings']['host'] . '/repositories/' . $requestParams['machineName'],
+        "value" => $this->settings->get('triplestore')['generalSettings']['host'] . '/repositories/' . $requestParams['machineName'],
       ],
       [
         "name" => "TS_REPOSITORY",
@@ -292,7 +298,7 @@ class SodaScsPortainerServiceActions implements SodaScsServiceRequestInterface {
       ],
       [
         "name" => "TS_WRITE_URL",
-        "value" => 'https://' . $this->settings->get('triplestore')['openGdpSettings']['host'] . '/repositories/' . $requestParams['machineName'] . '/statements',
+        "value" => $this->settings->get('triplestore')['generalSettings']['host'] . '/repositories/' . $requestParams['machineName'] . '/statements',
       ],
       [
         "name" => "WISSKI_BASE_IMAGE_VERSION",
@@ -381,10 +387,24 @@ class SodaScsPortainerServiceActions implements SodaScsServiceRequestInterface {
    * @throws \Drupal\Core\TypedData\Exception\MissingDataException
    */
   public function buildGetRequest($requestParams): array {
-    $route = $this->settings->get('wisski')['routes']['readAllUrl'];
-    if (empty($route)) {
-      throw new MissingDataException('Read all URL setting is not set.');
+
+    if (empty($this->settings->get('wisski')['portainerOptions']['host'])) {
+      throw new MissingDataException('Portainer host setting is not set.');
     }
+
+    if (empty($this->settings->get('portainer')['routes']['stacks']['baseUrl'])) {
+      throw new MissingDataException('Portainer base URL setting is not set.');
+    }
+
+    if (empty($this->settings->get('portainer')['routes']['stacks']['getOneUrl'])) {
+      throw new MissingDataException('Portainer get one stack URL setting is not set.');
+    }
+
+    if (empty($this->settings->get('wisski')['portainerOptions']['authenticationToken'])) {
+      throw new MissingDataException('Portainer authentication token setting is not set.');
+    }
+
+    $route = $this->settings->get('wisski')['portainerOptions']['host'] . $this->settings->get('portainer')['routes']['stacks']['baseUrl'] . str_replace('{stackId}', $requestParams['stackId'], $this->settings->get('portainer')['routes']['stacks']['getOneUrl']);
 
     return [
       'success' => TRUE,
@@ -393,7 +413,7 @@ class SodaScsPortainerServiceActions implements SodaScsServiceRequestInterface {
       'headers' => [
         'Content-Type' => 'application/json',
         'Accept' => 'application/json',
-        'X-API-Key' => $this->settings->get('wisski')['portainerOptions']['authenticationToken'],
+        'X-API-Key' => $this->settings->get('portainer')['portainerOptions']['authenticationToken'],
       ],
     ];
   }
@@ -423,22 +443,30 @@ class SodaScsPortainerServiceActions implements SodaScsServiceRequestInterface {
    * @throws \Drupal\Core\TypedData\Exception\MissingDataException
    */
   public function buildDeleteRequest(array $queryParams): array {
-    $url = $this->settings->get('wisski')['routes']['deleteUrl'];
-    if (empty($url)) {
-      throw new MissingDataException('Delete URL setting is not set.');
+
+    if (empty($this->settings->get('portainer')['portainerOptions']['host'])) {
+      throw new MissingDataException('Portainer host setting is not set.');
     }
 
-    $queryParams['endpointId'] = $this->settings->get('wisski')['portainerOptions']['endpoint'];
+    if (empty($this->settings->get('portainer')['portainerOptions']['endpoint'])) {
+      throw new MissingDataException('Portainer endpoint setting is not set.');
+    } else {
+      $queryParams['endpointId'] = $this->settings->get('portainer')['portainerOptions']['endpoint'];
+    }
 
-    if (empty($queryParams['endpointId'])) {
-      throw new MissingDataException('Endpoint ID setting is not set.');
+    if (empty($this->settings->get('portainer')['routes']['stacks']['baseUrl'])) {
+      throw new MissingDataException('Stack delete URL setting is not set.');
+    }
+
+    if (empty($this->settings->get('portainer')['routes']['stacks']['crud']['deleteUrl'])) {
+      throw new MissingDataException('Stack delete URL setting is not set.');
     }
 
     if (empty($queryParams['externalId'])) {
       throw new MissingDataException('Stack ID setting is not set.');
     }
 
-    $route = $url . $queryParams['externalId'] . '?' . http_build_query($queryParams);
+    $route = $this->settings->get('portainer')['portainerOptions']['host'] . str_replace('{stackId}', $queryParams['externalId'], $this->settings->get('portainer')['routes']['stacks']['crud']['deleteUrl']) . '?' . http_build_query($queryParams);
 
     return [
       'success' => TRUE,
@@ -447,7 +475,7 @@ class SodaScsPortainerServiceActions implements SodaScsServiceRequestInterface {
       'headers' => [
         'Content-Type' => 'application/json',
         'Accept' => 'application/json',
-        'X-API-Key' => $this->settings->get('wisski')['portainerOptions']['authenticationToken'],
+        'X-API-Key' => $this->settings->get('portainer')['portainerOptions']['authenticationToken'],
       ],
     ];
   }
@@ -471,18 +499,18 @@ class SodaScsPortainerServiceActions implements SodaScsServiceRequestInterface {
    * @return array
    *   The request array for the makeRequest function.
    */
-  public function buildHealthCheckRequest(): array {
-    if (empty($this->settings->get('wisski')['portainerOptions']['host'])) {
+  public function buildHealthCheckRequest(array $requestParams): array {
+    if (empty($this->settings->get('portainer')['portainerOptions']['host'])) {
       throw new MissingDataException('Portainer host setting is not set.');
     }
-    if (empty($this->settings->get('wisski')['routes']['healthCheck']['url'])) {
+    if (empty($this->settings->get('portainer')['routes']['healthCheck']['url'])) {
       throw new MissingDataException('Portainer health check endpoint setting is not set.');
     }
 
-    $route = 'https://' .$this->settings->get('wisski')['portainerOptions']['host'] . $this->settings->get('wisski')['routes']['healthCheck']['url'];
+    $route = 'https://' .$this->settings->get('portainer')['portainerOptions']['host'] . $this->settings->get('portainer')['routes']['healthCheck']['url'];
     return [
       'success' => TRUE,
-      'method' => 'POST',
+      'method' => 'GET',
       'route' => $route,
       'headers' => [
         'Content-Type' => 'application/json',
