@@ -191,8 +191,9 @@ class SodaScsFilesystemComponentActions implements SodaScsComponentActionsInterf
     }
     catch (MissingDataException $e) {
       $this->loggerFactory->get('soda_scs_manager')
-        ->error("Cannot assemble Request: @error", [
+        ->error("Cannot assemble Request: @error @trace", [
           '@error' => $e->getMessage(),
+          '@trace' => $e->getTraceAsString(),
         ]);
       $this->messenger->addError($this->t("Cannot assemble request. See logs for more details."));
       return [
@@ -319,9 +320,10 @@ class SodaScsFilesystemComponentActions implements SodaScsComponentActionsInterf
       $dockerVolumeDeleteRequest = $this->sodaScsDockerVolumesServiceActions->buildDeleteRequest($queryParams);
     }
     catch (MissingDataException $e) {
-      $this->loggerFactory->get('soda_scs_manager')->error("Cannot assemble @bundle delete request: @error", [
+      $this->loggerFactory->get('soda_scs_manager')->error("Cannot assemble @bundle delete request: @error @trace", [
         '@bundle' => $bundleLabel,
         '@error' => $e->getMessage(),
+        '@trace' => $e->getTraceAsString(),
       ]);
       $this->messenger->addError($this->t("Cannot assemble @bundle component delete request. See logs for more details.", [
         '@bundle' => $bundleLabel,

@@ -17,9 +17,19 @@ services:
       - '@messenger'
       - '@string_translation'
       - '@soda_scs_manager.docker_volumes_service.actions'
-      - '@soda_scs_manager.opengdp_service.actions'
+      - '@soda_scs_manager.opengdb_service.actions'
       - '@soda_scs_manager.portainer_service.actions'
       - '@soda_scs_manager.sql_service.actions'
+
+  soda_scs_manager.service.helpers:
+    class: Drupal\soda_scs_manager\Helpers\SodaScsServiceHelpers
+    arguments:
+      - '@config.factory'
+      - '@http_client'
+      - '@entity_type.manager'
+      - '@logger.factory'
+      - '@messenger'
+      - '@string_translation'
 
   # Docker registry actions
 
@@ -79,7 +89,7 @@ services:
       - '@entity_type.manager'
       - '@logger.factory'
       - '@messenger'
-      - '@soda_scs_manager.opengdp_service.actions'
+      - '@soda_scs_manager.opengdb_service.actions'
       - '@soda_scs_manager.service_key.actions'
       - '@string_translation'
 
@@ -116,14 +126,15 @@ services:
         - '@logger.factory'
         - '@messenger'
         - '@request_stack'
+        - '@soda_scs_manager.service.helpers'
         - '@soda_scs_manager.portainer_service.actions'
         - '@soda_scs_manager.sql_service.actions'
         - '@string_translation'
         - '@twig'
 
 
-  soda_scs_manager.opengdp_service.actions:
-    class: Drupal\soda_scs_manager\RequestActions\SodaScsOpenGdpServiceActions
+  soda_scs_manager.opengdb_service.actions:
+    class: Drupal\soda_scs_manager\RequestActions\SodaScsOpenGdbServiceActions
     arguments:
       - '@config.factory'
       - '@http_client'
@@ -143,6 +154,7 @@ services:
         - '@plugin.manager.mail'
         - '@messenger'
         - '@request_stack'
+        - '@soda_scs_manager.service.helpers'
         - '@soda_scs_manager.sql_service.actions'
         - '@string_translation'
         - '@twig'

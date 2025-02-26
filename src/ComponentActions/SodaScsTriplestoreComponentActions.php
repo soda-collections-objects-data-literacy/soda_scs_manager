@@ -161,9 +161,10 @@ class SodaScsTriplestoreComponentActions implements SodaScsComponentActionsInter
     }
     catch (MissingDataException $e) {
       $this->loggerFactory->get('soda_scs_manager')
-        ->error("Cannot assemble Request: @error", [
+        ->error($this->t("Cannot assemble Request: @error @trace", [
           '@error' => $e->getMessage(),
-        ]);
+          '@trace' => $e->getTraceAsString(),
+        ]));
       $this->messenger->addError($this->t("Cannot assemble request. See logs for more details."));
       return [
         'message' => 'Cannot assemble Request.',
@@ -258,9 +259,10 @@ class SodaScsTriplestoreComponentActions implements SodaScsComponentActionsInter
             }
             catch (\Exception $e) {
               $this->loggerFactory->get('soda_scs_manager')
-                ->error("Cannot assemble Request: @error", [
+                ->error($this->t("Cannot assemble Request: @error @trace", [
                   '@error' => $e->getMessage(),
-                ]);
+                  '@trace' => $e->getTraceAsString(),
+                ]));
               $this->messenger->addError($this->t("Cannot assemble request. See logs for more details."));
               return [
                 'message' => 'Cannot assemble Request.',
@@ -278,9 +280,10 @@ class SodaScsTriplestoreComponentActions implements SodaScsComponentActionsInter
           }
           catch (MissingDataException $e) {
             $this->loggerFactory->get('soda_scs_manager')
-              ->error("Cannot assemble Request: @error", [
+              ->error($this->t("Cannot assemble Request: @error @trace", [
                 '@error' => $e->getMessage(),
-              ]);
+                '@trace' => $e->getTraceAsString(),
+              ]));
             $this->messenger->addError($this->t("Cannot assemble request. See logs for more details."));
             return [
               'message' => 'Cannot assemble Request.',
@@ -343,9 +346,10 @@ class SodaScsTriplestoreComponentActions implements SodaScsComponentActionsInter
         }
         catch (MissingDataException $e) {
           $this->loggerFactory->get('soda_scs_manager')
-            ->error("Cannot assemble Request: @error", [
+            ->error($this->t("Cannot assemble Request: @error @trace", [
               '@error' => $e->getMessage(),
-            ]);
+              '@trace' => $e->getTraceAsString(),
+            ]));
           $this->messenger->addError($this->t("Cannot assemble request. See logs for more details."));
           return [
             'message' => 'Cannot assemble Request.',
@@ -360,9 +364,10 @@ class SodaScsTriplestoreComponentActions implements SodaScsComponentActionsInter
     }
     catch (MissingDataException $e) {
       $this->loggerFactory->get('soda_scs_manager')
-        ->error("Cannot assemble Request: @error", [
+        ->error($this->t("Cannot assemble Request: @error @trace", [
           '@error' => $e->getMessage(),
-        ]);
+          '@trace' => $e->getTraceAsString(),
+        ]));
       $this->messenger->addError($this->t("Cannot assemble request. See logs for more details."));
       return [
         'message' => 'Cannot assemble Request.',

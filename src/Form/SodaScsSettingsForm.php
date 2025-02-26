@@ -42,6 +42,37 @@ class SodaScsSettingsForm extends ConfigFormBase {
       '#default_tab' => 'edit-general',
     ];
 
+    $form['info'] = [
+      '#type' => 'details',
+      '#title' => $this->t('Informations'),
+      '#group' => 'tabs',
+    ];
+
+    $form['info']['fields'] = [
+      '#type' => 'fieldset',
+      '#title' => $this->t('Informations'),
+    ];
+
+    $form['info']['fields']['info'] = [
+      '#type' => 'item',
+      '#title' => $this->t('Placeholders'),
+      '#markup' => $this->t('You can use the following placeholders in the settings form:
+      <ul>
+        <li><strong>{containerId}</strong> - The Docker container ID</li>
+        <li><strong>{endpointId}</strong> - The Portainer endpoint ID</li>
+        <li><strong>{instanceId}</strong> - The WissKI instance ID</li>
+        <li><strong>{repositoryId}</strong> - The triplestore repository ID</li>
+        <li><strong>{stackId}</strong> - The Portainer stack ID</li>
+        <li><strong>{userId}</strong> - The triplestore user ID</li>
+        <li><strong>{volumeId}</strong> - The Docker volume ID</li>
+      </ul>
+      <br>
+      <ul>
+      <li><strong>{empty}</strong> - Use if there is no value</li>
+      </ul>
+      '),
+    ];
+
     // General settings tab.
     $form['general'] = [
       '#type' => 'details',
@@ -72,7 +103,7 @@ class SodaScsSettingsForm extends ConfigFormBase {
       '#title' => $this->t('General settings'),
     ];
 
-    $form['database']['fields']['dbHost'] = [ 
+    $form['database']['fields']['dbHost'] = [
       '#type' => 'textfield',
       '#title' => $this->t('Database host'),
       '#default_value' => $this->config('soda_scs_manager.settings')->get('dbHost'),
@@ -196,7 +227,7 @@ class SodaScsSettingsForm extends ConfigFormBase {
       '#description' => $this->t('The delete repositories route, like /{repositoryId}.'),
     ];
 
-    $form['triplestore']['routes']['repositories']['crud']['healthCheck']['url'] = [
+    $form['triplestore']['routes']['repositories']['healthCheck']['url'] = [
       '#type' => 'textfield',
       '#title' => $this->t('Health check route'),
       '#default_value' => $this->config('soda_scs_manager.settings')->get('triplestore')['routes']['repositories']['healthCheck']['url'] ?? '',
@@ -259,9 +290,6 @@ class SodaScsSettingsForm extends ConfigFormBase {
       '#description' => $this->t('The delete route, like /{userId}.'),
     ];
 
-
-   
-
     $form['triplestore']['routes']['misc'] = [
       '#type' => 'fieldset',
       '#attributes' => ['id' => 'soda-scs--routes-subform--misc'],
@@ -288,7 +316,6 @@ class SodaScsSettingsForm extends ConfigFormBase {
         'wrapper' => 'soda-scs--routes-subform--health-check',
       ],
     ];
-
 
     $form['triplestore']['routes']['misc']['token'] = [
       '#type' => 'fieldset',
@@ -458,7 +485,7 @@ class SodaScsSettingsForm extends ConfigFormBase {
       '#attributes' => ['id' => 'soda-scs--routes-subform--docker-api'],
       '#title' => $this->t('Docker Container routes'),
     ];
-    
+
     $form['portainer']['routes']['endpoints']['dockerApi']['containers']['baseUrl'] = [
       '#type' => 'textfield',
       '#title' => $this->t('Container base route'),
@@ -570,7 +597,7 @@ class SodaScsSettingsForm extends ConfigFormBase {
     ];
 
 
-    # WissKI instance routes. 
+    # WissKI instance routes.
     $form['wisski']['instances'] = [
       '#type' => 'fieldset',
       '#title' => 'Instances routes for WissKI components',

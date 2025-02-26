@@ -522,7 +522,7 @@ class SodaScsWisskiStackActions implements SodaScsStackActionsInterface {
       $this->messenger->addError($this->t("Cannot delete triplestore component. See logs for more details."));
       if ($e->getCode() == 1) {
         // If component does not exist, we cannot delete the database.
-        $this->loggerFactory->get('soda_scs_manager')->error("Cannot delete triplestore component: @error. Clean reference in Stack. TRACE: @trace", [
+        $this->loggerFactory->get('soda_scs_manager')->error("Cannot delete triplestore component: @error Clean reference in Stack. TRACE: @trace", [
           '@error' => $e->getMessage(),
           '@trace' => $e->getTraceAsString(),
         ]);
@@ -546,9 +546,10 @@ class SodaScsWisskiStackActions implements SodaScsStackActionsInterface {
     catch (MissingDataException $e) {
       // If settings are not set, we cannot delete the WissKI instance.
       $this->loggerFactory->get('soda_scs_manager')
-        ->error("Cannot assemble Request: @error", [
+        ->error($this->t("Cannot assemble Request: @error @trace", [
           '@error' => $e->getMessage(),
-        ]);
+          '@trace' => $e->getTraceAsString(),
+        ]));
       $this->messenger->addError($this->t("Cannot assemble request. See logs for more details."));
 
       // Return database and triplestore results.

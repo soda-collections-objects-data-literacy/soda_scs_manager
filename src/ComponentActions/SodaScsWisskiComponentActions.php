@@ -226,9 +226,10 @@ class SodaScsWisskiComponentActions implements SodaScsComponentActionsInterface 
     }
     catch (MissingDataException $e) {
       $this->loggerFactory->get('soda_scs_manager')
-        ->error("Cannot assemble Request: @error", [
+        ->error($this->t("Cannot assemble Request: @error @trace", [
           '@error' => $e->getMessage(),
-        ]);
+          '@trace' => $e->getTraceAsString(),
+        ]));
       $this->messenger->addError($this->t("Cannot assemble request. See logs for more details."));
       return [
         'message' => 'Cannot assemble Request.',
@@ -323,23 +324,30 @@ class SodaScsWisskiComponentActions implements SodaScsComponentActionsInterface 
    */
   public function deleteComponent(SodaScsComponentInterface $component): array {
     $queryParams['externalId'] = $component->get('externalId')->value;
-    try{
+    try {
       $portainerGetRequest = $this->sodaScsPortainerServiceActions->buildGetRequest($queryParams);
       $portainerGetResponse = $this->sodaScsPortainerServiceActions->makeRequest($portainerGetRequest);
       if (!$portainerGetResponse['success']) {
-        throw new \Exception($this->t('Cannot get @component at portainer.', ['@component' => $component->id()]));
+        return [
+          'message' => $this->t('Cannot get WissKI component @component at portainer.', ['@component' => $component->getLabel()]),
+          'data' => $portainerGetResponse,
+          'success' => FALSE,
+          'error' => $portainerGetResponse['error'],
+          'statusCode' => $portainerGetResponse['statusCode'],
+        ];
       }
-      $portainerResponsePayload = json_decode($portainerGetResponse['data']['portainerResponse']->getBody()->getContents(), TRUE);
+
     }
     catch (\Exception $e) {
-      $this->loggerFactory->get('soda_scs_manager')->error("Cannot get WissKI component @component at portainer: @error", [
-        '@component' => $component->id(),
+      $this->loggerFactory->get('soda_scs_manager')->error($this->t("Cannot get WissKI component @component at portainer: @error @trace", [
+        '@component' => $component->getLabel(),
         '@error' => $e->getMessage(),
-      ]);
-      $this->messenger->addError($this->t("Cannot get WissKI component @component at portainer. See logs for more details.", ['@component' => $component->id()]));
+        '@trace' => $e->getTraceAsString(),
+      ]));
+      $this->messenger->addError($this->t("Cannot get WissKI component @component at portainer. See logs for more details.", ['@component' => $component->getLabel()]));
       return [
-        'message' => 'Cannot get WissKI component at portainer.',
-        'data' => [],
+        'message' => $this->t('Cannot get WissKI component @component at portainer.', ['@component' => $component->getLabel()]),
+        'data' => $e,
         'success' => FALSE,
         'error' => $e->getMessage(),
         'statusCode' => $e->getCode(),
@@ -373,7 +381,7 @@ class SodaScsWisskiComponentActions implements SodaScsComponentActionsInterface 
         $this->messenger->addError($this->t("Could not delete WissKI stack at portainer, but will delete the component anyway. See logs for more details."));
       }
       $component->delete();
-      
+
       return [
         'message' => 'Deleted WissKI component.',
         'data' => [

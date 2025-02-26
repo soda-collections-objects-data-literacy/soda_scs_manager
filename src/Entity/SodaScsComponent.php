@@ -127,7 +127,7 @@ class SodaScsComponent extends ContentEntityBase implements SodaScsComponentInte
     return $this;
   }
 
-  
+
   /**
    * Returns the label of the SODa SCS Component.
    *
@@ -135,7 +135,7 @@ class SodaScsComponent extends ContentEntityBase implements SodaScsComponentInte
    *   The label of the SODa SCS Component.
    */
   public function getLabel() {
-    return $this->label;
+    return $this->label->value;
   }
 
   /**
@@ -147,7 +147,7 @@ class SodaScsComponent extends ContentEntityBase implements SodaScsComponentInte
    * @return $this
    */
   public function setLabel($label) {
-    $this->label = $label;
+    $this->label->value = $label;
     return $this;
   }
 
@@ -243,7 +243,7 @@ class SodaScsComponent extends ContentEntityBase implements SodaScsComponentInte
         'type' => 'string_textfield',
         'weight' => 10,
       ]);
-      
+
 
     $fields['notes'] = BaseFieldDefinition::create('string_long')
       ->setLabel(new TranslatableMarkup('Notes'))

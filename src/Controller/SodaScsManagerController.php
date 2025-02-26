@@ -114,7 +114,7 @@ class SodaScsManagerController extends ControllerBase {
     ];
   }
 
-    /**
+  /**
    * Page for component management.
    *
    * @return array

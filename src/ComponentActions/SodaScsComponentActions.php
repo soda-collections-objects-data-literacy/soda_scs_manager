@@ -150,6 +150,7 @@ class SodaScsComponentActions implements SodaScsComponentActionsInterface {
     switch ($component->bundle()) {
       case 'soda_scs_filesystem_component':
         return $this->sodaScsFilesystemComponentActions->deleteComponent($component);
+
       case 'soda_scs_wisski_component':
         return $this->sodaScsWisskiComponentActions->deleteComponent($component);
 

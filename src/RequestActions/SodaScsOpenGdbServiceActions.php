@@ -15,7 +15,7 @@ use GuzzleHttp\Exception\ClientException;
 /**
  * Handles the communication with the SCS user manager daemon.
  */
-class SodaScsOpenGdpServiceActions implements SodaScsServiceRequestInterface {
+class SodaScsOpenGdbServiceActions implements SodaScsServiceRequestInterface {
 
   use StringTranslationTrait;
 
@@ -120,7 +120,7 @@ class SodaScsOpenGdpServiceActions implements SodaScsServiceRequestInterface {
       'headers' => [
         'Content-Type' => 'application/json',
         'Accept' => 'application/json',
-        'Authorization' => 'Basic ' . base64_encode($this->settings->get('triplestore')['openGdpSettings']['adminUsername'] . ':' . $this->settings->get('triplestore')['openGdpSettings']['adminPassword']),
+        'Authorization' => 'Basic ' . base64_encode($this->settings->get('triplestore')['openGdbSettings']['adminUsername'] . ':' . $this->settings->get('triplestore')['openGdbSettings']['adminPassword']),
       ],
       'body' => $body,
     ];
@@ -183,7 +183,7 @@ class SodaScsOpenGdpServiceActions implements SodaScsServiceRequestInterface {
       'headers' => [
         'Content-Type' => 'application/json',
         'Accept' => 'application/json',
-        'Authorization' => 'Basic ' . base64_encode($this->settings->get('triplestore')['openGdpSettings']['adminUsername'] . ':' . $this->settings->get('triplestore')['openGdpSettings']['adminPassword']),
+        'Authorization' => 'Basic ' . base64_encode($this->settings->get('triplestore')['openGdbSettings']['adminUsername'] . ':' . $this->settings->get('triplestore')['openGdbSettings']['adminPassword']),
       ],
     ];
   }
@@ -207,7 +207,7 @@ class SodaScsOpenGdpServiceActions implements SodaScsServiceRequestInterface {
       'headers' => [
         'Content-Type' => 'application/json',
         'Accept' => 'application/json',
-        'Authorization' => 'Basic ' . base64_encode($this->settings->get('triplestore')['openGdpSettings']['adminUsername'] . ':' . $this->settings->get('triplestore')['openGdpSettings']['adminPassword']),
+        'Authorization' => 'Basic ' . base64_encode($this->settings->get('triplestore')['openGdbSettings']['adminUsername'] . ':' . $this->settings->get('triplestore')['openGdbSettings']['adminPassword']),
       ],
     ];
   }
@@ -257,7 +257,7 @@ class SodaScsOpenGdpServiceActions implements SodaScsServiceRequestInterface {
       'headers' => [
         'Content-Type' => 'application/json',
         'Accept' => 'application/json',
-        'Authorization' => 'Basic ' . base64_encode($this->settings->get('triplestore')['openGdpSettings']['adminUsername'] . ':' . $this->settings->get('triplestore')['openGdpSettings']['adminPassword']),
+        'Authorization' => 'Basic ' . base64_encode($this->settings->get('triplestore')['openGdbSettings']['adminUsername'] . ':' . $this->settings->get('triplestore')['openGdbSettings']['adminPassword']),
       ],
       'body' => $body,
     ];
@@ -308,7 +308,7 @@ class SodaScsOpenGdpServiceActions implements SodaScsServiceRequestInterface {
       'headers' => [
         'Content-Type' => 'application/json',
         'Accept' => 'application/json',
-        'Authorization' => 'Basic ' . base64_encode($this->settings->get('triplestore')['openGdpSettings']['adminUsername'] . ':' . $this->settings->get('triplestore')['openGdpSettings']['adminPassword']),
+        'Authorization' => 'Basic ' . base64_encode($this->settings->get('triplestore')['openGdbSettings']['adminUsername'] . ':' . $this->settings->get('triplestore')['openGdbSettings']['adminPassword']),
       ],
     ];
   }

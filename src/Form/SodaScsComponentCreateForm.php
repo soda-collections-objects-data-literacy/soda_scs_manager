@@ -13,6 +13,7 @@ use Drupal\Core\Session\AccountProxyInterface;
 use Drupal\soda_scs_manager\ComponentActions\SodaScsComponentActionsInterface;
 use Drupal\soda_scs_manager\RequestActions\SodaScsServiceRequestInterface;
 use Symfony\Component\DependencyInjection\ContainerInterface;
+use Drupal\Core\Entity\EntityTypeManagerInterface;
 
 /**
  * Form controller for the ScsComponent entity create form.
@@ -67,6 +68,13 @@ class SodaScsComponentCreateForm extends ContentEntityForm {
   protected SodaScsComponentActionsInterface $sodaScsComponentActions;
 
   /**
+   * The entity type manager.
+   *
+   * @var \Drupal\Core\Entity\EntityTypeManagerInterface
+   */
+  protected $entityTypeManager;
+
+  /**
    * Constructs a new SodaScsComponentCreateForm.
    *
    * @param \Drupal\Core\Session\AccountProxyInterface $currentUser
@@ -83,6 +91,8 @@ class SodaScsComponentCreateForm extends ContentEntityForm {
    *   The Soda SCS API Actions service.
    * @param \Drupal\soda_scs_manager\SodaScsComponentActionsInterface $sodaScsComponentActions
    *   The Soda SCS API Actions service.
+   * @param \Drupal\Core\Entity\EntityTypeManagerInterface $entityTypeManager
+   *   The entity type manager.
    */
   public function __construct(
     AccountProxyInterface $currentUser,
@@ -92,12 +102,14 @@ class SodaScsComponentCreateForm extends ContentEntityForm {
     TimeInterface $time,
     SodaScsServiceRequestInterface $sodaScsDockerRegistryServiceActions,
     SodaScsComponentActionsInterface $sodaScsComponentActions,
+    EntityTypeManagerInterface $entityTypeManager,
   ) {
     parent::__construct($entity_repository, $entity_type_bundle_info, $time);
     $this->currentUser = $currentUser;
     $this->settings = $configFactory->getEditable('soda_scs_manager.settings');
     $this->sodaScsDockerRegistryServiceActions = $sodaScsDockerRegistryServiceActions;
     $this->sodaScsComponentActions = $sodaScsComponentActions;
+    $this->entityTypeManager = $entityTypeManager;
   }
 
   /**
@@ -112,6 +124,7 @@ class SodaScsComponentCreateForm extends ContentEntityForm {
       $container->get('datetime.time'),
       $container->get('soda_scs_manager.docker_registry_service.actions'),
       $container->get('soda_scs_manager.component.actions'),
+      $container->get('entity_type.manager')
     );
   }
 
@@ -221,7 +234,7 @@ class SodaScsComponentCreateForm extends ContentEntityForm {
     }
 
     // Check if the machineName is already in use by another SodaScsComponent entity.
-    $entity_query = \Drupal::entityQuery('soda_scs_component')
+    $entity_query = $this->entityTypeManager->getStorage('soda_scs_component')->getQuery()
       ->accessCheck(FALSE)
       ->condition('machineName', $machineName);
     $existing_entities = $entity_query->execute();

@@ -12,8 +12,8 @@ use Drupal\Core\Messenger\MessengerInterface;
 use Drupal\Core\StringTranslation\TranslationInterface;
 use Drupal\Core\StringTranslation\StringTranslationTrait;
 use Drupal\soda_scs_manager\ServiceActions\SodaScsServiceActionsInterface;
-use Drupal\soda_scs_manager\ServiceKeyActions\SodaScsServiceKeyActionsInterface;
 use Drupal\soda_scs_manager\RequestActions\SodaScsServiceRequestInterface;
+use Drupal\Core\TypedData\Exception\MissingDataException;
 
 
 /**
@@ -67,11 +67,11 @@ class SodaScsComponentHelpers {
   protected SodaScsServiceRequestInterface $dockerVolumesServiceActions;
 
   /**
-   * The OpenGDP service actions.
+   * The openGDB service actions.
    *
    * @var \Drupal\soda_scs_manager\ServiceActions\SodaScsServiceRequestInterface
    */
-  protected SodaScsServiceRequestInterface $openGdpServiceActions;
+  protected SodaScsServiceRequestInterface $openGdbServiceActions;
 
   /**
    * The Portainer service actions.
@@ -95,7 +95,7 @@ class SodaScsComponentHelpers {
     MessengerInterface $messenger,
     TranslationInterface $stringTranslation,
     SodaScsServiceRequestInterface $dockerVolumesServiceActions,
-    SodaScsServiceRequestInterface $openGdpServiceActions,
+    SodaScsServiceRequestInterface $openGdbServiceActions,
     SodaScsServiceRequestInterface $portainerServiceActions,
     SodaScsServiceActionsInterface $sqlServiceActions,
 
@@ -109,7 +109,7 @@ class SodaScsComponentHelpers {
     $this->messenger = $messenger;
     $this->stringTranslation = $stringTranslation;
     $this->dockerVolumesServiceActions = $dockerVolumesServiceActions;
-    $this->openGdpServiceActions = $openGdpServiceActions;
+    $this->openGdbServiceActions = $openGdbServiceActions;
     $this->portainerServiceActions = $portainerServiceActions;
     $this->sqlServiceActions = $sqlServiceActions;
   }
@@ -245,12 +245,12 @@ class SodaScsComponentHelpers {
   public function checkTriplestoreHealth(string $component, string $machineName) {
     try {
       $healthCheckRoutePart = str_replace('{repositoryID}', $machineName, $this->settings->get('triplestore')['repositories']['healthCheck']['url']);
-      $route = 'https://' . $this->settings->get('triplestore')['openGdpSettings']['host'] . $healthCheckRoutePart;
+      $route = 'https://' . $this->settings->get('triplestore')['openGdbSettings']['host'] . $healthCheckRoutePart;
       $requestParams = [
         'headers' => [
         'Content-Type' => 'application/json',
         'Accept' => 'application/json',
-        'Authorization' => 'Basic ' . base64_encode($this->settings->get('triplestore')['openGdpSettings']['adminUsername'] . ':' . $this->settings->get('triplestore')['openGdpSettings']['adminPassword']),
+        'Authorization' => 'Basic ' . base64_encode($this->settings->get('triplestore')['openGdbSettings']['adminUsername'] . ':' . $this->settings->get('triplestore')['openGdbSettings']['adminPassword']),
       ],
       ];
       $response = $this->httpClient->request('GET', $route, $requestParams);
@@ -269,4 +269,48 @@ class SodaScsComponentHelpers {
     }
   }
 
+  /**
+   * Initialize docker volumes service settings.
+   *
+   * @return array
+   *   The docker volumes service settings.
+   *
+   * @throws \Drupal\Core\TypedData\Exception\MissingDataException
+   *   Thrown when a required setting is missing.
+   */
+  public function initDockerVolumesServiceSettings() {
+    $dockerVolumeSettings = [];
+    $dockerVolumeSettings['portainerHostRoute'] = $this->settings->get('portainer.portainerOptions.host');
+    $dockerVolumeSettings['portainerAuthenticationTokenRoute'] = $this->settings->get('portainer.portainerOptions.authenticationToken');
+    $dockerVolumeSettings['portainerEndpointId'] = $this->settings->get('portainer.portainerOptions.endpointId');
+    $dockerVolumeSettings['portainerEndpointsBaseUrlRoute'] = $this->settings->get('portainer.routes.endpoints.baseUrl');
+    $dockerVolumeSettings['portainerEndpointsBaseUrlRoute'] = $this->settings->get('portainer.routes.endpoints.baseUrl');
+    $dockerVolumeSettings['dockerApiBaseUrlRoute'] = $this->settings->get('portainer.routes.endpoints.dockerApi.baseUrl');
+    $dockerVolumeSettings['dockerApiVolumesBaseUrlRoute'] = $this->settings->get('portainer.routes.endpoints.dockerApi.volumes.baseUrl');
+    $dockerVolumeSettings['dockerApiVolumesCreateUrlRoute'] = $this->settings->get('portainer.routes.endpoints.dockerApi.volumes.crud.createUrl');
+
+    if (empty($portainerHostRoute)) {
+      throw new MissingDataException('Portainer host setting is not set.');
+    }
+    if (empty($portainerAuthenticationTokenRoute)) {
+      throw new MissingDataException('Portainer authentication token setting is not set.');
+    }
+    if (empty($portainerEndpointId)) {
+      throw new MissingDataException('Portainer endpoint setting is not set.');
+    }
+    if (empty($portainerEndpointsBaseUrlRoute)) {
+      throw new MissingDataException('Portainer endpoints base URL setting is not set.');
+    }
+    if (empty($dockerApiBaseUrlRoute)) {
+      throw new MissingDataException('Docker API URL setting is not set.');
+    }
+    if (empty($dockerApiVolumesBaseUrlRoute)) {
+      throw new MissingDataException('Docker API volumes URL setting is not set.');
+    }
+    if (empty($dockerApiVolumesCreateUrlRoute)) {
+      throw new MissingDataException('Docker API volumes create URL setting is not set.');
+    }
+
+    return $dockerVolumeSettings;
+  }
 }
