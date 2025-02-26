@@ -12,6 +12,7 @@ use Drupal\Core\StringTranslation\StringTranslationTrait;
 use Drupal\Core\StringTranslation\TranslationInterface;
 use Drupal\Core\TypedData\Exception\MissingDataException;
 use Drupal\soda_scs_manager\Entity\SodaScsComponentInterface;
+use Drupal\soda_scs_manager\Helpers\SodaScsServiceHelpers;
 
 /**
  * Handles the communication with the SCS user manager daemon.
@@ -57,12 +58,20 @@ class SodaScsSqlServiceActions implements SodaScsServiceActionsInterface {
    */
   protected MessengerInterface $messenger;
 
+  /**
+   * The Soda SCS service helpers.
+   *
+   * @var \Drupal\soda_scs_manager\Helpers\SodaScsServiceHelpers
+   */
+  protected SodaScsServiceHelpers $sodaScsServiceHelpers;
+
   public function __construct(
     ConfigFactoryInterface $configFactory,
     Connection $database,
     EntityTypeManagerInterface $entityTypeManager,
     LoggerChannelFactoryInterface $loggerFactory,
     MessengerInterface $messenger,
+    SodaScsServiceHelpers $sodaScsServiceHelpers,
     TranslationInterface $stringTranslation,
   ) {
     $this->settings = $configFactory
@@ -71,6 +80,7 @@ class SodaScsSqlServiceActions implements SodaScsServiceActionsInterface {
     $this->entityTypeManager = $entityTypeManager;
     $this->loggerFactory = $loggerFactory;
     $this->messenger = $messenger;
+    $this->sodaScsServiceHelpers = $sodaScsServiceHelpers;
     $this->stringTranslation = $stringTranslation;
   }
 
@@ -86,23 +96,11 @@ class SodaScsSqlServiceActions implements SodaScsServiceActionsInterface {
    * @throws \Drupal\Core\TypedData\Exception\MissingDataException
    */
   public function createService(SodaScsComponentInterface $component): array {
+    // Initialize settings.
+    $databaseSettings = $this->sodaScsServiceHelpers->initDatabaseServiceSettings();
 
-    // Username.
-    $dbUserName = $component->getOwner()->getDisplayName();
-    if (!$dbUserName) {
-      throw new MissingDataException('User name not found');
-    }
-    // Database host.
-    $dbHost = $this->settings->get('dbHost');
-    if (empty($dbHost)) {
-      throw new MissingDataException('Database Host setting missing');
-    }
-
-    // Database root password.
-    $dbRootPassword = $this->settings->get('dbRootPassword');
-    if (empty($dbRootPassword)) {
-      throw new MissingDataException('Database root password setting missing');
-    }
+    $dbHost = str_replace('https://', '', $databaseSettings['dbHost']);
+    $dbRootPassword = $databaseSettings['dbRootPassword'];
 
     $dbName = $component->get('machineName')->value;
 
@@ -138,8 +136,11 @@ class SodaScsSqlServiceActions implements SodaScsServiceActionsInterface {
    *   Command, execution status (0 = success >0 = failure) and last line of
    */
   public function existService(string $name): array {
-    $dbHost = $this->settings->get('dbHost');
-    $dbRootPassword = $this->settings->get('dbRootPassword');
+    // Initialize settings.
+    $databaseSettings = $this->sodaScsServiceHelpers->initDatabaseServiceSettings();
+
+    $dbHost = str_replace('https://', '', $databaseSettings['dbHost']);
+    $dbRootPassword = $databaseSettings['dbRootPassword'];
 
     // Check if the database exists.
     $checkDbCommand = "mysql -h $dbHost -uroot -p$dbRootPassword -e 'SHOW DATABASES LIKE \"$name\";' 2>&1";
@@ -173,6 +174,9 @@ class SodaScsSqlServiceActions implements SodaScsServiceActionsInterface {
    * @throws \Drupal\Core\TypedData\Exception\MissingDataException
    */
   public function deleteService(SodaScsComponentInterface $component): array {
+    // Initialize settings.
+    $databaseSettings = $this->sodaScsServiceHelpers->initDatabaseServiceSettings();
+
     $dbName = $component->get('machineName')->value;
     $dbUsername = $component->getOwner()->getDisplayName();
 
@@ -181,7 +185,7 @@ class SodaScsSqlServiceActions implements SodaScsServiceActionsInterface {
     $dbUserPassword = $serviceKey->get('servicePassword')->value;
 
     // Database host.
-    $dbHost = $this->settings->get('dbHost');
+    $dbHost = str_replace('https://', '', $databaseSettings['dbHost']);
     if (empty($dbHost)) {
       throw new MissingDataException('Database Host setting missing');
     }
@@ -243,8 +247,12 @@ class SodaScsSqlServiceActions implements SodaScsServiceActionsInterface {
    *   output as result.
    */
   public function createServiceUser(string $dbUser, string $dbUserPassword): array {
-    $dbHost = $this->settings->get('dbHost');
-    $dbRootPassword = $this->settings->get('dbRootPassword');
+    // Initialize settings.
+    $databaseSettings = $this->sodaScsServiceHelpers->initDatabaseServiceSettings();
+
+    // Replace https:// with empty string.
+    $dbHost = str_replace('https://', '', $databaseSettings['dbHost']);
+    $dbRootPassword = $databaseSettings['dbRootPassword'];
 
     $createDbUserCommand = "mysql -h $dbHost -uroot -p$dbRootPassword -e 'CREATE USER \"$dbUser\"@\"%\" IDENTIFIED BY \"$dbUserPassword\"; FLUSH PRIVILEGES;' 2>&1";
     $dbUserCreated = exec($createDbUserCommand, $createDbUserOutput, $createDbUserReturnVar);
@@ -313,8 +321,12 @@ class SodaScsSqlServiceActions implements SodaScsServiceActionsInterface {
    *   output as result.
    */
   public function existServiceUser(string $dbUser): array {
-    $dbHost = $this->settings->get('dbHost');
-    $dbRootPassword = $this->settings->get('dbRootPassword');
+    // Initialize settings.
+    $databaseSettings = $this->sodaScsServiceHelpers->initDatabaseServiceSettings();
+
+    // Replace https:// with empty string.
+    $dbHost = str_replace('https://', '', $databaseSettings['dbHost']);
+    $dbRootPassword = $databaseSettings['dbRootPassword'];
 
     // Check if the user exists.
     $checkUserCommand = "mysql -h $dbHost -uroot -p$dbRootPassword -e 'SELECT EXISTS(SELECT 1 FROM mysql.user WHERE user = \"$dbUser\");' 2>&1";
@@ -356,8 +368,12 @@ class SodaScsSqlServiceActions implements SodaScsServiceActionsInterface {
    *   and result (last line of output).
    */
   public function grantServiceRights(string $dbUser, string $name, array $rights): array {
-    $dbHost = $this->settings->get('dbHost');
-    $dbRootPassword = $this->settings->get('dbRootPassword');
+    // Initialize settings.
+    $databaseSettings = $this->sodaScsServiceHelpers->initDatabaseServiceSettings();
+
+    // Replace https:// with empty string.
+    $dbHost = str_replace('https://', '', $databaseSettings['dbHost']);
+    $dbRootPassword = $databaseSettings['dbRootPassword'];
     $rights = implode(', ', $rights);
 
     $grantRightsCommand = "mysql -h $dbHost -uroot -p$dbRootPassword -e 'GRANT $rights ON `$name`.* TO \"$dbUser\"@\"%\"; FLUSH PRIVILEGES;' 2>&1";
@@ -379,9 +395,12 @@ class SodaScsSqlServiceActions implements SodaScsServiceActionsInterface {
    *   and result (last line of output).
    */
   public function flushPrivileges(): array {
-    $dbHost = $this->settings->get('dbHost');
-    $dbRootPassword = $this->settings->get('dbRootPassword');
+    // Initialize settings.
+    $databaseSettings = $this->sodaScsServiceHelpers->initDatabaseServiceSettings();
 
+    // Replace https:// with empty string.
+    $dbHost = str_replace('https://', '', $databaseSettings['dbHost']);
+    $dbRootPassword = $databaseSettings['dbRootPassword'];
     $flushPrivilegesCommand = "mysql -h $dbHost -uroot -p$dbRootPassword -e 'FLUSH PRIVILEGES;' 2>&1";
     $flushPrivilegesCommandResult = exec($flushPrivilegesCommand, $grantRightsCommandOutput, $grantRightsCommandReturnVar);
     return [
@@ -399,7 +418,7 @@ class SodaScsSqlServiceActions implements SodaScsServiceActionsInterface {
    *
    * @param string $dbUser
    *   The name of the database user.
-   * @param string $dbUserPassword
+   * @param string|null $dbUserPassword
    *   The password of the database user.
    *
    * @return array
@@ -407,7 +426,7 @@ class SodaScsSqlServiceActions implements SodaScsServiceActionsInterface {
    *   status (>0 = failed or 0 = success), output (array)
    *   and result (last line of output).
    */
-  public function cleanServiceUsers(string $dbUser, string $dbUserPassword = NULL): array {
+  public function cleanServiceUsers(string $dbUser, string|null $dbUserPassword = NULL): array {
     if ($dbUser == 'root') {
       return [
         'message' => $this->t('Can not delete the root user'),
@@ -458,7 +477,11 @@ class SodaScsSqlServiceActions implements SodaScsServiceActionsInterface {
    *   and result (last line of output).
    */
   public function userOwnsAnyDatabases(string $dbUser, string $userPassword) {
-    $dbHost = $this->settings->get('dbHost');
+    // Initialize settings.
+    $databaseSettings = $this->sodaScsServiceHelpers->initDatabaseServiceSettings();
+
+    // Replace https:// with empty string.
+    $dbHost = str_replace('https://', '', $databaseSettings['dbHost']);
 
     // Check if the user owns any databases.
     $userOwnsAnyDatabasesCommand = "mysql -h$dbHost -u$dbUser -p$userPassword -e 'SELECT COUNT(*) FROM information_schema.SCHEMATA;' 2>&1";
@@ -469,22 +492,9 @@ class SodaScsSqlServiceActions implements SodaScsServiceActionsInterface {
       'output' => $userOwnsAnyDatabasesOutput,
       'result' => $userOwnsAnyDatabasesCommandResult,
     ];
+
   }
 
-  
-  /**
-   * Checks if a user has read and write access to a database.
-   *
-   * @param string $dbUser
-   *   The name of the database user.
-   * @param string $dbName
-   *   The name of the database.
-   * @param string $dbUserPassword
-   *   The password of the database user.
-   *
-   * @return bool
-   *   TRUE if the user has read and write access to the database.
-   */
   /**
    * Checks if a user has read and write access to a database.
    *
@@ -499,8 +509,13 @@ class SodaScsSqlServiceActions implements SodaScsServiceActionsInterface {
    *   TRUE if the user has read and write access to the database.
    */
   public function userHasReadWriteAccessToDatabase(string $dbUser, string $dbName, string $dbUserPassword): bool {
-    $dbHost = $this->settings->get('dbHost');
+    // Initialize settings.
+    $databaseSettings = $this->sodaScsServiceHelpers->initDatabaseServiceSettings();
 
+    // Replace https:// with empty string.
+    $dbHost = str_replace('https://', '', $databaseSettings['dbHost']);
+
+    // Check if the user has read and write access to the database.
     $checkPrivilegesCommand = "mysql -h $dbHost -u$dbUser -p$dbUserPassword -e 'SHOW GRANTS FOR \"$dbUser\"@\"%\";' 2>&1";
     $checkPrivilegesCommandResult = exec($checkPrivilegesCommand, $checkPrivilegesCommandOutput, $checkPrivilegesCommandReturnVar);
 
@@ -523,8 +538,8 @@ class SodaScsSqlServiceActions implements SodaScsServiceActionsInterface {
     $hasDeletePrivilege = strpos($privileges, "GRANT DELETE") !== FALSE;
 
     return (($hasSelectPrivilege && ($hasInsertPrivilege && $hasUpdatePrivilege && $hasDeletePrivilege))) || $hasAllPrivileges;
-  }
 
+  }
 
   /**
    * Checks handle shell command failure.

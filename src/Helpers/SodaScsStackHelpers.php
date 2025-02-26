@@ -22,7 +22,6 @@ class SodaScsStackHelpers implements SodaScsHelpersInterface {
    */
   protected $messenger;
 
-
   /**
    * SodaScsStackHelpers constructor.
    *
@@ -30,7 +29,6 @@ class SodaScsStackHelpers implements SodaScsHelpersInterface {
    *   The messenger.
    * @param \Drupal\Core\StringTranslation\TranslationInterface $stringTranslation
    *   The string translation.
-
    */
   public function __construct(MessengerInterface $messenger, TranslationInterface $stringTranslation) {
     $this->messenger = $messenger;

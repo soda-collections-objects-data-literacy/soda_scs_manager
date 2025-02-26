@@ -172,7 +172,7 @@ class SodaScsSettingsForm extends ConfigFormBase {
       '#title' => 'Routes for ' . $form_state->getValue('bundle') . ' service',
     ];
 
-    // repositories routes.
+    // Repositories routes.
     $form['triplestore']['routes']['repositories'] = [
       '#type' => 'fieldset',
       '#attributes' => ['id' => 'soda-scs--routes-subform--repositories'],
@@ -371,7 +371,7 @@ class SodaScsSettingsForm extends ConfigFormBase {
       '#description' => $this->t('The swarm Id, like "1".'),
     ];
 
-    # Endpoint routes.
+    // Endpoint routes.
     $form['portainer']['routes']['endpoints'] = [
       '#type' => 'fieldset',
       '#attributes' => ['id' => 'soda-scs--routes-subform--endpoints'],
@@ -385,7 +385,7 @@ class SodaScsSettingsForm extends ConfigFormBase {
       '#description' => $this->t('The endpoint base URL, like /api/endpoints.'),
     ];
 
-    ## Portainer health check
+    // Portainer health check.
     $form['portainer']['routes']['endpoints']['healthCheck'] = [
       '#type' => 'fieldset',
       '#attributes' => ['id' => 'soda-scs--routes-subform--health-check'],
@@ -407,7 +407,7 @@ class SodaScsSettingsForm extends ConfigFormBase {
       ],
     ];
 
-    # Docker API route.
+    // Docker API route.
 
     $form['portainer']['routes']['endpoints']['dockerApi'] = [
       '#type' => 'fieldset',
@@ -422,7 +422,7 @@ class SodaScsSettingsForm extends ConfigFormBase {
       '#description' => $this->t('The base URL, like "/docker".'),
     ];
 
-    # Docker volumes routes.
+    // Docker volumes routes.
 
     $form['portainer']['routes']['endpoints']['dockerApi']['volumes'] = [
       '#type' => 'fieldset',
@@ -478,7 +478,7 @@ class SodaScsSettingsForm extends ConfigFormBase {
       '#description' => $this->t('The delete volume route, like /{volumeId}.'),
     ];
 
-    # Docker containers routes.
+    // Docker containers routes.
 
     $form['portainer']['routes']['endpoints']['dockerApi']['containers'] = [
       '#type' => 'fieldset',
@@ -533,13 +533,11 @@ class SodaScsSettingsForm extends ConfigFormBase {
       '#description' => $this->t('The delete container route, like "/{containerId}".'),
     ];
 
-
     $form['portainer']['routes']['stacks'] = [
       '#type' => 'fieldset',
       '#attributes' => ['id' => 'soda-scs--routes-subform--stacks'],
       '#title' => $this->t('Docker Stacks routes'),
     ];
-
 
     $form['portainer']['routes']['stacks']['baseUrl'] = [
       '#type' => 'textfield',
@@ -596,14 +594,13 @@ class SodaScsSettingsForm extends ConfigFormBase {
       '#tree' => TRUE,
     ];
 
-
-    # WissKI instance routes.
+    // WissKI instance routes.
     $form['wisski']['instances'] = [
       '#type' => 'fieldset',
       '#title' => 'Instances routes for WissKI components',
     ];
 
-    # Base route
+    // Base route.
     $form['wisski']['instances']['baseUrl'] = [
       '#type' => 'textfield',
       '#title' => $this->t('Base route'),
@@ -611,7 +608,7 @@ class SodaScsSettingsForm extends ConfigFormBase {
       '#description' => $this->t('The base URL, like "https://{instanceId}.scs.sammlungen.io".'),
     ];
 
-    # Misc routes
+    // Misc routes.
 
     $form['wisski']['instances']['misc']['healthCheck'] = [
       '#type' => 'fieldset',

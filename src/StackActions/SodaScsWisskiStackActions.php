@@ -333,8 +333,6 @@ class SodaScsWisskiStackActions implements SodaScsStackActionsInterface {
       ];
     }
 
-    
-
     try {
       $sqlComponent->set('referencedComponents', $wisskiComponent->id());
       $sqlComponent->save();

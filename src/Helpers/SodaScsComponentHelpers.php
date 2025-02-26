@@ -18,7 +18,7 @@ use Drupal\Core\TypedData\Exception\MissingDataException;
 
 /**
  * Helper functions for SCS components.
- * 
+ *
  * @todo Use health check functions from the service actions.
  */
 class SodaScsComponentHelpers {
@@ -87,6 +87,13 @@ class SodaScsComponentHelpers {
    */
   protected SodaScsServiceActionsInterface $sqlServiceActions;
 
+  /**
+   * The Soda SCS service helpers.
+   *
+   * @var \Drupal\soda_scs_manager\Helpers\SodaScsServiceHelpers
+   */
+  protected SodaScsServiceHelpers $sodaScsServiceHelpers;
+
   public function __construct(
     ConfigFactoryInterface $configFactory,
     ClientInterface $httpClient,
@@ -94,11 +101,11 @@ class SodaScsComponentHelpers {
     LoggerChannelFactoryInterface $loggerFactory,
     MessengerInterface $messenger,
     TranslationInterface $stringTranslation,
+    SodaScsServiceHelpers $sodaScsServiceHelpers,
     SodaScsServiceRequestInterface $dockerVolumesServiceActions,
     SodaScsServiceRequestInterface $openGdbServiceActions,
     SodaScsServiceRequestInterface $portainerServiceActions,
     SodaScsServiceActionsInterface $sqlServiceActions,
-
   ) {
     // Services from container.
     $this->settings = $configFactory
@@ -108,6 +115,7 @@ class SodaScsComponentHelpers {
     $this->loggerFactory = $loggerFactory;
     $this->messenger = $messenger;
     $this->stringTranslation = $stringTranslation;
+    $this->sodaScsServiceHelpers = $sodaScsServiceHelpers;
     $this->dockerVolumesServiceActions = $dockerVolumesServiceActions;
     $this->openGdbServiceActions = $openGdbServiceActions;
     $this->portainerServiceActions = $portainerServiceActions;
@@ -118,8 +126,9 @@ class SodaScsComponentHelpers {
    * Drupal instance health check.
    */
   public function drupalHealthCheck(string $machineName) {
+    $generalSettings = $this->sodaScsServiceHelpers->initGeneralSettings();
     try {
-      $route = 'https://' . $machineName . '.' . $this->settings->get('scsHost') . $this->settings->get('wisski')['instances']['healthCheck']['url'];
+      $route = 'https://' . $machineName . '.' . $generalSettings['scsHost'] . $this->settings->get('wisski')['instances']['healthCheck']['url'];
       $response = $this->httpClient->request('get', $route);
       if ($response->getStatusCode() == 200) {
         // Request successful, handle the data in $response->data.
@@ -147,7 +156,6 @@ class SodaScsComponentHelpers {
     }
   }
 
-  
   /**
    * Check filesystem health.
    */
@@ -168,7 +176,7 @@ class SodaScsComponentHelpers {
           'success' => FALSE,
           'error' => $healthRequestResult['error'],
         ];
-      } 
+      }
     }
     catch (\Exception $e) {
       return [
@@ -269,48 +277,4 @@ class SodaScsComponentHelpers {
     }
   }
 
-  /**
-   * Initialize docker volumes service settings.
-   *
-   * @return array
-   *   The docker volumes service settings.
-   *
-   * @throws \Drupal\Core\TypedData\Exception\MissingDataException
-   *   Thrown when a required setting is missing.
-   */
-  public function initDockerVolumesServiceSettings() {
-    $dockerVolumeSettings = [];
-    $dockerVolumeSettings['portainerHostRoute'] = $this->settings->get('portainer.portainerOptions.host');
-    $dockerVolumeSettings['portainerAuthenticationTokenRoute'] = $this->settings->get('portainer.portainerOptions.authenticationToken');
-    $dockerVolumeSettings['portainerEndpointId'] = $this->settings->get('portainer.portainerOptions.endpointId');
-    $dockerVolumeSettings['portainerEndpointsBaseUrlRoute'] = $this->settings->get('portainer.routes.endpoints.baseUrl');
-    $dockerVolumeSettings['portainerEndpointsBaseUrlRoute'] = $this->settings->get('portainer.routes.endpoints.baseUrl');
-    $dockerVolumeSettings['dockerApiBaseUrlRoute'] = $this->settings->get('portainer.routes.endpoints.dockerApi.baseUrl');
-    $dockerVolumeSettings['dockerApiVolumesBaseUrlRoute'] = $this->settings->get('portainer.routes.endpoints.dockerApi.volumes.baseUrl');
-    $dockerVolumeSettings['dockerApiVolumesCreateUrlRoute'] = $this->settings->get('portainer.routes.endpoints.dockerApi.volumes.crud.createUrl');
-
-    if (empty($portainerHostRoute)) {
-      throw new MissingDataException('Portainer host setting is not set.');
-    }
-    if (empty($portainerAuthenticationTokenRoute)) {
-      throw new MissingDataException('Portainer authentication token setting is not set.');
-    }
-    if (empty($portainerEndpointId)) {
-      throw new MissingDataException('Portainer endpoint setting is not set.');
-    }
-    if (empty($portainerEndpointsBaseUrlRoute)) {
-      throw new MissingDataException('Portainer endpoints base URL setting is not set.');
-    }
-    if (empty($dockerApiBaseUrlRoute)) {
-      throw new MissingDataException('Docker API URL setting is not set.');
-    }
-    if (empty($dockerApiVolumesBaseUrlRoute)) {
-      throw new MissingDataException('Docker API volumes URL setting is not set.');
-    }
-    if (empty($dockerApiVolumesCreateUrlRoute)) {
-      throw new MissingDataException('Docker API volumes create URL setting is not set.');
-    }
-
-    return $dockerVolumeSettings;
-  }
 }

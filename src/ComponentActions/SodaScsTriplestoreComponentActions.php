@@ -180,7 +180,7 @@ class SodaScsTriplestoreComponentActions implements SodaScsComponentActionsInter
       $getUserRequestParams = [
         'type' => 'user',
         'queryParams' => [],
-        'routeParams' => [$triplestoreComponent->getOwner()->getDisplayName()],
+        'routeParams' => ['username' => $triplestoreComponent->getOwner()->getDisplayName()],
       ];
 
       $openGdbgetUserRequest = $this->sodaScsOpenGdbServiceActions->buildGetRequest($getUserRequestParams);
@@ -195,7 +195,7 @@ class SodaScsTriplestoreComponentActions implements SodaScsComponentActionsInter
             $createUserRequestParams = [
               'type' => 'user',
               'queryParams' => [],
-              'routeParams' => [$username],
+              'routeParams' => ['username' => $username],
               'body' => [
                 'password' => $triplestoreComponentServiceKey->get('servicePassword')->value,
                 'machineName' => $machineName,
@@ -319,7 +319,7 @@ class SodaScsTriplestoreComponentActions implements SodaScsComponentActionsInter
           $updateUserRequestParams = [
             'type' => 'user',
             'queryParams' => [],
-            'routeParams' => [$username],
+            'routeParams' => ['username' => $username],
             'body' => [
 
               'grantedAuthorities' => array_merge(
@@ -459,17 +459,16 @@ class SodaScsTriplestoreComponentActions implements SodaScsComponentActionsInter
    *   The result array of the created component.
    */
   public function deleteComponent(SodaScsComponentInterface $component): array {
+    $username = $component->getOwner()->getAccountName();
+    $machineName = $component->get('machineName')->value;
+    $requestParams = [
+      'type' => 'repository',
+      'queryParams' => [],
+      'routeParams' => ['machineName' => $machineName],
+      'body' => [],
+    ];
 
     try {
-      $username = $component->getOwner()->getAccountName();
-      $machineName = $component->get('machineName')->value;
-      $requestParams = [
-        'type' => 'repository',
-        'queryParams' => [],
-        'routeParams' => [$machineName],
-        'body' => [],
-      ];
-
       $openGdbDeleteRepositoryRequest = $this->sodaScsOpenGdbServiceActions->buildDeleteRequest($requestParams);
       $openGdbDeleteRepositoryResponse = $this->sodaScsOpenGdbServiceActions->makeRequest($openGdbDeleteRepositoryRequest);
 
@@ -477,17 +476,8 @@ class SodaScsTriplestoreComponentActions implements SodaScsComponentActionsInter
         /** @var \GuzzleHttp\Exception\ClientException $clientException */
         $clientException = $openGdbDeleteRepositoryResponse['data']['openGdbResponse'];
         if (!$clientException->getResponse()->getStatusCode() === 404) {
-          return [
-            'message' => 'Could not delete triplestore component.',
-            'data' => [
-              'openGdbResponse' => $openGdbDeleteRepositoryResponse,
-              'openGdbUpdateUserResponse' => NULL,
-              'openGdbGetUserResponse' => NULL,
-              'openGdbDeleteUserResponse' => NULL,
-            ],
-            'success' => FALSE,
-            'error' => $openGdbDeleteRepositoryResponse['error'],
-          ];
+          $this->messenger->addError($this->t("Could not delete repository of component %component, because it does not exist. Move on to delete the component.", ['%component' => $machineName]));
+
         }
       }
     }
@@ -495,7 +485,7 @@ class SodaScsTriplestoreComponentActions implements SodaScsComponentActionsInter
       return [
         'message' => $this->t('Could not delete triplestore component %component', ['%component' => $machineName]),
         'data' => [
-          'openGdbDeleteRepositoryResponse' => $openGdbDeleteRepositoryResponse,
+          'openGdbDeleteRepositoryResponse' => NULL,
           'openGdbUpdateUserResponse' => NULL,
           'openGdbGetUserResponse' => NULL,
           'openGdbDeleteUserResponse' => NULL,
@@ -508,7 +498,7 @@ class SodaScsTriplestoreComponentActions implements SodaScsComponentActionsInter
       $requestParams = [
         'type' => 'user',
         'queryParams' => [],
-        'routeParams' => [$username],
+        'routeParams' => ['username' => $username],
         'body' => [],
       ];
 
@@ -535,7 +525,7 @@ class SodaScsTriplestoreComponentActions implements SodaScsComponentActionsInter
     }
     catch (\Exception $e) {
       return [
-        'message' => $this->t('Could not delete triplestore component %component', ['%component' => $machineName]),
+        'message' => $this->t('Could not get triplestore user of component %component', ['%component' => $machineName]),
         'data' => [
           'openGdbDeleteRepositoryResponse' => $openGdbDeleteRepositoryResponse,
           'openGdbUpdateUserResponse' => NULL,
@@ -561,7 +551,7 @@ class SodaScsTriplestoreComponentActions implements SodaScsComponentActionsInter
         $updateUserRequestParams = [
           'type' => 'user',
           'queryParams' => [],
-          'routeParams' => [$username],
+          'routeParams' => ['username' => $username],
           'body' => [
 
             'grantedAuthorities' => $authorities,
@@ -602,7 +592,7 @@ class SodaScsTriplestoreComponentActions implements SodaScsComponentActionsInter
         $deleteUserRequestParams = [
           'type' => 'user',
           'queryParams' => [],
-          'routeParams' => [$username],
+          'routeParams' => ['username' => $username],
           'body' => [],
         ];
 

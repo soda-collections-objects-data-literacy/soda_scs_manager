@@ -10,10 +10,9 @@ use Drupal\Core\Logger\LoggerChannelFactoryInterface;
 use Drupal\Core\Messenger\MessengerInterface;
 use Drupal\Core\StringTranslation\TranslationInterface;
 use Drupal\Core\StringTranslation\StringTranslationTrait;
+use Drupal\Core\TypedData\Exception\MissingDataException;
 use Drupal\soda_scs_manager\ServiceActions\SodaScsServiceActionsInterface;
 use Drupal\soda_scs_manager\RequestActions\SodaScsServiceRequestInterface;
-use Drupal\Core\TypedData\Exception\MissingDataException;
-
 
 /**
  * Helper functions for SCS components.
@@ -105,6 +104,86 @@ class SodaScsServiceHelpers {
   }
 
   /**
+   * Initialize database settings.
+   *
+   * @return array
+   *   The database settings.
+   *
+   * @throws \Drupal\Core\TypedData\Exception\MissingDataException
+   *   Thrown when a required setting is missing.
+   */
+  public function initDatabaseServiceSettings() {
+    $databaseSettings = [];
+    $databaseSettings['dbHost'] = $this->settings->get('dbHost');
+    $databaseSettings['dbPort'] = $this->settings->get('dbPort');
+    $databaseSettings['dbRootPassword'] = $this->settings->get('dbRootPassword');
+    $databaseSettings['dbManagementHost'] = $this->settings->get('dbManagementHost');
+
+    if (empty($databaseSettings['dbHost'])) {
+      throw new MissingDataException('Database host setting is not set.');
+    }
+    if (empty($databaseSettings['dbPort'])) {
+      throw new MissingDataException('Database port setting is not set.');
+    }
+    if (empty($databaseSettings['dbRootPassword'])) {
+      throw new MissingDataException('Database root password setting is not set.');
+    }
+    if (empty($databaseSettings['dbManagementHost'])) {
+      throw new MissingDataException('Database management host setting is not set.');
+    }
+
+    foreach ($databaseSettings as &$value) {
+      $value = str_replace('{empty}', '', $value);
+    }
+
+    return $databaseSettings;
+  }
+
+  /**
+   * Initialize Docker container settings.
+   *
+   * @return array
+   *   The Docker container settings.
+   *
+   * @throws \Drupal\Core\TypedData\Exception\MissingDataException
+   *   Thrown when a required setting is missing.
+   */
+  public function initDockerContainerSettings() {
+    $dockerContainerSettings = [];
+    $dockerContainerSettings['baseUrl'] = $this->settings->get('portainer.routes.endpoints.dockerApi.containers.baseUrl');
+    $dockerContainerSettings['createUrl'] = $this->settings->get('portainer.routes.endpoints.dockerApi.containers.crud.createUrl');
+    $dockerContainerSettings['readOneUrl'] = $this->settings->get('portainer.routes.endpoints.dockerApi.containers.crud.readOneUrl');
+    $dockerContainerSettings['readAllUrl'] = $this->settings->get('portainer.routes.endpoints.dockerApi.containers.crud.readAllUrl');
+    $dockerContainerSettings['updateUrl'] = $this->settings->get('portainer.routes.endpoints.dockerApi.containers.crud.updateUrl');
+    $dockerContainerSettings['deleteUrl'] = $this->settings->get('portainer.routes.endpoints.dockerApi.containers.crud.deleteUrl');
+
+    if (empty($dockerContainerSettings['baseUrl'])) {
+      throw new MissingDataException('Docker containers base URL setting is not set.');
+    }
+    if (empty($dockerContainerSettings['createUrl'])) {
+      throw new MissingDataException('Docker containers create URL setting is not set.');
+    }
+    if (empty($dockerContainerSettings['readOneUrl'])) {
+      throw new MissingDataException('Docker containers read one URL setting is not set.');
+    }
+    if (empty($dockerContainerSettings['readAllUrl'])) {
+      throw new MissingDataException('Docker containers read all URL setting is not set.');
+    }
+    if (empty($dockerContainerSettings['updateUrl'])) {
+      throw new MissingDataException('Docker containers update URL setting is not set.');
+    }
+    if (empty($dockerContainerSettings['deleteUrl'])) {
+      throw new MissingDataException('Docker containers delete URL setting is not set.');
+    }
+
+    foreach ($dockerContainerSettings as &$value) {
+      $value = str_replace('{empty}', '', $value);
+    }
+
+    return $dockerContainerSettings;
+  }
+
+  /**
    * Initialize docker volumes service settings.
    *
    * @return array
@@ -173,39 +252,192 @@ class SodaScsServiceHelpers {
   }
 
   /**
-   * Initialize database settings.
+   * Initialize portainer service settings.
    *
    * @return array
-   *   The database settings.
+   *   The portainer service settings.
    *
    * @throws \Drupal\Core\TypedData\Exception\MissingDataException
    *   Thrown when a required setting is missing.
    */
-  public function initDatabaseSettings() {
-    $databaseSettings = [];
-    $databaseSettings['dbHost'] = $this->settings->get('dbHost');
-    $databaseSettings['dbPort'] = $this->settings->get('dbPort');
-    $databaseSettings['dbRootPassword'] = $this->settings->get('dbRootPassword');
-    $databaseSettings['dbManagementHost'] = $this->settings->get('dbManagementHost');
+  public function initPortainerServiceSettings() {
+    $portainerServiceSettings = [];
+    $portainerServiceSettings['portainerHostRoute'] = $this->settings->get('portainer.portainerOptions.host');
+    $portainerServiceSettings['portainerAuthenticationToken'] = $this->settings->get('portainer.portainerOptions.authenticationToken');
+    $portainerServiceSettings['portainerEndpointId'] = $this->settings->get('portainer.portainerOptions.endpointId');
+    $portainerServiceSettings['portainerEndpointsBaseUrlRoute'] = $this->settings->get('portainer.routes.endpoints.baseUrl');
+    $portainerServiceSettings['portainerEndpointsHealthCheckUrl'] = $this->settings->get('portainer.routes.endpoints.healthCheck.url');
 
-    if (empty($databaseSettings['dbHost'])) {
-      throw new MissingDataException('Database host setting is not set.');
+    if (empty($portainerServiceSettings['portainerHostRoute'])) {
+      throw new MissingDataException('Portainer host setting is not set.');
     }
-    if (empty($databaseSettings['dbPort'])) {
-      throw new MissingDataException('Database port setting is not set.');
+    if (empty($portainerServiceSettings['portainerAuthenticationToken'])) {
+      throw new MissingDataException('Portainer authentication token setting is not set.');
     }
-    if (empty($databaseSettings['dbRootPassword'])) {
-      throw new MissingDataException('Database root password setting is not set.');
+    if (empty($portainerServiceSettings['portainerEndpointId'])) {
+      throw new MissingDataException('Portainer endpoint setting is not set.');
     }
-    if (empty($databaseSettings['dbManagementHost'])) {
-      throw new MissingDataException('Database management host setting is not set.');
+    if (empty($portainerServiceSettings['portainerEndpointsBaseUrlRoute'])) {
+      throw new MissingDataException('Portainer endpoints base URL setting is not set.');
     }
 
-    foreach ($databaseSettings as &$value) {
+    if (empty($portainerServiceSettings['portainerEndpointsHealthCheckUrl'])) {
+      throw new MissingDataException('Portainer endpoint health check endpoint setting is not set.');
+    }
+
+    return $portainerServiceSettings;
+  }
+
+  /**
+   * Initialize Portainer stacks settings.
+   *
+   * @return array
+   *   The Portainer stacks settings.
+   *
+   * @throws \Drupal\Core\TypedData\Exception\MissingDataException
+   *   Thrown when a required setting is missing.
+   */
+  public function initPortainerStacksSettings() {
+    $portainerStacksSettings = [];
+    $portainerStacksSettings['baseUrl'] = $this->settings->get('portainer.routes.stacks.baseUrl');
+    $portainerStacksSettings['createUrl'] = $this->settings->get('portainer.routes.stacks.crud.createUrl');
+    $portainerStacksSettings['readOneUrl'] = $this->settings->get('portainer.routes.stacks.crud.readOneUrl');
+    $portainerStacksSettings['readAllUrl'] = $this->settings->get('portainer.routes.stacks.crud.readAllUrl');
+    $portainerStacksSettings['updateUrl'] = $this->settings->get('portainer.routes.stacks.crud.updateUrl');
+    $portainerStacksSettings['deleteUrl'] = $this->settings->get('portainer.routes.stacks.crud.deleteUrl');
+
+    if (empty($portainerStacksSettings['baseUrl'])) {
+      throw new MissingDataException('Portainer stacks base URL setting is not set.');
+    }
+    if (empty($portainerStacksSettings['createUrl'])) {
+      throw new MissingDataException('Portainer stacks create URL setting is not set.');
+    }
+    if (empty($portainerStacksSettings['readOneUrl'])) {
+      throw new MissingDataException('Portainer stacks read one URL setting is not set.');
+    }
+    if (empty($portainerStacksSettings['readAllUrl'])) {
+      throw new MissingDataException('Portainer stacks read all URL setting is not set.');
+    }
+    if (empty($portainerStacksSettings['updateUrl'])) {
+      throw new MissingDataException('Portainer stacks update URL setting is not set.');
+    }
+    if (empty($portainerStacksSettings['deleteUrl'])) {
+      throw new MissingDataException('Portainer stacks delete URL setting is not set.');
+    }
+
+    foreach ($portainerStacksSettings as &$value) {
       $value = str_replace('{empty}', '', $value);
     }
 
-    return $databaseSettings;
+    return $portainerStacksSettings;
+  }
+
+  /**
+   * Initialize Triplestore misc settings (triplestore misc).
+   *
+   * @return array
+   *   The Triplestore misc settings.
+   *
+   * @throws \Drupal\Core\TypedData\Exception\MissingDataException
+   *   Thrown when a required setting is missing.
+   */
+  public function initTriplestoreMiscSettings() {
+    $triplestoreMiscSettings = [];
+    $triplestoreMiscSettings['healthCheckUrl'] = $this->settings->get('triplestore.routes.misc.healthCheck.url');
+    $triplestoreMiscSettings['tokenUrl'] = $this->settings->get('triplestore.routes.misc.token.tokenUrl');
+
+    if (empty($triplestoreMiscSettings['healthCheckUrl'])) {
+      throw new MissingDataException('Triplestore health check URL setting is not set.');
+    }
+    if (empty($triplestoreMiscSettings['tokenUrl'])) {
+      throw new MissingDataException('Triplestore token URL setting is not set.');
+    }
+
+    foreach ($triplestoreMiscSettings as &$value) {
+      $value = str_replace('{empty}', '', $value);
+    }
+
+    return $triplestoreMiscSettings;
+  }
+
+  /**
+   * Initialize docker volumes service settings.
+   *
+   * @return array
+   *   The docker volumes service settings.
+   *
+   * @throws \Drupal\Core\TypedData\Exception\MissingDataException
+   *   Thrown when a required setting is missing.
+   */
+  public function initTriplestoreRepositoriesSettings() {
+    $triplestoreRepositoriesSettings = [];
+    $triplestoreRepositoriesSettings['baseUrl'] = $this->settings->get('triplestore.routes.repositories.baseUrl');
+    $triplestoreRepositoriesSettings['createUrl'] = $this->settings->get('triplestore.routes.repositories.crud.createUrl');
+    $triplestoreRepositoriesSettings['readOneUrl'] = $this->settings->get('triplestore.routes.repositories.crud.readOneUrl');
+    $triplestoreRepositoriesSettings['readAllUrl'] = $this->settings->get('triplestore.routes.repositories.crud.readAllUrl');
+    $triplestoreRepositoriesSettings['updateUrl'] = $this->settings->get('triplestore.routes.repositories.crud.updateUrl');
+    $triplestoreRepositoriesSettings['deleteUrl'] = $this->settings->get('triplestore.routes.repositories.crud.deleteUrl');
+
+    if (empty($triplestoreRepositoriesSettings['baseUrl'])) {
+      throw new MissingDataException('Triplestore base URL setting is not set.');
+    }
+    if (empty($triplestoreRepositoriesSettings['createUrl'])) {
+      throw new MissingDataException('Triplestore create URL setting is not set.');
+    }
+    if (empty($triplestoreRepositoriesSettings['readOneUrl'])) {
+      throw new MissingDataException('Triplestore read one URL setting is not set.');
+    }
+    if (empty($triplestoreRepositoriesSettings['readAllUrl'])) {
+      throw new MissingDataException('Triplestore read all URL setting is not set.');
+    }
+    if (empty($triplestoreRepositoriesSettings['updateUrl'])) {
+      throw new MissingDataException('Triplestore update URL setting is not set.');
+    }
+    if (empty($triplestoreRepositoriesSettings['deleteUrl'])) {
+      throw new MissingDataException('Triplestore delete URL setting is not set.');
+    }
+
+    foreach ($triplestoreRepositoriesSettings as &$value) {
+      $value = str_replace('{empty}', '', $value);
+    }
+
+    return $triplestoreRepositoriesSettings;
+  }
+
+  /**
+   * Initialize openGDB service settings.
+   *
+   * @return array
+   *   The openGDB service settings.
+   *
+   * @throws \Drupal\Core\TypedData\Exception\MissingDataException
+   *   Thrown when a required setting is missing.
+   */
+  public function initTriplestoreServiceSettings() {
+    $triplestoreServiceSettings = [];
+    $triplestoreServiceSettings['triplestoreHostRoute'] = $this->settings->get('triplestore.generalSettings.host');
+    $triplestoreServiceSettings['triplestorePort'] = $this->settings->get('triplestore.generalSettings.port');
+    $triplestoreServiceSettings['triplestoreAdminUsername'] = $this->settings->get('triplestore.generalSettings.adminUsername');
+    $triplestoreServiceSettings['triplestoreAdminPassword'] = $this->settings->get('triplestore.generalSettings.adminPassword');
+
+    if (empty($triplestoreServiceSettings['triplestoreHostRoute'])) {
+      throw new MissingDataException('Triplestore host URL setting is not set.');
+    }
+    if (empty($triplestoreServiceSettings['triplestorePort'])) {
+      throw new MissingDataException('Triplestore port URL setting is not set.');
+    }
+    if (empty($triplestoreServiceSettings['triplestoreAdminUsername'])) {
+      throw new MissingDataException('Triplestore admin username URL setting is not set.');
+    }
+    if (empty($triplestoreServiceSettings['triplestoreAdminPassword'])) {
+      throw new MissingDataException('Triplestore admin password URL setting is not set.');
+    }
+
+    foreach ($triplestoreServiceSettings as &$value) {
+      $value = str_replace('{empty}', '', $value);
+    }
+
+    return $triplestoreServiceSettings;
   }
 
   /**
@@ -250,246 +482,6 @@ class SodaScsServiceHelpers {
     }
 
     return $triplestoreUserSettings;
-  }
-
-  /**
-   * Initialize Triplestore misc settings (triplestore misc).
-   *
-   * @return array
-   *   The Triplestore misc settings.
-   *
-   * @throws \Drupal\Core\TypedData\Exception\MissingDataException
-   *   Thrown when a required setting is missing.
-   */
-  public function initTriplestoreMiscSettings() {
-    $triplestoreMiscSettings = [];
-    $triplestoreMiscSettings['healthCheckUrl'] = $this->settings->get('triplestore.routes.misc.healthCheck.url');
-    $triplestoreMiscSettings['tokenUrl'] = $this->settings->get('triplestore.routes.misc.token.tokenUrl');
-
-    if (empty($triplestoreMiscSettings['healthCheckUrl'])) {
-      throw new MissingDataException('Triplestore health check URL setting is not set.');
-    }
-    if (empty($triplestoreMiscSettings['tokenUrl'])) {
-      throw new MissingDataException('Triplestore token URL setting is not set.');
-    }
-
-    foreach ($triplestoreMiscSettings as &$value) {
-      $value = str_replace('{empty}', '', $value);
-    }
-
-    return $triplestoreMiscSettings;
-  }
-
-  /**
-   * Initialize Docker container settings.
-   *
-   * @return array
-   *   The Docker container settings.
-   *
-   * @throws \Drupal\Core\TypedData\Exception\MissingDataException
-   *   Thrown when a required setting is missing.
-   */
-  public function initDockerContainerSettings() {
-    $dockerContainerSettings = [];
-    $dockerContainerSettings['baseUrl'] = $this->settings->get('portainer.routes.endpoints.dockerApi.containers.baseUrl');
-    $dockerContainerSettings['createUrl'] = $this->settings->get('portainer.routes.endpoints.dockerApi.containers.crud.createUrl');
-    $dockerContainerSettings['readOneUrl'] = $this->settings->get('portainer.routes.endpoints.dockerApi.containers.crud.readOneUrl');
-    $dockerContainerSettings['readAllUrl'] = $this->settings->get('portainer.routes.endpoints.dockerApi.containers.crud.readAllUrl');
-    $dockerContainerSettings['updateUrl'] = $this->settings->get('portainer.routes.endpoints.dockerApi.containers.crud.updateUrl');
-    $dockerContainerSettings['deleteUrl'] = $this->settings->get('portainer.routes.endpoints.dockerApi.containers.crud.deleteUrl');
-
-    if (empty($dockerContainerSettings['baseUrl'])) {
-      throw new MissingDataException('Docker containers base URL setting is not set.');
-    }
-    if (empty($dockerContainerSettings['createUrl'])) {
-      throw new MissingDataException('Docker containers create URL setting is not set.');
-    }
-    if (empty($dockerContainerSettings['readOneUrl'])) {
-      throw new MissingDataException('Docker containers read one URL setting is not set.');
-    }
-    if (empty($dockerContainerSettings['readAllUrl'])) {
-      throw new MissingDataException('Docker containers read all URL setting is not set.');
-    }
-    if (empty($dockerContainerSettings['updateUrl'])) {
-      throw new MissingDataException('Docker containers update URL setting is not set.');
-    }
-    if (empty($dockerContainerSettings['deleteUrl'])) {
-      throw new MissingDataException('Docker containers delete URL setting is not set.');
-    }
-
-    foreach ($dockerContainerSettings as &$value) {
-      $value = str_replace('{empty}', '', $value);
-    }
-
-    return $dockerContainerSettings;
-  }
-
-  /**
-   * Initialize openGDB service settings.
-   *
-   * @return array
-   *   The openGDB service settings.
-   *
-   * @throws \Drupal\Core\TypedData\Exception\MissingDataException
-   *   Thrown when a required setting is missing.
-   */
-  public function initTriplestoreServiceSettings() {
-    $triplestoreServiceSettings = [];
-    $triplestoreServiceSettings['triplestoreHostRoute'] = $this->settings->get('triplestore.generalSettings.host');
-    $triplestoreServiceSettings['triplestorePort'] = $this->settings->get('triplestore.generalSettings.port');
-    $triplestoreServiceSettings['triplestoreadminUsername'] = $this->settings->get('triplestore.generalSettings.adminUsername');
-    $triplestoreServiceSettings['triplestoreadminPassword'] = $this->settings->get('triplestore.generalSettings.adminPassword');
-
-    if (empty($triplestoreServiceSettings['triplestoreHostRoute'])) {
-      throw new MissingDataException('Triplestore host URL setting is not set.');
-    }
-    if (empty($triplestoreServiceSettings['triplestorePort'])) {
-      throw new MissingDataException('Triplestore port URL setting is not set.');
-    }
-    if (empty($triplestoreServiceSettings['triplestoreadminUsername'])) {
-      throw new MissingDataException('Triplestore admin username URL setting is not set.');
-    }
-    if (empty($triplestoreServiceSettings['triplestoreadminPassword'])) {
-      throw new MissingDataException('Triplestore admin password URL setting is not set.');
-    }
-
-    foreach ($triplestoreServiceSettings as &$value) {
-      $value = str_replace('{empty}', '', $value);
-    }
-
-    return $triplestoreServiceSettings;
-  }
-
-  /**
-   * Initialize docker volumes service settings.
-   *
-   * @return array
-   *   The docker volumes service settings.
-   *
-   * @throws \Drupal\Core\TypedData\Exception\MissingDataException
-   *   Thrown when a required setting is missing.
-   */
-  public function initTriplestoreRepositoriesSettings() {
-    $triplestoreRepositoriesSettings = [];
-    $triplestoreRepositoriesSettings['triplestoreRepositoriesBaseUrlRoute'] = $this->settings->get('triplestore.routes.repositories.baseUrl');
-    $triplestoreRepositoriesSettings['triplestoreRepositoriesCreateUrlRoute'] = $this->settings->get('triplestore.routes.repositories.crud.createUrl');
-    $triplestoreRepositoriesSettings['triplestoreRepositoriesReadOneUrlRoute'] = $this->settings->get('triplestore.routes.repositories.crud.readOneUrl');
-    $triplestoreRepositoriesSettings['triplestoreRepositoriesReadAllUrlRoute'] = $this->settings->get('triplestore.routes.repositories.crud.readAllUrl');
-    $triplestoreRepositoriesSettings['triplestoreRepositoriesUpdateUrlRoute'] = $this->settings->get('triplestore.routes.repositories.crud.updateUrl');
-    $triplestoreRepositoriesSettings['triplestoreRepositoriesDeleteUrlRoute'] = $this->settings->get('triplestore.routes.repositories.crud.deleteUrl');
-    $triplestoreRepositoriesSettings['triplestoreRepositoriesHealthCheckUrlRoute'] = $this->settings->get('triplestore.routes.repositories.crud.healthCheck.url');
-
-    if (empty($triplestoreRepositoriesSettings['triplestoreRepositoriesBaseUrlRoute'])) {
-      throw new MissingDataException('Triplestore base URL setting is not set.');
-    }
-    if (empty($triplestoreRepositoriesSettings['triplestoreRepositoriesVolumesBaseUrlRoute'])) {
-      throw new MissingDataException('Triplestore volumes URL setting is not set.');
-    }
-    if (empty($triplestoreRepositoriesSettings['triplestoreRepositoriesVolumesCreateUrlRoute'])) {
-      throw new MissingDataException('Triplestore volumes create URL setting is not set.');
-    }
-    if (empty($triplestoreRepositoriesSettings['triplestoreRepositoriesVolumesReadOneUrlRoute'])) {
-      throw new MissingDataException('Triplestore volumes read one URL setting is not set.');
-    }
-    if (empty($triplestoreRepositoriesSettings['triplestoreRepositoriesVolumesReadAllUrlRoute'])) {
-      throw new MissingDataException('Triplestore volumes read all URL setting is not set.');
-    }
-    if (empty($triplestoreRepositoriesSettings['triplestoreRepositoriesVolumesUpdateUrlRoute'])) {
-      throw new MissingDataException('Triplestore volumes update URL setting is not set.');
-    }
-    if (empty($triplestoreRepositoriesSettings['triplestoreRepositoriesVolumesDeleteUrlRoute'])) {
-      throw new MissingDataException('Triplestore volumes delete URL setting is not set.');
-    }
-    if (empty($triplestoreRepositoriesSettings['triplestoreRepositoriesHealthCheckUrlRoute'])) {
-      throw new MissingDataException('Triplestore health check URL setting is not set.');
-    }
-
-    foreach ($triplestoreRepositoriesSettings as &$value) {
-      $value = str_replace('{empty}', '', $value);
-    }
-
-    return $triplestoreRepositoriesSettings;
-  }
-
-  /**
-   * Initialize portainer service settings.
-   *
-   * @return array
-   *   The portainer service settings.
-   *
-   * @throws \Drupal\Core\TypedData\Exception\MissingDataException
-   *   Thrown when a required setting is missing.
-   */
-  public function initPortainerServiceSettings() {
-    $portainerServiceSettings = [];
-    $portainerServiceSettings['portainerHostRoute'] = $this->settings->get('portainer.portainerOptions.host');
-    $portainerServiceSettings['portainerAuthenticationTokenRoute'] = $this->settings->get('portainer.portainerOptions.authenticationToken');
-    $portainerServiceSettings['portainerEndpointId'] = $this->settings->get('portainer.portainerOptions.endpointId');
-    $portainerServiceSettings['portainerEndpointsBaseUrlRoute'] = $this->settings->get('portainer.routes.endpoints.baseUrl');
-    $portainerServiceSettings['portainerEndpointsHealthCheckUrl'] = $this->settings->get('portainer.routes.endpoints.healthCheck.url');
-
-    if (empty($portainerServiceSettings['portainerHostRoute'])) {
-      throw new MissingDataException('Portainer host setting is not set.');
-    }
-    if (empty($portainerServiceSettings['portainerAuthenticationTokenRoute'])) {
-      throw new MissingDataException('Portainer authentication token setting is not set.');
-    }
-    if (empty($portainerServiceSettings['portainerEndpointId'])) {
-      throw new MissingDataException('Portainer endpoint setting is not set.');
-    }
-    if (empty($portainerServiceSettings['portainerEndpointsBaseUrlRoute'])) {
-      throw new MissingDataException('Portainer endpoints base URL setting is not set.');
-    }
-
-    if (empty($portainerServiceSettings['portainerEndpointsHealthCheckUrl'])) {
-      throw new MissingDataException('Portainer endpoint health check endpoint setting is not set.');
-    }
-
-    return $portainerServiceSettings;
-  }
-
-  /**
-   * Initialize Portainer stacks settings.
-   *
-   * @return array
-   *   The Portainer stacks settings.
-   *
-   * @throws \Drupal\Core\TypedData\Exception\MissingDataException
-   *   Thrown when a required setting is missing.
-   */
-  public function initPortainerStacksSettings() {
-    $portainerStacksSettings = [];
-    $portainerStacksSettings['portainerStacksBaseUrl'] = $this->settings->get('portainer.routes.stacks.baseUrl');
-    $portainerStacksSettings['portainerStacksCreateUrl'] = $this->settings->get('portainer.routes.stacks.crud.createUrl');
-    $portainerStacksSettings['portainerStacksReadOneUrl'] = $this->settings->get('portainer.routes.stacks.crud.readOneUrl');
-    $portainerStacksSettings['portainerStacksReadAllUrl'] = $this->settings->get('portainer.routes.stacks.crud.readAllUrl');
-    $portainerStacksSettings['portainerStacksUpdateUrl'] = $this->settings->get('portainer.routes.stacks.crud.updateUrl');
-    $portainerStacksSettings['portainerStacksDeleteUrl'] = $this->settings->get('portainer.routes.stacks.crud.deleteUrl');
-
-    if (empty($portainerStacksSettings['portainerStacksBaseUrl'])) {
-      throw new MissingDataException('Portainer stacks base URL setting is not set.');
-    }
-    if (empty($portainerStacksSettings['portainerStacksCreateUrl'])) {
-      throw new MissingDataException('Portainer stacks create URL setting is not set.');
-    }
-    if (empty($portainerStacksSettings['portainerStacksReadOneUrl'])) {
-      throw new MissingDataException('Portainer stacks read one URL setting is not set.');
-    }
-    if (empty($portainerStacksSettings['portainerStacksReadAllUrl'])) {
-      throw new MissingDataException('Portainer stacks read all URL setting is not set.');
-    }
-    if (empty($portainerStacksSettings['portainerStacksUpdateUrl'])) {
-      throw new MissingDataException('Portainer stacks update URL setting is not set.');
-    }
-    if (empty($portainerStacksSettings['portainerStacksDeleteUrl'])) {
-      throw new MissingDataException('Portainer stacks delete URL setting is not set.');
-    }
-
-    foreach ($portainerStacksSettings as &$value) {
-      $value = str_replace('{empty}', '', $value);
-    }
-
-    return $portainerStacksSettings;
   }
 
 }

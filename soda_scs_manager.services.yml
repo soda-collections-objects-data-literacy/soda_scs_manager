@@ -16,6 +16,7 @@ services:
       - '@logger.factory'
       - '@messenger'
       - '@string_translation'
+      - '@soda_scs_manager.service.helpers'
       - '@soda_scs_manager.docker_volumes_service.actions'
       - '@soda_scs_manager.opengdb_service.actions'
       - '@soda_scs_manager.portainer_service.actions'
@@ -140,6 +141,7 @@ services:
       - '@http_client'
       - '@logger.factory'
       - '@messenger'
+      - '@soda_scs_manager.service.helpers'
       - '@string_translation'
 
   soda_scs_manager.portainer_service.actions:
@@ -167,6 +169,7 @@ services:
       - '@entity_type.manager'
       - '@logger.factory'
       - '@messenger'
+      - '@soda_scs_manager.service.helpers'
       - '@string_translation'
 
 # Stack actions

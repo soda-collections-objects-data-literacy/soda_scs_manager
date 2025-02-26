@@ -3,12 +3,10 @@
 namespace Drupal\soda_scs_manager\Entity;
 
 use Drupal\Core\Entity\ContentEntityBase;
-use Drupal\Core\Entity\EntityInterface;
 use Drupal\Core\Entity\EntityTypeInterface;
 use Drupal\Core\Field\BaseFieldDefinition;
 use Drupal\Core\Field\FieldStorageDefinitionInterface;
 use Drupal\Core\StringTranslation\TranslatableMarkup;
-use Drupal\soda_scs_manager\Entity\SodaScsComponentInterface;
 use Drupal\user\EntityOwnerTrait;
 
 /**
@@ -127,7 +125,6 @@ class SodaScsComponent extends ContentEntityBase implements SodaScsComponentInte
     return $this;
   }
 
-
   /**
    * Returns the label of the SODa SCS Component.
    *
@@ -150,7 +147,6 @@ class SodaScsComponent extends ContentEntityBase implements SodaScsComponentInte
     $this->label->value = $label;
     return $this;
   }
-
 
   /**
    * {@inheritdoc}
@@ -203,7 +199,8 @@ class SodaScsComponent extends ContentEntityBase implements SodaScsComponentInte
       ->setLabel(new TranslatableMarkup('Health Status'))
       ->setDescription(new TranslatableMarkup('The health status of the SODa SCS Component.'))
       ->setRequired(FALSE)
-      ->setReadOnly(TRUE) // Ensure this is read-only as it will be updated via JavaScript.
+    // Ensure this is read-only as it will be updated via JavaScript.
+      ->setReadOnly(TRUE)
       ->setCardinality(1)
       ->setDisplayConfigurable('form', FALSE)
       ->setDisplayConfigurable('view', FALSE)
@@ -243,7 +240,6 @@ class SodaScsComponent extends ContentEntityBase implements SodaScsComponentInte
         'type' => 'string_textfield',
         'weight' => 10,
       ]);
-
 
     $fields['notes'] = BaseFieldDefinition::create('string_long')
       ->setLabel(new TranslatableMarkup('Notes'))

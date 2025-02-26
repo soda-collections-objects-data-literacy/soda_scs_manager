@@ -18,7 +18,6 @@ use Drupal\Core\TypedData\Exception\MissingDataException;
 use Drupal\soda_scs_manager\Helpers\SodaScsServiceHelpers;
 use Drupal\soda_scs_manager\ServiceActions\SodaScsServiceActionsInterface;
 use GuzzleHttp\ClientInterface;
-use GuzzleHttp\Exception\{ClientException, RequestException};
 
 use Symfony\Component\HttpFoundation\RequestStack;
 
@@ -205,9 +204,11 @@ class SodaScsPortainerServiceActions implements SodaScsServiceRequestInterface {
    */
   public function buildCreateRequest(array $requestParams): array {
     // Initialize settings.
+    $generalSettings = $this->sodaScsServiceHelpers->initGeneralSettings();
     $portainerServiceSettings = $this->sodaScsServiceHelpers->initPortainerServiceSettings();
     $portainerStacksSettings = $this->sodaScsServiceHelpers->initPortainerStacksSettings();
     $triplestoreServiceSettings = $this->sodaScsServiceHelpers->initTriplestoreServiceSettings();
+    $databaseServiceSettings = $this->sodaScsServiceHelpers->initDatabaseServiceSettings();
 
     // Assemble query params.
     $queryParams = [
@@ -215,12 +216,31 @@ class SodaScsPortainerServiceActions implements SodaScsServiceRequestInterface {
     ];
 
     // Build route.
-    $route = $portainerServiceSettings['portainerHostRoute'] . $portainerStacksSettings['portainerStacksBaseUrl'] . $portainerStacksSettings['portainerStacksCreateUrl'] . '?' . http_build_query($queryParams);
+    $route = $portainerServiceSettings['portainerHostRoute'] . $portainerStacksSettings['baseUrl'] . $portainerStacksSettings['createUrl'] . '?' . http_build_query($queryParams);
 
     // URLs with underscores are not supported.
-    $defaultGraphmachineName = str_replace('_', '-', $requestParams['machineName']);
+    $defaultGraphMachineName = str_replace('_', '-', $requestParams['machineName']);
+    $hostDomainName = str_replace('https://', '', $generalSettings['scsHost']);
+    $defaultGraphIri = $this->t('https://@defaultGraphMachineName.@hostDomainName', [
+      '@defaultGraphMachineName' => $defaultGraphMachineName,
+      '@hostDomainName' => $hostDomainName,
+    ]);
 
-    $trustedHost = str_replace('.', '\.', $requestParams['machineName'] . '.' . $this->settings->get('scsHost'));
+    $instanceDomain = $this->t('https://@machineName.@hostDomainName', [
+      '@machineName' => $requestParams['machineName'],
+      '@hostDomainName' => $hostDomainName,
+    ]);
+
+    $instanceDomainName = str_replace('https://', '', $instanceDomain);
+
+    $trustedHost = str_replace('.', '\.', $instanceDomainName);
+
+    if ($requestParams['wisskiType'] == 'stack') {
+      $repositoryURL = 'https://github.com/soda-collections-objects-data-literacy/wisski-base-stack.git';
+    }
+    else {
+      $repositoryURL = 'https://github.com/soda-collections-objects-data-literacy/wisski-base-component.git';
+    }
 
     $env = [
       [
@@ -229,7 +249,7 @@ class SodaScsPortainerServiceActions implements SodaScsServiceRequestInterface {
       ],
       [
         "name" => "DB_HOST",
-        "value" => $this->settings->get('dbHost'),
+        "value" => str_replace('https://', '', $databaseServiceSettings['dbHost']),
       ],
       [
         "name" => "DB_NAME",
@@ -246,14 +266,11 @@ class SodaScsPortainerServiceActions implements SodaScsServiceRequestInterface {
       [
         "name" => "DEFAULT_GRAPH",
         // @todo whats the best way of concat strings with vars?
-        "value" => sprintf(
-        '%s.%s/contents/',
-        $defaultGraphmachineName,
-        $this->settings->get('scsHost')),
+        "value" => $defaultGraphIri . '/contents/',
       ],
       [
         "name" => "DOMAIN",
-        "value" => $this->settings->get('scsHost'),
+        "value" => $hostDomainName,
       ],
       [
         "name" => "DRUPAL_USER",
@@ -334,14 +351,6 @@ class SodaScsPortainerServiceActions implements SodaScsServiceRequestInterface {
 
     ];
 
-    foreach ($env as $variable) {
-      if ($variable['name'] == "WISSKI_FLAVOURS") {
-        continue;
-      }
-      if (empty($variable['value'])) {
-        throw new MissingDataException($variable['name'] . ' setting is not set.');
-      }
-    }
     return [
       'success' => TRUE,
       'method' => 'POST',
@@ -349,14 +358,14 @@ class SodaScsPortainerServiceActions implements SodaScsServiceRequestInterface {
       'headers' => [
         'Content-Type' => 'application/json',
         'Accept' => 'application/json',
-        'X-API-Key' => $this->settings->get('wisski')['portainerOptions']['authenticationToken'],
+        'X-API-Key' => $portainerServiceSettings['portainerAuthenticationToken'],
       ],
       'body' => json_encode([
         'composeFile' => 'docker-compose.yml',
         'env' => $env,
         'name' => $requestParams['machineName'],
         'repositoryAuthentication' => FALSE,
-        'repositoryURL' => 'https://github.com/soda-collections-objects-data-literacy/wisski-base-stack.git',
+        'repositoryURL' => $repositoryURL,
       ]),
     ];
   }
@@ -392,7 +401,7 @@ class SodaScsPortainerServiceActions implements SodaScsServiceRequestInterface {
     $portainerStacksSettings = $this->sodaScsServiceHelpers->initPortainerStacksSettings();
 
     // Build route.
-    $route = $portainerServiceSettings['portainerHostRoute'] . $portainerStacksSettings['portainerStacksBaseUrl'] . str_replace('{stackId}', $requestParams['externalId'], $portainerStacksSettings['portainerStacksReadOneUrl']);
+    $route = $portainerServiceSettings['portainerHostRoute'] . $portainerStacksSettings['baseUrl'] . str_replace('{stackId}', $requestParams['externalId'], $portainerStacksSettings['readOneUrl']);
 
     return [
       'success' => TRUE,
@@ -401,7 +410,7 @@ class SodaScsPortainerServiceActions implements SodaScsServiceRequestInterface {
       'headers' => [
         'Content-Type' => 'application/json',
         'Accept' => 'application/json',
-        'X-API-Key' => $portainerServiceSettings['portainerAuthenticationTokenRoute'],
+        'X-API-Key' => $portainerServiceSettings['portainerAuthenticationToken'],
       ],
     ];
   }
@@ -436,7 +445,7 @@ class SodaScsPortainerServiceActions implements SodaScsServiceRequestInterface {
     $portainerStacksSettings = $this->sodaScsServiceHelpers->initPortainerStacksSettings();
 
     // Build route.
-    $route = $portainerServiceSettings['portainerHostRoute'] . $portainerStacksSettings['portainerStacksBaseUrl'] . str_replace('{stackId}', $queryParams['externalId'], $portainerStacksSettings['portainerStacksDeleteUrl']);
+    $route = $portainerServiceSettings['portainerHostRoute'] . $portainerStacksSettings['baseUrl'] . str_replace('{stackId}', $queryParams['externalId'], $portainerStacksSettings['deleteUrl']) . '?endpointId=' . $portainerServiceSettings['portainerEndpointId'];
 
     return [
       'success' => TRUE,
@@ -445,7 +454,7 @@ class SodaScsPortainerServiceActions implements SodaScsServiceRequestInterface {
       'headers' => [
         'Content-Type' => 'application/json',
         'Accept' => 'application/json',
-        'X-API-Key' => $portainerServiceSettings['portainerAuthenticationTokenRoute'],
+        'X-API-Key' => $portainerServiceSettings['portainerAuthenticationToken'],
       ],
     ];
   }
@@ -480,7 +489,7 @@ class SodaScsPortainerServiceActions implements SodaScsServiceRequestInterface {
       'headers' => [
         'Content-Type' => 'application/json',
         'Accept' => 'application/json',
-        'X-API-Key' => $portainerServiceSettings['portainerAuthenticationTokenRoute'],
+        'X-API-Key' => $portainerServiceSettings['portainerAuthenticationToken'],
       ],
     ];
   }

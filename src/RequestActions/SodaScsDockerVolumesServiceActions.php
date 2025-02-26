@@ -174,7 +174,7 @@ class SodaScsDockerVolumesServiceActions implements SodaScsServiceRequestInterfa
     }
     // Send the request.
     try {
-     
+
       $response = $this->httpClient->request($request['method'], $request['route'], $requestParams);
       return [
         'message' => 'Request succeeded',
@@ -247,7 +247,7 @@ class SodaScsDockerVolumesServiceActions implements SodaScsServiceRequestInterfa
       'headers' => [
         'Content-Type' => 'application/json',
         'Accept' => 'application/json',
-        'X-API-Key' => $portainerServiceSettings['portainerAuthenticationTokenRoute'],
+        'X-API-Key' => $portainerServiceSettings['portainerAuthenticationToken'],
       ],
       'body' => json_encode(
         [
@@ -287,7 +287,7 @@ class SodaScsDockerVolumesServiceActions implements SodaScsServiceRequestInterfa
       'headers' => [
         'Content-Type' => 'application/json',
         'Accept' => 'application/json',
-        'X-API-Key' => $portainerServiceSettings['portainerAuthenticationTokenRoute'],
+        'X-API-Key' => $portainerServiceSettings['portainerAuthenticationToken'],
       ],
     ];
   }
@@ -317,7 +317,7 @@ class SodaScsDockerVolumesServiceActions implements SodaScsServiceRequestInterfa
       'headers' => [
         'Content-Type' => 'application/json',
         'Accept' => 'application/json',
-        'X-API-Key' => $portainerServiceSettings['portainerAuthenticationTokenRoute'],
+        'X-API-Key' => $portainerServiceSettings['portainerAuthenticationToken'],
       ],
     ];
   }
@@ -350,13 +350,13 @@ class SodaScsDockerVolumesServiceActions implements SodaScsServiceRequestInterfa
   }
 
   /** Build update request.
-   * 
+   *
    * @param array $requestParams
    *   The request parameters.
-   * 
+   *
    * @return array
    *   The request array.
-   * 
+   *
    * @throws \Drupal\Core\TypedData\Exception\MissingDataException
    */
   public function buildUpdateRequest(array $requestParams): array {

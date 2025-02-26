@@ -11,6 +11,7 @@ use Drupal\Core\StringTranslation\TranslationInterface;
 use Drupal\Core\TypedData\Exception\MissingDataException;
 use GuzzleHttp\ClientInterface;
 use GuzzleHttp\Exception\ClientException;
+use Drupal\soda_scs_manager\Helpers\SodaScsServiceHelpers;
 
 /**
  * Handles the communication with the SCS user manager daemon.
@@ -47,17 +48,26 @@ class SodaScsOpenGdbServiceActions implements SodaScsServiceRequestInterface {
    */
   protected Config $settings;
 
+  /**
+   * The Soda SCS service helpers.
+   *
+   * @var \Drupal\soda_scs_manager\Helpers\SodaScsServiceHelpers
+   */
+  protected SodaScsServiceHelpers $sodaScsServiceHelpers;
+
   public function __construct(
     ConfigFactoryInterface $configFactory,
     ClientInterface $httpClient,
     LoggerChannelFactoryInterface $loggerFactory,
     MessengerInterface $messenger,
+    SodaScsServiceHelpers $sodaScsServiceHelpers,
     TranslationInterface $stringTranslation,
   ) {
     $this->settings = $configFactory->get('soda_scs_manager.settings');
     $this->httpClient = $httpClient;
     $this->loggerFactory = $loggerFactory;
     $this->messenger = $messenger;
+    $this->sodaScsServiceHelpers = $sodaScsServiceHelpers;
     $this->stringTranslation = $stringTranslation;
   }
 
@@ -73,9 +83,13 @@ class SodaScsOpenGdbServiceActions implements SodaScsServiceRequestInterface {
    * @throws \Drupal\Core\TypedData\Exception\MissingDataException
    */
   public function buildCreateRequest(array $requestParams): array {
+    $triplestoreServiceSettings = $this->sodaScsServiceHelpers->initTriplestoreServiceSettings();
+    $triplestoreRepositoriesSettings = $this->sodaScsServiceHelpers->initTriplestoreRepositoriesSettings();
+    $triplestoreUserSettings = $this->sodaScsServiceHelpers->initTriplestoreUserSettings();
+
     switch ($requestParams['type']) {
       case 'repository':
-        $url = $this->settings->get('triplestore')['routes']['repository']['createUrl'];
+        $url = $triplestoreRepositoriesSettings['baseUrl'] . $triplestoreRepositoriesSettings['createUrl'];
         $body = json_encode([
           'id' => $requestParams['body']['machineName'],
           'title' => $requestParams['body']['title'],
@@ -85,7 +99,7 @@ class SodaScsOpenGdbServiceActions implements SodaScsServiceRequestInterface {
         break;
 
       case 'user':
-        $url = $this->settings->get('triplestore')['routes']['user']['createUrl'];
+        $url = $triplestoreUserSettings['baseUrl'] . $triplestoreUserSettings['createUrl'];
         $body = json_encode([
           'password' => $requestParams['body']['password'],
           "grantedAuthorities" => [
@@ -97,16 +111,11 @@ class SodaScsOpenGdbServiceActions implements SodaScsServiceRequestInterface {
         break;
 
       default:
-        $url = '';
-        $body = json_encode([]);
+        throw new MissingDataException('Create URL setting is not set.');
 
     }
 
-    if (empty($url)) {
-      throw new MissingDataException('Create URL setting is not set.');
-    }
-
-    $route = $url . implode('/', $requestParams['routeParams']);
+    $route = $triplestoreServiceSettings['triplestoreHostRoute'] . $url;
 
     if ($requestParams['queryParams']) {
       $route .= '?' . http_build_query($requestParams['queryParams']);
@@ -120,7 +129,7 @@ class SodaScsOpenGdbServiceActions implements SodaScsServiceRequestInterface {
       'headers' => [
         'Content-Type' => 'application/json',
         'Accept' => 'application/json',
-        'Authorization' => 'Basic ' . base64_encode($this->settings->get('triplestore')['openGdbSettings']['adminUsername'] . ':' . $this->settings->get('triplestore')['openGdbSettings']['adminPassword']),
+        'Authorization' => 'Basic ' . base64_encode($triplestoreServiceSettings['triplestoreAdminUsername'] . ':' . $triplestoreServiceSettings['triplestoreAdminPassword']),
       ],
       'body' => $body,
     ];
@@ -151,25 +160,30 @@ class SodaScsOpenGdbServiceActions implements SodaScsServiceRequestInterface {
    * @throws \Drupal\Core\TypedData\Exception\MissingDataException
    */
   public function buildGetRequest($requestParams): array {
+    // Initialize settings.
+    $triplestoreServiceSettings = $this->sodaScsServiceHelpers->initTriplestoreServiceSettings();
+    $triplestoreRepositoriesSettings = $this->sodaScsServiceHelpers->initTriplestoreRepositoriesSettings();
+    $triplestoreUserSettings = $this->sodaScsServiceHelpers->initTriplestoreUserSettings();
+
     switch ($requestParams['type']) {
       case 'repository':
-        $url = $this->settings->get('triplestore')['routes']['repository']['readOneUrl'];
+        $baseUrl = $triplestoreRepositoriesSettings['baseUrl'];
+        $readUrl = str_replace('{repositoryId}', $requestParams['routeParams']['machineName'], $triplestoreRepositoriesSettings['readOneUrl']);
+        $url = $baseUrl . $readUrl;
         break;
 
       case 'user':
-        $url = $this->settings->get('triplestore')['routes']['user']['readOneUrl'];
+        $baseUrl = $triplestoreUserSettings['baseUrl'];
+        $readUrl = str_replace('{userId}', $requestParams['routeParams']['username'], $triplestoreUserSettings['readOneUrl']);
+        $url = $baseUrl . $readUrl;
         break;
 
       default:
-        $url = '';
+        throw new MissingDataException('Get URL setting is not set.');
 
     }
 
-    if (empty($url)) {
-      throw new MissingDataException('Get URL setting is not set.');
-    }
-
-    $route = $url . implode('/', $requestParams['routeParams']);
+    $route = $triplestoreServiceSettings['triplestoreHostRoute'] . $url;
 
     if ($requestParams['queryParams']) {
       $route .= '?' . http_build_query($requestParams['queryParams']);
@@ -183,7 +197,7 @@ class SodaScsOpenGdbServiceActions implements SodaScsServiceRequestInterface {
       'headers' => [
         'Content-Type' => 'application/json',
         'Accept' => 'application/json',
-        'Authorization' => 'Basic ' . base64_encode($this->settings->get('triplestore')['openGdbSettings']['adminUsername'] . ':' . $this->settings->get('triplestore')['openGdbSettings']['adminPassword']),
+        'Authorization' => 'Basic ' . base64_encode($triplestoreServiceSettings['triplestoreAdminUsername'] . ':' . $triplestoreServiceSettings['triplestoreAdminPassword']),
       ],
     ];
   }
@@ -195,10 +209,9 @@ class SodaScsOpenGdbServiceActions implements SodaScsServiceRequestInterface {
    *   The health check request.
    */
   public function buildHealthCheckRequest(array $requestParams): array {
-    $route = $this->settings->get('triplestore')['routes']['healthCheck']['url'];
-    if (empty($route)) {
-      throw new MissingDataException('Health check URL setting is not set.');
-    }
+    // Initialize settings.
+    $triplestoreServiceSettings = $this->sodaScsServiceHelpers->initTriplestoreServiceSettings();
+    $route = $triplestoreServiceSettings['triplestoreHostRoute'] . $requestParams['url'];
 
     return [
       'success' => TRUE,
@@ -207,7 +220,7 @@ class SodaScsOpenGdbServiceActions implements SodaScsServiceRequestInterface {
       'headers' => [
         'Content-Type' => 'application/json',
         'Accept' => 'application/json',
-        'Authorization' => 'Basic ' . base64_encode($this->settings->get('triplestore')['openGdbSettings']['adminUsername'] . ':' . $this->settings->get('triplestore')['openGdbSettings']['adminPassword']),
+        'Authorization' => 'Basic ' . base64_encode($triplestoreServiceSettings['triplestoreAdminUsername'] . ':' . $triplestoreServiceSettings['triplestoreAdminPassword']),
       ],
     ];
   }
@@ -222,28 +235,26 @@ class SodaScsOpenGdbServiceActions implements SodaScsServiceRequestInterface {
    *   The request array for the makeRequest function.
    */
   public function buildUpdateRequest(array $requestParams): array {
+    $triplestoreServiceSettings = $this->sodaScsServiceHelpers->initTriplestoreServiceSettings();
+    $triplestoreUserSettings = $this->sodaScsServiceHelpers->initTriplestoreUserSettings();
+    $triplestoreRepositoriesSettings = $this->sodaScsServiceHelpers->initTriplestoreRepositoriesSettings();
     switch ($requestParams['type']) {
       case 'repository':
-        $url = $this->settings->get('triplestore')['routes']['repository']['updateUrl'];
+        $url = $triplestoreRepositoriesSettings['baseUrl'] . str_replace('{repositoryId}', $requestParams['routeParams']['machineName'], $triplestoreRepositoriesSettings['updateUrl']);
         $body = json_encode($requestParams['body']);
         break;
 
       case 'user':
-        $url = $this->settings->get('triplestore')['routes']['user']['updateUrl'];
+        $url = $triplestoreUserSettings['baseUrl'] . str_replace('{userId}', $requestParams['routeParams']['username'], $triplestoreUserSettings['updateUrl']);
         $body = json_encode($requestParams['body']);
         break;
 
       default:
-        $url = '';
-        $body = json_encode([]);
+        throw new MissingDataException('Update URL setting is not set.');
 
     }
 
-    if (empty($url)) {
-      throw new MissingDataException('Get URL setting is not set.');
-    }
-
-    $route = $url . implode('/', $requestParams['routeParams']);
+    $route = $triplestoreServiceSettings['triplestoreHostRoute'] . $url;
 
     if ($requestParams['queryParams']) {
       $route .= '?' . http_build_query($requestParams['queryParams']);
@@ -257,7 +268,7 @@ class SodaScsOpenGdbServiceActions implements SodaScsServiceRequestInterface {
       'headers' => [
         'Content-Type' => 'application/json',
         'Accept' => 'application/json',
-        'Authorization' => 'Basic ' . base64_encode($this->settings->get('triplestore')['openGdbSettings']['adminUsername'] . ':' . $this->settings->get('triplestore')['openGdbSettings']['adminPassword']),
+        'Authorization' => 'Basic ' . base64_encode($triplestoreServiceSettings['triplestoreAdminUsername'] . ':' . $triplestoreServiceSettings['triplestoreAdminPassword']),
       ],
       'body' => $body,
     ];
@@ -275,26 +286,31 @@ class SodaScsOpenGdbServiceActions implements SodaScsServiceRequestInterface {
    * @throws \Drupal\Core\TypedData\Exception\MissingDataException
    */
   public function buildDeleteRequest(array $requestParams): array {
+    // Initialize settings.
+    $triplestoreServiceSettings = $this->sodaScsServiceHelpers->initTriplestoreServiceSettings();
+    $triplestoreRepositoriesSettings = $this->sodaScsServiceHelpers->initTriplestoreRepositoriesSettings();
+    $triplestoreUserSettings = $this->sodaScsServiceHelpers->initTriplestoreUserSettings();
+
     // @todo May use $requestParams['type'] if there is no other logic.
     switch ($requestParams['type']) {
       case 'repository':
-        $url = $this->settings->get('triplestore')['routes']['repository']['deleteUrl'];
+        $repositoriesBaseUrl = $triplestoreRepositoriesSettings['baseUrl'];
+        $deleteUrlRoute = str_replace('{repositoryId}', $requestParams['routeParams']['machineName'], $triplestoreRepositoriesSettings['deleteUrl']);
+        $url = $repositoriesBaseUrl . $deleteUrlRoute;
         break;
 
       case 'user':
-        $url = $this->settings->get('triplestore')['routes']['user']['deleteUrl'];
+        $usersBaseUrl = $triplestoreUserSettings['baseUrl'];
+        $deleteUrlRoute = str_replace('{userId}', $requestParams['routeParams']['username'], $triplestoreUserSettings['deleteUrl']);
+        $url = $usersBaseUrl . $deleteUrlRoute;
         break;
 
       default:
-        $url = '';
+        throw new MissingDataException('Delete URL setting is not set.');
 
     }
 
-    if (empty($url)) {
-      throw new MissingDataException('Delete URL setting is not set.');
-    }
-
-    $route = $url . implode('/', $requestParams['routeParams']);
+    $route = $triplestoreServiceSettings['triplestoreHostRoute'] . $url;
 
     if ($requestParams['queryParams']) {
       $route .= '?' . http_build_query($requestParams['queryParams']);
@@ -308,7 +324,7 @@ class SodaScsOpenGdbServiceActions implements SodaScsServiceRequestInterface {
       'headers' => [
         'Content-Type' => 'application/json',
         'Accept' => 'application/json',
-        'Authorization' => 'Basic ' . base64_encode($this->settings->get('triplestore')['openGdbSettings']['adminUsername'] . ':' . $this->settings->get('triplestore')['openGdbSettings']['adminPassword']),
+        'Authorization' => 'Basic ' . base64_encode($triplestoreServiceSettings['triplestoreAdminUsername'] . ':' . $triplestoreServiceSettings['triplestoreAdminPassword']),
       ],
     ];
   }
@@ -367,18 +383,20 @@ class SodaScsOpenGdbServiceActions implements SodaScsServiceRequestInterface {
         ];
       }
       // @todo Implement tracing in every logger.
-      $this->loggerFactory->get('soda_scs_manager')->error("OpenGDB request failed with code @code error: @error trace @trace", [
+      $this->loggerFactory->get('soda_scs_manager')->error("OpenGDB request for @type failed with code @code error: @error trace @trace", [
+        '@type' => $request['type'],
         '@code' => $e->getCode(),
         '@error' => $e->getMessage(),
         '@trace' => $e->getTraceAsString(),
       ]);
     }
-    $this->messenger->addError($this->t("OpenGDB request failed. See logs for more details."));
+    $this->messenger->addError($this->t("OpenGDB request for @type failed. See logs for more details.", ['@type' => $request['type']]));
     return [
       'message' => 'Request failed with code @code' . $e->getCode(),
       'data' => [
         'openGdbResponse' => $e,
       ],
+      'statusCode' => $e->getCode(),
       'success' => FALSE,
       'error' => $e->getMessage(),
     ];
@@ -394,8 +412,11 @@ class SodaScsOpenGdbServiceActions implements SodaScsServiceRequestInterface {
    *   The request array for the makeRequest function.
    */
   public function buildTokenRequest(array $requestParams): array {
+    // Initialize settings.
+    $triplestoreServiceSettings = $this->sodaScsServiceHelpers->initTriplestoreServiceSettings();
+    $triplestoreMiscSettings = $this->sodaScsServiceHelpers->initTriplestoreMiscSettings();
 
-    $route = $this->settings->get('triplestore')['routes']['token']['tokenUrl'] ?? throw new MissingDataException('Token URL setting is not set.');
+    $route = $triplestoreServiceSettings['triplestoreHostRoute'] . str_replace('{userId}', $requestParams['routeParams']['username'], $triplestoreMiscSettings['tokenUrl']);
 
     $body = json_encode($requestParams['body']);
 
