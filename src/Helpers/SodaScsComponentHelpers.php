@@ -4,7 +4,6 @@ namespace Drupal\soda_scs_manager\Helpers;
 
 use Drupal\Core\Config\Config;
 use Drupal\Core\Config\ConfigFactoryInterface;
-use Drupal\Core\Entity\EntityInterface;
 use Drupal\Core\Entity\EntityTypeManagerInterface;
 use GuzzleHttp\ClientInterface;
 use Drupal\Core\Logger\LoggerChannelFactoryInterface;
@@ -13,8 +12,6 @@ use Drupal\Core\StringTranslation\TranslationInterface;
 use Drupal\Core\StringTranslation\StringTranslationTrait;
 use Drupal\soda_scs_manager\ServiceActions\SodaScsServiceActionsInterface;
 use Drupal\soda_scs_manager\RequestActions\SodaScsServiceRequestInterface;
-use Drupal\Core\TypedData\Exception\MissingDataException;
-
 
 /**
  * Helper functions for SCS components.
@@ -161,7 +158,7 @@ class SodaScsComponentHelpers {
    */
   public function checkFilesystemHealth(string $machineName) {
 
-    # Check if Portainer service is available.
+    // Check if Portainer service is available.
     try {
       $requestParams = [
         'machineName' => $machineName,
@@ -202,9 +199,10 @@ class SodaScsComponentHelpers {
           'success' => FALSE,
           'error' => $healthRequestResult['error'],
         ];
-      } else {
+      }
+      else {
         return [
-          "message" => $this->t("Filesystem is available.", ),
+          "message" => $this->t("Filesystem is available."),
           'code' => $healthRequestResult['statusCode'],
           'data' => $healthRequestResult['data'],
           'success' => TRUE,
@@ -223,7 +221,6 @@ class SodaScsComponentHelpers {
     }
   }
 
-
   /**
    * Check SQL database health.
    */
@@ -237,7 +234,6 @@ class SodaScsComponentHelpers {
     $sqlServiceKey = $this->entityTypeManager->getStorage('soda_scs_service_key')->load($sqlServiceKeyId);
     $dbUserPassword = $sqlServiceKey->get('servicePassword')->value;
     $fullAccess = $this->sqlServiceActions->userHasReadWriteAccessToDatabase($dbUser, $dbName, $dbUserPassword);
-    $iddd = $component->id();
     if (!$fullAccess) {
       return [
         'message' => $this->t("MariaDB health check failed for component @component.", ['@component' => $component->id()]),
@@ -248,18 +244,29 @@ class SodaScsComponentHelpers {
       'message' => $this->t("MariaDB health check passed for component @component.", ['@component' => $component->id()]),
       'success' => TRUE,
     ];
-    }
+  }
 
+  /**
+   * Check triplestore health.
+   *
+   * @param string $component
+   *   The component ID.
+   * @param string $machineName
+   *   The machine name.
+   *
+   * @return array
+   *   The health check result.
+   */
   public function checkTriplestoreHealth(string $component, string $machineName) {
     try {
       $healthCheckRoutePart = str_replace('{repositoryID}', $machineName, $this->settings->get('triplestore')['repositories']['healthCheck']['url']);
       $route = 'https://' . $this->settings->get('triplestore')['openGdbSettings']['host'] . $healthCheckRoutePart;
       $requestParams = [
         'headers' => [
-        'Content-Type' => 'application/json',
-        'Accept' => 'application/json',
-        'Authorization' => 'Basic ' . base64_encode($this->settings->get('triplestore')['openGdbSettings']['adminUsername'] . ':' . $this->settings->get('triplestore')['openGdbSettings']['adminPassword']),
-      ],
+          'Content-Type' => 'application/json',
+          'Accept' => 'application/json',
+          'Authorization' => 'Basic ' . base64_encode($this->settings->get('triplestore')['openGdbSettings']['adminUsername'] . ':' . $this->settings->get('triplestore')['openGdbSettings']['adminPassword']),
+        ],
       ];
       $response = $this->httpClient->request('GET', $route, $requestParams);
       if ($response->getStatusCode() == 200) {
@@ -271,7 +278,10 @@ class SodaScsComponentHelpers {
     }
     catch (\Exception $e) {
       return [
-        'message' => $this->t("Triplestore health check failed for component @component: @error", ['@component' => $component, '@error' => $e->getMessage()]),
+        'message' => $this->t("Triplestore health check failed for component @component: @error", [
+          '@component' => $component,
+          '@error' => $e->getMessage(),
+        ]),
         'success' => FALSE,
       ];
     }
