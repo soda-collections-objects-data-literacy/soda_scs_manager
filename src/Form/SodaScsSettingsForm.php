@@ -60,6 +60,7 @@ class SodaScsSettingsForm extends ConfigFormBase {
       <ul>
         <li><strong>{containerId}</strong> - The Docker container ID</li>
         <li><strong>{endpointId}</strong> - The Portainer endpoint ID</li>
+        <li><strong>{execId}</strong> - The Docker exec ID</li>
         <li><strong>{instanceId}</strong> - The WissKI instance ID</li>
         <li><strong>{repositoryId}</strong> - The triplestore repository ID</li>
         <li><strong>{stackId}</strong> - The Portainer stack ID</li>
@@ -235,7 +236,6 @@ class SodaScsSettingsForm extends ConfigFormBase {
     ];
 
     // Triplestore user routes.
-
     $form['triplestore']['routes']['users'] = [
       '#type' => 'fieldset',
       '#attributes' => ['id' => 'soda-scs--routes-subform--user'],
@@ -408,7 +408,6 @@ class SodaScsSettingsForm extends ConfigFormBase {
     ];
 
     // Docker API route.
-
     $form['portainer']['routes']['endpoints']['dockerApi'] = [
       '#type' => 'fieldset',
       '#attributes' => ['id' => 'soda-scs--routes-subform--docker-api'],
@@ -417,13 +416,47 @@ class SodaScsSettingsForm extends ConfigFormBase {
 
     $form['portainer']['routes']['endpoints']['dockerApi']['baseUrl'] = [
       '#type' => 'textfield',
-      '#title' => $this->t(' base route'),
+      '#title' => $this->t('Base route'),
       '#default_value' => $this->config('soda_scs_manager.settings')->get('portainer')['routes']['endpoints']['dockerApi']['baseUrl'] ?? '',
       '#description' => $this->t('The base URL, like "/docker".'),
     ];
 
-    // Docker volumes routes.
+    // Docker exec routes.
+    $form['portainer']['routes']['endpoints']['dockerApi']['exec'] = [
+      '#type' => 'fieldset',
+      '#attributes' => ['id' => 'soda-scs--routes-subform--docker-api-exec'],
+      '#title' => $this->t('Docker exec routes.'),
+    ];
 
+    $form['portainer']['routes']['endpoints']['dockerApi']['exec']['createUrl'] = [
+      '#type' => 'textfield',
+      '#title' => $this->t('Docker exec create route.'),
+      '#default_value' => $this->config('soda_scs_manager.settings')->get('portainer')['routes']['endpoints']['dockerApi']['exec']['createUrl'] ?? '',
+      '#description' => $this->t('Route to create a command inside a running container, like "/containers/{containerId}/exec".'),
+    ];
+
+    $form['portainer']['routes']['endpoints']['dockerApi']['exec']['startUrl'] = [
+      '#type' => 'textfield',
+      '#title' => $this->t('Docker exec start route.'),
+      '#default_value' => $this->config('soda_scs_manager.settings')->get('portainer')['routes']['endpoints']['dockerApi']['exec']['startUrl'] ?? '',
+      '#description' => $this->t('Route to start a command inside a running container, like "/exec/{execId}/start".'),
+    ];
+
+    $form['portainer']['routes']['endpoints']['dockerApi']['exec']['resizeUrl'] = [
+      '#type' => 'textfield',
+      '#title' => $this->t('Docker exec resize route.'),
+      '#default_value' => $this->config('soda_scs_manager.settings')->get('portainer')['routes']['endpoints']['dockerApi']['exec']['resizeUrl'] ?? '',
+      '#description' => $this->t('Route to resize a command inside a running container, like "/exec/{execId}/resize".'),
+    ];
+
+    $form['portainer']['routes']['endpoints']['dockerApi']['exec']['inspectUrl'] = [
+      '#type' => 'textfield',
+      '#title' => $this->t('Docker exec inspect route.'),
+      '#default_value' => $this->config('soda_scs_manager.settings')->get('portainer')['routes']['endpoints']['dockerApi']['exec']['inspectUrl'] ?? '',
+      '#description' => $this->t('Route to inspect a command inside a running container, like "/exec/{execId}/json".'),
+    ];
+
+    // Docker volumes routes.
     $form['portainer']['routes']['endpoints']['dockerApi']['volumes'] = [
       '#type' => 'fieldset',
       '#attributes' => ['id' => 'soda-scs--routes-subform--docker-api'],
@@ -479,7 +512,6 @@ class SodaScsSettingsForm extends ConfigFormBase {
     ];
 
     // Docker containers routes.
-
     $form['portainer']['routes']['endpoints']['dockerApi']['containers'] = [
       '#type' => 'fieldset',
       '#attributes' => ['id' => 'soda-scs--routes-subform--docker-api'],
@@ -609,7 +641,6 @@ class SodaScsSettingsForm extends ConfigFormBase {
     ];
 
     // Misc routes.
-
     $form['wisski']['instances']['misc']['healthCheck'] = [
       '#type' => 'fieldset',
       '#attributes' => ['id' => 'soda-scs--routes-subform--health-check'],

@@ -1,0 +1,10 @@
+{{ entity_type|replace({'soda_scs_': ''}) }}
+<div class="card mx-auto" style="width: 18rem;">
+  <img class="card-img-top p-3 mx-auto d-block" src="{{ file_url(entity.imageUrl.0.value) }}" alt="{{ entity.label.0.value }}" style="max-width: 150px;">
+  <div class="card-body text-center d-flex flex-column justify-content-between">
+
+       <h5 class="card-title
+    <h5 class="soda-scs-manager--card-title"> {{ entity.label.0.value }} </h5>
+    <a href="/soda-scs-manager/{{ entity_type }}/{{ entity.id.0.value }}" class="btn btn-primary">MORE INFO</a>
+  </div>
+</div>

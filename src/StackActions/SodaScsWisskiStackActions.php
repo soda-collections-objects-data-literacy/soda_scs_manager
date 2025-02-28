@@ -352,6 +352,19 @@ class SodaScsWisskiStackActions implements SodaScsStackActionsInterface {
       ];
     }
     catch (MissingDataException $e) {
+      $this->loggerFactory->get('soda_scs_manager')->error("WissKI creation exists with error: @error trace: @trace", [
+        '@error' => $e->getMessage(),
+        '@trace' => $e->getTraceAsString(),
+      ]);
+      $this->messenger->addError($this->t("Could not create WissKI. See logs for more details."));
+      return [
+        'message' => 'Could not create WissKI component.',
+        'data' => [
+          'sqlComponentCreateResult' => $sqlComponentCreateResult,
+          'triplestoreComponentCreateResult' => $triplestoreComponentCreateResult,
+          'wisskiComponentCreateResult' => NULL,
+        ],
+      ];
     }
   }
 

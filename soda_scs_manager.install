@@ -30,32 +30,6 @@ function soda_scs_manager_install() {
     $destination = $destination_directory . '/' . $file->filename;
     $file_system->copy($file->uri, $destination, FileExists::Replace);
   }
-
-  // Install bundle field definitions.
-  \Drupal::messenger()->addStatus(__FUNCTION__);
-  $efm = \Drupal::service('entity_field.manager');
-
-  foreach (['soda_scs_wisski_stack'] as $stackBundleId) {
-    $stack_base_fields = $efm->getFieldStorageDefinitions('soda_scs_stack', $stackBundleId);
-    // This gets all fields defined for the bundle, including base fields.
-    $stack_type_fields = $efm->getFieldDefinitions('soda_scs_stack', $stackBundleId);
-    // This gets us the list of fields defined by the bundle.
-    $stack_bundle_fields = array_diff(array_keys($stack_type_fields), array_keys($stack_base_fields));
-    foreach ($stack_bundle_fields as $id => $field_name) {
-      \Drupal::entityDefinitionUpdateManager()->installFieldStorageDefinition($field_name, 'soda_scs_stack', 'soda_scs_manager', $stack_type_fields[$field_name]);
-    }
-  }
-  foreach (['soda_scs_wisski_component', 'soda_scs_sql_component', 'soda_scs_triplestore_component'] as $componentBundleId) {
-    $component_base_fields = $efm->getFieldStorageDefinitions('soda_scs_component', $componentBundleId);
-    // This gets all fields defined for the bundle, including base fields.
-    $component_type_fields = $efm->getFieldDefinitions('soda_scs_component', $componentBundleId);
-    // This gets us the list of fields defined by the bundle.
-    $component_bundle_fields = array_diff(array_keys($component_type_fields), array_keys($component_base_fields));
-    foreach ($component_bundle_fields as $id => $field_name) {
-      \Drupal::entityDefinitionUpdateManager()->installFieldStorageDefinition($field_name, 'soda_scs_component', 'soda_scs_manager', $component_type_fields[$field_name]);
-    }
-  }
-
 }
 
 /**

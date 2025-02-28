@@ -8,7 +8,6 @@ use Drupal\Core\Field\BaseFieldDefinition;
 use Drupal\Core\Field\FieldStorageDefinitionInterface;
 use Drupal\Core\StringTranslation\TranslatableMarkup;
 use Drupal\user\EntityOwnerTrait;
-use Drupal\user\UserInterface;
 
 /**
  * Defines the ComponentCredentials entity.
@@ -24,14 +23,13 @@ use Drupal\user\UserInterface;
  *     plural = "@count Service Keys",
  *   ),
  *   handlers = {
- *     "storage" = "Drupal\Core\Entity\Sql\SqlContentEntityStorage",
  *     "view_builder" = "Drupal\Core\Entity\EntityViewBuilder",
  *     "list_builder" = "Drupal\soda_scs_manager\ListBuilder\SodaScsServiceKeyListBuilder",
  *     "views_data" = "Drupal\views\EntityViewsData",
  *     "translation" = "Drupal\content_translation\ContentTranslationHandler",
  *     "form" = {
- *       "default" = "Drupal\soda_scs_manager\Form\SodaScsServiceKeyCreateForm",
- *       "add" = "Drupal\Core\Entity\ContentEntityForm",
+ *       "default" = "Drupal\soda_scs_manager\Form\SodaScsServiceKeyEditForm",
+ *       "add" = "Drupal\soda_scs_manager\Form\SodaScsServiceKeyCreateForm",
  *       "edit" = "Drupal\soda_scs_manager\Form\SodaScsServiceKeyEditForm",
  *       "delete" = "Drupal\soda_scs_manager\Form\SodaScsServiceKeyDeleteForm",
  *     },
@@ -42,7 +40,7 @@ use Drupal\user\UserInterface;
  *   },
  *   links = {
  *     "canonical" = "/soda-scs-manager/service-key/{soda_scs_service_key}",
- *     "add-form" = "/soda-scs-manager/service-key/add",
+ *     "add-form" = "/soda-scs-manager/service-key/add/{bundle}",
  *     "edit-form" = "/soda-scs-manager/service-key/{soda_scs_service_key}/edit",
  *     "delete-form" = "/soda-scs-manager/service-key/{soda_scs_service_key}/delete",
  *     "collection" = "/soda-scs-manager/service-key/list",
@@ -54,6 +52,7 @@ use Drupal\user\UserInterface;
  *   fieldable = TRUE,
  *   common_reference_target = TRUE,
  *   entity_keys = {
+ *     "bundle" = "bundle",
  *     "id" = "id",
  *     "uuid" = "uuid",
  *     "label" = "label",
@@ -62,6 +61,7 @@ use Drupal\user\UserInterface;
  *     "langcode" = "langcode",
  *   },
  *   config_export = {
+ *     "bundle",
  *     "id",
  *     "label",
  *     "uuid",
@@ -70,7 +70,6 @@ use Drupal\user\UserInterface;
  *     "owner",
  *     "langcode",
  *     "type",
- * 
  *   }
  * )
  */
@@ -111,8 +110,6 @@ class SodaScsServiceKey extends ContentEntityBase implements SodaScsServiceKeyIn
       ->setDisplayConfigurable('view', FALSE)
       ->setDisplayConfigurable('form', FALSE);
 
-
-
     $fields['scsComponent'] = BaseFieldDefinition::create('entity_reference')
       ->setLabel(new TranslatableMarkup('SODa SCS Component'))
       ->setSetting('target_type', 'soda_scs_component')
@@ -140,7 +137,7 @@ class SodaScsServiceKey extends ContentEntityBase implements SodaScsServiceKeyIn
         'type' => 'string',
         'weight' => 10,
         'css_class' => 'soda-scs-manager-service-password',
-        
+
       ])
       ->setDisplayConfigurable('view', FALSE);
 

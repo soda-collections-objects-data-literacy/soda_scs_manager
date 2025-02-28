@@ -140,47 +140,36 @@ class SodaScsServiceHelpers {
   }
 
   /**
-   * Initialize Docker container settings.
+   * Initialize docker exec service settings.
    *
    * @return array
-   *   The Docker container settings.
-   *
-   * @throws \Drupal\Core\TypedData\Exception\MissingDataException
-   *   Thrown when a required setting is missing.
+   *   The docker exec service settings.
    */
-  public function initDockerContainerSettings() {
-    $dockerContainerSettings = [];
-    $dockerContainerSettings['baseUrl'] = $this->settings->get('portainer.routes.endpoints.dockerApi.containers.baseUrl');
-    $dockerContainerSettings['createUrl'] = $this->settings->get('portainer.routes.endpoints.dockerApi.containers.crud.createUrl');
-    $dockerContainerSettings['readOneUrl'] = $this->settings->get('portainer.routes.endpoints.dockerApi.containers.crud.readOneUrl');
-    $dockerContainerSettings['readAllUrl'] = $this->settings->get('portainer.routes.endpoints.dockerApi.containers.crud.readAllUrl');
-    $dockerContainerSettings['updateUrl'] = $this->settings->get('portainer.routes.endpoints.dockerApi.containers.crud.updateUrl');
-    $dockerContainerSettings['deleteUrl'] = $this->settings->get('portainer.routes.endpoints.dockerApi.containers.crud.deleteUrl');
+  public function initDockerExecServiceSettings() {
+    $dockerExecServiceSettings = [];
+    $dockerExecServiceSettings['dockerApiExecCreateUrlRoute'] = $this->settings->get('portainer.routes.endpoints.dockerApi.exec.createUrl');
+    $dockerExecServiceSettings['dockerApiExecStartUrlRoute'] = $this->settings->get('portainer.routes.endpoints.dockerApi.exec.startUrl');
+    $dockerExecServiceSettings['dockerApiExecResizeUrlRoute'] = $this->settings->get('portainer.routes.endpoints.dockerApi.exec.resizeUrl');
+    $dockerExecServiceSettings['dockerApiExecInspectUrlRoute'] = $this->settings->get('portainer.routes.endpoints.dockerApi.exec.inspectUrl');
 
-    if (empty($dockerContainerSettings['baseUrl'])) {
-      throw new MissingDataException('Docker containers base URL setting is not set.');
+    if (empty($dockerExecServiceSettings['dockerApiExecCreateUrlRoute'])) {
+      throw new MissingDataException('Docker exec create URL setting is not set.');
     }
-    if (empty($dockerContainerSettings['createUrl'])) {
-      throw new MissingDataException('Docker containers create URL setting is not set.');
+    if (empty($dockerExecServiceSettings['dockerApiExecStartUrlRoute'])) {
+      throw new MissingDataException('Docker exec start URL setting is not set.');
     }
-    if (empty($dockerContainerSettings['readOneUrl'])) {
-      throw new MissingDataException('Docker containers read one URL setting is not set.');
+    if (empty($dockerExecServiceSettings['dockerApiExecResizeUrlRoute'])) {
+      throw new MissingDataException('Docker exec resize URL setting is not set.');
     }
-    if (empty($dockerContainerSettings['readAllUrl'])) {
-      throw new MissingDataException('Docker containers read all URL setting is not set.');
-    }
-    if (empty($dockerContainerSettings['updateUrl'])) {
-      throw new MissingDataException('Docker containers update URL setting is not set.');
-    }
-    if (empty($dockerContainerSettings['deleteUrl'])) {
-      throw new MissingDataException('Docker containers delete URL setting is not set.');
+    if (empty($dockerExecServiceSettings['dockerApiExecInspectUrlRoute'])) {
+      throw new MissingDataException('Docker exec inspect URL setting is not set.');
     }
 
-    foreach ($dockerContainerSettings as &$value) {
+    foreach ($dockerExecServiceSettings as &$value) {
       $value = str_replace('{empty}', '', $value);
     }
 
-    return $dockerContainerSettings;
+    return $dockerExecServiceSettings;
   }
 
   /**
@@ -194,7 +183,6 @@ class SodaScsServiceHelpers {
    */
   public function initDockerVolumesServiceSettings() {
     $dockerVolumeServiceSettings = [];
-    $dockerVolumeServiceSettings['dockerApiBaseUrlRoute'] = $this->settings->get('portainer.routes.endpoints.dockerApi.baseUrl');
     $dockerVolumeServiceSettings['dockerApiVolumesBaseUrlRoute'] = $this->settings->get('portainer.routes.endpoints.dockerApi.volumes.baseUrl');
     $dockerVolumeServiceSettings['dockerApiVolumesCreateUrlRoute'] = $this->settings->get('portainer.routes.endpoints.dockerApi.volumes.crud.createUrl');
     $dockerVolumeServiceSettings['dockerApiVolumesReadOneUrlRoute'] = $this->settings->get('portainer.routes.endpoints.dockerApi.volumes.crud.readOneUrl');
@@ -267,6 +255,7 @@ class SodaScsServiceHelpers {
     $portainerServiceSettings['portainerEndpointId'] = $this->settings->get('portainer.portainerOptions.endpointId');
     $portainerServiceSettings['portainerEndpointsBaseUrlRoute'] = $this->settings->get('portainer.routes.endpoints.baseUrl');
     $portainerServiceSettings['portainerEndpointsHealthCheckUrl'] = $this->settings->get('portainer.routes.endpoints.healthCheck.url');
+    $portainerServiceSettings['dockerApiBaseUrlRoute'] = $this->settings->get('portainer.routes.endpoints.dockerApi.baseUrl');
 
     if (empty($portainerServiceSettings['portainerHostRoute'])) {
       throw new MissingDataException('Portainer host setting is not set.');
@@ -283,6 +272,10 @@ class SodaScsServiceHelpers {
 
     if (empty($portainerServiceSettings['portainerEndpointsHealthCheckUrl'])) {
       throw new MissingDataException('Portainer endpoint health check endpoint setting is not set.');
+    }
+
+    if (empty($portainerServiceSettings['dockerApiBaseUrlRoute'])) {
+      throw new MissingDataException('Docker API base URL setting is not set.');
     }
 
     return $portainerServiceSettings;

@@ -43,6 +43,30 @@ class SodaScsComponentBundle extends SodaScsComponent implements SodaScsComponen
           ]);
 
         break;
+
+      case 'soda_scs_filesystem_component':
+        $definitions['connectedComponents'] = BundleFieldDefinition::create('entity_reference')
+          ->setLabel(new TranslatableMarkup('Connected components'))
+          ->setDescription(new TranslatableMarkup('The connected components of the SODa SCS Component.'))
+          ->setDisplayConfigurable('form', FALSE)
+          ->setDisplayConfigurable('view', FALSE)
+          ->setDisplayOptions('form', [
+            'type' => 'options_buttons',
+            'weight' => 60,
+          ])
+          ->setCardinality(FieldStorageDefinitionInterface::CARDINALITY_UNLIMITED)
+          ->setDisplayOptions('view', [
+            'label' => 'above',
+            'type' => 'checklist',
+            'weight' => 60,
+          ])
+          ->setSetting('target_type', 'soda_scs_component')
+          ->setSetting('handler', 'default')
+          ->setRequired(FALSE)
+          ->setReadOnly(TRUE)
+          ->setTranslatable(FALSE);
+
+        break;
     }
 
     return $definitions;

@@ -43,14 +43,13 @@ use Drupal\user\EntityOwnerTrait;
  *   fieldable = TRUE,
  *   common_reference_target = TRUE,
  *   entity_keys = {
+ *     "bundle" = "bundle",
  *     "id" = "id",
  *     "langcode" = "langcode",
  *     "uuid" = "uuid",
  *     "label" = "label",
- *     "bundle" = "bundle",
  *     "uid" = "owner",
  *     "owner" = "owner",
- *
  *   },
  *   links = {
  *     "canonical" = "/soda-scs-manager/component/{soda_scs_component}",
@@ -241,6 +240,18 @@ class SodaScsComponent extends ContentEntityBase implements SodaScsComponentInte
         'weight' => 10,
       ]);
 
+    $fields['machineName'] = BaseFieldDefinition::create('string')
+      ->setLabel(new TranslatableMarkup('Machine Name'))
+      ->setDescription(new TranslatableMarkup('The machine name of the SODa SCS Component. Use only letters, numbers, minus and underscores.'))
+      ->setRequired(TRUE)
+      ->setReadOnly(TRUE)
+      ->setCardinality(1)
+      ->setDisplayConfigurable('view', FALSE)
+      ->setDisplayOptions('form', [
+        'type' => 'string_textfield',
+        'weight' => 20,
+      ]);
+
     $fields['notes'] = BaseFieldDefinition::create('string_long')
       ->setLabel(new TranslatableMarkup('Notes'))
       ->setDescription(new TranslatableMarkup('Notes about the SODa SCS Component.'))
@@ -274,6 +285,29 @@ class SodaScsComponent extends ContentEntityBase implements SodaScsComponentInte
       ->setDisplayOptions('form', [
         'type' => 'options_buttons',
         'weight' => 40,
+      ]);
+
+    $fields['partOfProject'] = BaseFieldDefinition::create('entity_reference')
+      ->setLabel(new TranslatableMarkup('Project'))
+      ->setDescription(new TranslatableMarkup('The project this component belongs to.'))
+      ->setSetting('target_type', 'soda_scs_project')
+      ->setSetting('handler', 'default')
+      ->setRequired(FALSE)
+      ->setDisplayConfigurable('form', TRUE)
+      ->setDisplayOptions('form', [
+        'type' => 'inline_entity_form_complex',
+        'weight' => 5,
+        'settings' => [
+          'allow_new' => TRUE,
+          'allow_existing' => TRUE,
+          'match_operator' => 'CONTAINS',
+        ],
+      ])
+      ->setDisplayConfigurable('view', TRUE)
+      ->setDisplayOptions('view', [
+        'label' => 'above',
+        'type' => 'entity_reference_label',
+        'weight' => 5,
       ]);
 
     // @todo Implement the reuse of dangling components
@@ -318,18 +352,6 @@ class SodaScsComponent extends ContentEntityBase implements SodaScsComponentInte
         'label' => 'above',
         'type' => 'boolean',
         'weight' => 30,
-      ]);
-
-    $fields['machineName'] = BaseFieldDefinition::create('string')
-      ->setLabel(new TranslatableMarkup('Machine Name'))
-      ->setDescription(new TranslatableMarkup('The machine name of the SODa SCS Component. Use only letters, numbers, minus and underscores.'))
-      ->setRequired(TRUE)
-      ->setReadOnly(TRUE)
-      ->setCardinality(1)
-      ->setDisplayConfigurable('view', FALSE)
-      ->setDisplayOptions('form', [
-        'type' => 'string_textfield',
-        'weight' => 20,
       ]);
 
     $fields['updated'] = BaseFieldDefinition::create('changed')

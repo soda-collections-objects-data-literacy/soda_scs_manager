@@ -174,7 +174,7 @@ class SodaScsDockerRegistryServiceActions implements SodaScsServiceRequestInterf
 
   /**
    * Builds the health check request.
-   * 
+   *
    * @param array $requestParams
    *   The request parameters.
    *

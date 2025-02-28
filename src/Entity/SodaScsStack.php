@@ -7,7 +7,6 @@ use Drupal\Core\Entity\EntityTypeInterface;
 use Drupal\Core\Field\BaseFieldDefinition;
 use Drupal\Core\Field\FieldStorageDefinitionInterface;
 use Drupal\Core\StringTranslation\TranslatableMarkup;
-use Drupal\soda_scs_manager\Entity\Bundle\SodaScsComponentBundle;
 use Drupal\user\EntityOwnerTrait;
 
 /**
@@ -118,8 +117,6 @@ class SodaScsStack extends ContentEntityBase implements SodaScsStackInterface {
   public function getLabel() {
     return $this->get('label')->value;
   }
-
-
 
   /**
    * {@inheritdoc}
@@ -248,6 +245,29 @@ class SodaScsStack extends ContentEntityBase implements SodaScsStackInterface {
         'label' => 'above',
         'type' => 'string',
         'weight' => 20,
+      ]);
+
+    $fields['partOfProject'] = BaseFieldDefinition::create('entity_reference')
+      ->setLabel(new TranslatableMarkup('Project'))
+      ->setDescription(new TranslatableMarkup('The project this component belongs to.'))
+      ->setSetting('target_type', 'soda_scs_project')
+      ->setSetting('handler', 'default')
+      ->setRequired(FALSE)
+      ->setDisplayConfigurable('form', TRUE)
+      ->setDisplayOptions('form', [
+        'type' => 'inline_entity_form_complex',
+        'weight' => 5,
+        'settings' => [
+          'allow_new' => TRUE,
+          'allow_existing' => TRUE,
+          'match_operator' => 'CONTAINS',
+        ],
+      ])
+      ->setDisplayConfigurable('view', TRUE)
+      ->setDisplayOptions('view', [
+        'label' => 'above',
+        'type' => 'entity_reference_label',
+        'weight' => 5,
       ]);
 
     $fields['updated'] = BaseFieldDefinition::create('changed')

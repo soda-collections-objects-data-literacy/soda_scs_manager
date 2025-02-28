@@ -54,7 +54,7 @@ class SodaScsStackCreateForm extends ContentEntityForm {
   /**
    * The Soda SCS API Actions service.
    *
-   * @var \Drupal\soda_scs_manager\SodaScsStackActionsInterface
+   * @var \Drupal\soda_scs_manager\StackActions\SodaScsStackActionsInterface
    */
   protected SodaScsStackActionsInterface $sodaScsStackActions;
 
@@ -71,7 +71,7 @@ class SodaScsStackCreateForm extends ContentEntityForm {
    *   The config factory.
    * @param \Drupal\Component\Datetime\TimeInterface $time
    *   The time service.
-   * @param \Drupal\soda_scs_manager\SodaScsStackActions $sodaScsStackActions
+   * @param \Drupal\soda_scs_manager\StackActions\SodaScsStackActionsInterface $sodaScsStackActions
    *   The Soda SCS API Actions service.
    */
   public function __construct(

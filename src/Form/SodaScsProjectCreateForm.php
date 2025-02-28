@@ -29,7 +29,7 @@ use Drupal\Core\Entity\EntityTypeManagerInterface;
  * - image: The image of the entity (comes from bundle).
  * and redirects to the components page.
  */
-class SodaScsComponentCreateForm extends ContentEntityForm {
+class SodaScsProjectCreateForm extends ContentEntityForm {
 
 
   /**
@@ -132,7 +132,7 @@ class SodaScsComponentCreateForm extends ContentEntityForm {
    * {@inheritdoc}
    */
   public function getFormId(): string {
-    return 'soda_scs_manager_component_create_form';
+    return 'soda_scs_manager_project_create_form';
   }
 
   /**
@@ -141,29 +141,14 @@ class SodaScsComponentCreateForm extends ContentEntityForm {
   public function buildForm(array $form, FormStateInterface $form_state, string|null $bundle = NULL) {
 
     $this->bundle = $bundle;
+
     // Build the form.
     $form = parent::buildForm($form, $form_state);
-
-    $bundle_info = $this->entityTypeBundleInfo->getBundleInfo('soda_scs_component');
-
-    $form['#title'] = $this->t('Create a new @label', ['@label' => $bundle_info[$this->bundle]['label']]);
-
-    $form['info'] = [
-      '#type' => 'details',
-      '#title' => $this->t('What is that?'),
-      '#value' => $bundle_info[$this->bundle]['description'],
-    ];
 
     $form['owner']['widget']['#default_value'] = $this->currentUser->id();
     if (!\Drupal::currentUser()->hasPermission('soda scs manager admin')) {
       $form['owner']['#access'] = FALSE;
     }
-
-    // Change the label of the submit button.
-    $form['actions']['submit']['#value'] = $this->t('CREATE COMPONENT');
-    $form['actions']['submit']['#attributes']['class'][] = 'soda-scs-component--component--form-submit';
-
-    $form['#attached']['library'][] = 'soda_scs_manager/globalStyling';
 
     return $form;
   }
@@ -171,114 +156,23 @@ class SodaScsComponentCreateForm extends ContentEntityForm {
   /**
    * {@inheritdoc}
    */
-  public function validateForm(array &$form, FormStateInterface $form_state) {
-
-    parent::validateForm($form, $form_state);
-    $machineName = $form_state->getValue('machineName')[0]['value'];
-
-    $pattern = '/^[a-z0-9-_]+$/';
-
-    if (!preg_match($pattern, $machineName)) {
-      $form_state->setErrorByName('machineName', $this->t('The machineName can only contain small letters, digits, minus, and underscore'));
-    }
-
-    $disallowed_words = [
-      "all",
-      "alter",
-      "and",
-      "any",
-      "between",
-      "case",
-      "create",
-      "delete",
-      "drop",
-      "else",
-      "end",
-      "exists",
-      "false",
-      "from",
-      "group",
-      "having",
-      "if",
-      "in",
-      "insert",
-      "is",
-      "join",
-      "like",
-      "limit",
-      "not",
-      "null",
-      "offset",
-      "order",
-      "or",
-      "regexp",
-      "rlike",
-      "select",
-      "some",
-      "then",
-      "truncate",
-      "true",
-      "union",
-      "update",
-      "where",
-      "when",
-      "xor",
-    ];
-
-    // Check if the machineName contains any disallowed words.
-    foreach ($disallowed_words as $word) {
-
-      if ($machineName === $disallowed_words) {
-        $form_state->setErrorByName('machineName', $this->t('The machineName cannot contain the word "@word"', ['@word' => $word]));
-      }
-    }
-
-    // Check if the machineName is already in use by another SodaScsComponent entity.
-    $entity_query = $this->entityTypeManager->getStorage('soda_scs_component')->getQuery()
-      ->accessCheck(FALSE)
-      ->condition('machineName', $machineName);
-    $existing_entities = $entity_query->execute();
-
-    if (!empty($existing_entities)) {
-      $form_state->setErrorByName('machineName', $this->t('The machineName is already in use by another Soda SCS Component entity'));
-    }
+  public function save(array $form, FormStateInterface $form_state) {
+    parent::save($form, $form_state);
   }
 
   /**
    * {@inheritdoc}
-   *
-   * @throws \Drupal\Core\Entity\EntityStorageException
    */
-  public function save(array $form, FormStateInterface $form_state): void {
-    $label = $form_state->getValue('label')[0]['value'];
-    // We call it component here.
-    /** @var \Drupal\soda_scs_manager\Entity\SodaScsComponentInterface $component */
-    $component = $this->entity;
-    $component->set('bundle', $this->entity->bundle());
-    $component->set('created', $this->time->getRequestTime());
-    $component->set('updated', $this->time->getRequestTime());
-    $component->set('owner', $form_state->getValue('owner'));
-    $machineName = reset($form_state->getValue('machineName'))['value'];
-    $component->setLabel($label);
-    $component->set('machineName', $machineName);
-    /** @var \Drupal\soda_scs_manager\Entity\SodaScsComponentBundleInterface $bundle */
-    $bundle_info = $this->entityTypeBundleInfo->getBundleInfo('soda_scs_component')[$this->bundle];
-    $component->set('description', $bundle_info['description']);
-    $component->set('imageUrl', $bundle_info['imageUrl']);
+  public function validateForm(array &$form, FormStateInterface $form_state) {
+    parent::validateForm($form, $form_state);
+  }
 
-    // Create external stack.
-    $createComponentResult = $this->sodaScsComponentActions->createComponent($component);
+  /**
+   * {@inheritdoc}
+   */
+  public function submitForm(array &$form, FormStateInterface $form_state) {
+    parent::submitForm($form, $form_state);
 
-    if (!$createComponentResult['success']) {
-      $this->messenger()->addMessage($this->t('Cannot create component "@label". See logs for more details.', [
-        '@label' => $this->entity->label(),
-        '@username' => $this->currentUser->getAccount()->getDisplayName(),
-      ]), 'error');
-      return;
-    }
-
-    // Redirect to the components page.
-    $form_state->setRedirect('soda_scs_manager.desk');
   }
 
 }

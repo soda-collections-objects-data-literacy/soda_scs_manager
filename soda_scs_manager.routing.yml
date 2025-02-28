@@ -117,10 +117,11 @@ entity.soda_scs_service_key.canonical:
         type: entity:soda_scs_service_key
 
 entity.soda_scs_service_key.add_form:
-  path: '/soda-scs-manager/service-key/add'
+  path: '/soda-scs-manager/service-key/add/{bundle}'
   defaults:
     _entity_form: 'soda_scs_service_key.add'
     _title: 'Add SODa SCS Service Key'
+    bundle: 'soda_scs_service_key'
   requirements:
     _permission: 'soda scs manager user'
 
@@ -159,10 +160,19 @@ entity.soda_scs_project.canonical:
     _permission: 'soda scs manager user'
 
 entity.soda_scs_project.add_form:
-  path: '/soda-scs-manager/project/add'
+  path: '/soda-scs-manager/project/add/{bundle}'
   defaults:
     _entity_form: 'soda_scs_project.add'
     _title: 'Add SODa SCS Project'
+    bundle: 'soda_scs_project'
+  requirements:
+    _permission: 'soda scs manager user'
+
+entity.soda_scs_project.edit_form:
+  path: '/soda-scs-manager/project/{soda_scs_project}/edit'
+  defaults:
+    _entity_form: 'soda_scs_project.edit'
+    _title: 'Edit SODa SCS Project'
   requirements:
     _permission: 'soda scs manager user'
 
@@ -179,7 +189,7 @@ entity.soda_scs_project.delete_form:
     _permission: 'soda scs manager user'
 
 entity.soda_scs_project.collection:
-  path: '/soda-scs-manager/projects'
+  path: '/soda-scs-manager/project/list'
   defaults:
     _entity_list: 'soda_scs_project'
     _title: 'SODa SCS Projects'
@@ -187,7 +197,7 @@ entity.soda_scs_project.collection:
     _permission: 'soda scs manager user'
 
 # Pages
-
+# @todo: refactor to use entity type as parameter for just one route
 soda_scs_manager.desk:
   path: '/soda-scs-manager/desk'
   defaults:

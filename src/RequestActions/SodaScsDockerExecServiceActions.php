@@ -14,17 +14,16 @@ use Drupal\Core\Messenger\MessengerInterface;
 use Drupal\Core\StringTranslation\StringTranslationTrait;
 use Drupal\Core\StringTranslation\TranslationInterface;
 use Drupal\Core\Template\TwigEnvironment;
-use Drupal\Core\TypedData\Exception\MissingDataException;
 use Drupal\soda_scs_manager\ServiceActions\SodaScsServiceActionsInterface;
 use Drupal\soda_scs_manager\Helpers\SodaScsServiceHelpers;
-use Drupal\soda_scs_manager\RequestActions\SodaScsServiceRequestInterface;
+use Drupal\soda_scs_manager\RequestActions\SodaScsExecRequestInterface;
 use GuzzleHttp\ClientInterface;
 use Symfony\Component\HttpFoundation\RequestStack;
 
 /**
  * Handles the communication with the SCS user manager daemon.
  */
-class SodaScsDockerVolumesServiceActions implements SodaScsServiceRequestInterface {
+class SodaScsDockerExecServiceActions implements SodaScsExecRequestInterface {
 
   use DependencySerializationTrait;
   use StringTranslationTrait;
@@ -200,30 +199,6 @@ class SodaScsDockerVolumesServiceActions implements SodaScsServiceRequestInterfa
   }
 
   /**
-   * Build token request.
-   *
-   * @param array $requestParams
-   *   The request parameters.
-   *
-   * @return array
-   *   The request array for the makeRequest function.
-   */
-  public function buildTokenRequest(array $requestParams): array {
-    return [];
-  }
-
-  /**
-   * Portainer instance health check.
-   *
-   * @return array
-   *   The request array for the makeRequest function.
-   */
-  public function buildHealthCheckRequest(array $requestParams): array {
-    $healthRequest = $this->buildGetRequest($requestParams);
-    return $healthRequest;
-  }
-
-  /**
    * Builds the create volume request for the Portainer service API.
    *
    * @param array $requestParams
@@ -235,10 +210,20 @@ class SodaScsDockerVolumesServiceActions implements SodaScsServiceRequestInterfa
    * @throws \Drupal\Core\TypedData\Exception\MissingDataException
    */
   public function buildCreateRequest(array $requestParams): array {
+    // Initialize settings.
     $portainerServiceSettings = $this->sodaScsServiceHelpers->initPortainerServiceSettings();
-    $dockerVolumeServiceSettings = $this->sodaScsServiceHelpers->initDockerVolumesServiceSettings();
+    $dockerExecServiceSettings = $this->sodaScsServiceHelpers->initDockerExecServiceSettings();
 
-    $route = $portainerServiceSettings['portainerHostRoute'] . $portainerServiceSettings['portainerEndpointsBaseUrlRoute'] . str_replace('{endpointId}', $portainerServiceSettings['portainerEndpointId'], $dockerVolumeServiceSettings['dockerApiBaseUrlRoute']) . $dockerVolumeServiceSettings['dockerApiVolumesBaseUrlRoute'] . $dockerVolumeServiceSettings['dockerApiVolumesCreateUrlRoute'];
+    $route =
+      // https://portainer.scs.sammlungen.io
+      $portainerServiceSettings['portainerHostRoute'] .
+      // /api/endpoints
+      $portainerServiceSettings['portainerEndpointsBaseUrlRoute'] .
+      // /{endpointId}/docker
+      str_replace('{endpointId}', $portainerServiceSettings['portainerEndpointId'], $portainerServiceSettings['dockerApiBaseUrlRoute']) .
+      // /containers/{containerId}/exec.
+      str_replace('{containerId}', $requestParams['containerId'], $dockerExecServiceSettings['dockerApiExecCreateUrlRoute']);
+
     return [
       'method' => 'POST',
       'route' => $route,
@@ -249,139 +234,128 @@ class SodaScsDockerVolumesServiceActions implements SodaScsServiceRequestInterfa
       ],
       'body' => json_encode(
         [
-          'Name' => $requestParams['machineName'],
-          'Driver' => 'local',
-          'labels' => [
-            'com.docker.compose.project' => $requestParams['project'],
-            'com.docker.compose.volume' => $requestParams['machineName'],
-          ],
+          'Cmd' => $requestParams['cmd'],
+          'Detach' => FALSE,
+          'Tty' => FALSE,
+          'User' => $requestParams['user'] ?? '',
+          'WorkingDir' => $requestParams['workingDir'] ?? '',
+          'Env' => $requestParams['env'] ?? [],
         ]
       ),
     ];
   }
 
   /**
-   * Builds the delete volume request for the Portainer service API.
-   *
-   * @param array $requestParams
-   *   The request params.
-   *
-   * @return array
-   *   The request array.
-   *
-   * @throws \Drupal\Core\TypedData\Exception\MissingDataException
-   */
-  public function buildDeleteRequest(array $requestParams): array {
-    // Init settings.
-    $portainerServiceSettings = $this->sodaScsServiceHelpers->initPortainerServiceSettings();
-    $dockerVolumeServiceSettings = $this->sodaScsServiceHelpers->initDockerVolumesServiceSettings();
-
-    // Construct route.
-    $route = $portainerServiceSettings['portainerHostRoute'] . $portainerServiceSettings['portainerEndpointsBaseUrlRoute'] . str_replace('{endpointId}', $portainerServiceSettings['portainerEndpointId'], $dockerVolumeServiceSettings['dockerApiBaseUrlRoute']) . $dockerVolumeServiceSettings['dockerApiVolumesBaseUrlRoute'] . str_replace('{volumeId}', urlencode($requestParams['machineName']), $dockerVolumeServiceSettings['dockerApiVolumesDeleteUrlRoute']);
-
-    return [
-      'method' => 'DELETE',
-      'route' => $route,
-      'headers' => [
-        'Content-Type' => 'application/json',
-        'Accept' => 'application/json',
-        'X-API-Key' => $portainerServiceSettings['portainerAuthenticationToken'],
-      ],
-    ];
-  }
-
-  /**
-   * Builds the inspect volume request for the Portainer service API.
-   *
-   * @param array $requestParams
-   *   The name of the volume to inspect.
-   *
-   * @return array
-   *   The request array.
-   *
-   * @throws \Drupal\Core\TypedData\Exception\MissingDataException
-   */
-  public function buildGetRequest(array $requestParams): array {
-    // Init settings.
-    $portainerServiceSettings = $this->sodaScsServiceHelpers->initPortainerServiceSettings();
-    $dockerVolumeServiceSettings = $this->sodaScsServiceHelpers->initDockerVolumesServiceSettings();
-
-    // Construct route.
-    $route = $portainerServiceSettings['portainerHostRoute'] . $portainerServiceSettings['portainerEndpointsBaseUrlRoute'] . str_replace('{endpointId}', $portainerServiceSettings['portainerEndpointId'], $dockerVolumeServiceSettings['dockerApiBaseUrlRoute']) . $dockerVolumeServiceSettings['dockerApiVolumesBaseUrlRoute'] . str_replace('{volumeId}', urlencode($requestParams['machineName']), $dockerVolumeServiceSettings['dockerApiVolumesReadOneUrlRoute']);
-
-    return [
-      'method' => 'GET',
-      'route' => $route,
-      'headers' => [
-        'Content-Type' => 'application/json',
-        'Accept' => 'application/json',
-        'X-API-Key' => $portainerServiceSettings['portainerAuthenticationToken'],
-      ],
-    ];
-  }
-
-  /**
-   * Builds the list volumes request for the Portainer service API.
+   * Builds the start request for the Docker exec API.
    *
    * @param array $requestParams
    *   The request parameters.
    *
    * @return array
-   *   The request array.
-   *
-   * @throws \Drupal\Core\TypedData\Exception\MissingDataException
+   *   The start request.
    */
-  public function buildGetAllRequest(array $requestParams): array {
-    if (empty($this->settings->get('wisski')['routes']['dockerApi']['url'])) {
-      throw new MissingDataException('Docker API URL setting is not set.');
-    }
-    $route = $this->settings->get('wisski')['routes']['dockerApi']['url'] . '/volumes';
-    return [
-      'method' => 'GET',
-      'route' => $route,
-      'headers' => [
-        'Content-Type' => 'application/json',
-        'Accept' => 'application/json',
-        'X-API-Key' => $this->settings->get('wisski')['portainerOptions']['authenticationToken'],
-      ],
-    ];
-  }
+  public function buildStartRequest(array $requestParams): array {
+    // Initialize settings.
+    $portainerServiceSettings = $this->sodaScsServiceHelpers->initPortainerServiceSettings();
+    $dockerExecServiceSettings = $this->sodaScsServiceHelpers->initDockerExecServiceSettings();
 
-  /**
-   * Build update request.
-   *
-   * @param array $requestParams
-   *   The request parameters.
-   *
-   * @return array
-   *   The request array.
-   *
-   * @throws \Drupal\Core\TypedData\Exception\MissingDataException
-   */
-  public function buildUpdateRequest(array $requestParams): array {
-    if (empty($this->settings->get('wisski')['routes']['dockerApi']['url'])) {
-      throw new MissingDataException('Docker API URL setting is not set.');
-    }
+    $route =
+      // https://portainer.scs.sammlungen.io
+      $portainerServiceSettings['portainerHostRoute'] .
+      // /api/endpoints
+      $portainerServiceSettings['portainerEndpointsBaseUrlRoute'] .
+      // /{endpointId}/docker
+      str_replace('{endpointId}', $portainerServiceSettings['portainerEndpointId'], $dockerExecServiceSettings['dockerApiBaseUrlRoute']) .
+      // /containers/{containerId}/exec/{execId}/start.
+      str_replace('{execId}', $requestParams['execId'], $dockerExecServiceSettings['dockerApiExecStartUrlRoute']);
 
-    $route = $this->settings->get('wisski')['routes']['dockerApi']['url'] . '/volumes/' . urlencode($requestParams['machineName']);
     return [
       'method' => 'POST',
       'route' => $route,
       'headers' => [
         'Content-Type' => 'application/json',
         'Accept' => 'application/json',
-        'X-API-Key' => $this->settings->get('wisski')['portainerOptions']['authenticationToken'],
+        'X-API-Key' => $portainerServiceSettings['portainerAuthenticationToken'],
       ],
-      'body' => json_encode(
-        [
-          'Name' => $requestParams['machineName'],
-          'Driver' => 'local',
-          'DriverOpts' => $requestParams['driverOpts'],
-          'labels' => [
-            'com.docker.compose.volume' => $requestParams['machineName'],
-          ],
-        ]
-      ),
+      'body' => json_encode([
+        'Detach' => FALSE,
+        'Tty' => TRUE,
+      ]),
+    ];
+  }
+
+  /**
+   * Builds the resize request for the Docker exec API.
+   *
+   * @param array $requestParams
+   *   The request parameters.
+   *
+   * @return array
+   *   The resize request.
+   *
+   * @throws \Drupal\Core\TypedData\Exception\MissingDataException
+   */
+  public function buildResizeRequest(array $requestParams): array {
+    // Initialize settings.
+    $portainerServiceSettings = $this->sodaScsServiceHelpers->initPortainerServiceSettings();
+    $dockerExecServiceSettings = $this->sodaScsServiceHelpers->initDockerExecServiceSettings();
+
+    $route =
+      // https://portainer.scs.sammlungen.io
+      $portainerServiceSettings['portainerHostRoute'] .
+      // /api/endpoints
+      $portainerServiceSettings['portainerEndpointsBaseUrlRoute'] .
+      // /{endpointId}/docker
+      str_replace('{endpointId}', $portainerServiceSettings['portainerEndpointId'], $dockerExecServiceSettings['dockerApiBaseUrlRoute']) .
+      // /containers/{containerId}/exec/{execId}/resize.
+      str_replace('{execId}', $requestParams['execId'], $dockerExecServiceSettings['dockerApiExecResizeUrlRoute']);
+
+    return [
+      'method' => 'POST',
+      'route' => $route,
+      'headers' => [
+        'Content-Type' => 'application/json',
+        'Accept' => 'application/json',
+        'X-API-Key' => $portainerServiceSettings['portainerAuthenticationToken'],
+      ],
+      'query' => [
+        'h' => $requestParams['height'] ?? 24,
+        'w' => $requestParams['width'] ?? 80,
+      ],
+    ];
+  }
+
+  /**
+   * Builds the inspect request for the Docker exec API.
+   *
+   * @param array $requestParams
+   *   The request parameters.
+   *
+   * @return array
+   *   The inspect request.
+   */
+  public function buildInspectRequest(array $requestParams): array {
+    // Initialize settings.
+    $portainerServiceSettings = $this->sodaScsServiceHelpers->initPortainerServiceSettings();
+    $dockerExecServiceSettings = $this->sodaScsServiceHelpers->initDockerExecServiceSettings();
+
+    $route =
+      // https://portainer.scs.sammlungen.io
+      $portainerServiceSettings['portainerHostRoute'] .
+      // /api/endpoints
+      $portainerServiceSettings['portainerEndpointsBaseUrlRoute'] .
+      // /{endpointId}/docker
+      str_replace('{endpointId}', $portainerServiceSettings['portainerEndpointId'], $dockerExecServiceSettings['dockerApiBaseUrlRoute']) .
+      // /containers/{containerId}/exec/{execId}/inspect.
+      str_replace('{execId}', $requestParams['execId'], $dockerExecServiceSettings['dockerApiExecInspectUrlRoute']);
+
+    return [
+      'method' => 'GET',
+      'route' => $route,
+      'headers' => [
+        'Accept' => 'application/json',
+        'X-API-Key' => $portainerServiceSettings['portainerAuthenticationToken'],
+      ],
     ];
   }
 

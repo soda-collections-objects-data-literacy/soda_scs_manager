@@ -9,6 +9,7 @@ use Drupal\Core\Entity\EntityTypeManagerInterface;
 use Drupal\Core\Session\AccountInterface;
 use Drupal\Core\Url;
 use Symfony\Component\DependencyInjection\ContainerInterface;
+use Drupal\Core\Entity\EntityTypeBundleInfoInterface;
 
 /**
  * The SODa SCS Manager info controller.
@@ -30,16 +31,30 @@ class SodaScsManagerController extends ControllerBase {
   protected $currentUser;
 
   /**
+   * The bundle info service.
+   *
+   * @var \Drupal\Core\Entity\EntityTypeBundleInfoInterface
+   */
+  protected $bundleInfo;
+
+  /**
    * Class constructor.
    *
    * @param \Drupal\Core\Entity\EntityTypeManagerInterface $entityTypeManager
    *   The entity type manager.
    * @param \Drupal\Core\Session\AccountInterface $currentUser
    *   The current user.
+   * @param \Drupal\Core\Entity\EntityTypeBundleInfoInterface $bundleInfo
+   *   The bundle info service.
    */
-  public function __construct(EntityTypeManagerInterface $entityTypeManager, AccountInterface $currentUser) {
+  public function __construct(
+    EntityTypeManagerInterface $entityTypeManager,
+    AccountInterface $currentUser,
+    EntityTypeBundleInfoInterface $bundleInfo,
+  ) {
     $this->entityTypeManager = $entityTypeManager;
     $this->currentUser = $currentUser;
+    $this->bundleInfo = $bundleInfo;
   }
 
   /**
@@ -51,7 +66,8 @@ class SodaScsManagerController extends ControllerBase {
   public static function create(ContainerInterface $container) {
     return new static(
       $container->get('entity_type.manager'),
-      $container->get('current_user')
+      $container->get('current_user'),
+      $container->get('entity_type.bundle.info')
     );
   }
 
@@ -106,7 +122,7 @@ class SodaScsManagerController extends ControllerBase {
       $componentsByUser[$username][] = $component;
     }
     return [
-      '#theme' => 'components_page',
+      '#theme' => 'components_desk',
       '#componentsByUser' => $componentsByUser,
       '#cache' => [
         'max-age' => 0,
@@ -148,8 +164,50 @@ class SodaScsManagerController extends ControllerBase {
       $stacksByUser[$username][] = $stack;
     }
     return [
-      '#theme' => 'stacks_page',
+      '#theme' => 'stacks_desk',
       '#stacksByUser' => $stacksByUser,
+      '#cache' => [
+        'max-age' => 0,
+      ],
+    ];
+  }
+
+  /**
+   * Page for entity management.
+   *
+   * @return array
+   *   The page build array.
+   */
+  public function entityDeskPage($entity_type): array {
+    $current_user = $this->currentUser();
+    try {
+      $storage = $this->entityTypeManager->getStorage($entity_type);
+    }
+    catch (InvalidPluginDefinitionException | PluginNotFoundException $e) {
+      // @todo Handle exception properly. */
+      return [];
+    }
+    if ($current_user->hasPermission('manage soda scs manager')) {
+      // If the user has the 'manage soda scs manager' permission,
+      // load all components.
+      /** @var \Drupal\soda_scs_manager\Entity\SodaScsStack|\Drupal\soda_scs_manager\Entity\SodaScsComponent $entities */
+      $entities = $storage->loadMultiple();
+    }
+    else {
+      // If the user does not have the 'manage soda scs manager'
+      // permission, only load their own components.
+      $entities = $storage->loadByProperties(['user' => $current_user->id()]);
+    }
+
+    $entitiesByUser = [];
+    /** @var \Drupal\soda_scs_manager\Entity\SodaScsStackInterface|\Drupal\soda_scs_manager\Entity\SodaScsComponentInterface $entity */
+    foreach ($entities as $entity) {
+      $username = $entity->getOwner()->getDisplayName();
+      $entitiesByUser[$username][] = $entity;
+    }
+    return [
+      '#theme' => 'soda_scs_manager__entity_desk',
+      '#entitiesByUser' => $entitiesByUser,
       '#cache' => [
         'max-age' => 0,
       ],
@@ -172,7 +230,14 @@ class SodaScsManagerController extends ControllerBase {
     ];
 
     // Get all component bundles.
-    $bundles = \Drupal::service('entity_type.bundle.info')->getBundleInfo('soda_scs_component');
+    $bundles = $this->bundleInfo->getBundleInfo('soda_scs_component');
+
+    // Remove components that only works in a stack.
+    unset($bundles['soda_scs_collabora_component']);
+    unset($bundles['soda_scs_drawio_component']);
+    unset($bundles['soda_scs_jupyter_component']);
+    unset($bundles['soda_scs_nextcloud_component']);
+    unset($bundles['soda_scs_wisski_component']);
 
     /** @var \Drupal\soda_scs_manager\Entity\Bundle\SodaScsStackBundle $bundle */
     foreach ($bundles as $id => $bundle) {
@@ -209,7 +274,7 @@ class SodaScsManagerController extends ControllerBase {
     ];
 
     // Get all component bundles.
-    $bundles = \Drupal::service('entity_type.bundle.info')->getBundleInfo('soda_scs_stack');
+    $bundles = $this->bundleInfo->getBundleInfo('soda_scs_stack');
 
     /** @var \Drupal\soda_scs_manager\Entity\Bundle\SodaScsStackBundle $bundle */
     foreach ($bundles as $id => $bundle) {
