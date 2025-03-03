@@ -84,24 +84,9 @@ class SodaScsProjectDeleteForm extends ContentEntityDeleteForm {
     $project = $this->entity;
 
     // Delete the whole stack with database.
-    $deleteProjectResult = $project->delete();
+    $project->delete();
 
-    if (!$deleteProjectResult['success']) {
-      \Drupal::messenger()->addError($this->t('%message See logs for more information.', [
-        '%message' => $deleteProjectResult['message'],
-      ]));
-      \Drupal::logger('soda_scs_manager')->error('%message %error %trace', [
-        '%message' => $deleteProjectResult['message'],
-        '%error' => $deleteProjectResult['error'],
-      ]);
-      return;
-    }
-
-    $this->messenger()->addStatus($deleteProjectResult['message']);
-    // Call the parent submit handler to delete the entity.
-    // We don't do this here.
-    // parent::submitForm($form, $form_state);.
-    // Redirect to the desk.
+    $this->messenger()->addStatus($this->t('Project @label has been deleted.', ['@label' => $project->label()]));
     $form_state->setRedirect('entity.soda_scs_project.collection');
   }
 

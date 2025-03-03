@@ -14,6 +14,8 @@ use Drupal\soda_scs_manager\ComponentActions\SodaScsComponentActionsInterface;
 use Drupal\soda_scs_manager\RequestActions\SodaScsServiceRequestInterface;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 use Drupal\Core\Entity\EntityTypeManagerInterface;
+use Drupal\Core\Entity\EntityTypeInterface;
+use Drupal\Core\Field\BaseFieldDefinition;
 
 /**
  * Form controller for the ScsComponent entity create form.
@@ -150,6 +152,15 @@ class SodaScsProjectCreateForm extends ContentEntityForm {
       $form['owner']['#access'] = FALSE;
     }
 
+    // Make the machineName field readonly and add JavaScript to auto-generate it.
+    if (isset($form['machineName'])) {
+      // Add CSS classes for machine name generation.
+      $form['label']['widget'][0]['value']['#attributes']['class'][] = 'soda-scs-manager--machine-name-source';
+      $form['machineName']['widget'][0]['value']['#attributes']['class'][] = 'soda-scs-manager--machine-name-target';
+      // Attach JavaScript to auto-generate machine name.
+      $form['#attached']['library'][] = 'soda_scs_manager/machine-name-generator';
+    }
+
     return $form;
   }
 
@@ -165,6 +176,18 @@ class SodaScsProjectCreateForm extends ContentEntityForm {
    */
   public function validateForm(array &$form, FormStateInterface $form_state) {
     parent::validateForm($form, $form_state);
+    // Check if a project with this machine name already exists.
+    $machineName = $form_state->getValue('machineName')[0]['value'];
+    $query = \Drupal::entityQuery('soda_scs_project')
+      ->condition('machineName', $machineName)
+      ->accessCheck(FALSE);
+    $entities = $query->execute();
+
+    if (!empty($entities)) {
+      $form_state->setErrorByName('machineName', $this->t('A project with machine name "@machine_name" already exists. Please choose a different name.', [
+        '@machine_name' => $machineName,
+      ]));
+    }
   }
 
   /**
@@ -172,6 +195,8 @@ class SodaScsProjectCreateForm extends ContentEntityForm {
    */
   public function submitForm(array &$form, FormStateInterface $form_state) {
     parent::submitForm($form, $form_state);
+
+    $form_state->setRedirect('entity.soda_scs_project.collection');
 
   }
 

@@ -242,14 +242,31 @@ class SodaScsComponent extends ContentEntityBase implements SodaScsComponentInte
 
     $fields['machineName'] = BaseFieldDefinition::create('string')
       ->setLabel(new TranslatableMarkup('Machine Name'))
-      ->setDescription(new TranslatableMarkup('The machine name of the SODa SCS Component. Use only letters, numbers, minus and underscores.'))
+      ->setDescription(new TranslatableMarkup('The machine-readable name of the project.'))
       ->setRequired(TRUE)
-      ->setReadOnly(TRUE)
-      ->setCardinality(1)
-      ->setDisplayConfigurable('view', FALSE)
+      ->setSetting('max_length', 32)
       ->setDisplayOptions('form', [
         'type' => 'string_textfield',
-        'weight' => 20,
+        'weight' => 15,
+        'settings' => [
+          'size' => 30,
+        ],
+        // Make the field read-only in the form display.
+        'third_party_settings' => [
+          'readonly' => TRUE,
+        ],
+      ])
+      ->setDisplayConfigurable('form', TRUE)
+      ->setDisplayOptions('view', [
+        'label' => 'inline',
+        'type' => 'string',
+        'weight' => -5,
+      ])
+      ->setDisplayConfigurable('view', TRUE)
+      // Add constraint to ensure machine name format is valid.
+      ->addConstraint('RegexPattern', [
+        'pattern' => '/^[a-z0-9_]+$/',
+        'message' => t('Machine name must contain only lowercase letters, numbers, and underscores.'),
       ]);
 
     $fields['notes'] = BaseFieldDefinition::create('string_long')

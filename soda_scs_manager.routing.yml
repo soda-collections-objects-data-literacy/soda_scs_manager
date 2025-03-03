@@ -298,3 +298,17 @@ soda_scs_manager.menu.default:
     _controller: '\Drupal\soda_scs_manager\Controller\SodaScsMenuController::mainLinkPage'
   requirements:
     _permission: 'soda scs manager user'
+
+soda_scs_manager.machine_name_edit_form:
+  path: '/soda-scs-manager/machine-name-edit/{entity_type}/{entity_id}'
+  defaults:
+    _form: '\Drupal\soda_scs_manager\Form\MachineNameEditForm'
+    _title: 'Edit Machine Name'
+  requirements:
+    _permission: 'access content'
+  options:
+    parameters:
+      entity_type:
+        type: string
+      entity_id:
+        type: entity:{entity_type}

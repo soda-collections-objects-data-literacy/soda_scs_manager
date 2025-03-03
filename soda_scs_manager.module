@@ -11,7 +11,7 @@ use Drupal\Core\Entity\EntityTypeInterface;
 use Drupal\Core\Routing\RouteMatchInterface;
 use Drupal\Core\StringTranslation\TranslatableMarkup;
 use Drupal\soda_scs_manager\Entity\Bundle\SodaScsComponentBundle;
-use Drupal\soda_scs_manager\Entity\Bundle\SodaScsProjectBundle;
+use Drupal\soda_scs_manager\Entity\Bundle\SodaScsProjectsBundle;
 use Drupal\soda_scs_manager\Entity\Bundle\SodaScsServiceKeyBundle;
 use Drupal\soda_scs_manager\Entity\Bundle\SodaScsStackBundle;
 use Drupal\user\UserInterface;
@@ -101,6 +101,16 @@ function soda_scs_manager_theme($existing, $type, $theme, $path) {
 
     'users_page' => [
       'variables' => ['users' => NULL],
+    ],
+
+    'machine_name_with_edit' => [
+      'variables' => [
+        'machine_name' => NULL,
+        'entity_id' => NULL,
+        'entity_type' => NULL,
+        'edit_label' => NULL,
+        'edit_url' => NULL,
+      ],
     ],
 
   ];
@@ -281,15 +291,15 @@ function soda_scs_manager_entity_bundle_info() {
   ];
 
   // Projects.
-  $bundles['soda_scs_project']['soda_scs_project'] = [
-    'label' => new TranslatableMarkup('Project'),
-    'class' => SodaScsProjectBundle::class,
+  $bundles['soda_scs_project']['default'] = [
+    'label' => new TranslatableMarkup('Default Project'),
+    'class' => SodaScsProjectsBundle::class,
     'description' => new TranslatableMarkup('A Project is a collection of components and stacks.'),
   ];
 
   // Service Keys.
-  $bundles['soda_scs_service_key']['soda_scs_service_key'] = [
-    'label' => new TranslatableMarkup('Service Key'),
+  $bundles['soda_scs_service_key']['default'] = [
+    'label' => new TranslatableMarkup('Default Service Key'),
     'class' => SodaScsServiceKeyBundle::class,
     'description' => new TranslatableMarkup('A Service Key is a key for a service.'),
   ];

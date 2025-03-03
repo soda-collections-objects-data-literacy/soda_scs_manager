@@ -13,3 +13,13 @@ componentHelpers:
   version: 1.x
   js:
     js/updateHealthStatus.js: {}
+
+machine-name-generator:
+  version: 1.x
+  js:
+    js/machine-name-generator.js: {}
+  dependencies:
+    - core/jquery
+    - core/drupal
+    - core/jquery.once
+

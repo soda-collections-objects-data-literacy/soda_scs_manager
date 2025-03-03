@@ -159,6 +159,15 @@ class SodaScsComponentCreateForm extends ContentEntityForm {
       $form['owner']['#access'] = FALSE;
     }
 
+    // Make the machineName field readonly and add JavaScript to auto-generate it.
+    if (isset($form['machineName'])) {
+      // Add CSS classes for machine name generation.
+      $form['label']['widget'][0]['value']['#attributes']['class'][] = 'soda-scs-manager--machine-name-source';
+      $form['machineName']['widget'][0]['value']['#attributes']['class'][] = 'soda-scs-manager--machine-name-target';
+      // Attach JavaScript to auto-generate machine name.
+      $form['#attached']['library'][] = 'soda_scs_manager/machine-name-generator';
+    }
+
     // Change the label of the submit button.
     $form['actions']['submit']['#value'] = $this->t('CREATE COMPONENT');
     $form['actions']['submit']['#attributes']['class'][] = 'soda-scs-component--component--form-submit';

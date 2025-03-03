@@ -135,7 +135,7 @@ class SodaScsStack extends ContentEntityBase implements SodaScsStackInterface {
       ->setDisplayOptions('view', [
         'label' => 'above',
         'type' => 'timestamp',
-        'weight' => 7,
+        'weight' => 70,
       ]);
 
     $fields['description'] = BaseFieldDefinition::create('text_long')
@@ -149,7 +149,7 @@ class SodaScsStack extends ContentEntityBase implements SodaScsStackInterface {
         'type' => 'text_textarea',
         'label' => 'above',
         'region' => 'hidden',
-        'weight' => 3,
+        'weight' => 30,
         'settings' => [
           'rows' => 10,
           'cols' => 100,
@@ -174,7 +174,7 @@ class SodaScsStack extends ContentEntityBase implements SodaScsStackInterface {
       ->setDisplayOptions('view', [
         'label' => 'hidden',
         'type' => 'image',
-        'weight' => 0,
+        'weight' => -10,
       ]);
 
     // @todo Insure to have only dangling components as references.
@@ -187,7 +187,7 @@ class SodaScsStack extends ContentEntityBase implements SodaScsStackInterface {
       ->setDisplayOptions('view', [
         'label' => 'above',
         'type' => 'entity_reference_label',
-        'weight' => 2,
+        'weight' => 20,
       ])
       ->setDisplayConfigurable('form', TRUE);
 
@@ -230,21 +230,32 @@ class SodaScsStack extends ContentEntityBase implements SodaScsStackInterface {
       ]);
 
     $fields['machineName'] = BaseFieldDefinition::create('string')
-      ->setLabel(new TranslatableMarkup('machineName'))
-      ->setDescription(new TranslatableMarkup('Used for "machineName".soda-scs.org.'))
+      ->setLabel(new TranslatableMarkup('Machine Name'))
+      ->setDescription(new TranslatableMarkup('The machine-readable name of the project.'))
       ->setRequired(TRUE)
-      ->setReadOnly(TRUE)
-      ->setTranslatable(FALSE)
-      ->setCardinality(1)
-      ->setDisplayConfigurable('view', FALSE)
+      ->setSetting('max_length', 32)
       ->setDisplayOptions('form', [
-        'type' => 'text_default',
-        'weight' => 20,
+        'type' => 'string_textfield',
+        'weight' => 15,
+        'settings' => [
+          'size' => 30,
+        ],
+        // Make the field read-only in the form display.
+        'third_party_settings' => [
+          'readonly' => TRUE,
+        ],
       ])
+      ->setDisplayConfigurable('form', TRUE)
       ->setDisplayOptions('view', [
-        'label' => 'above',
+        'label' => 'inline',
         'type' => 'string',
-        'weight' => 20,
+        'weight' => -5,
+      ])
+      ->setDisplayConfigurable('view', TRUE)
+      // Add constraint to ensure machine name format is valid.
+      ->addConstraint('RegexPattern', [
+        'pattern' => '/^[a-z0-9_]+$/',
+        'message' => t('Machine name must contain only lowercase letters, numbers, and underscores.'),
       ]);
 
     $fields['partOfProject'] = BaseFieldDefinition::create('entity_reference')
@@ -256,7 +267,7 @@ class SodaScsStack extends ContentEntityBase implements SodaScsStackInterface {
       ->setDisplayConfigurable('form', TRUE)
       ->setDisplayOptions('form', [
         'type' => 'inline_entity_form_complex',
-        'weight' => 5,
+        'weight' => 40,
         'settings' => [
           'allow_new' => TRUE,
           'allow_existing' => TRUE,
@@ -280,7 +291,7 @@ class SodaScsStack extends ContentEntityBase implements SodaScsStackInterface {
       ->setDisplayOptions('view', [
         'label' => 'above',
         'type' => 'timestamp',
-        'weight' => 8,
+        'weight' => 80,
       ]);
 
     return $fields;

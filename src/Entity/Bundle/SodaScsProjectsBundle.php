@@ -11,7 +11,7 @@ use Drupal\soda_scs_manager\Entity\SodaScsProjectInterface;
 /**
  * A bundle class for SODa SCS Project.
  */
-class SodaScsProjectBundle extends SodaScsProject implements SodaScsProjectInterface {
+class SodaScsProjectsBundle extends SodaScsProject implements SodaScsProjectInterface {
 
   /**
    * {@inheritdoc}
@@ -19,7 +19,7 @@ class SodaScsProjectBundle extends SodaScsProject implements SodaScsProjectInter
   public static function bundleFieldDefinitions(EntityTypeInterface $entity_type, $bundle, array $base_field_definitions) {
     $definitions = [];
     switch ($bundle) {
-      case 'soda_scs_project':
+      case 'default':
         $definitions['testFields'] = BundleFieldDefinition::create('string')
           ->setLabel(new TranslatableMarkup('Test fields'))
           ->setDescription(new TranslatableMarkup('Test fields for the project.'))

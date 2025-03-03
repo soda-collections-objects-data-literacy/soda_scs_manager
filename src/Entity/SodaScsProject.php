@@ -25,7 +25,7 @@ use Drupal\user\EntityOwnerTrait;
  *   ),
  *   handlers = {
  *     "views_data" = "Drupal\views\EntityViewsData",
- *     "list_builder" = "Drupal\Core\Entity\EntityListBuilder",
+ *     "list_builder" = "Drupal\soda_scs_manager\ListBuilder\SodaScsProjectListBuilder",
  *     "view_builder" = "Drupal\Core\Entity\EntityViewBuilder",
  *     "form" = {
  *       "default" = "Drupal\soda_scs_manager\Form\SodaScsProjectForm",
@@ -73,6 +73,7 @@ use Drupal\user\EntityOwnerTrait;
  *     "owner",
  *     "members",
  *     "rights",
+ *     "scsComponent",
  *   }
  * )
  */
@@ -98,42 +99,68 @@ class SodaScsProject extends ContentEntityBase implements EntityInterface {
     $fields['description'] = BaseFieldDefinition::create('string_long')
       ->setLabel(new TranslatableMarkup('Description'))
       ->setDescription(new TranslatableMarkup('The description of the project.'))
-      ->setDisplayConfigurable('form', TRUE)
-      ->setDisplayConfigurable('view', TRUE);
+      ->setDisplayConfigurable('form', FALSE)
+      ->setDisplayConfigurable('view', FALSE);
 
     $fields['label'] = BaseFieldDefinition::create('string')
       ->setLabel(new TranslatableMarkup('Label'))
       ->setDescription(new TranslatableMarkup('The label of the project.'))
       ->setRequired(TRUE)
-      ->setDisplayConfigurable('form', TRUE)
-      ->setDisplayConfigurable('view', TRUE)
+      ->setDisplayConfigurable('form', FALSE)
+      ->setDisplayOptions('form', [
+        'type' => 'string_textfield',
+        'weight' => 10,
+        'settings' => [
+          'size' => 30,
+        ],
+      ])
+      ->setDisplayConfigurable('view', FALSE)
       ->setDisplayOptions('view', [
         'label' => 'above',
         'type' => 'string',
         'weight' => 10,
-      ])
-      ->setDisplayOptions('form', [
-        'type' => 'string_textfield',
-        'weight' => 10,
       ]);
 
     $fields['machineName'] = BaseFieldDefinition::create('string')
-      ->setLabel(new TranslatableMarkup('Machine name'))
-      ->setDescription(new TranslatableMarkup('The machine name of the project.'))
-      ->setDisplayConfigurable('form', TRUE)
+      ->setLabel(new TranslatableMarkup('Machine Name'))
+      ->setDescription(new TranslatableMarkup('The machine-readable name of the project.'))
+      ->setRequired(TRUE)
+      ->setSetting('max_length', 32)
       ->setDisplayOptions('form', [
         'type' => 'string_textfield',
-        'weight' => 20,
+        'weight' => 15,
+        'settings' => [
+          'size' => 30,
+        ],
+        // Make the field read-only in the form display.
+        'third_party_settings' => [
+          'readonly' => TRUE,
+        ],
       ])
-      ->setDisplayConfigurable('view', TRUE);
+      ->setDisplayConfigurable('form', TRUE)
+      ->setDisplayOptions('view', [
+        'label' => 'inline',
+        'type' => 'string',
+        'weight' => -5,
+      ])
+      ->setDisplayConfigurable('view', TRUE)
+      // Add constraint to ensure machine name format is valid.
+      ->addConstraint('RegexPattern', [
+        'pattern' => '/^[a-z0-9_]+$/',
+        'message' => t('Machine name must contain only lowercase letters, numbers, and underscores.'),
+      ]);
 
     $fields['members'] = BaseFieldDefinition::create('entity_reference')
       ->setLabel(new TranslatableMarkup('Members'))
       ->setDescription(new TranslatableMarkup('The members associated with the project.'))
       ->setSetting('target_type', 'user')
       ->setCardinality(FieldStorageDefinitionInterface::CARDINALITY_UNLIMITED)
-      ->setDisplayConfigurable('form', TRUE)
-      ->setDisplayConfigurable('view', TRUE);
+      ->setDisplayConfigurable('form', FALSE)
+      ->setDisplayOptions('form', [
+        'type' => 'entity_reference_autocomplete',
+        'weight' => 30,
+      ])
+      ->setDisplayConfigurable('view', FALSE);
 
     $fields['owner'] = BaseFieldDefinition::create('entity_reference')
       ->setLabel(new TranslatableMarkup('Owner'))
@@ -142,8 +169,8 @@ class SodaScsProject extends ContentEntityBase implements EntityInterface {
       ->setSetting('handler', 'default')
       ->setRequired(TRUE)
       ->setReadOnly(FALSE)
-      ->setDisplayConfigurable('form', TRUE)
-      ->setDisplayConfigurable('view', TRUE)
+      ->setDisplayConfigurable('form', FALSE)
+      ->setDisplayConfigurable('view', FALSE)
       ->setDisplayOptions('view', [
         'label' => 'above',
         'type' => 'entity_reference_label',
@@ -157,8 +184,23 @@ class SodaScsProject extends ContentEntityBase implements EntityInterface {
     $fields['rights'] = BaseFieldDefinition::create('string_long')
       ->setLabel(new TranslatableMarkup('Rights'))
       ->setDescription(new TranslatableMarkup('The rights associated with the project.'))
-      ->setDisplayConfigurable('form', TRUE)
-      ->setDisplayConfigurable('view', TRUE);
+      ->setDisplayConfigurable('form', FALSE)
+      ->setDisplayConfigurable('view', FALSE);
+
+    $fields['scsComponent'] = BaseFieldDefinition::create('entity_reference')
+      ->setLabel(new TranslatableMarkup('SCS Components'))
+      ->setDescription(new TranslatableMarkup('The SCS components associated with this project.'))
+      ->setSetting('target_type', 'soda_scs_component')
+      ->setCardinality(FieldStorageDefinitionInterface::CARDINALITY_UNLIMITED)
+      ->setComputed(TRUE)
+      ->setClass('\Drupal\soda_scs_manager\ComputedField\ScsComponentsReferenceField')
+      ->setDisplayConfigurable('form', FALSE)
+      ->setDisplayConfigurable('view', FALSE)
+      ->setDisplayOptions('view', [
+        'label' => 'above',
+        'type' => 'entity_reference_label',
+        'weight' => 40,
+      ]);
 
     $fields['updated'] = BaseFieldDefinition::create('changed')
       ->setLabel(new TranslatableMarkup('Updated'))

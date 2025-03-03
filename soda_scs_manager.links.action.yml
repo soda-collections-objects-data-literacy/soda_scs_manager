@@ -1,0 +1,11 @@
+# Project
+entity.soda_scs_project.add_form:
+  route_name: entity.soda_scs_project.add_form
+  title: 'Add project'
+  route_parameters:
+    bundle: 'soda_scs_project'
+  appears_on:
+    - entity.soda_scs_project.collection
+  options:
+    attributes:
+      class: ['button', 'button--action', 'button--primary']
