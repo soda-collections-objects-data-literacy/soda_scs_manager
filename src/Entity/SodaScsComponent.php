@@ -248,13 +248,6 @@ class SodaScsComponent extends ContentEntityBase implements SodaScsComponentInte
       ->setDisplayOptions('form', [
         'type' => 'string_textfield',
         'weight' => 15,
-        'settings' => [
-          'size' => 30,
-        ],
-        // Make the field read-only in the form display.
-        'third_party_settings' => [
-          'readonly' => TRUE,
-        ],
       ])
       ->setDisplayConfigurable('form', TRUE)
       ->setDisplayOptions('view', [
@@ -264,9 +257,11 @@ class SodaScsComponent extends ContentEntityBase implements SodaScsComponentInte
       ])
       ->setDisplayConfigurable('view', TRUE)
       // Add constraint to ensure machine name format is valid.
-      ->addConstraint('RegexPattern', [
-        'pattern' => '/^[a-z0-9_]+$/',
-        'message' => t('Machine name must contain only lowercase letters, numbers, and underscores.'),
+      ->addPropertyConstraints('value', [
+        'Regex' => [
+          'pattern' => '/^[a-z0-9_]+$/',
+          'message' => t('Machine name must contain only lowercase letters, numbers, and underscores.'),
+        ],
       ]);
 
     $fields['notes'] = BaseFieldDefinition::create('string_long')

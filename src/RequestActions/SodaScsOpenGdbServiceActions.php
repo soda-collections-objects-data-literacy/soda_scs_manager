@@ -99,7 +99,7 @@ class SodaScsOpenGdbServiceActions implements SodaScsServiceRequestInterface {
         break;
 
       case 'user':
-        $url = $triplestoreUserSettings['baseUrl'] . $triplestoreUserSettings['createUrl'];
+        $url = $triplestoreUserSettings['baseUrl'] . str_replace('{userId}', $requestParams['routeParams']['username'], $triplestoreUserSettings['createUrl']);
         $body = json_encode([
           'password' => $requestParams['body']['password'],
           "grantedAuthorities" => [
@@ -211,7 +211,21 @@ class SodaScsOpenGdbServiceActions implements SodaScsServiceRequestInterface {
   public function buildHealthCheckRequest(array $requestParams): array {
     // Initialize settings.
     $triplestoreServiceSettings = $this->sodaScsServiceHelpers->initTriplestoreServiceSettings();
-    $route = $triplestoreServiceSettings['triplestoreHostRoute'] . $requestParams['url'];
+    $triplestoreRepositoriesSettings = $this->sodaScsServiceHelpers->initTriplestoreRepositoriesSettings();
+    switch ($requestParams['type']) {
+      case 'repository':
+        $dynamicUrlPart = $triplestoreRepositoriesSettings['baseUrl'] . str_replace('{repositoryId}', $requestParams['routeParams']['machineName'], $triplestoreRepositoriesSettings['healthCheckUrl']);
+        break;
+
+      case 'service':
+        $dynamicUrlPart = $triplestoreServiceSettings['healthCheckUrl'];
+        break;
+
+      default:
+        throw new MissingDataException('Health check URL setting is not set.');
+    }
+
+    $route = $triplestoreServiceSettings['triplestoreHostRoute'] . $dynamicUrlPart;
 
     return [
       'success' => TRUE,
@@ -349,15 +363,15 @@ class SodaScsOpenGdbServiceActions implements SodaScsServiceRequestInterface {
     // Send the request.
     try {
       $response = $this->httpClient->request($request['method'], $request['route'], $requestParams);
-      $response = json_decode($response->getBody()->getContents(), TRUE);
 
       return [
-        'message' => 'Request succeeded.',
         'data' => [
           'openGdbResponse' => $response,
         ],
-        'success' => TRUE,
         'error' => '',
+        'message' => 'Request succeeded.',
+        'statusCode' => $response->getStatusCode(),
+        'success' => TRUE,
       ];
     }
     catch (ClientException $e) {
@@ -392,13 +406,13 @@ class SodaScsOpenGdbServiceActions implements SodaScsServiceRequestInterface {
     }
     $this->messenger->addError($this->t("OpenGDB request for @type failed. See logs for more details.", ['@type' => $request['type']]));
     return [
-      'message' => 'Request failed with code @code' . $e->getCode(),
       'data' => [
         'openGdbResponse' => $e,
       ],
+      'error' => $e->getMessage(),
+      'message' => 'Request failed with code @code' . $e->getCode(),
       'statusCode' => $e->getCode(),
       'success' => FALSE,
-      'error' => $e->getMessage(),
     ];
   }
 

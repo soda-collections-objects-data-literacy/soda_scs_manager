@@ -84,23 +84,9 @@ class SodaScsServiceKeyDeleteForm extends ContentEntityDeleteForm {
     $serviceKey = $this->entity;
 
     // Delete the whole stack with database.
-    $deleteServiceKeyResult = $serviceKey->delete();
+    $serviceKey->delete();
 
-    if (!$deleteServiceKeyResult['success']) {
-      \Drupal::messenger()->addError($this->t('%message See logs for more information.', [
-        '%message' => $deleteServiceKeyResult['message'],
-      ]));
-      \Drupal::logger('soda_scs_manager')->error('%message %error %trace', [
-        '%message' => $deleteServiceKeyResult['message'],
-        '%error' => $deleteServiceKeyResult['error'],
-      ]);
-      return;
-    }
-
-    $this->messenger()->addStatus($deleteServiceKeyResult['message']);
-    // Call the parent submit handler to delete the entity.
-    // We don't do this here.
-    // parent::submitForm($form, $form_state);.
+    $this->messenger()->addStatus($this->t('Key deleted successfully.'));
     // Redirect to the desk.
     $form_state->setRedirect('entity.soda_scs_service_key.collection');
   }

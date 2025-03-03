@@ -141,6 +141,7 @@ class SodaScsComponentHelpers {
           "message" => 'Component health check is not available: ' . $response->getStatusCode(),
           'code' => $response->getStatusCode(),
           'success' => FALSE,
+          'error' => $response->getBody(),
         ];
       }
     }
@@ -149,6 +150,7 @@ class SodaScsComponentHelpers {
         "message" => 'Component health check is not available: ' . $e->getMessage(),
         'code' => $e->getCode(),
         'success' => FALSE,
+        'error' => $e->getMessage(),
       ];
     }
   }
@@ -259,22 +261,31 @@ class SodaScsComponentHelpers {
    */
   public function checkTriplestoreHealth(string $component, string $machineName) {
     try {
-      $healthCheckRoutePart = str_replace('{repositoryID}', $machineName, $this->settings->get('triplestore')['repositories']['healthCheck']['url']);
-      $route = 'https://' . $this->settings->get('triplestore')['openGdbSettings']['host'] . $healthCheckRoutePart;
       $requestParams = [
-        'headers' => [
-          'Content-Type' => 'application/json',
-          'Accept' => 'application/json',
-          'Authorization' => 'Basic ' . base64_encode($this->settings->get('triplestore')['openGdbSettings']['adminUsername'] . ':' . $this->settings->get('triplestore')['openGdbSettings']['adminPassword']),
+        'type' => 'repository',
+        'routeParams' => [
+          'machineName' => $machineName,
         ],
       ];
-      $response = $this->httpClient->request('GET', $route, $requestParams);
-      if ($response->getStatusCode() == 200) {
+      $healthCheckRequest = $this->openGdbServiceActions->buildHealthCheckRequest($requestParams);
+      $healthCheckResult = $this->openGdbServiceActions->makeRequest($healthCheckRequest);
+      if ($healthCheckResult['statusCode'] != 200) {
         return [
-          'message' => "Triplestore is healthy for component $component.",
-          'success' => TRUE,
+          'message' => $this->t("Triplestore health check failed for component @component: @error", [
+            '@component' => $component,
+            '@error' => $healthCheckResult['error'],
+          ]),
+          'success' => FALSE,
+          'error' => $healthCheckResult['error'],
+          'data' => $healthCheckResult['data'],
         ];
       }
+      return [
+        'message' => $this->t("Triplestore is healthy for component @component.", [
+          '@component' => $component,
+        ]),
+        'success' => TRUE,
+      ];
     }
     catch (\Exception $e) {
       return [
@@ -283,6 +294,8 @@ class SodaScsComponentHelpers {
           '@error' => $e->getMessage(),
         ]),
         'success' => FALSE,
+        'error' => $e->getMessage(),
+        'data' => $e,
       ];
     }
   }

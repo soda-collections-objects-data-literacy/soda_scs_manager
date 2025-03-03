@@ -370,6 +370,7 @@ class SodaScsServiceHelpers {
     $triplestoreRepositoriesSettings['readAllUrl'] = $this->settings->get('triplestore.routes.repositories.crud.readAllUrl');
     $triplestoreRepositoriesSettings['updateUrl'] = $this->settings->get('triplestore.routes.repositories.crud.updateUrl');
     $triplestoreRepositoriesSettings['deleteUrl'] = $this->settings->get('triplestore.routes.repositories.crud.deleteUrl');
+    $triplestoreRepositoriesSettings['healthCheckUrl'] = $this->settings->get('triplestore.routes.repositories.healthCheck.url');
 
     if (empty($triplestoreRepositoriesSettings['baseUrl'])) {
       throw new MissingDataException('Triplestore base URL setting is not set.');
@@ -388,6 +389,9 @@ class SodaScsServiceHelpers {
     }
     if (empty($triplestoreRepositoriesSettings['deleteUrl'])) {
       throw new MissingDataException('Triplestore delete URL setting is not set.');
+    }
+    if (empty($triplestoreRepositoriesSettings['healthCheckUrl'])) {
+      throw new MissingDataException('Triplestore health check URL setting is not set.');
     }
 
     foreach ($triplestoreRepositoriesSettings as &$value) {
@@ -412,7 +416,7 @@ class SodaScsServiceHelpers {
     $triplestoreServiceSettings['triplestorePort'] = $this->settings->get('triplestore.generalSettings.port');
     $triplestoreServiceSettings['triplestoreAdminUsername'] = $this->settings->get('triplestore.generalSettings.adminUsername');
     $triplestoreServiceSettings['triplestoreAdminPassword'] = $this->settings->get('triplestore.generalSettings.adminPassword');
-
+    $triplestoreServiceSettings['healthCheckUrl'] = $this->settings->get('triplestore.routes.misc.healthCheck.url');
     if (empty($triplestoreServiceSettings['triplestoreHostRoute'])) {
       throw new MissingDataException('Triplestore host URL setting is not set.');
     }
@@ -424,6 +428,9 @@ class SodaScsServiceHelpers {
     }
     if (empty($triplestoreServiceSettings['triplestoreAdminPassword'])) {
       throw new MissingDataException('Triplestore admin password URL setting is not set.');
+    }
+    if (empty($triplestoreServiceSettings['healthCheckUrl'])) {
+      throw new MissingDataException('Triplestore health check URL setting is not set.');
     }
 
     foreach ($triplestoreServiceSettings as &$value) {

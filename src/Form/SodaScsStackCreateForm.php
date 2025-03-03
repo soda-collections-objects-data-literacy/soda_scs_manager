@@ -130,9 +130,12 @@ class SodaScsStackCreateForm extends ContentEntityForm {
 
     // Make the machineName field readonly and add JavaScript to auto-generate it.
     if (isset($form['machineName'])) {
+      // @todo Check if there is a better way to do this.
       // Add CSS classes for machine name generation.
       $form['label']['widget'][0]['value']['#attributes']['class'][] = 'soda-scs-manager--machine-name-source';
       $form['machineName']['widget'][0]['value']['#attributes']['class'][] = 'soda-scs-manager--machine-name-target';
+      // Make the machine name field read-only.
+      $form['machineName']['widget'][0]['value']['#attributes']['readonly'] = 'readonly';
       // Attach JavaScript to auto-generate machine name.
       $form['#attached']['library'][] = 'soda_scs_manager/machine-name-generator';
     }
@@ -154,7 +157,7 @@ class SodaScsStackCreateForm extends ContentEntityForm {
     parent::validateForm($form, $form_state);
     $machineName = $form_state->getValue('machineName')[0]['value'];
 
-    $pattern = '/^[a-z0-9-]+$/';
+    $pattern = '/^[a-z0-9-_]+$/';
 
     if (!preg_match($pattern, $machineName)) {
       $form_state->setErrorByName('machineName', $this->t('The machineName can only contain small letters, digits, and minus.'));

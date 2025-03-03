@@ -145,6 +145,18 @@ entity.soda_scs_service_key.collection:
   requirements:
     _permission: 'soda scs manager admin'
 
+entity.soda_scs_service_key.renew_confirm_form:
+  path: '/admin/structure/soda_scs_service_key/{soda_scs_service_key}/renew'
+  defaults:
+    _form: '\Drupal\soda_scs_manager\Form\SodaScsServiceKeyRenewConfirmForm'
+    _title: 'Renew service key'
+  requirements:
+    _permission: 'administer soda scs service keys'
+  options:
+    parameters:
+      soda_scs_service_key:
+        type: entity:soda_scs_service_key
+
 # SODa SCS Project Entities
 
 entity.soda_scs_project.canonical:

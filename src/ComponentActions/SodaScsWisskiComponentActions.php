@@ -155,7 +155,7 @@ class SodaScsWisskiComponentActions implements SodaScsComponentActionsInterface 
         'userId'  => $entity->getOwnerId(),
         'username' => $entity->getOwner()->getDisplayName(),
       ];
-      $wisskiComponentServiceKeyEntity = $this->sodaScsServiceKeyActions->getServiceKey($keyProps) ?? throw new \Exception('WissKI service key not found.');
+      $wisskiComponentServiceKeyEntity = $this->sodaScsServiceKeyActions->getServiceKey($keyProps) ?? $this->sodaScsServiceKeyActions->createServiceKey($keyProps);
       $wisskiComponentServiceKeyPassword = $wisskiComponentServiceKeyEntity->get('servicePassword')->value ?? throw new \Exception('WissKI service key password not found.');
 
       /** @var \Drupal\soda_scs_manager\Entity\SodaScsComponentInterface $wisskiComponent */

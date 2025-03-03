@@ -39,10 +39,40 @@ class SodaScsProjectEditForm extends ContentEntityForm {
   }
 
   /**
+   * Cancel form submission handler.
+   *
+   * @param array $form
+   *   The form array.
+   * @param \Drupal\Core\Form\FormStateInterface $form_state
+   *   The form state.
+   */
+  public function cancelForm(array &$form, FormStateInterface $form_state) {
+    $form_state->setRedirect('entity.soda_scs_project.collection');
+  }
+
+  /**
    * {@inheritdoc}
    */
   public function buildForm(array $form, FormStateInterface $form_state) {
     $form = parent::buildForm($form, $form_state);
+
+    // Make the machineName field readonly and add JavaScript to auto-generate it.
+    if (isset($form['machineName'])) {
+      $form['machineName']['widget'][0]['value']['#attributes']['readonly'] = 'readonly';
+      $form['machineName']['widget'][0]['value']['#attributes']['disabled'] = 'disabled';
+    }
+
+    // Remove the delete button.
+    unset($form['actions']['delete']);
+
+    // Add an abort button.
+    $form['actions']['abort'] = [
+      '#type' => 'submit',
+      '#value' => $this->t('Abort'),
+      '#submit' => ['::cancelForm'],
+      '#limit_validation_errors' => [],
+      '#weight' => 10,
+    ];
 
     return $form;
   }
@@ -56,7 +86,7 @@ class SodaScsProjectEditForm extends ContentEntityForm {
     parent::save($form, $form_state);
 
     // Redirect to the components page.
-    $form_state->setRedirect('soda_scs_manager.projects');
+    $form_state->setRedirect('entity.soda_scs_project.collection');
   }
 
 }

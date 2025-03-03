@@ -12,6 +12,7 @@ use Drupal\Core\StringTranslation\StringTranslationTrait;
 use Drupal\Core\StringTranslation\TranslationInterface;
 use Drupal\Core\TypedData\Exception\MissingDataException;
 use Drupal\soda_scs_manager\Entity\SodaScsComponentInterface;
+use Drupal\soda_scs_manager\Entity\SodaScsServiceKeyInterface;
 use Drupal\soda_scs_manager\Helpers\SodaScsServiceHelpers;
 
 /**
@@ -158,9 +159,40 @@ class SodaScsSqlServiceActions implements SodaScsServiceActionsInterface {
   }
 
   /**
-   * Updates a database.
+   * Renews a database user password.
+   *
+   * @param \Drupal\soda_scs_manager\Entity\SodaScsServiceKeyInterface $serviceKey
+   *   The SODa SCS service key.
+   *
+   * @return array
+   *   Success result.
    */
-  public function updateService() {}
+  public function renewUserPassword(SodaScsServiceKeyInterface $serviceKey): array {
+    // Initialize settings.
+    $databaseSettings = $this->sodaScsServiceHelpers->initDatabaseServiceSettings();
+
+    $dbHost = str_replace('https://', '', $databaseSettings['dbHost']);
+    $dbRootPassword = $databaseSettings['dbRootPassword'];
+
+    $dbUser = $serviceKey->get('owner')->target_id;
+    /** @var \Drupal\user\Entity\User $dbUser */
+    $dbUser = $this->entityTypeManager->getStorage('user')->load($dbUser);
+    $dbUsername = $dbUser->getDisplayName();
+
+    $dbUserPassword = $serviceKey->get('servicePassword')->value;
+
+    // Check if the database exists.
+    $alterUserCommand = "mysql -h $dbHost -uroot -p$dbRootPassword -e 'ALTER USER \"$dbUsername\"@\"%\" IDENTIFIED BY \"$dbUserPassword\"; FLUSH PRIVILEGES;' 2>&1";
+    $alterUserResult = exec($alterUserCommand, $alterUserOutput, $alterUserReturnVar);
+
+    return [
+      'command' => $alterUserCommand,
+      'execStatus' => $alterUserReturnVar,
+      'output' => $alterUserOutput,
+      'result' => $alterUserResult,
+    ];
+
+  }
 
   /**
    * Deletes a database.

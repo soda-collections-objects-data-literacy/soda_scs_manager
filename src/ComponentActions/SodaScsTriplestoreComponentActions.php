@@ -186,11 +186,13 @@ class SodaScsTriplestoreComponentActions implements SodaScsComponentActionsInter
       $openGdbgetUserRequest = $this->sodaScsOpenGdbServiceActions->buildGetRequest($getUserRequestParams);
       $getUserResponse = $this->sodaScsOpenGdbServiceActions->makeRequest($openGdbgetUserRequest);
 
+      $getUserResponseData = json_decode($getUserResponse['data']['openGdbResponse']->getBody()->getContents(), TRUE);
+
       // @todo Make good error handling
       if ($getUserResponse['success'] === FALSE) {
         $response = $getUserResponse['data']['openGdbResponse']->getResponse();
         if ($response->getStatusCode() === 404) {
-          // If there is none create repo user.
+          // If there is no create repo user, create one.
           try {
             $createUserRequestParams = [
               'type' => 'user',
@@ -305,7 +307,7 @@ class SodaScsTriplestoreComponentActions implements SodaScsComponentActionsInter
           $roleBefore = ['ROLE_USER'];
           $readRightsBefore = [];
           $writeRightsBefore = [];
-          foreach ($getUserResponse['data']['openGdbResponse']['grantedAuthorities'] as $authority) {
+          foreach ($getUserResponseData['grantedAuthorities'] as $authority) {
             if (strpos($authority, 'ROLE_') === 0) {
               $roleBefore = [$authority];
             }
@@ -475,9 +477,8 @@ class SodaScsTriplestoreComponentActions implements SodaScsComponentActionsInter
       if (!$openGdbDeleteRepositoryResponse['success']) {
         /** @var \GuzzleHttp\Exception\ClientException $clientException */
         $clientException = $openGdbDeleteRepositoryResponse['data']['openGdbResponse'];
-        if (!$clientException->getResponse()->getStatusCode() === 404) {
+        if ($clientException->getCode() === 404) {
           $this->messenger->addError($this->t("Could not delete repository of component %component, because it does not exist. Move on to delete the component.", ['%component' => $machineName]));
-
         }
       }
     }
@@ -502,8 +503,11 @@ class SodaScsTriplestoreComponentActions implements SodaScsComponentActionsInter
         'body' => [],
       ];
 
+      // Get the user.
       $openGdbGetUserRequest = $this->sodaScsOpenGdbServiceActions->buildGetRequest($requestParams);
       $openGdbGetUserResponse = $this->sodaScsOpenGdbServiceActions->makeRequest($openGdbGetUserRequest);
+
+      // Check if the user exists.
       if (!$openGdbGetUserResponse['success']) {
         /** @var \GuzzleHttp\Exception\ClientException $clientException */
         $clientException = $openGdbGetUserResponse['data']['openGdbResponse'];
@@ -537,7 +541,13 @@ class SodaScsTriplestoreComponentActions implements SodaScsComponentActionsInter
       ];
     }
 
-    $authorities = $openGdbGetUserResponse['data']['openGdbResponse']['grantedAuthorities'];
+    // Get the response data.
+    $openGdbGetUserResponseData = json_decode($openGdbGetUserResponse['data']['openGdbResponse']->getBody()->getContents(), TRUE);
+
+    // Get the authorities.
+    $authorities = $openGdbGetUserResponseData['grantedAuthorities'];
+
+    // Check if the user has more than 3 authorities.
     if ($authorities > 3) {
 
       try {
@@ -566,6 +576,7 @@ class SodaScsTriplestoreComponentActions implements SodaScsComponentActionsInter
           ],
         ];
 
+        // Update the user.
         $openGdbUpdateUserRequest = $this->sodaScsOpenGdbServiceActions->buildUpdateRequest($updateUserRequestParams);
         $openGdbUpdateUserResponse = $this->sodaScsOpenGdbServiceActions->makeRequest($openGdbUpdateUserRequest);
         $openGdbDeleteUserResponse = NULL;

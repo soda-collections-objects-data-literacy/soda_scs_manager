@@ -3,6 +3,7 @@
 namespace Drupal\soda_scs_manager\ServiceActions;
 
 use Drupal\soda_scs_manager\Entity\SodaScsComponentInterface;
+use Drupal\soda_scs_manager\Entity\SodaScsServiceKeyInterface;
 
 /**
  * Interface for SODa SCS Service actions.
@@ -34,9 +35,15 @@ interface SodaScsServiceActionsInterface {
   public function existService(string $name): array;
 
   /**
-   * Updates a service.
+   * Renews a service user password.
+   *
+   * @param \Drupal\soda_scs_manager\Entity\SodaScsServiceKeyInterface $serviceKey
+   *   The SODa SCS service key.
+   *
+   * @return array
+   *   Success result.
    */
-  public function updateService();
+  public function renewUserPassword(SodaScsServiceKeyInterface $serviceKey): array;
 
   /**
    * Deletes a service.
@@ -131,7 +138,7 @@ interface SodaScsServiceActionsInterface {
    *
    * @param string $user
    *   The name of the service user.
-   * @param string $userPassword
+   * @param string|null $userPassword
    *   The password of the service user.
    *
    * @return array
@@ -139,7 +146,7 @@ interface SodaScsServiceActionsInterface {
    *   status (>0 = failed or 0 = success), output (array)
    *   and result (last line of output).
    */
-  public function cleanServiceUsers(string $user, string $userPassword = NULL): array;
+  public function cleanServiceUsers(string $user, string|null $userPassword = NULL): array;
 
   /**
    * Checks handle shell command failure.
@@ -160,7 +167,7 @@ interface SodaScsServiceActionsInterface {
    */
   public function handleCommandFailure(array $commandResult, string $action, string $entityName): array;
 
-/**
+  /**
    * Checks if a user has read and write access to a database.
    *
    * @param string $dbUser

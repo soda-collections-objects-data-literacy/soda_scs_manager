@@ -87,6 +87,14 @@ class SodaScsServiceKeyListBuilder extends EntityListBuilder {
       'url' => Url::fromRoute('entity.soda_scs_service_key.delete_form', ['soda_scs_service_key' => $entity->id()]),
     ];
 
+    if ($entity->get('scsComponentBundle')->value === 'soda_scs_sql_component') {
+      $operations['#links']['renew'] = [
+        'title' => $this->t('Renew'),
+        'weight' => 100,
+        'url' => Url::fromRoute('entity.soda_scs_service_key.renew_confirm_form', ['soda_scs_service_key' => $entity->id()]),
+      ];
+    }
+
     return $operations;
   }
 
