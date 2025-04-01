@@ -29,6 +29,16 @@ entity.soda_scs_component.service_link:
       target: '_blank'
       class: ['soda-scs-manager--service-link']
 
+entity.soda_scs_component.confirm_form:
+  route_name: entity.soda_scs_component.snapshot
+  title: 'Snapshot'
+  base_route: entity.soda_scs_component.canonical
+  options:
+    parameters:
+      soda_scs_component: { type: entity:soda_scs_component }
+  weight: 100
+
+
 # Service Key
 entity.soda_scs_service_key.canonical:
   route_name: entity.soda_scs_service_key.canonical
@@ -66,6 +76,15 @@ entity.soda_scs_stack.delete_form:
   base_route: entity.soda_scs_stack.canonical
   title: 'Delete'
   weight: 20
+
+entity.soda_scs_stack.confirm_form:
+  route_name: entity.soda_scs_stack.snapshot
+  title: 'Snapshot'
+  base_route: entity.soda_scs_stack.canonical
+  options:
+    parameters:
+      soda_scs_stack: { type: entity:soda_scs_stack }
+  weight: 100
 
 # Tabs
 
@@ -108,3 +127,4 @@ entity.soda_scs_project.delete_form:
   base_route: entity.soda_scs_project.canonical
   title: 'Delete'
   weight: 20
+

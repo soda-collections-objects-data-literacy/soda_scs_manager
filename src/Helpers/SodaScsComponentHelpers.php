@@ -123,31 +123,43 @@ class SodaScsComponentHelpers {
    * Drupal instance health check.
    */
   public function drupalHealthCheck(string $machineName) {
-    $generalSettings = $this->sodaScsServiceHelpers->initGeneralSettings();
     try {
-      $route = 'https://' . $machineName . '.' . $generalSettings['scsHost'] . $this->settings->get('wisski')['instances']['healthCheck']['url'];
-      $response = $this->httpClient->request('get', $route);
-      if ($response->getStatusCode() == 200) {
-        // Request successful, handle the data in $response->data.
-        return [
-          "message" => "Component health check is available.",
-          'code' => $response->getStatusCode(),
-          'success' => TRUE,
-        ];
-      }
-      else {
-        // Request failed, handle the error.
-        return [
-          "message" => 'Component health check is not available: ' . $response->getStatusCode(),
-          'code' => $response->getStatusCode(),
-          'success' => FALSE,
-          'error' => $response->getBody(),
-        ];
+      $requestParams = [
+        'type' => 'instance',
+        'machineName' => $machineName,
+      ];
+      $healthRequest = $this->portainerServiceActions->buildHealthCheckRequest($requestParams);
+      $healthRequestResult = $this->portainerServiceActions->makeRequest($healthRequest);
+
+      switch ($healthRequestResult['statusCode']) {
+        case 200:
+          return [
+            "message" => 'Component is available.',
+            'code' => $healthRequestResult['statusCode'],
+            'success' => TRUE,
+            'error' => '',
+          ];
+
+        case 502:
+          return [
+            "message" => 'Component not (yet) available.',
+            'code' => $healthRequestResult['statusCode'],
+            'success' => FALSE,
+            'error' => $healthRequestResult['error'],
+          ];
+
+        default:
+          return [
+            "message" => 'Component is not available: ' . $healthRequestResult['statusCode'],
+            'code' => $healthRequestResult['statusCode'],
+            'success' => FALSE,
+            'error' => $healthRequestResult['error'],
+          ];
       }
     }
     catch (\Exception $e) {
       return [
-        "message" => 'Component health check is not available: ' . $e->getMessage(),
+        "message" => 'Component is not available: ' . $e->getMessage(),
         'code' => $e->getCode(),
         'success' => FALSE,
         'error' => $e->getMessage(),
@@ -164,6 +176,7 @@ class SodaScsComponentHelpers {
     try {
       $requestParams = [
         'machineName' => $machineName,
+        'type' => 'service',
       ];
       $healthRequest = $this->portainerServiceActions->buildHealthCheckRequest($requestParams);
       $healthRequestResult = $this->portainerServiceActions->makeRequest($healthRequest);
@@ -190,6 +203,7 @@ class SodaScsComponentHelpers {
     try {
       $requestParams = [
         'machineName' => $machineName,
+        'type' => 'instance',
       ];
       $healthRequest = $this->dockerVolumesServiceActions->buildHealthCheckRequest($requestParams);
       $healthRequestResult = $this->dockerVolumesServiceActions->makeRequest($healthRequest);
@@ -298,6 +312,13 @@ class SodaScsComponentHelpers {
         'data' => $e,
       ];
     }
+  }
+
+  /**
+   * Create secret key.
+   */
+  public function createSecret() {
+    return bin2hex(random_bytes(16));
   }
 
 }

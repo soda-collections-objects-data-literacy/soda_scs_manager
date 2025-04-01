@@ -8,12 +8,13 @@ use Drupal\Core\Config\ConfigFactoryInterface;
 use Drupal\Core\Entity\ContentEntityForm;
 use Drupal\Core\Entity\EntityRepositoryInterface;
 use Drupal\Core\Entity\EntityTypeBundleInfoInterface;
+use Drupal\Core\Entity\EntityTypeManagerInterface;
 use Drupal\Core\Form\FormStateInterface;
+use Drupal\Core\Logger\LoggerChannelFactoryInterface;
 use Drupal\Core\Session\AccountProxyInterface;
 use Drupal\soda_scs_manager\ComponentActions\SodaScsComponentActionsInterface;
 use Drupal\soda_scs_manager\RequestActions\SodaScsServiceRequestInterface;
 use Symfony\Component\DependencyInjection\ContainerInterface;
-use Drupal\Core\Entity\EntityTypeManagerInterface;
 
 /**
  * Form controller for the ScsComponent entity create form.
@@ -40,6 +41,13 @@ class SodaScsComponentCreateForm extends ContentEntityForm {
   protected string $bundle;
 
   /**
+   * The SODa SCS Component bundle info.
+   *
+   * @var array
+   */
+  protected array $bundleInfo;
+
+  /**
    * The current user.
    *
    * @var \Drupal\Core\Session\AccountProxyInterface
@@ -52,6 +60,20 @@ class SodaScsComponentCreateForm extends ContentEntityForm {
    * @var \Drupal\Core\Config\Config
    */
   protected Config $settings;
+
+  /**
+   * The entity type manager.
+   *
+   * @var \Drupal\Core\Entity\EntityTypeManagerInterface
+   */
+  protected $entityTypeManager;
+
+  /**
+   * The logger factory.
+   *
+   * @var \Drupal\Core\Logger\LoggerChannelFactoryInterface
+   */
+  protected $loggerFactory;
 
   /**
    * The Soda SCS API Actions service.
@@ -68,13 +90,6 @@ class SodaScsComponentCreateForm extends ContentEntityForm {
   protected SodaScsComponentActionsInterface $sodaScsComponentActions;
 
   /**
-   * The entity type manager.
-   *
-   * @var \Drupal\Core\Entity\EntityTypeManagerInterface
-   */
-  protected $entityTypeManager;
-
-  /**
    * Constructs a new SodaScsComponentCreateForm.
    *
    * @param \Drupal\Core\Session\AccountProxyInterface $currentUser
@@ -85,6 +100,8 @@ class SodaScsComponentCreateForm extends ContentEntityForm {
    *   The entity type bundle info.
    * @param \Drupal\Core\Config\ConfigFactoryInterface $configFactory
    *   The config factory.
+   * @param \Drupal\Core\Logger\LoggerChannelFactoryInterface $loggerFactory
+   *   The logger factory.
    * @param \Drupal\Component\Datetime\TimeInterface $time
    *   The time service.
    * @param \Drupal\soda_scs_manager\RequestActions\SodaScsServiceRequestInterface $sodaScsDockerRegistryServiceActions
@@ -99,6 +116,7 @@ class SodaScsComponentCreateForm extends ContentEntityForm {
     EntityRepositoryInterface $entity_repository,
     EntityTypeBundleInfoInterface $entity_type_bundle_info,
     ConfigFactoryInterface $configFactory,
+    LoggerChannelFactoryInterface $loggerFactory,
     TimeInterface $time,
     SodaScsServiceRequestInterface $sodaScsDockerRegistryServiceActions,
     SodaScsComponentActionsInterface $sodaScsComponentActions,
@@ -107,9 +125,10 @@ class SodaScsComponentCreateForm extends ContentEntityForm {
     parent::__construct($entity_repository, $entity_type_bundle_info, $time);
     $this->currentUser = $currentUser;
     $this->settings = $configFactory->getEditable('soda_scs_manager.settings');
+    $this->entityTypeManager = $entityTypeManager;
+    $this->loggerFactory = $loggerFactory;
     $this->sodaScsDockerRegistryServiceActions = $sodaScsDockerRegistryServiceActions;
     $this->sodaScsComponentActions = $sodaScsComponentActions;
-    $this->entityTypeManager = $entityTypeManager;
   }
 
   /**
@@ -121,10 +140,11 @@ class SodaScsComponentCreateForm extends ContentEntityForm {
       $container->get('entity.repository'),
       $container->get('entity_type.bundle.info'),
       $container->get('config.factory'),
+      $container->get('logger.factory'),
       $container->get('datetime.time'),
       $container->get('soda_scs_manager.docker_registry_service.actions'),
       $container->get('soda_scs_manager.component.actions'),
-      $container->get('entity_type.manager')
+      $container->get('entity_type.manager'),
     );
   }
 
@@ -141,25 +161,38 @@ class SodaScsComponentCreateForm extends ContentEntityForm {
   public function buildForm(array $form, FormStateInterface $form_state, string|null $bundle = NULL) {
 
     $this->bundle = $bundle;
+    $this->bundleInfo = $this->entityTypeBundleInfo->getBundleInfo('soda_scs_component')[$this->bundle];
+
+    // Ensure the entity has the correct bundle before building the form.
+    if (!$this->entity->bundle() && $this->bundle) {
+      $this->entity = $this->entityTypeManager->getStorage('soda_scs_component')->create([
+        'type' => $this->bundle,
+      ]);
+    }
+
+    // Set the imageUrl and description for the entity.
+    $this->entity->set('imageUrl', $this->bundleInfo['imageUrl']);
+    $this->entity->set('description', $this->bundleInfo['description']);
+    $this->entity->set('health', 'Unknown');
+
     // Build the form.
     $form = parent::buildForm($form, $form_state);
 
-    $bundle_info = $this->entityTypeBundleInfo->getBundleInfo('soda_scs_component');
-
-    $form['#title'] = $this->t('Create a new @label', ['@label' => $bundle_info[$this->bundle]['label']]);
+    $form['#title'] = $this->t('Create a new @label', ['@label' => $this->bundleInfo['label']]);
 
     $form['info'] = [
       '#type' => 'details',
       '#title' => $this->t('What is that?'),
-      '#value' => $bundle_info[$this->bundle]['description'],
+      '#value' => $this->bundleInfo['description'],
     ];
 
     $form['owner']['widget']['#default_value'] = $this->currentUser->id();
-    if (!\Drupal::currentUser()->hasPermission('soda scs manager admin')) {
+    if (!$this->currentUser->hasPermission('soda scs manager admin')) {
       $form['owner']['#access'] = FALSE;
     }
 
-    // Make the machineName field readonly and add JavaScript to auto-generate it.
+    // Make the machineName field readonly and
+    // add JavaScript to auto-generate it.
     if (isset($form['machineName'])) {
       // @todo Check if there is a better way to do this.
       // Add CSS classes for machine name generation.
@@ -169,6 +202,12 @@ class SodaScsComponentCreateForm extends ContentEntityForm {
       $form['machineName']['widget'][0]['value']['#attributes']['readonly'] = 'readonly';
       // Attach JavaScript to auto-generate machine name.
       $form['#attached']['library'][] = 'soda_scs_manager/machine-name-generator';
+    }
+
+    // Make partOfProjects field required for filesystem components.
+    if ($this->bundle === 'soda_scs_filesystem_component' && isset($form['partOfProjects'])) {
+      $form['partOfProjects']['widget']['#required'] = TRUE;
+      $form['partOfProjects']['widget']['#description'] = $this->t('This field is required for filesystem components.');
     }
 
     // Change the label of the submit button.
@@ -262,30 +301,20 @@ class SodaScsComponentCreateForm extends ContentEntityForm {
    * @throws \Drupal\Core\Entity\EntityStorageException
    */
   public function save(array $form, FormStateInterface $form_state): void {
-    $label = $form_state->getValue('label')[0]['value'];
-    // We call it component here.
-    /** @var \Drupal\soda_scs_manager\Entity\SodaScsComponentInterface $component */
-    $component = $this->entity;
-    $component->set('bundle', $this->entity->bundle());
-    $component->set('created', $this->time->getRequestTime());
-    $component->set('updated', $this->time->getRequestTime());
-    $component->set('owner', $form_state->getValue('owner'));
-    $machineName = reset($form_state->getValue('machineName'))['value'];
-    $component->setLabel($label);
-    $component->set('machineName', $machineName);
-    /** @var \Drupal\soda_scs_manager\Entity\SodaScsComponentBundleInterface $bundle */
-    $bundle_info = $this->entityTypeBundleInfo->getBundleInfo('soda_scs_component')[$this->bundle];
-    $component->set('description', $bundle_info['description']);
-    $component->set('imageUrl', $bundle_info['imageUrl']);
 
+    // Set the label of the entity.
+    $this->entity->set('label', $this->entity->get('label')->value . ' (' . $this->bundleInfo['label'] . ')');
     // Create external stack.
-    $createComponentResult = $this->sodaScsComponentActions->createComponent($component);
+    $createComponentResult = $this->sodaScsComponentActions->createComponent($this->entity);
 
     if (!$createComponentResult['success']) {
       $this->messenger()->addMessage($this->t('Cannot create component "@label". See logs for more details.', [
         '@label' => $this->entity->label(),
         '@username' => $this->currentUser->getAccount()->getDisplayName(),
       ]), 'error');
+      $this->loggerFactory->get('soda_scs_manager')->error("Cannot create component: @message", [
+        '@message' => $createComponentResult['message'],
+      ]);
       return;
     }
 

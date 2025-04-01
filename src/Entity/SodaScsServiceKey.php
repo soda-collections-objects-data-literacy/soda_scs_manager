@@ -107,16 +107,24 @@ class SodaScsServiceKey extends ContentEntityBase implements SodaScsServiceKeyIn
       ->setLabel(new TranslatableMarkup('Label'))
       ->setRequired(TRUE)
       ->setReadOnly(TRUE)
-      ->setDisplayConfigurable('view', FALSE)
-      ->setDisplayConfigurable('form', FALSE);
+      ->setDisplayConfigurable('form', FALSE)
+      ->setDisplayOptions('form', [
+        'type' => 'string_textfield',
+        'weight' => 10,
+      ])
+      ->setDisplayConfigurable('view', FALSE);
 
     $fields['scsComponent'] = BaseFieldDefinition::create('entity_reference')
       ->setLabel(new TranslatableMarkup('SODa SCS Component'))
       ->setSetting('target_type', 'soda_scs_component')
       ->setSetting('handler', 'default')
       ->setCardinality(FieldStorageDefinitionInterface::CARDINALITY_UNLIMITED)
-      ->setDisplayConfigurable('view', FALSE)
-      ->setDisplayConfigurable('form', FALSE);
+      ->setDisplayConfigurable('form', FALSE)
+      ->setDisplayOptions('form', [
+        'type' => 'entity_reference_autocomplete',
+        'weight' => 10,
+      ])
+      ->setDisplayConfigurable('view', FALSE);
 
     $fields['scsComponentBundle'] = BaseFieldDefinition::create('string')
       ->setLabel(new TranslatableMarkup('SODa SCS Component Bundle'))
@@ -124,6 +132,11 @@ class SodaScsServiceKey extends ContentEntityBase implements SodaScsServiceKeyIn
       ->setCardinality(1)
       ->setRequired(TRUE)
       ->setReadOnly(TRUE)
+      ->setDisplayConfigurable('form', FALSE)
+      ->setDisplayOptions('form', [
+        'type' => 'string_textfield',
+        'weight' => 10,
+      ])
       ->setDisplayConfigurable('view', FALSE);
 
     $fields['servicePassword'] = BaseFieldDefinition::create('string')
@@ -132,28 +145,41 @@ class SodaScsServiceKey extends ContentEntityBase implements SodaScsServiceKeyIn
       ->setCardinality(1)
       ->setRequired(TRUE)
       ->setReadOnly(FALSE)
+      ->setDisplayConfigurable('form', FALSE)
+      ->setDisplayOptions('form', [
+        'type' => 'string_textfield',
+        'weight' => 10,
+      ])
       ->setDisplayOptions('view', [
         'label' => 'above',
         'type' => 'string',
         'weight' => 10,
         'css_class' => 'soda-scs-manager-service-password',
-
       ])
       ->setDisplayConfigurable('view', FALSE);
 
-    $fields['type'] = BaseFieldDefinition::create('string')
+    $fields['type'] = BaseFieldDefinition::create('list_string')
       ->setLabel(new TranslatableMarkup('Type'))
       ->setDescription(new TranslatableMarkup('The type of the service key.'))
       ->setCardinality(1)
       ->setRequired(TRUE)
       ->setReadOnly(TRUE)
+      ->setDisplayConfigurable('form', FALSE)
+      ->setDisplayOptions('form', [
+        'type' => 'options_buttons',
+        'weight' => 10,
+
+      ])
+      ->setSetting('allowed_values', [
+        'password' => 'Password',
+        'token' => 'Token',
+      ])
       ->setDisplayConfigurable('view', FALSE)
       ->setDisplayOptions('view', [
         'label' => 'above',
         'type' => 'string',
         'weight' => 0,
-      ])
-      ->setDisplayConfigurable('form', FALSE);
+      ]);
 
     $fields['owner'] = BaseFieldDefinition::create('entity_reference')
       ->setLabel(new TranslatableMarkup('Owner'))
@@ -162,8 +188,12 @@ class SodaScsServiceKey extends ContentEntityBase implements SodaScsServiceKeyIn
       ->setCardinality(1)
       ->setRequired(TRUE)
       ->setReadOnly(TRUE)
-      ->setDisplayConfigurable('view', FALSE)
-      ->setDisplayConfigurable('form', FALSE);
+      ->setDisplayConfigurable('form', FALSE)
+      ->setDisplayOptions('form', [
+        'type' => 'entity_reference_autocomplete',
+        'weight' => 10,
+      ])
+      ->setDisplayConfigurable('view', FALSE);
 
     return $fields;
 

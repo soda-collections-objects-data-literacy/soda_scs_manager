@@ -20,16 +20,6 @@ entity.soda_scs_project.collection:
   requirements:
     _permission: 'soda scs manager admin'
 
-## Stacks
-entity.soda_scs_stack.collection:
-  title: 'SODa SCS Stacks'
-  description: 'Manage SODa SCS Stacks'
-  parent: system.admin_structure
-  route_name: entity.soda_scs_stack.collection
-  weight: 100
-  requirements:
-    _permission: 'soda scs manager admin'
-
 ## Service Keys
 soda_scs_manager.service_key.admin:
   title: 'SODa SCS Service Keys'
@@ -39,6 +29,24 @@ soda_scs_manager.service_key.admin:
   weight: 100
   requirements:
     _permission: 'soda scs manager user'
+
+# Snapshots
+entity.soda_scs_snapshot.collection:
+  title: 'SODa SCS Snapshots'
+  description: 'Manage SODa SCS Snapshots'
+  parent: system.admin_structure
+  route_name: entity.soda_scs_snapshot.collection
+  weight: 100
+
+## Stacks
+entity.soda_scs_stack.collection:
+  title: 'SODa SCS Stacks'
+  description: 'Manage SODa SCS Stacks'
+  parent: system.admin_structure
+  route_name: entity.soda_scs_stack.collection
+  weight: 100
+  requirements:
+    _permission: 'soda scs manager admin'
 
 # Configuration
 soda_scs_manager.users_page:

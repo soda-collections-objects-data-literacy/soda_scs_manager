@@ -19,9 +19,9 @@ class SodaScsServiceKeyListBuilder extends EntityListBuilder {
    * {@inheritdoc}
    */
   public function buildHeader() {
-    $header['component'] = $this->t('Component');
-    $header['bundle'] = $this->t('Bundle');
     $header['id'] = $this->t('Id');
+    $header['label'] = $this->t('Label');
+    $header['component'] = $this->t('Used by component(s)');
     $header['owner'] = $this->t('Owner');
     $header['type'] = $this->t('Type');
     $header['password'] = $this->t('Password');
@@ -42,18 +42,18 @@ class SodaScsServiceKeyListBuilder extends EntityListBuilder {
       $links = [];
       foreach ($referencedEntities as $referencedEntity) {
         $links[] = Link::fromTextAndUrl(
-        $referencedEntity->label(),
+        $referencedEntity->id(),
         Url::fromRoute('entity.soda_scs_component.canonical', ['soda_scs_component' => $referencedEntity->id()])
         )->toString();
       }
 
       // Concatenate the links with a comma separator.
-      $linksString = implode(',</br>', $links);
+      $linksString = implode(', ', $links);
 
       // Markup::create to ensure the HTML is not escaped.
-      $row['scsComponent'] = Markup::create($linksString);
-      $row['scsComponentBundle'] = $entity->get('scsComponentBundle')->value;
       $row['id'] = $entity->id();
+      $row['label'] = $entity->label();
+      $row['scsComponent'] = Markup::create($linksString);
       $row['owner'] = $entity->getOwner()->getDisplayName();
       $row['type'] = $entity->get('type')->value;
       $row['servicePassword'] = [
@@ -79,6 +79,7 @@ class SodaScsServiceKeyListBuilder extends EntityListBuilder {
    * @todo Why I have to do this, this should be in the parent class
    */
   public function buildOperations(EntityInterface $entity) {
+    /** @var \Drupal\soda_scs_manager\Entity\SodaScsServiceKeyInterface $entity */
     $operations = parent::buildOperations($entity);
 
     $operations['#links']['delete'] = [
@@ -87,13 +88,18 @@ class SodaScsServiceKeyListBuilder extends EntityListBuilder {
       'url' => Url::fromRoute('entity.soda_scs_service_key.delete_form', ['soda_scs_service_key' => $entity->id()]),
     ];
 
-    if ($entity->get('scsComponentBundle')->value === 'soda_scs_sql_component') {
-      $operations['#links']['renew'] = [
-        'title' => $this->t('Renew'),
-        'weight' => 100,
-        'url' => Url::fromRoute('entity.soda_scs_service_key.renew_confirm_form', ['soda_scs_service_key' => $entity->id()]),
-      ];
-    }
+    // Only show the renew operation for SQL components.
+    /** @var \Drupal\Core\Field\EntityReferenceFieldItemListInterface $referencedComponentsList */
+    #$referencedComponentsList = $entity->get('scsComponent');
+    #$referencedComponentsEntities = $referencedComponentsList->referencedEntities();
+    #$referencedComponentsEntity = $referencedComponentsEntities[0];
+    #if ($referencedComponentsEntity->bundle() === 'soda_scs_sql_component') {
+    #  $operations['#links']['renew'] = [
+    #    'title' => $this->t('Renew'),
+    #    'weight' => 100,
+    #    'url' => Url::fromRoute('entity.soda_scs_service_key.renew_confirm_form', ['soda_scs_service_key' => $entity->id()]),
+    #  ];
+    #}
 
     return $operations;
   }

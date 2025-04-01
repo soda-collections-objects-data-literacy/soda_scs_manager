@@ -149,25 +149,6 @@ interface SodaScsServiceActionsInterface {
   public function cleanServiceUsers(string $user, string|null $userPassword = NULL): array;
 
   /**
-   * Checks handle shell command failure.
-   *
-   * @param array $commandResult
-   *   The command result.
-   * @param string $action
-   *   The action.
-   * @param string $entityName
-   *   The entity name.
-   *
-   * @return array
-   *   Result information with
-   *   - string message,
-   *   - array data
-   *   - array error
-   *   - boolean success.
-   */
-  public function handleCommandFailure(array $commandResult, string $action, string $entityName): array;
-
-  /**
    * Checks if a user has read and write access to a database.
    *
    * @param string $dbUser

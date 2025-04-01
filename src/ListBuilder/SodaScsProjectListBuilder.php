@@ -37,7 +37,7 @@ class SodaScsProjectListBuilder extends EntityListBuilder {
     if ($entity->getOwnerId() === \Drupal::currentUser()->id() || \Drupal::currentUser()->hasPermission('soda scs manager admin')) {
 
       /** @var \Drupal\Core\Field\EntityReferenceFieldItemListInterface $scsComponentValues */
-      $scsComponentValues = $entity->get('scsComponent');
+      $scsComponentValues = $entity->get('connectedComponents');
       $referencedEntities = $scsComponentValues->referencedEntities();
       $links = [];
       foreach ($referencedEntities as $referencedEntity) {

@@ -73,7 +73,7 @@ class SodaScsComponentDeleteForm extends ContentEntityDeleteForm {
    * {@inheritdoc}
    */
   public function getQuestion() {
-  
+
     return $this->t('Are you sure you want to delete component: @label?', ['@label' => $this->entity->label()]);
   }
 
@@ -99,6 +99,7 @@ class SodaScsComponentDeleteForm extends ContentEntityDeleteForm {
     $deleteComponentResult = $this->sodaScsComponentActions->deleteComponent($component);
 
     if (!$deleteComponentResult['success']) {
+      $this->messenger()->addError($deleteComponentResult['message']);
       return;
     }
     $this->messenger()->addStatus($deleteComponentResult['message']);

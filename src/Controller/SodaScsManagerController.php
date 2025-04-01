@@ -72,23 +72,6 @@ class SodaScsManagerController extends ControllerBase {
   }
 
   /**
-   * Page for user management.
-   *
-   * @return array
-   *   The page build array.
-   */
-  public function usersPage(): array {
-    $options['user'] = $this->currentUser()->id();
-    // If the user is not an admin, filter the accounts to
-    // only include their own.
-    // $components = $this->dbActions->listComponents($options['uid']);.
-    return [
-      '#theme' => 'users_page',
-      '#users' => [],
-    ];
-  }
-
-  /**
    * Page for component management.
    *
    * @return array
@@ -119,15 +102,28 @@ class SodaScsManagerController extends ControllerBase {
     /** @var \Drupal\soda_scs_manager\Entity\SodaScsComponentInterface $component */
     foreach ($components as $component) {
       $username = $component->getOwner()->getDisplayName();
-      $componentsByUser[$username][] = $component;
+      $componentsByUser[$username][] = [
+        '#theme' => 'soda_scs_manager__entity_card',
+        '#title' => $this->t('@bundle', ['@bundle' => $component->label()]),
+        '#description' => $component->get('description')->value,
+        '#imageUrl' => $component->get('imageUrl')->value,
+        '#url' => Url::fromRoute('entity.soda_scs_component.canonical', ['soda_scs_component' => $component->id()]),
+        '#attached' => [
+          'library' => ['soda_scs_manager/globalStyling'],
+        ],
+      ];
     }
-    return [
-      '#theme' => 'components_desk',
-      '#componentsByUser' => $componentsByUser,
+
+    $build = [
+      '#theme' => 'soda_scs_manager__desk',
+      '#entitiesByUser' => $componentsByUser,
+      '#entity_type' => 'soda_scs_component',
       '#cache' => [
         'max-age' => 0,
       ],
     ];
+
+    return $build;
   }
 
   /**
@@ -161,11 +157,18 @@ class SodaScsManagerController extends ControllerBase {
     /** @var \Drupal\soda_scs_manager\Entity\SodaScsStackInterface $stack */
     foreach ($stack as $stack) {
       $username = $stack->getOwner()->getDisplayName();
-      $stacksByUser[$username][] = $stack;
+      $stacksByUser[$username][] = [
+        '#theme' => 'soda_scs_manager__entity_card',
+        '#title' => $this->t('@bundle', ['@bundle' => $stack->label()]),
+        '#description' => $stack->get('description')->value,
+        '#imageUrl' => $stack->get('imageUrl')->value,
+        '#url' => Url::fromRoute('entity.soda_scs_stack.canonical', ['soda_scs_stack' => $stack->id()]),
+      ];
     }
     return [
-      '#theme' => 'stacks_desk',
-      '#stacksByUser' => $stacksByUser,
+      '#theme' => 'soda_scs_manager__desk',
+      '#entitiesByUser' => $stacksByUser,
+      '#entity_type' => 'soda_scs_stack',
       '#cache' => [
         'max-age' => 0,
       ],
@@ -224,9 +227,9 @@ class SodaScsManagerController extends ControllerBase {
 
     // Create the build array.
     $build = [
-      '#theme' => 'container',
-      '#attributes' => ['class' => 'row row-cols-1 row-cols-md-4 g-4'],
-      '#children' => [],
+      '#theme' => 'soda_scs_manager__store',
+      '#attributes' => ['class' => 'container soda-scs-manager--view--grid'],
+      '#components' => [],
     ];
 
     // Get all component bundles.
@@ -238,16 +241,17 @@ class SodaScsManagerController extends ControllerBase {
     unset($bundles['soda_scs_jupyter_component']);
     unset($bundles['soda_scs_nextcloud_component']);
     unset($bundles['soda_scs_wisski_component']);
+    unset($bundles['soda_scs_openrefine_component']);
 
     /** @var \Drupal\soda_scs_manager\Entity\Bundle\SodaScsStackBundle $bundle */
     foreach ($bundles as $id => $bundle) {
 
       // Add the card to the build array.
-      $build['#children'][] = [
-        '#theme' => 'bundle_card',
+      $build['#components'][] = [
+        '#theme' => 'component_card',
         '#title' => $this->t('@bundle', ['@bundle' => $bundle['label']]),
         '#description' => $bundle['description'],
-        '#image_url' => $bundle['imageUrl'],
+        '#imageUrl' => $bundle['imageUrl'],
         '#url' => Url::fromRoute('entity.soda_scs_component.add_form', ['bundle' => $id]),
         '#attached' => [
           'library' => ['soda_scs_manager/globalStyling'],
@@ -265,12 +269,12 @@ class SodaScsManagerController extends ControllerBase {
    *   The page build array.
    */
   public function stackStorePage() {
-
+    // @todo: make this more generic.
     // Create the build array.
     $build = [
-      '#theme' => 'container',
-      '#attributes' => ['class' => 'd-flex justify-content-between'],
-      '#children' => [],
+      '#theme' => 'soda_scs_manager__store',
+      '#attributes' => ['class' => 'container soda-scs-manager--view--grid'],
+      '#components' => [],
     ];
 
     // Get all component bundles.
@@ -280,11 +284,11 @@ class SodaScsManagerController extends ControllerBase {
     foreach ($bundles as $id => $bundle) {
 
       // Add the card to the build array.
-      $build['#children'][] = [
-        '#theme' => 'bundle_card',
+      $build['#components'][] = [
+        '#theme' => 'component_card',
         '#title' => $this->t('@bundle', ['@bundle' => $bundle['label']]),
         '#description' => $bundle['description'],
-        '#image_url' => $bundle['imageUrl'],
+        '#imageUrl' => $bundle['imageUrl'],
         '#url' => Url::fromRoute('entity.soda_scs_stack.add_form', ['bundle' => $id]),
         '#attached' => [
           'library' => ['soda_scs_manager/globalStyling'],

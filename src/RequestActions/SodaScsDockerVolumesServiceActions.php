@@ -236,9 +236,10 @@ class SodaScsDockerVolumesServiceActions implements SodaScsServiceRequestInterfa
    */
   public function buildCreateRequest(array $requestParams): array {
     $portainerServiceSettings = $this->sodaScsServiceHelpers->initPortainerServiceSettings();
+    $dockerApiSettings = $this->sodaScsServiceHelpers->initDockerApiSettings();
     $dockerVolumeServiceSettings = $this->sodaScsServiceHelpers->initDockerVolumesServiceSettings();
 
-    $route = $portainerServiceSettings['portainerHostRoute'] . $portainerServiceSettings['portainerEndpointsBaseUrlRoute'] . str_replace('{endpointId}', $portainerServiceSettings['portainerEndpointId'], $dockerVolumeServiceSettings['dockerApiBaseUrlRoute']) . $dockerVolumeServiceSettings['dockerApiVolumesBaseUrlRoute'] . $dockerVolumeServiceSettings['dockerApiVolumesCreateUrlRoute'];
+    $route = $portainerServiceSettings['host'] . $portainerServiceSettings['baseUrl'] . str_replace('{endpointId}', $portainerServiceSettings['portainerEndpointId'], $dockerApiSettings['baseUrl']) . $dockerVolumeServiceSettings['baseUrl'] . $dockerVolumeServiceSettings['createUrl'];
     return [
       'method' => 'POST',
       'route' => $route,
@@ -274,10 +275,11 @@ class SodaScsDockerVolumesServiceActions implements SodaScsServiceRequestInterfa
   public function buildDeleteRequest(array $requestParams): array {
     // Init settings.
     $portainerServiceSettings = $this->sodaScsServiceHelpers->initPortainerServiceSettings();
+    $dockerApiSettings = $this->sodaScsServiceHelpers->initDockerApiSettings();
     $dockerVolumeServiceSettings = $this->sodaScsServiceHelpers->initDockerVolumesServiceSettings();
 
     // Construct route.
-    $route = $portainerServiceSettings['portainerHostRoute'] . $portainerServiceSettings['portainerEndpointsBaseUrlRoute'] . str_replace('{endpointId}', $portainerServiceSettings['portainerEndpointId'], $dockerVolumeServiceSettings['dockerApiBaseUrlRoute']) . $dockerVolumeServiceSettings['dockerApiVolumesBaseUrlRoute'] . str_replace('{volumeId}', urlencode($requestParams['machineName']), $dockerVolumeServiceSettings['dockerApiVolumesDeleteUrlRoute']);
+    $route = $portainerServiceSettings['host'] . $portainerServiceSettings['baseUrl'] . str_replace('{endpointId}', $portainerServiceSettings['portainerEndpointId'], $dockerApiSettings['baseUrl']) . $dockerVolumeServiceSettings['baseUrl'] . str_replace('{volumeId}', urlencode($requestParams['machineName']), $dockerVolumeServiceSettings['deleteUrl']);
 
     return [
       'method' => 'DELETE',
@@ -304,10 +306,11 @@ class SodaScsDockerVolumesServiceActions implements SodaScsServiceRequestInterfa
   public function buildGetRequest(array $requestParams): array {
     // Init settings.
     $portainerServiceSettings = $this->sodaScsServiceHelpers->initPortainerServiceSettings();
+    $dockerApiSettings = $this->sodaScsServiceHelpers->initDockerApiSettings();
     $dockerVolumeServiceSettings = $this->sodaScsServiceHelpers->initDockerVolumesServiceSettings();
 
     // Construct route.
-    $route = $portainerServiceSettings['portainerHostRoute'] . $portainerServiceSettings['portainerEndpointsBaseUrlRoute'] . str_replace('{endpointId}', $portainerServiceSettings['portainerEndpointId'], $dockerVolumeServiceSettings['dockerApiBaseUrlRoute']) . $dockerVolumeServiceSettings['dockerApiVolumesBaseUrlRoute'] . str_replace('{volumeId}', urlencode($requestParams['machineName']), $dockerVolumeServiceSettings['dockerApiVolumesReadOneUrlRoute']);
+    $route = $portainerServiceSettings['host'] . $portainerServiceSettings['baseUrl'] . str_replace('{endpointId}', $portainerServiceSettings['portainerEndpointId'], $dockerApiSettings['baseUrl']) . $dockerVolumeServiceSettings['baseUrl'] . str_replace('{volumeId}', urlencode($requestParams['machineName']), $dockerVolumeServiceSettings['readUrl']);
 
     return [
       'method' => 'GET',
@@ -332,10 +335,11 @@ class SodaScsDockerVolumesServiceActions implements SodaScsServiceRequestInterfa
    * @throws \Drupal\Core\TypedData\Exception\MissingDataException
    */
   public function buildGetAllRequest(array $requestParams): array {
-    if (empty($this->settings->get('wisski')['routes']['dockerApi']['url'])) {
-      throw new MissingDataException('Docker API URL setting is not set.');
-    }
-    $route = $this->settings->get('wisski')['routes']['dockerApi']['url'] . '/volumes';
+    $portainerServiceSettings = $this->sodaScsServiceHelpers->initPortainerServiceSettings();
+    $dockerApiSettings = $this->sodaScsServiceHelpers->initDockerApiSettings();
+    $dockerVolumeServiceSettings = $this->sodaScsServiceHelpers->initDockerVolumesServiceSettings();
+
+    $route = $portainerServiceSettings['host'] . $portainerServiceSettings['baseUrl'] . str_replace('{endpointId}', $portainerServiceSettings['portainerEndpointId'], $dockerApiSettings['baseUrl']) . $dockerVolumeServiceSettings['baseUrl'] . $dockerVolumeServiceSettings['readUrl'];
     return [
       'method' => 'GET',
       'route' => $route,
@@ -359,18 +363,18 @@ class SodaScsDockerVolumesServiceActions implements SodaScsServiceRequestInterfa
    * @throws \Drupal\Core\TypedData\Exception\MissingDataException
    */
   public function buildUpdateRequest(array $requestParams): array {
-    if (empty($this->settings->get('wisski')['routes']['dockerApi']['url'])) {
-      throw new MissingDataException('Docker API URL setting is not set.');
-    }
+    $portainerServiceSettings = $this->sodaScsServiceHelpers->initPortainerServiceSettings();
+    $dockerApiSettings = $this->sodaScsServiceHelpers->initDockerApiSettings();
+    $dockerVolumeServiceSettings = $this->sodaScsServiceHelpers->initDockerVolumesServiceSettings();
 
-    $route = $this->settings->get('wisski')['routes']['dockerApi']['url'] . '/volumes/' . urlencode($requestParams['machineName']);
+    $route = $portainerServiceSettings['host'] . $portainerServiceSettings['baseUrl'] . str_replace('{endpointId}', $portainerServiceSettings['portainerEndpointId'], $dockerApiSettings['baseUrl']) . $dockerVolumeServiceSettings['baseUrl'] . str_replace('{volumeId}', urlencode($requestParams['machineName']), $dockerVolumeServiceSettings['updateUrl']);
     return [
       'method' => 'POST',
       'route' => $route,
       'headers' => [
         'Content-Type' => 'application/json',
         'Accept' => 'application/json',
-        'X-API-Key' => $this->settings->get('wisski')['portainerOptions']['authenticationToken'],
+        'X-API-Key' => $portainerServiceSettings['portainerAuthenticationToken'],
       ],
       'body' => json_encode(
         [

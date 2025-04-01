@@ -61,6 +61,18 @@ entity.soda_scs_stack.collection:
   requirements:
     _permission: 'soda scs manager user'
 
+entity.soda_scs_stack.snapshot:
+  path: '/soda-scs-manager/stack/{soda_scs_stack}/snapshot'
+  defaults:
+    _form: '\Drupal\soda_scs_manager\Form\SodaScsSnapshotConfirmForm'
+    _title: 'Create Snapshot'
+  requirements:
+    _permission: 'create soda scs snapshot'
+  options:
+    parameters:
+      soda_scs_stack:
+        type: entity:soda_scs_stack
+
 # Soda SCS Component Entities
 
 entity.soda_scs_component.canonical:
@@ -95,7 +107,6 @@ entity.soda_scs_component.delete_form:
   requirements:
     _permission: 'soda scs manager user'
 
-
 entity.soda_scs_component.collection:
   path: '/soda-scs-manager/components'
   defaults:
@@ -103,6 +114,18 @@ entity.soda_scs_component.collection:
     _title: 'Soda SCS Components'
   requirements:
     _permission: 'soda scs manager user'
+
+entity.soda_scs_component.snapshot:
+  path: '/soda-scs-manager/component/{soda_scs_component}/snapshot'
+  defaults:
+    _form: '\Drupal\soda_scs_manager\Form\SodaScsSnapshotConfirmForm'
+    _title: 'Create Snapshot'
+  requirements:
+    _permission: 'create soda scs snapshot'
+  options:
+    parameters:
+      soda_scs_component:
+        type: entity:soda_scs_component
 
 # SODa SCS Service Key Entities
 
@@ -156,6 +179,48 @@ entity.soda_scs_service_key.renew_confirm_form:
     parameters:
       soda_scs_service_key:
         type: entity:soda_scs_service_key
+
+# SODa SCS Snapshot Entities
+
+entity.soda_scs_snapshot.add_form:
+  path: '/soda-scs-manager/snapshot/add/{bundle}'
+  defaults:
+    _entity_form: 'soda_scs_snapshot.add'
+    _title: 'Add SODa SCS Snapshot'
+  requirements:
+    _permission: 'soda scs manager user'
+
+entity.soda_scs_snapshot.canonical:
+  path: '/soda-scs-manager/snapshot/{soda_scs_snapshot}'
+  defaults:
+    _entity_view: 'soda_scs_snapshot.default'
+    _title: 'SODa SCS Snapshot'
+  requirements:
+    _permission: 'soda scs manager user'
+
+entity.soda_scs_snapshot.edit_form:
+  path: '/soda-scs-manager/snapshot/{soda_scs_snapshot}/edit'
+  defaults:
+    _entity_form: 'soda_scs_snapshot.edit'
+    _title: 'Edit SODa SCS Snapshot'
+  requirements:
+    _permission: 'soda scs manager user'
+
+entity.soda_scs_snapshot.delete_form:
+  path: '/soda-scs-manager/snapshot/{soda_scs_snapshot}/delete'
+  defaults:
+    _entity_form: 'soda_scs_snapshot.delete'
+    _title: 'Delete SODa SCS Snapshot'
+  requirements:
+    _permission: 'soda scs manager user'
+
+entity.soda_scs_snapshot.collection:
+  path: '/soda-scs-manager/snapshot/list'
+  defaults:
+    _entity_list: 'soda_scs_snapshot'
+    _title: 'SODa SCS Snapshots'
+  requirements:
+    _permission: 'soda scs manager user'
 
 # SODa SCS Project Entities
 
@@ -290,14 +355,6 @@ soda_scs_manager.settings.menu:
   defaults:
     _controller: '\Drupal\system\Controller\SystemController::systemAdminMenuBlockPage'
     _title: 'WissKI cloud account manager'
-  requirements:
-    _permission: 'soda scs manager admin'
-
-soda_scs_manager.users:
-  path: '/soda-scs-manager/users'
-  defaults:
-    _controller: '\Drupal\soda_scs_manager\Controller\SodaScsManagerController::usersPage'
-    _title:  'User managing page'
   requirements:
     _permission: 'soda scs manager admin'
 

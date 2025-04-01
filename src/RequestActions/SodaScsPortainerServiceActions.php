@@ -205,18 +205,20 @@ class SodaScsPortainerServiceActions implements SodaScsServiceRequestInterface {
   public function buildCreateRequest(array $requestParams): array {
     // Initialize settings.
     $generalSettings = $this->sodaScsServiceHelpers->initGeneralSettings();
+    $keycloakSettings = $this->sodaScsServiceHelpers->initKeycloakSettings();
     $portainerServiceSettings = $this->sodaScsServiceHelpers->initPortainerServiceSettings();
     $portainerStacksSettings = $this->sodaScsServiceHelpers->initPortainerStacksSettings();
     $triplestoreServiceSettings = $this->sodaScsServiceHelpers->initTriplestoreServiceSettings();
     $databaseServiceSettings = $this->sodaScsServiceHelpers->initDatabaseServiceSettings();
+    $wisskiInstanceSettings = $this->sodaScsServiceHelpers->initWisskiInstanceSettings();
 
     // Assemble query params.
     $queryParams = [
-      'endpointId' => $portainerServiceSettings['portainerEndpointId'],
+      'endpointId' => $portainerServiceSettings['endpointId'],
     ];
 
     // Build route.
-    $route = $portainerServiceSettings['portainerHostRoute'] . $portainerStacksSettings['baseUrl'] . $portainerStacksSettings['createUrl'] . '?' . http_build_query($queryParams);
+    $route = $portainerServiceSettings['host'] . $portainerStacksSettings['baseUrl'] . $portainerStacksSettings['createUrl'] . '?' . http_build_query($queryParams);
 
     // URLs with underscores are not supported.
     $defaultGraphMachineName = str_replace('_', '-', $requestParams['machineName']);
@@ -226,10 +228,7 @@ class SodaScsPortainerServiceActions implements SodaScsServiceRequestInterface {
       '@hostDomainName' => $hostDomainName,
     ]);
 
-    $instanceDomain = $this->t('https://@machineName.@hostDomainName', [
-      '@machineName' => $requestParams['machineName'],
-      '@hostDomainName' => $hostDomainName,
-    ]);
+    $instanceDomain = str_replace('{instanceId}', $requestParams['machineName'], $wisskiInstanceSettings['baseUrl']);
 
     $instanceDomainName = str_replace('https://', '', $instanceDomain);
 
@@ -249,11 +248,11 @@ class SodaScsPortainerServiceActions implements SodaScsServiceRequestInterface {
       ],
       [
         "name" => "DB_HOST",
-        "value" => str_replace('https://', '', $databaseServiceSettings['dbHost']),
+        "value" => str_replace('https://', '', $databaseServiceSettings['host']),
       ],
       [
         "name" => "DB_NAME",
-        "value" => $requestParams['machineName'],
+        "value" => $requestParams['dbName'],
       ],
       [
         "name" => "DB_PASSWORD",
@@ -270,7 +269,7 @@ class SodaScsPortainerServiceActions implements SodaScsServiceRequestInterface {
       ],
       [
         "name" => "DOMAIN",
-        "value" => $hostDomainName,
+        "value" => $instanceDomainName,
       ],
       [
         "name" => "DRUPAL_USER",
@@ -283,6 +282,14 @@ class SodaScsPortainerServiceActions implements SodaScsServiceRequestInterface {
       [
         "name" => "DRUPAL_TRUSTED_HOST",
         "value" => $trustedHost,
+      ],
+      [
+        "name" => "KEYCLOAK_REALM",
+        "value" => $keycloakSettings['realm'],
+      ],
+      [
+        "name" => "OPENID_CONNECT_CLIENT_SECRET",
+        "value" => $requestParams['openidConnectClientSecret'],
       ],
       [
         "name" => "SERVICE_NAME",
@@ -302,11 +309,11 @@ class SodaScsPortainerServiceActions implements SodaScsServiceRequestInterface {
       ],
       [
         "name" => "TS_READ_URL",
-        "value" => $triplestoreServiceSettings['triplestoreHostRoute'] . '/repositories/' . $requestParams['machineName'],
+        "value" => $triplestoreServiceSettings['host'] . '/repositories/' . $requestParams['tsRepository'],
       ],
       [
         "name" => "TS_REPOSITORY",
-        "value" => $requestParams['machineName'],
+        "value" => $requestParams['tsRepository'],
       ],
       [
         "name" => "TS_USERNAME",
@@ -314,7 +321,7 @@ class SodaScsPortainerServiceActions implements SodaScsServiceRequestInterface {
       ],
       [
         "name" => "TS_WRITE_URL",
-        "value" => $triplestoreServiceSettings['triplestoreHostRoute'] . '/repositories/' . $requestParams['machineName'] . '/statements',
+        "value" => $triplestoreServiceSettings['host'] . '/repositories/' . $requestParams['tsRepository'] . '/statements',
       ],
       [
         "name" => "WISSKI_BASE_IMAGE_VERSION",
@@ -358,7 +365,7 @@ class SodaScsPortainerServiceActions implements SodaScsServiceRequestInterface {
       'headers' => [
         'Content-Type' => 'application/json',
         'Accept' => 'application/json',
-        'X-API-Key' => $portainerServiceSettings['portainerAuthenticationToken'],
+        'X-API-Key' => $portainerServiceSettings['authenticationToken'],
       ],
       'body' => json_encode([
         'composeFile' => 'docker-compose.yml',
@@ -401,7 +408,7 @@ class SodaScsPortainerServiceActions implements SodaScsServiceRequestInterface {
     $portainerStacksSettings = $this->sodaScsServiceHelpers->initPortainerStacksSettings();
 
     // Build route.
-    $route = $portainerServiceSettings['portainerHostRoute'] . $portainerStacksSettings['baseUrl'] . str_replace('{stackId}', $requestParams['externalId'], $portainerStacksSettings['readOneUrl']);
+    $route = $portainerServiceSettings['host'] . $portainerStacksSettings['baseUrl'] . str_replace('{stackId}', $requestParams['externalId'], $portainerStacksSettings['readOneUrl']);
 
     return [
       'success' => TRUE,
@@ -410,7 +417,7 @@ class SodaScsPortainerServiceActions implements SodaScsServiceRequestInterface {
       'headers' => [
         'Content-Type' => 'application/json',
         'Accept' => 'application/json',
-        'X-API-Key' => $portainerServiceSettings['portainerAuthenticationToken'],
+        'X-API-Key' => $portainerServiceSettings['authenticationToken'],
       ],
     ];
   }
@@ -445,7 +452,7 @@ class SodaScsPortainerServiceActions implements SodaScsServiceRequestInterface {
     $portainerStacksSettings = $this->sodaScsServiceHelpers->initPortainerStacksSettings();
 
     // Build route.
-    $route = $portainerServiceSettings['portainerHostRoute'] . $portainerStacksSettings['baseUrl'] . str_replace('{stackId}', $queryParams['externalId'], $portainerStacksSettings['deleteUrl']) . '?endpointId=' . $portainerServiceSettings['portainerEndpointId'];
+    $route = $portainerServiceSettings['host'] . $portainerStacksSettings['baseUrl'] . str_replace('{stackId}', $queryParams['externalId'], $portainerStacksSettings['deleteUrl']) . '?endpointId=' . $portainerServiceSettings['endpointId'];
 
     return [
       'success' => TRUE,
@@ -454,7 +461,7 @@ class SodaScsPortainerServiceActions implements SodaScsServiceRequestInterface {
       'headers' => [
         'Content-Type' => 'application/json',
         'Accept' => 'application/json',
-        'X-API-Key' => $portainerServiceSettings['portainerAuthenticationToken'],
+        'X-API-Key' => $portainerServiceSettings['authenticationToken'],
       ],
     ];
   }
@@ -475,13 +482,28 @@ class SodaScsPortainerServiceActions implements SodaScsServiceRequestInterface {
   /**
    * Portainer instance health check.
    *
+   * @param array $requestParams
+   *   The request parameters.
+   *
    * @return array
    *   The request array for the makeRequest function.
    */
   public function buildHealthCheckRequest(array $requestParams): array {
     $portainerServiceSettings = $this->sodaScsServiceHelpers->initPortainerServiceSettings();
+    $wisskiInstanceSettings = $this->sodaScsServiceHelpers->initWisskiInstanceSettings();
+    switch ($requestParams['type']) {
+      case 'service':
+        $route = $portainerServiceSettings['host'] . $portainerServiceSettings['baseUrl'] . str_replace('{endpointId}', $portainerServiceSettings['endpointId'], $portainerServiceSettings['healthCheckUrl']);
+        break;
 
-    $route = $portainerServiceSettings['portainerHostRoute'] . $portainerServiceSettings['portainerEndpointsBaseUrlRoute'] . str_replace('{endpointId}', $portainerServiceSettings['portainerEndpointId'], $portainerServiceSettings['portainerEndpointsHealthCheckUrl']);
+      case 'instance':
+        $route = str_replace('{instanceId}', $requestParams['machineName'], $wisskiInstanceSettings['baseUrl']) . $wisskiInstanceSettings['healthCheckUrl'];
+        break;
+
+      default:
+        throw new \Exception('Invalid request type');
+    }
+
     return [
       'success' => TRUE,
       'method' => 'GET',
@@ -489,7 +511,7 @@ class SodaScsPortainerServiceActions implements SodaScsServiceRequestInterface {
       'headers' => [
         'Content-Type' => 'application/json',
         'Accept' => 'application/json',
-        'X-API-Key' => $portainerServiceSettings['portainerAuthenticationToken'],
+        'X-API-Key' => $portainerServiceSettings['authenticationToken'],
       ],
     ];
   }

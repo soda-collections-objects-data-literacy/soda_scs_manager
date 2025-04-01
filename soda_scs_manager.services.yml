@@ -63,7 +63,7 @@ services:
       - '@http_client'
       - '@logger.factory'
       - '@messenger'
-      - '@soda_scs_manager.docker_volumes_service.actions'
+      - '@soda_scs_manager.docker_exec_service.actions'
       - '@soda_scs_manager.portainer_service.actions'
       - '@soda_scs_manager.service_key.actions'
       - '@soda_scs_manager.sql_service.actions'
@@ -103,7 +103,11 @@ services:
       - '@http_client'
       - '@logger.factory'
       - '@messenger'
+      - '@soda_scs_manager.docker_exec_service.actions'
+      - '@soda_scs_manager.docker_run_service.actions'
+      - '@soda_scs_manager.component.helpers'
       - '@soda_scs_manager.stack.helpers'
+      - '@soda_scs_manager.keycloak_service.actions'
       - '@soda_scs_manager.portainer_service.actions'
       - '@soda_scs_manager.sql_service.actions'
       - '@soda_scs_manager.service_key.actions'
@@ -116,6 +120,41 @@ services:
       - '@entity_type.manager'
 
   # Service actions
+
+  soda_scs_manager.docker_exec_service.actions:
+    class: Drupal\soda_scs_manager\RequestActions\SodaScsDockerExecServiceActions
+    arguments:
+        - '@config.factory'
+        - '@database'
+        - '@entity_type.manager'
+        - '@http_client'
+        - '@language_manager'
+        - '@logger.factory'
+        - '@messenger'
+        - '@request_stack'
+        - '@soda_scs_manager.service.helpers'
+        - '@soda_scs_manager.portainer_service.actions'
+        - '@soda_scs_manager.sql_service.actions'
+        - '@string_translation'
+        - '@twig'
+
+  soda_scs_manager.docker_run_service.actions:
+    class: Drupal\soda_scs_manager\RequestActions\SodaScsDockerRunServiceActions
+    arguments:
+      - '@config.factory'
+      - '@database'
+      - '@entity_type.manager'
+      - '@http_client'
+      - '@language_manager'
+      - '@logger.factory'
+      - '@messenger'
+      - '@request_stack'
+      - '@soda_scs_manager.service.helpers'
+      - '@soda_scs_manager.portainer_service.actions'
+      - '@soda_scs_manager.sql_service.actions'
+      - '@string_translation'
+      - '@twig'
+
   soda_scs_manager.docker_volumes_service.actions:
     class: Drupal\soda_scs_manager\RequestActions\SodaScsDockerVolumesServiceActions
     arguments:
@@ -133,6 +172,17 @@ services:
         - '@string_translation'
         - '@twig'
 
+  soda_scs_manager.keycloak_service.actions:
+    class: Drupal\soda_scs_manager\RequestActions\SodaScsKeycloakServiceActions
+    arguments:
+      - '@config.factory'
+      - '@http_client'
+      - '@entity_type.manager'
+      - '@messenger'
+      - '@request_stack'
+      - '@logger.factory'
+      - '@soda_scs_manager.service.helpers'
+      - '@string_translation'
 
   soda_scs_manager.opengdb_service.actions:
     class: Drupal\soda_scs_manager\RequestActions\SodaScsOpenGdbServiceActions

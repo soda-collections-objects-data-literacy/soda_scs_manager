@@ -53,3 +53,9 @@ view soda scs service key:
 
 delete soda scs service key:
   title: 'Delete SODa SCS Service Key'
+
+
+# SCS Snapshot Permissions
+create soda scs snapshot:
+  title: 'Create SCS Snapshots'
+  description: 'Create snapshots of stacks and components.'

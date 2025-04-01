@@ -15,9 +15,9 @@
         // Process the label to create a machine name
         const createMachineName = function (label) {
           return label.toLowerCase()
-            .replace(/[^a-z0-9_]+/g, '_') // Replace non-alphanumeric characters with underscore
+            .replace(/[^a-z0-9-]+/g, '-') // Replace non-alphanumeric characters with underscore
             .replace(/^[^a-z]+/, '')      // Remove non-alphabetic characters from the beginning
-            .replace(/_+$/, '')           // Remove trailing underscores
+            .replace(/-+$/, '')           // Remove trailing underscores
             .substring(0, 32);            // Limit length to 32 characters
         };
 

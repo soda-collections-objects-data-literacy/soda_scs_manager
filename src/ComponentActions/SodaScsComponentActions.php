@@ -170,4 +170,17 @@ class SodaScsComponentActions implements SodaScsComponentActionsInterface {
     }
   }
 
+  /**
+   * Create a snapshot of a component.
+   *
+   * @param \Drupal\soda_scs_manager\Entity\SodaScsComponentInterface $component
+   *   The component.
+   *
+   * @return array
+   *   The result of the request.
+   */
+  public function createSnapshot(SodaScsComponentInterface $component): array {
+    return [];
+  }
+
 }

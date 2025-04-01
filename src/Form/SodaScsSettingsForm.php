@@ -62,6 +62,7 @@ class SodaScsSettingsForm extends ConfigFormBase {
         <li><strong>{endpointId}</strong> - The Portainer endpoint ID</li>
         <li><strong>{execId}</strong> - The Docker exec ID</li>
         <li><strong>{instanceId}</strong> - The WissKI instance ID</li>
+        <li><strong>{realm}</strong> - The Keycloak realm</li>
         <li><strong>{repositoryId}</strong> - The triplestore repository ID</li>
         <li><strong>{stackId}</strong> - The Portainer stack ID</li>
         <li><strong>{userId}</strong> - The triplestore user ID</li>
@@ -104,6 +105,7 @@ class SodaScsSettingsForm extends ConfigFormBase {
       '#title' => $this->t('General settings'),
     ];
 
+    // @todo Replace fields with generalSettings.
     $form['database']['fields']['dbHost'] = [
       '#type' => 'textfield',
       '#title' => $this->t('Database host'),
@@ -128,6 +130,125 @@ class SodaScsSettingsForm extends ConfigFormBase {
       '#title' => $this->t('Management host'),
       '#default_value' => $this->config('soda_scs_manager.settings')->get('dbManagementHost'),
       '#description' => $this->t('The management host, like https://adminer-db.scs.sammlungen.io.'),
+    ];
+
+    // Keycloak settings tab.
+    // @see \Drupal\soda_scs_manager\Helpers\SodaScsServiceHelpers::initKeycloakSettings().
+    $form['keycloak'] = [
+      '#type' => 'details',
+      '#title' => $this->t('Keycloak settings'),
+      '#group' => 'tabs',
+      '#tree' => TRUE,
+    ];
+
+    $form['keycloak']['generalSettings'] = [
+      '#type' => 'fieldset',
+      '#title' => $this->t('Keycloak settings'),
+    ];
+
+    $form['keycloak']['generalSettings']['keycloakHost'] = [
+      '#type' => 'textfield',
+      '#title' => $this->t('Keycloak host'),
+      '#default_value' => $this->config('soda_scs_manager.settings')->get('keycloak')['generalSettings']['keycloakHost'] ?? '',
+      '#description' => $this->t('The keycloak host, like https://auth.sammlungen.io.'),
+    ];
+
+    $form['keycloak']['generalSettings']['keycloakRealm'] = [
+      '#type' => 'textfield',
+      '#title' => $this->t('Keycloak realm'),
+      '#default_value' => $this->config('soda_scs_manager.settings')->get('keycloak')['generalSettings']['keycloakRealm'] ?? '',
+      '#description' => $this->t('The keycloak realm, like wisski.'),
+    ];
+
+    $form['keycloak']['generalSettings']['adminUsername'] = [
+      '#type' => 'textfield',
+      '#title' => $this->t('Admin username'),
+      '#default_value' => $this->config('soda_scs_manager.settings')->get('keycloak')['generalSettings']['adminUsername'] ?? '',
+      '#description' => $this->t('The keycloak admin username, like admin.'),
+    ];
+
+    $form['keycloak']['generalSettings']['adminPassword'] = [
+      '#type' => 'textfield',
+      '#title' => $this->t('Admin password'),
+      '#default_value' => $this->config('soda_scs_manager.settings')->get('keycloak')['generalSettings']['adminPassword'] ?? '',
+      '#description' => $this->t('The keycloak admin password, like admin.'),
+    ];
+
+    $form['keycloak']['routes'] = [
+      '#type' => 'fieldset',
+      '#title' => $this->t('Keycloak routes'),
+    ];
+
+    $form['keycloak']['routes']['clients'] = [
+      '#type' => 'fieldset',
+      '#title' => $this->t('Clients routes'),
+    ];
+
+    $form['keycloak']['routes']['clients']['baseUrl'] = [
+      '#type' => 'textfield',
+      '#title' => $this->t('Base URL'),
+      '#default_value' => $this->config('soda_scs_manager.settings')->get('keycloak')['routes']['clients']['baseUrl'] ?? '',
+      '#description' => $this->t('The base URL, like /admin/realms.'),
+    ];
+
+    $form['keycloak']['routes']['clients']['crud'] = [
+      '#type' => 'fieldset',
+      '#title' => $this->t('CRUD routes'),
+    ];
+
+    $form['keycloak']['routes']['clients']['crud']['createUrl'] = [
+      '#type' => 'textfield',
+      '#title' => $this->t('Create URL'),
+      '#default_value' => $this->config('soda_scs_manager.settings')->get('keycloak')['routes']['clients']['crud']['createUrl'] ?? '',
+      '#description' => $this->t('The create URL, like /admin/realms.'),
+    ];
+
+    $form['keycloak']['routes']['clients']['crud']['readOneUrl'] = [
+      '#type' => 'textfield',
+      '#title' => $this->t('Read one URL'),
+      '#default_value' => $this->config('soda_scs_manager.settings')->get('keycloak')['routes']['clients']['crud']['readOneUrl'] ?? '',
+      '#description' => $this->t('The read one URL.'),
+    ];
+
+    $form['keycloak']['routes']['clients']['crud']['readAllUrl'] = [
+      '#type' => 'textfield',
+      '#title' => $this->t('Read all URL'),
+      '#default_value' => $this->config('soda_scs_manager.settings')->get('keycloak')['routes']['clients']['crud']['readAllUrl'] ?? '',
+      '#description' => $this->t('The read all URL.'),
+    ];
+
+    $form['keycloak']['routes']['clients']['crud']['updateUrl'] = [
+      '#type' => 'textfield',
+      '#title' => $this->t('Update URL'),
+      '#default_value' => $this->config('soda_scs_manager.settings')->get('keycloak')['routes']['clients']['crud']['updateUrl'] ?? '',
+      '#description' => $this->t('The update URL.'),
+    ];
+
+    $form['keycloak']['routes']['clients']['crud']['deleteUrl'] = [
+      '#type' => 'textfield',
+      '#title' => $this->t('Delete URL'),
+      '#default_value' => $this->config('soda_scs_manager.settings')->get('keycloak')['routes']['clients']['crud']['deleteUrl'] ?? '',
+      '#description' => $this->t('The delete URL.'),
+    ];
+
+    $form['keycloak']['routes']['clients']['healthCheck']['url'] = [
+      '#type' => 'textfield',
+      '#title' => $this->t('Health check URL'),
+      '#default_value' => $this->config('soda_scs_manager.settings')->get('keycloak')['routes']['clients']['healthCheck']['url'] ?? '',
+      '#description' => $this->t('The health check URL.'),
+    ];
+
+    $form['keycloak']['routes']['misc'] = [
+      '#type' => 'fieldset',
+      '#attributes' => ['id' => 'soda-scs--routes-subform--misc'],
+      '#title' => 'Miscellaneous routes',
+    ];
+
+    $form['keycloak']['routes']['misc']['tokenUrl'] = [
+      '#type' => 'textfield',
+      '#title' => $this->t('Token URL'),
+      '#default_value' => $this->config('soda_scs_manager.settings')->get('keycloak')['routes']['misc']['tokenUrl'] ?? '',
+      '#description' => $this->t('The token URL, like /realms/master/protocol/openid-connect/token.'),
     ];
 
     // Triplestore settings tab.
@@ -456,6 +577,88 @@ class SodaScsSettingsForm extends ConfigFormBase {
       '#description' => $this->t('Route to inspect a command inside a running container, like "/exec/{execId}/json".'),
     ];
 
+    // Docker container routes.
+    $form['portainer']['routes']['endpoints']['dockerApi']['containers'] = [
+      '#type' => 'fieldset',
+      '#attributes' => ['id' => 'soda-scs--routes-subform--docker-api-containers'],
+      '#title' => $this->t('Docker Container routes.'),
+    ];
+
+    $form['portainer']['routes']['endpoints']['dockerApi']['containers']['baseUrl'] = [
+      '#type' => 'textfield',
+      '#title' => $this->t('Docker API base route'),
+      '#default_value' => $this->config('soda_scs_manager.settings')->get('portainer')['routes']['endpoints']['dockerApi']['containers']['baseUrl'] ?? '',
+      '#description' => $this->t('The base URL, like "/containers".'),
+    ];
+
+    $form['portainer']['routes']['endpoints']['dockerApi']['containers']['crussrdr'] = [
+      '#type' => 'fieldset',
+      '#title' => $this->t('Docker Container CRUSSRDR routes.'),
+    ];
+
+    $form['portainer']['routes']['endpoints']['dockerApi']['containers']['crussrdr']['createUrl'] = [
+      '#type' => 'textfield',
+      '#title' => $this->t('Docker Container create route.'),
+      '#default_value' => $this->config('soda_scs_manager.settings')->get('portainer')['routes']['endpoints']['dockerApi']['containers']['crussrdr']['createUrl'] ?? '',
+      '#description' => $this->t('The create route, like "/create".'),
+    ];
+
+    $form['portainer']['routes']['endpoints']['dockerApi']['containers']['crussrdr']['readOneUrl'] = [
+      '#type' => 'textfield',
+      '#title' => $this->t('Docker Container read one route.'),
+      '#default_value' => $this->config('soda_scs_manager.settings')->get('portainer')['routes']['endpoints']['dockerApi']['containers']['crussrdr']['readOneUrl'] ?? '',
+      '#description' => $this->t('The read one route, like "/{containerId}/json".'),
+    ];
+
+    $form['portainer']['routes']['endpoints']['dockerApi']['containers']['crussrdr']['readAllUrl'] = [
+      '#type' => 'textfield',
+      '#title' => $this->t('Docker Container read all route.'),
+      '#default_value' => $this->config('soda_scs_manager.settings')->get('portainer')['routes']['endpoints']['dockerApi']['containers']['crussrdr']['readAllUrl'] ?? '',
+      '#description' => $this->t('The read all route, like "/json".'),
+    ];
+
+    $form['portainer']['routes']['endpoints']['dockerApi']['containers']['crussrdr']['updateUrl'] = [
+      '#type' => 'textfield',
+      '#title' => $this->t('Docker Container update route.'),
+      '#default_value' => $this->config('soda_scs_manager.settings')->get('portainer')['routes']['endpoints']['dockerApi']['containers']['crussrdr']['updateUrl'] ?? '',
+      '#description' => $this->t('The update route, like "/{containerId}/update".'),
+    ];
+
+    $form['portainer']['routes']['endpoints']['dockerApi']['containers']['crussrdr']['startUrl'] = [
+      '#type' => 'textfield',
+      '#title' => $this->t('Docker Container start route.'),
+      '#default_value' => $this->config('soda_scs_manager.settings')->get('portainer')['routes']['endpoints']['dockerApi']['containers']['crussrdr']['startUrl'] ?? '',
+      '#description' => $this->t('The start route, like "/{containerId}/start".'),
+    ];
+
+    $form['portainer']['routes']['endpoints']['dockerApi']['containers']['crussrdr']['stopUrl'] = [
+      '#type' => 'textfield',
+      '#title' => $this->t('Docker Container stop route.'),
+      '#default_value' => $this->config('soda_scs_manager.settings')->get('portainer')['routes']['endpoints']['dockerApi']['containers']['crussrdr']['stopUrl'] ?? '',
+      '#description' => $this->t('The stop route, like "/{containerId}/stop".'),
+    ];
+
+    $form['portainer']['routes']['endpoints']['dockerApi']['containers']['crussrdr']['restartUrl'] = [
+      '#type' => 'textfield',
+      '#title' => $this->t('Docker Container restart route.'),
+      '#default_value' => $this->config('soda_scs_manager.settings')->get('portainer')['routes']['endpoints']['dockerApi']['containers']['crussrdr']['restartUrl'] ?? '',
+      '#description' => $this->t('The restart route, like "/{containerId}/restart".'),
+    ];
+
+    $form['portainer']['routes']['endpoints']['dockerApi']['containers']['crussrdr']['deleteUrl'] = [
+      '#type' => 'textfield',
+      '#title' => $this->t('Docker Container delete route.'),
+      '#default_value' => $this->config('soda_scs_manager.settings')->get('portainer')['routes']['endpoints']['dockerApi']['containers']['crussrdr']['deleteUrl'] ?? '',
+      '#description' => $this->t('The delete route, like "/{containerId}".'),
+    ];
+
+    $form['portainer']['routes']['endpoints']['dockerApi']['containers']['crussrdr']['removeUrl'] = [
+      '#type' => 'textfield',
+      '#title' => $this->t('Docker Container remove route.'),
+      '#default_value' => $this->config('soda_scs_manager.settings')->get('portainer')['routes']['endpoints']['dockerApi']['containers']['crussrdr']['removeUrl'] ?? '',
+      '#description' => $this->t('The remove route, like "/{containerId}/prune".'),
+    ];
+
     // Docker volumes routes.
     $form['portainer']['routes']['endpoints']['dockerApi']['volumes'] = [
       '#type' => 'fieldset',
@@ -511,60 +714,7 @@ class SodaScsSettingsForm extends ConfigFormBase {
       '#description' => $this->t('The delete volume route, like /{volumeId}.'),
     ];
 
-    // Docker containers routes.
-    $form['portainer']['routes']['endpoints']['dockerApi']['containers'] = [
-      '#type' => 'fieldset',
-      '#attributes' => ['id' => 'soda-scs--routes-subform--docker-api'],
-      '#title' => $this->t('Docker Container routes'),
-    ];
-
-    $form['portainer']['routes']['endpoints']['dockerApi']['containers']['baseUrl'] = [
-      '#type' => 'textfield',
-      '#title' => $this->t('Container base route'),
-      '#default_value' => $this->config('soda_scs_manager.settings')->get('portainer')['routes']['endpoints']['dockerApi']['containers']['baseUrl'] ?? '',
-      '#description' => $this->t('The base URL, like "/containers".'),
-    ];
-
-    $form['portainer']['routes']['endpoints']['dockerApi']['containers']['crud'] = [
-      '#type' => 'fieldset',
-      '#title' => $this->t('Docker Container CRUD routes'),
-    ];
-
-    $form['portainer']['routes']['endpoints']['dockerApi']['containers']['crud']['createUrl'] = [
-      '#type' => 'textfield',
-      '#title' => $this->t('Create container route'),
-      '#default_value' => $this->config('soda_scs_manager.settings')->get('portainer')['routes']['endpoints']['dockerApi']['containers']['crud']['createUrl'] ?? '',
-      '#description' => $this->t('The create container route, like "/create".'),
-    ];
-
-    $form['portainer']['routes']['endpoints']['dockerApi']['containers']['crud']['readOneUrl'] = [
-      '#type' => 'textfield',
-      '#title' => $this->t('Read one container route'),
-      '#default_value' => $this->config('soda_scs_manager.settings')->get('portainer')['routes']['endpoints']['dockerApi']['containers']['crud']['readOneUrl'] ?? '',
-      '#description' => $this->t('The read one container route, like "/{containerId}".'),
-    ];
-
-    $form['portainer']['routes']['endpoints']['dockerApi']['containers']['crud']['readAllUrl'] = [
-      '#type' => 'textfield',
-      '#title' => $this->t('Read all containers route'),
-      '#default_value' => $this->config('soda_scs_manager.settings')->get('portainer')['routes']['endpoints']['dockerApi']['containers']['crud']['readAllUrl'] ?? '',
-      '#description' => $this->t('The read all containers route, like "/containers".'),
-    ];
-
-    $form['portainer']['routes']['endpoints']['dockerApi']['containers']['crud']['updateUrl'] = [
-      '#type' => 'textfield',
-      '#title' => $this->t('Update container route'),
-      '#default_value' => $this->config('soda_scs_manager.settings')->get('portainer')['routes']['endpoints']['dockerApi']['containers']['crud']['updateUrl'] ?? '',
-      '#description' => $this->t('The update container route, like "/{containerId}".'),
-    ];
-
-    $form['portainer']['routes']['endpoints']['dockerApi']['containers']['crud']['deleteUrl'] = [
-      '#type' => 'textfield',
-      '#title' => $this->t('Delete container route'),
-      '#default_value' => $this->config('soda_scs_manager.settings')->get('portainer')['routes']['endpoints']['dockerApi']['containers']['crud']['deleteUrl'] ?? '',
-      '#description' => $this->t('The delete container route, like "/{containerId}".'),
-    ];
-
+    // Portainer stacks routes.
     $form['portainer']['routes']['stacks'] = [
       '#type' => 'fieldset',
       '#attributes' => ['id' => 'soda-scs--routes-subform--stacks'],
@@ -668,6 +818,7 @@ class SodaScsSettingsForm extends ConfigFormBase {
       ->set('dbPort', $form_state->getValue('dbPort'))
       ->set('dbManagementHost', $form_state->getValue('dbManagementHost'))
       ->set('dbRootPassword', $form_state->getValue('dbRootPassword'))
+      ->set('keycloak', $form_state->getValue('keycloak'))
       ->set('triplestore', $form_state->getValue('triplestore'))
       ->set('wisski', $form_state->getValue('wisski'))
       ->set('portainer', $form_state->getValue('portainer'))

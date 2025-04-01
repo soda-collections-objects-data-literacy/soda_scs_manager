@@ -14,6 +14,7 @@ use Drupal\Core\StringTranslation\StringTranslationTrait;
 use Drupal\Core\TypedData\Exception\MissingDataException;
 use Drupal\soda_scs_manager\Entity\SodaScsComponentInterface;
 use Drupal\soda_scs_manager\Entity\SodaScsStackInterface;
+use Drupal\soda_scs_manager\Exception\SodaScsSqlServiceException;
 use Drupal\soda_scs_manager\ServiceActions\SodaScsServiceActionsInterface;
 use Drupal\soda_scs_manager\ServiceKeyActions\SodaScsServiceKeyActionsInterface;
 use GuzzleHttp\ClientInterface;
@@ -127,7 +128,7 @@ class SodaScsSqlComponentActions implements SodaScsComponentActionsInterface {
         throw new \Exception('SQL component bundle info not found');
       }
 
-      $machineName = $entity->get('machineName')->value;
+      $machineName = 'sql-' . $entity->get('machineName')->value;
       $sqlComponent = $this->entityTypeManager->getStorage('soda_scs_component')->create(
         [
           'bundle' => 'soda_scs_sql_component',
@@ -137,11 +138,13 @@ class SodaScsSqlComponentActions implements SodaScsComponentActionsInterface {
           'description' => $sqlComponentBundleInfo['description'],
           'imageUrl' => $sqlComponentBundleInfo['imageUrl'],
           'health' => 'Unknown',
+          'partOfProjects' => $entity->get('partOfProjects'),
         ]
       );
 
       $keyProps = [
-        'bundle'  => 'soda_scs_sql_component',
+        'bundle'  => $sqlComponent->bundle(),
+        'bundleLabel' => $sqlComponentBundleInfo['label'],
         'type'  => 'password',
         'userId'  => $entity->getOwnerId(),
         'username' => $entity->getOwner()->getDisplayName(),
@@ -172,13 +175,19 @@ class SodaScsSqlComponentActions implements SodaScsComponentActionsInterface {
         throw new MissingDataException('Database root password setting missing');
       }
 
-      $dbName = $entity->get('machineName')->value;
+      $dbName = $machineName;
       // Check if the database exists.
       $checkDbExistsResult = $this->sodaScsMysqlServiceActions->existService($dbName);
 
       // Command failed.
       if ($checkDbExistsResult['execStatus'] != 0) {
-        return $this->sodaScsMysqlServiceActions->handleCommandFailure($checkDbExistsResult, 'check if database', $dbName);
+        throw new SodaScsSqlServiceException(
+          "Cannot check if database $dbName exists.",
+          $checkDbExistsResult['command'],
+          'check if database',
+          $dbName,
+          $checkDbExistsResult['output']
+        );
       }
 
       if ($checkDbExistsResult['result']) {
@@ -192,7 +201,13 @@ class SodaScsSqlComponentActions implements SodaScsComponentActionsInterface {
 
       // Command failed.
       if ($checkDbUserExistsResult['execStatus'] != 0) {
-        return $this->sodaScsMysqlServiceActions->handleCommandFailure($checkDbUserExistsResult, 'check if user', $dbUserName);
+        throw new SodaScsSqlServiceException(
+          "Cannot check if user $dbName exists.",
+          $checkDbUserExistsResult['command'],
+          'check if user',
+          $dbUserName,
+          $checkDbUserExistsResult['output']
+        );
       }
 
       if ($checkDbUserExistsResult['result'] == 0) {
@@ -204,7 +219,13 @@ class SodaScsSqlComponentActions implements SodaScsComponentActionsInterface {
 
         // Command failed.
         if ($createDbUserResult['execStatus'] != 0) {
-          return $this->sodaScsMysqlServiceActions->handleCommandFailure($createDbUserResult, 'create user', $dbUserName);
+          throw new SodaScsSqlServiceException(
+            "Cannot create user $dbName.",
+            $createDbUserResult['command'],
+            'create user',
+            $dbUserName,
+            $createDbUserResult['output']
+          );
         }
       }
 
@@ -213,14 +234,26 @@ class SodaScsSqlComponentActions implements SodaScsComponentActionsInterface {
 
       // Command failed.
       if ($grantRights2DbResult['execStatus'] != 0) {
-        return $this->sodaScsMysqlServiceActions->handleCommandFailure($grantRights2DbResult, 'grant rights to user', 'user', 'dbUser');
+        throw new SodaScsSqlServiceException(
+          "Cannot grant rights to user $dbName.",
+          $grantRights2DbResult['command'],
+          'grant rights to user',
+          $dbUserName,
+          $grantRights2DbResult['output']
+        );
       }
 
       // Create Drupal database.
       $createDatabaseServiceResult = $this->sodaScsMysqlServiceActions->createService($sqlComponent);
 
       if ($createDatabaseServiceResult['execStatus'] != 0) {
-        return $this->sodaScsMysqlServiceActions->handleCommandFailure($createDatabaseServiceResult, 'create database', $dbName);
+        throw new SodaScsSqlServiceException(
+          "Cannot create database $dbName.",
+          $createDatabaseServiceResult['command'],
+          'create database',
+          $dbName,
+          $createDatabaseServiceResult['output']
+        );
       }
 
       // Create database component.
@@ -241,9 +274,7 @@ class SodaScsSqlComponentActions implements SodaScsComponentActionsInterface {
     }
     catch (MissingDataException $e) {
       $this->loggerFactory->get('soda_scs_manager')
-        ->error("Cannot create database. @error", [
-          '@error' => $e->getMessage(),
-        ]);
+        ->error("Cannot create database. error: $e");
       $this->messenger->addError($this->t("Cannot create database. See logs for more details."));
       return [
         'message' => 'Cannot create database.',
@@ -252,6 +283,19 @@ class SodaScsSqlComponentActions implements SodaScsComponentActionsInterface {
         'error' => $e->getMessage(),
       ];
     }
+  }
+
+  /**
+   * Create SODa SCS Snapshot.
+   *
+   * @param \Drupal\soda_scs_manager\Entity\SodaScsComponentInterface $component
+   *   The SODa SCS Component.
+   *
+   * @return array
+   *   Result information with the created snapshot.
+   */
+  public function createSnapshot(SodaScsComponentInterface $component): array {
+    return [];
   }
 
   /**
@@ -304,12 +348,9 @@ class SodaScsSqlComponentActions implements SodaScsComponentActionsInterface {
       $deleteDbResult = $this->sodaScsMysqlServiceActions->deleteService($component);
       $component->delete();
     }
-    catch (MissingDataException $e) {
+    catch (\Exception $e) {
       $this->loggerFactory->get('soda_scs_manager')
-        ->error("Cannot delete database: @error trace: @trace", [
-          '@error' => $e->getMessage(),
-          '@trace' => $e->getTraceAsString(),
-        ]);
+        ->error("Cannot delete database: $e");
       $this->messenger->addError($this->t("Cannot delete database. See logs for more details."));
 
       return [
@@ -327,13 +368,26 @@ class SodaScsSqlComponentActions implements SodaScsComponentActionsInterface {
       /** @var \Drupal\soda_scs_manager\Entity\SodaScsServiceKeyInterface $sqlServiceKey */
       $sqlServiceKey = $this->entityTypeManager->getStorage('soda_scs_service_key')->load($component->get('serviceKey')->target_id);
       $dbUserPassword = $sqlServiceKey->get('servicePassword')->value;
+    }
+    catch (\Exception $e) {
+      $this->loggerFactory->get('soda_scs_manager')
+        ->error("Cannot load service key: $e");
+      $this->messenger->addError($this->t("Cannot load service key. See logs for more details."));
+      return [
+        'message' => 'Cannot load service key.',
+        'data' => NULL,
+        'success' => FALSE,
+        'error' => $e->getMessage(),
+      ];
+    }
+
+    // Clean database users.
+    try {
       $cleanDatabaseUsers = $this->sodaScsMysqlServiceActions->cleanServiceUsers($component->getOwner()->getDisplayName(), $dbUserPassword);
     }
-    catch (MissingDataException $e) {
+    catch (\Exception $e) {
       $this->loggerFactory->get('soda_scs_manager')
-        ->error("Cannot clean database users. @error", [
-          '@error' => $e->getMessage(),
-        ]);
+        ->error("Cannot clean database users. error: $e");
       $this->messenger->addError($this->t("Cannot clean database users. See logs for more details."));
       return [
         'message' => 'Cannot clean database. users',

@@ -15,6 +15,8 @@ use Drupal\soda_scs_manager\Entity\Bundle\SodaScsProjectsBundle;
 use Drupal\soda_scs_manager\Entity\Bundle\SodaScsServiceKeyBundle;
 use Drupal\soda_scs_manager\Entity\Bundle\SodaScsStackBundle;
 use Drupal\user\UserInterface;
+use Drupal\soda_scs_manager\Entity\SodaScsProject;
+use Drupal\soda_scs_manager\Entity\SodaScsComponent;
 
 // This file contains implementations of the following hooks:
 // - hook_help(): implements the user help page for the module.
@@ -59,11 +61,21 @@ function soda_scs_manager_theme($existing, $type, $theme, $path) {
   return [
     // Cards.
     'bundle_card' => [
-      'variables' => ['title' => NULL, 'description' => NULL, 'url' => NULL, 'image_url' => NULL],
+      'variables' => [
+        'title' => NULL,
+        'description' => NULL,
+        'url' => NULL,
+        'imageUrl' => NULL,
+      ],
     ],
 
     'component_card' => [
-      'variables' => ['component' => NULL],
+      'variables' => [
+        'title' => NULL,
+        'description' => NULL,
+        'url' => NULL,
+        'imageUrl' => NULL,
+      ],
     ],
 
     'stack_card' => [
@@ -71,36 +83,39 @@ function soda_scs_manager_theme($existing, $type, $theme, $path) {
     ],
 
     'soda_scs_manager__entity_card' => [
-      'variables' => ['entity' => NULL, 'entity_type' => NULL],
+      'variables' => [
+        'title' => NULL,
+        'description' => NULL,
+        'url' => NULL,
+        'imageUrl' => NULL,
+      ],
     ],
 
     // Pages.
-    'stacks_desk' => [
-      'variables' => [
-        'stacksByUser' => NULL,
-      ],
-    ],
+#    'stacks_desk' => [
+#      'variables' => [
+#        'stacksByUser' => NULL,#
+#      ],
+#    ],
 
     'soda_scs_manager__desk' => [
       'variables' => [
         'entitiesByUser' => NULL,
+        'entity_type' => NULL,
       ],
     ],
 
-    'components_desk' => [
-      'variables' => [
-        'componentsByUser' => NULL,
-      ],
-    ],
+#    'soda_scs_manager__desk' => [
+#      'variables' => [
+#        'componentsByUser' => NULL,
+#      ],
+#    ],
 
-    'components_store' => [
+    'soda_scs_manager__store' => [
       'variables' => [
         'components' => NULL,
+        'attributes' => NULL,
       ],
-    ],
-
-    'users_page' => [
-      'variables' => ['users' => NULL],
     ],
 
     'machine_name_with_edit' => [
@@ -221,70 +236,50 @@ function soda_scs_manager_ensure_scs_user_role() {
  */
 function soda_scs_manager_entity_bundle_info() {
   // Components.
-  $bundles['soda_scs_component']['soda_scs_collabora_component'] = [
-    'label' => new TranslatableMarkup('Collabora Component'),
-    'class' => SodaScsComponentBundle::class,
-    'description' => new TranslatableMarkup('A Collabora instance for collaborative document editing.'),
-    'imageUrl' => 'public://soda_scs_manager/images/collabora.svg',
-  ];
-
-  $bundles['soda_scs_component']['soda_scs_drawio_component'] = [
-    'label' => new TranslatableMarkup('Draw.io Component'),
-    'class' => SodaScsComponentBundle::class,
-    'description' => new TranslatableMarkup('A Draw.io instance for conceptual modeling.'),
-    'imageUrl' => 'public://soda_scs_manager/images/draw-io.svg',
-  ];
 
   $bundles['soda_scs_component']['soda_scs_filesystem_component'] = [
-    'label' => new TranslatableMarkup('Filesystem Component'),
+    'label' => new TranslatableMarkup('Filesystem'),
     'class' => SodaScsComponentBundle::class,
     'description' => new TranslatableMarkup('A filesystem for storage of structured data.'),
     'imageUrl' => 'public://soda_scs_manager/images/filesystem.svg',
   ];
 
   $bundles['soda_scs_component']['soda_scs_jupyter_component'] = [
-    'label' => new TranslatableMarkup('Jupyter Component'),
+    'label' => new TranslatableMarkup('JupyterHub Account'),
     'class' => SodaScsComponentBundle::class,
     'description' => new TranslatableMarkup('A Jupyter web IDE for coding in Python.'),
     'imageUrl' => 'public://soda_scs_manager/images/jupyternotebook.svg',
   ];
 
   $bundles['soda_scs_component']['soda_scs_nextcloud_component'] = [
-    'label' => new TranslatableMarkup('Nextcloud Component'),
+    'label' => new TranslatableMarkup('Nextcloud Account'),
     'class' => SodaScsComponentBundle::class,
     'description' => new TranslatableMarkup('A Nextcloud instance for cloud storage and file sharing.'),
     'imageUrl' => 'public://soda_scs_manager/images/nextcloud.svg',
   ];
 
-  $bundles['soda_scs_component']['soda_scs_open_refine_component'] = [
-    'label' => new TranslatableMarkup('Open Refine Component'),
-    'class' => SodaScsComponentBundle::class,
-    'description' => new TranslatableMarkup('An open source web-based tool for data curation and editing.'),
-    'imageUrl' => 'public://soda_scs_manager/images/openrefine.svg',
-  ];
-
   $bundles['soda_scs_component']['soda_scs_sql_component'] = [
-    'label' => new TranslatableMarkup('SQL Component'),
+    'label' => new TranslatableMarkup('SQL Database'),
     'class' => SodaScsComponentBundle::class,
     'description' => new TranslatableMarkup('A relational database for storage of structured data.'),
     'imageUrl' => 'public://soda_scs_manager/images/sql.svg',
   ];
   $bundles['soda_scs_component']['soda_scs_triplestore_component'] = [
-    'label' => new TranslatableMarkup('Triplestore Component'),
+    'label' => new TranslatableMarkup('Triplestore'),
     'class' => SodaScsComponentBundle::class,
     'description' => new TranslatableMarkup('Graph database for storage of RDF data.'),
     'imageUrl' => 'public://soda_scs_manager/images/triplestore.svg',
   ];
 
   $bundles['soda_scs_component']['soda_scs_webprotege_component'] = [
-    'label' => new TranslatableMarkup('WebProtégé Component'),
+    'label' => new TranslatableMarkup('WebProtégé'),
     'class' => SodaScsComponentBundle::class,
     'description' => new TranslatableMarkup('A web-based tool for creating and editing OWL ontologies.'),
     'imageUrl' => 'public://soda_scs_manager/images/protege.svg',
   ];
 
   $bundles['soda_scs_component']['soda_scs_wisski_component'] = [
-    'label' => new TranslatableMarkup('WissKI Component'),
+    'label' => new TranslatableMarkup('WissKI'),
     'class' => SodaScsComponentBundle::class,
     'description' => new TranslatableMarkup('A WissKI Component is a component of a WissKI Stack.'),
     'imageUrl' => 'public://soda_scs_manager/images/wisski.svg',
@@ -309,7 +304,7 @@ function soda_scs_manager_entity_bundle_info() {
     'label' => new TranslatableMarkup('JupyterHub Stack'),
     'class' => SodaScsStackBundle::class,
     'description' => new TranslatableMarkup('A JupyterHub Stack contains Jupyter, Open Refine.'),
-    'imageUrl' => 'public://soda_scs_manager/images/jupyter-stack.svg',
+    'imageUrl' => 'public://soda_scs_manager/images/jupyterhub-stack.svg',
   ];
 
   $bundles['soda_scs_stack']['soda_scs_wisski_stack'] = [
@@ -351,5 +346,186 @@ function soda_scs_manager_entity_field_storage_info(EntityTypeInterface $entity_
       }
     }
     return $definitions;
+  }
+}
+
+/**
+ * Implements hook_ENTITY_TYPE_update() for soda_scs_project entities.
+ *
+ * Updates the partOfProjects field on components when a project is updated.
+ */
+function soda_scs_manager_soda_scs_project_update(SodaScsProject $entity) {
+  _soda_scs_manager_sync_project_component_relationship($entity);
+}
+
+/**
+ * Implements hook_ENTITY_TYPE_insert() for soda_scs_project entities.
+ *
+ * Updates the partOfProjects field on components when a project is created.
+ */
+function soda_scs_manager_soda_scs_project_insert(SodaScsProject $entity) {
+  _soda_scs_manager_sync_project_component_relationship($entity);
+}
+
+/**
+ * Implements hook_ENTITY_TYPE_delete() for soda_scs_project entities.
+ *
+ * Deletes the partOfProjects field on components when a project is deleted.
+ */
+function soda_scs_manager_soda_scs_project_delete(SodaScsProject $entity) {
+  _soda_scs_manager_sync_project_component_relationship($entity);
+}
+
+/**
+ * Implements hook_ENTITY_TYPE_update() for soda_scs_component entities.
+ *
+ * Updates the connectedComponents field on projects when a component is updated.
+ */
+function soda_scs_manager_soda_scs_component_update(SodaScsComponent $entity) {
+  _soda_scs_manager_sync_component_project_relationship($entity);
+}
+
+/**
+ * Implements hook_ENTITY_TYPE_insert() for soda_scs_component entities.
+ *
+ * Updates the connectedComponents field on projects when a component is created.
+ */
+function soda_scs_manager_soda_scs_component_insert(SodaScsComponent $entity) {
+  _soda_scs_manager_sync_component_project_relationship($entity);
+}
+
+/**
+ * Implements hook_ENTITY_TYPE_delete() for soda_scs_component entities.
+ *
+ * Deletes the connectedComponents field on projects when a component is deleted.
+ */
+function soda_scs_manager_soda_scs_component_delete(SodaScsComponent $entity) {
+  _soda_scs_manager_sync_component_project_relationship($entity);
+}
+
+/**
+ * Syncs the relationship from project to components.
+ *
+ * @param \Drupal\soda_scs_manager\Entity\SodaScsProject $project
+ *   The project entity.
+ */
+function _soda_scs_manager_sync_project_component_relationship(SodaScsProject $project) {
+  // Get components referenced by this project.
+  $componentIds = [];
+  $connectedComponents = $project->get('connectedComponents')->getValue();
+  foreach ($connectedComponents as $componentRef) {
+    $componentIds[] = $componentRef['target_id'];
+  }
+
+  // Load all components that might reference this project.
+  $componentStorage = \Drupal::entityTypeManager()->getStorage('soda_scs_component');
+
+  // First, find all components that reference this project.
+  $query = $componentStorage->getQuery()
+    ->condition('partOfProjects', $project->id())
+    ->accessCheck(FALSE);
+  $referencingComponentIds = $query->execute();
+
+  if (!empty($referencingComponentIds)) {
+    $referencingComponents = $componentStorage->loadMultiple($referencingComponentIds);
+
+    // For each component that references this project,
+    // check if it should still reference it.
+    /** @var \Drupal\soda_scs_manager\Entity\SodaScsComponent $component */
+    foreach ($referencingComponents as $component) {
+      // Skip if the component is still connected to the project.
+      if (in_array($component->id(), $componentIds)) {
+        continue;
+      }
+
+      // Component is no longer connected to the project, remove the reference.
+      $projectRefs = [];
+      foreach ($component->get('partOfProjects')->getValue() as $ref) {
+        if ($ref['target_id'] != $project->id()) {
+          $projectRefs[] = $ref;
+        }
+      }
+
+      // Update the component with the new references.
+      $component->set('partOfProjects', $projectRefs);
+      // Prevent infinite recursion by setting a flag.
+      $component->syncing = TRUE;
+      $component->save();
+    }
+  }
+
+  // If there are no components connected to this project, we're done.
+  if (empty($componentIds)) {
+    return;
+  }
+
+  // Load all currently referenced components.
+  /** @var \Drupal\soda_scs_manager\Entity\SodaScsComponent[] $components */
+  $components = $componentStorage->loadMultiple($componentIds);
+
+  // For each component, ensure it references this project.
+  foreach ($components as $component) {
+    $projectRefs = $component->get('partOfProjects')->getValue();
+    $projectRefIds = [];
+    foreach ($projectRefs as $ref) {
+      $projectRefIds[] = $ref['target_id'];
+    }
+
+    // If this project is not referenced by the component, add it.
+    if (!in_array($project->id(), $projectRefIds)) {
+      $projectRefs[] = ['target_id' => $project->id()];
+      $component->set('partOfProjects', $projectRefs);
+      // Prevent infinite recursion by setting a flag.
+      $component->syncing = TRUE;
+      $component->save();
+    }
+  }
+}
+
+/**
+ * Syncs the relationship from component to projects.
+ *
+ * @param \Drupal\soda_scs_manager\Entity\SodaScsComponent $component
+ *   The component entity.
+ */
+function _soda_scs_manager_sync_component_project_relationship(SodaScsComponent $component) {
+  // Skip if we're in the middle of syncing to prevent infinite recursion.
+  if (!empty($component->syncing)) {
+    return;
+  }
+
+  // Get projects referenced by this component.
+  $projectIds = [];
+  $partOfProjects = $component->get('partOfProjects')->getValue();
+  foreach ($partOfProjects as $projectRef) {
+    $projectIds[] = $projectRef['target_id'];
+  }
+
+  if (empty($projectIds)) {
+    return;
+  }
+
+  // Load all referenced projects.
+  $projectStorage = \Drupal::entityTypeManager()->getStorage('soda_scs_project');
+  /** @var \Drupal\soda_scs_manager\Entity\SodaScsProject[] $projects */
+  $projects = $projectStorage->loadMultiple($projectIds);
+
+  // For each project, ensure it references this component.
+  foreach ($projects as $project) {
+    /** @var \Drupal\soda_scs_manager\Entity\SodaScsProject $project */
+    $componentRefs = $project->get('connectedComponents')->getValue();
+    $componentRefIds = [];
+    foreach ($componentRefs as $ref) {
+      $componentRefIds[] = $ref['target_id'];
+    }
+
+    // If this component is not referenced by the project, add it.
+    if (!in_array($component->id(), $componentRefIds)) {
+      $componentRefs[] = ['target_id' => $component->id()];
+      $project->set('connectedComponents', $componentRefs);
+      // Prevent infinite recursion by setting a flag.
+      $project->syncing = TRUE;
+      $project->save();
+    }
   }
 }

@@ -98,11 +98,7 @@ class SodaScsDockerRegistryServiceActions implements SodaScsServiceRequestInterf
       ];
     }
     catch (ClientException $e) {
-      $this->loggerFactory->get('soda_scs_manager')->error("Portainer request failed with code @code error: @error trace @trace", [
-        '@code' => $e->getCode(),
-        '@error' => $e->getMessage(),
-        '@trace' => $e->getTraceAsString(),
-      ]);
+      $this->loggerFactory->get('soda_scs_manager')->error("Portainer request failed. error: $e");
     }
     $this->messenger->addError($this->t("Portainer request failed. See logs for more details."));
     return [

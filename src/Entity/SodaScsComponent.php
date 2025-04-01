@@ -60,8 +60,10 @@ use Drupal\user\EntityOwnerTrait;
  *
  *   config_export = {
  *    "bundle",
+ *    "connectedComponents",
  *    "created",
  *    "description",
+ *    "flavours",
  *    "id",
  *    "imageUrl",
  *    "label",
@@ -70,6 +72,7 @@ use Drupal\user\EntityOwnerTrait;
  *    "uuid",
  *    "updated",
  *    "owner",
+ *    "partOfProjects",
  *    }
  *
  * )
@@ -259,8 +262,8 @@ class SodaScsComponent extends ContentEntityBase implements SodaScsComponentInte
       // Add constraint to ensure machine name format is valid.
       ->addPropertyConstraints('value', [
         'Regex' => [
-          'pattern' => '/^[a-z0-9_]+$/',
-          'message' => t('Machine name must contain only lowercase letters, numbers, and underscores.'),
+          'pattern' => '/^[a-z0-9-]+$/',
+          'message' => t('Machine name must contain only lowercase letters, numbers, and minus.'),
         ],
       ]);
 
@@ -272,12 +275,12 @@ class SodaScsComponent extends ContentEntityBase implements SodaScsComponentInte
       ->setDisplayConfigurable('view', FALSE)
       ->setDisplayOptions('form', [
         'type' => 'string_textarea',
-        'weight' => 50,
+        'weight' => 60,
       ])
       ->setDisplayOptions('view', [
         'label' => 'above',
         'type' => 'text_default',
-        'weight' => 50,
+        'weight' => 60,
       ]);
 
     $fields['owner'] = BaseFieldDefinition::create('entity_reference')
@@ -299,21 +302,17 @@ class SodaScsComponent extends ContentEntityBase implements SodaScsComponentInte
         'weight' => 40,
       ]);
 
-    $fields['partOfProject'] = BaseFieldDefinition::create('entity_reference')
+    $fields['partOfProjects'] = BaseFieldDefinition::create('entity_reference')
       ->setLabel(new TranslatableMarkup('Project'))
       ->setDescription(new TranslatableMarkup('The project this component belongs to.'))
       ->setSetting('target_type', 'soda_scs_project')
-      ->setSetting('handler', 'default')
+      ->setSetting('handler', 'soda_scs_project_access')
+      ->setCardinality(FieldStorageDefinitionInterface::CARDINALITY_UNLIMITED)
       ->setRequired(FALSE)
       ->setDisplayConfigurable('form', TRUE)
       ->setDisplayOptions('form', [
-        'type' => 'inline_entity_form_complex',
-        'weight' => 5,
-        'settings' => [
-          'allow_new' => TRUE,
-          'allow_existing' => TRUE,
-          'match_operator' => 'CONTAINS',
-        ],
+        'type' => 'options_buttons',
+        'weight' => 45,
       ])
       ->setDisplayConfigurable('view', TRUE)
       ->setDisplayOptions('view', [
@@ -323,8 +322,8 @@ class SodaScsComponent extends ContentEntityBase implements SodaScsComponentInte
       ]);
 
     // @todo Implement the reuse of dangling components
-    $fields['referencedComponents'] = BaseFieldDefinition::create('entity_reference')
-      ->setLabel(new TranslatableMarkup('Connect with dangling component(s)'))
+    $fields['connectedComponents'] = BaseFieldDefinition::create('entity_reference')
+      ->setLabel(new TranslatableMarkup('Connected Components'))
       ->setSetting('target_type', 'soda_scs_component')
       ->setSetting('handler', 'default')
       ->setRequired(FALSE)

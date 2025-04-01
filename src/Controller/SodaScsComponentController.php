@@ -64,51 +64,72 @@ class SodaScsComponentController extends ControllerBase {
         $filesystemHealth = $this->sodaScsComponentHelpers
           ->checkFilesystemHealth($component->get('machineName')->value);
         if (!$filesystemHealth) {
-          return new JsonResponse(['status' => [
-            'message' => $this->t("Filesystem health check failed for component @component. Message: @message", ['@component' => $component->id(), '@message' => $filesystemHealth['message']]),
-            'success' => FALSE,
-          ]], $filesystemHealth['code']);
+          return new JsonResponse([
+            'status' => [
+              'message' => $this->t("Filesystem health check failed for component @component. Message: @message", ['@component' => $component->id(), '@message' => $filesystemHealth['message']]),
+              'success' => FALSE,
+            ],
+            'code' => $filesystemHealth['code'],
+          ]);
         }
         return new JsonResponse(['status' => $filesystemHealth]);
+
         break;
 
       case 'soda_scs_sql_component':
         $sqlHealth = $this->sodaScsComponentHelpers->checkSqlHealth($component->id());
         if (!$sqlHealth) {
-          return new JsonResponse(['status' => [
-            'message' => $this->t("MariaDB health check failed for component @component.", ['@component' => $component->id()]),
-            'success' => FALSE,
-          ]], $sqlHealth['code']);
+          return new JsonResponse(
+            [
+              'status' => [
+                'message' => $this->t("MariaDB health check failed for component @component.", ['@component' => $component->id()]),
+                'success' => FALSE,
+              ],
+              'code' => $sqlHealth['code'],
+            ],
+          );
         }
         return new JsonResponse(['status' => $sqlHealth]);
-     
+
       case 'soda_scs_triplestore_component':
         $triplestoreHealth = $this->sodaScsComponentHelpers
           ->checkTriplestoreHealth($component->get('machineName')->value, $component->get('machineName')->value);
         if (!$triplestoreHealth) {
-          return new JsonResponse(['status' => [
-            'message' => $this->t("Triplestore health check failed for component @component.", ['@component' => $component->id()]),
-            'success' => FALSE,
-          ]], $triplestoreHealth['code']);
+          return new JsonResponse([
+            'status' => [
+              'message' => $this->t("Triplestore health check failed for component @component.", ['@component' => $component->id()]),
+              'success' => FALSE,
+            ],
+            'code' => $triplestoreHealth['code'],
+          ]);
         }
         return new JsonResponse(['status' => $triplestoreHealth]);
-      
+
       case 'soda_scs_wisski_component':
-          $wisskiHealth = $this->sodaScsComponentHelpers
-            ->drupalHealthCheck($component->get('machineName')->value);
-          if (!$wisskiHealth) {
-            return new JsonResponse(['status' => [
+        $wisskiHealth = $this->sodaScsComponentHelpers
+          ->drupalHealthCheck($component->get('machineName')->value);
+        if (!$wisskiHealth) {
+          return new JsonResponse([
+            'status' => [
               'message' => $this->t("WissKI health check failed for component @component.", ['@component' => $component->id()]),
               'success' => FALSE,
-            ]], $wisskiHealth['code']);
-          }
-          return new JsonResponse(['status' => $wisskiHealth]);
-     
+            ],
+            'code' => $wisskiHealth['code'],
+          ]);
+        }
+        return new JsonResponse(['status' => $wisskiHealth]);
+
       default:
-        return new JsonResponse(['status' => [
-          'message' => $this->t("Health check failed for component @component with message: @message", ['@component' => $component->id(), '@message' => 'Unknown component type.']),
-          'success' => FALSE,
-        ]], 500);
+        return new JsonResponse(
+          [
+            'status' => [
+              'message' => $this->t("Health check failed for component @component with message: @message", ['@component' => $component->id(), '@message' => 'Unknown component type.']),
+              'success' => FALSE,
+            ],
+            'code' => 500,
+          ],
+          500,
+        );
     }
   }
 

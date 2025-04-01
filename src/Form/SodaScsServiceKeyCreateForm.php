@@ -153,4 +153,15 @@ class SodaScsServiceKeyCreateForm extends ContentEntityForm {
     return $form;
   }
 
+  /**
+   * {@inheritdoc}
+   */
+  public function save(array $form, FormStateInterface $form_state): void {
+    parent::save($form, $form_state);
+
+    $this->messenger()->addMessage($this->t('Service key created successfully.'));
+
+    $form_state->setRedirect('entity.soda_scs_service_key.collection');
+  }
+
 }

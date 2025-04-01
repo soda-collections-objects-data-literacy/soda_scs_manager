@@ -1,9 +1,7 @@
-<div class="card mx-auto" style="width: 18rem;">
-  <img class="card-img-top p-3 mx-auto d-block" src="{{ file_url(component.imageUrl.0.value) }}" alt="{{ component.label.0.value }}" style="max-width: 150px;">
+<div class="card mx-auto h-100" style="width: 18rem;">
+  <img class="card-img-top p-3 mx-auto d-block" src="{{file_url(imageUrl)}}" alt="{{ title }}" style="height: 150px; max-width: 150px;">
   <div class="card-body text-center d-flex flex-column justify-content-between">
-
-       <h5 class="card-title
-    <h5 class="soda-scs-manager--card-title"> {{ component.label.0.value }} </h5>
-    <a href="/soda-scs-manager/component/{{ component.id.0.value }}" class="btn btn-primary">MORE INFO</a>
+    <div class="soda-scs-manager--card-title"><strong>{{ title }}</strong></div>
+    <a href="{{ url }}" class="btn btn-primary mt-auto"><strong>{{ 'MORE INFO'|t }}</strong></a>
   </div>
 </div>

@@ -63,11 +63,13 @@ class SodaScsManagerServiceController extends ControllerBase {
     switch ($soda_scs_component->get('bundle')->value) {
       case 'soda_scs_wisski_component':
         $machineName = $soda_scs_component->get('machineName')->value;
-        $url = 'https://' . $machineName . '.' . $host;
+        $url = 'https://' . $machineName . '.wisski.' . str_replace('https://', '', $host);
         break;
+
       case 'soda_scs_sql_component':
-        $url = 'https://' . $management_host;
+        $url = 'https://adminer-db.' . $management_host;
         break;
+
       default:
         throw new \Exception('Unknown component type: ' . $soda_scs_component->get('bundle')->value);
     }

@@ -19,6 +19,7 @@
             if ($data[0]['status']['success'] === true) {
               $("div.field--name-health div.field__item .dot").remove();
               $("div.field--name-health div.field__item").text('Running')
+              $("div.field--name-health div.field__label").removeClass('soda-scs-manager--component-status--api-error').removeAttr('title');
             } else {
               $("div.field--name-health div.field__item").text($data[0]['status']['message'])
               $("div.field--name-health div.field__label").addClass('soda-scs-manager--component-status--api-error').attr('title', $data[0]['status']['error']);

@@ -40,7 +40,7 @@ class ScsComponentsReferenceField extends EntityReferenceFieldItemList {
     if ($entity && !$entity->isNew()) {
       // Query for components that reference this project.
       $query = $this->entityTypeManager->getStorage('soda_scs_component')->getQuery()
-        ->condition('partOfProject', $entity->id())
+        ->condition('partOfProjects', $entity->id())
         ->accessCheck(TRUE);
       $component_ids = $query->execute();
 

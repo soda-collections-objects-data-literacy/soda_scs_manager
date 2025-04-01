@@ -212,17 +212,19 @@ class SodaScsDockerExecServiceActions implements SodaScsExecRequestInterface {
   public function buildCreateRequest(array $requestParams): array {
     // Initialize settings.
     $portainerServiceSettings = $this->sodaScsServiceHelpers->initPortainerServiceSettings();
+    $dockerApiSettings = $this->sodaScsServiceHelpers->initDockerApiSettings();
     $dockerExecServiceSettings = $this->sodaScsServiceHelpers->initDockerExecServiceSettings();
 
+    // @todo Container name is not the container id.
     $route =
       // https://portainer.scs.sammlungen.io
-      $portainerServiceSettings['portainerHostRoute'] .
+      $portainerServiceSettings['host'] .
       // /api/endpoints
-      $portainerServiceSettings['portainerEndpointsBaseUrlRoute'] .
+      $portainerServiceSettings['baseUrl'] .
       // /{endpointId}/docker
-      str_replace('{endpointId}', $portainerServiceSettings['portainerEndpointId'], $portainerServiceSettings['dockerApiBaseUrlRoute']) .
+      str_replace('{endpointId}', $portainerServiceSettings['endpointId'], $dockerApiSettings['baseUrl']) .
       // /containers/{containerId}/exec.
-      str_replace('{containerId}', $requestParams['containerId'], $dockerExecServiceSettings['dockerApiExecCreateUrlRoute']);
+      str_replace('{containerId}', $requestParams['containerName'], $dockerExecServiceSettings['createUrl']);
 
     return [
       'method' => 'POST',
@@ -230,16 +232,13 @@ class SodaScsDockerExecServiceActions implements SodaScsExecRequestInterface {
       'headers' => [
         'Content-Type' => 'application/json',
         'Accept' => 'application/json',
-        'X-API-Key' => $portainerServiceSettings['portainerAuthenticationToken'],
+        'X-API-Key' => $portainerServiceSettings['authenticationToken'],
       ],
       'body' => json_encode(
         [
           'Cmd' => $requestParams['cmd'],
           'Detach' => FALSE,
           'Tty' => FALSE,
-          'User' => $requestParams['user'] ?? '',
-          'WorkingDir' => $requestParams['workingDir'] ?? '',
-          'Env' => $requestParams['env'] ?? [],
         ]
       ),
     ];
@@ -257,17 +256,18 @@ class SodaScsDockerExecServiceActions implements SodaScsExecRequestInterface {
   public function buildStartRequest(array $requestParams): array {
     // Initialize settings.
     $portainerServiceSettings = $this->sodaScsServiceHelpers->initPortainerServiceSettings();
+    $dockerApiSettings = $this->sodaScsServiceHelpers->initDockerApiSettings();
     $dockerExecServiceSettings = $this->sodaScsServiceHelpers->initDockerExecServiceSettings();
 
     $route =
       // https://portainer.scs.sammlungen.io
-      $portainerServiceSettings['portainerHostRoute'] .
+      $portainerServiceSettings['host'] .
       // /api/endpoints
-      $portainerServiceSettings['portainerEndpointsBaseUrlRoute'] .
+      $portainerServiceSettings['baseUrl'] .
       // /{endpointId}/docker
-      str_replace('{endpointId}', $portainerServiceSettings['portainerEndpointId'], $dockerExecServiceSettings['dockerApiBaseUrlRoute']) .
+      str_replace('{endpointId}', $portainerServiceSettings['endpointId'], $dockerApiSettings['baseUrl']) .
       // /containers/{containerId}/exec/{execId}/start.
-      str_replace('{execId}', $requestParams['execId'], $dockerExecServiceSettings['dockerApiExecStartUrlRoute']);
+      str_replace('{execId}', $requestParams['execId'], $dockerExecServiceSettings['startUrl']);
 
     return [
       'method' => 'POST',
@@ -298,17 +298,18 @@ class SodaScsDockerExecServiceActions implements SodaScsExecRequestInterface {
   public function buildResizeRequest(array $requestParams): array {
     // Initialize settings.
     $portainerServiceSettings = $this->sodaScsServiceHelpers->initPortainerServiceSettings();
+    $dockerApiSettings = $this->sodaScsServiceHelpers->initDockerApiSettings();
     $dockerExecServiceSettings = $this->sodaScsServiceHelpers->initDockerExecServiceSettings();
 
     $route =
       // https://portainer.scs.sammlungen.io
-      $portainerServiceSettings['portainerHostRoute'] .
+      $portainerServiceSettings['host'] .
       // /api/endpoints
-      $portainerServiceSettings['portainerEndpointsBaseUrlRoute'] .
+      $portainerServiceSettings['baseUrl'] .
       // /{endpointId}/docker
-      str_replace('{endpointId}', $portainerServiceSettings['portainerEndpointId'], $dockerExecServiceSettings['dockerApiBaseUrlRoute']) .
+      str_replace('{endpointId}', $portainerServiceSettings['endpointId'], $dockerApiSettings['baseUrl']) .
       // /containers/{containerId}/exec/{execId}/resize.
-      str_replace('{execId}', $requestParams['execId'], $dockerExecServiceSettings['dockerApiExecResizeUrlRoute']);
+      str_replace('{execId}', $requestParams['execId'], $dockerExecServiceSettings['resizeUrl']);
 
     return [
       'method' => 'POST',
@@ -337,17 +338,18 @@ class SodaScsDockerExecServiceActions implements SodaScsExecRequestInterface {
   public function buildInspectRequest(array $requestParams): array {
     // Initialize settings.
     $portainerServiceSettings = $this->sodaScsServiceHelpers->initPortainerServiceSettings();
+    $dockerApiSettings = $this->sodaScsServiceHelpers->initDockerApiSettings();
     $dockerExecServiceSettings = $this->sodaScsServiceHelpers->initDockerExecServiceSettings();
 
     $route =
       // https://portainer.scs.sammlungen.io
-      $portainerServiceSettings['portainerHostRoute'] .
+      $portainerServiceSettings['host'] .
       // /api/endpoints
-      $portainerServiceSettings['portainerEndpointsBaseUrlRoute'] .
+      $portainerServiceSettings['baseUrl'] .
       // /{endpointId}/docker
-      str_replace('{endpointId}', $portainerServiceSettings['portainerEndpointId'], $dockerExecServiceSettings['dockerApiBaseUrlRoute']) .
+      str_replace('{endpointId}', $portainerServiceSettings['endpointId'], $dockerApiSettings['baseUrl']) .
       // /containers/{containerId}/exec/{execId}/inspect.
-      str_replace('{execId}', $requestParams['execId'], $dockerExecServiceSettings['dockerApiExecInspectUrlRoute']);
+      str_replace('{execId}', $requestParams['execId'], $dockerExecServiceSettings['inspectUrl']);
 
     return [
       'method' => 'GET',

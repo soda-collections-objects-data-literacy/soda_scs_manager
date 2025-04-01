@@ -224,13 +224,9 @@ class SodaScsWisskiStackActions implements SodaScsStackActionsInterface {
 
       $stack->includedComponents[] = $sqlComponent->id();
       $stack->imageUrl = 'public://soda_scs_manager/images/wisski-stack.svg';
-      $stack->save();
     }
     catch (\Exception $e) {
-      $this->loggerFactory->get('soda_scs_manager')->error("Database component exists with error: @error trace: @trace", [
-        '@error' => $e->getMessage(),
-        '@trace' => $e->getTraceAsString(),
-      ]);
+      $this->loggerFactory->get('soda_scs_manager')->error("Could not create database component. error: $e");
       $this->messenger->addError($this->t("Could not create database component. See logs for more details."));
       return [
         'message' => 'Could not create database component.',
@@ -258,14 +254,10 @@ class SodaScsWisskiStackActions implements SodaScsStackActionsInterface {
       }
       $triplestoreComponent = $triplestoreComponentCreateResult['data']['triplestoreComponent'];
       $stack->includedComponents[] = $triplestoreComponent->id();
-      $stack->save();
 
     }
     catch (\Exception $e) {
-      $this->loggerFactory->get('soda_scs_manager')->error("Triplestore creation exists with error: @error trace: @trace", [
-        '@error' => $e->getMessage(),
-        '@trace' => $e->getTraceAsString(),
-      ]);
+      $this->loggerFactory->get('soda_scs_manager')->error("Could not create triplestore component. error: $e");
       $this->messenger->addError($this->t("Could not create triplestore. See logs for more details."));
       return [
         'message' => 'Could not create triplestore component.',
@@ -295,14 +287,10 @@ class SodaScsWisskiStackActions implements SodaScsStackActionsInterface {
       }
       $wisskiComponent = $wisskiComponentCreateResult['data']['wisskiComponent'];
       $stack->includedComponents[] = $wisskiComponent->id();
-      $stack->save();
 
     }
     catch (\Exception $e) {
-      $this->loggerFactory->get('soda_scs_manager')->error("WissKI creation exists with error: @error trace: @trace", [
-        '@error' => $e->getMessage(),
-        '@trace' => $e->getTraceAsString(),
-      ]);
+      $this->loggerFactory->get('soda_scs_manager')->error("Could not create WissKI component. error: $e");
       $this->messenger->addError($this->t("Could not create WissKI. See logs for more details."));
       return [
         'message' => 'Could not create WissKI component.',
@@ -316,10 +304,7 @@ class SodaScsWisskiStackActions implements SodaScsStackActionsInterface {
       ];
     }
     catch (SodaScsRequestException $e) {
-      $this->loggerFactory->get('soda_scs_manager')->error("WissKI creation exists with error: @error trace: @trace ", [
-        '@error' => $e->getMessage(),
-        '@trace' => $e->getTraceAsString(),
-      ]);
+      $this->loggerFactory->get('soda_scs_manager')->error("Could not create WissKI component. error: $e");
       $this->messenger->addError($this->t("Could not create WissKI. See logs for more details."));
       return [
         'message' => 'Could not create WissKI component.',
@@ -334,11 +319,20 @@ class SodaScsWisskiStackActions implements SodaScsStackActionsInterface {
     }
 
     try {
-      $sqlComponent->set('referencedComponents', $wisskiComponent->id());
+      // Set the connected components for the SQL component.
+      $sqlComponent->set('connectedComponents', $wisskiComponent->id());
       $sqlComponent->save();
 
-      $triplestoreComponent->set('referencedComponents', $wisskiComponent->id());
+      // Set the connected components for the triplestore component.
+      $triplestoreComponent->set('connectedComponents', $wisskiComponent->id());
       $triplestoreComponent->save();
+
+      // Set the connected components for the WissKI component.
+      $wisskiComponent->set('connectedComponents', [$sqlComponent->id(), $triplestoreComponent->id()]);
+      $wisskiComponent->save();
+
+      $stack->set('machineName', 'stack-' . $stack->get('machineName')->value);
+      $stack->save();
 
       return [
         'message' => 'Successfully created WissKI stack.',
@@ -352,10 +346,7 @@ class SodaScsWisskiStackActions implements SodaScsStackActionsInterface {
       ];
     }
     catch (MissingDataException $e) {
-      $this->loggerFactory->get('soda_scs_manager')->error("WissKI creation exists with error: @error trace: @trace", [
-        '@error' => $e->getMessage(),
-        '@trace' => $e->getTraceAsString(),
-      ]);
+      $this->loggerFactory->get('soda_scs_manager')->error("Could not create WissKI component. error: $e");
       $this->messenger->addError($this->t("Could not create WissKI. See logs for more details."));
       return [
         'message' => 'Could not create WissKI component.',
@@ -402,9 +393,7 @@ class SodaScsWisskiStackActions implements SodaScsStackActionsInterface {
     }
     catch (SodaScsRequestException $e) {
       $this->loggerFactory->get('soda_scs_manager')
-        ->error("Request response with error: @error", [
-          '@error' => $e->getMessage(),
-        ]);
+        ->error("Request response with error: $e");
       $this->messenger->addError($this->t("Request error. See logs for more details."));
       return [
         'message' => 'Request failed with exception: ' . $e->getMessage(),
@@ -470,9 +459,7 @@ class SodaScsWisskiStackActions implements SodaScsStackActionsInterface {
     catch (MissingDataException $e) {
       // If settings are not set, we cannot delete the database.
       $this->loggerFactory->get('soda_scs_manager')
-        ->error("Cannot delete database. @error", [
-          '@error' => $e->getMessage(),
-        ]);
+        ->error("Cannot delete database: $e");
       $this->messenger->addError($this->t("Cannot delete database. See logs for more details."));
       return [
         'message' => 'Cannot delete database.',
@@ -489,9 +476,7 @@ class SodaScsWisskiStackActions implements SodaScsStackActionsInterface {
       $this->messenger->addError($this->t("Cannot delete database. See logs for more details."));
       if ($e->getCode() == 1) {
         // If component does not exist, we cannot delete the database.
-        $this->loggerFactory->get('soda_scs_manager')->error("Cannot delete database. @error Clean reference in stack.", [
-          '@error' => $e->getMessage(),
-        ]);
+        $this->loggerFactory->get('soda_scs_manager')->error("Could not delete database component. error: $e");
         $this->sodaScsStackHelpers->cleanIncludedComponents($stack);
       }
     }
@@ -514,9 +499,7 @@ class SodaScsWisskiStackActions implements SodaScsStackActionsInterface {
     catch (MissingDataException $e) {
       // If settings are not set, we cannot delete the database.
       $this->loggerFactory->get('soda_scs_manager')
-        ->error("Cannot delete triplestore. @error", [
-          '@error' => $e->getMessage(),
-        ]);
+        ->error("Cannot delete triplestore: $e");
       $this->messenger->addError($this->t("Cannot delete triplestore component. See logs for more details."));
       return [
         'message' => 'Cannot delete triplestore.',
@@ -533,10 +516,7 @@ class SodaScsWisskiStackActions implements SodaScsStackActionsInterface {
       $this->messenger->addError($this->t("Cannot delete triplestore component. See logs for more details."));
       if ($e->getCode() == 1) {
         // If component does not exist, we cannot delete the database.
-        $this->loggerFactory->get('soda_scs_manager')->error("Cannot delete triplestore component: @error Clean reference in Stack. TRACE: @trace", [
-          '@error' => $e->getMessage(),
-          '@trace' => $e->getTraceAsString(),
-        ]);
+        $this->loggerFactory->get('soda_scs_manager')->error("Cannot delete triplestore component: $e");
         $this->sodaScsStackHelpers->cleanIncludedComponents($stack);
       }
     }
@@ -557,10 +537,7 @@ class SodaScsWisskiStackActions implements SodaScsStackActionsInterface {
     catch (MissingDataException $e) {
       // If settings are not set, we cannot delete the WissKI instance.
       $this->loggerFactory->get('soda_scs_manager')
-        ->error($this->t("Cannot assemble Request: @error @trace", [
-          '@error' => $e->getMessage(),
-          '@trace' => $e->getTraceAsString(),
-        ]));
+        ->error("Cannot delete WissKI component. error: $e");
       $this->messenger->addError($this->t("Cannot assemble request. See logs for more details."));
 
       // Return database and triplestore results.
@@ -579,9 +556,7 @@ class SodaScsWisskiStackActions implements SodaScsStackActionsInterface {
     catch (SodaScsRequestException $e) {
       // If request fails, we cannot delete the WissKI instance.
       $this->loggerFactory->get('soda_scs_manager')
-        ->error("Request response with error: @error", [
-          '@error' => $e->getMessage(),
-        ]);
+        ->error("Request response with error: $e");
       $this->messenger->addError($this->t("Request error. See logs for more details."));
       return [
         'message' => 'WissKI database was deleted, but request failed to delete WissKI instance.',
@@ -598,9 +573,7 @@ class SodaScsWisskiStackActions implements SodaScsStackActionsInterface {
       $this->messenger->addError($this->t("Cannot delete WissKI component. See logs for more details."));
       if ($e->getCode() == 1) {
         // If component does not exist, we cannot delete the WissKI instance.
-        $this->loggerFactory->get('soda_scs_manager')->error("Cannot delete WissKI component. @error Clean reference in Stack.", [
-          '@error' => $e->getMessage(),
-        ]);
+        $this->loggerFactory->get('soda_scs_manager')->error("Cannot delete WissKI component: $e");
         $this->sodaScsStackHelpers->cleanIncludedComponents($stack);
       }
     }

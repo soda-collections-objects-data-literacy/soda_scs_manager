@@ -9,3 +9,15 @@ entity.soda_scs_project.add_form:
   options:
     attributes:
       class: ['button', 'button--action', 'button--primary']
+
+# Service Key
+entity.soda_scs_service_key.add_form:
+  route_name: entity.soda_scs_service_key.add_form
+  title: 'Add service key'
+  route_parameters:
+    bundle: 'soda_scs_service_key'
+  appears_on:
+    - entity.soda_scs_service_key.collection
+  options:
+    attributes:
+      class: ['button', 'button--action', 'button--primary']

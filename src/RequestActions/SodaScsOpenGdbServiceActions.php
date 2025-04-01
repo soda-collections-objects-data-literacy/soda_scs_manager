@@ -115,7 +115,7 @@ class SodaScsOpenGdbServiceActions implements SodaScsServiceRequestInterface {
 
     }
 
-    $route = $triplestoreServiceSettings['triplestoreHostRoute'] . $url;
+    $route = $triplestoreServiceSettings['host'] . $url;
 
     if ($requestParams['queryParams']) {
       $route .= '?' . http_build_query($requestParams['queryParams']);
@@ -129,7 +129,7 @@ class SodaScsOpenGdbServiceActions implements SodaScsServiceRequestInterface {
       'headers' => [
         'Content-Type' => 'application/json',
         'Accept' => 'application/json',
-        'Authorization' => 'Basic ' . base64_encode($triplestoreServiceSettings['triplestoreAdminUsername'] . ':' . $triplestoreServiceSettings['triplestoreAdminPassword']),
+        'Authorization' => 'Basic ' . base64_encode($triplestoreServiceSettings['adminUsername'] . ':' . $triplestoreServiceSettings['adminPassword']),
       ],
       'body' => $body,
     ];
@@ -183,7 +183,7 @@ class SodaScsOpenGdbServiceActions implements SodaScsServiceRequestInterface {
 
     }
 
-    $route = $triplestoreServiceSettings['triplestoreHostRoute'] . $url;
+    $route = $triplestoreServiceSettings['host'] . $url;
 
     if ($requestParams['queryParams']) {
       $route .= '?' . http_build_query($requestParams['queryParams']);
@@ -197,7 +197,7 @@ class SodaScsOpenGdbServiceActions implements SodaScsServiceRequestInterface {
       'headers' => [
         'Content-Type' => 'application/json',
         'Accept' => 'application/json',
-        'Authorization' => 'Basic ' . base64_encode($triplestoreServiceSettings['triplestoreAdminUsername'] . ':' . $triplestoreServiceSettings['triplestoreAdminPassword']),
+        'Authorization' => 'Basic ' . base64_encode($triplestoreServiceSettings['adminUsername'] . ':' . $triplestoreServiceSettings['adminPassword']),
       ],
     ];
   }
@@ -225,7 +225,7 @@ class SodaScsOpenGdbServiceActions implements SodaScsServiceRequestInterface {
         throw new MissingDataException('Health check URL setting is not set.');
     }
 
-    $route = $triplestoreServiceSettings['triplestoreHostRoute'] . $dynamicUrlPart;
+    $route = $triplestoreServiceSettings['host'] . $dynamicUrlPart;
 
     return [
       'success' => TRUE,
@@ -234,7 +234,7 @@ class SodaScsOpenGdbServiceActions implements SodaScsServiceRequestInterface {
       'headers' => [
         'Content-Type' => 'application/json',
         'Accept' => 'application/json',
-        'Authorization' => 'Basic ' . base64_encode($triplestoreServiceSettings['triplestoreAdminUsername'] . ':' . $triplestoreServiceSettings['triplestoreAdminPassword']),
+        'Authorization' => 'Basic ' . base64_encode($triplestoreServiceSettings['adminUsername'] . ':' . $triplestoreServiceSettings['adminPassword']),
       ],
     ];
   }
@@ -268,7 +268,7 @@ class SodaScsOpenGdbServiceActions implements SodaScsServiceRequestInterface {
 
     }
 
-    $route = $triplestoreServiceSettings['triplestoreHostRoute'] . $url;
+    $route = $triplestoreServiceSettings['host'] . $url;
 
     if ($requestParams['queryParams']) {
       $route .= '?' . http_build_query($requestParams['queryParams']);
@@ -282,7 +282,7 @@ class SodaScsOpenGdbServiceActions implements SodaScsServiceRequestInterface {
       'headers' => [
         'Content-Type' => 'application/json',
         'Accept' => 'application/json',
-        'Authorization' => 'Basic ' . base64_encode($triplestoreServiceSettings['triplestoreAdminUsername'] . ':' . $triplestoreServiceSettings['triplestoreAdminPassword']),
+        'Authorization' => 'Basic ' . base64_encode($triplestoreServiceSettings['adminUsername'] . ':' . $triplestoreServiceSettings['adminPassword']),
       ],
       'body' => $body,
     ];
@@ -324,7 +324,7 @@ class SodaScsOpenGdbServiceActions implements SodaScsServiceRequestInterface {
 
     }
 
-    $route = $triplestoreServiceSettings['triplestoreHostRoute'] . $url;
+    $route = $triplestoreServiceSettings['host'] . $url;
 
     if ($requestParams['queryParams']) {
       $route .= '?' . http_build_query($requestParams['queryParams']);
@@ -338,7 +338,7 @@ class SodaScsOpenGdbServiceActions implements SodaScsServiceRequestInterface {
       'headers' => [
         'Content-Type' => 'application/json',
         'Accept' => 'application/json',
-        'Authorization' => 'Basic ' . base64_encode($triplestoreServiceSettings['triplestoreAdminUsername'] . ':' . $triplestoreServiceSettings['triplestoreAdminPassword']),
+        'Authorization' => 'Basic ' . base64_encode($triplestoreServiceSettings['adminUsername'] . ':' . $triplestoreServiceSettings['adminPassword']),
       ],
     ];
   }
@@ -397,12 +397,7 @@ class SodaScsOpenGdbServiceActions implements SodaScsServiceRequestInterface {
         ];
       }
       // @todo Implement tracing in every logger.
-      $this->loggerFactory->get('soda_scs_manager')->error("OpenGDB request for @type failed with code @code error: @error trace @trace", [
-        '@type' => $request['type'],
-        '@code' => $e->getCode(),
-        '@error' => $e->getMessage(),
-        '@trace' => $e->getTraceAsString(),
-      ]);
+      $this->loggerFactory->get('soda_scs_manager')->error("OpenGDB request failed. error: $e");
     }
     $this->messenger->addError($this->t("OpenGDB request for @type failed. See logs for more details.", ['@type' => $request['type']]));
     return [
@@ -430,7 +425,7 @@ class SodaScsOpenGdbServiceActions implements SodaScsServiceRequestInterface {
     $triplestoreServiceSettings = $this->sodaScsServiceHelpers->initTriplestoreServiceSettings();
     $triplestoreMiscSettings = $this->sodaScsServiceHelpers->initTriplestoreMiscSettings();
 
-    $route = $triplestoreServiceSettings['triplestoreHostRoute'] . str_replace('{userId}', $requestParams['routeParams']['username'], $triplestoreMiscSettings['tokenUrl']);
+    $route = $triplestoreServiceSettings['host'] . str_replace('{userId}', $requestParams['routeParams']['username'], $triplestoreMiscSettings['tokenUrl']);
 
     $body = json_encode($requestParams['body']);
 

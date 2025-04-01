@@ -109,10 +109,7 @@ class SodaScsSqlStackActions implements SodaScsStackActionsInterface {
 
     }
     catch (\Exception $e) {
-      $this->loggerFactory->get('soda_scs_manager')->error("Database component creation exists with error: @error trace: @trace", [
-        '@error' => $e->getMessage(),
-        '@trace' => $e->getTraceAsString(),
-      ]);
+      $this->loggerFactory->get('soda_scs_manager')->error("Database component creation exists with error: $e");
       $this->messenger->addError($this->t("Could not create database component. See logs for more details."));
       return [
         'message' => 'Could not create database component.',
@@ -206,9 +203,7 @@ class SodaScsSqlStackActions implements SodaScsStackActionsInterface {
     }
     catch (MissingDataException $e) {
       $this->loggerFactory->get('soda_scs_manager')
-        ->error("Cannot delete database. @error", [
-          '@error' => $e->getMessage(),
-        ]);
+        ->error("Cannot delete database. error: $e");
       $this->messenger->addError($this->t("Cannot delete database. See logs for more details."));
       return [
         'message' => 'Cannot delete database.',
@@ -223,9 +218,7 @@ class SodaScsSqlStackActions implements SodaScsStackActionsInterface {
       $this->messenger->addError($this->t("Cannot delete database. See logs for more details."));
       if ($e->getCode() == 1) {
         // If component does not exist, we cannot delete the database.
-        $this->loggerFactory->get('soda_scs_manager')->error("Cannot delete database. @error Clean reference in stack.", [
-          '@error' => $e->getMessage(),
-        ]);
+        $this->loggerFactory->get('soda_scs_manager')->error("Cannot delete database: $e");
         $this->sodaScsStackHelpers->cleanIncludedComponents($stack);
       }
     }

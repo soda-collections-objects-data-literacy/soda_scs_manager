@@ -9,6 +9,7 @@ use Drupal\Core\Entity\ContentEntityForm;
 use Drupal\Core\Entity\EntityRepositoryInterface;
 use Drupal\Core\Entity\EntityTypeBundleInfoInterface;
 use Drupal\Core\Form\FormStateInterface;
+use Drupal\Core\Logger\LoggerChannelFactoryInterface;
 use Drupal\Core\Session\AccountProxyInterface;
 use Drupal\soda_scs_manager\StackActions\SodaScsStackActionsInterface;
 use Symfony\Component\DependencyInjection\ContainerInterface;
@@ -45,6 +46,13 @@ class SodaScsStackCreateForm extends ContentEntityForm {
   protected AccountProxyInterface $currentUser;
 
   /**
+   * The logger factory.
+   *
+   * @var \Drupal\Core\Logger\LoggerChannelFactoryInterface
+   */
+  protected $loggerFactory;
+
+  /**
    * The settings config.
    *
    * @var \Drupal\Core\Config\Config
@@ -69,6 +77,8 @@ class SodaScsStackCreateForm extends ContentEntityForm {
    *   The entity type bundle info.
    * @param \Drupal\Core\Config\ConfigFactoryInterface $configFactory
    *   The config factory.
+   * @param \Drupal\Core\Logger\LoggerChannelFactoryInterface $loggerFactory
+   *   The logger factory.
    * @param \Drupal\Component\Datetime\TimeInterface $time
    *   The time service.
    * @param \Drupal\soda_scs_manager\StackActions\SodaScsStackActionsInterface $sodaScsStackActions
@@ -79,12 +89,14 @@ class SodaScsStackCreateForm extends ContentEntityForm {
     EntityRepositoryInterface $entity_repository,
     EntityTypeBundleInfoInterface $entity_type_bundle_info,
     ConfigFactoryInterface $configFactory,
+    LoggerChannelFactoryInterface $loggerFactory,
     TimeInterface $time,
     SodaScsStackActionsInterface $sodaScsStackActions,
   ) {
     parent::__construct($entity_repository, $entity_type_bundle_info, $time);
     $this->currentUser = $currentUser;
     $this->settings = $configFactory->getEditable('soda_scs_manager.settings');
+    $this->loggerFactory = $loggerFactory;
     $this->sodaScsStackActions = $sodaScsStackActions;
   }
 
@@ -97,6 +109,7 @@ class SodaScsStackCreateForm extends ContentEntityForm {
       $container->get('entity.repository'),
       $container->get('entity_type.bundle.info'),
       $container->get('config.factory'),
+      $container->get('logger.factory'),
       $container->get('datetime.time'),
       $container->get('soda_scs_manager.stack.actions'),
 
@@ -157,7 +170,7 @@ class SodaScsStackCreateForm extends ContentEntityForm {
     parent::validateForm($form, $form_state);
     $machineName = $form_state->getValue('machineName')[0]['value'];
 
-    $pattern = '/^[a-z0-9-_]+$/';
+    $pattern = '/^[a-z0-9-]+$/';
 
     if (!preg_match($pattern, $machineName)) {
       $form_state->setErrorByName('machineName', $this->t('The machineName can only contain small letters, digits, and minus.'));
@@ -240,14 +253,16 @@ class SodaScsStackCreateForm extends ContentEntityForm {
     $stack->set('created', $this->time->getRequestTime());
     $stack->set('updated', $this->time->getRequestTime());
     $stack->set('owner', $this->currentUser->getAccount()->id());
-    $machineName = reset($form_state->getValue('machineName'))['value'];
-    $stack->setLabel($form_state->getValue('label')[0]['value'] . ' (WissKI Stack)');
-    $stack->set('machineName', $machineName);
+    $stack->setLabel($form_state->getValue('label')[0]['value']);
+    $stack->set('machineName', $form_state->getValue('machineName')[0]['value']);
 
     // Create external stack.
     $createStackResult = $this->sodaScsStackActions->createStack($stack);
 
     if (!$createStackResult['success']) {
+      $this->loggerFactory->get('soda_scs_manager')->error("Cannot create stack: @error", [
+        '@error' => $createStackResult['error'],
+      ]);
       $this->messenger()->addMessage($this->t('Cannot create stack "@label". See logs for more details.', [
         '@label' => $this->entity->label(),
         '@username' => $this->currentUser->getAccount()->getDisplayName(),

@@ -14,8 +14,11 @@ use Drupal\Core\StringTranslation\StringTranslationTrait;
 use Drupal\Core\TypedData\Exception\MissingDataException;
 use Drupal\soda_scs_manager\Entity\SodaScsComponentInterface;
 use Drupal\soda_scs_manager\Entity\SodaScsStackInterface;
+use Drupal\soda_scs_manager\Helpers\SodaScsComponentHelpers;
 use Drupal\soda_scs_manager\Helpers\SodaScsHelpersInterface;
+use Drupal\soda_scs_manager\RequestActions\SodaScsExecRequestInterface;
 use Drupal\soda_scs_manager\RequestActions\SodaScsServiceRequestInterface;
+use Drupal\soda_scs_manager\RequestActions\SodaScsRunRequestInterface;
 use Drupal\soda_scs_manager\ServiceActions\SodaScsServiceActionsInterface;
 use Drupal\soda_scs_manager\ServiceKeyActions\SodaScsServiceKeyActionsInterface;
 use GuzzleHttp\ClientInterface;
@@ -64,6 +67,20 @@ class SodaScsWisskiComponentActions implements SodaScsComponentActionsInterface 
   protected MessengerInterface $messenger;
 
   /**
+   * The SCS Docker exec service actions.
+   *
+   * @var \Drupal\soda_scs_manager\RequestActions\SodaScsExecRequestInterface
+   */
+  protected SodaScsExecRequestInterface $sodaScsDockerExecServiceActions;
+
+  /**
+   * The SCS Docker run service actions.
+   *
+   * @var \Drupal\soda_scs_manager\RequestActions\SodaScsRunRequestInterface
+   */
+  protected SodaScsRunRequestInterface $sodaScsDockerRunServiceActions;
+
+  /**
    * The settings config.
    *
    * @var \Drupal\Core\Config\Config
@@ -71,11 +88,25 @@ class SodaScsWisskiComponentActions implements SodaScsComponentActionsInterface 
   protected Config $settings;
 
   /**
+   * The SCS component helpers service.
+   *
+   * @var \Drupal\soda_scs_manager\Helpers\SodaScsComponentHelpers
+   */
+  protected SodaScsComponentHelpers $sodaScsComponentHelpers;
+
+  /**
    * The SCS stack helpers service.
    *
    * @var \Drupal\soda_scs_manager\Helpers\SodaScsHelpersInterface
    */
   protected SodaScsHelpersInterface $sodaScsStackHelpers;
+
+  /**
+   * The SCS Keycloak actions service.
+   *
+   * @var \Drupal\soda_scs_manager\RequestActions\SodaScsServiceRequestInterface
+   */
+  protected SodaScsServiceRequestInterface $sodaScsKeycloakServiceActions;
 
   /**
    * The SCS Portainer actions service.
@@ -108,7 +139,11 @@ class SodaScsWisskiComponentActions implements SodaScsComponentActionsInterface 
     ClientInterface $httpClient,
     LoggerChannelFactoryInterface $loggerFactory,
     MessengerInterface $messenger,
+    SodaScsExecRequestInterface $sodaScsDockerExecServiceActions,
+    SodaScsRunRequestInterface $sodaScsDockerRunServiceActions,
+    SodaScsComponentHelpers $sodaScsComponentHelpers,
     SodaScsHelpersInterface $sodaScsStackHelpers,
+    SodaScsServiceRequestInterface $sodaScsKeycloakServiceActions,
     SodaScsServiceRequestInterface $sodaScsPortainerServiceActions,
     SodaScsServiceActionsInterface $sodaScsSqlServiceActions,
     SodaScsServiceKeyActionsInterface $sodaScsServiceKeyActions,
@@ -122,11 +157,15 @@ class SodaScsWisskiComponentActions implements SodaScsComponentActionsInterface 
     $this->httpClient = $httpClient;
     $this->loggerFactory = $loggerFactory;
     $this->messenger = $messenger;
+    $this->sodaScsDockerExecServiceActions = $sodaScsDockerExecServiceActions;
+    $this->sodaScsDockerRunServiceActions = $sodaScsDockerRunServiceActions;
     $this->settings = $settings;
+    $this->sodaScsComponentHelpers = $sodaScsComponentHelpers;
     $this->sodaScsStackHelpers = $sodaScsStackHelpers;
     $this->sodaScsPortainerServiceActions = $sodaScsPortainerServiceActions;
     $this->sodaScsSqlServiceActions = $sodaScsSqlServiceActions;
     $this->sodaScsServiceKeyActions = $sodaScsServiceKeyActions;
+    $this->sodaScsKeycloakServiceActions = $sodaScsKeycloakServiceActions;
     $this->stringTranslation = $stringTranslation;
   }
 
@@ -146,11 +185,21 @@ class SodaScsWisskiComponentActions implements SodaScsComponentActionsInterface 
       if (!$wisskiComponentBundleInfo) {
         throw new \Exception('WissKI component bundle info not found');
       }
-      $machineName = $entity->get('machineName')->value;
+      $machineName = 'wisski-' . $entity->get('machineName')->value;
+      // Get included SQL component if this is a stack (not a component)
+      if ($entity instanceof SodaScsStackInterface) {
+        // Retrieve the SQL component that this WissKI component will use.
+        $sqlComponent = $this->sodaScsStackHelpers->retrieveIncludedComponent($entity, 'soda_scs_sql_component');
+        if (!$sqlComponent) {
+          throw new \Exception('SQL component not found for WissKI component');
+        }
+        $dbName = $sqlComponent->get('machineName')->value;
+      }
 
       // Create service key if it does not exist.
       $keyProps = [
         'bundle'  => 'soda_scs_wisski_component',
+        'bundleLabel' => $wisskiComponentBundleInfo['label'],
         'type'  => 'password',
         'userId'  => $entity->getOwnerId(),
         'username' => $entity->getOwner()->getDisplayName(),
@@ -162,13 +211,14 @@ class SodaScsWisskiComponentActions implements SodaScsComponentActionsInterface 
       $wisskiComponent = $this->entityTypeManager->getStorage('soda_scs_component')->create(
         [
           'bundle' => 'soda_scs_wisski_component',
-          'label' => $entity->get('label')->value . ' (WissKI Environment)',
+          'label' => $entity->get('label')->value . ' (WissKI)',
           'machineName' => $machineName,
           'owner'  => $entity->getOwner(),
           'description' => $wisskiComponentBundleInfo['description'],
           'imageUrl' => $wisskiComponentBundleInfo['imageUrl'],
-          'flavours' => array_values($entity->get('flavours')->getValue()),
+          'flavours' => $entity->get('flavours')->value,
           'health' => 'Unknown',
+          'partOfProjects' => $entity->get('partOfProjects'),
         ]
       );
 
@@ -206,19 +256,30 @@ class SodaScsWisskiComponentActions implements SodaScsComponentActionsInterface 
         $triplestoreComponentServiceTokenEntity = $this->sodaScsServiceKeyActions->getServiceKey($triplestoreTokenProps) ?? throw new \Exception('Triplestore service token not found.');
         $triplestoreComponentServiceTokenString = $triplestoreComponentServiceTokenEntity->get('servicePassword')->value ?? throw new \Exception('Triplestore service token not found.');
 
-        $flavours_array = $wisskiComponent->get('flavours')->getValue();
+        $flavoursList = $wisskiComponent->get('flavours')->value;
 
-        $flavours = [];
-        foreach ($flavours_array as $flavour) {
-          $flavours[] = $flavour['value'];
+        $flavours = '';
+
+        // Process flavours array into a space-separated string.
+        if (is_array($flavoursList)) {
+          // Extract values from each flavour entry.
+          foreach ($flavoursList as $flavour) {
+            if (isset($flavour['value'])) {
+              $flavoursArray[] = $flavour['value'];
+            }
+          }
+
+          // Join flavours with spaces if any were found.
+          if (!empty($flavours)) {
+            $flavours = implode(' ', $flavoursArray);
+          }
         }
-
-        $flavours = implode(' ', $flavours);
 
         $wisskiType = 'stack';
       }
       else {
         // If it is not a stack we set the values to empty strings.
+        $dbName = '';
         $wisskiComponentServiceKeyPassword = '';
         $sqlComponentServiceKeyPassword = '';
         $triplestoreComponentServiceKeyPassword = '';
@@ -227,13 +288,45 @@ class SodaScsWisskiComponentActions implements SodaScsComponentActionsInterface 
         $wisskiType = 'component';
       }
 
+      // Request keycloak client configs.
+      $keycloakTokenRequest = $this->sodaScsKeycloakServiceActions->buildTokenRequest([]);
+      $keycloakTokenResponse = $this->sodaScsKeycloakServiceActions->makeRequest($keycloakTokenRequest);
+      if (!$keycloakTokenResponse['success']) {
+        throw new \Exception('Keycloak token request failed.');
+      }
+      $keycloakTokenResponseContents = json_decode($keycloakTokenResponse['data']['keycloakResponse']->getBody()->getContents(), TRUE);
+      $keycloakToken = $keycloakTokenResponseContents['access_token'];
+      $openidConnectClientSecret = $this->sodaScsComponentHelpers->createSecret();
+
+      $keycloakCreateClientRequest = $this->sodaScsKeycloakServiceActions->buildCreateRequest([
+        // @todo Use url of component.
+        'clientId' => $machineName,
+        'name' => $entity->get('label')->value,
+        'description' => 'Change me',
+        'token' => $keycloakToken,
+        'rootUrl' => 'https://' . $machineName . '.scs.sammlungen.io',
+        'adminUrl' => 'https://' . $machineName . '.scs.sammlungen.io',
+        'logoutUrl' => 'https://' . $machineName . '.scs.sammlungen.io/logout',
+        // @todo: Use secret from service key.
+        'secret' => $openidConnectClientSecret,
+      ]);
+
+      $keycloakCreateClientResponse = $this->sodaScsKeycloakServiceActions->makeRequest($keycloakCreateClientRequest);
+
+      if (!$keycloakCreateClientResponse['success']) {
+        throw new \Exception('Keycloak create client request failed.');
+      }
+      // @todo Use project from component.
       $requestParams = [
+        'dbName' => $dbName,
         'flavours' => $flavours,
-        'machineName' => $wisskiComponent->get('machineName')->value,
+        'machineName' => $machineName,
+        'openidConnectClientSecret' => $openidConnectClientSecret,
         'project' => 'my_project',
         'sqlServicePassword' => $sqlComponentServiceKeyPassword,
         'triplestoreServicePassword' => $triplestoreComponentServiceKeyPassword,
         'triplestoreServiceToken' => $triplestoreComponentServiceTokenString,
+        'tsRepository' => $triplestoreComponent->get('machineName')->value,
         'userId' => $wisskiComponent->getOwnerId(),
         'username' => $wisskiComponent->getOwner()->getDisplayName(),
         'wisskiServicePassword' => $wisskiComponentServiceKeyPassword,
@@ -242,15 +335,12 @@ class SodaScsWisskiComponentActions implements SodaScsComponentActionsInterface 
       // Create Drupal instance.
       $portainerCreateRequest = $this->sodaScsPortainerServiceActions->buildCreateRequest($requestParams);
     }
-    catch (MissingDataException $e) {
+    catch (\Exception $e) {
       $this->loggerFactory->get('soda_scs_manager')
-        ->error($this->t("Cannot assemble Request: @error @trace", [
-          '@error' => $e->getMessage(),
-          '@trace' => $e->getTraceAsString(),
-        ]));
-      $this->messenger->addError($this->t("Cannot assemble request. See logs for more details."));
+        ->error("Request failed: error: $e");
+      $this->messenger->addError($this->t("Request failed. See logs for more details."));
       return [
-        'message' => 'Cannot assemble Request.',
+        'message' => 'Request failed.',
         'data' => [
           'portainerResponse' => NULL,
         ],
@@ -259,8 +349,24 @@ class SodaScsWisskiComponentActions implements SodaScsComponentActionsInterface 
       ];
     }
 
-    $portainerCreateRequestResult = $this->sodaScsPortainerServiceActions->makeRequest($portainerCreateRequest);
-
+    try {
+      $portainerCreateRequestResult = $this->sodaScsPortainerServiceActions->makeRequest($portainerCreateRequest);
+    }
+    catch (\Exception $e) {
+      $this->loggerFactory->get('soda_scs_manager')->error("Portainer request failed: @error", [
+        '@error' => $e->getMessage(),
+      ]);
+      return [
+        'message' => 'Portainer request failed.',
+        'data' => [
+          'wisskiComponent' => NULL,
+          'portainerCreateRequestResult' => $portainerCreateRequestResult,
+        ],
+        'statusCode' => $portainerCreateRequestResult['statusCode'],
+        'success' => FALSE,
+        'error' => $portainerCreateRequestResult['error'],
+      ];
+    }
     if (!$portainerCreateRequestResult['success']) {
       return [
         'message' => 'Portainer request failed.',
@@ -293,6 +399,56 @@ class SodaScsWisskiComponentActions implements SodaScsComponentActionsInterface 
       'success' => TRUE,
       'error' => NULL,
     ];
+  }
+
+  /**
+   * Create SODa SCS Snapshot.
+   *
+   * @param \Drupal\soda_scs_manager\Entity\SodaScsComponentInterface $component
+   *   The SODa SCS Component.
+   *
+   * @return array
+   *   Result information with the created snapshot.
+   */
+  public function createSnapshot(SodaScsComponentInterface $component): array {
+
+    $timestamp = time();
+    $machineName = $component->get('machineName')->value;
+    $snapshotName = $machineName . '-snapshot-' . $timestamp;
+    $backupPath = '/var/snapshots/' . $component->getOwner()->getDisplayName() . '/' . $timestamp . '/' . $machineName;
+
+    $requestParams = [
+      'name' => $snapshotName,
+      'volumes' => [
+        $machineName . '_drupal-root' => ['bind' => '/source'],
+        $backupPath => ['bind' => '/backup'],
+      ],
+      'image' => 'alpine:latest',
+      'cmd' => [
+        'tar',
+        '-czf',
+        '/backup/' . $snapshotName . '.tar.gz',
+        '-C',
+        '/source',
+        '.',
+      ],
+      'hostConfig' => [
+        'AutoRemove' => TRUE,
+      ],
+    ];
+
+    $request = $this->sodaScsDockerExecServiceActions->buildCreateRequest($requestParams);
+    $response = $this->sodaScsDockerExecServiceActions->makeRequest($request);
+
+    if (!$response['success']) {
+      return [
+        'message' => 'Snapshot creation failed.',
+        'data' => $response,
+        'success' => FALSE,
+        'error' => $response['error'],
+      ];
+    }
+    return [];
   }
 
   /**
@@ -357,11 +513,7 @@ class SodaScsWisskiComponentActions implements SodaScsComponentActionsInterface 
 
     }
     catch (\Exception $e) {
-      $this->loggerFactory->get('soda_scs_manager')->error($this->t("Cannot get WissKI component @component at portainer: @error @trace", [
-        '@component' => $component->getLabel(),
-        '@error' => $e->getMessage(),
-        '@trace' => $e->getTraceAsString(),
-      ]));
+      $this->loggerFactory->get('soda_scs_manager')->error("Cannot get WissKI component @component at portainer: $e", ['@component' => $component->getLabel()]);
       $this->messenger->addError($this->t("Cannot get WissKI component @component at portainer. See logs for more details.", ['@component' => $component->getLabel()]));
       return [
         'message' => $this->t('Cannot get WissKI component @component at portainer.', ['@component' => $component->getLabel()]),
@@ -375,9 +527,7 @@ class SodaScsWisskiComponentActions implements SodaScsComponentActionsInterface 
       $portainerDeleteRequest = $this->sodaScsPortainerServiceActions->buildDeleteRequest($queryParams);
     }
     catch (MissingDataException $e) {
-      $this->loggerFactory->get('soda_scs_manager')->error("Cannot assemble WissKI delete request: @error", [
-        '@error' => $e->getMessage(),
-      ]);
+      $this->loggerFactory->get('soda_scs_manager')->error("Cannot assemble WissKI delete request: $e");
       $this->messenger->addError($this->t("Cannot assemble WissKI component delete request. See logs for more details."));
       return [
         'message' => 'Cannot assemble Request.',
@@ -411,9 +561,7 @@ class SodaScsWisskiComponentActions implements SodaScsComponentActionsInterface 
       ];
     }
     catch (\Exception $e) {
-      $this->loggerFactory->get('soda_scs_manager')->error("Cannot delete WissKI component: @error", [
-        '@error' => $e->getMessage(),
-      ]);
+      $this->loggerFactory->get('soda_scs_manager')->error("Cannot delete WissKI component: $e");
       $this->messenger->addError($this->t("Cannot delete WissKI component. See logs for more details."));
       return [
         'message' => 'Cannot delete WissKI component.',

@@ -22,6 +22,17 @@ interface SodaScsComponentActionsInterface {
   public function createComponent(SodaScsStackInterface|SodaScsComponentInterface $entity): array;
 
   /**
+   * Create SODa SCS Snapshot.
+   *
+   * @param \Drupal\soda_scs_manager\Entity\SodaScsComponentInterface $component
+   *   The SODa SCS Component.
+   *
+   * @return array
+   *   Result information with the created snapshot.
+   */
+  public function createSnapshot(SodaScsComponentInterface $component): array;
+
+  /**
    * Get all SODa SCS Component.
    *
    * @return array

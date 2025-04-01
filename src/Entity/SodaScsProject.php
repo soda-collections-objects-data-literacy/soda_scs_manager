@@ -5,6 +5,7 @@ namespace Drupal\soda_scs_manager\Entity;
 use Drupal\Core\Entity\ContentEntityBase;
 use Drupal\Core\Entity\EntityInterface;
 use Drupal\Core\Entity\EntityTypeInterface;
+use Drupal\Core\Entity\EntityStorageInterface;
 use Drupal\Core\Field\BaseFieldDefinition;
 use Drupal\Core\Field\FieldStorageDefinitionInterface;
 use Drupal\Core\StringTranslation\TranslatableMarkup;
@@ -62,6 +63,7 @@ use Drupal\user\EntityOwnerTrait;
  *   },
  *   config_export = {
  *     "bundle",
+ *     "connectedComponents",
  *     "created",
  *     "description",
  *     "id",
@@ -73,7 +75,6 @@ use Drupal\user\EntityOwnerTrait;
  *     "owner",
  *     "members",
  *     "rights",
- *     "scsComponent",
  *   }
  * )
  */
@@ -82,11 +83,45 @@ class SodaScsProject extends ContentEntityBase implements EntityInterface {
   use EntityOwnerTrait;
 
   /**
+   * Starting value for group ID.
+   */
+  const GROUP_ID_START = 10000;
+
+  /**
    * {@inheritdoc}
    */
   public static function baseFieldDefinitions(EntityTypeInterface $entity_type) {
 
     $fields = parent::baseFieldDefinitions($entity_type);
+
+    $fields['connectedComponents'] = BaseFieldDefinition::create('entity_reference')
+      ->setLabel(new TranslatableMarkup('Connected Components'))
+      ->setDescription(new TranslatableMarkup('The SCS components associated with this project.'))
+      ->setSetting('target_type', 'soda_scs_component')
+      ->setCardinality(FieldStorageDefinitionInterface::CARDINALITY_UNLIMITED)
+      ->setSetting('handler', 'default')
+      ->setSetting('handler_settings', [
+        'auto_create' => FALSE,
+        'filter' => [
+          'type' => 'soda_scs_component_access',
+
+        ],
+        'sort' => [
+          'field' => 'label',
+          'direction' => 'ASC',
+        ],
+      ])
+      ->setDisplayConfigurable('form', FALSE)
+      ->setDisplayOptions('form', [
+        'type' => 'options_buttons',
+        'weight' => 40,
+      ])
+      ->setDisplayConfigurable('view', FALSE)
+      ->setDisplayOptions('view', [
+        'label' => 'above',
+        'type' => 'entity_reference_label',
+        'weight' => 40,
+      ]);
 
     $fields['created'] = BaseFieldDefinition::create('created')
       ->setLabel(new TranslatableMarkup('Created'))
@@ -101,6 +136,19 @@ class SodaScsProject extends ContentEntityBase implements EntityInterface {
       ->setDescription(new TranslatableMarkup('The description of the project.'))
       ->setDisplayConfigurable('form', FALSE)
       ->setDisplayConfigurable('view', FALSE);
+
+    $fields['groupId'] = BaseFieldDefinition::create('integer')
+      ->setLabel(new TranslatableMarkup('Permission Group ID'))
+      ->setDescription(new TranslatableMarkup('The permission group ID associated with the project.'))
+      ->setRequired(TRUE)
+      ->setReadOnly(TRUE)
+      ->setDisplayConfigurable('form', FALSE)
+      ->setDisplayConfigurable('view', FALSE)
+      ->setDisplayOptions('view', [
+        'label' => 'above',
+        'type' => 'integer',
+        'weight' => 10,
+      ]);
 
     $fields['label'] = BaseFieldDefinition::create('string')
       ->setLabel(new TranslatableMarkup('Label'))
@@ -140,8 +188,8 @@ class SodaScsProject extends ContentEntityBase implements EntityInterface {
       // Add constraint to ensure machine name format is valid.
       ->addPropertyConstraints('value', [
         'Regex' => [
-          'pattern' => '/^[a-z0-9_]+$/',
-          'message' => t('Machine name must contain only lowercase letters, numbers, and underscores.'),
+          'pattern' => '/^[a-z0-9-]+$/',
+          'message' => t('Machine name must contain only lowercase letters, numbers, and minus.'),
         ],
       ]);
 
@@ -182,21 +230,6 @@ class SodaScsProject extends ContentEntityBase implements EntityInterface {
       ->setDisplayConfigurable('form', FALSE)
       ->setDisplayConfigurable('view', FALSE);
 
-    $fields['scsComponent'] = BaseFieldDefinition::create('entity_reference')
-      ->setLabel(new TranslatableMarkup('SCS Components'))
-      ->setDescription(new TranslatableMarkup('The SCS components associated with this project.'))
-      ->setSetting('target_type', 'soda_scs_component')
-      ->setCardinality(FieldStorageDefinitionInterface::CARDINALITY_UNLIMITED)
-      ->setComputed(TRUE)
-      ->setClass('\Drupal\soda_scs_manager\ComputedField\ScsComponentsReferenceField')
-      ->setDisplayConfigurable('form', FALSE)
-      ->setDisplayConfigurable('view', FALSE)
-      ->setDisplayOptions('view', [
-        'label' => 'above',
-        'type' => 'entity_reference_label',
-        'weight' => 40,
-      ]);
-
     $fields['updated'] = BaseFieldDefinition::create('changed')
       ->setLabel(new TranslatableMarkup('Updated'))
       ->setDescription(new TranslatableMarkup('The time that the SODa SCS Project was last updated.'))
@@ -206,6 +239,39 @@ class SodaScsProject extends ContentEntityBase implements EntityInterface {
       ->setDisplayConfigurable('view', FALSE);
 
     return $fields;
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function preSave(EntityStorageInterface $storage) {
+    parent::preSave($storage);
+
+    // Only set groupId for new entities that don't have one yet.
+    if ($this->isNew() && empty($this->get('groupId')->value)) {
+      // Find the highest existing groupId.
+      $query = \Drupal::entityQuery('soda_scs_project')
+        ->accessCheck(FALSE)
+        ->sort('groupId', 'DESC')
+        ->range(0, 1);
+
+      $result = $query->execute();
+
+      if (empty($result)) {
+        // No existing projects, start with the base value.
+        $next_id = self::GROUP_ID_START;
+      }
+      else {
+        // Get the highest existing ID and increment it.
+        $entity_id = reset($result);
+        /** @var \Drupal\soda_scs_manager\Entity\SodaScsProject $highest_entity */
+        $highest_entity = $storage->load($entity_id);
+        $highest_id = $highest_entity->get('groupId')->value;
+        $next_id = max((int) $highest_id + 1, self::GROUP_ID_START);
+      }
+
+      $this->set('groupId', $next_id);
+    }
   }
 
 }

@@ -248,28 +248,24 @@ class SodaScsStack extends ContentEntityBase implements SodaScsStackInterface {
       // Add constraint to ensure machine name format is valid.
       ->addPropertyConstraints('value', [
         'Regex' => [
-          'pattern' => '/^[a-z0-9_]+$/',
-          'message' => t('Machine name must contain only lowercase letters, numbers, and underscores.'),
+          'pattern' => '/^[a-z0-9-]+$/',
+          'message' => t('Machine name must contain only lowercase letters, numbers, and minus.'),
         ],
       ]);
 
-    $fields['partOfProject'] = BaseFieldDefinition::create('entity_reference')
+    $fields['partOfProjects'] = BaseFieldDefinition::create('entity_reference')
       ->setLabel(new TranslatableMarkup('Project'))
       ->setDescription(new TranslatableMarkup('The project this component belongs to.'))
       ->setSetting('target_type', 'soda_scs_project')
-      ->setSetting('handler', 'default')
+      ->setSetting('handler', 'soda_scs_project_access')
       ->setRequired(FALSE)
-      ->setDisplayConfigurable('form', TRUE)
+      ->setCardinality(FieldStorageDefinitionInterface::CARDINALITY_UNLIMITED)
+      ->setDisplayConfigurable('form', FALSE)
       ->setDisplayOptions('form', [
-        'type' => 'inline_entity_form_complex',
+        'type' => 'options_buttons',
         'weight' => 40,
-        'settings' => [
-          'allow_new' => TRUE,
-          'allow_existing' => TRUE,
-          'match_operator' => 'CONTAINS',
-        ],
       ])
-      ->setDisplayConfigurable('view', TRUE)
+      ->setDisplayConfigurable('view', FALSE)
       ->setDisplayOptions('view', [
         'label' => 'above',
         'type' => 'entity_reference_label',

@@ -106,7 +106,7 @@ class SodaScsTriplestoreComponentActions implements SodaScsComponentActionsInter
       if (!$triplestoreComponentBundleInfo) {
         throw new \Exception('Triplestore component bundle info not found');
       }
-      $machineName = $entity->get('machineName')->value;
+      $machineName = 'ts-' . $entity->get('machineName')->value;
       /** @var \Drupal\soda_scs_manager\Entity\SodaScsComponentInterface $triplestoreComponent */
       $triplestoreComponent = $this->entityTypeManager->getStorage('soda_scs_component')->create(
         [
@@ -117,11 +117,13 @@ class SodaScsTriplestoreComponentActions implements SodaScsComponentActionsInter
           'description' => $triplestoreComponentBundleInfo['description'],
           'imageUrl' => $triplestoreComponentBundleInfo['imageUrl'],
           'health' => 'Unknown',
+          'partOfProjects' => $entity->get('partOfProjects'),
         ]
       );
       // Create service key if it does not exist.
       $keyProps = [
-        'bundle'  => 'soda_scs_triplestore_component',
+        'bundle'  => $triplestoreComponent->bundle(),
+        'bundleLabel' => $triplestoreComponentBundleInfo['label'],
         'type'  => 'password',
         'userId'    => $entity->getOwnerId(),
         'username' => $entity->getOwner()->getDisplayName(),
@@ -142,7 +144,7 @@ class SodaScsTriplestoreComponentActions implements SodaScsComponentActionsInter
       }
 
       $username = $triplestoreComponent->getOwner()->getDisplayName();
-      $machineName = $triplestoreComponent->get('machineName')->value;
+
       // Build repo request.
       $createRepoRequestParams = [
         'type' => 'repository',
@@ -161,10 +163,7 @@ class SodaScsTriplestoreComponentActions implements SodaScsComponentActionsInter
     }
     catch (MissingDataException $e) {
       $this->loggerFactory->get('soda_scs_manager')
-        ->error($this->t("Cannot assemble Request: @error @trace", [
-          '@error' => $e->getMessage(),
-          '@trace' => $e->getTraceAsString(),
-        ]));
+        ->error("Cannot assemble Request: $e");
       $this->messenger->addError($this->t("Cannot assemble request. See logs for more details."));
       return [
         'message' => 'Cannot assemble Request.',
@@ -261,10 +260,7 @@ class SodaScsTriplestoreComponentActions implements SodaScsComponentActionsInter
             }
             catch (\Exception $e) {
               $this->loggerFactory->get('soda_scs_manager')
-                ->error($this->t("Cannot assemble Request: @error @trace", [
-                  '@error' => $e->getMessage(),
-                  '@trace' => $e->getTraceAsString(),
-                ]));
+                ->error("Cannot assemble Request: $e");
               $this->messenger->addError($this->t("Cannot assemble request. See logs for more details."));
               return [
                 'message' => 'Cannot assemble Request.',
@@ -282,10 +278,7 @@ class SodaScsTriplestoreComponentActions implements SodaScsComponentActionsInter
           }
           catch (MissingDataException $e) {
             $this->loggerFactory->get('soda_scs_manager')
-              ->error($this->t("Cannot assemble Request: @error @trace", [
-                '@error' => $e->getMessage(),
-                '@trace' => $e->getTraceAsString(),
-              ]));
+              ->error("Cannot assemble Request: $e");
             $this->messenger->addError($this->t("Cannot assemble request. See logs for more details."));
             return [
               'message' => 'Cannot assemble Request.',
@@ -348,10 +341,7 @@ class SodaScsTriplestoreComponentActions implements SodaScsComponentActionsInter
         }
         catch (MissingDataException $e) {
           $this->loggerFactory->get('soda_scs_manager')
-            ->error($this->t("Cannot assemble Request: @error @trace", [
-              '@error' => $e->getMessage(),
-              '@trace' => $e->getTraceAsString(),
-            ]));
+            ->error("Cannot assemble Request: $e");
           $this->messenger->addError($this->t("Cannot assemble request. See logs for more details."));
           return [
             'message' => 'Cannot assemble Request.',
@@ -366,10 +356,7 @@ class SodaScsTriplestoreComponentActions implements SodaScsComponentActionsInter
     }
     catch (MissingDataException $e) {
       $this->loggerFactory->get('soda_scs_manager')
-        ->error($this->t("Cannot assemble Request: @error @trace", [
-          '@error' => $e->getMessage(),
-          '@trace' => $e->getTraceAsString(),
-        ]));
+        ->error("Cannot assemble Request: $e");
       $this->messenger->addError($this->t("Cannot assemble request. See logs for more details."));
       return [
         'message' => 'Cannot assemble Request.',
@@ -394,7 +381,7 @@ class SodaScsTriplestoreComponentActions implements SodaScsComponentActionsInter
     // Save the service token.
     /* @todo Make sure there is a triplestore component service token. */
     if (empty($triplestoreComponentServiceToken)) {
-      throw new \Exception('There is now no triplestore component service token.');
+      throw new \Exception('There is no triplestore component service token.');
     }
 
     $triplestoreComponentServiceToken->scsComponent[] = $triplestoreComponent->id();
@@ -413,6 +400,19 @@ class SodaScsTriplestoreComponentActions implements SodaScsComponentActionsInter
       'success' => TRUE,
       'error' => NULL,
     ];
+  }
+
+  /**
+   * Create SODa SCS Snapshot.
+   *
+   * @param \Drupal\soda_scs_manager\Entity\SodaScsComponentInterface $component
+   *   The SODa SCS Component.
+   *
+   * @return array
+   *   Result information with the created snapshot.
+   */
+  public function createSnapshot(SodaScsComponentInterface $component): array {
+    return [];
   }
 
   /**
