@@ -260,9 +260,8 @@ class SodaScsStackCreateForm extends ContentEntityForm {
     $createStackResult = $this->sodaScsStackActions->createStack($stack);
 
     if (!$createStackResult['success']) {
-      $this->loggerFactory->get('soda_scs_manager')->error("Cannot create stack: @error", [
-        '@error' => $createStackResult['error'],
-      ]);
+      $error = $createStackResult['error'];
+      $this->loggerFactory->get('soda_scs_manager')->error("Cannot create stack: $error");
       $this->messenger()->addMessage($this->t('Cannot create stack "@label". See logs for more details.', [
         '@label' => $this->entity->label(),
         '@username' => $this->currentUser->getAccount()->getDisplayName(),
