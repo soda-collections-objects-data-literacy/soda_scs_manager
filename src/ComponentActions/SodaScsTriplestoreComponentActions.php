@@ -185,7 +185,6 @@ class SodaScsTriplestoreComponentActions implements SodaScsComponentActionsInter
       $openGdbgetUserRequest = $this->sodaScsOpenGdbServiceActions->buildGetRequest($getUserRequestParams);
       $getUserResponse = $this->sodaScsOpenGdbServiceActions->makeRequest($openGdbgetUserRequest);
 
-      $getUserResponseData = json_decode($getUserResponse['data']['openGdbResponse']->getBody()->getContents(), TRUE);
 
       // @todo Make good error handling
       if ($getUserResponse['success'] === FALSE) {
@@ -248,10 +247,11 @@ class SodaScsTriplestoreComponentActions implements SodaScsComponentActionsInter
                   'error' => $createUserResponse['error'],
                 ];
               }
+              $createUserTokenData = json_decode($createUserTokenResponse['data']['openGdbResponse']->getBody()->getContents(), TRUE);
               $tokenProps = [
                 'bundle'  => 'soda_scs_triplestore_component',
                 'type'  => 'token',
-                'token' => $createUserTokenResponse['data']['openGdbResponse']['token'],
+                'token' => $createUserTokenData['token'],
                 'userId'    => $entity->getOwnerId(),
                 'username' => $entity->getOwner()->getDisplayName(),
               ];
@@ -296,6 +296,7 @@ class SodaScsTriplestoreComponentActions implements SodaScsComponentActionsInter
       }
       else {
         try {
+          $getUserResponseData = json_decode($getUserResponse['data']['openGdbResponse']->getBody()->getContents(), TRUE);
           // Update existing user.
           $roleBefore = ['ROLE_USER'];
           $readRightsBefore = [];
