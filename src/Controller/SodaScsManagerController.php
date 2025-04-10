@@ -97,7 +97,7 @@ class SodaScsManagerController extends ControllerBase {
     else {
       // If the user does not have the 'manage soda scs manager'
       // permission, only load their own components.
-      $components = $storage->loadByProperties(['user' => $current_user->id()]);
+      $components = $storage->loadByProperties(['owner' => $current_user->id()]);
     }
 
     $componentsByUser = [];
@@ -118,6 +118,7 @@ class SodaScsManagerController extends ControllerBase {
 
     $build = [
       '#theme' => 'soda_scs_manager__desk',
+      '#attributes' => ['class' => 'container soda-scs-manager--view--grid'],
       '#entitiesByUser' => $componentsByUser,
       '#entity_type' => 'soda_scs_component',
       '#cache' => [
@@ -152,7 +153,7 @@ class SodaScsManagerController extends ControllerBase {
     else {
       // If the user does not have the 'manage soda scs manager'
       // permission, only load their own components.
-      $stack = $storage->loadByProperties(['user' => $current_user->id()]);
+      $stack = $storage->loadByProperties(['owner' => $current_user->id()]);
     }
 
     $stacksByUser = [];
@@ -172,11 +173,15 @@ class SodaScsManagerController extends ControllerBase {
     }
     return [
       '#theme' => 'soda_scs_manager__desk',
+      '#attributes' => ['class' => 'container soda-scs-manager--view--grid'],
       '#entitiesByUser' => $stacksByUser,
       '#entity_type' => 'soda_scs_stack',
       '#cache' => [
         'max-age' => 0,
       ],
+      '#attached' => [
+          'library' => ['soda_scs_manager/globalStyling'],
+        ],
     ];
   }
 
@@ -204,7 +209,7 @@ class SodaScsManagerController extends ControllerBase {
     else {
       // If the user does not have the 'manage soda scs manager'
       // permission, only load their own components.
-      $entities = $storage->loadByProperties(['user' => $current_user->id()]);
+      $entities = $storage->loadByProperties(['owner' => $current_user->id()]);
     }
 
     $entitiesByUser = [];
@@ -218,6 +223,9 @@ class SodaScsManagerController extends ControllerBase {
       '#entitiesByUser' => $entitiesByUser,
       '#cache' => [
         'max-age' => 0,
+      ],
+      '#attached' => [
+        'library' => ['soda_scs_manager/globalStyling'],
       ],
     ];
   }
@@ -235,6 +243,9 @@ class SodaScsManagerController extends ControllerBase {
       '#theme' => 'soda_scs_manager__store',
       '#attributes' => ['class' => 'container soda-scs-manager--view--grid'],
       '#components' => [],
+      '#attached' => [
+        'library' => ['soda_scs_manager/globalStyling'],
+      ],
     ];
 
     // Get all component bundles.
@@ -284,6 +295,10 @@ class SodaScsManagerController extends ControllerBase {
 
     // Get all component bundles.
     $bundles = $this->bundleInfo->getBundleInfo('soda_scs_stack');
+
+    // remove work in progress stackes
+    unset($bundles['soda_scs_nextcloud_stack']);
+    unset($bundles['soda_scs_jupyter_stack']);
 
     /** @var \Drupal\soda_scs_manager\Entity\Bundle\SodaScsStackBundle $bundle */
     foreach ($bundles as $id => $bundle) {

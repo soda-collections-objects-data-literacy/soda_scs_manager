@@ -3,7 +3,7 @@
   {% if entitiesByUser is not empty %}
     {% for username, entities in entitiesByUser %}
       <h2>{{ entity_type }}s of User {{ username }}</h2>
-      <div class="soda-scs-manager--view--grid">
+      <div {{ attributes }}>
         {% for entity in entities %}
           {{ entity }}
         {% endfor %}

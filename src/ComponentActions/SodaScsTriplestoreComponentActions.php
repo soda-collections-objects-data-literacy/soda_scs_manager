@@ -182,8 +182,8 @@ class SodaScsTriplestoreComponentActions implements SodaScsComponentActionsInter
         'routeParams' => ['username' => $triplestoreComponent->getOwner()->getDisplayName()],
       ];
 
-      $openGdbgetUserRequest = $this->sodaScsOpenGdbServiceActions->buildGetRequest($getUserRequestParams);
-      $getUserResponse = $this->sodaScsOpenGdbServiceActions->makeRequest($openGdbgetUserRequest);
+      $openGdbGetUserRequest = $this->sodaScsOpenGdbServiceActions->buildGetRequest($getUserRequestParams);
+      $getUserResponse = $this->sodaScsOpenGdbServiceActions->makeRequest($openGdbGetUserRequest);
 
 
       // @todo Make good error handling
@@ -226,7 +226,9 @@ class SodaScsTriplestoreComponentActions implements SodaScsComponentActionsInter
               $createUserTokenRequestParams = [
                 'type' => 'user',
                 'queryParams' => [],
-                'routeParams' => [],
+                'routeParams' => [
+                  'username' => $username
+                ],
                 'body' => [
                   'username' => $username,
                   'password' => $triplestoreComponentServiceKey->get('servicePassword')->value,
@@ -250,6 +252,7 @@ class SodaScsTriplestoreComponentActions implements SodaScsComponentActionsInter
               $createUserTokenData = json_decode($createUserTokenResponse['data']['openGdbResponse']->getBody()->getContents(), TRUE);
               $tokenProps = [
                 'bundle'  => 'soda_scs_triplestore_component',
+                'bundleLabel' => $triplestoreComponentBundleInfo['label'],
                 'type'  => 'token',
                 'token' => $createUserTokenData['token'],
                 'userId'    => $entity->getOwnerId(),

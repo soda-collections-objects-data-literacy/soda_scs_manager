@@ -102,6 +102,7 @@ function soda_scs_manager_theme($existing, $type, $theme, $path) {
       'variables' => [
         'entitiesByUser' => NULL,
         'entity_type' => NULL,
+        'attributes' => NULL,
       ],
     ],
 

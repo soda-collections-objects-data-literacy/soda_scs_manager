@@ -425,11 +425,12 @@ class SodaScsOpenGdbServiceActions implements SodaScsServiceRequestInterface {
     $triplestoreServiceSettings = $this->sodaScsServiceHelpers->initTriplestoreServiceSettings();
     $triplestoreMiscSettings = $this->sodaScsServiceHelpers->initTriplestoreMiscSettings();
 
-    $route = $triplestoreServiceSettings['host'] . str_replace('{userId}', $requestParams['routeParams']['username'], $triplestoreMiscSettings['tokenUrl']);
+    $route = $triplestoreServiceSettings['host'] . $triplestoreMiscSettings['tokenUrl'];
 
     $body = json_encode($requestParams['body']);
 
     return [
+      'type' => $requestParams['type'],
       'success' => TRUE,
       'method' => 'POST',
       'route' => $route,
