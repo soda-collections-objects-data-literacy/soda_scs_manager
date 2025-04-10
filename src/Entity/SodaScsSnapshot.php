@@ -140,15 +140,16 @@ class SodaScsSnapshot extends ContentEntityBase implements SodaScsSnapshotInterf
         'weight' => 30,
       ]);
 
-    $fields['created'] = BaseFieldDefinition::create('created')
-      ->setLabel(new TranslatableMarkup('Created'))
-      ->setDescription(new TranslatableMarkup('The time that the snapshot was created.'))
+    $fields['checksum'] = BaseFieldDefinition::create('string')
+      ->setLabel(new TranslatableMarkup('Checksum'))
+      ->setDescription(new TranslatableMarkup('The checksum of the snapshot content.'))
       ->setRequired(TRUE)
+      ->setDisplayConfigurable('form', FALSE)
       ->setDisplayConfigurable('view', TRUE)
       ->setDisplayOptions('view', [
         'label' => 'above',
-        'type' => 'timestamp',
-        'weight' => 40,
+        'type' => 'string',
+        'weight' => 60,
       ]);
 
     $fields['changed'] = BaseFieldDefinition::create('changed')
@@ -162,16 +163,15 @@ class SodaScsSnapshot extends ContentEntityBase implements SodaScsSnapshotInterf
         'weight' => 50,
       ]);
 
-    $fields['checksum'] = BaseFieldDefinition::create('string')
-      ->setLabel(new TranslatableMarkup('Checksum'))
-      ->setDescription(new TranslatableMarkup('The checksum of the snapshot content.'))
+    $fields['created'] = BaseFieldDefinition::create('created')
+      ->setLabel(new TranslatableMarkup('Created'))
+      ->setDescription(new TranslatableMarkup('The time that the snapshot was created.'))
       ->setRequired(TRUE)
-      ->setDisplayConfigurable('form', FALSE)
       ->setDisplayConfigurable('view', TRUE)
       ->setDisplayOptions('view', [
         'label' => 'above',
-        'type' => 'string',
-        'weight' => 60,
+        'type' => 'timestamp',
+        'weight' => 40,
       ]);
 
     return $fields;
