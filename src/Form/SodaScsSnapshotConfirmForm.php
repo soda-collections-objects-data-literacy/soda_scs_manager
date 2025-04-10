@@ -99,7 +99,6 @@ class SodaScsSnapshotConfirmForm extends ConfirmFormBase {
     // Create the snapshot entity.
     $snapshot = SodaScsSnapshot::create([
       'label' => $values['label'],
-      'description' => $values['description'],
       'owner' => \Drupal::currentUser()->id(),
     ]);
 

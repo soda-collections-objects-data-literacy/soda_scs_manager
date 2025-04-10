@@ -66,42 +66,38 @@ class SodaScsSnapshot extends ContentEntityBase implements SodaScsSnapshotInterf
   public static function baseFieldDefinitions(EntityTypeInterface $entity_type) {
     $fields = parent::baseFieldDefinitions($entity_type);
 
-    $fields['snapshotOfStack'] = BaseFieldDefinition::create('entity_reference')
-      ->setLabel(new TranslatableMarkup('Stack'))
-      ->setDescription(new TranslatableMarkup('The stack this snapshot is taken from.'))
-      ->setSetting('target_type', 'soda_scs_stack')
-      ->setSetting('handler', 'default')
-      ->setRequired(FALSE)
-      ->setCardinality(1)
-      ->setDisplayConfigurable('form', TRUE)
-      ->setDisplayOptions('form', [
-        'type' => 'entity_reference_autocomplete',
-        'weight' => 10,
-      ])
+    $fields['checksum'] = BaseFieldDefinition::create('string')
+      ->setLabel(new TranslatableMarkup('Checksum'))
+      ->setDescription(new TranslatableMarkup('The checksum of the snapshot content.'))
+      ->setRequired(TRUE)
+      ->setDisplayConfigurable('form', FALSE)
       ->setDisplayConfigurable('view', TRUE)
       ->setDisplayOptions('view', [
         'label' => 'above',
-        'type' => 'entity_reference_label',
-        'weight' => 10,
+        'type' => 'string',
+        'weight' => 60,
       ]);
 
-    $fields['snapshotOfComponent'] = BaseFieldDefinition::create('entity_reference')
-      ->setLabel(new TranslatableMarkup('Component'))
-      ->setDescription(new TranslatableMarkup('The component this snapshot is taken from.'))
-      ->setSetting('target_type', 'soda_scs_component')
-      ->setSetting('handler', 'default')
-      ->setRequired(FALSE)
-      ->setCardinality(1)
-      ->setDisplayConfigurable('form', TRUE)
-      ->setDisplayOptions('form', [
-        'type' => 'entity_reference_autocomplete',
-        'weight' => 20,
-      ])
+    $fields['changed'] = BaseFieldDefinition::create('changed')
+      ->setLabel(new TranslatableMarkup('Changed'))
+      ->setDescription(new TranslatableMarkup('The time that the snapshot was last updated.'))
+      ->setRequired(TRUE)
       ->setDisplayConfigurable('view', TRUE)
       ->setDisplayOptions('view', [
         'label' => 'above',
-        'type' => 'entity_reference_label',
-        'weight' => 20,
+        'type' => 'timestamp',
+        'weight' => 50,
+      ]);
+
+    $fields['created'] = BaseFieldDefinition::create('created')
+      ->setLabel(new TranslatableMarkup('Created'))
+      ->setDescription(new TranslatableMarkup('The time that the snapshot was created.'))
+      ->setRequired(TRUE)
+      ->setDisplayConfigurable('view', TRUE)
+      ->setDisplayOptions('view', [
+        'label' => 'above',
+        'type' => 'timestamp',
+        'weight' => 40,
       ]);
 
     $fields['label'] = BaseFieldDefinition::create('string')
@@ -140,38 +136,42 @@ class SodaScsSnapshot extends ContentEntityBase implements SodaScsSnapshotInterf
         'weight' => 30,
       ]);
 
-    $fields['checksum'] = BaseFieldDefinition::create('string')
-      ->setLabel(new TranslatableMarkup('Checksum'))
-      ->setDescription(new TranslatableMarkup('The checksum of the snapshot content.'))
-      ->setRequired(TRUE)
-      ->setDisplayConfigurable('form', FALSE)
+    $fields['snapshotOfComponent'] = BaseFieldDefinition::create('entity_reference')
+      ->setLabel(new TranslatableMarkup('Component'))
+      ->setDescription(new TranslatableMarkup('The component this snapshot is taken from.'))
+      ->setSetting('target_type', 'soda_scs_component')
+      ->setSetting('handler', 'default')
+      ->setRequired(FALSE)
+      ->setCardinality(1)
+      ->setDisplayConfigurable('form', TRUE)
+      ->setDisplayOptions('form', [
+        'type' => 'entity_reference_autocomplete',
+        'weight' => 20,
+      ])
       ->setDisplayConfigurable('view', TRUE)
       ->setDisplayOptions('view', [
         'label' => 'above',
-        'type' => 'string',
-        'weight' => 60,
+        'type' => 'entity_reference_label',
+        'weight' => 20,
       ]);
 
-    $fields['changed'] = BaseFieldDefinition::create('changed')
-      ->setLabel(new TranslatableMarkup('Changed'))
-      ->setDescription(new TranslatableMarkup('The time that the snapshot was last updated.'))
-      ->setRequired(TRUE)
+    $fields['snapshotOfStack'] = BaseFieldDefinition::create('entity_reference')
+      ->setLabel(new TranslatableMarkup('Stack'))
+      ->setDescription(new TranslatableMarkup('The stack this snapshot is taken from.'))
+      ->setSetting('target_type', 'soda_scs_stack')
+      ->setSetting('handler', 'default')
+      ->setRequired(FALSE)
+      ->setCardinality(1)
+      ->setDisplayConfigurable('form', TRUE)
+      ->setDisplayOptions('form', [
+        'type' => 'entity_reference_autocomplete',
+        'weight' => 10,
+      ])
       ->setDisplayConfigurable('view', TRUE)
       ->setDisplayOptions('view', [
         'label' => 'above',
-        'type' => 'timestamp',
-        'weight' => 50,
-      ]);
-
-    $fields['created'] = BaseFieldDefinition::create('created')
-      ->setLabel(new TranslatableMarkup('Created'))
-      ->setDescription(new TranslatableMarkup('The time that the snapshot was created.'))
-      ->setRequired(TRUE)
-      ->setDisplayConfigurable('view', TRUE)
-      ->setDisplayOptions('view', [
-        'label' => 'above',
-        'type' => 'timestamp',
-        'weight' => 40,
+        'type' => 'entity_reference_label',
+        'weight' => 10,
       ]);
 
     return $fields;
