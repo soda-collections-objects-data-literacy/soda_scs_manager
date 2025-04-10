@@ -76,6 +76,8 @@ class SodaScsManagerController extends ControllerBase {
    *
    * @return array
    *   The page build array.
+   *
+   * @todo Join ComponentDesk and Stack desk to generic Desk.
    */
   public function componentDeskPage(): array {
     $current_user = $this->currentUser();
@@ -163,6 +165,9 @@ class SodaScsManagerController extends ControllerBase {
         '#description' => $stack->get('description')->value,
         '#imageUrl' => $stack->get('imageUrl')->value,
         '#url' => Url::fromRoute('entity.soda_scs_stack.canonical', ['soda_scs_stack' => $stack->id()]),
+        '#attached' => [
+          'library' => ['soda_scs_manager/globalStyling'],
+        ],
       ];
     }
     return [
