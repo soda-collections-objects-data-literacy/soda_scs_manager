@@ -1,0 +1,31 @@
+{#
+/**
+ * @file
+ * Theme implementation for the site navigation.
+ *
+ * Available variables:
+ * - page.nav_branding: Items for the branding region (logo, site name).
+ * - page.nav_main: Items for the main navigation menu.
+ * - page.nav_additional: Items for additional navigation elements (search, user menu).
+ */
+#}
+
+<nav class="navigation w-full" role="navigation">
+  {% if page.nav_branding %}
+    <div class="nav-branding">
+      {{ page.nav_branding }}
+    </div>
+  {% endif %}
+
+  {% if page.nav_main %}
+    <nav class="nav-main">
+      {{ page.nav_main }}
+    </nav>
+  {% endif %}
+
+  {% if page.nav_additional %}
+    <div class="nav-additional">
+      {{ page.nav_additional }}
+    </div>
+  {% endif %}
+</nav>

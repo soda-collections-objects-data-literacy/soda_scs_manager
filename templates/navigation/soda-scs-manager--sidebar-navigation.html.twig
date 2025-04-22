@@ -1,0 +1,23 @@
+{#
+/**
+ * @file
+ * Theme implementation for the SODa SCS Manager sidebar navigation.
+ *
+ * Available variables:
+ * - items: An array of navigation items with icons and URLs.
+ * - attributes: HTML attributes for the container.
+ */
+#}
+
+
+<div{{ attributes.addClass('soda-sidebar-nav bg-slate-950 rounded-l-lg py-4') }}>
+  <nav class="flex flex-col space-y-3">
+    {% for item in items %}
+      <a href="{{ item.url }}" class="nav-item flex justify-center p-2 transition duration-150 ease-in-out group {{ item.classes }} {{ item.is_active ? 'active ring-2 ring-primary-500 ring-opacity-75 rounded-md shadow-lgshadow-glow' }}" title="{{ item.title }}">
+        <div class="group-hover:scale-115 transition duration-150 ease-in-out">
+          {{ item.svg|raw }}
+        </div>
+      </a>
+    {% endfor %}
+  </nav>
+</div>

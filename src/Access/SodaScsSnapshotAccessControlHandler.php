@@ -10,13 +10,13 @@ use Drupal\Core\Entity\EntityInterface;
 use Drupal\Core\Session\AccountInterface;
 
 /**
- * Defines the access control handler for the soda scs stack entity type.
+ * Defines the access control handler for the soda scs snapshot entity type.
  *
  * phpcs:disable Drupal.Arrays.Array.LongLineDeclaration
  *
  * @see https://www.drupal.org/project/coder/issues/3185082
  */
-final class SodaScsStackAccessControlHandler extends EntityAccessControlHandler {
+final class SodaScsSnapshotAccessControlHandler extends EntityAccessControlHandler {
 
   /**
    * {@inheritdoc}

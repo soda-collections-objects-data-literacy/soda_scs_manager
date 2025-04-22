@@ -12,6 +12,8 @@ use Drupal\Core\StringTranslation\StringTranslationTrait;
 use Drupal\Core\TypedData\Exception\MissingDataException;
 use GuzzleHttp\ClientInterface;
 use GuzzleHttp\Exception\ClientException;
+use Drupal\Core\Utility\Error;
+use Psr\Log\LogLevel;
 
 /**
  * Handles the communication with the SCS user manager daemon.
@@ -98,7 +100,7 @@ class SodaScsDockerRegistryServiceActions implements SodaScsServiceRequestInterf
       ];
     }
     catch (ClientException $e) {
-      $this->loggerFactory->get('soda_scs_manager')->error("Portainer request failed. error: $e");
+      Error::logException($this->loggerFactory->get('soda_scs_manager'), $e, 'Portainer request failed', [], LogLevel::ERROR);
     }
     $this->messenger->addError($this->t("Portainer request failed. See logs for more details."));
     return [

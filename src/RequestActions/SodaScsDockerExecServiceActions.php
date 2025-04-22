@@ -162,7 +162,13 @@ class SodaScsDockerExecServiceActions implements SodaScsExecRequestInterface {
    * @param array $request
    *   The request array.
    *
-   * @return array
+   * @return array{
+   *   message: string,
+   *   success: bool,
+   *   error: string,
+   *   data: array,
+   *   statusCode: int,
+   *   }
    *   The response array.
    */
   public function makeRequest($request): array {
@@ -239,6 +245,7 @@ class SodaScsDockerExecServiceActions implements SodaScsExecRequestInterface {
           'Cmd' => $requestParams['cmd'],
           'Detach' => FALSE,
           'Tty' => FALSE,
+          'User' => $requestParams['user'],
         ]
       ),
     ];
@@ -275,7 +282,7 @@ class SodaScsDockerExecServiceActions implements SodaScsExecRequestInterface {
       'headers' => [
         'Content-Type' => 'application/json',
         'Accept' => 'application/json',
-        'X-API-Key' => $portainerServiceSettings['portainerAuthenticationToken'],
+        'X-API-Key' => $portainerServiceSettings['authenticationToken'],
       ],
       'body' => json_encode([
         'Detach' => FALSE,
@@ -317,7 +324,7 @@ class SodaScsDockerExecServiceActions implements SodaScsExecRequestInterface {
       'headers' => [
         'Content-Type' => 'application/json',
         'Accept' => 'application/json',
-        'X-API-Key' => $portainerServiceSettings['portainerAuthenticationToken'],
+        'X-API-Key' => $portainerServiceSettings['authenticationToken'],
       ],
       'query' => [
         'h' => $requestParams['height'] ?? 24,

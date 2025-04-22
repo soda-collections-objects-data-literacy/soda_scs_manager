@@ -2,13 +2,15 @@
 
 namespace Drupal\soda_scs_manager\Form;
 
+use Drupal\Core\Entity\EntityTypeManagerInterface;
 use Drupal\Core\Form\ConfirmFormBase;
 use Drupal\Core\Form\FormStateInterface;
-use Drupal\Core\Url;
-use Drupal\Core\StringTranslation\TranslatableMarkup;
+use Drupal\Core\Logger\LoggerChannelFactoryInterface;
+use Drupal\soda_scs_manager\ComponentActions\SodaScsComponentActionsInterface;
 use Drupal\soda_scs_manager\Entity\SodaScsSnapshot;
-use Drupal\Core\Entity\EntityTypeManagerInterface;
 use Symfony\Component\DependencyInjection\ContainerInterface;
+use Drupal\Core\Utility\Error;
+use Psr\Log\LogLevel;
 
 /**
  * Provides a confirmation form for creating snapshots.
@@ -37,13 +39,37 @@ class SodaScsSnapshotConfirmForm extends ConfirmFormBase {
   protected $entityTypeManager;
 
   /**
+   * The Soda SCS WissKI Component Actions.
+   *
+   * @var \Drupal\soda_scs_manager\ComponentActions\SodaScsComponentActionsInterface
+   */
+  protected $sodaScsWisskiComponentActions;
+
+  /**
+   * The logger factory.
+   *
+   * @var \Drupal\Core\Logger\LoggerChannelFactoryInterface
+   */
+  protected $loggerFactory;
+
+  /**
    * Constructs a new SodaScsSnapshotConfirmForm.
    *
    * @param \Drupal\Core\Entity\EntityTypeManagerInterface $entity_type_manager
    *   The entity type manager.
+   * @param \Drupal\soda_scs_manager\ComponentActions\SodaScsComponentActionsInterface $sodaScsWisskiComponentActions
+   *   The Soda SCS Component Actions.
+   * @param \Drupal\Core\Logger\LoggerChannelFactoryInterface $logger_factory
+   *   The logger factory.
    */
-  public function __construct(EntityTypeManagerInterface $entity_type_manager) {
+  public function __construct(
+    EntityTypeManagerInterface $entity_type_manager,
+    SodaScsComponentActionsInterface $sodaScsWisskiComponentActions,
+    LoggerChannelFactoryInterface $logger_factory,
+  ) {
     $this->entityTypeManager = $entity_type_manager;
+    $this->sodaScsWisskiComponentActions = $sodaScsWisskiComponentActions;
+    $this->loggerFactory = $logger_factory;
   }
 
   /**
@@ -51,7 +77,9 @@ class SodaScsSnapshotConfirmForm extends ConfirmFormBase {
    */
   public static function create(ContainerInterface $container) {
     return new static(
-      $container->get('entity_type.manager')
+      $container->get('entity_type.manager'),
+      $container->get('soda_scs_manager.wisski_component.actions'),
+      $container->get('logger.factory')
     );
   }
 
@@ -96,10 +124,18 @@ class SodaScsSnapshotConfirmForm extends ConfirmFormBase {
   public function submitForm(array &$form, FormStateInterface $form_state) {
     $values = $form_state->getValues();
 
+    $createSnapshotResult = $this->sodaScsWisskiComponentActions->createSnapshot($this->entity);
+
+    if (!$createSnapshotResult['success']) {
+      $this->messenger()->addError($this->t('Failed to create snapshot. See logs for more details.'));
+      $error = $createSnapshotResult['error'];
+      Error::logException($this->loggerFactory->get('soda_scs_manager'), new \Exception($error), 'Failed to create snapshot', [], LogLevel::ERROR);
+      return;
+    }
+
     // Create the snapshot entity.
     $snapshot = SodaScsSnapshot::create([
       'label' => $values['label'],
-      'description' => $values['description'],
       'owner' => \Drupal::currentUser()->id(),
     ]);
 

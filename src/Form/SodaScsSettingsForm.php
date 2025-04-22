@@ -586,7 +586,7 @@ class SodaScsSettingsForm extends ConfigFormBase {
 
     $form['portainer']['routes']['endpoints']['dockerApi']['containers']['baseUrl'] = [
       '#type' => 'textfield',
-      '#title' => $this->t('Docker API base route'),
+      '#title' => $this->t('Docker Container API base route'),
       '#default_value' => $this->config('soda_scs_manager.settings')->get('portainer')['routes']['endpoints']['dockerApi']['containers']['baseUrl'] ?? '',
       '#description' => $this->t('The base URL, like "/containers".'),
     ];
@@ -668,7 +668,7 @@ class SodaScsSettingsForm extends ConfigFormBase {
 
     $form['portainer']['routes']['endpoints']['dockerApi']['volumes']['baseUrl'] = [
       '#type' => 'textfield',
-      '#title' => $this->t('Docker API base route'),
+      '#title' => $this->t('Docker volumes API base route'),
       '#default_value' => $this->config('soda_scs_manager.settings')->get('portainer')['routes']['endpoints']['dockerApi']['volumes']['baseUrl'] ?? '',
       '#description' => $this->t('The base URL, like "/volumes".'),
     ];

@@ -17,6 +17,8 @@ use GuzzleHttp\Exception\ClientException;
 use GuzzleHttp\Exception\GuzzleException;
 use Drupal\soda_scs_manager\Exception\SodaScsRequestException;
 use Drupal\soda_scs_manager\Helpers\SodaScsServiceHelpers;
+use Drupal\Core\Utility\Error;
+use Psr\Log\LogLevel;
 
 /**
  * Class SodaScsKeycloakServiceActions.
@@ -498,7 +500,7 @@ class SodaScsKeycloakServiceActions implements SodaScsServiceRequestInterface {
       ];
     }
     catch (\Exception $e) {
-      $this->loggerFactory->get('soda_scs_manager')->error('Keycloak request failed: @error', ['@error' => $e->getMessage()]);
+      Error::logException($this->loggerFactory->get('soda_scs_manager'), $e, 'Keycloak request failed', [], LogLevel::ERROR);
       $this->loggerFactory->get('soda_scs_manager')->debug('Request details: @request', ['@request' => print_r($request, TRUE)]);
 
       return [

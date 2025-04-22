@@ -14,13 +14,13 @@ use Drupal\user\EntityOwnerTrait;
  *
  * @ContentEntityType(
  *   id = "soda_scs_service_key",
- *   label = @Translation("Service Key"),
- *   label_collection = @Translation("Service Keys"),
- *   label_singular = @Translation("Service Key"),
- *   label_plural = @Translation("Service Keys"),
+ *   label = @Translation("Soda SCS Service Key"),
+ *   label_collection = @Translation("Soda SCS Service Keys"),
+ *   label_singular = @Translation("Soda SCS Service Key"),
+ *   label_plural = @Translation("Soda SCS Service Keys"),
  *   label_count = @PluralTranslation(
- *     singular = "@count Service Key",
- *     plural = "@count Service Keys",
+ *     singular = "@count Soda SCS Service Key",
+ *     plural = "@count Soda SCS Service Keys",
  *   ),
  *   handlers = {
  *     "view_builder" = "Drupal\Core\Entity\EntityViewBuilder",
@@ -50,6 +50,7 @@ use Drupal\user\EntityOwnerTrait;
  *   admin_permission = "administer soda scs service key entities",
  *   field_ui_base_route = "entity.soda_scs_service_key.edit_form",
  *   fieldable = TRUE,
+ *   translatable = TRUE,
  *   common_reference_target = TRUE,
  *   entity_keys = {
  *     "bundle" = "bundle",

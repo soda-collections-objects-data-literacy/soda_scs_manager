@@ -45,6 +45,7 @@ use Drupal\user\EntityOwnerTrait;
  *   field_ui_base_route = "entity.soda_scs_project.edit_form",
  *   common_reference_target = TRUE,
  *   fieldable = TRUE,
+ *   translatable = TRUE,
  *   entity_keys = {
  *     "bundle" = "bundle",
  *     "id" = "id",

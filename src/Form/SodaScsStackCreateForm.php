@@ -13,6 +13,8 @@ use Drupal\Core\Logger\LoggerChannelFactoryInterface;
 use Drupal\Core\Session\AccountProxyInterface;
 use Drupal\soda_scs_manager\StackActions\SodaScsStackActionsInterface;
 use Symfony\Component\DependencyInjection\ContainerInterface;
+use Drupal\Core\Utility\Error;
+use Psr\Log\LogLevel;
 
 /**
  * Form controller for the ScsComponent entity create form.
@@ -261,7 +263,7 @@ class SodaScsStackCreateForm extends ContentEntityForm {
 
     if (!$createStackResult['success']) {
       $error = $createStackResult['error'];
-      $this->loggerFactory->get('soda_scs_manager')->error("Cannot create stack: $error");
+      Error::logException($this->loggerFactory->get('soda_scs_manager'), new \Exception($error), 'Cannot create stack', [], LogLevel::ERROR);
       $this->messenger()->addMessage($this->t('Cannot create stack "@label". See logs for more details.', [
         '@label' => $this->entity->label(),
         '@username' => $this->currentUser->getAccount()->getDisplayName(),

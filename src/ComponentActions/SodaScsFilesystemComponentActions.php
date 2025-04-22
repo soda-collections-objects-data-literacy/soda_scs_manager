@@ -9,9 +9,11 @@ use Drupal\Core\DependencyInjection\DependencySerializationTrait;
 use Drupal\Core\Entity\EntityTypeBundleInfoInterface;
 use Drupal\Core\Entity\EntityTypeManagerInterface;
 use Drupal\Core\Logger\LoggerChannelFactoryInterface;
+use Drupal\Core\Logger\LoggerChannelInterface;
 use Drupal\Core\Messenger\MessengerInterface;
 use Drupal\Core\StringTranslation\TranslationInterface;
 use Drupal\Core\StringTranslation\StringTranslationTrait;
+use Drupal\Core\Utility\Error;
 use Drupal\soda_scs_manager\Entity\SodaScsComponentInterface;
 use Drupal\soda_scs_manager\Entity\SodaScsStackInterface;
 use Drupal\soda_scs_manager\Helpers\SodaScsHelpersInterface;
@@ -20,6 +22,7 @@ use Drupal\soda_scs_manager\RequestActions\SodaScsExecRequestInterface;
 use Drupal\soda_scs_manager\ServiceActions\SodaScsServiceActionsInterface;
 use Drupal\soda_scs_manager\ServiceKeyActions\SodaScsServiceKeyActionsInterface;
 use GuzzleHttp\ClientInterface;
+use Psr\Log\LogLevel;
 
 /**
  * Class for SODa SCS Component filesystem actions.
@@ -62,9 +65,9 @@ class SodaScsFilesystemComponentActions implements SodaScsComponentActionsInterf
   /**
    * The logger factory.
    *
-   * @var \Drupal\Core\Logger\LoggerChannelFactoryInterface
+   * @var \Drupal\Core\Logger\LoggerChannelInterface
    */
-  protected LoggerChannelFactoryInterface $loggerFactory;
+  protected LoggerChannelInterface $logger;
 
   /**
    * The messenger service.
@@ -139,7 +142,7 @@ class SodaScsFilesystemComponentActions implements SodaScsComponentActionsInterf
     $this->entityTypeBundleInfo = $entityTypeBundleInfo;
     $this->entityTypeManager = $entityTypeManager;
     $this->httpClient = $httpClient;
-    $this->loggerFactory = $loggerFactory;
+    $this->logger = $loggerFactory->get('soda_scs_manager');
     $this->messenger = $messenger;
     $this->settings = $configFactory
       ->getEditable('soda_scs_manager.settings');
@@ -268,7 +271,7 @@ class SodaScsFilesystemComponentActions implements SodaScsComponentActionsInterf
       }
     }
     catch (\Exception $e) {
-      $this->loggerFactory->get('soda_scs_manager')->error("Cannot create exec request for the shared folders via access proxy: $e");
+      Error::logException($this->logger, $e, 'Cannot create exec request for the shared folders via access proxy', [], LogLevel::ERROR);
       return [
         'message' => 'Exec request for the shared folders via access proxy failed.',
         'data' => [
@@ -401,7 +404,7 @@ class SodaScsFilesystemComponentActions implements SodaScsComponentActionsInterf
       }
     }
     catch (\Exception $e) {
-      $this->loggerFactory->get('soda_scs_manager')->error("Cannot set permissions for the shared folders in the containers: $e");
+      Error::logException($this->logger, $e, 'Cannot set permissions for the shared folders in the containers', [], LogLevel::ERROR);
       return [
         'message' => 'Could not set permissions for the shared folders in the containers.',
         'data' => [
@@ -421,7 +424,7 @@ class SodaScsFilesystemComponentActions implements SodaScsComponentActionsInterf
       $entity->save();
     }
     catch (\Exception $e) {
-      $this->loggerFactory->get('soda_scs_manager')->error("Cannot save component: $e");
+      Error::logException($this->logger, $e, 'Cannot save component.', [], LogLevel::ERROR);
       return [
         'message' => 'Could not save component.',
         'data' => [
@@ -630,7 +633,7 @@ class SodaScsFilesystemComponentActions implements SodaScsComponentActionsInterf
       }
     }
     catch (\Exception $e) {
-      $this->loggerFactory->get('soda_scs_manager')->error("Cannot create exec request for the shared folders via access proxy: $e");
+      Error::logException($this->logger, $e, 'Cannot create exec request for the shared folders via access proxy', [], LogLevel::ERROR);
       return [
         'message' => 'Exec request for the shared folders via access proxy failed.',
         'data' => [
@@ -765,7 +768,7 @@ class SodaScsFilesystemComponentActions implements SodaScsComponentActionsInterf
       }
     }
     catch (\Exception $e) {
-      $this->loggerFactory->get('soda_scs_manager')->error("Cannot set permissions for the shared folders in the containers: $e");
+      Error::logException($this->logger, $e, 'Cannot set permissions for the shared folders in the containers', [], LogLevel::ERROR);
       return [
         'message' => 'Could not set permissions for the shared folders in the containers.',
         'data' => [
@@ -785,7 +788,7 @@ class SodaScsFilesystemComponentActions implements SodaScsComponentActionsInterf
       $entity->delete();
     }
     catch (\Exception $e) {
-      $this->loggerFactory->get('soda_scs_manager')->error("Cannot save component: $e");
+      Error::logException($this->logger, $e, 'Cannot save component', [], LogLevel::ERROR);
       return [
         'message' => 'Could not save component.',
         'data' => [

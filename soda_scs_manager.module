@@ -59,29 +59,22 @@ function soda_scs_manager_help($route_name, RouteMatchInterface $route_match) {
  */
 function soda_scs_manager_theme($existing, $type, $theme, $path) {
   return [
-    // Cards.
-    'bundle_card' => [
+    'soda_scs_manager__store' => [
       'variables' => [
-        'title' => NULL,
-        'description' => NULL,
-        'url' => NULL,
-        'imageUrl' => NULL,
+        'components' => NULL,
+        'stacks' => NULL,
+        'attributes' => NULL,
       ],
+      'template' => 'pages/soda-scs-manager--store',
     ],
-
-    'component_card' => [
+    'soda_scs_manager__desk' => [
       'variables' => [
-        'title' => NULL,
-        'description' => NULL,
-        'url' => NULL,
-        'imageUrl' => NULL,
+        'entitiesByUser' => NULL,
+        'entity_type' => NULL,
+        'attributes' => NULL,
       ],
+      'template' => 'pages/soda-scs-manager--desk',
     ],
-
-    'stack_card' => [
-      'variables' => ['stack' => NULL],
-    ],
-
     'soda_scs_manager__entity_card' => [
       'variables' => [
         'title' => NULL,
@@ -89,46 +82,21 @@ function soda_scs_manager_theme($existing, $type, $theme, $path) {
         'url' => NULL,
         'imageUrl' => NULL,
       ],
+      'template' => 'cards/soda-scs-manager--entity-card',
     ],
-
-    // Pages.
-#    'stacks_desk' => [
-#      'variables' => [
-#        'stacksByUser' => NULL,#
-#      ],
-#    ],
-
-    'soda_scs_manager__desk' => [
+    'soda_scs_manager__start_page' => [
       'variables' => [
-        'entitiesByUser' => NULL,
-        'entity_type' => NULL,
         'attributes' => NULL,
       ],
+      'template' => 'pages/soda-scs-manager--start-page',
     ],
-
-#    'soda_scs_manager__desk' => [
-#      'variables' => [
-#        'componentsByUser' => NULL,
-#      ],
-#    ],
-
-    'soda_scs_manager__store' => [
+    'soda_scs_manager__sidebar_navigation' => [
       'variables' => [
-        'components' => NULL,
-        'attributes' => NULL,
+        'items' => [],
+        'attributes' => [],
       ],
+      'template' => 'navigation/soda-scs-manager--sidebar-navigation',
     ],
-
-    'machine_name_with_edit' => [
-      'variables' => [
-        'machine_name' => NULL,
-        'entity_id' => NULL,
-        'entity_type' => NULL,
-        'edit_label' => NULL,
-        'edit_url' => NULL,
-      ],
-    ],
-
   ];
 }
 

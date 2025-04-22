@@ -8,6 +8,7 @@ use Drupal\Core\Database\Connection;
 use Drupal\Core\DependencyInjection\DependencySerializationTrait;
 use Drupal\Core\Entity\EntityTypeManagerInterface;
 use Drupal\Core\Logger\LoggerChannelFactoryInterface;
+use Drupal\Core\Logger\LoggerChannelInterface;
 use Drupal\Core\Messenger\MessengerInterface;
 use Drupal\Core\StringTranslation\TranslationInterface;
 use Drupal\Core\StringTranslation\StringTranslationTrait;
@@ -18,6 +19,8 @@ use Drupal\soda_scs_manager\Exception\SodaScsSqlServiceException;
 use Drupal\soda_scs_manager\ServiceActions\SodaScsServiceActionsInterface;
 use Drupal\soda_scs_manager\ServiceKeyActions\SodaScsServiceKeyActionsInterface;
 use GuzzleHttp\ClientInterface;
+use Psr\Log\LogLevel;
+use Drupal\Core\Utility\Error;
 
 /**
  * Handles the communication with the SCS user manager daemon.
@@ -51,9 +54,9 @@ class SodaScsSqlComponentActions implements SodaScsComponentActionsInterface {
   /**
    * The logger factory.
    *
-   * @var \Drupal\Core\Logger\LoggerChannelFactoryInterface
+   * @var \Drupal\Core\Logger\LoggerChannelInterface
    */
-  protected LoggerChannelFactoryInterface $loggerFactory;
+  protected LoggerChannelInterface $logger;
 
   /**
    * The messenger service.
@@ -103,7 +106,7 @@ class SodaScsSqlComponentActions implements SodaScsComponentActionsInterface {
     $this->database = $database;
     $this->entityTypeManager = $entityTypeManager;
     $this->httpClient = $httpClient;
-    $this->loggerFactory = $loggerFactory;
+    $this->logger = $loggerFactory->get('soda_scs_manager');
     $this->messenger = $messenger;
     $this->settings = $settings;
     $this->sodaScsMysqlServiceActions = $sodaScsMysqlServiceActions;
@@ -273,8 +276,7 @@ class SodaScsSqlComponentActions implements SodaScsComponentActionsInterface {
       ];
     }
     catch (MissingDataException $e) {
-      $this->loggerFactory->get('soda_scs_manager')
-        ->error("Cannot create database. error: $e");
+      Error::logException($this->logger, $e, 'Cannot create database', [], LogLevel::ERROR);
       $this->messenger->addError($this->t("Cannot create database. See logs for more details."));
       return [
         'message' => 'Cannot create database.',
@@ -349,8 +351,7 @@ class SodaScsSqlComponentActions implements SodaScsComponentActionsInterface {
       $component->delete();
     }
     catch (\Exception $e) {
-      $this->loggerFactory->get('soda_scs_manager')
-        ->error("Cannot delete database: $e");
+      Error::logException($this->logger, $e, 'Cannot delete database', [], LogLevel::ERROR);
       $this->messenger->addError($this->t("Cannot delete database. See logs for more details."));
 
       return [
@@ -370,8 +371,7 @@ class SodaScsSqlComponentActions implements SodaScsComponentActionsInterface {
       $dbUserPassword = $sqlServiceKey->get('servicePassword')->value;
     }
     catch (\Exception $e) {
-      $this->loggerFactory->get('soda_scs_manager')
-        ->error("Cannot load service key: $e");
+      Error::logException($this->logger, $e, 'Cannot load service key', [], LogLevel::ERROR);
       $this->messenger->addError($this->t("Cannot load service key. See logs for more details."));
       return [
         'message' => 'Cannot load service key.',
@@ -386,8 +386,7 @@ class SodaScsSqlComponentActions implements SodaScsComponentActionsInterface {
       $cleanDatabaseUsers = $this->sodaScsMysqlServiceActions->cleanServiceUsers($component->getOwner()->getDisplayName(), $dbUserPassword);
     }
     catch (\Exception $e) {
-      $this->loggerFactory->get('soda_scs_manager')
-        ->error("Cannot clean database users. error: $e");
+      Error::logException($this->logger, $e, 'Cannot clean database users', [], LogLevel::ERROR);
       $this->messenger->addError($this->t("Cannot clean database users. See logs for more details."));
       return [
         'message' => 'Cannot clean database. users',

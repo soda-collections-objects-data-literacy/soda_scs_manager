@@ -2,6 +2,7 @@
 
 namespace Drupal\soda_scs_manager\ComponentActions;
 
+use Drupal\Core\File\FileSystem;
 use Drupal\Core\Config\Config;
 use Drupal\Core\Config\ConfigFactoryInterface;
 use Drupal\Core\Database\Connection;
@@ -22,6 +23,8 @@ use Drupal\soda_scs_manager\RequestActions\SodaScsRunRequestInterface;
 use Drupal\soda_scs_manager\ServiceActions\SodaScsServiceActionsInterface;
 use Drupal\soda_scs_manager\ServiceKeyActions\SodaScsServiceKeyActionsInterface;
 use GuzzleHttp\ClientInterface;
+use Drupal\Core\Utility\Error;
+use Psr\Log\LogLevel;
 
 /**
  * Handles the communication with the SCS user manager daemon.
@@ -336,8 +339,7 @@ class SodaScsWisskiComponentActions implements SodaScsComponentActionsInterface 
       $portainerCreateRequest = $this->sodaScsPortainerServiceActions->buildCreateRequest($requestParams);
     }
     catch (\Exception $e) {
-      $this->loggerFactory->get('soda_scs_manager')
-        ->error("Request failed: error: $e");
+      Error::logException($this->loggerFactory->get('soda_scs_manager'), $e, 'Request failed', [], LogLevel::ERROR);
       $this->messenger->addError($this->t("Request failed. See logs for more details."));
       return [
         'message' => 'Request failed.',
@@ -411,44 +413,91 @@ class SodaScsWisskiComponentActions implements SodaScsComponentActionsInterface 
    *   Result information with the created snapshot.
    */
   public function createSnapshot(SodaScsComponentInterface $component): array {
+    try {
+      $timestamp = time();
+      $date = date('Y-m-d', $timestamp);
+      $machineName = $component->get('machineName')->value;
+      $snapshotName = $machineName . '--snapshot--' . $timestamp;
+      $backupPath = '/var/scs-manager/snapshots/' . $component->getOwner()->getDisplayName() . '/' . $date . '/' . $machineName;
 
-    $timestamp = time();
-    $machineName = $component->get('machineName')->value;
-    $snapshotName = $machineName . '-snapshot-' . $timestamp;
-    $backupPath = '/var/snapshots/' . $component->getOwner()->getDisplayName() . '/' . $timestamp . '/' . $machineName;
+      // Create the backup directory.
+      $dirCreateResult = $this->sodaScsComponentHelpers->createDir($backupPath);
+      if (!$dirCreateResult['success']) {
+        return $dirCreateResult;
+      }
 
-    $requestParams = [
-      'name' => $snapshotName,
-      'volumes' => [
-        $machineName . '_drupal-root' => ['bind' => '/source'],
-        $backupPath => ['bind' => '/backup'],
-      ],
-      'image' => 'alpine:latest',
-      'cmd' => [
-        'tar',
-        '-czf',
-        '/backup/' . $snapshotName . '.tar.gz',
-        '-C',
-        '/source',
-        '.',
-      ],
-      'hostConfig' => [
-        'AutoRemove' => TRUE,
-      ],
-    ];
+      // Create and run the snapshot container.
+      $requestParams = [
+        'name' => $snapshotName,
+        'volumes' => NULL,
+        'image' => 'alpine:latest',
+        'user' => '33:33',
+        'cmd' => [
+          'tar',
+          'czf',
+          '/backup/' . $snapshotName . '--webroot.tar.gz',
+          '-C',
+          '/source',
+          '.',
+        ],
+        'hostConfig' => [
+          'Binds' => [
+            $machineName . '_drupal-root:/source',
+            $backupPath . ':/backup'
+          ],
+          'AutoRemove' => FALSE,
+        ],
+      ];
 
-    $request = $this->sodaScsDockerExecServiceActions->buildCreateRequest($requestParams);
-    $response = $this->sodaScsDockerExecServiceActions->makeRequest($request);
+      // Make the create container request.
+      $createContainerRequest = $this->sodaScsDockerRunServiceActions->buildCreateRequest($requestParams);
+      $createContainerResponse = $this->sodaScsDockerRunServiceActions->makeRequest($createContainerRequest);
 
-    if (!$response['success']) {
+      if (!$createContainerResponse['success']) {
+        return [
+          'message' => 'Create container request failed. Snapshot creation aborted..',
+          'data' => $createContainerResponse,
+          'success' => FALSE,
+          'error' => $createContainerResponse['error'],
+          'statusCode' => $createContainerResponse['statusCode'],
+        ];
+      }
+
+      // Get container ID from response.
+      $containerId = json_decode($createContainerResponse['data']['portainerResponse']->getBody()->getContents(), TRUE)['Id'];
+
+      // Make the start container request.
+      $startContainerRequest = $this->sodaScsDockerRunServiceActions->buildStartRequest(['containerId' => $containerId]);
+      $startContainerResponse = $this->sodaScsDockerRunServiceActions->makeRequest($startContainerRequest);
+
+      if (!$startContainerResponse['success']) {
+        return [
+          'message' => 'Start container request failed. Snapshot creation aborted..',
+          'data' => $startContainerResponse,
+          'success' => FALSE,
+          'error' => $startContainerResponse['error'],
+          'statusCode' => $startContainerResponse['statusCode'],
+        ];
+      }
+
       return [
-        'message' => 'Snapshot creation failed.',
-        'data' => $response,
-        'success' => FALSE,
-        'error' => $response['error'],
+        'message' => 'Snapshot created successfully.',
+        'data' => $createContainerResponse,
+        'success' => TRUE,
+        'error' => NULL,
+        'statusCode' => $createContainerResponse['statusCode'],
       ];
     }
-    return [];
+    catch (\Exception $e) {
+      Error::logException($this->loggerFactory->get('soda_scs_manager'), $e, 'Snapshot creation failed', [], LogLevel::ERROR);
+      return [
+        'message' => 'Snapshot creation failed.',
+        'data' => $e,
+        'success' => FALSE,
+        'error' => $e->getMessage(),
+        'statusCode' => 500,
+      ];
+    }
   }
 
   /**
@@ -513,7 +562,7 @@ class SodaScsWisskiComponentActions implements SodaScsComponentActionsInterface 
 
     }
     catch (\Exception $e) {
-      $this->loggerFactory->get('soda_scs_manager')->error("Cannot get WissKI component @component at portainer: $e", ['@component' => $component->getLabel()]);
+      Error::logException($this->loggerFactory->get('soda_scs_manager'), $e, 'Cannot get WissKI component at portainer', ['@component' => $component->getLabel()], LogLevel::ERROR);
       $this->messenger->addError($this->t("Cannot get WissKI component @component at portainer. See logs for more details.", ['@component' => $component->getLabel()]));
       return [
         'message' => $this->t('Cannot get WissKI component @component at portainer.', ['@component' => $component->getLabel()]),
@@ -527,7 +576,7 @@ class SodaScsWisskiComponentActions implements SodaScsComponentActionsInterface 
       $portainerDeleteRequest = $this->sodaScsPortainerServiceActions->buildDeleteRequest($queryParams);
     }
     catch (MissingDataException $e) {
-      $this->loggerFactory->get('soda_scs_manager')->error("Cannot assemble WissKI delete request: $e");
+      Error::logException($this->loggerFactory->get('soda_scs_manager'), $e, 'Cannot assemble WissKI delete request', [], LogLevel::ERROR);
       $this->messenger->addError($this->t("Cannot assemble WissKI component delete request. See logs for more details."));
       return [
         'message' => 'Cannot assemble Request.',
@@ -543,9 +592,7 @@ class SodaScsWisskiComponentActions implements SodaScsComponentActionsInterface 
       /** @var array $portainerResponse */
       $requestResult = $this->sodaScsPortainerServiceActions->makeRequest($portainerDeleteRequest);
       if (!$requestResult['success']) {
-        $this->loggerFactory->get('soda_scs_manager')->error("Could not delete WissKI stack at portainer. error: @error", [
-          '@error' => $requestResult['error'],
-        ]);
+        Error::logException($this->loggerFactory->get('soda_scs_manager'), new \Exception($requestResult['error']), 'Could not delete WissKI stack at portainer', [], LogLevel::ERROR);
         $this->messenger->addError($this->t("Could not delete WissKI stack at portainer, but will delete the component anyway. See logs for more details."));
       }
       $component->delete();
@@ -561,7 +608,7 @@ class SodaScsWisskiComponentActions implements SodaScsComponentActionsInterface 
       ];
     }
     catch (\Exception $e) {
-      $this->loggerFactory->get('soda_scs_manager')->error("Cannot delete WissKI component: $e");
+      Error::logException($this->loggerFactory->get('soda_scs_manager'), $e, 'Cannot delete WissKI component', [], LogLevel::ERROR);
       $this->messenger->addError($this->t("Cannot delete WissKI component. See logs for more details."));
       return [
         'message' => 'Cannot delete WissKI component.',

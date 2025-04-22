@@ -14,15 +14,15 @@ use Drupal\user\EntityOwnerTrait;
  *
  * @ContentEntityType(
  *   id = "soda_scs_stack",
- *   label = @Translation("Stack"),
- *   label_collection = @Translation("Stacks"),
- *   label_singular = @Translation("Stack"),
- *   label_plural = @Translation("Stacks"),
+ *   label = @Translation("Soda SCS Stack"),
+ *   label_collection = @Translation("Soda SCS Stacks"),
+ *   label_singular = @Translation("Soda SCS Stack"),
+ *   label_plural = @Translation("Soda SCS Stacks"),
  *   label_count = @PluralTranslation(
- *     singular = "@count Stacks",
- *     plural = "@count Stacks",
+ *     singular = "@count Soda SCS Stacks",
+ *     plural = "@count Soda SCS Stacks",
  *   ),
- *   bundle_label = @Translation("Stack type"),
+ *   bundle_label = @Translation("Soda SCS Stack type"),
  *   handlers = {
  *     "storage" = "Drupal\Core\Entity\Sql\SqlContentEntityStorage",
  *     "view_builder" = "Drupal\Core\Entity\EntityViewBuilder",
@@ -49,6 +49,7 @@ use Drupal\user\EntityOwnerTrait;
  *   data_table = "soda_scs_stack_field_data",
  *   field_ui_base_route = "entity.soda_scs_stack.edit_form",
  *   fieldable = TRUE,
+ *   translatable = TRUE,
  *   common_reference_target = TRUE,
  *   entity_keys = {
  *     "id" = "id",

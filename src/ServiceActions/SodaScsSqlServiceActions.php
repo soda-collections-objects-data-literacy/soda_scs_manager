@@ -15,6 +15,8 @@ use Drupal\soda_scs_manager\Entity\SodaScsComponentInterface;
 use Drupal\soda_scs_manager\Entity\SodaScsServiceKeyInterface;
 use Drupal\soda_scs_manager\Helpers\SodaScsServiceHelpers;
 use Drupal\soda_scs_manager\Exception\SodaScsSqlServiceException;
+use Drupal\Core\Utility\Error;
+use Psr\Log\LogLevel;
 
 /**
  * Handles the communication with the SCS user manager daemon.
@@ -130,8 +132,7 @@ class SodaScsSqlServiceActions implements SodaScsServiceActionsInterface {
       ];
     }
     catch (SodaScsSqlServiceException $e) {
-      $this->loggerFactory->get('soda_scs_manager')
-        ->error('Exception: @message', ['@message' => $e->getMessage()]);
+      Error::logException($this->loggerFactory->get('soda_scs_manager'), $e, 'Exception', [], LogLevel::ERROR);
       return [
         'message' => $e->getMessage(),
         'data' => [],
@@ -232,7 +233,7 @@ class SodaScsSqlServiceActions implements SodaScsServiceActionsInterface {
       $dbUserPassword = $serviceKey->get('servicePassword')->value;
     }
     catch (\Exception $e) {
-      $this->loggerFactory->get('soda_scs_manager')->error("Error loading service key: $e");
+      Error::logException($this->loggerFactory->get('soda_scs_manager'), $e, 'Error loading service key', [], LogLevel::ERROR);
       $this->messenger->addError($this->t('Error loading service key: @error', ['@error' => $e->getMessage()]));
       return [
         'message' => $this->t('Error loading service key: @error', ['@error' => $e->getMessage()]),
@@ -365,9 +366,7 @@ class SodaScsSqlServiceActions implements SodaScsServiceActionsInterface {
     }
     catch (\Exception $e) {
       // Request failed, handle the error.
-      $this->loggerFactory
-        ->get('soda_scs_manager')
-        ->error('Request failed with exception: ' . $e->getMessage());
+      Error::logException($this->loggerFactory->get('soda_scs_manager'), $e, 'Request failed with exception', [], LogLevel::ERROR);
       $this->messenger
         ->addError($this->t('Can not communicate with the SCS user manager daemon.'));
       return [];

@@ -2,6 +2,9 @@
 
 namespace Drupal\soda_scs_manager\ListBuilder;
 
+use Drupal\Core\Link;
+use Drupal\Core\Url;
+use Drupal\Core\Render\Markup;
 use Drupal\Core\Entity\EntityInterface;
 use Drupal\Core\Entity\EntityListBuilder;
 use Drupal\Core\Datetime\DateFormatterInterface;
@@ -13,7 +16,7 @@ use Symfony\Component\DependencyInjection\ContainerInterface;
 /**
  * Provides a list builder for SODa SCS Snapshots.
  */
-class SnapshotListBuilder extends EntityListBuilder {
+class SodaScsSnapshotListBuilder extends EntityListBuilder {
 
   /**
    * The date formatter service.
@@ -85,19 +88,23 @@ class SnapshotListBuilder extends EntityListBuilder {
     $row['id'] = $entity->id();
     $row['name'] = $entity->label();
 
+    $referencedEntities = [];
     // Get the component entity if associated.
-    $componentEntities = $entity->snapshotOfComponent->referencedEntities();
-
-    foreach ($componentEntities as $componentEntity) {
-      $componentLinks[] = $componentEntity->toUrl();
+    if (!$entity->get('snapshotOfComponent')->isEmpty()) {
+      $referencedEntities = array_merge($referencedEntities, $entity->snapshotOfComponent->referencedEntities());
     }
 
-    if ($componentLinks) {
-      $row['component'] = $componentLinks;
+    $links = [];
+    foreach ($referencedEntities as $referencedEntity) {
+      $links[] = Link::fromTextAndUrl(
+      $referencedEntity->id(),
+      Url::fromRoute('entity.soda_scs_component.canonical', ['soda_scs_component' => $referencedEntity->id()])
+      )->toString();
     }
-    else {
-      $row['component'] = $this->t('N/A');
-    }
+
+    // Concatenate the links with a comma separator.
+    $linksString = implode(', ', $links);
+    $row['component'] = Markup::create($linksString);
     $row['created'] = $this->dateFormatter->format($entity->getCreatedTime(), 'short');
 
     return $row + parent::buildRow($entity);
@@ -108,6 +115,24 @@ class SnapshotListBuilder extends EntityListBuilder {
    */
   protected function getDefaultOperations(EntityInterface $entity) {
     $operations = parent::getDefaultOperations($entity);
+
+    // Add edit operation if missing
+    if ($entity->hasLinkTemplate('edit-form') && !isset($operations['edit'])) {
+      $operations['edit'] = [
+        'title' => $this->t('Edit'),
+        'weight' => 10,
+        'url' => $entity->toUrl('edit-form'),
+      ];
+    }
+
+    // Add delete operation if missing
+    if ($entity->hasLinkTemplate('delete-form') && !isset($operations['delete'])) {
+      $operations['delete'] = [
+        'title' => $this->t('Delete'),
+        'weight' => 100,
+        'url' => $entity->toUrl('delete-form'),
+      ];
+    }
 
     $destination = $this->redirectDestination->getAsArray();
     foreach ($operations as $key => $operation) {
