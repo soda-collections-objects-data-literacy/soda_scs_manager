@@ -50,6 +50,7 @@ use Drupal\user\EntityOwnerTrait;
  *   admin_permission = "administer soda scs service key entities",
  *   field_ui_base_route = "entity.soda_scs_service_key.edit_form",
  *   fieldable = TRUE,
+ *   translatable = TRUE,
  *   common_reference_target = TRUE,
  *   entity_keys = {
  *     "bundle" = "bundle",

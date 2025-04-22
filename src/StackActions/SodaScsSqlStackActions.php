@@ -12,6 +12,8 @@ use Drupal\soda_scs_manager\ComponentActions\SodaScsComponentActionsInterface;
 use Drupal\soda_scs_manager\Entity\SodaScsStackInterface;
 use Drupal\soda_scs_manager\Exception\SodaScsComponentException;
 use Drupal\soda_scs_manager\Helpers\SodaScsHelpersInterface;
+use Drupal\Core\Utility\Error;
+use Psr\Log\LogLevel;
 
 /**
  * Handles the communication with the SCS user manager daemon.
@@ -109,7 +111,7 @@ class SodaScsSqlStackActions implements SodaScsStackActionsInterface {
 
     }
     catch (\Exception $e) {
-      $this->loggerFactory->get('soda_scs_manager')->error("Database component creation exists with error: $e");
+      Error::logException($this->loggerFactory->get('soda_scs_manager'), $e, 'Database component creation failed', [], LogLevel::ERROR);
       $this->messenger->addError($this->t("Could not create database component. See logs for more details."));
       return [
         'message' => 'Could not create database component.',
@@ -202,8 +204,7 @@ class SodaScsSqlStackActions implements SodaScsStackActionsInterface {
       }
     }
     catch (MissingDataException $e) {
-      $this->loggerFactory->get('soda_scs_manager')
-        ->error("Cannot delete database. error: $e");
+      Error::logException($this->loggerFactory->get('soda_scs_manager'), $e, 'Cannot delete database', [], LogLevel::ERROR);
       $this->messenger->addError($this->t("Cannot delete database. See logs for more details."));
       return [
         'message' => 'Cannot delete database.',
@@ -218,7 +219,7 @@ class SodaScsSqlStackActions implements SodaScsStackActionsInterface {
       $this->messenger->addError($this->t("Cannot delete database. See logs for more details."));
       if ($e->getCode() == 1) {
         // If component does not exist, we cannot delete the database.
-        $this->loggerFactory->get('soda_scs_manager')->error("Cannot delete database: $e");
+        Error::logException($this->loggerFactory->get('soda_scs_manager'), $e, 'Cannot delete database', [], LogLevel::ERROR);
         $this->sodaScsStackHelpers->cleanIncludedComponents($stack);
       }
     }

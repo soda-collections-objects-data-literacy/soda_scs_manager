@@ -278,53 +278,25 @@ entity.soda_scs_project.collection:
 soda_scs_manager.desk:
   path: '/soda-scs-manager/desk'
   defaults:
-    _controller: '\Drupal\soda_scs_manager\Controller\SodaScsManagerController::stackDeskPage'
+    _controller: '\Drupal\soda_scs_manager\Controller\SodaScsManagerController::deskPage'
     _title:  'Your stacks'
   requirements:
     _permission: 'soda scs manager user'
   options:
     no_cache: TRUE
 
-soda_scs_manager.desk.stacks:
-  path: '/soda-scs-manager/desk/stacks'
+soda_scs_manager.start_page:
+  path: '/soda-scs-manager'
   defaults:
-    _controller: '\Drupal\soda_scs_manager\Controller\SodaScsManagerController::stackDeskPage'
-    _title:  'Your stacks'
+    _controller: '\Drupal\soda_scs_manager\Controller\SodaScsManagerController::startPage'
+    _title: 'SCS Manager'
   requirements:
     _permission: 'soda scs manager user'
-  options:
-    no_cache: TRUE
-
-soda_scs_manager.desk.components:
-  path: '/soda-scs-manager/desk/components'
-  defaults:
-    _controller: '\Drupal\soda_scs_manager\Controller\SodaScsManagerController::componentDeskPage'
-    _title:  'Your components'
-  requirements:
-    _permission: 'soda scs manager user'
-  options:
-    no_cache: TRUE
 
 soda_scs_manager.store:
   path: '/soda-scs-manager/store'
   defaults:
-    _controller: '\Drupal\soda_scs_manager\Controller\SodaScsManagerController::stackStorePage'
-    _title: 'Store'
-  requirements:
-    _permission: 'soda scs manager user'
-
-soda_scs_manager.store.stacks:
-  path: '/soda-scs-manager/store/stacks'
-  defaults:
-    _controller: '\Drupal\soda_scs_manager\Controller\SodaScsManagerController::stackStorePage'
-    _title: 'Store'
-  requirements:
-    _permission: 'soda scs manager user'
-
-soda_scs_manager.store.components:
-  path: '/soda-scs-manager/store/components'
-  defaults:
-    _controller: '\Drupal\soda_scs_manager\Controller\SodaScsManagerController::componentStorePage'
+    _controller: '\Drupal\soda_scs_manager\Controller\SodaScsManagerController::storePage'
     _title: 'Store'
   requirements:
     _permission: 'soda scs manager user'
@@ -361,10 +333,10 @@ soda_scs_manager.settings.menu:
 ## Menu items for the main navigation
 
 soda_scs_manager.menu.default:
-  path: '/soda-scs-manager/menu'
+  path: '/soda-scs-manager'
   defaults:
     _title: 'Our Main link page'
-    _controller: '\Drupal\soda_scs_manager\Controller\SodaScsMenuController::mainLinkPage'
+    _controller: '\Drupal\soda_scs_manager\Controller\SodaScsManagerController::startPage'
   requirements:
     _permission: 'soda scs manager user'
 

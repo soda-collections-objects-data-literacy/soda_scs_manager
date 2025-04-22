@@ -11,6 +11,7 @@ use Drupal\Core\Messenger\MessengerInterface;
 use Drupal\Core\StringTranslation\TranslationInterface;
 use Drupal\Core\StringTranslation\StringTranslationTrait;
 use Drupal\soda_scs_manager\ServiceActions\SodaScsServiceActionsInterface;
+use Drupal\soda_scs_manager\RequestActions\SodaScsExecRequestInterface;
 use Drupal\soda_scs_manager\RequestActions\SodaScsServiceRequestInterface;
 
 /**
@@ -22,11 +23,11 @@ class SodaScsComponentHelpers {
   use StringTranslationTrait;
 
   /**
-   * The HTTP client.
+   * The Docker Volumes service actions.
    *
-   * @var \GuzzleHttp\ClientInterface
+   * @var \Drupal\soda_scs_manager\ServiceActions\SodaScsServiceRequestInterface
    */
-  protected ClientInterface $httpClient;
+  protected SodaScsServiceRequestInterface $dockerVolumesServiceActions;
 
   /**
    * The entity type manager.
@@ -34,6 +35,13 @@ class SodaScsComponentHelpers {
    * @var \Drupal\Core\Entity\EntityTypeManagerInterface
    */
   protected EntityTypeManagerInterface $entityTypeManager;
+
+  /**
+   * The HTTP client.
+   *
+   * @var \GuzzleHttp\ClientInterface
+   */
+  protected ClientInterface $httpClient;
 
   /**
    * The logger factory.
@@ -50,20 +58,6 @@ class SodaScsComponentHelpers {
   protected MessengerInterface $messenger;
 
   /**
-   * The settings.
-   *
-   * @var \Drupal\Core\Config
-   */
-  protected Config $settings;
-
-  /**
-   * The Docker Volumes service actions.
-   *
-   * @var \Drupal\soda_scs_manager\ServiceActions\SodaScsServiceRequestInterface
-   */
-  protected SodaScsServiceRequestInterface $dockerVolumesServiceActions;
-
-  /**
    * The openGDB service actions.
    *
    * @var \Drupal\soda_scs_manager\ServiceActions\SodaScsServiceRequestInterface
@@ -78,11 +72,18 @@ class SodaScsComponentHelpers {
   protected SodaScsServiceRequestInterface $portainerServiceActions;
 
   /**
-   * The SQL service actions.
+   * The settings.
    *
-   * @var \Drupal\soda_scs_manager\ServiceActions\SodaScsServiceActionsInterface
+   * @var \Drupal\Core\Config
    */
-  protected SodaScsServiceActionsInterface $sqlServiceActions;
+  protected Config $settings;
+
+  /**
+   * The Soda SCS Docker exec service actions.
+   *
+   * @var \Drupal\soda_scs_manager\RequestActions\SodaScsExecRequestInterface
+   */
+  protected SodaScsExecRequestInterface $sodaScsDockerExecServiceActions;
 
   /**
    * The Soda SCS service helpers.
@@ -91,32 +92,41 @@ class SodaScsComponentHelpers {
    */
   protected SodaScsServiceHelpers $sodaScsServiceHelpers;
 
+  /**
+   * The SQL service actions.
+   *
+   * @var \Drupal\soda_scs_manager\ServiceActions\SodaScsServiceActionsInterface
+   */
+  protected SodaScsServiceActionsInterface $sqlServiceActions;
+
   public function __construct(
     ConfigFactoryInterface $configFactory,
-    ClientInterface $httpClient,
+    SodaScsServiceRequestInterface $dockerVolumesServiceActions,
     EntityTypeManagerInterface $entityTypeManager,
+    ClientInterface $httpClient,
     LoggerChannelFactoryInterface $loggerFactory,
     MessengerInterface $messenger,
-    TranslationInterface $stringTranslation,
-    SodaScsServiceHelpers $sodaScsServiceHelpers,
-    SodaScsServiceRequestInterface $dockerVolumesServiceActions,
     SodaScsServiceRequestInterface $openGdbServiceActions,
     SodaScsServiceRequestInterface $portainerServiceActions,
+    SodaScsExecRequestInterface $sodaScsDockerExecServiceActions,
+    SodaScsServiceHelpers $sodaScsServiceHelpers,
     SodaScsServiceActionsInterface $sqlServiceActions,
+    TranslationInterface $stringTranslation,
   ) {
     // Services from container.
-    $this->settings = $configFactory
-      ->getEditable('soda_scs_manager.settings');
+    $this->dockerVolumesServiceActions = $dockerVolumesServiceActions;
     $this->entityTypeManager = $entityTypeManager;
     $this->httpClient = $httpClient;
     $this->loggerFactory = $loggerFactory;
     $this->messenger = $messenger;
-    $this->stringTranslation = $stringTranslation;
-    $this->sodaScsServiceHelpers = $sodaScsServiceHelpers;
-    $this->dockerVolumesServiceActions = $dockerVolumesServiceActions;
     $this->openGdbServiceActions = $openGdbServiceActions;
     $this->portainerServiceActions = $portainerServiceActions;
+    $this->settings = $configFactory
+      ->getEditable('soda_scs_manager.settings');
+    $this->sodaScsDockerExecServiceActions = $sodaScsDockerExecServiceActions;
+    $this->sodaScsServiceHelpers = $sodaScsServiceHelpers;
     $this->sqlServiceActions = $sqlServiceActions;
+    $this->stringTranslation = $stringTranslation;
   }
 
   /**
@@ -319,6 +329,70 @@ class SodaScsComponentHelpers {
    */
   public function createSecret() {
     return bin2hex(random_bytes(16));
+  }
+
+  /**
+   * Create FS dir via access-proxy container.
+   *
+   * @param string $path
+   *   The path to create.
+   *
+   * @return array{
+   *   message: string,
+   *   success: bool,
+   *   error: string,
+   *   data: array,
+   *   statusCode: int,
+   *   }
+   *   The result of the operation.
+   */
+  public function createDir(string $path) {
+    try {
+      $dirCreateExecRequest = $this->sodaScsDockerExecServiceActions->buildCreateRequest([
+        'containerName' => 'access-proxy',
+        'user' => '33',
+        'cmd' => [
+          'mkdir',
+          '-p',
+          $path,
+        ],
+      ]);
+
+      $dirCreateExecResponse = $this->sodaScsDockerExecServiceActions->makeRequest($dirCreateExecRequest);
+
+      if (!$dirCreateExecResponse['success']) {
+        return $dirCreateExecResponse;
+      }
+
+      $dirCreateExecId = json_decode($dirCreateExecResponse['data']['portainerResponse']->getBody()->getContents(), TRUE)['Id'];
+
+      $dirCreateStartExecRequest = $this->sodaScsDockerExecServiceActions->buildStartRequest([
+        'execId' => $dirCreateExecId,
+      ]);
+
+      $dirCreateStartExecResponse = $this->sodaScsDockerExecServiceActions->makeRequest($dirCreateStartExecRequest);
+
+      if (!$dirCreateStartExecResponse['success']) {
+        return $dirCreateStartExecResponse;
+      }
+
+      return [
+        'message' => $this->t("Directory created successfully."),
+        'success' => TRUE,
+        'error' => '',
+        'data' => [],
+        'statusCode' => 200,
+      ];
+    }
+    catch (\Exception $e) {
+      return [
+        'message' => $this->t("Failed to create directory: @error", ['@error' => $e->getMessage()]),
+        'success' => FALSE,
+        'error' => $e->getMessage(),
+        'data' => $e,
+        'statusCode' => $e->getCode(),
+      ];
+    }
   }
 
 }

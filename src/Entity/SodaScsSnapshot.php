@@ -7,6 +7,7 @@ use Drupal\Core\Entity\EntityTypeInterface;
 use Drupal\Core\Field\BaseFieldDefinition;
 use Drupal\Core\StringTranslation\TranslatableMarkup;
 use Drupal\user\EntityOwnerTrait;
+
 // @todo Add access handler. "access" = "Drupal\soda_scs_manager\Access\SodaScsSnapshotAccessControlHandler",
 /**
  * Defines the Soda SCS Snapshot entity.
@@ -47,6 +48,7 @@ use Drupal\user\EntityOwnerTrait;
  *   base_table = "soda_scs_snapshot",
  *   data_table = "soda_scs_snapshot_field_data",
  *   fieldable = TRUE,
+ *   translatable = TRUE,
  *   entity_keys = {
  *     "id" = "id",
  *     "uuid" = "uuid",

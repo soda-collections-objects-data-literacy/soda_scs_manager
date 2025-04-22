@@ -61,7 +61,13 @@ interface SodaScsExecRequestInterface {
    * @param array $request
    *   The request.
    *
-   * @return array
+   * @return array{
+   *   message: string,
+   *   success: bool,
+   *   error: string,
+   *   data: array,
+   *   statusCode: int,
+   * }
    *   The response.
    *
    * @throws \Drupal\soda_scs_manager\Exception\SodaScsRequestException

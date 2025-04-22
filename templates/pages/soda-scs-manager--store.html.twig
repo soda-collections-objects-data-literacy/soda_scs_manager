@@ -1,0 +1,32 @@
+
+<h2 class="center text-center text-stone-200 text-8xl font-bold mb-10">Stacks</h1>
+{% if stacks is not empty %}
+  {% set stack_count = stacks|length %}
+  {% set grid_class = 'grid-count-' ~ stack_count %}
+
+  <div {{ attributes.addClass(grid_class) }} class="soda-scs-manager--view--grid">
+    {% for entity in stacks %}
+      {{ entity }}
+    {% endfor %}
+  </div>
+{% else %}
+  <div class="alert alert-info opacity-20 bg-slate-950 border-2 border-stone-200 border-cyan-500 p-4 rounded-lg text-center">
+    <p class="text-stone-200 text-xl">{{ 'No stacks available.'|t }}</p>
+  </div>
+{% endif %}
+
+<h2 class="center text-center text-stone-200 text-8xl font-bold mb-10">Components</h1>
+{% if components is not empty %}
+  {% set component_count = components|length %}
+  {% set grid_class = 'grid-count-' ~ component_count %}
+
+  <div {{ attributes.addClass(grid_class) }} class="soda-scs-manager--view--grid">
+    {% for entity in components %}
+      {{ entity }}
+    {% endfor %}
+  </div>
+{% else %}
+  <div class="alert alert-info opacity-20 bg-slate-950 border-2 border-stone-200 border-cyan-500 p-4 rounded-lg text-center">
+    <p class="text-stone-200 text-xl">{{ 'No components available.'|t }}</p>
+  </div>
+{% endif %}

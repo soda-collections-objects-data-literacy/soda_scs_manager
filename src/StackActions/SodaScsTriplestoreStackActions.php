@@ -10,6 +10,8 @@ use Drupal\Core\StringTranslation\TranslationInterface;
 use Drupal\soda_scs_manager\ComponentActions\SodaScsComponentActionsInterface;
 use Drupal\soda_scs_manager\Entity\SodaScsStackInterface;
 use Drupal\soda_scs_manager\Helpers\SodaScsHelpersInterface;
+use Drupal\Core\Utility\Error;
+use Psr\Log\LogLevel;
 
 /**
  * Handles the triplestore stack actions.
@@ -102,7 +104,7 @@ class SodaScsTriplestoreStackActions implements SodaScsStackActionsInterface {
       ];
     }
     catch (\Exception $e) {
-      $this->loggerFactory->get('soda_scs_manager')->error("Triplestore component creation exists with error: $e");
+      Error::logException($this->loggerFactory->get('soda_scs_manager'), $e, 'Triplestore component creation failed', [], LogLevel::ERROR);
       $this->messenger->addError($this->t("Could not create triplestore component. See logs for more details."));
       return [
         'message' => $this->t('Could not create stack: %message', ['%message' => $e->getMessage()]),
@@ -196,7 +198,7 @@ class SodaScsTriplestoreStackActions implements SodaScsStackActionsInterface {
 
     }
     catch (\Exception $e) {
-      $this->loggerFactory->get('soda_scs_manager')->error("Triplestore component deletion exists with error: $e");
+      Error::logException($this->loggerFactory->get('soda_scs_manager'), $e, 'Triplestore component deletion failed', [], LogLevel::ERROR);
       $this->messenger->addError($this->t("Could not delete triplestore component. See logs for more details."));
       return [
         'message' => 'Could not delete triplestore component.',

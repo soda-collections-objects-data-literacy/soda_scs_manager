@@ -12,6 +12,8 @@ use Drupal\Core\TypedData\Exception\MissingDataException;
 use GuzzleHttp\ClientInterface;
 use GuzzleHttp\Exception\ClientException;
 use Drupal\soda_scs_manager\Helpers\SodaScsServiceHelpers;
+use Drupal\Core\Utility\Error;
+use Psr\Log\LogLevel;
 
 /**
  * Handles the communication with the SCS user manager daemon.
@@ -397,7 +399,7 @@ class SodaScsOpenGdbServiceActions implements SodaScsServiceRequestInterface {
         ];
       }
       // @todo Implement tracing in every logger.
-      $this->loggerFactory->get('soda_scs_manager')->error("OpenGDB request failed. error: $e");
+      Error::logException($this->loggerFactory->get('soda_scs_manager'), $e, 'OpenGDB request failed', [], LogLevel::ERROR);
     }
     $this->messenger->addError($this->t("OpenGDB request for @type failed. See logs for more details.", ['@type' => $request['type']]));
     return [

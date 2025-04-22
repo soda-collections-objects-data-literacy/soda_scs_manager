@@ -86,28 +86,6 @@ entity.soda_scs_stack.confirm_form:
       soda_scs_stack: { type: entity:soda_scs_stack }
   weight: 100
 
-# Tabs
-
-soda_scs_manager.store.components:
-  route_name: soda_scs_manager.store.components
-  title: 'Components'
-  base_route: soda_scs_manager.store
-
-soda_scs_manager.store:
-  route_name: soda_scs_manager.store
-  title: 'Stacks'
-  base_route: soda_scs_manager.store
-
-soda_scs_manager.desk.components:
-  route_name: soda_scs_manager.desk.components
-  title: 'Components'
-  base_route: soda_scs_manager.desk
-
-soda_scs_manager.desk:
-  route_name: soda_scs_manager.desk
-  title: 'Stacks'
-  base_route: soda_scs_manager.desk
-
 # Projects
 
 entity.soda_scs_project.canonical:

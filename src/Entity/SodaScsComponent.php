@@ -41,6 +41,7 @@ use Drupal\user\EntityOwnerTrait;
  *   admin_permission = "administer soda scs component entities",
  *   field_ui_base_route = "entity.soda_scs_component.edit_form",
  *   fieldable = TRUE,
+ *   translatable = TRUE,
  *   common_reference_target = TRUE,
  *   entity_keys = {
  *     "bundle" = "bundle",
@@ -74,7 +75,6 @@ use Drupal\user\EntityOwnerTrait;
  *    "owner",
  *    "partOfProjects",
  *    }
- *
  * )
  */
 class SodaScsComponent extends ContentEntityBase implements SodaScsComponentInterface {

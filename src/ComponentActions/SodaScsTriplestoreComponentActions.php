@@ -15,6 +15,8 @@ use Drupal\soda_scs_manager\Entity\SodaScsComponentInterface;
 use Drupal\soda_scs_manager\Entity\SodaScsStackInterface;
 use Drupal\soda_scs_manager\RequestActions\SodaScsServiceRequestInterface;
 use Drupal\soda_scs_manager\ServiceKeyActions\SodaScsServiceKeyActionsInterface;
+use Drupal\Core\Utility\Error;
+use Psr\Log\LogLevel;
 
 /**
  * Handles the communication with the SCS user manager daemon.
@@ -162,8 +164,7 @@ class SodaScsTriplestoreComponentActions implements SodaScsComponentActionsInter
       $createRepoResponse = $this->sodaScsOpenGdbServiceActions->makeRequest($openGdbCreateRepoRequest);
     }
     catch (MissingDataException $e) {
-      $this->loggerFactory->get('soda_scs_manager')
-        ->error("Cannot assemble Request: $e");
+      Error::logException($this->loggerFactory->get('soda_scs_manager'), $e, 'Cannot assemble Request', [], LogLevel::ERROR);
       $this->messenger->addError($this->t("Cannot assemble request. See logs for more details."));
       return [
         'message' => 'Cannot assemble Request.',
@@ -184,7 +185,6 @@ class SodaScsTriplestoreComponentActions implements SodaScsComponentActionsInter
 
       $openGdbGetUserRequest = $this->sodaScsOpenGdbServiceActions->buildGetRequest($getUserRequestParams);
       $getUserResponse = $this->sodaScsOpenGdbServiceActions->makeRequest($openGdbGetUserRequest);
-
 
       // @todo Make good error handling
       if ($getUserResponse['success'] === FALSE) {
@@ -262,8 +262,7 @@ class SodaScsTriplestoreComponentActions implements SodaScsComponentActionsInter
               $triplestoreComponent->serviceKey[] = $triplestoreComponentServiceToken;
             }
             catch (\Exception $e) {
-              $this->loggerFactory->get('soda_scs_manager')
-                ->error("Cannot assemble Request: $e");
+              Error::logException($this->loggerFactory->get('soda_scs_manager'), $e, 'Cannot assemble Request', [], LogLevel::ERROR);
               $this->messenger->addError($this->t("Cannot assemble request. See logs for more details."));
               return [
                 'message' => 'Cannot assemble Request.',
@@ -280,8 +279,7 @@ class SodaScsTriplestoreComponentActions implements SodaScsComponentActionsInter
 
           }
           catch (MissingDataException $e) {
-            $this->loggerFactory->get('soda_scs_manager')
-              ->error("Cannot assemble Request: $e");
+            Error::logException($this->loggerFactory->get('soda_scs_manager'), $e, 'Cannot assemble Request', [], LogLevel::ERROR);
             $this->messenger->addError($this->t("Cannot assemble request. See logs for more details."));
             return [
               'message' => 'Cannot assemble Request.',
@@ -344,8 +342,7 @@ class SodaScsTriplestoreComponentActions implements SodaScsComponentActionsInter
           $createUserResponse = NULL;
         }
         catch (MissingDataException $e) {
-          $this->loggerFactory->get('soda_scs_manager')
-            ->error("Cannot assemble Request: $e");
+          Error::logException($this->loggerFactory->get('soda_scs_manager'), $e, 'Cannot assemble Request', [], LogLevel::ERROR);
           $this->messenger->addError($this->t("Cannot assemble request. See logs for more details."));
           return [
             'message' => 'Cannot assemble Request.',
@@ -359,8 +356,7 @@ class SodaScsTriplestoreComponentActions implements SodaScsComponentActionsInter
       }
     }
     catch (MissingDataException $e) {
-      $this->loggerFactory->get('soda_scs_manager')
-        ->error("Cannot assemble Request: $e");
+      Error::logException($this->loggerFactory->get('soda_scs_manager'), $e, 'Cannot assemble Request', [], LogLevel::ERROR);
       $this->messenger->addError($this->t("Cannot assemble request. See logs for more details."));
       return [
         'message' => 'Cannot assemble Request.',
@@ -487,6 +483,7 @@ class SodaScsTriplestoreComponentActions implements SodaScsComponentActionsInter
       }
     }
     catch (\Exception $e) {
+      Error::logException($this->loggerFactory->get('soda_scs_manager'), $e, 'Could not delete triplestore component', ['%component' => $machineName], LogLevel::ERROR);
       return [
         'message' => $this->t('Could not delete triplestore component %component', ['%component' => $machineName]),
         'data' => [
@@ -532,6 +529,7 @@ class SodaScsTriplestoreComponentActions implements SodaScsComponentActionsInter
       }
     }
     catch (\Exception $e) {
+      Error::logException($this->loggerFactory->get('soda_scs_manager'), $e, 'Could not get triplestore user information', ['%component' => $machineName], LogLevel::ERROR);
       return [
         'message' => $this->t('Could not get triplestore user of component %component', ['%component' => $machineName]),
         'data' => [
@@ -587,9 +585,9 @@ class SodaScsTriplestoreComponentActions implements SodaScsComponentActionsInter
 
       }
       catch (\Exception $e) {
-
+        Error::logException($this->loggerFactory->get('soda_scs_manager'), $e, 'Could not update triplestore user', ['%component' => $machineName], LogLevel::ERROR);
         return [
-          'message' => $this->t('Could not delete triplestore component %component', ['%component' => $machineName]),
+          'message' => $this->t('Could not update triplestore user %username', ['%username' => $username]),
           'data' => [
             'openGdbDeleteRepositoryResponse' => $openGdbDeleteRepositoryResponse,
             'openGdbGetUserResponse' => $openGdbGetUserResponse,
@@ -616,6 +614,7 @@ class SodaScsTriplestoreComponentActions implements SodaScsComponentActionsInter
         $openGdbUpdateUserResponse = NULL;
       }
       catch (\Exception $e) {
+        Error::logException($this->loggerFactory->get('soda_scs_manager'), $e, 'Could not delete OpenGDB user', ['%username' => $username], LogLevel::ERROR);
         return [
           'message' => $this->t('Could not delete OpenGDB user %username', ['%username' => $username]),
           'data' => [

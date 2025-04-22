@@ -11,17 +11,17 @@ services:
     class: Drupal\soda_scs_manager\Helpers\SodaScsComponentHelpers
     arguments:
       - '@config.factory'
-      - '@http_client'
+      - '@soda_scs_manager.docker_volumes_service.actions'
       - '@entity_type.manager'
+      - '@http_client'
       - '@logger.factory'
       - '@messenger'
-      - '@string_translation'
-      - '@soda_scs_manager.service.helpers'
-      - '@soda_scs_manager.docker_volumes_service.actions'
       - '@soda_scs_manager.opengdb_service.actions'
       - '@soda_scs_manager.portainer_service.actions'
+      - '@soda_scs_manager.docker_exec_service.actions'
+      - '@soda_scs_manager.service.helpers'
       - '@soda_scs_manager.sql_service.actions'
-
+      - '@string_translation'
   soda_scs_manager.service.helpers:
     class: Drupal\soda_scs_manager\Helpers\SodaScsServiceHelpers
     arguments:

@@ -218,12 +218,14 @@ class SodaScsDockerRunServiceActions implements SodaScsRunRequestInterface {
 
     $route =
       // https://portainer.scs.sammlungen.io
-      $portainerServiceSettings['portainerHostRoute'] .
+      $portainerServiceSettings['host'] .
       // /api/endpoints
-      $portainerServiceSettings['portainerEndpointsBaseUrlRoute'] .
+      $portainerServiceSettings['baseUrl'] .
       // /{endpointId}/docker
-      str_replace('{endpointId}', $portainerServiceSettings['portainerEndpointId'], $dockerApiSettings['baseUrl']) .
-      // /containers/create
+      str_replace('{endpointId}', $portainerServiceSettings['endpointId'], $dockerApiSettings['baseUrl']) .
+      // /containers
+      $dockerRunServiceSettings['baseUrl'] .
+      // /create
       $dockerRunServiceSettings['createUrl'];
 
     // Add name query parameter if specified.
@@ -244,6 +246,7 @@ class SodaScsDockerRunServiceActions implements SodaScsRunRequestInterface {
       'StdinOnce' => $requestParams['stdinOnce'] ?? FALSE,
       'WorkingDir' => $requestParams['workingDir'] ?? '',
       'Volumes' => $requestParams['volumes'] ?? NULL,
+      'User' => $requestParams['user'] ?? NULL,
     ];
 
     // Host configuration if provided.
@@ -262,7 +265,7 @@ class SodaScsDockerRunServiceActions implements SodaScsRunRequestInterface {
       'headers' => [
         'Content-Type' => 'application/json',
         'Accept' => 'application/json',
-        'X-API-Key' => $portainerServiceSettings['portainerAuthenticationToken'],
+        'X-API-Key' => $portainerServiceSettings['authenticationToken'],
       ],
       'query' => !empty($query) ? $query : NULL,
       'body' => json_encode($containerConfig),
@@ -288,11 +291,11 @@ class SodaScsDockerRunServiceActions implements SodaScsRunRequestInterface {
 
     $route =
       // https://portainer.scs.sammlungen.io
-      $portainerServiceSettings['portainerHostRoute'] .
+      $portainerServiceSettings['host'] .
       // /api/endpoints
-      $portainerServiceSettings['portainerEndpointsBaseUrlRoute'] .
+      $portainerServiceSettings['baseUrl'] .
       // /{endpointId}/docker
-      str_replace('{endpointId}', $portainerServiceSettings['portainerEndpointId'], $dockerApiSettings['baseUrl']) .
+      str_replace('{endpointId}', $portainerServiceSettings['endpointId'], $dockerApiSettings['baseUrl']) .
       // /containers/{containerId}/start
       str_replace('{containerId}', $requestParams['containerId'], $dockerRunServiceSettings['startUrl']);
 
@@ -302,7 +305,7 @@ class SodaScsDockerRunServiceActions implements SodaScsRunRequestInterface {
       'headers' => [
         'Content-Type' => 'application/json',
         'Accept' => 'application/json',
-        'X-API-Key' => $portainerServiceSettings['portainerAuthenticationToken'],
+        'X-API-Key' => $portainerServiceSettings['authenticationToken'],
       ],
     ];
   }
@@ -326,11 +329,11 @@ class SodaScsDockerRunServiceActions implements SodaScsRunRequestInterface {
 
     $route =
       // https://portainer.scs.sammlungen.io
-      $portainerServiceSettings['portainerHostRoute'] .
+      $portainerServiceSettings['host'] .
       // /api/endpoints
-      $portainerServiceSettings['portainerEndpointsBaseUrlRoute'] .
+      $portainerServiceSettings['baseUrl'] .
       // /{endpointId}/docker
-      str_replace('{endpointId}', $portainerServiceSettings['portainerEndpointId'], $dockerApiSettings['baseUrl']) .
+      str_replace('{endpointId}', $portainerServiceSettings['endpointId'], $dockerApiSettings['baseUrl']) .
       // /containers/{containerId}/stop
       str_replace('{containerId}', $requestParams['containerId'], $dockerRunServiceSettings['stopUrl']);
 
@@ -345,7 +348,7 @@ class SodaScsDockerRunServiceActions implements SodaScsRunRequestInterface {
       'headers' => [
         'Content-Type' => 'application/json',
         'Accept' => 'application/json',
-        'X-API-Key' => $portainerServiceSettings['portainerAuthenticationToken'],
+        'X-API-Key' => $portainerServiceSettings['authenticationToken'],
       ],
       'query' => !empty($query) ? $query : NULL,
     ];
@@ -370,11 +373,11 @@ class SodaScsDockerRunServiceActions implements SodaScsRunRequestInterface {
 
     $route =
       // https://portainer.scs.sammlungen.io
-      $portainerServiceSettings['portainerHostRoute'] .
+      $portainerServiceSettings['host'] .
       // /api/endpoints
-      $portainerServiceSettings['portainerEndpointsBaseUrlRoute'] .
+      $portainerServiceSettings['baseUrl'] .
       // /{endpointId}/docker
-      str_replace('{endpointId}', $portainerServiceSettings['portainerEndpointId'], $dockerApiSettings['baseUrl']) .
+      str_replace('{endpointId}', $portainerServiceSettings['endpointId'], $dockerApiSettings['baseUrl']) .
       // /containers/{containerId}/json
       str_replace('{containerId}', $requestParams['containerId'], $dockerRunServiceSettings['inspectUrl']);
 
@@ -383,7 +386,7 @@ class SodaScsDockerRunServiceActions implements SodaScsRunRequestInterface {
       'route' => $route,
       'headers' => [
         'Accept' => 'application/json',
-        'X-API-Key' => $portainerServiceSettings['portainerAuthenticationToken'],
+        'X-API-Key' => $portainerServiceSettings['authenticationToken'],
       ],
     ];
   }
@@ -407,11 +410,11 @@ class SodaScsDockerRunServiceActions implements SodaScsRunRequestInterface {
 
     $route =
       // https://portainer.scs.sammlungen.io
-      $portainerServiceSettings['portainerHostRoute'] .
+      $portainerServiceSettings['host'] .
       // /api/endpoints
-      $portainerServiceSettings['portainerEndpointsBaseUrlRoute'] .
+      $portainerServiceSettings['baseUrl'] .
       // /{endpointId}/docker
-      str_replace('{endpointId}', $portainerServiceSettings['portainerEndpointId'], $dockerApiSettings['baseUrl']) .
+      str_replace('{endpointId}', $portainerServiceSettings['endpointId'], $dockerApiSettings['baseUrl']) .
       // /containers/{containerId}
       str_replace('{containerId}', $requestParams['containerId'], $dockerRunServiceSettings['removeUrl']);
 
@@ -425,7 +428,7 @@ class SodaScsDockerRunServiceActions implements SodaScsRunRequestInterface {
       'route' => $route,
       'headers' => [
         'Accept' => 'application/json',
-        'X-API-Key' => $portainerServiceSettings['portainerAuthenticationToken'],
+        'X-API-Key' => $portainerServiceSettings['authenticationToken'],
       ],
       'query' => $query,
     ];

@@ -8,6 +8,7 @@
 use Drupal\Core\File\FileExists;
 use Drupal\Core\File\FileSystemInterface;
 use Drupal\system\SystemManager;
+use Drupal\block\Entity\Block;
 
 /**
  * Implements hook_install().
@@ -47,4 +48,49 @@ function soda_scs_manager_requirements($phase) {
     }
   }
   return $requirements;
+}
+
+/**
+ * Implements hook_update_N().
+ *
+ * Place the SODa SCS navigation block in the nav_sidebar region.
+ */
+function soda_scs_manager_update_9001() {
+  // Delete the block if it already exists.
+  try {
+    $block_storage = \Drupal::entityTypeManager()->getStorage('block');
+    $existing_block = $block_storage->load('soda_scs_navigation');
+    if ($existing_block) {
+      $existing_block->delete();
+      \Drupal::messenger()->addMessage(t('Removed existing navigation block.'));
+    }
+  }
+  catch (\Exception $e) {
+    \Drupal::messenger()->addError(t('Failed to delete existing block: @message', ['@message' => $e->getMessage()]));
+  }
+
+  // Create the block.
+  $block = Block::create([
+    'id' => 'soda_scs_navigation',
+    'theme' => 'soda_scs_manager_theme',
+    'region' => 'nav_sidebar',
+    'weight' => -100,
+    'plugin' => 'soda_scs_manager_navigation_block',
+    'settings' => [
+      'id' => 'soda_scs_manager_navigation_block',
+      'label' => 'SODa SCS Manager Sidebar Navigation',
+      'provider' => 'soda_scs_manager',
+      'label_display' => '0',
+    ],
+    'visibility' => [
+      'request_path' => [
+        'id' => 'request_path',
+        'pages' => '/soda-scs-manager*',
+        'negate' => FALSE,
+      ],
+    ],
+  ]);
+
+  $block->save();
+  return t('SODa SCS Navigation block has been placed in the nav_sidebar region.');
 }

@@ -49,6 +49,7 @@ use Drupal\user\EntityOwnerTrait;
  *   data_table = "soda_scs_stack_field_data",
  *   field_ui_base_route = "entity.soda_scs_stack.edit_form",
  *   fieldable = TRUE,
+ *   translatable = TRUE,
  *   common_reference_target = TRUE,
  *   entity_keys = {
  *     "id" = "id",

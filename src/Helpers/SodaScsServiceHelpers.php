@@ -194,6 +194,7 @@ class SodaScsServiceHelpers {
    */
   public function initDockerRunServiceSettings(): array {
     $dockerRunServiceSettings['name'] = 'Docker run service';
+    $dockerRunServiceSettings['baseUrl'] = $this->settings->get('portainer.routes.endpoints.dockerApi.containers.baseUrl');
     $dockerRunServiceSettings['createUrl'] = $this->settings->get('portainer.routes.endpoints.dockerApi.containers.crussrdr.createUrl');
     $dockerRunServiceSettings['readOneUrl'] = $this->settings->get('portainer.routes.endpoints.dockerApi.containers.crussrdr.readOneUrl');
     $dockerRunServiceSettings['readAllUrl'] = $this->settings->get('portainer.routes.endpoints.dockerApi.containers.crussrdr.readAllUrl');

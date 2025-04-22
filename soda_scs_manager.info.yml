@@ -4,3 +4,5 @@ description: 'Sammlungen, Objekte, Datenkompetenzen Semantic Coworking Space Man
 package: SODa SCS
 configure: soda_scs_manager.settings
 core_version_requirement: ^10 | ^11
+'interface translation project': soda_scs_manager
+'interface translation server pattern': modules/custom/%project/translations/%project.%language.po

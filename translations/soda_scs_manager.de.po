@@ -1,0 +1,1947 @@
+# $Id$
+#
+# German translation of Drupal (general)
+# Copyright 2025 Robert Nasarek <r.nasarek@gnm.de>
+# Generated from files:
+#  soda_scs_manager.module: n/a
+#  soda_scs_manager.install: n/a
+#  soda_scs_manager.info.yml: n/a
+#  soda_scs_manager.links.menu.yml: n/a
+#  soda_scs_manager.links.action.yml: n/a
+#  src/Entity/SodaScsComponent.php: n/a
+#  soda_scs_manager.routing.yml: n/a
+#  src/Entity/SodaScsProject.php: n/a
+#  src/Plugin/Block/SodaScsNavigationBlock.php: n/a
+#  soda_scs_manager.links.task.yml: n/a
+#  src/ListBuilder/SodaScsSnapshotListBuilder.php: n/a
+#  src/Form/SodaScsSnapshotDeleteForm.php: n/a
+#  src/ListBuilder/SodaScsProjectListBuilder.php: n/a
+#  src/ListBuilder/SodaScsServiceKeyListBuilder.php: n/a
+#  soda_scs_manager.permissions.yml: n/a
+#  src/Entity/SodaScsSnapshot.php: n/a
+#  src/ComponentActions/SodaScsComponentActions.php: n/a
+#  src/ComponentActions/SodaScsFilesystemComponentActions.php: n/a
+#  src/ComponentActions/SodaScsSqlComponentActions.php: n/a
+#  src/StackActions/SodaScsSqlStackActions.php: n/a
+#  src/StackActions/SodaScsWisskiStackActions.php: n/a
+#  src/ComponentActions/SodaScsTriplestoreComponentActions.php: n/a
+#  src/ComponentActions/SodaScsWisskiComponentActions.php: n/a
+#  src/Controller/SodaScsComponentBundleController.php: n/a
+#  src/Controller/SodaScsComponentController.php: n/a
+#  src/Helpers/SodaScsComponentHelpers.php: n/a
+#  src/Controller/SodaScsManagerController.php: n/a
+#  src/Entity/SodaScsStack.php: n/a
+#  src/Form/SodaScsSnapshotConfirmForm.php: n/a
+#  src/Entity/SodaScsServiceKey.php: n/a
+#  src/ListBuilder/SodaScsComponentListBuilder.php: n/a
+#  src/ListBuilder/SodaScsStackListBuilder.php: n/a
+#  src/Entity/Bundle/SodaScsComponentBundle.php: n/a
+#  src/Entity/Bundle/SodaScsStackBundle.php: n/a
+#  src/Entity/Bundle/SodaScsProjectsBundle.php: n/a
+#  src/Exception/SodaScsPortainerException.php: n/a
+#  src/Form/SodaScsComponentCreateForm.php: n/a
+#  src/Form/SodaScsStackCreateForm.php: n/a
+#  src/Form/SodaScsComponentDeleteForm.php: n/a
+#  src/Form/SodaScsStackDeleteForm.php: n/a
+#  src/Form/SodaScsProjectCreateForm.php: n/a
+#  src/Form/SodaScsProjectDeleteForm.php: n/a
+#  src/Form/SodaScsProjectEditForm.php: n/a
+#  src/Form/SodaScsServiceKeyCreateForm.php: n/a
+#  src/Form/SodaScsServiceKeyDeleteForm.php: n/a
+#  src/Form/SodaScsServiceKeyRenewConfirmForm.php: n/a
+#  src/Form/SodaScsSettingsForm.php: n/a
+#  src/Form/SodaScsSnapshotCreateForm.php: n/a
+#  src/Plugin/EntityReferenceSelection/SodaScsComponentSelection.php: n/a
+#  src/Plugin/EntityReferenceSelection/SodaScsProjectSelection.php: n/a
+#  src/RequestActions/SodaScsDockerRegistryServiceActions.php: n/a
+#  src/RequestActions/SodaScsKeycloakServiceActions.php: n/a
+#  src/RequestActions/SodaScsPortainerServiceActions.php: n/a
+#  src/RequestActions/SodaScsOpenGdbServiceActions.php: n/a
+#  src/ServiceActions/SodaScsSqlServiceActions.php: n/a
+#  src/StackActions/SodaScsTriplestoreStackActions.php: n/a
+#  templates/block/block--system-branding-block.html.twig: n/a
+#  templates/navigation/menu-local-tasks.html.twig: n/a
+#  templates/node/node.html.twig: n/a
+#  templates/pages/soda-scs-manager--desk.html.twig: n/a
+#  templates/pages/soda-scs-manager--store.html.twig: n/a
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: SODa SCS Manager (0.0.1)\n"
+"POT-Creation-Date: 2025-04-22 10:52+0200\n"
+"PO-Revision-Date: 2025-04-22 10:52+0200\n"
+"Last-Translator: Robert Nasarek <r.nasarek@gnm.de>\n"
+"Language-Team: German <j.neubauer@gnm.de>\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+
+#: soda_scs_manager.module:41
+msgid "About"
+msgstr "Über"
+
+#: soda_scs_manager.module:42
+msgid "This module provides the functionality to create, validate and manage WissKI Cloud accounts."
+msgstr "Dieses Modul bietet die Funktionalität zum Erstellen, Validieren und Verwalten von WissKI Cloud-Konten."
+
+#: soda_scs_manager.module:44
+msgid "Configuration"
+msgstr "Konfiguration"
+
+#: soda_scs_manager.module:45
+msgid "Configuration is done on the <a href=\"@settingsPage\" targer=\"_blank\">settings page</a>."
+msgstr "Die Konfiguration erfolgt auf der <a href=\"@settingsPage\" targer=\"_blank\">Einstellungsseite</a>."
+
+#: soda_scs_manager.module:47
+msgid "Create WissKI Cloud Account"
+msgstr "WissKI Cloud-Konto erstellen"
+
+#: soda_scs_manager.module:48
+msgid "<a href=\"@createPage\" targer=\"_blank\">This page</a> allows you to create a WissKI Cloud account."
+msgstr "<a href=\"@createPage\" targer=\"_blank\">Diese Seite</a> ermöglicht es Ihnen, ein WissKI Cloud-Konto zu erstellen."
+
+#: soda_scs_manager.module:50
+msgid "Validate WissKI Cloud Account"
+msgstr "WissKI Cloud-Konto validieren"
+
+#: soda_scs_manager.module:51
+msgid "<a href=\"@validationPage\" targer=\"_blank\">This page</a> allows you to validate your account and check the status of the provision."
+msgstr "<a href=\"@validationPage\" targer=\"_blank\">Diese Seite</a> ermöglicht es Ihnen, Ihr Konto zu validieren und den Status der Bereitstellung zu überprüfen."
+
+#: soda_scs_manager.module:210
+msgid "Filesystem"
+msgstr "Dateisystem"
+
+#: soda_scs_manager.module:212
+msgid "A filesystem for storage of structured data."
+msgstr "Ein Dateisystem zur Speicherung strukturierter Daten."
+
+#: soda_scs_manager.module:217
+msgid "JupyterHub Account"
+msgstr "JupyterHub-Konto"
+
+#: soda_scs_manager.module:219
+msgid "A Jupyter web IDE for coding in Python."
+msgstr "Eine Jupyter Web-IDE für die Programmierung in Python."
+
+#: soda_scs_manager.module:224
+msgid "Nextcloud Account"
+msgstr "Nextcloud-Konto"
+
+#: soda_scs_manager.module:226
+msgid "A Nextcloud instance for cloud storage and file sharing."
+msgstr "Eine Nextcloud-Instanz für Cloud-Speicher und Dateifreigabe."
+
+#: soda_scs_manager.module:231
+msgid "SQL Database"
+msgstr "SQL-Datenbank"
+
+#: soda_scs_manager.module:233
+msgid "A relational database for storage of structured data."
+msgstr "Eine relationale Datenbank zur Speicherung strukturierter Daten."
+
+#: soda_scs_manager.module:237
+msgid "Triplestore"
+msgstr "Triplestore"
+
+#: soda_scs_manager.module:239
+msgid "Graph database for storage of RDF data."
+msgstr "Graphdatenbank zur Speicherung von RDF-Daten."
+
+#: soda_scs_manager.module:244
+msgid "WebProtégé"
+msgstr "WebProtégé"
+
+#: soda_scs_manager.module:246
+msgid "A web-based tool for creating and editing OWL ontologies."
+msgstr "Ein webbasiertes Tool zum Erstellen und Bearbeiten von OWL-Ontologien."
+
+#: soda_scs_manager.module:251
+msgid "WissKI"
+msgstr "WissKI"
+
+#: soda_scs_manager.module:253
+msgid "A WissKI Component is a component of a WissKI Stack."
+msgstr "Eine WissKI-Komponente ist ein Bestandteil eines WissKI-Stacks."
+
+#: soda_scs_manager.module:259
+msgid "Default Project"
+msgstr "Standardprojekt"
+
+#: soda_scs_manager.module:261
+msgid "A Project is a collection of components and stacks."
+msgstr "Ein Projekt ist eine Sammlung von Komponenten und Stacks."
+
+#: soda_scs_manager.module:266
+msgid "Default Service Key"
+msgstr "Standard-Serviceschlüssel"
+
+#: soda_scs_manager.module:268
+msgid "A Service Key is a key for a service."
+msgstr "Ein Serviceschlüssel ist ein Schlüssel für einen Dienst."
+
+#: soda_scs_manager.module:273
+msgid "JupyterHub Stack"
+msgstr "JupyterHub-Stack"
+
+#: soda_scs_manager.module:275
+msgid "A JupyterHub Stack contains Jupyter, Open Refine."
+msgstr "Ein JupyterHub-Stack enthält Jupyter, Open Refine."
+
+#: soda_scs_manager.module:280
+msgid "WissKI Stack"
+msgstr "WissKI-Stack"
+
+#: soda_scs_manager.module:282
+msgid "A WissKI Stack contains a WissKI, a Triplestore and a Database."
+msgstr "Ein WissKI-Stack enthält ein WissKI, einen Triplestore und eine Datenbank."
+
+#: soda_scs_manager.module:287
+msgid "Nextcloud Stack"
+msgstr "Nextcloud-Stack"
+
+#: soda_scs_manager.module:289
+msgid "A Nextcloud Stack contains Nextcloud, Draw.io and Collabora."
+msgstr "Ein Nextcloud-Stack enthält Nextcloud, Draw.io und Collabora."
+
+#: soda_scs_manager.install:65
+msgid "Removed existing navigation block."
+msgstr "Vorhandenen Navigationsblock entfernt."
+
+#: soda_scs_manager.install:69
+msgid "Failed to delete existing block: @message"
+msgstr "Fehler beim Löschen des vorhandenen Blocks: @message"
+
+#: soda_scs_manager.install:95
+msgid "SODa SCS Navigation block has been placed in the nav_sidebar region."
+msgstr "SODa SCS-Navigationsblock wurde in der nav_sidebar-Region platziert."
+
+#: soda_scs_manager.info.yml:0 soda_scs_manager.links.menu.yml:0;0
+msgid "SODa SCS manager"
+msgstr "SODa SCS-Manager"
+
+#: soda_scs_manager.info.yml:0
+msgid "Sammlungen, Objekte, Datenkompetenzen Semantic Coworking Space Manager (SODa SCS Manager) module for managing SCS components."
+msgstr "Sammlungen, Objekte, Datenkompetenzen Semantic Coworking Space Manager (SODa SCS Manager) Modul zur Verwaltung von SCS-Komponenten."
+
+#: soda_scs_manager.info.yml:0
+msgid "SODa SCS"
+msgstr "SODa SCS"
+
+#: soda_scs_manager.links.action.yml:0
+msgid "Add project"
+msgstr "Projekt hinzufügen"
+
+#: soda_scs_manager.links.action.yml:0
+msgid "Add service key"
+msgstr "Serviceschlüssel hinzufügen"
+
+#: soda_scs_manager.links.menu.yml:0 src/Entity/SodaScsComponent.php:12;12
+msgid "SODa SCS Components"
+msgstr "SODa SCS-Komponenten"
+
+#: soda_scs_manager.links.menu.yml:0 soda_scs_manager.routing.yml:0 src/Entity/SodaScsProject.php:14;14
+msgid "SODa SCS Projects"
+msgstr "SODa SCS-Projekte"
+
+#: soda_scs_manager.links.menu.yml:0 soda_scs_manager.routing.yml:0
+msgid "SODa SCS Service Keys"
+msgstr "SODa SCS-Serviceschlüssel"
+
+#: soda_scs_manager.links.menu.yml:0 soda_scs_manager.routing.yml:0
+msgid "SODa SCS Snapshots"
+msgstr "SODa SCS-Snapshots"
+
+#: soda_scs_manager.links.menu.yml:0
+msgid "SODa SCS Stacks"
+msgstr "SODa SCS-Stacks"
+
+#: soda_scs_manager.links.menu.yml:0;0
+msgid "SODa SCS manager users page"
+msgstr "SODa SCS-Manager Benutzerseite"
+
+#: soda_scs_manager.links.menu.yml:0;0
+msgid "SODa SCS manager components page"
+msgstr "SODa SCS-Manager Komponentenseite"
+
+#: soda_scs_manager.links.menu.yml:0
+msgid "Component store"
+msgstr "Komponenten-Store"
+
+#: soda_scs_manager.links.menu.yml:0;0
+msgid "SODa SCS manager settings"
+msgstr "SODa SCS-Manager Einstellungen"
+
+#: soda_scs_manager.links.menu.yml:0 src/Plugin/Block/SodaScsNavigationBlock.php:8
+msgid "SODa SCS Manager"
+msgstr "SODa SCS-Manager"
+
+#: soda_scs_manager.links.menu.yml:0 src/Plugin/Block/SodaScsNavigationBlock.php:56
+msgid "Desk"
+msgstr "Schreibtisch"
+
+#: soda_scs_manager.links.menu.yml:0 soda_scs_manager.routing.yml:0 src/Plugin/Block/SodaScsNavigationBlock.php:65
+msgid "Store"
+msgstr "Store"
+
+#: soda_scs_manager.links.menu.yml:0
+msgid "Manage SODa SCS Components"
+msgstr "SODa SCS-Komponenten verwalten"
+
+#: soda_scs_manager.links.menu.yml:0
+msgid "Manage SODa SCS Projects"
+msgstr "SODa SCS-Projekte verwalten"
+
+#: soda_scs_manager.links.menu.yml:0
+msgid "Manage SODa SCS Service Keys"
+msgstr "SODa SCS-Serviceschlüssel verwalten"
+
+#: soda_scs_manager.links.menu.yml:0
+msgid "Manage SODa SCS Snapshots"
+msgstr "SODa SCS-Snapshots verwalten"
+
+#: soda_scs_manager.links.menu.yml:0
+msgid "Manage SODa SCS Stacks"
+msgstr "SODa SCS-Stacks verwalten"
+
+#: soda_scs_manager.links.menu.yml:0
+msgid "List all available components and provide the possibility to install them"
+msgstr "Alle verfügbaren Komponenten auflisten und die Möglichkeit bieten, sie zu installieren"
+
+#: soda_scs_manager.links.menu.yml:0
+msgid "Link to the SODa SCS Manager Component Page"
+msgstr "Link zur SODa SCS-Manager Komponentenseite"
+
+#: soda_scs_manager.links.menu.yml:0
+msgid "Your components"
+msgstr "Ihre Komponenten"
+
+#: soda_scs_manager.links.menu.yml:0
+msgid "Available components"
+msgstr "Verfügbare Komponenten"
+
+#: soda_scs_manager.links.task.yml:0;0;0;0 src/ListBuilder/SodaScsSnapshotListBuilder.php:145
+msgid "View"
+msgstr "Ansehen"
+
+#: soda_scs_manager.links.task.yml:0;0;0;0 src/Form/SodaScsSnapshotDeleteForm.php:36 src/ListBuilder/SodaScsProjectListBuilder.php:82 src/ListBuilder/SodaScsServiceKeyListBuilder.php:86 src/ListBuilder/SodaScsSnapshotListBuilder.php:131
+msgid "Delete"
+msgstr "Löschen"
+
+#: soda_scs_manager.links.task.yml:0
+msgid "Show"
+msgstr "Anzeigen"
+
+#: soda_scs_manager.links.task.yml:0;0
+msgid "Snapshot"
+msgstr "Snapshot"
+
+#: soda_scs_manager.links.task.yml:0 src/ListBuilder/SodaScsSnapshotListBuilder.php:122
+msgid "Edit"
+msgstr "Bearbeiten"
+
+#: soda_scs_manager.permissions.yml:0
+msgid "Administer SODa SCS Manager"
+msgstr "SODa SCS-Manager verwalten"
+
+#: soda_scs_manager.permissions.yml:0
+msgid "Administer SODa SCS Manager Settings and Accounts"
+msgstr "SODa SCS-Manager Einstellungen und Konten verwalten"
+
+#: soda_scs_manager.permissions.yml:0
+msgid "SODa SCS Manager user"
+msgstr "SODa SCS-Manager Benutzer"
+
+#: soda_scs_manager.permissions.yml:0
+msgid "Administer own Stacks, Components and Service Keys"
+msgstr "Eigene Stacks, Komponenten und Serviceschlüssel verwalten"
+
+#: soda_scs_manager.permissions.yml:0
+msgid "Administer SODa SCS Component types"
+msgstr "SODa SCS-Komponententypen verwalten"
+
+#: soda_scs_manager.permissions.yml:0
+msgid "Maintain the types SODa SCS Component entity."
+msgstr "Die Typen der SODa SCS-Komponentenentität pflegen."
+
+#: soda_scs_manager.permissions.yml:0
+msgid "Create SODa SCS Component"
+msgstr "SODa SCS-Komponente erstellen"
+
+#: soda_scs_manager.permissions.yml:0
+msgid "View SODa SCS Component"
+msgstr "SODa SCS-Komponente anzeigen"
+
+#: soda_scs_manager.permissions.yml:0
+msgid "Edit SODa SCS Component"
+msgstr "SODa SCS-Komponente bearbeiten"
+
+#: soda_scs_manager.permissions.yml:0
+msgid "Delete SODa SCS Component"
+msgstr "SODa SCS-Komponente löschen"
+
+#: soda_scs_manager.permissions.yml:0
+msgid "Create SODa SCS Stack"
+msgstr "SODa SCS-Stack erstellen"
+
+#: soda_scs_manager.permissions.yml:0
+msgid "Edit SODa SCS Stack"
+msgstr "SODa SCS-Stack bearbeiten"
+
+#: soda_scs_manager.permissions.yml:0
+msgid "View SODa SCS Stack"
+msgstr "SODa SCS-Stack anzeigen"
+
+#: soda_scs_manager.permissions.yml:0
+msgid "Delete SODa SCS Stack"
+msgstr "SODa SCS-Stack löschen"
+
+#: soda_scs_manager.permissions.yml:0
+msgid "Create SODa SCS Service Key"
+msgstr "SODa SCS-Serviceschlüssel erstellen"
+
+#: soda_scs_manager.permissions.yml:0
+msgid "Edit SODa SCS Service Key"
+msgstr "SODa SCS-Serviceschlüssel bearbeiten"
+
+#: soda_scs_manager.permissions.yml:0
+msgid "View SODa SCS Service Key"
+msgstr "SODa SCS-Serviceschlüssel anzeigen"
+
+#: soda_scs_manager.permissions.yml:0 soda_scs_manager.routing.yml:0
+msgid "Delete SODa SCS Service Key"
+msgstr "SODa SCS-Serviceschlüssel löschen"
+
+#: soda_scs_manager.permissions.yml:0
+msgid "Create SCS Snapshots"
+msgstr "SCS-Snapshots erstellen"
+
+#: soda_scs_manager.permissions.yml:0
+msgid "Create snapshots of stacks and components."
+msgstr "Snapshots von Stacks und Komponenten erstellen."
+
+#: soda_scs_manager.routing.yml:0
+msgid "Component health check"
+msgstr "Komponenten-Zustandsprüfung"
+
+#: soda_scs_manager.routing.yml:0 src/Entity/SodaScsSnapshot.php:162
+msgid "Stack"
+msgstr "Stack"
+
+#: soda_scs_manager.routing.yml:0
+msgid "Add Stack"
+msgstr "Stack hinzufügen"
+
+#: soda_scs_manager.routing.yml:0
+msgid "Delete Stack"
+msgstr "Stack löschen"
+
+#: soda_scs_manager.routing.yml:0
+msgid "Stacks"
+msgstr "Stacks"
+
+#: soda_scs_manager.routing.yml:0;0
+msgid "Create Snapshot"
+msgstr "Snapshot erstellen"
+
+#: soda_scs_manager.routing.yml:0
+msgid "ScsComponent"
+msgstr "ScsComponent"
+
+#: soda_scs_manager.routing.yml:0
+msgid "Add ScsComponent"
+msgstr "ScsComponent hinzufügen"
+
+#: soda_scs_manager.routing.yml:0
+msgid "Delete ScsComponent"
+msgstr "ScsComponent löschen"
+
+#: soda_scs_manager.routing.yml:0
+msgid "Soda SCS Components"
+msgstr "Soda SCS-Komponenten"
+
+#: soda_scs_manager.routing.yml:0
+msgid "SODa SCS Service Key"
+msgstr "SODa SCS-Serviceschlüssel"
+
+#: soda_scs_manager.routing.yml:0
+msgid "Add SODa SCS Service Key"
+msgstr "SODa SCS-Serviceschlüssel hinzufügen"
+
+#: soda_scs_manager.routing.yml:0
+msgid "Renew service key"
+msgstr "Serviceschlüssel erneuern"
+
+#: soda_scs_manager.routing.yml:0
+msgid "Add SODa SCS Snapshot"
+msgstr "SODa SCS-Snapshot hinzufügen"
+
+#: soda_scs_manager.routing.yml:0
+msgid "SODa SCS Snapshot"
+msgstr "SODa SCS-Snapshot"
+
+#: soda_scs_manager.routing.yml:0
+msgid "Edit SODa SCS Snapshot"
+msgstr "SODa SCS-Snapshot bearbeiten"
+
+#: soda_scs_manager.routing.yml:0
+msgid "Delete SODa SCS Snapshot"
+msgstr "SODa SCS-Snapshot löschen"
+
+#: soda_scs_manager.routing.yml:0 src/Entity/SodaScsProject.php:14;14
+msgid "SODa SCS Project"
+msgstr "SODa SCS-Projekt"
+
+#: soda_scs_manager.routing.yml:0
+msgid "Add SODa SCS Project"
+msgstr "SODa SCS-Projekt hinzufügen"
+
+#: soda_scs_manager.routing.yml:0
+msgid "Edit SODa SCS Project"
+msgstr "SODa SCS-Projekt bearbeiten"
+
+#: soda_scs_manager.routing.yml:0
+msgid "Delete SODa SCS Project"
+msgstr "SODa SCS-Projekt löschen"
+
+#: soda_scs_manager.routing.yml:0
+msgid "Your stacks"
+msgstr "Ihre Stacks"
+
+#: soda_scs_manager.routing.yml:0
+msgid "SCS Manager"
+msgstr "SCS-Manager"
+
+#: soda_scs_manager.routing.yml:0
+msgid "External service link"
+msgstr "Externer Dienst-Link"
+
+#: soda_scs_manager.routing.yml:0
+msgid "WissKI cloud account settings"
+msgstr "WissKI Cloud-Kontoeinstellungen"
+
+#: soda_scs_manager.routing.yml:0
+msgid "WissKI cloud account manager"
+msgstr "WissKI Cloud-Kontomanager"
+
+#: soda_scs_manager.routing.yml:0
+msgid "Our Main link page"
+msgstr "Unsere Hauptlinkseite"
+
+#: soda_scs_manager.routing.yml:0
+msgid "Edit Machine Name"
+msgstr "Maschinenname bearbeiten"
+
+#: src/ComponentActions/SodaScsComponentActions.php:165
+msgid "Could not delete component of type @bundle."
+msgstr "Komponente vom Typ @bundle konnte nicht gelöscht werden."
+
+#: src/ComponentActions/SodaScsFilesystemComponentActions.php:807
+msgid "Deleted Filesystem component @name."
+msgstr "Dateisystemkomponente @name gelöscht."
+
+#: src/ComponentActions/SodaScsSqlComponentActions.php:198
+msgid "Database already exists. See logs for more details."
+msgstr "Datenbank existiert bereits. Weitere Details finden Sie in den Logs."
+
+#: src/ComponentActions/SodaScsSqlComponentActions.php:280
+msgid "Cannot create database. See logs for more details."
+msgstr "Datenbank kann nicht erstellt werden. Weitere Details finden Sie in den Logs."
+
+#: src/ComponentActions/SodaScsSqlComponentActions.php:355 src/StackActions/SodaScsSqlStackActions.php:208;219 src/StackActions/SodaScsWisskiStackActions.php:463;476
+msgid "Cannot delete database. See logs for more details."
+msgstr "Datenbank kann nicht gelöscht werden. Weitere Details finden Sie in den Logs."
+
+#: src/ComponentActions/SodaScsSqlComponentActions.php:375
+msgid "Cannot load service key. See logs for more details."
+msgstr "Serviceschlüssel kann nicht geladen werden. Weitere Details finden Sie in den Logs."
+
+#: src/ComponentActions/SodaScsSqlComponentActions.php:390
+msgid "Cannot clean database users. See logs for more details."
+msgstr "Datenbankbenutzer können nicht bereinigt werden. Weitere Details finden Sie in den Logs."
+
+#: src/ComponentActions/SodaScsTriplestoreComponentActions.php:168;266;283;346;360 src/StackActions/SodaScsWisskiStackActions.php:539
+msgid "Cannot assemble request. See logs for more details."
+msgstr "Anfrage kann nicht zusammengestellt werden. Weitere Details finden Sie in den Logs."
+
+#: src/ComponentActions/SodaScsTriplestoreComponentActions.php:208
+msgid "Created OpenGDB user: @username"
+msgstr "OpenGDB-Benutzer erstellt: @username"
+
+#: src/ComponentActions/SodaScsTriplestoreComponentActions.php:391
+msgid "Created triplestore component %machineName."
+msgstr "Triplestore-Komponente %machineName erstellt."
+
+#: src/ComponentActions/SodaScsTriplestoreComponentActions.php:481
+msgid "Could not delete repository of component %component, because it does not exist. Move on to delete the component."
+msgstr "Repository der Komponente %component konnte nicht gelöscht werden, da es nicht existiert. Fahren Sie mit dem Löschen der Komponente fort."
+
+#: src/ComponentActions/SodaScsTriplestoreComponentActions.php:488
+msgid "Could not delete triplestore component %component"
+msgstr "Triplestore-Komponente %component konnte nicht gelöscht werden"
+
+#: src/ComponentActions/SodaScsTriplestoreComponentActions.php:534
+msgid "Could not get triplestore user of component %component"
+msgstr "Triplestore-Benutzer der Komponente %component konnte nicht abgerufen werden"
+
+#: src/ComponentActions/SodaScsTriplestoreComponentActions.php:590
+msgid "Could not update triplestore user %username"
+msgstr "Triplestore-Benutzer %username konnte nicht aktualisiert werden"
+
+#: src/ComponentActions/SodaScsTriplestoreComponentActions.php:619
+msgid "Could not delete OpenGDB user %username"
+msgstr "OpenGDB-Benutzer %username konnte nicht gelöscht werden"
+
+#: src/ComponentActions/SodaScsTriplestoreComponentActions.php:633
+msgid "Deleted triplestore component %component"
+msgstr "Triplestore-Komponente %component gelöscht"
+
+#: src/ComponentActions/SodaScsWisskiComponentActions.php:343
+msgid "Request failed. See logs for more details."
+msgstr "Anfrage fehlgeschlagen. Weitere Details finden Sie in den Logs."
+
+#: src/ComponentActions/SodaScsWisskiComponentActions.php:555;568
+msgid "Cannot get WissKI component @component at portainer."
+msgstr "WissKI-Komponente @component kann nicht bei Portainer abgerufen werden."
+
+#: src/ComponentActions/SodaScsWisskiComponentActions.php:566
+msgid "Cannot get WissKI component @component at portainer. See logs for more details."
+msgstr "WissKI-Komponente @component kann nicht bei Portainer abgerufen werden. Weitere Details finden Sie in den Logs."
+
+#: src/ComponentActions/SodaScsWisskiComponentActions.php:580
+msgid "Cannot assemble WissKI component delete request. See logs for more details."
+msgstr "WissKI-Komponenten-Löschanfrage kann nicht zusammengestellt werden. Weitere Details finden Sie in den Logs."
+
+#: src/ComponentActions/SodaScsWisskiComponentActions.php:596
+msgid "Could not delete WissKI stack at portainer, but will delete the component anyway. See logs for more details."
+msgstr "WissKI-Stack konnte nicht bei Portainer gelöscht werden, die Komponente wird trotzdem gelöscht. Weitere Details finden Sie in den Logs."
+
+#: src/ComponentActions/SodaScsWisskiComponentActions.php:612 src/StackActions/SodaScsWisskiStackActions.php:570
+msgid "Cannot delete WissKI component. See logs for more details."
+msgstr "WissKI-Komponente kann nicht gelöscht werden. Weitere Details finden Sie in den Logs."
+
+#: src/ComponentActions/SodaScsWisskiComponentActions.php:358
+msgid "Portainer request failed: @error"
+msgstr "Portainer-Anfrage fehlgeschlagen: @error"
+
+#: src/Controller/SodaScsComponentBundleController.php:19
+msgid "Component Bundles"
+msgstr "Komponenten-Bundles"
+
+#: src/Controller/SodaScsComponentController.php:69
+msgid "Filesystem health check failed for component @component. Message: @message"
+msgstr "Dateisystem-Zustandsprüfung für Komponente @component fehlgeschlagen. Nachricht: @message"
+
+#: src/Controller/SodaScsComponentController.php:85 src/Helpers/SodaScsComponentHelpers.php:265
+msgid "MariaDB health check failed for component @component."
+msgstr "MariaDB-Zustandsprüfung für Komponente @component fehlgeschlagen."
+
+#: src/Controller/SodaScsComponentController.php:100
+msgid "Triplestore health check failed for component @component."
+msgstr "Triplestore-Zustandsprüfung für Komponente @component fehlgeschlagen."
+
+#: src/Controller/SodaScsComponentController.php:114
+msgid "WissKI health check failed for component @component."
+msgstr "WissKI-Zustandsprüfung für Komponente @component fehlgeschlagen."
+
+#: src/Controller/SodaScsComponentController.php:126
+msgid "Health check failed for component @component with message: @message"
+msgstr "Zustandsprüfung für Komponente @component fehlgeschlagen mit Nachricht: @message"
+
+#: src/Controller/SodaScsManagerController.php:109;145;200;219
+msgid "@bundle"
+msgstr "@bundle"
+
+#: src/Entity/SodaScsComponent.php:267 src/Entity/SodaScsProject.php:193 src/Entity/SodaScsStack.php:253
+msgid "Machine name must contain only lowercase letters, numbers, and minus."
+msgstr "Der Maschinenname darf nur Kleinbuchstaben, Zahlen und Minuszeichen enthalten."
+
+#: src/Entity/SodaScsComponent.php:162 src/Entity/SodaScsProject.php:128 src/Entity/SodaScsSnapshot.php:96 src/Entity/SodaScsStack.php:129 src/ListBuilder/SodaScsSnapshotListBuilder.php:78
+msgid "Created"
+msgstr "Erstellt"
+
+#: src/Entity/SodaScsComponent.php:163 src/Entity/SodaScsStack.php:130
+msgid "The time that the SODa SCS Component was created."
+msgstr "Der Zeitpunkt, zu dem die SODa SCS-Komponente erstellt wurde."
+
+#: src/Entity/SodaScsComponent.php:175 src/Entity/SodaScsProject.php:136 src/Entity/SodaScsStack.php:143 src/Form/SodaScsSnapshotConfirmForm.php:113
+msgid "Description"
+msgstr "Beschreibung"
+
+#: src/Entity/SodaScsComponent.php:176 src/Entity/SodaScsStack.php:144
+msgid "The description of the SODa SCS Component."
+msgstr "Die Beschreibung der SODa SCS-Komponente."
+
+#: src/Entity/SodaScsComponent.php:194
+msgid "External ID"
+msgstr "Externe ID"
+
+#: src/Entity/SodaScsComponent.php:195
+msgid "The external ID of the SODa SCS Component."
+msgstr "Die externe ID der SODa SCS-Komponente."
+
+#: src/Entity/SodaScsComponent.php:202
+msgid "Health Status"
+msgstr "Gesundheitsstatus"
+
+#: src/Entity/SodaScsComponent.php:203
+msgid "The health status of the SODa SCS Component."
+msgstr "Der Gesundheitsstatus der SODa SCS-Komponente."
+
+#: src/Entity/SodaScsComponent.php:218 src/Entity/SodaScsStack.php:168
+msgid "Image"
+msgstr "Image"
+
+#: src/Entity/SodaScsComponent.php:219
+msgid "The image of the SODa SCS Component."
+msgstr "Das Image der SODa SCS-Komponente."
+
+#: src/Entity/SodaScsComponent.php:231 src/Entity/SodaScsProject.php:155 src/Entity/SodaScsServiceKey.php:108 src/Entity/SodaScsSnapshot.php:107 src/Entity/SodaScsStack.php:196 src/ListBuilder/SodaScsServiceKeyListBuilder.php:23
+msgid "Label"
+msgstr "Bezeichnung"
+
+#: src/Entity/SodaScsComponent.php:232 src/Entity/SodaScsStack.php:197
+msgid "The label of the SODa SCS Component."
+msgstr "Die Bezeichnung der SODa SCS-Komponente."
+
+#: src/Entity/SodaScsComponent.php:248 src/Entity/SodaScsProject.php:174 src/Entity/SodaScsStack.php:234
+msgid "Machine Name"
+msgstr "Maschinenname"
+
+#: src/Entity/SodaScsComponent.php:249 src/Entity/SodaScsProject.php:175 src/Entity/SodaScsStack.php:235
+msgid "The machine-readable name of the project."
+msgstr "Der maschinenlesbare Name des Projekts."
+
+#: src/Entity/SodaScsComponent.php:272
+msgid "Notes"
+msgstr "Notizen"
+
+#: src/Entity/SodaScsComponent.php:273
+msgid "Notes about the SODa SCS Component."
+msgstr "Notizen über die SODa SCS-Komponente."
+
+#: src/Entity/SodaScsComponent.php:288 src/Entity/SodaScsProject.php:210 src/Entity/SodaScsServiceKey.php:186 src/Entity/SodaScsSnapshot.php:124 src/Entity/SodaScsStack.php:215 src/ListBuilder/SodaScsProjectListBuilder.php:24 src/ListBuilder/SodaScsServiceKeyListBuilder.php:25
+msgid "Owner"
+msgstr "Besitzer"
+
+#: src/Entity/SodaScsComponent.php:289
+msgid "The owner of the SODa SCS Component."
+msgstr "Der Besitzer der SODa SCS-Komponente."
+
+#: src/Entity/SodaScsComponent.php:307 src/Entity/SodaScsStack.php:258
+msgid "Project"
+msgstr "Projekt"
+
+#: src/Entity/SodaScsComponent.php:308 src/Entity/SodaScsStack.php:259
+msgid "The project this component belongs to."
+msgstr "Das Projekt, zu dem diese Komponente gehört."
+
+#: src/Entity/SodaScsComponent.php:327 src/Entity/SodaScsProject.php:99
+msgid "Connected Components"
+msgstr "Verbundene Komponenten"
+
+#: src/Entity/SodaScsComponent.php:343
+msgid "Service Key"
+msgstr "Service-Schlüssel"
+
+#: src/Entity/SodaScsComponent.php:344
+msgid "The service key associated with this component."
+msgstr "Der mit dieser Komponente verbundene Service-Schlüssel."
+
+#: src/Entity/SodaScsComponent.php:358
+msgid "Status"
+msgstr "Status"
+
+#: src/Entity/SodaScsComponent.php:359
+msgid "The status of the SODa SCS Component."
+msgstr "Der Status der SODa SCS-Komponente."
+
+#: src/Entity/SodaScsComponent.php:370 src/Entity/SodaScsProject.php:235 src/Entity/SodaScsStack.php:277
+msgid "Updated"
+msgstr "Aktualisiert"
+
+#: src/Entity/SodaScsComponent.php:371 src/Entity/SodaScsStack.php:278
+msgid "The time that the SODa SCS Component was last updated."
+msgstr "Der Zeitpunkt der letzten Aktualisierung der SODa SCS-Komponente."
+
+#: src/Entity/SodaScsComponent.php:12;12 src/Entity/SodaScsServiceKey.php:119
+msgid "SODa SCS Component"
+msgstr "SODa SCS-Komponente"
+
+#: src/Entity/SodaScsProject.php:100
+msgid "The SCS components associated with this project."
+msgstr "Die mit diesem Projekt verbundenen SCS-Komponenten."
+
+#: src/Entity/SodaScsProject.php:129
+msgid "The time that the SODa SCS Project was created."
+msgstr "Der Zeitpunkt der Erstellung des SODa SCS-Projekts."
+
+#: src/Entity/SodaScsProject.php:137
+msgid "The description of the project."
+msgstr "Die Beschreibung des Projekts."
+
+#: src/Entity/SodaScsProject.php:142
+msgid "Permission Group ID"
+msgstr "Berechtigungsgruppen-ID"
+
+#: src/Entity/SodaScsProject.php:143
+msgid "The permission group ID associated with the project."
+msgstr "Die mit dem Projekt verbundene Berechtigungsgruppen-ID."
+
+#: src/Entity/SodaScsProject.php:156
+msgid "The label of the project."
+msgstr "Die Bezeichnung des Projekts."
+
+#: src/Entity/SodaScsProject.php:198 src/ListBuilder/SodaScsProjectListBuilder.php:25
+msgid "Members"
+msgstr "Mitglieder"
+
+#: src/Entity/SodaScsProject.php:199
+msgid "The members associated with the project."
+msgstr "Die mit dem Projekt verbundenen Mitglieder."
+
+#: src/Entity/SodaScsProject.php:211
+msgid "The owner of the SODa SCS Project."
+msgstr "Der Besitzer des SODa SCS-Projekts."
+
+#: src/Entity/SodaScsProject.php:229 src/ListBuilder/SodaScsProjectListBuilder.php:27
+msgid "Rights"
+msgstr "Rechte"
+
+#: src/Entity/SodaScsProject.php:230
+msgid "The rights associated with the project."
+msgstr "Die mit dem Projekt verbundenen Rechte."
+
+#: src/Entity/SodaScsProject.php:236
+msgid "The time that the SODa SCS Project was last updated."
+msgstr "Der Zeitpunkt der letzten Aktualisierung des SODa SCS-Projekts."
+
+#: src/Entity/SodaScsServiceKey.php:131
+msgid "SODa SCS Component Bundle"
+msgstr "SODa SCS-Komponenten-Bundle"
+
+#: src/Entity/SodaScsServiceKey.php:132
+msgid "The bundle of the SODa SCS Component."
+msgstr "Das Bundle der SODa SCS-Komponente."
+
+#: src/Entity/SodaScsServiceKey.php:144 src/ListBuilder/SodaScsServiceKeyListBuilder.php:27
+msgid "Password"
+msgstr "Passwort"
+
+#: src/Entity/SodaScsServiceKey.php:145
+msgid "The password of the service key."
+msgstr "Das Passwort des Service-Schlüssels."
+
+#: src/Entity/SodaScsServiceKey.php:163 src/ListBuilder/SodaScsComponentListBuilder.php:19 src/ListBuilder/SodaScsServiceKeyListBuilder.php:26 src/ListBuilder/SodaScsStackListBuilder.php:19
+msgid "Type"
+msgstr "Typ"
+
+#: src/Entity/SodaScsServiceKey.php:164
+msgid "The type of the service key."
+msgstr "Der Typ des Service-Schlüssels."
+
+#: src/Entity/SodaScsServiceKey.php:12;12
+msgid "Soda SCS Service Key"
+msgstr "Soda SCS Service-Schlüssel"
+
+#: src/Entity/SodaScsServiceKey.php:12;12
+msgid "Soda SCS Service Keys"
+msgstr "Soda SCS Service-Schlüssel"
+
+#: src/Entity/SodaScsSnapshot.php:73
+msgid "Checksum"
+msgstr "Prüfsumme"
+
+#: src/Entity/SodaScsSnapshot.php:74
+msgid "The checksum of the snapshot content."
+msgstr "Die Prüfsumme des Snapshot-Inhalts."
+
+#: src/Entity/SodaScsSnapshot.php:85
+msgid "Changed"
+msgstr "Geändert"
+
+#: src/Entity/SodaScsSnapshot.php:86
+msgid "The time that the snapshot was last updated."
+msgstr "Der Zeitpunkt der letzten Aktualisierung des Snapshots."
+
+#: src/Entity/SodaScsSnapshot.php:97
+msgid "The time that the snapshot was created."
+msgstr "Der Zeitpunkt der Erstellung des Snapshots."
+
+#: src/Entity/SodaScsSnapshot.php:108
+msgid "The label of the snapshot."
+msgstr "Das Etikett des Snapshots."
+
+#: src/Entity/SodaScsSnapshot.php:125
+msgid "The owner of the snapshot."
+msgstr "Der Besitzer des Snapshots."
+
+#: src/Entity/SodaScsSnapshot.php:143 src/ListBuilder/SodaScsSnapshotListBuilder.php:77
+msgid "Component"
+msgstr "Komponente"
+
+#: src/Entity/SodaScsSnapshot.php:144
+msgid "The component this snapshot is taken from."
+msgstr "Die Komponente, von der dieser Snapshot stammt."
+
+#: src/Entity/SodaScsSnapshot.php:163
+msgid "The stack this snapshot is taken from."
+msgstr "Der Stack, von dem dieser Snapshot stammt."
+
+#: src/Entity/SodaScsSnapshot.php:12;12
+msgid "Soda SCS Snapshot"
+msgstr "Soda SCS Snapshot"
+
+#: src/Entity/SodaScsSnapshot.php:12;12
+msgid "Soda SCS Snapshots"
+msgstr "Soda SCS Snapshots"
+
+#: src/Entity/SodaScsStack.php:169
+msgid "The image of the SODa SCS Stack."
+msgstr "Das Image des SODa SCS Stacks."
+
+#: src/Entity/SodaScsStack.php:183
+msgid "Included components"
+msgstr "Eingeschlossene Komponenten"
+
+#: src/Entity/SodaScsStack.php:216
+msgid "The owner of the SODa SCS Stack."
+msgstr "Der Besitzer des SODa SCS Stacks."
+
+#: src/Entity/SodaScsStack.php:12;12
+msgid "Soda SCS Stack"
+msgstr "Soda SCS Stack"
+
+#: src/Entity/SodaScsStack.php:12;12
+msgid "Soda SCS Stacks"
+msgstr "Soda SCS Stacks"
+
+#: src/Entity/SodaScsStack.php:12
+msgid "Soda SCS Stack type"
+msgstr "Soda SCS Stack-Typ"
+
+#: src/Entity/Bundle/SodaScsComponentBundle.php:25 src/Entity/Bundle/SodaScsStackBundle.php:25
+msgid "Flavour"
+msgstr "Geschmack"
+
+#: src/Entity/Bundle/SodaScsComponentBundle.php:26 src/Entity/Bundle/SodaScsStackBundle.php:26
+msgid "The flavour of the SODa SCS Component."
+msgstr "Der Geschmack der SODa SCS Komponente."
+
+#: src/Entity/Bundle/SodaScsComponentBundle.php:49
+msgid "Shared With"
+msgstr "Geteilt mit"
+
+#: src/Entity/Bundle/SodaScsComponentBundle.php:50
+msgid "The components that are shared with this component."
+msgstr "Die Komponenten, die mit dieser Komponente geteilt werden."
+
+#: src/Entity/Bundle/SodaScsProjectsBundle.php:24
+msgid "Test fields"
+msgstr "Testfelder"
+
+#: src/Entity/Bundle/SodaScsProjectsBundle.php:25
+msgid "Test fields for the project."
+msgstr "Testfelder für das Projekt."
+
+#: src/Exception/SodaScsPortainerException.php:38
+msgid "Portainer request failed: @message"
+msgstr "Portainer-Anfrage fehlgeschlagen: @message"
+
+#: src/Exception/SodaScsPortainerException.php:59
+msgid "Service operation failed. Please try again later."
+msgstr "Dienstoperation fehlgeschlagen. Bitte versuchen Sie es später erneut."
+
+#: src/Form/SodaScsComponentCreateForm.php:181 src/Form/SodaScsStackCreateForm.php:139
+msgid "Create a new @label"
+msgstr "Erstellen Sie ein neues @label"
+
+#: src/Form/SodaScsComponentCreateForm.php:185
+msgid "What is that?"
+msgstr "Was ist das?"
+
+#: src/Form/SodaScsComponentCreateForm.php:210
+msgid "This field is required for filesystem components."
+msgstr "Dieses Feld ist für Dateisystemkomponenten erforderlich."
+
+#: src/Form/SodaScsComponentCreateForm.php:214
+msgid "CREATE COMPONENT"
+msgstr "KOMPONENTE ERSTELLEN"
+
+#: src/Form/SodaScsComponentCreateForm.php:233
+msgid "The machineName can only contain small letters, digits, minus, and underscore"
+msgstr "Der Maschinenname darf nur Kleinbuchstaben, Ziffern, Minus und Unterstrich enthalten"
+
+#: src/Form/SodaScsComponentCreateForm.php:283 src/Form/SodaScsStackCreateForm.php:228
+msgid "The machineName cannot contain the word \"@word\""
+msgstr "Der Maschinenname darf das Wort \"@word\" nicht enthalten"
+
+#: src/Form/SodaScsComponentCreateForm.php:294 src/Form/SodaScsStackCreateForm.php:239
+msgid "The machineName is already in use by another Soda SCS Component entity"
+msgstr "Der Maschinenname wird bereits von einer anderen Soda SCS Komponente verwendet"
+
+#: src/Form/SodaScsComponentCreateForm.php:311
+msgid "Cannot create component \"@label\". See logs for more details."
+msgstr "Komponente \"@label\" kann nicht erstellt werden. Siehe Protokolle für weitere Details."
+
+#: src/Form/SodaScsComponentCreateForm.php:315
+msgid "Cannot create component: @message"
+msgstr "Komponente kann nicht erstellt werden: @message"
+
+#: src/Form/SodaScsComponentDeleteForm.php:77 src/Form/SodaScsStackDeleteForm.php:69
+msgid "Are you sure you want to delete component: @label?"
+msgstr "Sind Sie sicher, dass Sie die Komponente löschen möchten: @label?"
+
+#: src/Form/SodaScsComponentDeleteForm.php:92 src/Form/SodaScsStackDeleteForm.php:84
+msgid "Deleting component: @label"
+msgstr "Komponente wird gelöscht: @label"
+
+#: src/Form/SodaScsProjectCreateForm.php:191
+msgid "A project with machine name \"@machine_name\" already exists. Please choose a different name."
+msgstr "Ein Projekt mit dem Maschinenname \"@machine_name\" existiert bereits. Bitte wählen Sie einen anderen Namen."
+
+#: src/Form/SodaScsProjectDeleteForm.php:65
+msgid "Are you sure you want to delete project: @label?"
+msgstr "Sind Sie sicher, dass Sie das Projekt löschen möchten: @label?"
+
+#: src/Form/SodaScsProjectDeleteForm.php:89
+msgid "Project @label has been deleted."
+msgstr "Projekt @label wurde gelöscht."
+
+#: src/Form/SodaScsProjectDeleteForm.php:80
+msgid "Deleting project: @label"
+msgstr "Projekt wird gelöscht: @label"
+
+#: src/Form/SodaScsProjectEditForm.php:71
+msgid "Abort"
+msgstr "Abbrechen"
+
+#: src/Form/SodaScsServiceKeyCreateForm.php:162
+msgid "Service key created successfully."
+msgstr "Dienstschlüssel erfolgreich erstellt."
+
+#: src/Form/SodaScsServiceKeyDeleteForm.php:65
+msgid "Are you sure you want to delete key: @label?"
+msgstr "Sind Sie sicher, dass Sie den Schlüssel löschen möchten: @label?"
+
+#: src/Form/SodaScsServiceKeyDeleteForm.php:89
+msgid "Key deleted successfully."
+msgstr "Schlüssel erfolgreich gelöscht."
+
+#: src/Form/SodaScsServiceKeyDeleteForm.php:80
+msgid "Deleting key: @label"
+msgstr "Schlüssel wird gelöscht: @label"
+
+#: src/Form/SodaScsServiceKeyRenewConfirmForm.php:71
+msgid "Are you sure you want to renew the service key %name?"
+msgstr "Sind Sie sicher, dass Sie den Dienstschlüssel %name erneuern möchten?"
+
+#: src/Form/SodaScsServiceKeyRenewConfirmForm.php:85
+msgid "This action will generate a new password for this service key. The old password will no longer work. This action cannot be undone."
+msgstr "Diese Aktion generiert ein neues Passwort für diesen Dienstschlüssel. Das alte Passwort wird nicht mehr funktionieren. Diese Aktion kann nicht rückgängig gemacht werden."
+
+#: src/Form/SodaScsServiceKeyRenewConfirmForm.php:92
+msgid "Renew"
+msgstr "Erneuern"
+
+#: src/Form/SodaScsServiceKeyRenewConfirmForm.php:109
+msgid "Could not renew the service key %name."
+msgstr "Der Dienstschlüssel %name konnte nicht erneuert werden."
+
+#: src/Form/SodaScsServiceKeyRenewConfirmForm.php:115
+msgid "The service key %name has been renewed."
+msgstr "Der Dienstschlüssel %name wurde erneuert."
+
+#: src/Form/SodaScsSettingsForm.php:47;53
+msgid "Informations"
+msgstr "Informationen"
+
+#: src/Form/SodaScsSettingsForm.php:58
+msgid "Placeholders"
+msgstr "Platzhalter"
+
+#: src/Form/SodaScsSettingsForm.php:59
+msgid "You can use the following placeholders in the settings form:\n      <ul>\n        <li><strong>{containerId}</strong> - The Docker container ID</li>\n        <li><strong>{endpointId}</strong> - The Portainer endpoint ID</li>\n        <li><strong>{execId}</strong> - The Docker exec ID</li>\n        <li><strong>{instanceId}</strong> - The WissKI instance ID</li>\n        <li><strong>{realm}</strong> - The Keycloak realm</li>\n        <li><strong>{repositoryId}</strong> - The triplestore repository ID</li>\n        <li><strong>{stackId}</strong> - The Portainer stack ID</li>\n        <li><strong>{userId}</strong> - The triplestore user ID</li>\n        <li><strong>{volumeId}</strong> - The Docker volume ID</li>\n      </ul>\n      <br>\n      <ul>\n      <li><strong>{empty}</strong> - Use if there is no value</li>\n      </ul>\n      "
+msgstr "Sie können die folgenden Platzhalter im Einstellungsformular verwenden:\n      <ul>\n        <li><strong>{containerId}</strong> - Die Docker-Container-ID</li>\n        <li><strong>{endpointId}</strong> - Die Portainer-Endpunkt-ID</li>\n        <li><strong>{execId}</strong> - Die Docker-Exec-ID</li>\n        <li><strong>{instanceId}</strong> - Die WissKI-Instanz-ID</li>\n        <li><strong>{realm}</strong> - Der Keycloak-Realm</li>\n        <li><strong>{repositoryId}</strong> - Die Triplestore-Repository-ID</li>\n        <li><strong>{stackId}</strong> - Die Portainer-Stack-ID</li>\n        <li><strong>{userId}</strong> - Die Triplestore-Benutzer-ID</li>\n        <li><strong>{volumeId}</strong> - Die Docker-Volume-ID</li>\n      </ul>\n      <br>\n      <ul>\n      <li><strong>{empty}</strong> - Verwenden, wenn kein Wert vorhanden ist</li>\n      </ul>\n      "
+
+#: src/Form/SodaScsSettingsForm.php:81;87;105;264
+msgid "General settings"
+msgstr "Allgemeine Einstellungen"
+
+#: src/Form/SodaScsSettingsForm.php:91
+msgid "SODa SCS host"
+msgstr "SODa SCS Host"
+
+#: src/Form/SodaScsSettingsForm.php:93
+msgid "The SODa SCS host, like https://scs.sammlungen.io."
+msgstr "Der SODa SCS Host, wie https://scs.sammlungen.io."
+
+#: src/Form/SodaScsSettingsForm.php:99
+msgid "Database settings"
+msgstr "Datenbankeinstellungen"
+
+#: src/Form/SodaScsSettingsForm.php:111
+msgid "Database host"
+msgstr "Datenbank-Host"
+
+#: src/Form/SodaScsSettingsForm.php:113
+msgid "The database host, like https://db.scs.sammlungen.io."
+msgstr "Der Datenbank-Host, wie https://db.scs.sammlungen.io."
+
+#: src/Form/SodaScsSettingsForm.php:117
+msgid "Database port"
+msgstr "Datenbank-Port"
+
+#: src/Form/SodaScsSettingsForm.php:119
+msgid "The database port, like 3306."
+msgstr "Der Datenbank-Port, wie 3306."
+
+#: src/Form/SodaScsSettingsForm.php:123
+msgid "Root password"
+msgstr "Root-Passwort"
+
+#: src/Form/SodaScsSettingsForm.php:125
+msgid "The root password, like root."
+msgstr "Das Root-Passwort, wie root."
+
+#: src/Form/SodaScsSettingsForm.php:130
+msgid "Management host"
+msgstr "Verwaltungs-Host"
+
+#: src/Form/SodaScsSettingsForm.php:132
+msgid "The management host, like https://adminer-db.scs.sammlungen.io."
+msgstr "Der Verwaltungs-Host, wie https://adminer-db.scs.sammlungen.io."
+
+#: src/Form/SodaScsSettingsForm.php:139;146
+msgid "Keycloak settings"
+msgstr "Keycloak-Einstellungen"
+
+#: src/Form/SodaScsSettingsForm.php:151
+msgid "Keycloak host"
+msgstr "Keycloak-Host"
+
+#: src/Form/SodaScsSettingsForm.php:153
+msgid "The keycloak host, like https://auth.sammlungen.io."
+msgstr "Der Keycloak-Host, wie https://auth.sammlungen.io."
+
+#: src/Form/SodaScsSettingsForm.php:158
+msgid "Keycloak realm"
+msgstr "Keycloak-Realm"
+
+#: src/Form/SodaScsSettingsForm.php:160
+msgid "The keycloak realm, like wisski."
+msgstr "Der Keycloak-Realm, wie wisski."
+
+#: src/Form/SodaScsSettingsForm.php:165;281
+msgid "Admin username"
+msgstr "Admin-Benutzername"
+
+#: src/Form/SodaScsSettingsForm.php:167
+msgid "The keycloak admin username, like admin."
+msgstr "Der Keycloak-Admin-Benutzername, wie admin."
+
+#: src/Form/SodaScsSettingsForm.php:172;287
+msgid "Admin password"
+msgstr "Admin-Passwort"
+
+#: src/Form/SodaScsSettingsForm.php:174
+msgid "The keycloak admin password, like admin."
+msgstr "Das Keycloak-Admin-Passwort, wie admin."
+
+#: src/Form/SodaScsSettingsForm.php:179
+msgid "Keycloak routes"
+msgstr "Keycloak-Routen"
+
+#: src/Form/SodaScsSettingsForm.php:184
+msgid "Clients routes"
+msgstr "Client-Routen"
+
+#: src/Form/SodaScsSettingsForm.php:189;306;368
+msgid "Base URL"
+msgstr "Basis-URL"
+
+#: src/Form/SodaScsSettingsForm.php:191
+msgid "The base URL, like /admin/realms."
+msgstr "Die Basis-URL, wie /admin/realms."
+
+#: src/Form/SodaScsSettingsForm.php:196
+msgid "CRUD routes"
+msgstr "CRUD-Routen"
+
+#: src/Form/SodaScsSettingsForm.php:201
+msgid "Create URL"
+msgstr "Erstellen-URL"
+
+#: src/Form/SodaScsSettingsForm.php:203
+msgid "The create URL, like /admin/realms."
+msgstr "Die Erstellen-URL, wie /admin/realms."
+
+#: src/Form/SodaScsSettingsForm.php:208
+msgid "Read one URL"
+msgstr "Einzelne Lesen-URL"
+
+#: src/Form/SodaScsSettingsForm.php:210
+msgid "The read one URL."
+msgstr "Die Einzelne Lesen-URL."
+
+#: src/Form/SodaScsSettingsForm.php:215
+msgid "Read all URL"
+msgstr "Alle Lesen-URL"
+
+#: src/Form/SodaScsSettingsForm.php:217
+msgid "The read all URL."
+msgstr "Die Alle Lesen-URL."
+
+#: src/Form/SodaScsSettingsForm.php:222
+msgid "Update URL"
+msgstr "Aktualisieren-URL"
+
+#: src/Form/SodaScsSettingsForm.php:224
+msgid "The update URL."
+msgstr "Die Aktualisieren-URL."
+
+#: src/Form/SodaScsSettingsForm.php:229
+msgid "Delete URL"
+msgstr "Löschen-URL"
+
+#: src/Form/SodaScsSettingsForm.php:231
+msgid "The delete URL."
+msgstr "Die Löschen-URL."
+
+#: src/Form/SodaScsSettingsForm.php:236
+msgid "Health check URL"
+msgstr "Gesundheitscheck-URL"
+
+#: src/Form/SodaScsSettingsForm.php:238
+msgid "The health check URL."
+msgstr "Die Gesundheitscheck-URL."
+
+#: src/Form/SodaScsSettingsForm.php:249
+msgid "Token URL"
+msgstr "Token-URL"
+
+#: src/Form/SodaScsSettingsForm.php:251
+msgid "The token URL, like /realms/master/protocol/openid-connect/token."
+msgstr "Die Token-URL, wie /realms/master/protocol/openid-connect/token."
+
+#: src/Form/SodaScsSettingsForm.php:257
+msgid "Triplestore settings"
+msgstr "Triplestore-Einstellungen"
+
+#: src/Form/SodaScsSettingsForm.php:269
+msgid "Triplestore host"
+msgstr "Triplestore-Host"
+
+#: src/Form/SodaScsSettingsForm.php:271
+msgid "The triplestore host, like https://ts.scs.sammlungen.io."
+msgstr "Der Triplestore-Host, wie https://ts.scs.sammlungen.io."
+
+#: src/Form/SodaScsSettingsForm.php:275
+msgid "Port"
+msgstr "Port"
+
+#: src/Form/SodaScsSettingsForm.php:277
+msgid "The triplestore port, like 80."
+msgstr "Der Triplestore-Port, wie 80."
+
+#: src/Form/SodaScsSettingsForm.php:283
+msgid "The admin username, like admin."
+msgstr "Der Admin-Benutzername, wie admin."
+
+#: src/Form/SodaScsSettingsForm.php:289
+msgid "The admin password, like password."
+msgstr "Das Admin-Passwort, wie password."
+
+#: src/Form/SodaScsSettingsForm.php:308
+msgid "The base URL, like /rest/repositories."
+msgstr "Die Basis-URL, wie /rest/repositories."
+
+#: src/Form/SodaScsSettingsForm.php:319
+msgid "Create repositories route"
+msgstr "Erstellen von Repository-Routen"
+
+#: src/Form/SodaScsSettingsForm.php:321
+msgid "The create repositories route."
+msgstr "Die Erstellen von Repository-Routen."
+
+#: src/Form/SodaScsSettingsForm.php:326
+msgid "Read one repositories route"
+msgstr "Einzelne Repository-Lesen-Route"
+
+#: src/Form/SodaScsSettingsForm.php:328
+msgid "The read one repositories route, like /{repositoryId}."
+msgstr "Die Einzelne Repository-Lesen-Route, wie /{repositoryId}."
+
+#: src/Form/SodaScsSettingsForm.php:333
+msgid "Read all repositories route"
+msgstr "Alle Repository-Lesen-Routen"
+
+#: src/Form/SodaScsSettingsForm.php:335
+msgid "The read all repositories route."
+msgstr "Die Alle Repository-Lesen-Routen."
+
+#: src/Form/SodaScsSettingsForm.php:340
+msgid "Update repositories route"
+msgstr "Aktualisieren von Repository-Routen"
+
+#: src/Form/SodaScsSettingsForm.php:342
+msgid "The update repositories route, like /{repositoryId}."
+msgstr "Die Aktualisieren von Repository-Routen, wie /{repositoryId}."
+
+#: src/Form/SodaScsSettingsForm.php:347
+msgid "Delete repositories route"
+msgstr "Löschen von Repository-Routen"
+
+#: src/Form/SodaScsSettingsForm.php:349
+msgid "The delete repositories route, like /{repositoryId}."
+msgstr "Die Löschen von Repository-Routen, wie /{repositoryId}."
+
+#: src/Form/SodaScsSettingsForm.php:354;427;513;517;801
+msgid "Health check route"
+msgstr "Gesundheitscheck-Route"
+
+#: src/Form/SodaScsSettingsForm.php:356
+msgid "The health check route, like /{repositoryId}/size."
+msgstr "Die Gesundheitscheck-Route, wie /{repositoryId}/size."
+
+#: src/Form/SodaScsSettingsForm.php:370
+msgid "The base URL, like /rest/security/users."
+msgstr "Die Basis-URL, wie /rest/security/users."
+
+#: src/Form/SodaScsSettingsForm.php:381
+msgid "Create user route"
+msgstr "Benutzerroute erstellen"
+
+#: src/Form/SodaScsSettingsForm.php:383
+msgid "The create route, like /."
+msgstr "Die Erstellen-Route, wie /."
+
+#: src/Form/SodaScsSettingsForm.php:388
+msgid "Read one user route"
+msgstr "Einzelne Benutzer-Lesen-Route"
+
+#: src/Form/SodaScsSettingsForm.php:390
+msgid "The read one route, like /{userId}."
+msgstr "Die Einzelne Lesen-Route, wie /{userId}."
+
+#: src/Form/SodaScsSettingsForm.php:395
+msgid "Read all users route"
+msgstr "Alle Benutzer-Lesen-Routen"
+
+#: src/Form/SodaScsSettingsForm.php:397
+msgid "The read all route."
+msgstr "Die Alle Lesen-Routen."
+
+#: src/Form/SodaScsSettingsForm.php:402
+msgid "Update user route"
+msgstr "Benutzerroute aktualisieren"
+
+#: src/Form/SodaScsSettingsForm.php:404
+msgid "The update route, like /{userId}."
+msgstr "Die Aktualisieren-Route, wie /{userId}."
+
+#: src/Form/SodaScsSettingsForm.php:409
+msgid "Delete user route"
+msgstr "Benutzerroute löschen"
+
+#: src/Form/SodaScsSettingsForm.php:411
+msgid "The delete route, like /{userId}."
+msgstr "Die Löschen-Route, wie /{userId}."
+
+#: src/Form/SodaScsSettingsForm.php:429
+msgid "The health check route, like /protocol."
+msgstr "Die Gesundheitscheck-Route, wie /protocol."
+
+#: src/Form/SodaScsSettingsForm.php:434;524
+msgid "Check"
+msgstr "Prüfen"
+
+#: src/Form/SodaScsSettingsForm.php:449
+msgid "Authentification token URL"
+msgstr "Authentifizierungs-Token-URL"
+
+#: src/Form/SodaScsSettingsForm.php:451
+msgid "The authentification token URL, like /api-token-auth/{userId}."
+msgstr "Die Authentifizierungs-Token-URL, wie /api-token-auth/{userId}."
+
+#: src/Form/SodaScsSettingsForm.php:457
+msgid "Portainer settings"
+msgstr "Portainer-Einstellungen"
+
+#: src/Form/SodaScsSettingsForm.php:464
+msgid "Portainer options"
+msgstr "Portainer-Optionen"
+
+#: src/Form/SodaScsSettingsForm.php:469
+msgid "Host"
+msgstr "Host"
+
+#: src/Form/SodaScsSettingsForm.php:471
+msgid "The host, like https://portainer.scs.sammlungen.io"
+msgstr "Der Host, wie https://portainer.scs.sammlungen.io"
+
+#: src/Form/SodaScsSettingsForm.php:476
+msgid "Authentication token"
+msgstr "Authentifizierungs-Token"
+
+#: src/Form/SodaScsSettingsForm.php:478
+msgid "The authentication token, like 1234"
+msgstr "Das Authentifizierungs-Token, wie 1234"
+
+#: src/Form/SodaScsSettingsForm.php:483
+msgid "Endpoint"
+msgstr "Endpunkt"
+
+#: src/Form/SodaScsSettingsForm.php:485
+msgid "The endpoint, like \"1\"."
+msgstr "Der Endpunkt, wie \"1\"."
+
+#: src/Form/SodaScsSettingsForm.php:490
+msgid "Swarm Id"
+msgstr "Swarm-ID"
+
+#: src/Form/SodaScsSettingsForm.php:492
+msgid "The swarm Id, like \"1\"."
+msgstr "Die Swarm-ID, wie \"1\"."
+
+#: src/Form/SodaScsSettingsForm.php:499
+msgid "Endpoint routes"
+msgstr "Endpunkt-Routen"
+
+#: src/Form/SodaScsSettingsForm.php:504
+msgid "Endpoint base route"
+msgstr "Endpunkt-Basisroute"
+
+#: src/Form/SodaScsSettingsForm.php:506
+msgid "The endpoint base URL, like /api/endpoints."
+msgstr "Die Endpunkt-Basis-URL, wie /api/endpoints."
+
+#: src/Form/SodaScsSettingsForm.php:519
+msgid "The health check route, like \"/{endpointId}\""
+msgstr "Die Gesundheitscheck-Route, wie \"/{endpointId}\""
+
+#: src/Form/SodaScsSettingsForm.php:535
+msgid "Docker API routes"
+msgstr "Docker-API-Routen"
+
+#: src/Form/SodaScsSettingsForm.php:540;726;788
+msgid "Base route"
+msgstr "Basisroute"
+
+#: src/Form/SodaScsSettingsForm.php:542
+msgid "The base URL, like \"/docker\"."
+msgstr "Die Basis-URL, wie \"/docker\"."
+
+#: src/Form/SodaScsSettingsForm.php:549
+msgid "Docker exec routes."
+msgstr "Docker-Exec-Routen."
+
+#: src/Form/SodaScsSettingsForm.php:554
+msgid "Docker exec create route."
+msgstr "Docker-Exec-Erstellen-Route."
+
+#: src/Form/SodaScsSettingsForm.php:556
+msgid "Route to create a command inside a running container, like \"/containers/{containerId}/exec\"."
+msgstr "Route zum Erstellen eines Befehls in einem laufenden Container, wie \"/containers/{containerId}/exec\"."
+
+#: src/Form/SodaScsSettingsForm.php:561
+msgid "Docker exec start route."
+msgstr "Docker-Exec-Start-Route."
+
+#: src/Form/SodaScsSettingsForm.php:563
+msgid "Route to start a command inside a running container, like \"/exec/{execId}/start\"."
+msgstr "Route zum Starten eines Befehls in einem laufenden Container, wie \"/exec/{execId}/start\"."
+
+#: src/Form/SodaScsSettingsForm.php:568
+msgid "Docker exec resize route."
+msgstr "Docker-Exec-Größenänderungs-Route."
+
+#: src/Form/SodaScsSettingsForm.php:570
+msgid "Route to resize a command inside a running container, like \"/exec/{execId}/resize\"."
+msgstr "Route zum Ändern der Größe eines Befehls in einem laufenden Container, wie \"/exec/{execId}/resize\"."
+
+#: src/Form/SodaScsSettingsForm.php:575
+msgid "Docker exec inspect route."
+msgstr "Docker-Exec-Inspektions-Route."
+
+#: src/Form/SodaScsSettingsForm.php:577
+msgid "Route to inspect a command inside a running container, like \"/exec/{execId}/json\"."
+msgstr "Route zur Inspektion eines Befehls in einem laufenden Container, wie \"/exec/{execId}/json\"."
+
+#: src/Form/SodaScsSettingsForm.php:584
+msgid "Docker Container routes."
+msgstr "Docker-Container-Routen."
+
+#: src/Form/SodaScsSettingsForm.php:589
+msgid "Docker Container API base route"
+msgstr "Docker-Container-API-Basisroute"
+
+#: src/Form/SodaScsSettingsForm.php:591
+msgid "The base URL, like \"/containers\"."
+msgstr "Die Basis-URL, wie \"/containers\"."
+
+#: src/Form/SodaScsSettingsForm.php:596
+msgid "Docker Container CRUSSRDR routes."
+msgstr "Docker-Container-CRUSSRDR-Routen."
+
+#: src/Form/SodaScsSettingsForm.php:601
+msgid "Docker Container create route."
+msgstr "Docker-Container-Erstellen-Route."
+
+#: src/Form/SodaScsSettingsForm.php:603
+msgid "The create route, like \"/create\"."
+msgstr "Die Erstellen-Route, wie \"/create\"."
+
+#: src/Form/SodaScsSettingsForm.php:608
+msgid "Docker Container read one route."
+msgstr "Docker-Container-Einzelne-Lesen-Route."
+
+#: src/Form/SodaScsSettingsForm.php:610
+msgid "The read one route, like \"/{containerId}/json\"."
+msgstr "Die Einzelne Lesen-Route, wie \"/{containerId}/json\"."
+
+#: src/Form/SodaScsSettingsForm.php:615
+msgid "Docker Container read all route."
+msgstr "Docker-Container-Alle-Lesen-Route."
+
+#: src/Form/SodaScsSettingsForm.php:617
+msgid "The read all route, like \"/json\"."
+msgstr "Die Alle Lesen-Route, wie \"/json\"."
+
+#: src/Form/SodaScsSettingsForm.php:622
+msgid "Docker Container update route."
+msgstr "Docker-Container-Aktualisieren-Route."
+
+#: src/Form/SodaScsSettingsForm.php:624
+msgid "The update route, like \"/{containerId}/update\"."
+msgstr "Die Aktualisieren-Route, wie \"/{containerId}/update\"."
+
+#: src/Form/SodaScsSettingsForm.php:629
+msgid "Docker Container start route."
+msgstr "Docker-Container-Start-Route."
+
+#: src/Form/SodaScsSettingsForm.php:631
+msgid "The start route, like \"/{containerId}/start\"."
+msgstr "Die Start-Route, wie \"/{containerId}/start\"."
+
+#: src/Form/SodaScsSettingsForm.php:636
+msgid "Docker Container stop route."
+msgstr "Docker-Container-Stopp-Route."
+
+#: src/Form/SodaScsSettingsForm.php:638
+msgid "The stop route, like \"/{containerId}/stop\"."
+msgstr "Die Stopp-Route, wie \"/{containerId}/stop\"."
+
+#: src/Form/SodaScsSettingsForm.php:643
+msgid "Docker Container restart route."
+msgstr "Docker-Container-Neustart-Route."
+
+#: src/Form/SodaScsSettingsForm.php:645
+msgid "The restart route, like \"/{containerId}/restart\"."
+msgstr "Die Neustart-Route, wie \"/{containerId}/restart\"."
+
+#: src/Form/SodaScsSettingsForm.php:650
+msgid "Docker Container delete route."
+msgstr "Docker-Container-Löschen-Route."
+
+#: src/Form/SodaScsSettingsForm.php:652
+msgid "The delete route, like \"/{containerId}\"."
+msgstr "Die Löschen-Route, wie \"/{containerId}\"."
+
+#: src/Form/SodaScsSettingsForm.php:657
+msgid "Docker Container remove route."
+msgstr "Docker-Container-Entfernen-Route."
+
+#: src/Form/SodaScsSettingsForm.php:659
+msgid "The remove route, like \"/{containerId}/prune\"."
+msgstr "Die Entfernen-Route, wie \"/{containerId}/prune\"."
+
+#: src/Form/SodaScsSettingsForm.php:666
+msgid "Docker Volume routes."
+msgstr "Docker-Volume-Routen."
+
+#: src/Form/SodaScsSettingsForm.php:671
+msgid "Docker volumes API base route"
+msgstr "Docker-Volumes-API-Basisroute"
+
+#: src/Form/SodaScsSettingsForm.php:673
+msgid "The base URL, like \"/volumes\"."
+msgstr "Die Basis-URL, wie \"/volumes\"."
+
+#: src/Form/SodaScsSettingsForm.php:679
+msgid "Docker Volume CRUD routes."
+msgstr "Docker-Volume-CRUD-Routen."
+
+#: src/Form/SodaScsSettingsForm.php:684
+msgid "Create volume route"
+msgstr "Volume-Erstellen-Route"
+
+#: src/Form/SodaScsSettingsForm.php:686
+msgid "The create volume route, like \"/create\"."
+msgstr "Die Volume-Erstellen-Route, wie \"/create\"."
+
+#: src/Form/SodaScsSettingsForm.php:691
+msgid "Read one volume route"
+msgstr "Einzelne Volume-Lesen-Route"
+
+#: src/Form/SodaScsSettingsForm.php:693
+msgid "The read one volume route, like \"/{volumeId}\"."
+msgstr "Die Einzelne Volume-Lesen-Route, wie \"/{volumeId}\"."
+
+#: src/Form/SodaScsSettingsForm.php:698
+msgid "Read all volumes route"
+msgstr "Alle Volume-Lesen-Routen"
+
+#: src/Form/SodaScsSettingsForm.php:700
+msgid "The read all volumes route, like \"\"."
+msgstr "Die Alle Volume-Lesen-Routen, wie \"\"."
+
+#: src/Form/SodaScsSettingsForm.php:705
+msgid "Update volume route"
+msgstr "Volume-Aktualisieren-Route"
+
+#: src/Form/SodaScsSettingsForm.php:707
+msgid "The update volume route, like \"/{volumeId}\"."
+msgstr "Die Volume-Aktualisieren-Route, wie \"/{volumeId}\"."
+
+#: src/Form/SodaScsSettingsForm.php:712
+msgid "Delete volume route"
+msgstr "Volume-Löschen-Route"
+
+#: src/Form/SodaScsSettingsForm.php:714
+msgid "The delete volume route, like /{volumeId}."
+msgstr "Die Volume-Löschen-Route, wie /{volumeId}."
+
+#: src/Form/SodaScsSettingsForm.php:721
+msgid "Docker Stacks routes"
+msgstr "Docker-Stacks-Routen"
+
+#: src/Form/SodaScsSettingsForm.php:728
+msgid "The base URL, like \"/stacks\"."
+msgstr "Die Basis-URL, wie \"/stacks\"."
+
+#: src/Form/SodaScsSettingsForm.php:733
+msgid "Portainer Stack CRUD routes"
+msgstr "Portainer-Stack-CRUD-Routen"
+
+#: src/Form/SodaScsSettingsForm.php:738
+msgid "Create route"
+msgstr "Erstellen-Route"
+
+#: src/Form/SodaScsSettingsForm.php:740
+msgid "The create route, like \"/\"."
+msgstr "Die Erstellen-Route, wie \"/\"."
+
+#: src/Form/SodaScsSettingsForm.php:745
+msgid "Read one route"
+msgstr "Einzelne Lesen-Route"
+
+#: src/Form/SodaScsSettingsForm.php:747
+msgid "The read one route, like \"/{stackId}\"."
+msgstr "Die Einzelne Lesen-Route, wie \"/{stackId}\"."
+
+#: src/Form/SodaScsSettingsForm.php:752
+msgid "Read all route"
+msgstr "Alle Lesen-Route"
+
+#: src/Form/SodaScsSettingsForm.php:754
+msgid "The read all route, like \"\"."
+msgstr "Die Alle Lesen-Route, wie \"\"."
+
+#: src/Form/SodaScsSettingsForm.php:759
+msgid "Update route"
+msgstr "Aktualisieren-Route"
+
+#: src/Form/SodaScsSettingsForm.php:761
+msgid "The update route, like \"/{stackId}\"."
+msgstr "Die Aktualisieren-Route, wie \"/{stackId}\"."
+
+#: src/Form/SodaScsSettingsForm.php:766
+msgid "Delete route"
+msgstr "Löschen-Route"
+
+#: src/Form/SodaScsSettingsForm.php:768
+msgid "The delete route, like \"/{stackId}\"."
+msgstr "Die Löschen-Route, wie \"/{stackId}\"."
+
+#: src/Form/SodaScsSettingsForm.php:774
+msgid "WissKI settings"
+msgstr "WissKI-Einstellungen"
+
+#: src/Form/SodaScsSettingsForm.php:790
+msgid "The base URL, like \"https://{instanceId}.scs.sammlungen.io\"."
+msgstr "Die Basis-URL, wie \"https://{instanceId}.scs.sammlungen.io\"."
+
+#: src/Form/SodaScsSettingsForm.php:803
+msgid "The health check route, like \"/health\"."
+msgstr "Die Gesundheitscheck-Route, wie \"/health\"."
+
+#: src/Form/SodaScsSnapshotConfirmForm.php:106
+msgid "Snapshot Label"
+msgstr "Snapshot-Etikett"
+
+#: src/Form/SodaScsSnapshotConfirmForm.php:107
+msgid "Enter a label for this snapshot."
+msgstr "Geben Sie ein Etikett für diesen Snapshot ein."
+
+#: src/Form/SodaScsSnapshotConfirmForm.php:114
+msgid "Enter a description for this snapshot."
+msgstr "Geben Sie eine Beschreibung für diesen Snapshot ein."
+
+#: src/Form/SodaScsSnapshotConfirmForm.php:130
+msgid "Failed to create snapshot. See logs for more details."
+msgstr "Snapshot konnte nicht erstellt werden. Siehe Protokolle für weitere Details."
+
+#: src/Form/SodaScsSnapshotConfirmForm.php:155 src/Form/SodaScsSnapshotCreateForm.php:51
+msgid "Created new snapshot %label."
+msgstr "Neuer Snapshot %label erstellt."
+
+#: src/Form/SodaScsSnapshotConfirmForm.php:166
+msgid "Create snapshot of @type @label?"
+msgstr "Snapshot von @type @label erstellen?"
+
+#: src/Form/SodaScsSnapshotConfirmForm.php:183
+msgid "This action will create a new snapshot of the current state of this @type."
+msgstr "Diese Aktion erstellt einen neuen Snapshot des aktuellen Zustands dieses @type."
+
+#: src/Form/SodaScsSnapshotCreateForm.php:24
+msgid "Add snapshot"
+msgstr "Snapshot hinzufügen"
+
+#: src/Form/SodaScsSnapshotCreateForm.php:27
+msgid "Edit snapshot @label"
+msgstr "Snapshot @label bearbeiten"
+
+#: src/Form/SodaScsSnapshotCreateForm.php:56
+msgid "Updated snapshot %label."
+msgstr "Snapshot %label aktualisiert."
+
+#: src/Form/SodaScsSnapshotDeleteForm.php:20
+msgid "Are you sure you want to delete snapshot %label?"
+msgstr "Sind Sie sicher, dass Sie den Snapshot %label löschen möchten?"
+
+#: src/Form/SodaScsSnapshotDeleteForm.php:48
+msgid "Snapshot %label has been deleted."
+msgstr "Snapshot %label wurde gelöscht."
+
+#: src/Form/SodaScsStackCreateForm.php:159
+msgid "CREATE STACK"
+msgstr "STACK ERSTELLEN"
+
+#: src/Form/SodaScsStackCreateForm.php:178
+msgid "The machineName can only contain small letters, digits, and minus."
+msgstr "Der Maschinenname darf nur Kleinbuchstaben, Ziffern und Minus enthalten."
+
+#: src/Form/SodaScsStackCreateForm.php:267
+msgid "Cannot create stack \"@label\". See logs for more details."
+msgstr "Stack \"@label\" kann nicht erstellt werden. Siehe Protokolle für weitere Details."
+
+#: src/Form/SodaScsStackDeleteForm.php:94
+msgid "%message See logs for more information."
+msgstr "%message Siehe Protokolle für weitere Informationen."
+
+#: src/Form/SodaScsStackDeleteForm.php:97
+msgid "%message %error %trace"
+msgstr "%message %error %trace"
+
+#: src/Helpers/SodaScsComponentHelpers.php:231
+msgid "Filesystem is available."
+msgstr "Dateisystem ist verfügbar."
+
+#: src/Helpers/SodaScsComponentHelpers.php:270
+msgid "MariaDB health check passed for component @component."
+msgstr "MariaDB-Gesundheitscheck für Komponente @component bestanden."
+
+#: src/Helpers/SodaScsComponentHelpers.php:298;316
+msgid "Triplestore health check failed for component @component: @error"
+msgstr "Triplestore-Gesundheitscheck für Komponente @component fehlgeschlagen: @error"
+
+#: src/Helpers/SodaScsComponentHelpers.php:308
+msgid "Triplestore is healthy for component @component."
+msgstr "Triplestore ist gesund für Komponente @component."
+
+#: src/Helpers/SodaScsComponentHelpers.php:380
+msgid "Directory created successfully."
+msgstr "Verzeichnis erfolgreich erstellt."
+
+#: src/Helpers/SodaScsComponentHelpers.php:389
+msgid "Failed to create directory: @error"
+msgstr "Verzeichnis konnte nicht erstellt werden: @error"
+
+#: src/ListBuilder/SodaScsComponentListBuilder.php:20 src/ListBuilder/SodaScsStackListBuilder.php:20
+msgid "Domain"
+msgstr "Domain"
+
+#: src/ListBuilder/SodaScsComponentListBuilder.php:21 src/ListBuilder/SodaScsStackListBuilder.php:21
+msgid "Operations"
+msgstr "Operationen"
+
+#: src/ListBuilder/SodaScsProjectListBuilder.php:22 src/ListBuilder/SodaScsSnapshotListBuilder.php:76
+msgid "Name"
+msgstr "Name"
+
+#: src/ListBuilder/SodaScsProjectListBuilder.php:23
+msgid "Machine name"
+msgstr "Maschinenname"
+
+#: src/ListBuilder/SodaScsProjectListBuilder.php:26
+msgid "Components"
+msgstr "Komponenten"
+
+#: src/ListBuilder/SodaScsServiceKeyListBuilder.php:22
+msgid "Id"
+msgstr "ID"
+
+#: src/ListBuilder/SodaScsServiceKeyListBuilder.php:24
+msgid "Used by component(s)"
+msgstr "Verwendet von Komponente(n)"
+
+#: src/ListBuilder/SodaScsSnapshotListBuilder.php:75
+msgid "ID"
+msgstr "ID"
+
+#: src/Plugin/Block/SodaScsNavigationBlock.php:47
+msgid "Dashboard"
+msgstr "Dashboard"
+
+#: src/Plugin/Block/SodaScsNavigationBlock.php:75
+msgid "Settings"
+msgstr "Einstellungen"
+
+#: src/Plugin/Block/SodaScsNavigationBlock.php:8
+msgid "SODa SCS Manager Sidebar Navigation"
+msgstr "SODa SCS Manager Seitenleisten-Navigation"
+
+#: src/Plugin/EntityReferenceSelection/SodaScsComponentSelection.php:8
+msgid "SCS Component Selection"
+msgstr "SCS Komponentenauswahl"
+
+#: src/Plugin/EntityReferenceSelection/SodaScsProjectSelection.php:10
+msgid "SCS Project Selection"
+msgstr "SCS Projektauswahl"
+
+#: src/RequestActions/SodaScsDockerRegistryServiceActions.php:105
+msgid "Portainer request failed. See logs for more details."
+msgstr "Portainer-Anfrage fehlgeschlagen. Siehe Protokolle für weitere Details."
+
+#: src/RequestActions/SodaScsKeycloakServiceActions.php:507 src/RequestActions/SodaScsPortainerServiceActions.php:183
+msgid "Request failed with code @code"
+msgstr "Anfrage mit Code @code fehlgeschlagen"
+
+#: src/RequestActions/SodaScsKeycloakServiceActions.php:504
+msgid "Request details: @request"
+msgstr "Anfragedetails: @request"
+
+#: src/RequestActions/SodaScsOpenGdbServiceActions.php:385
+msgid "OpenGDB user: @username does not exist. Try to create it for you..."
+msgstr "OpenGDB-Benutzer: @username existiert nicht. Versuchen, es für Sie zu erstellen..."
+
+#: src/RequestActions/SodaScsOpenGdbServiceActions.php:404
+msgid "OpenGDB request for @type failed. See logs for more details."
+msgstr "OpenGDB-Anfrage für @type fehlgeschlagen. Siehe Protokolle für weitere Details."
+
+#: src/RequestActions/SodaScsPortainerServiceActions.php:226
+msgid "https://@defaultGraphMachineName.@hostDomainName"
+msgstr "https://@defaultGraphMachineName.@hostDomainName"
+
+#: src/ServiceActions/SodaScsSqlServiceActions.php:237;239
+msgid "Error loading service key: @error"
+msgstr "Fehler beim Laden des Dienstschlüssels: @error"
+
+#: src/ServiceActions/SodaScsSqlServiceActions.php:267
+msgid "Database could not be found. See logs for details."
+msgstr "Datenbank konnte nicht gefunden werden. Siehe Protokolle für Details."
+
+#: src/ServiceActions/SodaScsSqlServiceActions.php:269
+msgid "Database @name database could not be found."
+msgstr "Datenbank @name konnte nicht gefunden werden."
+
+#: src/ServiceActions/SodaScsSqlServiceActions.php:295
+msgid "Delete database @name."
+msgstr "Datenbank @name löschen."
+
+#: src/ServiceActions/SodaScsSqlServiceActions.php:371
+msgid "Can not communicate with the SCS user manager daemon."
+msgstr "Kann nicht mit dem SCS-Benutzer-Manager-Daemon kommunizieren."
+
+#: src/ServiceActions/SodaScsSqlServiceActions.php:495
+msgid "Can not delete the root user"
+msgstr "Kann den Root-Benutzer nicht löschen"
+
+#: src/ServiceActions/SodaScsSqlServiceActions.php:516
+msgid "User owns databases"
+msgstr "Benutzer besitzt Datenbanken"
+
+#: src/ServiceActions/SodaScsSqlServiceActions.php:535
+msgid "User owned no databases, and was deleted"
+msgstr "Benutzer besaß keine Datenbanken und wurde gelöscht"
+
+#: src/StackActions/SodaScsSqlStackActions.php:115 src/StackActions/SodaScsWisskiStackActions.php:232
+msgid "Could not create database component. See logs for more details."
+msgstr "Datenbankkomponente konnte nicht erstellt werden. Siehe Protokolle für weitere Details."
+
+#: src/StackActions/SodaScsTriplestoreStackActions.php:88
+msgid "Could not create triplestore stack: %message"
+msgstr "Triplestore-Stack konnte nicht erstellt werden: %message"
+
+#: src/StackActions/SodaScsTriplestoreStackActions.php:98
+msgid "Created triplestore stack: %message"
+msgstr "Triplestore-Stack erstellt: %message"
+
+#: src/StackActions/SodaScsTriplestoreStackActions.php:108
+msgid "Could not create triplestore component. See logs for more details."
+msgstr "Triplestore-Komponente konnte nicht erstellt werden. Siehe Protokolle für weitere Details."
+
+#: src/StackActions/SodaScsTriplestoreStackActions.php:110
+msgid "Could not create stack: %message"
+msgstr "Stack konnte nicht erstellt werden: %message"
+
+#: src/StackActions/SodaScsTriplestoreStackActions.php:202
+msgid "Could not delete triplestore component. See logs for more details."
+msgstr "Triplestore-Komponente konnte nicht gelöscht werden. Siehe Protokolle für weitere Details."
+
+#: src/StackActions/SodaScsWisskiStackActions.php:263
+msgid "Could not create triplestore. See logs for more details."
+msgstr "Triplestore konnte nicht erstellt werden. Siehe Protokolle für weitere Details."
+
+#: src/StackActions/SodaScsWisskiStackActions.php:296;310;352
+msgid "Could not create WissKI. See logs for more details."
+msgstr "WissKI konnte nicht erstellt werden. Siehe Protokolle für weitere Details."
+
+#: src/StackActions/SodaScsWisskiStackActions.php:398;557
+msgid "Request error. See logs for more details."
+msgstr "Anfragefehler. Siehe Protokolle für weitere Details."
+
+#: src/StackActions/SodaScsWisskiStackActions.php:502;515
+msgid "Cannot delete triplestore component. See logs for more details."
+msgstr "Triplestore-Komponente kann nicht gelöscht werden. Siehe Protokolle für weitere Details."
+
+#: templates/block/block--system-branding-block.html.twig:19;20;25
+msgid "Home"
+msgstr "Startseite"
+
+#: templates/navigation/menu-local-tasks.html.twig:15
+msgid "Primary tabs"
+msgstr "Primäre Registerkarten"
+
+#: templates/navigation/menu-local-tasks.html.twig:21
+msgid "Secondary tabs"
+msgstr "Sekundäre Registerkarten"
+
+#: templates/node/node.html.twig:87
+msgid "Submitted by @author_name on @date"
+msgstr "Eingereicht von @author_name am @date"
+
+#: templates/pages/soda-scs-manager--desk.html.twig:20
+msgid "No"
+msgstr "Nein"
+
+#: templates/pages/soda-scs-manager--store.html.twig:14
+msgid "No stacks available."
+msgstr "Keine Stacks verfügbar."
+
+#: templates/pages/soda-scs-manager--store.html.twig:30
+msgid "No components available."
+msgstr "Keine Komponenten verfügbar."
