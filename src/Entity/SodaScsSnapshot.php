@@ -7,27 +7,27 @@ use Drupal\Core\Entity\EntityTypeInterface;
 use Drupal\Core\Field\BaseFieldDefinition;
 use Drupal\Core\StringTranslation\TranslatableMarkup;
 use Drupal\user\EntityOwnerTrait;
-
+// @todo Add access handler. "access" = "Drupal\soda_scs_manager\Access\SodaScsSnapshotAccessControlHandler",
 /**
  * Defines the Soda SCS Snapshot entity.
  *
  * @ContentEntityType(
  *   id = "soda_scs_snapshot",
- *   label = @Translation("Snapshot"),
- *   label_collection = @Translation("Snapshots"),
- *   label_singular = @Translation("Snapshot"),
- *   label_plural = @Translation("Snapshots"),
+ *   label = @Translation("Soda SCS Snapshot"),
+ *   label_collection = @Translation("Soda SCS Snapshots"),
+ *   label_singular = @Translation("Soda SCS Snapshot"),
+ *   label_plural = @Translation("Soda SCS Snapshots"),
  *   label_count = @PluralTranslation(
- *     singular = "@count Snapshot",
- *     plural = "@count Snapshots",
+ *     singular = "@count Soda SCS Snapshot",
+ *     plural = "@count Soda SCS Snapshots",
  *   ),
  *   handlers = {
  *     "storage" = "Drupal\Core\Entity\Sql\SqlContentEntityStorage",
  *     "view_builder" = "Drupal\Core\Entity\EntityViewBuilder",
- *     "list_builder" = "Drupal\soda_scs_manager\ListBuilder\SnapshotListBuilder",
+ *     "list_builder" = "Drupal\soda_scs_manager\ListBuilder\SodaScsSnapshotListBuilder",
  *     "views_data" = "Drupal\views\EntityViewsData",
  *     "translation" = "Drupal\content_translation\ContentTranslationHandler",
- *     "access" = "Drupal\soda_scs_manager\Access\SodaScsSnapshotAccessControlHandler",
+ *     "access" = "Drupal\Core\Entity\EntityAccessControlHandler",
  *     "form" = {
  *       "default" = "Drupal\soda_scs_manager\Form\SodaScsSnapshotCreateForm",
  *       "add" = "Drupal\soda_scs_manager\Form\SodaScsSnapshotCreateForm",
@@ -39,8 +39,9 @@ use Drupal\user\EntityOwnerTrait;
  *   },
  *   links = {
  *     "canonical" = "/soda-scs-manager/snapshot/{soda_scs_snapshot}",
- *     "add-form" = "/soda-scs-manager/snapshot/add",
+ *     "edit-form" = "/soda-scs-manager/snapshot/{soda_scs_snapshot}/edit",
  *     "delete-form" = "/soda-scs-manager/snapshot/{soda_scs_snapshot}/delete",
+ *     "add-form" = "/soda-scs-manager/snapshot/add",
  *     "collection" = "/soda-scs-manager/snapshots",
  *   },
  *   base_table = "soda_scs_snapshot",
