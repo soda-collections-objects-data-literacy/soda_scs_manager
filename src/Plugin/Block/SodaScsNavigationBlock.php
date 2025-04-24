@@ -29,7 +29,7 @@ class SodaScsNavigationBlock extends BlockBase {
         'class' => ['soda-scs-manager--sidebar--navigation'],
       ],
       '#attached' => [
-        'library' => ['soda_scs_manager_theme/globalStyling'],
+        'library' => ['soda_scs_manager/globalStyling'],
       ],
       '#contextual_links' => [],
     ];

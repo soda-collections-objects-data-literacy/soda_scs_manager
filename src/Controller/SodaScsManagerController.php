@@ -112,7 +112,7 @@ class SodaScsManagerController extends ControllerBase {
         '#entity_type' => 'soda_scs_component',
         '#url' => Url::fromRoute('entity.soda_scs_component.canonical', ['soda_scs_component' => $component->id()]),
         '#attached' => [
-          'library' => ['soda_scs_manager_theme/globalStyling'],
+          'library' => ['soda_scs_manager/globalStyling'],
         ],
       ];
     }
@@ -148,7 +148,7 @@ class SodaScsManagerController extends ControllerBase {
         '#entity_type' => 'soda_scs_stack',
         '#url' => Url::fromRoute('entity.soda_scs_stack.canonical', ['soda_scs_stack' => $stack->id()]),
         '#attached' => [
-          'library' => ['soda_scs_manager_theme/globalStyling'],
+          'library' => ['soda_scs_manager/globalStyling'],
         ],
       ];
     }
@@ -180,7 +180,7 @@ class SodaScsManagerController extends ControllerBase {
       '#components' => [],
       '#stacks' => [],
       '#attached' => [
-        'library' => ['soda_scs_manager_theme/globalStyling'],
+        'library' => ['soda_scs_manager/globalStyling'],
       ],
     ];
 
@@ -202,7 +202,7 @@ class SodaScsManagerController extends ControllerBase {
         '#imageUrl' => $stackBundle['imageUrl'],
         '#url' => Url::fromRoute('entity.soda_scs_stack.add_form', ['bundle' => $id]),
         '#attached' => [
-          'library' => ['soda_scs_manager_theme/globalStyling'],
+          'library' => ['soda_scs_manager/globalStyling'],
         ],
       ];
     }
@@ -221,7 +221,7 @@ class SodaScsManagerController extends ControllerBase {
         '#imageUrl' => $componentBundle['imageUrl'],
         '#url' => Url::fromRoute('entity.soda_scs_component.add_form', ['bundle' => $id]),
         '#attached' => [
-          'library' => ['soda_scs_manager_theme/globalStyling'],
+          'library' => ['soda_scs_manager/globalStyling'],
         ],
       ];
     }
@@ -239,7 +239,7 @@ class SodaScsManagerController extends ControllerBase {
     return [
       '#theme' => 'soda_scs_manager__start_page',
       '#attached' => [
-        'library' => ['soda_scs_manager_theme/globalStyling'],
+        'library' => ['soda_scs_manager/globalStyling'],
       ],
     ];
   }

@@ -1,0 +1,8 @@
+{
+    "name": "drupal/soda_scs_manager",
+    "description": "This is a module for the SODA SCS Manager.",
+    "type": "drupal-module",
+    "require": {
+        "drupal/tailwindcss": "^5.0@alpha"
+    }
+}
