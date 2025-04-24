@@ -1,0 +1,72 @@
+/**
+ * Keycloak registration form styles.
+ */
+
+.keycloak-user-registration-form {
+  @apply max-w-xl mx-auto p-6 bg-white rounded-lg shadow-md;
+}
+
+.keycloak-user-registration-form .form-item {
+  @apply mb-4;
+}
+
+.keycloak-user-registration-form label {
+  @apply block text-gray-700 text-sm font-bold mb-2;
+}
+
+.keycloak-user-registration-form input[type="text"],
+.keycloak-user-registration-form input[type="email"],
+.keycloak-user-registration-form input[type="password"] {
+  @apply shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight;
+}
+
+.keycloak-user-registration-form input[type="text"]:focus,
+.keycloak-user-registration-form input[type="email"]:focus,
+.keycloak-user-registration-form input[type="password"]:focus {
+  @apply outline-none ring-2 ring-blue-500;
+}
+
+.keycloak-user-registration-form .description {
+  @apply text-xs text-gray-600 mt-1;
+}
+
+.keycloak-user-registration-form .form-actions {
+  @apply mt-6;
+}
+
+.keycloak-user-registration-form .form-submit {
+  @apply bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline;
+}
+
+/* Approval form styles */
+.keycloak-user-approval-form {
+  @apply max-w-4xl mx-auto p-6 bg-white rounded-lg shadow-md;
+}
+
+.keycloak-user-approval-form table {
+  @apply min-w-full bg-white;
+}
+
+.keycloak-user-approval-form th {
+  @apply px-6 py-3 border-b-2 border-gray-200 bg-gray-100 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider;
+}
+
+.keycloak-user-approval-form td {
+  @apply px-6 py-4 border-b border-gray-200 text-sm;
+}
+
+.keycloak-user-approval-form tr:hover {
+  @apply bg-gray-50;
+}
+
+.keycloak-user-approval-form .button {
+  @apply inline-block px-4 py-2 text-sm font-medium leading-5 text-center text-white transition-colors duration-150 bg-blue-600 border border-transparent rounded-lg active:bg-blue-600 hover:bg-blue-700 focus:outline-none focus:shadow-outline-blue;
+}
+
+.keycloak-user-approval-form .button-approve {
+  @apply bg-green-600 hover:bg-green-700;
+}
+
+.keycloak-user-approval-form .button-reject {
+  @apply bg-red-600 hover:bg-red-700;
+}

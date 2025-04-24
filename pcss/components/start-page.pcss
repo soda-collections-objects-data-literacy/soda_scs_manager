@@ -1,0 +1,44 @@
+/* Start Page Components */
+/* These styles define the start page layout and appearance */
+
+@layer components {
+  .soda-scs-manager--start-page {
+    @apply max-w-6xl mx-auto p-6;
+  }
+
+  .soda-scs-manager--header-section {
+    @apply text-center mb-12;
+  }
+
+  .soda-scs-manager--header-section h1 {
+    @apply text-4xl font-bold text-orange-400 mb-2;
+  }
+
+  .soda-scs-manager--header-section p {
+    @apply text-xl text-stone-300;
+  }
+
+  .soda-scs-manager--tiles-container {
+    @apply grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6;
+  }
+
+  .soda-scs-manager--tile-card {
+    @apply bg-stone-800 rounded-lg p-6 flex flex-col items-center text-center transition-all duration-300 hover:bg-stone-700 hover:shadow-lg;
+  }
+
+  .soda-scs-manager--tile-card h2 {
+    @apply text-xl font-semibold text-orange-400 mt-4 mb-2;
+  }
+
+  .soda-scs-manager--tile-card p {
+    @apply text-stone-300;
+  }
+
+  .soda-scs-manager--icon-wrapper {
+    @apply w-12 h-12 flex items-center justify-center text-orange-400;
+  }
+
+  .soda-scs-manager--icon-wrapper svg {
+    @apply w-10 h-10;
+  }
+}

@@ -238,8 +238,12 @@ class SodaScsManagerController extends ControllerBase {
   public function startPage(): array {
     return [
       '#theme' => 'soda_scs_manager__start_page',
+      '#attributes' => ['class' => ['container', 'mx-auto']],
       '#attached' => [
         'library' => ['soda_scs_manager/globalStyling'],
+      ],
+      '#cache' => [
+        'max-age' => 0,
       ],
     ];
   }

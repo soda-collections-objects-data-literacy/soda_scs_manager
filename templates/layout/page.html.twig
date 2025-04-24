@@ -49,14 +49,14 @@
  * @ingroup themeable
  */
 #}
-<div class="container p-4 mx-auto">
+<div class="container">
 
-  <header role="banner" class="mb-4">
+  <header role="banner">
     {{ page.header }}
   </header>
 
   {% if page.admin_panel %}
-    <div class="admin-panel mb-4">
+    <div class="admin-panel">
       {{ page.admin_panel }}
     </div>
   {% endif %}
@@ -70,24 +70,24 @@
   <main role="main">
     <a id="main-content" tabindex="-1"></a>{# link is in html.html.twig #}
 
-    <div class="-mx-4 md:flex">
-      <div class="flex flex-row md:flex-1">
+    <div>
+      <div>
         <div class="nav-sidebar-container">
           {{ page.nav_sidebar }}
         </div>
-        <div class="flex-1">
+        <div>
           {{ page.content }}
         </div>
       </div>
 
       {% if page.sidebar_first %}
-        <aside class="p-4 md:w-1/4" role="complementary">
+        <aside role="complementary">
           {{ page.sidebar_first }}
         </aside>
       {% endif %}
 
       {% if page.sidebar_second %}
-        <aside class="p-4 md:w-1/4" role="complementary">
+        <aside role="complementary">
           {{ page.sidebar_second }}
         </aside>
       {% endif %}
@@ -95,21 +95,21 @@
   </main>
 
   {% if page.footer_meta or page.footer_main or page.footer_additional %}
-    <footer role="contentinfo" class="mt-8">
+    <footer role="contentinfo">
       {% if page.footer_meta %}
-        <div class="footer-meta py-2">
+        <div class="footer-meta">
           {{ page.footer_meta }}
         </div>
       {% endif %}
 
       {% if page.footer_main %}
-        <div class="footer-main py-4">
+        <div class="footer-main">
           {{ page.footer_main }}
         </div>
       {% endif %}
 
       {% if page.footer_additional %}
-        <div class="footer-additional py-2">
+        <div class="footer-additional">
           {{ page.footer_additional }}
         </div>
       {% endif %}

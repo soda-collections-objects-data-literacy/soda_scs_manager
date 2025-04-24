@@ -4,10 +4,10 @@
   "version": "1.0.0",
   "type": "module",
   "scripts": {
-    "dev": "npx @tailwindcss/cli --input src/pcss/soda_scs_manager_theme.pcss --output dist/soda_scs_manager_theme.css --watch",
-    "build": "npx @tailwindcss/cli --input src/pcss/soda_scs_manager_theme.pcss --output dist/soda_scs_manager_theme.css --minify",
-    "build:map": "postcss src/pcss/soda_scs_manager_theme.pcss -o dist/soda_scs_manager_theme.css --map",
-    "watch:map": "postcss src/pcss/soda_scs_manager_theme.pcss -o dist/soda_scs_manager_theme.css --map --watch"
+    "dev": "npx @tailwindcss/cli --input pcss/soda_scs_manager_theme.pcss --output css/style.css --watch",
+    "build": "npx @tailwindcss/cli --input pcss/soda_scs_manager_theme.pcss --output css/style.css --minify",
+    "build:map": "postcss pcss/soda_scs_manager_theme.pcss -o css/style.css --map",
+    "watch:map": "postcss pcss/soda_scs_manager_theme.pcss -o css/style.css --map --watch"
   },
   "dependencies": {
     "@tailwindcss/cli": "^4.0.0",
