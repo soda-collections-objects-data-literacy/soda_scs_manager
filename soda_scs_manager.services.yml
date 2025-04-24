@@ -265,3 +265,16 @@ services:
       - '@soda_scs_manager.triplestore_component.actions'
       - '@soda_scs_manager.wisski_component.actions'
       - '@string_translation'
+
+# Keycloak registration services
+  soda_scs_manager.keycloak_service_actions:
+    class: Drupal\soda_scs_manager\RequestActions\SodaScsKeycloakServiceActions
+    arguments:
+      - '@config.factory'
+      - '@http_client'
+      - '@entity_type.manager'
+      - '@messenger'
+      - '@request_stack'
+      - '@logger.factory'
+      - '@soda_scs_manager.service.helpers'
+      - '@string_translation'

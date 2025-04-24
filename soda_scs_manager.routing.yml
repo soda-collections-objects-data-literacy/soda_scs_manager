@@ -353,3 +353,51 @@ soda_scs_manager.machine_name_edit_form:
         type: string
       entity_id:
         type: entity:{entity_type}
+
+# Keycloak User Registration
+
+soda_scs_manager.user_registration:
+  path: '/user/register'
+  defaults:
+    _form: '\Drupal\soda_scs_manager\Form\KeycloakUserRegistrationForm'
+    _title: 'Register for an account'
+  requirements:
+    _access: 'TRUE'
+  options:
+    _admin_route: FALSE
+
+soda_scs_manager.user_registration_approvals:
+  path: '/admin/people/keycloak-registrations'
+  defaults:
+    _form: '\Drupal\soda_scs_manager\Form\KeycloakUserApprovalForm'
+    _title: 'Keycloak User Registrations'
+  requirements:
+    _permission: 'administer users'
+  options:
+    _admin_route: TRUE
+
+soda_scs_manager.user_registration_approve:
+  path: '/admin/people/keycloak-registrations/{id}/approve'
+  defaults:
+    _controller: '\Drupal\soda_scs_manager\Form\KeycloakUserApprovalForm::approveRegistration'
+    _title: 'Approve User Registration'
+  requirements:
+    _permission: 'administer users'
+  options:
+    _admin_route: TRUE
+    parameters:
+      id:
+        type: integer
+
+soda_scs_manager.user_registration_reject:
+  path: '/admin/people/keycloak-registrations/{id}/reject'
+  defaults:
+    _controller: '\Drupal\soda_scs_manager\Form\KeycloakUserApprovalForm::rejectRegistration'
+    _title: 'Reject User Registration'
+  requirements:
+    _permission: 'administer users'
+  options:
+    _admin_route: TRUE
+    parameters:
+      id:
+        type: integer

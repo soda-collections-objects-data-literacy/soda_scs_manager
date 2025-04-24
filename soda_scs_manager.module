@@ -17,6 +17,7 @@ use Drupal\soda_scs_manager\Entity\Bundle\SodaScsStackBundle;
 use Drupal\user\UserInterface;
 use Drupal\soda_scs_manager\Entity\SodaScsProject;
 use Drupal\soda_scs_manager\Entity\SodaScsComponent;
+use Drupal\Core\Url;
 
 // This file contains implementations of the following hooks:
 // - hook_help(): implements the user help page for the module.
@@ -89,13 +90,6 @@ function soda_scs_manager_theme($existing, $type, $theme, $path) {
         'attributes' => NULL,
       ],
       'template' => 'pages/soda-scs-manager--start-page',
-    ],
-    'soda_scs_manager__sidebar_navigation' => [
-      'variables' => [
-        'items' => [],
-        'attributes' => [],
-      ],
-      'template' => 'navigation/soda-scs-manager--sidebar-navigation',
     ],
   ];
 }
@@ -497,4 +491,66 @@ function _soda_scs_manager_sync_component_project_relationship(SodaScsComponent 
       $project->save();
     }
   }
+}
+
+/**
+ * Implements hook_mail().
+ */
+function soda_scs_manager_mail($key, &$message, $params) {
+  $options = [
+    'langcode' => $message['langcode'],
+  ];
+
+  $site_config = \Drupal::config('system.site');
+  $site_name = $site_config->get('name');
+
+  switch ($key) {
+    case 'registration_admin_notification':
+      $message['subject'] = t('New user registration on @site_name', ['@site_name' => $site_name], $options);
+      $message['body'][] = t('A new user has registered on @site_name.', ['@site_name' => $site_name], $options);
+      $message['body'][] = t('Username: @username', ['@username' => $params['username']], $options);
+      $message['body'][] = t('Email: @email', ['@email' => $params['email']], $options);
+      $message['body'][] = t('Name: @first_name @last_name', [
+        '@first_name' => $params['first_name'],
+        '@last_name' => $params['last_name'],
+      ], $options);
+      $message['body'][] = t('To approve or reject this registration, visit: @url', [
+        '@url' => Url::fromRoute('soda_scs_manager.user_registration_approvals')
+          ->setAbsolute()
+          ->toString(),
+      ], $options);
+      break;
+
+    case 'registration_user_notification':
+      $message['subject'] = t('Your registration on @site_name', ['@site_name' => $site_name], $options);
+      $message['body'][] = t('Hello @username,', ['@username' => $params['username']], $options);
+      $message['body'][] = t('Thank you for registering on @site_name.', ['@site_name' => $site_name], $options);
+      $message['body'][] = t('Your registration is pending administrator approval. You will receive another email once your account is approved or rejected.', [], $options);
+      break;
+
+    case 'registration_approval':
+      $message['subject'] = t('Your account on @site_name has been approved', ['@site_name' => $site_name], $options);
+      $message['body'][] = t('Hello @username,', ['@username' => $params['username']], $options);
+      $message['body'][] = t('Your registration on @site_name has been approved.', ['@site_name' => $site_name], $options);
+      $message['body'][] = t('You can now log in at: @login_url', ['@login_url' => $params['login_url']], $options);
+      $message['body'][] = t('For security reasons, you will need to reset your password when you first log in.', [], $options);
+      break;
+
+    case 'registration_rejection':
+      $message['subject'] = t('Your account on @site_name was not approved', ['@site_name' => $site_name], $options);
+      $message['body'][] = t('Hello @username,', ['@username' => $params['username']], $options);
+      $message['body'][] = t('Your registration on @site_name has been reviewed and was not approved at this time.', ['@site_name' => $site_name], $options);
+      $message['body'][] = t('If you believe this is an error, please contact the site administrators.', [], $options);
+      break;
+  }
+}
+
+/**
+ * Implements hook_form_FORM_ID_alter() for user_register_form.
+ */
+function soda_scs_manager_form_user_register_form_alter(&$form, &$form_state, $form_id) {
+  // Disable native Drupal registration by redirecting to our custom form.
+  $response = new \Symfony\Component\HttpFoundation\RedirectResponse(\Drupal\Core\Url::fromRoute('soda_scs_manager.user_registration')->toString());
+  $response->send();
+  exit;
 }

@@ -23,3 +23,11 @@ machine-name-generator:
     - core/drupal
     - core/jquery.once
 
+keycloak_registration:
+  version: 1.x
+  css:
+    theme:
+      css/keycloak-registration-form.css: {}
+  js:
+    js/keycloak-registration.js: {}
+

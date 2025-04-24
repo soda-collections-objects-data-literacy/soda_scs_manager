@@ -9,6 +9,7 @@ use Drupal\Core\File\FileExists;
 use Drupal\Core\File\FileSystemInterface;
 use Drupal\system\SystemManager;
 use Drupal\block\Entity\Block;
+use Drupal\Core\Database\Database;
 
 /**
  * Implements hook_install().
@@ -31,21 +32,179 @@ function soda_scs_manager_install() {
     $destination = $destination_directory . '/' . $file->filename;
     $file_system->copy($file->uri, $destination, FileExists::Replace);
   }
+
+  // Set the default front page to the soda_scs_manager start page.
+  \Drupal::configFactory()->getEditable('system.site')
+    ->set('page.front', '/soda-scs-manager')
+    ->save();
+
+  // Remove specified blocks from layout
+  _soda_scs_manager_remove_default_blocks();
+
+  // Move account menu to footer_top region
+  $block_ids = \Drupal::entityQuery('block')
+    ->condition('plugin', 'system_menu_block:account')
+    ->execute();
+
+  if (!empty($block_ids)) {
+    $blocks = Block::loadMultiple($block_ids);
+    foreach ($blocks as $block) {
+      $block->setRegion('footer_top');
+      $block->save();
+    }
+  }
 }
 
 /**
- * Implements hook_requirements().
+ * Helper function to remove default blocks.
  */
-function soda_scs_manager_requirements($phase) {
-  $requirements = [];
-  if ($phase == 'install' || $phase == 'runtime') {
-    $theme_list = \Drupal::service('theme_handler')->listInfo();
-    if (!isset($theme_list['bootstrap5'])) {
-      $requirements['soda_scs_manager_theme'] = [
-        'severity' => SystemManager::REQUIREMENT_ERROR,
+function _soda_scs_manager_remove_default_blocks() {
+  $blocks_to_remove = [
+    'system_powered_by_block',
+    'node_syndicate_block',
+    'search_form_block',
+  ];
 
-      ];
+  foreach ($blocks_to_remove as $block_id) {
+    $blocks = \Drupal::entityTypeManager()
+      ->getStorage('block')
+      ->loadByProperties(['plugin' => $block_id]);
+
+    foreach ($blocks as $block) {
+      $block->delete();
     }
   }
-  return $requirements;
+}
+
+/**
+ * Implements hook_schema().
+ */
+function soda_scs_manager_schema() {
+  $schema['keycloak_user_registration'] = [
+    'description' => 'Stores user registrations pending admin approval before adding to Keycloak.',
+    'fields' => [
+      'id' => [
+        'type' => 'serial',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+        'description' => 'Primary Key: Unique registration ID.',
+      ],
+      'email' => [
+        'type' => 'varchar',
+        'length' => 255,
+        'not null' => TRUE,
+        'default' => '',
+        'description' => 'User email address.',
+      ],
+      'username' => [
+        'type' => 'varchar',
+        'length' => 255,
+        'not null' => TRUE,
+        'default' => '',
+        'description' => 'Username for the account.',
+      ],
+      'first_name' => [
+        'type' => 'varchar',
+        'length' => 255,
+        'not null' => TRUE,
+        'default' => '',
+        'description' => 'First name of the user.',
+      ],
+      'last_name' => [
+        'type' => 'varchar',
+        'length' => 255,
+        'not null' => TRUE,
+        'default' => '',
+        'description' => 'Last name of the user.',
+      ],
+      'password' => [
+        'type' => 'varchar',
+        'length' => 255,
+        'not null' => TRUE,
+        'default' => '',
+        'description' => 'Temporary password hash for the user.',
+      ],
+      'status' => [
+        'type' => 'varchar',
+        'length' => 20,
+        'not null' => TRUE,
+        'default' => 'pending',
+        'description' => 'Status of the registration (pending, approved, rejected).',
+      ],
+      'created' => [
+        'type' => 'int',
+        'not null' => TRUE,
+        'default' => 0,
+        'description' => 'Unix timestamp when the registration was created.',
+      ],
+      'updated' => [
+        'type' => 'int',
+        'not null' => TRUE,
+        'default' => 0,
+        'description' => 'Unix timestamp when the registration was last updated.',
+      ],
+    ],
+    'primary key' => ['id'],
+    'indexes' => [
+      'email' => ['email'],
+      'username' => ['username'],
+      'status' => ['status'],
+    ],
+  ];
+
+  return $schema;
+}
+
+/**
+ * Set the default front page to the SCS Manager start page.
+ */
+function soda_scs_manager_update_11001() {
+  \Drupal::configFactory()->getEditable('system.site')
+    ->set('page.front', '/soda-scs-manager')
+    ->save();
+
+  return t('Default front page has been set to the SODa SCS Manager start page.');
+}
+
+/**
+ * Remove default blocks from layout.
+ */
+function soda_scs_manager_update_11002() {
+  _soda_scs_manager_remove_default_blocks();
+
+  return t('Default blocks have been removed from the layout.');
+}
+
+/**
+ * Move account menu to footer_top region.
+ */
+function soda_scs_manager_update_11003() {
+  $block_ids = \Drupal::entityQuery('block')
+    ->condition('plugin', 'system_menu_block:account')
+    ->execute();
+
+  if (!empty($block_ids)) {
+    $blocks = Block::loadMultiple($block_ids);
+    foreach ($blocks as $block) {
+      $block->setRegion('footer_top');
+      $block->save();
+    }
+  }
+
+  return t('Account menu block has been moved to the footer_top region.');
+}
+
+/**
+ * Add keycloak_user_registration table.
+ */
+function soda_scs_manager_update_11004() {
+  $schema = Database::getConnection()->schema();
+
+  if (!$schema->tableExists('keycloak_user_registration')) {
+    $table = soda_scs_manager_schema();
+    $schema->createTable('keycloak_user_registration', $table['keycloak_user_registration']);
+    return t('Created keycloak_user_registration table.');
+  }
+
+  return t('Table keycloak_user_registration already exists.');
 }
