@@ -1,0 +1,37 @@
+/* Grid Components */
+/* These styles define grid layout components */
+
+@layer components {
+  .soda-scs-manager--view--grid {
+    @apply grid mx-auto gap-6 justify-items-center;
+
+    /* Default is 4 columns */
+    @apply grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4;
+
+    /* Grid count variations */
+    &.grid-count-1 {
+      @apply grid-cols-1;
+    }
+
+    &.grid-count-2 {
+      @apply grid-cols-1 sm:grid-cols-2;
+    }
+
+    &.grid-count-4 {
+      @apply grid-cols-1 sm:grid-cols-2 max-w-[550px] mx-auto;
+    }
+  }
+
+  /* Responsive classes */
+  @media (min-width: 768px) {
+    .md\:grid-cols-2 {
+      @apply grid-cols-2;
+    }
+  }
+
+  @media (min-width: 1024px) {
+    .lg\:grid-cols-4 {
+      @apply grid-cols-4;
+    }
+  }
+}

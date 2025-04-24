@@ -1,0 +1,80 @@
+/* Tab Components */
+/* These styles define tab navigation components */
+
+@layer components {
+.soda-tab {
+  @apply text-white font-bold px-6 py-3 rounded-t-lg transition-all duration-300
+    mr-4 relative bottom-0 border-b-0 text-[1.1rem] -mb-2 z-20 inline-block;
+
+  &:hover {
+    @apply text-white/90 translate-y-1;
+
+  }
+
+  &.soda-tab-active {
+    @apply text-white translate-y-1 pb-2;
+  }
+}
+
+/* Tab container */
+.tabs-container {
+  @apply p-0 m-0 relative z-10 mb-2;
+  padding-left: 20px;
+  background-color: transparent;
+
+  ul {
+    @apply flex list-none p-0 m-0 align-bottom;
+
+    li {
+      @apply list-none relative;
+
+      &.active a {
+        @apply opacity-100 shadow-lg shadow-cyan-500/50;
+      }
+
+      &.inactive a {
+        @apply opacity-90;
+
+        &:hover {
+          @apply opacity-100;
+        }
+      }
+    }
+  }
+}
+
+/* Tab content connection */
+.bg-gradient-to-br {
+  position: relative;
+  z-index: 5;
+  margin-top: -5px;
+}
+
+/* Tab content styling */
+.tab-content {
+  border-top-left-radius: 0;
+  border-top-right-radius: 0;
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+  position: relative;
+  top: -2px;
+}
+
+/* Primary tabs margin adjustment for pages */
+.primary-tabs + .container {
+  padding-top: 0;
+}
+
+/* Tab styles that need specific classes */
+.tabs-cyan {
+  @apply bg-cyan-500;
+}
+
+.tabs-pink {
+  @apply bg-pink-500;
+}
+
+.tabs-violet {
+  @apply bg-violet-500;
+}
+
+}
