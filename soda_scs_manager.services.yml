@@ -226,27 +226,25 @@ services:
   soda_scs_manager.stack.actions:
     class: Drupal\soda_scs_manager\StackActions\SodaScsStackActions
     arguments:
-      - '@soda_scs_manager.sql_stack.actions'
-      - '@soda_scs_manager.triplestore_stack.actions'
+      - '@soda_scs_manager.jupyter_stack.actions'
+      - '@soda_scs_manager.nextcloud_stack.actions'
       - '@soda_scs_manager.wisski_stack.actions'
       - '@string_translation'
 
-  soda_scs_manager.sql_stack.actions:
-    class: Drupal\soda_scs_manager\StackActions\SodaScsSqlStackActions
+  soda_scs_manager.jupyter_stack.actions:
+    class: Drupal\soda_scs_manager\StackActions\SodaScsJupyterStackActions
     arguments:
       - '@logger.factory'
       - '@messenger'
-      - '@soda_scs_manager.sql_component.actions'
       - '@soda_scs_manager.stack.helpers'
       - '@string_translation'
 
-  soda_scs_manager.triplestore_stack.actions:
-    class: Drupal\soda_scs_manager\StackActions\SodaScsTriplestoreStackActions
+  soda_scs_manager.nextcloud_stack.actions:
+    class: Drupal\soda_scs_manager\StackActions\SodaScsNextcloudStackActions
     arguments:
       - '@logger.factory'
       - '@messenger'
       - '@soda_scs_manager.stack.helpers'
-      - '@soda_scs_manager.triplestore_component.actions'
       - '@string_translation'
 
   soda_scs_manager.wisski_stack.actions:

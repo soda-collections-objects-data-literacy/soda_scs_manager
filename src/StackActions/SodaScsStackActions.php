@@ -21,14 +21,14 @@ class SodaScsStackActions implements SodaScsStackActionsInterface {
    *
    * @var \Drupal\soda_scs_manager\SodaScsStackActionsInterface
    */
-  protected SodaScsStackActionsInterface $sodaScsSqlStackActions;
+  protected SodaScsStackActionsInterface $sodaScsJupyterStackActions;
 
   /**
    * The SCS triplestore actions service.
    *
    * @var \Drupal\soda_scs_manager\SodaScsStackActionsInterface
    */
-  protected SodaScsStackActionsInterface $sodaScsTriplestoreStackActions;
+  protected SodaScsStackActionsInterface $sodaScsNextcloudStackActions;
 
   /**
    * The SCS wisski actions service.
@@ -40,9 +40,9 @@ class SodaScsStackActions implements SodaScsStackActionsInterface {
   /**
    * Class constructor.
    */
-  public function __construct(SodaScsStackActionsInterface $sodaScsSqlStackActions, SodaScsStackActionsInterface $sodaScsTriplestoreStackActions, SodaScsStackActionsInterface $sodaScsWisskiStackActions, TranslationInterface $stringTranslation) {
-    $this->sodaScsSqlStackActions = $sodaScsSqlStackActions;
-    $this->sodaScsTriplestoreStackActions = $sodaScsTriplestoreStackActions;
+  public function __construct(SodaScsStackActionsInterface $sodaScsJupyterStackActions, SodaScsStackActionsInterface $sodaScsNextcloudStackActions, SodaScsStackActionsInterface $sodaScsWisskiStackActions, TranslationInterface $stringTranslation) {
+    $this->sodaScsJupyterStackActions = $sodaScsJupyterStackActions;
+    $this->sodaScsNextcloudStackActions = $sodaScsNextcloudStackActions;
     $this->sodaScsWisskiStackActions = $sodaScsWisskiStackActions;
     $this->stringTranslation = $stringTranslation;
   }
@@ -64,11 +64,11 @@ class SodaScsStackActions implements SodaScsStackActionsInterface {
       case 'soda_scs_wisski_stack':
         return $this->sodaScsWisskiStackActions->createStack($stack);
 
-      case 'soda_scs_sql_stack':
-        return $this->sodaScsSqlStackActions->createStack($stack);
+      case 'soda_scs_jupyter_stack':
+        return $this->sodaScsJupyterStackActions->createStack($stack);
 
-      case 'soda_scs_triplestore_stack':
-        return $this->sodaScsTriplestoreStackActions->createStack($stack);
+      case 'soda_scs_nextcloud_stack':
+        return $this->sodaScsNextcloudStackActions->createStack($stack);
 
       default:
         throw new \Exception('Component type not supported for creation.');

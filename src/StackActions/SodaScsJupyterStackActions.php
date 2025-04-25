@@ -14,9 +14,9 @@ use Drupal\Core\Utility\Error;
 use Psr\Log\LogLevel;
 
 /**
- * Handles the triplestore stack actions.
+ * Handles the jupyter stack actions.
  */
-class SodaScsTriplestoreStackActions implements SodaScsStackActionsInterface {
+class SodaScsJupyterStackActions implements SodaScsStackActionsInterface {
 
   use DependencySerializationTrait;
   use StringTranslationTrait;
@@ -43,11 +43,11 @@ class SodaScsTriplestoreStackActions implements SodaScsStackActionsInterface {
   protected SodaScsHelpersInterface $sodaScsStackHelpers;
 
   /**
-   * The SCS triplestore actions service.
+   * The SCS jupyter actions service.
    *
    * @var \Drupal\soda_scs_manager\ComponentActions\SodaScsComponentActionsInterface
    */
-  protected SodaScsComponentActionsInterface $sodaScsTriplestoreComponentActions;
+  protected SodaScsComponentActionsInterface $sodaScsJupyterComponentActions;
 
   /**
    * Class constructor.
@@ -56,19 +56,19 @@ class SodaScsTriplestoreStackActions implements SodaScsStackActionsInterface {
     LoggerChannelFactoryInterface $loggerFactory,
     MessengerInterface $messenger,
     SodaScsHelpersInterface $sodaScsStackHelpers,
-    SodaScsComponentActionsInterface $sodaScsTriplestoreComponentActions,
+    SodaScsComponentActionsInterface $sodaScsJupyterComponentActions,
     TranslationInterface $stringTranslation,
   ) {
     // Services from container.
     $this->loggerFactory = $loggerFactory;
     $this->messenger = $messenger;
     $this->sodaScsStackHelpers = $sodaScsStackHelpers;
-    $this->sodaScsTriplestoreComponentActions = $sodaScsTriplestoreComponentActions;
+    $this->sodaScsJupyterComponentActions = $sodaScsJupyterComponentActions;
     $this->stringTranslation = $stringTranslation;
   }
 
   /**
-   * Create a triplestore stack.
+   * Create a jupyter stack.
    *
    * @param \Drupal\soda_scs_manager\Entity\SodaScsStackInterface $stack
    *   The component.
@@ -80,36 +80,23 @@ class SodaScsTriplestoreStackActions implements SodaScsStackActionsInterface {
    */
   public function createStack(SodaScsStackInterface $stack): array {
     try {
-      // Create the Triplestore component.
-      $triplestoreComponentCreateResult = $this->sodaScsTriplestoreComponentActions->createComponent($stack);
-
-      if (!$triplestoreComponentCreateResult['success']) {
-        return [
-          'message' => $this->t('Could not create triplestore stack: %message', ['%message' => $triplestoreComponentCreateResult['message']]),
-          'data' => [
-            'triplestoreComponentCreateResult' => $triplestoreComponentCreateResult,
-          ],
-          'success' => FALSE,
-          'error' => $triplestoreComponentCreateResult['error'],
-        ];
-      }
       $stack->save();
       return [
-        'message' => $this->t('Created triplestore stack: %message', ['%message' => $triplestoreComponentCreateResult['message']]),
+        'message' => $this->t('Created jupyter stack: %message', ['%message' => $stack->label()]),
         'data' => [
-          'triplestoreComponentCreateResult' => $triplestoreComponentCreateResult,
+          'stack' => $stack,
         ],
         'success' => TRUE,
         'error' => NULL,
       ];
     }
     catch (\Exception $e) {
-      Error::logException($this->loggerFactory->get('soda_scs_manager'), $e, 'Triplestore component creation failed', [], LogLevel::ERROR);
-      $this->messenger->addError($this->t("Could not create triplestore component. See logs for more details."));
+      Error::logException($this->loggerFactory->get('soda_scs_manager'), $e, 'Jupyter stack creation failed', [], LogLevel::ERROR);
+      $this->messenger->addError($this->t("Could not create jupyter stack. See logs for more details."));
       return [
         'message' => $this->t('Could not create stack: %message', ['%message' => $e->getMessage()]),
         'data' => [
-          'triplestoreComponentCreateResult' => NULL,
+          'stack' => NULL,
         ],
         'success' => FALSE,
         'error' => $e,
@@ -118,7 +105,7 @@ class SodaScsTriplestoreStackActions implements SodaScsStackActionsInterface {
   }
 
   /**
-   * Read all Triplestore stacks.
+   * Read all Jupyter stacks.
    *
    * @param string $bundle
    *   The bundle.
@@ -133,7 +120,7 @@ class SodaScsTriplestoreStackActions implements SodaScsStackActionsInterface {
   }
 
   /**
-   * Read a triplestore stack.
+   * Read a jupyter stack.
    *
    * @param Drupal\soda_scs_manager\Entity\SodaScsComponentInterface $component
    *   The component.
@@ -146,7 +133,7 @@ class SodaScsTriplestoreStackActions implements SodaScsStackActionsInterface {
   }
 
   /**
-   * Update a triplestore stack.
+   * Update a jupyter stack.
    *
    * @param \Drupal\soda_scs_manager\Entity\SodaScsComponentInterface $component
    *   The component.
@@ -159,7 +146,7 @@ class SodaScsTriplestoreStackActions implements SodaScsStackActionsInterface {
   }
 
   /**
-   * Delete a triplestore stack.
+   * Delete a jupyter stack.
    *
    * @param \Drupal\soda_scs_manager\Entity\SodaScsStackInterface $stack
    *   The SODa SCS Stack entity.
@@ -171,26 +158,11 @@ class SodaScsTriplestoreStackActions implements SodaScsStackActionsInterface {
    */
   public function deleteStack(SodaScsStackInterface $stack): array {
     try {
-
-      $triplestoreComponent = $this->sodaScsStackHelpers->retrieveIncludedComponent($stack, 'soda_scs_triplestore_component');
-      // Create the Triplestore component.
-      $triplestoreComponentDeleteResult = $this->sodaScsTriplestoreComponentActions->deleteComponent($triplestoreComponent);
-
-      if (!$triplestoreComponentDeleteResult['success']) {
-        return [
-          'message' => 'Could not delete triplestore component.',
-          'data' => [
-            'triplestoreComponentDeleteResult' => $triplestoreComponentDeleteResult,
-          ],
-          'success' => FALSE,
-          'error' => $triplestoreComponentDeleteResult['error'],
-        ];
-      }
       $stack->delete();
       return [
-        'message' => 'Deleted triplestore component.',
+        'message' => 'Deleted jupyter stack.',
         'data' => [
-          'triplestoreComponentDeleteResult' => $triplestoreComponentDeleteResult,
+          'stack' => $stack,
         ],
         'success' => TRUE,
         'error' => NULL,
@@ -198,12 +170,12 @@ class SodaScsTriplestoreStackActions implements SodaScsStackActionsInterface {
 
     }
     catch (\Exception $e) {
-      Error::logException($this->loggerFactory->get('soda_scs_manager'), $e, 'Triplestore component deletion failed', [], LogLevel::ERROR);
-      $this->messenger->addError($this->t("Could not delete triplestore component. See logs for more details."));
+      Error::logException($this->loggerFactory->get('soda_scs_manager'), $e, 'Jupyter component deletion failed', [], LogLevel::ERROR);
+      $this->messenger->addError($this->t("Could not delete jupyter component. See logs for more details."));
       return [
-        'message' => 'Could not delete triplestore component.',
+        'message' => 'Could not delete jupyter component.',
         'data' => [
-          'triplestoreComponentDeleteResult' => NULL,
+          'jupyterComponentDeleteResult' => NULL,
         ],
         'success' => FALSE,
         'error' => $e,
