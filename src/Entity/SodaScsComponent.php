@@ -246,7 +246,7 @@ class SodaScsComponent extends ContentEntityBase implements SodaScsComponentInte
 
     $fields['label'] = BaseFieldDefinition::create('string')
       ->setLabel(new TranslatableMarkup('Label'))
-      ->setDescription(new TranslatableMarkup('The label of the SODa SCS Component.'))
+      ->setDescription(new TranslatableMarkup('Human-readable name.'))
       ->setRequired(TRUE)
       ->setReadOnly(FALSE)
       ->setDisplayConfigurable('view', FALSE)
@@ -322,7 +322,7 @@ class SodaScsComponent extends ContentEntityBase implements SodaScsComponentInte
 
     $fields['partOfProjects'] = BaseFieldDefinition::create('entity_reference')
       ->setLabel(new TranslatableMarkup('Project'))
-      ->setDescription(new TranslatableMarkup('The project this component belongs to.'))
+      ->setDescription(new TranslatableMarkup('The project this application belongs to.'))
       ->setSetting('target_type', 'soda_scs_project')
       ->setSetting('handler', 'soda_scs_project_access')
       ->setCardinality(FieldStorageDefinitionInterface::CARDINALITY_UNLIMITED)

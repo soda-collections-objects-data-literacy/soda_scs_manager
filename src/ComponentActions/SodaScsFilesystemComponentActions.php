@@ -271,7 +271,13 @@ class SodaScsFilesystemComponentActions implements SodaScsComponentActionsInterf
       }
     }
     catch (\Exception $e) {
-      Error::logException($this->logger, $e, 'Cannot create exec request for the shared folders via access proxy', [], LogLevel::ERROR);
+      Error::logException(
+        $this->logger,
+        $e,
+        'Cannot create exec request for the shared folders via access proxy: @message',
+        ['@message' => $e->getMessage()],
+        LogLevel::ERROR
+      );
       return [
         'message' => 'Exec request for the shared folders via access proxy failed.',
         'data' => [
@@ -404,7 +410,13 @@ class SodaScsFilesystemComponentActions implements SodaScsComponentActionsInterf
       }
     }
     catch (\Exception $e) {
-      Error::logException($this->logger, $e, 'Cannot set permissions for the shared folders in the containers', [], LogLevel::ERROR);
+      Error::logException(
+        $this->logger,
+        $e,
+        'Cannot set permissions for the shared folders in the containers: @message',
+        ['@message' => $e->getMessage()],
+        LogLevel::ERROR
+      );
       return [
         'message' => 'Could not set permissions for the shared folders in the containers.',
         'data' => [
@@ -424,7 +436,13 @@ class SodaScsFilesystemComponentActions implements SodaScsComponentActionsInterf
       $entity->save();
     }
     catch (\Exception $e) {
-      Error::logException($this->logger, $e, 'Cannot save component.', [], LogLevel::ERROR);
+      Error::logException(
+        $this->logger,
+        $e,
+        'Cannot save component: @message',
+        ['@message' => $e->getMessage()],
+        LogLevel::ERROR
+      );
       return [
         'message' => 'Could not save component.',
         'data' => [
@@ -633,7 +651,13 @@ class SodaScsFilesystemComponentActions implements SodaScsComponentActionsInterf
       }
     }
     catch (\Exception $e) {
-      Error::logException($this->logger, $e, 'Cannot create exec request for the shared folders via access proxy', [], LogLevel::ERROR);
+      Error::logException(
+        $this->logger,
+        $e,
+        'Cannot create exec request for the shared folders via access proxy: @message',
+        ['@message' => $e->getMessage()],
+        LogLevel::ERROR
+      );
       return [
         'message' => 'Exec request for the shared folders via access proxy failed.',
         'data' => [
@@ -768,7 +792,13 @@ class SodaScsFilesystemComponentActions implements SodaScsComponentActionsInterf
       }
     }
     catch (\Exception $e) {
-      Error::logException($this->logger, $e, 'Cannot set permissions for the shared folders in the containers', [], LogLevel::ERROR);
+      Error::logException(
+        $this->logger,
+        $e,
+        'Cannot set permissions for the shared folders in the containers: @message',
+        ['@message' => $e->getMessage()],
+        LogLevel::ERROR
+      );
       return [
         'message' => 'Could not set permissions for the shared folders in the containers.',
         'data' => [
@@ -788,7 +818,13 @@ class SodaScsFilesystemComponentActions implements SodaScsComponentActionsInterf
       $entity->delete();
     }
     catch (\Exception $e) {
-      Error::logException($this->logger, $e, 'Cannot save component', [], LogLevel::ERROR);
+      Error::logException(
+        $this->logger,
+        $e,
+        'Cannot save component: @message',
+        ['@message' => $e->getMessage()],
+        LogLevel::ERROR
+      );
       return [
         'message' => 'Could not save component.',
         'data' => [

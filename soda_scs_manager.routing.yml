@@ -8,16 +8,6 @@ soda_scs_manager.component.health_check:
   requirements:
     _permission: 'soda scs manager user'
 
-# Assets
-
-soda_scs_manager.assets:
-  path: '/soda-scs-manager/assets/{asset}'
-  defaults:
-    _controller: '\Drupal\soda_scs_manager\Controller\SodaScsAssetController::loadImage'
-  requirements:
-    asset: '.*'
-    _access: 'TRUE'
-
 # Soda SCS Stack Entities
 
 entity.soda_scs_stack.canonical:
@@ -67,7 +57,7 @@ entity.soda_scs_stack.snapshot:
     _form: '\Drupal\soda_scs_manager\Form\SodaScsSnapshotConfirmForm'
     _title: 'Create Snapshot'
   requirements:
-    _permission: 'create soda scs snapshot'
+    _permission: 'soda scs manager user'
   options:
     parameters:
       soda_scs_stack:
@@ -121,7 +111,7 @@ entity.soda_scs_component.snapshot:
     _form: '\Drupal\soda_scs_manager\Form\SodaScsSnapshotConfirmForm'
     _title: 'Create Snapshot'
   requirements:
-    _permission: 'create soda scs snapshot'
+    _permission: 'soda scs manager user'
   options:
     parameters:
       soda_scs_component:
@@ -146,7 +136,7 @@ entity.soda_scs_service_key.add_form:
     _title: 'Add SODa SCS Service Key'
     bundle: 'soda_scs_service_key'
   requirements:
-    _permission: 'soda scs manager user'
+    _permission: 'soda scs manager admin'
 
 entity.soda_scs_service_key.delete_form:
   path: '/soda-scs-manager/service-key/{soda_scs_service_key}/delete'
@@ -158,7 +148,7 @@ entity.soda_scs_service_key.delete_form:
       soda_scs_service_key:
         type: entity:soda_scs_service_key
   requirements:
-    _permission: 'soda scs manager user'
+    _permission: 'soda scs manager admin'
 
 entity.soda_scs_service_key.collection:
   path: '/soda-scs-manager/service-key/list'
@@ -174,7 +164,7 @@ entity.soda_scs_service_key.renew_confirm_form:
     _form: '\Drupal\soda_scs_manager\Form\SodaScsServiceKeyRenewConfirmForm'
     _title: 'Renew service key'
   requirements:
-    _permission: 'administer soda scs service keys'
+    _permission: 'soda scs manager admin'
   options:
     parameters:
       soda_scs_service_key:
@@ -285,6 +275,14 @@ soda_scs_manager.desk:
   options:
     no_cache: TRUE
 
+soda_scs_manager.documentation:
+  path: '/soda-scs-manager/documentation'
+  defaults:
+    _controller: '\Drupal\soda_scs_manager\Controller\SodaScsManagerController::documentationPage'
+    _title: 'Documentation'
+  requirements:
+    _permission: 'soda scs manager user'
+
 soda_scs_manager.start_page:
   path: '/soda-scs-manager'
   defaults:
@@ -314,19 +312,19 @@ soda_scs_manager.service_link:
     _permission: 'soda scs manager user'
     _custom_access: '\Drupal\soda_scs_manager\Access\SodaScsLinksTasksAccessControlHandler::accessServiceLink'
 
+soda_scs_manager.entities:
+  path: '/admin/config/soda-scs-manager'
+  defaults:
+    _controller: '\Drupal\system\Controller\SystemController::systemAdminMenuBlockPage'
+    _title: 'WissKI cloud account manager'
+  requirements:
+    _permission: 'soda scs manager user'
+
 soda_scs_manager.settings:
   path: '/admin/config/soda-scs-manager/settings'
   defaults:
     _form: '\Drupal\soda_scs_manager\Form\SodaScsSettingsForm'
     _title:  'WissKI cloud account settings'
-  requirements:
-    _permission: 'soda scs manager admin'
-
-soda_scs_manager.settings.menu:
-  path: '/admin/config/soda-scs-manager'
-  defaults:
-    _controller: '\Drupal\system\Controller\SystemController::systemAdminMenuBlockPage'
-    _title: 'WissKI cloud account manager'
   requirements:
     _permission: 'soda scs manager admin'
 
@@ -347,20 +345,6 @@ soda_scs_manager.menu.default:
     _controller: '\Drupal\soda_scs_manager\Controller\SodaScsManagerController::startPage'
   requirements:
     _permission: 'soda scs manager user'
-
-soda_scs_manager.machine_name_edit_form:
-  path: '/soda-scs-manager/machine-name-edit/{entity_type}/{entity_id}'
-  defaults:
-    _form: '\Drupal\soda_scs_manager\Form\MachineNameEditForm'
-    _title: 'Edit Machine Name'
-  requirements:
-    _permission: 'access content'
-  options:
-    parameters:
-      entity_type:
-        type: string
-      entity_id:
-        type: entity:{entity_type}
 
 # Keycloak User Registration
 

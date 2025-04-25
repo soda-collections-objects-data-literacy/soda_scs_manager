@@ -339,7 +339,13 @@ class SodaScsWisskiComponentActions implements SodaScsComponentActionsInterface 
       $portainerCreateRequest = $this->sodaScsPortainerServiceActions->buildCreateRequest($requestParams);
     }
     catch (\Exception $e) {
-      Error::logException($this->loggerFactory->get('soda_scs_manager'), $e, 'Request failed', [], LogLevel::ERROR);
+      Error::logException(
+        $this->loggerFactory->get('soda_scs_manager'),
+        $e,
+        'Request failed: @message',
+        ['@message' => $e->getMessage()],
+        LogLevel::ERROR
+      );
       $this->messenger->addError($this->t("Request failed. See logs for more details."));
       return [
         'message' => 'Request failed.',
@@ -489,7 +495,13 @@ class SodaScsWisskiComponentActions implements SodaScsComponentActionsInterface 
       ];
     }
     catch (\Exception $e) {
-      Error::logException($this->loggerFactory->get('soda_scs_manager'), $e, 'Snapshot creation failed', [], LogLevel::ERROR);
+      Error::logException(
+        $this->loggerFactory->get('soda_scs_manager'),
+        $e,
+        'Snapshot creation failed: @message',
+        ['@message' => $e->getMessage()],
+        LogLevel::ERROR
+      );
       return [
         'message' => 'Snapshot creation failed.',
         'data' => $e,
@@ -562,7 +574,13 @@ class SodaScsWisskiComponentActions implements SodaScsComponentActionsInterface 
 
     }
     catch (\Exception $e) {
-      Error::logException($this->loggerFactory->get('soda_scs_manager'), $e, 'Cannot get WissKI component at portainer', ['@component' => $component->getLabel()], LogLevel::ERROR);
+      Error::logException(
+        $this->loggerFactory->get('soda_scs_manager'),
+        $e,
+        'Cannot get WissKI component at portainer: @message',
+        ['@component' => $component->getLabel(), '@message' => $e->getMessage()],
+        LogLevel::ERROR
+      );
       $this->messenger->addError($this->t("Cannot get WissKI component @component at portainer. See logs for more details.", ['@component' => $component->getLabel()]));
       return [
         'message' => $this->t('Cannot get WissKI component @component at portainer.', ['@component' => $component->getLabel()]),
@@ -576,7 +594,13 @@ class SodaScsWisskiComponentActions implements SodaScsComponentActionsInterface 
       $portainerDeleteRequest = $this->sodaScsPortainerServiceActions->buildDeleteRequest($queryParams);
     }
     catch (MissingDataException $e) {
-      Error::logException($this->loggerFactory->get('soda_scs_manager'), $e, 'Cannot assemble WissKI delete request', [], LogLevel::ERROR);
+      Error::logException(
+        $this->loggerFactory->get('soda_scs_manager'),
+        $e,
+        'Cannot assemble WissKI delete request: @message',
+        ['@message' => $e->getMessage()],
+        LogLevel::ERROR
+      );
       $this->messenger->addError($this->t("Cannot assemble WissKI component delete request. See logs for more details."));
       return [
         'message' => 'Cannot assemble Request.',
@@ -592,7 +616,13 @@ class SodaScsWisskiComponentActions implements SodaScsComponentActionsInterface 
       /** @var array $portainerResponse */
       $requestResult = $this->sodaScsPortainerServiceActions->makeRequest($portainerDeleteRequest);
       if (!$requestResult['success']) {
-        Error::logException($this->loggerFactory->get('soda_scs_manager'), new \Exception($requestResult['error']), 'Could not delete WissKI stack at portainer', [], LogLevel::ERROR);
+        Error::logException(
+          $this->loggerFactory->get('soda_scs_manager'),
+          new \Exception($requestResult['error']),
+          'Could not delete WissKI stack at portainer: @message',
+          ['@message' => $requestResult['error']],
+          LogLevel::ERROR
+        );
         $this->messenger->addError($this->t("Could not delete WissKI stack at portainer, but will delete the component anyway. See logs for more details."));
       }
       $component->delete();
@@ -608,7 +638,13 @@ class SodaScsWisskiComponentActions implements SodaScsComponentActionsInterface 
       ];
     }
     catch (\Exception $e) {
-      Error::logException($this->loggerFactory->get('soda_scs_manager'), $e, 'Cannot delete WissKI component', [], LogLevel::ERROR);
+      Error::logException(
+        $this->loggerFactory->get('soda_scs_manager'),
+        $e,
+        'Cannot delete WissKI component: @message',
+        ['@message' => $e->getMessage()],
+        LogLevel::ERROR
+      );
       $this->messenger->addError($this->t("Cannot delete WissKI component. See logs for more details."));
       return [
         'message' => 'Cannot delete WissKI component.',

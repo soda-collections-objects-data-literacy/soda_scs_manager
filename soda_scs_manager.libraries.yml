@@ -34,7 +34,7 @@ keycloak_registration:
 tag_filter:
   version: 1.x
   js:
-    js/soda-tag-filter.js: {}
+    js/tag-filter.js: {}
   dependencies:
     - core/drupal
 

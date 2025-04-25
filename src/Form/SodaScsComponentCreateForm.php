@@ -211,7 +211,7 @@ class SodaScsComponentCreateForm extends ContentEntityForm {
     }
 
     // Change the label of the submit button.
-    $form['actions']['submit']['#value'] = $this->t('CREATE COMPONENT');
+    $form['actions']['submit']['#value'] = $this->t('CREATE');
     $form['actions']['submit']['#attributes']['class'][] = 'soda-scs-component--component--form-submit';
 
     $form['#attached']['library'][] = 'soda_scs_manager/globalStyling';

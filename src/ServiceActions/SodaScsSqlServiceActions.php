@@ -132,7 +132,13 @@ class SodaScsSqlServiceActions implements SodaScsServiceActionsInterface {
       ];
     }
     catch (SodaScsSqlServiceException $e) {
-      Error::logException($this->loggerFactory->get('soda_scs_manager'), $e, 'Exception', [], LogLevel::ERROR);
+      Error::logException(
+        $this->loggerFactory->get('soda_scs_manager'),
+        $e,
+        'Exception: @message',
+        ['@message' => $e->getMessage()],
+        LogLevel::ERROR
+      );
       return [
         'message' => $e->getMessage(),
         'data' => [],
@@ -233,7 +239,13 @@ class SodaScsSqlServiceActions implements SodaScsServiceActionsInterface {
       $dbUserPassword = $serviceKey->get('servicePassword')->value;
     }
     catch (\Exception $e) {
-      Error::logException($this->loggerFactory->get('soda_scs_manager'), $e, 'Error loading service key', [], LogLevel::ERROR);
+      Error::logException(
+        $this->loggerFactory->get('soda_scs_manager'),
+        $e,
+        'Error loading service key: @message',
+        ['@message' => $e->getMessage()],
+        LogLevel::ERROR
+      );
       $this->messenger->addError($this->t('Error loading service key: @error', ['@error' => $e->getMessage()]));
       return [
         'message' => $this->t('Error loading service key: @error', ['@error' => $e->getMessage()]),
@@ -366,7 +378,13 @@ class SodaScsSqlServiceActions implements SodaScsServiceActionsInterface {
     }
     catch (\Exception $e) {
       // Request failed, handle the error.
-      Error::logException($this->loggerFactory->get('soda_scs_manager'), $e, 'Request failed with exception', [], LogLevel::ERROR);
+      Error::logException(
+        $this->loggerFactory->get('soda_scs_manager'),
+        $e,
+        'Request failed with exception: @message',
+        ['@message' => $e->getMessage()],
+        LogLevel::ERROR
+      );
       $this->messenger
         ->addError($this->t('Can not communicate with the SCS user manager daemon.'));
       return [];

@@ -377,8 +377,19 @@ class SodaScsOpenGdbServiceActions implements SodaScsServiceRequestInterface {
       ];
     }
     catch (ClientException $e) {
+      if ($request['type'] === 'repository' && $e->getCode() === 404) {
+        $this->messenger->addError($this->t("OpenGDB request for @type failed. See logs for more details.", ['@type' => $request['type']]));
+        Error::logException($this->loggerFactory->get('soda_scs_manager'), $e, 'OpenGDB request failed: @message', ['@message' => $e->getMessage()], LogLevel::ERROR);
+        return [
+          'message' => 'Request failed, is the triplestore running?',
+          'data' => [
+            'openGdbResponse' => $e,
+          ],
+          'success' => FALSE,
+        ];
+      }
       // @todo User not exist is ok, try to make this no error
-      if ($request['type'] === 'user' && $e->getCode() === 404) {
+      elseif ($request['type'] === 'user' && $e->getCode() === 404) {
         $username = array_slice(explode('/', $request['route']), -1)[0];
         $this->messenger
           ->addWarning(
@@ -398,10 +409,9 @@ class SodaScsOpenGdbServiceActions implements SodaScsServiceRequestInterface {
           'error' => $e->getMessage(),
         ];
       }
-      // @todo Implement tracing in every logger.
-      Error::logException($this->loggerFactory->get('soda_scs_manager'), $e, 'OpenGDB request failed', [], LogLevel::ERROR);
     }
     $this->messenger->addError($this->t("OpenGDB request for @type failed. See logs for more details.", ['@type' => $request['type']]));
+    Error::logException($this->loggerFactory->get('soda_scs_manager'), $e, 'OpenGDB request failed: @message', ['@message' => $e->getMessage()], LogLevel::ERROR);
     return [
       'data' => [
         'openGdbResponse' => $e,

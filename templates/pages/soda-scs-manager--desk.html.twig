@@ -8,11 +8,47 @@
  * @ingroup themeable
  */
 #}
-{% set entity_type = entity_type|replace({'soda_scs_': ''}) %}
+
+{% set all_tags = ['coding', 'content-management', 'data-cleaning', 'data-science', 'database', 'filesharing', 'office', 'ontology', 'publishing'] %}
+
+<div class="soda-scs-manager--tag-filter-container p-2 rounded-lg align-center justify-center">
+  <h3 class="text-stone-200 text-2xl font-bold p-1 text-center m-1 my-1">{{ 'Filter by Tags'|t }}</h3>
+  <div class="soda-scs-manager--tag-filter flex flex-wrap gap-2 justify-center" data-active-tags="[]">
+    {% for tag in all_tags|sort %}
+      <button class="soda-scs-manager--tag-filter-button rounded-full px-3 py-1.5 text-sm flex items-center gap-1.5 cursor-pointer transition-all
+        {% if tag == 'coding' %}
+          bg-purple-100 text-purple-700 hover:bg-purple-200
+        {% elseif tag == 'content-management' %}
+          bg-blue-100 text-blue-700 hover:bg-blue-200
+        {% elseif tag == 'database' %}
+          bg-emerald-100 text-emerald-700 hover:bg-emerald-200
+        {% elseif tag == 'data-cleaning' %}
+          bg-green-100 text-green-700 hover:bg-green-200
+        {% elseif tag == 'data-science' %}
+          bg-teal-100 text-teal-700 hover:bg-teal-200
+        {% elseif tag == 'filesharing' %}
+          bg-cyan-100 text-cyan-700 hover:bg-cyan-200
+        {% elseif tag == 'ontology' %}
+          bg-indigo-100 text-indigo-700 hover:bg-indigo-200
+        {% elseif tag == 'publishing' %}
+          bg-amber-100 text-amber-700 hover:bg-amber-200
+        {% elseif tag == 'office' %}
+          bg-orange-100 text-orange-700 hover:bg-orange-200
+        {% elseif tag == 'triplestore' %}
+          bg-lime-100 text-lime-700 hover:bg-lime-200
+        {% else %}
+          bg-stone-100 text-stone-700 hover:bg-stone-200
+        {% endif %}" data-tag="{{ tag }}">
+        {{ tag }}
+        <span class="soda-scs-manager--tag-remove hidden">×</span>
+      </button>
+    {% endfor %}
+  </div>
+</div>
     {% if entitiesByUser is not empty %}
       {% for username, entities in entitiesByUser %}
         <div class="text-center mb-8">
-          <h2 class="text-3xl font-bold text-stone-200 mb-4">{{ entity_type }}s of User {{ username }}</h2>
+          <h2 class="text-3xl font-bold text-stone-200 mb-4"> Applications of User {{ username }}</h2>
         </div>
 
         {% set entity_count = entities|length %}
@@ -26,7 +62,7 @@
       {% endfor %}
     {% else %}
       <div class="alert alert-info opacity-90 bg-slate-950 border-2 border-stone-200 shadow-lg shadow-cyan-500/50 p-4 rounded-lg text-center">
-        <p class="text-stone-200 text-xl">{{ 'No ' ~ entity_type ~ 's found.'|t }}</p>
+        <p class="text-stone-200 text-xl">{{ 'No applications found.'|t }}</p>
       </div>
     {% endif %}
   </div>

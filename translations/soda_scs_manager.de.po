@@ -171,8 +171,8 @@ msgid "Default Project"
 msgstr "Standardprojekt"
 
 #: soda_scs_manager.module:261
-msgid "A Project is a collection of components and stacks."
-msgstr "Ein Projekt ist eine Sammlung von Komponenten und Stacks."
+msgid "A Project is a collection of applications."
+msgstr "Ein Projekt ist eine Sammlung von Komponenten."
 
 #: soda_scs_manager.module:266
 msgid "Default Service Key"
@@ -223,7 +223,7 @@ msgid "SODa SCS manager"
 msgstr "SODa SCS-Manager"
 
 #: soda_scs_manager.info.yml:0
-msgid "Sammlungen, Objekte, Datenkompetenzen Semantic Coworking Space Manager (SODa SCS Manager) module for managing SCS components."
+msgid "Sammlungen, Objekte, Datenkompetenzen Semantic Coworking Space Manager (SODa SCS Manager) module for managing SCS applications."
 msgstr "Sammlungen, Objekte, Datenkompetenzen Semantic Coworking Space Manager (SODa SCS Manager) Modul zur Verwaltung von SCS-Komponenten."
 
 #: soda_scs_manager.info.yml:0
@@ -239,7 +239,7 @@ msgid "Add service key"
 msgstr "Serviceschlüssel hinzufügen"
 
 #: soda_scs_manager.links.menu.yml:0 src/Entity/SodaScsComponent.php:12;12
-msgid "SODa SCS Components"
+msgid "SODa SCS applications"
 msgstr "SODa SCS-Komponenten"
 
 #: soda_scs_manager.links.menu.yml:0 soda_scs_manager.routing.yml:0 src/Entity/SodaScsProject.php:14;14
@@ -263,7 +263,7 @@ msgid "SODa SCS manager users page"
 msgstr "SODa SCS-Manager Benutzerseite"
 
 #: soda_scs_manager.links.menu.yml:0;0
-msgid "SODa SCS manager components page"
+msgid "SODa SCS manager applications page"
 msgstr "SODa SCS-Manager Komponentenseite"
 
 #: soda_scs_manager.links.menu.yml:0
@@ -307,7 +307,7 @@ msgid "Manage SODa SCS Stacks"
 msgstr "SODa SCS-Stacks verwalten"
 
 #: soda_scs_manager.links.menu.yml:0
-msgid "List all available components and provide the possibility to install them"
+msgid "List all available applications and provide the possibility to install them"
 msgstr "Alle verfügbaren Komponenten auflisten und die Möglichkeit bieten, sie zu installieren"
 
 #: soda_scs_manager.links.menu.yml:0
@@ -315,11 +315,11 @@ msgid "Link to the SODa SCS Manager Component Page"
 msgstr "Link zur SODa SCS-Manager Komponentenseite"
 
 #: soda_scs_manager.links.menu.yml:0
-msgid "Your components"
+msgid "Your applications"
 msgstr "Ihre Komponenten"
 
 #: soda_scs_manager.links.menu.yml:0
-msgid "Available components"
+msgid "Available applications"
 msgstr "Verfügbare Komponenten"
 
 #: soda_scs_manager.links.task.yml:0;0;0;0 src/ListBuilder/SodaScsSnapshotListBuilder.php:145
@@ -355,7 +355,7 @@ msgid "SODa SCS Manager user"
 msgstr "SODa SCS-Manager Benutzer"
 
 #: soda_scs_manager.permissions.yml:0
-msgid "Administer own Stacks, Components and Service Keys"
+msgid "Administer own Stacks, applications and Service Keys"
 msgstr "Eigene Stacks, Komponenten und Serviceschlüssel verwalten"
 
 #: soda_scs_manager.permissions.yml:0
@@ -419,8 +419,8 @@ msgid "Create SCS Snapshots"
 msgstr "SCS-Snapshots erstellen"
 
 #: soda_scs_manager.permissions.yml:0
-msgid "Create snapshots of stacks and components."
-msgstr "Snapshots von Stacks und Komponenten erstellen."
+msgid "Create snapshots of applications."
+msgstr "Snapshots von Anwendungen erstellen."
 
 #: soda_scs_manager.routing.yml:0
 msgid "Component health check"
@@ -459,8 +459,8 @@ msgid "Delete ScsComponent"
 msgstr "ScsComponent löschen"
 
 #: soda_scs_manager.routing.yml:0
-msgid "Soda SCS Components"
-msgstr "Soda SCS-Komponenten"
+msgid "Soda SCS applications"
+msgstr "Soda SCS-Anwendungen"
 
 #: soda_scs_manager.routing.yml:0
 msgid "SODa SCS Service Key"
@@ -702,17 +702,13 @@ msgstr "Das Image der SODa SCS-Komponente."
 msgid "Label"
 msgstr "Bezeichnung"
 
-#: src/Entity/SodaScsComponent.php:232 src/Entity/SodaScsStack.php:197
-msgid "The label of the SODa SCS Component."
-msgstr "Die Bezeichnung der SODa SCS-Komponente."
-
 #: src/Entity/SodaScsComponent.php:248 src/Entity/SodaScsProject.php:174 src/Entity/SodaScsStack.php:234
 msgid "Machine Name"
 msgstr "Maschinenname"
 
 #: src/Entity/SodaScsComponent.php:249 src/Entity/SodaScsProject.php:175 src/Entity/SodaScsStack.php:235
-msgid "The machine-readable name of the project."
-msgstr "Der maschinenlesbare Name des Projekts."
+msgid "The machine-readable name."
+msgstr "Der maschinenlesbare Name."
 
 #: src/Entity/SodaScsComponent.php:272
 msgid "Notes"
@@ -735,11 +731,11 @@ msgid "Project"
 msgstr "Projekt"
 
 #: src/Entity/SodaScsComponent.php:308 src/Entity/SodaScsStack.php:259
-msgid "The project this component belongs to."
-msgstr "Das Projekt, zu dem diese Komponente gehört."
+msgid "The project this application belongs to."
+msgstr "Das Projekt, zu dem diese Anwendung gehört."
 
 #: src/Entity/SodaScsComponent.php:327 src/Entity/SodaScsProject.php:99
-msgid "Connected Components"
+msgid "Connected applications"
 msgstr "Verbundene Komponenten"
 
 #: src/Entity/SodaScsComponent.php:343
@@ -771,7 +767,7 @@ msgid "SODa SCS Component"
 msgstr "SODa SCS-Komponente"
 
 #: src/Entity/SodaScsProject.php:100
-msgid "The SCS components associated with this project."
+msgid "The SCS applications associated with this project."
 msgstr "Die mit diesem Projekt verbundenen SCS-Komponenten."
 
 #: src/Entity/SodaScsProject.php:129
@@ -903,7 +899,7 @@ msgid "The image of the SODa SCS Stack."
 msgstr "Das Image des SODa SCS Stacks."
 
 #: src/Entity/SodaScsStack.php:183
-msgid "Included components"
+msgid "Included applications"
 msgstr "Eingeschlossene Komponenten"
 
 #: src/Entity/SodaScsStack.php:216
@@ -924,18 +920,18 @@ msgstr "Soda SCS Stack-Typ"
 
 #: src/Entity/Bundle/SodaScsComponentBundle.php:25 src/Entity/Bundle/SodaScsStackBundle.php:25
 msgid "Flavour"
-msgstr "Geschmack"
+msgstr "Flavour"
 
 #: src/Entity/Bundle/SodaScsComponentBundle.php:26 src/Entity/Bundle/SodaScsStackBundle.php:26
 msgid "The flavour of the SODa SCS Component."
-msgstr "Der Geschmack der SODa SCS Komponente."
+msgstr "Der Flavour der SODa SCS Komponente."
 
 #: src/Entity/Bundle/SodaScsComponentBundle.php:49
 msgid "Shared With"
 msgstr "Geteilt mit"
 
 #: src/Entity/Bundle/SodaScsComponentBundle.php:50
-msgid "The components that are shared with this component."
+msgid "The applications that are shared with this component."
 msgstr "Die Komponenten, die mit dieser Komponente geteilt werden."
 
 #: src/Entity/Bundle/SodaScsProjectsBundle.php:24
@@ -963,12 +959,12 @@ msgid "What is that?"
 msgstr "Was ist das?"
 
 #: src/Form/SodaScsComponentCreateForm.php:210
-msgid "This field is required for filesystem components."
+msgid "This field is required for filesystem applications."
 msgstr "Dieses Feld ist für Dateisystemkomponenten erforderlich."
 
 #: src/Form/SodaScsComponentCreateForm.php:214
-msgid "CREATE COMPONENT"
-msgstr "KOMPONENTE ERSTELLEN"
+msgid "CREATE"
+msgstr "ERSTELLEN"
 
 #: src/Form/SodaScsComponentCreateForm.php:233
 msgid "The machineName can only contain small letters, digits, minus, and underscore"
@@ -1727,8 +1723,8 @@ msgid "Snapshot %label has been deleted."
 msgstr "Snapshot %label wurde gelöscht."
 
 #: src/Form/SodaScsStackCreateForm.php:159
-msgid "CREATE STACK"
-msgstr "STACK ERSTELLEN"
+msgid "CREATE"
+msgstr "ERSTELLEN"
 
 #: src/Form/SodaScsStackCreateForm.php:178
 msgid "The machineName can only contain small letters, digits, and minus."
@@ -1787,7 +1783,7 @@ msgid "Machine name"
 msgstr "Maschinenname"
 
 #: src/ListBuilder/SodaScsProjectListBuilder.php:26
-msgid "Components"
+msgid "Applications"
 msgstr "Komponenten"
 
 #: src/ListBuilder/SodaScsServiceKeyListBuilder.php:22
@@ -1943,5 +1939,5 @@ msgid "No stacks available."
 msgstr "Keine Stacks verfügbar."
 
 #: templates/pages/soda-scs-manager--store.html.twig:30
-msgid "No components available."
+msgid "No applications available."
 msgstr "Keine Komponenten verfügbar."

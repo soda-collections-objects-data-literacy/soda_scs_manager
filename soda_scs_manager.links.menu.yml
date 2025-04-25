@@ -1,104 +1,161 @@
-# Structure
-## Components
-entity.soda_scs_component.collection:
+# Links
+## Structure
+
+soda_scs_manager.entities:
+  title: 'SODa SCS Manager Administration'
+  description: 'Manage SODa SCS Manager'
+  parent: system.admin_structure
+  route_name: soda_scs_manager.entities
+  weight: 100
+  requirements:
+    _permission: 'soda scs manager admin'
+
+### Components
+soda_scs_manager.entities.components:
   title: 'SODa SCS Components'
   description: 'Manage SODa SCS Components'
-  parent: system.admin_structure
+  parent: soda_scs_manager.entities
   route_name: entity.soda_scs_component.collection
-  weight: 100
-  requirements:
-    _permission: 'soda scs manager admin'
-
-# Projects
-entity.soda_scs_project.collection:
-  title: 'SODa SCS Projects'
-  description: 'Manage SODa SCS Projects'
-  parent: system.admin_structure
-  route_name: entity.soda_scs_project.collection
-  weight: 100
-  requirements:
-    _permission: 'soda scs manager admin'
-
-## Service Keys
-soda_scs_manager.service_key.admin:
-  title: 'SODa SCS Service Keys'
-  description: 'Manage SODa SCS Service Keys'
-  parent: system.admin_structure
-  route_name: entity.soda_scs_service_key.collection
   weight: 100
   requirements:
     _permission: 'soda scs manager user'
 
-# Snapshots
-entity.soda_scs_snapshot.collection:
-  title: 'SODa SCS Snapshots'
-  description: 'Manage SODa SCS Snapshots'
-  parent: system.admin_structure
-  route_name: entity.soda_scs_snapshot.collection
+### Projects
+soda_scs_manager.entities.projects:
+  title: 'SODa SCS Projects'
+  description: 'Manage SODa SCS Projects'
+  parent: soda_scs_manager.entities
+  route_name: entity.soda_scs_project.collection
   weight: 100
+  requirements:
+    _permission: 'soda scs manager user'
 
-## Stacks
-entity.soda_scs_stack.collection:
-  title: 'SODa SCS Stacks'
-  description: 'Manage SODa SCS Stacks'
-  parent: system.admin_structure
-  route_name: entity.soda_scs_stack.collection
+### Service Keys
+soda_scs_manager.entities.service_keys:
+  title: 'SODa SCS Service Keys'
+  description: 'Manage SODa SCS Service Keys'
+  parent: soda_scs_manager.entities
+  route_name: entity.soda_scs_service_key.collection
   weight: 100
   requirements:
     _permission: 'soda scs manager admin'
 
-# Configuration
-soda_scs_manager.component_page:
-    title: 'SODa SCS manager components page'
-    description: 'SODa SCS manager components page'
-    parent: soda_scs_manager.settings_menu_block
-    route_name: soda_scs_manager.desk
+### Snapshots
+soda_scs_manager.entities.snapshots:
+  title: 'SODa SCS Snapshots'
+  description: 'Manage SODa SCS Snapshots'
+  parent: soda_scs_manager.entities
+  route_name: entity.soda_scs_snapshot.collection
+  weight: 100
+  requirements:
+    _permission: 'soda scs manager user'
 
-soda_scs_manager.component_store:
-    title: 'Component store'
-    description: 'List all available components and provide the possibility to install them'
-    parent: soda_scs_manager.settings_menu_block
-    route_name: soda_scs_manager.store
+### Stacks
+soda_scs_manager.entities.stacks:
+  title: 'SODa SCS Stacks'
+  description: 'Manage SODa SCS Stacks'
+  parent: soda_scs_manager.entities
+  route_name: entity.soda_scs_stack.collection
+  weight: 100
+  requirements:
+    _permission: 'soda scs manager user'
+
+# Configuration pages
 
 soda_scs_manager.settings_menu_block:
-    title: 'SODa SCS manager'
-    description: 'SODa SCS manager'
-    parent: system.admin_config
-    route_name: soda_scs_manager.settings.menu
+  title: 'SODa SCS Manager'
+  description: 'SODa SCS Manager settings and configurations'
+  parent: system.admin_config
+  route_name: soda_scs_manager.settings
+  weight: 100
+  requirements:
+    _permission: 'soda scs manager user'
 
-soda_scs_manager.settings_form:
+soda_scs_manager.application_desk:
+    title: 'Application desk'
+    description: 'List used applications by user'
+    parent: soda_scs_manager.settings_menu_block
+    route_name: soda_scs_manager.desk
+    requirements:
+      _permission: 'soda scs manager user'
+
+soda_scs_manager.application_store:
+    title: 'Application store'
+    description: 'List all available applications'
+    parent: soda_scs_manager.settings_menu_block
+    route_name: soda_scs_manager.store
+    requirements:
+      _permission: 'soda scs manager user'
+
+soda_scs_manager.application_documentation:
+    title: 'SODa SCS Manager documentation'
+    description: 'Documentation for SODa SCS Manager'
+    parent: soda_scs_manager.settings_menu_block
+    route_name: soda_scs_manager.documentation
+    requirements:
+      _permission: 'soda scs manager user'
+
+soda_scs_manager.settings:
     title: 'SODa SCS manager settings'
-    description: 'SODa SCS manager settings'
+    description: 'Manage SODa SCS Manager settings'
     parent: soda_scs_manager.settings_menu_block
     route_name: soda_scs_manager.settings
+    requirements:
+      _permission: 'soda scs manager admin'
 
-soda_scs_manager.users_page:
-    title: 'SODa SCS manager keycloak users'
-    description: 'SODa SCS manager keycloak users'
+soda_scs_manager.keycloak_users:
+    title: 'Keycloak users'
+    description: 'Manage Keycloak users'
     parent: soda_scs_manager.settings_menu_block
     route_name: soda_scs_manager.user_registration_approvals
+    requirements:
+      _permission: 'soda scs manager admin'
 
 # Menu items for the main navigation
 soda_scs_manager.main_navigation:
   title: 'SODa SCS Manager'
-  description: 'Link to the SODa SCS Manager Component Page'
+  description: 'Overview of main tasks'
   menu_name: main
   route_name: soda_scs_manager.menu.default
   weight: 10
+  requirements:
+    _permission: 'soda scs manager user'
 
 soda_scs_manager.menu.desk:
   title: 'Desk'
-  description: 'Your components'
+  description: 'Your applications'
   parent: soda_scs_manager.main_navigation
   route_name: soda_scs_manager.desk
   weight: 10
+  requirements:
+    _permission: 'soda scs manager user'
 
 soda_scs_manager.menu.store:
   title: 'Store'
-  description: 'Available components'
+  description: 'Available applications'
   parent: soda_scs_manager.main_navigation
   route_name: soda_scs_manager.store
   weight: 10
+  requirements:
+    _permission: 'soda scs manager user'
+
+soda_scs_manager.menu.documentation:
+  title: 'Documentation'
+  description: 'Documentation'
+  parent: soda_scs_manager.main_navigation
+  route_name: soda_scs_manager.documentation
+  weight: 10
+  requirements:
+    _permission: 'soda scs manager user'
+
+soda_scs_manager.menu.administration:
+  title: 'Administration'
+  description: 'Administration'
+  parent: soda_scs_manager.main_navigation
+  route_name: soda_scs_manager.administration
+  weight: 10
+  requirements:
+    _permission: 'soda scs manager user'
 
 soda_scs_manager.user_registration_approvals:
   title: 'Keycloak User Registrations'
@@ -106,3 +163,5 @@ soda_scs_manager.user_registration_approvals:
   parent: entity.user.collection
   route_name: soda_scs_manager.user_registration_approvals
   weight: 10
+  requirements:
+    _permission: 'soda scs manager admin'

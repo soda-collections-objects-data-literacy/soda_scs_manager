@@ -56,14 +56,12 @@ class SodaScsJupyterStackActions implements SodaScsStackActionsInterface {
     LoggerChannelFactoryInterface $loggerFactory,
     MessengerInterface $messenger,
     SodaScsHelpersInterface $sodaScsStackHelpers,
-    SodaScsComponentActionsInterface $sodaScsJupyterComponentActions,
     TranslationInterface $stringTranslation,
   ) {
     // Services from container.
     $this->loggerFactory = $loggerFactory;
     $this->messenger = $messenger;
     $this->sodaScsStackHelpers = $sodaScsStackHelpers;
-    $this->sodaScsJupyterComponentActions = $sodaScsJupyterComponentActions;
     $this->stringTranslation = $stringTranslation;
   }
 
@@ -91,7 +89,13 @@ class SodaScsJupyterStackActions implements SodaScsStackActionsInterface {
       ];
     }
     catch (\Exception $e) {
-      Error::logException($this->loggerFactory->get('soda_scs_manager'), $e, 'Jupyter stack creation failed', [], LogLevel::ERROR);
+      Error::logException(
+        $this->loggerFactory->get('soda_scs_manager'),
+        $e,
+        'Jupyter stack creation failed: @message',
+        ['@message' => $e->getMessage()],
+        LogLevel::ERROR
+      );
       $this->messenger->addError($this->t("Could not create jupyter stack. See logs for more details."));
       return [
         'message' => $this->t('Could not create stack: %message', ['%message' => $e->getMessage()]),
@@ -170,7 +174,13 @@ class SodaScsJupyterStackActions implements SodaScsStackActionsInterface {
 
     }
     catch (\Exception $e) {
-      Error::logException($this->loggerFactory->get('soda_scs_manager'), $e, 'Jupyter component deletion failed', [], LogLevel::ERROR);
+      Error::logException(
+        $this->loggerFactory->get('soda_scs_manager'),
+        $e,
+        'Jupyter component deletion failed: @message',
+        ['@message' => $e->getMessage()],
+        LogLevel::ERROR
+      );
       $this->messenger->addError($this->t("Could not delete jupyter component. See logs for more details."));
       return [
         'message' => 'Could not delete jupyter component.',

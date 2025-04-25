@@ -18,7 +18,7 @@ use Psr\Log\LogLevel;
 /**
  * Handles the communication with the SCS user manager daemon.
  */
-class SodaScsSqlStackActions implements SodaScsStackActionsInterface {
+class SodaScsNextcloudStackActions implements SodaScsStackActionsInterface {
 
   use DependencySerializationTrait;
   use StringTranslationTrait;
@@ -45,25 +45,16 @@ class SodaScsSqlStackActions implements SodaScsStackActionsInterface {
   protected SodaScsHelpersInterface $sodaScsStackHelpers;
 
   /**
-   * The SCS database actions service.
-   *
-   * @var \Drupal\soda_scs_manager\SodaScsComponentActionsInterface
-   */
-  protected SodaScsComponentActionsInterface $sodaScsSqlComponentActions;
-
-  /**
    * Class constructor.
    */
   public function __construct(
     LoggerChannelFactoryInterface $loggerFactory,
     MessengerInterface $messenger,
-    SodaScsComponentActionsInterface $sodaScsSqlComponentActions,
     SodaScsHelpersInterface $sodaScsStackHelpers,
   ) {
     // Services from container.
     $this->loggerFactory = $loggerFactory;
     $this->messenger = $messenger;
-    $this->sodaScsSqlComponentActions = $sodaScsSqlComponentActions;
     $this->sodaScsStackHelpers = $sodaScsStackHelpers;
   }
 
@@ -86,24 +77,11 @@ class SodaScsSqlStackActions implements SodaScsStackActionsInterface {
    */
   public function createStack(SodaScsStackInterface $stack): array {
     try {
-      // Create the SQL component.
-      $sqlComponentCreateResult = $this->sodaScsSqlComponentActions->createComponent($stack);
-
-      if (!$sqlComponentCreateResult['success']) {
-        return [
-          'message' => 'Could not create database component.',
-          'data' => [
-            'sqlComponentCreateResult' => $sqlComponentCreateResult,
-          ],
-          'success' => FALSE,
-          'error' => $sqlComponentCreateResult['error'],
-        ];
-      }
       $stack->save();
       return [
         'message' => 'Could not create database component.',
         'data' => [
-          'sqlComponentCreateResult' => $sqlComponentCreateResult,
+          'sqlComponentCreateResult' => NULL,
         ],
         'success' => TRUE,
         'error' => NULL,
@@ -111,7 +89,13 @@ class SodaScsSqlStackActions implements SodaScsStackActionsInterface {
 
     }
     catch (\Exception $e) {
-      Error::logException($this->loggerFactory->get('soda_scs_manager'), $e, 'Database component creation failed', [], LogLevel::ERROR);
+      Error::logException(
+        $this->loggerFactory->get('soda_scs_manager'),
+        $e,
+        'Database component creation failed: @message',
+        ['@message' => $e->getMessage()],
+        LogLevel::ERROR
+      );
       $this->messenger->addError($this->t("Could not create database component. See logs for more details."));
       return [
         'message' => 'Could not create database component.',
@@ -194,44 +178,34 @@ class SodaScsSqlStackActions implements SodaScsStackActionsInterface {
    */
   public function deleteStack(SodaScsStackInterface $stack): array {
     try {
-      // Delete Drupal database.
-      $sqlComponent = $this->sodaScsStackHelpers->retrieveIncludedComponent($stack, 'soda_scs_sql_component');
-      if ($sqlComponent) {
-        $deleteDbResult = $this->sodaScsSqlComponentActions->deleteComponent($sqlComponent);
-      }
-      else {
-        $deleteDbResult = NULL;
-      }
-    }
-    catch (MissingDataException $e) {
-      Error::logException($this->loggerFactory->get('soda_scs_manager'), $e, 'Cannot delete database', [], LogLevel::ERROR);
-      $this->messenger->addError($this->t("Cannot delete database. See logs for more details."));
+      $stack->delete();
       return [
-        'message' => 'Cannot delete database.',
+        'message' => 'Component deleted',
         'data' => [
-          'deleteDbResult' => NULL,
+          'deleteStackResult' => NULL,
         ],
-        'success' => FALSE,
-        'error' => $e->getMessage(),
+        'success' => TRUE,
+        'error' => NULL,
       ];
     }
-    catch (SodaScsComponentException $e) {
-      $this->messenger->addError($this->t("Cannot delete database. See logs for more details."));
-      if ($e->getCode() == 1) {
-        // If component does not exist, we cannot delete the database.
-        Error::logException($this->loggerFactory->get('soda_scs_manager'), $e, 'Cannot delete database', [], LogLevel::ERROR);
-        $this->sodaScsStackHelpers->cleanIncludedComponents($stack);
-      }
+    catch (\Exception $e) {
+      Error::logException(
+        $this->loggerFactory->get('soda_scs_manager'),
+        $e,
+        'Database component deletion failed: @message',
+        ['@message' => $e->getMessage()],
+        LogLevel::ERROR
+      );
+      $this->messenger->addError($this->t("Could not delete database component. See logs for more details."));
+      return [
+        'message' => 'Could not delete database component.',
+        'data' => [
+          'deleteStackResult' => NULL,
+        ],
+        'success' => FALSE,
+        'error' => $e,
+      ];
     }
-    $stack->delete();
-    return [
-      'message' => 'Component deleted',
-      'data' => [
-        'deleteDbResult' => $deleteDbResult,
-      ],
-      'success' => TRUE,
-      'error' => NULL,
-    ];
   }
 
 }

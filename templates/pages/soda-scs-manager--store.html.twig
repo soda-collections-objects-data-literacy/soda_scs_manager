@@ -10,11 +10,11 @@
 #}
 {% set all_tags = ['coding', 'content-management', 'data-cleaning', 'data-science', 'database', 'filesharing', 'office', 'ontology', 'publishing'] %}
 
-<div class="soda-tag-filter-container p-2 rounded-lg align-center justify-center">
+<div class="soda-scs-manager--tag-filter-container p-2 rounded-lg align-center justify-center">
   <h3 class="text-stone-200 text-2xl font-bold p-1 text-center m-1 my-1">{{ 'Filter by Tags'|t }}</h3>
-  <div class="soda-tag-filter flex flex-wrap gap-2 justify-center" data-active-tags="[]">
+  <div class="soda-scs-manager--tag-filter flex flex-wrap gap-2 justify-center" data-active-tags="[]">
     {% for tag in all_tags|sort %}
-      <button class="soda-tag-filter-button rounded-full px-3 py-1.5 text-sm flex items-center gap-1.5 cursor-pointer transition-all
+      <button class="soda-scs-manager--tag-filter-button rounded-full px-3 py-1.5 text-sm flex items-center gap-1.5 cursor-pointer transition-all
         {% if tag == 'coding' %}
           bg-purple-100 text-purple-700 hover:bg-purple-200
         {% elseif tag == 'content-management' %}
@@ -39,7 +39,7 @@
           bg-stone-100 text-stone-700 hover:bg-stone-200
         {% endif %}" data-tag="{{ tag }}">
         {{ tag }}
-        <span class="soda-tag-remove hidden">×</span>
+        <span class="soda-scs-manager--tag-remove hidden">×</span>
       </button>
     {% endfor %}
   </div>

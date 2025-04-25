@@ -276,7 +276,13 @@ class SodaScsSqlComponentActions implements SodaScsComponentActionsInterface {
       ];
     }
     catch (MissingDataException $e) {
-      Error::logException($this->logger, $e, 'Cannot create database', [], LogLevel::ERROR);
+      Error::logException(
+        $this->logger,
+        $e,
+        'Cannot create database: @message',
+        ['@message' => $e->getMessage()],
+        LogLevel::ERROR
+      );
       $this->messenger->addError($this->t("Cannot create database. See logs for more details."));
       return [
         'message' => 'Cannot create database.',
@@ -351,7 +357,13 @@ class SodaScsSqlComponentActions implements SodaScsComponentActionsInterface {
       $component->delete();
     }
     catch (\Exception $e) {
-      Error::logException($this->logger, $e, 'Cannot delete database', [], LogLevel::ERROR);
+      Error::logException(
+        $this->logger,
+        $e,
+        'Cannot delete database: @message',
+        ['@message' => $e->getMessage()],
+        LogLevel::ERROR
+      );
       $this->messenger->addError($this->t("Cannot delete database. See logs for more details."));
 
       return [
@@ -371,7 +383,13 @@ class SodaScsSqlComponentActions implements SodaScsComponentActionsInterface {
       $dbUserPassword = $sqlServiceKey->get('servicePassword')->value;
     }
     catch (\Exception $e) {
-      Error::logException($this->logger, $e, 'Cannot load service key', [], LogLevel::ERROR);
+      Error::logException(
+        $this->logger,
+        $e,
+        'Cannot load service key: @message',
+        ['@message' => $e->getMessage()],
+        LogLevel::ERROR
+      );
       $this->messenger->addError($this->t("Cannot load service key. See logs for more details."));
       return [
         'message' => 'Cannot load service key.',
@@ -386,7 +404,13 @@ class SodaScsSqlComponentActions implements SodaScsComponentActionsInterface {
       $cleanDatabaseUsers = $this->sodaScsMysqlServiceActions->cleanServiceUsers($component->getOwner()->getDisplayName(), $dbUserPassword);
     }
     catch (\Exception $e) {
-      Error::logException($this->logger, $e, 'Cannot clean database users', [], LogLevel::ERROR);
+      Error::logException(
+        $this->logger,
+        $e,
+        'Cannot clean database users: @message',
+        ['@message' => $e->getMessage()],
+        LogLevel::ERROR
+      );
       $this->messenger->addError($this->t("Cannot clean database users. See logs for more details."));
       return [
         'message' => 'Cannot clean database. users',

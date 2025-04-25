@@ -156,7 +156,7 @@ class SodaScsStackCreateForm extends ContentEntityForm {
     }
 
     // Change the label of the submit button.
-    $form['actions']['submit']['#value'] = $this->t('CREATE STACK');
+    $form['actions']['submit']['#value'] = $this->t('CREATE');
     $form['actions']['submit']['#attributes']['class'][] = 'soda-scs-stack--stack--form-submit';
 
     $form['#attached']['library'][] = 'soda_scs_manager/globalStyling';
@@ -263,7 +263,13 @@ class SodaScsStackCreateForm extends ContentEntityForm {
 
     if (!$createStackResult['success']) {
       $error = $createStackResult['error'];
-      Error::logException($this->loggerFactory->get('soda_scs_manager'), new \Exception($error), 'Cannot create stack', [], LogLevel::ERROR);
+      Error::logException(
+        $this->loggerFactory->get('soda_scs_manager'),
+        new \Exception($error),
+        'Cannot create stack: @message',
+        ['@message' => $error],
+        LogLevel::ERROR
+      );
       $this->messenger()->addMessage($this->t('Cannot create stack "@label". See logs for more details.', [
         '@label' => $this->entity->label(),
         '@username' => $this->currentUser->getAccount()->getDisplayName(),

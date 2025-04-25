@@ -500,7 +500,13 @@ class SodaScsKeycloakServiceActions implements SodaScsServiceRequestInterface {
       ];
     }
     catch (\Exception $e) {
-      Error::logException($this->loggerFactory->get('soda_scs_manager'), $e, 'Keycloak request failed', [], LogLevel::ERROR);
+      Error::logException(
+        $this->loggerFactory->get('soda_scs_manager'),
+        $e,
+        'Keycloak request failed: @message',
+        ['@message' => $e->getMessage()],
+        LogLevel::ERROR
+      );
       $this->loggerFactory->get('soda_scs_manager')->debug('Request details: @request', ['@request' => print_r($request, TRUE)]);
 
       return [

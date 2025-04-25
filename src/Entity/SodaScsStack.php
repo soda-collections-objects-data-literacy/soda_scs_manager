@@ -194,7 +194,6 @@ class SodaScsStack extends ContentEntityBase implements SodaScsStackInterface {
 
     $fields['label'] = BaseFieldDefinition::create('string')
       ->setLabel(new TranslatableMarkup('Label'))
-      ->setDescription(new TranslatableMarkup('The label of the SODa SCS Component.'))
       ->setRequired(TRUE)
       ->setReadOnly(TRUE)
       ->setTranslatable(FALSE)
@@ -232,7 +231,7 @@ class SodaScsStack extends ContentEntityBase implements SodaScsStackInterface {
 
     $fields['machineName'] = BaseFieldDefinition::create('string')
       ->setLabel(new TranslatableMarkup('Machine Name'))
-      ->setDescription(new TranslatableMarkup('The machine-readable name of the project.'))
+      ->setDescription(new TranslatableMarkup('The machine-readable name.'))
       ->setRequired(TRUE)
       ->setSetting('max_length', 32)
       ->setDisplayOptions('form', [
@@ -256,7 +255,7 @@ class SodaScsStack extends ContentEntityBase implements SodaScsStackInterface {
 
     $fields['partOfProjects'] = BaseFieldDefinition::create('entity_reference')
       ->setLabel(new TranslatableMarkup('Project'))
-      ->setDescription(new TranslatableMarkup('The project this component belongs to.'))
+      ->setDescription(new TranslatableMarkup('The project this application belongs to.'))
       ->setSetting('target_type', 'soda_scs_project')
       ->setSetting('handler', 'soda_scs_project_access')
       ->setRequired(FALSE)

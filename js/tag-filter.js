@@ -9,13 +9,13 @@
   /**
    * Behavior for tag filtering.
    */
-  Drupal.behaviors.sodaTagFilter = {
+  Drupal.behaviors.tagFilter = {
     attach: function (context, settings) {
       // Get all tag filter buttons
-      const filterButtons = context.querySelectorAll('.soda-tag-filter-button');
+      const filterButtons = context.querySelectorAll('.soda-scs-manager--tag-filter-button');
 
       // Initialize state
-      const filterContainer = context.querySelector('.soda-tag-filter');
+      const filterContainer = context.querySelector('.soda-scs-manager--tag-filter');
       if (!filterContainer) return;
 
       let activeTags = JSON.parse(filterContainer.dataset.activeTags || '[]');
@@ -30,12 +30,12 @@
             // Remove tag
             activeTags = activeTags.filter(t => t !== tag);
             this.setAttribute('aria-pressed', 'false');
-            this.querySelector('.soda-tag-remove').classList.add('hidden');
+            this.querySelector('.soda-scs-manager--tag-remove').classList.add('hidden');
           } else {
             // Add tag
             activeTags.push(tag);
             this.setAttribute('aria-pressed', 'true');
-            this.querySelector('.soda-tag-remove').classList.remove('hidden');
+            this.querySelector('.soda-scs-manager--tag-remove').classList.remove('hidden');
           }
 
           // Update active tags data attribute
@@ -59,6 +59,7 @@
         // If no active tags, show all cards
         if (activeTags.length === 0) {
           cards.forEach(card => {
+            // Allow the card to become visible first
             card.classList.remove('hidden-by-filter');
           });
           return;
