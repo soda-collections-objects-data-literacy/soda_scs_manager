@@ -38,10 +38,10 @@ function soda_scs_manager_install() {
     ->set('page.front', '/soda-scs-manager')
     ->save();
 
-  // Remove specified blocks from layout
+  // Remove specified blocks from layout.
   _soda_scs_manager_remove_default_blocks();
 
-  // Move account menu to footer_top region
+  // Move account menu to footer_top region.
   $block_ids = \Drupal::entityQuery('block')
     ->condition('plugin', 'system_menu_block:account')
     ->execute();
@@ -52,6 +52,19 @@ function soda_scs_manager_install() {
       $block->setRegion('footer_top');
       $block->save();
     }
+  }
+
+  // Check if Olivero is the default theme and set custom color scheme.
+  $default_theme = \Drupal::config('system.theme')->get('default');
+  if ($default_theme === 'olivero') {
+    // Set Olivero theme to use custom color scheme with primary color #ff8904.
+    \Drupal::configFactory()->getEditable('olivero.settings')
+      ->set('color_scheme', 'custom')
+      ->set('base_primary_color', '#ff8904')
+      ->save();
+
+    // Clear caches to apply the theme changes.
+    \Drupal::service('cache.render')->invalidateAll();
   }
 }
 
@@ -207,4 +220,20 @@ function soda_scs_manager_update_11004() {
   }
 
   return t('Table keycloak_user_registration already exists.');
+}
+
+/**
+ * Set the default front page to the SCS Manager start page.
+ */
+function soda_scs_manager_update_11005() {
+  // If theme is olivero, set custom color scheme.
+  $default_theme = \Drupal::config('system.theme')->get('default');
+  if ($default_theme === 'olivero') {
+    \Drupal::configFactory()->getEditable('olivero.settings')
+      ->set('color_scheme', 'custom')
+      ->set('base_primary_color', '#ff8904')
+      ->save();
+  }
+
+  return t('Olivero theme has been configured with custom color scheme.');
 }
