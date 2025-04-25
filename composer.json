@@ -3,6 +3,9 @@
     "description": "This is a module for the SODA SCS Manager.",
     "type": "drupal-module",
     "require": {
+        "drupal/openid_connect": "^3.0@alpha",
+        "drupal/smtp": "^1.4",
         "drupal/tailwindcss": "^5.0@alpha"
+
     }
 }

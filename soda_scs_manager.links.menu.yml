@@ -48,12 +48,6 @@ entity.soda_scs_stack.collection:
     _permission: 'soda scs manager admin'
 
 # Configuration
-soda_scs_manager.users_page:
-    title: 'SODa SCS manager users page'
-    description: 'SODa SCS manager users page'
-    parent: soda_scs_manager.settings_menu_block
-    route_name: soda_scs_manager.users
-
 soda_scs_manager.component_page:
     title: 'SODa SCS manager components page'
     description: 'SODa SCS manager components page'
@@ -77,6 +71,12 @@ soda_scs_manager.settings_form:
     description: 'SODa SCS manager settings'
     parent: soda_scs_manager.settings_menu_block
     route_name: soda_scs_manager.settings
+
+soda_scs_manager.users_page:
+    title: 'SODa SCS manager keycloak users'
+    description: 'SODa SCS manager keycloak users'
+    parent: soda_scs_manager.settings_menu_block
+    route_name: soda_scs_manager.user_registration_approvals
 
 # Menu items for the main navigation
 soda_scs_manager.main_navigation:

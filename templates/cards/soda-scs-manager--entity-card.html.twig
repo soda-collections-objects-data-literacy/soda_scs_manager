@@ -1,12 +1,39 @@
 {{ entity_type|replace({'soda_scs_': ''}) }}
 <div class="soda-scs-manager--type--card">
-  <div class="image-wrapper">
-    <img class="card-img-top " src="{{ file_url(imageUrl) }}" alt="{{ label }}" style="max-width: 200px;">
-  </div>
-  <div class="card-body ">
-    <h5 class="soda-scs-manager--card-title">{{ title }}</h5>
-    <a href="{{ url }}" class="btn">
-      MORE INFO
-    </a>
-  </div>
+  <a href="{{ url }}" class="soda-scs-manager--card-link"></a>
+    <div class="soda-scs-manager--card-tags mb-4">
+      {% for tag in tags|sort %}
+        <span class="soda-scs-manager--card-tag rounded-full px-2 py-1 text-xs whitespace-nowrap
+        {% if tag == 'coding' %}
+          bg-purple-100 text-purple-700 hover:bg-purple-200
+        {% elseif tag == 'content-management' %}
+          bg-blue-100 text-blue-700 hover:bg-blue-200
+        {% elseif tag == 'database' %}
+          bg-emerald-100 text-emerald-700 hover:bg-emerald-200
+        {% elseif tag == 'data-cleaning' %}
+          bg-green-100 text-green-700 hover:bg-green-200
+        {% elseif tag == 'data-science' %}
+          bg-teal-100 text-teal-700 hover:bg-teal-200
+        {% elseif tag == 'filesharing' %}
+          bg-cyan-100 text-cyan-700 hover:bg-cyan-200
+        {% elseif tag == 'ontology' %}
+          bg-indigo-100 text-indigo-700 hover:bg-indigo-200
+        {% elseif tag == 'publishing' %}
+          bg-amber-100 text-amber-700 hover:bg-amber-200
+        {% elseif tag == 'office' %}
+          bg-orange-100 text-orange-700 hover:bg-orange-200
+        {% elseif tag == 'triplestore' %}
+          bg-lime-100 text-lime-700 hover:bg-lime-200
+        {% else %}
+          bg-stone-100 text-stone-700 hover:bg-stone-200
+        {% endif %}">{{ tag }}</span>
+      {% endfor %}
+    </div>
+    <div class="soda-scs-manager--image-wrapper">
+      <img class="soda-scs-manager--card-img-top " src="{{ file_url(imageUrl) }}" alt="{{ label }}">
+    </div>
+    <div class="soda-scs-manager--card-body ">
+      <h5 class="soda-scs-manager--card-title">{{ title }}</h5>
+      <p class="soda-scs-manager--card-text">{{ description }}</p>
+    </div>
 </div>

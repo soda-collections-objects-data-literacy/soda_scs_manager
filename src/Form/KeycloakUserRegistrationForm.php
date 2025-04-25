@@ -2,6 +2,7 @@
 
 namespace Drupal\soda_scs_manager\Form;
 
+use Drupal\Core\Database\Connection;
 use Drupal\Core\Form\FormBase;
 use Drupal\Core\Form\FormStateInterface;
 use Drupal\Core\Mail\MailManagerInterface;
@@ -10,6 +11,7 @@ use Drupal\Core\Messenger\MessengerInterface;
 use Drupal\Core\Password\PasswordGeneratorInterface;
 use Drupal\Core\Password\PasswordInterface;
 use Drupal\Core\StringTranslation\StringTranslationTrait;
+use Drupal\Core\Url;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 use Drupal\Component\Utility\EmailValidatorInterface;
 
@@ -19,6 +21,13 @@ use Drupal\Component\Utility\EmailValidatorInterface;
 class KeycloakUserRegistrationForm extends FormBase {
   use StringTranslationTrait;
 
+
+  /**
+   * The database connection service.
+   *
+   * @var \Drupal\Core\Database\Connection
+   */
+  protected $connection;
   /**
    * The mail manager service.
    *
@@ -64,12 +73,14 @@ class KeycloakUserRegistrationForm extends FormBase {
   /**
    * Constructs a KeycloakUserRegistrationForm object.
    *
-   * @param \Drupal\Core\Mail\MailManagerInterface $mail_manager
-   *   The mail manager service.
+   * @param \Drupal\Core\Database\Connection $connection
+   *   The database connection.
    * @param \Drupal\Core\Entity\EntityTypeManagerInterface $entity_type_manager
    *   The entity type manager.
    * @param \Drupal\Core\Messenger\MessengerInterface $messenger
    *   The messenger service.
+   * @param \Drupal\Core\Mail\MailManagerInterface $mail_manager
+   *   The mail manager service.
    * @param \Drupal\Core\Password\PasswordGeneratorInterface $password_generator
    *   The password generator service.
    * @param \Drupal\Core\Password\PasswordInterface $password_hasher
@@ -78,15 +89,17 @@ class KeycloakUserRegistrationForm extends FormBase {
    *   The email validator service.
    */
   public function __construct(
-    MailManagerInterface $mail_manager,
+    Connection $connection,
     EntityTypeManagerInterface $entity_type_manager,
+    MailManagerInterface $mail_manager,
     MessengerInterface $messenger,
     PasswordGeneratorInterface $password_generator,
     PasswordInterface $password_hasher,
-    EmailValidatorInterface $email_validator
+    EmailValidatorInterface $email_validator,
   ) {
-    $this->mailManager = $mail_manager;
+    $this->connection = $connection;
     $this->entityTypeManager = $entity_type_manager;
+    $this->mailManager = $mail_manager;
     $this->messenger = $messenger;
     $this->passwordGenerator = $password_generator;
     $this->passwordHasher = $password_hasher;
@@ -98,8 +111,9 @@ class KeycloakUserRegistrationForm extends FormBase {
    */
   public static function create(ContainerInterface $container) {
     return new static(
-      $container->get('plugin.manager.mail'),
+      $container->get('database'),
       $container->get('entity_type.manager'),
+      $container->get('plugin.manager.mail'),
       $container->get('messenger'),
       $container->get('password_generator'),
       $container->get('password'),
@@ -184,8 +198,7 @@ class KeycloakUserRegistrationForm extends FormBase {
     }
 
     // Check if email is already registered.
-    $connection = \Drupal::database();
-    $query = $connection->select('keycloak_user_registration', 'kur')
+    $query = $this->connection->select('keycloak_user_registration', 'kur')
       ->fields('kur', ['id'])
       ->condition('email', $email)
       ->condition('status', 'pending');
@@ -202,7 +215,7 @@ class KeycloakUserRegistrationForm extends FormBase {
     }
 
     // Check if username is already registered.
-    $query = $connection->select('keycloak_user_registration', 'kur')
+    $query = $this->connection->select('keycloak_user_registration', 'kur')
       ->fields('kur', ['id'])
       ->condition('username', $username)
       ->condition('status', 'pending');
@@ -224,15 +237,16 @@ class KeycloakUserRegistrationForm extends FormBase {
     $last_name = $form_state->getValue('last_name');
     $password = $form_state->getValue('password');
 
+    // @todo Make better password security.
+
     // Save to database.
-    $connection = \Drupal::database();
-    $id = $connection->insert('keycloak_user_registration')
+    $id = $this->connection->insert('keycloak_user_registration')
       ->fields([
         'email' => $email,
         'username' => $username,
         'first_name' => $first_name,
         'last_name' => $last_name,
-        'password' => $this->passwordHasher->hash($password),
+        'password' => $password,
         'status' => 'pending',
         'created' => time(),
         'updated' => time(),
@@ -275,6 +289,28 @@ class KeycloakUserRegistrationForm extends FormBase {
       $email,
       'en',
       $params,
+      NULL,
+      TRUE
+    );
+
+    // Send notification to site admin about new registration that needs approval.
+    $admin_email = $this->config('smtp.settings')->get('smtp_from');
+    $admin_params = [
+      'registration_id' => $id,
+      'username' => $username,
+      'email' => $email,
+      'first_name' => $first_name,
+      'last_name' => $last_name,
+      'site_name' => $site_name,
+      'approval_url' => Url::fromRoute('soda_scs_manager.user_registration_approvals', [], ['absolute' => TRUE])->toString(),
+    ];
+
+    $this->mailManager->mail(
+      'soda_scs_manager',
+      'registration_admin_approval',
+      $admin_email,
+      'en',
+      $admin_params,
       NULL,
       TRUE
     );

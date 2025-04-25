@@ -2,4 +2,27 @@
 /* These styles define store-specific UI components */
 
 @layer components {
+  .soda-tag-filter-container {
+    @apply w-full;
+  }
+
+  .soda-tag-filter-button {
+    @apply shadow-sm hover:shadow-md transition-shadow;
+  }
+
+  .soda-tag-filter-button[aria-pressed="true"] {
+    @apply shadow-md font-semibold;
+  }
+
+  .soda-tag-filter-button[aria-pressed="true"] .soda-tag-remove {
+    @apply inline-block;
+  }
+
+  .soda-tag-remove {
+    @apply font-bold text-base ml-1;
+  }
+
+  .soda-scs-manager--type--card.hidden-by-filter {
+    @apply hidden;
+  }
 }

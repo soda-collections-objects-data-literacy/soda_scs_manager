@@ -74,6 +74,7 @@ use Drupal\user\EntityOwnerTrait;
  *    "updated",
  *    "owner",
  *    "partOfProjects",
+ *    "tags",
  *    }
  * )
  */
@@ -156,6 +157,23 @@ class SodaScsComponent extends ContentEntityBase implements SodaScsComponentInte
   public static function baseFieldDefinitions(EntityTypeInterface $entity_type) {
     // Fetch any existing base field definitions from the parent class (= id, uuid, langcode, bundle).
     $fields = parent::baseFieldDefinitions($entity_type);
+
+    // @todo Implement the reuse of dangling components.
+    $fields['connectedComponents'] = BaseFieldDefinition::create('entity_reference')
+      ->setLabel(new TranslatableMarkup('Connected Components'))
+      ->setSetting('target_type', 'soda_scs_component')
+      ->setSetting('handler', 'default')
+      ->setRequired(FALSE)
+      ->setReadOnly(TRUE)
+      ->setTranslatable(FALSE)
+      ->setCardinality(FieldStorageDefinitionInterface::CARDINALITY_UNLIMITED)
+      ->setDisplayConfigurable('form', FALSE)
+      ->setDisplayConfigurable('view', FALSE)
+      ->setDisplayOptions('view', [
+        'label' => 'above',
+        'type' => 'entity_reference_label',
+        'weight' => 30,
+      ]);
 
     $fields['created'] = BaseFieldDefinition::create('created')
       ->setLabel(new TranslatableMarkup('Created'))
@@ -321,23 +339,6 @@ class SodaScsComponent extends ContentEntityBase implements SodaScsComponentInte
         'weight' => 5,
       ]);
 
-    // @todo Implement the reuse of dangling components
-    $fields['connectedComponents'] = BaseFieldDefinition::create('entity_reference')
-      ->setLabel(new TranslatableMarkup('Connected Components'))
-      ->setSetting('target_type', 'soda_scs_component')
-      ->setSetting('handler', 'default')
-      ->setRequired(FALSE)
-      ->setReadOnly(TRUE)
-      ->setTranslatable(FALSE)
-      ->setCardinality(FieldStorageDefinitionInterface::CARDINALITY_UNLIMITED)
-      ->setDisplayConfigurable('form', FALSE)
-      ->setDisplayConfigurable('view', FALSE)
-      ->setDisplayOptions('view', [
-        'label' => 'above',
-        'type' => 'entity_reference_label',
-        'weight' => 30,
-      ]);
-
     $fields['serviceKey'] = BaseFieldDefinition::create('entity_reference')
       ->setLabel(new TranslatableMarkup('Service Key'))
       ->setDescription(new TranslatableMarkup('The service key associated with this component.'))
@@ -363,6 +364,19 @@ class SodaScsComponent extends ContentEntityBase implements SodaScsComponentInte
         'label' => 'above',
         'type' => 'boolean',
         'weight' => 30,
+      ]);
+
+    $fields['tags'] = BaseFieldDefinition::create('list_string')
+      ->setLabel(new TranslatableMarkup('Tags'))
+      ->setDescription(new TranslatableMarkup('The tags of the SODa SCS Component.'))
+      ->setCardinality(FieldStorageDefinitionInterface::CARDINALITY_UNLIMITED)
+      ->setRequired(FALSE)
+      ->setReadOnly(TRUE)
+      ->setDisplayConfigurable('view', FALSE)
+      ->setDisplayOptions('view', [
+        'label' => 'above',
+        'type' => 'list_default',
+        'weight' => 70,
       ]);
 
     $fields['updated'] = BaseFieldDefinition::create('changed')

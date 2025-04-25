@@ -279,7 +279,7 @@ soda_scs_manager.desk:
   path: '/soda-scs-manager/desk'
   defaults:
     _controller: '\Drupal\soda_scs_manager\Controller\SodaScsManagerController::deskPage'
-    _title:  'Your stacks'
+    _title:  'Desk'
   requirements:
     _permission: 'soda scs manager user'
   options:
@@ -289,7 +289,7 @@ soda_scs_manager.start_page:
   path: '/soda-scs-manager'
   defaults:
     _controller: '\Drupal\soda_scs_manager\Controller\SodaScsManagerController::startPage'
-    _title: 'SCS Manager'
+    _title: 'SODa SCS Manager'
   requirements:
     _permission: 'soda scs manager user'
 
@@ -329,6 +329,14 @@ soda_scs_manager.settings.menu:
     _title: 'WissKI cloud account manager'
   requirements:
     _permission: 'soda scs manager admin'
+
+soda_scs_manager.tour:
+  path: '/soda-scs-manager/tour'
+  defaults:
+    _controller: '\Drupal\soda_scs_manager\Controller\SodaScsManagerController::tourPage'
+    _title: 'Beginners Tour'
+  requirements:
+    _permission: 'soda scs manager user'
 
 ## Menu items for the main navigation
 

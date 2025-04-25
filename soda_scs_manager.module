@@ -18,6 +18,7 @@ use Drupal\user\UserInterface;
 use Drupal\soda_scs_manager\Entity\SodaScsProject;
 use Drupal\soda_scs_manager\Entity\SodaScsComponent;
 use Drupal\Core\Url;
+use Symfony\Component\HttpFoundation\RedirectResponse;
 
 // This file contains implementations of the following hooks:
 // - hook_help(): implements the user help page for the module.
@@ -82,6 +83,7 @@ function soda_scs_manager_theme($existing, $type, $theme, $path) {
         'description' => NULL,
         'url' => NULL,
         'imageUrl' => NULL,
+        'tags' => NULL,
       ],
       'template' => 'cards/soda-scs-manager--entity-card',
     ],
@@ -151,11 +153,16 @@ function soda_scs_manager_soda_scs_stack_view(array &$build, EntityInterface $en
  * Implements hook_user_insert().
  */
 function soda_scs_manager_user_insert(UserInterface $user) {
-  // Get the role ID of the custom role.
-  $role_id = 'scs_user';
 
-  // Assign the custom role to the new user.
-  $user->addRole($role_id);
+  // Set the user status to active by default.
+  if (!$user->isActive()) {
+    $user->activate();
+  }
+
+  // Assign the scs_user role to the new user.
+  if (!$user->hasRole('scs_user')) {
+    $user->addRole('scs_user');
+  }
 
   // Save the updated user.
   $user->save();
@@ -205,20 +212,7 @@ function soda_scs_manager_entity_bundle_info() {
     'class' => SodaScsComponentBundle::class,
     'description' => new TranslatableMarkup('A filesystem for storage of structured data.'),
     'imageUrl' => 'public://soda_scs_manager/images/filesystem.svg',
-  ];
-
-  $bundles['soda_scs_component']['soda_scs_jupyter_component'] = [
-    'label' => new TranslatableMarkup('JupyterHub Account'),
-    'class' => SodaScsComponentBundle::class,
-    'description' => new TranslatableMarkup('A Jupyter web IDE for coding in Python.'),
-    'imageUrl' => 'public://soda_scs_manager/images/jupyternotebook.svg',
-  ];
-
-  $bundles['soda_scs_component']['soda_scs_nextcloud_component'] = [
-    'label' => new TranslatableMarkup('Nextcloud Account'),
-    'class' => SodaScsComponentBundle::class,
-    'description' => new TranslatableMarkup('A Nextcloud instance for cloud storage and file sharing.'),
-    'imageUrl' => 'public://soda_scs_manager/images/nextcloud.svg',
+    'tags' => ['filesharing'],
   ];
 
   $bundles['soda_scs_component']['soda_scs_sql_component'] = [
@@ -226,12 +220,15 @@ function soda_scs_manager_entity_bundle_info() {
     'class' => SodaScsComponentBundle::class,
     'description' => new TranslatableMarkup('A relational database for storage of structured data.'),
     'imageUrl' => 'public://soda_scs_manager/images/sql.svg',
+    'tags' => ['database'],
   ];
+
   $bundles['soda_scs_component']['soda_scs_triplestore_component'] = [
     'label' => new TranslatableMarkup('Triplestore'),
     'class' => SodaScsComponentBundle::class,
     'description' => new TranslatableMarkup('Graph database for storage of RDF data.'),
     'imageUrl' => 'public://soda_scs_manager/images/triplestore.svg',
+    'tags' => ['database', 'triplestore'],
   ];
 
   $bundles['soda_scs_component']['soda_scs_webprotege_component'] = [
@@ -239,6 +236,7 @@ function soda_scs_manager_entity_bundle_info() {
     'class' => SodaScsComponentBundle::class,
     'description' => new TranslatableMarkup('A web-based tool for creating and editing OWL ontologies.'),
     'imageUrl' => 'public://soda_scs_manager/images/protege.svg',
+    'tags' => ['ontology'],
   ];
 
   $bundles['soda_scs_component']['soda_scs_wisski_component'] = [
@@ -246,6 +244,7 @@ function soda_scs_manager_entity_bundle_info() {
     'class' => SodaScsComponentBundle::class,
     'description' => new TranslatableMarkup('A WissKI Component is a component of a WissKI Stack.'),
     'imageUrl' => 'public://soda_scs_manager/images/wisski.svg',
+    'tags' => ['ontology', 'content-management'],
   ];
 
   // Projects.
@@ -264,24 +263,27 @@ function soda_scs_manager_entity_bundle_info() {
 
   // Stacks.
   $bundles['soda_scs_stack']['soda_scs_jupyter_stack'] = [
-    'label' => new TranslatableMarkup('JupyterHub Stack'),
+    'label' => new TranslatableMarkup('JupyterHub'),
     'class' => SodaScsStackBundle::class,
     'description' => new TranslatableMarkup('A JupyterHub Stack contains Jupyter, Open Refine.'),
     'imageUrl' => 'public://soda_scs_manager/images/jupyterhub-stack.svg',
+    'tags' => ['coding', 'data-science', 'data-cleaning'],
   ];
 
   $bundles['soda_scs_stack']['soda_scs_wisski_stack'] = [
-    'label' => new TranslatableMarkup('WissKI Stack'),
+    'label' => new TranslatableMarkup('WissKI Environment'),
     'class' => SodaScsStackBundle::class,
     'description' => new TranslatableMarkup('A WissKI Stack contains a WissKI, a Triplestore and a Database.'),
     'imageUrl' => 'public://soda_scs_manager/images/wisski-stack.svg',
+    'tags' => ['content-management', 'database', 'ontology', 'publishing', 'triplestore'],
   ];
 
   $bundles['soda_scs_stack']['soda_scs_nextcloud_stack'] = [
-    'label' => new TranslatableMarkup('Nextcloud Stack'),
+    'label' => new TranslatableMarkup('Nextcloud'),
     'class' => SodaScsStackBundle::class,
-    'description' => new TranslatableMarkup('A Nextcloud Stack contains Nextcloud, Draw.io and Collabora.'),
+    'description' => new TranslatableMarkup('A Nextcloud Stack contains Nextcloud, Draw.io and OnlyOffice.'),
     'imageUrl' => 'public://soda_scs_manager/images/nextcloud-stack.svg',
+    'tags' => ['filesharing', 'office', 'publishing'],
   ];
 
   return $bundles;
@@ -302,9 +304,6 @@ function soda_scs_manager_entity_field_storage_info(EntityTypeInterface $entity_
         if (class_exists($class)) {
           $bundle_defs = $class::bundleFieldDefinitions($entity_type, $bundle_id, []);
           $definitions = array_merge($definitions, $bundle_defs);
-        }
-        else {
-          $a = 1;
         }
       }
     }
@@ -550,7 +549,7 @@ function soda_scs_manager_mail($key, &$message, $params) {
  */
 function soda_scs_manager_form_user_register_form_alter(&$form, &$form_state, $form_id) {
   // Disable native Drupal registration by redirecting to our custom form.
-  $response = new \Symfony\Component\HttpFoundation\RedirectResponse(\Drupal\Core\Url::fromRoute('soda_scs_manager.user_registration')->toString());
+  $response = new RedirectResponse(Url::fromRoute('soda_scs_manager.user_registration')->toString());
   $response->send();
   exit;
 }

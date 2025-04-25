@@ -31,3 +31,10 @@ keycloak_registration:
   js:
     js/keycloak-registration.js: {}
 
+tag_filter:
+  version: 1.x
+  js:
+    js/soda-tag-filter.js: {}
+  dependencies:
+    - core/drupal
+

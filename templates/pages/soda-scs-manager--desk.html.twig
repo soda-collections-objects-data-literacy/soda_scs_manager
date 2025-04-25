@@ -1,5 +1,14 @@
+{#
+/**
+ * @file
+ * Default theme implementation for SODa SCS Manager desk page.
+ *
+ * Available variables:
+ * - attributes: HTML attributes for the container.
+ * @ingroup themeable
+ */
+#}
 {% set entity_type = entity_type|replace({'soda_scs_': ''}) %}
-  <h1 class="center text-center text-stone-200 text-8xl font-bold mb-10">Desk</h1>
     {% if entitiesByUser is not empty %}
       {% for username, entities in entitiesByUser %}
         <div class="text-center mb-8">

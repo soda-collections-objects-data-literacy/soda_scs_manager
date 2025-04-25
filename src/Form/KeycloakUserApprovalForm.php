@@ -73,7 +73,7 @@ class KeycloakUserApprovalForm extends FormBase {
     MailManagerInterface $mail_manager,
     MessengerInterface $messenger,
     SodaScsKeycloakServiceActions $keycloak_service_actions,
-    SodaScsServiceHelpers $service_helpers
+    SodaScsServiceHelpers $service_helpers,
   ) {
     $this->database = $database;
     $this->mailManager = $mail_manager;
@@ -226,7 +226,7 @@ class KeycloakUserApprovalForm extends FormBase {
     $userUrl = $keycloakSettings['host'] . '/admin/realms/' . $keycloakSettings['realm'] . '/users';
 
     $userData = [
-      'enabled' => true,
+      'enabled' => TRUE,
       'username' => $registration->username,
       'email' => $registration->email,
       'firstName' => $registration->first_name,
@@ -234,12 +234,11 @@ class KeycloakUserApprovalForm extends FormBase {
       'credentials' => [
         [
           'type' => 'password',
-          'value' => $registration->password, // Password will need to be reset on first login
-          'temporary' => true,
+          'value' => $registration->password,
+          'temporary' => FALSE,
         ],
       ],
-      'emailVerified' => false,
-      'requiredActions' => ['UPDATE_PASSWORD'],
+      'emailVerified' => TRUE,
     ];
 
     // Prepare the request for creating a user.

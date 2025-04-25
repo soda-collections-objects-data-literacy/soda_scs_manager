@@ -2,5 +2,21 @@
 /* These styles define card layout components */
 
 @layer components {
+  a {
+    &.soda-scs-manager--tile-card {
+      @apply rounded-lg p-6 flex flex-col items-center text-center border-2 border-stone-200 hover:border-orange-400;
 
+      h2 {
+        @apply text-xl font-semibold text-orange-400 mt-4 mb-2;
+      }
+
+      p {
+        @apply text-stone-900;
+      }
+    }
+  }
+
+  .soda-scs-manager--type--card {
+    @apply relative rounded-lg p-6 flex flex-col items-center text-center border-2 border-stone-200 hover:border-orange-400;
+  }
 }

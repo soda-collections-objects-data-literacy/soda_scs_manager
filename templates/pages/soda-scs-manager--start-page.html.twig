@@ -11,11 +11,11 @@
 #}
 <div{{ attributes.addClass('soda-scs-manager--start-page') }}>
   <div class="soda-scs-manager--header-section">
-    <h1>SODa SCS Manager</h1>
-    <p>Your workbench for collection data</p>
+    <h1>Welcome!</h1>
+    <p>{{ 'New here? Start <a href="@tour_url">the beginners tour</a> to learn more about the possibilities.'|t({'@tour_url': path('soda_scs_manager.tour')}) }}</p>
   </div>
 
-  <div class="soda-scs-manager--tiles-container">
+  <div class="soda-scs-manager--tiles-container soda-scs-manager--view--grid">
     <!-- Desk Tile -->
     <a href="{{ path('soda_scs_manager.desk') }}" class="soda-scs-manager--tile-card">
       <div class="soda-scs-manager--icon-wrapper">
@@ -24,7 +24,7 @@
         </svg>
       </div>
       <h2>Desk</h2>
-      <p>Manage your stacks and components</p>
+      <p>{{ 'Manage your applications in use'|t }}</p>
     </a>
 
     <!-- Store Tile -->
@@ -36,7 +36,7 @@
         </svg>
       </div>
       <h2>Store</h2>
-      <p>Browse and provision components</p>
+      <p>{{ 'Browse available applications'|t }}</p>
     </a>
 
     <!-- Documentation Tile -->
@@ -47,7 +47,7 @@
         </svg>
       </div>
       <h2>Documentation</h2>
-      <p>Read guides and documentation</p>
+      <p>{{ 'Read guides and documentation'|t }}</p>
     </a>
 
     <!-- Administration Tile -->
@@ -58,7 +58,7 @@
         </svg>
       </div>
       <h2>Administration</h2>
-      <p>Configure system settings</p>
+      <p>{{ 'Configure system settings'|t }}</p>
     </a>
   </div>
 </div>

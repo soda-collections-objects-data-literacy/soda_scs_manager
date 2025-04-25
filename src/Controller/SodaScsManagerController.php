@@ -180,16 +180,15 @@ class SodaScsManagerController extends ControllerBase {
       '#components' => [],
       '#stacks' => [],
       '#attached' => [
-        'library' => ['soda_scs_manager/globalStyling'],
+        'library' => [
+          'soda_scs_manager/globalStyling',
+          'soda_scs_manager/tag_filter',
+        ],
       ],
     ];
 
     // Get all component bundles.
     $stackBundles = $this->bundleInfo->getBundleInfo('soda_scs_stack');
-
-    // Remove work in progress stacks.
-    unset($stackBundles['soda_scs_nextcloud_stack']);
-    unset($stackBundles['soda_scs_jupyter_stack']);
 
     /** @var \Drupal\soda_scs_manager\Entity\Bundle\SodaScsStackBundle $stackBundle */
     foreach ($stackBundles as $id => $stackBundle) {
@@ -200,6 +199,7 @@ class SodaScsManagerController extends ControllerBase {
         '#title' => $this->t('@bundle', ['@bundle' => $stackBundle['label']]),
         '#description' => $stackBundle['description'],
         '#imageUrl' => $stackBundle['imageUrl'],
+        '#tags' => $stackBundle['tags'],
         '#url' => Url::fromRoute('entity.soda_scs_stack.add_form', ['bundle' => $id]),
         '#attached' => [
           'library' => ['soda_scs_manager/globalStyling'],
@@ -219,6 +219,7 @@ class SodaScsManagerController extends ControllerBase {
         '#title' => $this->t('@bundle', ['@bundle' => $componentBundle['label']]),
         '#description' => $componentBundle['description'],
         '#imageUrl' => $componentBundle['imageUrl'],
+        '#tags' => $componentBundle['tags'],
         '#url' => Url::fromRoute('entity.soda_scs_component.add_form', ['bundle' => $id]),
         '#attached' => [
           'library' => ['soda_scs_manager/globalStyling'],
@@ -239,6 +240,24 @@ class SodaScsManagerController extends ControllerBase {
     return [
       '#theme' => 'soda_scs_manager__start_page',
       '#attributes' => ['class' => ['container', 'mx-auto']],
+      '#attached' => [
+        'library' => ['soda_scs_manager/globalStyling'],
+      ],
+      '#cache' => [
+        'max-age' => 0,
+      ],
+    ];
+  }
+
+  /**
+   * Page for the beginners tour.
+   *
+   * @return array
+   *   The page build array.
+   */
+  public function tourPage(): array {
+    return [
+      '#theme' => 'soda_scs_manager__tour_page',
       '#attached' => [
         'library' => ['soda_scs_manager/globalStyling'],
       ],
