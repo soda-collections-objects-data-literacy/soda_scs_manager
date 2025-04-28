@@ -123,3 +123,9 @@ entity.soda_scs_project.delete_form:
   title: 'Delete'
   weight: 20
 
+# User Registration tab for login page
+soda_scs_manager.user_registration:
+  route_name: soda_scs_manager.user_registration
+  base_route: user.page
+  title: 'Create new account'
+
