@@ -169,7 +169,6 @@ class KeycloakUserRegistrationForm extends FormBase {
 
     $form['password'] = [
       '#type' => 'password_confirm',
-      '#title' => $this->t('Password'),
       '#required' => TRUE,
       '#description' => $this->t('Enter the password you would like to use.'),
     ];
