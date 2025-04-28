@@ -24,8 +24,10 @@ use Psr\Log\LogLevel;
  * Class SodaScsKeycloakServiceActions.
  *
  * Implements actions for Keycloak service requests.
+ *
+ * @todo Kill redundant param replacement etc.
  */
-class SodaScsKeycloakServiceActions implements SodaScsServiceRequestInterface {
+class SodaScsKeycloakServiceUserActions implements SodaScsServiceRequestInterface {
 
   use StringTranslationTrait;
 
@@ -138,66 +140,29 @@ class SodaScsKeycloakServiceActions implements SodaScsServiceRequestInterface {
    * @throws \Drupal\Core\TypedData\Exception\MissingDataException
    */
   public function buildCreateRequest(array $requestParams): array {
-    $keycloakSettings = $this->sodaScsServiceHelpers->initKeycloakSettings();
+    $keycloakGeneralSettings = $this->sodaScsServiceHelpers->initKeycloakGeneralSettings();
+    $keycloakUsersSettings = $this->sodaScsServiceHelpers->initKeycloakUsersSettings();
 
-    $keycloakSettings['createUrl'] = '/admin/realms/' . $keycloakSettings['realm'] . '/clients';
-    $route = $keycloakSettings['host'] . $keycloakSettings['createUrl'];
+    // Build the route.
+    $route =
+      // Host route.
+      $keycloakGeneralSettings['host'] .
+      // Base URL.
+      $keycloakUsersSettings['baseUrl'] .
+      // Create URL.
+      $keycloakUsersSettings['createUrl'];
 
-    $body = [
-      "clientId" => $requestParams['clientId'],
-      "name" => $requestParams['name'],
-      "description" => $requestParams['description'],
-      "rootUrl" => $requestParams['rootUrl'],
-      "adminUrl" => $requestParams['adminUrl'],
-      "baseUrl" => "/",
-      "surrogateAuthRequired" => FALSE,
-      "enabled" => TRUE,
-      "alwaysDisplayInConsole" => FALSE,
-      "clientAuthenticatorType" => "client-secret",
-      "secret" => $requestParams['secret'],
-      "redirectUris" => [
-        "*",
-      ],
-      "webOrigins" => [
-        "*",
-      ],
-      "notBefore" => 0,
-      "bearerOnly" => FALSE,
-      "consentRequired" => FALSE,
-      "standardFlowEnabled" => TRUE,
-      "implicitFlowEnabled" => FALSE,
-      "directAccessGrantsEnabled" => FALSE,
-      "serviceAccountsEnabled" => FALSE,
-      "publicClient" => FALSE,
-      "frontchannelLogout" => FALSE,
-      "protocol" => "openid-connect",
-      "attributes" => [
-        "realm_client" => FALSE,
-      ],
-      "authenticationFlowBindingOverrides" => (object) [],
-      "fullScopeAllowed" => TRUE,
-      "nodeReRegistrationTimeout" => -1,
-      "defaultClientScopes" => [
-        "web-origins",
-        "acr",
-        "profile",
-        "roles",
-        "groups",
-        "basic",
-        "email",
-      ],
-      "optionalClientScopes" => [
-        "address",
-        "phone",
-        "offline_access",
-        "microprofile-jwt",
-      ],
-      "access" => [
-        "view" => TRUE,
-        "configure" => TRUE,
-        "manage" => TRUE,
-      ],
-    ];
+    // Replace any route parameters.
+    if (!empty($requestParams['routeParams'])) {
+      foreach ($requestParams['routeParams'] as $key => $value) {
+        $route = str_replace('{' . $key . '}', $value, $route);
+      }
+    }
+
+    // Add query parameters if they exist.
+    if (!empty($requestParams['queryParams'])) {
+      $route .= '?' . http_build_query($requestParams['queryParams']);
+    }
 
     return [
       'success' => TRUE,
@@ -207,7 +172,7 @@ class SodaScsKeycloakServiceActions implements SodaScsServiceRequestInterface {
         'Content-Type' => 'application/json',
         'Authorization' => 'Bearer ' . $requestParams['token'],
       ],
-      'body' => json_encode($body),
+      'body' => json_encode($requestParams['body']),
     ];
   }
 
@@ -221,19 +186,26 @@ class SodaScsKeycloakServiceActions implements SodaScsServiceRequestInterface {
    *   The read request.
    */
   public function buildGetAllRequest(array $requestParams): array {
-    $keycloakSettings = $this->sodaScsServiceHelpers->initKeycloakSettings();
+    $keycloakGeneralSettings = $this->sodaScsServiceHelpers->initKeycloakGeneralSettings();
+    $keycloakUsersSettings = $this->sodaScsServiceHelpers->initKeycloakUsersSettings();
 
-    if (empty($keycloakSettings['getAllUrl'])) {
-      return [
-        'success' => FALSE,
-        'error' => 'Get All URL setting is not set.',
-      ];
+    // Build the route.
+    $route =
+      // Host route.
+      $keycloakGeneralSettings['host'] .
+      // Base URL.
+      $keycloakUsersSettings['baseUrl'] .
+      // Get all URL.
+      $keycloakUsersSettings['readAllUrl'];
+
+    // Replace any route parameters.
+    if (!empty($requestParams['routeParams'])) {
+      foreach ($requestParams['routeParams'] as $key => $value) {
+        $route = str_replace('{' . $key . '}', $value, $route);
+      }
     }
 
-    $url = $keycloakSettings['baseUrl'] . $keycloakSettings['getAllUrl'];
-
-    $route = $keycloakSettings['hostRoute'] . $url;
-
+    // Add query parameters if they exist.
     if (!empty($requestParams['queryParams'])) {
       $route .= '?' . http_build_query($requestParams['queryParams']);
     }
@@ -263,23 +235,26 @@ class SodaScsKeycloakServiceActions implements SodaScsServiceRequestInterface {
    * @throws \Drupal\Core\TypedData\Exception\MissingDataException
    */
   public function buildGetRequest(array $requestParams): array {
-    $keycloakSettings = $this->sodaScsServiceHelpers->initKeycloakSettings();
+    $keycloakGeneralSettings = $this->sodaScsServiceHelpers->initKeycloakGeneralSettings();
+    $keycloakUsersSettings = $this->sodaScsServiceHelpers->initKeycloakUsersSettings();
 
-    if (empty($keycloakSettings['getUrl'])) {
-      throw new MissingDataException('Get URL setting is not set.');
-    }
-
-    $url = $keycloakSettings['baseUrl'] . $keycloakSettings['getUrl'];
+    // Build the route.
+    $route =
+      // Host route.
+      $keycloakGeneralSettings['host'] .
+      // Base URL.
+      $keycloakUsersSettings['baseUrl'] .
+      // Read one URL.
+      $keycloakUsersSettings['readOneUrl'];
 
     // Replace any route parameters.
     if (!empty($requestParams['routeParams'])) {
       foreach ($requestParams['routeParams'] as $key => $value) {
-        $url = str_replace('{' . $key . '}', $value, $url);
+        $route = str_replace('{' . $key . '}', $value, $route);
       }
     }
 
-    $route = $keycloakSettings['hostRoute'] . $url;
-
+    // Add query parameters if they exist.
     if (!empty($requestParams['queryParams'])) {
       $route .= '?' . http_build_query($requestParams['queryParams']);
     }
@@ -307,18 +282,24 @@ class SodaScsKeycloakServiceActions implements SodaScsServiceRequestInterface {
    *   The health check request.
    */
   public function buildHealthCheckRequest(array $requestParams): array {
-    $keycloakSettings = $this->sodaScsServiceHelpers->initKeycloakSettings();
+    $keycloakGeneralSettings = $this->sodaScsServiceHelpers->initKeycloakGeneralSettings();
+    $keycloakUsersSettings = $this->sodaScsServiceHelpers->initKeycloakUsersSettings();
 
-    if (empty($keycloakSettings['healthCheckUrl'])) {
-      return [
-        'success' => FALSE,
-        'error' => 'Health check URL setting is not set.',
-      ];
+    // Build the route.
+    $route =
+      // Host route.
+      $keycloakGeneralSettings['host'] .
+      // Base URL.
+      $keycloakUsersSettings['baseUrl'] .
+      // Health check URL.
+      $keycloakUsersSettings['healthCheckUrl'];
+
+    // Replace any route parameters.
+    if (!empty($requestParams['routeParams'])) {
+      foreach ($requestParams['routeParams'] as $key => $value) {
+        $route = str_replace('{' . $key . '}', $value, $route);
+      }
     }
-
-    $url = $keycloakSettings['baseUrl'] . $keycloakSettings['healthCheckUrl'];
-
-    $route = $keycloakSettings['hostRoute'] . $url;
 
     return [
       'success' => TRUE,
@@ -341,29 +322,29 @@ class SodaScsKeycloakServiceActions implements SodaScsServiceRequestInterface {
    *   The update request.
    */
   public function buildUpdateRequest(array $requestParams): array {
-    $keycloakSettings = $this->sodaScsServiceHelpers->initKeycloakSettings();
+    $keycloakGeneralSettings = $this->sodaScsServiceHelpers->initKeycloakGeneralSettings();
+    $keycloakUsersSettings = $this->sodaScsServiceHelpers->initKeycloakUsersSettings();
 
-    if (empty($keycloakSettings['updateUrl'])) {
-      return [
-        'success' => FALSE,
-        'error' => 'Update URL setting is not set.',
-      ];
-    }
-
-    $url = $keycloakSettings['baseUrl'] . $keycloakSettings['updateUrl'];
+    // Build the route.
+    $route =
+      // Host route.
+      $keycloakGeneralSettings['host'] .
+      // Base URL.
+      $keycloakUsersSettings['baseUrl'] .
+      // Update URL.
+      $keycloakUsersSettings['updateUrl'];
 
     // Replace any route parameters.
     if (!empty($requestParams['routeParams'])) {
       foreach ($requestParams['routeParams'] as $key => $value) {
-        $url = str_replace('{' . $key . '}', $value, $url);
+        $route = str_replace('{' . $key . '}', $value, $route);
       }
     }
 
     // Prepare the request body.
     $body = json_encode($requestParams['body'] ?? []);
 
-    $route = $keycloakSettings['hostRoute'] . $url;
-
+    // Add query parameters if they exist.
     if (!empty($requestParams['queryParams'])) {
       $route .= '?' . http_build_query($requestParams['queryParams']);
     }
@@ -394,23 +375,27 @@ class SodaScsKeycloakServiceActions implements SodaScsServiceRequestInterface {
    * @throws \Drupal\Core\TypedData\Exception\MissingDataException
    */
   public function buildDeleteRequest(array $requestParams): array {
-    $keycloakSettings = $this->sodaScsServiceHelpers->initKeycloakSettings();
+    $keycloakGeneralSettings = $this->sodaScsServiceHelpers->initKeycloakGeneralSettings();
+    $keycloakUsersSettings = $this->sodaScsServiceHelpers->initKeycloakUsersSettings();
 
-    if (empty($keycloakSettings['deleteUrl'])) {
-      throw new MissingDataException('Delete URL setting is not set.');
-    }
 
-    $url = $keycloakSettings['baseUrl'] . $keycloakSettings['deleteUrl'];
+    // Build the route.
+    $route =
+      // Host route.
+      $keycloakGeneralSettings['host'] .
+      // Base URL.
+      $keycloakUsersSettings['baseUrl'] .
+      // Delete URL.
+      $keycloakUsersSettings['deleteUrl'];
 
     // Replace any route parameters.
     if (!empty($requestParams['routeParams'])) {
       foreach ($requestParams['routeParams'] as $key => $value) {
-        $url = str_replace('{' . $key . '}', $value, $url);
+        $route = str_replace('{' . $key . '}', $value, $route);
       }
     }
 
-    $route = $keycloakSettings['hostRoute'] . $url;
-
+    // Add query parameters if they exist.
     if (!empty($requestParams['queryParams'])) {
       $route .= '?' . http_build_query($requestParams['queryParams']);
     }
@@ -438,19 +423,18 @@ class SodaScsKeycloakServiceActions implements SodaScsServiceRequestInterface {
    *   The request array for the makeRequest function.
    */
   public function buildTokenRequest(array $requestParams): array {
-    $keycloakSettings = $this->sodaScsServiceHelpers->initKeycloakSettings();
+    $keycloakGeneralSettings = $this->sodaScsServiceHelpers->initKeycloakGeneralSettings();
 
-    // Define the token endpoint for the master realm.
-    $keycloakSettings['tokenUrl'] = '/realms/master/protocol/openid-connect/token';
-
-    $route = $keycloakSettings['host'] . $keycloakSettings['tokenUrl'];
+    $route = $keycloakGeneralSettings['host'] .
+      // Token URL.
+      $keycloakGeneralSettings['tokenUrl'];
 
     // Set up the form parameters matching the curl command format.
     $body = [
       'grant_type' => 'password',
       'client_id' => 'admin-cli',
-      'username' => $keycloakSettings['adminUsername'] ?? '',
-      'password' => $keycloakSettings['adminPassword'] ?? '',
+      'username' => $keycloakGeneralSettings['adminUsername'] ?? '',
+      'password' => $keycloakGeneralSettings['adminPassword'] ?? '',
     ];
 
     return [

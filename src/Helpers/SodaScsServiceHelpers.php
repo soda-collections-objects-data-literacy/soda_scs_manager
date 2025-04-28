@@ -127,16 +127,30 @@ class SodaScsServiceHelpers {
    * @return array
    *   The keycloak settings.
    */
-  public function initKeycloakSettings() {
-    $keycloakSettings['name'] = 'Keycloak';
+  public function initKeycloakGeneralSettings() {
+    $keycloakSettings['name'] = 'Keycloak general';
     $keycloakSettings['host'] = $this->settings->get('keycloak.generalSettings.keycloakHost');
     $keycloakSettings['realm'] = $this->settings->get('keycloak.generalSettings.keycloakRealm');
     $keycloakSettings['adminUsername'] = $this->settings->get('keycloak.generalSettings.adminUsername');
     $keycloakSettings['adminPassword'] = $this->settings->get('keycloak.generalSettings.adminPassword');
 
-    // Base URL and CRUD routes for clients.
+    // Miscellaneous routes.
+    $keycloakSettings['tokenUrl'] = $this->settings->get('keycloak.routes.misc.tokenUrl');
+
+    $this->checkSettings($keycloakSettings);
+
+    return $keycloakSettings;
+  }
+
+  /**
+   * Initialize keycloak settings.
+   *
+   * @return array
+   *   The keycloak settings.
+   */
+  public function initKeycloakClientsSettings() {
+    $keycloakSettings['name'] = 'Keycloak clients';
     $keycloakSettings['baseUrl'] = $this->settings->get('keycloak.routes.clients.baseUrl');
-    $keycloakSettings['createUrl'] = $this->settings->get('keycloak.routes.clients.crud.createUrl');
     $keycloakSettings['readOneUrl'] = $this->settings->get('keycloak.routes.clients.crud.readOneUrl');
     $keycloakSettings['readAllUrl'] = $this->settings->get('keycloak.routes.clients.crud.readAllUrl');
     $keycloakSettings['updateUrl'] = $this->settings->get('keycloak.routes.clients.crud.updateUrl');
@@ -145,8 +159,27 @@ class SodaScsServiceHelpers {
     // Health check URL.
     $keycloakSettings['healthCheckUrl'] = $this->settings->get('keycloak.routes.clients.healthCheck.url');
 
-    // Miscellaneous routes.
-    $keycloakSettings['tokenUrl'] = $this->settings->get('keycloak.routes.misc.tokenUrl');
+
+
+    $this->checkSettings($keycloakSettings);
+
+    return $keycloakSettings;
+  }
+
+  /**
+   * Initialize keycloak users settings.
+   *
+   * @return array
+   *   The keycloak users settings.
+   */
+  public function initKeycloakUsersSettings() {
+    $keycloakSettings['name'] = 'Keycloak users';
+    $keycloakSettings['baseUrl'] = $this->settings->get('keycloak.routes.users.baseUrl');
+    $keycloakSettings['createUrl'] = $this->settings->get('keycloak.routes.users.crud.createUrl');
+    $keycloakSettings['readOneUrl'] = $this->settings->get('keycloak.routes.users.crud.readOneUrl');
+    $keycloakSettings['readAllUrl'] = $this->settings->get('keycloak.routes.users.crud.readAllUrl');
+    $keycloakSettings['updateUrl'] = $this->settings->get('keycloak.routes.users.crud.updateUrl');
+    $keycloakSettings['deleteUrl'] = $this->settings->get('keycloak.routes.users.crud.deleteUrl');
 
     $this->checkSettings($keycloakSettings);
 

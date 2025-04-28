@@ -9,7 +9,7 @@ use Drupal\Core\Mail\MailManagerInterface;
 use Drupal\Core\Messenger\MessengerInterface;
 use Drupal\Core\StringTranslation\StringTranslationTrait;
 use Drupal\Core\Url;
-use Drupal\soda_scs_manager\RequestActions\SodaScsKeycloakServiceActions;
+use Drupal\soda_scs_manager\RequestActions\SodaScsKeycloakServiceUserActions;
 use Drupal\soda_scs_manager\Helpers\SodaScsServiceHelpers;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 
@@ -43,9 +43,9 @@ class KeycloakUserApprovalForm extends FormBase {
   /**
    * The Keycloak service actions.
    *
-   * @var \Drupal\soda_scs_manager\RequestActions\SodaScsKeycloakServiceActions
+   * @var \Drupal\soda_scs_manager\RequestActions\SodaScsKeycloakServiceUserActions
    */
-  protected $keycloakServiceActions;
+  protected $keycloakServiceUserActions;
 
   /**
    * The SODa SCS service helpers.
@@ -63,7 +63,7 @@ class KeycloakUserApprovalForm extends FormBase {
    *   The mail manager service.
    * @param \Drupal\Core\Messenger\MessengerInterface $messenger
    *   The messenger service.
-   * @param \Drupal\soda_scs_manager\RequestActions\SodaScsKeycloakServiceActions $keycloak_service_actions
+   * @param \Drupal\soda_scs_manager\RequestActions\SodaScsKeycloakServiceUserActions $keycloak_service_user_actions
    *   The Keycloak service actions.
    * @param \Drupal\soda_scs_manager\Helpers\SodaScsServiceHelpers $service_helpers
    *   The SODa SCS service helpers.
@@ -72,14 +72,14 @@ class KeycloakUserApprovalForm extends FormBase {
     Connection $database,
     MailManagerInterface $mail_manager,
     MessengerInterface $messenger,
-    SodaScsKeycloakServiceActions $keycloak_service_actions,
-    SodaScsServiceHelpers $service_helpers,
+    SodaScsKeycloakServiceUserActions $keycloakServiceUserActions,
+    SodaScsServiceHelpers $serviceHelpers,
   ) {
     $this->database = $database;
     $this->mailManager = $mail_manager;
     $this->messenger = $messenger;
-    $this->keycloakServiceActions = $keycloak_service_actions;
-    $this->serviceHelpers = $service_helpers;
+    $this->keycloakServiceUserActions = $keycloakServiceUserActions;
+    $this->serviceHelpers = $serviceHelpers;
   }
 
   /**
@@ -90,7 +90,7 @@ class KeycloakUserApprovalForm extends FormBase {
       $container->get('database'),
       $container->get('plugin.manager.mail'),
       $container->get('messenger'),
-      $container->get('soda_scs_manager.keycloak_service_actions'),
+      $container->get('soda_scs_manager.keycloak_service.user.actions'),
       $container->get('soda_scs_manager.service.helpers')
     );
   }
@@ -209,11 +209,11 @@ class KeycloakUserApprovalForm extends FormBase {
     }
 
     // Get Keycloak settings.
-    $keycloakSettings = $this->serviceHelpers->initKeycloakSettings();
+    $keycloakGeneralSettings = $this->serviceHelpers->initKeycloakGeneralSettings();
 
     // Get token first.
-    $tokenRequest = $this->keycloakServiceActions->buildTokenRequest([]);
-    $tokenResponse = $this->keycloakServiceActions->makeRequest($tokenRequest);
+    $tokenRequest = $this->keycloakServiceUserActions->buildTokenRequest([]);
+    $tokenResponse = $this->keycloakServiceUserActions->makeRequest($tokenRequest);
 
     if (!$tokenResponse['success']) {
       $this->messenger->addError($this->t('Failed to authenticate with Keycloak: @error', ['@error' => $tokenResponse['error']]));
@@ -222,38 +222,30 @@ class KeycloakUserApprovalForm extends FormBase {
 
     $token = json_decode($tokenResponse['data']['keycloakResponse']->getBody()->getContents())->access_token;
 
-    // Create user in Keycloak.
-    $userUrl = $keycloakSettings['host'] . '/admin/realms/' . $keycloakSettings['realm'] . '/users';
-
-    $userData = [
-      'enabled' => TRUE,
-      'username' => $registration->username,
-      'email' => $registration->email,
-      'firstName' => $registration->first_name,
-      'lastName' => $registration->last_name,
-      'credentials' => [
-        [
-          'type' => 'password',
-          'value' => $registration->password,
-          'temporary' => FALSE,
+    $requestParams = [
+      'token' => $token,
+      'routeParams' => [
+        'realm' => $keycloakGeneralSettings['realm'],
+      ],
+      'body' => [
+        'enabled' => TRUE,
+        'username' => $registration->username,
+        'email' => $registration->email,
+        'firstName' => $registration->first_name,
+        'lastName' => $registration->last_name,
+        'credentials' => [
+          [
+            'type' => 'password',
+            'value' => $registration->password,
+            'temporary' => FALSE,
+          ],
         ],
+        'emailVerified' => TRUE,
       ],
-      'emailVerified' => TRUE,
     ];
 
-    // Prepare the request for creating a user.
-    $createUserRequest = [
-      'success' => TRUE,
-      'method' => 'POST',
-      'route' => $userUrl,
-      'headers' => [
-        'Content-Type' => 'application/json',
-        'Authorization' => 'Bearer ' . $token,
-      ],
-      'body' => json_encode($userData),
-    ];
-
-    $createUserResponse = $this->keycloakServiceActions->makeRequest($createUserRequest);
+    $createUserRequest = $this->keycloakServiceUserActions->buildCreateRequest($requestParams);
+    $createUserResponse = $this->keycloakServiceUserActions->makeRequest($createUserRequest);
 
     if (!$createUserResponse['success']) {
       $this->messenger->addError($this->t('Failed to create user in Keycloak: @error', ['@error' => $createUserResponse['error']]));
@@ -277,7 +269,7 @@ class KeycloakUserApprovalForm extends FormBase {
       'username' => $registration->username,
       'email' => $registration->email,
       'site_name' => $site_name,
-      'login_url' => $keycloakSettings['host'] . '/realms/' . $keycloakSettings['realm'] . '/account',
+      'login_url' => "https://scs.sammlungen.io/user/login",
     ];
 
     $this->mailManager->mail(

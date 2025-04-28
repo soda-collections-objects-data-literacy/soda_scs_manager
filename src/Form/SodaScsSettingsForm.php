@@ -58,6 +58,7 @@ class SodaScsSettingsForm extends ConfigFormBase {
       '#title' => $this->t('Placeholders'),
       '#markup' => $this->t('You can use the following placeholders in the settings form:
       <ul>
+        <li><strong>{clientId}</strong> - The Keycloak client ID</li>
         <li><strong>{containerId}</strong> - The Docker container ID</li>
         <li><strong>{endpointId}</strong> - The Portainer endpoint ID</li>
         <li><strong>{execId}</strong> - The Docker exec ID</li>
@@ -65,7 +66,7 @@ class SodaScsSettingsForm extends ConfigFormBase {
         <li><strong>{realm}</strong> - The Keycloak realm</li>
         <li><strong>{repositoryId}</strong> - The triplestore repository ID</li>
         <li><strong>{stackId}</strong> - The Portainer stack ID</li>
-        <li><strong>{userId}</strong> - The triplestore user ID</li>
+        <li><strong>{userId}</strong> - The user ID (triplestore, Keycloak etc.)</li>
         <li><strong>{volumeId}</strong> - The Docker volume ID</li>
       </ul>
       <br>
@@ -91,6 +92,13 @@ class SodaScsSettingsForm extends ConfigFormBase {
       '#title' => $this->t('SODa SCS host'),
       '#default_value' => $this->config('soda_scs_manager.settings')->get('scsHost'),
       '#description' => $this->t('The SODa SCS host, like https://scs.sammlungen.io.'),
+    ];
+
+    $form['general']['fields']['administratorEmail'] = [
+      '#type' => 'textfield',
+      '#title' => $this->t('Administrator email'),
+      '#default_value' => $this->config('soda_scs_manager.settings')->get('administratorEmail'),
+      '#description' => $this->t('The administrator email, like admin@scs.sammlungen.io.'),
     ];
 
     // Database settings tab.
@@ -188,7 +196,7 @@ class SodaScsSettingsForm extends ConfigFormBase {
       '#type' => 'textfield',
       '#title' => $this->t('Base URL'),
       '#default_value' => $this->config('soda_scs_manager.settings')->get('keycloak')['routes']['clients']['baseUrl'] ?? '',
-      '#description' => $this->t('The base URL, like /admin/realms.'),
+      '#description' => $this->t('The base URL, like /admin/realms/{realm}/clients.'),
     ];
 
     $form['keycloak']['routes']['clients']['crud'] = [
@@ -200,35 +208,35 @@ class SodaScsSettingsForm extends ConfigFormBase {
       '#type' => 'textfield',
       '#title' => $this->t('Create URL'),
       '#default_value' => $this->config('soda_scs_manager.settings')->get('keycloak')['routes']['clients']['crud']['createUrl'] ?? '',
-      '#description' => $this->t('The create URL, like /admin/realms.'),
+      '#description' => $this->t('The create URL, like {emtpy}.'),
     ];
 
     $form['keycloak']['routes']['clients']['crud']['readOneUrl'] = [
       '#type' => 'textfield',
       '#title' => $this->t('Read one URL'),
       '#default_value' => $this->config('soda_scs_manager.settings')->get('keycloak')['routes']['clients']['crud']['readOneUrl'] ?? '',
-      '#description' => $this->t('The read one URL.'),
+      '#description' => $this->t('The read one URL, like /{clientId}.'),
     ];
 
     $form['keycloak']['routes']['clients']['crud']['readAllUrl'] = [
       '#type' => 'textfield',
       '#title' => $this->t('Read all URL'),
       '#default_value' => $this->config('soda_scs_manager.settings')->get('keycloak')['routes']['clients']['crud']['readAllUrl'] ?? '',
-      '#description' => $this->t('The read all URL.'),
+      '#description' => $this->t('The read all URL, like {empty}.'),
     ];
 
     $form['keycloak']['routes']['clients']['crud']['updateUrl'] = [
       '#type' => 'textfield',
       '#title' => $this->t('Update URL'),
       '#default_value' => $this->config('soda_scs_manager.settings')->get('keycloak')['routes']['clients']['crud']['updateUrl'] ?? '',
-      '#description' => $this->t('The update URL.'),
+      '#description' => $this->t('The update URL, like /{clientId}.'),
     ];
 
     $form['keycloak']['routes']['clients']['crud']['deleteUrl'] = [
       '#type' => 'textfield',
       '#title' => $this->t('Delete URL'),
       '#default_value' => $this->config('soda_scs_manager.settings')->get('keycloak')['routes']['clients']['crud']['deleteUrl'] ?? '',
-      '#description' => $this->t('The delete URL.'),
+      '#description' => $this->t('The delete URL, like /{clientId}.'),
     ];
 
     $form['keycloak']['routes']['clients']['healthCheck']['url'] = [
@@ -237,6 +245,59 @@ class SodaScsSettingsForm extends ConfigFormBase {
       '#default_value' => $this->config('soda_scs_manager.settings')->get('keycloak')['routes']['clients']['healthCheck']['url'] ?? '',
       '#description' => $this->t('The health check URL.'),
     ];
+
+    $form['keycloak']['routes']['users'] = [
+      '#type' => 'fieldset',
+      '#title' => $this->t('Users routes'),
+    ];
+
+    $form['keycloak']['routes']['users']['baseUrl'] = [
+      '#type' => 'textfield',
+      '#title' => $this->t('Base URL'),
+      '#default_value' => $this->config('soda_scs_manager.settings')->get('keycloak')['routes']['users']['baseUrl'] ?? '',
+      '#description' => $this->t('The base URL, like /admin/realms/{realm}/users.'),
+    ];
+
+    $form['keycloak']['routes']['users']['crud'] = [
+      '#type' => 'fieldset',
+      '#title' => $this->t('CRUD routes'),
+    ];
+
+    $form['keycloak']['routes']['users']['crud']['createUrl'] = [
+      '#type' => 'textfield',
+      '#title' => $this->t('Create URL'),
+      '#default_value' => $this->config('soda_scs_manager.settings')->get('keycloak')['routes']['users']['crud']['createUrl'] ?? '',
+      '#description' => $this->t('The create URL, like {empty}.'),
+    ];
+
+    $form['keycloak']['routes']['users']['crud']['readOneUrl'] = [
+      '#type' => 'textfield',
+      '#title' => $this->t('Read one URL'),
+      '#default_value' => $this->config('soda_scs_manager.settings')->get('keycloak')['routes']['users']['crud']['readOneUrl'] ?? '',
+      '#description' => $this->t('The read one URL, like /{userId}.'),
+    ];
+
+    $form['keycloak']['routes']['users']['crud']['readAllUrl'] = [
+      '#type' => 'textfield',
+      '#title' => $this->t('Read all URL'),
+      '#default_value' => $this->config('soda_scs_manager.settings')->get('keycloak')['routes']['users']['crud']['readAllUrl'] ?? '',
+      '#description' => $this->t('The read all URL, like {empty}.'),
+    ];
+
+    $form['keycloak']['routes']['users']['crud']['updateUrl'] = [
+      '#type' => 'textfield',
+      '#title' => $this->t('Update URL'),
+      '#default_value' => $this->config('soda_scs_manager.settings')->get('keycloak')['routes']['users']['crud']['updateUrl'] ?? '',
+      '#description' => $this->t('The update URL, like /{userId}.'),
+    ];
+
+    $form['keycloak']['routes']['users']['crud']['deleteUrl'] = [
+      '#type' => 'textfield',
+      '#title' => $this->t('Delete URL'),
+      '#default_value' => $this->config('soda_scs_manager.settings')->get('keycloak')['routes']['users']['crud']['deleteUrl'] ?? '',
+      '#description' => $this->t('The delete URL, like /{userId}  .'),
+    ];
+
 
     $form['keycloak']['routes']['misc'] = [
       '#type' => 'fieldset',
@@ -814,6 +875,7 @@ class SodaScsSettingsForm extends ConfigFormBase {
     // Save the configuration.
     $this->config('soda_scs_manager.settings')
       ->set('scsHost', $form_state->getValue('scsHost'))
+      ->set('administratorEmail', $form_state->getValue('administratorEmail'))
       ->set('dbHost', $form_state->getValue('dbHost'))
       ->set('dbPort', $form_state->getValue('dbPort'))
       ->set('dbManagementHost', $form_state->getValue('dbManagementHost'))

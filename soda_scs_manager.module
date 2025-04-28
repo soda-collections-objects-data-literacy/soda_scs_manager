@@ -577,3 +577,101 @@ function soda_scs_manager_form_soda_scs_manager_component_create_form_alter(&$fo
     $form['sharedWith']['#access'] = FALSE;
   }
 }
+
+/**
+ * Implements hook_user_delete().
+ *
+ * Deletes a user from Keycloak when a Drupal user is deleted.
+ */
+function soda_scs_manager_user_delete(UserInterface $user) {
+  // Get the Keycloak service user actions.
+  $keycloakServiceUserActions = \Drupal::service('soda_scs_manager.keycloak_service.user.actions');
+  // Get the service helpers.
+  $serviceHelpers = \Drupal::service('soda_scs_manager.service.helpers');
+  // Get the logger.
+  $logger = \Drupal::logger('soda_scs_manager');
+  // Get the messenger.
+  $messenger = \Drupal::messenger();
+
+  // Log the user deletion.
+  $logger->notice('Deleting user from Keycloak: @username', ['@username' => $user->getAccountName()]);
+
+  try {
+
+    $username = $user->getAccountName();
+    // Get Keycloak settings.
+    $keycloakGeneralSettings = $serviceHelpers->initKeycloakGeneralSettings();
+
+    // First get a token for Keycloak API authentication.
+    $tokenRequest = $keycloakServiceUserActions->buildTokenRequest([]);
+    $tokenResponse = $keycloakServiceUserActions->makeRequest($tokenRequest);
+
+    if (!$tokenResponse['success']) {
+      $logger->error('Failed to get Keycloak token for user deletion: @error', ['@error' => $tokenResponse['error']]);
+      return;
+    }
+
+    // Extract the access token.
+    $tokenData = json_decode($tokenResponse['data']['keycloakResponse']->getBody()->getContents(), TRUE);
+    $accessToken = $tokenData['access_token'];
+
+    // Set the token.
+    $getUserParams['token'] = $accessToken;
+    // userRouteParams
+    $getUserParams['routeParams'] = [
+      'realm' => $keycloakGeneralSettings['realm'],
+
+    ];
+
+    // userQueryParams
+    $getUserParams['queryParams'] = [
+      'username' => $username,
+    ];
+
+    // Get the user from Keycloak.
+    $getUserRequest = $keycloakServiceUserActions->buildGetAllRequest($getUserParams);
+    $getUserResponse = $keycloakServiceUserActions->makeRequest($getUserRequest);
+
+    if (!$getUserResponse['success']) {
+      $logger->error('Failed to find user in Keycloak: @error', ['@error' => $getUserResponse['error']]);
+      return;
+    }
+
+    $userData = json_decode($getUserResponse['data']['keycloakResponse']->getBody()->getContents(), TRUE);
+
+    // If no user found, log and return
+    if (empty($userData) || !is_array($userData) || count($userData) === 0) {
+      $logger->notice('No matching user found in Keycloak for username: @username', ['@username' => $user->getAccountName()]);
+      return;
+    }
+
+    // Set the token.
+    $deleteUserParams['token'] = $accessToken;
+    // Extract the Keycloak user ID
+    $deleteUserParams['routeParams'] = [
+      'realm' => $keycloakGeneralSettings['realm'],
+      'userId' => $userData[0]['id'],
+    ];
+
+    // Build the delete request.
+    $deleteUserRequest = $keycloakServiceUserActions->buildDeleteRequest($deleteUserParams);
+    // Make the deleterequest.
+    $deleteUserResponse = $keycloakServiceUserActions->makeRequest($deleteUserRequest);
+
+    if ($deleteUserResponse['success']) {
+      $messenger->addMessage(t('Successfully deleted user from Keycloak: @username (ID: @id)', [
+        '@username' => $getUserParams['queryParams']['username'],
+        '@id' => $deleteUserParams['routeParams']['userId'],
+      ]));
+      $logger->notice('Successfully deleted user from Keycloak: @username (ID: @id)', [
+        '@username' => $getUserParams['queryParams']['username'],
+        '@id' => $deleteUserParams['routeParams']['userId'],
+      ]);
+    } else {
+      $logger->error('Failed to delete user from Keycloak: @error', ['@error' => $deleteUserResponse['error']]);
+    }
+  }
+  catch (\Exception $e) {
+    $logger->error('Error deleting user from Keycloak: @error', ['@error' => $e->getMessage()]);
+  }
+}

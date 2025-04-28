@@ -265,8 +265,20 @@ services:
       - '@string_translation'
 
 # Keycloak registration services
-  soda_scs_manager.keycloak_service_actions:
-    class: Drupal\soda_scs_manager\RequestActions\SodaScsKeycloakServiceActions
+  soda_scs_manager.keycloak_service.client.actions:
+    class: Drupal\soda_scs_manager\RequestActions\SodaScsKeycloakServiceClientActions
+    arguments:
+      - '@config.factory'
+      - '@http_client'
+      - '@entity_type.manager'
+      - '@messenger'
+      - '@request_stack'
+      - '@logger.factory'
+      - '@soda_scs_manager.service.helpers'
+      - '@string_translation'
+
+  soda_scs_manager.keycloak_service.user.actions:
+    class: Drupal\soda_scs_manager\RequestActions\SodaScsKeycloakServiceUserActions
     arguments:
       - '@config.factory'
       - '@http_client'

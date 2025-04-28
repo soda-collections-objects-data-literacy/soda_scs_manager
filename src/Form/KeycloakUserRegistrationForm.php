@@ -263,6 +263,7 @@ class KeycloakUserRegistrationForm extends FormBase {
       'email' => $email,
       'first_name' => $first_name,
       'last_name' => $last_name,
+      'site_name' => $site_name,
     ];
 
     $this->mailManager->mail(
@@ -271,7 +272,7 @@ class KeycloakUserRegistrationForm extends FormBase {
       $site_mail,
       'en',
       $params,
-      NULL,
+      $email,
       TRUE
     );
 
@@ -288,12 +289,17 @@ class KeycloakUserRegistrationForm extends FormBase {
       $email,
       'en',
       $params,
-      NULL,
+      $site_mail,
       TRUE
     );
 
     // Send notification to site admin about new registration that needs approval.
     $admin_email = $this->config('smtp.settings')->get('smtp_from');
+    if (empty($admin_email)) {
+      // Fallback to site email if SMTP from is not set
+      $admin_email = $site_mail;
+    }
+
     $admin_params = [
       'registration_id' => $id,
       'username' => $username,
@@ -303,16 +309,6 @@ class KeycloakUserRegistrationForm extends FormBase {
       'site_name' => $site_name,
       'approval_url' => Url::fromRoute('soda_scs_manager.user_registration_approvals', [], ['absolute' => TRUE])->toString(),
     ];
-
-    $this->mailManager->mail(
-      'soda_scs_manager',
-      'registration_admin_approval',
-      $admin_email,
-      'en',
-      $admin_params,
-      NULL,
-      TRUE
-    );
 
     // Display success message.
     $this->messenger->addStatus($this->t('Your registration has been submitted and is pending approval. You will be notified by email when your account is approved.'));
