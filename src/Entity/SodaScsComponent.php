@@ -287,7 +287,7 @@ class SodaScsComponent extends ContentEntityBase implements SodaScsComponentInte
 
     $fields['notes'] = BaseFieldDefinition::create('string_long')
       ->setLabel(new TranslatableMarkup('Notes'))
-      ->setDescription(new TranslatableMarkup('Notes about the SODa SCS Component.'))
+      ->setDescription(new TranslatableMarkup('Notes about the SODa SCS application.'))
       ->setRequired(FALSE)
       ->setReadOnly(FALSE)
       ->setDisplayConfigurable('view', FALSE)

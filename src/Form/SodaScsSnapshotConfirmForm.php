@@ -6,6 +6,7 @@ use Drupal\Core\Entity\EntityTypeManagerInterface;
 use Drupal\Core\Form\ConfirmFormBase;
 use Drupal\Core\Form\FormStateInterface;
 use Drupal\Core\Logger\LoggerChannelFactoryInterface;
+use Drupal\Core\Url;
 use Drupal\soda_scs_manager\ComponentActions\SodaScsComponentActionsInterface;
 use Drupal\soda_scs_manager\Entity\SodaScsSnapshot;
 use Symfony\Component\DependencyInjection\ContainerInterface;
@@ -93,7 +94,7 @@ class SodaScsSnapshotConfirmForm extends ConfirmFormBase {
   /**
    * {@inheritdoc}
    */
-  public function buildForm(array $form, FormStateInterface $form_state, $soda_scs_stack = NULL, $soda_scs_component = NULL) {
+  public function buildForm(array $form, FormStateInterface $form_state, $bundle = NULL, $soda_scs_stack = NULL, $soda_scs_component = NULL) {
     $this->entity = $soda_scs_stack ?? $soda_scs_component;
     $this->entityType = $soda_scs_stack ? 'soda_scs_stack' : 'soda_scs_component';
 
@@ -162,7 +163,9 @@ class SodaScsSnapshotConfirmForm extends ConfirmFormBase {
       '%label' => $snapshot->label(),
     ]));
 
-    $form_state->setRedirectUrl($this->getCancelUrl());
+    // Set the redirect URL correctly
+    $cancelUrl = $this->getCancelUrl();
+    $form_state->setRedirectUrl($cancelUrl);
   }
 
   /**
@@ -179,6 +182,12 @@ class SodaScsSnapshotConfirmForm extends ConfirmFormBase {
    * {@inheritdoc}
    */
   public function getCancelUrl() {
+    if ($this->entityType === 'soda_scs_stack') {
+      return \Drupal\Core\Url::fromRoute('entity.soda_scs_stack.canonical', [
+        'bundle' => $this->entity->bundle(),
+        'soda_scs_stack' => $this->entity->id(),
+      ]);
+    }
     return $this->entity->toUrl();
   }
 

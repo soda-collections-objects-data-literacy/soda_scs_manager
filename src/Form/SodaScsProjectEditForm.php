@@ -55,11 +55,32 @@ class SodaScsProjectEditForm extends ContentEntityForm {
    */
   public function buildForm(array $form, FormStateInterface $form_state) {
     $form = parent::buildForm($form, $form_state);
+    $current_user = \Drupal::currentUser();
 
     // Make the machineName field readonly and add JavaScript to auto-generate it.
     if (isset($form['machineName'])) {
       $form['machineName']['widget'][0]['value']['#attributes']['readonly'] = 'readonly';
       $form['machineName']['widget'][0]['value']['#attributes']['disabled'] = 'disabled';
+    }
+
+    $form['owner']['widget']['#default_value'] = $current_user->id();
+    if (!$current_user->hasPermission('soda scs manager admin')) {
+      $form['owner']['#access'] = FALSE;
+    }
+
+    // Restrict connectedComponents field to only show components owned by the current user
+    // unless they have admin permission
+    if (isset($form['connectedComponents'])) {
+
+      $uid = $current_user->id();
+      $is_admin = $current_user->hasPermission('soda scs manager admin');
+
+      if (!$is_admin) {
+        // Modify the selection handler settings to only show user's components
+        $form['connectedComponents']['widget']['#selection_settings']['filter'] = [
+          'owner' => $uid,
+        ];
+      }
     }
 
     // Remove the delete button.

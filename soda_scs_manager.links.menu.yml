@@ -1,60 +1,60 @@
 # Links
 ## Structure
 
-soda_scs_manager.entities:
+soda_scs_manager.administration:
   title: 'SODa SCS Manager Administration'
   description: 'Manage SODa SCS Manager'
   parent: system.admin_structure
-  route_name: soda_scs_manager.entities
+  route_name: soda_scs_manager.administration
   weight: 100
   requirements:
     _permission: 'soda scs manager admin'
 
 ### Components
-soda_scs_manager.entities.components:
+soda_scs_manager.administration.components:
   title: 'SODa SCS Components'
   description: 'Manage SODa SCS Components'
-  parent: soda_scs_manager.entities
+  parent: soda_scs_manager.administration
   route_name: entity.soda_scs_component.collection
   weight: 100
   requirements:
     _permission: 'soda scs manager user'
 
 ### Projects
-soda_scs_manager.entities.projects:
+soda_scs_manager.administration.projects:
   title: 'SODa SCS Projects'
   description: 'Manage SODa SCS Projects'
-  parent: soda_scs_manager.entities
+  parent: soda_scs_manager.administration
   route_name: entity.soda_scs_project.collection
   weight: 100
   requirements:
     _permission: 'soda scs manager user'
 
 ### Service Keys
-soda_scs_manager.entities.service_keys:
+soda_scs_manager.administration.service_keys:
   title: 'SODa SCS Service Keys'
   description: 'Manage SODa SCS Service Keys'
-  parent: soda_scs_manager.entities
+  parent: soda_scs_manager.administration
   route_name: entity.soda_scs_service_key.collection
   weight: 100
   requirements:
     _permission: 'soda scs manager admin'
 
 ### Snapshots
-soda_scs_manager.entities.snapshots:
+soda_scs_manager.administration.snapshots:
   title: 'SODa SCS Snapshots'
   description: 'Manage SODa SCS Snapshots'
-  parent: soda_scs_manager.entities
+  parent: soda_scs_manager.administration
   route_name: entity.soda_scs_snapshot.collection
   weight: 100
   requirements:
     _permission: 'soda scs manager user'
 
 ### Stacks
-soda_scs_manager.entities.stacks:
+soda_scs_manager.administration.stacks:
   title: 'SODa SCS Stacks'
   description: 'Manage SODa SCS Stacks'
-  parent: soda_scs_manager.entities
+  parent: soda_scs_manager.administration
   route_name: entity.soda_scs_stack.collection
   weight: 100
   requirements:
@@ -126,7 +126,7 @@ soda_scs_manager.menu.desk:
   description: 'Your applications'
   parent: soda_scs_manager.main_navigation
   route_name: soda_scs_manager.desk
-  weight: 10
+  weight: 20
   requirements:
     _permission: 'soda scs manager user'
 
@@ -144,7 +144,7 @@ soda_scs_manager.menu.documentation:
   description: 'Documentation'
   parent: soda_scs_manager.main_navigation
   route_name: soda_scs_manager.documentation
-  weight: 10
+  weight: 30
   requirements:
     _permission: 'soda scs manager user'
 
@@ -153,7 +153,7 @@ soda_scs_manager.menu.administration:
   description: 'Administration'
   parent: soda_scs_manager.main_navigation
   route_name: soda_scs_manager.administration
-  weight: 10
+  weight: 40
   requirements:
     _permission: 'soda scs manager user'
 

@@ -113,7 +113,7 @@ class SodaScsTriplestoreComponentActions implements SodaScsComponentActionsInter
       $triplestoreComponent = $this->entityTypeManager->getStorage('soda_scs_component')->create(
         [
           'bundle' => 'soda_scs_triplestore_component',
-          'label' => $entity->get('label')->value . ' (Triplestore)',
+          'label' => $entity->get('label')->value,
           'machineName' => $machineName,
           'owner'  => $entity->getOwnerId(),
           'description' => $triplestoreComponentBundleInfo['description'],

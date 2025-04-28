@@ -50,11 +50,26 @@ class SodaScsProjectListBuilder extends EntityListBuilder {
       // Concatenate the links with a comma separator.
       $linksString = implode(',</br>', $links);
 
+      /** @var \Drupal\Core\Field\EntityReferenceFieldItemListInterface $members */
+      $members = $entity->get('members');
+      $referencedMembers = $members->referencedEntities();
+      $members = [];
+      /** @var \Drupal\user\Entity\User $referencedMember */
+      foreach ($referencedMembers as $referencedMember) {
+        $members[] = Link::fromTextAndUrl(
+          $referencedMember->getDisplayName(),
+          Url::fromRoute('entity.user.canonical', ['user' => $referencedMember->id()])
+        )->toString();
+      }
+
       // Markup::create to ensure the HTML is not escaped.
-      $row['name'] = $entity->label();
+      $row['name'] = Link::fromTextAndUrl(
+        $entity->label(),
+        Url::fromRoute('entity.soda_scs_project.canonical', ['soda_scs_project' => $entity->id()])
+      )->toString();
       $row['machineName'] = $entity->get('machineName')->value;
       $row['owner'] = $entity->getOwner()->getDisplayName();
-      $row['members'] = $entity->get('members')->value;
+      $row['members'] = Markup::create(implode(', ', $members));
       $row['components'] = Markup::create($linksString);
       $row['rights'] = $entity->get('rights')->value;
       return $row + parent::buildRow($entity);

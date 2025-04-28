@@ -19,7 +19,7 @@ class SodaScsStackDeleteForm extends ContentEntityDeleteForm {
   /**
    * The Soda SCS API Actions service.
    *
-   * @var \Drupal\soda_scs_manager\SodaScsStackActionsInterface
+   * @var \Drupal\soda_scs_manager\StackActions\SodaScsStackActionsInterface
    */
   protected SodaScsStackActionsInterface $sodaScsStackActions;
 
@@ -32,7 +32,7 @@ class SodaScsStackDeleteForm extends ContentEntityDeleteForm {
    *   The entity type bundle info.
    * @param Drupal\Component\Datetime\TimeInterface $time
    *   The time service.
-   * @param \Drupal\soda_scs_manager\SodaScsStackActionsInterface $sodaScsStackActions
+   * @param \Drupal\soda_scs_manager\StackActions\SodaScsStackActionsInterface $sodaScsStackActions
    *   The Soda SCS API Actions service.
    */
   public function __construct(EntityRepositoryInterface $entity_repository, EntityTypeBundleInfoInterface $entity_type_bundle_info, TimeInterface $time, SodaScsStackActionsInterface $sodaScsStackActions) {
@@ -74,7 +74,7 @@ class SodaScsStackDeleteForm extends ContentEntityDeleteForm {
    */
   public function getCancelUrl() {
     //TODO: Fix "page not found"
-    return Url::fromRoute('entity.soda_scs_stack.canonical', ['soda_scs_stack' => $this->entity->id()]);
+    return Url::fromRoute('entity.soda_scs_stack.canonical', ['bundle' => $this->entity->bundle(), 'soda_scs_stack' => $this->entity->id()]);
   }
 
   /**

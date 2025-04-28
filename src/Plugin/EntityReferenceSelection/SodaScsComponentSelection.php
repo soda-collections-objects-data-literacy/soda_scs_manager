@@ -36,8 +36,16 @@ class SodaScsComponentSelection extends DefaultSelection {
   protected function addAccessConditions(QueryInterface $query) {
     $current_user = \Drupal::currentUser();
 
-    // If user has admin permission, don't restrict access.
-    if ($current_user->hasPermission('administer soda scs component entities')) {
+    // If user has admin permission, don't restrict access unless specific owner filter is set
+    if ($current_user->hasPermission('soda scs manager admin') && empty($this->configuration['handler_settings']['filter']['owner'])) {
+      return;
+    }
+
+    // If a specific owner is set in the filter, use that instead of the current user
+    if (!empty($this->configuration['handler_settings']['filter']['owner'])) {
+      $uid = $this->configuration['handler_settings']['filter']['owner'];
+      // Only filter by this specific owner
+      $query->condition('owner', $uid);
       return;
     }
 
@@ -51,8 +59,7 @@ class SodaScsComponentSelection extends DefaultSelection {
 
     // Components in projects where the user is owner or member.
     $project_query = \Drupal::entityQuery('soda_scs_project')
-      ->accessCheck(TRUE)
-      ->condition('status', 1);
+      ->accessCheck(TRUE);
 
     $project_or = $project_query->orConditionGroup()
       ->condition('owner', $uid)
@@ -63,7 +70,7 @@ class SodaScsComponentSelection extends DefaultSelection {
 
     if (!empty($project_ids)) {
       // Add condition for components that belong to these projects.
-      $or_group->condition('project', $project_ids, 'IN');
+      $or_group->condition('partOfProjects', $project_ids, 'IN');
     }
 
     // Add the OR group to the main query.

@@ -44,11 +44,15 @@ class SodaScsManagerServiceController extends ControllerBase {
    *
    * @param Drupal\soda_scs_manager\Entity\SodaScsComponentInterface $soda_scs_component
    *   The SODa SCS Component entity.
+   * @param Drupal\soda_scs_manager\Entity\SodaScsStackInterface $soda_scs_stack
+   *   The SODa SCS Stack entity.
    *
    * @return \Drupal\Core\Routing\TrustedRedirectResponse
    *   The redirect response.
+   *
+   * @todo Make this more flexible with a single parameter.
    */
-  public function generateUrl($soda_scs_component): TrustedRedirectResponse {
+  public function generateUrl($soda_scs_component, $soda_scs_stack): TrustedRedirectResponse {
     if (empty($this->config('soda_scs_manager.settings')->get('scsHost'))) {
       throw new MissingDataException('SODa SCS host is not set.');
     }
@@ -60,9 +64,19 @@ class SodaScsManagerServiceController extends ControllerBase {
     $host = $this->config('soda_scs_manager.settings')->get('scsHost');
     $management_host = $this->config('soda_scs_manager.settings')->get('dbManagementHost');
 
-    switch ($soda_scs_component->get('bundle')->value) {
+    if ($soda_scs_component) {
+      $entity = $soda_scs_component;
+    }
+    elseif ($soda_scs_stack) {
+      $entity = $soda_scs_stack;
+    }
+    else {
+      throw new \Exception('No entity provided.');
+    }
+
+    switch ($entity->get('bundle')->value) {
       case 'soda_scs_wisski_component':
-        $machineName = $soda_scs_component->get('machineName')->value;
+        $machineName = $entity->get('machineName')->value;
         $url = 'https://' . $machineName . '.wisski.' . str_replace('https://', '', $host);
         break;
 
@@ -71,7 +85,7 @@ class SodaScsManagerServiceController extends ControllerBase {
         break;
 
       default:
-        throw new \Exception('Unknown component type: ' . $soda_scs_component->get('bundle')->value);
+        throw new \Exception('Unknown component type: ' . $entity->get('bundle')->value);
     }
 
     // Redirect to the generated URL.

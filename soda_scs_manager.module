@@ -265,7 +265,7 @@ function soda_scs_manager_entity_bundle_info() {
   $bundles['soda_scs_stack']['soda_scs_jupyter_stack'] = [
     'label' => new TranslatableMarkup('JupyterHub'),
     'class' => SodaScsStackBundle::class,
-    'description' => new TranslatableMarkup('A JupyterHub Stack contains Jupyter, Open Refine.'),
+    'description' => new TranslatableMarkup('A JupyterHub Stack contains Jupyter and OpenRefine.'),
     'imageUrl' => 'public://soda_scs_manager/images/jupyterhub-stack.svg',
     'tags' => ['coding', 'data-science', 'data-cleaning'],
   ];
@@ -552,4 +552,28 @@ function soda_scs_manager_form_user_register_form_alter(&$form, &$form_state, $f
   $response = new RedirectResponse(Url::fromRoute('soda_scs_manager.user_registration')->toString());
   $response->send();
   exit;
+}
+
+/**
+ * Implements hook_form_FORM_ID_alter() for soda_scs_manager_stack_create_form.
+ */
+function soda_scs_manager_form_soda_scs_manager_stack_create_form_alter(&$form, &$form_state, $form_id) {
+  // Disable the partOfProjects field
+  if (isset($form['partOfProjects'])) {
+    $form['partOfProjects']['#access'] = FALSE;
+  }
+}
+
+/**
+ * Implements hook_form_FORM_ID_alter() for soda_scs_manager_stack_create_form.
+ */
+function soda_scs_manager_form_soda_scs_manager_component_create_form_alter(&$form, &$form_state, $form_id) {
+  // Disable the partOfProjects field
+  if (isset($form['partOfProjects'])) {
+    $form['partOfProjects']['#access'] = FALSE;
+  }
+  // Disable the partOfProjects field
+  if (isset($form['sharedWith'])) {
+    $form['sharedWith']['#access'] = FALSE;
+  }
 }

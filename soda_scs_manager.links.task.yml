@@ -15,13 +15,13 @@ entity.soda_scs_component.delete_form:
   route_name: entity.soda_scs_component.delete_form
   base_route: entity.soda_scs_component.canonical
   title: 'Delete'
-  weight: 20
+  weight: 40
 
 entity.soda_scs_component.service_link:
-  route_name: soda_scs_manager.service_link
+  route_name: soda_scs_manager.component.service_link
   base_route: entity.soda_scs_component.canonical
   title: 'Show'
-  weight: 100
+  weight: 20
   options:
     parameters:
       soda_scs_component: { type: soda_scs_component }
@@ -36,7 +36,7 @@ entity.soda_scs_component.confirm_form:
   options:
     parameters:
       soda_scs_component: { type: entity:soda_scs_component }
-  weight: 100
+  weight: 40
 
 
 # Service Key
@@ -58,12 +58,25 @@ entity.soda_scs_service_key.delete_form:
   title: 'Delete'
   weight: 20
 
-# Stacks
+# Stacks/*
 entity.soda_scs_stack.canonical:
   route_name: entity.soda_scs_stack.canonical
   base_route: entity.soda_scs_stack.canonical
   title: 'View'
-  weight: 50
+  weight: 10
+  options:
+    parameters:
+      soda_scs_stack: { type: entity:soda_scs_stack }
+      bundle: { type: string }
+
+entity.soda_scs_stack.service_link:
+  route_name: soda_scs_manager.stack.service_link
+  base_route: entity.soda_scs_stack.canonical
+  title: 'Show'
+  weight: 20
+  options:
+    parameters:
+      soda_scs_stack: { type: entity:soda_scs_stack }
 
 # entity.soda_scs_stack.edit_form:
 #   route_name: entity.soda_scs_stack.edit_form
@@ -75,7 +88,10 @@ entity.soda_scs_stack.delete_form:
   route_name: entity.soda_scs_stack.delete_form
   base_route: entity.soda_scs_stack.canonical
   title: 'Delete'
-  weight: 20
+  weight: 40
+  options:
+    parameters:
+      soda_scs_stack: { type: entity:soda_scs_stack }
 
 entity.soda_scs_stack.confirm_form:
   route_name: entity.soda_scs_stack.snapshot
@@ -84,7 +100,8 @@ entity.soda_scs_stack.confirm_form:
   options:
     parameters:
       soda_scs_stack: { type: entity:soda_scs_stack }
-  weight: 100
+      bundle: { type: string }
+  weight: 30
 
 # Projects
 

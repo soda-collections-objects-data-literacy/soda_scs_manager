@@ -152,6 +152,27 @@ class SodaScsProjectCreateForm extends ContentEntityForm {
       $form['owner']['#access'] = FALSE;
     }
 
+    // Add a description to the form.
+    $form['description'] = [
+      '#type' => 'markup',
+      '#markup' => '<p>' . $this->t('Create a new project to organize your components.') . '</p>',
+      '#weight' => -10,
+    ];
+
+    // Restrict connectedComponents field to only show components owned by the current user
+    // unless they have admin permission
+    if (isset($form['connectedComponents'])) {
+      $uid = $this->currentUser->id();
+      $is_admin = $this->currentUser->hasPermission('soda scs manager admin');
+
+      if (!$is_admin) {
+        // Modify the selection handler settings to only show user's components
+        $form['connectedComponents']['widget']['#selection_settings']['filter'] = [
+          'owner' => $uid,
+        ];
+      }
+    }
+
     // Make the machineName field readonly and add
     // JavaScript to auto-generate it.
     if (isset($form['machineName'])) {

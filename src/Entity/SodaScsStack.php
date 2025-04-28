@@ -25,7 +25,7 @@ use Drupal\user\EntityOwnerTrait;
  *   bundle_label = @Translation("Soda SCS Stack type"),
  *   handlers = {
  *     "storage" = "Drupal\Core\Entity\Sql\SqlContentEntityStorage",
- *     "view_builder" = "Drupal\Core\Entity\EntityViewBuilder",
+ *     "view_builder" = "Drupal\soda_scs_manager\ViewBuilder\SodaScsStackViewBuilder",
  *     "list_builder" = "Drupal\soda_scs_manager\ListBuilder\SodaScsStackListBuilder",
  *     "views_data" = "Drupal\views\EntityViewsData",
  *     "translation" = "Drupal\content_translation\ContentTranslationHandler",
@@ -205,28 +205,9 @@ class SodaScsStack extends ContentEntityBase implements SodaScsStackInterface {
       ])
       ->setDisplayConfigurable('view', FALSE)
       ->setDisplayOptions('view', [
-        'label' => 'above',
+        'label' => 'hidden',
         'type' => 'string',
         'weight' => 10,
-      ]);
-
-    $fields['owner'] = BaseFieldDefinition::create('entity_reference')
-      ->setLabel(new TranslatableMarkup('Owner'))
-      ->setDescription(new TranslatableMarkup('The owner of the SODa SCS Stack.'))
-      ->setSetting('target_type', 'user')
-      ->setSetting('handler', 'default')
-      ->setRequired(TRUE)
-      ->setReadOnly(FALSE)
-      ->setDisplayConfigurable('form', FALSE)
-      ->setDisplayConfigurable('view', FALSE)
-      ->setDisplayOptions('view', [
-        'label' => 'above',
-        'type' => 'entity_reference_label',
-        'weight' => 30,
-      ])
-      ->setDisplayOptions('form', [
-        'type' => 'options_buttons',
-        'weight' => 30,
       ]);
 
     $fields['machineName'] = BaseFieldDefinition::create('string')
@@ -252,6 +233,43 @@ class SodaScsStack extends ContentEntityBase implements SodaScsStackInterface {
           'message' => t('Machine name must contain only lowercase letters, numbers, and minus.'),
         ],
       ]);
+
+    $fields['notes'] = BaseFieldDefinition::create('string_long')
+      ->setLabel(new TranslatableMarkup('Notes'))
+      ->setDescription(new TranslatableMarkup('Notes about the SODa SCS application.'))
+      ->setRequired(FALSE)
+      ->setReadOnly(FALSE)
+      ->setDisplayConfigurable('view', FALSE)
+      ->setDisplayOptions('form', [
+        'type' => 'string_textarea',
+        'weight' => 60,
+      ])
+      ->setDisplayOptions('view', [
+        'label' => 'above',
+        'type' => 'text_default',
+        'weight' => 60,
+      ]);
+
+    $fields['owner'] = BaseFieldDefinition::create('entity_reference')
+      ->setLabel(new TranslatableMarkup('Owner'))
+      ->setDescription(new TranslatableMarkup('The owner of the SODa SCS Stack.'))
+      ->setSetting('target_type', 'user')
+      ->setSetting('handler', 'default')
+      ->setRequired(TRUE)
+      ->setReadOnly(FALSE)
+      ->setDisplayConfigurable('form', FALSE)
+      ->setDisplayConfigurable('view', FALSE)
+      ->setDisplayOptions('view', [
+        'label' => 'above',
+        'type' => 'entity_reference_label',
+        'weight' => 30,
+      ])
+      ->setDisplayOptions('form', [
+        'type' => 'options_buttons',
+        'weight' => 30,
+      ]);
+
+
 
     $fields['partOfProjects'] = BaseFieldDefinition::create('entity_reference')
       ->setLabel(new TranslatableMarkup('Project'))

@@ -187,8 +187,8 @@ msgid "JupyterHub Stack"
 msgstr "JupyterHub-Stack"
 
 #: soda_scs_manager.module:275
-msgid "A JupyterHub Stack contains Jupyter, Open Refine."
-msgstr "Ein JupyterHub-Stack enthält Jupyter, Open Refine."
+msgid "A JupyterHub Stack contains Jupyter and OpenRefine."
+msgstr "Ein JupyterHub-Stack enthält Jupyter und OpenRefine."
 
 #: soda_scs_manager.module:280
 msgid "WissKI Stack"

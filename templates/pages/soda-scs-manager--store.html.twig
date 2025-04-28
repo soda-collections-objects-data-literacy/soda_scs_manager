@@ -45,7 +45,7 @@
   </div>
 </div>
 
-<h2 class="center text-center text-stone-200 text-8xl font-bold mb-10">{{ 'Bundled Applications'|t }}</h2>
+<h2 class="center text-center text-stone-200 text-8xl font-bold mb-10" id="bundled-applications">{{ 'Bundled Applications'|t }}</h2>
 
 {% if stacks is not empty %}
   {% set stack_count = stacks|length %}
@@ -62,7 +62,7 @@
   </div>
 {% endif %}
 
-<h2 class="center text-center text-stone-200 text-8xl font-bold mb-10">{{ 'Single Applications'|t }}</h2>
+<h2 class="center text-center text-stone-200 text-8xl font-bold mb-10" id="single-applications">{{ 'Single Applications'|t }}</h2>
 {% if components is not empty %}
   {% set component_count = components|length %}
   {% set grid_class = 'grid-count-' ~ component_count %}

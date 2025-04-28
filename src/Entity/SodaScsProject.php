@@ -71,10 +71,10 @@ use Drupal\user\EntityOwnerTrait;
  *     "label",
  *     "langcode",
  *     "machineName",
+ *     "members",
  *     "uuid",
  *     "updated",
  *     "owner",
- *     "members",
  *     "rights",
  *   }
  * )
@@ -96,17 +96,13 @@ class SodaScsProject extends ContentEntityBase implements EntityInterface {
     $fields = parent::baseFieldDefinitions($entity_type);
 
     $fields['connectedComponents'] = BaseFieldDefinition::create('entity_reference')
-      ->setLabel(new TranslatableMarkup('Connected Components'))
-      ->setDescription(new TranslatableMarkup('The SCS components associated with this project.'))
+      ->setLabel(new TranslatableMarkup('Connected applications'))
+      ->setDescription(new TranslatableMarkup('The applications associated with this project.'))
       ->setSetting('target_type', 'soda_scs_component')
       ->setCardinality(FieldStorageDefinitionInterface::CARDINALITY_UNLIMITED)
-      ->setSetting('handler', 'default')
+      ->setSetting('handler', 'soda_scs_component_access')
       ->setSetting('handler_settings', [
         'auto_create' => FALSE,
-        'filter' => [
-          'type' => 'soda_scs_component_access',
-
-        ],
         'sort' => [
           'field' => 'label',
           'direction' => 'ASC',
@@ -198,13 +194,19 @@ class SodaScsProject extends ContentEntityBase implements EntityInterface {
       ->setLabel(new TranslatableMarkup('Members'))
       ->setDescription(new TranslatableMarkup('The members associated with the project.'))
       ->setSetting('target_type', 'user')
+      ->setSetting('handler', 'default')
       ->setCardinality(FieldStorageDefinitionInterface::CARDINALITY_UNLIMITED)
       ->setDisplayConfigurable('form', FALSE)
       ->setDisplayOptions('form', [
         'type' => 'entity_reference_autocomplete',
         'weight' => 30,
       ])
-      ->setDisplayConfigurable('view', FALSE);
+      ->setDisplayConfigurable('view', FALSE)
+      ->setDisplayOptions('view', [
+        'label' => 'above',
+        'type' => 'entity_reference_label',
+        'weight' => 30,
+      ]);
 
     $fields['owner'] = BaseFieldDefinition::create('entity_reference')
       ->setLabel(new TranslatableMarkup('Owner'))
@@ -214,14 +216,14 @@ class SodaScsProject extends ContentEntityBase implements EntityInterface {
       ->setRequired(TRUE)
       ->setReadOnly(FALSE)
       ->setDisplayConfigurable('form', FALSE)
+      ->setDisplayOptions('form', [
+        'type' => 'options_buttons',
+        'weight' => 30,
+      ])
       ->setDisplayConfigurable('view', FALSE)
       ->setDisplayOptions('view', [
         'label' => 'above',
         'type' => 'entity_reference_label',
-        'weight' => 30,
-      ])
-      ->setDisplayOptions('form', [
-        'type' => 'options_buttons',
         'weight' => 30,
       ]);
 

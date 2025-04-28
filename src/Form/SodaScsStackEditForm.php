@@ -47,6 +47,12 @@ class SodaScsStackEditForm extends ContentEntityForm {
     $form['#attached']['library'][] = 'soda_scs_manager/globalStyling';
     $form['actions']['delete'] = [];
 
+    $current_user = \Drupal::currentUser();
+    $form['owner']['widget']['#default_value'] = $current_user->id();
+    if (!$current_user->hasPermission('soda scs manager admin')) {
+      $form['owner']['#access'] = FALSE;
+    }
+
     return $form;
   }
 
