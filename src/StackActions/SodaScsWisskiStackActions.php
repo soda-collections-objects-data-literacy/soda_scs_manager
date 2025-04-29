@@ -19,7 +19,7 @@ use Drupal\soda_scs_manager\ComponentActions\SodaScsComponentActionsInterface;
 use Drupal\soda_scs_manager\Entity\SodaScsStackInterface;
 use Drupal\soda_scs_manager\Exception\SodaScsComponentException;
 use Drupal\soda_scs_manager\Exception\SodaScsRequestException;
-use Drupal\soda_scs_manager\Helpers\SodaScsHelpersInterface;
+use Drupal\soda_scs_manager\Helpers\SodaScsStackHelpers;
 use Drupal\soda_scs_manager\RequestActions\SodaScsServiceRequestInterface;
 use Drupal\soda_scs_manager\ServiceActions\SodaScsServiceActionsInterface;
 use Drupal\soda_scs_manager\ServiceKeyActions\SodaScsServiceKeyActionsInterface;
@@ -102,9 +102,9 @@ class SodaScsWisskiStackActions implements SodaScsStackActionsInterface {
   /**
    * The SCS component helpers service.
    *
-   * @var \Drupal\soda_scs_manager\Helpers\SodaScsHelpersInterface
+   * @var \Drupal\soda_scs_manager\Helpers\SodaScsStackHelpers
    */
-  protected SodaScsHelpersInterface $sodaScsStackHelpers;
+  protected SodaScsStackHelpers $sodaScsStackHelpers;
 
   /**
    * The SCS database actions service.
@@ -165,7 +165,7 @@ class SodaScsWisskiStackActions implements SodaScsStackActionsInterface {
     EntityTypeManagerInterface $entityTypeManager,
     LoggerChannelFactoryInterface $loggerFactory,
     MessengerInterface $messenger,
-    SodaScsHelpersInterface $sodaScsStackHelpers,
+    SodaScsStackHelpers $sodaScsStackHelpers,
     SodaScsComponentActionsInterface $sodaScsSqlComponentActions,
     SodaScsServiceActionsInterface $sodaScsMysqlServiceActions,
     SodaScsServiceKeyActionsInterface $sodaScsServiceKeyActions,

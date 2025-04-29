@@ -12,7 +12,7 @@ use Drupal\soda_scs_manager\Exception\SodaScsComponentException;
 /**
  * Helper functions for SCS components.
  */
-class SodaScsStackHelpers implements SodaScsHelpersInterface {
+class SodaScsStackHelpers {
   use StringTranslationTrait;
 
   /**

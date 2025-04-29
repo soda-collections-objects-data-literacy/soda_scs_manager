@@ -9,7 +9,7 @@ use Drupal\Core\StringTranslation\StringTranslationTrait;
 use Drupal\Core\StringTranslation\TranslationInterface;
 use Drupal\soda_scs_manager\ComponentActions\SodaScsComponentActionsInterface;
 use Drupal\soda_scs_manager\Entity\SodaScsStackInterface;
-use Drupal\soda_scs_manager\Helpers\SodaScsHelpersInterface;
+use Drupal\soda_scs_manager\Helpers\SodaScsStackHelpers;
 use Drupal\Core\Utility\Error;
 use Psr\Log\LogLevel;
 
@@ -38,9 +38,9 @@ class SodaScsJupyterStackActions implements SodaScsStackActionsInterface {
   /**
    * The SCS stack helpers service.
    *
-   * @var \Drupal\soda_scs_manager\Helpers\SodaScsHelpersInterface
+   * @var \Drupal\soda_scs_manager\Helpers\SodaScsStackHelpers
    */
-  protected SodaScsHelpersInterface $sodaScsStackHelpers;
+  protected SodaScsStackHelpers $sodaScsStackHelpers;
 
   /**
    * The SCS jupyter actions service.
@@ -55,7 +55,7 @@ class SodaScsJupyterStackActions implements SodaScsStackActionsInterface {
   public function __construct(
     LoggerChannelFactoryInterface $loggerFactory,
     MessengerInterface $messenger,
-    SodaScsHelpersInterface $sodaScsStackHelpers,
+    SodaScsStackHelpers $sodaScsStackHelpers,
     TranslationInterface $stringTranslation,
   ) {
     // Services from container.

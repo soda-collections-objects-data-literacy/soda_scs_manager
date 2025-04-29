@@ -11,7 +11,7 @@ use Drupal\Core\TypedData\Exception\MissingDataException;
 use Drupal\soda_scs_manager\ComponentActions\SodaScsComponentActionsInterface;
 use Drupal\soda_scs_manager\Entity\SodaScsStackInterface;
 use Drupal\soda_scs_manager\Exception\SodaScsComponentException;
-use Drupal\soda_scs_manager\Helpers\SodaScsHelpersInterface;
+use Drupal\soda_scs_manager\Helpers\SodaScsStackHelpers;
 use Drupal\Core\Utility\Error;
 use Psr\Log\LogLevel;
 
@@ -40,9 +40,9 @@ class SodaScsNextcloudStackActions implements SodaScsStackActionsInterface {
   /**
    * The SCS stack helpers service.
    *
-   * @var \Drupal\soda_scs_manager\Helpers\SodaScsHelpersInterface
+   * @var \Drupal\soda_scs_manager\Helpers\SodaScsStackHelpers
    */
-  protected SodaScsHelpersInterface $sodaScsStackHelpers;
+  protected SodaScsStackHelpers $sodaScsStackHelpers;
 
   /**
    * Class constructor.
@@ -50,7 +50,7 @@ class SodaScsNextcloudStackActions implements SodaScsStackActionsInterface {
   public function __construct(
     LoggerChannelFactoryInterface $loggerFactory,
     MessengerInterface $messenger,
-    SodaScsHelpersInterface $sodaScsStackHelpers,
+    SodaScsStackHelpers $sodaScsStackHelpers,
   ) {
     // Services from container.
     $this->loggerFactory = $loggerFactory;

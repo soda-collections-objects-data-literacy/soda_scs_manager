@@ -5,9 +5,9 @@ namespace Drupal\soda_scs_manager\Controller;
 use Drupal\Core\Controller\ControllerBase;
 use Drupal\Core\Entity\EntityTypeManagerInterface;
 use Drupal\Core\Routing\TrustedRedirectResponse;
+use Drupal\soda_scs_manager\Helpers\SodaScsServiceHelpersInterface;
 use Drupal\soda_scs_manager\StackActions\SodaScsStackActionsInterface;
 use Symfony\Component\DependencyInjection\ContainerInterface;
-use Drupal\Core\TypedData\Exception\MissingDataException;
 
 /**
  * The SODa SCS Manager service controller.
@@ -22,11 +22,22 @@ class SodaScsManagerServiceController extends ControllerBase {
   protected SodaScsStackActionsInterface $sodaScsStackActions;
 
   /**
+   * The SODa SCS Manager service helpers.
+   *
+   * @var \Drupal\soda_scs_manager\Helpers\SodaScsServiceHelpersInterface
+   */
+  protected SodaScsServiceHelpersInterface $sodaScsServiceHelpers;
+  /**
    * Class constructor.
    */
-  public function __construct(SodaScsStackActionsInterface $sodaScsStackActions, EntityTypeManagerInterface $entityTypeManager) {
+  public function __construct(
+    SodaScsStackActionsInterface $sodaScsStackActions,
+    EntityTypeManagerInterface $entityTypeManager,
+    SodaScsServiceHelpersInterface $sodaScsServiceHelpers
+  ) {
     $this->sodaScsStackActions = $sodaScsStackActions;
     $this->entityTypeManager = $entityTypeManager;
+    $this->sodaScsServiceHelpers = $sodaScsServiceHelpers;
   }
 
   /**
@@ -34,45 +45,26 @@ class SodaScsManagerServiceController extends ControllerBase {
    */
   public static function create(ContainerInterface $container) {
     return new static(
+      $container->get('entity_type.manager'),
+      $container->get('soda_scs_manager.service_helpers'),
       $container->get('soda_scs_manager.stack.actions'),
-      $container->get('entity_type.manager')
     );
   }
 
   /**
    * Generate a URL based on the component ID.
    *
-   * @param Drupal\soda_scs_manager\Entity\SodaScsComponentInterface $soda_scs_component
-   *   The SODa SCS Component entity.
-   * @param Drupal\soda_scs_manager\Entity\SodaScsStackInterface $soda_scs_stack
-   *   The SODa SCS Stack entity.
+   * @param Drupal\soda_scs_manager\Entity\SodaScsComponentInterface | Drupal\soda_scs_manager\Entity\SodaScsStackInterface $entity
+   *   The SODa SCS Component or Stack entity.
    *
    * @return \Drupal\Core\Routing\TrustedRedirectResponse
    *   The redirect response.
    *
    * @todo Make this more flexible with a single parameter.
    */
-  public function generateUrl($soda_scs_component, $soda_scs_stack): TrustedRedirectResponse {
-    if (empty($this->config('soda_scs_manager.settings')->get('scsHost'))) {
-      throw new MissingDataException('SODa SCS host is not set.');
-    }
+  public function generateUrl($entity): TrustedRedirectResponse {
 
-    if (empty($this->config('soda_scs_manager.settings')->get('dbManagementHost'))) {
-      throw new MissingDataException('Database management host is not set.');
-    }
-
-    $host = $this->config('soda_scs_manager.settings')->get('scsHost');
-    $management_host = $this->config('soda_scs_manager.settings')->get('dbManagementHost');
-
-    if ($soda_scs_component) {
-      $entity = $soda_scs_component;
-    }
-    elseif ($soda_scs_stack) {
-      $entity = $soda_scs_stack;
-    }
-    else {
-      throw new \Exception('No entity provided.');
-    }
+    $host = $this->sodaScsServiceHelpers->;
 
     switch ($entity->get('bundle')->value) {
       case 'soda_scs_wisski_component':

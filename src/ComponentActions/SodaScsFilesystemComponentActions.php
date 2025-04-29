@@ -16,7 +16,7 @@ use Drupal\Core\StringTranslation\StringTranslationTrait;
 use Drupal\Core\Utility\Error;
 use Drupal\soda_scs_manager\Entity\SodaScsComponentInterface;
 use Drupal\soda_scs_manager\Entity\SodaScsStackInterface;
-use Drupal\soda_scs_manager\Helpers\SodaScsHelpersInterface;
+use Drupal\soda_scs_manager\Helpers\SodaScsStackHelpers;
 use Drupal\soda_scs_manager\RequestActions\SodaScsServiceRequestInterface;
 use Drupal\soda_scs_manager\RequestActions\SodaScsExecRequestInterface;
 use Drupal\soda_scs_manager\ServiceActions\SodaScsServiceActionsInterface;
@@ -86,9 +86,9 @@ class SodaScsFilesystemComponentActions implements SodaScsComponentActionsInterf
   /**
    * The SCS stack helpers service.
    *
-   * @var \Drupal\soda_scs_manager\Helpers\SodaScsHelpersInterface
+   * @var \Drupal\soda_scs_manager\Helpers\SodaScsStackHelpers
    */
-  protected SodaScsHelpersInterface $sodaScsStackHelpers;
+  protected SodaScsStackHelpers $sodaScsStackHelpers;
 
   /**
    * The SCS Docker Volumes actions service.
@@ -133,7 +133,7 @@ class SodaScsFilesystemComponentActions implements SodaScsComponentActionsInterf
     SodaScsServiceRequestInterface $sodaScsPortainerServiceActions,
     SodaScsServiceKeyActionsInterface $sodaScsServiceKeyActions,
     SodaScsServiceActionsInterface $sodaScsSqlServiceActions,
-    SodaScsHelpersInterface $sodaScsStackHelpers,
+    SodaScsStackHelpers $sodaScsStackHelpers,
     TranslationInterface $stringTranslation,
   ) {
     // Services from container.

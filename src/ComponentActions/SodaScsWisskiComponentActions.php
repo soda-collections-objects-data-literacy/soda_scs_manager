@@ -16,7 +16,7 @@ use Drupal\Core\TypedData\Exception\MissingDataException;
 use Drupal\soda_scs_manager\Entity\SodaScsComponentInterface;
 use Drupal\soda_scs_manager\Entity\SodaScsStackInterface;
 use Drupal\soda_scs_manager\Helpers\SodaScsComponentHelpers;
-use Drupal\soda_scs_manager\Helpers\SodaScsHelpersInterface;
+use Drupal\soda_scs_manager\Helpers\SodaScsStackHelpers;
 use Drupal\soda_scs_manager\RequestActions\SodaScsExecRequestInterface;
 use Drupal\soda_scs_manager\RequestActions\SodaScsServiceRequestInterface;
 use Drupal\soda_scs_manager\RequestActions\SodaScsRunRequestInterface;
@@ -100,9 +100,9 @@ class SodaScsWisskiComponentActions implements SodaScsComponentActionsInterface 
   /**
    * The SCS stack helpers service.
    *
-   * @var \Drupal\soda_scs_manager\Helpers\SodaScsHelpersInterface
+   * @var \Drupal\soda_scs_manager\Helpers\SodaScsStackHelpers
    */
-  protected SodaScsHelpersInterface $sodaScsStackHelpers;
+  protected SodaScsStackHelpers $sodaScsStackHelpers;
 
   /**
    * The SCS Keycloak actions service.
@@ -152,7 +152,7 @@ class SodaScsWisskiComponentActions implements SodaScsComponentActionsInterface 
     SodaScsExecRequestInterface $sodaScsDockerExecServiceActions,
     SodaScsRunRequestInterface $sodaScsDockerRunServiceActions,
     SodaScsComponentHelpers $sodaScsComponentHelpers,
-    SodaScsHelpersInterface $sodaScsStackHelpers,
+    SodaScsStackHelpers $sodaScsStackHelpers,
     SodaScsServiceRequestInterface $sodaScsKeycloakServiceClientActions,
     SodaScsServiceRequestInterface $sodaScsKeycloakServiceUserActions,
     SodaScsServiceRequestInterface $sodaScsPortainerServiceActions,

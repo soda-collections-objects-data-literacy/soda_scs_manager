@@ -21,7 +21,7 @@ use Drupal\Core\Utility\Error;
 use Psr\Log\LogLevel;
 
 /**
- * Class SodaScsKeycloakServiceActions.
+ * Class SodaScsKeycloakServiceClientActions.
  *
  * Implements actions for Keycloak service requests.
  */
@@ -86,7 +86,7 @@ class SodaScsKeycloakServiceClientActions implements SodaScsServiceRequestInterf
   protected SodaScsServiceHelpers $sodaScsServiceHelpers;
 
   /**
-   * Constructs a new SodaScsKeycloakServiceActions object.
+   * Constructs a new SodaScsKeycloakServiceClientActions object.
    *
    * @param \Drupal\Core\Config\ConfigFactoryInterface $config_factory
    *   The config factory.

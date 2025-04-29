@@ -389,14 +389,14 @@ soda_scs_manager.user_registration_reject:
 # Tasks
 
 soda_scs_manager.component.service_link:
-  path: '/soda-scs-manager/component-service-link/{soda_scs_component}'
+  path: '/soda-scs-manager/service-link/{entity}'
   defaults:
     _controller: '\Drupal\soda_scs_manager\Controller\SodaScsManagerServiceController::generateUrl'
     _title: 'External service link'
   options:
     parameters:
-      soda_scs_component:
-        type: entity:soda_scs_component
+      entity:
+        type: entity
   requirements:
     _permission: 'soda scs manager user'
     _custom_access: '\Drupal\soda_scs_manager\Access\SodaScsComponentLinksTasksAccessControlHandler::accessServiceLink'
