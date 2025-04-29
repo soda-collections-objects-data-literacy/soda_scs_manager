@@ -109,7 +109,14 @@ class SodaScsWisskiComponentActions implements SodaScsComponentActionsInterface 
    *
    * @var \Drupal\soda_scs_manager\RequestActions\SodaScsServiceRequestInterface
    */
-  protected SodaScsServiceRequestInterface $sodaScsKeycloakServiceActions;
+  protected SodaScsServiceRequestInterface $sodaScsKeycloakServiceClientActions;
+
+  /**
+   * The SCS Keycloak actions service.
+   *
+   * @var \Drupal\soda_scs_manager\RequestActions\SodaScsServiceRequestInterface
+   */
+  protected SodaScsServiceRequestInterface $sodaScsKeycloakServiceUserActions;
 
   /**
    * The SCS Portainer actions service.
@@ -146,7 +153,8 @@ class SodaScsWisskiComponentActions implements SodaScsComponentActionsInterface 
     SodaScsRunRequestInterface $sodaScsDockerRunServiceActions,
     SodaScsComponentHelpers $sodaScsComponentHelpers,
     SodaScsHelpersInterface $sodaScsStackHelpers,
-    SodaScsServiceRequestInterface $sodaScsKeycloakServiceActions,
+    SodaScsServiceRequestInterface $sodaScsKeycloakServiceClientActions,
+    SodaScsServiceRequestInterface $sodaScsKeycloakServiceUserActions,
     SodaScsServiceRequestInterface $sodaScsPortainerServiceActions,
     SodaScsServiceActionsInterface $sodaScsSqlServiceActions,
     SodaScsServiceKeyActionsInterface $sodaScsServiceKeyActions,
@@ -168,7 +176,8 @@ class SodaScsWisskiComponentActions implements SodaScsComponentActionsInterface 
     $this->sodaScsPortainerServiceActions = $sodaScsPortainerServiceActions;
     $this->sodaScsSqlServiceActions = $sodaScsSqlServiceActions;
     $this->sodaScsServiceKeyActions = $sodaScsServiceKeyActions;
-    $this->sodaScsKeycloakServiceActions = $sodaScsKeycloakServiceActions;
+    $this->sodaScsKeycloakServiceClientActions = $sodaScsKeycloakServiceClientActions;
+    $this->sodaScsKeycloakServiceUserActions = $sodaScsKeycloakServiceUserActions;
     $this->stringTranslation = $stringTranslation;
   }
 
@@ -292,8 +301,8 @@ class SodaScsWisskiComponentActions implements SodaScsComponentActionsInterface 
       }
 
       // Request keycloak client configs.
-      $keycloakTokenRequest = $this->sodaScsKeycloakServiceActions->buildTokenRequest([]);
-      $keycloakTokenResponse = $this->sodaScsKeycloakServiceActions->makeRequest($keycloakTokenRequest);
+      $keycloakTokenRequest = $this->sodaScsKeycloakServiceClientActions->buildTokenRequest([]);
+      $keycloakTokenResponse = $this->sodaScsKeycloakServiceClientActions->makeRequest($keycloakTokenRequest);
       if (!$keycloakTokenResponse['success']) {
         throw new \Exception('Keycloak token request failed.');
       }
@@ -301,7 +310,7 @@ class SodaScsWisskiComponentActions implements SodaScsComponentActionsInterface 
       $keycloakToken = $keycloakTokenResponseContents['access_token'];
       $openidConnectClientSecret = $this->sodaScsComponentHelpers->createSecret();
 
-      $keycloakCreateClientRequest = $this->sodaScsKeycloakServiceActions->buildCreateRequest([
+      $keycloakCreateClientRequest = $this->sodaScsKeycloakServiceClientActions->buildCreateRequest([
         // @todo Use url of component.
         'clientId' => $machineName,
         'name' => $entity->get('label')->value,
@@ -314,7 +323,7 @@ class SodaScsWisskiComponentActions implements SodaScsComponentActionsInterface 
         'secret' => $openidConnectClientSecret,
       ]);
 
-      $keycloakCreateClientResponse = $this->sodaScsKeycloakServiceActions->makeRequest($keycloakCreateClientRequest);
+      $keycloakCreateClientResponse = $this->sodaScsKeycloakServiceClientActions->makeRequest($keycloakCreateClientRequest);
 
       if (!$keycloakCreateClientResponse['success']) {
         throw new \Exception('Keycloak create client request failed.');

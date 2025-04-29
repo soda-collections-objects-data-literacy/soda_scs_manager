@@ -107,7 +107,8 @@ services:
       - '@soda_scs_manager.docker_run_service.actions'
       - '@soda_scs_manager.component.helpers'
       - '@soda_scs_manager.stack.helpers'
-      - '@soda_scs_manager.keycloak_service.actions'
+      - '@soda_scs_manager.keycloak_service.client.actions'
+      - '@soda_scs_manager.keycloak_service.user.actions'
       - '@soda_scs_manager.portainer_service.actions'
       - '@soda_scs_manager.sql_service.actions'
       - '@soda_scs_manager.service_key.actions'
@@ -172,8 +173,21 @@ services:
         - '@string_translation'
         - '@twig'
 
-  soda_scs_manager.keycloak_service.actions:
-    class: Drupal\soda_scs_manager\RequestActions\SodaScsKeycloakServiceActions
+  ## Keycloak service actions
+  soda_scs_manager.keycloak_service.client.actions:
+    class: Drupal\soda_scs_manager\RequestActions\SodaScsKeycloakServiceClientActions
+    arguments:
+      - '@config.factory'
+      - '@http_client'
+      - '@entity_type.manager'
+      - '@messenger'
+      - '@request_stack'
+      - '@logger.factory'
+      - '@soda_scs_manager.service.helpers'
+      - '@string_translation'
+
+  soda_scs_manager.keycloak_service.user.actions:
+    class: Drupal\soda_scs_manager\RequestActions\SodaScsKeycloakServiceUserActions
     arguments:
       - '@config.factory'
       - '@http_client'
@@ -264,27 +278,3 @@ services:
       - '@soda_scs_manager.wisski_component.actions'
       - '@string_translation'
 
-# Keycloak registration services
-  soda_scs_manager.keycloak_service.client.actions:
-    class: Drupal\soda_scs_manager\RequestActions\SodaScsKeycloakServiceClientActions
-    arguments:
-      - '@config.factory'
-      - '@http_client'
-      - '@entity_type.manager'
-      - '@messenger'
-      - '@request_stack'
-      - '@logger.factory'
-      - '@soda_scs_manager.service.helpers'
-      - '@string_translation'
-
-  soda_scs_manager.keycloak_service.user.actions:
-    class: Drupal\soda_scs_manager\RequestActions\SodaScsKeycloakServiceUserActions
-    arguments:
-      - '@config.factory'
-      - '@http_client'
-      - '@entity_type.manager'
-      - '@messenger'
-      - '@request_stack'
-      - '@logger.factory'
-      - '@soda_scs_manager.service.helpers'
-      - '@string_translation'
