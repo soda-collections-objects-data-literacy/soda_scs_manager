@@ -40,11 +40,26 @@ class SodaScsSnapshotConfirmForm extends ConfirmFormBase {
   protected $entityTypeManager;
 
   /**
+   * The Soda SCS SQL Component Actions.
+   *
+   * @var \Drupal\soda_scs_manager\ComponentActions\SodaScsComponentActionsInterface
+   */
+  protected $sodaScsSqlComponentActions;
+
+  /**   
+   * The Soda SCS Triple Store Component Actions.
+   *
+   * @var \Drupal\soda_scs_manager\ComponentActions\SodaScsComponentActionsInterface
+   */
+  protected $sodaScsTripleStoreComponentActions;
+
+  /**
    * The Soda SCS WissKI Component Actions.
    *
    * @var \Drupal\soda_scs_manager\ComponentActions\SodaScsComponentActionsInterface
    */
   protected $sodaScsWisskiComponentActions;
+
 
   /**
    * The logger factory.
@@ -65,11 +80,17 @@ class SodaScsSnapshotConfirmForm extends ConfirmFormBase {
    */
   public function __construct(
     EntityTypeManagerInterface $entity_type_manager,
+    SodaScsComponentActionsInterface $sodaScsSqlComponentActions,
+    SodaScsComponentActionsInterface $sodaScsTripleStoreComponentActions,
     SodaScsComponentActionsInterface $sodaScsWisskiComponentActions,
+
     LoggerChannelFactoryInterface $logger_factory,
   ) {
     $this->entityTypeManager = $entity_type_manager;
+    $this->sodaScsSqlComponentActions = $sodaScsSqlComponentActions;
+    $this->sodaScsTripleStoreComponentActions = $sodaScsTripleStoreComponentActions;
     $this->sodaScsWisskiComponentActions = $sodaScsWisskiComponentActions;
+
     $this->loggerFactory = $logger_factory;
   }
 
@@ -79,6 +100,8 @@ class SodaScsSnapshotConfirmForm extends ConfirmFormBase {
   public static function create(ContainerInterface $container) {
     return new static(
       $container->get('entity_type.manager'),
+      $container->get('soda_scs_manager.sql_component.actions'),
+      $container->get('soda_scs_manager.triplestore_component.actions'),
       $container->get('soda_scs_manager.wisski_component.actions'),
       $container->get('logger.factory')
     );
@@ -126,16 +149,20 @@ class SodaScsSnapshotConfirmForm extends ConfirmFormBase {
     $values = $form_state->getValues();
 
     switch ($this->entity->bundle()) {
+      case 'soda_scs_sql_component':
+        $createSnapshotResult = $this->sodaScsSqlComponentActions->createSnapshot($this->entity);
+        break;
+      case 'soda_scs_triple_store_component':
+        $createSnapshotResult = $this->sodaScsTripleStoreComponentActions->createSnapshot($this->entity);
+        break;
       case 'soda_scs_wisski_component':
         $createSnapshotResult = $this->sodaScsWisskiComponentActions->createSnapshot($this->entity);
         break;
-      case 'soda_scs_sql_component':
-        #$createSnapshotResult = $this->sodaScsSqlComponentActions->createSnapshot($this->entity);
-        break;
+      default:
+        $this->messenger()->addError($this->t('Failed to create snapshot. Unknown component type.'));
+        return;
     }
 
-    #$createSnapshotResult = $this->s
-    #odaScsWisskiComponentActions->createSnapshot($this->entity);
 
     if (!$createSnapshotResult['success']) {
       $this->messenger()->addError($this->t('Failed to create snapshot. See logs for more details.'));

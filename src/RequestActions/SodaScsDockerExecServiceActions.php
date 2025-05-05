@@ -209,6 +209,9 @@ class SodaScsDockerExecServiceActions implements SodaScsExecRequestInterface {
    *
    * @param array $requestParams
    *   The request params.
+   * - 'cmd[string]': The command to run, i.e. ['mysqldump', '-u', 'root', '-p', 'password', 'database', 'table']
+   * - 'containerName': The name of the container to run the command in, i.e. 'database'
+   * - 'user': The user to run the command as, i.e. '33'
    *
    * @return array
    *   The request array.
@@ -254,8 +257,9 @@ class SodaScsDockerExecServiceActions implements SodaScsExecRequestInterface {
   /**
    * Builds the start request for the Docker exec API.
    *
-   * @param array $requestParams
-   *   The request parameters.
+   * @param array[] $requestParams
+   *   The request parameters:
+   *   - 'execId': The exec id.
    *
    * @return array
    *   The start request.

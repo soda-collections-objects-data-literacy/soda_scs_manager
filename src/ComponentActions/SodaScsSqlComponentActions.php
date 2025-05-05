@@ -16,11 +16,13 @@ use Drupal\Core\TypedData\Exception\MissingDataException;
 use Drupal\soda_scs_manager\Entity\SodaScsComponentInterface;
 use Drupal\soda_scs_manager\Entity\SodaScsStackInterface;
 use Drupal\soda_scs_manager\Exception\SodaScsSqlServiceException;
+use Drupal\soda_scs_manager\Helpers\SodaScsComponentHelpers;
 use Drupal\soda_scs_manager\ServiceActions\SodaScsServiceActionsInterface;
 use Drupal\soda_scs_manager\ServiceKeyActions\SodaScsServiceKeyActionsInterface;
 use GuzzleHttp\ClientInterface;
 use Psr\Log\LogLevel;
 use Drupal\Core\Utility\Error;
+use Drupal\soda_scs_manager\RequestActions\SodaScsDockerExecServiceActions;
 
 /**
  * Handles the communication with the SCS user manager daemon.
@@ -73,6 +75,21 @@ class SodaScsSqlComponentActions implements SodaScsComponentActionsInterface {
   protected Config $settings;
 
   /**
+   * The SCS Component Helpers service.
+   *
+   * @var \Drupal\soda_scs_manager\Helpers\SodaScsComponentHelpers
+   */
+  protected SodaScsComponentHelpers $sodaScsComponentHelpers;
+
+  /**
+   * The SCS Docker Exec service actions.
+   *
+   * @var \Drupal\soda_scs_manager\RequestActions\SodaScsDockerExecServiceActions
+   */
+  protected SodaScsDockerExecServiceActions $sodaScsDockerExecServiceActions;
+
+
+  /**
    * The SCS database actions service.
    *
    * @var \Drupal\soda_scs_manager\ServiceActions\SodaScsServiceActionsInterface
@@ -96,6 +113,8 @@ class SodaScsSqlComponentActions implements SodaScsComponentActionsInterface {
     ClientInterface $httpClient,
     LoggerChannelFactoryInterface $loggerFactory,
     MessengerInterface $messenger,
+    SodaScsComponentHelpers $sodaScsComponentHelpers,
+    SodaScsDockerExecServiceActions $sodaScsDockerExecServiceActions,
     SodaScsServiceActionsInterface $sodaScsMysqlServiceActions,
     SodaScsServiceKeyActionsInterface $sodaScsServiceKeyActions,
     TranslationInterface $stringTranslation,
@@ -109,6 +128,8 @@ class SodaScsSqlComponentActions implements SodaScsComponentActionsInterface {
     $this->logger = $loggerFactory->get('soda_scs_manager');
     $this->messenger = $messenger;
     $this->settings = $settings;
+    $this->sodaScsComponentHelpers = $sodaScsComponentHelpers;
+    $this->sodaScsDockerExecServiceActions = $sodaScsDockerExecServiceActions;
     $this->sodaScsMysqlServiceActions = $sodaScsMysqlServiceActions;
     $this->sodaScsServiceKeyActions = $sodaScsServiceKeyActions;
     $this->stringTranslation = $stringTranslation;
@@ -303,7 +324,109 @@ class SodaScsSqlComponentActions implements SodaScsComponentActionsInterface {
    *   Result information with the created snapshot.
    */
   public function createSnapshot(SodaScsComponentInterface $component): array {
-    return [];
+
+    try {
+      $timestamp = time();
+      $date = date('Y-m-d', $timestamp);
+      $machineName = $component->get('machineName')->value;
+      $snapshotName = $machineName . '--snapshot--' . $timestamp . '.sql';
+      $backupPath = '/var/scs-manager/snapshots/' . $component->getOwner()->getDisplayName() . '/' . $date . '/' . $machineName;
+
+      // Create the backup directory.
+      $dirCreateResult = $this->sodaScsComponentHelpers->createDir($backupPath);
+      if (!$dirCreateResult['success']) {
+        return $dirCreateResult;
+      }
+
+      // Get the database name.
+      $dbName = $machineName;
+
+      // Get the database user.
+      $dbUserName = $component->getOwner()->getDisplayName();
+
+      // Get the database user password.
+      /** @var \Drupal\Core\Field\EntityReferenceFieldItemList $sqlServiceKeyItemlist */
+      $sqlServiceKeyItemlist = $component->get('serviceKey');
+      /** @var \Drupal\soda_scs_manager\Entity\SodaScsServiceKeyInterface $sqlServiceKey */
+      $sqlServiceKey = $sqlServiceKeyItemlist->referencedEntities()[0];
+
+      $dbUserPassword = $sqlServiceKey->get('servicePassword')->value;
+
+      // Create and run the snapshot container.
+      $requestParams = [
+        'cmd' => [
+          'sh',
+          '-c',
+          sprintf(
+            'mysqldump -u %s -p%s %s > %s',
+            escapeshellarg($dbUserName),
+            escapeshellarg($dbUserPassword),
+            escapeshellarg($dbName),
+            escapeshellarg($backupPath . '/' . $snapshotName)
+          ),
+        ],
+        'containerName' => 'database',
+        'user' => '33',
+      ];
+
+      // Make the create container exec request.
+      $createContainerExecRequest = $this->sodaScsDockerExecServiceActions->buildCreateRequest($requestParams);
+      $createContainerExecResponse = $this->sodaScsDockerExecServiceActions->makeRequest($createContainerExecRequest);
+
+      if (!$createContainerExecResponse['success']) {
+        return [
+          'message' => 'Create container exec request failed. Snapshot creation aborted..',
+          'data' => $createContainerExecResponse,
+          'success' => FALSE,
+          'error' => $createContainerExecResponse['error'],
+          'statusCode' => $createContainerExecResponse['statusCode'],
+        ];
+      }
+
+      // Get container ID from response.
+      $execId = json_decode($createContainerExecResponse['data']['portainerResponse']->getBody()->getContents(), TRUE)['Id'];
+
+      // Make the start container exec request.
+      $startContainerExecRequest = $this->sodaScsDockerExecServiceActions->buildStartRequest(['execId' => $execId]);
+      $startContainerExecResponse = $this->sodaScsDockerExecServiceActions->makeRequest($startContainerExecRequest);
+
+      if (!$startContainerExecResponse['success']) {
+        return [
+          'message' => 'Start container exec request failed. Snapshot creation aborted..',
+          'data' => $startContainerExecResponse,
+          'success' => FALSE,
+          'error' => $startContainerExecResponse['error'],
+          'statusCode' => $startContainerExecResponse['statusCode'],
+        ];
+      }
+
+      return [
+        'message' => 'Snapshot created successfully.',
+        'data' => [
+          'createContainerExecResponse' => $createContainerExecResponse,
+          'startContainerExecResponse' => $startContainerExecResponse,
+        ],
+        'success' => TRUE,
+        'error' => NULL,
+        'statusCode' => $createContainerExecResponse['statusCode'],
+      ];
+    }
+    catch (\Exception $e) {
+      Error::logException(
+        $this->logger,
+        $e,
+        'Snapshot creation failed: @message',
+        ['@message' => $e->getMessage()],
+        LogLevel::ERROR
+      );
+      return [
+        'message' => 'Snapshot creation failed.',
+        'data' => $e,
+        'success' => FALSE,
+        'error' => $e->getMessage(),
+        'statusCode' => 500,
+      ];
+    }
   }
 
   /**

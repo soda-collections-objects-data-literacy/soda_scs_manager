@@ -79,6 +79,8 @@ services:
       - '@http_client'
       - '@logger.factory'
       - '@messenger'
+      - '@soda_scs_manager.component.helpers'
+      - '@soda_scs_manager.docker_exec_service.actions'
       - '@soda_scs_manager.sql_service.actions'
       - '@soda_scs_manager.service_key.actions'
       - '@string_translation'
