@@ -54,7 +54,11 @@ class SodaScsServiceKeyListBuilder extends EntityListBuilder {
       $row['id'] = $entity->id();
       $row['label'] = $entity->label();
       $row['scsComponent'] = Markup::create($linksString);
-      $row['owner'] = $entity->getOwner()->getDisplayName();
+
+      // Check if the owner exists before calling getDisplayName()
+      $owner = $entity->getOwner();
+      $row['owner'] = $owner ? $owner->getDisplayName() : 'Unknown (ID: ' . $entity->getOwnerId() . ')';
+
       $row['type'] = $entity->get('type')->value;
       $row['servicePassword'] = [
         'data' => $entity->get('servicePassword')->value,
