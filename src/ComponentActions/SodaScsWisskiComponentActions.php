@@ -223,7 +223,7 @@ class SodaScsWisskiComponentActions implements SodaScsComponentActionsInterface 
       $wisskiComponent = $this->entityTypeManager->getStorage('soda_scs_component')->create(
         [
           'bundle' => 'soda_scs_wisski_component',
-          'label' => $entity->get('label')->value . ' (WissKI)',
+          'label' => $entity->get('label')->value,
           'machineName' => $machineName,
           'owner'  => $entity->getOwner(),
           'description' => $wisskiComponentBundleInfo['description'],
