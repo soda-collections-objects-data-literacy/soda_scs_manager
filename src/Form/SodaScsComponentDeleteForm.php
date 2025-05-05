@@ -87,26 +87,49 @@ class SodaScsComponentDeleteForm extends ContentEntityDeleteForm {
   /**
    * {@inheritdoc}
    */
-  public function submitForm(array &$form, FormStateInterface $form_state) {
-    // Add custom logic before deletion.
-    \Drupal::logger('soda_scs_manager')->notice('Deleting component: @label', ['@label' => $this->entity->label()]);
+  public function buildForm(array $form, FormStateInterface $form_state) {
+    $form = parent::buildForm($form, $form_state);
+    // If a previous delete attempt failed, show the force delete button.
+    if ($form_state->get('delete_failed')) {
+      $form['actions']['force_delete'] = [
+        '#type' => 'submit',
+        '#value' => $this->t('Force delete'),
+        '#button_type' => 'danger',
+        '#submit' => ['::forceDeleteSubmit'],
+      ];
+    }
+    return $form;
+  }
 
-    // Construct properties.
-    /** @var \Drupal\soda_scs_manager\Entity\SodaScsComponent $entity */
+  /**
+   * Custom submit handler for force delete.
+   */
+  public function forceDeleteSubmit(array &$form, FormStateInterface $form_state) {
+    \Drupal::logger('soda_scs_manager')->warning('Force deleting component: @label', ['@label' => $this->entity->label()]);
+    /** @var \Drupal\soda_scs_manager\Entity\SodaScsComponent $component */
     $component = $this->entity;
+    // Directly delete the entity, bypassing the component actions.
+    $component->delete();
+    $this->messenger()->addWarning($this->t('Component force deleted.'));
+    $form_state->setRedirect('soda_scs_manager.desk');
+  }
 
-    // Delete the whole stack with database.
+  /**
+   * {@inheritdoc}
+   */
+  public function submitForm(array &$form, FormStateInterface $form_state) {
+    \Drupal::logger('soda_scs_manager')->notice('Deleting component: @label', ['@label' => $this->entity->label()]);
+    /** @var \Drupal\soda_scs_manager\Entity\SodaScsComponent $component */
+    $component = $this->entity;
     $deleteComponentResult = $this->sodaScsComponentActions->deleteComponent($component);
-
     if (!$deleteComponentResult['success']) {
       $this->messenger()->addError($deleteComponentResult['message']);
+      // Set a flag in form state to show the force delete button on rebuild.
+      $form_state->set('delete_failed', TRUE);
+      $form_state->setRebuild();
       return;
     }
     $this->messenger()->addStatus($deleteComponentResult['message']);
-    // Call the parent submit handler to delete the entity.
-    // We don't do this here.
-    // parent::submitForm($form, $form_state);.
-    // Redirect to the desk.
     $form_state->setRedirect('soda_scs_manager.desk');
   }
 
