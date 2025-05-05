@@ -8,8 +8,6 @@ soda_scs_manager.component.health_check:
   requirements:
     _permission: 'soda scs manager user'
 
-
-
 # Soda SCS Component Entities
 
 entity.soda_scs_component.canonical:
@@ -29,6 +27,14 @@ entity.soda_scs_component.add_form:
   defaults:
     _entity_form: 'soda_scs_component.add'
     _title: 'Add ScsComponent'
+  requirements:
+    _permission: 'soda scs manager user'
+
+entity.soda_scs_component.edit_form:
+  path: '/soda-scs-manager/component/{soda_scs_component}/edit'
+  defaults:
+    _entity_form: 'soda_scs_component.edit'
+    _title: 'Edit ScsComponent'
   requirements:
     _permission: 'soda scs manager user'
 
@@ -235,6 +241,14 @@ entity.soda_scs_stack.add_form:
   requirements:
     _permission: 'soda scs manager user'
 
+entity.soda_scs_stack.edit_form:
+  path: '/soda-scs-manager/stack/{soda_scs_stack}/edit'
+  defaults:
+    _entity_form: 'soda_scs_stack.edit'
+    _title: 'Edit Stack'
+  requirements:
+    _permission: 'soda scs manager user'
+
 entity.soda_scs_stack.delete_form:
   path: '/soda-scs-manager/stack/{soda_scs_stack}/delete'
   defaults:
@@ -389,27 +403,28 @@ soda_scs_manager.user_registration_reject:
 # Tasks
 
 soda_scs_manager.component.service_link:
-  path: '/soda-scs-manager/service-link/{entity}'
+  path: '/soda-scs-manager/component/service-link/{soda_scs_component}'
   defaults:
-    _controller: '\Drupal\soda_scs_manager\Controller\SodaScsManagerServiceController::generateUrl'
+    _controller: '\Drupal\soda_scs_manager\Controller\SodaScsManagerServiceController::generateComponentUrl'
     _title: 'External service link'
-  options:
-    parameters:
-      entity:
-        type: entity
   requirements:
     _permission: 'soda scs manager user'
     _custom_access: '\Drupal\soda_scs_manager\Access\SodaScsComponentLinksTasksAccessControlHandler::accessServiceLink'
+  options:
+    parameters:
+      soda_scs_component:
+        type: entity:soda_scs_component
 
 soda_scs_manager.stack.service_link:
-  path: '/soda-scs-manager/stack-service-link/{soda_scs_stack}'
+  path: '/soda-scs-manager/stack/service-link/{soda_scs_stack}'
   defaults:
-    _controller: '\Drupal\soda_scs_manager\Controller\SodaScsManagerServiceController::generateUrl'
+    _controller: '\Drupal\soda_scs_manager\Controller\SodaScsManagerServiceController::generateStackUrl'
     _title: 'External service link'
+  requirements:
+    _permission: 'soda scs manager user'
+    _custom_access: '\Drupal\soda_scs_manager\Access\SodaScsStackLinksTasksAccessControlHandler::accessServiceLink'
   options:
     parameters:
       soda_scs_stack:
         type: entity:soda_scs_stack
-  requirements:
-    _permission: 'soda scs manager user'
-    _custom_access: '\Drupal\soda_scs_manager\Access\SodaScsStackLinksTasksAccessControlHandler::accessServiceLink'
+

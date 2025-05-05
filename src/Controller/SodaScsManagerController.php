@@ -221,6 +221,7 @@ class SodaScsManagerController extends ControllerBase {
       $entitiesByUser[$username][] = [
         '#theme' => 'soda_scs_manager__entity_card',
         '#title' => $this->t('@bundle', ['@bundle' => $entity->label()]),
+        '#type' =>  $bundleInfo['label']->render(),
         '#description' => $entity->get('description')->value,
         '#imageUrl' => $bundleInfo['imageUrl'],
         '#url' => Url::fromRoute('entity.' . $entity->getEntityTypeId() . '.canonical', ['bundle' => $entity->bundle(), $entity->getEntityTypeId() => $entity->id()]),

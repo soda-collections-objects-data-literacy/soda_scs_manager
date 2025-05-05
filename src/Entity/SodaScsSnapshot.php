@@ -154,7 +154,7 @@ class SodaScsSnapshot extends ContentEntityBase implements SodaScsSnapshotInterf
       ->setDisplayConfigurable('view', TRUE)
       ->setDisplayOptions('view', [
         'label' => 'above',
-        'type' => 'entity_reference_label',
+        'type' => 'soda_scs_component_label_with_type',
         'weight' => 20,
       ]);
 

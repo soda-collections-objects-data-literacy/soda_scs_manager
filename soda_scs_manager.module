@@ -79,11 +79,12 @@ function soda_scs_manager_theme($existing, $type, $theme, $path) {
     ],
     'soda_scs_manager__entity_card' => [
       'variables' => [
-        'title' => NULL,
         'description' => NULL,
-        'url' => NULL,
         'imageUrl' => NULL,
         'tags' => NULL,
+        'title' => NULL,
+        'type' => NULL,
+        'url' => NULL,
       ],
       'template' => 'cards/soda-scs-manager--entity-card',
     ],

@@ -42,16 +42,51 @@ class SodaScsStackEditForm extends ContentEntityForm {
    * {@inheritdoc}
    */
   public function buildForm(array $form, FormStateInterface $form_state) {
+    /** @var \Drupal\soda_scs_manager\Entity\SodaScsStackInterface $stack */
+    $stack = $this->entity;
     $form = parent::buildForm($form, $form_state);
+
+    // Make the machine name field read-only
+    if (isset($form['machineName'])) {
+      // Hide the original widget and show plain text instead
+      $form['machineName']['#access'] = FALSE;
+      $form['machineName_display'] = [
+        '#type' => 'item',
+        '#title' => $this->t('Machine Name'),
+        '#markup' => $stack->get('machineName')->value,
+        '#weight' => $form['machineName']['#weight'] ?? 0,
+      ];
+    }
+
+    if (isset($form['owner'])) {
+      // Get the current owner label
+      $owner_name = $this->t('Unknown');
+
+      // Get the field definitions to check if owner field exists
+      $field_definitions = $stack->getFieldDefinitions();
+      if (isset($field_definitions['owner'])) {
+        // Get owner entity reference from the entity
+        $owner_items = $stack->get('owner');
+        if (!$owner_items->isEmpty()) {
+          $owner_entity = $owner_items->entity;
+          if ($owner_entity) {
+            $owner_name = '<a href="' . $owner_entity->toUrl()->toString() . '">' . $owner_entity->label() . '</a>';
+          }
+        }
+
+        // Hide the original widget and show plain text instead
+        $form['owner']['#access'] = FALSE;
+        $form['owner_display'] = [
+          '#type' => 'item',
+          '#title' => $this->t('Owner'),
+          '#markup' => $owner_name,
+          '#weight' => $form['owner']['#weight'] ?? 0,
+        ];
+      }
+    }
 
     $form['#attached']['library'][] = 'soda_scs_manager/globalStyling';
     $form['actions']['delete'] = [];
-
-    $current_user = \Drupal::currentUser();
-    $form['owner']['widget']['#default_value'] = $current_user->id();
-    if (!$current_user->hasPermission('soda scs manager admin')) {
-      $form['owner']['#access'] = FALSE;
-    }
 
     return $form;
   }

@@ -125,7 +125,17 @@ class SodaScsSnapshotConfirmForm extends ConfirmFormBase {
   public function submitForm(array &$form, FormStateInterface $form_state) {
     $values = $form_state->getValues();
 
-    $createSnapshotResult = $this->sodaScsWisskiComponentActions->createSnapshot($this->entity);
+    switch ($this->entity->bundle()) {
+      case 'soda_scs_wisski_component':
+        $createSnapshotResult = $this->sodaScsWisskiComponentActions->createSnapshot($this->entity);
+        break;
+      case 'soda_scs_sql_component':
+        #$createSnapshotResult = $this->sodaScsSqlComponentActions->createSnapshot($this->entity);
+        break;
+    }
+
+    #$createSnapshotResult = $this->s
+    #odaScsWisskiComponentActions->createSnapshot($this->entity);
 
     if (!$createSnapshotResult['success']) {
       $this->messenger()->addError($this->t('Failed to create snapshot. See logs for more details.'));

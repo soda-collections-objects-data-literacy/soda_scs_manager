@@ -205,7 +205,7 @@ class SodaScsPortainerServiceActions implements SodaScsServiceRequestInterface {
   public function buildCreateRequest(array $requestParams): array {
     // Initialize settings.
     $generalSettings = $this->sodaScsServiceHelpers->initGeneralSettings();
-    $keycloakSettings = $this->sodaScsServiceHelpers->initKeycloakSettings();
+    $keycloakGeneralSettings = $this->sodaScsServiceHelpers->initKeycloakGeneralSettings();
     $portainerServiceSettings = $this->sodaScsServiceHelpers->initPortainerServiceSettings();
     $portainerStacksSettings = $this->sodaScsServiceHelpers->initPortainerStacksSettings();
     $triplestoreServiceSettings = $this->sodaScsServiceHelpers->initTriplestoreServiceSettings();
@@ -285,7 +285,7 @@ class SodaScsPortainerServiceActions implements SodaScsServiceRequestInterface {
       ],
       [
         "name" => "KEYCLOAK_REALM",
-        "value" => $keycloakSettings['realm'],
+        "value" => $keycloakGeneralSettings['realm'],
       ],
       [
         "name" => "OPENID_CONNECT_CLIENT_SECRET",

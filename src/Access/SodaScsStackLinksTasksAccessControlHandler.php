@@ -22,10 +22,6 @@ final class SodaScsStackLinksTasksAccessControlHandler {
    *   TRUE if access is allowed, FALSE otherwise.
    */
   public static function accessServiceLink(SodaScsStackInterface $soda_scs_stack) {
-    // Replace 'triplestore_bundle' with the actual bundle ID for triplestore.
-    if  ($soda_scs_stack->bundle() == 'soda_scs_triplestore_stack') {
-      return AccessResult::forbidden();
-    }
     return AccessResult::allowed();
   }
 

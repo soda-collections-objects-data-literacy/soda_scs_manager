@@ -3,28 +3,22 @@ entity.soda_scs_component.canonical:
   route_name: entity.soda_scs_component.canonical
   base_route: entity.soda_scs_component.canonical
   title: 'View'
-  weight: 50
+  weight: 10
 
-# entity.soda_scs_component.edit_form:
-#   route_name: entity.soda_scs_component.edit_form
-#   base_route: entity.soda_scs_component.canonical
-#   title: 'Edit'
-#   weight: 10
-
-entity.soda_scs_component.delete_form:
-  route_name: entity.soda_scs_component.delete_form
+entity.soda_scs_component.edit_form:
+  route_name: entity.soda_scs_component.edit_form
   base_route: entity.soda_scs_component.canonical
-  title: 'Delete'
-  weight: 40
+  title: 'Edit'
+  weight: 20
 
 entity.soda_scs_component.service_link:
   route_name: soda_scs_manager.component.service_link
   base_route: entity.soda_scs_component.canonical
   title: 'Show'
-  weight: 20
+  weight: 30
   options:
     parameters:
-      soda_scs_component: { type: soda_scs_component }
+      soda_scs_component: { type: entity:soda_scs_component }
     attributes:
       target: '_blank'
       class: ['soda-scs-manager--service-link']
@@ -38,25 +32,30 @@ entity.soda_scs_component.confirm_form:
       soda_scs_component: { type: entity:soda_scs_component }
   weight: 40
 
+entity.soda_scs_component.delete_form:
+  route_name: entity.soda_scs_component.delete_form
+  base_route: entity.soda_scs_component.canonical
+  title: 'Delete'
+  weight: 50
 
 # Service Key
 entity.soda_scs_service_key.canonical:
   route_name: entity.soda_scs_service_key.canonical
   base_route: entity.soda_scs_service_key.canonical
   title: 'View'
-  weight: 50
+  weight: 10
 
-# entity.soda_scs_service_key.edit_form:
-#   route_name: entity.soda_scs_service_key.edit_form
-#   base_route: entity.soda_scs_service_key.canonical
-#   title: 'Edit'
-#   weight: 10
+#entity.soda_scs_service_key.edit_form:
+#  route_name: entity.soda_scs_service_key.edit_form
+#  base_route: entity.soda_scs_service_key.canonical#
+#  title: 'Edit'
+#  weight: 20
 
 entity.soda_scs_service_key.delete_form:
   route_name: entity.soda_scs_service_key.delete_form
   base_route: entity.soda_scs_service_key.canonical
   title: 'Delete'
-  weight: 20
+  weight: 30
 
 # Stacks/*
 entity.soda_scs_stack.canonical:
@@ -67,28 +66,18 @@ entity.soda_scs_stack.canonical:
   options:
     parameters:
       soda_scs_stack: { type: entity:soda_scs_stack }
-      bundle: { type: string }
+
+entity.soda_scs_stack.edit_form:
+  route_name: entity.soda_scs_stack.edit_form
+  base_route: entity.soda_scs_stack.canonical
+  title: 'Edit'
+  weight: 20
 
 entity.soda_scs_stack.service_link:
   route_name: soda_scs_manager.stack.service_link
   base_route: entity.soda_scs_stack.canonical
   title: 'Show'
-  weight: 20
-  options:
-    parameters:
-      soda_scs_stack: { type: entity:soda_scs_stack }
-
-# entity.soda_scs_stack.edit_form:
-#   route_name: entity.soda_scs_stack.edit_form
-#   base_route: entity.soda_scs_stack.canonical
-#   title: 'Edit'
-#   weight: 10
-
-entity.soda_scs_stack.delete_form:
-  route_name: entity.soda_scs_stack.delete_form
-  base_route: entity.soda_scs_stack.canonical
-  title: 'Delete'
-  weight: 40
+  weight: 30
   options:
     parameters:
       soda_scs_stack: { type: entity:soda_scs_stack }
@@ -101,7 +90,16 @@ entity.soda_scs_stack.confirm_form:
     parameters:
       soda_scs_stack: { type: entity:soda_scs_stack }
       bundle: { type: string }
-  weight: 30
+  weight: 40
+
+entity.soda_scs_stack.delete_form:
+  route_name: entity.soda_scs_stack.delete_form
+  base_route: entity.soda_scs_stack.canonical
+  title: 'Delete'
+  weight: 50
+  options:
+    parameters:
+      soda_scs_stack: { type: entity:soda_scs_stack }
 
 # Projects
 

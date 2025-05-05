@@ -140,7 +140,9 @@ class SodaScsKeycloakServiceClientActions implements SodaScsServiceRequestInterf
   public function buildCreateRequest(array $requestParams): array {
     $keycloakGeneralSettings = $this->sodaScsServiceHelpers->initKeycloakGeneralSettings();
     $keycloakClientsSettings = $this->sodaScsServiceHelpers->initKeycloakClientsSettings();
+    $requestParams['routeParams']['realm'] = $keycloakGeneralSettings['realm'];
 
+    // Build the route.
     $route = $keycloakGeneralSettings['host'] . $keycloakClientsSettings['baseUrl'] . $keycloakClientsSettings['createUrl'];
 
     // Replace any route parameters.
@@ -232,6 +234,8 @@ class SodaScsKeycloakServiceClientActions implements SodaScsServiceRequestInterf
     $keycloakGeneralSettings = $this->sodaScsServiceHelpers->initKeycloakGeneralSettings();
     $keycloakClientsSettings = $this->sodaScsServiceHelpers->initKeycloakClientsSettings();
 
+    $requestParams['routeParams']['realm'] = $keycloakGeneralSettings['realm'];
+
     // Build the route.
     $route =
       // Host route.
@@ -281,6 +285,8 @@ class SodaScsKeycloakServiceClientActions implements SodaScsServiceRequestInterf
     $keycloakGeneralSettings = $this->sodaScsServiceHelpers->initKeycloakGeneralSettings();
     $keycloakClientsSettings = $this->sodaScsServiceHelpers->initKeycloakClientsSettings();
 
+    $requestParams['routeParams']['realm'] = $keycloakGeneralSettings['realm'];
+
     // Build the route.
     $route =
       // Host route.
@@ -328,6 +334,8 @@ class SodaScsKeycloakServiceClientActions implements SodaScsServiceRequestInterf
     $keycloakGeneralSettings = $this->sodaScsServiceHelpers->initKeycloakGeneralSettings();
     $keycloakClientsSettings = $this->sodaScsServiceHelpers->initKeycloakClientsSettings();
 
+    $requestParams['routeParams']['realm'] = $keycloakGeneralSettings['realm'];
+
     // Build the route.
     $route =
       // Host route.
@@ -367,6 +375,8 @@ class SodaScsKeycloakServiceClientActions implements SodaScsServiceRequestInterf
   public function buildUpdateRequest(array $requestParams): array {
     $keycloakGeneralSettings = $this->sodaScsServiceHelpers->initKeycloakGeneralSettings();
     $keycloakClientsSettings = $this->sodaScsServiceHelpers->initKeycloakClientsSettings();
+
+    $requestParams['routeParams']['realm'] = $keycloakGeneralSettings['realm'];
 
     // Build the route.
     $route =
@@ -420,6 +430,8 @@ class SodaScsKeycloakServiceClientActions implements SodaScsServiceRequestInterf
   public function buildDeleteRequest(array $requestParams): array {
     $keycloakGeneralSettings = $this->sodaScsServiceHelpers->initKeycloakGeneralSettings();
     $keycloakClientsSettings = $this->sodaScsServiceHelpers->initKeycloakClientsSettings();
+
+    $requestParams['routeParams']['realm'] = $keycloakGeneralSettings['realm'];
 
     // Build the route.
     $route =

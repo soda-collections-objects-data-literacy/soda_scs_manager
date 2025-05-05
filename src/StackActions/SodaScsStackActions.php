@@ -149,11 +149,11 @@ class SodaScsStackActions implements SodaScsStackActionsInterface {
       case 'soda_scs_wisski_stack':
         return $this->sodaScsWisskiStackActions->deleteStack($stack);
 
-      case 'soda_scs_sql_stack':
-        return $this->sodaScsSqlStackActions->deleteStack($stack);
+      case 'soda_scs_jupyter_stack':
+        return $this->sodaScsJupyterStackActions->deleteStack($stack);
 
-      case 'soda_scs_triplestore_stack':
-        return $this->sodaScsTriplestoreStackActions->deleteStack($stack);
+      case 'soda_scs_nextcloud_stack':
+        return $this->sodaScsNextcloudStackActions->deleteStack($stack);
 
       /* @todo Better error handling with trace info. */
       default:

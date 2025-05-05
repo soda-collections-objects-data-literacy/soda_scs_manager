@@ -33,6 +33,7 @@ use Drupal\user\EntityOwnerTrait;
  *     "form" = {
  *       "default" = "Drupal\soda_scs_manager\Form\SodaScsStackCreateForm",
  *       "add" = "Drupal\soda_scs_manager\Form\SodaScsStackCreateForm",
+ *       "edit" = "Drupal\soda_scs_manager\Form\SodaScsStackEditForm",
  *       "delete" = "\Drupal\soda_scs_manager\Form\SodaScsStackDeleteForm",
  *     },
  *     "route_provider" = {
@@ -42,6 +43,7 @@ use Drupal\user\EntityOwnerTrait;
  *   links = {
  *     "canonical" = "/soda-scs-manager/stack/{soda_scs_stack}",
  *     "add-form" = "/soda-scs-manager/stack/add/{bundle}",
+ *     "edit-form" = "/soda-scs-manager/stack/{soda_scs_stack}/edit",
  *     "delete-form" = "/soda-scs-manager/stack/{soda_scs_stack}/delete",
  *     "collection" = "/soda-scs-manager/stacks",
  *   },
@@ -187,7 +189,7 @@ class SodaScsStack extends ContentEntityBase implements SodaScsStackInterface {
       ->setDisplayConfigurable('view', TRUE)
       ->setDisplayOptions('view', [
         'label' => 'above',
-        'type' => 'entity_reference_label',
+        'type' => 'soda_scs_component_label_with_type',
         'weight' => 20,
       ])
       ->setDisplayConfigurable('form', TRUE);

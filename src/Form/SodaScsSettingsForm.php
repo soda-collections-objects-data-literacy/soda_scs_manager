@@ -140,6 +140,27 @@ class SodaScsSettingsForm extends ConfigFormBase {
       '#description' => $this->t('The management host, like https://adminer-db.scs.sammlungen.io.'),
     ];
 
+    // Jupyter settings tab.
+    // @see \Drupal\soda_scs_manager\Helpers\SodaScsServiceHelpers::initJupyterHubSettings().
+    $form['jupyterhub'] = [
+      '#type' => 'details',
+      '#title' => $this->t('JupyterHub settings'),
+      '#group' => 'tabs',
+      '#tree' => TRUE,
+    ];
+
+    $form['jupyterhub']['generalSettings'] = [
+      '#type' => 'fieldset',
+      '#title' => $this->t('General settings'),
+    ];
+
+    $form['jupyterhub']['generalSettings']['baseUrl'] = [
+      '#type' => 'textfield',
+      '#title' => $this->t('Base URL'),
+      '#default_value' => $this->config('soda_scs_manager.settings')->get('jupyterhub')['generalSettings']['baseUrl'] ?? '',
+      '#description' => $this->t('The base URL, like https://jupyterhub.scs.sammlungen.io.'),
+    ];
+
     // Keycloak settings tab.
     // @see \Drupal\soda_scs_manager\Helpers\SodaScsServiceHelpers::initKeycloakSettings().
     $form['keycloak'] = [
@@ -310,6 +331,27 @@ class SodaScsSettingsForm extends ConfigFormBase {
       '#title' => $this->t('Token URL'),
       '#default_value' => $this->config('soda_scs_manager.settings')->get('keycloak')['routes']['misc']['tokenUrl'] ?? '',
       '#description' => $this->t('The token URL, like /realms/master/protocol/openid-connect/token.'),
+    ];
+
+    // Nextcloud settings tab.
+    // @see \Drupal\soda_scs_manager\Helpers\SodaScsServiceHelpers::initNextcloudSettings().
+    $form['nextcloud'] = [
+      '#type' => 'details',
+      '#title' => $this->t('Nextcloud settings'),
+      '#group' => 'tabs',
+      '#tree' => TRUE,
+    ];
+
+    $form['nextcloud']['generalSettings'] = [
+      '#type' => 'fieldset',
+      '#title' => $this->t('General settings'),
+    ];
+
+    $form['nextcloud']['generalSettings']['baseUrl'] = [
+      '#type' => 'textfield',
+      '#title' => $this->t('Base URL'),
+      '#default_value' => $this->config('soda_scs_manager.settings')->get('nextcloud')['generalSettings']['baseUrl'] ?? '',
+      '#description' => $this->t('The base URL, like https://nextcloud.scs.sammlungen.io.'),
     ];
 
     // Triplestore settings tab.
@@ -880,7 +922,9 @@ class SodaScsSettingsForm extends ConfigFormBase {
       ->set('dbPort', $form_state->getValue('dbPort'))
       ->set('dbManagementHost', $form_state->getValue('dbManagementHost'))
       ->set('dbRootPassword', $form_state->getValue('dbRootPassword'))
+      ->set('jupyterhub', $form_state->getValue('jupyterhub'))
       ->set('keycloak', $form_state->getValue('keycloak'))
+      ->set('nextcloud', $form_state->getValue('nextcloud'))
       ->set('triplestore', $form_state->getValue('triplestore'))
       ->set('wisski', $form_state->getValue('wisski'))
       ->set('portainer', $form_state->getValue('portainer'))

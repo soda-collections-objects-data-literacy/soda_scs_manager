@@ -135,7 +135,7 @@ class SodaScsSqlComponentActions implements SodaScsComponentActionsInterface {
       $sqlComponent = $this->entityTypeManager->getStorage('soda_scs_component')->create(
         [
           'bundle' => 'soda_scs_sql_component',
-          'label' => $entity->get('label')->value . ' (SQL Database)',
+          'label' => $entity->get('label')->value,
           'machineName' => $machineName,
           'owner'  => $entity->getOwnerId(),
           'description' => $sqlComponentBundleInfo['description'],

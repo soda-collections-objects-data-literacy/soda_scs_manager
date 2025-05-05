@@ -1,6 +1,9 @@
 {{ entity_type|replace({'soda_scs_': ''}) }}
 <div class="soda-scs-manager--type--card">
   <a href="{{ url }}" class="soda-scs-manager--card-link"></a>
+  <div class="soda-scs-manager--card-type">
+    {{ type }}
+  </div>
     <div class="soda-scs-manager--card-tags mb-4">
       {% for tag in tags|sort %}
         <span class="soda-scs-manager--card-tag rounded-full px-2 py-1 text-xs whitespace-nowrap
