@@ -46,6 +46,9 @@ class SodaScsStackEditForm extends ContentEntityForm {
     $stack = $this->entity;
     $form = parent::buildForm($form, $form_state);
 
+    // Hide the flavours field.
+    $form['flavours']['#access'] = FALSE;
+
     // Make the machine name field read-only
     if (isset($form['machineName'])) {
       // Hide the original widget and show plain text instead

@@ -72,6 +72,11 @@ class SodaScsComponentViewBuilder extends EntityViewBuilder {
   public function build(array $build) {
     $build = parent::build($build);
 
+    // Hide the flavours field if it exists in the build array.
+    if (isset($build['flavours'])) {
+      $build['flavours']['#access'] = FALSE;
+    }
+
     $build['#attached']['library'][] = 'soda_scs_manager/security';
     $build['#attached']['library'][] = 'soda_scs_manager/componentHelpers';
     $build['#attached']['drupalSettings']['componentInfo']['healthUrl'] = '/soda-scs-manager/health/' . $build['#soda_scs_component']->id();

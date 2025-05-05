@@ -15,6 +15,11 @@ class SodaScsStackViewBuilder extends EntityViewBuilder {
   public function build(array $build) {
     $build = parent::build($build);
 
+    // Hide the flavours field if it exists in the build array.
+    if (isset($build['flavours'])) {
+      $build['flavours']['#access'] = FALSE;
+    }
+
     return $build;
   }
 

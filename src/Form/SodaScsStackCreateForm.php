@@ -155,6 +155,9 @@ class SodaScsStackCreateForm extends ContentEntityForm {
       $form['#attached']['library'][] = 'soda_scs_manager/machine-name-generator';
     }
 
+    // Hide the flavours field.
+    $form['flavours']['#access'] = FALSE;
+
     // Change the label of the submit button.
     $form['actions']['submit']['#value'] = $this->t('CREATE');
     $form['actions']['submit']['#attributes']['class'][] = 'soda-scs-stack--stack--form-submit';

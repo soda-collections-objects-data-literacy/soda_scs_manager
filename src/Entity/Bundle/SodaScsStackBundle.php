@@ -38,8 +38,9 @@ class SodaScsStackBundle extends SodaScsStack implements SodaScsStackInterface {
           ])
           /* @todo implement  'malty' => '3D', 'woody' => 'Provenance', 'herbal' => 'Conservation and Restoration'.*/
           ->setSetting('allowed_values', [
-            'sweet' => 'default data model',
             'fruity' => '2D',
+            'woody' => '3D',
+            'herbal' => 'Conservation and Restoration',
           ]);
         break;
     }

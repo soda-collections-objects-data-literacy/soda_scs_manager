@@ -178,6 +178,9 @@ class SodaScsComponentCreateForm extends ContentEntityForm {
     // Build the form.
     $form = parent::buildForm($form, $form_state);
 
+    // Hide the flavours field.
+    $form['flavours']['#access'] = FALSE;
+
     $form['#title'] = $this->t('Create a new @label', ['@label' => $this->bundleInfo['label']]);
 
     $form['info'] = [
