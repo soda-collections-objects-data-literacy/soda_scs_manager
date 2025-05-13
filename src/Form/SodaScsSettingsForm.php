@@ -372,7 +372,6 @@ class SodaScsSettingsForm extends ConfigFormBase {
       '#description' => $this->t('The delete URL, like /{userId}  .'),
     ];
 
-
     $form['keycloak']['routes']['misc'] = [
       '#type' => 'fieldset',
       '#attributes' => ['id' => 'soda-scs--routes-subform--misc'],
