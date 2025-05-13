@@ -129,6 +129,20 @@ class SodaScsKeycloakServiceGroupActions implements SodaScsServiceRequestInterfa
    *
    * @param array $requestParams
    *   The request parameters.
+   *    routeParams:
+   *      realm (required) string: realm name (not id!)
+   *    body:
+   *      GroupRepresentation (required):
+   *        id (optional) string: group id.
+   *        name (required) string: group name.
+   *        path (required) string: group path.
+   *        parentId (optional) string: parent group id.
+   *        subGroupCount (optional) Long(int64): number of sub groups.
+   *        subGroups (optional) array (List of GroupRepresentation): sub groups.
+   *        attributes (optional) array (Map<string, List<string>>): attributes.
+   *        realmRoles (optional) array (List<string>): realm roles.
+   *        clientRoles (optional) array (Map<string, List<string>>): client roles.
+   *        access (optional) array (Map<string, List<string>>): access.
    *
    * @return array
    *   The create request.
@@ -177,6 +191,16 @@ class SodaScsKeycloakServiceGroupActions implements SodaScsServiceRequestInterfa
    *
    * @param array $requestParams
    *   The request parameters.
+   *    routeParams:
+   *      realm (required): realm name (not id!)
+   *    queryParams:
+   *      briefRepresentation (optional): true
+   *      exact (optional): false
+   *      first (optional): null
+   *      max (optional): null
+   *      populateHierarchy (optional): true
+   *      q (optional): null
+   *      search (optional): null.
    *
    * @return array
    *   The read request.
@@ -224,6 +248,9 @@ class SodaScsKeycloakServiceGroupActions implements SodaScsServiceRequestInterfa
    *
    * @param array $requestParams
    *   The request parameters.
+   *    routeParams:
+   *      realm (required): realm name (not id!)
+   *      group-id (required): group id.
    *
    * @return array
    *   The read request.
@@ -313,6 +340,21 @@ class SodaScsKeycloakServiceGroupActions implements SodaScsServiceRequestInterfa
    *
    * @param array $requestParams
    *   The request parameters.
+   *    routeParams:
+   *      realm (required): realm name (not id!)
+   *      group-id (required): group id.
+   *    body:
+   *      GroupRepresentation (required):
+   *        id (optional) string: group id.
+   *        name (required) string: group name.
+   *        path (required) string: group path.
+   *        parentId (optional) string: parent group id.
+   *        subGroupCount (optional) Long(int64): number of sub groups.
+   *        subGroups (optional) array (List of GroupRepresentation): sub groups.
+   *        attributes (optional) array (Map<string, List<string>>): attributes.
+   *        realmRoles (optional) array (List<string>): realm roles.
+   *        clientRoles (optional) array (Map<string, List<string>>): client roles.
+   *        access (optional) array (Map<string, List<string>>): access.
    *
    * @return array
    *   The update request.
@@ -364,6 +406,9 @@ class SodaScsKeycloakServiceGroupActions implements SodaScsServiceRequestInterfa
    *
    * @param array $requestParams
    *   The request parameters.
+   *    routeParams:
+   *      realm (required): realm name (not id!)
+   *      group-id (required): group id.
    *
    * @return array
    *   The delete request.
