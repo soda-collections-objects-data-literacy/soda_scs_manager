@@ -11,7 +11,6 @@ use Drupal\Core\StringTranslation\StringTranslationTrait;
 use Drupal\Core\StringTranslation\TranslationInterface;
 use GuzzleHttp\ClientInterface;
 use Symfony\Component\HttpFoundation\RequestStack;
-use Drupal\soda_scs_manager\RequestActions\SodaScsServiceRequestInterface;
 use Drupal\soda_scs_manager\Helpers\SodaScsServiceHelpers;
 use Drupal\Core\Utility\Error;
 use Psr\Log\LogLevel;
@@ -138,11 +137,16 @@ class SodaScsKeycloakServiceGroupActions implements SodaScsServiceRequestInterfa
    *        path (required) string: group path.
    *        parentId (optional) string: parent group id.
    *        subGroupCount (optional) Long(int64): number of sub groups.
-   *        subGroups (optional) array (List of GroupRepresentation): sub groups.
-   *        attributes (optional) array (Map<string, List<string>>): attributes.
-   *        realmRoles (optional) array (List<string>): realm roles.
-   *        clientRoles (optional) array (Map<string, List<string>>): client roles.
-   *        access (optional) array (Map<string, List<string>>): access.
+   *        subGroups (optional) array
+   *          (List of GroupRepresentation): sub groups.
+   *        attributes (optional) array
+   *          (Map<string, List<string>>): attributes.
+   *        realmRoles (optional) array
+   *          (List<string>): realm roles.
+   *        clientRoles (optional) array
+   *          (Map<string, List<string>>): client roles.
+   *        access (optional) array
+   *          (Map<string, List<string>>): access.
    *
    * @return array
    *   The create request.
@@ -350,11 +354,16 @@ class SodaScsKeycloakServiceGroupActions implements SodaScsServiceRequestInterfa
    *        path (required) string: group path.
    *        parentId (optional) string: parent group id.
    *        subGroupCount (optional) Long(int64): number of sub groups.
-   *        subGroups (optional) array (List of GroupRepresentation): sub groups.
-   *        attributes (optional) array (Map<string, List<string>>): attributes.
-   *        realmRoles (optional) array (List<string>): realm roles.
-   *        clientRoles (optional) array (Map<string, List<string>>): client roles.
-   *        access (optional) array (Map<string, List<string>>): access.
+   *        subGroups (optional) array
+   *          (List of GroupRepresentation): sub groups.
+   *        attributes (optional) array
+   *          (Map<string, List<string>>): attributes.
+   *        realmRoles (optional) array
+   *          (List<string>): realm roles.
+   *        clientRoles (optional) array
+   *          (Map<string, List<string>>): client roles.
+   *        access (optional) array
+   *          (Map<string, List<string>>): access.
    *
    * @return array
    *   The update request.
@@ -418,7 +427,6 @@ class SodaScsKeycloakServiceGroupActions implements SodaScsServiceRequestInterfa
   public function buildDeleteRequest(array $requestParams): array {
     $keycloakGeneralSettings = $this->sodaScsServiceHelpers->initKeycloakGeneralSettings();
     $keycloakUsersSettings = $this->sodaScsServiceHelpers->initKeycloakUsersSettings();
-
 
     // Build the route.
     $route =

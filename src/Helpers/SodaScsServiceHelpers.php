@@ -227,7 +227,6 @@ class SodaScsServiceHelpers {
     return $jupyterHubSettings;
   }
 
-
   /**
    * Initialize keycloak settings.
    *
