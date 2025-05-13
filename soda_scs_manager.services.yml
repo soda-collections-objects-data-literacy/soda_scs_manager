@@ -110,6 +110,7 @@ services:
       - '@soda_scs_manager.component.helpers'
       - '@soda_scs_manager.stack.helpers'
       - '@soda_scs_manager.keycloak_service.client.actions'
+      - '@soda_scs_manager.keycloak_service.group.actions'
       - '@soda_scs_manager.keycloak_service.user.actions'
       - '@soda_scs_manager.portainer_service.actions'
       - '@soda_scs_manager.sql_service.actions'
@@ -178,6 +179,18 @@ services:
   ## Keycloak service actions
   soda_scs_manager.keycloak_service.client.actions:
     class: Drupal\soda_scs_manager\RequestActions\SodaScsKeycloakServiceClientActions
+    arguments:
+      - '@config.factory'
+      - '@http_client'
+      - '@entity_type.manager'
+      - '@messenger'
+      - '@request_stack'
+      - '@logger.factory'
+      - '@soda_scs_manager.service.helpers'
+      - '@string_translation'
+
+  soda_scs_manager.keycloak_service.group.actions:
+    class: Drupal\soda_scs_manager\RequestActions\SodaScsKeycloakServiceGroupActions
     arguments:
       - '@config.factory'
       - '@http_client'

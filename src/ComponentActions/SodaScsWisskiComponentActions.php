@@ -111,6 +111,14 @@ class SodaScsWisskiComponentActions implements SodaScsComponentActionsInterface 
    */
   protected SodaScsServiceRequestInterface $sodaScsKeycloakServiceClientActions;
 
+
+  /**
+   * The SCS Keycloak actions service.
+   *
+   * @var \Drupal\soda_scs_manager\RequestActions\SodaScsServiceRequestInterface
+   */
+  protected SodaScsKeycloakServiceGroupActions $sodaScsKeycloakServiceGroupActions;
+
   /**
    * The SCS Keycloak actions service.
    *
@@ -154,6 +162,7 @@ class SodaScsWisskiComponentActions implements SodaScsComponentActionsInterface 
     SodaScsComponentHelpers $sodaScsComponentHelpers,
     SodaScsStackHelpers $sodaScsStackHelpers,
     SodaScsServiceRequestInterface $sodaScsKeycloakServiceClientActions,
+    SodaScsKeycloakServiceGroupActions $sodaScsKeycloakServiceGroupActions,
     SodaScsServiceRequestInterface $sodaScsKeycloakServiceUserActions,
     SodaScsServiceRequestInterface $sodaScsPortainerServiceActions,
     SodaScsServiceActionsInterface $sodaScsSqlServiceActions,
@@ -399,6 +408,10 @@ class SodaScsWisskiComponentActions implements SodaScsComponentActionsInterface 
     $portainerResponsePayload = json_decode($portainerCreateRequestResult['data']['portainerResponse']->getBody()->getContents(), TRUE);
     // Set the external ID.
     $wisskiComponent->set('externalId', $portainerResponsePayload['Id']);
+
+    // Create keycloak group for admin.
+    $keycloakAdminGroup = $this->sodaScsKeycloakServiceGroupActions->createGroup([
+      'name' => $machineName . '-admin',
 
     // Save the component.
     $wisskiComponent->save();
