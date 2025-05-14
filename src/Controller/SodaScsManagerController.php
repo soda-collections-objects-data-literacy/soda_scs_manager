@@ -119,8 +119,6 @@ class SodaScsManagerController extends ControllerBase {
       $projects = $projectStorage->loadByProperties(['members' => $current_user->id()]);
     }
 
-
-
     try {
       $componentStorage = $this->entityTypeManager->getStorage('soda_scs_component');
     }
@@ -140,7 +138,7 @@ class SodaScsManagerController extends ControllerBase {
       $components = $componentStorage->loadByProperties(['owner' => $current_user->id()]);
     }
 
-    // Get all component IDs that are included in projects
+    // Get all component IDs that are included in projects.
     $includedComponentIds = [];
     /** @var \Drupal\soda_scs_manager\Entity\SodaScsProjectInterface $project */
     foreach ($projects as $project) {
@@ -155,18 +153,17 @@ class SodaScsManagerController extends ControllerBase {
       }
     }
 
-    // Remove components that are already included in projects
+    // Remove components that are already included in projects.
     if (!empty($includedComponentIds)) {
       foreach ($includedComponentIds as $componentId) {
         if (isset($components[$componentId])) {
           unset($components[$componentId]);
-        } else {
+        }
+        else {
           $components[$componentId] = $this->entityTypeManager->getStorage('soda_scs_component')->load($componentId);
         }
       }
     }
-
-
 
     try {
       $stackStorage = $this->entityTypeManager->getStorage('soda_scs_stack');
@@ -187,13 +184,13 @@ class SodaScsManagerController extends ControllerBase {
       $stacks = $stackStorage->loadByProperties(['owner' => $current_user->id()]);
     }
 
-    // Get all component IDs that are included in stacks
+    // Get all component IDs that are included in stacks.
     $includedComponentIds = [];
     /** @var \Drupal\soda_scs_manager\Entity\SodaScsStackInterface $stack */
     foreach ($stacks as $stack) {
-      // Check if the stack has an includedComponents field
+      // Check if the stack has an includedComponents field.
       if ($stack->hasField('includedComponents') && !$stack->get('includedComponents')->isEmpty()) {
-        // Get the referenced component IDs
+        // Get the referenced component IDs.
         /** @var \Drupal\Core\Field\EntityReferenceFieldItemListInterface $includedComponents */
         $includedComponents = $stack->get('includedComponents');
         foreach ($includedComponents->referencedEntities() as $component) {
@@ -202,7 +199,7 @@ class SodaScsManagerController extends ControllerBase {
       }
     }
 
-    // Remove components that are already included in stacks
+    // Remove components that are already included in stacks.
     if (!empty($includedComponentIds)) {
       foreach ($includedComponentIds as $componentId) {
         if (isset($components[$componentId])) {
@@ -221,10 +218,16 @@ class SodaScsManagerController extends ControllerBase {
       $entitiesByUser[$username][] = [
         '#theme' => 'soda_scs_manager__entity_card',
         '#title' => $this->t('@bundle', ['@bundle' => $entity->label()]),
-        '#type' =>  $bundleInfo['label']->render(),
+        '#type' => $bundleInfo['label']->render(),
         '#description' => $entity->get('description')->value,
         '#imageUrl' => $bundleInfo['imageUrl'],
-        '#url' => Url::fromRoute('entity.' . $entity->getEntityTypeId() . '.canonical', ['bundle' => $entity->bundle(), $entity->getEntityTypeId() => $entity->id()]),
+        '#url' => Url::fromRoute('entity.' .
+          $entity->getEntityTypeId() .
+          '.canonical',
+          [
+            'bundle' => $entity->bundle(),
+            $entity->getEntityTypeId() => $entity->id(),
+          ]),
         '#tags' => $bundleInfo['tags'],
       ];
     }
@@ -254,7 +257,7 @@ class SodaScsManagerController extends ControllerBase {
    *   The page build array.
    */
   public function storePage() {
-    // @todo: make this more generic.
+    // @todo Make this more generic.
     // Create the build array.
     $build = [
       '#theme' => 'soda_scs_manager__store',
