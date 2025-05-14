@@ -9,6 +9,7 @@ use Drupal\Core\Entity\EntityTypeBundleInfoInterface;
 use Drupal\Core\Form\FormStateInterface;
 use Drupal\Core\Url;
 use Drupal\soda_scs_manager\ComponentActions\SodaScsComponentActionsInterface;
+use Drupal\soda_scs_manager\StackActions\SodaScsStackActionsInterface;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 
 /**
@@ -19,14 +20,14 @@ class SodaScsComponentDeleteForm extends ContentEntityDeleteForm {
   /**
    * The Soda SCS API Actions service.
    *
-   * @var \Drupal\soda_scs_manager\SodaScsComponentActionsInterface
+   * @var \Drupal\soda_scs_manager\StackActions\SodaScsStackActionsInterface
    */
-  protected SodaScsComponentActionsInterface $sodaScsStackActions;
+  protected SodaScsStackActionsInterface $sodaScsStackActions;
 
   /**
    * The Soda SCS API Actions service.
    *
-   * @var \Drupal\soda_scs_manager\SodaScsComponentActionsInterface
+   * @var \Drupal\soda_scs_manager\ComponentActions\SodaScsComponentActionsInterface
    */
   protected SodaScsComponentActionsInterface $sodaScsComponentActions;
 
@@ -39,7 +40,7 @@ class SodaScsComponentDeleteForm extends ContentEntityDeleteForm {
    *   The entity type bundle info.
    * @param Drupal\Component\Datetime\TimeInterface $time
    *   The time service.
-   * @param \Drupal\soda_scs_manager\SodaScsComponentActionsInterface $sodaScsComponentActions
+   * @param \Drupal\soda_scs_manager\ComponentActions\SodaScsComponentActionsInterface $sodaScsComponentActions
    *   The Soda SCS API Actions service.
    */
   public function __construct(EntityRepositoryInterface $entity_repository, EntityTypeBundleInfoInterface $entity_type_bundle_info, TimeInterface $time, SodaScsComponentActionsInterface $sodaScsComponentActions) {
@@ -96,8 +97,19 @@ class SodaScsComponentDeleteForm extends ContentEntityDeleteForm {
         '#value' => $this->t('Force delete'),
         '#button_type' => 'danger',
         '#submit' => ['::forceDeleteSubmit'],
+        '#attributes' => ['class' => ['soda-scs-component--component--form-submit']],
       ];
     }
+
+    // Add throbber overlay classes to the default delete button.
+    if (isset($form['actions']['submit'])) {
+      $form['actions']['submit']['#attributes']['class'][] = 'soda-scs-component--component--form-submit';
+    }
+
+    // @todo Not working yet!
+    // Attach the throbber overlay library.
+    $form['#attached']['library'][] = 'soda_scs_manager/throbber_overlay';
+
     return $form;
   }
 
