@@ -99,6 +99,7 @@ services:
   soda_scs_manager.wisski_component.actions:
     class: Drupal\soda_scs_manager\ComponentActions\SodaScsWisskiComponentActions
     arguments:
+      - '@entity_type.bundle.info'
       - '@config.factory'
       - '@database'
       - '@entity_type.manager'

@@ -214,7 +214,12 @@ class SodaScsManagerController extends ControllerBase {
     /** @var \Drupal\soda_scs_manager\Entity\SodaScsStackInterface $stack */
     foreach ($entities as $entity) {
       $bundleInfo = $this->bundleInfo->getBundleInfo($entity->getEntityTypeId())[$entity->bundle()];
-      $username = $entity->getOwner()->getDisplayName();
+      if ($entity->getOwner() !== NULL && $entity->getOwner()->getDisplayName() !== NULL) {
+        $username = $entity->getOwner()->getDisplayName();
+      }
+      else {
+        $username = 'deleted user';
+      }
       $entitiesByUser[$username][] = [
         '#theme' => 'soda_scs_manager__entity_card',
         '#title' => $this->t('@bundle', ['@bundle' => $entity->label()]),

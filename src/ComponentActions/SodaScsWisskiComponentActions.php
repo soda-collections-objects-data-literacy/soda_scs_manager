@@ -2,13 +2,14 @@
 
 namespace Drupal\soda_scs_manager\ComponentActions;
 
-use Drupal\Core\File\FileSystem;
 use Drupal\Core\Config\Config;
 use Drupal\Core\Config\ConfigFactoryInterface;
 use Drupal\Core\Database\Connection;
 use Drupal\Core\DependencyInjection\DependencySerializationTrait;
+use Drupal\Core\Entity\EntityTypeBundleInfoInterface;
 use Drupal\Core\Entity\EntityTypeManagerInterface;
 use Drupal\Core\Logger\LoggerChannelFactoryInterface;
+use Drupal\Core\Logger\LoggerChannelInterface;
 use Drupal\Core\Messenger\MessengerInterface;
 use Drupal\Core\StringTranslation\TranslationInterface;
 use Drupal\Core\StringTranslation\StringTranslationTrait;
@@ -35,6 +36,13 @@ class SodaScsWisskiComponentActions implements SodaScsComponentActionsInterface 
   use StringTranslationTrait;
 
   /**
+   * The bundle info.
+   *
+   * @var \Drupal\Core\Entity\EntityTypeBundleInfoInterface
+   */
+  protected EntityTypeBundleInfoInterface $bundleInfo;
+
+  /**
    * The database.
    *
    * @var \Drupal\Core\Database\Connection
@@ -58,9 +66,9 @@ class SodaScsWisskiComponentActions implements SodaScsComponentActionsInterface 
   /**
    * The logger factory.
    *
-   * @var \Drupal\Core\Logger\LoggerChannelFactoryInterface
+   * @var \Drupal\Core\Logger\LoggerChannelInterface
    */
-  protected LoggerChannelFactoryInterface $loggerFactory;
+  protected LoggerChannelInterface $logger;
 
   /**
    * The messenger service.
@@ -84,11 +92,11 @@ class SodaScsWisskiComponentActions implements SodaScsComponentActionsInterface 
   protected SodaScsRunRequestInterface $sodaScsDockerRunServiceActions;
 
   /**
-   * The settings config.
+   * The config config.
    *
    * @var \Drupal\Core\Config\Config
    */
-  protected Config $settings;
+  protected Config $config;
 
   /**
    * The SCS component helpers service.
@@ -117,7 +125,7 @@ class SodaScsWisskiComponentActions implements SodaScsComponentActionsInterface 
    *
    * @var \Drupal\soda_scs_manager\RequestActions\SodaScsServiceRequestInterface
    */
-  protected SodaScsKeycloakServiceGroupActions $sodaScsKeycloakServiceGroupActions;
+  protected SodaScsServiceRequestInterface $sodaScsKeycloakServiceGroupActions;
 
   /**
    * The SCS Keycloak actions service.
@@ -151,6 +159,7 @@ class SodaScsWisskiComponentActions implements SodaScsComponentActionsInterface 
    * Class constructor.
    */
   public function __construct(
+    EntityTypeBundleInfoInterface $bundleInfo,
     ConfigFactoryInterface $configFactory,
     Connection $database,
     EntityTypeManagerInterface $entityTypeManager,
@@ -162,7 +171,7 @@ class SodaScsWisskiComponentActions implements SodaScsComponentActionsInterface 
     SodaScsComponentHelpers $sodaScsComponentHelpers,
     SodaScsStackHelpers $sodaScsStackHelpers,
     SodaScsServiceRequestInterface $sodaScsKeycloakServiceClientActions,
-    SodaScsKeycloakServiceGroupActions $sodaScsKeycloakServiceGroupActions,
+    SodaScsServiceRequestInterface $sodaScsKeycloakServiceGroupActions,
     SodaScsServiceRequestInterface $sodaScsKeycloakServiceUserActions,
     SodaScsServiceRequestInterface $sodaScsPortainerServiceActions,
     SodaScsServiceActionsInterface $sodaScsSqlServiceActions,
@@ -170,23 +179,24 @@ class SodaScsWisskiComponentActions implements SodaScsComponentActionsInterface 
     TranslationInterface $stringTranslation,
   ) {
     // Services from container.
-    $settings = $configFactory
+    $this->bundleInfo = $bundleInfo;
+    $this->config = $configFactory
       ->getEditable('soda_scs_manager.settings');
     $this->database = $database;
     $this->entityTypeManager = $entityTypeManager;
     $this->httpClient = $httpClient;
-    $this->loggerFactory = $loggerFactory;
+    $this->logger = $loggerFactory->get('soda_scs_manager');
     $this->messenger = $messenger;
+    $this->sodaScsComponentHelpers = $sodaScsComponentHelpers;
     $this->sodaScsDockerExecServiceActions = $sodaScsDockerExecServiceActions;
     $this->sodaScsDockerRunServiceActions = $sodaScsDockerRunServiceActions;
-    $this->settings = $settings;
-    $this->sodaScsComponentHelpers = $sodaScsComponentHelpers;
-    $this->sodaScsStackHelpers = $sodaScsStackHelpers;
-    $this->sodaScsPortainerServiceActions = $sodaScsPortainerServiceActions;
-    $this->sodaScsSqlServiceActions = $sodaScsSqlServiceActions;
-    $this->sodaScsServiceKeyActions = $sodaScsServiceKeyActions;
     $this->sodaScsKeycloakServiceClientActions = $sodaScsKeycloakServiceClientActions;
+    $this->sodaScsKeycloakServiceGroupActions = $sodaScsKeycloakServiceGroupActions;
     $this->sodaScsKeycloakServiceUserActions = $sodaScsKeycloakServiceUserActions;
+    $this->sodaScsPortainerServiceActions = $sodaScsPortainerServiceActions;
+    $this->sodaScsServiceKeyActions = $sodaScsServiceKeyActions;
+    $this->sodaScsSqlServiceActions = $sodaScsSqlServiceActions;
+    $this->sodaScsStackHelpers = $sodaScsStackHelpers;
     $this->stringTranslation = $stringTranslation;
   }
 
@@ -201,7 +211,7 @@ class SodaScsWisskiComponentActions implements SodaScsComponentActionsInterface 
    */
   public function createComponent(SodaScsStackInterface|SodaScsComponentInterface $entity): array {
     try {
-      $wisskiComponentBundleInfo = \Drupal::service('entity_type.bundle.info')->getBundleInfo('soda_scs_component')['soda_scs_wisski_component'];
+      $wisskiComponentBundleInfo = $this->bundleInfo->getBundleInfo('soda_scs_component')['soda_scs_wisski_component'];
 
       if (!$wisskiComponentBundleInfo) {
         throw new \Exception('WissKI component bundle info not found');
@@ -309,7 +319,7 @@ class SodaScsWisskiComponentActions implements SodaScsComponentActionsInterface 
         $wisskiType = 'component';
       }
 
-      // Request keycloak client configs.
+      // Request keycloak token.
       $keycloakTokenRequest = $this->sodaScsKeycloakServiceClientActions->buildTokenRequest([]);
       $keycloakTokenResponse = $this->sodaScsKeycloakServiceClientActions->makeRequest($keycloakTokenRequest);
       if (!$keycloakTokenResponse['success']) {
@@ -317,8 +327,11 @@ class SodaScsWisskiComponentActions implements SodaScsComponentActionsInterface 
       }
       $keycloakTokenResponseContents = json_decode($keycloakTokenResponse['data']['keycloakResponse']->getBody()->getContents(), TRUE);
       $keycloakToken = $keycloakTokenResponseContents['access_token'];
+
+      // Create random openid connect client secret.
       $openidConnectClientSecret = $this->sodaScsComponentHelpers->createSecret();
 
+      // Create openid connect client.
       $keycloakCreateClientRequest = $this->sodaScsKeycloakServiceClientActions->buildCreateRequest([
         // @todo Use url of component.
         'clientId' => $machineName,
@@ -328,19 +341,117 @@ class SodaScsWisskiComponentActions implements SodaScsComponentActionsInterface 
         'rootUrl' => 'https://' . $machineName . '.scs.sammlungen.io',
         'adminUrl' => 'https://' . $machineName . '.scs.sammlungen.io',
         'logoutUrl' => 'https://' . $machineName . '.scs.sammlungen.io/logout',
-        // @todo: Use secret from service key.
+        // @todo Use secret from service key.
         'secret' => $openidConnectClientSecret,
       ]);
 
       $keycloakCreateClientResponse = $this->sodaScsKeycloakServiceClientActions->makeRequest($keycloakCreateClientRequest);
-
       if (!$keycloakCreateClientResponse['success']) {
-        throw new \Exception('Keycloak create client request failed.');
+        throw new \Exception('Keycloak create client request failed: ' . $keycloakCreateClientResponse['error']);
       }
+
+      // Create keycloak group for admin.
+      $keycloakAdminGroup = $machineName . '-admin';
+
+      $keycloakBuildCreateGroupRequest = $this->sodaScsKeycloakServiceGroupActions->buildCreateRequest([
+        'body' => [
+          'name' => $keycloakAdminGroup,
+          'path' => '/' . $keycloakAdminGroup,
+        ],
+        'token' => $keycloakToken,
+      ]);
+
+      $keycloakCreateGroupRequest = $this->sodaScsKeycloakServiceGroupActions->makeRequest($keycloakBuildCreateGroupRequest);
+      if (!$keycloakCreateGroupRequest['success']) {
+        throw new \Exception('Keycloak create admin group request failed: ' . $keycloakCreateGroupRequest['error']);
+      }
+
+      // Create keycloak group for users.
+      $keycloakUserGroup = $machineName . '-user';
+
+      $keycloakBuildCreateRequest = $this->sodaScsKeycloakServiceGroupActions->buildCreateRequest([
+        'body' => [
+          'name' => $keycloakUserGroup,
+          'path' => '/' . $keycloakUserGroup,
+        ],
+        'token' => $keycloakToken,
+      ]);
+
+      $keycloakCreateGroupRequest = $this->sodaScsKeycloakServiceGroupActions->makeRequest($keycloakBuildCreateRequest);
+      if (!$keycloakCreateGroupRequest['success']) {
+        throw new \Exception('Keycloak create user group request failed: ' . $keycloakCreateGroupRequest['error']);
+      }
+
+      // Set up parameters to search for the user.
+      $getUserParams = [
+        'token' => $keycloakToken,
+        'queryParams' => [
+          'username' => $wisskiComponent->getOwner()->getDisplayName(),
+        ],
+      ];
+
+      // Get the user from Keycloak.
+      $getUserRequest = $this->sodaScsKeycloakServiceUserActions->buildGetAllRequest($getUserParams);
+      $getUserResponse = $this->sodaScsKeycloakServiceUserActions->makeRequest($getUserRequest);
+
+      if ($getUserResponse['success']) {
+        $userData = json_decode($getUserResponse['data']['keycloakResponse']->getBody()->getContents(), TRUE);
+
+        // Extract the UUID if user is found.
+        if (!empty($userData) && is_array($userData) && count($userData) > 0) {
+          $userUuid = $userData[0]['id'];
+        }
+      }
+
+      // Get existing keycloak groups for the user.
+      $keycloakGetUserGroupsRequest = $this->sodaScsKeycloakServiceGroupActions->buildGetAllRequest([
+        'routeParams' => [
+          'userId' => $userUuid,
+        ],
+        'token' => $keycloakToken,
+        'type' => 'of_users',
+      ]);
+
+      $keycloakGetUserGroupsResponse = $this->sodaScsKeycloakServiceUserActions->makeRequest($keycloakGetUserGroupsRequest);
+      if (!$keycloakGetUserGroupsResponse['success']) {
+        throw new \Exception('Keycloak get user groups request failed: ' . $keycloakGetUserGroupsResponse['error']);
+      }
+
+      $userGroupsResponseContent = $keycloakGetUserGroupsResponse['data']['keycloakResponse']->getBody()->getContents();
+      $userGroupsArray = json_decode($userGroupsResponseContent, TRUE);
+
+      foreach ($userGroupsArray as $userGroup) {
+        $userGroups[$userGroup['id']] = $userGroup['name'];
+      }
+      // Check if the user is already in the admin group.
+      if (!in_array($keycloakAdminGroup, $userGroups)) {
+        // Add user to keycloak admin group.
+        $userGroups[] = $keycloakAdminGroup;
+      }
+
+      $keycloakBuildAddUserToGroupRequest = $this->sodaScsKeycloakServiceUserActions->buildUpdateRequest([
+        'body' => [
+          'UserRepresentation' => [
+            'groups' => $userGroups,
+          ],
+        ],
+        'routeParams' => [
+          'userId' => $userUuid,
+        ],
+        'token' => $keycloakToken,
+      ]);
+      $keycloakAddUserToGroupRequest = $this->sodaScsKeycloakServiceUserActions->makeRequest($keycloakBuildAddUserToGroupRequest);
+
+      if (!$keycloakAddUserToGroupRequest['success']) {
+        throw new \Exception('Keycloak add user to admin group request failed: ' . $keycloakAddUserToGroupRequest['error']);
+      }
+
       // @todo Use project from component.
       $requestParams = [
         'dbName' => $dbName,
         'flavours' => $flavours,
+        'keycloakAdminGroup' => $keycloakAdminGroup,
+        'keycloakUserGroup' => $keycloakUserGroup,
         'machineName' => $machineName,
         'openidConnectClientSecret' => $openidConnectClientSecret,
         'project' => 'my_project',
@@ -358,7 +469,7 @@ class SodaScsWisskiComponentActions implements SodaScsComponentActionsInterface 
     }
     catch (\Exception $e) {
       Error::logException(
-        $this->loggerFactory->get('soda_scs_manager'),
+        $this->logger,
         $e,
         'Request failed: @message',
         ['@message' => $e->getMessage()],
@@ -379,7 +490,7 @@ class SodaScsWisskiComponentActions implements SodaScsComponentActionsInterface 
       $portainerCreateRequestResult = $this->sodaScsPortainerServiceActions->makeRequest($portainerCreateRequest);
     }
     catch (\Exception $e) {
-      $this->loggerFactory->get('soda_scs_manager')->error("Portainer request failed: @error", [
+      $this->logger->error("Portainer request failed: @error", [
         '@error' => $e->getMessage(),
       ]);
       return [
@@ -408,10 +519,6 @@ class SodaScsWisskiComponentActions implements SodaScsComponentActionsInterface 
     $portainerResponsePayload = json_decode($portainerCreateRequestResult['data']['portainerResponse']->getBody()->getContents(), TRUE);
     // Set the external ID.
     $wisskiComponent->set('externalId', $portainerResponsePayload['Id']);
-
-    // Create keycloak group for admin.
-    $keycloakAdminGroup = $this->sodaScsKeycloakServiceGroupActions->createGroup([
-      'name' => $machineName . '-admin',
 
     // Save the component.
     $wisskiComponent->save();
@@ -471,7 +578,7 @@ class SodaScsWisskiComponentActions implements SodaScsComponentActionsInterface 
         'hostConfig' => [
           'Binds' => [
             $machineName . '_drupal-root:/source',
-            $backupPath . ':/backup'
+            $backupPath . ':/backup',
           ],
           'AutoRemove' => FALSE,
         ],
@@ -518,7 +625,7 @@ class SodaScsWisskiComponentActions implements SodaScsComponentActionsInterface 
     }
     catch (\Exception $e) {
       Error::logException(
-        $this->loggerFactory->get('soda_scs_manager'),
+        $this->logger,
         $e,
         'Snapshot creation failed: @message',
         ['@message' => $e->getMessage()],
@@ -597,7 +704,7 @@ class SodaScsWisskiComponentActions implements SodaScsComponentActionsInterface 
     }
     catch (\Exception $e) {
       Error::logException(
-        $this->loggerFactory->get('soda_scs_manager'),
+        $this->logger,
         $e,
         'Cannot get WissKI component at portainer: @message',
         ['@component' => $component->getLabel(), '@message' => $e->getMessage()],
@@ -617,7 +724,7 @@ class SodaScsWisskiComponentActions implements SodaScsComponentActionsInterface 
     }
     catch (MissingDataException $e) {
       Error::logException(
-        $this->loggerFactory->get('soda_scs_manager'),
+        $this->logger,
         $e,
         'Cannot assemble WissKI delete request: @message',
         ['@message' => $e->getMessage()],
@@ -639,7 +746,7 @@ class SodaScsWisskiComponentActions implements SodaScsComponentActionsInterface 
       $requestResult = $this->sodaScsPortainerServiceActions->makeRequest($portainerDeleteRequest);
       if (!$requestResult['success']) {
         Error::logException(
-          $this->loggerFactory->get('soda_scs_manager'),
+          $this->logger,
           new \Exception($requestResult['error']),
           'Could not delete WissKI stack at portainer: @message',
           ['@message' => $requestResult['error']],
@@ -661,7 +768,7 @@ class SodaScsWisskiComponentActions implements SodaScsComponentActionsInterface 
     }
     catch (\Exception $e) {
       Error::logException(
-        $this->loggerFactory->get('soda_scs_manager'),
+        $this->logger,
         $e,
         'Cannot delete WissKI component: @message',
         ['@message' => $e->getMessage()],

@@ -501,7 +501,12 @@ class SodaScsTriplestoreComponentActions implements SodaScsComponentActionsInter
    *   The result array of the created component.
    */
   public function deleteComponent(SodaScsComponentInterface $component): array {
-    $username = $component->getOwner()->getAccountName();
+    if ($component->getOwner() !== NULL && $component->getOwner()->getDisplayName() !== NULL) {
+      $username = $component->getOwner()->getDisplayName();
+    }
+    else {
+      $username = 'deleted user';
+    }
     $machineName = $component->get('machineName')->value;
     $requestParams = [
       'type' => 'repository',

@@ -46,7 +46,7 @@ class SodaScsSnapshotConfirmForm extends ConfirmFormBase {
    */
   protected $sodaScsSqlComponentActions;
 
-  /**   
+  /**
    * The Soda SCS Triple Store Component Actions.
    *
    * @var \Drupal\soda_scs_manager\ComponentActions\SodaScsComponentActionsInterface
@@ -139,7 +139,17 @@ class SodaScsSnapshotConfirmForm extends ConfirmFormBase {
       '#required' => FALSE,
     ];
 
-    return parent::buildForm($form, $form_state);
+    $form = parent::buildForm($form, $form_state);
+
+    // Add throbber overlay class to the submit button.
+    if (isset($form['actions']['submit'])) {
+      $form['actions']['submit']['#attributes']['class'][] = 'soda-scs-component--component--form-submit';
+    }
+
+    // Attach the throbber overlay library.
+    $form['#attached']['library'][] = 'soda_scs_manager/throbber_overlay';
+
+    return $form;
   }
 
   /**

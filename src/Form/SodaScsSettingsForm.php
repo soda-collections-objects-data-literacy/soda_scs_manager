@@ -372,6 +372,13 @@ class SodaScsSettingsForm extends ConfigFormBase {
       '#description' => $this->t('The delete URL, like /{userId}  .'),
     ];
 
+    $form['keycloak']['routes']['users']['crud']['getGroupsUrl'] = [
+      '#type' => 'textfield',
+      '#title' => $this->t('Get groups URL'),
+      '#default_value' => $this->config('soda_scs_manager.settings')->get('keycloak')['routes']['users']['crud']['getGroupsUrl'] ?? '',
+      '#description' => $this->t('The get groups URL, like /{userId}/groups.'),
+    ];
+
     $form['keycloak']['routes']['misc'] = [
       '#type' => 'fieldset',
       '#attributes' => ['id' => 'soda-scs--routes-subform--misc'],
