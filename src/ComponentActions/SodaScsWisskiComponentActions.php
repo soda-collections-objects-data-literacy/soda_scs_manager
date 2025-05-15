@@ -201,13 +201,26 @@ class SodaScsWisskiComponentActions implements SodaScsComponentActionsInterface 
   }
 
   /**
-   * Create SODa SCS Component.
+   * Creates a WissKI component entity with necessary dependencies.
+   *
+   * This function handles the creation of a WissKI component by:
+   * - Retrieving information about the connected SQL and
+   *   triplestore components.
+   * - Creating/retrieving a service key for authentication
+   *   in dependend services.
+   * - Create new openid connect client in keycloak and
+   *   admin and user groups for the instance.
+   * - Add the user to the wisski instance admin group.
+   * - Creating a new WissKI instance at portainer.
+   * - Create the Wisski component entity.
+   * - Linking the component to its parent stack if necessary.
    *
    * @param \Drupal\soda_scs_manager\Entity\SodaScsStackInterface|\Drupal\soda_scs_manager\Entity\SodaScsComponentInterface $entity
-   *   The SODa SCS component.
+   *   The parent SODa SCS stack or
+   *   component that this WissKI component belongs to.
    *
    * @return array
-   *   The SODa SCS component.
+   *   The created WissKI component configuration.
    */
   public function createComponent(SodaScsStackInterface|SodaScsComponentInterface $entity): array {
     try {
@@ -217,6 +230,9 @@ class SodaScsWisskiComponentActions implements SodaScsComponentActionsInterface 
         throw new \Exception('WissKI component bundle info not found');
       }
       $machineName = 'wisski-' . $entity->get('machineName')->value;
+      //
+      // Get information about the connected SQL and triplestore components.
+      //
       // Get included SQL component if this is a stack (not a component)
       if ($entity instanceof SodaScsStackInterface) {
         // Retrieve the SQL component that this WissKI component will use.
@@ -319,20 +335,24 @@ class SodaScsWisskiComponentActions implements SodaScsComponentActionsInterface 
         $wisskiType = 'component';
       }
 
+      //
+      // Create the openid connect client in keycloak and
+      // the admin and user groups for the instance.
+      //
       // Request keycloak token.
-      $keycloakTokenRequest = $this->sodaScsKeycloakServiceClientActions->buildTokenRequest([]);
-      $keycloakTokenResponse = $this->sodaScsKeycloakServiceClientActions->makeRequest($keycloakTokenRequest);
-      if (!$keycloakTokenResponse['success']) {
+      $keycloakBuildTokenRequest = $this->sodaScsKeycloakServiceClientActions->buildTokenRequest([]);
+      $keycloakMakeTokenRequest = $this->sodaScsKeycloakServiceClientActions->makeRequest($keycloakBuildTokenRequest);
+      if (!$keycloakMakeTokenRequest['success']) {
         throw new \Exception('Keycloak token request failed.');
       }
-      $keycloakTokenResponseContents = json_decode($keycloakTokenResponse['data']['keycloakResponse']->getBody()->getContents(), TRUE);
+      $keycloakTokenResponseContents = json_decode($keycloakMakeTokenRequest['data']['keycloakResponse']->getBody()->getContents(), TRUE);
       $keycloakToken = $keycloakTokenResponseContents['access_token'];
 
       // Create random openid connect client secret.
       $openidConnectClientSecret = $this->sodaScsComponentHelpers->createSecret();
 
       // Create openid connect client.
-      $keycloakCreateClientRequest = $this->sodaScsKeycloakServiceClientActions->buildCreateRequest([
+      $keycloakBuildCreateClientRequest = $this->sodaScsKeycloakServiceClientActions->buildCreateRequest([
         // @todo Use url of component.
         'clientId' => $machineName,
         'name' => $entity->get('label')->value,
@@ -345,44 +365,59 @@ class SodaScsWisskiComponentActions implements SodaScsComponentActionsInterface 
         'secret' => $openidConnectClientSecret,
       ]);
 
-      $keycloakCreateClientResponse = $this->sodaScsKeycloakServiceClientActions->makeRequest($keycloakCreateClientRequest);
-      if (!$keycloakCreateClientResponse['success']) {
-        throw new \Exception('Keycloak create client request failed: ' . $keycloakCreateClientResponse['error']);
+      $keycloakMakeCreateClientResponse = $this->sodaScsKeycloakServiceClientActions->makeRequest($keycloakBuildCreateClientRequest);
+      if (!$keycloakMakeCreateClientResponse['success']) {
+        throw new \Exception('Keycloak create client request failed: ' . $keycloakMakeCreateClientResponse['error']);
       }
 
       // Create keycloak group for admin.
-      $keycloakAdminGroup = $machineName . '-admin';
+      $keycloakWisskiInstanceAdminGroupName = $machineName . '-admin';
 
-      $keycloakBuildCreateGroupRequest = $this->sodaScsKeycloakServiceGroupActions->buildCreateRequest([
+      $keycloakBuildCreateAdminGroupRequest = $this->sodaScsKeycloakServiceGroupActions->buildCreateRequest([
         'body' => [
-          'name' => $keycloakAdminGroup,
-          'path' => '/' . $keycloakAdminGroup,
+          'name' => $keycloakWisskiInstanceAdminGroupName,
+          'path' => '/' . $keycloakWisskiInstanceAdminGroupName,
         ],
         'token' => $keycloakToken,
       ]);
 
-      $keycloakCreateGroupRequest = $this->sodaScsKeycloakServiceGroupActions->makeRequest($keycloakBuildCreateGroupRequest);
-      if (!$keycloakCreateGroupRequest['success']) {
-        throw new \Exception('Keycloak create admin group request failed: ' . $keycloakCreateGroupRequest['error']);
+      $keycloakMakeCreateAdminGroupResponse = $this->sodaScsKeycloakServiceGroupActions->makeRequest($keycloakBuildCreateAdminGroupRequest);
+      if (!$keycloakMakeCreateAdminGroupResponse['success']) {
+        throw new \Exception('Keycloak create admin group request failed: ' . $keycloakMakeCreateAdminGroupResponse['error']);
       }
 
       // Create keycloak group for users.
-      $keycloakUserGroup = $machineName . '-user';
+      $keycloakWisskiInstanceUserGroupName = $machineName . '-user';
 
-      $keycloakBuildCreateRequest = $this->sodaScsKeycloakServiceGroupActions->buildCreateRequest([
+      $keycloakBuildCreateUserGroupRequest = $this->sodaScsKeycloakServiceGroupActions->buildCreateRequest([
         'body' => [
-          'name' => $keycloakUserGroup,
-          'path' => '/' . $keycloakUserGroup,
+          'name' => $keycloakWisskiInstanceUserGroupName,
+          'path' => '/' . $keycloakWisskiInstanceUserGroupName,
         ],
         'token' => $keycloakToken,
       ]);
 
-      $keycloakCreateGroupRequest = $this->sodaScsKeycloakServiceGroupActions->makeRequest($keycloakBuildCreateRequest);
-      if (!$keycloakCreateGroupRequest['success']) {
-        throw new \Exception('Keycloak create user group request failed: ' . $keycloakCreateGroupRequest['error']);
+      $keycloakMakeCreateUserGroupResponse = $this->sodaScsKeycloakServiceGroupActions->makeRequest($keycloakBuildCreateUserGroupRequest);
+      if (!$keycloakMakeCreateUserGroupResponse['success']) {
+        throw new \Exception('Keycloak create user group request failed: ' . $keycloakMakeCreateUserGroupResponse['error']);
       }
 
-      // Set up parameters to search for the user.
+      // Get all groups from Keycloak for group ids.
+      $keycloakBuildGetAllGroupsRequest = $this->sodaScsKeycloakServiceGroupActions->buildGetAllRequest([
+        'token' => $keycloakToken,
+      ]);
+      $keycloakMakeGetAllGroupsResponse = $this->sodaScsKeycloakServiceGroupActions->makeRequest($keycloakBuildGetAllGroupsRequest);
+
+      if ($keycloakMakeGetAllGroupsResponse['success']) {
+        $keycloakGroups = json_decode($keycloakMakeGetAllGroupsResponse['data']['keycloakResponse']->getBody()->getContents(), TRUE);
+        // Get the admin group id of the WissKI instance.
+        $keycloakWisskiInstanceAdminGroup = array_filter($keycloakGroups, function ($group) use ($keycloakWisskiInstanceAdminGroupName) {
+          return $group['name'] === $keycloakWisskiInstanceAdminGroupName;
+        });
+        $keycloakWisskiInstanceAdminGroup = reset($keycloakWisskiInstanceAdminGroup);
+      }
+
+      // Set up parameters to search for the keycloak user.
       $getUserParams = [
         'token' => $keycloakToken,
         'queryParams' => [
@@ -390,68 +425,44 @@ class SodaScsWisskiComponentActions implements SodaScsComponentActionsInterface 
         ],
       ];
 
-      // Get the user from Keycloak.
-      $getUserRequest = $this->sodaScsKeycloakServiceUserActions->buildGetAllRequest($getUserParams);
-      $getUserResponse = $this->sodaScsKeycloakServiceUserActions->makeRequest($getUserRequest);
+      // Get the user from Keycloak via getAllUsers,
+      // because wie do not have the uuid, but only the username.
+      $getAllUsersRequest = $this->sodaScsKeycloakServiceUserActions->buildGetAllRequest($getUserParams);
+      $getAllUsersResponse = $this->sodaScsKeycloakServiceUserActions->makeRequest($getAllUsersRequest);
 
-      if ($getUserResponse['success']) {
-        $userData = json_decode($getUserResponse['data']['keycloakResponse']->getBody()->getContents(), TRUE);
+      if ($getAllUsersResponse['success']) {
+        $allUserData = json_decode($getAllUsersResponse['data']['keycloakResponse']->getBody()->getContents(), TRUE);
 
         // Extract the UUID if user is found.
-        if (!empty($userData) && is_array($userData) && count($userData) > 0) {
-          $userUuid = $userData[0]['id'];
+        if (!empty($allUserData) && is_array($allUserData) && count($allUserData) > 0) {
+          $userData = $allUserData[0];
         }
       }
 
-      // Get existing keycloak groups for the user.
-      $keycloakGetUserGroupsRequest = $this->sodaScsKeycloakServiceGroupActions->buildGetAllRequest([
-        'routeParams' => [
-          'userId' => $userUuid,
-        ],
-        'token' => $keycloakToken,
-        'type' => 'of_users',
-      ]);
-
-      $keycloakGetUserGroupsResponse = $this->sodaScsKeycloakServiceUserActions->makeRequest($keycloakGetUserGroupsRequest);
-      if (!$keycloakGetUserGroupsResponse['success']) {
-        throw new \Exception('Keycloak get user groups request failed: ' . $keycloakGetUserGroupsResponse['error']);
-      }
-
-      $userGroupsResponseContent = $keycloakGetUserGroupsResponse['data']['keycloakResponse']->getBody()->getContents();
-      $userGroupsArray = json_decode($userGroupsResponseContent, TRUE);
-
-      foreach ($userGroupsArray as $userGroup) {
-        $userGroups[$userGroup['id']] = $userGroup['name'];
-      }
-      // Check if the user is already in the admin group.
-      if (!in_array($keycloakAdminGroup, $userGroups)) {
-        // Add user to keycloak admin group.
-        $userGroups[] = $keycloakAdminGroup;
-      }
-
+      // Add user to admin group.
       $keycloakBuildAddUserToGroupRequest = $this->sodaScsKeycloakServiceUserActions->buildUpdateRequest([
-        'body' => [
-          'UserRepresentation' => [
-            'groups' => $userGroups,
-          ],
-        ],
+        'type' => 'group',
         'routeParams' => [
-          'userId' => $userUuid,
+          'userId' => $userData['id'],
+          'groupId' => $keycloakWisskiInstanceAdminGroup['id'],
         ],
         'token' => $keycloakToken,
       ]);
-      $keycloakAddUserToGroupRequest = $this->sodaScsKeycloakServiceUserActions->makeRequest($keycloakBuildAddUserToGroupRequest);
+      $keycloakMakeAddUserToGroupRequest = $this->sodaScsKeycloakServiceUserActions->makeRequest($keycloakBuildAddUserToGroupRequest);
 
-      if (!$keycloakAddUserToGroupRequest['success']) {
-        throw new \Exception('Keycloak add user to admin group request failed: ' . $keycloakAddUserToGroupRequest['error']);
+      if (!$keycloakMakeAddUserToGroupRequest['success']) {
+        throw new \Exception('Keycloak add user to admin group request failed: ' . $keycloakMakeAddUserToGroupRequest['error']);
       }
 
+      //
+      // Create the WissKI instance at portainer.
+      //
       // @todo Use project from component.
       $requestParams = [
         'dbName' => $dbName,
         'flavours' => $flavours,
-        'keycloakAdminGroup' => $keycloakAdminGroup,
-        'keycloakUserGroup' => $keycloakUserGroup,
+        'keycloakAdminGroup' => $keycloakWisskiInstanceAdminGroupName,
+        'keycloakUserGroup' => $keycloakWisskiInstanceUserGroupName,
         'machineName' => $machineName,
         'openidConnectClientSecret' => $openidConnectClientSecret,
         'project' => 'my_project',
@@ -464,7 +475,7 @@ class SodaScsWisskiComponentActions implements SodaScsComponentActionsInterface 
         'wisskiServicePassword' => $wisskiComponentServiceKeyPassword,
         'wisskiType' => $wisskiType,
       ];
-      // Create Drupal instance.
+      // Create the WissKI instance at portainer.
       $portainerCreateRequest = $this->sodaScsPortainerServiceActions->buildCreateRequest($requestParams);
     }
     catch (\Exception $e) {
@@ -694,13 +705,17 @@ class SodaScsWisskiComponentActions implements SodaScsComponentActionsInterface 
       if (!$portainerGetResponse['success']) {
         return [
           'message' => $this->t('Cannot get WissKI component @component at portainer.', ['@component' => $component->getLabel()]),
-          'data' => $portainerGetResponse,
+          'data' => [
+            'portainerResponse' => $portainerGetResponse,
+            'keycloakClientResponse' => NULL,
+            'keycloakAdminGroupResponse' => NULL,
+            'keycloakUserGroupResponse' => NULL,
+          ],
           'success' => FALSE,
           'error' => $portainerGetResponse['error'],
           'statusCode' => $portainerGetResponse['statusCode'],
         ];
       }
-
     }
     catch (\Exception $e) {
       Error::logException(
@@ -713,7 +728,12 @@ class SodaScsWisskiComponentActions implements SodaScsComponentActionsInterface 
       $this->messenger->addError($this->t("Cannot get WissKI component @component at portainer. See logs for more details.", ['@component' => $component->getLabel()]));
       return [
         'message' => $this->t('Cannot get WissKI component @component at portainer.', ['@component' => $component->getLabel()]),
-        'data' => $e,
+        'data' => [
+          'portainerResponse' => NULL,
+          'keycloakClientResponse' => NULL,
+          'keycloakAdminGroupResponse' => NULL,
+          'keycloakUserGroupResponse' => NULL,
+        ],
         'success' => FALSE,
         'error' => $e->getMessage(),
         'statusCode' => $e->getCode(),
@@ -735,6 +755,9 @@ class SodaScsWisskiComponentActions implements SodaScsComponentActionsInterface 
         'message' => 'Cannot assemble Request.',
         'data' => [
           'portainerResponse' => NULL,
+          'keycloakClientResponse' => NULL,
+          'keycloakAdminGroupResponse' => NULL,
+          'keycloakUserGroupResponse' => NULL,
         ],
         'success' => FALSE,
         'error' => $e->getMessage(),
@@ -754,12 +777,91 @@ class SodaScsWisskiComponentActions implements SodaScsComponentActionsInterface 
         );
         $this->messenger->addError($this->t("Could not delete WissKI stack at portainer, but will delete the component anyway. See logs for more details."));
       }
+
+      // Request keycloak token.
+      $keycloakBuildTokenRequest = $this->sodaScsKeycloakServiceClientActions->buildTokenRequest([]);
+      $keycloakMakeTokenRequest = $this->sodaScsKeycloakServiceClientActions->makeRequest($keycloakBuildTokenRequest);
+      if (!$keycloakMakeTokenRequest['success']) {
+        throw new \Exception('Keycloak token request failed.');
+      }
+      $keycloakTokenResponseContents = json_decode($keycloakMakeTokenRequest['data']['keycloakResponse']->getBody()->getContents(), TRUE);
+      $keycloakToken = $keycloakTokenResponseContents['access_token'];
+
+      // Delete the client in keycloak.
+      $keycloakBuildDeleteClientRequest = $this->sodaScsKeycloakServiceClientActions->buildDeleteRequest([
+        'clientId' => $component->get('machineName')->value,
+        'token' => $keycloakToken,
+      ]);
+      $keycloakMakeDeleteClientResponse = $this->sodaScsKeycloakServiceClientActions->makeRequest($keycloakBuildDeleteClientRequest);
+
+      if (!$keycloakMakeDeleteClientResponse['success']) {
+        return [
+          'message' => 'Cannot delete WissKI component at keycloak.',
+          'data' => [
+            'portainerResponse' => $requestResult,
+            'keycloakClientResponse' => $keycloakMakeDeleteClientResponse,
+            'keycloakAdminGroupResponse' => NULL,
+            'keycloakUserGroupResponse' => NULL,
+          ],
+          'success' => FALSE,
+          'error' => NULL,
+          'statusCode' => $keycloakMakeDeleteClientResponse['statusCode'],
+        ];
+      }
+      // Delete the admin group in keycloak.
+      $keycloakBuildDeleteAdminGroupRequest = $this->sodaScsKeycloakServiceGroupActions->buildDeleteRequest([
+        'groupId' => $component->get('keycloakAdminGroup')->value,
+        'token' => $keycloakToken,
+      ]);
+      $keycloakMakeDeleteAdminGroupResponse = $this->sodaScsKeycloakServiceGroupActions->makeRequest($keycloakBuildDeleteAdminGroupRequest);
+
+      if (!$keycloakMakeDeleteAdminGroupResponse['success']) {
+        return [
+          'message' => 'Cannot delete WissKI component admin group at keycloak.',
+          'data' => [
+            'portainerResponse' => $requestResult,
+            'keycloakClientResponse' => $keycloakMakeDeleteClientResponse,
+            'keycloakAdminGroupResponse' => $keycloakMakeDeleteAdminGroupResponse,
+            'keycloakUserGroupResponse' => NULL,
+          ],
+          'success' => FALSE,
+          'error' => NULL,
+          'statusCode' => $keycloakMakeDeleteAdminGroupResponse['statusCode'],
+        ];
+      }
+
+      // Delete the user group in keycloak.
+      $keycloakBuildDeleteUserGroupRequest = $this->sodaScsKeycloakServiceGroupActions->buildDeleteRequest([
+        'groupId' => $component->get('keycloakUserGroup')->value,
+        'token' => $keycloakToken,
+      ]);
+      $keycloakMakeDeleteUserGroupResponse = $this->sodaScsKeycloakServiceGroupActions->makeRequest($keycloakBuildDeleteUserGroupRequest);
+
+      if (!$keycloakMakeDeleteUserGroupResponse['success']) {
+        return [
+          'message' => 'Cannot delete WissKI component user group at keycloak.',
+          'data' => [
+            'portainerResponse' => $requestResult,
+            'keycloakClientResponse' => $keycloakMakeDeleteClientResponse,
+            'keycloakAdminGroupResponse' => $keycloakMakeDeleteAdminGroupResponse,
+            'keycloakUserGroupResponse' => $keycloakMakeDeleteUserGroupResponse,
+          ],
+          'success' => FALSE,
+          'error' => NULL,
+          'statusCode' => $keycloakMakeDeleteUserGroupResponse['statusCode'],
+        ];
+      }
+
+      // Delete the component.
       $component->delete();
 
       return [
         'message' => 'Deleted WissKI component.',
         'data' => [
           'portainerResponse' => $requestResult,
+          'keycloakClientResponse' => $keycloakMakeDeleteClientResponse,
+          'keycloakAdminGroupResponse' => $keycloakMakeDeleteAdminGroupResponse,
+          'keycloakUserGroupResponse' => $keycloakMakeDeleteUserGroupResponse,
         ],
         'success' => TRUE,
         'error' => NULL,
@@ -779,6 +881,9 @@ class SodaScsWisskiComponentActions implements SodaScsComponentActionsInterface 
         'message' => 'Cannot delete WissKI component.',
         'data' => [
           'portainerResponse' => NULL,
+          'keycloakClientResponse' => NULL,
+          'keycloakAdminGroupResponse' => NULL,
+          'keycloakUserGroupResponse' => NULL,
         ],
         'success' => FALSE,
         'error' => $e->getMessage(),

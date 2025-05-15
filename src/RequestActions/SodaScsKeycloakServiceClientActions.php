@@ -239,7 +239,7 @@ class SodaScsKeycloakServiceClientActions implements SodaScsServiceRequestInterf
     // Build the route.
     $route =
       // Host route.
-      $keycloakGeneralSettings['hostRoute'] .
+      $keycloakGeneralSettings['host'] .
       // Base URL.
       $keycloakClientsSettings['baseUrl'] .
       // Read all URL.
@@ -290,7 +290,7 @@ class SodaScsKeycloakServiceClientActions implements SodaScsServiceRequestInterf
     // Build the route.
     $route =
       // Host route.
-      $keycloakGeneralSettings['hostRoute'] .
+      $keycloakGeneralSettings['host'] .
       // Base URL.
       $keycloakClientsSettings['baseUrl'] .
       // Read one URL.
@@ -339,7 +339,7 @@ class SodaScsKeycloakServiceClientActions implements SodaScsServiceRequestInterf
     // Build the route.
     $route =
       // Host route.
-      $keycloakGeneralSettings['hostRoute'] .
+      $keycloakGeneralSettings['host'] .
       // Base URL.
       $keycloakClientsSettings['baseUrl'] .
       // Health check URL.
@@ -381,7 +381,7 @@ class SodaScsKeycloakServiceClientActions implements SodaScsServiceRequestInterf
     // Build the route.
     $route =
       // Host route.
-      $keycloakGeneralSettings['hostRoute'] .
+      $keycloakGeneralSettings['host'] .
       // Base URL.
       $keycloakClientsSettings['baseUrl'] .
       // Update URL.
@@ -436,7 +436,7 @@ class SodaScsKeycloakServiceClientActions implements SodaScsServiceRequestInterf
     // Build the route.
     $route =
       // Host route.
-      $keycloakGeneralSettings['hostRoute'] .
+      $keycloakGeneralSettings['host'] .
       // Base URL.
       $keycloakClientsSettings['baseUrl'] .
       // Delete URL.

@@ -215,50 +215,28 @@ class SodaScsKeycloakServiceGroupActions implements SodaScsServiceRequestInterfa
   public function buildGetAllRequest(array $requestParams): array {
     $keycloakGeneralSettings = $this->sodaScsServiceHelpers->initKeycloakGeneralSettings();
     $keycloakGroupsSettings = $this->sodaScsServiceHelpers->initKeycloakGroupsSettings();
-    $keycloakUsersSettings = $this->sodaScsServiceHelpers->initKeycloakUsersSettings();
+    // Build the route.
+    $route =
+      // Host route.
+      $keycloakGeneralSettings['host'] .
+      // Base URL.
+      str_replace('{realm}', $keycloakGeneralSettings['realm'], $keycloakGroupsSettings['baseUrl']) .
+      // Get all URL.
+      $keycloakGroupsSettings['readAllUrl'];
 
-    if ($requestParams['type'] === 'of_groups') {
-      // Build the route.
-      $route =
-        // Host route.
-        $keycloakGeneralSettings['host'] .
-        // Base URL.
-        str_replace('{realm}', $keycloakGeneralSettings['realm'], $keycloakGroupsSettings['baseUrl']) .
-        // Get all URL.
-        $keycloakGroupsSettings['readAllUrl'];
-
-      // Replace any route parameters.
-      if (!empty($requestParams['routeParams'])) {
-        foreach ($requestParams['routeParams'] as $key => $value) {
-          $route = str_replace('{' . $key . '}', $value, $route);
-        }
-      }
-
-      // Add query parameters if they exist.
-      if (!empty($requestParams['queryParams'])) {
-        $route .= '?' . http_build_query($requestParams['queryParams']);
+    // Replace any route parameters.
+    if (!empty($requestParams['routeParams'])) {
+      foreach ($requestParams['routeParams'] as $key => $value) {
+        $route = str_replace('{' . $key . '}', $value, $route);
       }
     }
-    elseif ($requestParams['type'] === 'of_users') {
-      // Build the route.
-      $route =
-        // Host route.
-        $keycloakGeneralSettings['host'] .
-        // Base URL.
-        str_replace('{realm}', $keycloakGeneralSettings['realm'], $keycloakUsersSettings['baseUrl']) .
-        // Get all URL.
-        $keycloakUsersSettings['getGroupsUrl'];
 
-      // Replace any route parameters.
-      if (!empty($requestParams['routeParams'])) {
-        foreach ($requestParams['routeParams'] as $key => $value) {
-          $route = str_replace('{' . $key . '}', $value, $route);
-        }
-      }
+    // Add query parameters if they exist.
+    if (!empty($requestParams['queryParams'])) {
+      $route .= '?' . http_build_query($requestParams['queryParams']);
     }
 
     return [
-      'type' => $requestParams['type'] ?? 'users',
       'success' => TRUE,
       'method' => 'GET',
       'route' => $route,

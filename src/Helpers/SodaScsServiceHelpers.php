@@ -306,6 +306,9 @@ class SodaScsServiceHelpers {
     $keycloakSettings['updateUrl'] = $this->settings->get('keycloak.routes.users.crud.updateUrl');
     $keycloakSettings['deleteUrl'] = $this->settings->get('keycloak.routes.users.crud.deleteUrl');
     $keycloakSettings['getGroupsUrl'] = $this->settings->get('keycloak.routes.users.crud.getGroupsUrl');
+    $keycloakSettings['updateGroupsUrl'] = $this->settings->get('keycloak.routes.users.crud.updateGroupsUrl');
+    $keycloakSettings['deleteGroupsUrl'] = $this->settings->get('keycloak.routes.users.crud.deleteGroupsUrl');
+
     $this->checkSettings($keycloakSettings);
 
     return $keycloakSettings;

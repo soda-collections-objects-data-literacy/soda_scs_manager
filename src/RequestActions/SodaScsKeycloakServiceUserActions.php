@@ -184,14 +184,28 @@ class SodaScsKeycloakServiceUserActions implements SodaScsServiceRequestInterfac
     $keycloakGeneralSettings = $this->sodaScsServiceHelpers->initKeycloakGeneralSettings();
     $keycloakUsersSettings = $this->sodaScsServiceHelpers->initKeycloakUsersSettings();
 
+    $type = $requestParams['type'] ?? 'user';
+
     // Build the route.
     $route =
       // Host route.
       $keycloakGeneralSettings['host'] .
       // Base URL.
-      str_replace('{realm}', $keycloakGeneralSettings['realm'], $keycloakUsersSettings['baseUrl']) .
-      // Get all URL.
-      $keycloakUsersSettings['readAllUrl'];
+      str_replace('{realm}', $keycloakGeneralSettings['realm'], $keycloakUsersSettings['baseUrl']);
+
+    // ...of all groups of a user.
+    if ($type === 'group') {
+      $route .=
+        // Get all URL.
+        $keycloakUsersSettings['readAllGroupsUrl'];
+    }
+
+    // ...of all users.
+    else {
+      $route .=
+        // Get all URL.
+        $keycloakUsersSettings['readAllUrl'];
+    }
 
     // Replace any route parameters.
     if (!empty($requestParams['routeParams'])) {
@@ -206,7 +220,7 @@ class SodaScsKeycloakServiceUserActions implements SodaScsServiceRequestInterfac
     }
 
     return [
-      'type' => $requestParams['type'] ?? 'users',
+      'type' => $type,
       'success' => TRUE,
       'method' => 'GET',
       'route' => $route,
@@ -379,14 +393,28 @@ class SodaScsKeycloakServiceUserActions implements SodaScsServiceRequestInterfac
     $keycloakGeneralSettings = $this->sodaScsServiceHelpers->initKeycloakGeneralSettings();
     $keycloakUsersSettings = $this->sodaScsServiceHelpers->initKeycloakUsersSettings();
 
+    $type = $requestParams['type'] ?? 'user';
+
     // Build the route.
     $route =
       // Host route.
       $keycloakGeneralSettings['host'] .
       // Base URL.
-      str_replace('{realm}', $keycloakGeneralSettings['realm'], $keycloakUsersSettings['baseUrl']) .
-      // Update URL.
-      $keycloakUsersSettings['updateUrl'];
+        str_replace('{realm}', $keycloakGeneralSettings['realm'], $keycloakUsersSettings['baseUrl']);
+
+    if ($type === 'group') {
+      $route .=
+        // Update URL.
+        $keycloakUsersSettings['updateGroupsUrl'];
+
+    }
+
+    else {
+      $route .=
+        // Update URL.
+        $keycloakUsersSettings['updateUrl'];
+
+    }
 
     // Replace any route parameters.
     if (!empty($requestParams['routeParams'])) {
@@ -404,7 +432,7 @@ class SodaScsKeycloakServiceUserActions implements SodaScsServiceRequestInterfac
     }
 
     return [
-      'type' => $requestParams['type'] ?? 'user',
+      'type' => $type,
       'success' => TRUE,
       'method' => 'PUT',
       'route' => $route,
