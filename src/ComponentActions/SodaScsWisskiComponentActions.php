@@ -358,9 +358,9 @@ class SodaScsWisskiComponentActions implements SodaScsComponentActionsInterface 
         'name' => $entity->get('label')->value,
         'description' => 'Change me',
         'token' => $keycloakToken,
-        'rootUrl' => 'https://' . $machineName . '.scs.sammlungen.io',
-        'adminUrl' => 'https://' . $machineName . '.scs.sammlungen.io',
-        'logoutUrl' => 'https://' . $machineName . '.scs.sammlungen.io/logout',
+        'rootUrl' => 'https://' . $machineName . '.wisski.scs.sammlungen.io',
+        'adminUrl' => 'https://' . $machineName . '.wisski.scs.sammlungen.io',
+        'logoutUrl' => 'https://' . $machineName . '.wisski.scs.sammlungen.io/logout',
         // @todo Use secret from service key.
         'secret' => $openidConnectClientSecret,
       ]);
