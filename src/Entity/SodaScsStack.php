@@ -216,7 +216,7 @@ class SodaScsStack extends ContentEntityBase implements SodaScsStackInterface {
       ->setLabel(new TranslatableMarkup('Machine Name'))
       ->setDescription(new TranslatableMarkup('The machine-readable name.'))
       ->setRequired(TRUE)
-      ->setSetting('max_length', 32)
+      ->setSetting('max_length', 255)
       ->setDisplayOptions('form', [
         'type' => 'string_textfield',
         'weight' => 15,
