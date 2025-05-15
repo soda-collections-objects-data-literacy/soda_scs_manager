@@ -267,7 +267,7 @@ class SodaScsComponent extends ContentEntityBase implements SodaScsComponentInte
       ->setLabel(new TranslatableMarkup('Machine Name'))
       ->setDescription(new TranslatableMarkup('The machine-readable name of the project.'))
       ->setRequired(TRUE)
-      ->setSetting('max_length', 32)
+      ->setSetting('max_length', 255)
       ->setDisplayOptions('form', [
         'type' => 'string_textfield',
         'weight' => 15,
