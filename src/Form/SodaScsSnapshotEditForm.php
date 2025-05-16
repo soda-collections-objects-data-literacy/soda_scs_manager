@@ -2,10 +2,15 @@
 
 namespace Drupal\soda_scs_manager\Form;
 
+use Drupal\Component\Datetime\TimeInterface;
 use Drupal\Core\Entity\ContentEntityForm;
+use Drupal\Core\Entity\EntityRepositoryInterface;
+use Drupal\Core\Entity\EntityTypeBundleInfoInterface;
+use Drupal\Core\Entity\EntityTypeManagerInterface;
 use Drupal\Core\Form\FormStateInterface;
 use Drupal\Core\StringTranslation\StringTranslationTrait;
 use Drupal\user\EntityOwnerTrait;
+use Symfony\Component\DependencyInjection\ContainerInterface;
 
 /**
  * Form controller for the snapshot entity create/edit forms.
@@ -14,6 +19,26 @@ class SodaScsSnapshotEditForm extends ContentEntityForm {
 
   use StringTranslationTrait;
   use EntityOwnerTrait;
+
+  /**
+   * {@inheritdoc}
+   */
+  public function __construct(EntityRepositoryInterface $entity_repository, EntityTypeBundleInfoInterface $entity_type_bundle_info, TimeInterface $time, EntityTypeManagerInterface $entity_type_manager) {
+    parent::__construct($entity_repository, $entity_type_bundle_info, $time);
+    $this->entityTypeManager = $entity_type_manager;
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public static function create(ContainerInterface $container) {
+    return new static(
+      $container->get('entity.repository'),
+      $container->get('entity_type.bundle.info'),
+      $container->get('datetime.time'),
+      $container->get('entity_type.manager')
+    );
+  }
 
   /**
    * {@inheritdoc}
@@ -55,7 +80,7 @@ class SodaScsSnapshotEditForm extends ContentEntityForm {
         $entity = $element['widget'][0]['target_id']['#default_value'];
         $form[$key]['widget']['#access'] = FALSE;
         if ($entity) {
-          $entity = \Drupal::entityTypeManager()->getStorage($element['widget'][0]['target_id']['#target_type'])->load($entity->id());
+          $entity = $this->entityTypeManager->getStorage($element['widget'][0]['target_id']['#target_type'])->load($entity->id());
           $form[$key]['#type'] = 'item';
           $form[$key]['#title'] = $form[$key]['widget']['#title'];
           $form[$key]['#description'] = $form[$key]['widget']['#description'];

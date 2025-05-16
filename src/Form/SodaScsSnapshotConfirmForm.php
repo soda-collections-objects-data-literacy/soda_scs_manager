@@ -173,7 +173,6 @@ class SodaScsSnapshotConfirmForm extends ConfirmFormBase {
         return;
     }
 
-
     if (!$createSnapshotResult['success']) {
       $this->messenger()->addError($this->t('Failed to create snapshot. See logs for more details.'));
       $error = $createSnapshotResult['error'];
@@ -191,6 +190,9 @@ class SodaScsSnapshotConfirmForm extends ConfirmFormBase {
     $snapshot = SodaScsSnapshot::create([
       'label' => $values['label'],
       'owner' => \Drupal::currentUser()->id(),
+      'langcode' => 'en',
+      'changed' => time(),
+      'created' => time(),
     ]);
 
     if ($this->entityType === 'soda_scs_stack') {
