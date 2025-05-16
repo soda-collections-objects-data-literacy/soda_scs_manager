@@ -63,6 +63,27 @@ class SodaScsProjectCreateForm extends ContentEntityForm {
   protected SodaScsServiceRequestInterface $sodaScsDockerRegistryServiceActions;
 
   /**
+   * The Soda SCS Keycloak Service Client Actions service.
+   *
+   * @var \Drupal\soda_scs_manager\RequestActions\SodaScsServiceRequestInterface
+   */
+  protected SodaScsServiceRequestInterface $sodaScsKeycloakServiceClientActions;
+
+  /**
+   * The Soda SCS Keycloak Service Group Actions service.
+   *
+   * @var \Drupal\soda_scs_manager\RequestActions\SodaScsServiceRequestInterface
+   */
+  protected SodaScsServiceRequestInterface $sodaScsKeycloakServiceGroupActions;
+
+  /**
+   * The Soda SCS Keycloak Service User Actions service.
+   *
+   * @var \Drupal\soda_scs_manager\RequestActions\SodaScsServiceRequestInterface
+   */
+  protected SodaScsServiceRequestInterface $sodaScsKeycloakServiceUserActions;
+
+  /**
    * The Soda SCS API Actions service.
    *
    * @var \Drupal\soda_scs_manager\ComponentActions\SodaScsComponentActionsInterface
@@ -81,37 +102,49 @@ class SodaScsProjectCreateForm extends ContentEntityForm {
    *
    * @param \Drupal\Core\Session\AccountProxyInterface $currentUser
    *   The current user.
-   * @param Drupal\Core\Entity\EntityRepositoryInterface $entity_repository
-   *   The entity repository.
-   * @param Drupal\Core\Entity\EntityTypeBundleInfoInterface $entity_type_bundle_info
-   *   The entity type bundle info.
    * @param \Drupal\Core\Config\ConfigFactoryInterface $configFactory
    *   The config factory.
-   * @param \Drupal\Component\Datetime\TimeInterface $time
-   *   The time service.
-   * @param \Drupal\soda_scs_manager\RequestActions\SodaScsServiceRequestInterface $sodaScsDockerRegistryServiceActions
-   *   The Soda SCS API Actions service.
-   * @param \Drupal\soda_scs_manager\ComponentActions\SodaScsComponentActionsInterface $sodaScsComponentActions
-   *   The Soda SCS API Actions service.
+   * @param \Drupal\Core\Entity\EntityRepositoryInterface $entity_repository
+   *   The entity repository.
+   * @param \Drupal\Core\Entity\EntityTypeBundleInfoInterface $entity_type_bundle_info
+   *   The entity type bundle info.
    * @param \Drupal\Core\Entity\EntityTypeManagerInterface $entityTypeManager
    *   The entity type manager.
+   * @param \Drupal\soda_scs_manager\ComponentActions\SodaScsComponentActionsInterface $sodaScsComponentActions
+   *   The Soda SCS API Actions service.
+   * @param \Drupal\soda_scs_manager\RequestActions\SodaScsServiceRequestInterface $sodaScsDockerRegistryServiceActions
+   *   The Soda SCS API Actions service.
+   * @param \Drupal\soda_scs_manager\RequestActions\SodaScsServiceRequestInterface $sodaScsKeycloakServiceClientActions
+   *   The Soda SCS API Actions service.
+   * @param \Drupal\soda_scs_manager\RequestActions\SodaScsServiceRequestInterface $sodaScsKeycloakServiceGroupActions
+   *   The Soda SCS API Actions service.
+   * @param \Drupal\soda_scs_manager\RequestActions\SodaScsServiceRequestInterface $sodaScsKeycloakServiceUserActions
+   *   The Soda SCS API Actions service.
+   * @param \Drupal\Component\Datetime\TimeInterface $time
+   *   The time service.
    */
   public function __construct(
     AccountProxyInterface $currentUser,
+    ConfigFactoryInterface $configFactory,
     EntityRepositoryInterface $entity_repository,
     EntityTypeBundleInfoInterface $entity_type_bundle_info,
-    ConfigFactoryInterface $configFactory,
-    TimeInterface $time,
-    SodaScsServiceRequestInterface $sodaScsDockerRegistryServiceActions,
-    SodaScsComponentActionsInterface $sodaScsComponentActions,
     EntityTypeManagerInterface $entityTypeManager,
+    SodaScsComponentActionsInterface $sodaScsComponentActions,
+    SodaScsServiceRequestInterface $sodaScsDockerRegistryServiceActions,
+    SodaScsServiceRequestInterface $sodaScsKeycloakServiceClientActions,
+    SodaScsServiceRequestInterface $sodaScsKeycloakServiceGroupActions,
+    SodaScsServiceRequestInterface $sodaScsKeycloakServiceUserActions,
+    TimeInterface $time,
   ) {
     parent::__construct($entity_repository, $entity_type_bundle_info, $time);
     $this->currentUser = $currentUser;
-    $this->settings = $configFactory->getEditable('soda_scs_manager.settings');
-    $this->sodaScsDockerRegistryServiceActions = $sodaScsDockerRegistryServiceActions;
-    $this->sodaScsComponentActions = $sodaScsComponentActions;
     $this->entityTypeManager = $entityTypeManager;
+    $this->settings = $configFactory->getEditable('soda_scs_manager.settings');
+    $this->sodaScsComponentActions = $sodaScsComponentActions;
+    $this->sodaScsDockerRegistryServiceActions = $sodaScsDockerRegistryServiceActions;
+    $this->sodaScsKeycloakServiceClientActions = $sodaScsKeycloakServiceClientActions;
+    $this->sodaScsKeycloakServiceGroupActions = $sodaScsKeycloakServiceGroupActions;
+    $this->sodaScsKeycloakServiceUserActions = $sodaScsKeycloakServiceUserActions;
   }
 
   /**
@@ -120,13 +153,16 @@ class SodaScsProjectCreateForm extends ContentEntityForm {
   public static function create(ContainerInterface $container) {
     return new static(
       $container->get('current_user'),
+      $container->get('config.factory'),
       $container->get('entity.repository'),
       $container->get('entity_type.bundle.info'),
-      $container->get('config.factory'),
-      $container->get('datetime.time'),
-      $container->get('soda_scs_manager.docker_registry_service.actions'),
+      $container->get('entity_type.manager'),
       $container->get('soda_scs_manager.component.actions'),
-      $container->get('entity_type.manager')
+      $container->get('soda_scs_manager.docker_registry_service.actions'),
+      $container->get('soda_scs_manager.keycloak_service.client.actions'),
+      $container->get('soda_scs_manager.keycloak_service.group.actions'),
+      $container->get('soda_scs_manager.keycloak_service.user.actions'),
+      $container->get('datetime.time'),
     );
   }
 
@@ -214,7 +250,80 @@ class SodaScsProjectCreateForm extends ContentEntityForm {
    * {@inheritdoc}
    */
   public function submitForm(array &$form, FormStateInterface $form_state) {
-    parent::submitForm($form, $form_state);
+    #parent::submitForm($form, $form_state);
+
+    /* @todo Move this to a separate service. */
+    foreach ($form_state->getValue('connectedComponents') as $componentId) {
+      $component = $this->entityTypeManager->getStorage('soda_scs_component')->load($componentId['target_id']);
+      switch ($component->bundle()) {
+        case 'soda_scs_wisski_component':
+          $wisskiComponent = $component;
+          $wisskiMachineName = $wisskiComponent->machineName->value;
+          // Add group to keycloak user.
+          $keycloakBuildTokenRequest = $this->sodaScsKeycloakServiceClientActions->buildTokenRequest([]);
+          $keycloakMakeTokenRequest = $this->sodaScsKeycloakServiceClientActions->makeRequest($keycloakBuildTokenRequest);
+          if (!$keycloakMakeTokenRequest['success']) {
+            throw new \Exception('Keycloak token request failed.');
+          }
+          $keycloakTokenResponseContents = json_decode($keycloakMakeTokenRequest['data']['keycloakResponse']->getBody()->getContents(), TRUE);
+          $keycloakToken = $keycloakTokenResponseContents['access_token'];
+
+          $keycloakWisskiInstanceUserGroupName = $wisskiMachineName . '-user';
+
+          // Get all groups from Keycloak for group ids.
+          $keycloakBuildGetAllGroupsRequest = $this->sodaScsKeycloakServiceGroupActions->buildGetAllRequest([
+            'token' => $keycloakToken,
+          ]);
+          $keycloakMakeGetAllGroupsResponse = $this->sodaScsKeycloakServiceGroupActions->makeRequest($keycloakBuildGetAllGroupsRequest);
+
+          if ($keycloakMakeGetAllGroupsResponse['success']) {
+            $keycloakGroups = json_decode($keycloakMakeGetAllGroupsResponse['data']['keycloakResponse']->getBody()->getContents(), TRUE);
+            // Get the admin group id of the WissKI instance.
+            $keycloakWisskiInstanceUserGroup = array_filter($keycloakGroups, function ($group) use ($keycloakWisskiInstanceUserGroupName) {
+              return $group['name'] === $keycloakWisskiInstanceUserGroupName;
+            });
+            $keycloakWisskiInstanceAdminGroup = reset($keycloakWisskiInstanceUserGroup);
+          }
+
+          // Set up parameters to search for the keycloak user.
+          $getUserParams = [
+            'token' => $keycloakToken,
+            'queryParams' => [
+              'username' => $wisskiComponent->getOwner()->getDisplayName(),
+            ],
+          ];
+
+          // Get the user from Keycloak via getAllUsers,
+          // because wie do not have the uuid, but only the username.
+          $getAllUsersRequest = $this->sodaScsKeycloakServiceUserActions->buildGetAllRequest($getUserParams);
+          $getAllUsersResponse = $this->sodaScsKeycloakServiceUserActions->makeRequest($getAllUsersRequest);
+
+          if ($getAllUsersResponse['success']) {
+            $allUserData = json_decode($getAllUsersResponse['data']['keycloakResponse']->getBody()->getContents(), TRUE);
+
+            // Extract the UUID if user is found.
+            if (!empty($allUserData) && is_array($allUserData) && count($allUserData) > 0) {
+              $userData = $allUserData[0];
+            }
+          }
+
+          // Add user to admin group.
+          $keycloakBuildAddUserToGroupRequest = $this->sodaScsKeycloakServiceUserActions->buildUpdateRequest([
+            'type' => 'group',
+            'routeParams' => [
+              'userId' => $userData['id'],
+              'groupId' => $keycloakWisskiInstanceAdminGroup['id'],
+            ],
+            'token' => $keycloakToken,
+          ]);
+          $keycloakMakeAddUserToGroupRequest = $this->sodaScsKeycloakServiceUserActions->makeRequest($keycloakBuildAddUserToGroupRequest);
+
+          if (!$keycloakMakeAddUserToGroupRequest['success']) {
+            throw new \Exception('Keycloak add user to admin group request failed: ' . $keycloakMakeAddUserToGroupRequest['error']);
+          }
+          break;
+      }
+    }
 
     $form_state->setRedirect('entity.soda_scs_project.collection');
 
