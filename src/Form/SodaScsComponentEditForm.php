@@ -39,6 +39,18 @@ class SodaScsComponentEditForm extends ContentEntityForm {
   }
 
   /**
+   * Cancel form submission handler.
+   *
+   * @param array $form
+   *   The form array.
+   * @param \Drupal\Core\Form\FormStateInterface $form_state
+   *   The form state.
+   */
+  public function cancelForm(array &$form, FormStateInterface $form_state) {
+    $form_state->setRedirect('soda_scs_manager.desk');
+  }
+
+  /**
    * {@inheritdoc}
    */
   public function buildForm(array $form, FormStateInterface $form_state) {
@@ -50,9 +62,9 @@ class SodaScsComponentEditForm extends ContentEntityForm {
     // Hide the flavours field.
     $form['flavours']['#access'] = FALSE;
 
-    // Make the machine name field read-only
+    // Make the machine name field read-only.
     if (isset($form['machineName'])) {
-      // Hide the original widget and show plain text instead
+      // Hide the original widget and show plain text instead.
       $form['machineName']['#access'] = FALSE;
       $form['machineName_display'] = [
         '#type' => 'item',
@@ -63,13 +75,13 @@ class SodaScsComponentEditForm extends ContentEntityForm {
     }
 
     if (isset($form['owner'])) {
-      // Get the current owner label
+      // Get the current owner label.
       $owner_name = $this->t('Unknown');
 
-      // Get the field definitions to check if owner field exists
+      // Get the field definitions to check if owner field exists.
       $field_definitions = $component->getFieldDefinitions();
       if (isset($field_definitions['owner'])) {
-        // Get owner entity reference from the entity
+        // Get owner entity reference from the entity.
         $owner_items = $component->get('owner');
         if (!$owner_items->isEmpty()) {
           $owner_entity = $owner_items->entity;
@@ -78,7 +90,7 @@ class SodaScsComponentEditForm extends ContentEntityForm {
           }
         }
 
-        // Hide the original widget and show plain text instead
+        // Hide the original widget and show plain text instead.
         $form['owner']['#access'] = FALSE;
         $form['owner_display'] = [
           '#type' => 'item',
@@ -90,6 +102,15 @@ class SodaScsComponentEditForm extends ContentEntityForm {
     }
 
     $form['#attached']['library'][] = 'soda_scs_manager/globalStyling';
+    $form['actions']['cancel'] = [
+      '#type' => 'submit',
+      '#value' => $this->t('Cancel'),
+      '#weight' => 10,
+      '#submit' => ['::cancelForm'],
+      '#attributes' => [
+        'class' => ['button', 'button--secondary', 'button--cancel'],
+      ],
+    ];
     $form['actions']['delete'] = [];
 
     return $form;
