@@ -73,8 +73,12 @@ class SodaScsSnapshotConfirmForm extends ConfirmFormBase {
    *
    * @param \Drupal\Core\Entity\EntityTypeManagerInterface $entity_type_manager
    *   The entity type manager.
+   * @param \Drupal\soda_scs_manager\ComponentActions\SodaScsComponentActionsInterface $sodaScsSqlComponentActions
+   *   The Soda SCS SQL Component Actions.
+   * @param \Drupal\soda_scs_manager\ComponentActions\SodaScsComponentActionsInterface $sodaScsTripleStoreComponentActions
+   *   The Soda SCS Triple Store Component Actions.
    * @param \Drupal\soda_scs_manager\ComponentActions\SodaScsComponentActionsInterface $sodaScsWisskiComponentActions
-   *   The Soda SCS Component Actions.
+   *   The Soda SCS WissKI Component Actions.
    * @param \Drupal\Core\Logger\LoggerChannelFactoryInterface $logger_factory
    *   The logger factory.
    */
@@ -83,7 +87,6 @@ class SodaScsSnapshotConfirmForm extends ConfirmFormBase {
     SodaScsComponentActionsInterface $sodaScsSqlComponentActions,
     SodaScsComponentActionsInterface $sodaScsTripleStoreComponentActions,
     SodaScsComponentActionsInterface $sodaScsWisskiComponentActions,
-
     LoggerChannelFactoryInterface $logger_factory,
   ) {
     $this->entityTypeManager = $entity_type_manager;
@@ -162,12 +165,15 @@ class SodaScsSnapshotConfirmForm extends ConfirmFormBase {
       case 'soda_scs_sql_component':
         $createSnapshotResult = $this->sodaScsSqlComponentActions->createSnapshot($this->entity);
         break;
-      case 'soda_scs_triple_store_component':
+
+      case 'soda_scs_triplestore_component':
         $createSnapshotResult = $this->sodaScsTripleStoreComponentActions->createSnapshot($this->entity);
         break;
+
       case 'soda_scs_wisski_component':
         $createSnapshotResult = $this->sodaScsWisskiComponentActions->createSnapshot($this->entity);
         break;
+
       default:
         $this->messenger()->addError($this->t('Failed to create snapshot. Unknown component type.'));
         return;
@@ -193,6 +199,7 @@ class SodaScsSnapshotConfirmForm extends ConfirmFormBase {
       'langcode' => 'en',
       'changed' => time(),
       'created' => time(),
+      'file' => $createSnapshotResult['data']['file']->id(),
     ]);
 
     if ($this->entityType === 'soda_scs_stack') {
@@ -212,7 +219,7 @@ class SodaScsSnapshotConfirmForm extends ConfirmFormBase {
       '%label' => $snapshot->label(),
     ]));
 
-    // Set the redirect URL correctly
+    // Set the redirect URL correctly.
     $cancelUrl = $this->getCancelUrl();
     $form_state->setRedirectUrl($cancelUrl);
   }
@@ -232,7 +239,7 @@ class SodaScsSnapshotConfirmForm extends ConfirmFormBase {
    */
   public function getCancelUrl() {
     if ($this->entityType === 'soda_scs_stack') {
-      return \Drupal\Core\Url::fromRoute('entity.soda_scs_stack.canonical', [
+      return Url::fromRoute('entity.soda_scs_stack.canonical', [
         'bundle' => $this->entity->bundle(),
         'soda_scs_stack' => $this->entity->id(),
       ]);

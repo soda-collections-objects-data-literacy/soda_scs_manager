@@ -31,6 +31,7 @@ use Drupal\user\EntityOwnerTrait;
  *     "access" = "Drupal\Core\Entity\EntityAccessControlHandler",
  *     "form" = {
  *       "default" = "Drupal\soda_scs_manager\Form\SodaScsSnapshotCreateForm",
+ *       "edit" = "Drupal\soda_scs_manager\Form\SodaScsSnapshotEditForm",
  *       "add" = "Drupal\soda_scs_manager\Form\SodaScsSnapshotCreateForm",
  *       "delete" = "Drupal\soda_scs_manager\Form\SodaScsSnapshotDeleteForm",
  *     },
@@ -57,6 +58,18 @@ use Drupal\user\EntityOwnerTrait;
  *     "langcode" = "langcode",
  *     "owner" = "owner",
  *   },
+ *   config_export = {
+ *     "changed",
+ *     "checksum",
+ *     "created",
+ *     "id",
+ *     "label",
+ *     "langcode",
+ *     "owner",
+ *     "snapshotOfComponent",
+ *     "snapshotOfStack",
+ *     "uuid",
+ *   }
  * )
  */
 class SodaScsSnapshot extends ContentEntityBase implements SodaScsSnapshotInterface {
@@ -101,6 +114,22 @@ class SodaScsSnapshot extends ContentEntityBase implements SodaScsSnapshotInterf
         'label' => 'above',
         'type' => 'timestamp',
         'weight' => 40,
+      ]);
+
+    $fields['file'] = BaseFieldDefinition::create('file')
+      ->setLabel(new TranslatableMarkup('File'))
+      ->setDescription(new TranslatableMarkup('The file of the snapshot.'))
+      ->setRequired(TRUE)
+      ->setDisplayConfigurable('form', TRUE)
+      ->setDisplayOptions('form', [
+        'type' => 'file',
+        'weight' => 30,
+      ])
+      ->setDisplayConfigurable('view', TRUE)
+      ->setDisplayOptions('view', [
+        'label' => 'above',
+        'type' => 'file',
+        'weight' => 30,
       ]);
 
     $fields['label'] = BaseFieldDefinition::create('string')
@@ -247,6 +276,28 @@ class SodaScsSnapshot extends ContentEntityBase implements SodaScsSnapshotInterf
    */
   public function setChecksum($checksum) {
     $this->set('checksum', $checksum);
+    return $this;
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function getFile() {
+    if (!$this->get('file')->isEmpty()) {
+      return $this->get('file')->entity;
+    }
+    return NULL;
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function setFile($fid) {
+    $this->set('file', $fid);
+    if ($this->getFile()) {
+      $this->getFile()->setPermanent();
+      $this->getFile()->save();
+    }
     return $this;
   }
 

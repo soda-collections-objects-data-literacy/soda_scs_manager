@@ -65,6 +65,9 @@ class SodaScsSnapshotEditForm extends ContentEntityForm {
   public function buildForm(array $form, FormStateInterface $form_state) {
     $form = parent::buildForm($form, $form_state);
 
+    /** @var \Drupal\soda_scs_manager\Entity\SodaScsSnapshot $snapshot */
+    $snapshot = $this->entity;
+
     // Convert entity reference fields to links.
     foreach ($form as $key => $element) {
       if (is_array($element) &&
@@ -87,6 +90,18 @@ class SodaScsSnapshotEditForm extends ContentEntityForm {
           $form[$key]['#markup'] = $entity->toLink()->toString();
         }
       }
+      if ($key === 'file') {
+        $form[$key]['widget']['#access'] = FALSE;
+        if (!$snapshot->get('file')->isEmpty()) {
+          $file = $snapshot->getFile();
+          if ($file) {
+            $form[$key]['#type'] = 'item';
+            $form[$key]['#title'] = $form[$key]['widget'][0]['#title'];
+            $form[$key]['#description'] = $form[$key]['widget'][0]['#description'];
+            $form[$key]['#markup'] = $file->getFileUri();
+          }
+        }
+      }
     }
 
     $form['actions']['cancel'] = [
@@ -105,8 +120,20 @@ class SodaScsSnapshotEditForm extends ContentEntityForm {
    * {@inheritdoc}
    */
   public function save(array $form, FormStateInterface $form_state) {
-    $this->entity->save();
-    $form_state->setRedirectUrl($this->entity->toUrl('entity.soda_scs_snapshot.collection'));
+    /** @var \Drupal\soda_scs_manager\Entity\SodaScsSnapshot $snapshot */
+    $snapshot = $this->entity;
+
+    // Ensure the file is marked as permanent if it exists.
+    if (!$snapshot->get('file')->isEmpty()) {
+      $file = $snapshot->getFile();
+      if ($file) {
+        $file->setPermanent();
+        $file->save();
+      }
+    }
+
+    $snapshot->save();
+    $form_state->setRedirectUrl($snapshot->toUrl('collection'));
   }
 
 }

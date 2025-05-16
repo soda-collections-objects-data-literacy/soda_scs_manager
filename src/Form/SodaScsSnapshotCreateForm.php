@@ -44,6 +44,16 @@ class SodaScsSnapshotCreateForm extends ContentEntityForm {
   public function save(array $form, FormStateInterface $form_state) {
     /** @var \Drupal\soda_scs_manager\Entity\SodaScsSnapshot $snapshot */
     $snapshot = $this->entity;
+
+    // Ensure the uploaded file is marked as permanent.
+    if (!$snapshot->get('file')->isEmpty()) {
+      $file = $snapshot->getFile();
+      if ($file) {
+        $file->setPermanent();
+        $file->save();
+      }
+    }
+
     $status = $snapshot->save();
     $messenger = \Drupal::messenger();
 

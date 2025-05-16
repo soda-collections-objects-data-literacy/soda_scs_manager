@@ -10,25 +10,28 @@ use Drupal\Core\Entity\EntityTypeManagerInterface;
 use Drupal\Core\Logger\LoggerChannelFactoryInterface;
 use Drupal\Core\Logger\LoggerChannelInterface;
 use Drupal\Core\Messenger\MessengerInterface;
-use Drupal\Core\StringTranslation\TranslationInterface;
 use Drupal\Core\StringTranslation\StringTranslationTrait;
+use Drupal\Core\StringTranslation\TranslationInterface;
 use Drupal\Core\TypedData\Exception\MissingDataException;
+use Drupal\Core\Utility\Error;
+use Drupal\file\Entity\File;
 use Drupal\soda_scs_manager\Entity\SodaScsComponentInterface;
 use Drupal\soda_scs_manager\Entity\SodaScsStackInterface;
 use Drupal\soda_scs_manager\Exception\SodaScsSqlServiceException;
 use Drupal\soda_scs_manager\Helpers\SodaScsComponentHelpers;
+use Drupal\soda_scs_manager\RequestActions\SodaScsDockerExecServiceActions;
 use Drupal\soda_scs_manager\ServiceActions\SodaScsServiceActionsInterface;
 use Drupal\soda_scs_manager\ServiceKeyActions\SodaScsServiceKeyActionsInterface;
+use Drupal\user\EntityOwnerTrait;
 use GuzzleHttp\ClientInterface;
 use Psr\Log\LogLevel;
-use Drupal\Core\Utility\Error;
-use Drupal\soda_scs_manager\RequestActions\SodaScsDockerExecServiceActions;
 
 /**
  * Handles the communication with the SCS user manager daemon.
  */
 class SodaScsSqlComponentActions implements SodaScsComponentActionsInterface {
 
+  use EntityOwnerTrait;
   use DependencySerializationTrait;
   use StringTranslationTrait;
 
@@ -376,7 +379,13 @@ class SodaScsSqlComponentActions implements SodaScsComponentActionsInterface {
       if (!$createContainerExecResponse['success']) {
         return [
           'message' => 'Create container exec request failed. Snapshot creation aborted..',
-          'data' => $createContainerExecResponse,
+          'data' => [
+            'createContainerExecResponse' => $createContainerExecResponse,
+            'metadata' => [
+              'snapshotName' => $snapshotName,
+              'backupPath' => $backupPath,
+            ],
+          ],
           'success' => FALSE,
           'error' => $createContainerExecResponse['error'],
           'statusCode' => $createContainerExecResponse['statusCode'],
@@ -393,18 +402,39 @@ class SodaScsSqlComponentActions implements SodaScsComponentActionsInterface {
       if (!$startContainerExecResponse['success']) {
         return [
           'message' => 'Start container exec request failed. Snapshot creation aborted..',
-          'data' => $startContainerExecResponse,
+          'data' => [
+            'startContainerExecResponse' => $startContainerExecResponse,
+            'metadata' => [
+              'snapshotName' => $snapshotName,
+              'backupPath' => $backupPath,
+            ],
+          ],
           'success' => FALSE,
           'error' => $startContainerExecResponse['error'],
           'statusCode' => $startContainerExecResponse['statusCode'],
         ];
       }
 
+      // Create file entity.
+      $file = File::create([
+        'uri' => $backupPath . '/' . $snapshotName,
+        'uid' => $component->getOwnerId(),
+        'status' => 1,
+        'filename' => $snapshotName,
+        'filemime' => 'application/x-sql',
+      ]);
+      $file->save();
+
       return [
         'message' => 'Snapshot created successfully.',
         'data' => [
           'createContainerExecResponse' => $createContainerExecResponse,
           'startContainerExecResponse' => $startContainerExecResponse,
+          'metadata' => [
+            'snapshotName' => $snapshotName,
+            'backupPath' => $backupPath,
+          ],
+          'file' => $file,
         ],
         'success' => TRUE,
         'error' => NULL,
