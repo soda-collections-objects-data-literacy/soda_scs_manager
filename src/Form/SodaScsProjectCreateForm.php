@@ -8,14 +8,13 @@ use Drupal\Core\Config\ConfigFactoryInterface;
 use Drupal\Core\Entity\ContentEntityForm;
 use Drupal\Core\Entity\EntityRepositoryInterface;
 use Drupal\Core\Entity\EntityTypeBundleInfoInterface;
+use Drupal\Core\Entity\EntityTypeManagerInterface;
 use Drupal\Core\Form\FormStateInterface;
 use Drupal\Core\Session\AccountProxyInterface;
 use Drupal\soda_scs_manager\ComponentActions\SodaScsComponentActionsInterface;
 use Drupal\soda_scs_manager\RequestActions\SodaScsServiceRequestInterface;
+use Drupal\user\EntityOwnerTrait;
 use Symfony\Component\DependencyInjection\ContainerInterface;
-use Drupal\Core\Entity\EntityTypeManagerInterface;
-use Drupal\Core\Entity\EntityTypeInterface;
-use Drupal\Core\Field\BaseFieldDefinition;
 
 /**
  * Form controller for the ScsComponent entity create form.
@@ -33,6 +32,7 @@ use Drupal\Core\Field\BaseFieldDefinition;
  */
 class SodaScsProjectCreateForm extends ContentEntityForm {
 
+  use EntityOwnerTrait;
 
   /**
    * The SODa SCS Component bundle.
@@ -148,7 +148,7 @@ class SodaScsProjectCreateForm extends ContentEntityForm {
     $form = parent::buildForm($form, $form_state);
 
     $form['owner']['widget']['#default_value'] = $this->currentUser->id();
-    if (!\Drupal::currentUser()->hasPermission('soda scs manager admin')) {
+    if (!$this->currentUser->hasPermission('soda scs manager admin')) {
       $form['owner']['#access'] = FALSE;
     }
 
@@ -159,14 +159,15 @@ class SodaScsProjectCreateForm extends ContentEntityForm {
       '#weight' => -10,
     ];
 
-    // Restrict connectedComponents field to only show components owned by the current user
-    // unless they have admin permission
+    // Restrict connectedComponents field to only
+    // show components owned by the current user
+    // unless they have admin permission.
     if (isset($form['connectedComponents'])) {
       $uid = $this->currentUser->id();
       $is_admin = $this->currentUser->hasPermission('soda scs manager admin');
 
       if (!$is_admin) {
-        // Modify the selection handler settings to only show user's components
+        // Modify the selection handler settings to only show user's components.
         $form['connectedComponents']['widget']['#selection_settings']['filter'] = [
           'owner' => $uid,
         ];
@@ -192,18 +193,12 @@ class SodaScsProjectCreateForm extends ContentEntityForm {
   /**
    * {@inheritdoc}
    */
-  public function save(array $form, FormStateInterface $form_state) {
-    parent::save($form, $form_state);
-  }
-
-  /**
-   * {@inheritdoc}
-   */
   public function validateForm(array &$form, FormStateInterface $form_state) {
     parent::validateForm($form, $form_state);
     // Check if a project with this machine name already exists.
     $machineName = $form_state->getValue('machineName')[0]['value'];
-    $query = \Drupal::entityQuery('soda_scs_project')
+    $query = $this->entityTypeManager->getStorage('soda_scs_project')
+      ->getQuery()
       ->condition('machineName', $machineName)
       ->accessCheck(FALSE);
     $entities = $query->execute();
