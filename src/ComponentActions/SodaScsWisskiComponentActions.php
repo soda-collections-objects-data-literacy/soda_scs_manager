@@ -439,6 +439,10 @@ class SodaScsWisskiComponentActions implements SodaScsComponentActionsInterface 
         }
       }
 
+      if (empty($userData)) {
+        throw new \Exception('Keycloak user not found.');
+      }
+
       // Add user to admin group.
       $keycloakBuildAddUserToGroupRequest = $this->sodaScsKeycloakServiceUserActions->buildUpdateRequest([
         'type' => 'group',
