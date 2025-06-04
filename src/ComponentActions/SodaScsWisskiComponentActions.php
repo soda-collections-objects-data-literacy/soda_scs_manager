@@ -788,10 +788,13 @@ class SodaScsWisskiComponentActions implements SodaScsComponentActionsInterface 
       $keycloakToken = $keycloakTokenResponseContents['access_token'];
 
       // Delete the client in keycloak.
-      $keycloakBuildDeleteClientRequest = $this->sodaScsKeycloakServiceClientActions->buildDeleteRequest([
-        'clientId' => $component->get('machineName')->value,
+      $deleteRequestParams = [
+        'routeParams' => [
+          'clientId' => $component->get('machineName')->value,
+        ],
         'token' => $keycloakToken,
-      ]);
+      ];
+      $keycloakBuildDeleteClientRequest = $this->sodaScsKeycloakServiceClientActions->buildDeleteRequest($deleteRequestParams);
       $keycloakMakeDeleteClientResponse = $this->sodaScsKeycloakServiceClientActions->makeRequest($keycloakBuildDeleteClientRequest);
 
       if (!$keycloakMakeDeleteClientResponse['success']) {
