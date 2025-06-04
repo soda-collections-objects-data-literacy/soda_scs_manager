@@ -427,7 +427,7 @@ class SodaScsWisskiComponentActions implements SodaScsComponentActionsInterface 
    * @return array
    *   Result information with the created snapshot.
    */
-  public function createSnapshot(SodaScsComponentInterface $component): array {
+  public function createSnapshot(SodaScsComponentInterface $component, string $label): array {
     try {
       $timestamp = time();
       $date = date('Y-m-d', $timestamp);

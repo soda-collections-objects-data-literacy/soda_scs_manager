@@ -176,10 +176,13 @@ class SodaScsComponentActions implements SodaScsComponentActionsInterface {
    * @param \Drupal\soda_scs_manager\Entity\SodaScsComponentInterface $component
    *   The component.
    *
+   * @param string $label
+   *   The label of the snapshot.
+   *
    * @return array
    *   The result of the request.
    */
-  public function createSnapshot(SodaScsComponentInterface $component): array {
+  public function createSnapshot(SodaScsComponentInterface $component, string $label): array {
     return [];
   }
 

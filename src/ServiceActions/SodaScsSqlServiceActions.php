@@ -236,6 +236,10 @@ class SodaScsSqlServiceActions implements SodaScsServiceActionsInterface {
     try {
       /** @var \Drupal\soda_scs_manager\Entity\SodaScsServiceKeyInterface $serviceKey */
       $serviceKey = $this->entityTypeManager->getStorage('soda_scs_service_key')->load($component->get('serviceKey')->target_id);
+      if (!$serviceKey) {
+        throw new \Exception($this->t("Service key not found for component @component.", [
+          '@component' => $component->get('machineName')->value]));
+      }
       $dbUserPassword = $serviceKey->get('servicePassword')->value;
     }
     catch (\Exception $e) {

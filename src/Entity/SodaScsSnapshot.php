@@ -103,6 +103,18 @@ class SodaScsSnapshot extends ContentEntityBase implements SodaScsSnapshotInterf
         'weight' => 40,
       ]);
 
+    $fields['snapshotFile'] = BaseFieldDefinition::create('file')
+      ->setLabel(new TranslatableMarkup('Snapshot File'))
+      ->setDescription(new TranslatableMarkup('The file of the snapshot.'))
+      ->setRequired(TRUE)
+      ->setDisplayConfigurable('form', FALSE)
+      ->setDisplayConfigurable('view', FALSE)
+      ->setDisplayOptions('view', [
+        'label' => 'above',
+        'type' => 'file',
+        'weight' => 30,
+      ]);
+
     $fields['label'] = BaseFieldDefinition::create('string')
       ->setLabel(new TranslatableMarkup('Label'))
       ->setDescription(new TranslatableMarkup('The label of the snapshot.'))

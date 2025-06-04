@@ -323,17 +323,19 @@ class SodaScsSqlComponentActions implements SodaScsComponentActionsInterface {
    * @return array
    *   Result information with the created snapshot.
    */
-  public function createSnapshot(SodaScsComponentInterface $component): array {
+  public function createSnapshot(SodaScsComponentInterface $component, string $label): array {
 
     try {
       $timestamp = time();
       $date = date('Y-m-d', $timestamp);
       $machineName = $component->get('machineName')->value;
       $snapshotName = $machineName . '--snapshot--' . $timestamp . '.sql';
-      $backupPath = '/var/scs-manager/snapshots/' . $component->getOwner()->getDisplayName() . '/' . $date . '/' . $machineName;
+      $backupRootDir = '/var/scs-manager/snapshots/' . $component->getOwner()->getDisplayName() . '/' . $date . '/' . $machineName;
+      $backupDir = $backupRootDir . '/' . $snapshotName;
+      $tarGzBackupDir = str_replace('sql', 'sql.tar.gz', $backupDir);
 
       // Create the backup directory.
-      $dirCreateResult = $this->sodaScsComponentHelpers->createDir($backupPath);
+      $dirCreateResult = $this->sodaScsComponentHelpers->createDir($backupRootDir);
       if (!$dirCreateResult['success']) {
         return $dirCreateResult;
       }
@@ -341,29 +343,12 @@ class SodaScsSqlComponentActions implements SodaScsComponentActionsInterface {
       // Get the database name.
       $dbName = $machineName;
 
-      // Get the database user.
-      $dbUserName = $component->getOwner()->getDisplayName();
-
-      // Get the database user password.
-      /** @var \Drupal\Core\Field\EntityReferenceFieldItemList $sqlServiceKeyItemlist */
-      $sqlServiceKeyItemlist = $component->get('serviceKey');
-      /** @var \Drupal\soda_scs_manager\Entity\SodaScsServiceKeyInterface $sqlServiceKey */
-      $sqlServiceKey = $sqlServiceKeyItemlist->referencedEntities()[0];
-
-      $dbUserPassword = $sqlServiceKey->get('servicePassword')->value;
-
       // Create and run the snapshot container.
       $requestParams = [
         'cmd' => [
-          'sh',
+          'bash',
           '-c',
-          sprintf(
-            'mysqldump -u %s -p%s %s > %s',
-            escapeshellarg($dbUserName),
-            escapeshellarg($dbUserPassword),
-            escapeshellarg($dbName),
-            escapeshellarg($backupPath . '/' . $snapshotName)
-          ),
+          '/var/scs-manager/scripts/database/db-snapshot.bash ' . $dbName . ' ' . $backupDir,
         ],
         'containerName' => 'database',
         'user' => '33',
@@ -400,10 +385,22 @@ class SodaScsSqlComponentActions implements SodaScsComponentActionsInterface {
         ];
       }
 
+      // Create the snapshot entity.
+      $snapshot = $this->entityTypeManager->getStorage('soda_scs_snapshot')->create([
+        'snapshotFile' => $tarGzBackupDir,
+        'label' => $label,
+        'owner' => $component->getOwner(),
+        'machineName' => $snapshotName,
+        'checksum' => $this->sodaScsComponentHelpers->getChecksum($backupDir),
+        'snapshotOfComponent' => $component->id(),
+      ]);
+
+
       return [
         'message' => 'Snapshot created successfully.',
         'data' => [
           'createContainerExecResponse' => $createContainerExecResponse,
+          'snapshot' => $snapshot,
           'startContainerExecResponse' => $startContainerExecResponse,
         ],
         'success' => TRUE,
@@ -412,6 +409,7 @@ class SodaScsSqlComponentActions implements SodaScsComponentActionsInterface {
       ];
     }
     catch (\Exception $e) {
+      $this->messenger->addError($this->t("Snapshot creation failed. See logs for more details."));
       Error::logException(
         $this->logger,
         $e,

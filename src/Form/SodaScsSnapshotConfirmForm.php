@@ -46,7 +46,7 @@ class SodaScsSnapshotConfirmForm extends ConfirmFormBase {
    */
   protected $sodaScsSqlComponentActions;
 
-  /**   
+  /**
    * The Soda SCS Triple Store Component Actions.
    *
    * @var \Drupal\soda_scs_manager\ComponentActions\SodaScsComponentActionsInterface
@@ -150,13 +150,13 @@ class SodaScsSnapshotConfirmForm extends ConfirmFormBase {
 
     switch ($this->entity->bundle()) {
       case 'soda_scs_sql_component':
-        $createSnapshotResult = $this->sodaScsSqlComponentActions->createSnapshot($this->entity);
+        $createSnapshotResult = $this->sodaScsSqlComponentActions->createSnapshot($this->entity, $values['label']);
         break;
       case 'soda_scs_triple_store_component':
-        $createSnapshotResult = $this->sodaScsTripleStoreComponentActions->createSnapshot($this->entity);
+        $createSnapshotResult = $this->sodaScsTripleStoreComponentActions->createSnapshot($this->entity, $values['label']);
         break;
       case 'soda_scs_wisski_component':
-        $createSnapshotResult = $this->sodaScsWisskiComponentActions->createSnapshot($this->entity);
+        $createSnapshotResult = $this->sodaScsWisskiComponentActions->createSnapshot($this->entity, $values['label']);
         break;
       default:
         $this->messenger()->addError($this->t('Failed to create snapshot. Unknown component type.'));
@@ -178,10 +178,7 @@ class SodaScsSnapshotConfirmForm extends ConfirmFormBase {
     }
 
     // Create the snapshot entity.
-    $snapshot = SodaScsSnapshot::create([
-      'label' => $values['label'],
-      'owner' => \Drupal::currentUser()->id(),
-    ]);
+    $snapshot = $createSnapshotResult['data']['snapshot'];
 
     if ($this->entityType === 'soda_scs_stack') {
       $snapshot->set('snapshotOfStack', $this->entity->id());
@@ -189,10 +186,6 @@ class SodaScsSnapshotConfirmForm extends ConfirmFormBase {
     else {
       $snapshot->set('snapshotOfComponent', $this->entity->id());
     }
-
-    // Generate checksum.
-    $checksum = md5(serialize($this->entity->toArray()));
-    $snapshot->set('checksum', $checksum);
 
     $snapshot->save();
 

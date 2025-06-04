@@ -31,7 +31,10 @@ interface SodaScsComponentActionsInterface {
    * Create SODa SCS Snapshot.
    *
    * @param \Drupal\soda_scs_manager\Entity\SodaScsComponentInterface $component
-   *   The SODa SCS Component.
+   *   The SODa SCS Component to create the snapshot from.
+   *
+   * @param string $label
+   *   The label of the snapshot.
    *
    * @return array{
    *   message: string,
@@ -42,7 +45,7 @@ interface SodaScsComponentActionsInterface {
    *   }
    *   Result information with the created snapshot.
    */
-  public function createSnapshot(SodaScsComponentInterface $component): array;
+  public function createSnapshot(SodaScsComponentInterface $component, string $label): array;
 
   /**
    * Get all SODa SCS Component.

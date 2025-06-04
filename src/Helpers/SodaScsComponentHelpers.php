@@ -273,6 +273,13 @@ class SodaScsComponentHelpers {
   }
 
   /**
+   * Get the checksum of a file.
+   */
+  public function getChecksum(string $path) {
+    return hash_file('sha256', $path);
+  }
+
+  /**
    * Check triplestore health.
    *
    * @param string $component

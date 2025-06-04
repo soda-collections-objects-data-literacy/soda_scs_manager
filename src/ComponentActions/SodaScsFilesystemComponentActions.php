@@ -481,7 +481,7 @@ class SodaScsFilesystemComponentActions implements SodaScsComponentActionsInterf
    * @return array
    *   Result information with the created snapshot.
    */
-  public function createSnapshot(SodaScsComponentInterface $component): array {
+  public function createSnapshot(SodaScsComponentInterface $component, string $label): array {
     return [];
   }
 
