@@ -9,23 +9,20 @@ use Drupal\Core\Logger\LoggerChannelFactoryInterface;
 use Drupal\Core\Messenger\MessengerInterface;
 use Drupal\Core\StringTranslation\StringTranslationTrait;
 use Drupal\Core\StringTranslation\TranslationInterface;
-use Drupal\Core\TypedData\Exception\MissingDataException;
 use GuzzleHttp\ClientInterface;
 use Symfony\Component\HttpFoundation\RequestStack;
-use Drupal\soda_scs_manager\RequestActions\SodaScsServiceRequestInterface;
-use GuzzleHttp\Exception\ClientException;
-use GuzzleHttp\Exception\GuzzleException;
-use Drupal\soda_scs_manager\Exception\SodaScsRequestException;
 use Drupal\soda_scs_manager\Helpers\SodaScsServiceHelpers;
 use Drupal\Core\Utility\Error;
 use Psr\Log\LogLevel;
 
 /**
- * Class SodaScsKeycloakServiceClientActions.
+ * Class SodaScsKeycloakServiceGroupActions.
  *
  * Implements actions for Keycloak service requests.
+ *
+ * @todo Kill redundant param replacement etc.
  */
-class SodaScsKeycloakServiceClientActions implements SodaScsServiceRequestInterface {
+class SodaScsKeycloakServiceGroupActions implements SodaScsServiceRequestInterface {
 
   use StringTranslationTrait;
 
@@ -86,7 +83,7 @@ class SodaScsKeycloakServiceClientActions implements SodaScsServiceRequestInterf
   protected SodaScsServiceHelpers $sodaScsServiceHelpers;
 
   /**
-   * Constructs a new SodaScsKeycloakServiceClientActions object.
+   * Constructs a new SodaScsKeycloakServiceGroupActions object.
    *
    * @param \Drupal\Core\Config\ConfigFactoryInterface $config_factory
    *   The config factory.
@@ -131,6 +128,25 @@ class SodaScsKeycloakServiceClientActions implements SodaScsServiceRequestInterf
    *
    * @param array $requestParams
    *   The request parameters.
+   *    routeParams:
+   *      realm (required) string: realm name (not id!)
+   *    body:
+   *      GroupRepresentation (required):
+   *        id (optional) string: group id.
+   *        name (required) string: group name.
+   *        path (required) string: group path.
+   *        parentId (optional) string: parent group id.
+   *        subGroupCount (optional) Long(int64): number of sub groups.
+   *        subGroups (optional) array
+   *          (List of GroupRepresentation): sub groups.
+   *        attributes (optional) array
+   *          (Map<string, List<string>>): attributes.
+   *        realmRoles (optional) array
+   *          (List<string>): realm roles.
+   *        clientRoles (optional) array
+   *          (Map<string, List<string>>): client roles.
+   *        access (optional) array
+   *          (Map<string, List<string>>): access.
    *
    * @return array
    *   The create request.
@@ -139,101 +155,7 @@ class SodaScsKeycloakServiceClientActions implements SodaScsServiceRequestInterf
    */
   public function buildCreateRequest(array $requestParams): array {
     $keycloakGeneralSettings = $this->sodaScsServiceHelpers->initKeycloakGeneralSettings();
-    $keycloakClientsSettings = $this->sodaScsServiceHelpers->initKeycloakClientsSettings();
-    $requestParams['routeParams']['realm'] = $keycloakGeneralSettings['realm'];
-
-    // Build the route.
-    $route = $keycloakGeneralSettings['host'] . $keycloakClientsSettings['baseUrl'] . $keycloakClientsSettings['createUrl'];
-
-    // Replace any route parameters.
-    if (!empty($requestParams['routeParams'])) {
-      foreach ($requestParams['routeParams'] as $key => $value) {
-        $route = str_replace('{' . $key . '}', $value, $route);
-      }
-    }
-
-    // Prepare the request body.
-    $body = [
-      "clientId" => $requestParams['clientId'],
-      "name" => $requestParams['name'],
-      "description" => $requestParams['description'],
-      "rootUrl" => $requestParams['rootUrl'],
-      "adminUrl" => $requestParams['adminUrl'],
-      "baseUrl" => "/",
-      "surrogateAuthRequired" => FALSE,
-      "enabled" => TRUE,
-      "alwaysDisplayInConsole" => FALSE,
-      "clientAuthenticatorType" => "client-secret",
-      "secret" => $requestParams['secret'],
-      "redirectUris" => [
-        "*",
-      ],
-      "webOrigins" => [
-        "*",
-      ],
-      "notBefore" => 0,
-      "bearerOnly" => FALSE,
-      "consentRequired" => FALSE,
-      "standardFlowEnabled" => TRUE,
-      "implicitFlowEnabled" => FALSE,
-      "directAccessGrantsEnabled" => FALSE,
-      "serviceAccountsEnabled" => FALSE,
-      "publicClient" => FALSE,
-      "frontchannelLogout" => FALSE,
-      "protocol" => "openid-connect",
-      "attributes" => [
-        "realm_client" => FALSE,
-      ],
-      "authenticationFlowBindingOverrides" => (object) [],
-      "fullScopeAllowed" => TRUE,
-      "nodeReRegistrationTimeout" => -1,
-      "defaultClientScopes" => [
-        "web-origins",
-        "acr",
-        "profile",
-        "roles",
-        "groups",
-        "basic",
-        "email",
-      ],
-      "optionalClientScopes" => [
-        "address",
-        "phone",
-        "offline_access",
-        "microprofile-jwt",
-      ],
-      "access" => [
-        "view" => TRUE,
-        "configure" => TRUE,
-        "manage" => TRUE,
-      ],
-    ];
-
-    return [
-      'success' => TRUE,
-      'method' => 'POST',
-      'route' => $route,
-      'headers' => [
-        'Content-Type' => 'application/json',
-        'Authorization' => 'Bearer ' . $requestParams['token'],
-      ],
-      'body' => json_encode($body),
-    ];
-  }
-
-  /**
-   * Builds the get all request for the Keycloak service API.
-   *
-   * @param array $requestParams
-   *   The request parameters.
-   *
-   * @return array
-   *   The read request.
-   */
-  public function buildGetAllRequest(array $requestParams): array {
-    $keycloakGeneralSettings = $this->sodaScsServiceHelpers->initKeycloakGeneralSettings();
-    $keycloakClientsSettings = $this->sodaScsServiceHelpers->initKeycloakClientsSettings();
-
+    $keycloakGroupsSettings = $this->sodaScsServiceHelpers->initKeycloakGroupsSettings();
     $requestParams['routeParams']['realm'] = $keycloakGeneralSettings['realm'];
 
     // Build the route.
@@ -241,9 +163,9 @@ class SodaScsKeycloakServiceClientActions implements SodaScsServiceRequestInterf
       // Host route.
       $keycloakGeneralSettings['host'] .
       // Base URL.
-      $keycloakClientsSettings['baseUrl'] .
-      // Read all URL.
-      $keycloakClientsSettings['readAllUrl'];
+      $keycloakGroupsSettings['baseUrl'] .
+      // Create URL.
+      $keycloakGroupsSettings['createUrl'];
 
     // Replace any route parameters.
     if (!empty($requestParams['routeParams'])) {
@@ -258,7 +180,63 @@ class SodaScsKeycloakServiceClientActions implements SodaScsServiceRequestInterf
     }
 
     return [
-      'type' => $requestParams['type'] ?? 'users',
+      'success' => TRUE,
+      'method' => 'POST',
+      'route' => $route,
+      'headers' => [
+        'Content-Type' => 'application/json',
+        'Authorization' => 'Bearer ' . $requestParams['token'],
+      ],
+      'body' => json_encode($requestParams['body']),
+    ];
+  }
+
+  /**
+   * Builds the get all request for the Keycloak service API.
+   *
+   * @param array $requestParams
+   *   The request parameters.
+   *    routeParams:
+   *      realm (required): realm name (not id!)
+   *    queryParams:
+   *      briefRepresentation (optional): true
+   *      exact (optional): false
+   *      first (optional): null
+   *      max (optional): null
+   *      populateHierarchy (optional): true
+   *      q (optional): null
+   *      search (optional): null.
+   *
+   * @return array
+   *   The read request.
+   *
+   * @todo Proof if all is correct.
+   */
+  public function buildGetAllRequest(array $requestParams): array {
+    $keycloakGeneralSettings = $this->sodaScsServiceHelpers->initKeycloakGeneralSettings();
+    $keycloakGroupsSettings = $this->sodaScsServiceHelpers->initKeycloakGroupsSettings();
+    // Build the route.
+    $route =
+      // Host route.
+      $keycloakGeneralSettings['host'] .
+      // Base URL.
+      str_replace('{realm}', $keycloakGeneralSettings['realm'], $keycloakGroupsSettings['baseUrl']) .
+      // Get all URL.
+      $keycloakGroupsSettings['readAllUrl'];
+
+    // Replace any route parameters.
+    if (!empty($requestParams['routeParams'])) {
+      foreach ($requestParams['routeParams'] as $key => $value) {
+        $route = str_replace('{' . $key . '}', $value, $route);
+      }
+    }
+
+    // Add query parameters if they exist.
+    if (!empty($requestParams['queryParams'])) {
+      $route .= '?' . http_build_query($requestParams['queryParams']);
+    }
+
+    return [
       'success' => TRUE,
       'method' => 'GET',
       'route' => $route,
@@ -275,6 +253,9 @@ class SodaScsKeycloakServiceClientActions implements SodaScsServiceRequestInterf
    *
    * @param array $requestParams
    *   The request parameters.
+   *    routeParams:
+   *      realm (required): realm name (not id!)
+   *      group-id (required): group id.
    *
    * @return array
    *   The read request.
@@ -283,18 +264,16 @@ class SodaScsKeycloakServiceClientActions implements SodaScsServiceRequestInterf
    */
   public function buildGetRequest(array $requestParams): array {
     $keycloakGeneralSettings = $this->sodaScsServiceHelpers->initKeycloakGeneralSettings();
-    $keycloakClientsSettings = $this->sodaScsServiceHelpers->initKeycloakClientsSettings();
-
-    $requestParams['routeParams']['realm'] = $keycloakGeneralSettings['realm'];
+    $keycloakGroupsSettings = $this->sodaScsServiceHelpers->initKeycloakGroupsSettings();
 
     // Build the route.
     $route =
       // Host route.
       $keycloakGeneralSettings['host'] .
       // Base URL.
-      $keycloakClientsSettings['baseUrl'] .
+      $keycloakGroupsSettings['baseUrl'] .
       // Read one URL.
-      $keycloakClientsSettings['readOneUrl'];
+      $keycloakGroupsSettings['readOneUrl'];
 
     // Replace any route parameters.
     if (!empty($requestParams['routeParams'])) {
@@ -332,18 +311,16 @@ class SodaScsKeycloakServiceClientActions implements SodaScsServiceRequestInterf
    */
   public function buildHealthCheckRequest(array $requestParams): array {
     $keycloakGeneralSettings = $this->sodaScsServiceHelpers->initKeycloakGeneralSettings();
-    $keycloakClientsSettings = $this->sodaScsServiceHelpers->initKeycloakClientsSettings();
-
-    $requestParams['routeParams']['realm'] = $keycloakGeneralSettings['realm'];
+    $keycloakGroupsSettings = $this->sodaScsServiceHelpers->initKeycloakGroupsSettings();
 
     // Build the route.
     $route =
       // Host route.
       $keycloakGeneralSettings['host'] .
       // Base URL.
-      $keycloakClientsSettings['baseUrl'] .
+      $keycloakGroupsSettings['baseUrl'] .
       // Health check URL.
-      $keycloakClientsSettings['healthCheckUrl'];
+      $keycloakGroupsSettings['healthCheckUrl'];
 
     // Replace any route parameters.
     if (!empty($requestParams['routeParams'])) {
@@ -368,24 +345,42 @@ class SodaScsKeycloakServiceClientActions implements SodaScsServiceRequestInterf
    *
    * @param array $requestParams
    *   The request parameters.
+   *    routeParams:
+   *      realm (required): realm name (not id!)
+   *      group-id (required): group id.
+   *    body:
+   *      GroupRepresentation (required):
+   *        id (optional) string: group id.
+   *        name (required) string: group name.
+   *        path (required) string: group path.
+   *        parentId (optional) string: parent group id.
+   *        subGroupCount (optional) Long(int64): number of sub groups.
+   *        subGroups (optional) array
+   *          (List of GroupRepresentation): sub groups.
+   *        attributes (optional) array
+   *          (Map<string, List<string>>): attributes.
+   *        realmRoles (optional) array
+   *          (List<string>): realm roles.
+   *        clientRoles (optional) array
+   *          (Map<string, List<string>>): client roles.
+   *        access (optional) array
+   *          (Map<string, List<string>>): access.
    *
    * @return array
    *   The update request.
    */
   public function buildUpdateRequest(array $requestParams): array {
     $keycloakGeneralSettings = $this->sodaScsServiceHelpers->initKeycloakGeneralSettings();
-    $keycloakClientsSettings = $this->sodaScsServiceHelpers->initKeycloakClientsSettings();
-
-    $requestParams['routeParams']['realm'] = $keycloakGeneralSettings['realm'];
+    $keycloakGroupsSettings = $this->sodaScsServiceHelpers->initKeycloakGroupsSettings();
 
     // Build the route.
     $route =
       // Host route.
       $keycloakGeneralSettings['host'] .
       // Base URL.
-      $keycloakClientsSettings['baseUrl'] .
+      $keycloakGroupsSettings['baseUrl'] .
       // Update URL.
-      $keycloakClientsSettings['updateUrl'];
+      $keycloakGroupsSettings['updateUrl'];
 
     // Replace any route parameters.
     if (!empty($requestParams['routeParams'])) {
@@ -421,6 +416,9 @@ class SodaScsKeycloakServiceClientActions implements SodaScsServiceRequestInterf
    *
    * @param array $requestParams
    *   The request parameters.
+   *    routeParams:
+   *      realm (required): realm name (not id!)
+   *      group-id (required): group id.
    *
    * @return array
    *   The delete request.
@@ -429,18 +427,16 @@ class SodaScsKeycloakServiceClientActions implements SodaScsServiceRequestInterf
    */
   public function buildDeleteRequest(array $requestParams): array {
     $keycloakGeneralSettings = $this->sodaScsServiceHelpers->initKeycloakGeneralSettings();
-    $keycloakClientsSettings = $this->sodaScsServiceHelpers->initKeycloakClientsSettings();
-
-    $requestParams['routeParams']['realm'] = $keycloakGeneralSettings['realm'];
+    $keycloakGroupsSettings = $this->sodaScsServiceHelpers->initKeycloakGroupsSettings();
 
     // Build the route.
     $route =
       // Host route.
       $keycloakGeneralSettings['host'] .
       // Base URL.
-      $keycloakClientsSettings['baseUrl'] .
+      $keycloakGroupsSettings['baseUrl'] .
       // Delete URL.
-      $keycloakClientsSettings['deleteUrl'];
+      $keycloakGroupsSettings['deleteUrl'];
 
     // Replace any route parameters.
     if (!empty($requestParams['routeParams'])) {

@@ -9,13 +9,8 @@ use Drupal\Core\Logger\LoggerChannelFactoryInterface;
 use Drupal\Core\Messenger\MessengerInterface;
 use Drupal\Core\StringTranslation\StringTranslationTrait;
 use Drupal\Core\StringTranslation\TranslationInterface;
-use Drupal\Core\TypedData\Exception\MissingDataException;
 use GuzzleHttp\ClientInterface;
 use Symfony\Component\HttpFoundation\RequestStack;
-use Drupal\soda_scs_manager\RequestActions\SodaScsServiceRequestInterface;
-use GuzzleHttp\Exception\ClientException;
-use GuzzleHttp\Exception\GuzzleException;
-use Drupal\soda_scs_manager\Exception\SodaScsRequestException;
 use Drupal\soda_scs_manager\Helpers\SodaScsServiceHelpers;
 use Drupal\Core\Utility\Error;
 use Psr\Log\LogLevel;
@@ -189,14 +184,28 @@ class SodaScsKeycloakServiceUserActions implements SodaScsServiceRequestInterfac
     $keycloakGeneralSettings = $this->sodaScsServiceHelpers->initKeycloakGeneralSettings();
     $keycloakUsersSettings = $this->sodaScsServiceHelpers->initKeycloakUsersSettings();
 
+    $type = $requestParams['type'] ?? 'user';
+
     // Build the route.
     $route =
       // Host route.
       $keycloakGeneralSettings['host'] .
       // Base URL.
-      $keycloakUsersSettings['baseUrl'] .
-      // Get all URL.
-      $keycloakUsersSettings['readAllUrl'];
+      str_replace('{realm}', $keycloakGeneralSettings['realm'], $keycloakUsersSettings['baseUrl']);
+
+    // ...of all groups of a user.
+    if ($type === 'group') {
+      $route .=
+        // Get all URL.
+        $keycloakUsersSettings['readAllGroupsUrl'];
+    }
+
+    // ...of all users.
+    else {
+      $route .=
+        // Get all URL.
+        $keycloakUsersSettings['readAllUrl'];
+    }
 
     // Replace any route parameters.
     if (!empty($requestParams['routeParams'])) {
@@ -211,7 +220,7 @@ class SodaScsKeycloakServiceUserActions implements SodaScsServiceRequestInterfac
     }
 
     return [
-      'type' => $requestParams['type'] ?? 'users',
+      'type' => $type,
       'success' => TRUE,
       'method' => 'GET',
       'route' => $route,
@@ -243,7 +252,7 @@ class SodaScsKeycloakServiceUserActions implements SodaScsServiceRequestInterfac
       // Host route.
       $keycloakGeneralSettings['host'] .
       // Base URL.
-      $keycloakUsersSettings['baseUrl'] .
+      str_replace('{realm}', $keycloakGeneralSettings['realm'], $keycloakUsersSettings['baseUrl']) .
       // Read one URL.
       $keycloakUsersSettings['readOneUrl'];
 
@@ -317,6 +326,65 @@ class SodaScsKeycloakServiceUserActions implements SodaScsServiceRequestInterfac
    *
    * @param array $requestParams
    *   The request parameters.
+   *     routeParams:
+   *       - realm (required): The realm name.
+   *       - userId (required): The user ID.
+   *     body:
+   *       - UserRepresentation (optional): The user representation.
+   *          - id (optional):
+   *            The user ID.
+   *          - username (optional):
+   *            The username.
+   *          - firstName (optional):
+   *            The user's first name.
+   *          - lastName (optional):
+   *            The user's last name.
+   *          - email (optional):
+   *            The user's email address.
+   *          - emailVerified (optional):
+   *            Whether the email is verified.
+   *          - attributes (optional):
+   *            Map of user attributes.
+   *          - userProfileMetadata (optional):
+   *            User profile metadata.
+   *          - self (optional):
+   *            Self reference.
+   *          - origin (optional):
+   *            Origin information.
+   *          - createdTimestamp (optional):
+   *            Creation timestamp.
+   *          - enabled (optional):
+   *            Whether the user is enabled.
+   *          - totp (optional):
+   *            Time-based one-time password status.
+   *          - federationLink (optional):
+   *            Federation link.
+   *          - serviceAccountClientId (optional):
+   *            Service account client ID.
+   *          - credentials (optional):
+   *            List of credentials.
+   *          - disableableCredentialTypes (optional):
+   *            Set of disableable credential types.
+   *          - requiredActions (optional):
+   *            List of required actions.
+   *          - federatedIdentities (optional):
+   *            List of federated identities.
+   *          - realmRoles (optional):
+   *            List of realm roles.
+   *          - clientRoles (optional):
+   *            Map of client roles.
+   *          - clientConsents (optional):
+   *            List of client consents.
+   *          - notBefore (optional):
+   *            Not before timestamp.
+   *          - applicationRoles (optional):
+   *            Map of application roles.
+   *          - socialLinks (optional):
+   *            List of social links.
+   *          - groups (optional):
+   *            List of groups.
+   *          - access (optional):
+   *            Map of access permissions.
    *
    * @return array
    *   The update request.
@@ -325,14 +393,28 @@ class SodaScsKeycloakServiceUserActions implements SodaScsServiceRequestInterfac
     $keycloakGeneralSettings = $this->sodaScsServiceHelpers->initKeycloakGeneralSettings();
     $keycloakUsersSettings = $this->sodaScsServiceHelpers->initKeycloakUsersSettings();
 
+    $type = $requestParams['type'] ?? 'user';
+
     // Build the route.
     $route =
       // Host route.
       $keycloakGeneralSettings['host'] .
       // Base URL.
-      $keycloakUsersSettings['baseUrl'] .
-      // Update URL.
-      $keycloakUsersSettings['updateUrl'];
+        str_replace('{realm}', $keycloakGeneralSettings['realm'], $keycloakUsersSettings['baseUrl']);
+
+    if ($type === 'group') {
+      $route .=
+        // Update URL.
+        $keycloakUsersSettings['updateGroupsUrl'];
+
+    }
+
+    else {
+      $route .=
+        // Update URL.
+        $keycloakUsersSettings['updateUrl'];
+
+    }
 
     // Replace any route parameters.
     if (!empty($requestParams['routeParams'])) {
@@ -350,7 +432,7 @@ class SodaScsKeycloakServiceUserActions implements SodaScsServiceRequestInterfac
     }
 
     return [
-      'type' => $requestParams['type'] ?? 'user',
+      'type' => $type,
       'success' => TRUE,
       'method' => 'PUT',
       'route' => $route,
@@ -378,13 +460,12 @@ class SodaScsKeycloakServiceUserActions implements SodaScsServiceRequestInterfac
     $keycloakGeneralSettings = $this->sodaScsServiceHelpers->initKeycloakGeneralSettings();
     $keycloakUsersSettings = $this->sodaScsServiceHelpers->initKeycloakUsersSettings();
 
-
     // Build the route.
     $route =
       // Host route.
       $keycloakGeneralSettings['host'] .
       // Base URL.
-      $keycloakUsersSettings['baseUrl'] .
+      str_replace('{realm}', $keycloakGeneralSettings['realm'], $keycloakUsersSettings['baseUrl']) .
       // Delete URL.
       $keycloakUsersSettings['deleteUrl'];
 

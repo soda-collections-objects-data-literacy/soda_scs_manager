@@ -68,15 +68,16 @@ class SodaScsProjectEditForm extends ContentEntityForm {
       $form['owner']['#access'] = FALSE;
     }
 
-    // Restrict connectedComponents field to only show components owned by the current user
-    // unless they have admin permission
+    // Restrict connectedComponents field to only
+    // show components owned by the current user
+    // unless they have admin permission.
     if (isset($form['connectedComponents'])) {
 
       $uid = $current_user->id();
       $is_admin = $current_user->hasPermission('soda scs manager admin');
 
       if (!$is_admin) {
-        // Modify the selection handler settings to only show user's components
+        // Modify the selection handler settings to only show user's components.
         $form['connectedComponents']['widget']['#selection_settings']['filter'] = [
           'owner' => $uid,
         ];
@@ -87,12 +88,15 @@ class SodaScsProjectEditForm extends ContentEntityForm {
     unset($form['actions']['delete']);
 
     // Add an abort button.
-    $form['actions']['abort'] = [
+    $form['actions']['cancel'] = [
       '#type' => 'submit',
-      '#value' => $this->t('Abort'),
+      '#value' => $this->t('Cancel'),
       '#submit' => ['::cancelForm'],
       '#limit_validation_errors' => [],
       '#weight' => 10,
+      '#attributes' => [
+        'class' => ['button', 'button--secondary', 'button--cancel'],
+      ],
     ];
 
     return $form;

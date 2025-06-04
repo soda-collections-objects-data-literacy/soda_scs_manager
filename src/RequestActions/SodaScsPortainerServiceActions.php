@@ -14,7 +14,6 @@ use Drupal\Core\Messenger\MessengerInterface;
 use Drupal\Core\StringTranslation\TranslationInterface;
 use Drupal\Core\StringTranslation\StringTranslationTrait;
 use Drupal\Core\Template\TwigEnvironment;
-use Drupal\Core\TypedData\Exception\MissingDataException;
 use Drupal\soda_scs_manager\Helpers\SodaScsServiceHelpers;
 use Drupal\soda_scs_manager\ServiceActions\SodaScsServiceActionsInterface;
 use GuzzleHttp\ClientInterface;
@@ -282,6 +281,14 @@ class SodaScsPortainerServiceActions implements SodaScsServiceRequestInterface {
       [
         "name" => "DRUPAL_TRUSTED_HOST",
         "value" => $trustedHost,
+      ],
+      [
+        "name" => "KEYCLOAK_ADMIN_GROUP",
+        "value" => $requestParams['keycloakAdminGroup'],
+      ],
+      [
+        "name" => "KEYCLOAK_USER_GROUP",
+        "value" => $requestParams['keycloakUserGroup'],
       ],
       [
         "name" => "KEYCLOAK_REALM",

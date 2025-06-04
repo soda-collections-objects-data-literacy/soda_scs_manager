@@ -227,7 +227,6 @@ class SodaScsServiceHelpers {
     return $jupyterHubSettings;
   }
 
-
   /**
    * Initialize keycloak settings.
    *
@@ -267,7 +266,25 @@ class SodaScsServiceHelpers {
     // Health check URL.
     $keycloakSettings['healthCheckUrl'] = $this->settings->get('keycloak.routes.clients.healthCheck.url');
 
+    $this->checkSettings($keycloakSettings);
 
+    return $keycloakSettings;
+  }
+
+  /**
+   * Initialize keycloak groups settings.
+   *
+   * @return array
+   *   The keycloak groups settings.
+   */
+  public function initKeycloakGroupsSettings() {
+    $keycloakSettings['name'] = 'Keycloak groups';
+    $keycloakSettings['baseUrl'] = $this->settings->get('keycloak.routes.groups.baseUrl');
+    $keycloakSettings['createUrl'] = $this->settings->get('keycloak.routes.groups.crud.createUrl');
+    $keycloakSettings['readOneUrl'] = $this->settings->get('keycloak.routes.groups.crud.readOneUrl');
+    $keycloakSettings['readAllUrl'] = $this->settings->get('keycloak.routes.groups.crud.readAllUrl');
+    $keycloakSettings['updateUrl'] = $this->settings->get('keycloak.routes.groups.crud.updateUrl');
+    $keycloakSettings['deleteUrl'] = $this->settings->get('keycloak.routes.groups.crud.deleteUrl');
 
     $this->checkSettings($keycloakSettings);
 
@@ -288,6 +305,9 @@ class SodaScsServiceHelpers {
     $keycloakSettings['readAllUrl'] = $this->settings->get('keycloak.routes.users.crud.readAllUrl');
     $keycloakSettings['updateUrl'] = $this->settings->get('keycloak.routes.users.crud.updateUrl');
     $keycloakSettings['deleteUrl'] = $this->settings->get('keycloak.routes.users.crud.deleteUrl');
+    $keycloakSettings['getGroupsUrl'] = $this->settings->get('keycloak.routes.users.crud.getGroupsUrl');
+    $keycloakSettings['updateGroupsUrl'] = $this->settings->get('keycloak.routes.users.crud.updateGroupsUrl');
+    $keycloakSettings['deleteGroupsUrl'] = $this->settings->get('keycloak.routes.users.crud.deleteGroupsUrl');
 
     $this->checkSettings($keycloakSettings);
 

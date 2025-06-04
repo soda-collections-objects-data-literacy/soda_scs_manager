@@ -231,7 +231,10 @@ class SodaScsSqlServiceActions implements SodaScsServiceActionsInterface {
     $databaseSettings = $this->sodaScsServiceHelpers->initDatabaseServiceSettings();
 
     $dbName = $component->get('machineName')->value;
-    $dbUsername = $component->getOwner()->getDisplayName();
+
+    // If we delete the user the component are still there.
+    // @todo Ask if we delete everything, if the user is deleted.
+    $dbUsername = $component->getOwner() !== NULL && $component->getOwner()->getDisplayName() !== NULL ? $component->getOwner()->getDisplayName() : 'deleted user';
 
     try {
       /** @var \Drupal\soda_scs_manager\Entity\SodaScsServiceKeyInterface $serviceKey */

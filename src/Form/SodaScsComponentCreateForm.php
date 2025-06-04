@@ -218,6 +218,7 @@ class SodaScsComponentCreateForm extends ContentEntityForm {
     $form['actions']['submit']['#attributes']['class'][] = 'soda-scs-component--component--form-submit';
 
     $form['#attached']['library'][] = 'soda_scs_manager/globalStyling';
+    $form['#attached']['library'][] = 'soda_scs_manager/throbber_overlay';
 
     return $form;
   }

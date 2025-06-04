@@ -95,6 +95,9 @@ class SodaScsProject extends ContentEntityBase implements EntityInterface {
 
     $fields = parent::baseFieldDefinitions($entity_type);
 
+    // Add the bundle label to the connectedComponents
+    // field with soda_scs_manager_options_list_alter hook.
+    // @see soda_scs_manager_options_list_alter().
     $fields['connectedComponents'] = BaseFieldDefinition::create('entity_reference')
       ->setLabel(new TranslatableMarkup('Connected applications'))
       ->setDescription(new TranslatableMarkup('The applications associated with this project.'))
@@ -170,7 +173,7 @@ class SodaScsProject extends ContentEntityBase implements EntityInterface {
       ->setLabel(new TranslatableMarkup('Machine Name'))
       ->setDescription(new TranslatableMarkup('The machine-readable name of the project.'))
       ->setRequired(TRUE)
-      ->setSetting('max_length', 32)
+      ->setSetting('max_length', 255)
       ->setDisplayOptions('form', [
         'type' => 'string_textfield',
         'weight' => 15,

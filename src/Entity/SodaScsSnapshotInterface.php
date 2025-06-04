@@ -86,4 +86,23 @@ interface SodaScsSnapshotInterface extends ContentEntityInterface, EntityOwnerIn
    */
   public function setChecksum($checksum);
 
+  /**
+   * Gets the snapshot file entity.
+   *
+   * @return \Drupal\file\FileInterface|null
+   *   The file entity or null if not set.
+   */
+  public function getFile();
+
+  /**
+   * Sets the snapshot file.
+   *
+   * @param int $fid
+   *   The file entity ID.
+   *
+   * @return \Drupal\soda_scs_manager\Entity\SodaScsSnapshotInterface
+   *   The called snapshot entity.
+   */
+  public function setFile($fid);
+
 }

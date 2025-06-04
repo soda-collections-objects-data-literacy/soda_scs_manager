@@ -73,8 +73,12 @@ class SodaScsSnapshotConfirmForm extends ConfirmFormBase {
    *
    * @param \Drupal\Core\Entity\EntityTypeManagerInterface $entity_type_manager
    *   The entity type manager.
+   * @param \Drupal\soda_scs_manager\ComponentActions\SodaScsComponentActionsInterface $sodaScsSqlComponentActions
+   *   The Soda SCS SQL Component Actions.
+   * @param \Drupal\soda_scs_manager\ComponentActions\SodaScsComponentActionsInterface $sodaScsTripleStoreComponentActions
+   *   The Soda SCS Triple Store Component Actions.
    * @param \Drupal\soda_scs_manager\ComponentActions\SodaScsComponentActionsInterface $sodaScsWisskiComponentActions
-   *   The Soda SCS Component Actions.
+   *   The Soda SCS WissKI Component Actions.
    * @param \Drupal\Core\Logger\LoggerChannelFactoryInterface $logger_factory
    *   The logger factory.
    */
@@ -83,7 +87,6 @@ class SodaScsSnapshotConfirmForm extends ConfirmFormBase {
     SodaScsComponentActionsInterface $sodaScsSqlComponentActions,
     SodaScsComponentActionsInterface $sodaScsTripleStoreComponentActions,
     SodaScsComponentActionsInterface $sodaScsWisskiComponentActions,
-
     LoggerChannelFactoryInterface $logger_factory,
   ) {
     $this->entityTypeManager = $entity_type_manager;
@@ -139,7 +142,17 @@ class SodaScsSnapshotConfirmForm extends ConfirmFormBase {
       '#required' => FALSE,
     ];
 
-    return parent::buildForm($form, $form_state);
+    $form = parent::buildForm($form, $form_state);
+
+    // Add throbber overlay class to the submit button.
+    if (isset($form['actions']['submit'])) {
+      $form['actions']['submit']['#attributes']['class'][] = 'soda-scs-component--component--form-submit';
+    }
+
+    // Attach the throbber overlay library.
+    $form['#attached']['library'][] = 'soda_scs_manager/throbber_overlay';
+
+    return $form;
   }
 
   /**
@@ -152,17 +165,19 @@ class SodaScsSnapshotConfirmForm extends ConfirmFormBase {
       case 'soda_scs_sql_component':
         $createSnapshotResult = $this->sodaScsSqlComponentActions->createSnapshot($this->entity, $values['label']);
         break;
-      case 'soda_scs_triple_store_component':
-        $createSnapshotResult = $this->sodaScsTripleStoreComponentActions->createSnapshot($this->entity, $values['label']);
+
+      case 'soda_scs_triplestore_component':
+        $createSnapshotResult = $this->sodaScsTripleStoreComponentActions->createSnapshot($this->entity);
         break;
+
       case 'soda_scs_wisski_component':
         $createSnapshotResult = $this->sodaScsWisskiComponentActions->createSnapshot($this->entity, $values['label']);
         break;
+
       default:
         $this->messenger()->addError($this->t('Failed to create snapshot. Unknown component type.'));
         return;
     }
-
 
     if (!$createSnapshotResult['success']) {
       $this->messenger()->addError($this->t('Failed to create snapshot. See logs for more details.'));
@@ -178,7 +193,14 @@ class SodaScsSnapshotConfirmForm extends ConfirmFormBase {
     }
 
     // Create the snapshot entity.
-    $snapshot = $createSnapshotResult['data']['snapshot'];
+    $snapshot = SodaScsSnapshot::create([
+      'label' => $values['label'],
+      'owner' => \Drupal::currentUser()->id(),
+      'langcode' => 'en',
+      'changed' => time(),
+      'created' => time(),
+      'file' => $createSnapshotResult['data']['file']->id(),
+    ]);
 
     if ($this->entityType === 'soda_scs_stack') {
       $snapshot->set('snapshotOfStack', $this->entity->id());
@@ -193,7 +215,7 @@ class SodaScsSnapshotConfirmForm extends ConfirmFormBase {
       '%label' => $snapshot->label(),
     ]));
 
-    // Set the redirect URL correctly
+    // Set the redirect URL correctly.
     $cancelUrl = $this->getCancelUrl();
     $form_state->setRedirectUrl($cancelUrl);
   }
@@ -213,7 +235,7 @@ class SodaScsSnapshotConfirmForm extends ConfirmFormBase {
    */
   public function getCancelUrl() {
     if ($this->entityType === 'soda_scs_stack') {
-      return \Drupal\Core\Url::fromRoute('entity.soda_scs_stack.canonical', [
+      return Url::fromRoute('entity.soda_scs_stack.canonical', [
         'bundle' => $this->entity->bundle(),
         'soda_scs_stack' => $this->entity->id(),
       ]);

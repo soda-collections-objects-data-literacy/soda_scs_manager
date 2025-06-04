@@ -38,3 +38,13 @@ tag_filter:
   dependencies:
     - core/drupal
 
+throbber_overlay:
+  version: 1.x
+  js:
+    js/throbber-overlay.js: {}
+  dependencies:
+    - core/once
+    - core/drupal
+    - core/drupalSettings
+    - core/jquery
+
