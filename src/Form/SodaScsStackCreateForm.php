@@ -241,6 +241,15 @@ class SodaScsStackCreateForm extends ContentEntityForm {
     if (!empty($existing_entities)) {
       $form_state->setErrorByName('machineName', $this->t('The machineName is already in use by another Soda SCS Component entity'));
     }
+
+    if (strlen($form_state->getValue('label')[0]['value']) > 25) {
+      $form_state->setErrorByName('label', $this->t('The label must not exceed 25 characters.'));
+    }
+
+    // Check if the machineName is longer than 30 characters.
+    if (strlen($machineName) > 30) {
+      $form_state->setErrorByName('machineName', $this->t('The machine name must not exceed 30 characters.'));
+    }
   }
 
   /**
