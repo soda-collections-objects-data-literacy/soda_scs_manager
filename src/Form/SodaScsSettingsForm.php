@@ -58,7 +58,7 @@ class SodaScsSettingsForm extends ConfigFormBase {
       '#title' => $this->t('Placeholders'),
       '#markup' => $this->t('You can use the following placeholders in the settings form:
       <ul>
-        <li><strong>{clientId}</strong> - The Keycloak client ID</li>
+        <li><strong>{clientUuid}</strong> - The Keycloak client UUID</li>
         <li><strong>{containerId}</strong> - The Docker container ID</li>
         <li><strong>{endpointId}</strong> - The Portainer endpoint ID</li>
         <li><strong>{execId}</strong> - The Docker exec ID</li>

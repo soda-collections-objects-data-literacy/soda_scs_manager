@@ -234,6 +234,9 @@ class SodaScsManagerController extends ControllerBase {
             $entity->getEntityTypeId() => $entity->id(),
           ]),
         '#tags' => $bundleInfo['tags'],
+        '#cache' => [
+          'max-age' => 0,
+        ],
       ];
     }
 

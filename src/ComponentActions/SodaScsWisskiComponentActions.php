@@ -787,10 +787,30 @@ class SodaScsWisskiComponentActions implements SodaScsComponentActionsInterface 
       $keycloakTokenResponseContents = json_decode($keycloakMakeTokenRequest['data']['keycloakResponse']->getBody()->getContents(), TRUE);
       $keycloakToken = $keycloakTokenResponseContents['access_token'];
 
+      // Get client uuid.
+      $getAllClientsRequestParams = [
+        'queryParams' => [
+          'clientId' => $component->get('machineName')->value,
+        ],
+      ];
+      $keycloakBuildGetAllClientRequest = $this->sodaScsKeycloakServiceClientActions->buildGetAllRequest($getAllClientsRequestParams);
+      $keycloakMakeGetAllClientResponse = $this->sodaScsKeycloakServiceClientActions->makeRequest($keycloakBuildGetAllClientRequest);
+      if (!$keycloakMakeGetAllClientResponse['success']) {
+        return [
+          'message' => 'Cannot get WissKI component client uuid at keycloak.',
+          'data' => [
+            'portainerResponse' => $requestResult,
+            'keycloakClientResponse' => $keycloakMakeGetAllClientResponse,
+          ],
+        ];
+      }
+      $keycloakGetAllClientResponseContents = json_decode($keycloakMakeGetAllClientResponse['data']['keycloakResponse']->getBody()->getContents(), TRUE);
+      $clientUuid = $keycloakGetAllClientResponseContents[0]['id'];
+
       // Delete the client in keycloak.
       $deleteRequestParams = [
         'routeParams' => [
-          'clientId' => $component->get('machineName')->value,
+          'clientUuid' => $clientUuid,
         ],
         'token' => $keycloakToken,
       ];
