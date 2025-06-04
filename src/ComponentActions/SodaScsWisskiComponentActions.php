@@ -796,6 +796,7 @@ class SodaScsWisskiComponentActions implements SodaScsComponentActionsInterface 
         'queryParams' => [
           'clientId' => $component->get('machineName')->value,
         ],
+        'token' => $keycloakToken,
       ];
       $keycloakBuildGetAllClientRequest = $this->sodaScsKeycloakServiceClientActions->buildGetAllRequest($getAllClientsRequestParams);
       $keycloakMakeGetAllClientResponse = $this->sodaScsKeycloakServiceClientActions->makeRequest($keycloakBuildGetAllClientRequest);
@@ -835,11 +836,39 @@ class SodaScsWisskiComponentActions implements SodaScsComponentActionsInterface 
           'statusCode' => $keycloakMakeDeleteClientResponse['statusCode'],
         ];
       }
-      // Delete the admin group in keycloak.
-      $keycloakBuildDeleteAdminGroupRequest = $this->sodaScsKeycloakServiceGroupActions->buildDeleteRequest([
-        'groupId' => $component->get('keycloakAdminGroup')->value,
+
+      $keycloakWisskiInstanceAdminGroupName = $component->get('machineName')->value . '-admin';
+      $keycloakWisskiInstanceUserGroupName = $component->get('machineName')->value . '-user';
+      // Get all groups from Keycloak for group ids.
+      $keycloakBuildGetAllGroupsRequest = $this->sodaScsKeycloakServiceGroupActions->buildGetAllRequest([
         'token' => $keycloakToken,
       ]);
+      $keycloakMakeGetAllGroupsResponse = $this->sodaScsKeycloakServiceGroupActions->makeRequest($keycloakBuildGetAllGroupsRequest);
+
+      if ($keycloakMakeGetAllGroupsResponse['success']) {
+        $keycloakGroups = json_decode($keycloakMakeGetAllGroupsResponse['data']['keycloakResponse']->getBody()->getContents(), TRUE);
+        // Get the admin group id of the WissKI instance.
+        // Get admin group details.
+        $keycloakWisskiInstanceAdminGroup = array_filter($keycloakGroups, function ($group) use ($keycloakWisskiInstanceAdminGroupName) {
+          return $group['name'] === $keycloakWisskiInstanceAdminGroupName;
+        });
+        $keycloakWisskiInstanceAdminGroup = reset($keycloakWisskiInstanceAdminGroup);
+
+        // Get user group details.
+        $keycloakWisskiInstanceUserGroup = array_filter($keycloakGroups, function ($group) use ($keycloakWisskiInstanceUserGroupName) {
+          return $group['name'] === $keycloakWisskiInstanceUserGroupName;
+        });
+        $keycloakWisskiInstanceUserGroup = reset($keycloakWisskiInstanceUserGroup);
+      }
+
+      // Delete the admin group in keycloak.
+      $deleteAdminGroupRequestParams = [
+        'routeParams' => [
+          'groupId' => $keycloakWisskiInstanceAdminGroup['id'],
+        ],
+        'token' => $keycloakToken,
+      ];
+      $keycloakBuildDeleteAdminGroupRequest = $this->sodaScsKeycloakServiceGroupActions->buildDeleteRequest($deleteAdminGroupRequestParams);
       $keycloakMakeDeleteAdminGroupResponse = $this->sodaScsKeycloakServiceGroupActions->makeRequest($keycloakBuildDeleteAdminGroupRequest);
 
       if (!$keycloakMakeDeleteAdminGroupResponse['success']) {
@@ -858,10 +887,13 @@ class SodaScsWisskiComponentActions implements SodaScsComponentActionsInterface 
       }
 
       // Delete the user group in keycloak.
-      $keycloakBuildDeleteUserGroupRequest = $this->sodaScsKeycloakServiceGroupActions->buildDeleteRequest([
-        'groupId' => $component->get('keycloakUserGroup')->value,
+      $deleteUserGroupRequestParams = [
+        'routeParams' => [
+          'groupId' => $keycloakWisskiInstanceUserGroup['id'],
+        ],
         'token' => $keycloakToken,
-      ]);
+      ];
+      $keycloakBuildDeleteUserGroupRequest = $this->sodaScsKeycloakServiceGroupActions->buildDeleteRequest($deleteUserGroupRequestParams);
       $keycloakMakeDeleteUserGroupResponse = $this->sodaScsKeycloakServiceGroupActions->makeRequest($keycloakBuildDeleteUserGroupRequest);
 
       if (!$keycloakMakeDeleteUserGroupResponse['success']) {

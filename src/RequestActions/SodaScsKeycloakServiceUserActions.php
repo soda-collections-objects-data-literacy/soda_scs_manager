@@ -460,12 +460,14 @@ class SodaScsKeycloakServiceUserActions implements SodaScsServiceRequestInterfac
     $keycloakGeneralSettings = $this->sodaScsServiceHelpers->initKeycloakGeneralSettings();
     $keycloakUsersSettings = $this->sodaScsServiceHelpers->initKeycloakUsersSettings();
 
+    $requestParams['routeParams']['realm'] = $keycloakGeneralSettings['realm'];
+
     // Build the route.
     $route =
       // Host route.
       $keycloakGeneralSettings['host'] .
       // Base URL.
-      str_replace('{realm}', $keycloakGeneralSettings['realm'], $keycloakUsersSettings['baseUrl']) .
+      $keycloakUsersSettings['baseUrl'] .
       // Delete URL.
       $keycloakUsersSettings['deleteUrl'];
 
