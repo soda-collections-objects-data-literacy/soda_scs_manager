@@ -684,7 +684,7 @@ function soda_scs_manager_user_delete(UserInterface $user) {
 /**
  * Implements hook_options_list_alter().
  */
-function soda_scs_manager_options_list_alter_stop(array &$options, array $context) {
+function soda_scs_manager_options_list_alter(array &$options, array $context) {
   // Check if this is our connectedComponents field for soda_scs_project.
   if (isset($context['fieldDefinition']) &&
       $context['fieldDefinition']->getName() === 'connectedComponents' &&
@@ -716,7 +716,7 @@ function soda_scs_manager_options_list_alter_stop(array &$options, array $contex
         $bundleLabel = $bundleInfo[$component->bundle()]['label'] ?? $component->bundle();
 
         // Format the label as "Label (Bundle)".
-        $modified_options[$key] = $component->label() . ' (' . $bundleLabel . ')';
+        $modified_options[$key][key($value)] = $component->label() . ' (' . $bundleLabel . ')';
       }
       else {
         // Keep original value if component can't be loaded.
@@ -724,6 +724,8 @@ function soda_scs_manager_options_list_alter_stop(array &$options, array $contex
       }
     }
 
+    // Sort the options by key.
+    ksort($modified_options);
     // Replace original options with modified ones.
     $options = $modified_options;
   }
