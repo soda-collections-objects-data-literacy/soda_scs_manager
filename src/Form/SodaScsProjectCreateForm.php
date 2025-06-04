@@ -303,7 +303,7 @@ class SodaScsProjectCreateForm extends ContentEntityForm {
                 LogLevel::ERROR
               );
               $form_state->setErrorByName('connectedComponents', $this->t('Keycloak token request failed. See logs for more details.'));
-              continue;
+              break;
             }
             $keycloakTokenResponseContents = json_decode($keycloakMakeTokenRequest['data']['keycloakResponse']->getBody()->getContents(), TRUE);
             $keycloakToken = $keycloakTokenResponseContents['access_token'];
@@ -328,7 +328,7 @@ class SodaScsProjectCreateForm extends ContentEntityForm {
                 LogLevel::ERROR
               );
               $form_state->setErrorByName('connectedComponents', $this->t('Keycloak get all groups request failed. See logs for more details.'));
-              continue;
+              break;
             }
 
             $keycloakGroups = json_decode($keycloakMakeGetAllGroupsResponse['data']['keycloakResponse']->getBody()->getContents(), TRUE);
@@ -361,7 +361,7 @@ class SodaScsProjectCreateForm extends ContentEntityForm {
                 LogLevel::ERROR
               );
               $form_state->setErrorByName('connectedComponents', $this->t('Keycloak get all users request failed. See logs for more details.'));
-              continue;
+              break;
             }
 
             $allUserData = json_decode($getAllUsersResponse['data']['keycloakResponse']->getBody()->getContents(), TRUE);
@@ -381,7 +381,7 @@ class SodaScsProjectCreateForm extends ContentEntityForm {
                 'connectedComponents',
                 $this->t('Keycloak user not found. See logs for more details.'),
               );
-              continue;
+              break;
             }
 
             // 3. Add user to admin group.
@@ -410,7 +410,7 @@ class SodaScsProjectCreateForm extends ContentEntityForm {
                 ]),
               );
             }
-            continue;
+            break;
 
           case 'soda_scs_sql_component':
             $sqlComponent = $component;
@@ -419,18 +419,18 @@ class SodaScsProjectCreateForm extends ContentEntityForm {
             // Grant all privileges for the database user.
             $this->sodaScsSqlServiceActions->grantServiceRights($member->getDisplayName(), $sqlMachineName, ['ALL']);
 
-            continue;
+            break;
 
           case 'soda_scs_triplestore_component':
             $triplestoreComponent = $component;
             $triplestoreMachineName = $triplestoreComponent->machineName->value;
-            continue;
+            break;
 
           default:
             $this->messenger()->addWarning($this->t('Component @component is not supported yet.', [
               '@component' => $component->label(),
             ]));
-            continue;
+            break;
         }
       }
     }
