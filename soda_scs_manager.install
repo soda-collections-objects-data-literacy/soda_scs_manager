@@ -237,3 +237,14 @@ function soda_scs_manager_update_11005() {
 
   return t('Olivero theme has been configured with custom color scheme.');
 }
+
+/**
+ * Create documentation basic page with URL alias.
+ */
+function soda_scs_manager_update_11006() {
+  // Install the documentation content type and page configuration.
+  $config_installer = \Drupal::service('config.installer');
+  $config_installer->installDefaultConfig('module', 'soda_scs_manager');
+
+  return t('Documentation content type and page have been created.');
+}

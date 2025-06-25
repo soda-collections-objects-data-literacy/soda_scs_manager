@@ -72,21 +72,6 @@ class SodaScsManagerController extends ControllerBase {
   }
 
   /**
-   * Page for documentation.
-   *
-   * @return array
-   *   The page build array.
-   */
-  public function documentationPage(): array {
-    return [
-      '#theme' => 'soda_scs_manager__documentation_page',
-      '#attached' => [
-        'library' => ['soda_scs_manager/globalStyling'],
-      ],
-    ];
-  }
-
-  /**
    * Page for component management.
    *
    * @return array

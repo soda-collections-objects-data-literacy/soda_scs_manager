@@ -91,7 +91,7 @@ soda_scs_manager.application_documentation:
     title: 'SODa SCS Manager documentation'
     description: 'Documentation for SODa SCS Manager'
     parent: soda_scs_manager.settings_menu_block
-    route_name: soda_scs_manager.documentation
+    url: 'internal:/soda-scs-manager/documentation'
     requirements:
       _permission: 'soda scs manager user'
 
@@ -143,7 +143,7 @@ soda_scs_manager.menu.documentation:
   title: 'Documentation'
   description: 'Documentation'
   parent: soda_scs_manager.main_navigation
-  route_name: soda_scs_manager.documentation
+  url: 'internal:/soda-scs-manager/documentation'
   weight: 30
   requirements:
     _permission: 'soda scs manager user'

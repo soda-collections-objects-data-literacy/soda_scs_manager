@@ -294,14 +294,6 @@ soda_scs_manager.desk:
   options:
     no_cache: TRUE
 
-soda_scs_manager.documentation:
-  path: '/soda-scs-manager/documentation'
-  defaults:
-    _controller: '\Drupal\soda_scs_manager\Controller\SodaScsManagerController::documentationPage'
-    _title: 'Documentation'
-  requirements:
-    _permission: 'soda scs manager user'
-
 soda_scs_manager.start_page:
   path: '/soda-scs-manager'
   defaults:
