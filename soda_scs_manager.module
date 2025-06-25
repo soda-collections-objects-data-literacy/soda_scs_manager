@@ -20,19 +20,6 @@ use Drupal\soda_scs_manager\Entity\SodaScsComponent;
 use Drupal\Core\Url;
 use Symfony\Component\HttpFoundation\RedirectResponse;
 
-// This file contains implementations of the following hooks:
-// - hook_help(): implements the user help page for the module.
-// - hook_ENTITY_TYPE_view(): implements the content of the overview page
-//   for soda_scs_component and soda_scs_stack entities.
-// - hook_theme(): implements the theme for several entites and pages.
-// - hook_preprocess(): implements the preprocess function to add
-//   javascript libraries.
-// - hook_user_insert(): implements the functionality that assigns a role to a
-//   newly created user.
-// - hook_bundle_info(): add the additional bundles for the soda_scs_component.
-// - hook_entity_field_storage_info(): Defines storage for all bundle fields.
-// - hook_options_list_alter(): Alters the options list for
-//   the connectedComponents field.
 /**
  * Implements hook_help().
  */
@@ -678,6 +665,32 @@ function soda_scs_manager_user_delete(UserInterface $user) {
   }
   catch (\Exception $e) {
     $logger->error('Error deleting user from Keycloak: @error', ['@error' => $e->getMessage()]);
+  }
+
+  // Clean database users.
+  $cleanDatabaseUsers = \Drupal::service('soda_scs_manager.sql_service.actions')->cleanServiceUsers($user->getDisplayName());
+
+  if ($cleanDatabaseUsers['success']) {
+    $messenger->addMessage(t('Successfully cleaned database users for user: @username', ['@username' => $user->getDisplayName()]));
+  }
+  else {
+    $messenger->addError(t('Failed to clean database users for user: @username', ['@username' => $user->getDisplayName()]));
+  }
+
+  // Clean triplestore users.
+  $tsDeleteRequestParams = [
+    'type' => 'user',
+    'routeParams' => [
+      'username' => $user->getDisplayName(),
+    ],
+  ];
+  $cleanTriplestoreUsers = \Drupal::service('soda_scs_manager.opengdb_service.actions')->buildDeleteRequest($tsDeleteRequestParams);
+
+  if ($cleanTriplestoreUsers['success']) {
+    $messenger->addMessage(t('Successfully cleaned triplestore users for user: @username', ['@username' => $user->getDisplayName()]));
+  }
+  else {
+    $messenger->addError(t('Failed to clean triplestore users for user: @username', ['@username' => $user->getDisplayName()]));
   }
 }
 

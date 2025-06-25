@@ -1,0 +1,559 @@
+soda_scs_manager.settings:
+  type: config_object
+  label: 'SODa SCS Manager settings'
+  mapping:
+    scsHost:
+      type: string
+      label: 'SODa SCS host'
+      description: 'The SODa SCS host, like https://scs.sammlungen.io.'
+    administratorEmail:
+      type: string
+      label: 'Administrator email'
+      description: 'The administrator email, like admin@scs.sammlungen.io.'
+    dbHost:
+      type: string
+      label: 'Database host'
+      description: 'The database host, like https://db.scs.sammlungen.io.'
+    dbPort:
+      type: string
+      label: 'Database port'
+      description: 'The database port, like 3306.'
+    dbRootPassword:
+      type: string
+      label: 'Root password'
+      description: 'The root password, like root.'
+    dbManagementHost:
+      type: string
+      label: 'Management host'
+      description: 'The management host, like https://adminer-db.scs.sammlungen.io.'
+    jupyterhub:
+      type: mapping
+      label: 'JupyterHub settings'
+      mapping:
+        generalSettings:
+          type: mapping
+          label: 'General settings'
+          mapping:
+            baseUrl:
+              type: string
+              label: 'Base URL'
+              description: 'The base URL, like https://jupyterhub.scs.sammlungen.io.'
+    keycloak:
+      type: mapping
+      label: 'Keycloak settings'
+      mapping:
+        generalSettings:
+          type: mapping
+          label: 'Keycloak settings'
+          mapping:
+            keycloakHost:
+              type: string
+              label: 'Keycloak host'
+              description: 'The keycloak host, like https://auth.sammlungen.io.'
+            keycloakRealm:
+              type: string
+              label: 'Keycloak realm'
+              description: 'The keycloak realm, like wisski.'
+            adminUsername:
+              type: string
+              label: 'Admin username'
+              description: 'The keycloak admin username, like admin.'
+            adminPassword:
+              type: string
+              label: 'Admin password'
+              description: 'The keycloak admin password, like admin.'
+        routes:
+          type: mapping
+          label: 'Keycloak routes'
+          mapping:
+            clients:
+              type: mapping
+              label: 'Clients routes'
+              mapping:
+                baseUrl:
+                  type: string
+                  label: 'Base URL'
+                  description: 'The base URL, like /admin/realms/{realm}/clients.'
+                crud:
+                  type: mapping
+                  label: 'CRUD routes'
+                  mapping:
+                    createUrl:
+                      type: string
+                      label: 'Create URL'
+                      description: 'The create URL, like {empty}.'
+                    readOneUrl:
+                      type: string
+                      label: 'Read one URL'
+                      description: 'The read one URL, like /{clientId}.'
+                    readAllUrl:
+                      type: string
+                      label: 'Read all URL'
+                      description: 'The read all URL, like {empty}.'
+                    updateUrl:
+                      type: string
+                      label: 'Update URL'
+                      description: 'The update URL, like /{clientId}.'
+                    deleteUrl:
+                      type: string
+                      label: 'Delete URL'
+                      description: 'The delete URL, like /{clientId}.'
+                healthCheck:
+                  type: mapping
+                  label: 'Health check'
+                  mapping:
+                    url:
+                      type: string
+                      label: 'Health check URL'
+                      description: 'The health check URL.'
+            groups:
+              type: mapping
+              label: 'Groups routes'
+              mapping:
+                baseUrl:
+                  type: string
+                  label: 'Base URL'
+                  description: 'The base URL, like /admin/realms/{realm}/groups.'
+                crud:
+                  type: mapping
+                  label: 'CRUD routes'
+                  mapping:
+                    createUrl:
+                      type: string
+                      label: 'Create URL'
+                      description: 'The create URL, like {empty}.'
+                    readOneUrl:
+                      type: string
+                      label: 'Read one URL'
+                      description: 'The read one URL, like /{groupId}.'
+                    readAllUrl:
+                      type: string
+                      label: 'Read all URL'
+                      description: 'The read all URL, like {empty}.'
+                    updateUrl:
+                      type: string
+                      label: 'Update URL'
+                      description: 'The update URL, like /{groupId}.'
+                    deleteUrl:
+                      type: string
+                      label: 'Delete URL'
+                      description: 'The delete URL, like /{groupId}.'
+            users:
+              type: mapping
+              label: 'Users routes'
+              mapping:
+                baseUrl:
+                  type: string
+                  label: 'Base URL'
+                  description: 'The base URL, like /admin/realms/{realm}/users.'
+                crud:
+                  type: mapping
+                  label: 'CRUD routes'
+                  mapping:
+                    createUrl:
+                      type: string
+                      label: 'Create URL'
+                      description: 'The create URL, like {empty}.'
+                    readOneUrl:
+                      type: string
+                      label: 'Read one URL'
+                      description: 'The read one URL, like /{userId}.'
+                    readAllUrl:
+                      type: string
+                      label: 'Read all URL'
+                      description: 'The read all URL, like {empty}.'
+                    updateUrl:
+                      type: string
+                      label: 'Update URL'
+                      description: 'The update URL, like /{userId}.'
+                    deleteUrl:
+                      type: string
+                      label: 'Delete URL'
+                      description: 'The delete URL, like /{userId}.'
+                    getGroupsUrl:
+                      type: string
+                      label: 'Get groups URL'
+                      description: 'The get groups URL, like /{userId}/groups.'
+                    updateGroupsUrl:
+                      type: string
+                      label: 'Add user to group URL'
+                      description: 'The update user group URL, like /{userId}/groups/{groupId}.'
+                    deleteGroupsUrl:
+                      type: string
+                      label: 'Delete user from group URL'
+                      description: 'The delete user from group URL, like /{userId}/groups/{groupId}.'
+            misc:
+              type: mapping
+              label: 'Miscellaneous routes'
+              mapping:
+                tokenUrl:
+                  type: string
+                  label: 'Token URL'
+                  description: 'The token URL, like /realms/master/protocol/openid-connect/token.'
+    nextcloud:
+      type: mapping
+      label: 'Nextcloud settings'
+      mapping:
+        generalSettings:
+          type: mapping
+          label: 'General settings'
+          mapping:
+            baseUrl:
+              type: string
+              label: 'Base URL'
+              description: 'The base URL, like https://nextcloud.scs.sammlungen.io.'
+    triplestore:
+      type: mapping
+      label: 'Triplestore settings'
+      mapping:
+        generalSettings:
+          type: mapping
+          label: 'General settings'
+          mapping:
+            host:
+              type: string
+              label: 'Triplestore host'
+              description: 'The triplestore host, like https://ts.scs.sammlungen.io.'
+            port:
+              type: string
+              label: 'Port'
+              description: 'The triplestore port, like 80.'
+            adminUsername:
+              type: string
+              label: 'Admin username'
+              description: 'The admin username, like admin.'
+            adminPassword:
+              type: string
+              label: 'Admin password'
+              description: 'The admin password, like password.'
+        routes:
+          type: mapping
+          label: 'Routes for service'
+          mapping:
+            repositories:
+              type: mapping
+              label: 'Repositories routes'
+              mapping:
+                baseUrl:
+                  type: string
+                  label: 'Base URL'
+                  description: 'The base URL, like /rest/repositories.'
+                crud:
+                  type: mapping
+                  label: 'CRUD routes'
+                  mapping:
+                    createUrl:
+                      type: string
+                      label: 'Create repositories route'
+                      description: 'The create repositories route.'
+                    readOneUrl:
+                      type: string
+                      label: 'Read one repositories route'
+                      description: 'The read one repositories route, like /{repositoryId}.'
+                    readAllUrl:
+                      type: string
+                      label: 'Read all repositories route'
+                      description: 'The read all repositories route.'
+                    updateUrl:
+                      type: string
+                      label: 'Update repositories route'
+                      description: 'The update repositories route, like /{repositoryId}.'
+                    deleteUrl:
+                      type: string
+                      label: 'Delete repositories route'
+                      description: 'The delete repositories route, like /{repositoryId}.'
+                healthCheck:
+                  type: mapping
+                  label: 'Health check'
+                  mapping:
+                    url:
+                      type: string
+                      label: 'Health check route'
+                      description: 'The health check route, like /{repositoryId}/size.'
+            users:
+              type: mapping
+              label: 'User routes'
+              mapping:
+                baseUrl:
+                  type: string
+                  label: 'Base URL'
+                  description: 'The base URL, like /rest/security/users.'
+                crud:
+                  type: mapping
+                  label: 'User CRUD routes'
+                  mapping:
+                    createUrl:
+                      type: string
+                      label: 'Create user route'
+                      description: 'The create route, like /.'
+                    readOneUrl:
+                      type: string
+                      label: 'Read one user route'
+                      description: 'The read one route, like /{userId}.'
+                    readAllUrl:
+                      type: string
+                      label: 'Read all users route'
+                      description: 'The read all route.'
+                    updateUrl:
+                      type: string
+                      label: 'Update user route'
+                      description: 'The update route, like /{userId}.'
+                    deleteUrl:
+                      type: string
+                      label: 'Delete user route'
+                      description: 'The delete route, like /{userId}.'
+            misc:
+              type: mapping
+              label: 'Miscellaneous routes'
+              mapping:
+                healthCheck:
+                  type: mapping
+                  label: 'Health check route'
+                  mapping:
+                    url:
+                      type: string
+                      label: 'Health check route'
+                      description: 'The health check route, like /protocol.'
+                token:
+                  type: mapping
+                  label: 'Token route'
+                  mapping:
+                    tokenUrl:
+                      type: string
+                      label: 'Authentification token URL'
+                      description: 'The authentification token URL, like /api-token-auth/{userId}.'
+    portainer:
+      type: mapping
+      label: 'Portainer settings'
+      mapping:
+        portainerOptions:
+          type: mapping
+          label: 'Portainer options'
+          mapping:
+            host:
+              type: string
+              label: 'Host'
+              description: 'The host, like https://portainer.scs.sammlungen.io'
+            authenticationToken:
+              type: string
+              label: 'Authentication token'
+              description: 'The authentication token, like 1234'
+            endpointId:
+              type: string
+              label: 'Endpoint'
+              description: 'The endpoint, like "1".'
+            swarmId:
+              type: string
+              label: 'Swarm Id'
+              description: 'The swarm Id, like "1".'
+        routes:
+          type: mapping
+          label: 'Routes'
+          mapping:
+            endpoints:
+              type: mapping
+              label: 'Endpoint routes'
+              mapping:
+                baseUrl:
+                  type: string
+                  label: 'Endpoint base route'
+                  description: 'The endpoint base URL, like /api/endpoints.'
+                healthCheck:
+                  type: mapping
+                  label: 'Health check route'
+                  mapping:
+                    url:
+                      type: string
+                      label: 'Health check route'
+                      description: 'The health check route, like "/{endpointId}"'
+                dockerApi:
+                  type: mapping
+                  label: 'Docker API routes'
+                  mapping:
+                    baseUrl:
+                      type: string
+                      label: 'Base route'
+                      description: 'The base URL, like "/docker".'
+                    exec:
+                      type: mapping
+                      label: 'Docker exec routes'
+                      mapping:
+                        createUrl:
+                          type: string
+                          label: 'Docker exec create route'
+                          description: 'Route to create a command inside a running container, like "/containers/{containerId}/exec".'
+                        startUrl:
+                          type: string
+                          label: 'Docker exec start route'
+                          description: 'Route to start a command inside a running container, like "/exec/{execId}/start".'
+                        resizeUrl:
+                          type: string
+                          label: 'Docker exec resize route'
+                          description: 'Route to resize a command inside a running container, like "/exec/{execId}/resize".'
+                        inspectUrl:
+                          type: string
+                          label: 'Docker exec inspect route'
+                          description: 'Route to inspect a command inside a running container, like "/exec/{execId}/json".'
+                    containers:
+                      type: mapping
+                      label: 'Docker Container routes'
+                      mapping:
+                        baseUrl:
+                          type: string
+                          label: 'Docker Container API base route'
+                          description: 'The base URL, like "/containers".'
+                        crussrdr:
+                          type: mapping
+                          label: 'Docker Container CRUSSRDR routes'
+                          mapping:
+                            createUrl:
+                              type: string
+                              label: 'Docker Container create route'
+                              description: 'The create route, like "/create".'
+                            readOneUrl:
+                              type: string
+                              label: 'Docker Container read one route'
+                              description: 'The read one route, like "/{containerId}/json".'
+                            readAllUrl:
+                              type: string
+                              label: 'Docker Container read all route'
+                              description: 'The read all route, like "/json".'
+                            updateUrl:
+                              type: string
+                              label: 'Docker Container update route'
+                              description: 'The update route, like "/{containerId}/update".'
+                            startUrl:
+                              type: string
+                              label: 'Docker Container start route'
+                              description: 'The start route, like "/{containerId}/start".'
+                            stopUrl:
+                              type: string
+                              label: 'Docker Container stop route'
+                              description: 'The stop route, like "/{containerId}/stop".'
+                            restartUrl:
+                              type: string
+                              label: 'Docker Container restart route'
+                              description: 'The restart route, like "/{containerId}/restart".'
+                            deleteUrl:
+                              type: string
+                              label: 'Docker Container delete route'
+                              description: 'The delete route, like "/{containerId}".'
+                            removeUrl:
+                              type: string
+                              label: 'Docker Container remove route'
+                              description: 'The remove route, like "/{containerId}/prune".'
+                    volumes:
+                      type: mapping
+                      label: 'Docker Volume routes'
+                      mapping:
+                        baseUrl:
+                          type: string
+                          label: 'Docker volumes API base route'
+                          description: 'The base URL, like "/volumes".'
+                        crud:
+                          type: mapping
+                          label: 'Docker Volume CRUD routes'
+                          mapping:
+                            createUrl:
+                              type: string
+                              label: 'Create volume route'
+                              description: 'The create volume route, like "/create".'
+                            readOneUrl:
+                              type: string
+                              label: 'Read one volume route'
+                              description: 'The read one volume route, like "/{volumeId}".'
+                            readAllUrl:
+                              type: string
+                              label: 'Read all volumes route'
+                              description: 'The read all volumes route, like "".'
+                            updateUrl:
+                              type: string
+                              label: 'Update volume route'
+                              description: 'The update volume route, like "/{volumeId}".'
+                            deleteUrl:
+                              type: string
+                              label: 'Delete volume route'
+                              description: 'The delete volume route, like /{volumeId}.'
+            stacks:
+              type: mapping
+              label: 'Docker Stacks routes'
+              mapping:
+                baseUrl:
+                  type: string
+                  label: 'Base route'
+                  description: 'The base URL, like "/stacks".'
+                crud:
+                  type: mapping
+                  label: 'Portainer Stack CRUD routes'
+                  mapping:
+                    createUrl:
+                      type: string
+                      label: 'Create route'
+                      description: 'The create route, like "/".'
+                    readOneUrl:
+                      type: string
+                      label: 'Read one route'
+                      description: 'The read one route, like "/{stackId}".'
+                    readAllUrl:
+                      type: string
+                      label: 'Read all route'
+                      description: 'The read all route, like "".'
+                    updateUrl:
+                      type: string
+                      label: 'Update route'
+                      description: 'The update route, like "/{stackId}".'
+                    deleteUrl:
+                      type: string
+                      label: 'Delete route'
+                      description: 'The delete route, like "/{stackId}".'
+    wisski:
+      type: mapping
+      label: 'WissKI settings'
+      mapping:
+        instances:
+          type: mapping
+          label: 'Instances routes for WissKI components'
+          mapping:
+            baseUrl:
+              type: string
+              label: 'Base route'
+              description: 'The base URL, like "https://{instanceId}.scs.sammlungen.io".'
+            misc:
+              type: mapping
+              label: 'Miscellaneous routes'
+              mapping:
+                healthCheck:
+                  type: mapping
+                  label: 'Health check route'
+                  mapping:
+                    url:
+                      type: string
+                      label: 'Health check route'
+                      description: 'The health check route, like "/health".'
+    security:
+      type: mapping
+      label: 'Security settings'
+      mapping:
+        logging:
+          type: mapping
+          label: 'Logging security settings'
+          mapping:
+            sanitize_logs:
+              type: boolean
+              label: 'Sanitize sensitive data in logs'
+              description: 'When enabled, passwords and other sensitive data are sanitized from log messages.'
+            log_level:
+              type: string
+              label: 'Minimum log level'
+              description: 'The minimum log level to write to logs.'
+              constraints:
+                Choice:
+                  choices:
+                    - debug
+                    - info
+                    - notice
+                    - warning
+                    - error
+                    - critical
+                    - alert
+                    - emergency

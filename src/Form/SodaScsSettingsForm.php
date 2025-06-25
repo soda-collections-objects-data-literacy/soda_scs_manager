@@ -4,6 +4,7 @@ namespace Drupal\soda_scs_manager\Form;
 
 use Drupal\Core\Form\ConfigFormBase;
 use Drupal\Core\Form\FormStateInterface;
+use Psr\Log\LogLevel;
 
 /**
  * SODa SCS Manager in settings form.
@@ -979,6 +980,56 @@ class SodaScsSettingsForm extends ConfigFormBase {
       '#description' => $this->t('The health check route, like "/health".'),
     ];
 
+    // Security settings tab.
+    $form['security'] = [
+      '#type' => 'details',
+      '#title' => $this->t('Security Settings'),
+      '#group' => 'tabs',
+      '#tree' => TRUE,
+    ];
+
+    $form['security']['logging'] = [
+      '#type' => 'fieldset',
+      '#title' => $this->t('Secure Logging'),
+      '#description' => $this->t('Configure security and logging options for the SODa SCS Manager.'),
+    ];
+
+    $form['security']['logging']['sanitize_logs'] = [
+      '#type' => 'checkbox',
+      '#title' => $this->t('Sanitize sensitive data in logs'),
+      '#description' => $this->t('When enabled, passwords, API keys, and other sensitive data will be automatically sanitized from log messages. <strong>Highly recommended for production environments.</strong>'),
+      '#default_value' => $this->config('soda_scs_manager.settings')->get('security')['logging']['sanitize_logs'] ?? TRUE,
+    ];
+
+    $form['security']['logging']['log_level'] = [
+      '#type' => 'select',
+      '#title' => $this->t('Minimum log level'),
+      '#description' => $this->t('Only log messages at or above this level will be written to the logs.'),
+      '#options' => [
+        LogLevel::DEBUG => $this->t('Debug'),
+        LogLevel::INFO => $this->t('Info'),
+        LogLevel::NOTICE => $this->t('Notice'),
+        LogLevel::WARNING => $this->t('Warning'),
+        LogLevel::ERROR => $this->t('Error'),
+        LogLevel::CRITICAL => $this->t('Critical'),
+        LogLevel::ALERT => $this->t('Alert'),
+        LogLevel::EMERGENCY => $this->t('Emergency'),
+      ],
+      '#default_value' => $this->config('soda_scs_manager.settings')->get('security')['logging']['log_level'] ?? LogLevel::INFO,
+    ];
+
+    $form['security']['logging']['warning'] = [
+      '#type' => 'item',
+      '#markup' => '<div class="messages messages--warning">' .
+      $this->t('<strong>Security Warning:</strong> Disabling log sanitization may expose sensitive information like passwords and API keys in log files. Only disable this setting in development environments and ensure logs are properly secured.') .
+      '</div>',
+      '#states' => [
+        'visible' => [
+          ':input[name="security[logging][sanitize_logs]"]' => ['checked' => FALSE],
+        ],
+      ],
+    ];
+
     return $form;
   }
 
@@ -1001,7 +1052,18 @@ class SodaScsSettingsForm extends ConfigFormBase {
       ->set('triplestore', $form_state->getValue('triplestore'))
       ->set('wisski', $form_state->getValue('wisski'))
       ->set('portainer', $form_state->getValue('portainer'))
+      ->set('security', $form_state->getValue('security'))
       ->save();
+
+    // Log the configuration change with secure logging.
+    $securitySettings = $form_state->getValue('security');
+    $this->logger('soda_scs_manager')->info(
+      'SODa SCS Manager settings updated. Log sanitization: @sanitize, Log level: @level',
+      [
+        '@sanitize' => $securitySettings['logging']['sanitize_logs'] ? 'enabled' : 'disabled',
+        '@level' => $securitySettings['logging']['log_level'],
+      ]
+    );
     parent::submitForm($form, $form_state);
   }
 
