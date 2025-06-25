@@ -429,6 +429,8 @@ class SodaScsKeycloakServiceGroupActions implements SodaScsServiceRequestInterfa
     $keycloakGeneralSettings = $this->sodaScsServiceHelpers->initKeycloakGeneralSettings();
     $keycloakGroupsSettings = $this->sodaScsServiceHelpers->initKeycloakGroupsSettings();
 
+    $requestParams['routeParams']['realm'] = $keycloakGeneralSettings['realm'];
+
     // Build the route.
     $route =
       // Host route.

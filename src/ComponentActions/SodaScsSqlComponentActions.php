@@ -322,6 +322,8 @@ class SodaScsSqlComponentActions implements SodaScsComponentActionsInterface {
    *
    * @param \Drupal\soda_scs_manager\Entity\SodaScsComponentInterface $component
    *   The SODa SCS Component.
+   * @param string $label
+   *   The label of the snapshot.
    *
    * @return array
    *   Result information with the created snapshot.
@@ -368,7 +370,7 @@ class SodaScsSqlComponentActions implements SodaScsComponentActionsInterface {
             'createContainerExecResponse' => $createContainerExecResponse,
             'metadata' => [
               'snapshotName' => $snapshotName,
-              'backupPath' => $backupPath,
+              'backupPath' => $backupDir,
             ],
           ],
           'success' => FALSE,
@@ -391,7 +393,7 @@ class SodaScsSqlComponentActions implements SodaScsComponentActionsInterface {
             'startContainerExecResponse' => $startContainerExecResponse,
             'metadata' => [
               'snapshotName' => $snapshotName,
-              'backupPath' => $backupPath,
+              'backupPath' => $backupDir,
             ],
           ],
           'success' => FALSE,
@@ -402,11 +404,11 @@ class SodaScsSqlComponentActions implements SodaScsComponentActionsInterface {
 
       // Create file entity.
       $file = File::create([
-        'uri' => $backupPath . '/' . $snapshotName,
+        'uri' => $tarGzBackupDir,
         'uid' => $component->getOwnerId(),
         'status' => 1,
         'filename' => $snapshotName,
-        'filemime' => 'application/x-sql',
+        'filemime' => 'application/x-sql.tar.gz',
       ]);
       $file->save();
 
@@ -414,11 +416,11 @@ class SodaScsSqlComponentActions implements SodaScsComponentActionsInterface {
         'message' => 'Snapshot created successfully.',
         'data' => [
           'createContainerExecResponse' => $createContainerExecResponse,
-          'snapshot' => $snapshot,
+          'snapshot' => $component,
           'startContainerExecResponse' => $startContainerExecResponse,
           'metadata' => [
             'snapshotName' => $snapshotName,
-            'backupPath' => $backupPath,
+            'backupPath' => $backupDir,
           ],
           'file' => $file,
         ],
@@ -539,34 +541,10 @@ class SodaScsSqlComponentActions implements SodaScsComponentActionsInterface {
       ];
     }
 
-    // Clean database users.
-    try {
-      $cleanDatabaseUsers = $this->sodaScsMysqlServiceActions->cleanServiceUsers($component->getOwner()->getDisplayName(), $dbUserPassword);
-    }
-    catch (\Exception $e) {
-      Error::logException(
-        $this->logger,
-        $e,
-        'Cannot clean database users: @message',
-        ['@message' => $e->getMessage()],
-        LogLevel::ERROR
-      );
-      $this->messenger->addError($this->t("Cannot clean database users. See logs for more details."));
-      return [
-        'message' => 'Cannot clean database. users',
-        'data' => [
-          'deleteDbResult' => $deleteDbResult,
-          'cleanDatabaseUsers' => $cleanDatabaseUsers,
-        ],
-        'success' => FALSE,
-        'error' => $e->getMessage(),
-      ];
-    }
     return [
       'message' => 'SQL component deleted, users cleaned',
       'data' => [
         'deleteDbResult' => $deleteDbResult,
-        'cleanDatabaseUsers' => $cleanDatabaseUsers,
       ],
       'success' => TRUE,
       'error' => NULL,

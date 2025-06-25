@@ -15,6 +15,7 @@ use Drupal\soda_scs_manager\Entity\SodaScsComponentInterface;
 use Drupal\soda_scs_manager\Entity\SodaScsServiceKeyInterface;
 use Drupal\soda_scs_manager\Helpers\SodaScsServiceHelpers;
 use Drupal\soda_scs_manager\Exception\SodaScsSqlServiceException;
+use Drupal\soda_scs_manager\Traits\SecureLoggingTrait;
 use Drupal\Core\Utility\Error;
 use Psr\Log\LogLevel;
 
@@ -26,6 +27,7 @@ use Psr\Log\LogLevel;
 class SodaScsSqlServiceActions implements SodaScsServiceActionsInterface {
 
   use StringTranslationTrait;
+  use SecureLoggingTrait;
 
   /**
    * The database connection.
@@ -115,29 +117,45 @@ class SodaScsSqlServiceActions implements SodaScsServiceActionsInterface {
 
       // Command failed.
       if ($createDbReturnVar != 0) {
+        // Log the error with sanitized command.
+        $this->secureLog(
+          LogLevel::ERROR,
+          'Failed to create database @dbName. Command: @command',
+          [
+            '@dbName' => $dbName,
+            '@command' => $createDbCommand,
+          ],
+          ['@command']
+        );
+
         throw new SodaScsSqlServiceException(
           "Cannot create database $dbName.",
-          $createDbCommand,
+          $this->sanitizeCommandForLogging($createDbCommand),
           'create database',
           $dbName,
           $createDbOutput
         );
       }
 
+      // Log successful database creation.
+      $this->secureLog(
+        LogLevel::INFO,
+        'Successfully created database @dbName',
+        ['@dbName' => $dbName]
+      );
+
       return [
-        'command' => $createDbCommand,
+        'command' => $this->sanitizeCommandForLogging($createDbCommand),
         'execStatus' => $createDbReturnVar,
         'output' => $createDbOutput,
         'result' => $dbCreated,
       ];
     }
     catch (SodaScsSqlServiceException $e) {
-      Error::logException(
-        $this->loggerFactory->get('soda_scs_manager'),
-        $e,
-        'Exception: @message',
-        ['@message' => $e->getMessage()],
-        LogLevel::ERROR
+      $this->secureLog(
+        LogLevel::ERROR,
+        'Database service exception: @message',
+        ['@message' => $e->getMessage()]
       );
       return [
         'message' => $e->getMessage(),
@@ -171,8 +189,18 @@ class SodaScsSqlServiceActions implements SodaScsServiceActionsInterface {
     // Check if the output contains the database name.
     $dbExists = !empty($databaseExists) && in_array($name, $databaseExists);
 
+    // Log the database check operation.
+    $this->secureLog(
+      LogLevel::DEBUG,
+      'Checked if database @dbName exists. Result: @result',
+      [
+        '@dbName' => $name,
+        '@result' => $dbExists ? 'exists' : 'does not exist',
+      ]
+    );
+
     return [
-      'command' => $checkDbCommand,
+      'command' => $this->sanitizeCommandForLogging($checkDbCommand),
       'execStatus' => $checkDbReturnVar,
       'output' => $databaseExists,
       'result' => $dbExists,
@@ -240,8 +268,7 @@ class SodaScsSqlServiceActions implements SodaScsServiceActionsInterface {
       /** @var \Drupal\soda_scs_manager\Entity\SodaScsServiceKeyInterface $serviceKey */
       $serviceKey = $this->entityTypeManager->getStorage('soda_scs_service_key')->load($component->get('serviceKey')->target_id);
       if (!$serviceKey) {
-        throw new \Exception($this->t("Service key not found for component @component.", [
-          '@component' => $component->get('machineName')->value]));
+        throw new \Exception("Service key not found for component @component" . $component->get('machineName')->value);
       }
       $dbUserPassword = $serviceKey->get('servicePassword')->value;
     }
@@ -294,7 +321,7 @@ class SodaScsSqlServiceActions implements SodaScsServiceActionsInterface {
 
     // Delete the database.
     $deleteDbCommand = "mysql -h$dbHost -u$dbUsername -p$dbUserPassword -e 'DROP DATABASE `$dbName`;' 2>&1";
-    $dbDeleted = exec($deleteDbCommand, $deleteDbOutput, $deleteDbReturnVar);
+    exec($deleteDbCommand, $deleteDbOutput, $deleteDbReturnVar);
     if (is_array($deleteDbOutput)) {
       $deleteDbOutput = implode(", ", $deleteDbOutput);
     }
@@ -491,8 +518,25 @@ class SodaScsSqlServiceActions implements SodaScsServiceActionsInterface {
     $dbRootPassword = $databaseSettings['rootPassword'];
     $flushPrivilegesCommand = "mysql -h $dbHost -uroot -p$dbRootPassword -e 'FLUSH PRIVILEGES;' 2>&1";
     $flushPrivilegesCommandResult = exec($flushPrivilegesCommand, $grantRightsCommandOutput, $grantRightsCommandReturnVar);
+
+    // Log the flush privileges operation.
+    if ($grantRightsCommandReturnVar != 0) {
+      $this->secureLog(
+        LogLevel::ERROR,
+        'Failed to flush database privileges. Command: @command',
+        ['@command' => $flushPrivilegesCommand],
+        ['@command']
+      );
+    }
+    else {
+      $this->secureLog(
+        LogLevel::DEBUG,
+        'Successfully flushed database privileges'
+      );
+    }
+
     return [
-      'command' => $flushPrivilegesCommand,
+      'command' => $this->sanitizeCommandForLogging($flushPrivilegesCommand),
       'execStatus' => $grantRightsCommandReturnVar,
       'output' => $grantRightsCommandOutput,
       'result' => $flushPrivilegesCommandResult,
@@ -518,29 +562,9 @@ class SodaScsSqlServiceActions implements SodaScsServiceActionsInterface {
     if ($dbUser == 'root') {
       return [
         'message' => $this->t('Can not delete the root user'),
+        'data' => [],
         'error' => NULL,
         'success' => FALSE,
-      ];
-    }
-
-    // Check if the user owns any databases.
-    $userOwnsAnyDatabasesResult = $this->userOwnsAnyDatabases($dbUser, $dbUserPassword);
-
-    if ($userOwnsAnyDatabasesResult['execStatus'] != 0) {
-      throw new SodaScsSqlServiceException(
-        "Cannot check if user @user owns any databases.",
-        $userOwnsAnyDatabasesResult['command'],
-        'check if user owns any databases',
-        $dbUser,
-        $userOwnsAnyDatabasesResult['output']
-      );
-    }
-
-    if ($userOwnsAnyDatabasesResult['result'] > 1) {
-      return [
-        'message' => $this->t('User owns databases'),
-        'error' => NULL,
-        'success' => TRUE,
       ];
     }
 
@@ -549,7 +573,7 @@ class SodaScsSqlServiceActions implements SodaScsServiceActionsInterface {
     if ($databaseUserDeleted['execStatus'] != 0) {
       throw new SodaScsSqlServiceException(
         "Cannot delete database user @user.",
-        $databaseUserDeleted['command'],
+        $this->sanitizeCommandForLogging($databaseUserDeleted['command']),
         'delete database user',
         $dbUser,
         $databaseUserDeleted['output']
@@ -558,6 +582,7 @@ class SodaScsSqlServiceActions implements SodaScsServiceActionsInterface {
 
     return [
       'message' => $this->t('User owned no databases, and was deleted'),
+      'data' => [],
       'error' => NULL,
       'success' => TRUE,
     ];
@@ -586,8 +611,16 @@ class SodaScsSqlServiceActions implements SodaScsServiceActionsInterface {
     // Check if the user owns any databases.
     $userOwnsAnyDatabasesCommand = "mysql -h$dbHost -u$dbUser -p$userPassword -e 'SELECT COUNT(*) FROM information_schema.SCHEMATA;' 2>&1";
     $userOwnsAnyDatabasesCommandResult = exec($userOwnsAnyDatabasesCommand, $userOwnsAnyDatabasesOutput, $userOwnsAnyDatabasesReturnVar);
+
+    // Log the database ownership check.
+    $this->secureLog(
+      LogLevel::DEBUG,
+      'Checked database ownership for user @dbUser',
+      ['@dbUser' => $dbUser]
+    );
+
     return [
-      'command' => $userOwnsAnyDatabasesCommand,
+      'command' => $this->sanitizeCommandForLogging($userOwnsAnyDatabasesCommand),
       'execStatus' => $userOwnsAnyDatabasesReturnVar,
       'output' => $userOwnsAnyDatabasesOutput,
       'result' => $userOwnsAnyDatabasesCommandResult,
@@ -617,7 +650,7 @@ class SodaScsSqlServiceActions implements SodaScsServiceActionsInterface {
 
     // Check if the user has read and write access to the database.
     $checkPrivilegesCommand = "mysql -h $dbHost -u$dbUser -p$dbUserPassword -e 'SHOW GRANTS FOR \"$dbUser\"@\"%\";' 2>&1";
-    $checkPrivilegesCommandResult = exec($checkPrivilegesCommand, $checkPrivilegesCommandOutput, $checkPrivilegesCommandReturnVar);
+    exec($checkPrivilegesCommand, $checkPrivilegesCommandOutput, $checkPrivilegesCommandReturnVar);
 
     if ($checkPrivilegesCommandReturnVar != 0) {
       throw new \Exception("Failed to check privileges for user $dbUser on database $dbName");

@@ -1,0 +1,4 @@
+security:
+  logging:
+    sanitize_logs: true
+    log_level: 'info'
