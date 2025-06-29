@@ -339,7 +339,7 @@ soda_scs_manager.tour:
 soda_scs_manager.menu.default:
   path: '/soda-scs-manager'
   defaults:
-    _title: 'Our Main link page'
+    _title: 'Start page'
     _controller: '\Drupal\soda_scs_manager\Controller\SodaScsManagerController::startPage'
   requirements:
     _permission: 'soda scs manager user'
