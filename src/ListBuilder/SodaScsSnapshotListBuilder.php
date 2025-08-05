@@ -116,7 +116,7 @@ class SodaScsSnapshotListBuilder extends EntityListBuilder {
   protected function getDefaultOperations(EntityInterface $entity) {
     $operations = parent::getDefaultOperations($entity);
 
-    // Add edit operation if missing
+    // Add edit operation if missing.
     if ($entity->hasLinkTemplate('edit-form') && !isset($operations['edit'])) {
       $operations['edit'] = [
         'title' => $this->t('Edit'),
@@ -125,7 +125,7 @@ class SodaScsSnapshotListBuilder extends EntityListBuilder {
       ];
     }
 
-    // Add delete operation if missing
+    // Add delete operation if missing.
     if ($entity->hasLinkTemplate('delete-form') && !isset($operations['delete'])) {
       $operations['delete'] = [
         'title' => $this->t('Delete'),
