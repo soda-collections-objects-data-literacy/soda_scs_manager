@@ -239,19 +239,6 @@ class SodaScsProjectCreateForm extends ContentEntityForm {
       }
     }
 
-    // Make the machineName field readonly and add
-    // JavaScript to auto-generate it.
-    if (isset($form['machineName'])) {
-      // @todo Check if there is a better way to do this.
-      // Add CSS classes for machine name generation.
-      $form['label']['widget'][0]['value']['#attributes']['class'][] = 'soda-scs-manager--machine-name-source';
-      $form['machineName']['widget'][0]['value']['#attributes']['class'][] = 'soda-scs-manager--machine-name-target';
-      // Make the machine name field read-only.
-      $form['machineName']['widget'][0]['value']['#attributes']['readonly'] = 'readonly';
-      // Attach JavaScript to auto-generate machine name.
-      $form['#attached']['library'][] = 'soda_scs_manager/machine-name-generator';
-    }
-
     return $form;
   }
 
@@ -260,19 +247,6 @@ class SodaScsProjectCreateForm extends ContentEntityForm {
    */
   public function validateForm(array &$form, FormStateInterface $form_state) {
     parent::validateForm($form, $form_state);
-    // Check if a project with this machine name already exists.
-    $machineName = $form_state->getValue('machineName')[0]['value'];
-    $query = $this->entityTypeManager->getStorage('soda_scs_project')
-      ->getQuery()
-      ->condition('machineName', $machineName)
-      ->accessCheck(FALSE);
-    $entities = $query->execute();
-
-    if (!empty($entities)) {
-      $form_state->setErrorByName('machineName', $this->t('A project with machine name "@machine_name" already exists. Please choose a different name.', [
-        '@machine_name' => $machineName,
-      ]));
-    }
     /* @todo Move this to a separate service. */
     // Assign rights to all components...
     foreach ($form_state->getValue('connectedComponents') as $componentId) {
