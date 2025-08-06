@@ -342,7 +342,7 @@ soda_scs_manager.menu.default:
     _title: 'Start page'
     _controller: '\Drupal\soda_scs_manager\Controller\SodaScsManagerController::startPage'
   requirements:
-    _permission: 'soda scs manager user'
+    _access: 'TRUE'
 
 # Keycloak User Registration
 
