@@ -21,146 +21,6 @@ use Drupal\Core\Url;
 use Symfony\Component\HttpFoundation\RedirectResponse;
 
 /**
- * Implements hook_help().
- */
-function soda_scs_manager_help($route_name, RouteMatchInterface $route_match) {
-  $output = '';
-
-  switch ($route_name) {
-    case 'help.page.soda_scs_manager':
-      $output .= '<h3>' . new TranslatableMarkup('About') . '</h3>';
-      $output .= '<p>' . new TranslatableMarkup('This module provides the functionality to create, validate and manage WissKI Cloud accounts.') . '</p>';
-
-      $output .= '<h3>' . new TranslatableMarkup('Configuration') . '</h3>';
-      $output .= '<p>' . new TranslatableMarkup('Configuration is done on the <a href="@settingsPage" targer="_blank">settings page</a>.', ['@settingsPage' => '/admin/config/wisski-cloud-account-manager/settings']) . '</p>';
-
-      $output .= '<h3>' . new TranslatableMarkup('Create WissKI Cloud Account') . '</h3>';
-      $output .= '<p>' . new TranslatableMarkup('<a href="@createPage" targer="_blank">This page</a> allows you to create a WissKI Cloud account.', ['@createPage' => '/wisski-cloud-account-manager/create']) . '</p>';
-
-      $output .= '<h3>' . new TranslatableMarkup('Validate WissKI Cloud Account') . '</h3>';
-      $output .= '<p>' . new TranslatableMarkup('<a href="@validationPage" targer="_blank">This page</a> allows you to validate your account and check the status of the provision.', ['@validationPage' => '/wisski-cloud-account-manager/validate/GsyMv5DdFhPCixL1wTLZhzFg7sVDOiHq']) . '</p>';
-      break;
-  }
-  return $output;
-}
-
-/**
- * Implements hook_theme().
- */
-function soda_scs_manager_theme($existing, $type, $theme, $path) {
-  return [
-    'soda_scs_manager__store' => [
-      'variables' => [
-        'components' => NULL,
-        'stacks' => NULL,
-        'attributes' => NULL,
-      ],
-      'template' => 'pages/soda-scs-manager--store',
-    ],
-    'soda_scs_manager__desk' => [
-      'variables' => [
-        'entitiesByUser' => NULL,
-        'entity_type' => NULL,
-        'attributes' => NULL,
-      ],
-      'template' => 'pages/soda-scs-manager--desk',
-    ],
-    'soda_scs_manager__entity_card' => [
-      'variables' => [
-        'description' => NULL,
-        'imageUrl' => NULL,
-        'tags' => NULL,
-        'title' => NULL,
-        'type' => NULL,
-        'url' => NULL,
-      ],
-      'template' => 'cards/soda-scs-manager--entity-card',
-    ],
-    'soda_scs_manager__start_page' => [
-      'variables' => [
-        'attributes' => NULL,
-      ],
-      'template' => 'pages/soda-scs-manager--start-page',
-    ],
-  ];
-}
-
-/**
- * Implements hook_preprocess_HOOK().
- */
-function soda_scs_manager_preprocess_soda_scs_component(array &$variables) {
-  $variables['#attached']['library'][] = 'soda_scs_manager/health_status';
-}
-
-/**
- * Implements hook_ENTITY_TYPE_view() for soda_scs_component entities.
- */
-function soda_scs_manager_soda_scs_component_view(array &$build, EntityInterface $entity, EntityViewDisplayInterface $display, $view_mode) {
-  if ($entity->getEntityTypeId() === 'soda_scs_component') {
-    // Check if the imageUrl field has a value.
-    /** @var \Drupal\soda_scs_manager\Entity\SodaScsComponentInterface $entity */
-    if ($imageUrl = $entity->get('imageUrl')->value) {
-      $imageUrl = Drupal::service('file_url_generator')->generateAbsoluteString($imageUrl);
-      $build['#attached']['library'][] = 'soda_scs_manager/globalStyling';
-      // Add a custom render array for the imageUrl field.
-      $build['imageUrl'] = [
-        '#type' => 'markup',
-        '#markup' => '<img class="img-thumbnail soda-scs-manager--img--thumbnail" src="' . $imageUrl . '" alt="Image description" />',
-        // Ensure proper sanitization of the URL.
-        '#allowed_tags' => ['img'],
-      // Adjust the weight as needed.
-        '#weight' => 10,
-      ];
-    }
-  }
-}
-
-/**
- * Implements hook_ENTITY_TYPE_view() for soda_scs_component entities.
- */
-function soda_scs_manager_soda_scs_stack_view(array &$build, EntityInterface $entity, EntityViewDisplayInterface $display, $view_mode) {
-  if ($entity->getEntityTypeId() === 'soda_scs_stack') {
-    // Check if the imageUrl field has a value.
-    /** @var \Drupal\soda_scs_manager\Entity\SodaScsComponentInterface $entity */
-    if ($imageUrl = $entity->get('imageUrl')->value) {
-      $imageUrl = Drupal::service('file_url_generator')->generateAbsoluteString($imageUrl);
-      $build['#attached']['library'][] = 'soda_scs_manager/globalStyling';
-      // Add a custom render array for the imageUrl field.
-      $build['imageUrl'] = [
-        '#type' => 'markup',
-        '#markup' => '<img class="img-thumbnail soda-scs-manager--img--thumbnail" src="' . $imageUrl . '" alt="Image description" />',
-        // Ensure proper sanitization of the URL.
-        '#allowed_tags' => ['img'],
-      // Adjust the weight as needed.
-        '#weight' => 10,
-      ];
-    }
-  }
-}
-
-/**
- * Implements hook_user_insert().
- */
-function soda_scs_manager_user_insert(UserInterface $user) {
-
-  // Set the user status to active by default.
-  if (!$user->isActive()) {
-    $user->activate();
-  }
-
-  // Assign the scs_user role to the new user.
-  if (!$user->hasRole('scs_user')) {
-    $user->addRole('scs_user');
-  }
-
-  // Save the updated user.
-  $user->save();
-
-  // Ensure the role exists and has the required permissions.
-  soda_scs_manager_ensure_scs_user_role();
-}
-
-/**
  * Ensure the scs_user role exists and has the required permissions.
  */
 function soda_scs_manager_ensure_scs_user_role() {
@@ -300,12 +160,224 @@ function soda_scs_manager_entity_field_storage_info(EntityTypeInterface $entity_
 }
 
 /**
- * Implements hook_ENTITY_TYPE_update() for soda_scs_project entities.
- *
- * Updates the partOfProjects field on components when a project is updated.
+ * Implements hook_form_FORM_ID_alter() for soda_scs_manager_stack_create_form.
  */
-function soda_scs_manager_soda_scs_project_update(SodaScsProject $entity) {
-  _soda_scs_manager_sync_project_component_relationship($entity);
+function soda_scs_manager_form_soda_scs_manager_component_create_form_alter(&$form, &$form_state, $form_id) {
+  // Disable the partOfProjects field.
+  if (isset($form['partOfProjects'])) {
+    $form['partOfProjects']['#access'] = FALSE;
+  }
+  // Disable the partOfProjects field.
+  if (isset($form['sharedWith'])) {
+    $form['sharedWith']['#access'] = FALSE;
+  }
+}
+
+/**
+ * Implements hook_form_FORM_ID_alter() for soda_scs_manager_stack_create_form.
+ */
+function soda_scs_manager_form_soda_scs_manager_stack_create_form_alter(&$form, &$form_state, $form_id) {
+  // Disable the partOfProjects field.
+  if (isset($form['partOfProjects'])) {
+    $form['partOfProjects']['#access'] = FALSE;
+  }
+}
+
+/**
+ * Implements hook_form_FORM_ID_alter() for user_register_form.
+ */
+function soda_scs_manager_form_user_register_form_alter(&$form, &$form_state, $form_id) {
+  // Disable native Drupal registration by redirecting to our custom form.
+  $response = new RedirectResponse(Url::fromRoute('soda_scs_manager.user_registration')->toString());
+  $response->send();
+  exit;
+}
+
+/**
+ * Implements hook_help().
+ */
+function soda_scs_manager_help($route_name, RouteMatchInterface $route_match) {
+  $output = '';
+
+  switch ($route_name) {
+    case 'help.page.soda_scs_manager':
+      $output .= '<h3>' . new TranslatableMarkup('About') . '</h3>';
+      $output .= '<p>' . new TranslatableMarkup('This module provides the functionality to create, validate and manage WissKI Cloud accounts.') . '</p>';
+
+      $output .= '<h3>' . new TranslatableMarkup('Configuration') . '</h3>';
+      $output .= '<p>' . new TranslatableMarkup('Configuration is done on the <a href="@settingsPage" targer="_blank">settings page</a>.', ['@settingsPage' => '/admin/config/wisski-cloud-account-manager/settings']) . '</p>';
+
+      $output .= '<h3>' . new TranslatableMarkup('Create WissKI Cloud Account') . '</h3>';
+      $output .= '<p>' . new TranslatableMarkup('<a href="@createPage" targer="_blank">This page</a> allows you to create a WissKI Cloud account.', ['@createPage' => '/wisski-cloud-account-manager/create']) . '</p>';
+
+      $output .= '<h3>' . new TranslatableMarkup('Validate WissKI Cloud Account') . '</h3>';
+      $output .= '<p>' . new TranslatableMarkup('<a href="@validationPage" targer="_blank">This page</a> allows you to validate your account and check the status of the provision.', ['@validationPage' => '/wisski-cloud-account-manager/validate/GsyMv5DdFhPCixL1wTLZhzFg7sVDOiHq']) . '</p>';
+      break;
+  }
+  return $output;
+}
+
+/**
+ * Implements hook_mail().
+ */
+function soda_scs_manager_mail($key, &$message, $params) {
+  $options = [
+    'langcode' => $message['langcode'],
+  ];
+
+  $site_config = \Drupal::config('system.site');
+  $site_name = $site_config->get('name');
+
+  switch ($key) {
+    case 'registration_admin_notification':
+      $message['subject'] = t('New user registration on @site_name', ['@site_name' => $site_name], $options);
+      $message['body'][] = t('A new user has registered on @site_name.', ['@site_name' => $site_name], $options);
+      $message['body'][] = t('Username: @username', ['@username' => $params['username']], $options);
+      $message['body'][] = t('Email: @email', ['@email' => $params['email']], $options);
+      $message['body'][] = t('Name: @first_name @last_name', [
+        '@first_name' => $params['first_name'],
+        '@last_name' => $params['last_name'],
+      ], $options);
+      $message['body'][] = t('To approve or reject this registration, visit: @url', [
+        '@url' => Url::fromRoute('soda_scs_manager.user_registration_approvals')
+          ->setAbsolute()
+          ->toString(),
+      ], $options);
+      break;
+
+    case 'registration_user_notification':
+      $message['subject'] = t('Your registration on @site_name', ['@site_name' => $site_name], $options);
+      $message['body'][] = t('Hello @username,', ['@username' => $params['username']], $options);
+      $message['body'][] = t('Thank you for registering on @site_name.', ['@site_name' => $site_name], $options);
+      $message['body'][] = t('Your registration is pending administrator approval. You will receive another email once your account is approved or rejected.', [], $options);
+      break;
+
+    case 'registration_approval':
+      $message['subject'] = t('Your account on @site_name has been approved', ['@site_name' => $site_name], $options);
+      $message['body'][] = t('Hello @username,', ['@username' => $params['username']], $options);
+      $message['body'][] = t('Your registration on @site_name has been approved.', ['@site_name' => $site_name], $options);
+      $message['body'][] = t('You can now log in at: @login_url', ['@login_url' => $params['login_url']], $options);
+      $message['body'][] = t('For security reasons, you will need to reset your password when you first log in.', [], $options);
+      break;
+
+    case 'registration_rejection':
+      $message['subject'] = t('Your account on @site_name was not approved', ['@site_name' => $site_name], $options);
+      $message['body'][] = t('Hello @username,', ['@username' => $params['username']], $options);
+      $message['body'][] = t('Your registration on @site_name has been reviewed and was not approved at this time.', ['@site_name' => $site_name], $options);
+      $message['body'][] = t('If you believe this is an error, please contact the site administrators.', [], $options);
+      break;
+  }
+}
+
+/**
+ * Implements hook_options_list_alter().
+ */
+function soda_scs_manager_options_list_alter(array &$options, array $context) {
+  // Check if this is our connectedComponents field for soda_scs_project.
+  if (isset($context['fieldDefinition']) &&
+      $context['fieldDefinition']->getName() === 'connectedComponents' &&
+      $context['entity'] &&
+      $context['entity']->getEntityTypeId() === 'soda_scs_project') {
+
+    // Load entity type manager.
+    $entityTypeManager = \Drupal::entityTypeManager();
+
+    // Temporary array to store modified options.
+    $modified_options = [];
+
+    // Get the component storage handler.
+    $componentStorage = $entityTypeManager->getStorage('soda_scs_component');
+
+    // For each option, add the bundle label in parentheses.
+    foreach ($options as $key => $value) {
+      // Skip '_none' option if present.
+      if ($key === '_none') {
+        $modified_options[$key] = $value;
+        continue;
+      }
+
+      // Load the component entity.
+      $component = $componentStorage->load(array_key_first($value));
+      if ($component) {
+        // Get the bundle label.
+        $bundleInfo = \Drupal::service('entity_type.bundle.info')->getBundleInfo('soda_scs_component');
+        $bundleLabel = $bundleInfo[$component->bundle()]['label'] ?? $component->bundle();
+
+        // Format the label as "Label (Bundle)".
+        $modified_options[$key][key($value)] = $component->label() . ' (' . $bundleLabel . ')';
+      }
+      else {
+        // Keep original value if component can't be loaded.
+        $modified_options[$key] = $value;
+      }
+    }
+
+    // Sort the options by key.
+    ksort($modified_options);
+    // Replace original options with modified ones.
+    $options = $modified_options;
+  }
+}
+
+
+/**
+ * Implements hook_preprocess_HOOK().
+ */
+function soda_scs_manager_preprocess_soda_scs_component(array &$variables) {
+  $variables['#attached']['library'][] = 'soda_scs_manager/health_status';
+}
+
+/**
+ * Implements hook_ENTITY_TYPE_delete() for soda_scs_component entities.
+ *
+ * Deletes the connectedComponents field on
+ * projects when a component is deleted.
+ */
+function soda_scs_manager_soda_scs_component_delete(SodaScsComponent $entity) {
+  _soda_scs_manager_sync_component_project_relationship($entity);
+}
+
+/**
+ * Implements hook_ENTITY_TYPE_insert() for soda_scs_component entities.
+ *
+ * Updates the connectedComponents field on
+ * projects when a component is created.
+ */
+function soda_scs_manager_soda_scs_component_insert(SodaScsComponent $entity) {
+  _soda_scs_manager_sync_component_project_relationship($entity);
+}
+
+/**
+ * Implements hook_ENTITY_TYPE_update() for soda_scs_component entities.
+ *
+ * Updates the connectedComponents field on
+ * projects when a component is updated.
+ */
+function soda_scs_manager_soda_scs_component_update(SodaScsComponent $entity) {
+  _soda_scs_manager_sync_component_project_relationship($entity);
+}
+
+/**
+ * Implements hook_ENTITY_TYPE_view() for soda_scs_component entities.
+ */
+function soda_scs_manager_soda_scs_component_view(array &$build, EntityInterface $entity, EntityViewDisplayInterface $display, $view_mode) {
+  if ($entity->getEntityTypeId() === 'soda_scs_component') {
+    // Check if the imageUrl field has a value.
+    /** @var \Drupal\soda_scs_manager\Entity\SodaScsComponentInterface $entity */
+    if ($imageUrl = $entity->get('imageUrl')->value) {
+      $imageUrl = Drupal::service('file_url_generator')->generateAbsoluteString($imageUrl);
+      $build['#attached']['library'][] = 'soda_scs_manager/globalStyling';
+      // Add a custom render array for the imageUrl field.
+      $build['imageUrl'] = [
+        '#type' => 'markup',
+        '#markup' => '<img class="img-thumbnail soda-scs-manager--img--thumbnail" src="' . $imageUrl . '" alt="Image description" />',
+        // Ensure proper sanitization of the URL.
+        '#allowed_tags' => ['img'],
+      // Adjust the weight as needed.
+        '#weight' => 10,
+      ];
+    }
+  }
 }
 
 /**
@@ -327,33 +399,83 @@ function soda_scs_manager_soda_scs_project_delete(SodaScsProject $entity) {
 }
 
 /**
- * Implements hook_ENTITY_TYPE_update() for soda_scs_component entities.
+ * Implements hook_ENTITY_TYPE_update() for soda_scs_project entities.
  *
- * Updates the connectedComponents field on
- * projects when a component is updated.
+ * Updates the partOfProjects field on components when a project is updated.
  */
-function soda_scs_manager_soda_scs_component_update(SodaScsComponent $entity) {
-  _soda_scs_manager_sync_component_project_relationship($entity);
+function soda_scs_manager_soda_scs_project_update(SodaScsProject $entity) {
+  _soda_scs_manager_sync_project_component_relationship($entity);
 }
 
 /**
- * Implements hook_ENTITY_TYPE_insert() for soda_scs_component entities.
- *
- * Updates the connectedComponents field on
- * projects when a component is created.
+ * Implements hook_ENTITY_TYPE_view() for soda_scs_component entities.
  */
-function soda_scs_manager_soda_scs_component_insert(SodaScsComponent $entity) {
-  _soda_scs_manager_sync_component_project_relationship($entity);
+function soda_scs_manager_soda_scs_stack_view(array &$build, EntityInterface $entity, EntityViewDisplayInterface $display, $view_mode) {
+  if ($entity->getEntityTypeId() === 'soda_scs_stack') {
+    // Check if the imageUrl field has a value.
+    /** @var \Drupal\soda_scs_manager\Entity\SodaScsComponentInterface $entity */
+    if ($imageUrl = $entity->get('imageUrl')->value) {
+      $imageUrl = Drupal::service('file_url_generator')->generateAbsoluteString($imageUrl);
+      $build['#attached']['library'][] = 'soda_scs_manager/globalStyling';
+      // Add a custom render array for the imageUrl field.
+      $build['imageUrl'] = [
+        '#type' => 'markup',
+        '#markup' => '<img class="img-thumbnail soda-scs-manager--img--thumbnail" src="' . $imageUrl . '" alt="Image description" />',
+        // Ensure proper sanitization of the URL.
+        '#allowed_tags' => ['img'],
+      // Adjust the weight as needed.
+        '#weight' => 10,
+      ];
+    }
+  }
 }
 
 /**
- * Implements hook_ENTITY_TYPE_delete() for soda_scs_component entities.
+ * Syncs the relationship from component to projects.
  *
- * Deletes the connectedComponents field on
- * projects when a component is deleted.
+ * @param \Drupal\soda_scs_manager\Entity\SodaScsComponent $component
+ *   The component entity.
  */
-function soda_scs_manager_soda_scs_component_delete(SodaScsComponent $entity) {
-  _soda_scs_manager_sync_component_project_relationship($entity);
+function _soda_scs_manager_sync_component_project_relationship(SodaScsComponent $component) {
+  // Skip if we're in the middle of syncing to prevent infinite recursion.
+  if (!empty($component->syncing)) {
+    return;
+  }
+
+  // Get projects referenced by this component.
+  $projectIds = [];
+  $partOfProjects = $component->get('partOfProjects')->getValue();
+  foreach ($partOfProjects as $projectRef) {
+    $projectIds[] = $projectRef['target_id'];
+  }
+
+  if (empty($projectIds)) {
+    return;
+  }
+
+  // Load all referenced projects.
+  $projectStorage = \Drupal::entityTypeManager()->getStorage('soda_scs_project');
+  /** @var \Drupal\soda_scs_manager\Entity\SodaScsProject[] $projects */
+  $projects = $projectStorage->loadMultiple($projectIds);
+
+  // For each project, ensure it references this component.
+  foreach ($projects as $project) {
+    /** @var \Drupal\soda_scs_manager\Entity\SodaScsProject $project */
+    $componentRefs = $project->get('connectedComponents')->getValue();
+    $componentRefIds = [];
+    foreach ($componentRefs as $ref) {
+      $componentRefIds[] = $ref['target_id'];
+    }
+
+    // If this component is not referenced by the project, add it.
+    if (!in_array($component->id(), $componentRefIds)) {
+      $componentRefs[] = ['target_id' => $component->id()];
+      $project->set('connectedComponents', $componentRefs);
+      // Prevent infinite recursion by setting a flag.
+      $project->syncing = TRUE;
+      $project->save();
+    }
+  }
 }
 
 /**
@@ -436,137 +558,44 @@ function _soda_scs_manager_sync_project_component_relationship(SodaScsProject $p
 }
 
 /**
- * Syncs the relationship from component to projects.
- *
- * @param \Drupal\soda_scs_manager\Entity\SodaScsComponent $component
- *   The component entity.
+ * Implements hook_theme().
  */
-function _soda_scs_manager_sync_component_project_relationship(SodaScsComponent $component) {
-  // Skip if we're in the middle of syncing to prevent infinite recursion.
-  if (!empty($component->syncing)) {
-    return;
-  }
-
-  // Get projects referenced by this component.
-  $projectIds = [];
-  $partOfProjects = $component->get('partOfProjects')->getValue();
-  foreach ($partOfProjects as $projectRef) {
-    $projectIds[] = $projectRef['target_id'];
-  }
-
-  if (empty($projectIds)) {
-    return;
-  }
-
-  // Load all referenced projects.
-  $projectStorage = \Drupal::entityTypeManager()->getStorage('soda_scs_project');
-  /** @var \Drupal\soda_scs_manager\Entity\SodaScsProject[] $projects */
-  $projects = $projectStorage->loadMultiple($projectIds);
-
-  // For each project, ensure it references this component.
-  foreach ($projects as $project) {
-    /** @var \Drupal\soda_scs_manager\Entity\SodaScsProject $project */
-    $componentRefs = $project->get('connectedComponents')->getValue();
-    $componentRefIds = [];
-    foreach ($componentRefs as $ref) {
-      $componentRefIds[] = $ref['target_id'];
-    }
-
-    // If this component is not referenced by the project, add it.
-    if (!in_array($component->id(), $componentRefIds)) {
-      $componentRefs[] = ['target_id' => $component->id()];
-      $project->set('connectedComponents', $componentRefs);
-      // Prevent infinite recursion by setting a flag.
-      $project->syncing = TRUE;
-      $project->save();
-    }
-  }
-}
-
-/**
- * Implements hook_mail().
- */
-function soda_scs_manager_mail($key, &$message, $params) {
-  $options = [
-    'langcode' => $message['langcode'],
+function soda_scs_manager_theme($existing, $type, $theme, $path) {
+  return [
+    'soda_scs_manager__store' => [
+      'variables' => [
+        'components' => NULL,
+        'stacks' => NULL,
+        'attributes' => NULL,
+      ],
+      'template' => 'pages/soda-scs-manager--store',
+    ],
+    'soda_scs_manager__desk' => [
+      'variables' => [
+        'entitiesByUser' => NULL,
+        'entity_type' => NULL,
+        'attributes' => NULL,
+      ],
+      'template' => 'pages/soda-scs-manager--desk',
+    ],
+    'soda_scs_manager__entity_card' => [
+      'variables' => [
+        'description' => NULL,
+        'imageUrl' => NULL,
+        'tags' => NULL,
+        'title' => NULL,
+        'type' => NULL,
+        'url' => NULL,
+      ],
+      'template' => 'cards/soda-scs-manager--entity-card',
+    ],
+    'soda_scs_manager__start_page' => [
+      'variables' => [
+        'attributes' => NULL,
+      ],
+      'template' => 'pages/soda-scs-manager--start-page',
+    ],
   ];
-
-  $site_config = \Drupal::config('system.site');
-  $site_name = $site_config->get('name');
-
-  switch ($key) {
-    case 'registration_admin_notification':
-      $message['subject'] = t('New user registration on @site_name', ['@site_name' => $site_name], $options);
-      $message['body'][] = t('A new user has registered on @site_name.', ['@site_name' => $site_name], $options);
-      $message['body'][] = t('Username: @username', ['@username' => $params['username']], $options);
-      $message['body'][] = t('Email: @email', ['@email' => $params['email']], $options);
-      $message['body'][] = t('Name: @first_name @last_name', [
-        '@first_name' => $params['first_name'],
-        '@last_name' => $params['last_name'],
-      ], $options);
-      $message['body'][] = t('To approve or reject this registration, visit: @url', [
-        '@url' => Url::fromRoute('soda_scs_manager.user_registration_approvals')
-          ->setAbsolute()
-          ->toString(),
-      ], $options);
-      break;
-
-    case 'registration_user_notification':
-      $message['subject'] = t('Your registration on @site_name', ['@site_name' => $site_name], $options);
-      $message['body'][] = t('Hello @username,', ['@username' => $params['username']], $options);
-      $message['body'][] = t('Thank you for registering on @site_name.', ['@site_name' => $site_name], $options);
-      $message['body'][] = t('Your registration is pending administrator approval. You will receive another email once your account is approved or rejected.', [], $options);
-      break;
-
-    case 'registration_approval':
-      $message['subject'] = t('Your account on @site_name has been approved', ['@site_name' => $site_name], $options);
-      $message['body'][] = t('Hello @username,', ['@username' => $params['username']], $options);
-      $message['body'][] = t('Your registration on @site_name has been approved.', ['@site_name' => $site_name], $options);
-      $message['body'][] = t('You can now log in at: @login_url', ['@login_url' => $params['login_url']], $options);
-      $message['body'][] = t('For security reasons, you will need to reset your password when you first log in.', [], $options);
-      break;
-
-    case 'registration_rejection':
-      $message['subject'] = t('Your account on @site_name was not approved', ['@site_name' => $site_name], $options);
-      $message['body'][] = t('Hello @username,', ['@username' => $params['username']], $options);
-      $message['body'][] = t('Your registration on @site_name has been reviewed and was not approved at this time.', ['@site_name' => $site_name], $options);
-      $message['body'][] = t('If you believe this is an error, please contact the site administrators.', [], $options);
-      break;
-  }
-}
-
-/**
- * Implements hook_form_FORM_ID_alter() for user_register_form.
- */
-function soda_scs_manager_form_user_register_form_alter(&$form, &$form_state, $form_id) {
-  // Disable native Drupal registration by redirecting to our custom form.
-  $response = new RedirectResponse(Url::fromRoute('soda_scs_manager.user_registration')->toString());
-  $response->send();
-  exit;
-}
-
-/**
- * Implements hook_form_FORM_ID_alter() for soda_scs_manager_stack_create_form.
- */
-function soda_scs_manager_form_soda_scs_manager_stack_create_form_alter(&$form, &$form_state, $form_id) {
-  // Disable the partOfProjects field.
-  if (isset($form['partOfProjects'])) {
-    $form['partOfProjects']['#access'] = FALSE;
-  }
-}
-
-/**
- * Implements hook_form_FORM_ID_alter() for soda_scs_manager_stack_create_form.
- */
-function soda_scs_manager_form_soda_scs_manager_component_create_form_alter(&$form, &$form_state, $form_id) {
-  // Disable the partOfProjects field.
-  if (isset($form['partOfProjects'])) {
-    $form['partOfProjects']['#access'] = FALSE;
-  }
-  // Disable the partOfProjects field.
-  if (isset($form['sharedWith'])) {
-    $form['sharedWith']['#access'] = FALSE;
-  }
 }
 
 /**
@@ -694,52 +723,26 @@ function soda_scs_manager_user_delete(UserInterface $user) {
   }
 }
 
+
 /**
- * Implements hook_options_list_alter().
+ * Implements hook_user_insert().
  */
-function soda_scs_manager_options_list_alter(array &$options, array $context) {
-  // Check if this is our connectedComponents field for soda_scs_project.
-  if (isset($context['fieldDefinition']) &&
-      $context['fieldDefinition']->getName() === 'connectedComponents' &&
-      $context['entity'] &&
-      $context['entity']->getEntityTypeId() === 'soda_scs_project') {
+function soda_scs_manager_user_insert(UserInterface $user) {
 
-    // Load entity type manager.
-    $entityTypeManager = \Drupal::entityTypeManager();
-
-    // Temporary array to store modified options.
-    $modified_options = [];
-
-    // Get the component storage handler.
-    $componentStorage = $entityTypeManager->getStorage('soda_scs_component');
-
-    // For each option, add the bundle label in parentheses.
-    foreach ($options as $key => $value) {
-      // Skip '_none' option if present.
-      if ($key === '_none') {
-        $modified_options[$key] = $value;
-        continue;
-      }
-
-      // Load the component entity.
-      $component = $componentStorage->load(array_key_first($value));
-      if ($component) {
-        // Get the bundle label.
-        $bundleInfo = \Drupal::service('entity_type.bundle.info')->getBundleInfo('soda_scs_component');
-        $bundleLabel = $bundleInfo[$component->bundle()]['label'] ?? $component->bundle();
-
-        // Format the label as "Label (Bundle)".
-        $modified_options[$key][key($value)] = $component->label() . ' (' . $bundleLabel . ')';
-      }
-      else {
-        // Keep original value if component can't be loaded.
-        $modified_options[$key] = $value;
-      }
-    }
-
-    // Sort the options by key.
-    ksort($modified_options);
-    // Replace original options with modified ones.
-    $options = $modified_options;
+  // Set the user status to active by default.
+  if (!$user->isActive()) {
+    $user->activate();
   }
+
+  // Assign the scs_user role to the new user.
+  if (!$user->hasRole('scs_user')) {
+    $user->addRole('scs_user');
+  }
+
+  // Save the updated user.
+  $user->save();
+
+  // Ensure the role exists and has the required permissions.
+  soda_scs_manager_ensure_scs_user_role();
 }
+
