@@ -40,7 +40,7 @@ class SodaScsStackListBuilder extends EntityListBuilder {
   protected function getDefaultOperations(EntityInterface $entity) {
     $operations = parent::getDefaultOperations($entity);
 
-    // Update the URL for operations to include bundle
+    // Update the URL for operations to include bundle.
     if (isset($operations['edit'])) {
       $operations['edit']['url'] = $this->ensureBundleParameter($operations['edit']['url'], $entity);
     }
@@ -69,7 +69,7 @@ class SodaScsStackListBuilder extends EntityListBuilder {
     $route_name = $url->getRouteName();
     $route_parameters = $url->getRouteParameters();
 
-    // Add bundle parameter if the route requires it
+    // Add bundle parameter if the route requires it.
     if (strpos($route_name, 'entity.soda_scs_stack.') === 0 && !isset($route_parameters['bundle'])) {
       $route_parameters['bundle'] = $entity->bundle();
       $url = Url::fromRoute($route_name, $route_parameters);

@@ -68,7 +68,8 @@ class SodaScsProjectListBuilder extends EntityListBuilder {
         Url::fromRoute('entity.soda_scs_project.canonical', ['soda_scs_project' => $entity->id()])
       )->toString();
       $row['machineName'] = $entity->get('machineName')->value;
-      $row['owner'] = $entity->getOwner()->getDisplayName();
+      $owner = $entity->getOwner();
+      $row['owner'] = ($owner && $owner->getDisplayName()) ? $owner->getDisplayName() : 'unknown';
       $row['members'] = Markup::create(implode(', ', $members));
       $row['components'] = Markup::create($linksString);
       $row['rights'] = $entity->get('rights')->value;

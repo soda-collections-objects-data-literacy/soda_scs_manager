@@ -169,30 +169,6 @@ class SodaScsProject extends ContentEntityBase implements EntityInterface {
         'weight' => 10,
       ]);
 
-    $fields['machineName'] = BaseFieldDefinition::create('string')
-      ->setLabel(new TranslatableMarkup('Machine Name'))
-      ->setDescription(new TranslatableMarkup('The machine-readable name of the project.'))
-      ->setRequired(TRUE)
-      ->setSetting('max_length', 255)
-      ->setDisplayOptions('form', [
-        'type' => 'string_textfield',
-        'weight' => 15,
-      ])
-      ->setDisplayConfigurable('form', TRUE)
-      ->setDisplayOptions('view', [
-        'label' => 'inline',
-        'type' => 'string',
-        'weight' => -5,
-      ])
-      ->setDisplayConfigurable('view', TRUE)
-      // Add constraint to ensure machine name format is valid.
-      ->addPropertyConstraints('value', [
-        'Regex' => [
-          'pattern' => '/^[a-z0-9-]+$/',
-          'message' => t('Machine name must contain only lowercase letters, numbers, and minus.'),
-        ],
-      ]);
-
     $fields['members'] = BaseFieldDefinition::create('entity_reference')
       ->setLabel(new TranslatableMarkup('Members'))
       ->setDescription(new TranslatableMarkup('The members associated with the project.'))

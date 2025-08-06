@@ -57,12 +57,6 @@ class SodaScsProjectEditForm extends ContentEntityForm {
     $form = parent::buildForm($form, $form_state);
     $current_user = \Drupal::currentUser();
 
-    // Make the machineName field readonly and add JavaScript to auto-generate it.
-    if (isset($form['machineName'])) {
-      $form['machineName']['widget'][0]['value']['#attributes']['readonly'] = 'readonly';
-      $form['machineName']['widget'][0]['value']['#attributes']['disabled'] = 'disabled';
-    }
-
     $form['owner']['widget']['#default_value'] = $current_user->id();
     if (!$current_user->hasPermission('soda scs manager admin')) {
       $form['owner']['#access'] = FALSE;
