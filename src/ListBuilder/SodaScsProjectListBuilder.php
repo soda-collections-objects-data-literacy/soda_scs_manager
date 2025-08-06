@@ -20,7 +20,6 @@ class SodaScsProjectListBuilder extends EntityListBuilder {
    */
   public function buildHeader() {
     $header['name'] = $this->t('Name');
-    $header['machineName'] = $this->t('Machine name');
     $header['owner'] = $this->t('Owner');
     $header['members'] = $this->t('Members');
     $header['components'] = $this->t('Components');
@@ -67,7 +66,6 @@ class SodaScsProjectListBuilder extends EntityListBuilder {
         $entity->label(),
         Url::fromRoute('entity.soda_scs_project.canonical', ['soda_scs_project' => $entity->id()])
       )->toString();
-      $row['machineName'] = $entity->get('machineName')->value;
       $owner = $entity->getOwner();
       $row['owner'] = ($owner && $owner->getDisplayName()) ? $owner->getDisplayName() : 'unknown';
       $row['members'] = Markup::create(implode(', ', $members));
