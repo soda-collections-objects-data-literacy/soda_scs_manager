@@ -568,11 +568,23 @@ class SodaScsSqlServiceActions implements SodaScsServiceActionsInterface {
       ];
     }
 
+    $databaseUserExists = $this->existServiceUser($dbUser);
+    if ($databaseUserExists['result'] == 0) {
+      $this->messenger->addWarning($this->t('User does not exist'));
+
+      return [
+        'message' => $this->t('User does not exist'),
+        'data' => [],
+        'error' => NULL,
+        'success' => FALSE,
+      ];
+    }
+
     $databaseUserDeleted = $this->deleteServiceUser($dbUser);
 
     if ($databaseUserDeleted['execStatus'] != 0) {
       throw new SodaScsSqlServiceException(
-        "Cannot delete database user @user.",
+        "Cannot delete database user.",
         $this->sanitizeCommandForLogging($databaseUserDeleted['command']),
         'delete database user',
         $dbUser,
