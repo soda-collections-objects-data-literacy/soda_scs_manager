@@ -239,48 +239,7 @@ function soda_scs_manager_mail($key, &$message, $params) {
   }
 }
 
-/**
- * Implements hook_options_list_alter().
- */
-function soda_scs_manager_options_list_alter(array &$options, array $context) {
-  // Check if this is our connectedComponents field for soda_scs_project.
-  if (isset($context['fieldDefinition']) &&
-      $context['fieldDefinition']->getName() === 'connectedComponents' &&
-      $context['entity'] &&
-      $context['entity']->getEntityTypeId() === 'soda_scs_project') {
 
-    // Load entity type manager.
-    $entityTypeManager = \Drupal::entityTypeManager();
-
-    // Temporary array to store modified options.
-    $modified_options = [];
-
-    // Get the component storage handler.
-    $componentStorage = $entityTypeManager->getStorage('soda_scs_component');
-
-    // For each option, add the bundle label in parentheses.
-    foreach ($options as $componentType => $components) {
-
-      foreach ($components as $componentId => $component) {
-      // Load the component entity.
-      $componentEntity = $componentStorage->load($componentId);
-      if ($componentEntity) {
-          // Get the bundle label.
-          $bundleInfo = \Drupal::service('entity_type.bundle.info')->getBundleInfo('soda_scs_component');
-          $bundleLabel = $bundleInfo[$componentEntity->bundle()]['label'] ?? $componentEntity->bundle();
-
-          // Format the label as "Label (Bundle)".
-          $modified_options[$componentType][$componentId] = $componentEntity->label() . ' (' . $bundleLabel . ')';
-        }
-      }
-    }
-
-    // Sort the options by key.
-    ksort($modified_options);
-    // Replace original options with modified ones.
-    $options = $modified_options;
-  }
-}
 
 
 /**
