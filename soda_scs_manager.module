@@ -21,36 +21,6 @@ use Drupal\Core\Url;
 use Symfony\Component\HttpFoundation\RedirectResponse;
 
 /**
- * Ensure the scs_user role exists and has the required permissions.
- */
-function soda_scs_manager_ensure_scs_user_role() {
-  // Get the role storage.
-  $role_storage = \Drupal::entityTypeManager()->getStorage('user_role');
-
-  // Create the custom role if it doesn't exist.
-  if (!$role_storage->load('scs_user')) {
-    $role = $role_storage->create(['id' => 'scs_user', 'label' => 'scs_user']);
-    $role->save();
-  }
-
-  // Assign the required permissions to the custom role.
-  $permissions = [
-    'soda scs manager user',
-    'create soda scs stack',
-    'view soda scs stack',
-    'delete soda scs stack',
-    'create soda scs component',
-    'view soda scs component',
-    'delete soda scs component',
-    'create soda scs service key',
-    'view soda scs service key',
-    'delete soda scs service key',
-  ];
-
-  user_role_grant_permissions('scs_user', $permissions);
-}
-
-/**
  * Implements hook_entity_bundle_info().
  */
 function soda_scs_manager_entity_bundle_info() {
@@ -289,26 +259,19 @@ function soda_scs_manager_options_list_alter(array &$options, array $context) {
     $componentStorage = $entityTypeManager->getStorage('soda_scs_component');
 
     // For each option, add the bundle label in parentheses.
-    foreach ($options as $key => $value) {
-      // Skip '_none' option if present.
-      if ($key === '_none') {
-        $modified_options[$key] = $value;
-        continue;
-      }
+    foreach ($options as $componentType => $components) {
 
+      foreach ($components as $componentId => $component) {
       // Load the component entity.
-      $component = $componentStorage->load(array_key_first($value));
-      if ($component) {
-        // Get the bundle label.
-        $bundleInfo = \Drupal::service('entity_type.bundle.info')->getBundleInfo('soda_scs_component');
-        $bundleLabel = $bundleInfo[$component->bundle()]['label'] ?? $component->bundle();
+      $componentEntity = $componentStorage->load($componentId);
+      if ($componentEntity) {
+          // Get the bundle label.
+          $bundleInfo = \Drupal::service('entity_type.bundle.info')->getBundleInfo('soda_scs_component');
+          $bundleLabel = $bundleInfo[$componentEntity->bundle()]['label'] ?? $componentEntity->bundle();
 
-        // Format the label as "Label (Bundle)".
-        $modified_options[$key][key($value)] = $component->label() . ' (' . $bundleLabel . ')';
-      }
-      else {
-        // Keep original value if component can't be loaded.
-        $modified_options[$key] = $value;
+          // Format the label as "Label (Bundle)".
+          $modified_options[$componentType][$componentId] = $componentEntity->label() . ' (' . $bundleLabel . ')';
+        }
       }
     }
 
@@ -430,132 +393,6 @@ function soda_scs_manager_soda_scs_stack_view(array &$build, EntityInterface $en
   }
 }
 
-/**
- * Syncs the relationship from component to projects.
- *
- * @param \Drupal\soda_scs_manager\Entity\SodaScsComponent $component
- *   The component entity.
- */
-function _soda_scs_manager_sync_component_project_relationship(SodaScsComponent $component) {
-  // Skip if we're in the middle of syncing to prevent infinite recursion.
-  if (!empty($component->syncing)) {
-    return;
-  }
-
-  // Get projects referenced by this component.
-  $projectIds = [];
-  $partOfProjects = $component->get('partOfProjects')->getValue();
-  foreach ($partOfProjects as $projectRef) {
-    $projectIds[] = $projectRef['target_id'];
-  }
-
-  if (empty($projectIds)) {
-    return;
-  }
-
-  // Load all referenced projects.
-  $projectStorage = \Drupal::entityTypeManager()->getStorage('soda_scs_project');
-  /** @var \Drupal\soda_scs_manager\Entity\SodaScsProject[] $projects */
-  $projects = $projectStorage->loadMultiple($projectIds);
-
-  // For each project, ensure it references this component.
-  foreach ($projects as $project) {
-    /** @var \Drupal\soda_scs_manager\Entity\SodaScsProject $project */
-    $componentRefs = $project->get('connectedComponents')->getValue();
-    $componentRefIds = [];
-    foreach ($componentRefs as $ref) {
-      $componentRefIds[] = $ref['target_id'];
-    }
-
-    // If this component is not referenced by the project, add it.
-    if (!in_array($component->id(), $componentRefIds)) {
-      $componentRefs[] = ['target_id' => $component->id()];
-      $project->set('connectedComponents', $componentRefs);
-      // Prevent infinite recursion by setting a flag.
-      $project->syncing = TRUE;
-      $project->save();
-    }
-  }
-}
-
-/**
- * Syncs the relationship from project to components.
- *
- * @param \Drupal\soda_scs_manager\Entity\SodaScsProject $project
- *   The project entity.
- */
-function _soda_scs_manager_sync_project_component_relationship(SodaScsProject $project) {
-  // Get components referenced by this project.
-  $componentIds = [];
-  $connectedComponents = $project->get('connectedComponents')->getValue();
-  foreach ($connectedComponents as $componentRef) {
-    $componentIds[] = $componentRef['target_id'];
-  }
-
-  // Load all components that might reference this project.
-  $componentStorage = \Drupal::entityTypeManager()->getStorage('soda_scs_component');
-
-  // First, find all components that reference this project.
-  $query = $componentStorage->getQuery()
-    ->condition('partOfProjects', $project->id())
-    ->accessCheck(FALSE);
-  $referencingComponentIds = $query->execute();
-
-  if (!empty($referencingComponentIds)) {
-    $referencingComponents = $componentStorage->loadMultiple($referencingComponentIds);
-
-    // For each component that references this project,
-    // check if it should still reference it.
-    /** @var \Drupal\soda_scs_manager\Entity\SodaScsComponent $component */
-    foreach ($referencingComponents as $component) {
-      // Skip if the component is still connected to the project.
-      if (in_array($component->id(), $componentIds)) {
-        continue;
-      }
-
-      // Component is no longer connected to the project, remove the reference.
-      $projectRefs = [];
-      foreach ($component->get('partOfProjects')->getValue() as $ref) {
-        if ($ref['target_id'] != $project->id()) {
-          $projectRefs[] = $ref;
-        }
-      }
-
-      // Update the component with the new references.
-      $component->set('partOfProjects', $projectRefs);
-      // Prevent infinite recursion by setting a flag.
-      $component->syncing = TRUE;
-      $component->save();
-    }
-  }
-
-  // If there are no components connected to this project, we're done.
-  if (empty($componentIds)) {
-    return;
-  }
-
-  // Load all currently referenced components.
-  /** @var \Drupal\soda_scs_manager\Entity\SodaScsComponent[] $components */
-  $components = $componentStorage->loadMultiple($componentIds);
-
-  // For each component, ensure it references this project.
-  foreach ($components as $component) {
-    $projectRefs = $component->get('partOfProjects')->getValue();
-    $projectRefIds = [];
-    foreach ($projectRefs as $ref) {
-      $projectRefIds[] = $ref['target_id'];
-    }
-
-    // If this project is not referenced by the component, add it.
-    if (!in_array($project->id(), $projectRefIds)) {
-      $projectRefs[] = ['target_id' => $project->id()];
-      $component->set('partOfProjects', $projectRefs);
-      // Prevent infinite recursion by setting a flag.
-      $component->syncing = TRUE;
-      $component->save();
-    }
-  }
-}
 
 /**
  * Implements hook_theme().
@@ -743,6 +580,176 @@ function soda_scs_manager_user_insert(UserInterface $user) {
   $user->save();
 
   // Ensure the role exists and has the required permissions.
-  soda_scs_manager_ensure_scs_user_role();
+  _soda_scs_manager_ensure_scs_user_role();
+  _soda_scs_manager_create_default_project_for_user($user);
 }
 
+// Curstom hooks.
+
+/** Create default project for new user */
+function _soda_scs_manager_create_default_project_for_user(UserInterface $user) {
+  $project = SodaScsProject::create([
+    'bundle' => 'default',
+    'groupId' => $user->id() + SodaScsProject::GROUP_ID_START,
+    'label' => $user->getDisplayName() . '\'s default project',
+    'owner' => $user->id(),
+  ]);
+  $project->save();
+}
+
+/**
+ * Ensure the scs_user role exists and has the required permissions.
+ */
+function _soda_scs_manager_ensure_scs_user_role() {
+  // Get the role storage.
+  $role_storage = \Drupal::entityTypeManager()->getStorage('user_role');
+
+  // Create the custom role if it doesn't exist.
+  if (!$role_storage->load('scs_user')) {
+    $role = $role_storage->create(['id' => 'scs_user', 'label' => 'scs_user']);
+    $role->save();
+  }
+
+  // Assign the required permissions to the custom role.
+  $permissions = [
+    'soda scs manager user',
+    'create soda scs stack',
+    'view soda scs stack',
+    'delete soda scs stack',
+    'create soda scs component',
+    'view soda scs component',
+    'delete soda scs component',
+    'create soda scs service key',
+    'view soda scs service key',
+    'delete soda scs service key',
+  ];
+
+  user_role_grant_permissions('scs_user', $permissions);
+}
+
+/**
+ * Syncs the relationship from component to projects.
+ *
+ * @param \Drupal\soda_scs_manager\Entity\SodaScsComponent $component
+ *   The component entity.
+ */
+function _soda_scs_manager_sync_component_project_relationship(SodaScsComponent $component) {
+  // Skip if we're in the middle of syncing to prevent infinite recursion.
+  if (!empty($component->syncing)) {
+    return;
+  }
+
+  // Get projects referenced by this component.
+  $projectIds = [];
+  $partOfProjects = $component->get('partOfProjects')->getValue();
+  foreach ($partOfProjects as $projectRef) {
+    $projectIds[] = $projectRef['target_id'];
+  }
+
+  if (empty($projectIds)) {
+    return;
+  }
+
+  // Load all referenced projects.
+  $projectStorage = \Drupal::entityTypeManager()->getStorage('soda_scs_project');
+  /** @var \Drupal\soda_scs_manager\Entity\SodaScsProject[] $projects */
+  $projects = $projectStorage->loadMultiple($projectIds);
+
+  // For each project, ensure it references this component.
+  foreach ($projects as $project) {
+    /** @var \Drupal\soda_scs_manager\Entity\SodaScsProject $project */
+    $componentRefs = $project->get('connectedComponents')->getValue();
+    $componentRefIds = [];
+    foreach ($componentRefs as $ref) {
+      $componentRefIds[] = $ref['target_id'];
+    }
+
+    // If this component is not referenced by the project, add it.
+    if (!in_array($component->id(), $componentRefIds)) {
+      $componentRefs[] = ['target_id' => $component->id()];
+      $project->set('connectedComponents', $componentRefs);
+      // Prevent infinite recursion by setting a flag.
+      $project->syncing = TRUE;
+      $project->save();
+    }
+  }
+}
+
+/**
+ * Syncs the relationship from project to components.
+ *
+ * @param \Drupal\soda_scs_manager\Entity\SodaScsProject $project
+ *   The project entity.
+ */
+function _soda_scs_manager_sync_project_component_relationship(SodaScsProject $project) {
+  // Get components referenced by this project.
+  $componentIds = [];
+  $connectedComponents = $project->get('connectedComponents')->getValue();
+  foreach ($connectedComponents as $componentRef) {
+    $componentIds[] = $componentRef['target_id'];
+  }
+
+  // Load all components that might reference this project.
+  $componentStorage = \Drupal::entityTypeManager()->getStorage('soda_scs_component');
+
+  // First, find all components that reference this project.
+  $query = $componentStorage->getQuery()
+    ->condition('partOfProjects', $project->id())
+    ->accessCheck(FALSE);
+  $referencingComponentIds = $query->execute();
+
+  if (!empty($referencingComponentIds)) {
+    $referencingComponents = $componentStorage->loadMultiple($referencingComponentIds);
+
+    // For each component that references this project,
+    // check if it should still reference it.
+    /** @var \Drupal\soda_scs_manager\Entity\SodaScsComponent $component */
+    foreach ($referencingComponents as $component) {
+      // Skip if the component is still connected to the project.
+      if (in_array($component->id(), $componentIds)) {
+        continue;
+      }
+
+      // Component is no longer connected to the project, remove the reference.
+      $projectRefs = [];
+      foreach ($component->get('partOfProjects')->getValue() as $ref) {
+        if ($ref['target_id'] != $project->id()) {
+          $projectRefs[] = $ref;
+        }
+      }
+
+      // Update the component with the new references.
+      $component->set('partOfProjects', $projectRefs);
+      // Prevent infinite recursion by setting a flag.
+      $component->syncing = TRUE;
+      $component->save();
+    }
+  }
+
+  // If there are no components connected to this project, we're done.
+  if (empty($componentIds)) {
+    return;
+  }
+
+  // Load all currently referenced components.
+  /** @var \Drupal\soda_scs_manager\Entity\SodaScsComponent[] $components */
+  $components = $componentStorage->loadMultiple($componentIds);
+
+  // For each component, ensure it references this project.
+  foreach ($components as $component) {
+    $projectRefs = $component->get('partOfProjects')->getValue();
+    $projectRefIds = [];
+    foreach ($projectRefs as $ref) {
+      $projectRefIds[] = $ref['target_id'];
+    }
+
+    // If this project is not referenced by the component, add it.
+    if (!in_array($project->id(), $projectRefIds)) {
+      $projectRefs[] = ['target_id' => $project->id()];
+      $component->set('partOfProjects', $projectRefs);
+      // Prevent infinite recursion by setting a flag.
+      $component->syncing = TRUE;
+      $component->save();
+    }
+  }
+}

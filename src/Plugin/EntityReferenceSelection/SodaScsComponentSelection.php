@@ -21,7 +21,7 @@ class SodaScsComponentSelection extends DefaultSelection {
   /**
    * {@inheritdoc}
    */
-  protected function buildEntityQuery($match = NULL, $match_operator = 'CONTAINS') {
+    protected function buildEntityQuery($match = NULL, $match_operator = 'CONTAINS') {
     $query = parent::buildEntityQuery($match, $match_operator);
     $this->addAccessConditions($query);
     return $query;
@@ -36,15 +36,15 @@ class SodaScsComponentSelection extends DefaultSelection {
   protected function addAccessConditions(QueryInterface $query) {
     $current_user = \Drupal::currentUser();
 
-    // If user has admin permission, don't restrict access unless specific owner filter is set
+    // If user has admin permission, don't restrict access unless specific owner filter is set.
     if ($current_user->hasPermission('soda scs manager admin') && empty($this->configuration['handler_settings']['filter']['owner'])) {
       return;
     }
 
-    // If a specific owner is set in the filter, use that instead of the current user
+    // If a specific owner is set in the filter, use that instead of the current user.
     if (!empty($this->configuration['handler_settings']['filter']['owner'])) {
       $uid = $this->configuration['handler_settings']['filter']['owner'];
-      // Only filter by this specific owner
+      // Only filter by this specific owner.
       $query->condition('owner', $uid);
       return;
     }
