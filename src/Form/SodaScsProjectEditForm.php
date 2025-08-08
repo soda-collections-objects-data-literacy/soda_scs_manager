@@ -80,7 +80,7 @@ class SodaScsProjectEditForm extends ContentEntityForm {
     return $form;
   }
 
-  /**
+    /**
    * {@inheritdoc}
    *
    * @throws \Drupal\Core\Entity\EntityStorageException
@@ -91,5 +91,6 @@ class SodaScsProjectEditForm extends ContentEntityForm {
     // Redirect to the components page.
     $form_state->setRedirect('entity.soda_scs_project.collection');
   }
+
 
 }

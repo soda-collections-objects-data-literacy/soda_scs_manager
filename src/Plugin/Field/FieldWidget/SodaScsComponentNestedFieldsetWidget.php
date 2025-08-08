@@ -10,6 +10,7 @@ use Drupal\Core\Field\Plugin\Field\FieldWidget\OptionsWidgetBase;
 use Drupal\Core\Form\FormStateInterface;
 use Drupal\Core\Plugin\ContainerFactoryPluginInterface;
 use Drupal\Core\StringTranslation\TranslatableMarkup;
+use Drupal\Component\Utility\NestedArray;
 use Drupal\soda_scs_manager\Entity\SodaScsComponentInterface;
 use Drupal\user\EntityOwnerInterface;
 use Symfony\Component\DependencyInjection\ContainerInterface;
@@ -26,8 +27,6 @@ use Symfony\Component\DependencyInjection\ContainerInterface;
   multiple_values: TRUE,
 )]
 class SodaScsComponentNestedFieldsetWidget extends OptionsWidgetBase implements ContainerFactoryPluginInterface {
-
-
 
   /**
    * The entity type manager.
@@ -64,47 +63,51 @@ class SodaScsComponentNestedFieldsetWidget extends OptionsWidgetBase implements 
   public function formElement(FieldItemListInterface $items, $delta, array $element, array &$form, FormStateInterface $form_state) {
     $element = parent::formElement($items, $delta, $element, $form, $form_state);
 
+
+
     // Get all available options from the base widget.
     $options = $this->getOptions($items->getEntity());
     $selected = $this->getSelectedOptions($items);
 
     // Load all component entities to group them.
-    $component_ids = array_keys($options);
-    if (empty($component_ids)) {
+    $componentIds = array_keys($options);
+    if (empty($componentIds)) {
       return $element + [
         '#markup' => $this->t('No components available.'),
       ];
     }
 
-    $components = $this->entityTypeManager->getStorage('soda_scs_component')->loadMultiple($component_ids);
+    $components = $this->entityTypeManager->getStorage('soda_scs_component')->loadMultiple($componentIds);
 
     // Group components by owner and then by bundle (component type).
-    $grouped_components = [];
-    $bundle_info = \Drupal::service('entity_type.bundle.info')->getBundleInfo('soda_scs_component');
+    $groupedComponents = [];
+    $bundleInfo = \Drupal::service('entity_type.bundle.info')->getBundleInfo('soda_scs_component');
 
-    foreach ($components as $component_id => $component) {
+    foreach ($components as $componentId => $component) {
       /** @var \Drupal\soda_scs_manager\Entity\SodaScsComponentInterface $component */
       $owner = $component->getOwner();
-      $owner_name = $owner ? $owner->getDisplayName() : $this->t('Unknown');
-      $owner_id = $owner ? $owner->id() : 0;
+      $ownerName = $owner ? $owner->getDisplayName() : $this->t('Unknown');
+      $ownerId = $owner ? $owner->id() : 0;
 
       $bundle = $component->bundle();
-      $bundle_label = $bundle_info[$bundle]['label'] ?? $bundle;
+      $bundleLabel = $bundleInfo[$bundle]['label'] ?? $bundle;
 
-      $grouped_components[$owner_id][$bundle][] = [
-        'id' => $component_id,
-        'label' => $options[$component_id],
-        'owner_name' => $owner_name,
-        'bundle_label' => $bundle_label,
+      $groupedComponents[$ownerId][$bundle][] = [
+        'id' => $componentId,
+        'label' => $options[$componentId],
+        'owner_name' => $ownerName,
+        'bundle_label' => $bundleLabel,
       ];
     }
 
     // Sort by owner name.
-    uksort($grouped_components, function($a, $b) use ($grouped_components) {
-      if (isset($grouped_components[$a]) && isset($grouped_components[$b])) {
-        $owner_a = reset(reset($grouped_components[$a]))['owner_name'];
-        $owner_b = reset(reset($grouped_components[$b]))['owner_name'];
-        return strcasecmp($owner_a, $owner_b);
+    uksort($groupedComponents, function($a, $b) use ($groupedComponents) {
+      if (isset($groupedComponents[$a]) && isset($groupedComponents[$b])) {
+        $firstOwnerComponentA = reset($groupedComponents[$a]);
+        $firstOwnerComponentB = reset($groupedComponents[$b]);
+        $ownerA = reset($firstOwnerComponentA)['owner_name'];
+        $ownerB = reset($firstOwnerComponentB)['owner_name'];
+        return strcasecmp($ownerA, $ownerB);
       }
       return 0;
     });
@@ -115,57 +118,62 @@ class SodaScsComponentNestedFieldsetWidget extends OptionsWidgetBase implements 
     $element['#tree'] = TRUE;
     $element['#attributes']['class'][] = 'soda-scs-nested-main-fieldset';
 
+    // Add own validation handler.
+    $element['#element_validate'][] = [static::class, 'validateNestedElement'];
+    $element['#soda_scs_multiple'] = $this->multiple;
+
     // Create a container for the nested content.
     $element['nested_content'] = [
       '#type' => 'container',
       '#attributes' => ['class' => ['soda-scs-nested-content']],
     ];
 
-        foreach ($grouped_components as $owner_id => $owner_components) {
-      $owner_name = reset(reset($owner_components))['owner_name'];
+    foreach ($groupedComponents as $ownerId => $ownerComponents) {
+      $firstOwnerComponent = reset($ownerComponents);
+      $ownerName = reset($firstOwnerComponent)['owner_name'];
 
-      $element['nested_content']['owner_' . $owner_id] = [
+      $element['nested_content']['owner_' . $ownerId] = [
         '#type' => 'details',
-        '#title' => $this->t('Owner: @name', ['@name' => $owner_name]),
+        '#title' => $this->t('Owner: @name', ['@name' => $ownerName]),
         '#open' => FALSE,
         '#attributes' => ['class' => ['soda-scs-nested-owner-fieldset']],
       ];
 
       // Sort bundles by label.
-      uksort($owner_components, function($a, $b) use ($owner_components) {
-        $bundle_a = reset($owner_components[$a])['bundle_label'];
-        $bundle_b = reset($owner_components[$b])['bundle_label'];
-        return strcasecmp($bundle_a, $bundle_b);
+      uksort($ownerComponents, function($a, $b) use ($ownerComponents) {
+        $bundleA = reset($ownerComponents[$a])['bundle_label'];
+        $bundleB = reset($ownerComponents[$b])['bundle_label'];
+        return strcasecmp($bundleA, $bundleB);
       });
 
-            foreach ($owner_components as $bundle => $bundle_components) {
-        $bundle_label = $bundle_components[0]['bundle_label'];
+      foreach ($ownerComponents as $bundle => $bundleComponents) {
+        $bundleLabel = $bundleComponents[0]['bundle_label'];
 
-        $element['nested_content']['owner_' . $owner_id]['bundle_' . $bundle] = [
+        $element['nested_content']['owner_' . $ownerId]['bundle_' . $bundle] = [
           '#type' => 'fieldset',
-          '#title' => $bundle_label,
+          '#title' => $bundleLabel,
           '#attributes' => ['class' => ['soda-scs-nested-bundle-fieldset']],
         ];
 
         // Create options for this bundle.
-        $bundle_options = [];
-        foreach ($bundle_components as $component) {
-          $bundle_options[$component['id']] = $component['label'];
+        $bundleOptions = [];
+        foreach ($bundleComponents as $component) {
+          $bundleOptions[$component['id']] = $component['label'];
         }
 
         if ($this->multiple) {
-          $element['nested_content']['owner_' . $owner_id]['bundle_' . $bundle]['options'] = [
+          $element['nested_content']['owner_' . $ownerId]['bundle_' . $bundle]['options'] = [
             '#type' => 'checkboxes',
-            '#options' => $bundle_options,
-            '#default_value' => array_intersect($selected, array_keys($bundle_options)),
+            '#options' => $bundleOptions,
+            '#default_value' => array_intersect($selected, array_keys($bundleOptions)),
             '#attributes' => ['class' => ['soda-scs-nested-options']],
           ];
         }
         else {
           // For single selection, use radios but we need to handle the grouping differently.
-          $element['nested_content']['owner_' . $owner_id]['bundle_' . $bundle]['options'] = [
+          $element['nested_content']['owner_' . $ownerId]['bundle_' . $bundle]['options'] = [
             '#type' => 'radios',
-            '#options' => $bundle_options,
+            '#options' => $bundleOptions,
             '#default_value' => $selected ? reset($selected) : NULL,
             '#attributes' => ['class' => ['soda-scs-nested-options']],
           ];
@@ -173,45 +181,104 @@ class SodaScsComponentNestedFieldsetWidget extends OptionsWidgetBase implements 
       }
     }
 
-    // Add a custom value callback to handle the nested structure.
-    $element['#value_callback'] = [$this, 'valueCallback'];
-
     return $element;
   }
 
   /**
-   * Custom value callback to extract values from nested structure.
+   * {@inheritdoc}
    */
-  public function valueCallback(&$element, $input, FormStateInterface $form_state) {
-    if ($input === FALSE) {
-      return [];
-    }
+  public function massageFormValues(array $values, array $form, FormStateInterface $form_state) {
+    // Values are already flattened in validateNestedElement().
+    return $values;
+  }
 
-    $values = [];
-    if (is_array($input) && isset($input['nested_content'])) {
-      foreach ($input['nested_content'] as $owner_key => $owner_data) {
-        if (is_array($owner_data) && strpos($owner_key, 'owner_') === 0) {
-          foreach ($owner_data as $bundle_key => $bundle_data) {
-            if (is_array($bundle_data) && strpos($bundle_key, 'bundle_') === 0 && isset($bundle_data['options'])) {
-              if ($this->multiple) {
-                // For checkboxes, filter out FALSE values.
-                $selected = array_filter($bundle_data['options']);
-                $values = array_merge($values, array_keys($selected));
-              }
-              else {
-                // For radios, add the selected value if any.
-                if (!empty($bundle_data['options'])) {
-                  $values[] = $bundle_data['options'];
-                }
+
+
+   /**
+   * Custom element validation handler for nested widgets.
+   *
+   * @param array $element
+   *   The form element.
+   * @param \Drupal\Core\Form\FormStateInterface $form_state
+   *   The form state.
+   */
+  public static function validateNestedElement(array $element, FormStateInterface $form_state) {
+    $selectedIds = [];
+
+    if (!empty($element['nested_content']) && is_array($element['nested_content'])) {
+      // Filter $element['nested_content'] for items beginning with 'owner_'.
+      $ownerArray = array_filter(
+        $element['nested_content'],
+        function ($key) {
+          return str_starts_with($key, 'owner_');
+        },
+        ARRAY_FILTER_USE_KEY
+      );
+      foreach ($ownerArray as $owner) {
+        $bundleArray = array_filter(
+          $owner,
+          function ($key) {
+            return str_starts_with($key, 'bundle_soda_scs_');
+          },
+          ARRAY_FILTER_USE_KEY
+        );
+        foreach ($bundleArray as $bundle) {
+          if (!array_key_exists('options', $bundle)) {
+            continue;
+          }
+          $opts = $bundle['options'];
+
+          // New shape: a single checkbox element where '#value' is either
+          // [id => id] when checked, or [] when unchecked. Also supports
+          // element arrays with '#value' for radios.
+          if (is_array($opts) && array_key_exists('#value', $opts)) {
+            $value = $opts['#value'];
+            if (is_array($value) && !empty($value)) {
+              foreach (array_keys($value) as $id) {
+                $selectedIds[] = (string) $id;
               }
             }
+            elseif (!is_array($value) && !empty($value) && $value !== '_none') {
+              $selectedIds[] = (string) $value;
+            }
+          }
+          // Legacy checkboxes: id => 0|id (truthy when selected).
+          elseif (is_array($opts)) {
+            foreach ($opts as $id => $checked) {
+              if (!empty($checked)) {
+                $selectedIds[] = (string) $id;
+              }
+            }
+          }
+          // Legacy radios: scalar id or empty.
+          elseif (!empty($opts) && $opts !== '_none') {
+            $selectedIds[] = (string) $opts;
           }
         }
       }
     }
 
-    return $values;
+    // If single selection, keep the first one only.
+    $isMultiple = !empty($element['#soda_scs_multiple']);
+    if (!$isMultiple && $selectedIds) {
+      $selectedIds = [reset($selectedIds)];
+    }
+
+    // Build items in the structure expected by WidgetBase::submit().
+    $items = [];
+    foreach ($selectedIds as $id) {
+      $items[] = [$element['#key_column'] => $id];
+    }
+
+    // If required, enforce at least one selected.
+    if (!empty($element['#required']) && !$items) {
+      $form_state->setError($element, t('@name field is required.', ['@name' => $element['#title']]));
+    }
+
+    // Set the flattened items as the value of this element.
+    $form_state->setValueForElement($element, $items);
   }
+
 
   /**
    * {@inheritdoc}
