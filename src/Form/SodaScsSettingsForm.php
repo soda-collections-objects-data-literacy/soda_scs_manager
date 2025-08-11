@@ -172,238 +172,294 @@ class SodaScsSettingsForm extends ConfigFormBase {
       '#tree' => TRUE,
     ];
 
-    $form['keycloak']['generalSettings'] = [
+    $form['keycloak']['keycloakTabs'] = [
+      '#type' => 'horizontal_tabs',
+      '#title' => $this->t('Keycloak settings'),
+      '#default_tab' => 'edit-general',
+    ];
+
+    $form['keycloak']['keycloakTabs']['generalSettings'] = [
+      '#type' => 'details',
+      '#title' => $this->t('General Keycloak settings'),
+      '#group' => 'keycloakTabs',
+      '#tree' => TRUE,
+    ];
+
+    $form['keycloak']['keycloakTabs']['generalSettings']['fields'] = [
       '#type' => 'fieldset',
       '#title' => $this->t('Keycloak settings'),
     ];
 
-    $form['keycloak']['generalSettings']['keycloakHost'] = [
+    $form['keycloak']['keycloakTabs']['generalSettings']['fields']['keycloakHost'] = [
       '#type' => 'textfield',
       '#title' => $this->t('Keycloak host'),
-      '#default_value' => $this->config('soda_scs_manager.settings')->get('keycloak')['generalSettings']['keycloakHost'] ?? '',
+      '#default_value' => $this->config('soda_scs_manager.settings')->get('keycloak')['keycloakTabs']['generalSettings']['fields']['keycloakHost'] ?? '',
       '#description' => $this->t('The keycloak host, like https://auth.sammlungen.io.'),
     ];
 
-    $form['keycloak']['generalSettings']['keycloakRealm'] = [
+    $form['keycloak']['keycloakTabs']['generalSettings']['fields']['keycloakRealm'] = [
       '#type' => 'textfield',
       '#title' => $this->t('Keycloak realm'),
-      '#default_value' => $this->config('soda_scs_manager.settings')->get('keycloak')['generalSettings']['keycloakRealm'] ?? '',
+      '#default_value' => $this->config('soda_scs_manager.settings')->get('keycloak')['keycloakTabs']['generalSettings']['fields']['keycloakRealm'] ?? '',
       '#description' => $this->t('The keycloak realm, like wisski.'),
     ];
 
-    $form['keycloak']['generalSettings']['adminUsername'] = [
+   $form['keycloak']['keycloakTabs']['generalSettings']['fields']['adminUsername'] = [
       '#type' => 'textfield',
       '#title' => $this->t('Admin username'),
-      '#default_value' => $this->config('soda_scs_manager.settings')->get('keycloak')['generalSettings']['adminUsername'] ?? '',
+      '#default_value' => $this->config('soda_scs_manager.settings')->get('keycloak')['keycloakTabs']['generalSettings']['fields']['adminUsername'] ?? '',
       '#description' => $this->t('The keycloak admin username, like admin.'),
     ];
 
-    $form['keycloak']['generalSettings']['adminPassword'] = [
+    $form['keycloak']['keycloakTabs']['generalSettings']['fields']['adminPassword'] = [
       '#type' => 'textfield',
       '#title' => $this->t('Admin password'),
-      '#default_value' => $this->config('soda_scs_manager.settings')->get('keycloak')['generalSettings']['adminPassword'] ?? '',
+      '#default_value' => $this->config('soda_scs_manager.settings')->get('keycloak')['keycloakTabs']['generalSettings']['fields']['adminPassword'] ?? '',
       '#description' => $this->t('The keycloak admin password, like admin.'),
     ];
 
-    $form['keycloak']['routes'] = [
+    $form['keycloak']['keycloakTabs']['generalSettings']['fields']['OpenIdConnectClientMachineName'] = [
+      '#type' => 'textfield',
+      '#title' => $this->t('OpenID Connect client machine name'),
+      '#default_value' => $this->config('soda_scs_manager.settings')->get('keycloak')['keycloakTabs']['generalSettings']['fields']['OpenIdConnectClientMachineName'] ?? '',
+      '#description' => $this->t('The OpenID Connect client machine name, like scs_sso. Ensure you have created it at <a href="/admin/config/people/openid-connect">OpenID Connect settings</a>.'),
+    ];
+
+    $form['keycloak']['keycloakTabs']['routes'] = [
+      '#type' => 'details',
+      '#title' => $this->t('Keycloak routes'),
+      '#group' => 'keycloakTabs',
+    ];
+
+    $form['keycloak']['keycloakTabs']['routes']['fields'] = [
       '#type' => 'fieldset',
       '#title' => $this->t('Keycloak routes'),
     ];
 
-    $form['keycloak']['routes']['clients'] = [
+    $form['keycloak']['keycloakTabs']['routes']['fields']['clients'] = [
+      '#type' => 'details',
+      '#title' => $this->t('Clients routes'),
+    ];
+
+    $form['keycloak']['keycloakTabs']['routes']['fields']['clients']['fields'] = [
       '#type' => 'fieldset',
       '#title' => $this->t('Clients routes'),
     ];
 
-    $form['keycloak']['routes']['clients']['baseUrl'] = [
+    $form['keycloak']['keycloakTabs']['routes']['fields']['clients']['fields']['baseUrl'] = [
       '#type' => 'textfield',
       '#title' => $this->t('Base URL'),
-      '#default_value' => $this->config('soda_scs_manager.settings')->get('keycloak')['routes']['clients']['baseUrl'] ?? '',
+      '#default_value' => $this->config('soda_scs_manager.settings')->get('keycloak')['keycloakTabs']['routes']['fields']['clients']['fields']['baseUrl'] ?? '',
       '#description' => $this->t('The base URL, like /admin/realms/{realm}/clients.'),
     ];
 
-    $form['keycloak']['routes']['clients']['crud'] = [
+    $form['keycloak']['keycloakTabs']['routes']['fields']['clients']['fields']['crud'] = [
+      '#type' => 'details',
+      '#title' => $this->t('CRUD routes'),
+    ];
+
+    $form['keycloak']['keycloakTabs']['routes']['fields']['clients']['fields']['crud']['fields'] = [
       '#type' => 'fieldset',
       '#title' => $this->t('CRUD routes'),
     ];
 
-    $form['keycloak']['routes']['clients']['crud']['createUrl'] = [
+    $form['keycloak']['keycloakTabs']['routes']['fields']['clients']['fields']['crud']['fields']['createUrl'] = [
       '#type' => 'textfield',
       '#title' => $this->t('Create URL'),
-      '#default_value' => $this->config('soda_scs_manager.settings')->get('keycloak')['routes']['clients']['crud']['createUrl'] ?? '',
+      '#default_value' => $this->config('soda_scs_manager.settings')->get('keycloak')['keycloakTabs']['routes']['fields']['clients']['fields']['crud']['fields']['createUrl'] ?? '',
       '#description' => $this->t('The create URL, like {emtpy}.'),
     ];
 
-    $form['keycloak']['routes']['clients']['crud']['readOneUrl'] = [
+    $form['keycloak']['keycloakTabs']['routes']['fields'] ['clients']['fields']['crud']['fields']['readOneUrl'] = [
       '#type' => 'textfield',
       '#title' => $this->t('Read one URL'),
-      '#default_value' => $this->config('soda_scs_manager.settings')->get('keycloak')['routes']['clients']['crud']['readOneUrl'] ?? '',
+      '#default_value' => $this->config('soda_scs_manager.settings')->get('keycloak')['keycloakTabs']['routes']['fields']['clients']['fields']['crud']['fields']['readOneUrl'] ?? '',
       '#description' => $this->t('The read one URL, like /{clientId}.'),
     ];
 
-    $form['keycloak']['routes']['clients']['crud']['readAllUrl'] = [
+    $form['keycloak']['keycloakTabs']['routes']['fields'] ['clients']['fields']['crud']['fields']['readAllUrl'] = [
       '#type' => 'textfield',
       '#title' => $this->t('Read all URL'),
-      '#default_value' => $this->config('soda_scs_manager.settings')->get('keycloak')['routes']['clients']['crud']['readAllUrl'] ?? '',
+      '#default_value' => $this->config('soda_scs_manager.settings')->get('keycloak')['keycloakTabs']['routes']['fields']['clients']['fields']['crud']['fields']['readAllUrl'] ?? '',
       '#description' => $this->t('The read all URL, like {empty}.'),
     ];
 
-    $form['keycloak']['routes']['clients']['crud']['updateUrl'] = [
+    $form['keycloak']['keycloakTabs']['routes']['fields'] ['clients']['fields']['crud']['fields']['updateUrl'] = [
       '#type' => 'textfield',
       '#title' => $this->t('Update URL'),
-      '#default_value' => $this->config('soda_scs_manager.settings')->get('keycloak')['routes']['clients']['crud']['updateUrl'] ?? '',
+      '#default_value' => $this->config('soda_scs_manager.settings')->get('keycloak')['keycloakTabs']['routes']['fields']['clients']['fields']['crud']['fields']['updateUrl'] ?? '',
       '#description' => $this->t('The update URL, like /{clientId}.'),
     ];
 
-    $form['keycloak']['routes']['clients']['crud']['deleteUrl'] = [
+    $form['keycloak']['keycloakTabs']['routes']['fields'] ['clients']['fields']['crud']['fields']['deleteUrl'] = [
       '#type' => 'textfield',
       '#title' => $this->t('Delete URL'),
-      '#default_value' => $this->config('soda_scs_manager.settings')->get('keycloak')['routes']['clients']['crud']['deleteUrl'] ?? '',
+      '#default_value' => $this->config('soda_scs_manager.settings')->get('keycloak')['keycloakTabs']['routes']['fields']['clients']['fields']['crud']['fields']['deleteUrl'] ?? '',
       '#description' => $this->t('The delete URL, like /{clientId}.'),
     ];
 
-    $form['keycloak']['routes']['clients']['healthCheck']['url'] = [
+    $form['keycloak']['keycloakTabs']['routes']['fields']['clients']['fields']['healthCheck']['fields']['url'] = [
       '#type' => 'textfield',
       '#title' => $this->t('Health check URL'),
-      '#default_value' => $this->config('soda_scs_manager.settings')->get('keycloak')['routes']['clients']['healthCheck']['url'] ?? '',
+      '#default_value' => $this->config('soda_scs_manager.settings')->get('keycloak')['keycloakTabs']['routes']['fields']['clients']['fields']['healthCheck']['fields']['url'] ?? '',
       '#description' => $this->t('The health check URL.'),
     ];
 
-    $form['keycloak']['routes']['groups'] = [
+    $form['keycloak']['keycloakTabs']['routes']['fields']['groups'] = [
+      '#type' => 'details',
+      '#title' => $this->t('Groups routes'),
+      '#group' => 'keycloakTabs',
+    ];
+    $form['keycloak']['keycloakTabs']['routes']['fields']['groups']['fields'] = [
       '#type' => 'fieldset',
       '#title' => $this->t('Groups routes'),
     ];
 
-    $form['keycloak']['routes']['groups']['baseUrl'] = [
+    $form['keycloak']['keycloakTabs']['routes']['fields']['groups']['fields']['baseUrl'] = [
       '#type' => 'textfield',
       '#title' => $this->t('Base URL'),
-      '#default_value' => $this->config('soda_scs_manager.settings')->get('keycloak')['routes']['groups']['baseUrl'] ?? '',
+      '#default_value' => $this->config('soda_scs_manager.settings')->get('keycloak')['keycloakTabs']['routes']['fields']['groups']['fields']['baseUrl'] ?? '',
       '#description' => $this->t('The base URL, like /admin/realms/{realm}/groups.'),
     ];
 
-    $form['keycloak']['routes']['groups']['crud'] = [
+    $form['keycloak']['keycloakTabs']['routes']['fields']['groups']['fields']['crud'] = [
+      '#type' => 'details',
+      '#title' => $this->t('CRUD routes'),
+    ];
+    $form['keycloak']['keycloakTabs']['routes']['fields']['groups']['fields']['crud']['fields'] = [
       '#type' => 'fieldset',
       '#title' => $this->t('CRUD routes'),
     ];
 
-    $form['keycloak']['routes']['groups']['crud']['createUrl'] = [
+    $form['keycloak']['keycloakTabs']['routes']['fields']['groups']['fields']['crud']['fields']['createUrl'] = [
       '#type' => 'textfield',
       '#title' => $this->t('Create URL'),
-      '#default_value' => $this->config('soda_scs_manager.settings')->get('keycloak')['routes']['groups']['crud']['createUrl'] ?? '',
+      '#default_value' => $this->config('soda_scs_manager.settings')->get('keycloak')['keycloakTabs']['routes']['fields']['groups']['fields']['crud']['fields']['createUrl'] ?? '',
       '#description' => $this->t('The create URL, like {empty}.'),
     ];
 
-    $form['keycloak']['routes']['groups']['crud']['readOneUrl'] = [
+    $form['keycloak']['keycloakTabs']['routes']['fields']['groups']['fields']['crud']['fields']['readOneUrl'] = [
       '#type' => 'textfield',
       '#title' => $this->t('Read one URL'),
-      '#default_value' => $this->config('soda_scs_manager.settings')->get('keycloak')['routes']['groups']['crud']['readOneUrl'] ?? '',
+      '#default_value' => $this->config('soda_scs_manager.settings')->get('keycloak')['keycloakTabs']['routes']['fields']['groups']['fields']['crud']['fields']['readOneUrl'] ?? '',
       '#description' => $this->t('The read one URL, like /{groupId}.'),
     ];
 
-    $form['keycloak']['routes']['groups']['crud']['readAllUrl'] = [
+    $form['keycloak']['keycloakTabs']['routes']['fields']['groups']['fields']['crud']['fields']['readAllUrl'] = [
       '#type' => 'textfield',
       '#title' => $this->t('Read all URL'),
-      '#default_value' => $this->config('soda_scs_manager.settings')->get('keycloak')['routes']['groups']['crud']['readAllUrl'] ?? '',
+      '#default_value' => $this->config('soda_scs_manager.settings')->get('keycloak')['keycloakTabs']['routes']['fields']['groups']['fields']['crud']['fields']['readAllUrl'] ?? '',
       '#description' => $this->t('The read all URL, like {empty}.'),
     ];
 
-    $form['keycloak']['routes']['groups']['crud']['updateUrl'] = [
+    $form['keycloak']['keycloakTabs']['routes']['fields']['groups']['fields']['crud']['fields']['updateUrl'] = [
       '#type' => 'textfield',
       '#title' => $this->t('Update URL'),
-      '#default_value' => $this->config('soda_scs_manager.settings')->get('keycloak')['routes']['groups']['crud']['updateUrl'] ?? '',
+      '#default_value' => $this->config('soda_scs_manager.settings')->get('keycloak')['keycloakTabs']['routes']['fields']['groups']['fields']['crud']['fields']['updateUrl'] ?? '',
       '#description' => $this->t('The update URL, like /{groupId}.'),
     ];
 
-    $form['keycloak']['routes']['groups']['crud']['deleteUrl'] = [
+    $form['keycloak']['keycloakTabs']['routes']['fields']['groups']['fields']['crud']['fields']['deleteUrl'] = [
       '#type' => 'textfield',
       '#title' => $this->t('Delete URL'),
-      '#default_value' => $this->config('soda_scs_manager.settings')->get('keycloak')['routes']['groups']['crud']['deleteUrl'] ?? '',
+      '#default_value' => $this->config('soda_scs_manager.settings')->get('keycloak')['keycloakTabs']['routes']['fields']['groups']['fields']['crud']['fields']['deleteUrl'] ?? '',
       '#description' => $this->t('The delete URL, like /{groupId}.'),
     ];
 
-    $form['keycloak']['routes']['users'] = [
+    $form['keycloak']['keycloakTabs']['routes']['fields']['users'] = [
+      '#type' => 'details',
+      '#title' => $this->t('Users routes'),
+    ];
+    $form['keycloak']['keycloakTabs']['routes']['fields']['users']['fields'] = [
       '#type' => 'fieldset',
       '#title' => $this->t('Users routes'),
     ];
 
-    $form['keycloak']['routes']['users']['baseUrl'] = [
+    $form['keycloak']['keycloakTabs']['routes']['fields']['users']['fields']['baseUrl'] = [
       '#type' => 'textfield',
       '#title' => $this->t('Base URL'),
-      '#default_value' => $this->config('soda_scs_manager.settings')->get('keycloak')['routes']['users']['baseUrl'] ?? '',
+      '#default_value' => $this->config('soda_scs_manager.settings')->get('keycloak')['keycloakTabs']['routes']['fields']['users']['fields']['baseUrl'] ?? '',
       '#description' => $this->t('The base URL, like /admin/realms/{realm}/users.'),
     ];
 
-    $form['keycloak']['routes']['users']['crud'] = [
+    $form['keycloak']['keycloakTabs']['routes']['fields']['users']['fields']['crud'] = [
+      '#type' => 'details',
+      '#title' => $this->t('CRUD routes'),
+    ];
+    $form['keycloak']['keycloakTabs']['routes']['fields']['users']['fields']['crud']['fields'] = [
       '#type' => 'fieldset',
       '#title' => $this->t('CRUD routes'),
     ];
 
-    $form['keycloak']['routes']['users']['crud']['createUrl'] = [
+    $form['keycloak']['keycloakTabs']['routes']['fields']['users']['fields']['crud']['fields']['createUrl'] = [
       '#type' => 'textfield',
       '#title' => $this->t('Create URL'),
-      '#default_value' => $this->config('soda_scs_manager.settings')->get('keycloak')['routes']['users']['crud']['createUrl'] ?? '',
+      '#default_value' => $this->config('soda_scs_manager.settings')->get('keycloak')['keycloakTabs']['routes']['fields']['users']['fields']['crud']['fields']['createUrl'] ?? '',
       '#description' => $this->t('The create URL, like {empty}.'),
     ];
 
-    $form['keycloak']['routes']['users']['crud']['readOneUrl'] = [
+    $form['keycloak']['keycloakTabs']['routes']['fields']['users']['fields']['crud']['fields']['readOneUrl'] = [
       '#type' => 'textfield',
       '#title' => $this->t('Read one URL'),
-      '#default_value' => $this->config('soda_scs_manager.settings')->get('keycloak')['routes']['users']['crud']['readOneUrl'] ?? '',
+      '#default_value' => $this->config('soda_scs_manager.settings')->get('keycloak')['keycloakTabs']['routes']['fields']['users']['fields']['crud']['fields']['readOneUrl'] ?? '',
       '#description' => $this->t('The read one URL, like /{userId}.'),
     ];
 
-    $form['keycloak']['routes']['users']['crud']['readAllUrl'] = [
+    $form['keycloak']['keycloakTabs']['routes']['fields']['users']['fields']['crud']['fields']['readAllUrl'] = [
       '#type' => 'textfield',
       '#title' => $this->t('Read all URL'),
-      '#default_value' => $this->config('soda_scs_manager.settings')->get('keycloak')['routes']['users']['crud']['readAllUrl'] ?? '',
+      '#default_value' => $this->config('soda_scs_manager.settings')->get('keycloak')['keycloakTabs']['routes']['fields']['users']['fields']['crud']['fields']['readAllUrl'] ?? '',
       '#description' => $this->t('The read all URL, like {empty}.'),
     ];
 
-    $form['keycloak']['routes']['users']['crud']['updateUrl'] = [
+    $form['keycloak']['keycloakTabs']['routes']['fields']['users']['fields']['crud']['fields']['updateUrl'] = [
       '#type' => 'textfield',
       '#title' => $this->t('Update URL'),
-      '#default_value' => $this->config('soda_scs_manager.settings')->get('keycloak')['routes']['users']['crud']['updateUrl'] ?? '',
+      '#default_value' => $this->config('soda_scs_manager.settings')->get('keycloak')['keycloakTabs']['routes']['fields']['users']['fields']['crud']['fields']['updateUrl'] ?? '',
       '#description' => $this->t('The update URL, like /{userId}.'),
     ];
 
-    $form['keycloak']['routes']['users']['crud']['deleteUrl'] = [
+    $form['keycloak']['keycloakTabs']['routes']['fields']['users']['fields']['crud']['fields']['deleteUrl'] = [
       '#type' => 'textfield',
       '#title' => $this->t('Delete URL'),
-      '#default_value' => $this->config('soda_scs_manager.settings')->get('keycloak')['routes']['users']['crud']['deleteUrl'] ?? '',
+      '#default_value' => $this->config('soda_scs_manager.settings')->get('keycloak')['keycloakTabs']['routes']['fields']['users']['fields']['crud']['fields']['deleteUrl'] ?? '',
       '#description' => $this->t('The delete URL, like /{userId}  .'),
     ];
 
-    $form['keycloak']['routes']['users']['crud']['getGroupsUrl'] = [
+    $form['keycloak']['keycloakTabs']['routes']['fields']['users']['fields']['crud']['fields']['getGroupsUrl'] = [
       '#type' => 'textfield',
       '#title' => $this->t('Get groups URL'),
-      '#default_value' => $this->config('soda_scs_manager.settings')->get('keycloak')['routes']['users']['crud']['getGroupsUrl'] ?? '',
+      '#default_value' => $this->config('soda_scs_manager.settings')->get('keycloak')['keycloakTabs']['routes']['fields']['users']['fields']['crud']['fields']['getGroupsUrl'] ?? '',
       '#description' => $this->t('The get groups URL, like /{userId}/groups.'),
     ];
 
-    $form['keycloak']['routes']['users']['crud']['updateGroupsUrl'] = [
+    $form['keycloak']['keycloakTabs']['routes']['fields']['users']['fields']['crud']['fields']['updateGroupsUrl'] = [
       '#type' => 'textfield',
       '#title' => $this->t('Add user to group URL'),
-      '#default_value' => $this->config('soda_scs_manager.settings')->get('keycloak')['routes']['users']['crud']['updateGroupsUrl'] ?? '',
+      '#default_value' => $this->config('soda_scs_manager.settings')->get('keycloak')['keycloakTabs']['routes']['fields']['users']['fields']['crud']['fields']['updateGroupsUrl'] ?? '',
       '#description' => $this->t('The update user group URL, like /{userId}/groups/{groupId}.'),
     ];
 
-    $form['keycloak']['routes']['users']['crud']['deleteGroupsUrl'] = [
+    $form['keycloak']['keycloakTabs']['routes']['fields']['users']['fields']['crud']['fields']['deleteGroupsUrl'] = [
       '#type' => 'textfield',
       '#title' => $this->t('Delete user from group URL'),
-      '#default_value' => $this->config('soda_scs_manager.settings')->get('keycloak')['routes']['users']['crud']['deleteGroupsUrl'] ?? '',
+      '#default_value' => $this->config('soda_scs_manager.settings')->get('keycloak')['keycloakTabs']['routes']['fields']['users']['fields']['crud']['fields']['deleteGroupsUrl'] ?? '',
       '#description' => $this->t('The delete user from group URL, like /{userId}/groups/{groupId}.'),
     ];
 
-    $form['keycloak']['routes']['misc'] = [
+    $form['keycloak']['keycloakTabs']['routes']['fields']['misc'] = [
+      '#type' => 'details',
+      '#title' => $this->t('Miscellaneous routes'),
+    ];
+    $form['keycloak']['keycloakTabs']['routes']['fields']['misc']['fields'] = [
       '#type' => 'fieldset',
-      '#attributes' => ['id' => 'soda-scs--routes-subform--misc'],
-      '#title' => 'Miscellaneous routes',
+      '#title' => $this->t('Miscellaneous routes'),
     ];
 
-    $form['keycloak']['routes']['misc']['tokenUrl'] = [
+    $form['keycloak']['keycloakTabs']['routes']['fields']['misc']['fields']['tokenUrl'] = [
       '#type' => 'textfield',
       '#title' => $this->t('Token URL'),
-      '#default_value' => $this->config('soda_scs_manager.settings')->get('keycloak')['routes']['misc']['tokenUrl'] ?? '',
+      '#default_value' => $this->config('soda_scs_manager.settings')->get('keycloak')['keycloakTabs']['routes']['fields']['misc']['fields']['tokenUrl'] ?? '',
       '#description' => $this->t('The token URL, like /realms/master/protocol/openid-connect/token.'),
     ];
 

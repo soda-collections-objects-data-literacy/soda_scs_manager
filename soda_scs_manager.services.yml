@@ -1,12 +1,6 @@
 # @todo clean unnessary service arguments
 services:
   # Helpers
-  soda_scs_manager.stack.helpers:
-    class: Drupal\soda_scs_manager\Helpers\SodaScsStackHelpers
-    arguments:
-      - '@messenger'
-      - '@string_translation'
-
   soda_scs_manager.component.helpers:
     class: Drupal\soda_scs_manager\Helpers\SodaScsComponentHelpers
     arguments:
@@ -22,6 +16,18 @@ services:
       - '@soda_scs_manager.service.helpers'
       - '@soda_scs_manager.sql_service.actions'
       - '@string_translation'
+
+  soda_scs_manager.project.helpers:
+    class: Drupal\soda_scs_manager\Helpers\SodaScsProjectHelpers
+    arguments:
+      - '@config.factory'
+      - '@entity_type.manager'
+      - '@externalauth.authmap'
+      - '@soda_scs_manager.service.helpers'
+      - '@soda_scs_manager.keycloak_service.client.actions'
+      - '@soda_scs_manager.keycloak_service.group.actions'
+      - '@soda_scs_manager.keycloak_service.user.actions'
+
   soda_scs_manager.service.helpers:
     class: Drupal\soda_scs_manager\Helpers\SodaScsServiceHelpers
     arguments:
@@ -29,6 +35,12 @@ services:
       - '@http_client'
       - '@entity_type.manager'
       - '@logger.factory'
+      - '@messenger'
+      - '@string_translation'
+
+  soda_scs_manager.stack.helpers:
+    class: Drupal\soda_scs_manager\Helpers\SodaScsStackHelpers
+    arguments:
       - '@messenger'
       - '@string_translation'
 

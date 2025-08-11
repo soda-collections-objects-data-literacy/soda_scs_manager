@@ -15,11 +15,14 @@ use Drupal\Core\Logger\LoggerChannelInterface;
 use Drupal\Core\Session\AccountProxyInterface;
 use Drupal\Core\Utility\Error;
 use Drupal\soda_scs_manager\ComponentActions\SodaScsComponentActionsInterface;
-use Drupal\soda_scs_manager\ServiceActions\SodaScsServiceActionsInterface;
+use Drupal\soda_scs_manager\Entity\SodaScsProject;
+use Drupal\soda_scs_manager\Helpers\SodaScsProjectHelpers;
 use Drupal\soda_scs_manager\RequestActions\SodaScsServiceRequestInterface;
+use Drupal\soda_scs_manager\ServiceActions\SodaScsServiceActionsInterface;
 use Drupal\user\EntityOwnerTrait;
 use Psr\Log\LogLevel;
 use Symfony\Component\DependencyInjection\ContainerInterface;
+
 
 /**
  * Form controller for the ScsComponent entity create form.
@@ -110,6 +113,13 @@ class SodaScsProjectCreateForm extends ContentEntityForm {
   protected SodaScsServiceRequestInterface $sodaScsKeycloakServiceUserActions;
 
   /**
+   * The Soda SCS Project Helpers service.
+   *
+   * @var \Drupal\soda_scs_manager\Helpers\SodaScsProjectHelpers
+   */
+  protected SodaScsProjectHelpers $sodaScsProjectHelpers;
+
+  /**
    * The Soda SCS SQL Service Actions service.
    *
    * @var \Drupal\soda_scs_manager\ServiceActions\SodaScsServiceSqlServiceActionInterface
@@ -158,6 +168,7 @@ class SodaScsProjectCreateForm extends ContentEntityForm {
     SodaScsServiceRequestInterface $sodaScsKeycloakServiceClientActions,
     SodaScsServiceRequestInterface $sodaScsKeycloakServiceGroupActions,
     SodaScsServiceRequestInterface $sodaScsKeycloakServiceUserActions,
+    SodaScsProjectHelpers $sodaScsProjectHelpers,
     SodaScsServiceActionsInterface $sodaScsSqlServiceActions,
     TimeInterface $time,
   ) {
@@ -171,6 +182,7 @@ class SodaScsProjectCreateForm extends ContentEntityForm {
     $this->sodaScsKeycloakServiceClientActions = $sodaScsKeycloakServiceClientActions;
     $this->sodaScsKeycloakServiceGroupActions = $sodaScsKeycloakServiceGroupActions;
     $this->sodaScsKeycloakServiceUserActions = $sodaScsKeycloakServiceUserActions;
+    $this->sodaScsProjectHelpers = $sodaScsProjectHelpers;
     $this->sodaScsSqlServiceActions = $sodaScsSqlServiceActions;
   }
 
@@ -190,6 +202,7 @@ class SodaScsProjectCreateForm extends ContentEntityForm {
       $container->get('soda_scs_manager.keycloak_service.client.actions'),
       $container->get('soda_scs_manager.keycloak_service.group.actions'),
       $container->get('soda_scs_manager.keycloak_service.user.actions'),
+      $container->get('soda_scs_manager.project.helpers'),
       $container->get('soda_scs_manager.sql_service.actions'),
       $container->get('datetime.time'),
     );
@@ -415,6 +428,36 @@ class SodaScsProjectCreateForm extends ContentEntityForm {
    */
   public function save(array $form, FormStateInterface $form_state) {
     parent::save($form, $form_state);
+
+    // Create Keycloak group for the project using the group ID.
+    /** @var \Drupal\soda_scs_manager\Entity\SodaScsProject $project */
+    $project = $this->entity;
+
+    // Set group id.
+    $project->set('groupId', $project->id() + SodaScsProject::GROUP_ID_START);
+    $project->save();
+
+
+    // Call the Keycloak service to create the group.
+    $keycloakGroupResponse = $this->sodaScsProjectHelpers->createProjectGroup($project);
+
+    if (!$keycloakGroupResponse['success']) {
+      $this->messenger()->addError($this->t('Failed to create Keycloak group for project @project: See logs for details.', [
+        '@project' => $project->label(),
+      ]));
+      $this->logger->error('Failed to create Keycloak group for project @project: @error', [
+        '@project' => $project->label(),
+        '@error' => $keycloakGroupResponse['error'],
+      ]);
+    }
+
+    // Set keycloak uuid.
+    $project->set('keycloakUuid', $keycloakGroupResponse['data']['uuid']);
+    $project->save();
+
+    // Sync keycloak group members with owner and project members.
+    $this->sodaScsProjectHelpers->syncKeycloakGroupMembers($project);
+
     $this->messenger()->addMessage($this->t('Project @project has been created.', [
       '@project' => $this->entity->label(),
     ]));

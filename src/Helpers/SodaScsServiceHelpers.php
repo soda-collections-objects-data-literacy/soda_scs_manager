@@ -235,13 +235,14 @@ class SodaScsServiceHelpers {
    */
   public function initKeycloakGeneralSettings() {
     $keycloakSettings['name'] = 'Keycloak general';
-    $keycloakSettings['host'] = $this->settings->get('keycloak.generalSettings.keycloakHost');
-    $keycloakSettings['realm'] = $this->settings->get('keycloak.generalSettings.keycloakRealm');
-    $keycloakSettings['adminUsername'] = $this->settings->get('keycloak.generalSettings.adminUsername');
-    $keycloakSettings['adminPassword'] = $this->settings->get('keycloak.generalSettings.adminPassword');
+    $keycloakSettings['host'] = $this->settings->get('keycloak.keycloakTabs.generalSettings.fields.keycloakHost');
+    $keycloakSettings['realm'] = $this->settings->get('keycloak.keycloakTabs.generalSettings.fields.keycloakRealm');
+    $keycloakSettings['adminUsername'] = $this->settings->get('keycloak.keycloakTabs.generalSettings.fields.adminUsername');
+    $keycloakSettings['adminPassword'] = $this->settings->get('keycloak.keycloakTabs.generalSettings.fields.adminPassword');
+    $keycloakSettings['openIdConnectClientMachineName'] = $this->settings->get('keycloak.keycloakTabs.generalSettings.fields.OpenIdConnectClientMachineName');
 
     // Miscellaneous routes.
-    $keycloakSettings['tokenUrl'] = $this->settings->get('keycloak.routes.misc.tokenUrl');
+    $keycloakSettings['tokenUrl'] = $this->settings->get('keycloak.keycloakTabs.routes.fields.misc.fields.tokenUrl');
 
     $this->checkSettings($keycloakSettings);
 
@@ -256,15 +257,15 @@ class SodaScsServiceHelpers {
    */
   public function initKeycloakClientsSettings() {
     $keycloakSettings['name'] = 'Keycloak clients';
-    $keycloakSettings['baseUrl'] = $this->settings->get('keycloak.routes.clients.baseUrl');
-    $keycloakSettings['createUrl'] = $this->settings->get('keycloak.routes.clients.crud.createUrl');
-    $keycloakSettings['readOneUrl'] = $this->settings->get('keycloak.routes.clients.crud.readOneUrl');
-    $keycloakSettings['readAllUrl'] = $this->settings->get('keycloak.routes.clients.crud.readAllUrl');
-    $keycloakSettings['updateUrl'] = $this->settings->get('keycloak.routes.clients.crud.updateUrl');
-    $keycloakSettings['deleteUrl'] = $this->settings->get('keycloak.routes.clients.crud.deleteUrl');
+    $keycloakSettings['baseUrl'] = $this->settings->get('keycloak.keycloakTabs.routes.fields.clients.fields.baseUrl');
+    $keycloakSettings['createUrl'] = $this->settings->get('keycloak.keycloakTabs.routes.fields.clients.fields.crud.fields.createUrl');
+    $keycloakSettings['readOneUrl'] = $this->settings->get('keycloak.keycloakTabs.routes.fields.clients.fields.crud.fields.readOneUrl');
+    $keycloakSettings['readAllUrl'] = $this->settings->get('keycloak.keycloakTabs.routes.fields.clients.fields.crud.fields.readAllUrl');
+    $keycloakSettings['updateUrl'] = $this->settings->get('keycloak.keycloakTabs.routes.fields.clients.fields.crud.fields.updateUrl');
+    $keycloakSettings['deleteUrl'] = $this->settings->get('keycloak.keycloakTabs.routes.fields.clients.fields.crud.fields.deleteUrl');
 
     // Health check URL.
-    $keycloakSettings['healthCheckUrl'] = $this->settings->get('keycloak.routes.clients.healthCheck.url');
+    $keycloakSettings['healthCheckUrl'] = $this->settings->get('keycloak.keycloakTabs.routes.fields.clients.fields.healthCheck.fields.url');
 
     $this->checkSettings($keycloakSettings);
 
@@ -279,12 +280,12 @@ class SodaScsServiceHelpers {
    */
   public function initKeycloakGroupsSettings() {
     $keycloakSettings['name'] = 'Keycloak groups';
-    $keycloakSettings['baseUrl'] = $this->settings->get('keycloak.routes.groups.baseUrl');
-    $keycloakSettings['createUrl'] = $this->settings->get('keycloak.routes.groups.crud.createUrl');
-    $keycloakSettings['readOneUrl'] = $this->settings->get('keycloak.routes.groups.crud.readOneUrl');
-    $keycloakSettings['readAllUrl'] = $this->settings->get('keycloak.routes.groups.crud.readAllUrl');
-    $keycloakSettings['updateUrl'] = $this->settings->get('keycloak.routes.groups.crud.updateUrl');
-    $keycloakSettings['deleteUrl'] = $this->settings->get('keycloak.routes.groups.crud.deleteUrl');
+    $keycloakSettings['baseUrl'] = $this->settings->get('keycloak.keycloakTabs.routes.fields.groups.fields.baseUrl');
+    $keycloakSettings['createUrl'] = $this->settings->get('keycloak.keycloakTabs.routes.fields.groups.fields.crud.fields.createUrl');
+    $keycloakSettings['readOneUrl'] = $this->settings->get('keycloak.keycloakTabs.routes.fields.groups.fields.crud.fields.readOneUrl');
+    $keycloakSettings['readAllUrl'] = $this->settings->get('keycloak.keycloakTabs.routes.fields.groups.fields.crud.fields.readAllUrl');
+    $keycloakSettings['updateUrl'] = $this->settings->get('keycloak.keycloakTabs.routes.fields.groups.fields.crud.fields.updateUrl');
+    $keycloakSettings['deleteUrl'] = $this->settings->get('keycloak.keycloakTabs.routes.fields.groups.fields.crud.fields.deleteUrl');
 
     $this->checkSettings($keycloakSettings);
 
@@ -299,15 +300,15 @@ class SodaScsServiceHelpers {
    */
   public function initKeycloakUsersSettings() {
     $keycloakSettings['name'] = 'Keycloak users';
-    $keycloakSettings['baseUrl'] = $this->settings->get('keycloak.routes.users.baseUrl');
-    $keycloakSettings['createUrl'] = $this->settings->get('keycloak.routes.users.crud.createUrl');
-    $keycloakSettings['readOneUrl'] = $this->settings->get('keycloak.routes.users.crud.readOneUrl');
-    $keycloakSettings['readAllUrl'] = $this->settings->get('keycloak.routes.users.crud.readAllUrl');
-    $keycloakSettings['updateUrl'] = $this->settings->get('keycloak.routes.users.crud.updateUrl');
-    $keycloakSettings['deleteUrl'] = $this->settings->get('keycloak.routes.users.crud.deleteUrl');
-    $keycloakSettings['getGroupsUrl'] = $this->settings->get('keycloak.routes.users.crud.getGroupsUrl');
-    $keycloakSettings['updateGroupsUrl'] = $this->settings->get('keycloak.routes.users.crud.updateGroupsUrl');
-    $keycloakSettings['deleteGroupsUrl'] = $this->settings->get('keycloak.routes.users.crud.deleteGroupsUrl');
+    $keycloakSettings['baseUrl'] = $this->settings->get('keycloak.keycloakTabs.routes.fields.users.fields.baseUrl');
+    $keycloakSettings['createUrl'] = $this->settings->get('keycloak.keycloakTabs.routes.fields.users.fields.crud.fields.createUrl');
+    $keycloakSettings['readOneUrl'] = $this->settings->get('keycloak.keycloakTabs.routes.fields.users.fields.crud.fields.readOneUrl');
+    $keycloakSettings['readAllUrl'] = $this->settings->get('keycloak.keycloakTabs.routes.fields.users.fields.crud.fields.readAllUrl');
+    $keycloakSettings['updateUrl'] = $this->settings->get('keycloak.keycloakTabs.routes.fields.users.fields.crud.fields.updateUrl');
+    $keycloakSettings['deleteUrl'] = $this->settings->get('keycloak.keycloakTabs.routes.fields.users.fields.crud.fields.deleteUrl');
+    $keycloakSettings['getGroupsUrl'] = $this->settings->get('keycloak.keycloakTabs.routes.fields.users.fields.crud.fields.getGroupsUrl');
+    $keycloakSettings['updateGroupsUrl'] = $this->settings->get('keycloak.keycloakTabs.routes.fields.users.fields.crud.fields.updateGroupsUrl');
+    $keycloakSettings['deleteGroupsUrl'] = $this->settings->get('keycloak.keycloakTabs.routes.fields.users.fields.crud.fields.deleteGroupsUrl');
 
     $this->checkSettings($keycloakSettings);
 

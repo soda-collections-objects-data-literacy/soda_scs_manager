@@ -72,14 +72,14 @@ use Drupal\user\EntityOwnerTrait;
  *     "langcode",
  *     "machineName",
  *     "members",
- *     "uuid",
+ *     "keycloakUuid",
  *     "updated",
  *     "owner",
  *     "rights",
  *   }
  * )
  */
-class SodaScsProject extends ContentEntityBase implements EntityInterface {
+class SodaScsProject extends ContentEntityBase implements SodaScsProjectInterface {
 
   use EntityOwnerTrait;
 
@@ -166,6 +166,20 @@ class SodaScsProject extends ContentEntityBase implements EntityInterface {
         'weight' => 10,
       ]);
 
+    $fields['keycloakUuid'] = BaseFieldDefinition::create('string')
+      ->setLabel(new TranslatableMarkup('Keycloak UUID'))
+      ->setDescription(new TranslatableMarkup('The Keycloak UUID of the project group.'))
+      ->setRequired(TRUE)
+      ->setReadOnly(TRUE)
+      ->setDisplayConfigurable('form', FALSE)
+      // The form display for this field is disabled.
+      ->setDisplayConfigurable('view', FALSE)
+      ->setDisplayOptions('view', [
+        'label' => 'above',
+        'type' => 'string',
+        'weight' => 10,
+      ]);
+
     $fields['members'] = BaseFieldDefinition::create('entity_reference')
       ->setLabel(new TranslatableMarkup('Members'))
       ->setDescription(new TranslatableMarkup('The members associated with the project.'))
@@ -218,39 +232,6 @@ class SodaScsProject extends ContentEntityBase implements EntityInterface {
       ->setDisplayConfigurable('view', FALSE);
 
     return $fields;
-  }
-
-  /**
-   * {@inheritdoc}
-   */
-  public function preSave(EntityStorageInterface $storage) {
-    parent::preSave($storage);
-
-    // Only set groupId for new entities that don't have one yet.
-    if ($this->isNew() && empty($this->get('groupId')->value)) {
-      // Find the highest existing groupId.
-      $query = \Drupal::entityQuery('soda_scs_project')
-        ->accessCheck(FALSE)
-        ->sort('groupId', 'DESC')
-        ->range(0, 1);
-
-      $result = $query->execute();
-
-      if (empty($result)) {
-        // No existing projects, start with the base value.
-        $next_id = self::GROUP_ID_START;
-      }
-      else {
-        // Get the highest existing ID and increment it.
-        $entity_id = reset($result);
-        /** @var \Drupal\soda_scs_manager\Entity\SodaScsProject $highest_entity */
-        $highest_entity = $storage->load($entity_id);
-        $highest_id = $highest_entity->get('groupId')->value;
-        $next_id = max((int) $highest_id + 1, self::GROUP_ID_START);
-      }
-
-      $this->set('groupId', $next_id);
-    }
   }
 
 }

@@ -388,6 +388,8 @@ class SodaScsKeycloakServiceUserActions implements SodaScsServiceRequestInterfac
    *
    * @return array
    *   The update request.
+   *
+   * @todo Make it clearer how to update user infos and user group infos.
    */
   public function buildUpdateRequest(array $requestParams): array {
     $keycloakGeneralSettings = $this->sodaScsServiceHelpers->initKeycloakGeneralSettings();
