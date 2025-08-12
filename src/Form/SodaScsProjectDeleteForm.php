@@ -8,6 +8,7 @@ use Drupal\Core\Entity\EntityRepositoryInterface;
 use Drupal\Core\Entity\EntityTypeBundleInfoInterface;
 use Drupal\Core\Form\FormStateInterface;
 use Drupal\Core\Url;
+use Drupal\soda_scs_manager\Helpers\SodaScsProjectHelpers;
 use Drupal\soda_scs_manager\StackActions\SodaScsStackActionsInterface;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 
@@ -15,6 +16,13 @@ use Symfony\Component\DependencyInjection\ContainerInterface;
  * Provides a form for deleting Soda SCS Stack entities.
  */
 class SodaScsProjectDeleteForm extends ContentEntityDeleteForm {
+
+  /**
+   * The Soda SCS Project Helpers service.
+   *
+   * @var \Drupal\soda_scs_manager\Helpers\SodaScsProjectHelpers
+   */
+  protected SodaScsProjectHelpers $sodaScsProjectHelpers;
 
   /**
    * The Soda SCS API Actions service.
@@ -30,13 +38,16 @@ class SodaScsProjectDeleteForm extends ContentEntityDeleteForm {
    *   The entity repository.
    * @param Drupal\Core\Entity\EntityTypeBundleInfoInterface $entity_type_bundle_info
    *   The entity type bundle info.
+   * @param \Drupal\soda_scs_manager\Helpers\SodaScsProjectHelpers $sodaScsProjectHelpers
+   *   The Soda SCS Project Helpers service.
    * @param Drupal\Component\Datetime\TimeInterface $time
    *   The time service.
    */
-  public function __construct(EntityRepositoryInterface $entity_repository, EntityTypeBundleInfoInterface $entity_type_bundle_info, TimeInterface $time) {
+  public function __construct(EntityRepositoryInterface $entity_repository, EntityTypeBundleInfoInterface $entity_type_bundle_info, SodaScsProjectHelpers $sodaScsProjectHelpers, TimeInterface $time) {
     parent::__construct($entity_repository, $entity_type_bundle_info, $time);
     $this->entityRepository = $entity_repository;
     $this->entityTypeBundleInfo = $entity_type_bundle_info;
+    $this->sodaScsProjectHelpers = $sodaScsProjectHelpers;
     $this->time = $time;
   }
 
@@ -47,6 +58,7 @@ class SodaScsProjectDeleteForm extends ContentEntityDeleteForm {
     return new static(
       $container->get('entity.repository'),
       $container->get('entity_type.bundle.info'),
+      $container->get('soda_scs_manager.project.helpers'),
       $container->get('datetime.time'),
     );
   }
@@ -82,6 +94,9 @@ class SodaScsProjectDeleteForm extends ContentEntityDeleteForm {
     // Construct properties.
     /** @var \Drupal\soda_scs_manager\Entity\SodaScsProject $entity */
     $project = $this->entity;
+
+    // Delete the project group from Keycloak.
+    $this->sodaScsProjectHelpers->deleteProjectGroup($project);
 
     // Delete the whole stack with database.
     $project->delete();

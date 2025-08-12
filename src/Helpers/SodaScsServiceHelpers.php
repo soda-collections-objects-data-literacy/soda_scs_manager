@@ -286,6 +286,7 @@ class SodaScsServiceHelpers {
     $keycloakSettings['readAllUrl'] = $this->settings->get('keycloak.keycloakTabs.routes.fields.groups.fields.crud.fields.readAllUrl');
     $keycloakSettings['updateUrl'] = $this->settings->get('keycloak.keycloakTabs.routes.fields.groups.fields.crud.fields.updateUrl');
     $keycloakSettings['deleteUrl'] = $this->settings->get('keycloak.keycloakTabs.routes.fields.groups.fields.crud.fields.deleteUrl');
+    $keycloakSettings['getMembersUrl'] = $this->settings->get('keycloak.keycloakTabs.routes.fields.groups.fields.crud.fields.getMembersUrl');
 
     $this->checkSettings($keycloakSettings);
 
@@ -306,9 +307,9 @@ class SodaScsServiceHelpers {
     $keycloakSettings['readAllUrl'] = $this->settings->get('keycloak.keycloakTabs.routes.fields.users.fields.crud.fields.readAllUrl');
     $keycloakSettings['updateUrl'] = $this->settings->get('keycloak.keycloakTabs.routes.fields.users.fields.crud.fields.updateUrl');
     $keycloakSettings['deleteUrl'] = $this->settings->get('keycloak.keycloakTabs.routes.fields.users.fields.crud.fields.deleteUrl');
-    $keycloakSettings['getGroupsUrl'] = $this->settings->get('keycloak.keycloakTabs.routes.fields.users.fields.crud.fields.getGroupsUrl');
-    $keycloakSettings['updateGroupsUrl'] = $this->settings->get('keycloak.keycloakTabs.routes.fields.users.fields.crud.fields.updateGroupsUrl');
-    $keycloakSettings['deleteGroupsUrl'] = $this->settings->get('keycloak.keycloakTabs.routes.fields.users.fields.crud.fields.deleteGroupsUrl');
+    $keycloakSettings['getGroupsOfUserUrl'] = $this->settings->get('keycloak.keycloakTabs.routes.fields.users.fields.crud.fields.getGroupsOfUserUrl');
+    $keycloakSettings['addUserToGroupUrl'] = $this->settings->get('keycloak.keycloakTabs.routes.fields.users.fields.crud.fields.addUserToGroupUrl');
+    $keycloakSettings['removeUserFromGroupUrl'] = $this->settings->get('keycloak.keycloakTabs.routes.fields.users.fields.crud.fields.removeUserFromGroupUrl');
 
     $this->checkSettings($keycloakSettings);
 

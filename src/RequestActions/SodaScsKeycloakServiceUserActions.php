@@ -395,8 +395,7 @@ class SodaScsKeycloakServiceUserActions implements SodaScsServiceRequestInterfac
     $keycloakGeneralSettings = $this->sodaScsServiceHelpers->initKeycloakGeneralSettings();
     $keycloakUsersSettings = $this->sodaScsServiceHelpers->initKeycloakUsersSettings();
 
-    $type = $requestParams['type'] ?? 'user';
-
+    $success = FALSE;
     // Build the route.
     $route =
       // Host route.
@@ -404,18 +403,18 @@ class SodaScsKeycloakServiceUserActions implements SodaScsServiceRequestInterfac
       // Base URL.
         str_replace('{realm}', $keycloakGeneralSettings['realm'], $keycloakUsersSettings['baseUrl']);
 
-    if ($type === 'group') {
-      $route .=
-        // Update URL.
-        $keycloakUsersSettings['updateGroupsUrl'];
-
-    }
-
-    else {
-      $route .=
-        // Update URL.
-        $keycloakUsersSettings['updateUrl'];
-
+    switch ($requestParams['type']) {
+      case 'addUserToGroup':
+        $route .= $keycloakUsersSettings['addUserToGroupUrl'];
+        $success = TRUE;
+        break;
+      case 'updateUser':
+        $route .= $keycloakUsersSettings['updateUrl'];
+        $success = TRUE;
+        break;
+      default:
+        $success = FALSE;
+        break;
     }
 
     // Replace any route parameters.
@@ -434,8 +433,7 @@ class SodaScsKeycloakServiceUserActions implements SodaScsServiceRequestInterfac
     }
 
     return [
-      'type' => $type,
-      'success' => TRUE,
+      'success' => $success,
       'method' => 'PUT',
       'route' => $route,
       'headers' => [
@@ -464,14 +462,26 @@ class SodaScsKeycloakServiceUserActions implements SodaScsServiceRequestInterfac
 
     $requestParams['routeParams']['realm'] = $keycloakGeneralSettings['realm'];
 
+    $success = FALSE;
+
+    $type = $requestParams['type'] ?? NULL;
     // Build the route.
     $route =
       // Host route.
       $keycloakGeneralSettings['host'] .
       // Base URL.
-      $keycloakUsersSettings['baseUrl'] .
-      // Delete URL.
-      $keycloakUsersSettings['deleteUrl'];
+      $keycloakUsersSettings['baseUrl'];
+
+    $append = match ($type) {
+      'user' => $keycloakUsersSettings['deleteUrl'],
+      'removeUserFromGroup' => $keycloakUsersSettings['removeUserFromGroupUrl'],
+      default => NULL,
+    };
+
+    if ($append !== NULL) {
+      $route .= $append;
+      $success = TRUE;
+    }
 
     // Replace any route parameters.
     if (!empty($requestParams['routeParams'])) {
@@ -486,8 +496,8 @@ class SodaScsKeycloakServiceUserActions implements SodaScsServiceRequestInterfac
     }
 
     return [
-      'type' => $requestParams['type'] ?? 'user',
-      'success' => TRUE,
+      'type' => $type,
+      'success' => $success,
       'method' => 'DELETE',
       'route' => $route,
       'headers' => [

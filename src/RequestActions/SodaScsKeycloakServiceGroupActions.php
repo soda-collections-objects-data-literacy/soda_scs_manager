@@ -215,14 +215,28 @@ class SodaScsKeycloakServiceGroupActions implements SodaScsServiceRequestInterfa
   public function buildGetAllRequest(array $requestParams): array {
     $keycloakGeneralSettings = $this->sodaScsServiceHelpers->initKeycloakGeneralSettings();
     $keycloakGroupsSettings = $this->sodaScsServiceHelpers->initKeycloakGroupsSettings();
+
+    // @todo This is how we should to it everywhere.
+    $type = $requestParams['type'] ?? NULL;
+    $success = FALSE;
+
     // Build the route.
     $route =
       // Host route.
       $keycloakGeneralSettings['host'] .
       // Base URL.
-      str_replace('{realm}', $keycloakGeneralSettings['realm'], $keycloakGroupsSettings['baseUrl']) .
-      // Get all URL.
-      $keycloakGroupsSettings['readAllUrl'];
+      str_replace('{realm}', $keycloakGeneralSettings['realm'], $keycloakGroupsSettings['baseUrl']);
+
+    $append = match ($type) {
+      'groups' => $keycloakGroupsSettings['readAllUrl'],
+      'members' => $keycloakGroupsSettings['getMembersUrl'],
+      default => NULL,
+    };
+    if ($append !== NULL) {
+      $route .= $append;
+      $success = TRUE;
+    }
+
 
     // Replace any route parameters.
     if (!empty($requestParams['routeParams'])) {
@@ -237,7 +251,7 @@ class SodaScsKeycloakServiceGroupActions implements SodaScsServiceRequestInterfa
     }
 
     return [
-      'success' => TRUE,
+      'success' => $success,
       'method' => 'GET',
       'route' => $route,
       'headers' => [

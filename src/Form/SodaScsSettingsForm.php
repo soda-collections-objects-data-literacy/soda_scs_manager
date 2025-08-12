@@ -366,6 +366,13 @@ class SodaScsSettingsForm extends ConfigFormBase {
       '#description' => $this->t('The delete URL, like /{groupId}.'),
     ];
 
+    $form['keycloak']['keycloakTabs']['routes']['fields']['groups']['fields']['crud']['fields']['getMembersUrl'] = [
+      '#type' => 'textfield',
+      '#title' => $this->t('Get members URL'),
+      '#default_value' => $this->config('soda_scs_manager.settings')->get('keycloak')['keycloakTabs']['routes']['fields']['groups']['fields']['crud']['fields']['getMembersUrl'] ?? '',
+      '#description' => $this->t('The get members URL, like /{groupId}/members.'),
+    ];
+
     $form['keycloak']['keycloakTabs']['routes']['fields']['users'] = [
       '#type' => 'details',
       '#title' => $this->t('Users routes'),
@@ -426,24 +433,24 @@ class SodaScsSettingsForm extends ConfigFormBase {
       '#description' => $this->t('The delete URL, like /{userId}  .'),
     ];
 
-    $form['keycloak']['keycloakTabs']['routes']['fields']['users']['fields']['crud']['fields']['getGroupsUrl'] = [
+    $form['keycloak']['keycloakTabs']['routes']['fields']['users']['fields']['crud']['fields']['getGroupsOfUserUrl'] = [
       '#type' => 'textfield',
-      '#title' => $this->t('Get groups URL'),
-      '#default_value' => $this->config('soda_scs_manager.settings')->get('keycloak')['keycloakTabs']['routes']['fields']['users']['fields']['crud']['fields']['getGroupsUrl'] ?? '',
+      '#title' => $this->t('Get groups of user URL'),
+      '#default_value' => $this->config('soda_scs_manager.settings')->get('keycloak')['keycloakTabs']['routes']['fields']['users']['fields']['crud']['fields']['getGroupsOfUserUrl'] ?? '',
       '#description' => $this->t('The get groups URL, like /{userId}/groups.'),
     ];
 
-    $form['keycloak']['keycloakTabs']['routes']['fields']['users']['fields']['crud']['fields']['updateGroupsUrl'] = [
+    $form['keycloak']['keycloakTabs']['routes']['fields']['users']['fields']['crud']['fields']['addUserToGroupUrl'] = [
       '#type' => 'textfield',
       '#title' => $this->t('Add user to group URL'),
-      '#default_value' => $this->config('soda_scs_manager.settings')->get('keycloak')['keycloakTabs']['routes']['fields']['users']['fields']['crud']['fields']['updateGroupsUrl'] ?? '',
+      '#default_value' => $this->config('soda_scs_manager.settings')->get('keycloak')['keycloakTabs']['routes']['fields']['users']['fields']['crud']['fields']['addUserToGroupUrl'] ?? '',
       '#description' => $this->t('The update user group URL, like /{userId}/groups/{groupId}.'),
     ];
 
-    $form['keycloak']['keycloakTabs']['routes']['fields']['users']['fields']['crud']['fields']['deleteGroupsUrl'] = [
+    $form['keycloak']['keycloakTabs']['routes']['fields']['users']['fields']['crud']['fields']['removeUserFromGroupUrl'] = [
       '#type' => 'textfield',
       '#title' => $this->t('Delete user from group URL'),
-      '#default_value' => $this->config('soda_scs_manager.settings')->get('keycloak')['keycloakTabs']['routes']['fields']['users']['fields']['crud']['fields']['deleteGroupsUrl'] ?? '',
+      '#default_value' => $this->config('soda_scs_manager.settings')->get('keycloak')['keycloakTabs']['routes']['fields']['users']['fields']['crud']['fields']['removeUserFromGroupUrl'] ?? '',
       '#description' => $this->t('The delete user from group URL, like /{userId}/groups/{groupId}.'),
     ];
 

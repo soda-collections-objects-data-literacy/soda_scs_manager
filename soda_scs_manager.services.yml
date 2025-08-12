@@ -69,7 +69,6 @@ services:
     class: Drupal\soda_scs_manager\ComponentActions\SodaScsFilesystemComponentActions
     arguments:
       - '@config.factory'
-      - '@database'
       - '@entity_type.bundle.info'
       - '@entity_type.manager'
       - '@http_client'

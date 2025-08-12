@@ -21,24 +21,24 @@ interface SodaScsServiceRequestInterface {
   public function buildCreateRequest(array $requestParams): array;
 
   /**
-   * Builds the create request for the REST service API.
+   * Builds the get all request for the REST service API.
    *
    * @param array $requestParams
    *   The request parameters.
    *
    * @return array
-   *   The read request.
+   *   The get all request.
    */
   public function buildGetAllRequest(array $requestParams): array;
 
   /**
-   * Build request to get all stacks.
+   * Build request to get one entity.
    *
    * @param array $requestParams
    *   The request parameters.
    *
    * @return array
-   *   The read request.
+   *   The get one request.
    *
    * @throws \Drupal\Core\TypedData\Exception\MissingDataException
    */

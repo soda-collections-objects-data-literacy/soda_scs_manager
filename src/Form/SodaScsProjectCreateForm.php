@@ -456,7 +456,16 @@ class SodaScsProjectCreateForm extends ContentEntityForm {
     $project->save();
 
     // Sync keycloak group members with owner and project members.
-    $this->sodaScsProjectHelpers->syncKeycloakGroupMembers($project);
+    $syncKeycloakGroupMembersResponse = $this->sodaScsProjectHelpers->syncKeycloakGroupMembers($project);
+    if (!$syncKeycloakGroupMembersResponse['success']) {
+      $this->messenger()->addError($this->t('Failed to sync keycloak group members for project @project: See logs for details.', [
+        '@project' => $project->label(),
+      ]));
+      $this->logger->error('Failed to sync keycloak group members for project @project: @error', [
+        '@project' => $project->label(),
+        '@error' => $syncKeycloakGroupMembersResponse['error'],
+      ]);
+    }
 
     $this->messenger()->addMessage($this->t('Project @project has been created.', [
       '@project' => $this->entity->label(),

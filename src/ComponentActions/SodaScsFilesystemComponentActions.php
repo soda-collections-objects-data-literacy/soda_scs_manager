@@ -4,7 +4,6 @@ namespace Drupal\soda_scs_manager\ComponentActions;
 
 use Drupal\Core\Config\Config;
 use Drupal\Core\Config\ConfigFactoryInterface;
-use Drupal\Core\Database\Connection;
 use Drupal\Core\DependencyInjection\DependencySerializationTrait;
 use Drupal\Core\Entity\EntityTypeBundleInfoInterface;
 use Drupal\Core\Entity\EntityTypeManagerInterface;
@@ -33,13 +32,6 @@ class SodaScsFilesystemComponentActions implements SodaScsComponentActionsInterf
 
   use DependencySerializationTrait;
   use StringTranslationTrait;
-
-  /**
-   * The database.
-   *
-   * @var \Drupal\Core\Database\Connection
-   */
-  protected Connection $database;
 
   /**
    * The entity type bundle info.
@@ -123,7 +115,6 @@ class SodaScsFilesystemComponentActions implements SodaScsComponentActionsInterf
    */
   public function __construct(
     ConfigFactoryInterface $configFactory,
-    Connection $database,
     EntityTypeBundleInfoInterface $entityTypeBundleInfo,
     EntityTypeManagerInterface $entityTypeManager,
     ClientInterface $httpClient,
@@ -138,7 +129,6 @@ class SodaScsFilesystemComponentActions implements SodaScsComponentActionsInterf
   ) {
     // Services from container.
 
-    $this->database = $database;
     $this->entityTypeBundleInfo = $entityTypeBundleInfo;
     $this->entityTypeManager = $entityTypeManager;
     $this->httpClient = $httpClient;
