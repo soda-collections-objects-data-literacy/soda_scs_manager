@@ -433,23 +433,6 @@ class SodaScsProjectCreateForm extends ContentEntityForm {
     /** @var \Drupal\soda_scs_manager\Entity\SodaScsProject $project */
     $project = $this->entity;
 
-    // Call the Keycloak service to create the group.
-    $keycloakGroupResponse = $this->sodaScsProjectHelpers->createProjectGroup($project);
-
-    if (!$keycloakGroupResponse['success']) {
-      $this->messenger()->addError($this->t('Failed to create Keycloak group for project @project: See logs for details.', [
-        '@project' => $project->label(),
-      ]));
-      $this->logger->error('Failed to create Keycloak group for project @project: @error', [
-        '@project' => $project->label(),
-        '@error' => $keycloakGroupResponse['error'],
-      ]);
-    }
-
-    // Set keycloak uuid.
-    $project->set('keycloakUuid', $keycloakGroupResponse['data']['uuid']);
-    $project->save();
-
     // Sync keycloak group members with owner and project members.
     $syncKeycloakGroupMembersResponse = $this->sodaScsProjectHelpers->syncKeycloakGroupMembers($project);
     if (!$syncKeycloakGroupMembersResponse['success']) {

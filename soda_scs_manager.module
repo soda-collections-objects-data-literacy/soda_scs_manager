@@ -461,7 +461,8 @@ function soda_scs_manager_user_delete(UserInterface $user) {
     }
   }
   catch (\Exception $e) {
-    $logger->error('Error deleting user from Keycloak: @error', ['@error' => $e->getMessage()]);
+    $messenger->addError(t('Failed to delete user from Keycloak: @error', ['@error' => $e->getMessage()]));
+    $logger->error('Error deleting user @username from Keycloak: @error', ['@username' => $user->getDisplayName(), '@error' => $e->getMessage()]);
   }
 
   // Clean database users.
@@ -469,14 +470,17 @@ function soda_scs_manager_user_delete(UserInterface $user) {
 
   if ($cleanDatabaseUsers['success']) {
     $messenger->addMessage(t('Successfully cleaned database users for user: @username', ['@username' => $user->getDisplayName()]));
+    $logger->notice('Successfully cleaned database users for user: @username', ['@username' => $user->getDisplayName()]);
   }
   else {
     $messenger->addError(t('Failed to clean database users for user: @username', ['@username' => $user->getDisplayName()]));
+    $logger->error('Failed to clean database users for user: @username. @message @error', ['@username' => $user->getDisplayName(), '@message' => $cleanDatabaseUsers['message'], '@error' => $cleanDatabaseUsers['error']]);
   }
 
   // Clean triplestore users.
   $tsDeleteRequestParams = [
     'type' => 'user',
+    'queryParams' => [],
     'routeParams' => [
       'username' => $user->getDisplayName(),
     ],
@@ -488,6 +492,7 @@ function soda_scs_manager_user_delete(UserInterface $user) {
   }
   else {
     $messenger->addError(t('Failed to clean triplestore users for user: @username', ['@username' => $user->getDisplayName()]));
+    $logger->error('Failed to clean triplestore users for user: @username. @message @error', ['@username' => $user->getDisplayName(), '@message' => $cleanTriplestoreUsers['message'], '@error' => $cleanTriplestoreUsers['error']]);
   }
 }
 
@@ -529,7 +534,23 @@ function _soda_scs_manager_create_default_project_for_user(UserInterface $user) 
     'label' => $user->getDisplayName() . '\'s default project',
     'owner' => $user->id(),
   ]);
+
   $project->save();
+
+  // Sync user and keycloak groups.
+  $syncKeycloakGroupMembersResult = \Drupal::service('soda_scs_manager.project.helpers')->syncKeycloakGroupMembers($project);
+  if (!$syncKeycloakGroupMembersResult->success) {
+    $messenger = \Drupal::messenger();
+    $messenger->addError(t('Failed to sync user and keycloak groups for user: @username. @error', ['@username' => $user->getDisplayName(), '@error' => $syncKeycloakGroupMembersResult->error]));
+    $logger = \Drupal::logger('soda_scs_manager');
+    $logger->error('Failed to sync user and keycloak groups for user: @username. @error', ['@username' => $user->getDisplayName(), '@error' => $syncKeycloakGroupMembersResult->error]);
+  }
+  else {
+    $messenger = \Drupal::messenger();
+    $messenger->addMessage(t('Successfully synced user and keycloak groups for user: @username', ['@username' => $user->getDisplayName()]));
+    $logger = \Drupal::logger('soda_scs_manager');
+    $logger->notice('Successfully synced user and keycloak groups for user: @username', ['@username' => $user->getDisplayName()]);
+  }
 }
 
 /**

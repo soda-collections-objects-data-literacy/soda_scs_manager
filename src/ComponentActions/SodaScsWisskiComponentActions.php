@@ -445,7 +445,7 @@ class SodaScsWisskiComponentActions implements SodaScsComponentActionsInterface 
 
       // Add user to admin group.
       $keycloakBuildAddUserToGroupRequest = $this->sodaScsKeycloakServiceUserActions->buildUpdateRequest([
-        'type' => 'group',
+        'type' => 'addUserToGroup',
         'routeParams' => [
           'userId' => $userData['id'],
           'groupId' => $keycloakWisskiInstanceAdminGroup['id'],

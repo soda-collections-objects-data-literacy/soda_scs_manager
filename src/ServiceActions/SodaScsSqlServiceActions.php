@@ -563,7 +563,7 @@ class SodaScsSqlServiceActions implements SodaScsServiceActionsInterface {
       return [
         'message' => $this->t('Can not delete the root user'),
         'data' => [],
-        'error' => NULL,
+        'error' => '',
         'success' => FALSE,
       ];
     }
@@ -575,7 +575,7 @@ class SodaScsSqlServiceActions implements SodaScsServiceActionsInterface {
       return [
         'message' => $this->t('User does not exist'),
         'data' => [],
-        'error' => NULL,
+        'error' => '',
         'success' => FALSE,
       ];
     }
@@ -595,7 +595,7 @@ class SodaScsSqlServiceActions implements SodaScsServiceActionsInterface {
     return [
       'message' => $this->t('User owned no databases, and was deleted'),
       'data' => [],
-      'error' => NULL,
+      'error' => '',
       'success' => TRUE,
     ];
   }
@@ -698,8 +698,11 @@ class SodaScsSqlServiceActions implements SodaScsServiceActionsInterface {
    *   and result (last line of output).
    */
   public function deleteServiceUser($dbUser) {
-    $dbHost = $this->settings->get('host');
-    $dbRootPassword = $this->settings->get('rootPassword');
+    $databaseSettings = $this->sodaScsServiceHelpers->initDatabaseServiceSettings();
+    // Replace https:// with empty string.
+    $dbHost = str_replace('https://', '', $databaseSettings['host']);
+
+    $dbRootPassword = $databaseSettings['rootPassword'];
     // User does not own any databases, delete the user.
     $deleteUserCommand = "mysql -h $dbHost -uroot -p$dbRootPassword -e 'DROP USER `$dbUser`@`%`; FLUSH PRIVILEGES;'";
     $deleteUserCommandResult = exec($deleteUserCommand, $deleteUserOutput, $deleteUserReturnVar);

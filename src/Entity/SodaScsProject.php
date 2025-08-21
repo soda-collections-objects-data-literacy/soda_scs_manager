@@ -8,6 +8,7 @@ use Drupal\Core\Field\BaseFieldDefinition;
 use Drupal\Core\Field\FieldStorageDefinitionInterface;
 use Drupal\Core\StringTranslation\TranslatableMarkup;
 use Drupal\soda_scs_manager\ComputedField\SodaScsGroupIdComputedItemList;
+use Drupal\soda_scs_manager\ComputedField\SodaScsKeycloakUuidComputedItemList;
 use Drupal\user\EntityOwnerTrait;
 use Drupal\user\UserInterface;
 
@@ -188,10 +189,10 @@ class SodaScsProject extends ContentEntityBase implements SodaScsProjectInterfac
     $fields['keycloakUuid'] = BaseFieldDefinition::create('string')
       ->setLabel(new TranslatableMarkup('Keycloak UUID'))
       ->setDescription(new TranslatableMarkup('The Keycloak UUID of the project group.'))
-      ->setRequired(TRUE)
+      ->setComputed(TRUE)
+      ->setClass(SodaScsKeycloakUuidComputedItemList::class)
       ->setReadOnly(TRUE)
       ->setDisplayConfigurable('form', FALSE)
-      // The form display for this field is disabled.
       ->setDisplayConfigurable('view', FALSE)
       ->setDisplayOptions('view', [
         'label' => 'above',
