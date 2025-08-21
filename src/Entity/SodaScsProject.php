@@ -3,13 +3,13 @@
 namespace Drupal\soda_scs_manager\Entity;
 
 use Drupal\Core\Entity\ContentEntityBase;
-use Drupal\Core\Entity\EntityInterface;
 use Drupal\Core\Entity\EntityTypeInterface;
-use Drupal\Core\Entity\EntityStorageInterface;
 use Drupal\Core\Field\BaseFieldDefinition;
 use Drupal\Core\Field\FieldStorageDefinitionInterface;
 use Drupal\Core\StringTranslation\TranslatableMarkup;
+use Drupal\soda_scs_manager\ComputedField\SodaScsGroupIdComputedItemList;
 use Drupal\user\EntityOwnerTrait;
+use Drupal\user\UserInterface;
 
 /**
  * SODa SCS Project.
@@ -88,6 +88,24 @@ class SodaScsProject extends ContentEntityBase implements SodaScsProjectInterfac
    */
   const GROUP_ID_START = 10000;
 
+    /**
+   * Get the default project for a user.
+   *
+   * @param \Drupal\user\UserInterface $user
+   *   The user.
+   *
+  * @return array[SodaScsProject]|NULL
+   *   The default project for the user.
+   */
+  public static function loadByOwner(UserInterface $user) {
+    $query = \Drupal::entityQuery('soda_scs_project')
+      ->condition('owner', $user->id())
+      ->accessCheck(FALSE);
+    $result = $query->execute();
+    return self::loadMultiple($result);
+  }
+
+
   /**
    * {@inheritdoc}
    */
@@ -137,7 +155,8 @@ class SodaScsProject extends ContentEntityBase implements SodaScsProjectInterfac
     $fields['groupId'] = BaseFieldDefinition::create('integer')
       ->setLabel(new TranslatableMarkup('Permission Group ID'))
       ->setDescription(new TranslatableMarkup('The permission group ID associated with the project.'))
-      ->setRequired(TRUE)
+      ->setComputed(TRUE)
+      ->setClass(SodaScsGroupIdComputedItemList::class)
       ->setReadOnly(TRUE)
       ->setDisplayConfigurable('form', FALSE)
       ->setDisplayConfigurable('view', FALSE)
@@ -233,5 +252,6 @@ class SodaScsProject extends ContentEntityBase implements SodaScsProjectInterfac
 
     return $fields;
   }
+
 
 }

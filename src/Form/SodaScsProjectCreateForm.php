@@ -433,11 +433,6 @@ class SodaScsProjectCreateForm extends ContentEntityForm {
     /** @var \Drupal\soda_scs_manager\Entity\SodaScsProject $project */
     $project = $this->entity;
 
-    // Set group id.
-    $project->set('groupId', $project->id() + SodaScsProject::GROUP_ID_START);
-    $project->save();
-
-
     // Call the Keycloak service to create the group.
     $keycloakGroupResponse = $this->sodaScsProjectHelpers->createProjectGroup($project);
 

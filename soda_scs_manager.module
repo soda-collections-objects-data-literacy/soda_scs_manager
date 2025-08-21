@@ -414,7 +414,6 @@ function soda_scs_manager_user_delete(UserInterface $user) {
 
   try {
 
-    $username = $user->getAccountName();
     // Get Keycloak settings.
     $keycloakGeneralSettings = $serviceHelpers->initKeycloakGeneralSettings();
 
@@ -431,42 +430,15 @@ function soda_scs_manager_user_delete(UserInterface $user) {
     $tokenData = json_decode($tokenResponse['data']['keycloakResponse']->getBody()->getContents(), TRUE);
     $accessToken = $tokenData['access_token'];
 
-    // Set the token.
-    $getUserParams['token'] = $accessToken;
-    // userRouteParams.
-    $getUserParams['routeParams'] = [
-      'realm' => $keycloakGeneralSettings['realm'],
-
-    ];
-
-    // userQueryParams.
-    $getUserParams['queryParams'] = [
-      'username' => $username,
-    ];
-
-    // Get the user from Keycloak.
-    $getUserRequest = $keycloakServiceUserActions->buildGetAllRequest($getUserParams);
-    $getUserResponse = $keycloakServiceUserActions->makeRequest($getUserRequest);
-
-    if (!$getUserResponse['success']) {
-      $logger->error('Failed to find user in Keycloak: @error', ['@error' => $getUserResponse['error']]);
-      return;
-    }
-
-    $userData = json_decode($getUserResponse['data']['keycloakResponse']->getBody()->getContents(), TRUE);
-
-    // If no user found, log and return.
-    if (empty($userData) || !is_array($userData) || count($userData) === 0) {
-      $logger->notice('No matching user found in Keycloak for username: @username', ['@username' => $user->getAccountName()]);
-      return;
-    }
-
+    // Set the type.
+    $deleteUserParams['type'] = 'user';
     // Set the token.
     $deleteUserParams['token'] = $accessToken;
     // Extract the Keycloak user ID.
     $deleteUserParams['routeParams'] = [
       'realm' => $keycloakGeneralSettings['realm'],
-      'userId' => $userData[0]['id'],
+      // @todo: Create user helper service for this.
+      'userId' => \Drupal::service('soda_scs_manager.project.helpers')->getUserSsoUuid($user),
     ];
 
     // Build the delete request.
@@ -476,11 +448,11 @@ function soda_scs_manager_user_delete(UserInterface $user) {
 
     if ($deleteUserResponse['success']) {
       $messenger->addMessage(t('Successfully deleted user from Keycloak: @username (ID: @id)', [
-        '@username' => $getUserParams['queryParams']['username'],
+        '@username' => $user->getAccountName(),
         '@id' => $deleteUserParams['routeParams']['userId'],
       ]));
       $logger->notice('Successfully deleted user from Keycloak: @username (ID: @id)', [
-        '@username' => $getUserParams['queryParams']['username'],
+        '@username' => $user->getAccountName(),
         '@id' => $deleteUserParams['routeParams']['userId'],
       ]);
     }
@@ -541,19 +513,57 @@ function soda_scs_manager_user_insert(UserInterface $user) {
   // Ensure the role exists and has the required permissions.
   _soda_scs_manager_ensure_scs_user_role();
   _soda_scs_manager_create_default_project_for_user($user);
+  _soda_scs_manager_create_default_filesystem_for_user($user);
 }
 
 // Curstom hooks.
 
-/** Create default project for new user */
+/**
+ * Create default project for new user.
+ *
+ * The groupId is now automatically set in the insert hook to avoid double save.
+ */
 function _soda_scs_manager_create_default_project_for_user(UserInterface $user) {
   $project = SodaScsProject::create([
     'bundle' => 'default',
-    'groupId' => $user->id() + SodaScsProject::GROUP_ID_START,
     'label' => $user->getDisplayName() . '\'s default project',
     'owner' => $user->id(),
   ]);
   $project->save();
+}
+
+/**
+ * Create default filesystem for new user.
+ */
+function _soda_scs_manager_create_default_filesystem_for_user(UserInterface $user) {
+  // Get the default project for the user.
+  $projects = SodaScsProject::loadByOwner($user);
+
+  if (empty($projects) || count($projects) > 1) {
+    $messenger = \Drupal::messenger();
+    $messenger->addError(t('Failed to create default filesystem for user: @username. No default project found.', ['@username' => $user->getDisplayName()]));
+    $logger = \Drupal::logger('soda_scs_manager');
+    $logger->error('Failed to create default filesystem for user: @username. No default project found.', ['@username' => $user->getDisplayName()]);
+    return;
+  }
+
+  // Get the default project. Should only be one.
+  /** @var \Drupal\soda_scs_manager\Entity\SodaScsProject $project */
+  $project = reset($projects);
+
+  // Create the default filesystem.
+  $filesystem = SodaScsComponent::create([
+    'bundle' => 'soda_scs_filesystem_component',
+    'label' => $user->getDisplayName() . '\'s default filesystem',
+    'machineName' => 'fs-' . $user->getDisplayName() . '-default',
+    'owner' => $user->id(),
+    'partOfProjects' => [
+      [
+        'target_id' => $project->id(),
+      ],
+    ],
+  ]);
+  $filesystem->save();
 }
 
 /**
