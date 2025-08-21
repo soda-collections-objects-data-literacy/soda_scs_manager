@@ -176,12 +176,12 @@ class SodaScsFilesystemComponentActions implements SodaScsComponentActionsInterf
           'addgroup',
           '-g',
           (string) $projectEntity->get('groupId')->value,
-          $projectEntity->get('machineName')->value,
+          (string) $projectEntity->get('groupId')->value,
         ];
         $accessProxycmds[] = [
           'adduser',
           'filemanager',
-          $projectEntity->get('machineName')->value,
+          (string) $projectEntity->get('groupId')->value,
         ];
         $accessProxycmds[] = [
           'mkdir',
@@ -191,7 +191,7 @@ class SodaScsFilesystemComponentActions implements SodaScsComponentActionsInterf
         $accessProxycmds[] = [
           'chown',
           '-R',
-          'filemanager:' . $projectEntity->get('machineName')->value,
+          'filemanager:' . (string) $projectEntity->get('groupId')->value,
           '/shared/' . $entity->get('machineName')->value,
         ];
 
