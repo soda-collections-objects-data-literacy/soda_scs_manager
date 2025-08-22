@@ -317,3 +317,28 @@ function soda_scs_manager_update_11006() {
 
   return t('Documentation content type and page have been created with URL alias /soda-scs-manager/documentation.');
 }
+
+
+/**
+ * Add default_project field to user entity.
+ */
+function soda_scs_manager_update_11007() {
+  $entity_definition_update_manager = \Drupal::entityDefinitionUpdateManager();
+  $entity_type_manager = \Drupal::entityTypeManager();
+  $entity_type = $entity_type_manager->getDefinition('user');
+  $fields = soda_scs_manager_entity_base_field_info($entity_type);
+
+  if (isset($fields['default_project'])) {
+    $entity_definition_update_manager->installFieldStorageDefinition(
+      'default_project',
+      'user',
+      'soda_scs_manager',
+      $fields['default_project']
+    );
+  }
+
+  // Clear caches to refresh field definitions.
+  drupal_flush_all_caches();
+
+  return t('Added default_project field to user entity.');
+}
