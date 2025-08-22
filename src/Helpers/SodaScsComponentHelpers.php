@@ -185,7 +185,9 @@ class SodaScsComponentHelpers {
     // Check if Portainer service is available.
     try {
       $requestParams = [
-        'machineName' => $machineName,
+        'routeParams' => [
+          'filesystemId' => $machineName,
+        ],
         'type' => 'service',
       ];
       $healthRequest = $this->portainerServiceActions->buildHealthCheckRequest($requestParams);
@@ -212,7 +214,9 @@ class SodaScsComponentHelpers {
 
     try {
       $requestParams = [
-        'machineName' => $machineName,
+        'routeParams' => [
+          'volumeId' => $machineName,
+        ],
         'type' => 'instance',
       ];
       $healthRequest = $this->dockerVolumesServiceActions->buildHealthCheckRequest($requestParams);

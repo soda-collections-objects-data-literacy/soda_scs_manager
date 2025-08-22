@@ -186,6 +186,7 @@ class SodaScsServiceHelpers {
    */
   public function initDockerVolumesServiceSettings() {
     $dockerVolumeServiceSettings['name'] = 'Docker volumes service';
+    $dockerVolumeServiceSettings['baseUrl'] = $this->settings->get('portainer.routes.endpoints.dockerApi.volumes.baseUrl');
     $dockerVolumeServiceSettings['createUrl'] = $this->settings->get('portainer.routes.endpoints.dockerApi.volumes.crud.createUrl');
     $dockerVolumeServiceSettings['readOneUrl'] = $this->settings->get('portainer.routes.endpoints.dockerApi.volumes.crud.readOneUrl');
     $dockerVolumeServiceSettings['readAllUrl'] = $this->settings->get('portainer.routes.endpoints.dockerApi.volumes.crud.readAllUrl');

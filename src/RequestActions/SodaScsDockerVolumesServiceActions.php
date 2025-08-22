@@ -309,8 +309,28 @@ class SodaScsDockerVolumesServiceActions implements SodaScsServiceRequestInterfa
     $dockerApiSettings = $this->sodaScsServiceHelpers->initDockerApiSettings();
     $dockerVolumeServiceSettings = $this->sodaScsServiceHelpers->initDockerVolumesServiceSettings();
 
+    // Set route params.
+    $requestParams['routeParams']['endpointId'] = $portainerServiceSettings['endpointId'];
     // Construct route.
-    $route = $portainerServiceSettings['host'] . $portainerServiceSettings['baseUrl'] . str_replace('{endpointId}', $portainerServiceSettings['portainerEndpointId'], $dockerApiSettings['baseUrl']) . $dockerVolumeServiceSettings['baseUrl'] . str_replace('{volumeId}', urlencode($requestParams['machineName']), $dockerVolumeServiceSettings['readUrl']);
+    $route =
+    // Host route.
+    $portainerServiceSettings['host'] .
+    // Base URL.
+    $portainerServiceSettings['baseUrl'] . $dockerApiSettings['baseUrl'] . $dockerVolumeServiceSettings['baseUrl'] .
+    // Read one URL.
+    $dockerVolumeServiceSettings['readOneUrl'];
+
+    // Replace any route parameters.
+    if (!empty($requestParams['routeParams'])) {
+      foreach ($requestParams['routeParams'] as $key => $value) {
+        $route = str_replace('{' . $key . '}', $value, $route);
+      }
+    }
+
+    // Add query parameters if they exist.
+    if (!empty($requestParams['queryParams'])) {
+      $route .= '?' . http_build_query($requestParams['queryParams']);
+    }
 
     return [
       'method' => 'GET',
@@ -318,7 +338,7 @@ class SodaScsDockerVolumesServiceActions implements SodaScsServiceRequestInterfa
       'headers' => [
         'Content-Type' => 'application/json',
         'Accept' => 'application/json',
-        'X-API-Key' => $portainerServiceSettings['portainerAuthenticationToken'],
+        'X-API-Key' => $portainerServiceSettings['authenticationToken'],
       ],
     ];
   }

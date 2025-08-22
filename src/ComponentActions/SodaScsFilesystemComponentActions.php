@@ -155,6 +155,9 @@ class SodaScsFilesystemComponentActions implements SodaScsComponentActionsInterf
    */
   public function createComponent(SodaScsStackInterface|SodaScsComponentInterface $entity): array {
 
+    $createExecPermissionsResults = [];
+    $startExecPermissionsResults = [];
+
     $entity->set('machineName', 'fs-' . $entity->get('machineName')->value);
 
     // Create shared folders and set permissions in the access proxy container.
@@ -163,12 +166,12 @@ class SodaScsFilesystemComponentActions implements SodaScsComponentActionsInterf
       // Load project entities from target_id.
       /** @var \Drupal\Core\Field\EntityReferenceFieldItemList */
       $projectEntityReferencesList = $entity->get('partOfProjects');
-
       /** @var \Drupal\soda_scs_manager\Entity\SodaScsProject[] $projectEntities */
       $projectEntities = $projectEntityReferencesList->referencedEntities();
 
       // Create commands to create shared folders.
       $accessProxycmds = [];
+
       /** @var \Drupal\soda_scs_manager\Entity\SodaScsProject $projectEntity */
       foreach ($projectEntities as $projectEntity) {
         // Format each command as an array of arguments.
@@ -326,18 +329,18 @@ class SodaScsFilesystemComponentActions implements SodaScsComponentActionsInterf
             'addgroup',
             '-gid',
             $projectEntity->get('groupId')->value,
-            $projectEntity->get('machineName')->value,
+            $projectEntity->get('groupId')->value,
           ];
           $containerCmds[] = [
             'adduser',
             'www-data',
-            $projectEntity->get('machineName')->value,
+            $projectEntity->get('groupId')->value,
           ];
           $containerCmds[] = [
             'chown',
             '-h',
-            'www-data:' . $projectEntity->get('machineName')->value,
-            '/var/www/html/sites/default/private-files/' . $entity->get('machineName')->value,
+            'www-data:' . $projectEntity->get('groupId')->value,
+            '/var/www/html/sites/default/private-files/' . $projectEntity->get('groupId')->value,
           ];
           // Create shared folders via access proxy.
           // @todo Create setting for access proxy.
@@ -521,42 +524,11 @@ class SodaScsFilesystemComponentActions implements SodaScsComponentActionsInterf
    *   Result information with deleted component.
    */
   public function deleteComponent(SodaScsComponentInterface $entity): array {
-    // Create shared folders and set permissions in the access proxy container.
+    // Delete shared folders.
     try {
-      // Prepare command to create shared folders.
-      // Load project entities from target_id.
-      /** @var \Drupal\Core\Field\EntityReferenceFieldItemList */
-      $projectEntityReferencesList = $entity->get('partOfProjects');
-
-      /** @var \Drupal\soda_scs_manager\Entity\SodaScsProject[] $projectEntities */
-      $projectEntities = $projectEntityReferencesList->referencedEntities();
-
-      // Create commands to create shared folders.
-      $accessProxycmds = [];
-      /** @var \Drupal\soda_scs_manager\Entity\SodaScsProject $projectEntity */
-
-      // No Projects found. @todo: Ensure that project can not deleted if they have components.
-      if (empty($projectEntities)) {
-        $entity->delete();
-        return [
-          'message' => 'No projects found, but component deleted anyway.',
-          'data' => [
-            'filesystemComponent' => NULL,
-            'createExecCommandForFolderAtAccessProxyResult' => NULL,
-            'startExecCommandForFolderAtAccessProxyResult' => NULL,
-            'createExecCommandForSetFolderPermissionInContainersResult' => NULL,
-            'startExecCommandForSetFolderPermissionInContainersResult' => NULL,
-          ],
-          'success' => TRUE,
-          'error' => NULL,
-        ];
-      }
-
-      foreach ($projectEntities as $projectEntity) {
-        $machineName = $projectEntity->get('machineName')->value;
-        if (empty($machineName)) {
+        if (empty($entity->get('machineName')->value)) {
           return [
-            'message' => 'Project machine name is empty.',
+            'message' => 'Filesystem machine name is empty.',
             'data' => [
               'filesystemComponent' => NULL,
               'createExecCommandForFolderAtAccessProxyResult' => NULL,
@@ -568,235 +540,79 @@ class SodaScsFilesystemComponentActions implements SodaScsComponentActionsInterf
             'error' => NULL,
           ];
         }
-        $accessProxycmds[] = [
+        $accessProxyDeleteDirCmd = [
           'rmdir',
           '-p',
-          '/shared/' . $projectEntity->get('machineName')->value,
+          '/shared/' . $entity->get('machineName')->value,
         ];
-        // @todo Delete group when no components are shared with it or group is deleted.
-        /*
-         * $accessProxycmds[] = [
-         *   'deluser',
-         *   'filemanager',
-         *   $projectEntity->get('machineName')->value,
-         * ];
-         */
-      }
 
-      // Create shared folders via access proxy.
-      // @todo Create setting for access proxy.
-      foreach ($accessProxycmds as $accessProxycmd) {
+
+      // Delete shared folders via access proxy.
         $accessProxyRequestParams = [
           'containerName' => 'access-proxy',
           'label' => $entity->get('label')->value,
           'machineName' => $entity->get('machineName')->value,
           'partOfProjects' => $entity->get('partOfProjects')->value,
           'connectedComponents' => $entity->get('connectedComponents')->value,
-          'cmd' => $accessProxycmd,
+          'cmd' => $accessProxyDeleteDirCmd,
           'user' => 'www-data',
           'workingDir' => '',
           'env' => [],
         ];
 
         // Create the exec command.
-        $createExecCommandForFolderAtAccessProxyRequest = $this->sodaScsDockerExecServiceActions->buildCreateRequest($accessProxyRequestParams);
-        $createExecCommandForFolderAtAccessProxyResult = $this->sodaScsDockerExecServiceActions->makeRequest($createExecCommandForFolderAtAccessProxyRequest);
+        $createExecCommandForDeleteDirAtAccessProxyRequest = $this->sodaScsDockerExecServiceActions->buildCreateRequest($accessProxyRequestParams);
+        $createExecCommandForDeleteDirAtAccessProxyResult = $this->sodaScsDockerExecServiceActions->makeRequest($createExecCommandForDeleteDirAtAccessProxyRequest);
 
-        if (!$createExecCommandForFolderAtAccessProxyResult['success']) {
+        if (!$createExecCommandForDeleteDirAtAccessProxyResult['success']) {
           return [
             'message' => 'Could not create exec request for the shared folders via access proxy.',
             'data' => [
               'filesystemComponent' => NULL,
-              'createExecCommandForFolderAtAccessProxyResult' => $createExecCommandForFolderAtAccessProxyResult,
+              'createExecCommandForDeleteDirAtAccessProxyResult' => $createExecCommandForDeleteDirAtAccessProxyResult,
               'startExecCommandForFolderAtAccessProxyResult' => NULL,
-              'createExecCommandForSetFolderPermissionInContainersResult' => NULL,
-              'startExecCommandForSetFolderPermissionInContainersResult' => NULL,
             ],
             'success' => FALSE,
-            'error' => $createExecCommandForFolderAtAccessProxyResult['error'],
+            'error' => $createExecCommandForDeleteDirAtAccessProxyResult['error'],
           ];
         }
 
         // Get the exec command result.
-        $execCommandForFolderAtAccessProxyResult = json_decode($createExecCommandForFolderAtAccessProxyResult['data']['portainerResponse']->getBody()->getContents(), TRUE);
+        $execCommandForDeleteDirAtAccessProxyResult = json_decode($createExecCommandForDeleteDirAtAccessProxyResult['data']['portainerResponse']->getBody()->getContents(), TRUE);
 
         // Start the exec command.
-        $startExecCommandForFolderAtAccessProxyRequest = $this->sodaScsDockerExecServiceActions->buildStartRequest(['execId' => $execCommandForFolderAtAccessProxyResult['Id']]);
-        $startExecCommandForFolderAtAccessProxyResult = $this->sodaScsDockerExecServiceActions->makeRequest($startExecCommandForFolderAtAccessProxyRequest);
+        $startExecCommandForDeleteDirAtAccessProxyRequest = $this->sodaScsDockerExecServiceActions->buildStartRequest(['execId' => $execCommandForDeleteDirAtAccessProxyResult['Id']]);
+        $startExecCommandForDeleteDirAtAccessProxyResult = $this->sodaScsDockerExecServiceActions->makeRequest($startExecCommandForDeleteDirAtAccessProxyRequest);
 
-        if (!$startExecCommandForFolderAtAccessProxyResult['success']) {
+        if (!$startExecCommandForDeleteDirAtAccessProxyResult['success']) {
           return [
             'message' => 'Could not start exec request for the shared folders via access proxy.',
             'data' => [
               'filesystemComponent' => NULL,
-              'createExecCommandForFolderAtAccessProxyResult' => $createExecCommandForFolderAtAccessProxyResult,
-              'startExecCommandForFolderAtAccessProxyResult' => $startExecCommandForFolderAtAccessProxyResult,
+              'createExecCommandForDeleteDirAtAccessProxyResult' => $createExecCommandForDeleteDirAtAccessProxyResult,
+              'startExecCommandForDeleteDirAtAccessProxyResult' => $startExecCommandForDeleteDirAtAccessProxyResult,
               'createExecCommandForSetFolderPermissionInContainersResult' => NULL,
               'startExecCommandForSetFolderPermissionInContainersResult' => NULL,
             ],
             'success' => FALSE,
-            'error' => $startExecCommandForFolderAtAccessProxyResult['error'],
+            'error' => $startExecCommandForDeleteDirAtAccessProxyResult['error'],
           ];
         }
-      }
     }
     catch (\Exception $e) {
       Error::logException(
         $this->logger,
         $e,
-        'Cannot create exec request for the shared folders via access proxy: @message',
+        'Cannot delete shared folders via access proxy: @message',
         ['@message' => $e->getMessage()],
         LogLevel::ERROR
       );
       return [
-        'message' => 'Exec request for the shared folders via access proxy failed.',
+        'message' => 'Could not delete shared folders via access proxy.',
         'data' => [
           'filesystemComponent' => NULL,
-          'createExecCommandForFolderAtAccessProxyResult' => NULL,
-          'startExecCommandForFolderAtAccessProxyResult' => NULL,
-          'createExecCommandForSetFolderPermissionInContainersResult' => NULL,
-          'startExecCommandForSetFolderPermissionInContainersResult' => NULL,
-        ],
-        'success' => FALSE,
-        'error' => $e->getMessage(),
-      ];
-    }
-
-    try {
-      // If no project entities found, escape.
-      if (empty($projectEntities)) {
-        return [
-          'message' => 'No project entities found.',
-          'data' => [
-            'filesystemComponent' => NULL,
-            'createExecCommandForFolderAtAccessProxyResult' => NULL,
-            'startExecCommandForFolderAtAccessProxyResult' => NULL,
-            'createExecCommandForSetFolderPermissionInContainersResult' => NULL,
-            'startExecCommandForSetFolderPermissionInContainersResult' => NULL,
-          ],
-          'success' => FALSE,
-          'error' => NULL,
-        ];
-      }
-
-      // Create shared folders and set permissions in the component containers.
-      foreach ($projectEntities as $projectEntity) {
-
-        // Get included components.
-        /** @var \Drupal\Core\Field\EntityReferenceFieldItemList */
-        $componentReferencesList = $projectEntity->get('connectedComponents');
-
-        /** @var \Drupal\soda_scs_manager\Entity\SodaScsComponent[] $connectedComponents */
-        $connectedComponents = $componentReferencesList->referencedEntities();
-
-        foreach ($connectedComponents as $connectedComponent) {
-          $containerCmds = [];
-          /** @var \Drupal\soda_scs_manager\Entity\SodaScsComponent $connectedComponent */
-          switch ($connectedComponent->get('bundle')->value) {
-            case 'soda_scs_wisski_component':
-              $containerType = 'drupal';
-              break;
-
-            case 'soda_scs_filesystem_component':
-              continue 2;
-
-            default:
-              throw new \Exception('Unknown component bundle: ' . $connectedComponent->get('bundle')->value);
-          }
-          /** @var \Drupal\soda_scs_manager\Entity\SodaScsProject $projectEntity */
-          foreach ($projectEntities as $projectEntity) {
-            // @todo Delete group when no components are shared with it or group is deleted.
-            /*
-            $containerCmds[] = [
-            'groupdel',
-            $projectEntity->get('machineName')->value,
-            ];
-
-            $containerCmds[] = [
-            'usermod',
-            '-a', '-G', $projectEntity->get('machineName')->value, 'www-data',
-            ];
-             */
-            $containerCmds[] = [
-              'rm',
-              '/var/www/html/sites/default/private-files/' . $projectEntity->get('machineName')->value,
-            ];
-          }
-
-          // Create shared folders via access proxy.
-          // @todo Create setting for access proxy.
-          foreach ($containerCmds as $containerCmd) {
-            $accessProxyRequestParams = [
-              'containerName' => $connectedComponent->get('machineName')->value . '--' . $containerType,
-              'label' => $entity->get('label')->value,
-              'machineName' => $entity->get('machineName')->value,
-              'partOfProjects' => $entity->get('partOfProjects')->value,
-              'connectedComponents' => $entity->get('connectedComponents')->value,
-              'cmd' => $containerCmd,
-              'user' => '',
-              'workingDir' => '',
-              'env' => [],
-            ];
-
-            // Set permissions for the shared folders in the containers.
-            // Create the exec command.
-            $createExecCommandForSetFolderPermissionInContainersRequest = $this->sodaScsDockerExecServiceActions->buildCreateRequest($accessProxyRequestParams);
-            $createExecCommandForSetFolderPermissionInContainersResult = $this->sodaScsDockerExecServiceActions->makeRequest($createExecCommandForSetFolderPermissionInContainersRequest);
-
-            if (!$createExecCommandForSetFolderPermissionInContainersResult['success']) {
-              return [
-                'message' => 'Could not create exec request for the shared folders in the containers.',
-                'data' => [
-                  'filesystemComponent' => NULL,
-                  'createExecCommandForFolderAtAccessProxyResult' => $createExecCommandForFolderAtAccessProxyResult,
-                  'startExecCommandForFolderAtAccessProxyResult' => $startExecCommandForFolderAtAccessProxyResult,
-                  'createExecCommandForSetFolderPermissionInContainersResult' => $createExecCommandForSetFolderPermissionInContainersResult,
-                  'startExecCommandForSetFolderPermissionInContainersResult' => NULL,
-                ],
-                'success' => FALSE,
-                'error' => $createExecCommandForSetFolderPermissionInContainersResult['error'],
-              ];
-            }
-
-            // Start the exec command.
-            $execCommandIdForSetFolderPermissionInContainers = json_decode($createExecCommandForSetFolderPermissionInContainersResult['data']['portainerResponse']->getBody()->getContents(), TRUE);
-            $startExecCommandForSetFolderPermissionInContainersRequest = $this->sodaScsDockerExecServiceActions->buildStartRequest(['execId' => $execCommandIdForSetFolderPermissionInContainers['Id']]);
-            $startExecCommandForSetFolderPermissionInContainersResult = $this->sodaScsDockerExecServiceActions->makeRequest($startExecCommandForSetFolderPermissionInContainersRequest);
-
-            if (!$startExecCommandForSetFolderPermissionInContainersResult['success']) {
-              return [
-                'message' => 'Could not start exec request for the shared folders in the containers.',
-                'data' => [
-                  'filesystemComponent' => NULL,
-                  'createExecCommandForFolderAtAccessProxyResult' => $createExecCommandForFolderAtAccessProxyResult,
-                  'startExecCommandForFolderAtAccessProxyResult' => $startExecCommandForFolderAtAccessProxyResult,
-                  'createExecCommandForSetFolderPermissionInContainersResult' => $createExecCommandForSetFolderPermissionInContainersResult,
-                  'startExecCommandForSetFolderPermissionInContainersResult' => $startExecCommandForSetFolderPermissionInContainersResult,
-                ],
-                'success' => FALSE,
-                'error' => $startExecCommandForSetFolderPermissionInContainersResult['error'],
-              ];
-            }
-          }
-        }
-      }
-    }
-    catch (\Exception $e) {
-      Error::logException(
-        $this->logger,
-        $e,
-        'Cannot set permissions for the shared folders in the containers: @message',
-        ['@message' => $e->getMessage()],
-        LogLevel::ERROR
-      );
-      return [
-        'message' => 'Could not set permissions for the shared folders in the containers.',
-        'data' => [
-          'filesystemComponent' => NULL,
-          'createExecCommandForFolderAtAccessProxyResult' => $createExecCommandForFolderAtAccessProxyResult,
-          'startExecCommandForFolderAtAccessProxyResult' => $startExecCommandForFolderAtAccessProxyResult,
-          'createExecCommandForSetFolderPermissionInContainersResult' => $createExecCommandForSetFolderPermissionInContainersResult,
-          'startExecCommandForSetFolderPermissionInContainersResult' => $startExecCommandForSetFolderPermissionInContainersResult,
+          'createExecCommandForDeleteDirAtAccessProxyResult' => NULL,
+          'startExecCommandForDeleteDirAtAccessProxyResult' => NULL,
         ],
         'success' => FALSE,
         'error' => $e->getMessage(),
@@ -811,18 +627,16 @@ class SodaScsFilesystemComponentActions implements SodaScsComponentActionsInterf
       Error::logException(
         $this->logger,
         $e,
-        'Cannot save component: @message',
+        'Cannot delete component: @message',
         ['@message' => $e->getMessage()],
         LogLevel::ERROR
       );
       return [
-        'message' => 'Could not save component.',
+        'message' => 'Could not delete component.',
         'data' => [
           'filesystemComponent' => NULL,
-          'createExecCommandForFolderAtAccessProxyResult' => $createExecCommandForFolderAtAccessProxyResult,
-          'startExecCommandForFolderAtAccessProxyResult' => $startExecCommandForFolderAtAccessProxyResult,
-          'createExecCommandForSetFolderPermissionInContainersResult' => $createExecCommandForSetFolderPermissionInContainersResult,
-          'startExecCommandForSetFolderPermissionInContainersResult' => $startExecCommandForSetFolderPermissionInContainersResult,
+          'createExecCommandForDeleteDirAtAccessProxyResult' => NULL,
+          'startExecCommandForDeleteDirAtAccessProxyResult' => NULL,
         ],
         'success' => FALSE,
         'error' => $e->getMessage(),
@@ -833,12 +647,8 @@ class SodaScsFilesystemComponentActions implements SodaScsComponentActionsInterf
       'message' => $this->t('Deleted Filesystem component @name.', ['@name' => $entity->get('label')->value]),
       'data' => [
         'filesystemComponent' => $entity,
-        'createExecCommandForFolderAtAccessProxyResult' => $createExecCommandForFolderAtAccessProxyResult,
-        'startExecCommandForFolderAtAccessProxyResult' => $startExecCommandForFolderAtAccessProxyResult,
-        // @todo Add result.
-        'createExecCommandForSetFolderPermissionInContainersResult' => NULL,
-        // @todo Add result.
-        'startExecCommandForSetFolderPermissionInContainersResult' => NULL,
+        'createExecCommandForDeleteDirAtAccessProxyResult' => $createExecCommandForDeleteDirAtAccessProxyResult,
+        'startExecCommandForDeleteDirAtAccessProxyResult' => $startExecCommandForDeleteDirAtAccessProxyResult,
       ],
       'success' => TRUE,
       'error' => NULL,
