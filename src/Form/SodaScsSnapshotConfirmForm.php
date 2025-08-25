@@ -12,6 +12,7 @@ use Drupal\soda_scs_manager\Entity\SodaScsSnapshot;
 use Drupal\soda_scs_manager\StackActions\SodaScsStackActionsInterface;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 use Drupal\Core\Utility\Error;
+use Drupal\file\Entity\File;
 use Psr\Log\LogLevel;
 
 /**
@@ -207,9 +208,14 @@ class SodaScsSnapshotConfirmForm extends ConfirmFormBase {
       return;
     }
 
-    $portainerResponse = $createSnapshotResult['data']['portainerResponse']->getBody()->getContents();
-    $portainerResponse = json_decode($portainerResponse, TRUE);
+    $filePath = $createSnapshotResult['data']['metadata']['relativeTarFilePath'];
 
+    $file = File::create([
+      'uri' => 'private://' . $filePath,
+      'uid' => \Drupal::currentUser()->id(),
+      'status' => 1,
+    ]);
+    $file->save();
 
     // Create the snapshot entity.
     $snapshot = SodaScsSnapshot::create([
@@ -218,7 +224,7 @@ class SodaScsSnapshotConfirmForm extends ConfirmFormBase {
       'langcode' => 'en',
       'changed' => time(),
       'created' => time(),
-      'file' => $createSnapshotResult['data']['file']->id(),
+      'file' => $file->id(),
     ]);
 
     if ($this->entityType === 'soda_scs_stack') {

@@ -116,6 +116,15 @@ class SodaScsSnapshotListBuilder extends EntityListBuilder {
   protected function getDefaultOperations(EntityInterface $entity) {
     $operations = parent::getDefaultOperations($entity);
 
+    // Add entity view operation if missing.
+    if ($entity->hasLinkTemplate('canonical') && !isset($operations['view'])) {
+      $operations['view'] = [
+        'title' => $this->t('View'),
+        'weight' => 0,
+        'url' => $entity->toUrl('canonical'),
+      ];
+    }
+
     // Add edit operation if missing.
     if ($entity->hasLinkTemplate('edit-form') && !isset($operations['edit'])) {
       $operations['edit'] = [

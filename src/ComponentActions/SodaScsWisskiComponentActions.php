@@ -655,7 +655,11 @@ class SodaScsWisskiComponentActions implements SodaScsComponentActionsInterface 
       $date = date('Y-m-d', $timestamp);
       $machineName = $component->get('machineName')->value;
       $snapshotName = $machineName . '--snapshot--' . $timestamp;
-      $backupPath = '/var/scs-manager/snapshots/' . $component->getOwner()->getDisplayName() . '/' . $date . '/' . $machineName;
+      $privateFileSystemPath = '/var/scs-manager/snapshots/';
+      $componentBackupPath = $component->getOwner()->getDisplayName() . '/' . $date . '/' . $machineName;
+      $backupPath = $privateFileSystemPath . $componentBackupPath;
+      $tarFileName = $snapshotName . '--webroot.tar.gz';
+      $relativeTarFilePath = $componentBackupPath . '/' . $tarFileName;
 
       // Create the backup directory.
       $dirCreateResult = $this->sodaScsComponentHelpers->createDir($backupPath);
@@ -672,7 +676,7 @@ class SodaScsWisskiComponentActions implements SodaScsComponentActionsInterface 
         'cmd' => [
           'tar',
           'czf',
-          '/backup/' . $snapshotName . '--webroot.tar.gz',
+          '/backup/' . $tarFileName,
           '-C',
           '/source',
           '.',
@@ -716,6 +720,10 @@ class SodaScsWisskiComponentActions implements SodaScsComponentActionsInterface 
         'data' => [
           'startContainerResponse' => $startContainerResponse,
           'createContainerResponse' => $createContainerResponse,
+          'metadata' => [
+            'relativeTarFilePath' => $relativeTarFilePath,
+            'containerId' => $containerId,
+          ],
         ],
         'success' => TRUE,
         'error' => '',

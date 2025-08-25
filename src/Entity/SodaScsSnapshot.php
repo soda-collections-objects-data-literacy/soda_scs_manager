@@ -67,6 +67,7 @@ use Drupal\user\EntityOwnerTrait;
  *     "langcode",
  *     "owner",
  *     "snapshotOfComponent",
+ *     "file",
  *     "snapshotOfStack",
  *     "uuid",
  *   }
