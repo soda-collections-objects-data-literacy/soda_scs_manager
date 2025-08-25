@@ -518,28 +518,6 @@ class SodaScsSqlComponentActions implements SodaScsComponentActionsInterface {
         'error' => $e->getMessage(),
       ];
     }
-    try {
-      // GetServiceKey.
-      /** @var \Drupal\soda_scs_manager\Entity\SodaScsServiceKeyInterface $sqlServiceKey */
-      $sqlServiceKey = $this->entityTypeManager->getStorage('soda_scs_service_key')->load($component->get('serviceKey')->target_id);
-      $dbUserPassword = $sqlServiceKey->get('servicePassword')->value;
-    }
-    catch (\Exception $e) {
-      Error::logException(
-        $this->logger,
-        $e,
-        'Cannot load service key: @message',
-        ['@message' => $e->getMessage()],
-        LogLevel::ERROR
-      );
-      $this->messenger->addError($this->t("Cannot load service key. See logs for more details."));
-      return [
-        'message' => 'Cannot load service key.',
-        'data' => NULL,
-        'success' => FALSE,
-        'error' => $e->getMessage(),
-      ];
-    }
 
     return [
       'message' => 'SQL component deleted, users cleaned',

@@ -9,6 +9,7 @@ use Drupal\Core\Logger\LoggerChannelFactoryInterface;
 use Drupal\Core\Url;
 use Drupal\soda_scs_manager\ComponentActions\SodaScsComponentActionsInterface;
 use Drupal\soda_scs_manager\Entity\SodaScsSnapshot;
+use Drupal\soda_scs_manager\StackActions\SodaScsStackActionsInterface;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 use Drupal\Core\Utility\Error;
 use Psr\Log\LogLevel;
@@ -60,6 +61,12 @@ class SodaScsSnapshotConfirmForm extends ConfirmFormBase {
    */
   protected $sodaScsWisskiComponentActions;
 
+  /**
+   * The Soda SCS WissKI Stack Actions.
+   *
+   * @var \Drupal\soda_scs_manager\StackActions\SodaScsStackActionsInterface
+   */
+  protected $sodaScsWisskiStackActions;
 
   /**
    * The logger factory.
@@ -79,6 +86,8 @@ class SodaScsSnapshotConfirmForm extends ConfirmFormBase {
    *   The Soda SCS Triple Store Component Actions.
    * @param \Drupal\soda_scs_manager\ComponentActions\SodaScsComponentActionsInterface $sodaScsWisskiComponentActions
    *   The Soda SCS WissKI Component Actions.
+   * @param \Drupal\soda_scs_manager\StackActions\SodaScsStackActionsInterface $sodaScsWisskiStackActions
+   *   The Soda SCS WissKI Stack Actions.
    * @param \Drupal\Core\Logger\LoggerChannelFactoryInterface $logger_factory
    *   The logger factory.
    */
@@ -87,13 +96,14 @@ class SodaScsSnapshotConfirmForm extends ConfirmFormBase {
     SodaScsComponentActionsInterface $sodaScsSqlComponentActions,
     SodaScsComponentActionsInterface $sodaScsTripleStoreComponentActions,
     SodaScsComponentActionsInterface $sodaScsWisskiComponentActions,
+    SodaScsStackActionsInterface $sodaScsWisskiStackActions,
     LoggerChannelFactoryInterface $logger_factory,
   ) {
     $this->entityTypeManager = $entity_type_manager;
     $this->sodaScsSqlComponentActions = $sodaScsSqlComponentActions;
     $this->sodaScsTripleStoreComponentActions = $sodaScsTripleStoreComponentActions;
     $this->sodaScsWisskiComponentActions = $sodaScsWisskiComponentActions;
-
+    $this->sodaScsWisskiStackActions = $sodaScsWisskiStackActions;
     $this->loggerFactory = $logger_factory;
   }
 
@@ -106,6 +116,7 @@ class SodaScsSnapshotConfirmForm extends ConfirmFormBase {
       $container->get('soda_scs_manager.sql_component.actions'),
       $container->get('soda_scs_manager.triplestore_component.actions'),
       $container->get('soda_scs_manager.wisski_component.actions'),
+      $container->get('soda_scs_manager.wisski_stack.actions'),
       $container->get('logger.factory')
     );
   }
@@ -167,11 +178,15 @@ class SodaScsSnapshotConfirmForm extends ConfirmFormBase {
         break;
 
       case 'soda_scs_triplestore_component':
-        $createSnapshotResult = $this->sodaScsTripleStoreComponentActions->createSnapshot($this->entity);
+        $createSnapshotResult = $this->sodaScsTripleStoreComponentActions->createSnapshot($this->entity, $values['label']);
         break;
 
       case 'soda_scs_wisski_component':
         $createSnapshotResult = $this->sodaScsWisskiComponentActions->createSnapshot($this->entity, $values['label']);
+        break;
+
+      case 'soda_scs_wisski_stack':
+        $createSnapshotResult = $this->sodaScsWisskiStackActions->createSnapshot($this->entity, $values['label']);
         break;
 
       default:
@@ -191,6 +206,10 @@ class SodaScsSnapshotConfirmForm extends ConfirmFormBase {
       );
       return;
     }
+
+    $portainerResponse = $createSnapshotResult['data']['portainerResponse']->getBody()->getContents();
+    $portainerResponse = json_decode($portainerResponse, TRUE);
+
 
     // Create the snapshot entity.
     $snapshot = SodaScsSnapshot::create([

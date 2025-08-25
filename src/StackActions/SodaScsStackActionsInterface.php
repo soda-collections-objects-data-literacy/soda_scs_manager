@@ -3,6 +3,7 @@
 namespace Drupal\soda_scs_manager\StackActions;
 
 use Drupal\soda_scs_manager\Entity\SodaScsStackInterface;
+use Drupal\soda_scs_manager\ValueObject\SodaScsResult;
 
 /**
  * Handles the communication with the SCS user manager daemon.
@@ -21,6 +22,17 @@ interface SodaScsStackActionsInterface {
    * @throws \Exception
    */
   public function createStack(SodaScsStackInterface $stack): array;
+
+  /**
+   * Create a snapshot of a stack.
+   *
+   * @param \Drupal\soda_scs_manager\Entity\SodaScsStackInterface $stack
+   *   The stack.
+   *
+   * @return SodaScsResult
+   *   The result of the request.
+   */
+  public function createSnapshot(SodaScsStackInterface $stack): SodaScsResult;
 
   /**
    * Get all stacks of a bundle.

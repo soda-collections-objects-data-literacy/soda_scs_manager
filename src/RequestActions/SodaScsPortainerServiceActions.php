@@ -335,34 +335,9 @@ class SodaScsPortainerServiceActions implements SodaScsServiceRequestInterface {
         "value" => 'latest',
       ],
       [
-        "name" => "WISSKI_GRAIN_YEAST_WATER_VERSION",
-        "value" => 'dev-main',
-      ],
-      [
         "name" => "WISSKI_FLAVOURS",
         "value" => $requestParams['flavours'],
       ],
-      [
-        "name" => "WISSKI_SWEET_RECIPE_VERSION",
-        "value" => 'dev-main',
-      ],
-      [
-        "name" => "WISSKI_FRUITY_RECIPE_VERSION",
-        "value" => 'dev-main',
-      ],
-      [
-        "name" => "WISSKI_MALTY_RECIPE_VERSION",
-        "value" => 'dev-main',
-      ],
-      [
-        "name" => "WISSKI_WOODY_RECIPE_VERSION",
-        "value" => 'dev-main',
-      ],
-      [
-        "name" => "WISSKI_HERBAL_RECIPE_VERSION",
-        "value" => 'dev-main',
-      ],
-
     ];
 
     return [

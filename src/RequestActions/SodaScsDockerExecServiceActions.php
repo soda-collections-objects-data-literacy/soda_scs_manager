@@ -21,7 +21,14 @@ use GuzzleHttp\ClientInterface;
 use Symfony\Component\HttpFoundation\RequestStack;
 
 /**
- * Handles the communication with the SCS user manager daemon.
+ * Handles the communication with the Docker exec service API.
+ *
+ * For creating exec commands to perform actions in the containers,
+ * like "usermod -a -G www-data www-data" etc.
+ *
+ * @see https://docs.portainer.io/api/endpoints/docker/exec
+ *
+ *
  */
 class SodaScsDockerExecServiceActions implements SodaScsExecRequestInterface {
 
@@ -205,7 +212,7 @@ class SodaScsDockerExecServiceActions implements SodaScsExecRequestInterface {
   }
 
   /**
-   * Builds the create volume request for the Portainer service API.
+   * Builds the create request for the docker exec service API.
    *
    * @param array $requestParams
    *   The request params.

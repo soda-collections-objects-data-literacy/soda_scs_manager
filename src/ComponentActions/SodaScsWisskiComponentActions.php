@@ -224,16 +224,31 @@ class SodaScsWisskiComponentActions implements SodaScsComponentActionsInterface 
    */
   public function createComponent(SodaScsStackInterface|SodaScsComponentInterface $entity): array {
     try {
+
+      // Get the owner of the component.
+      $owner = $entity->getOwner();
+
+      // Get the default project of the owner.
+      $defaultProjectId = $owner->get('default_project')->target_id;
+
+      // Get the default project.
+      /** @var \Drupal\soda_scs_manager\Entity\SodaScsProjectInterface $defaultProject */
+      $defaultProject = $this->entityTypeManager->getStorage('soda_scs_project')->load($defaultProjectId);
+      $defaultProjectGroupId = $defaultProject->get('groupId')->value;
+
+      // Get the bundle info for the WissKI component.
       $wisskiComponentBundleInfo = $this->bundleInfo->getBundleInfo('soda_scs_component')['soda_scs_wisski_component'];
 
       if (!$wisskiComponentBundleInfo) {
         throw new \Exception('WissKI component bundle info not found');
       }
+
+      // Get the machine name for the WissKI component.
       $machineName = 'wisski-' . $entity->get('machineName')->value;
-      //
+
       // Get information about the connected SQL and triplestore components.
-      //
       // Get included SQL component if this is a stack (not a component)
+      // @todo This is legacy code and should be refactored.
       if ($entity instanceof SodaScsStackInterface) {
         // Retrieve the SQL component that this WissKI component will use.
         $sqlComponent = $this->sodaScsStackHelpers->retrieveIncludedComponent($entity, 'soda_scs_sql_component');
@@ -243,7 +258,7 @@ class SodaScsWisskiComponentActions implements SodaScsComponentActionsInterface 
         $dbName = $sqlComponent->get('machineName')->value;
       }
 
-      // Create service key if it does not exist.
+      // Create service key for WissKI component if it does not exist.
       $keyProps = [
         'bundle'  => 'soda_scs_wisski_component',
         'bundleLabel' => $wisskiComponentBundleInfo['label'],
@@ -254,6 +269,7 @@ class SodaScsWisskiComponentActions implements SodaScsComponentActionsInterface 
       $wisskiComponentServiceKeyEntity = $this->sodaScsServiceKeyActions->getServiceKey($keyProps) ?? $this->sodaScsServiceKeyActions->createServiceKey($keyProps);
       $wisskiComponentServiceKeyPassword = $wisskiComponentServiceKeyEntity->get('servicePassword')->value ?? throw new \Exception('WissKI service key password not found.');
 
+      // Create the WissKI component entity.
       /** @var \Drupal\soda_scs_manager\Entity\SodaScsComponentInterface $wisskiComponent */
       $wisskiComponent = $this->entityTypeManager->getStorage('soda_scs_component')->create(
         [
@@ -269,22 +285,32 @@ class SodaScsWisskiComponentActions implements SodaScsComponentActionsInterface 
         ]
       );
 
+      // Add the service key to the WissKI component entity.
       $wisskiComponent->serviceKey[] = $wisskiComponentServiceKeyEntity;
 
+      // If it is a stack, we need to retrieve the included components.
       if ($entity instanceof SodaScsStackInterface) {
-        // If it is a stack, we need to retrieve the included components.
+        // Set the WissKI type to stack.
+        $wisskiType = 'stack';
+
+        // Get the SQL component.
         $sqlComponent = $this->sodaScsStackHelpers->retrieveIncludedComponent($entity, 'soda_scs_sql_component');
 
+        // Get the service key for the SQL component.
         $sqlKeyProps = [
           'bundle'  => 'soda_scs_sql_component',
           'type'  => 'password',
           'userId'  => $sqlComponent->getOwnerId(),
         ];
 
+        // Get the service key for the SQL component.
         $sqlComponentServiceKeyEntity = $this->sodaScsServiceKeyActions->getServiceKey($sqlKeyProps) ?? throw new \Exception('SQL service key not found.');
         $sqlComponentServiceKeyPassword = $sqlComponentServiceKeyEntity->get('servicePassword')->value ?? throw new \Exception('SQL service key password not found.');
+
+        // Get the triplestore component.
         $triplestoreComponent = $this->sodaScsStackHelpers->retrieveIncludedComponent($entity, 'soda_scs_triplestore_component');
 
+        // Get the password for the triplestore component.
         $triplestoreKeyProps = [
           'bundle'  => 'soda_scs_triplestore_component',
           'type'  => 'password',
@@ -294,6 +320,7 @@ class SodaScsWisskiComponentActions implements SodaScsComponentActionsInterface 
         $triplestoreComponentServiceKeyEntity = $this->sodaScsServiceKeyActions->getServiceKey($triplestoreKeyProps) ?? throw new \Exception('Triplestore service key not found.');
         $triplestoreComponentServiceKeyPassword = $triplestoreComponentServiceKeyEntity->get('servicePassword')->value ?? throw new \Exception('Triplestore service key password not found.');
 
+        // Get the service token for the triplestore component.
         $triplestoreTokenProps = [
           'bundle'  => 'soda_scs_triplestore_component',
           'type'  => 'token',
@@ -303,8 +330,11 @@ class SodaScsWisskiComponentActions implements SodaScsComponentActionsInterface 
         $triplestoreComponentServiceTokenEntity = $this->sodaScsServiceKeyActions->getServiceKey($triplestoreTokenProps) ?? throw new \Exception('Triplestore service token not found.');
         $triplestoreComponentServiceTokenString = $triplestoreComponentServiceTokenEntity->get('servicePassword')->value ?? throw new \Exception('Triplestore service token not found.');
 
+        // Get the flavours for the WissKI component.
+        // @todo Implement the flavour logic.
         $flavoursList = $wisskiComponent->get('flavours')->value;
 
+        // Initialize the flavours string.
         $flavours = '';
 
         // Process flavours array into a space-separated string.
@@ -322,7 +352,7 @@ class SodaScsWisskiComponentActions implements SodaScsComponentActionsInterface 
           }
         }
 
-        $wisskiType = 'stack';
+
       }
       else {
         // If it is not a stack we set the values to empty strings.
@@ -461,7 +491,6 @@ class SodaScsWisskiComponentActions implements SodaScsComponentActionsInterface 
       //
       // Create the WissKI instance at portainer.
       //
-      // @todo Use project from component.
       $requestParams = [
         'dbName' => $dbName,
         'flavours' => $flavours,
@@ -469,7 +498,6 @@ class SodaScsWisskiComponentActions implements SodaScsComponentActionsInterface 
         'keycloakUserGroup' => $keycloakWisskiInstanceUserGroupName,
         'machineName' => $machineName,
         'openidConnectClientSecret' => $openidConnectClientSecret,
-        'project' => 'my_project',
         'sqlServicePassword' => $sqlComponentServiceKeyPassword,
         'triplestoreServicePassword' => $triplestoreComponentServiceKeyPassword,
         'triplestoreServiceToken' => $triplestoreComponentServiceTokenString,
@@ -534,6 +562,65 @@ class SodaScsWisskiComponentActions implements SodaScsComponentActionsInterface 
     $portainerResponsePayload = json_decode($portainerCreateRequestResult['data']['portainerResponse']->getBody()->getContents(), TRUE);
     // Set the external ID.
     $wisskiComponent->set('externalId', $portainerResponsePayload['Id']);
+
+    // Create the default project group in the WissKI container.
+    // First create the exec command...
+
+    $createDefaultProjectGroupRequestParams = [
+      'containerName' => $portainerResponsePayload['Name'] . '--drupal',
+      'cmd' => ['groupadd', '-g', (string) $defaultProjectGroupId, 'default-project-group'],
+      'user' => 'root',
+    ];
+    $createDefaultProjectGroupRequest = $this->sodaScsDockerExecServiceActions->buildCreateRequest($createDefaultProjectGroupRequestParams);
+
+    $createDefaultProjectGroupResponse = $this->sodaScsDockerExecServiceActions->makeRequest($createDefaultProjectGroupRequest);
+
+    if (!$createDefaultProjectGroupResponse['success']) {
+      throw new \Exception('Docker exec request failed: ' . $createDefaultProjectGroupResponse['error']);
+    }
+
+    $jsonResponse = json_decode($createDefaultProjectGroupResponse['data']['portainerResponse']->getBody()->getContents(), TRUE);
+    $execId = $jsonResponse['Id'];
+
+    $startDefaultProjectGroupRequestParams = [
+      'execId' => $execId,
+    ];
+
+    // Then execute the exec command.
+    $startDefaultProjectGroupRequest = $this->sodaScsDockerExecServiceActions->buildStartRequest($startDefaultProjectGroupRequestParams);
+    $startDefaultProjectGroupResponse = $this->sodaScsDockerExecServiceActions->makeRequest($startDefaultProjectGroupRequest);
+
+    if (!$startDefaultProjectGroupResponse['success']) {
+      throw new \Exception('Docker exec request failed: ' . $startDefaultProjectGroupResponse['error']);
+    }
+
+    // Add the default project group to the www-data user in the WissKI container.
+
+    // Set the default group for the www-data user in the WissKI container.
+    // First create the exec command...
+
+    $createDockerExecRequestParams = [
+      'containerName' => $portainerResponsePayload['Name'] . '--drupal',
+      'cmd' => ['usermod', '-a', '-G', (string) $defaultProjectGroupId, 'www-data'],
+      'user' => 'root',
+    ];
+
+    $createDockerExecRequest = $this->sodaScsDockerExecServiceActions->buildCreateRequest($createDockerExecRequestParams);
+    $createDockerExecResponse = $this->sodaScsDockerExecServiceActions->makeRequest($createDockerExecRequest);
+    if (!$createDockerExecResponse['success']) {
+      throw new \Exception('Docker exec request failed: ' . $createDockerExecResponse['error']);
+    }
+    $jsonResponse = json_decode($createDockerExecResponse['data']['portainerResponse']->getBody()->getContents(), TRUE);
+    $execId = $jsonResponse['Id'];
+    // Then execute the exec command.
+    $startDockerExecRequestParams = [
+      'execId' => $execId,
+    ];
+    $startDockerExecRequest = $this->sodaScsDockerExecServiceActions->buildStartRequest($startDockerExecRequestParams);
+    $startDockerExecResponse = $this->sodaScsDockerExecServiceActions->makeRequest($startDockerExecRequest);
+    if (!$startDockerExecResponse['success']) {
+      throw new \Exception('Docker exec request failed: ' . $startDockerExecResponse['error']);
+    }
 
     // Save the component.
     $wisskiComponent->save();
@@ -604,38 +691,35 @@ class SodaScsWisskiComponentActions implements SodaScsComponentActionsInterface 
       $createContainerResponse = $this->sodaScsDockerRunServiceActions->makeRequest($createContainerRequest);
 
       if (!$createContainerResponse['success']) {
-        return [
-          'message' => 'Create container request failed. Snapshot creation aborted..',
-          'data' => $createContainerResponse,
-          'success' => FALSE,
-          'error' => $createContainerResponse['error'],
-          'statusCode' => $createContainerResponse['statusCode'],
-        ];
+        return $createContainerResponse;
       }
 
       // Get container ID from response.
       $containerId = json_decode($createContainerResponse['data']['portainerResponse']->getBody()->getContents(), TRUE)['Id'];
 
       // Make the start container request.
-      $startContainerRequest = $this->sodaScsDockerRunServiceActions->buildStartRequest(['containerId' => $containerId]);
+      $startContainerRequest = $this->sodaScsDockerRunServiceActions->buildStartRequest([
+        'routeParams' => [
+          'containerId' => $containerId,
+        ],
+      ]);
       $startContainerResponse = $this->sodaScsDockerRunServiceActions->makeRequest($startContainerRequest);
 
       if (!$startContainerResponse['success']) {
-        return [
-          'message' => 'Start container request failed. Snapshot creation aborted..',
-          'data' => $startContainerResponse,
-          'success' => FALSE,
-          'error' => $startContainerResponse['error'],
-          'statusCode' => $startContainerResponse['statusCode'],
-        ];
+        return $startContainerResponse;
       }
 
+
+
       return [
-        'message' => 'Snapshot created successfully.',
-        'data' => $createContainerResponse,
+        'message' => 'Created and started snapshot container successfully.',
+        'data' => [
+          'startContainerResponse' => $startContainerResponse,
+          'createContainerResponse' => $createContainerResponse,
+        ],
         'success' => TRUE,
-        'error' => NULL,
-        'statusCode' => $createContainerResponse['statusCode'],
+        'error' => '',
+        'statusCode' => $startContainerResponse['statusCode'],
       ];
     }
     catch (\Exception $e) {
@@ -648,7 +732,10 @@ class SodaScsWisskiComponentActions implements SodaScsComponentActionsInterface 
       );
       return [
         'message' => 'Snapshot creation failed.',
-        'data' => $e,
+        'data' => [
+          'createContainerResponse' => NULL,
+          'startContainerResponse' => NULL,
+        ],
         'success' => FALSE,
         'error' => $e->getMessage(),
         'statusCode' => 500,

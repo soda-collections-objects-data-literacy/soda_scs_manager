@@ -23,6 +23,7 @@ use Drupal\soda_scs_manager\Helpers\SodaScsStackHelpers;
 use Drupal\soda_scs_manager\RequestActions\SodaScsServiceRequestInterface;
 use Drupal\soda_scs_manager\ServiceActions\SodaScsServiceActionsInterface;
 use Drupal\soda_scs_manager\ServiceKeyActions\SodaScsServiceKeyActionsInterface;
+use Drupal\soda_scs_manager\ValueObject\SodaScsResult;
 use GuzzleHttp\ClientInterface;
 use Symfony\Component\HttpFoundation\RequestStack;
 use Drupal\Core\Utility\Error;
@@ -389,6 +390,34 @@ class SodaScsWisskiStackActions implements SodaScsStackActionsInterface {
         ],
       ];
     }
+  }
+
+  /**
+   * Create a snapshot of a WissKI stack.
+   *
+   * @param \Drupal\soda_scs_manager\Entity\SodaScsStackInterface $stack
+   *   The stack.
+   *
+   * @return SodaScsResult
+   *   The result of the request.
+   */
+  public function createSnapshot(SodaScsStackInterface $stack): SodaScsResult {
+    $wisskiComponent = $this->sodaScsStackHelpers->retrieveIncludedComponent($stack, 'soda_scs_wisski_component');
+    $sqlComponent = $this->sodaScsStackHelpers->retrieveIncludedComponent($stack, 'soda_scs_sql_component');
+    $triplestoreComponent = $this->sodaScsStackHelpers->retrieveIncludedComponent($stack, 'soda_scs_triplestore_component');
+
+    $wisskiComponentSnapshot = $this->sodaScsWisskiComponentActions->createSnapshot($wisskiComponent, $wisskiComponent->getLabel());
+    $sqlComponentSnapshot = $this->sodaScsSqlComponentActions->createSnapshot($sqlComponent, $sqlComponent->getLabel());
+    $triplestoreComponentSnapshot = $this->sodaScsTriplestoreComponentActions->createSnapshot($triplestoreComponent, $triplestoreComponent->getLabel());
+
+    return SodaScsResult::success(
+      data: [
+        'wisskiComponentSnapshot' => $wisskiComponentSnapshot,
+        'sqlComponentSnapshot' => $sqlComponentSnapshot,
+        'triplestoreComponentSnapshot' => $triplestoreComponentSnapshot,
+      ],
+      message: 'Successfully created WissKI stack snapshot.'
+    );
   }
 
   /**
