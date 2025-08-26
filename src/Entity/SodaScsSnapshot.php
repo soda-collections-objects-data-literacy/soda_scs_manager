@@ -28,7 +28,7 @@ use Drupal\user\EntityOwnerTrait;
  *     "list_builder" = "Drupal\soda_scs_manager\ListBuilder\SodaScsSnapshotListBuilder",
  *     "views_data" = "Drupal\views\EntityViewsData",
  *     "translation" = "Drupal\content_translation\ContentTranslationHandler",
- *     "access" = "Drupal\Core\Entity\EntityAccessControlHandler",
+ *     "access" = "Drupal\soda_scs_manager\Access\SodaScsSnapshotAccessControlHandler",
  *     "form" = {
  *       "default" = "Drupal\soda_scs_manager\Form\SodaScsSnapshotCreateForm",
  *       "edit" = "Drupal\soda_scs_manager\Form\SodaScsSnapshotEditForm",
@@ -167,6 +167,22 @@ class SodaScsSnapshot extends ContentEntityBase implements SodaScsSnapshotInterf
         'label' => 'above',
         'type' => 'entity_reference_label',
         'weight' => 30,
+      ]);
+
+    $fields['signatureFile'] = BaseFieldDefinition::create('file')
+      ->setLabel(new TranslatableMarkup('Signature File'))
+      ->setDescription(new TranslatableMarkup('The signature file of the snapshot.'))
+      ->setRequired(TRUE)
+      ->setDisplayConfigurable('form', TRUE)
+      ->setDisplayOptions('form', [
+        'type' => 'file',
+        'weight' => 40,
+      ])
+      ->setDisplayConfigurable('view', TRUE)
+      ->setDisplayOptions('view', [
+        'label' => 'above',
+        'type' => 'file',
+        'weight' => 40,
       ]);
 
     $fields['snapshotOfComponent'] = BaseFieldDefinition::create('entity_reference')

@@ -22,6 +22,7 @@ use Drupal\soda_scs_manager\Helpers\SodaScsComponentHelpers;
 use Drupal\soda_scs_manager\RequestActions\SodaScsDockerExecServiceActions;
 use Drupal\soda_scs_manager\ServiceActions\SodaScsServiceActionsInterface;
 use Drupal\soda_scs_manager\ServiceKeyActions\SodaScsServiceKeyActionsInterface;
+use Drupal\soda_scs_manager\ValueObject\SodaScsResult;
 use Drupal\user\EntityOwnerTrait;
 use GuzzleHttp\ClientInterface;
 use Psr\Log\LogLevel;
@@ -322,19 +323,20 @@ class SodaScsSqlComponentActions implements SodaScsComponentActionsInterface {
    *
    * @param \Drupal\soda_scs_manager\Entity\SodaScsComponentInterface $component
    *   The SODa SCS Component.
-   * @param string $label
-   *   The label of the snapshot.
+   * @param string $timestamp
+   *   The timestamp of the snapshot.
+   * @param string $snapshotMachineName
+   *   The machine name of the snapshot.
    *
-   * @return array
+   * @return SodaScsResult
    *   Result information with the created snapshot.
    */
-  public function createSnapshot(SodaScsComponentInterface $component, string $label): array {
+  public function createSnapshot(SodaScsComponentInterface $component, string $snapshotMachineName, string $timestamp): SodaScsResult {
 
     try {
-      $timestamp = time();
       $date = date('Y-m-d', $timestamp);
       $machineName = $component->get('machineName')->value;
-      $snapshotName = $machineName . '--snapshot--' . $timestamp . '.sql';
+      $snapshotName = $snapshotMachineName;
       $backupRootDir = '/var/scs-manager/snapshots/' . $component->getOwner()->getDisplayName() . '/' . $date . '/' . $machineName;
       $backupDir = $backupRootDir . '/' . $snapshotName;
       $tarGzBackupDir = str_replace('sql', 'sql.tar.gz', $backupDir);
@@ -342,7 +344,10 @@ class SodaScsSqlComponentActions implements SodaScsComponentActionsInterface {
       // Create the backup directory.
       $dirCreateResult = $this->sodaScsComponentHelpers->createDir($backupRootDir);
       if (!$dirCreateResult['success']) {
-        return $dirCreateResult;
+        return SodaScsResult::failure(
+          error: $dirCreateResult['error'],
+          message: 'Snapshot creation failed: Could not create backup directory.',
+        );
       }
 
       // Get the database name.
@@ -364,19 +369,10 @@ class SodaScsSqlComponentActions implements SodaScsComponentActionsInterface {
       $createContainerExecResponse = $this->sodaScsDockerExecServiceActions->makeRequest($createContainerExecRequest);
 
       if (!$createContainerExecResponse['success']) {
-        return [
-          'message' => 'Create container exec request failed. Snapshot creation aborted..',
-          'data' => [
-            'createContainerExecResponse' => $createContainerExecResponse,
-            'metadata' => [
-              'snapshotName' => $snapshotName,
-              'backupPath' => $backupDir,
-            ],
-          ],
-          'success' => FALSE,
-          'error' => $createContainerExecResponse['error'],
-          'statusCode' => $createContainerExecResponse['statusCode'],
-        ];
+        return SodaScsResult::failure(
+          error: $createContainerExecResponse['error'],
+          message: 'Snapshot creation failed: Could not create container exec request.',
+        );
       }
 
       // Get container ID from response.
@@ -387,19 +383,10 @@ class SodaScsSqlComponentActions implements SodaScsComponentActionsInterface {
       $startContainerExecResponse = $this->sodaScsDockerExecServiceActions->makeRequest($startContainerExecRequest);
 
       if (!$startContainerExecResponse['success']) {
-        return [
-          'message' => 'Start container exec request failed. Snapshot creation aborted..',
-          'data' => [
-            'startContainerExecResponse' => $startContainerExecResponse,
-            'metadata' => [
-              'snapshotName' => $snapshotName,
-              'backupPath' => $backupDir,
-            ],
-          ],
-          'success' => FALSE,
-          'error' => $startContainerExecResponse['error'],
-          'statusCode' => $startContainerExecResponse['statusCode'],
-        ];
+        return SodaScsResult::failure(
+          error: $startContainerExecResponse['error'],
+          message: 'Snapshot creation failed: Could not start container exec request.',
+        );
       }
 
       // Create file entity.
@@ -412,9 +399,9 @@ class SodaScsSqlComponentActions implements SodaScsComponentActionsInterface {
       ]);
       $file->save();
 
-      return [
-        'message' => 'Snapshot created successfully.',
-        'data' => [
+      return SodaScsResult::success(
+        message: 'Snapshot created successfully.',
+        data: [
           'createContainerExecResponse' => $createContainerExecResponse,
           'snapshot' => $component,
           'startContainerExecResponse' => $startContainerExecResponse,
@@ -424,10 +411,7 @@ class SodaScsSqlComponentActions implements SodaScsComponentActionsInterface {
           ],
           'file' => $file,
         ],
-        'success' => TRUE,
-        'error' => NULL,
-        'statusCode' => $createContainerExecResponse['statusCode'],
-      ];
+      );
     }
     catch (\Exception $e) {
       $this->messenger->addError($this->t("Snapshot creation failed. See logs for more details."));
@@ -438,13 +422,10 @@ class SodaScsSqlComponentActions implements SodaScsComponentActionsInterface {
         ['@message' => $e->getMessage()],
         LogLevel::ERROR
       );
-      return [
-        'message' => 'Snapshot creation failed.',
-        'data' => $e,
-        'success' => FALSE,
-        'error' => $e->getMessage(),
-        'statusCode' => 500,
-      ];
+      return SodaScsResult::failure(
+        error: $e->getMessage(),
+        message: 'Snapshot creation failed.',
+      );
     }
   }
 

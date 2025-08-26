@@ -6,6 +6,7 @@ use Drupal\Core\DependencyInjection\DependencySerializationTrait;
 use Drupal\Core\StringTranslation\StringTranslationTrait;
 use Drupal\Core\StringTranslation\TranslationInterface;
 use Drupal\soda_scs_manager\Entity\SodaScsStackInterface;
+use Drupal\soda_scs_manager\ValueObject\SodaScsResult;
 
 /**
  * Handles the communication with the SCS user manager daemon.
@@ -72,6 +73,31 @@ class SodaScsStackActions implements SodaScsStackActionsInterface {
 
       default:
         throw new \Exception('Component type not supported for creation.');
+    }
+  }
+
+  /**
+   * Creates a snapshot of a stack.
+   *
+   * @param \Drupal\soda_scs_manager\Entity\SodaScsStackInterface $stack
+   *   The SODa SCS Stack entity.
+   *
+   * @return SodaScsResult
+   *   The result of the request.
+   */
+  public function createSnapshot(SodaScsStackInterface $stack): SodaScsResult {
+    switch ($stack->bundle()) {
+      case 'soda_scs_wisski_stack':
+        return $this->sodaScsWisskiStackActions->createSnapshot($stack);
+
+      case 'soda_scs_jupyter_stack':
+        return $this->sodaScsJupyterStackActions->createSnapshot($stack);
+
+      case 'soda_scs_nextcloud_stack':
+        return $this->sodaScsNextcloudStackActions->createSnapshot($stack);
+
+      default:
+        throw new \Exception('Component type not supported for snapshot creation.');
     }
   }
 

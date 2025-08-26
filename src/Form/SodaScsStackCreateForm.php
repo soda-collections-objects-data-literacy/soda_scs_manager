@@ -163,6 +163,7 @@ class SodaScsStackCreateForm extends ContentEntityForm {
     $form['actions']['submit']['#attributes']['class'][] = 'soda-scs-stack--stack--form-submit';
 
     $form['#attached']['library'][] = 'soda_scs_manager/globalStyling';
+    $form['#attached']['library'][] = 'soda_scs_manager/throbberOverlay';
 
     return $form;
   }

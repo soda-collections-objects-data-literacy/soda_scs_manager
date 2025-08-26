@@ -9,6 +9,7 @@ use Drupal\Core\Logger\LoggerChannelFactoryInterface;
 use Drupal\Core\Url;
 use Drupal\soda_scs_manager\ComponentActions\SodaScsComponentActionsInterface;
 use Drupal\soda_scs_manager\Entity\SodaScsSnapshot;
+use Drupal\soda_scs_manager\Helpers\SodaScsSnapshotHelpers;
 use Drupal\soda_scs_manager\StackActions\SodaScsStackActionsInterface;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 use Drupal\Core\Utility\Error;
@@ -40,6 +41,13 @@ class SodaScsSnapshotConfirmForm extends ConfirmFormBase {
    * @var \Drupal\Core\Entity\EntityTypeManagerInterface
    */
   protected $entityTypeManager;
+
+  /**
+   * The Soda SCS Snapshot Helpers.
+   *
+   * @var \Drupal\soda_scs_manager\Helpers\SodaScsSnapshotHelpers
+   */
+  protected $sodaScsSnapshotHelpers;
 
   /**
    * The Soda SCS SQL Component Actions.
@@ -81,6 +89,8 @@ class SodaScsSnapshotConfirmForm extends ConfirmFormBase {
    *
    * @param \Drupal\Core\Entity\EntityTypeManagerInterface $entity_type_manager
    *   The entity type manager.
+   * @param \Drupal\soda_scs_manager\Helpers\SodaScsSnapshotHelpers $sodaScsSnapshotHelpers
+   *   The Soda SCS Snapshot Helpers.
    * @param \Drupal\soda_scs_manager\ComponentActions\SodaScsComponentActionsInterface $sodaScsSqlComponentActions
    *   The Soda SCS SQL Component Actions.
    * @param \Drupal\soda_scs_manager\ComponentActions\SodaScsComponentActionsInterface $sodaScsTripleStoreComponentActions
@@ -94,6 +104,7 @@ class SodaScsSnapshotConfirmForm extends ConfirmFormBase {
    */
   public function __construct(
     EntityTypeManagerInterface $entity_type_manager,
+    SodaScsSnapshotHelpers $sodaScsSnapshotHelpers,
     SodaScsComponentActionsInterface $sodaScsSqlComponentActions,
     SodaScsComponentActionsInterface $sodaScsTripleStoreComponentActions,
     SodaScsComponentActionsInterface $sodaScsWisskiComponentActions,
@@ -101,6 +112,7 @@ class SodaScsSnapshotConfirmForm extends ConfirmFormBase {
     LoggerChannelFactoryInterface $logger_factory,
   ) {
     $this->entityTypeManager = $entity_type_manager;
+    $this->sodaScsSnapshotHelpers = $sodaScsSnapshotHelpers;
     $this->sodaScsSqlComponentActions = $sodaScsSqlComponentActions;
     $this->sodaScsTripleStoreComponentActions = $sodaScsTripleStoreComponentActions;
     $this->sodaScsWisskiComponentActions = $sodaScsWisskiComponentActions;
@@ -114,6 +126,7 @@ class SodaScsSnapshotConfirmForm extends ConfirmFormBase {
   public static function create(ContainerInterface $container) {
     return new static(
       $container->get('entity_type.manager'),
+      $container->get('soda_scs_manager.snapshot.helpers'),
       $container->get('soda_scs_manager.sql_component.actions'),
       $container->get('soda_scs_manager.triplestore_component.actions'),
       $container->get('soda_scs_manager.wisski_component.actions'),
@@ -172,22 +185,23 @@ class SodaScsSnapshotConfirmForm extends ConfirmFormBase {
    */
   public function submitForm(array &$form, FormStateInterface $form_state) {
     $values = $form_state->getValues();
+    $snapshotMachineName = $this->sodaScsSnapshotHelpers->cleanMachineName($values['label']);
 
     switch ($this->entity->bundle()) {
       case 'soda_scs_sql_component':
-        $createSnapshotResult = $this->sodaScsSqlComponentActions->createSnapshot($this->entity, $values['label']);
+        $createSnapshotResult = $this->sodaScsSqlComponentActions->createSnapshot($this->entity, $snapshotMachineName, time());
         break;
 
       case 'soda_scs_triplestore_component':
-        $createSnapshotResult = $this->sodaScsTripleStoreComponentActions->createSnapshot($this->entity, $values['label']);
+        $createSnapshotResult = $this->sodaScsTripleStoreComponentActions->createSnapshot($this->entity, $snapshotMachineName, time());
         break;
 
       case 'soda_scs_wisski_component':
-        $createSnapshotResult = $this->sodaScsWisskiComponentActions->createSnapshot($this->entity, $values['label']);
+        $createSnapshotResult = $this->sodaScsWisskiComponentActions->createSnapshot($this->entity, $snapshotMachineName, time());
         break;
 
       case 'soda_scs_wisski_stack':
-        $createSnapshotResult = $this->sodaScsWisskiStackActions->createSnapshot($this->entity, $values['label']);
+        $createSnapshotResult = $this->sodaScsWisskiStackActions->createSnapshot($this->entity, $snapshotMachineName, time());
         break;
 
       default:
@@ -195,9 +209,9 @@ class SodaScsSnapshotConfirmForm extends ConfirmFormBase {
         return;
     }
 
-    if (!$createSnapshotResult['success']) {
+    if (!$createSnapshotResult->success) {
       $this->messenger()->addError($this->t('Failed to create snapshot. See logs for more details.'));
-      $error = $createSnapshotResult['error'];
+      $error = $createSnapshotResult->error;
       Error::logException(
         $this->loggerFactory->get('soda_scs_manager'),
         new \Exception($error),
@@ -208,14 +222,23 @@ class SodaScsSnapshotConfirmForm extends ConfirmFormBase {
       return;
     }
 
-    $filePath = $createSnapshotResult['data']['metadata']['relativeTarFilePath'];
+    $createBagResult = $this->sodaScsSnapshotHelpers->createBagOfFiles(
+      $createSnapshotResult->data
+    );
 
     $file = File::create([
-      'uri' => 'private://' . $filePath,
+      'uri' => 'private://' . $createBagResult->data['metadata']['contentsTarFilePath'],
       'uid' => \Drupal::currentUser()->id(),
       'status' => 1,
     ]);
     $file->save();
+
+    $signatureFile = File::create([
+      'uri' => 'private://' . $createBagResult->data['metadata']['contentsSha256FilePath'],
+      'uid' => \Drupal::currentUser()->id(),
+      'status' => 1,
+    ]);
+    $signatureFile->save();
 
     // Create the snapshot entity.
     $snapshot = SodaScsSnapshot::create([
@@ -225,6 +248,7 @@ class SodaScsSnapshotConfirmForm extends ConfirmFormBase {
       'changed' => time(),
       'created' => time(),
       'file' => $file->id(),
+      'signatureFile' => $signatureFile->id(),
     ]);
 
     if ($this->entityType === 'soda_scs_stack') {

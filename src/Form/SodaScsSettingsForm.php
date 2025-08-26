@@ -103,6 +103,13 @@ class SodaScsSettingsForm extends ConfigFormBase {
       '#description' => $this->t('The administrator email, like admin@scs.sammlungen.io.'),
     ];
 
+    $form['general']['fields']['snapshotPath'] = [
+      '#type' => 'textfield',
+      '#title' => $this->t('Snapshot path'),
+      '#default_value' => $this->config('soda_scs_manager.settings')->get('snapshotPath'),
+      '#description' => $this->t('The snapshot path in addition to the private file system path, like /snapshots.'),
+    ];
+
     // Database settings tab.
     $form['database'] = [
       '#type' => 'details',
@@ -1103,19 +1110,20 @@ class SodaScsSettingsForm extends ConfigFormBase {
 
     // Save the configuration.
     $this->config('soda_scs_manager.settings')
-      ->set('scsHost', $form_state->getValue('scsHost'))
       ->set('administratorEmail', $form_state->getValue('administratorEmail'))
       ->set('dbHost', $form_state->getValue('dbHost'))
-      ->set('dbPort', $form_state->getValue('dbPort'))
       ->set('dbManagementHost', $form_state->getValue('dbManagementHost'))
+      ->set('dbPort', $form_state->getValue('dbPort'))
       ->set('dbRootPassword', $form_state->getValue('dbRootPassword'))
       ->set('jupyterhub', $form_state->getValue('jupyterhub'))
       ->set('keycloak', $form_state->getValue('keycloak'))
       ->set('nextcloud', $form_state->getValue('nextcloud'))
+      ->set('portainer', $form_state->getValue('portainer'))
+      ->set('scsHost', $form_state->getValue('scsHost'))
+      ->set('security', $form_state->getValue('security'))
+      ->set('snapshotPath', $form_state->getValue('snapshotPath'))
       ->set('triplestore', $form_state->getValue('triplestore'))
       ->set('wisski', $form_state->getValue('wisski'))
-      ->set('portainer', $form_state->getValue('portainer'))
-      ->set('security', $form_state->getValue('security'))
       ->save();
 
     // Log the configuration change with secure logging.

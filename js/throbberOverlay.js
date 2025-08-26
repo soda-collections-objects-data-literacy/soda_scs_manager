@@ -12,6 +12,7 @@
     attach: function (context, settings) {
       // Create the overlay element only once if it doesn't exist
       if (!$('.soda-scs-manager__throbber-overlay', context).length) {
+
         $('body', context).append(`
           <div class="soda-scs-manager__throbber-overlay">
             <div class="soda-scs-manager__throbber-overlay__spinner"></div>
@@ -28,7 +29,6 @@
             return;
           }
           // Show the overlay before form submission
-          console.log('show throbber overlay above');
           $('.soda-scs-manager__throbber-overlay').addClass('soda-scs-manager__throbber-overlay--active');
         });
       });
@@ -36,7 +36,6 @@
       // Handle all form submissions within the SODA SCS Manager
       once('throbber-overlay-form', 'form[id^="soda-scs"]', context).forEach(function(form) {
         $(form).on('submit', function(e) {
-          console.log('show throbber overlay beneath');
           // Show the overlay before form submission
           $('.soda-scs-manager__throbber-overlay').addClass('soda-scs-manager__throbber-overlay--active');
         });

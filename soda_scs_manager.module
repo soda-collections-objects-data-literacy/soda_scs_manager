@@ -21,6 +21,8 @@ use Drupal\soda_scs_manager\Entity\SodaScsComponent;
 use Drupal\Core\Url;
 use Symfony\Component\HttpFoundation\RedirectResponse;
 
+
+
 /**
  * Implement hook_entity_base_field_info().
  *
@@ -548,7 +550,24 @@ function soda_scs_manager_user_insert(UserInterface $user) {
   _soda_scs_manager_create_default_filesystem_for_user($user);
 }
 
-// Curstom hooks.
+/**
+ * Implements hook_user_login().
+ *
+ * Redirects users to the SODa SCS Manager start page after login.
+ */
+function soda_scs_manager_user_login(UserInterface $account) {
+  // Get the current request.
+  $request = \Drupal::request();
+
+  // Only redirect if there's no existing destination and not during AJAX requests.
+  if (!$request->query->has('destination') && !$request->isXmlHttpRequest()) {
+    // Redirect to the SODa SCS Manager start page.
+    $response = new RedirectResponse(Url::fromRoute('soda_scs_manager.start_page')->toString());
+    $response->send();
+  }
+}
+
+// Custom hooks.
 
 /**
  * Create default project for new user.
@@ -643,6 +662,9 @@ function _soda_scs_manager_ensure_scs_user_role() {
     'create soda scs service key',
     'view soda scs service key',
     'delete soda scs service key',
+    'create soda scs snapshot',
+    'view soda scs snapshot',
+    'delete soda scs snapshot',
   ];
 
   user_role_grant_permissions('scs_user', $permissions);

@@ -27,9 +27,9 @@ final class SodaScsSnapshotAccessControlHandler extends EntityAccessControlHandl
     }
 
     return match($operation) {
-      'view' => AccessResult::allowedIfHasPermission($account, 'view soda scs stack'),
-      'update' => AccessResult::allowedIfHasPermission($account, 'edit soda scs stack'),
-      'delete' => AccessResult::allowedIfHasPermission($account, 'delete soda scs stack'),
+      'view' => AccessResult::allowedIfHasPermission($account, 'view soda scs snapshot'),
+      'update' => AccessResult::allowedIfHasPermission($account, 'edit soda scs snapshot'),
+      'delete' => AccessResult::allowedIfHasPermission($account, 'delete soda scs snapshot'),
       default => AccessResult::neutral(),
     };
   }

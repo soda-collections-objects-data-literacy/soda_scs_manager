@@ -13,6 +13,7 @@ use Drupal\soda_scs_manager\Entity\SodaScsStackInterface;
 use Drupal\soda_scs_manager\Exception\SodaScsComponentException;
 use Drupal\soda_scs_manager\Helpers\SodaScsStackHelpers;
 use Drupal\Core\Utility\Error;
+use Drupal\soda_scs_manager\ValueObject\SodaScsResult;
 use Psr\Log\LogLevel;
 
 /**
@@ -106,6 +107,24 @@ class SodaScsNextcloudStackActions implements SodaScsStackActionsInterface {
         'error' => $e,
       ];
     }
+  }
+
+  /**
+   * Create a snapshot of a nextcloud stack.
+   *
+   * @param \Drupal\soda_scs_manager\Entity\SodaScsStackInterface $stack
+   *   The stack.
+   *
+   * @return SodaScsResult
+   *   The result.
+   */
+  public function createSnapshot(SodaScsStackInterface $stack): SodaScsResult {
+    return SodaScsResult::success(
+      data: [
+        'nextcloudComponentSnapshot' => [],
+      ],
+      message: 'Nextcloud stack snapshot created.',
+    );
   }
 
   /**

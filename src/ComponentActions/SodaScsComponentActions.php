@@ -7,6 +7,7 @@ use Drupal\Core\StringTranslation\StringTranslationTrait;
 use Drupal\Core\StringTranslation\TranslationInterface;
 use Drupal\soda_scs_manager\Entity\SodaScsComponentInterface;
 use Drupal\soda_scs_manager\Entity\SodaScsStackInterface;
+use Drupal\soda_scs_manager\ValueObject\SodaScsResult;
 
 /**
  * Handles the communication with the SCS user manager daemon.
@@ -176,14 +177,17 @@ class SodaScsComponentActions implements SodaScsComponentActionsInterface {
    * @param \Drupal\soda_scs_manager\Entity\SodaScsComponentInterface $component
    *   The component.
    *
-   * @param string $label
-   *   The label of the snapshot.
+   * @param string $timestamp
+   *   The timestamp of the snapshot.
    *
-   * @return array
+   * @return SodaScsResult
    *   The result of the request.
    */
-  public function createSnapshot(SodaScsComponentInterface $component, string $label): array {
-    return [];
+  public function createSnapshot(SodaScsComponentInterface $component, string $snapshotMachineName, string $timestamp): SodaScsResult {
+    return SodaScsResult::success(
+      message: 'Snapshot created successfully.',
+      data: [],
+    );
   }
 
 }

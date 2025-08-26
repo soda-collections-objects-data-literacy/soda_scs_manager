@@ -16,6 +16,7 @@ use Drupal\soda_scs_manager\Entity\SodaScsStackInterface;
 use Drupal\soda_scs_manager\RequestActions\SodaScsServiceRequestInterface;
 use Drupal\soda_scs_manager\ServiceKeyActions\SodaScsServiceKeyActionsInterface;
 use Drupal\Core\Utility\Error;
+use Drupal\soda_scs_manager\ValueObject\SodaScsResult;
 use Psr\Log\LogLevel;
 
 /**
@@ -447,12 +448,19 @@ class SodaScsTriplestoreComponentActions implements SodaScsComponentActionsInter
    *
    * @param \Drupal\soda_scs_manager\Entity\SodaScsComponentInterface $component
    *   The SODa SCS Component.
+   * @param string $timestamp
+   *   The timestamp of the snapshot.
+   * @param string $snapshotMachineName
+   *   The machine name of the snapshot.
    *
    * @return array
    *   Result information with the created snapshot.
    */
-  public function createSnapshot(SodaScsComponentInterface $component, string $label): array {
-    return [];
+  public function createSnapshot(SodaScsComponentInterface $component, string $timestamp, string $snapshotMachineName): SodaScsResult {
+    return SodaScsResult::success(
+      message: 'Snapshot created successfully.',
+      data: [],
+    );
   }
 
   /**

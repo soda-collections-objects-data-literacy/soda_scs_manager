@@ -11,20 +11,22 @@ use Drupal\Core\Entity\EntityTypeManagerInterface;
 use Drupal\Core\Logger\LoggerChannelFactoryInterface;
 use Drupal\Core\Logger\LoggerChannelInterface;
 use Drupal\Core\Messenger\MessengerInterface;
-use Drupal\Core\StringTranslation\TranslationInterface;
 use Drupal\Core\StringTranslation\StringTranslationTrait;
+use Drupal\Core\StringTranslation\TranslationInterface;
 use Drupal\Core\TypedData\Exception\MissingDataException;
+use Drupal\Core\Utility\Error;
 use Drupal\soda_scs_manager\Entity\SodaScsComponentInterface;
 use Drupal\soda_scs_manager\Entity\SodaScsStackInterface;
 use Drupal\soda_scs_manager\Helpers\SodaScsComponentHelpers;
+use Drupal\soda_scs_manager\Helpers\SodaScsSnapshotHelpers;
 use Drupal\soda_scs_manager\Helpers\SodaScsStackHelpers;
 use Drupal\soda_scs_manager\RequestActions\SodaScsExecRequestInterface;
-use Drupal\soda_scs_manager\RequestActions\SodaScsServiceRequestInterface;
 use Drupal\soda_scs_manager\RequestActions\SodaScsRunRequestInterface;
+use Drupal\soda_scs_manager\RequestActions\SodaScsServiceRequestInterface;
 use Drupal\soda_scs_manager\ServiceActions\SodaScsServiceActionsInterface;
 use Drupal\soda_scs_manager\ServiceKeyActions\SodaScsServiceKeyActionsInterface;
+use Drupal\soda_scs_manager\ValueObject\SodaScsResult;
 use GuzzleHttp\ClientInterface;
-use Drupal\Core\Utility\Error;
 use Psr\Log\LogLevel;
 
 /**
@@ -106,6 +108,13 @@ class SodaScsWisskiComponentActions implements SodaScsComponentActionsInterface 
   protected SodaScsComponentHelpers $sodaScsComponentHelpers;
 
   /**
+   * The SCS snapshot helpers service.
+   *
+   * @var \Drupal\soda_scs_manager\Helpers\SodaScsSnapshotHelpers
+   */
+  protected SodaScsSnapshotHelpers $sodaScsSnapshotHelpers;
+
+  /**
    * The SCS stack helpers service.
    *
    * @var \Drupal\soda_scs_manager\Helpers\SodaScsStackHelpers
@@ -169,6 +178,7 @@ class SodaScsWisskiComponentActions implements SodaScsComponentActionsInterface 
     SodaScsExecRequestInterface $sodaScsDockerExecServiceActions,
     SodaScsRunRequestInterface $sodaScsDockerRunServiceActions,
     SodaScsComponentHelpers $sodaScsComponentHelpers,
+    SodaScsSnapshotHelpers $sodaScsSnapshotHelpers,
     SodaScsStackHelpers $sodaScsStackHelpers,
     SodaScsServiceRequestInterface $sodaScsKeycloakServiceClientActions,
     SodaScsServiceRequestInterface $sodaScsKeycloakServiceGroupActions,
@@ -188,6 +198,7 @@ class SodaScsWisskiComponentActions implements SodaScsComponentActionsInterface 
     $this->logger = $loggerFactory->get('soda_scs_manager');
     $this->messenger = $messenger;
     $this->sodaScsComponentHelpers = $sodaScsComponentHelpers;
+    $this->sodaScsSnapshotHelpers = $sodaScsSnapshotHelpers;
     $this->sodaScsDockerExecServiceActions = $sodaScsDockerExecServiceActions;
     $this->sodaScsDockerRunServiceActions = $sodaScsDockerRunServiceActions;
     $this->sodaScsKeycloakServiceClientActions = $sodaScsKeycloakServiceClientActions;
@@ -645,46 +656,43 @@ class SodaScsWisskiComponentActions implements SodaScsComponentActionsInterface 
    *
    * @param \Drupal\soda_scs_manager\Entity\SodaScsComponentInterface $component
    *   The SODa SCS Component.
+   * @param string $timestamp
+   *   The timestamp of the snapshot.
+   * @param string $snapshotMachineName
+   *   The machine name of the snapshot.
    *
-   * @return array
+   * @return SodaScsResult
    *   Result information with the created snapshot.
    */
-  public function createSnapshot(SodaScsComponentInterface $component, string $label): array {
+  public function createSnapshot(SodaScsComponentInterface $component, string $snapshotMachineName, string $timestamp): SodaScsResult {
     try {
-      $timestamp = time();
-      $date = date('Y-m-d', $timestamp);
-      $machineName = $component->get('machineName')->value;
-      $snapshotName = $machineName . '--snapshot--' . $timestamp;
-      $privateFileSystemPath = '/var/scs-manager/snapshots/';
-      $componentBackupPath = $component->getOwner()->getDisplayName() . '/' . $date . '/' . $machineName;
-      $backupPath = $privateFileSystemPath . $componentBackupPath;
-      $tarFileName = $snapshotName . '--webroot.tar.gz';
-      $relativeTarFilePath = $componentBackupPath . '/' . $tarFileName;
+
+      $snapshotPaths = $this->sodaScsSnapshotHelpers->constructSnapshotPaths($component, $snapshotMachineName, $timestamp);
 
       // Create the backup directory.
-      $dirCreateResult = $this->sodaScsComponentHelpers->createDir($backupPath);
+      $dirCreateResult = $this->sodaScsSnapshotHelpers->createDir($snapshotPaths['backupPathWithType']);
       if (!$dirCreateResult['success']) {
-        return $dirCreateResult;
+        return SodaScsResult::failure(
+          error: $dirCreateResult['error'],
+          message: 'Snapshot creation failed: Could not create backup directory.',
+        );
       }
 
-      // Create and run the snapshot container.
+      // Create and run the snapshot container to create tar and sha256 file.
       $requestParams = [
-        'name' => $snapshotName,
+        'name' => $snapshotMachineName,
         'volumes' => NULL,
         'image' => 'alpine:latest',
         'user' => '33:33',
         'cmd' => [
-          'tar',
-          'czf',
-          '/backup/' . $tarFileName,
-          '-C',
-          '/source',
-          '.',
+          'sh',
+          '-c',
+          'tar czf /backup/' . $snapshotPaths['tarFileName'] . ' -C /source . && cd /backup && sha256sum ' . $snapshotPaths['tarFileName'] . ' > ' . $snapshotPaths['sha256FileName'],
         ],
         'hostConfig' => [
           'Binds' => [
-            $machineName . '_drupal-root:/source',
-            $backupPath . ':/backup',
+            $component->get('machineName')->value . '_drupal-root:/source',
+            $snapshotPaths['backupPathWithType'] . ':/backup',
           ],
           'AutoRemove' => FALSE,
         ],
@@ -695,7 +703,10 @@ class SodaScsWisskiComponentActions implements SodaScsComponentActionsInterface 
       $createContainerResponse = $this->sodaScsDockerRunServiceActions->makeRequest($createContainerRequest);
 
       if (!$createContainerResponse['success']) {
-        return $createContainerResponse;
+        return SodaScsResult::failure(
+          error: $createContainerResponse['error'],
+          message: 'Snapshot creation failed: Could not create snapshot container.',
+        );
       }
 
       // Get container ID from response.
@@ -710,25 +721,38 @@ class SodaScsWisskiComponentActions implements SodaScsComponentActionsInterface 
       $startContainerResponse = $this->sodaScsDockerRunServiceActions->makeRequest($startContainerRequest);
 
       if (!$startContainerResponse['success']) {
-        return $startContainerResponse;
+        return SodaScsResult::failure(
+          error: $startContainerResponse['error'],
+          message: 'Snapshot creation failed: Could not start snapshot container.',
+        );
       }
 
-
-
-      return [
-        'message' => 'Created and started snapshot container successfully.',
-        'data' => [
-          'startContainerResponse' => $startContainerResponse,
-          'createContainerResponse' => $createContainerResponse,
-          'metadata' => [
-            'relativeTarFilePath' => $relativeTarFilePath,
-            'containerId' => $containerId,
+      return SodaScsResult::success(
+        data: [
+          $component->bundle() => [
+            'startContainerResponse' => $startContainerResponse,
+            'createContainerResponse' => $createContainerResponse,
+            'metadata' => [
+              'backupPath' => $snapshotPaths['backupPath'],
+              'contentFilePaths' => [
+                'tarFilePath' => $snapshotPaths['absoluteTarFilePath'],
+                'sha256FilePath' => $snapshotPaths['absoluteSha256FilePath'],
+              ],
+              'contentFileNames' => [
+                'tarFileName' => $snapshotPaths['tarFileName'],
+                'sha256FileName' => $snapshotPaths['sha256FileName'],
+              ],
+              'containerId' => $containerId,
+              'snapshotMachineName' => $snapshotMachineName,
+              'timestamp' => $timestamp,
+              'componentBundle' => $component->bundle(),
+              'componentId' => $component->id(),
+              'componentMachineName' => $component->get('machineName')->value,
+            ],
           ],
         ],
-        'success' => TRUE,
-        'error' => '',
-        'statusCode' => $startContainerResponse['statusCode'],
-      ];
+        message: 'Created and started snapshot container successfully.',
+      );
     }
     catch (\Exception $e) {
       Error::logException(
@@ -738,16 +762,10 @@ class SodaScsWisskiComponentActions implements SodaScsComponentActionsInterface 
         ['@message' => $e->getMessage()],
         LogLevel::ERROR
       );
-      return [
-        'message' => 'Snapshot creation failed.',
-        'data' => [
-          'createContainerResponse' => NULL,
-          'startContainerResponse' => NULL,
-        ],
-        'success' => FALSE,
-        'error' => $e->getMessage(),
-        'statusCode' => 500,
-      ];
+      return SodaScsResult::failure(
+        error: $e->getMessage(),
+        message: 'Snapshot creation failed.',
+      );
     }
   }
 

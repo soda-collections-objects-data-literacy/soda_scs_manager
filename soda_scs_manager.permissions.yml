@@ -59,3 +59,15 @@ delete soda scs service key:
 create soda scs snapshot:
   title: 'Create SCS Snapshots'
   description: 'Create snapshots of stacks and components.'
+
+view soda scs snapshot:
+  title: 'View SCS Snapshots'
+  description: 'View snapshots of stacks and components.'
+
+edit soda scs snapshot:
+  title: 'Edit SCS Snapshots'
+  description: 'Edit snapshots of stacks and components.'
+
+delete soda scs snapshot:
+  title: 'Delete SCS Snapshots'
+  description: 'Delete snapshots of stacks and components.'

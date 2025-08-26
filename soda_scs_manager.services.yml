@@ -38,6 +38,14 @@ services:
       - '@messenger'
       - '@string_translation'
 
+  soda_scs_manager.snapshot.helpers:
+    class: Drupal\soda_scs_manager\Helpers\SodaScsSnapshotHelpers
+    arguments:
+      - '@soda_scs_manager.component.helpers'
+      - '@soda_scs_manager.docker_exec_service.actions'
+      - '@soda_scs_manager.docker_run_service.actions'
+      - '@logger.factory'
+
   soda_scs_manager.stack.helpers:
     class: Drupal\soda_scs_manager\Helpers\SodaScsStackHelpers
     arguments:
@@ -120,6 +128,7 @@ services:
       - '@soda_scs_manager.docker_exec_service.actions'
       - '@soda_scs_manager.docker_run_service.actions'
       - '@soda_scs_manager.component.helpers'
+      - '@soda_scs_manager.snapshot.helpers'
       - '@soda_scs_manager.stack.helpers'
       - '@soda_scs_manager.keycloak_service.client.actions'
       - '@soda_scs_manager.keycloak_service.group.actions'

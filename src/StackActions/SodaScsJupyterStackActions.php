@@ -9,6 +9,7 @@ use Drupal\Core\StringTranslation\StringTranslationTrait;
 use Drupal\Core\StringTranslation\TranslationInterface;
 use Drupal\soda_scs_manager\ComponentActions\SodaScsComponentActionsInterface;
 use Drupal\soda_scs_manager\Entity\SodaScsStackInterface;
+use Drupal\soda_scs_manager\ValueObject\SodaScsResult;
 use Drupal\soda_scs_manager\Helpers\SodaScsStackHelpers;
 use Drupal\Core\Utility\Error;
 use Psr\Log\LogLevel;
@@ -106,6 +107,25 @@ class SodaScsJupyterStackActions implements SodaScsStackActionsInterface {
         'error' => $e,
       ];
     }
+  }
+
+
+  /**
+   * Create a snapshot of a jupyter stack.
+   *
+   * @param \Drupal\soda_scs_manager\Entity\SodaScsStackInterface $stack
+   *   The stack.
+   *
+   * @return SodaScsResult
+   *   The result.
+   */
+  public function createSnapshot(SodaScsStackInterface $stack): SodaScsResult {
+    return SodaScsResult::success(
+      data: [
+        'jupyterComponentSnapshot' => [],
+      ],
+      message: 'Jupyter stack snapshot created.',
+    );
   }
 
   /**

@@ -4,6 +4,7 @@ namespace Drupal\soda_scs_manager\ComponentActions;
 
 use Drupal\soda_scs_manager\Entity\SodaScsComponentInterface;
 use Drupal\soda_scs_manager\Entity\SodaScsStackInterface;
+use Drupal\soda_scs_manager\ValueObject\SodaScsResult;
 
 /**
  * Interface for SODa SCS Component actions.
@@ -33,19 +34,13 @@ interface SodaScsComponentActionsInterface {
    * @param \Drupal\soda_scs_manager\Entity\SodaScsComponentInterface $component
    *   The SODa SCS Component to create the snapshot from.
    *
-   * @param string $label
-   *   The label of the snapshot.
+   * @param string $timestamp
+   *   The timestamp of the snapshot.
    *
-   * @return array{
-   *   message: string,
-   *   data: array[\Psr\Http\Message\ResponseInterface|\Exception],
-   *   success: bool,
-   *   error: string|null,
-   *   statusCode: int,
-   *   }
+   * @return SodaScsResult
    *   Result information with the created snapshot.
    */
-  public function createSnapshot(SodaScsComponentInterface $component, string $label): array;
+  public function createSnapshot(SodaScsComponentInterface $component, string $snapshotMachineName, string $timestamp): SodaScsResult;
 
   /**
    * Get all SODa SCS Component.
