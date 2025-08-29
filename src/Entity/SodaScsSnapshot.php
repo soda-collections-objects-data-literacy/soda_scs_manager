@@ -223,6 +223,29 @@ class SodaScsSnapshot extends ContentEntityBase implements SodaScsSnapshotInterf
         'weight' => 10,
       ]);
 
+    $fields['status'] = BaseFieldDefinition::create('list_string')
+      ->setLabel(new TranslatableMarkup('Status'))
+      ->setDescription(new TranslatableMarkup('The status of the snapshot.'))
+      ->setRequired(TRUE)
+      ->setDefaultValue('pending')
+      ->setSetting('allowed_values', [
+        'pending' => 'Pending',
+        'running' => 'Running',
+        'completed' => 'Completed',
+        'failed' => 'Failed',
+      ])
+      ->setDisplayConfigurable('form', TRUE)
+      ->setDisplayOptions('form', [
+        'type' => 'options_select',
+        'weight' => 50,
+      ])
+      ->setDisplayConfigurable('view', TRUE)
+      ->setDisplayOptions('view', [
+        'label' => 'above',
+        'type' => 'list_default',
+        'weight' => 50,
+      ]);
+
     return $fields;
   }
 

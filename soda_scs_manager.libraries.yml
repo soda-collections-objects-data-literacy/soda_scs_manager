@@ -7,7 +7,7 @@ globalStyling:
   version: 1.x
   css:
     theme:
-      css/style.css: {}
+      css/style.css: { weight: 100 }
 
 machineNameGenerator:
   version: 1.x
@@ -35,6 +35,7 @@ tagFilter:
   dependencies:
     - core/drupal
 
+# Give own css.
 throbberOverlay:
   version: 1.x
   js:

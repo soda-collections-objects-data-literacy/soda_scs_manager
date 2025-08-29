@@ -551,6 +551,15 @@ function soda_scs_manager_user_insert(UserInterface $user) {
 }
 
 /**
+ * Implements hook_page_attachments().
+ *
+ * Attaches the globalStyling library to all pages when the module is enabled.
+ */
+function soda_scs_manager_page_attachments(array &$attachments) {
+  $attachments['#attached']['library'][] = 'soda_scs_manager/globalStyling';
+}
+
+/**
  * Implements hook_user_login().
  *
  * Redirects users to the SODa SCS Manager start page after login.
@@ -565,6 +574,100 @@ function soda_scs_manager_user_login(UserInterface $account) {
     $response = new RedirectResponse(Url::fromRoute('soda_scs_manager.start_page')->toString());
     $response->send();
   }
+}
+
+/**
+ * Implements hook_file_download().
+ *
+ * Controls access to private snapshot files.
+ */
+function soda_scs_manager_file_download($uri) {
+  // Only handle files in the snapshots directory.
+  if (!str_contains($uri, 'snapshots/')) {
+    return NULL;
+  }
+
+  // Get the current user.
+  $current_user = \Drupal::currentUser();
+
+  // Allow access for admin users.
+  if ($current_user->hasPermission('soda scs manager admin')) {
+    return [
+      'Content-Type' => 'application/octet-stream',
+      'Content-Disposition' => 'attachment; filename="' . basename($uri) . '"',
+    ];
+  }
+
+  // Check if user has permission to view snapshots.
+  if (!$current_user->hasPermission('view soda scs snapshot')) {
+    return -1; // Access denied.
+  }
+
+  // Extract username from the path to check ownership.
+  $path_parts = explode('/', $uri);
+  $snapshots_index = array_search('snapshots', $path_parts);
+
+  if ($snapshots_index !== FALSE && isset($path_parts[$snapshots_index + 1])) {
+    $file_owner = $path_parts[$snapshots_index + 1];
+
+    // Allow access if the current user is the owner of the snapshot.
+    if ($current_user->getDisplayName() === $file_owner) {
+      return [
+        'Content-Type' => 'application/octet-stream',
+        'Content-Disposition' => 'attachment; filename="' . basename($uri) . '"',
+      ];
+    }
+  }
+
+  // Check if user has access to the associated snapshot entity.
+  try {
+    // Try to find a snapshot entity that references this file.
+    $entity_type_manager = \Drupal::entityTypeManager();
+    $snapshot_storage = $entity_type_manager->getStorage('soda_scs_snapshot');
+
+    // Query for snapshots that might contain this file.
+    $query = $snapshot_storage->getQuery()
+      ->accessCheck(TRUE)
+      ->condition('owner', $current_user->id());
+
+    $snapshot_ids = $query->execute();
+
+    if (!empty($snapshot_ids)) {
+      $snapshots = $snapshot_storage->loadMultiple($snapshot_ids);
+
+            // Check if any of the user's snapshots contain this file.
+      foreach ($snapshots as $snapshot) {
+        /** @var \Drupal\soda_scs_manager\Entity\SodaScsSnapshot $snapshot */
+        if (!$snapshot->get('file')->isEmpty()) {
+          $file_field = $snapshot->get('file')->entity;
+          if ($file_field && $file_field->getFileUri() === $uri) {
+            return [
+              'Content-Type' => 'application/octet-stream',
+              'Content-Disposition' => 'attachment; filename="' . basename($uri) . '"',
+            ];
+          }
+        }
+
+        if (!$snapshot->get('signatureFile')->isEmpty()) {
+          $signature_field = $snapshot->get('signatureFile')->entity;
+          if ($signature_field && $signature_field->getFileUri() === $uri) {
+            return [
+              'Content-Type' => 'text/plain',
+              'Content-Disposition' => 'attachment; filename="' . basename($uri) . '"',
+            ];
+          }
+        }
+      }
+    }
+  }
+  catch (\Exception $e) {
+    // Log the error and deny access.
+    \Drupal::logger('soda_scs_manager')->error('Error checking snapshot file access: @message', ['@message' => $e->getMessage()]);
+    return -1;
+  }
+
+  // Deny access by default.
+  return -1;
 }
 
 // Custom hooks.

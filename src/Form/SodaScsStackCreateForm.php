@@ -152,7 +152,7 @@ class SodaScsStackCreateForm extends ContentEntityForm {
       // Make the machine name field read-only.
       $form['machineName']['widget'][0]['value']['#attributes']['readonly'] = 'readonly';
       // Attach JavaScript to auto-generate machine name.
-      $form['#attached']['library'][] = 'soda_scs_manager/machine-name-generator';
+      $form['#attached']['library'][] = 'soda_scs_manager/machineNameGenerator';
     }
 
     // Hide the flavours field.

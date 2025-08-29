@@ -207,6 +207,22 @@ public function __construct(
   try {
     $contentFiles = [];
     foreach ($snapshotData as $componentBundle => $componentData) {
+      switch ($componentBundle) {
+        case 'soda_scs_filesystem_component':
+          $type = 'files';
+          break;
+        case 'soda_scs_wisski_component':
+          $type = 'files';
+          break;
+        case 'soda_scs_sql_component':
+          $type = 'sql';
+          break;
+        case 'soda_scs_triple_store_component':
+          $type = 'nq';
+          break;
+        default:
+          throw new \Exception('Invalid component bundle: ' . $componentBundle);
+      }
       foreach ($componentData['metadata']['contentFileNames'] as $fileType => $contentFileName) {
         $contentFiles[$componentBundle][$fileType] = $contentFileName;
       }
@@ -300,7 +316,7 @@ public function __construct(
       '-c',
         'cd /backup/bag && ' .
         'echo ' . $manifest . ' > ' . $manifestFileName . ' && ' .
-        'tar czf ' . $contentsTarFileName . ' -C ' . $manifestFileName . ' ' . $contentFilesString . ' && ' .
+        'tar czf ' . $contentsTarFileName . ' ' . $manifestFileName . ' ' . $contentFilesString . ' && ' .
         'sha256sum ' . $contentsTarFileName . ' > ' . $contentsSha256FileName,
     ],
     'hostConfig' => [
@@ -340,6 +356,8 @@ public function __construct(
       );
     }
 
+    $relativeBagPath = str_replace(\Drupal::service('file_system')->realpath("private://"), '', $bagPath);
+
     return SodaScsResult::success(
       data: [
         'startContainerResponse' => $startContainerResponse,
@@ -349,6 +367,8 @@ public function __construct(
           'contentsSha256FileName' => $contentsSha256FileName,
           'contentsTarFilePath' => $bagPath . '/' . $contentsTarFileName,
           'contentsSha256FilePath' => $bagPath . '/' . $contentsSha256FileName,
+          'relativeTarFilePath' => $relativeBagPath . '/' . $contentsTarFileName,
+          'relativeSha256FilePath' => $relativeBagPath . '/' .$contentsSha256FileName,
           'manifestFileName' => $manifestFileName,
           'containerId' => $containerId,
         ],

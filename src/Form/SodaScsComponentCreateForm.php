@@ -204,7 +204,7 @@ class SodaScsComponentCreateForm extends ContentEntityForm {
       // Make the machine name field read-only.
       $form['machineName']['widget'][0]['value']['#attributes']['readonly'] = 'readonly';
       // Attach JavaScript to auto-generate machine name.
-      $form['#attached']['library'][] = 'soda_scs_manager/machine-name-generator';
+      $form['#attached']['library'][] = 'soda_scs_manager/machineNameGenerator';
     }
 
     // Make partOfProjects field required for filesystem components.
@@ -218,7 +218,7 @@ class SodaScsComponentCreateForm extends ContentEntityForm {
     $form['actions']['submit']['#attributes']['class'][] = 'soda-scs-component--component--form-submit';
 
     $form['#attached']['library'][] = 'soda_scs_manager/globalStyling';
-    $form['#attached']['library'][] = 'soda_scs_manager/throbber_overlay';
+    $form['#attached']['library'][] = 'soda_scs_manager/throbberOverlay';
 
     return $form;
   }

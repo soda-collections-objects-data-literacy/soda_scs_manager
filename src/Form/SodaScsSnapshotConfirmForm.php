@@ -9,6 +9,7 @@ use Drupal\Core\Logger\LoggerChannelFactoryInterface;
 use Drupal\Core\Url;
 use Drupal\soda_scs_manager\ComponentActions\SodaScsComponentActionsInterface;
 use Drupal\soda_scs_manager\Entity\SodaScsSnapshot;
+use Drupal\soda_scs_manager\RequestActions\SodaScsDockerRunServiceActions;
 use Drupal\soda_scs_manager\Helpers\SodaScsSnapshotHelpers;
 use Drupal\soda_scs_manager\StackActions\SodaScsStackActionsInterface;
 use Symfony\Component\DependencyInjection\ContainerInterface;
@@ -41,6 +42,13 @@ class SodaScsSnapshotConfirmForm extends ConfirmFormBase {
    * @var \Drupal\Core\Entity\EntityTypeManagerInterface
    */
   protected $entityTypeManager;
+
+  /**
+   * The Soda SCS Docker Run Service Actions.
+   *
+   * @var \Drupal\soda_scs_manager\RequestActions\SodaScsDockerRunServiceActions
+   */
+  protected $sodaScsDockerRunServiceActions;
 
   /**
    * The Soda SCS Snapshot Helpers.
@@ -89,6 +97,8 @@ class SodaScsSnapshotConfirmForm extends ConfirmFormBase {
    *
    * @param \Drupal\Core\Entity\EntityTypeManagerInterface $entity_type_manager
    *   The entity type manager.
+   * @param \Drupal\soda_scs_manager\RequestActions\SodaScsDockerRunServiceActions $sodaScsDockerRunServiceActions
+   *   The Soda SCS Docker Run Service Actions.
    * @param \Drupal\soda_scs_manager\Helpers\SodaScsSnapshotHelpers $sodaScsSnapshotHelpers
    *   The Soda SCS Snapshot Helpers.
    * @param \Drupal\soda_scs_manager\ComponentActions\SodaScsComponentActionsInterface $sodaScsSqlComponentActions
@@ -104,6 +114,7 @@ class SodaScsSnapshotConfirmForm extends ConfirmFormBase {
    */
   public function __construct(
     EntityTypeManagerInterface $entity_type_manager,
+    SodaScsDockerRunServiceActions $sodaScsDockerRunServiceActions,
     SodaScsSnapshotHelpers $sodaScsSnapshotHelpers,
     SodaScsComponentActionsInterface $sodaScsSqlComponentActions,
     SodaScsComponentActionsInterface $sodaScsTripleStoreComponentActions,
@@ -112,6 +123,7 @@ class SodaScsSnapshotConfirmForm extends ConfirmFormBase {
     LoggerChannelFactoryInterface $logger_factory,
   ) {
     $this->entityTypeManager = $entity_type_manager;
+    $this->sodaScsDockerRunServiceActions = $sodaScsDockerRunServiceActions;
     $this->sodaScsSnapshotHelpers = $sodaScsSnapshotHelpers;
     $this->sodaScsSqlComponentActions = $sodaScsSqlComponentActions;
     $this->sodaScsTripleStoreComponentActions = $sodaScsTripleStoreComponentActions;
@@ -126,6 +138,7 @@ class SodaScsSnapshotConfirmForm extends ConfirmFormBase {
   public static function create(ContainerInterface $container) {
     return new static(
       $container->get('entity_type.manager'),
+      $container->get('soda_scs_manager.docker_run_service.actions'),
       $container->get('soda_scs_manager.snapshot.helpers'),
       $container->get('soda_scs_manager.sql_component.actions'),
       $container->get('soda_scs_manager.triplestore_component.actions'),
@@ -175,7 +188,7 @@ class SodaScsSnapshotConfirmForm extends ConfirmFormBase {
     }
 
     // Attach the throbber overlay library.
-    $form['#attached']['library'][] = 'soda_scs_manager/throbber_overlay';
+    $form['#attached']['library'][] = 'soda_scs_manager/throbberOverlay';
 
     return $form;
   }
@@ -222,19 +235,70 @@ class SodaScsSnapshotConfirmForm extends ConfirmFormBase {
       return;
     }
 
+    // Check if the snapshotcontainers are still running.
+
+    $containerIsRunning = TRUE;
+    $attempts = 0;
+    $maxAttempts = 18;
+    while ($containerIsRunning && $attempts < $maxAttempts) {
+      foreach ($createSnapshotResult->data as $componentBundle => $componentData) {
+        $containerId = $componentData['metadata']['containerId'];
+          $containerInspectRequest = $this->sodaScsDockerRunServiceActions->buildInspectRequest([
+            'routeParams' => [
+              'containerId' => $containerId,
+            ],
+          ]);
+          $containerInspectResponse = $this->sodaScsDockerRunServiceActions->makeRequest($containerInspectRequest);
+
+        if ($containerInspectResponse['success'] === FALSE) {
+          throw new \Exception('Failed to inspect container: ' . $containerInspectResponse['error']);
+        }
+
+        $responseCode = $containerInspectResponse['data']['portainerResponse']->getStatusCode();
+        if ($responseCode !== 200) {
+          throw new \Exception('Failed to inspect container: ' . $containerInspectResponse['error']);
+        }
+        $containerStatus = json_decode($containerInspectResponse['data']['portainerResponse']->getBody()->getContents(), TRUE);
+        $containerIsRunning = $containerStatus['State']['Running'];
+        if ($containerIsRunning) {
+          sleep(10);
+          $attempts++;
+        }
+        else {
+          $containerData[$componentBundle] = [
+            'containerId' => $containerId,
+            'containerStatus' => $containerStatus,
+          ];
+        }
+      }
+    }
+
+    if ($attempts === $maxAttempts) {
+      Error::logException(
+        $this->loggerFactory->get('soda_scs_manager'),
+        new \Exception('Failed to create snapshot. Maximum number of attempts to check if the container is running reached. Container is still running.'),
+        'Failed to create snapshot. See logs for more details.',
+        [],
+        LogLevel::ERROR
+      );
+      throw new \Exception('Failed to create snapshot. See logs for more details.');
+    }
+
+
+    // Create the bag of files.
     $createBagResult = $this->sodaScsSnapshotHelpers->createBagOfFiles(
       $createSnapshotResult->data
     );
 
     $file = File::create([
-      'uri' => 'private://' . $createBagResult->data['metadata']['contentsTarFilePath'],
+      'uri' => 'private://' . $createBagResult->data['metadata']['relativeTarFilePath'],
       'uid' => \Drupal::currentUser()->id(),
       'status' => 1,
     ]);
     $file->save();
 
     $signatureFile = File::create([
-      'uri' => 'private://' . $createBagResult->data['metadata']['contentsSha256FilePath'],
+      'uri' => 'private://' . $createBagResult->data['metadata']['relativeSha256FilePath'],
       'uid' => \Drupal::currentUser()->id(),
       'status' => 1,
     ]);

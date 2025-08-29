@@ -106,9 +106,9 @@ class SodaScsComponentDeleteForm extends ContentEntityDeleteForm {
       $form['actions']['submit']['#attributes']['class'][] = 'soda-scs-component--component--form-submit';
     }
 
-    // @todo Not working yet!
-    // Attach the throbber overlay library.
-    $form['#attached']['library'][] = 'soda_scs_manager/throbber_overlay';
+    // Attach the global styling and throbber overlay libraries.
+    $form['#attached']['library'][] = 'soda_scs_manager/globalStyling';
+    $form['#attached']['library'][] = 'soda_scs_manager/throbberOverlay';
 
     return $form;
   }

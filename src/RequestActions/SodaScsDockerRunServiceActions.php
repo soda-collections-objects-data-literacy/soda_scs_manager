@@ -387,15 +387,31 @@ class SodaScsDockerRunServiceActions implements SodaScsRunRequestInterface {
     $dockerApiSettings = $this->sodaScsServiceHelpers->initDockerApiSettings();
     $dockerRunServiceSettings = $this->sodaScsServiceHelpers->initDockerRunServiceSettings();
 
+    $requestParams['routeParams']['endpointId'] = $portainerServiceSettings['endpointId'];
+
     $route =
       // https://portainer.scs.sammlungen.io
       $portainerServiceSettings['host'] .
       // /api/endpoints
       $portainerServiceSettings['baseUrl'] .
       // /{endpointId}/docker
-      str_replace('{endpointId}', $portainerServiceSettings['endpointId'], $dockerApiSettings['baseUrl']) .
-      // /containers/{containerId}/json
-      str_replace('{containerId}', $requestParams['containerId'], $dockerRunServiceSettings['inspectUrl']);
+      $dockerApiSettings['baseUrl'] .
+      // /containers
+      $dockerRunServiceSettings['baseUrl'] .
+      // /{containerId}/json
+      $dockerRunServiceSettings['readOneUrl'];
+
+    // Replace any route parameters.
+    if (!empty($requestParams['routeParams'])) {
+      foreach ($requestParams['routeParams'] as $key => $value) {
+        $route = str_replace('{' . $key . '}', $value, $route);
+      }
+    }
+
+    // Add query parameters if they exist.
+    if (!empty($requestParams['queryParams'])) {
+      $route .= '?' . http_build_query($requestParams['queryParams']);
+    }
 
     return [
       'method' => 'GET',
