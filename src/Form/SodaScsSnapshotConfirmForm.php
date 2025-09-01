@@ -352,6 +352,9 @@ class SodaScsSnapshotConfirmForm extends ConfirmFormBase {
 
     $snapshot->save();
 
+    $this->entity->set('snapshots', $snapshot->id());
+    $this->entity->save();
+
     $this->messenger()->addMessage($this->t('Created new snapshot %label.', [
       '%label' => $snapshot->label(),
     ]));

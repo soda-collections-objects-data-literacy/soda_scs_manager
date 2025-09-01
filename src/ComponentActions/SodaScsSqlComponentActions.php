@@ -376,9 +376,9 @@ class SodaScsSqlComponentActions implements SodaScsComponentActionsInterface {
       $dumpFilePath = $snapshotPaths['backupPathWithType'] . '/' . $dbName . '.sql';
       $createDumpExecRequest = $this->sodaScsDockerExecServiceActions->buildCreateRequest([
         'cmd' => [
-          'sh',
+          'bash',
           '-c',
-          'mariadb-dump -uroot -p' . $dbRootPassword . ' ' . `$dbName` . ' > ' . $dumpFilePath,
+          'mariadb-dump -uroot -p' . $dbRootPassword . ' ' . $dbName . ' > ' . $dumpFilePath,
         ],
         'containerName' => 'database',
         'user' => '33',

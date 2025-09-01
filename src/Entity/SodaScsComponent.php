@@ -356,6 +356,21 @@ class SodaScsComponent extends ContentEntityBase implements SodaScsComponentInte
         'weight' => 60,
       ]);
 
+    $fields['snapshots'] = BaseFieldDefinition::create('entity_reference')
+      ->setLabel(new TranslatableMarkup('Snapshots'))
+      ->setDescription(new TranslatableMarkup('The snapshots of the SODa SCS Component.'))
+      ->setSetting('target_type', 'soda_scs_snapshot')
+      ->setSetting('handler', 'default')
+      ->setCardinality(FieldStorageDefinitionInterface::CARDINALITY_UNLIMITED)
+      ->setRequired(FALSE)
+      ->setDisplayConfigurable('form', FALSE)
+      ->setDisplayConfigurable('view', FALSE)
+      ->setDisplayOptions('view', [
+        'label' => 'above',
+        'type' => 'entity_reference_label',
+        'weight' => 60,
+      ]);
+
     $fields['status'] = BaseFieldDefinition::create('boolean')
       ->setLabel(new TranslatableMarkup('Status'))
       ->setDescription(new TranslatableMarkup('The status of the SODa SCS Component.'))
