@@ -120,6 +120,7 @@ services:
       - '@messenger'
       - '@soda_scs_manager.opengdb_service.actions'
       - '@soda_scs_manager.service_key.actions'
+      - '@soda_scs_manager.snapshot.helpers'
       - '@string_translation'
 
   soda_scs_manager.wisski_component.actions:

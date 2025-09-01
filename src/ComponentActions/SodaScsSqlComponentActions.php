@@ -374,6 +374,8 @@ class SodaScsSqlComponentActions implements SodaScsComponentActionsInterface {
         );
       }
       $dumpFilePath = $snapshotPaths['backupPathWithType'] . '/' . $dbName . '.sql';
+
+      // Create the dump execcreate request and execute it.
       $createDumpExecRequest = $this->sodaScsDockerExecServiceActions->buildCreateRequest([
         'cmd' => [
           'bash',
@@ -385,20 +387,75 @@ class SodaScsSqlComponentActions implements SodaScsComponentActionsInterface {
       ]);
       $createDumpExecResponse = $this->sodaScsDockerExecServiceActions->makeRequest($createDumpExecRequest);
 
+      // Check if the dump exec request was successful.
       if (!$createDumpExecResponse['success']) {
         return SodaScsResult::failure(
           error: $createDumpExecResponse['error'],
           message: 'Snapshot creation failed: Could not create database dump exec request.',
         );
       }
+
+      // Create the dump exex start request and execut it.
       $execId = json_decode($createDumpExecResponse['data']['portainerResponse']->getBody()->getContents(), TRUE)['Id'];
       $startDumpExecRequest = $this->sodaScsDockerExecServiceActions->buildStartRequest(['execId' => $execId]);
       $startDumpExecResponse = $this->sodaScsDockerExecServiceActions->makeRequest($startDumpExecRequest);
-      // @todo: Check if the dump has data, because the command give success even if the file is empty
+      
+      // Check if the dump exec start request was successful.
       if (!$startDumpExecResponse['success']) {
         return SodaScsResult::failure(
           error: $startDumpExecResponse['error'],
           message: 'Snapshot creation failed: Could not start database dump exec request.',
+        );
+      }
+
+      // Check if the dump file is ready.
+      $fileIsReady = FALSE;
+      $attempts = 0;
+      $maxAttempts = $this->sodaScsSnapshotHelpers->adjustMaxAttempts();
+      if ($maxAttempts === FALSE) {
+        Error::logException(
+          $this->logger,
+          new \Exception(''),
+          $this->t('The PHP request timeout is less than the required sleep interval of 5 seconds. Please increase your max_execution_time setting.'),
+          [],
+          LogLevel::ERROR
+        );
+        $this->messenger->addError($this->t('Could not create snapshot. See logs for more details.'));
+        return SodaScsResult::failure(
+          error: 'PHP request timeout is less than the required sleep interval of 5 seconds. Please increase your max_execution_time setting.',
+          message: 'Snapshot creation failed: Could not create snapshot.',
+        );
+      }
+
+        // Check if the dump file size does not change, then set fileIsReady to TRUE.
+      $previousFileSize = 0;
+      while (!$fileIsReady && $attempts < $maxAttempts) {
+        clearstatcache(TRUE, $dumpFilePath);
+        $currentFileSize = file_exists($dumpFilePath) ? filesize($dumpFilePath) : 0;
+        if ($currentFileSize > 0 && $currentFileSize === $previousFileSize) {
+          $fileIsReady = TRUE;
+        }
+        else {
+          $previousFileSize = $currentFileSize;
+          sleep(5);
+          $attempts++;
+        }
+      }
+      
+
+      // Exit if timeout is reached.
+      if ($attempts === $maxAttempts) {
+        Error::logException(
+          $this->logger,
+          new \Exception('Container timeout'),
+          'Failed to create snapshot. Maximum number of attempts to check if the container is running reached. Container is still running.',
+          [],
+          LogLevel::ERROR
+        );
+        $this->messenger->addError($this->t('Failed to create snapshot. See logs for more details.'));
+        return SodaScsResult::failure(
+          error: 'Container timeout',
+          message: 'Snapshot creation failed: Maximum number of attempts to check if the container is running reached. Container is still running.',
         );
       }
 
