@@ -59,6 +59,54 @@ function soda_scs_manager_entity_base_field_info(EntityTypeInterface $entity_typ
           'link' => TRUE,
         ],
       ]);
+    $fields['first_name'] = BaseFieldDefinition::create('string')
+      ->setLabel(new TranslatableMarkup('First Name'))
+      ->setDescription(new TranslatableMarkup('The first name of the user.'))
+      ->setRequired(TRUE)
+      ->setDisplayConfigurable('form', TRUE)
+      ->setDisplayOptions('form', [
+        'type' => 'string_textfield',
+        'weight' => 10,
+        'label' => 'above',
+      ])
+      ->setDisplayConfigurable('view', TRUE)
+      ->setDisplayOptions('view', [
+        'type' => 'string',
+        'weight' => 10,
+        'label' => 'above',
+      ]);
+    $fields['last_name'] = BaseFieldDefinition::create('string')
+      ->setLabel(new TranslatableMarkup('Last Name'))
+      ->setDescription(new TranslatableMarkup('The last name of the user.'))
+      ->setRequired(TRUE)
+      ->setDisplayConfigurable('form', TRUE)
+      ->setDisplayOptions('form', [
+        'type' => 'string_textfield',
+        'weight' => 10,
+        'label' => 'above',
+      ])
+      ->setDisplayConfigurable('view', TRUE)
+      ->setDisplayOptions('view', [
+        'type' => 'string',
+        'weight' => 10,
+        'label' => 'above',
+      ]);
+    $fields['sso_user_id'] = BaseFieldDefinition::create('string')
+      ->setLabel(new TranslatableMarkup('SSO User ID'))
+      ->setDescription(new TranslatableMarkup('The SSO user ID of the user.'))
+      ->setRequired(TRUE)
+      ->setDisplayConfigurable('form', TRUE)
+      ->setDisplayOptions('form', [
+        'type' => 'string_textfield',
+        'weight' => 10,
+        'label' => 'above',
+      ])
+      ->setDisplayConfigurable('view', TRUE)
+      ->setDisplayOptions('view', [
+        'type' => 'string',
+        'weight' => 10,
+        'label' => 'above',
+      ]);
   }
   return $fields;
 }
@@ -417,6 +465,7 @@ function soda_scs_manager_theme($existing, $type, $theme, $path) {
     'soda_scs_manager__start_page' => [
       'variables' => [
         'attributes' => NULL,
+        'user' => NULL,
       ],
       'template' => 'pages/soda-scs-manager--start-page',
     ],
@@ -548,6 +597,7 @@ function soda_scs_manager_user_insert(UserInterface $user) {
   _soda_scs_manager_ensure_scs_user_role();
   _soda_scs_manager_create_default_project_for_user($user);
   _soda_scs_manager_create_default_filesystem_for_user($user);
+  _soda_scs_manager_propagate_keycloak_user_data_to_fields($user);
 }
 
 /**
@@ -582,91 +632,85 @@ function soda_scs_manager_user_login(UserInterface $account) {
  * Controls access to private snapshot files.
  */
 function soda_scs_manager_file_download($uri) {
-  // Only handle files in the snapshots directory.
-  if (!str_contains($uri, 'snapshots/')) {
+  // Only handle private files in the snapshots directory.
+  $streamWrapperManager = \Drupal::service('stream_wrapper_manager');
+  $scheme = $streamWrapperManager->getScheme($uri);
+  if ($scheme !== 'private') {
+    return NULL;
+  }
+  $target = $streamWrapperManager->getTarget($uri);
+  if (!\str_starts_with($target, 'snapshots/')) {
     return NULL;
   }
 
-  // Get the current user.
-  $current_user = \Drupal::currentUser();
+  $account = \Drupal::currentUser();
 
-  // Allow access for admin users.
-  if ($current_user->hasPermission('soda scs manager admin')) {
+  // Admins can always download.
+  if ($account->hasPermission('soda scs manager admin')) {
+    $mimeType = 'application/octet-stream';
+    if ($file = \Drupal::service('file.repository')->loadByUri($uri)) {
+      $mimeType = $file->getMimeType() ?: $mimeType;
+    }
     return [
-      'Content-Type' => 'application/octet-stream',
+      'Content-Type' => $mimeType,
       'Content-Disposition' => 'attachment; filename="' . basename($uri) . '"',
     ];
   }
 
-  // Check if user has permission to view snapshots.
-  if (!$current_user->hasPermission('view soda scs snapshot')) {
-    return -1; // Access denied.
+  // Require the generic permission first.
+  if (!$account->hasPermission('view soda scs snapshot')) {
+    return -1;
   }
 
-  // Extract username from the path to check ownership.
-  $path_parts = explode('/', $uri);
-  $snapshots_index = array_search('snapshots', $path_parts);
+  // Resolve the file entity by URI.
+  /** @var \Drupal\file\FileInterface|null $file */
+  $fileRepository = \Drupal::service('file.repository');
+  $normalizedUri = $scheme . '://' . ltrim($target, '/');
+  $alternativeUri = $scheme . ':///' . ltrim($target, '/');
+  $file = $fileRepository->loadByUri($uri)
+    ?: $fileRepository->loadByUri($normalizedUri)
+    ?: $fileRepository->loadByUri($alternativeUri);
+  if (!$file) {
+    // Unknown file in private snapshots path. Deny to avoid leakage.
+    return -1;
+  }
 
-  if ($snapshots_index !== FALSE && isset($path_parts[$snapshots_index + 1])) {
-    $file_owner = $path_parts[$snapshots_index + 1];
+  $fid = (int) $file->id();
 
-    // Allow access if the current user is the owner of the snapshot.
-    if ($current_user->getDisplayName() === $file_owner) {
+  // Find snapshots that reference this file (either main file or signature).
+  $storage = \Drupal::entityTypeManager()->getStorage('soda_scs_snapshot');
+  $query = $storage->getQuery()
+    ->accessCheck(FALSE);
+
+  $or = $query->orConditionGroup()
+    ->condition('file.target_id', $fid)
+    ->condition('signatureFile.target_id', $fid);
+
+  // Enforce owner-based access.
+  $query
+    ->condition($or)
+    ->condition('owner', (int) $account->id());
+
+  $ids = $query->execute();
+
+  if (empty($ids)) {
+    // No snapshot owned by the user references this file.
+    return -1;
+  }
+
+  // Optionally, double-check access on any referencing snapshot.
+  $snapshots = $storage->loadMultiple($ids);
+  foreach ($snapshots as $snapshot) {
+    /** @var \Drupal\soda_scs_manager\Entity\SodaScsSnapshot $snapshot */
+    if ((int) $snapshot->get('owner')->target_id === (int) $account->id()) {
+      $mimeType = $file->getMimeType() ?: 'application/octet-stream';
       return [
-        'Content-Type' => 'application/octet-stream',
+        'Content-Type' => $mimeType,
         'Content-Disposition' => 'attachment; filename="' . basename($uri) . '"',
       ];
     }
   }
 
-  // Check if user has access to the associated snapshot entity.
-  try {
-    // Try to find a snapshot entity that references this file.
-    $entity_type_manager = \Drupal::entityTypeManager();
-    $snapshot_storage = $entity_type_manager->getStorage('soda_scs_snapshot');
-
-    // Query for snapshots that might contain this file.
-    $query = $snapshot_storage->getQuery()
-      ->accessCheck(TRUE)
-      ->condition('owner', $current_user->id());
-
-    $snapshot_ids = $query->execute();
-
-    if (!empty($snapshot_ids)) {
-      $snapshots = $snapshot_storage->loadMultiple($snapshot_ids);
-
-            // Check if any of the user's snapshots contain this file.
-      foreach ($snapshots as $snapshot) {
-        /** @var \Drupal\soda_scs_manager\Entity\SodaScsSnapshot $snapshot */
-        if (!$snapshot->get('file')->isEmpty()) {
-          $file_field = $snapshot->get('file')->entity;
-          if ($file_field && $file_field->getFileUri() === $uri) {
-            return [
-              'Content-Type' => 'application/octet-stream',
-              'Content-Disposition' => 'attachment; filename="' . basename($uri) . '"',
-            ];
-          }
-        }
-
-        if (!$snapshot->get('signatureFile')->isEmpty()) {
-          $signature_field = $snapshot->get('signatureFile')->entity;
-          if ($signature_field && $signature_field->getFileUri() === $uri) {
-            return [
-              'Content-Type' => 'text/plain',
-              'Content-Disposition' => 'attachment; filename="' . basename($uri) . '"',
-            ];
-          }
-        }
-      }
-    }
-  }
-  catch (\Exception $e) {
-    // Log the error and deny access.
-    \Drupal::logger('soda_scs_manager')->error('Error checking snapshot file access: @message', ['@message' => $e->getMessage()]);
-    return -1;
-  }
-
-  // Deny access by default.
   return -1;
 }
 
@@ -755,22 +799,50 @@ function _soda_scs_manager_ensure_scs_user_role() {
 
   // Assign the required permissions to the custom role.
   $permissions = [
-    'soda scs manager user',
-    'create soda scs stack',
-    'view soda scs stack',
-    'delete soda scs stack',
     'create soda scs component',
-    'view soda scs component',
-    'delete soda scs component',
+    'create soda scs project',
     'create soda scs service key',
-    'view soda scs service key',
-    'delete soda scs service key',
     'create soda scs snapshot',
-    'view soda scs snapshot',
+    'create soda scs stack',
+    'delete soda scs component',
+    'delete soda scs project',
+    'delete soda scs service key',
     'delete soda scs snapshot',
+    'delete soda scs stack',
+    'soda scs manager user',
+    'view soda scs component',
+    'view soda scs project',
+    'view soda scs service key',
+    'view soda scs snapshot',
+    'view soda scs stack',
   ];
 
   user_role_grant_permissions('scs_user', $permissions);
+}
+
+/**
+ * Propagate Keycloak user data to fields.
+ */
+function _soda_scs_manager_propagate_keycloak_user_data_to_fields(UserInterface $user) {
+  $keycloakService = \Drupal::service('soda_scs_manager.keycloak_service.helpers');
+
+  $keycloakToken = $keycloakService->getKeycloakToken();
+  $keycloakUser = $keycloakService->getKeycloakUser($keycloakToken, $user->getDisplayName());
+
+  // If Keycloak data is available, propagate it to user fields.
+  if (!empty($keycloakUser) && is_array($keycloakUser)) {
+    if (!empty($keycloakUser['firstName'])) {
+      $user->set('first_name', $keycloakUser['firstName']);
+    }
+    if (!empty($keycloakUser['lastName'])) {
+      $user->set('last_name', $keycloakUser['lastName']);
+    }
+    if (!empty($keycloakUser['id'])) {
+      $user->set('sso_user_id', $keycloakUser['id']);
+    }
+    // Save the user entity after updating fields.
+    $user->save();
+  }
 }
 
 /**

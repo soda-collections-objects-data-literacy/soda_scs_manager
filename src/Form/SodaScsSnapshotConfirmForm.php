@@ -228,8 +228,8 @@ class SodaScsSnapshotConfirmForm extends ConfirmFormBase {
       Error::logException(
         $this->loggerFactory->get('soda_scs_manager'),
         new \Exception($error),
-        'Failed to create snapshot: @message',
-        ['@message' => $error],
+        'Failed to create snapshot.',
+        [],
         LogLevel::ERROR
       );
       return;
@@ -239,7 +239,18 @@ class SodaScsSnapshotConfirmForm extends ConfirmFormBase {
 
     $containerIsRunning = TRUE;
     $attempts = 0;
-    $maxAttempts = 18;
+    $maxAttempts = $this->sodaScsSnapshotHelpers->adjustMaxAttempts();
+    if ($maxAttempts === FALSE) {
+      Error::logException(
+      $this->loggerFactory->get('soda_scs_manager'),
+      new \Exception(''),
+      $this->t('The PHP request timeout is less than the required sleep interval of 5 seconds. Please increase your max_execution_time setting.'),
+      [],
+      LogLevel::ERROR
+    );
+    $this->messenger()->addError($this->t('Could not create snapshot. See logs for more details.'));
+    return;
+    }
     while ($containerIsRunning && $attempts < $maxAttempts) {
       foreach ($createSnapshotResult->data as $componentBundle => $componentData) {
         $containerId = $componentData['metadata']['containerId'];
@@ -251,17 +262,33 @@ class SodaScsSnapshotConfirmForm extends ConfirmFormBase {
           $containerInspectResponse = $this->sodaScsDockerRunServiceActions->makeRequest($containerInspectRequest);
 
         if ($containerInspectResponse['success'] === FALSE) {
-          throw new \Exception('Failed to inspect container: ' . $containerInspectResponse['error']);
+          Error::logException(
+            $this->loggerFactory->get('soda_scs_manager'),
+            new \Exception('Container inspection failed'),
+            'Failed to create snapshot. Could not inspect container: ' . $containerInspectResponse['error'],
+            [],
+            LogLevel::ERROR
+          );
+          $this->messenger()->addError($this->t('Failed to create snapshot. See logs for more details.'));
+          return;
         }
 
         $responseCode = $containerInspectResponse['data']['portainerResponse']->getStatusCode();
         if ($responseCode !== 200) {
-          throw new \Exception('Failed to inspect container: ' . $containerInspectResponse['error']);
+          Error::logException(
+            $this->loggerFactory->get('soda_scs_manager'),
+            new \Exception('HTTP error'),
+            'Failed to create snapshot. Response code is not 200, but: ' . $responseCode,
+            [],
+            LogLevel::ERROR
+          );
+          $this->messenger()->addError($this->t('Failed to create snapshot. See logs for more details.'));
+          return;
         }
         $containerStatus = json_decode($containerInspectResponse['data']['portainerResponse']->getBody()->getContents(), TRUE);
         $containerIsRunning = $containerStatus['State']['Running'];
         if ($containerIsRunning) {
-          sleep(10);
+          sleep(5);
           $attempts++;
         }
         else {
@@ -276,12 +303,13 @@ class SodaScsSnapshotConfirmForm extends ConfirmFormBase {
     if ($attempts === $maxAttempts) {
       Error::logException(
         $this->loggerFactory->get('soda_scs_manager'),
-        new \Exception('Failed to create snapshot. Maximum number of attempts to check if the container is running reached. Container is still running.'),
-        'Failed to create snapshot. See logs for more details.',
+        new \Exception('Container timeout'),
+        'Failed to create snapshot. Maximum number of attempts to check if the container is running reached. Container is still running.',
         [],
         LogLevel::ERROR
       );
-      throw new \Exception('Failed to create snapshot. See logs for more details.');
+      $this->messenger()->addError($this->t('Failed to create snapshot. See logs for more details.'));
+      return;
     }
 
 

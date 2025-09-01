@@ -12,6 +12,7 @@ use Drupal\soda_scs_manager\ValueObject\SodaScsResult;
 use Psr\Log\LogLevel;
 use Drupal\Core\Logger\LoggerChannelFactoryInterface;
 use Drupal\Core\Utility\Error;
+use Drupal\Core\Messenger\MessengerTrait;
 
 /**
  * Helper class for snapshot operations.
@@ -19,6 +20,7 @@ use Drupal\Core\Utility\Error;
 class SodaScsSnapshotHelpers {
 
   use StringTranslationTrait;
+  use MessengerTrait;
 
   /**
    * The component helpers.
@@ -453,6 +455,33 @@ public function __construct(
         'statusCode' => $e->getCode(),
       ];
     }
+  }
+
+
+  /**
+   * Adjusts the maxAttempts based on the PHP request timeout and sleep interval.
+   *
+   * @param int|string $phpRequestTimeout
+   *   The PHP max_execution_time value.
+   * @param int $sleepInterval
+   *   The sleep interval in seconds.
+   *
+   * @return int|false
+   *   Returns the calculated maxAttempts, or FALSE if the timeout is too low.
+   */
+  public function adjustMaxAttempts($sleepInterval = 5) {
+    // Read the global PHP request timeout setting from the server.
+    $phpRequestTimeout = ini_get('max_execution_time');
+    // If max_execution_time is 0, it means unlimited, so return a default value.
+    if ((int)$phpRequestTimeout === 0) {
+      return 18;
+    }
+    if ((int)$phpRequestTimeout < $sleepInterval) {
+      // Show error and return FALSE if timeout is too low.
+      return FALSE;
+    }
+    // Calculate maxAttempts as the number of sleep intervals that fit in the timeout.
+    return (int) floor((int)$phpRequestTimeout / $sleepInterval);
   }
 
 }

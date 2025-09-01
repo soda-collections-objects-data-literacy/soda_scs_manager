@@ -235,13 +235,10 @@ class SodaScsDockerRegistryServiceActions implements SodaScsServiceRequestInterf
   /**
    * Build token request.
    *
-   * @param array $requestParams
-   *   The request parameters.
-   *
    * @return array
    *   The request array for the makeRequest function.
    */
-  public function buildTokenRequest(array $requestParams): array {
+  public function buildTokenRequest(array $requestParams = []): array {
     return [];
   }
 

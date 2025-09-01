@@ -19,7 +19,9 @@ use Drupal\soda_scs_manager\Entity\SodaScsComponentInterface;
 use Drupal\soda_scs_manager\Entity\SodaScsStackInterface;
 use Drupal\soda_scs_manager\Exception\SodaScsSqlServiceException;
 use Drupal\soda_scs_manager\Helpers\SodaScsComponentHelpers;
+use Drupal\soda_scs_manager\Helpers\SodaScsSnapshotHelpers;
 use Drupal\soda_scs_manager\RequestActions\SodaScsDockerExecServiceActions;
+use Drupal\soda_scs_manager\RequestActions\SodaScsDockerRunServiceActions;
 use Drupal\soda_scs_manager\ServiceActions\SodaScsServiceActionsInterface;
 use Drupal\soda_scs_manager\ServiceKeyActions\SodaScsServiceKeyActionsInterface;
 use Drupal\soda_scs_manager\ValueObject\SodaScsResult;
@@ -86,11 +88,25 @@ class SodaScsSqlComponentActions implements SodaScsComponentActionsInterface {
   protected SodaScsComponentHelpers $sodaScsComponentHelpers;
 
   /**
+   * The SCS Snapshot Helpers service.
+   *
+   * @var \Drupal\soda_scs_manager\Helpers\SodaScsSnapshotHelpers
+   */
+  protected SodaScsSnapshotHelpers $sodaScsSnapshotHelpers;
+
+  /**
    * The SCS Docker Exec service actions.
    *
    * @var \Drupal\soda_scs_manager\RequestActions\SodaScsDockerExecServiceActions
    */
   protected SodaScsDockerExecServiceActions $sodaScsDockerExecServiceActions;
+
+  /**
+   * The SCS Docker Run service actions.
+   *
+   * @var \Drupal\soda_scs_manager\RequestActions\SodaScsDockerRunServiceActions
+   */
+  protected SodaScsDockerRunServiceActions $sodaScsDockerRunServiceActions;
 
 
   /**
@@ -118,7 +134,9 @@ class SodaScsSqlComponentActions implements SodaScsComponentActionsInterface {
     LoggerChannelFactoryInterface $loggerFactory,
     MessengerInterface $messenger,
     SodaScsComponentHelpers $sodaScsComponentHelpers,
+    SodaScsSnapshotHelpers $sodaScsSnapshotHelpers,
     SodaScsDockerExecServiceActions $sodaScsDockerExecServiceActions,
+    SodaScsDockerRunServiceActions $sodaScsDockerRunServiceActions,
     SodaScsServiceActionsInterface $sodaScsMysqlServiceActions,
     SodaScsServiceKeyActionsInterface $sodaScsServiceKeyActions,
     TranslationInterface $stringTranslation,
@@ -133,7 +151,9 @@ class SodaScsSqlComponentActions implements SodaScsComponentActionsInterface {
     $this->messenger = $messenger;
     $this->settings = $settings;
     $this->sodaScsComponentHelpers = $sodaScsComponentHelpers;
+    $this->sodaScsSnapshotHelpers = $sodaScsSnapshotHelpers;
     $this->sodaScsDockerExecServiceActions = $sodaScsDockerExecServiceActions;
+    $this->sodaScsDockerRunServiceActions = $sodaScsDockerRunServiceActions;
     $this->sodaScsMysqlServiceActions = $sodaScsMysqlServiceActions;
     $this->sodaScsServiceKeyActions = $sodaScsServiceKeyActions;
     $this->stringTranslation = $stringTranslation;
@@ -332,17 +352,11 @@ class SodaScsSqlComponentActions implements SodaScsComponentActionsInterface {
    *   Result information with the created snapshot.
    */
   public function createSnapshot(SodaScsComponentInterface $component, string $snapshotMachineName, string $timestamp): SodaScsResult {
-
     try {
-      $date = date('Y-m-d', $timestamp);
-      $machineName = $component->get('machineName')->value;
-      $snapshotName = $snapshotMachineName;
-      $backupRootDir = '/var/scs-manager/snapshots/' . $component->getOwner()->getDisplayName() . '/' . $date . '/' . $machineName;
-      $backupDir = $backupRootDir . '/' . $snapshotName;
-      $tarGzBackupDir = str_replace('sql', 'sql.tar.gz', $backupDir);
+      $snapshotPaths = $this->sodaScsSnapshotHelpers->constructSnapshotPaths($component, $snapshotMachineName, $timestamp);
 
-      // Create the backup directory.
-      $dirCreateResult = $this->sodaScsComponentHelpers->createDir($backupRootDir);
+      // Create the backup directory (type-specific path).
+      $dirCreateResult = $this->sodaScsSnapshotHelpers->createDir($snapshotPaths['backupPathWithType']);
       if (!$dirCreateResult['success']) {
         return SodaScsResult::failure(
           error: $dirCreateResult['error'],
@@ -350,71 +364,113 @@ class SodaScsSqlComponentActions implements SodaScsComponentActionsInterface {
         );
       }
 
-      // Get the database name.
-      $dbName = $machineName;
-
-      // Create and run the snapshot container.
-      $requestParams = [
+      // Dump the database into the backup directory using the database container.
+      $dbName = $component->get('machineName')->value;
+      $dbRootPassword = $this->settings->get('dbRootPassword');
+      if (empty($dbRootPassword)) {
+        return SodaScsResult::failure(
+          error: 'Database root password setting missing',
+          message: 'Snapshot creation failed: Missing database root password.',
+        );
+      }
+      $dumpFilePath = $snapshotPaths['backupPathWithType'] . '/' . $dbName . '.sql';
+      $createDumpExecRequest = $this->sodaScsDockerExecServiceActions->buildCreateRequest([
         'cmd' => [
-          'bash',
+          'sh',
           '-c',
-          '/var/scs-manager/scripts/database/db-snapshot.bash ' . $dbName . ' ' . $backupDir,
+          'mariadb-dump -uroot -p' . $dbRootPassword . ' ' . `$dbName` . ' > ' . $dumpFilePath,
         ],
         'containerName' => 'database',
         'user' => '33',
-      ];
-
-      // Make the create container exec request.
-      $createContainerExecRequest = $this->sodaScsDockerExecServiceActions->buildCreateRequest($requestParams);
-      $createContainerExecResponse = $this->sodaScsDockerExecServiceActions->makeRequest($createContainerExecRequest);
-
-      if (!$createContainerExecResponse['success']) {
-        return SodaScsResult::failure(
-          error: $createContainerExecResponse['error'],
-          message: 'Snapshot creation failed: Could not create container exec request.',
-        );
-      }
-
-      // Get container ID from response.
-      $execId = json_decode($createContainerExecResponse['data']['portainerResponse']->getBody()->getContents(), TRUE)['Id'];
-
-      // Make the start container exec request.
-      $startContainerExecRequest = $this->sodaScsDockerExecServiceActions->buildStartRequest(['execId' => $execId]);
-      $startContainerExecResponse = $this->sodaScsDockerExecServiceActions->makeRequest($startContainerExecRequest);
-
-      if (!$startContainerExecResponse['success']) {
-        return SodaScsResult::failure(
-          error: $startContainerExecResponse['error'],
-          message: 'Snapshot creation failed: Could not start container exec request.',
-        );
-      }
-
-      // Create file entity.
-      $file = File::create([
-        'uri' => $tarGzBackupDir,
-        'uid' => $component->getOwnerId(),
-        'status' => 1,
-        'filename' => $snapshotName,
-        'filemime' => 'application/x-sql.tar.gz',
       ]);
-      $file->save();
+      $createDumpExecResponse = $this->sodaScsDockerExecServiceActions->makeRequest($createDumpExecRequest);
+
+      if (!$createDumpExecResponse['success']) {
+        return SodaScsResult::failure(
+          error: $createDumpExecResponse['error'],
+          message: 'Snapshot creation failed: Could not create database dump exec request.',
+        );
+      }
+      $execId = json_decode($createDumpExecResponse['data']['portainerResponse']->getBody()->getContents(), TRUE)['Id'];
+      $startDumpExecRequest = $this->sodaScsDockerExecServiceActions->buildStartRequest(['execId' => $execId]);
+      $startDumpExecResponse = $this->sodaScsDockerExecServiceActions->makeRequest($startDumpExecRequest);
+      // @todo: Check if the dump has data, because the command give success even if the file is empty
+      if (!$startDumpExecResponse['success']) {
+        return SodaScsResult::failure(
+          error: $startDumpExecResponse['error'],
+          message: 'Snapshot creation failed: Could not start database dump exec request.',
+        );
+      }
+
+      // Create and run a short-lived container to tar and sign the SQL dump.
+      $createContainerRequest = $this->sodaScsDockerRunServiceActions->buildCreateRequest([
+        'name' => $snapshotMachineName,
+        'volumes' => NULL,
+        'image' => 'alpine:latest',
+        'user' => '33:33',
+        'cmd' => [
+          'sh',
+          '-c',
+          'tar czf /backup/' . $snapshotPaths['tarFileName'] . ' -C /source . && cd /backup && sha256sum ' . $snapshotPaths['tarFileName'] . ' > ' . $snapshotPaths['sha256FileName'],
+        ],
+        'hostConfig' => [
+          'Binds' => [
+            $snapshotPaths['backupPathWithType'] . ':/source',
+            $snapshotPaths['backupPathWithType'] . ':/backup',
+          ],
+          'AutoRemove' => FALSE,
+        ],
+      ]);
+      $createContainerResponse = $this->sodaScsDockerRunServiceActions->makeRequest($createContainerRequest);
+      if (!$createContainerResponse['success']) {
+        return SodaScsResult::failure(
+          error: $createContainerResponse['error'],
+          message: 'Snapshot creation failed: Could not create snapshot container.',
+        );
+      }
+
+      $containerId = json_decode($createContainerResponse['data']['portainerResponse']->getBody()->getContents(), TRUE)['Id'];
+      $startContainerRequest = $this->sodaScsDockerRunServiceActions->buildStartRequest([
+        'routeParams' => [
+          'containerId' => $containerId,
+        ],
+      ]);
+      $startContainerResponse = $this->sodaScsDockerRunServiceActions->makeRequest($startContainerRequest);
+      if (!$startContainerResponse['success']) {
+        return SodaScsResult::failure(
+          error: $startContainerResponse['error'],
+          message: 'Snapshot creation failed: Could not start snapshot container.',
+        );
+      }
 
       return SodaScsResult::success(
-        message: 'Snapshot created successfully.',
         data: [
-          'createContainerExecResponse' => $createContainerExecResponse,
-          'snapshot' => $component,
-          'startContainerExecResponse' => $startContainerExecResponse,
-          'metadata' => [
-            'snapshotName' => $snapshotName,
-            'backupPath' => $backupDir,
+          $component->bundle() => [
+            'startContainerResponse' => $startContainerResponse,
+            'createContainerResponse' => $createContainerResponse,
+            'metadata' => [
+              'backupPath' => $snapshotPaths['backupPath'],
+              'contentFilePaths' => [
+                'tarFilePath' => $snapshotPaths['absoluteTarFilePath'],
+                'sha256FilePath' => $snapshotPaths['absoluteSha256FilePath'],
+              ],
+              'contentFileNames' => [
+                'tarFileName' => $snapshotPaths['tarFileName'],
+                'sha256FileName' => $snapshotPaths['sha256FileName'],
+              ],
+              'containerId' => $containerId,
+              'snapshotMachineName' => $snapshotMachineName,
+              'timestamp' => $timestamp,
+              'componentBundle' => $component->bundle(),
+              'componentId' => $component->id(),
+              'componentMachineName' => $component->get('machineName')->value,
+            ],
           ],
-          'file' => $file,
         ],
+        message: 'Created and started snapshot container successfully.',
       );
     }
     catch (\Exception $e) {
-      $this->messenger->addError($this->t("Snapshot creation failed. See logs for more details."));
       Error::logException(
         $this->logger,
         $e,

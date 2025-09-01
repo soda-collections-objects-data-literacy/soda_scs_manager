@@ -10,6 +10,7 @@ use Drupal\Core\Session\AccountInterface;
 use Drupal\Core\Url;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 use Drupal\Core\Entity\EntityTypeBundleInfoInterface;
+use Drupal\user\Entity\User;
 
 /**
  * The SODa SCS Manager info controller.
@@ -315,9 +316,14 @@ class SodaScsManagerController extends ControllerBase {
    *   The page build array.
    */
   public function startPage(): array {
+
+    $currentUser = $this->currentUser();
+    /** @var \Drupal\user\UserInterface $user */
+    $user = User::load($currentUser->id());
     return [
       '#theme' => 'soda_scs_manager__start_page',
       '#attributes' => ['class' => ['container', 'mx-auto']],
+      '#user' => $user ? $user->get('first_name')->value : 'SCS User',
       '#attached' => [
         'library' => ['soda_scs_manager/globalStyling'],
       ],

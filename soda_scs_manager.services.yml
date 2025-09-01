@@ -17,6 +17,11 @@ services:
       - '@soda_scs_manager.sql_service.actions'
       - '@string_translation'
 
+  soda_scs_manager.keycloak_service.helpers:
+    class: Drupal\soda_scs_manager\Helpers\SodaScsKeycloakHelpers
+    arguments:
+      - '@soda_scs_manager.keycloak_service.user.actions'
+
   soda_scs_manager.project.helpers:
     class: Drupal\soda_scs_manager\Helpers\SodaScsProjectHelpers
     arguments:
@@ -99,7 +104,9 @@ services:
       - '@logger.factory'
       - '@messenger'
       - '@soda_scs_manager.component.helpers'
+      - '@soda_scs_manager.snapshot.helpers'
       - '@soda_scs_manager.docker_exec_service.actions'
+      - '@soda_scs_manager.docker_run_service.actions'
       - '@soda_scs_manager.sql_service.actions'
       - '@soda_scs_manager.service_key.actions'
       - '@string_translation'

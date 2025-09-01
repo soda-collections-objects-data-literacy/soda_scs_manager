@@ -208,7 +208,7 @@ class SodaScsDockerVolumesServiceActions implements SodaScsServiceRequestInterfa
    * @return array
    *   The request array for the makeRequest function.
    */
-  public function buildTokenRequest(array $requestParams): array {
+  public function buildTokenRequest($requestParams = []): array {
     return [];
   }
 

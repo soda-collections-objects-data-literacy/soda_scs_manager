@@ -11,7 +11,7 @@
 #}
 <div{{ attributes.addClass('soda-scs-manager--start-page') }}>
   <div class="soda-scs-manager--header-section">
-    <h1>Welcome!</h1>
+    <h1>Hi {{ user }}!</h1>
     <p>{{ 'New here? Start <a href="@tour_url">the beginners tour</a> to learn more about the possibilities.'|t({'@tour_url': path('soda_scs_manager.tour')}) }}</p>
   </div>
 

@@ -83,12 +83,12 @@ interface SodaScsServiceRequestInterface {
    * Build token request.
    *
    * @param array $requestParams
-   *   The request parameters.
+   *   Optional request parameters.
    *
    * @return array
    *   The request array for the makeRequest function.
    */
-  public function buildTokenRequest(array $requestParams): array;
+  public function buildTokenRequest(array $requestParams = []): array;
 
   /**
    * Make the API request.
