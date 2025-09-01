@@ -18,7 +18,7 @@ use Psr\Log\LogLevel;
 /**
  * Handles the communication with the SCS user manager daemon.
  */
-class SodaScsOpenGdbServiceActions implements SodaScsServiceRequestInterface {
+class SodaScsOpenGdbServiceActions implements SodaScsOpenGdbRequestInterface {
 
   use StringTranslationTrait;
 
@@ -454,4 +454,54 @@ class SodaScsOpenGdbServiceActions implements SodaScsServiceRequestInterface {
     ];
   }
 
+  /**
+   * Builds the dump request for the OpenGDB service API.
+   *
+   * @param array $requestParams
+   *   The request parameters.
+   *
+   * @return array
+   *   The dump request.
+   */
+  public function buildDumpRequest(array $requestParams): array {
+    $triplestoreServiceSettings = $this->sodaScsServiceHelpers->initTriplestoreServiceSettings();
+    
+
+    // @todo Make this more flexible with settings.
+    $route = 
+    // https://ts.scs.sammlungen.io
+    $triplestoreServiceSettings['host'] .
+    // /repositories/
+    '/repositories/' .
+    // {repositoryId}
+    '{repositoryId}';
+
+    // Replace any route parameters.
+    if (!empty($requestParams['routeParams'])) {
+      foreach ($requestParams['routeParams'] as $key => $value) {
+        $route = str_replace('{' . $key . '}', $value, $route);
+      }
+    }
+
+    if (!empty($requestParams['queryParams'])) {
+      $route .= '?' . http_build_query($requestParams['queryParams']);
+    }
+
+    if (!empty($requestParams['body'])) {
+      $body = json_encode($requestParams['body']);
+    }
+
+    return [
+      'type' => 'select',
+      'success' => TRUE,
+      'method' => 'GET',
+      'route' => $route,
+      'headers' => [
+        'Content-Type' => 'application/json',
+        'Accept' => 'application/json',
+        'Authorization' => 'Basic ' . base64_encode($triplestoreServiceSettings['adminUsername'] . ':' . $triplestoreServiceSettings['adminPassword']),
+      ],
+      'body' => $body,
+    ];
+  }
 }

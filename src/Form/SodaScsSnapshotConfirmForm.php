@@ -228,7 +228,7 @@ class SodaScsSnapshotConfirmForm extends ConfirmFormBase {
       Error::logException(
         $this->loggerFactory->get('soda_scs_manager'),
         new \Exception($error),
-        'Failed to create snapshot.',
+        $this->t('Failed to create snapshot. @error', ['@error' => $error]),
         [],
         LogLevel::ERROR
       );
@@ -236,7 +236,7 @@ class SodaScsSnapshotConfirmForm extends ConfirmFormBase {
     }
 
     // Check if the snapshotcontainers are still running.
-
+    // @todo Abstract this to public function.
     $containerIsRunning = TRUE;
     $attempts = 0;
     $maxAttempts = $this->sodaScsSnapshotHelpers->adjustMaxAttempts();
@@ -253,6 +253,13 @@ class SodaScsSnapshotConfirmForm extends ConfirmFormBase {
     }
     while ($containerIsRunning && $attempts < $maxAttempts) {
       foreach ($createSnapshotResult->data as $componentBundle => $componentData) {
+        
+        // triplestore do not have a container.
+        if ($componentBundle === 'soda_scs_triplestore_component') {
+          $containerIsRunning = FALSE;
+          break;
+        }
+
         $containerId = $componentData['metadata']['containerId'];
           $containerInspectRequest = $this->sodaScsDockerRunServiceActions->buildInspectRequest([
             'routeParams' => [

@@ -11,11 +11,12 @@ use Drupal\Core\Messenger\MessengerInterface;
 use Drupal\Core\StringTranslation\StringTranslationTrait;
 use Drupal\Core\StringTranslation\TranslationInterface;
 use Drupal\Core\TypedData\Exception\MissingDataException;
+use Drupal\Core\Utility\Error;
 use Drupal\soda_scs_manager\Entity\SodaScsComponentInterface;
 use Drupal\soda_scs_manager\Entity\SodaScsStackInterface;
-use Drupal\soda_scs_manager\RequestActions\SodaScsServiceRequestInterface;
+use Drupal\soda_scs_manager\Helpers\SodaScsSnapshotHelpers;
+use Drupal\soda_scs_manager\RequestActions\SodaScsOpenGdbRequestInterface;
 use Drupal\soda_scs_manager\ServiceKeyActions\SodaScsServiceKeyActionsInterface;
-use Drupal\Core\Utility\Error;
 use Drupal\soda_scs_manager\ValueObject\SodaScsResult;
 use Psr\Log\LogLevel;
 
@@ -58,9 +59,9 @@ class SodaScsTriplestoreComponentActions implements SodaScsComponentActionsInter
   /**
    * The SCS OpenGDB service actions service.
    *
-   * @var \Drupal\soda_scs_manager\RequestActions\SodaScsServiceRequestInterface
+   * @var \Drupal\soda_scs_manager\RequestActions\SodaScsOpenGdbRequestInterface
    */
-  protected SodaScsServiceRequestInterface $sodaScsOpenGdbServiceActions;
+  protected SodaScsOpenGdbRequestInterface $sodaScsOpenGdbServiceActions;
 
   /**
    * The SCS Service Key actions service.
@@ -70,6 +71,14 @@ class SodaScsTriplestoreComponentActions implements SodaScsComponentActionsInter
   protected SodaScsServiceKeyActionsInterface $sodaScsServiceKeyActions;
 
   /**
+   * The SCS Snapshot helpers.
+   *
+   * @var \Drupal\soda_scs_manager\Helpers\SodaScsSnapshotHelpers
+   */
+  protected SodaScsSnapshotHelpers $sodaScsSnapshotHelpers;
+
+
+  /**
    * Class constructor.
    */
   public function __construct(
@@ -77,8 +86,9 @@ class SodaScsTriplestoreComponentActions implements SodaScsComponentActionsInter
     EntityTypeManagerInterface $entityTypeManager,
     LoggerChannelFactoryInterface $loggerFactory,
     MessengerInterface $messenger,
-    SodaScsServiceRequestInterface $sodaScsOpenGdbServiceActions,
+    SodaScsOpenGdbRequestInterface $sodaScsOpenGdbServiceActions,
     SodaScsServiceKeyActionsInterface $sodaScsServiceKeyActions,
+    SodaScsSnapshotHelpers $sodaScsSnapshotHelpers,
     TranslationInterface $stringTranslation,
   ) {
     // Services from container.
@@ -90,6 +100,7 @@ class SodaScsTriplestoreComponentActions implements SodaScsComponentActionsInter
     $this->settings = $settings;
     $this->sodaScsOpenGdbServiceActions = $sodaScsOpenGdbServiceActions;
     $this->sodaScsServiceKeyActions = $sodaScsServiceKeyActions;
+    $this->sodaScsSnapshotHelpers = $sodaScsSnapshotHelpers;
     $this->stringTranslation = $stringTranslation;
   }
 
@@ -448,7 +459,7 @@ class SodaScsTriplestoreComponentActions implements SodaScsComponentActionsInter
    *
    * @param \Drupal\soda_scs_manager\Entity\SodaScsComponentInterface $component
    *   The SODa SCS Component.
-   * @param string $timestamp
+   * @param int $timestamp
    *   The timestamp of the snapshot.
    * @param string $snapshotMachineName
    *   The machine name of the snapshot.
@@ -456,10 +467,78 @@ class SodaScsTriplestoreComponentActions implements SodaScsComponentActionsInter
    * @return array
    *   Result information with the created snapshot.
    */
-  public function createSnapshot(SodaScsComponentInterface $component, string $timestamp, string $snapshotMachineName): SodaScsResult {
+  public function createSnapshot(SodaScsComponentInterface $component, string $snapshotMachineName, int $timestamp): SodaScsResult {
+    // Create paths
+    // @todo Abstract this.
+    $snapshotPaths = $this->sodaScsSnapshotHelpers->constructSnapshotPaths($component, $snapshotMachineName, $timestamp);
+
+    // Create the backup directory.
+    $dirCreateResult = $this->sodaScsSnapshotHelpers->createDir($snapshotPaths['backupPathWithType']);
+    if (!$dirCreateResult['success']) {
+      return SodaScsResult::failure(
+        error: $dirCreateResult['error'],
+        message: 'Snapshot creation failed: Could not create backup directory.',
+      );
+    }
+    
+    // Build the request parameters.
+    $requestParams = [
+      'type' => 'select',
+      'queryParams' => [
+        'query' => 'select * where {?s ?p ?o .} '
+      ],
+      'routeParams' => [
+        'repositoryId' => $component->get('machineName')->value,
+      ],
+    ];
+
+    // Construct and do the request.
+    $openGdbDumpRequest = $this->sodaScsOpenGdbServiceActions->buildDumpRequest($requestParams);
+    $openGdbDumpResponse = $this->sodaScsOpenGdbServiceActions->makeRequest($openGdbDumpRequest);
+
+    if (!$openGdbDumpResponse['success']) {
+      return SodaScsResult::failure(
+        error: $openGdbDumpResponse['error'],
+        message: 'Snapshot creation failed: Could not dump triplestore component.',
+      );
+    }
+
+    $dumpData = $openGdbDumpResponse['data']['openGdbResponse']->getBody()->getContents();
+
+    // Transform SPARQL JSON to N-Quads and save to filesystem.
+    $nquadsResult = $this->sodaScsSnapshotHelpers->transformSparqlJsonToNquads($dumpData, $component, $snapshotPaths['backupPathWithType'], $timestamp);
+    if (!$nquadsResult['success']) {
+      return SodaScsResult::failure(
+        error: $nquadsResult['error'],
+        message: 'Snapshot creation failed: Could not convert to N-Quads format.',
+      );
+    }
+
     return SodaScsResult::success(
       message: 'Snapshot created successfully.',
-      data: [],
+      data: [
+        $component->bundle() => [
+          'startContainerResponse' => NULL,
+          'createContainerResponse' => NULL,
+          'metadata' => [
+            'backupPath' => $snapshotPaths['backupPath'],
+            'contentFilePaths' => [
+              'tarFilePath' => $snapshotPaths['absoluteTarFilePath'],
+              'sha256FilePath' => $snapshotPaths['absoluteSha256FilePath'],
+            ],
+            'contentFileNames' => [
+              'tarFileName' => $snapshotPaths['tarFileName'],
+              'sha256FileName' => $snapshotPaths['sha256FileName'],
+            ],
+            'containerId' => NULL,
+            'snapshotMachineName' => $snapshotMachineName,
+            'timestamp' => $timestamp,
+            'componentBundle' => $component->bundle(),
+            'componentId' => $component->id(),
+            'componentMachineName' => $component->get('machineName')->value,
+          ],
+        ],
+      ],
     );
   }
 

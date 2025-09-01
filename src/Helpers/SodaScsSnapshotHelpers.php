@@ -84,7 +84,7 @@ public function __construct(
         case 'soda_scs_sql_component':
           $type = 'sql';
           break;
-        case 'soda_scs_triple_store_component':
+        case 'soda_scs_triplestore_component':
           $type = 'nq';
           break;
         default:
@@ -482,6 +482,316 @@ public function __construct(
     }
     // Calculate maxAttempts as the number of sleep intervals that fit in the timeout.
     return (int) floor((int)$phpRequestTimeout / $sleepInterval);
+  }
+
+  /**
+   * Transform SPARQL JSON results to N-Quads format and save to filesystem.
+   *
+   * @param string $sparqlJsonData
+   *   The SPARQL JSON results as string.
+   * @param \Drupal\soda_scs_manager\Entity\SodaScsComponentInterface $component
+   *   The component entity.
+   * @param string $backupPath
+   *   The backup directory path.
+   * @param int $timestamp
+   *   The timestamp.
+   *
+   * @return array
+   *   Result array with success status and file information.
+   */
+  public function transformSparqlJsonToNquads($sparqlJsonData, SodaScsComponentInterface $component, $backupPath, int $timestamp) {
+    try {
+      // Parse the SPARQL JSON data.
+      $sparqlResults = json_decode($sparqlJsonData, TRUE);
+      
+      if (json_last_error() !== JSON_ERROR_NONE) {
+        return [
+          'success' => FALSE,
+          'error' => 'Invalid JSON data: ' . json_last_error_msg(),
+        ];
+      }
+
+      if (!isset($sparqlResults['results']['bindings'])) {
+        return [
+          'success' => FALSE,
+          'error' => 'Invalid SPARQL JSON format: missing results.bindings',
+        ];
+      }
+
+      $nquads = [];
+      $triplesCount = 0;
+
+      // Process each binding (triple).
+      foreach ($sparqlResults['results']['bindings'] as $binding) {
+        if (!isset($binding['s'], $binding['p'], $binding['o'])) {
+          continue; // Skip incomplete triples.
+        }
+
+        $subject = $this->formatRdfTerm($binding['s']);
+        $predicate = $this->formatRdfTerm($binding['p']);
+        $object = $this->formatRdfTerm($binding['o']);
+
+        if ($subject && $predicate && $object) {
+          $nquads[] = "$subject $predicate $object .";
+          $triplesCount++;
+        }
+      }
+
+      // Create the N-Quads file.
+      $fileName = $component->get('machineName')->value . '--' .(string) $timestamp   . '.nq';
+      $filePath = $backupPath . '/' . $fileName;
+
+      // Write N-Quads to file using the createFile helper.
+      $nquadsContent = implode("\n", $nquads);
+      
+      $writeResult = $this->writeFileContent($filePath, $nquadsContent);
+      
+      if (!$writeResult['success']) {
+        return [
+          'success' => FALSE,
+          'error' => 'Failed to write N-Quads file: ' . $writeResult['error'],
+        ];
+      }
+
+      return [
+        'success' => TRUE,
+        'file_path' => $filePath,
+        'file_name' => $fileName,
+        'triples_count' => $triplesCount,
+      ];
+
+    } catch (\Exception $e) {
+      Error::logException(
+        $this->logger,
+        $e,
+        'N-Quads transformation failed: @message',
+        ['@message' => $e->getMessage()],
+        LogLevel::ERROR
+      );
+      return [
+        'success' => FALSE,
+        'error' => 'Exception during N-Quads conversion: ' . $e->getMessage(),
+      ];
+    }
+  }
+
+  /**
+   * Format an RDF term for N-Quads serialization.
+   *
+   * @param array $term
+   *   The RDF term from SPARQL JSON binding.
+   *
+   * @return string|null
+   *   The formatted term or NULL if invalid.
+   */
+  private function formatRdfTerm($term) {
+    if (!isset($term['type'], $term['value'])) {
+      return NULL;
+    }
+
+    switch ($term['type']) {
+      case 'uri':
+        return '<' . $term['value'] . '>';
+
+      case 'literal':
+        $value = '"' . addslashes($term['value']) . '"';
+        
+        // Add language tag if present.
+        if (isset($term['xml:lang'])) {
+          $value .= '@' . $term['xml:lang'];
+        }
+        // Add datatype if present.
+        elseif (isset($term['datatype'])) {
+          $value .= '^^<' . $term['datatype'] . '>';
+        }
+        
+        return $value;
+
+      case 'bnode':
+        return '_:' . $term['value'];
+
+      default:
+        return NULL;
+    }
+  }
+
+  /**
+   * Write file content using native PHP file operations.
+   *
+   * @param string $filePath
+   *   The full file path to write to.
+   * @param string $content
+   *   The content to write.
+   *
+   * @return array
+   *   Result array with success status.
+   */
+  public function writeFileContent($filePath, $content) {
+    try {
+      $this->logger->info('Attempting to write file: @path', ['@path' => $filePath]);
+      
+      // First, ensure the directory exists using native PHP.
+      $directory = dirname($filePath);
+      if (!is_dir($directory)) {
+        $this->logger->info('Creating directory: @dir', ['@dir' => $directory]);
+        if (!mkdir($directory, 0755, TRUE)) {
+          $error = 'Failed to create directory: ' . $directory;
+          $this->logger->error($error);
+          return [
+            'message' => $this->t("Failed to create directory: @dir", ['@dir' => $directory]),
+            'success' => FALSE,
+            'error' => $error,
+            'data' => [],
+            'statusCode' => 500,
+          ];
+        }
+      }
+
+      // Write the file using native PHP file_put_contents.
+      $bytesWritten = file_put_contents($filePath, $content, LOCK_EX);
+      
+      if ($bytesWritten === FALSE) {
+        $error = 'Failed to write file content to: ' . $filePath;
+        $this->logger->error($error);
+        return [
+          'message' => $this->t("Failed to write file: @path", ['@path' => $filePath]),
+          'success' => FALSE,
+          'error' => $error,
+          'data' => [],
+          'statusCode' => 500,
+        ];
+      }
+
+      // Verify the file was actually created and has content.
+      if (!file_exists($filePath)) {
+        $error = 'File was not created: ' . $filePath;
+        $this->logger->error($error);
+        return [
+          'message' => $this->t("File was not created successfully at: @path", ['@path' => $filePath]),
+          'success' => FALSE,
+          'error' => $error,
+          'data' => [],
+          'statusCode' => 500,
+        ];
+      }
+
+      $fileSize = filesize($filePath);
+      if ($fileSize === FALSE) {
+        $fileSize = 0;
+      }
+
+      $this->logger->info('File written and verified successfully: @path (@bytes bytes)', [
+        '@path' => $filePath,
+        '@bytes' => $bytesWritten,
+      ]);
+
+      return [
+        'message' => $this->t("File written successfully."),
+        'success' => TRUE,
+        'error' => '',
+        'data' => [
+          'file_path' => $filePath,
+          'file_size' => $fileSize,
+          'bytes_written' => $bytesWritten,
+        ],
+        'statusCode' => 200,
+      ];
+    }
+    catch (\Exception $e) {
+      $this->logger->error('Exception during file write: @message', ['@message' => $e->getMessage()]);
+      return [
+        'message' => $this->t("Failed to write file: @error", ['@error' => $e->getMessage()]),
+        'success' => FALSE,
+        'error' => $e->getMessage(),
+        'data' => $e,
+        'statusCode' => $e->getCode(),
+      ];
+    }
+  }
+
+  /**
+   * Verify that a file exists using Docker exec container.
+   *
+   * @param string $filePath
+   *   The full file path to verify.
+   *
+   * @return array
+   *   Result array with success status and file information.
+   */
+  public function verifyFileExists($filePath) {
+    try {
+      $verifyExecRequest = $this->sodaScsDockerExecServiceActions->buildCreateRequest([
+        'containerName' => 'access-proxy',
+        'user' => '33',
+        'cmd' => [
+          'sh',
+          '-c',
+          'if [ -f "' . $filePath . '" ]; then stat -c "%s" "' . $filePath . '"; else echo "FILE_NOT_FOUND"; fi',
+        ],
+      ]);
+
+      $verifyExecResponse = $this->sodaScsDockerExecServiceActions->makeRequest($verifyExecRequest);
+
+      if (!$verifyExecResponse['success']) {
+        return $verifyExecResponse;
+      }
+
+      $verifyExecId = json_decode($verifyExecResponse['data']['portainerResponse']->getBody()->getContents(), TRUE)['Id'];
+
+      $verifyStartExecRequest = $this->sodaScsDockerExecServiceActions->buildStartRequest([
+        'execId' => $verifyExecId,
+      ]);
+
+      $verifyStartExecResponse = $this->sodaScsDockerExecServiceActions->makeRequest($verifyStartExecRequest);
+
+      if (!$verifyStartExecResponse['success']) {
+        return $verifyStartExecResponse;
+      }
+
+      // Check if we can get the output from the exec response.
+      $output = '';
+      if (isset($verifyStartExecResponse['data']['portainerResponse'])) {
+        $response = $verifyStartExecResponse['data']['portainerResponse'];
+        $output = $response->getBody()->getContents();
+      }
+
+      // If output contains FILE_NOT_FOUND, the file doesn't exist.
+      if (strpos($output, 'FILE_NOT_FOUND') !== FALSE) {
+        return [
+          'message' => $this->t("File not found: @path", ['@path' => $filePath]),
+          'success' => FALSE,
+          'error' => 'File does not exist',
+          'data' => [],
+          'statusCode' => 404,
+        ];
+      }
+
+      // Extract file size from output.
+      $fileSize = 0;
+      if (is_numeric(trim($output))) {
+        $fileSize = (int) trim($output);
+      }
+
+      return [
+        'message' => $this->t("File exists and verified."),
+        'success' => TRUE,
+        'error' => '',
+        'data' => [
+          'file_path' => $filePath,
+          'file_size' => $fileSize,
+        ],
+        'statusCode' => 200,
+      ];
+    }
+    catch (\Exception $e) {
+      return [
+        'message' => $this->t("Failed to verify file: @error", ['@error' => $e->getMessage()]),
+        'success' => FALSE,
+        'error' => $e->getMessage(),
+        'data' => $e,
+        'statusCode' => $e->getCode(),
+      ];
+    }
   }
 
 }

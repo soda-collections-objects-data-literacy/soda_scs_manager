@@ -343,7 +343,7 @@ class SodaScsSqlComponentActions implements SodaScsComponentActionsInterface {
    *
    * @param \Drupal\soda_scs_manager\Entity\SodaScsComponentInterface $component
    *   The SODa SCS Component.
-   * @param string $timestamp
+   * @param int $timestamp
    *   The timestamp of the snapshot.
    * @param string $snapshotMachineName
    *   The machine name of the snapshot.
@@ -351,7 +351,7 @@ class SodaScsSqlComponentActions implements SodaScsComponentActionsInterface {
    * @return SodaScsResult
    *   Result information with the created snapshot.
    */
-  public function createSnapshot(SodaScsComponentInterface $component, string $snapshotMachineName, string $timestamp): SodaScsResult {
+  public function createSnapshot(SodaScsComponentInterface $component, string $snapshotMachineName, int $timestamp): SodaScsResult {
     try {
       $snapshotPaths = $this->sodaScsSnapshotHelpers->constructSnapshotPaths($component, $snapshotMachineName, $timestamp);
 

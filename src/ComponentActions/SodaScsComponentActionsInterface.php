@@ -34,13 +34,13 @@ interface SodaScsComponentActionsInterface {
    * @param \Drupal\soda_scs_manager\Entity\SodaScsComponentInterface $component
    *   The SODa SCS Component to create the snapshot from.
    *
-   * @param string $timestamp
+   * @param int $timestamp
    *   The timestamp of the snapshot.
    *
    * @return SodaScsResult
    *   Result information with the created snapshot.
    */
-  public function createSnapshot(SodaScsComponentInterface $component, string $snapshotMachineName, string $timestamp): SodaScsResult;
+  public function createSnapshot(SodaScsComponentInterface $component, string $snapshotMachineName, int $timestamp): SodaScsResult;
 
   /**
    * Get all SODa SCS Component.
