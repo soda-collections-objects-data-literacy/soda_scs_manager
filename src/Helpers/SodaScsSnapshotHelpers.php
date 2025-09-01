@@ -394,7 +394,7 @@ public function __construct(
 }
 
   /**
-   * Create FS dir via access-proxy container.
+   * Create directory using native PHP operations.
    *
    * @param string $path
    *   The path to create.
@@ -410,39 +410,34 @@ public function __construct(
    */
   public function createDir(string $path) {
     try {
-      $dirCreateExecRequest = $this->sodaScsDockerExecServiceActions->buildCreateRequest([
-        'containerName' => 'access-proxy',
-        'user' => '33',
-        'cmd' => [
-          'mkdir',
-          '-p',
-          $path,
-        ],
-      ]);
-
-      $dirCreateExecResponse = $this->sodaScsDockerExecServiceActions->makeRequest($dirCreateExecRequest);
-
-      if (!$dirCreateExecResponse['success']) {
-        return $dirCreateExecResponse;
+      // Check if directory already exists.
+      if (is_dir($path)) {
+        return [
+          'message' => $this->t("Directory already exists."),
+          'success' => TRUE,
+          'error' => '',
+          'data' => ['path' => $path],
+          'statusCode' => 200,
+        ];
       }
 
-      $dirCreateExecId = json_decode($dirCreateExecResponse['data']['portainerResponse']->getBody()->getContents(), TRUE)['Id'];
-
-      $dirCreateStartExecRequest = $this->sodaScsDockerExecServiceActions->buildStartRequest([
-        'execId' => $dirCreateExecId,
-      ]);
-
-      $dirCreateStartExecResponse = $this->sodaScsDockerExecServiceActions->makeRequest($dirCreateStartExecRequest);
-
-      if (!$dirCreateStartExecResponse['success']) {
-        return $dirCreateStartExecResponse;
+      // Create the directory with proper permissions.
+      if (!mkdir($path, 0755, TRUE)) {
+        $error = 'Failed to create directory: ' . $path;
+        return [
+          'message' => $this->t("Failed to create directory: @path", ['@path' => $path]),
+          'success' => FALSE,
+          'error' => $error,
+          'data' => [],
+          'statusCode' => 500,
+        ];
       }
 
       return [
         'message' => $this->t("Directory created successfully."),
         'success' => TRUE,
         'error' => '',
-        'data' => [],
+        'data' => ['path' => $path],
         'statusCode' => 200,
       ];
     }
@@ -543,7 +538,7 @@ public function __construct(
 
       // Write N-Quads to file using the createFile helper.
       $nquadsContent = implode("\n", $nquads);
-      
+      // Use native file writing.
       $writeResult = $this->writeFileContent($filePath, $nquadsContent);
       
       if (!$writeResult['success']) {
@@ -710,7 +705,7 @@ public function __construct(
   }
 
   /**
-   * Verify that a file exists using Docker exec container.
+   * Verify that a file exists using native PHP file operations.
    *
    * @param string $filePath
    *   The full file path to verify.
@@ -720,43 +715,7 @@ public function __construct(
    */
   public function verifyFileExists($filePath) {
     try {
-      $verifyExecRequest = $this->sodaScsDockerExecServiceActions->buildCreateRequest([
-        'containerName' => 'access-proxy',
-        'user' => '33',
-        'cmd' => [
-          'sh',
-          '-c',
-          'if [ -f "' . $filePath . '" ]; then stat -c "%s" "' . $filePath . '"; else echo "FILE_NOT_FOUND"; fi',
-        ],
-      ]);
-
-      $verifyExecResponse = $this->sodaScsDockerExecServiceActions->makeRequest($verifyExecRequest);
-
-      if (!$verifyExecResponse['success']) {
-        return $verifyExecResponse;
-      }
-
-      $verifyExecId = json_decode($verifyExecResponse['data']['portainerResponse']->getBody()->getContents(), TRUE)['Id'];
-
-      $verifyStartExecRequest = $this->sodaScsDockerExecServiceActions->buildStartRequest([
-        'execId' => $verifyExecId,
-      ]);
-
-      $verifyStartExecResponse = $this->sodaScsDockerExecServiceActions->makeRequest($verifyStartExecRequest);
-
-      if (!$verifyStartExecResponse['success']) {
-        return $verifyStartExecResponse;
-      }
-
-      // Check if we can get the output from the exec response.
-      $output = '';
-      if (isset($verifyStartExecResponse['data']['portainerResponse'])) {
-        $response = $verifyStartExecResponse['data']['portainerResponse'];
-        $output = $response->getBody()->getContents();
-      }
-
-      // If output contains FILE_NOT_FOUND, the file doesn't exist.
-      if (strpos($output, 'FILE_NOT_FOUND') !== FALSE) {
+      if (!file_exists($filePath)) {
         return [
           'message' => $this->t("File not found: @path", ['@path' => $filePath]),
           'success' => FALSE,
@@ -766,10 +725,25 @@ public function __construct(
         ];
       }
 
-      // Extract file size from output.
-      $fileSize = 0;
-      if (is_numeric(trim($output))) {
-        $fileSize = (int) trim($output);
+      if (!is_file($filePath)) {
+        return [
+          'message' => $this->t("Path is not a file: @path", ['@path' => $filePath]),
+          'success' => FALSE,
+          'error' => 'Path exists but is not a file',
+          'data' => [],
+          'statusCode' => 400,
+        ];
+      }
+
+      $fileSize = filesize($filePath);
+      if ($fileSize === FALSE) {
+        return [
+          'message' => $this->t("Cannot determine file size: @path", ['@path' => $filePath]),
+          'success' => FALSE,
+          'error' => 'Failed to get file size',
+          'data' => [],
+          'statusCode' => 500,
+        ];
       }
 
       return [
@@ -779,6 +753,8 @@ public function __construct(
         'data' => [
           'file_path' => $filePath,
           'file_size' => $fileSize,
+          'is_readable' => is_readable($filePath),
+          'is_writable' => is_writable($filePath),
         ],
         'statusCode' => 200,
       ];
