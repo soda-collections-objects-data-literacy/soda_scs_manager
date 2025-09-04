@@ -359,7 +359,16 @@ class SodaScsSnapshotConfirmForm extends ConfirmFormBase {
 
     $snapshot->save();
 
-    $this->entity->set('snapshots', $snapshot->id());
+    // Add the snapshot to the referenced entities, preserving existing references.
+    $existingSnapshots = $this->entity->get('snapshots')->getValue();
+    $snapshotReferences = [];
+    foreach ($existingSnapshots as $item) {
+      if (isset($item['target_id'])) {
+        $snapshotReferences[] = $item['target_id'];
+      }
+    }
+    $snapshotReferences[] = $snapshot->id();
+    $this->entity->set('snapshots', $snapshotReferences);
     $this->entity->save();
 
     $this->messenger()->addMessage($this->t('Created new snapshot %label.', [

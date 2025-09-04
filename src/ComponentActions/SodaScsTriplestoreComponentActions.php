@@ -490,6 +490,7 @@ class SodaScsTriplestoreComponentActions implements SodaScsComponentActionsInter
       'routeParams' => [
         'repositoryId' => $component->get('machineName')->value,
       ],
+      'body' => [],
     ];
 
     // Construct and do the request.

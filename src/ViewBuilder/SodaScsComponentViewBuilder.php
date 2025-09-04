@@ -3,7 +3,7 @@
 namespace Drupal\soda_scs_manager\ViewBuilder;
 
 use Drupal\Core\Entity\EntityViewBuilder;
-
+use Drupal\Core\Entity\EntityInterface;
 use Drupal\Core\Entity\EntityRepositoryInterface;
 use Drupal\Core\Entity\EntityDisplayRepositoryInterface;
 use Drupal\Core\Entity\EntityTypeInterface;
@@ -81,6 +81,32 @@ class SodaScsComponentViewBuilder extends EntityViewBuilder {
     $build['#attached']['library'][] = 'soda_scs_manager/componentHelpers';
     $build['#attached']['drupalSettings']['componentInfo']['healthUrl'] = '/soda-scs-manager/health/' . $build['#soda_scs_component']->id();
 
+    return $build;
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  protected function getBuildDefaults(EntityInterface $entity, $view_mode) {
+    $build = parent::getBuildDefaults($entity, $view_mode);
+
+    // Add the bundle to the build array.
+    // Add a field with the bundle name.
+    $build['bundleName'] = [
+      '#type' => 'markup',
+      '#markup' => $entity->bundle(),
+      '#access' => TRUE,
+      '#weight' => 10,
+      '#title' => 'Bundle',
+    ];
+    
+    // Add custom theme suggestions.
+    $build['#theme'] = 'soda_scs_component';
+    
+    // Make entity and view_mode available to template suggestions.
+    $build['#soda_scs_component'] = $entity;
+    $build['#view_mode'] = $view_mode;
+    
     return $build;
   }
 

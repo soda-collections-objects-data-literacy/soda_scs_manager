@@ -487,10 +487,6 @@ class SodaScsOpenGdbServiceActions implements SodaScsOpenGdbRequestInterface {
       $route .= '?' . http_build_query($requestParams['queryParams']);
     }
 
-    if (!empty($requestParams['body'])) {
-      $body = json_encode($requestParams['body']);
-    }
-
     return [
       'type' => 'select',
       'success' => TRUE,
@@ -501,7 +497,7 @@ class SodaScsOpenGdbServiceActions implements SodaScsOpenGdbRequestInterface {
         'Accept' => 'application/json',
         'Authorization' => 'Basic ' . base64_encode($triplestoreServiceSettings['adminUsername'] . ':' . $triplestoreServiceSettings['adminPassword']),
       ],
-      'body' => $body,
-    ];
+      'body' => !empty($requestParams['body']) ? json_encode($requestParams['body']) : '',
+    ]; 
   }
 }

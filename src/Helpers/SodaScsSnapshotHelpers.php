@@ -219,7 +219,7 @@ public function __construct(
         case 'soda_scs_sql_component':
           $type = 'sql';
           break;
-        case 'soda_scs_triple_store_component':
+        case 'soda_scs_triplestore_component':
           $type = 'nq';
           break;
         default:
@@ -296,7 +296,7 @@ public function __construct(
         case 'soda_scs_sql_component':
           $type = 'sql';
           break;
-        case 'soda_scs_triple_store_component':
+        case 'soda_scs_triplestore_component':
           $type = 'nq';
           break;
         default:
@@ -623,12 +623,10 @@ public function __construct(
    */
   public function writeFileContent($filePath, $content) {
     try {
-      $this->logger->info('Attempting to write file: @path', ['@path' => $filePath]);
       
       // First, ensure the directory exists using native PHP.
       $directory = dirname($filePath);
       if (!is_dir($directory)) {
-        $this->logger->info('Creating directory: @dir', ['@dir' => $directory]);
         if (!mkdir($directory, 0755, TRUE)) {
           $error = 'Failed to create directory: ' . $directory;
           $this->logger->error($error);
@@ -674,11 +672,6 @@ public function __construct(
       if ($fileSize === FALSE) {
         $fileSize = 0;
       }
-
-      $this->logger->info('File written and verified successfully: @path (@bytes bytes)', [
-        '@path' => $filePath,
-        '@bytes' => $bytesWritten,
-      ]);
 
       return [
         'message' => $this->t("File written successfully."),
