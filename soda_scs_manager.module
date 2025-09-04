@@ -435,6 +435,10 @@ function soda_scs_manager_soda_scs_stack_view(array &$build, EntityInterface $en
  */
 function soda_scs_manager_theme($existing, $type, $theme, $path) {
   return [
+    'soda_scs_component' => [
+      'render element' => 'elements',
+      'template' => 'entity/soda-scs-component',
+    ],
     'soda_scs_manager__store' => [
       'variables' => [
         'components' => NULL,
@@ -470,6 +474,44 @@ function soda_scs_manager_theme($existing, $type, $theme, $path) {
       'template' => 'pages/soda-scs-manager--start-page',
     ],
   ];
+}
+
+/**
+ * Implements hook_theme_suggestions_HOOK().
+ */
+function soda_scs_manager_theme_suggestions_soda_scs_component(array $variables) {
+  $suggestions = [];
+  
+  /** @var \Drupal\soda_scs_manager\Entity\SodaScsComponent $entity */
+  $entity = $variables['elements']['#soda_scs_component'];
+  $view_mode = $variables['elements']['#view_mode'];
+  
+  // Add suggestion based on bundle.
+  $suggestions[] = 'soda_scs_component__' . $entity->bundle();
+  
+  // Add suggestion based on view mode.
+  $suggestions[] = 'soda_scs_component__' . $view_mode;
+  
+  // Add suggestion based on bundle and view mode.
+  $suggestions[] = 'soda_scs_component__' . $entity->bundle() . '__' . $view_mode;
+  
+  // Add suggestion based on entity ID.
+  $suggestions[] = 'soda_scs_component__' . $entity->id();
+  
+  return $suggestions;
+}
+
+/**
+ * Implements hook_theme_suggestions_HOOK_alter().
+ */
+function soda_scs_manager_theme_suggestions_soda_scs_component_alter(array &$suggestions, array $variables) {
+  /** @var \Drupal\soda_scs_manager\Entity\SodaScsComponent $entity */
+  $entity = $variables['elements']['#soda_scs_component'];
+  
+  // Add custom suggestions based on specific conditions.
+  if ($entity->hasField('tags') && !$entity->get('tags')->isEmpty()) {
+    $suggestions[] = 'soda_scs_component__with_tags';
+  }
 }
 
 /**

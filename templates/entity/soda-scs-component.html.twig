@@ -1,0 +1,102 @@
+{#
+/**
+ * @file
+ * Default template for SodaScsComponent entity.
+ *
+ * Available variables:
+ * - elements: The render array for the SodaScsComponent entity.
+ * - attributes: HTML attributes for the containing element.
+ * - view_mode: The view mode.
+ */
+#}
+
+<article{{ attributes.addClass('soda-scs-manager--component', 'soda-scs-manager--component--default') }}>
+  <header class="soda-scs-manager--component-header">
+    <div class="soda-scs-manager--component-row">
+      {% if elements.imageUrl %}
+        <div class="soda-scs-manager--component-thumbnail">
+          {{ elements.imageUrl }}
+        </div>
+      {% endif %}
+      {% if elements.label %}
+        <div class="soda-scs-manager--component-title">
+          {{ elements.label }}
+        </div>
+      {% endif %}
+    </div>
+    {% if elements.machineName %}
+      <div class="soda-scs-manager--component-row">
+        {{ elements.machineName }}
+      </div>
+    {% endif %}
+    {% if elements.description %}
+      <div class="soda-scs-manager--component-row">
+        {{ elements.description }}
+      </div>
+    {% endif %}
+    {% if elements.health %}
+      <div class="soda-scs-manager--component-row">
+        <div class="soda-scs-manager--component-health">
+          {{ elements.health }}
+        </div>
+      </div>
+    {% endif %}
+
+    {% if elements.tags %}
+      <div class="soda-scs-manager--component-row">
+       <div class="soda-scs-manager--component-tags">
+        {{ elements.tags }}
+        </div>
+      </div>
+    {% endif %}
+  </header>
+
+  <main class="soda-scs-manager--component-main">
+  <div class="soda-scs-manager--component-left-column">
+    <div class="soda-scs-manager--component-info">
+        {% if elements.bundle %}
+        {{ elements.bundle }}
+        {% endif %}
+        
+        {% if elements.partOfProjects %}
+        {{ elements.partOfProjects }}
+        {% endif %}
+
+        {% if elements.connectedComponents %}
+        {{ elements.connectedComponents }}
+        {% endif %}
+        {% if elements.status %}
+        {{ elements.status }}
+        {% endif %}
+        {% if elements.notes %}
+        {{ elements.notes }}
+        {% endif %}
+    </div>
+  </div>
+  <div class="soda-scs-manager--component-right-column">
+    <div class="soda-scs-manager--component-service-key">
+        {% if elements.serviceKey %}
+        {{ elements.serviceKey }}
+        {% endif %}
+    </div>
+    <div class="soda-scs-manager--component-snapshots">
+        {% if elements.snapshots %}
+        {{ elements.snapshots }}
+        {% endif %}
+    </div>
+  </div>
+ 
+  </main>
+
+  <footer class="soda-scs-manager--component-footer">
+    {% if elements.created %}
+      <div class="soda-scs-manager--component-created">{{ elements.created }}</div>
+    {% endif %}
+    {% if elements.updated %}
+      <div class="soda-scs-manager--component-updated">{{ elements.updated }}</div>
+    {% endif %}
+    {% if elements.owner %}
+      <div class="soda-scs-manager--component-owner">{{ elements.owner }}</div>
+    {% endif %}
+  </footer>
+</article>

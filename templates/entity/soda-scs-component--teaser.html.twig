@@ -1,0 +1,85 @@
+{#
+/**
+ * @file
+ * Template for SodaScsComponent entity - Teaser view mode.
+ *
+ * This template is used when the view mode is 'teaser'.
+ */
+#}
+<article{{ attributes.addClass('soda-scs-manager--component', 'soda-scs-manager--component--teaser') }}>
+  <div class="soda-scs-manager--teaser-card bg-white rounded-lg shadow-md hover:shadow-lg transition-shadow duration-200 p-4">
+    
+    {# Component type indicator #}
+    <div class="soda-scs-manager--teaser-type mb-2">
+      {% set bundle_class = 'soda-scs-manager--type--' ~ entity.bundle|replace({'soda_scs_': '', '_component': ''}) %}
+      <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium {{ bundle_class }}">
+        {% if entity.bundle == 'soda_scs_triplestore_component' %}
+          {{ 'Triplestore'|t }}
+        {% elseif entity.bundle == 'soda_scs_filesystem_component' %}
+          {{ 'Filesystem'|t }}
+        {% elseif entity.bundle == 'soda_scs_sql_component' %}
+          {{ 'SQL Database'|t }}
+        {% elseif entity.bundle == 'soda_scs_webprotege_component' %}
+          {{ 'WebProtégé'|t }}
+        {% elseif entity.bundle == 'soda_scs_wisski_component' %}
+          {{ 'WissKI'|t }}
+        {% else %}
+          {{ entity.bundle|replace({'soda_scs_': '', '_': ' '})|title }}
+        {% endif %}
+      </span>
+    </div>
+    
+    {# Component image and title #}
+    <div class="flex items-start gap-3 mb-3">
+      {% if entity.hasField('imageUrl') and entity.imageUrl.value %}
+        <div class="flex-shrink-0">
+          <img src="{{ file_url(entity.imageUrl.value) }}" alt="{{ entity.label }}" class="w-10 h-10 rounded" />
+        </div>
+      {% endif %}
+      
+      <div class="flex-1 min-w-0">
+        <h3 class="soda-scs-manager--teaser-title text-lg font-medium text-gray-900 truncate">
+          <a href="{{ url('entity.soda_scs_component.canonical', {'soda_scs_component': entity.id}) }}" class="hover:text-blue-600">
+            {{ entity.label }}
+          </a>
+        </h3>
+        
+        {% if content.description %}
+          <div class="soda-scs-manager--teaser-description text-sm text-gray-600 mt-1 line-clamp-2">
+            {{ content.description }}
+          </div>
+        {% endif %}
+      </div>
+    </div>
+    
+    {# Tags (limited to first 3) #}
+    {% if content.tags %}
+      <div class="soda-scs-manager--teaser-tags">
+        {% set tags = content.tags['#items']|slice(0, 3) %}
+        <div class="flex flex-wrap gap-1">
+          {% for tag in tags %}
+            <span class="inline-block bg-gray-100 text-gray-700 text-xs px-2 py-1 rounded">
+              {{ tag.value }}
+            </span>
+          {% endfor %}
+          {% if content.tags['#items']|length > 3 %}
+            <span class="text-xs text-gray-500">+{{ content.tags['#items']|length - 3 }} {{ 'more'|t }}</span>
+          {% endif %}
+        </div>
+      </div>
+    {% endif %}
+    
+    {# Status indicator #}
+    <div class="soda-scs-manager--teaser-status mt-3 pt-3 border-t border-gray-100">
+      <div class="flex items-center justify-between">
+        <span class="text-xs text-gray-500">
+          {{ 'Created'|t }}: {{ entity.created.value|date('M j, Y') }}
+        </span>
+        <div class="flex items-center gap-1">
+          <div class="w-2 h-2 bg-green-400 rounded-full"></div>
+          <span class="text-xs text-gray-600">{{ 'Active'|t }}</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</article>

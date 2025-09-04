@@ -1,3 +1,27 @@
 /* Layout Components */
 /* These styles define layout structure components */
 
+@layer components {
+  /* Component header layout */
+  .soda-scs-manager--component-header {
+    @apply flex flex-col justify-center gap-4 p-4 border-b border-gray-200;
+  }
+
+  .soda-scs-manager--component-titlebar {
+    @apply flex-1 flex items-center justify-between min-h-16;
+  }
+
+  .soda-scs-manager--component-title {
+    @apply text-xl font-semibold text-gray-900 m-0;
+  }
+
+  .soda-scs-manager--component-health {
+    @apply flex items-center;
+  }
+
+  /* Component row layout */
+  .soda-scs-manager--component-row {
+    @apply flex items-center gap-3 min-h-16;
+  }
+}
+
