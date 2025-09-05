@@ -322,3 +322,9 @@ services:
       - '@soda_scs_manager.wisski_component.actions'
       - '@string_translation'
 
+# Subscriber
+  # Deny access to the user.register and user.pass routes
+  soda_scs_manager.disable_drupal_login_route_subscriber:
+    class: Drupal\soda_scs_manager\Routing\SodaScsDisableDrupalLoginRouteSubscriber
+    tags:
+      - { name: event_subscriber }

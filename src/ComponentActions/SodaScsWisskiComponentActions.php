@@ -242,6 +242,10 @@ class SodaScsWisskiComponentActions implements SodaScsComponentActionsInterface 
       // Get the default project of the owner.
       $defaultProjectId = $owner->get('default_project')->target_id;
 
+      if (empty($defaultProjectId)) {
+        throw new \Exception('Default project not found for user: ' . $owner->getDisplayName());
+      }
+
       // Get the default project.
       /** @var \Drupal\soda_scs_manager\Entity\SodaScsProjectInterface $defaultProject */
       $defaultProject = $this->entityTypeManager->getStorage('soda_scs_project')->load($defaultProjectId);
