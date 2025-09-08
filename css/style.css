@@ -284,6 +284,15 @@
   .z-50 {
     z-index: 50;
   }
+  .col-span-2 {
+    grid-column: span 2 / span 2;
+  }
+  .col-span-4 {
+    grid-column: span 4 / span 4;
+  }
+  .col-start-2 {
+    grid-column-start: 2;
+  }
   .float-left {
     float: left;
   }
@@ -472,6 +481,15 @@
   }
   .grid-cols-1 {
     grid-template-columns: repeat(1, minmax(0, 1fr));
+  }
+  .grid-cols-4 {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+  .grid-cols-6 {
+    grid-template-columns: repeat(6, minmax(0, 1fr));
+  }
+  .grid-rows-2 {
+    grid-template-rows: repeat(2, minmax(0, 1fr));
   }
   .flex-col {
     flex-direction: column;
@@ -1206,6 +1224,17 @@
   }
 }
 @layer components {
+  .field--type-text-long {
+    font-family: "metropolis", sans-serif;
+    font-feature-settings: normal;
+    font-size: 16px;
+    font-style: normal;
+    font-variation-settings: normal;
+    font-weight: 700;
+    hyphens: auto;
+  }
+}
+@layer components {
   .soda-scs-manager--view--grid {
     display: grid;
     grid-template-columns: repeat(1, minmax(0, 1fr));
@@ -1243,7 +1272,7 @@
       object-fit: cover;
     }
   }
-  .soda-scs-manager--component-thumbnail {
+  .soda-scs-manager--component--thumbnail {
     display: flex;
     height: calc(var(--spacing) * 16);
     width: calc(var(--spacing) * 16);
@@ -1433,24 +1462,47 @@
   }
 }
 @layer components {
-  .soda-scs-manager--component-header {
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
+  .soda-scs-manager--component--default {
+    display: grid;
+    grid-template-columns: repeat(6, minmax(0, 1fr));
     gap: calc(var(--spacing) * 4);
-    border-bottom-style: var(--tw-border-style);
-    border-bottom-width: 1px;
-    border-color: var(--color-gray-200);
-    padding: calc(var(--spacing) * 4);
   }
-  .soda-scs-manager--component-titlebar {
+  .soda-scs-manager--component--header {
+    grid-column: span 4 / span 4;
+    grid-column-start: 2;
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: calc(var(--spacing) * 4);
+  }
+  .soda-scs-manager--component--header--left {
+    grid-column: span 2 / span 2;
+  }
+  .soda-scs-manager--component--header--right {
+    grid-column: span 2 / span 2;
+    display: grid;
+    grid-template-rows: repeat(2, minmax(0, 1fr));
+    gap: calc(var(--spacing) * 2);
+  }
+  .soda-scs-manager--component--header-row {
     display: flex;
-    min-height: calc(var(--spacing) * 16);
-    flex: 1;
     align-items: center;
-    justify-content: space-between;
+    gap: calc(var(--spacing) * 4);
   }
-  .soda-scs-manager--component-title {
+  .soda-scs-manager--component--machine-name-row {
+    display: flex;
+    align-items: center;
+  }
+  .soda-scs-manager--component--health-row {
+    display: flex;
+    align-items: center;
+  }
+  .soda-scs-manager--component--description-row {
+    grid-column: span 4 / span 4;
+  }
+  .soda-scs-manager--component--tags-row {
+    grid-column: span 4 / span 4;
+  }
+  .soda-scs-manager--component--title {
     margin: calc(var(--spacing) * 0);
     font-size: var(--text-xl);
     line-height: var(--tw-leading, var(--text-xl--line-height));
@@ -1458,15 +1510,57 @@
     font-weight: var(--font-weight-semibold);
     color: var(--color-gray-900);
   }
-  .soda-scs-manager--component-health {
+  .soda-scs-manager--component--health {
     display: flex;
     align-items: center;
   }
-  .soda-scs-manager--component-row {
-    display: flex;
-    min-height: calc(var(--spacing) * 16);
-    align-items: center;
-    gap: calc(var(--spacing) * 3);
+  .soda-scs-manager--component--thumbnail {
+    flex-shrink: 0;
+  }
+  .soda-scs-manager--component--machine-name {
+    font-size: var(--text-sm);
+    line-height: var(--tw-leading, var(--text-sm--line-height));
+    color: var(--color-gray-600);
+  }
+  .soda-scs-manager--component--description {
+    margin-top: calc(var(--spacing) * 2);
+    color: var(--color-gray-700);
+  }
+  .soda-scs-manager--component--tags {
+    margin-top: calc(var(--spacing) * 2);
+  }
+  .soda-scs-manager--component--main {
+    grid-column: span 6 / span 6;
+    display: grid;
+    grid-template-columns: repeat(6, minmax(0, 1fr));
+    gap: calc(var(--spacing) * 4);
+  }
+  .soda-scs-manager--component--left-column {
+    grid-column: span 4 / span 4;
+  }
+  .soda-scs-manager--component--right-column {
+    grid-column: span 2 / span 2;
+  }
+  .soda-scs-manager--component--info {
+    grid-column: span 4 / span 4;
+  }
+  .soda-scs-manager--component--service-key {
+    grid-column: span 2 / span 2;
+  }
+  .soda-scs-manager--component--snapshots {
+    grid-column: span 2 / span 2;
+  }
+  .soda-scs-manager--component--footer {
+    grid-column: span 4 / span 4;
+  }
+  .soda-scs-manager--component--created {
+    grid-column: span 2 / span 2;
+  }
+  .soda-scs-manager--component--updated {
+    grid-column: span 2 / span 2;
+  }
+  .soda-scs-manager--component--owner {
+    grid-column: span 2 / span 2;
   }
 }
 @layer components {

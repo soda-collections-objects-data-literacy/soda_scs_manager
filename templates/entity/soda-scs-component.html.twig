@@ -10,93 +10,108 @@
  */
 #}
 
-<article{{ attributes.addClass('soda-scs-manager--component', 'soda-scs-manager--component--default') }}>
-  <header class="soda-scs-manager--component-header">
-    <div class="soda-scs-manager--component-row">
-      {% if elements.imageUrl %}
-        <div class="soda-scs-manager--component-thumbnail">
+<article{{attributes.addClass('soda-scs-manager--component','soda-scs-manager--component--default')}}>
+  <header class="soda-scs-manager--component--header">
+    <div class="soda-scs-manager--component--header--left">
+      <div class="soda-scs-manager--component--header-row">
+        {% if elements.imageUrl %}
+        <div class="soda-scs-manager--component--thumbnail">
           {{ elements.imageUrl }}
         </div>
-      {% endif %}
-      {% if elements.label %}
-        <div class="soda-scs-manager--component-title">
+        {% endif %}
+        {% if elements.label %}
+        <div class="soda-scs-manager--component--title">
           {{ elements.label }}
         </div>
-      {% endif %}
-    </div>
-    {% if elements.machineName %}
-      <div class="soda-scs-manager--component-row">
-        {{ elements.machineName }}
+        {% endif %}
       </div>
-    {% endif %}
-    {% if elements.description %}
-      <div class="soda-scs-manager--component-row">
-        {{ elements.description }}
+    </div> {# end of header left column #}
+
+    <div class="soda-scs-manager--component-header--right">
+      <div class="soda-scs-manager--component--machine-name-row">
+        {% if elements.machineName %}
+        <div class="soda-scs-manager--component--machine-name">
+          {{ elements.machineName }}
+        </div>
+        {% endif %}
       </div>
-    {% endif %}
-    {% if elements.health %}
-      <div class="soda-scs-manager--component-row">
-        <div class="soda-scs-manager--component-health">
+      <div class="soda-scs-manager--component--health-row">
+        {% if elements.health %}
+        <div class="soda-scs-manager--component--health">
           {{ elements.health }}
         </div>
+        {% endif %}
       </div>
-    {% endif %}
+    </div> {# end of header right column #}
 
-    {% if elements.tags %}
-      <div class="soda-scs-manager--component-row">
-       <div class="soda-scs-manager--component-tags">
-        {{ elements.tags }}
-        </div>
+    <div class="soda-scs-manager--component--description-row">
+      {% if elements.description %}
+      <div class="soda-scs-manager--component--description">
+        {{ elements.description }}
       </div>
-    {% endif %}
+      {% endif %}
+    </div> {# end of description row #}
+
+    <div class="soda-scs-manager--component--tags-row">
+      {% if elements.tags %}
+      <div class="soda-scs-manager--component--tags">
+        {{ elements.tags }}
+      </div>
+      {% endif %}
+    </div> {# end of tags row #}
   </header>
 
-  <main class="soda-scs-manager--component-main">
-  <div class="soda-scs-manager--component-left-column">
-    <div class="soda-scs-manager--component-info">
-        {% if elements.bundle %}
-        {{ elements.bundle }}
-        {% endif %}
-        
-        {% if elements.partOfProjects %}
-        {{ elements.partOfProjects }}
-        {% endif %}
-
-        {% if elements.connectedComponents %}
-        {{ elements.connectedComponents }}
-        {% endif %}
-        {% if elements.status %}
-        {{ elements.status }}
-        {% endif %}
-        {% if elements.notes %}
-        {{ elements.notes }}
-        {% endif %}
-    </div>
-  </div>
-  <div class="soda-scs-manager--component-right-column">
-    <div class="soda-scs-manager--component-service-key">
+  <main class="soda-scs-manager--component--main">
+    <div class="soda-scs-manager--component--left-column">
+      <div class="soda-scs-manager--component--service-key">
         {% if elements.serviceKey %}
         {{ elements.serviceKey }}
         {% endif %}
-    </div>
-    <div class="soda-scs-manager--component-snapshots">
+      </div>
+      <div class="soda-scs-manager--component--snapshots">
         {% if elements.snapshots %}
         {{ elements.snapshots }}
         {% endif %}
+      </div>
     </div>
-  </div>
- 
+    <div class="soda-scs-manager--component--right-column">
+      <div class="soda-scs-manager--component--bundle">
+        {% if elements.bundle %}
+        {{ elements.bundle }}
+        {% endif %}
+      </div>
+      <div class="soda-scs-manager--component--partOfProjects">
+      {% if elements.partOfProjects %}
+      {{ elements.partOfProjects }}
+      {% endif %}
+      </div>
+      <div class="soda-scs-manager--component--connectedComponents">
+      {% if elements.connectedComponents %}
+      {{ elements.connectedComponents }}
+      {% endif %}
+      </div>
+      <div class="soda-scs-manager--component--status">
+      {% if elements.status %}
+      {{ elements.status }}
+      {% endif %}
+      </div>
+      <div class="soda-scs-manager--component--notes">
+      {% if elements.notes %}
+      {{ elements.notes }}
+      {% endif %}
+      </div>
+    </div>
   </main>
-
-  <footer class="soda-scs-manager--component-footer">
+  <footer class="soda-scs-manager--component--footer">
+    {% if elements.owner %}
+	    <div class="soda-scs-manager--component--owner">{{ elements.owner }}</div>
+    {% endif %}
     {% if elements.created %}
-      <div class="soda-scs-manager--component-created">{{ elements.created }}</div>
+      <div class="soda-scs-manager--component--created">{{ elements.created }}</div>
     {% endif %}
     {% if elements.updated %}
-      <div class="soda-scs-manager--component-updated">{{ elements.updated }}</div>
+      <div class="soda-scs-manager--component--updated">{{ elements.updated }}</div>
     {% endif %}
-    {% if elements.owner %}
-      <div class="soda-scs-manager--component-owner">{{ elements.owner }}</div>
-    {% endif %}
+
   </footer>
 </article>
