@@ -116,9 +116,11 @@ services:
     arguments:
       - '@config.factory'
       - '@entity_type.manager'
+      - '@entity_type.bundle.info'
       - '@logger.factory'
       - '@messenger'
       - '@soda_scs_manager.opengdb_service.actions'
+      - '@soda_scs_manager.docker_run_service.actions'
       - '@soda_scs_manager.service_key.actions'
       - '@soda_scs_manager.snapshot.helpers'
       - '@string_translation'

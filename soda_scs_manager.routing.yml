@@ -217,6 +217,19 @@ entity.soda_scs_snapshot.collection:
   requirements:
     _permission: 'soda scs manager user'
 
+entity.soda_scs_snapshot.restore_form:
+  path: '/soda-scs-manager/snapshot/{soda_scs_snapshot}/restore'
+  defaults:
+    _form: 'Drupal\soda_scs_manager\Form\SodaScsSnapshotRestoreForm'
+    _title: 'Restore SODa SCS Snapshot'
+  requirements:
+    _permission: 'soda scs manager user'
+  options:
+    parameters:
+      soda_scs_snapshot:
+        type: entity:soda_scs_snapshot
+
+
 # Soda SCS Stack Entities
 
 entity.soda_scs_stack.canonical:

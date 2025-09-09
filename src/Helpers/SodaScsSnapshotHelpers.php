@@ -309,7 +309,7 @@ public function __construct(
   $manifest = '"'. $manifest . '"';
   // Create the request params.
   $requestParams = [
-    'name' => $snapshotMachineName . '--bag',
+    'name' => 'snapshot--' . $this->generateRandomSuffix() . '--' . $snapshotMachineName . '--bag',
     'volumes' => NULL,
     'image' => 'alpine:latest',
     'user' => '33:33',
@@ -496,13 +496,30 @@ public function __construct(
    */
   public function transformSparqlJsonToNquads($sparqlJsonData, SodaScsComponentInterface $component, $backupPath, int $timestamp) {
     try {
-      // Parse the SPARQL JSON data.
-      $sparqlResults = json_decode($sparqlJsonData, TRUE);
-      
-      if (json_last_error() !== JSON_ERROR_NONE) {
+      // Log the raw response for debugging.
+      $this->logger->debug('SPARQL response data: @data', ['@data' => substr($sparqlJsonData, 0, 500)]);
+
+      // Check if we have any data at all.
+      if (empty($sparqlJsonData)) {
         return [
           'success' => FALSE,
-          'error' => 'Invalid JSON data: ' . json_last_error_msg(),
+          'error' => 'Empty SPARQL response received from triplestore',
+        ];
+      }
+
+      // Parse the SPARQL JSON data.
+      $sparqlResults = json_decode($sparqlJsonData, TRUE);
+
+      if (json_last_error() !== JSON_ERROR_NONE) {
+        // Log more details about the invalid JSON.
+        $this->logger->error('JSON decode error: @error. Raw data (first 1000 chars): @data', [
+          '@error' => json_last_error_msg(),
+          '@data' => substr($sparqlJsonData, 0, 1000),
+        ]);
+
+        return [
+          'success' => FALSE,
+          'error' => 'Invalid JSON data: ' . json_last_error_msg() . '. Raw response: ' . substr($sparqlJsonData, 0, 200),
         ];
       }
 
@@ -514,9 +531,9 @@ public function __construct(
       }
 
       $nquads = [];
-      $triplesCount = 0;
+      $quadsCount = 0;
 
-      // Process each binding (triple).
+      // Process each binding (quad: subject, predicate, object, graph).
       foreach ($sparqlResults['results']['bindings'] as $binding) {
         if (!isset($binding['s'], $binding['p'], $binding['o'])) {
           continue; // Skip incomplete triples.
@@ -526,9 +543,13 @@ public function __construct(
         $predicate = $this->formatRdfTerm($binding['p']);
         $object = $this->formatRdfTerm($binding['o']);
 
-        if ($subject && $predicate && $object) {
-          $nquads[] = "$subject $predicate $object .";
-          $triplesCount++;
+        // Get the graph/context (4th element for N-Quads).
+        $graph = isset($binding['g']) ? $this->formatRdfTerm($binding['g']) : null;
+
+        if ($subject && $predicate && $object && $graph) {
+          // N-Quads format: <subject> <predicate> <object> <graph> .
+          $nquads[] = "$subject $predicate $object $graph .";
+          $quadsCount++;
         }
       }
 
@@ -537,10 +558,11 @@ public function __construct(
       $filePath = $backupPath . '/' . $fileName;
 
       // Write N-Quads to file using the createFile helper.
+      // Join statements with actual newlines (newlines within literal strings are already encoded by formatRdfTerm).
       $nquadsContent = implode("\n", $nquads);
       // Use native file writing.
       $writeResult = $this->writeFileContent($filePath, $nquadsContent);
-      
+
       if (!$writeResult['success']) {
         return [
           'success' => FALSE,
@@ -552,7 +574,7 @@ public function __construct(
         'success' => TRUE,
         'file_path' => $filePath,
         'file_name' => $fileName,
-        'triples_count' => $triplesCount,
+        'quads_count' => $quadsCount,
       ];
 
     } catch (\Exception $e) {
@@ -589,8 +611,21 @@ public function __construct(
         return '<' . $term['value'] . '>';
 
       case 'literal':
-        $value = '"' . addslashes($term['value']) . '"';
-        
+        // Properly escape literal values for N-Quads format.
+        $escapedValue = $term['value'];
+        // Escape backslashes first (must be done before other escapes).
+        $escapedValue = str_replace('\\', '\\\\', $escapedValue);
+        // Escape quotes.
+        $escapedValue = str_replace('"', '\\"', $escapedValue);
+        // Escape newlines as \n.
+        $escapedValue = str_replace("\n", '\\n', $escapedValue);
+        // Escape carriage returns as \r.
+        $escapedValue = str_replace("\r", '\\r', $escapedValue);
+        // Escape tabs as \t.
+        $escapedValue = str_replace("\t", '\\t', $escapedValue);
+
+        $value = '"' . $escapedValue . '"';
+
         // Add language tag if present.
         if (isset($term['xml:lang'])) {
           $value .= '@' . $term['xml:lang'];
@@ -599,7 +634,7 @@ public function __construct(
         elseif (isset($term['datatype'])) {
           $value .= '^^<' . $term['datatype'] . '>';
         }
-        
+
         return $value;
 
       case 'bnode':
@@ -623,7 +658,7 @@ public function __construct(
    */
   public function writeFileContent($filePath, $content) {
     try {
-      
+
       // First, ensure the directory exists using native PHP.
       $directory = dirname($filePath);
       if (!is_dir($directory)) {
@@ -642,7 +677,7 @@ public function __construct(
 
       // Write the file using native PHP file_put_contents.
       $bytesWritten = file_put_contents($filePath, $content, LOCK_EX);
-      
+
       if ($bytesWritten === FALSE) {
         $error = 'Failed to write file content to: ' . $filePath;
         $this->logger->error($error);
@@ -761,6 +796,16 @@ public function __construct(
         'statusCode' => $e->getCode(),
       ];
     }
+  }
+
+  /**
+   * Generate a random suffix.
+   *
+   * @return string
+   *   The random suffix.
+   */
+  public function generateRandomSuffix() {
+    return str_pad((string) random_int(0, 999999), 6, '0', STR_PAD_LEFT);
   }
 
 }

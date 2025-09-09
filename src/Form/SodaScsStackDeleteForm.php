@@ -91,6 +91,10 @@ class SodaScsStackDeleteForm extends ContentEntityDeleteForm {
         '#submit' => ['::forceDeleteSubmit'],
       ];
     }
+
+    $form['#attached']['library'][] = 'soda_scs_manager/globalStyling';
+    $form['#attached']['library'][] = 'soda_scs_manager/throbberOverlay';
+
     return $form;
   }
 

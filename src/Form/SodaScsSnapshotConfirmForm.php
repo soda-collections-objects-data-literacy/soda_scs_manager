@@ -253,20 +253,16 @@ class SodaScsSnapshotConfirmForm extends ConfirmFormBase {
     }
     while ($containerIsRunning && $attempts < $maxAttempts) {
       foreach ($createSnapshotResult->data as $componentBundle => $componentData) {
-        
-        // triplestore do not have a container.
-        if ($componentBundle === 'soda_scs_triplestore_component') {
-          $containerIsRunning = FALSE;
-          break;
-        }
+        $containerId = $componentData['containerId'];
+        // Inspect the container to check if it is running.
 
-        $containerId = $componentData['metadata']['containerId'];
-          $containerInspectRequest = $this->sodaScsDockerRunServiceActions->buildInspectRequest([
-            'routeParams' => [
-              'containerId' => $containerId,
-            ],
-          ]);
-          $containerInspectResponse = $this->sodaScsDockerRunServiceActions->makeRequest($containerInspectRequest);
+        $containerInspectRequestParams = [
+          'routeParams' => [
+            'containerId' => $containerId,
+          ],
+        ];
+        $containerInspectRequest = $this->sodaScsDockerRunServiceActions->buildInspectRequest($containerInspectRequestParams);
+        $containerInspectResponse = $this->sodaScsDockerRunServiceActions->makeRequest($containerInspectRequest);
 
         if ($containerInspectResponse['success'] === FALSE) {
           Error::logException(
@@ -280,6 +276,7 @@ class SodaScsSnapshotConfirmForm extends ConfirmFormBase {
           return;
         }
 
+        // Todo: Handle error code 404, because the container is not running/ already removed OR handle deletion over status of container.
         $responseCode = $containerInspectResponse['data']['portainerResponse']->getStatusCode();
         if ($responseCode !== 200) {
           Error::logException(
@@ -292,13 +289,44 @@ class SodaScsSnapshotConfirmForm extends ConfirmFormBase {
           $this->messenger()->addError($this->t('Failed to create snapshot. See logs for more details.'));
           return;
         }
+        // Get the container status.
         $containerStatus = json_decode($containerInspectResponse['data']['portainerResponse']->getBody()->getContents(), TRUE);
         $containerIsRunning = $containerStatus['State']['Running'];
         if ($containerIsRunning) {
+          // If the container is running, wait for 5 seconds and try again.
           sleep(5);
           $attempts++;
         }
         else {
+          // Delete the temporarily created backup container if it is not running, but have no error.
+          if ($containerStatus['State']['ExitCode'] !== 0) {
+            Error::logException(
+              $this->loggerFactory->get('soda_scs_manager'),
+              new \Exception('Temporarily created backup container exited unexpectedly.'),
+              'Failed to create snapshot. Temporarily created backup container exited with exit code: ' . $containerStatus['State']['ExitCode'],
+              [],
+              LogLevel::ERROR
+            );
+          $this->messenger()->addError($this->t('Failed to create snapshot. See logs for more details.'));
+          return;
+          }
+          $deleteContainerRequestParams = [
+            'routeParams' => [
+              'containerId' => $containerId,
+            ],
+          ];
+
+          $deleteContainerRequest = $this->sodaScsDockerRunServiceActions->buildRemoveRequest($deleteContainerRequestParams);
+          $deleteContainerResponse = $this->sodaScsDockerRunServiceActions->makeRequest($deleteContainerRequest);
+          if (!$deleteContainerResponse['success']) {
+            Error::logException(
+              $this->loggerFactory->get('soda_scs_manager'),
+              new \Exception('Temporarily created backup container deletion failed'),
+              'Failed to create snapshot. Could not delete temporarily created backup container: ' . $deleteContainerResponse['error'],
+              [],
+              LogLevel::ERROR
+            );
+          }
           $containerData[$componentBundle] = [
             'containerId' => $containerId,
             'containerStatus' => $containerStatus,
@@ -324,6 +352,8 @@ class SodaScsSnapshotConfirmForm extends ConfirmFormBase {
     $createBagResult = $this->sodaScsSnapshotHelpers->createBagOfFiles(
       $createSnapshotResult->data
     );
+
+    // @todo Check if the bag container is still running. Wait for it to be removed.
 
     $file = File::create([
       'uri' => 'private://' . $createBagResult->data['metadata']['relativeTarFilePath'],

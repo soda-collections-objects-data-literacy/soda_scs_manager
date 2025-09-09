@@ -428,6 +428,12 @@ class SodaScsDockerRunServiceActions implements SodaScsRunRequestInterface {
    *
    * @param array $requestParams
    *   The request parameters.
+   *   - array queryParams: The query parameters.
+   *     - bool force: Force the removal of the container.
+   *     - bool v: Remove volumes associated with the container.
+   *     - bool link: Remove the specified link associated with the container.
+   *   - array routeParams: The route parameters.
+   *     - string containerId: The container ID.
    *
    * @return array
    *   The remove request.
@@ -446,14 +452,21 @@ class SodaScsDockerRunServiceActions implements SodaScsRunRequestInterface {
       // /api/endpoints
       $portainerServiceSettings['baseUrl'] .
       // /{endpointId}/docker
-      str_replace('{endpointId}', $portainerServiceSettings['endpointId'], $dockerApiSettings['baseUrl']) .
+      $dockerApiSettings['baseUrl'] .
       // /containers/{containerId}
-      str_replace('{containerId}', $requestParams['containerId'], $dockerRunServiceSettings['removeUrl']);
+      $dockerRunServiceSettings['removeUrl'];
 
-    $query = [
-      'force' => $requestParams['force'] ?? FALSE,
-      'v' => $requestParams['removeVolumes'] ?? FALSE,
-    ];
+    // Replace any route parameters.
+    if (!empty($requestParams['routeParams'])) {
+      foreach ($requestParams['routeParams'] as $key => $value) {
+        $route = str_replace('{' . $key . '}', $value, $route);
+      }
+    }
+
+    // Add query parameters if they exist.
+    if (!empty($requestParams['queryParams'])) {
+      $route .= '?' . http_build_query($requestParams['queryParams']);
+    }
 
     return [
       'method' => 'DELETE',
@@ -462,7 +475,6 @@ class SodaScsDockerRunServiceActions implements SodaScsRunRequestInterface {
         'Accept' => 'application/json',
         'X-API-Key' => $portainerServiceSettings['authenticationToken'],
       ],
-      'query' => $query,
     ];
   }
 

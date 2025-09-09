@@ -5,6 +5,7 @@ namespace Drupal\soda_scs_manager\ComponentActions;
 use Drupal\Core\Config\Config;
 use Drupal\Core\Config\ConfigFactoryInterface;
 use Drupal\Core\DependencyInjection\DependencySerializationTrait;
+use Drupal\Core\Entity\EntityTypeBundleInfoInterface;
 use Drupal\Core\Entity\EntityTypeManagerInterface;
 use Drupal\Core\Logger\LoggerChannelFactoryInterface;
 use Drupal\Core\Messenger\MessengerInterface;
@@ -16,6 +17,7 @@ use Drupal\soda_scs_manager\Entity\SodaScsComponentInterface;
 use Drupal\soda_scs_manager\Entity\SodaScsStackInterface;
 use Drupal\soda_scs_manager\Helpers\SodaScsSnapshotHelpers;
 use Drupal\soda_scs_manager\RequestActions\SodaScsOpenGdbRequestInterface;
+use Drupal\soda_scs_manager\RequestActions\SodaScsRunRequestInterface;
 use Drupal\soda_scs_manager\ServiceKeyActions\SodaScsServiceKeyActionsInterface;
 use Drupal\soda_scs_manager\ValueObject\SodaScsResult;
 use Psr\Log\LogLevel;
@@ -77,6 +79,20 @@ class SodaScsTriplestoreComponentActions implements SodaScsComponentActionsInter
    */
   protected SodaScsSnapshotHelpers $sodaScsSnapshotHelpers;
 
+  /**
+   * The entity type bundle info service.
+   *
+   * @var \Drupal\Core\Entity\EntityTypeBundleInfoInterface
+   */
+  protected EntityTypeBundleInfoInterface $entityTypeBundleInfo;
+
+  /**
+   * The SCS Docker Run service actions.
+   *
+   * @var \Drupal\soda_scs_manager\RequestActions\SodaScsRunRequestInterface
+   */
+  protected SodaScsRunRequestInterface $sodaScsDockerRunServiceActions;
+
 
   /**
    * Class constructor.
@@ -84,9 +100,11 @@ class SodaScsTriplestoreComponentActions implements SodaScsComponentActionsInter
   public function __construct(
     ConfigFactoryInterface $configFactory,
     EntityTypeManagerInterface $entityTypeManager,
+    EntityTypeBundleInfoInterface $entityTypeBundleInfo,
     LoggerChannelFactoryInterface $loggerFactory,
     MessengerInterface $messenger,
     SodaScsOpenGdbRequestInterface $sodaScsOpenGdbServiceActions,
+    SodaScsRunRequestInterface $sodaScsDockerRunServiceActions,
     SodaScsServiceKeyActionsInterface $sodaScsServiceKeyActions,
     SodaScsSnapshotHelpers $sodaScsSnapshotHelpers,
     TranslationInterface $stringTranslation,
@@ -95,10 +113,12 @@ class SodaScsTriplestoreComponentActions implements SodaScsComponentActionsInter
     $settings = $configFactory
       ->getEditable('soda_scs_manager.settings');
     $this->entityTypeManager = $entityTypeManager;
+    $this->entityTypeBundleInfo = $entityTypeBundleInfo;
     $this->loggerFactory = $loggerFactory;
     $this->messenger = $messenger;
     $this->settings = $settings;
     $this->sodaScsOpenGdbServiceActions = $sodaScsOpenGdbServiceActions;
+    $this->sodaScsDockerRunServiceActions = $sodaScsDockerRunServiceActions;
     $this->sodaScsServiceKeyActions = $sodaScsServiceKeyActions;
     $this->sodaScsSnapshotHelpers = $sodaScsSnapshotHelpers;
     $this->stringTranslation = $stringTranslation;
@@ -115,7 +135,7 @@ class SodaScsTriplestoreComponentActions implements SodaScsComponentActionsInter
    */
   public function createComponent(SodaScsStackInterface|SodaScsComponentInterface $entity): array {
     try {
-      $triplestoreComponentBundleInfo = \Drupal::service('entity_type.bundle.info')->getBundleInfo('soda_scs_component')['soda_scs_triplestore_component'];
+      $triplestoreComponentBundleInfo = $this->entityTypeBundleInfo->getBundleInfo('soda_scs_component')['soda_scs_triplestore_component'];
 
       if (!$triplestoreComponentBundleInfo) {
         throw new \Exception('Triplestore component bundle info not found');
@@ -445,8 +465,8 @@ class SodaScsTriplestoreComponentActions implements SodaScsComponentActionsInter
         'triplestoreComponent' => $triplestoreComponent,
         'createRepoResponse' => $createRepoResponse,
         'getUserResponse' => $getUserResponse,
-        'createUserResponse' => $createUserResponse,
-        'updateUserResponse' => $updateUserResponse,
+        'createUserResponse' => NULL,
+        'updateUserResponse' =>  NULL,
 
       ],
       'success' => TRUE,
@@ -480,12 +500,13 @@ class SodaScsTriplestoreComponentActions implements SodaScsComponentActionsInter
         message: 'Snapshot creation failed: Could not create backup directory.',
       );
     }
-    
+
     // Build the request parameters.
+    // Query to get all triples from all named graphs.
     $requestParams = [
       'type' => 'select',
       'queryParams' => [
-        'query' => 'select * where {?s ?p ?o .} '
+        'query' => 'SELECT ?s ?p ?o ?g WHERE { GRAPH ?g { ?s ?p ?o } }'
       ],
       'routeParams' => [
         'repositoryId' => $component->get('machineName')->value,
@@ -506,6 +527,11 @@ class SodaScsTriplestoreComponentActions implements SodaScsComponentActionsInter
 
     $dumpData = $openGdbDumpResponse['data']['openGdbResponse']->getBody()->getContents();
 
+    // Log the response for debugging.
+    $logger = $this->loggerFactory->get('soda_scs_manager');
+    $logger->debug('Triplestore dump response length: @length', ['@length' => strlen($dumpData)]);
+    $logger->debug('Triplestore dump response (first 500 chars): @data', ['@data' => substr($dumpData, 0, 500)]);
+
     // Transform SPARQL JSON to N-Quads and save to filesystem.
     $nquadsResult = $this->sodaScsSnapshotHelpers->transformSparqlJsonToNquads($dumpData, $component, $snapshotPaths['backupPathWithType'], $timestamp);
     if (!$nquadsResult['success']) {
@@ -515,12 +541,59 @@ class SodaScsTriplestoreComponentActions implements SodaScsComponentActionsInter
       );
     }
 
+    $randomInt = $this->sodaScsSnapshotHelpers->generateRandomSuffix();
+    $containerName = 'snapshot--' . $randomInt . '--' . $snapshotMachineName . '--triplestore';
+    // Create and run a short-lived container to tar and sign the SQL dump.
+    $createContainerRequest = $this->sodaScsDockerRunServiceActions->buildCreateRequest([
+      'name' => $containerName,
+      'volumes' => NULL,
+      'image' => 'alpine:latest',
+      'user' => '33:33',
+      'cmd' => [
+        'sh',
+        '-c',
+        'tar czf /backup/' . $snapshotPaths['tarFileName'] . ' -C /source . && cd /backup && sha256sum ' . $snapshotPaths['tarFileName'] . ' > ' . $snapshotPaths['sha256FileName'],
+      ],
+      'hostConfig' => [
+        'Binds' => [
+          $snapshotPaths['backupPathWithType'] . ':/source',
+          $snapshotPaths['backupPathWithType'] . ':/backup',
+        ],
+        'AutoRemove' => FALSE,
+      ],
+    ]);
+    $createContainerResponse = $this->sodaScsDockerRunServiceActions->makeRequest($createContainerRequest);
+    if (!$createContainerResponse['success']) {
+      return SodaScsResult::failure(
+        error: $createContainerResponse['error'],
+        message: 'Snapshot creation failed: Could not create snapshot container.',
+      );
+    }
+
+    $containerId = json_decode($createContainerResponse['data']['portainerResponse']->getBody()->getContents(), TRUE)['Id'];
+    $startContainerRequest = $this->sodaScsDockerRunServiceActions->buildStartRequest([
+      'routeParams' => [
+        'containerId' => $containerId,
+      ],
+    ]);
+    $startContainerResponse = $this->sodaScsDockerRunServiceActions->makeRequest($startContainerRequest);
+    if (!$startContainerResponse['success']) {
+      return SodaScsResult::failure(
+        error: $startContainerResponse['error'],
+        message: 'Snapshot creation failed: Could not start snapshot container.',
+      );
+    }
+
     return SodaScsResult::success(
       message: 'Snapshot created successfully.',
       data: [
         $component->bundle() => [
-          'startContainerResponse' => NULL,
-          'createContainerResponse' => NULL,
+          'componentBundle' => $component->bundle(),
+          'componentId' => $component->id(),
+          'componentMachineName' => $component->get('machineName')->value,
+          'containerId' => $containerId,
+          'containerName' => $containerName,
+          'createContainerResponse' => $createContainerResponse,
           'metadata' => [
             'backupPath' => $snapshotPaths['backupPath'],
             'contentFilePaths' => [
@@ -531,13 +604,10 @@ class SodaScsTriplestoreComponentActions implements SodaScsComponentActionsInter
               'tarFileName' => $snapshotPaths['tarFileName'],
               'sha256FileName' => $snapshotPaths['sha256FileName'],
             ],
-            'containerId' => NULL,
             'snapshotMachineName' => $snapshotMachineName,
             'timestamp' => $timestamp,
-            'componentBundle' => $component->bundle(),
-            'componentId' => $component->id(),
-            'componentMachineName' => $component->get('machineName')->value,
           ],
+          'startContainerResponse' => $startContainerResponse,
         ],
       ],
     );

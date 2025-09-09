@@ -31,13 +31,34 @@ interface SodaScsStackInterface extends ContentEntityInterface, EntityOwnerInter
   public function setLabel($label);
 
   /**
-   * Get the included Soda SCS Components.
+   * Get the value of a field.
+   *
+   * @param \Drupal\soda_scs_manager\Entity\SodaScsStackInterface $stack
+   *   Stack.
+   * @param string $fieldName
+   *   Field name.
+   *
+   * @return array
+   *   The value of the field.
    */
-  public function getIncludedComponents();
+  public function getValue(SodaScsStackInterface $stack, string $fieldName);
 
   /**
-   * Add included Soda SCS Component.
+   * Set the value of a field.
+   *
+   * @param \Drupal\soda_scs_manager\Entity\SodaScsStackInterface $stack
+   *   Stack.
+   * @param string $fieldName
+   *   Field name.
+   * @param string $value
+   *   Value to be put in $stack->field[$index]->value.
+   * @param ?int $index
+   *   The delta i.e. $stack->field[$index]
+   * @param string $defaultValue
+   *   The default values that will be written into the previous indexes.
+   * @param bool $overwriteOldValues
+   *   TRUE to ignore previous index values and overwrite them with $default_value.
    */
-  public function addIncludedComponent($component);
+  public static function setValue(SodaScsStackInterface $stack, string $fieldName, string $value, ?int $index = NULL, string $defaultValue = "", bool $overwriteOldValues = FALSE);
 
 }

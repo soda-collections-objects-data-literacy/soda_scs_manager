@@ -65,7 +65,7 @@ function soda_scs_manager_install() {
       ->save();
 
     // Clear caches to apply the theme changes.
-    \Drupal::service('cache.render')->invalidateAll();
+    \Drupal::service('cache.render')->deleteAll();
   }
 
   // Create the documentation page.
@@ -325,7 +325,9 @@ function soda_scs_manager_update_11006() {
  */
 function soda_scs_manager_update_11007() {
   $definition_update_manager = \Drupal::entityDefinitionUpdateManager();
-    if (!isset($fields['default_project'])) {
+  $fields = \Drupal::service('entity_field.manager')->getFieldStorageDefinitions('user');
+
+  if (!isset($fields['default_project'])) {
       $fields['default_project'] = BaseFieldDefinition::create('entity_reference')
       ->setLabel(new TranslatableMarkup('Default Project'))
       ->setDescription(new TranslatableMarkup('The default project for this user.'))

@@ -100,14 +100,14 @@ class SodaScsFilesystemComponentActions implements SodaScsComponentActionsInterf
   /**
    * The SCS database actions service.
    *
-   * @var \Drupal\soda_scs_manager\SodaScsServiceActionsInterface
+   * @var \Drupal\soda_scs_manager\ServiceActions\SodaScsServiceActionsInterface
    */
   protected SodaScsServiceActionsInterface $sodaScsSqlServiceActions;
 
   /**
    * The SCS Service Key actions service.
    *
-   * @var \Drupal\soda_scs_manager\SodaScsServiceKeyActionsInterface
+   * @var \Drupal\soda_scs_manager\ServiceKeyActions\SodaScsServiceKeyActionsInterface
    */
   protected SodaScsServiceKeyActionsInterface $sodaScsServiceKeyActions;
 
@@ -293,8 +293,8 @@ class SodaScsFilesystemComponentActions implements SodaScsComponentActionsInterf
           'message' => 'No project entities found.',
           'data' => [
             'filesystemComponent' => NULL,
-            'createExecCommandForFolderAtAccessProxyResult' => $createExecCommandForFolderAtAccessProxyResult,
-            'startExecCommandForFolderAtAccessProxyResult' => $startExecCommandForFolderAtAccessProxyResult,
+            'createExecCommandForFolderAtAccessProxyResult' => NULL,
+            'startExecCommandForFolderAtAccessProxyResult' => NULL,
             'createExecCommandForSetFolderPermissionInContainersResult' => NULL,
             'startExecCommandForSetFolderPermissionInContainersResult' => NULL,
           ],
@@ -417,8 +417,8 @@ class SodaScsFilesystemComponentActions implements SodaScsComponentActionsInterf
           'filesystemComponent' => NULL,
           'createExecCommandForFolderAtAccessProxyResult' => $createExecCommandForFolderAtAccessProxyResult,
           'startExecCommandForFolderAtAccessProxyResult' => $startExecCommandForFolderAtAccessProxyResult,
-          'createExecCommandForSetFolderPermissionInContainersResult' => $createExecCommandForSetFolderPermissionInContainersResult,
-          'startExecCommandForSetFolderPermissionInContainersResult' => $startExecCommandForSetFolderPermissionInContainersResult,
+          'createExecCommandForSetFolderPermissionInContainersResult' => NULL,
+          'startExecCommandForSetFolderPermissionInContainersResult' => NULL,
         ],
         'success' => FALSE,
         'error' => $e->getMessage(),
@@ -443,8 +443,8 @@ class SodaScsFilesystemComponentActions implements SodaScsComponentActionsInterf
           'filesystemComponent' => NULL,
           'createExecCommandForFolderAtAccessProxyResult' => $createExecCommandForFolderAtAccessProxyResult,
           'startExecCommandForFolderAtAccessProxyResult' => $startExecCommandForFolderAtAccessProxyResult,
-          'createExecCommandForSetFolderPermissionInContainersResult' => $createExecCommandForSetFolderPermissionInContainersResult,
-          'startExecCommandForSetFolderPermissionInContainersResult' => $startExecCommandForSetFolderPermissionInContainersResult,
+          'createExecCommandForSetFolderPermissionInContainersResult' => NULL,
+          'startExecCommandForSetFolderPermissionInContainersResult' => NULL,
         ],
         'success' => FALSE,
         'error' => $e->getMessage(),
@@ -471,7 +471,7 @@ class SodaScsFilesystemComponentActions implements SodaScsComponentActionsInterf
    *
    * @param \Drupal\soda_scs_manager\Entity\SodaScsComponentInterface $component
    *   The SODa SCS Component.
-   * @param string $timestamp
+   * @param int $timestamp
    *   The timestamp of the snapshot.
    * @param string $snapshotMachineName
    *   The machine name of the snapshot.
@@ -479,10 +479,25 @@ class SodaScsFilesystemComponentActions implements SodaScsComponentActionsInterf
    * @return array
    *   Result information with the created snapshot.
    */
-  public function createSnapshot(SodaScsComponentInterface $component, string $timestamp, string $snapshotMachineName): SodaScsResult {
+  public function createSnapshot(SodaScsComponentInterface $component, string $snapshotMachineName, int $timestamp): SodaScsResult {
+    try {
+      // TODO: Implement createSnapshot() method.
+    } catch (\Exception $e) {
+      // TODO: Implement createSnapshot() method.
+    }
+
     return SodaScsResult::success(
       message: 'Snapshot created successfully.',
-      data: [],
+      data: [
+        $component->bundle() => [
+          'createSnapshotResult' => NULL,
+        ],
+        'snapshotMachineName' => $snapshotMachineName,
+        'timestamp' => $timestamp,
+        'componentBundle' => $component->bundle(),
+        'componentId' => $component->id(),
+        'componentMachineName' => $component->get('machineName')->value,
+      ],
     );
   }
 

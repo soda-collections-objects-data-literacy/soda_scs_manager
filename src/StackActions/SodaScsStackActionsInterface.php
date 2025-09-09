@@ -29,10 +29,16 @@ interface SodaScsStackActionsInterface {
    * @param \Drupal\soda_scs_manager\Entity\SodaScsStackInterface $stack
    *   The stack.
    *
+   * @param string $snapshotMachineName
+   *   The snapshot machine name.
+   *
+   * @param int $timestamp
+   *   The timestamp.
+   *
    * @return SodaScsResult
    *   The result of the request.
    */
-  public function createSnapshot(SodaScsStackInterface $stack): SodaScsResult;
+  public function createSnapshot(SodaScsStackInterface $stack, string $snapshotMachineName, int $timestamp): SodaScsResult;
 
   /**
    * Get all stacks of a bundle.
@@ -50,18 +56,18 @@ interface SodaScsStackActionsInterface {
   /**
    * Read a stack.
    *
-   * @param Drupal\soda_scs_manager\Entity\SodaScsStackInterface $stack
+   * @param \Drupal\soda_scs_manager\Entity\SodaScsStackInterface $stack
    *   The stack.
    *
    * @return array
    *   The result of the request.
    */
-  public function getStack($stack): array;
+  public function getStack(SodaScsStackInterface $stack): array;
 
   /**
    * Update a stack.
    *
-   * @param Drupal\soda_scs_manager\Entity\SodaScsStackInterface $stack
+   * @param \Drupal\soda_scs_manager\Entity\SodaScsStackInterface $stack
    *   The stack.
    *
    * @return array

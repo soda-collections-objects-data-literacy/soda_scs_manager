@@ -20,28 +20,28 @@ class SodaScsComponentActions implements SodaScsComponentActionsInterface {
   /**
    * The SCS filesystem actions service.
    *
-   * @var \Drupal\soda_scs_manager\SodaScsComponentActionsInterface
+   * @var \Drupal\soda_scs_manager\ComponentActions\SodaScsComponentActionsInterface
    */
   protected SodaScsComponentActionsInterface $sodaScsFilesystemComponentActions;
 
   /**
    * The SCS sql actions service.
    *
-   * @var \Drupal\soda_scs_manager\SodaScsComponentActionsInterface
+   * @var \Drupal\soda_scs_manager\ComponentActions\SodaScsComponentActionsInterface
    */
   protected SodaScsComponentActionsInterface $sodaScsSqlComponentActions;
 
   /**
    * The SCS triplestore actions service.
    *
-   * @var \Drupal\soda_scs_manager\SodaScsComponentActionsInterface
+   * @var \Drupal\soda_scs_manager\ComponentActions\SodaScsComponentActionsInterface
    */
   protected SodaScsComponentActionsInterface $sodaScsTriplestoreComponentActions;
 
   /**
    * The SCS wisski actions service.
    *
-   * @var \Drupal\soda_scs_manager\SodaScsComponentActionsInterface
+   * @var \Drupal\soda_scs_manager\ComponentActions\SodaScsComponentActionsInterface
    */
   protected SodaScsComponentActionsInterface $sodaScsWisskiComponentActions;
 
@@ -177,13 +177,13 @@ class SodaScsComponentActions implements SodaScsComponentActionsInterface {
    * @param \Drupal\soda_scs_manager\Entity\SodaScsComponentInterface $component
    *   The component.
    *
-   * @param string $timestamp
+   * @param int $timestamp
    *   The timestamp of the snapshot.
    *
    * @return SodaScsResult
    *   The result of the request.
    */
-  public function createSnapshot(SodaScsComponentInterface $component, string $snapshotMachineName, string $timestamp): SodaScsResult {
+  public function createSnapshot(SodaScsComponentInterface $component, string $snapshotMachineName, int $timestamp): SodaScsResult {
     return SodaScsResult::success(
       message: 'Snapshot created successfully.',
       data: [],

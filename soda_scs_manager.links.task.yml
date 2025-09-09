@@ -57,6 +57,35 @@ entity.soda_scs_service_key.delete_form:
   title: 'Delete'
   weight: 30
 
+# Snapshots
+entity.soda_scs_snapshot.canonical:
+  route_name: entity.soda_scs_snapshot.canonical
+  base_route: entity.soda_scs_snapshot.canonical
+  title: 'View'
+  weight: 0
+  options:
+    parameters:
+      soda_scs_snapshot: { type: entity:soda_scs_snapshot }
+
+entity.soda_scs_snapshot.edit_form:
+  route_name: entity.soda_scs_snapshot.edit_form
+  base_route: entity.soda_scs_snapshot.canonical
+  title: 'Edit'
+  weight: 10
+
+entity.soda_scs_snapshot.delete_form:
+  route_name: entity.soda_scs_snapshot.delete_form
+  base_route: entity.soda_scs_snapshot.canonical
+  title: 'Delete'
+  weight: 20
+
+entity.soda_scs_snapshot.restore_form:
+  route_name: entity.soda_scs_snapshot.restore_form
+  base_route: entity.soda_scs_snapshot.canonical
+  title: 'Restore'
+  weight: 30
+
+
 # Stacks/*
 entity.soda_scs_stack.canonical:
   route_name: entity.soda_scs_stack.canonical

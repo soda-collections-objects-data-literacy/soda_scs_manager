@@ -82,19 +82,106 @@ class SodaScsStack extends ContentEntityBase implements SodaScsStackInterface {
 
   /**
    * Get the included Soda SCS Components.
+   *
+   * @param \Drupal\soda_scs_manager\Entity\SodaScsStackInterface $stack
+   *   Stack.
+   * @param string $fieldName
+   *   Field name.
+   *
+   * @return array
+   *   The referenced entities.
    */
-  public function getIncludedComponents() {
-    /** @var \Drupal\Core\Field\EntityReferenceFieldItemListInterface $referencedEntities */
-    $referencedEntities = $this->get('includedComponents');
-    return $referencedEntities->referencedEntities();
+  public function getValue(SodaScsStackInterface $stack, string $fieldName) {
+    if($stack->get($fieldName)->isEmpty()) {
+      return [];
+    }
+
+    $field_type = $stack->get($fieldName)->getFieldDefinition()->getType();
+    /** @var \Drupal\Core\Field\EntityReferenceFieldItemListInterface $field */
+    $field = $stack->get($fieldName);
+    if ($field_type == 'entity_reference') {
+      return $field->referencedEntities();
+    } else {
+      return $field->getValue();
+    }
+
   }
 
   /**
-   * Add included Soda SCS Component.
+   * Smart multi value field setter.
+   *
+   * Example calls:
+   *
+   *  setValue($stack, 'includedComponents', $componentId, 0);
+   *
+   *
+   * @param \Drupal\soda_scs_manager\Entity\SodaScsStackInterface $stack
+   *   Stack.
+   * @param string $fieldName
+   *   Field name.
+   * @param string $value
+   *   Value to be put in $stack->field[$index]->value.
+   * @param ?int $index
+   *   The delta i.e. $stack->field[$index]
+   * @param string $defaultValue
+   *   The default values that will be written into the previous indexes.
+   * @param bool $overwriteOldValues
+   *   TRUE to ignore previous index values and overwrite them with $default_value.
    */
-  public function addIncludedComponent($component) {
-    $this->set('includedComponents', $component);
-    return $this;
+  public static function setValue(SodaScsStackInterface $stack, string $fieldName, string $value, ?int $index = NULL, string $defaultValue = "", bool $overwriteOldValues = FALSE)
+  {
+    $oldValues = $stack->get($fieldName)->getValue();
+
+    // Grab old values and put them into $newValues array.
+
+    $fieldType = $stack->get($fieldName)->getFieldDefinition()->getType();
+    if ($fieldType == 'entity_reference') {
+      foreach ($oldValues as $key => $oldValue) {
+        $newValues[$key] = $oldValues[$key];
+      }
+    } else {
+      $newValues = [];
+      foreach ($oldValues as $oldValue) {
+        $newValues[]["value"] = $oldValues["value"];
+      }
+    }
+
+    // Optionally overwrite previous values with the provided default.
+    if ($overwriteOldValues) {
+      for ($i = 0; $i < $index; $i++) {
+        $newValues[$i] = $defaultValue;
+      }
+    }
+
+    $currentCount = count($newValues ?? []);
+
+    // If index is within current bounds, insert and shift items to the right.
+    if ($index < $currentCount) {
+      if ($fieldType == 'entity_reference') {
+        $insertItem = ['target_id' => $value];
+      } else {
+        $insertItem = ['value' => $value];
+      }
+      array_splice($newValues, $index, 0, [$insertItem]);
+    }
+    else {
+      // If index is beyond current bounds, pad missing items up to index - 1.
+      for ($i = $currentCount; $i < $index; $i++) {
+        if ($fieldType == 'entity_reference') {
+          $newValues[$i] = $defaultValue;
+        } else {
+          $newValues[$i]['value'] = $defaultValue;
+        }
+      }
+      // Set the value at the target index.
+      if ($fieldType == 'entity_reference') {
+        $newValues[$index]['target_id'] = $value;
+      } else {
+        $newValues[$index]['value'] = $value;
+      }
+    }
+
+    $stack->set($fieldName, $newValues);
   }
 
   /**
@@ -290,6 +377,21 @@ class SodaScsStack extends ContentEntityBase implements SodaScsStackInterface {
         'label' => 'above',
         'type' => 'entity_reference_label',
         'weight' => 5,
+      ]);
+
+    $fields['snapshots'] = BaseFieldDefinition::create('entity_reference')
+      ->setLabel(new TranslatableMarkup('Snapshots'))
+      ->setDescription(new TranslatableMarkup('The snapshots of the SODa SCS Stack.'))
+      ->setSetting('target_type', 'soda_scs_snapshot')
+      ->setSetting('handler', 'default')
+      ->setCardinality(FieldStorageDefinitionInterface::CARDINALITY_UNLIMITED)
+      ->setRequired(FALSE)
+      ->setDisplayConfigurable('form', FALSE)
+      ->setDisplayConfigurable('view', FALSE)
+      ->setDisplayOptions('view', [
+        'label' => 'above',
+        'type' => 'entity_reference_label',
+        'weight' => 60,
       ]);
 
     $fields['updated'] = BaseFieldDefinition::create('changed')

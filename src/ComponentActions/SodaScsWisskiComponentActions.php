@@ -683,9 +683,11 @@ class SodaScsWisskiComponentActions implements SodaScsComponentActionsInterface 
         );
       }
 
+      $randomInt = $this->sodaScsSnapshotHelpers->generateRandomSuffix();
+      $containerName = 'snapshot--' . $randomInt . '--' . $snapshotMachineName . '--drupal';
       // Create and run the snapshot container to create tar and sha256 file.
       $requestParams = [
-        'name' => $snapshotMachineName,
+        'name' => $containerName,
         'volumes' => NULL,
         'image' => 'alpine:latest',
         'user' => '33:33',
@@ -735,7 +737,11 @@ class SodaScsWisskiComponentActions implements SodaScsComponentActionsInterface 
       return SodaScsResult::success(
         data: [
           $component->bundle() => [
-            'startContainerResponse' => $startContainerResponse,
+            'componentBundle' => $component->bundle(),
+            'componentId' => $component->id(),
+            'componentMachineName' => $component->get('machineName')->value,
+            'containerId' => $containerId,
+            'containerName' => $containerName,
             'createContainerResponse' => $createContainerResponse,
             'metadata' => [
               'backupPath' => $snapshotPaths['backupPath'],
@@ -747,13 +753,10 @@ class SodaScsWisskiComponentActions implements SodaScsComponentActionsInterface 
                 'tarFileName' => $snapshotPaths['tarFileName'],
                 'sha256FileName' => $snapshotPaths['sha256FileName'],
               ],
-              'containerId' => $containerId,
               'snapshotMachineName' => $snapshotMachineName,
               'timestamp' => $timestamp,
-              'componentBundle' => $component->bundle(),
-              'componentId' => $component->id(),
-              'componentMachineName' => $component->get('machineName')->value,
             ],
+            'startContainerResponse' => $startContainerResponse,
           ],
         ],
         message: 'Created and started snapshot container successfully.',

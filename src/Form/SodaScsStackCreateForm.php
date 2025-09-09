@@ -8,6 +8,7 @@ use Drupal\Core\Config\ConfigFactoryInterface;
 use Drupal\Core\Entity\ContentEntityForm;
 use Drupal\Core\Entity\EntityRepositoryInterface;
 use Drupal\Core\Entity\EntityTypeBundleInfoInterface;
+use Drupal\Core\Entity\EntityTypeManagerInterface;
 use Drupal\Core\Form\FormStateInterface;
 use Drupal\Core\Logger\LoggerChannelFactoryInterface;
 use Drupal\Core\Session\AccountProxyInterface;
@@ -68,6 +69,8 @@ class SodaScsStackCreateForm extends ContentEntityForm {
    */
   protected SodaScsStackActionsInterface $sodaScsStackActions;
 
+  // Entity type manager variable is set in EntityForm.
+
   /**
    * Constructs a new SodaScsComponentCreateForm.
    *
@@ -85,6 +88,8 @@ class SodaScsStackCreateForm extends ContentEntityForm {
    *   The time service.
    * @param \Drupal\soda_scs_manager\StackActions\SodaScsStackActionsInterface $sodaScsStackActions
    *   The Soda SCS API Actions service.
+   * @param \Drupal\Core\Entity\EntityTypeManagerInterface $entityTypeManager
+   *   The entity type manager.
    */
   public function __construct(
     AccountProxyInterface $currentUser,
@@ -94,19 +99,21 @@ class SodaScsStackCreateForm extends ContentEntityForm {
     LoggerChannelFactoryInterface $loggerFactory,
     TimeInterface $time,
     SodaScsStackActionsInterface $sodaScsStackActions,
+    EntityTypeManagerInterface $entityTypeManager,
   ) {
     parent::__construct($entity_repository, $entity_type_bundle_info, $time);
     $this->currentUser = $currentUser;
     $this->settings = $configFactory->getEditable('soda_scs_manager.settings');
     $this->loggerFactory = $loggerFactory;
     $this->sodaScsStackActions = $sodaScsStackActions;
+    $this->entityTypeManager = $entityTypeManager;
   }
 
   /**
    * {@inheritdoc}
    */
   public static function create(ContainerInterface $container) {
-    return new static(
+    return new self(
       $container->get('current_user'),
       $container->get('entity.repository'),
       $container->get('entity_type.bundle.info'),
@@ -114,7 +121,7 @@ class SodaScsStackCreateForm extends ContentEntityForm {
       $container->get('logger.factory'),
       $container->get('datetime.time'),
       $container->get('soda_scs_manager.stack.actions'),
-
+      $container->get('entity_type.manager'),
     );
   }
 
@@ -139,7 +146,7 @@ class SodaScsStackCreateForm extends ContentEntityForm {
     $form['#title'] = $this->t('Create a new @label', ['@label' => $bundle_info[$this->bundle]['label']]);
 
     $form['owner']['widget']['#default_value'] = $this->currentUser->id();
-    if (!\Drupal::currentUser()->hasPermission('soda scs manager admin')) {
+    if (!$this->currentUser->hasPermission('soda scs manager admin')) {
       $form['owner']['#access'] = FALSE;
     }
 
@@ -234,7 +241,7 @@ class SodaScsStackCreateForm extends ContentEntityForm {
     }
 
     // Check if the machineName is already in use by another SodaScsComponent entity.
-    $entity_query = \Drupal::entityQuery('soda_scs_component')
+    $entity_query = $this->entityTypeManager->getStorage('soda_scs_component')->getQuery()
       ->accessCheck(FALSE)
       ->condition('machineName', $machineName);
     $existing_entities = $entity_query->execute();
@@ -251,6 +258,8 @@ class SodaScsStackCreateForm extends ContentEntityForm {
     if (strlen($machineName) > 30) {
       $form_state->setErrorByName('machineName', $this->t('The machine name must not exceed 30 characters.'));
     }
+
+    return true;
   }
 
   /**
@@ -263,7 +272,6 @@ class SodaScsStackCreateForm extends ContentEntityForm {
     // We call it stack here.
     /** @var \Drupal\soda_scs_manager\Entity\SodaScsStackInterface $stack */
     $stack = $this->entity;
-    /** @var \Drupal\soda_scs_manager\Entity\SodaScsComponentBundleInterface $bundle */
     $stack->set('bundle', $this->bundle);
     $stack->set('created', $this->time->getRequestTime());
     $stack->set('updated', $this->time->getRequestTime());
