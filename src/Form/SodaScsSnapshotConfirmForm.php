@@ -16,6 +16,7 @@ use Symfony\Component\DependencyInjection\ContainerInterface;
 use Drupal\Core\Utility\Error;
 use Drupal\file\Entity\File;
 use Psr\Log\LogLevel;
+use Drupal\Core\Session\AccountProxyInterface;
 
 /**
  * Provides a confirmation form for creating snapshots.
@@ -93,6 +94,13 @@ class SodaScsSnapshotConfirmForm extends ConfirmFormBase {
   protected $loggerFactory;
 
   /**
+   * The current user.
+   *
+   * @var \Drupal\Core\Session\AccountProxyInterface
+   */
+  protected $currentUser;
+
+  /**
    * Constructs a new SodaScsSnapshotConfirmForm.
    *
    * @param \Drupal\Core\Entity\EntityTypeManagerInterface $entity_type_manager
@@ -111,6 +119,8 @@ class SodaScsSnapshotConfirmForm extends ConfirmFormBase {
    *   The Soda SCS WissKI Stack Actions.
    * @param \Drupal\Core\Logger\LoggerChannelFactoryInterface $logger_factory
    *   The logger factory.
+   * @param \Drupal\Core\Session\AccountProxyInterface $current_user
+   *   The current user.
    */
   public function __construct(
     EntityTypeManagerInterface $entity_type_manager,
@@ -121,6 +131,7 @@ class SodaScsSnapshotConfirmForm extends ConfirmFormBase {
     SodaScsComponentActionsInterface $sodaScsWisskiComponentActions,
     SodaScsStackActionsInterface $sodaScsWisskiStackActions,
     LoggerChannelFactoryInterface $logger_factory,
+    AccountProxyInterface $current_user,
   ) {
     $this->entityTypeManager = $entity_type_manager;
     $this->sodaScsDockerRunServiceActions = $sodaScsDockerRunServiceActions;
@@ -130,13 +141,14 @@ class SodaScsSnapshotConfirmForm extends ConfirmFormBase {
     $this->sodaScsWisskiComponentActions = $sodaScsWisskiComponentActions;
     $this->sodaScsWisskiStackActions = $sodaScsWisskiStackActions;
     $this->loggerFactory = $logger_factory;
+    $this->currentUser = $current_user;
   }
 
   /**
    * {@inheritdoc}
    */
   public static function create(ContainerInterface $container) {
-    return new static(
+    return new self(
       $container->get('entity_type.manager'),
       $container->get('soda_scs_manager.docker_run_service.actions'),
       $container->get('soda_scs_manager.snapshot.helpers'),
@@ -144,7 +156,8 @@ class SodaScsSnapshotConfirmForm extends ConfirmFormBase {
       $container->get('soda_scs_manager.triplestore_component.actions'),
       $container->get('soda_scs_manager.wisski_component.actions'),
       $container->get('soda_scs_manager.wisski_stack.actions'),
-      $container->get('logger.factory')
+      $container->get('logger.factory'),
+      $container->get('current_user')
     );
   }
 
@@ -357,14 +370,14 @@ class SodaScsSnapshotConfirmForm extends ConfirmFormBase {
 
     $file = File::create([
       'uri' => 'private://' . $createBagResult->data['metadata']['relativeTarFilePath'],
-      'uid' => \Drupal::currentUser()->id(),
+      'uid' => $this->currentUser->id(),
       'status' => 1,
     ]);
     $file->save();
 
     $signatureFile = File::create([
       'uri' => 'private://' . $createBagResult->data['metadata']['relativeSha256FilePath'],
-      'uid' => \Drupal::currentUser()->id(),
+      'uid' => $this->currentUser->id(),
       'status' => 1,
     ]);
     $signatureFile->save();
@@ -372,7 +385,7 @@ class SodaScsSnapshotConfirmForm extends ConfirmFormBase {
     // Create the snapshot entity.
     $snapshot = SodaScsSnapshot::create([
       'label' => $values['label'],
-      'owner' => \Drupal::currentUser()->id(),
+      'owner' => $this->currentUser->id(),
       'langcode' => 'en',
       'changed' => time(),
       'created' => time(),
@@ -452,7 +465,7 @@ class SodaScsSnapshotConfirmForm extends ConfirmFormBase {
    *   TRUE if exists, FALSE otherwise.
    */
   public function exists($value) {
-    $query = \Drupal::entityQuery('soda_scs_snapshot')
+    $query = $this->entityTypeManager->getStorage('soda_scs_snapshot')->getQuery()
       ->condition('machineName', $value)
       ->accessCheck(TRUE);
     return !empty($query->execute());

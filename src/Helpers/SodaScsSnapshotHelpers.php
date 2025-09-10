@@ -13,6 +13,9 @@ use Psr\Log\LogLevel;
 use Drupal\Core\Logger\LoggerChannelFactoryInterface;
 use Drupal\Core\Utility\Error;
 use Drupal\Core\Messenger\MessengerTrait;
+use Drupal\Core\File\FileSystemInterface;
+use Drupal\Core\Config\ConfigFactoryInterface;
+use Drupal\Component\Transliteration\TransliterationInterface;
 
 /**
  * Helper class for snapshot operations.
@@ -51,6 +54,27 @@ class SodaScsSnapshotHelpers {
    */
   protected $logger;
 
+  /**
+   * The file system service.
+   *
+   * @var \Drupal\Core\File\FileSystemInterface
+   */
+  protected $fileSystem;
+
+  /**
+   * The config factory.
+   *
+   * @var \Drupal\Core\Config\ConfigFactoryInterface
+   */
+  protected $configFactory;
+
+  /**
+   * The transliteration service.
+   *
+   * @var \Drupal\Component\Transliteration\TransliterationInterface
+   */
+  protected $transliteration;
+
 /**
  * {@inheritdoc}
  */
@@ -59,11 +83,17 @@ public function __construct(
   SodaScsDockerExecServiceActions $sodaScsDockerExecServiceActions,
   SodaScsDockerRunServiceActions $sodaScsDockerRunServiceActions,
   LoggerChannelFactoryInterface $loggerFactory,
+  FileSystemInterface $fileSystem,
+  ConfigFactoryInterface $configFactory,
+  TransliterationInterface $transliteration,
 ) {
   $this->sodaScsComponentHelpers = $sodaScsComponentHelpers;
   $this->sodaScsDockerExecServiceActions = $sodaScsDockerExecServiceActions;
   $this->sodaScsDockerRunServiceActions = $sodaScsDockerRunServiceActions;
   $this->logger = $loggerFactory->get('soda_scs_manager');
+  $this->fileSystem = $fileSystem;
+  $this->configFactory = $configFactory;
+  $this->transliteration = $transliteration;
 }
 
 
@@ -79,7 +109,7 @@ public function __construct(
           $type = 'files';
           break;
         case 'soda_scs_wisski_component':
-          $type = 'files';
+          $type = 'drupal-data';
           break;
         case 'soda_scs_sql_component':
           $type = 'sql';
@@ -92,9 +122,9 @@ public function __construct(
       }
 
       // Get the private file system path from Drupal's file system settings. (/var/scs-manager/)
-      $privateFileSystemPath = \Drupal::service('file_system')->realpath("private://") ?? throw new \Exception('Private file system path not found');
+      $privateFileSystemPath = $this->fileSystem->realpath("private://") ?? throw new \Exception('Private file system path not found');
       // Get the snapshot path from the settings.
-      $snapshotPath = \Drupal::config('soda_scs_manager.settings')->get('snapshotPath') ?? throw new \Exception('Snapshot path not found');
+      $snapshotPath = $this->configFactory->get('soda_scs_manager.settings')->get('snapshotPath') ?? throw new \Exception('Snapshot path not found');
       // Full path to the snapshot directory, e.g. /var/scs-manager/snapshots.
       $snapshotFullPath = $privateFileSystemPath . $snapshotPath;
       // Get the owner of the component.
@@ -159,12 +189,9 @@ public function __construct(
    * @example
    *   cleanMachineName('Café & Bücher *Test*') returns 'cafe_bucher_test'
    */
-  public static function cleanMachineName(string $label, string $replacement = '_', int $maxLength = 32): string {
-    // Get the transliteration service.
-    $transliteration = \Drupal::service('transliteration');
-
+  public function cleanMachineName(string $label, string $replacement = '_', int $maxLength = 32): string {
     // Step 1: Transliterate accented characters (ä → a, é → e, etc.).
-    $machineName = $transliteration->transliterate($label, LanguageInterface::LANGCODE_DEFAULT, $replacement);
+    $machineName = $this->transliteration->transliterate($label, LanguageInterface::LANGCODE_DEFAULT, $replacement);
 
     // Step 2: Convert to lowercase.
     $machineName = strtolower($machineName);
@@ -207,6 +234,7 @@ public function __construct(
    */
   public function createBagOfFiles($snapshotData) {
   try {
+    // @todo This is redundant, should be abstracted.
     $contentFiles = [];
     foreach ($snapshotData as $componentBundle => $componentData) {
       switch ($componentBundle) {
@@ -214,7 +242,7 @@ public function __construct(
           $type = 'files';
           break;
         case 'soda_scs_wisski_component':
-          $type = 'files';
+          $type = 'drupal-data';
           break;
         case 'soda_scs_sql_component':
           $type = 'sql';
@@ -284,14 +312,14 @@ public function __construct(
   // Create the content files string, to get i.e. ../scs_user/new-wisski-component/2025-08-26/1724732400/files/new-wisski-component--1724732400.files.tar.gz
     $contentFilesString = '';
     foreach ($contentFiles as $bundle => $fileTypes) {
-
+      // @todo This is redundant, should be abstracted.
       foreach ($fileTypes as $fileType => $contentFileName) {
         switch ($bundle) {
         case 'soda_scs_filesystem_component':
           $type = 'files';
           break;
         case 'soda_scs_wisski_component':
-          $type = 'files';
+          $type = 'drupal-data';
           break;
         case 'soda_scs_sql_component':
           $type = 'sql';
@@ -358,7 +386,7 @@ public function __construct(
       );
     }
 
-    $relativeBagPath = str_replace(\Drupal::service('file_system')->realpath("private://"), '', $bagPath);
+    $relativeBagPath = str_replace($this->fileSystem->realpath("private://"), '', $bagPath);
 
     return SodaScsResult::success(
       data: [
