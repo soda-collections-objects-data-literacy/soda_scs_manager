@@ -260,15 +260,14 @@ class SodaScsSnapshotConfirmForm extends ConfirmFormBase {
       $this->t('The PHP request timeout is less than the required sleep interval of 5 seconds. Please increase your max_execution_time setting.'),
       [],
       LogLevel::ERROR
-    );
-    $this->messenger()->addError($this->t('Could not create snapshot. See logs for more details.'));
-    return;
+      );
+      $this->messenger()->addError($this->t('Could not create snapshot. See logs for more details.'));
+      return;
     }
     while ($containerIsRunning && $attempts < $maxAttempts) {
       foreach ($createSnapshotResult->data as $componentBundle => $componentData) {
         $containerId = $componentData['containerId'];
         // Inspect the container to check if it is running.
-
         $containerInspectRequestParams = [
           'routeParams' => [
             'containerId' => $containerId,
@@ -289,7 +288,9 @@ class SodaScsSnapshotConfirmForm extends ConfirmFormBase {
           return;
         }
 
-        // Todo: Handle error code 404, because the container is not running/ already removed OR handle deletion over status of container.
+        // @todo Handle error code 404, because the container
+        // is not running/ already removed OR handle deletion
+        // over status of container.
         $responseCode = $containerInspectResponse['data']['portainerResponse']->getStatusCode();
         if ($responseCode !== 200) {
           Error::logException(
@@ -311,7 +312,8 @@ class SodaScsSnapshotConfirmForm extends ConfirmFormBase {
           $attempts++;
         }
         else {
-          // Delete the temporarily created backup container if it is not running, but have no error.
+          // Delete the temporarily created backup container
+          // if it is not running, but have no error.
           if ($containerStatus['State']['ExitCode'] !== 0) {
             Error::logException(
               $this->loggerFactory->get('soda_scs_manager'),
@@ -320,8 +322,8 @@ class SodaScsSnapshotConfirmForm extends ConfirmFormBase {
               [],
               LogLevel::ERROR
             );
-          $this->messenger()->addError($this->t('Failed to create snapshot. See logs for more details.'));
-          return;
+            $this->messenger()->addError($this->t('Failed to create snapshot. See logs for more details.'));
+            return;
           }
           $deleteContainerRequestParams = [
             'routeParams' => [
@@ -360,14 +362,12 @@ class SodaScsSnapshotConfirmForm extends ConfirmFormBase {
       return;
     }
 
-
     // Create the bag of files.
     $createBagResult = $this->sodaScsSnapshotHelpers->createBagOfFiles(
       $createSnapshotResult->data
     );
 
     // @todo Check if the bag container is still running. Wait for it to be removed.
-
     $file = File::create([
       'uri' => 'private://' . $createBagResult->data['metadata']['relativeTarFilePath'],
       'uid' => $this->currentUser->id(),
@@ -402,7 +402,8 @@ class SodaScsSnapshotConfirmForm extends ConfirmFormBase {
 
     $snapshot->save();
 
-    // Add the snapshot to the referenced entities, preserving existing references.
+    // Add the snapshot to the referenced entities,
+    // preserving existing references.
     $existingSnapshots = $this->entity->get('snapshots')->getValue();
     $snapshotReferences = [];
     foreach ($existingSnapshots as $item) {
