@@ -85,7 +85,6 @@ class SodaScsSnapshotRestoreForm extends ConfirmFormBase {
    */
   protected $loggerFactory;
 
-
   /**
    * Constructs a new SodaScsSnapshotRestoreForm.
    *
@@ -219,13 +218,13 @@ class SodaScsSnapshotRestoreForm extends ConfirmFormBase {
     }
 
     // Verify checksum if available.
-    $signatureFile = File::load($this->snapshot->get('signatureFile')->target_id);
-    if ($signatureFile) {
-      $signatureUri = $signatureFile->getFileUri();
-      $signaturePath = \Drupal::service('file_system')->realpath($signatureUri);
+    $checksumFile = File::load($this->snapshot->get('checksumFile')->target_id);
+    if ($checksumFile) {
+      $checksumUri = $checksumFile->getFileUri();
+      $checksumPath = \Drupal::service('file_system')->realpath($checksumUri);
 
-      if ($signaturePath && file_exists($signaturePath)) {
-        $expectedChecksum = trim(file_get_contents($signaturePath));
+      if ($checksumPath && file_exists($checksumPath)) {
+        $expectedChecksum = trim(file_get_contents($checksumPath));
         $actualChecksum = hash_file('sha256', $filePath);
 
         if (strpos($expectedChecksum, $actualChecksum) === FALSE) {

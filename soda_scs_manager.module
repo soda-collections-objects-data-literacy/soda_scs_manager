@@ -21,10 +21,8 @@ use Drupal\soda_scs_manager\Entity\SodaScsComponent;
 use Drupal\Core\Url;
 use Symfony\Component\HttpFoundation\RedirectResponse;
 
-
-
 /**
- * Implement hook_entity_base_field_info().
+ * Implements hook_entity_base_field_info().
  *
  * Adds custom fields to the user entity.
  */
@@ -316,9 +314,6 @@ function soda_scs_manager_mail($key, &$message, $params) {
   }
 }
 
-
-
-
 /**
  * Implements hook_preprocess_HOOK().
  */
@@ -429,7 +424,6 @@ function soda_scs_manager_soda_scs_stack_view(array &$build, EntityInterface $en
   }
 }
 
-
 /**
  * Implements hook_theme().
  */
@@ -481,23 +475,23 @@ function soda_scs_manager_theme($existing, $type, $theme, $path) {
  */
 function soda_scs_manager_theme_suggestions_soda_scs_component(array $variables) {
   $suggestions = [];
-  
+
   /** @var \Drupal\soda_scs_manager\Entity\SodaScsComponent $entity */
   $entity = $variables['elements']['#soda_scs_component'];
   $view_mode = $variables['elements']['#view_mode'];
-  
+
   // Add suggestion based on bundle.
   $suggestions[] = 'soda_scs_component__' . $entity->bundle();
-  
+
   // Add suggestion based on view mode.
   $suggestions[] = 'soda_scs_component__' . $view_mode;
-  
+
   // Add suggestion based on bundle and view mode.
   $suggestions[] = 'soda_scs_component__' . $entity->bundle() . '__' . $view_mode;
-  
+
   // Add suggestion based on entity ID.
   $suggestions[] = 'soda_scs_component__' . $entity->id();
-  
+
   return $suggestions;
 }
 
@@ -507,7 +501,7 @@ function soda_scs_manager_theme_suggestions_soda_scs_component(array $variables)
 function soda_scs_manager_theme_suggestions_soda_scs_component_alter(array &$suggestions, array $variables) {
   /** @var \Drupal\soda_scs_manager\Entity\SodaScsComponent $entity */
   $entity = $variables['elements']['#soda_scs_component'];
-  
+
   // Add custom suggestions based on specific conditions.
   if ($entity->hasField('tags') && !$entity->get('tags')->isEmpty()) {
     $suggestions[] = 'soda_scs_component__with_tags';
@@ -557,7 +551,7 @@ function soda_scs_manager_user_delete(UserInterface $user) {
     // Extract the Keycloak user ID.
     $deleteUserParams['routeParams'] = [
       'realm' => $keycloakGeneralSettings['realm'],
-      // @todo: Create user helper service for this.
+      // @todo Create user helper service for this.
       'userId' => \Drupal::service('soda_scs_manager.project.helpers')->getUserSsoUuid($user),
     ];
 
@@ -581,8 +575,13 @@ function soda_scs_manager_user_delete(UserInterface $user) {
     }
   }
   catch (\Exception $e) {
-    $messenger->addError(t('Failed to delete user from Keycloak: @error', ['@error' => $e->getMessage()]));
-    $logger->error('Error deleting user @username from Keycloak: @error', ['@username' => $user->getDisplayName(), '@error' => $e->getMessage()]);
+    $messenger->addError(t('Failed to delete user from Keycloak: @error', [
+      '@error' => $e->getMessage(),
+    ]));
+    $logger->error('Error deleting user @username from Keycloak: @error', [
+      '@username' => $user->getDisplayName(),
+      '@error' => $e->getMessage(),
+    ]);
   }
 
   // Clean database users.
@@ -594,7 +593,11 @@ function soda_scs_manager_user_delete(UserInterface $user) {
   }
   else {
     $messenger->addError(t('Failed to clean database users for user: @username', ['@username' => $user->getDisplayName()]));
-    $logger->error('Failed to clean database users for user: @username. @message @error', ['@username' => $user->getDisplayName(), '@message' => $cleanDatabaseUsers['message'], '@error' => $cleanDatabaseUsers['error']]);
+    $logger->error('Failed to clean database users for user: @username. @message @error', [
+      '@username' => $user->getDisplayName(),
+      '@message' => $cleanDatabaseUsers['message'],
+      '@error' => $cleanDatabaseUsers['error'],
+    ]);
   }
 
   // Clean triplestore users.
@@ -612,10 +615,13 @@ function soda_scs_manager_user_delete(UserInterface $user) {
   }
   else {
     $messenger->addError(t('Failed to clean triplestore users for user: @username', ['@username' => $user->getDisplayName()]));
-    $logger->error('Failed to clean triplestore users for user: @username. @message @error', ['@username' => $user->getDisplayName(), '@message' => $cleanTriplestoreUsers['message'], '@error' => $cleanTriplestoreUsers['error']]);
+    $logger->error('Failed to clean triplestore users for user: @username. @message @error', [
+      '@username' => $user->getDisplayName(),
+      '@message' => $cleanTriplestoreUsers['message'],
+      '@error' => $cleanTriplestoreUsers['error'],
+    ]);
   }
 }
-
 
 /**
  * Implements hook_user_insert().
@@ -660,7 +666,8 @@ function soda_scs_manager_user_login(UserInterface $account) {
   // Get the current request.
   $request = \Drupal::request();
 
-  // Only redirect if there's no existing destination and not during AJAX requests.
+  // Only redirect if there's no existing
+  // destination and not during AJAX requests.
   if (!$request->query->has('destination') && !$request->isXmlHttpRequest()) {
     // Redirect to the SODa SCS Manager start page.
     $response = new RedirectResponse(Url::fromRoute('soda_scs_manager.start_page')->toString());
@@ -756,8 +763,6 @@ function soda_scs_manager_file_download($uri) {
   return -1;
 }
 
-// Custom hooks.
-
 /**
  * Create default project for new user.
  *
@@ -780,9 +785,15 @@ function _soda_scs_manager_create_default_project_for_user(UserInterface $user) 
   $syncKeycloakGroupMembersResult = \Drupal::service('soda_scs_manager.project.helpers')->syncKeycloakGroupMembers($project);
   if (!$syncKeycloakGroupMembersResult->success) {
     $messenger = \Drupal::messenger();
-    $messenger->addError(t('Failed to sync user and keycloak groups for user: @username. @error', ['@username' => $user->getDisplayName(), '@error' => $syncKeycloakGroupMembersResult->error]));
+    $messenger->addError(t('Failed to sync user and keycloak groups for user: @username. @error', [
+      '@username' => $user->getDisplayName(),
+      '@error' => $syncKeycloakGroupMembersResult->error,
+    ]));
     $logger = \Drupal::logger('soda_scs_manager');
-    $logger->error('Failed to sync user and keycloak groups for user: @username. @error', ['@username' => $user->getDisplayName(), '@error' => $syncKeycloakGroupMembersResult->error]);
+    $logger->error('Failed to sync user and keycloak groups for user: @username. @error', [
+      '@username' => $user->getDisplayName(),
+      '@error' => $syncKeycloakGroupMembersResult->error,
+    ]);
   }
   else {
     $messenger = \Drupal::messenger();

@@ -169,9 +169,9 @@ class SodaScsSnapshot extends ContentEntityBase implements SodaScsSnapshotInterf
         'weight' => 30,
       ]);
 
-    $fields['signatureFile'] = BaseFieldDefinition::create('file')
-      ->setLabel(new TranslatableMarkup('Signature File'))
-      ->setDescription(new TranslatableMarkup('The signature file of the snapshot.'))
+    $fields['checksumFile'] = BaseFieldDefinition::create('file')
+      ->setLabel(new TranslatableMarkup('checksum File'))
+      ->setDescription(new TranslatableMarkup('The checksum file of the snapshot.'))
       ->setRequired(TRUE)
       ->setDisplayConfigurable('form', TRUE)
       ->setDisplayOptions('form', [
@@ -186,8 +186,8 @@ class SodaScsSnapshot extends ContentEntityBase implements SodaScsSnapshotInterf
       ]);
 
     $fields['snapshotOfComponent'] = BaseFieldDefinition::create('entity_reference')
-      ->setLabel(new TranslatableMarkup('Component'))
-      ->setDescription(new TranslatableMarkup('The component this snapshot is taken from.'))
+      ->setLabel(new TranslatableMarkup('Application'))
+      ->setDescription(new TranslatableMarkup('The application this snapshot is taken from.'))
       ->setSetting('target_type', 'soda_scs_component')
       ->setSetting('handler', 'default')
       ->setRequired(FALSE)
@@ -205,8 +205,8 @@ class SodaScsSnapshot extends ContentEntityBase implements SodaScsSnapshotInterf
       ]);
 
     $fields['snapshotOfStack'] = BaseFieldDefinition::create('entity_reference')
-      ->setLabel(new TranslatableMarkup('Stack'))
-      ->setDescription(new TranslatableMarkup('The stack this snapshot is taken from.'))
+      ->setLabel(new TranslatableMarkup('Bundled application'))
+      ->setDescription(new TranslatableMarkup('The bundled application this snapshot is taken from.'))
       ->setSetting('target_type', 'soda_scs_stack')
       ->setSetting('handler', 'default')
       ->setRequired(FALSE)
@@ -221,29 +221,6 @@ class SodaScsSnapshot extends ContentEntityBase implements SodaScsSnapshotInterf
         'label' => 'above',
         'type' => 'entity_reference_label',
         'weight' => 10,
-      ]);
-
-    $fields['status'] = BaseFieldDefinition::create('list_string')
-      ->setLabel(new TranslatableMarkup('Status'))
-      ->setDescription(new TranslatableMarkup('The status of the snapshot.'))
-      ->setRequired(TRUE)
-      ->setDefaultValue('pending')
-      ->setSetting('allowed_values', [
-        'pending' => 'Pending',
-        'running' => 'Running',
-        'completed' => 'Completed',
-        'failed' => 'Failed',
-      ])
-      ->setDisplayConfigurable('form', TRUE)
-      ->setDisplayOptions('form', [
-        'type' => 'options_select',
-        'weight' => 50,
-      ])
-      ->setDisplayConfigurable('view', TRUE)
-      ->setDisplayOptions('view', [
-        'label' => 'above',
-        'type' => 'list_default',
-        'weight' => 50,
       ]);
 
     return $fields;

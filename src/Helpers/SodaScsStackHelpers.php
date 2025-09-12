@@ -52,8 +52,7 @@ class SodaScsStackHelpers {
   public function retrieveIncludedComponent(SodaScsStackInterface $stack, string $bundle): ?SodaScsComponentInterface {
 
     /** @var \Drupal\Core\Field\EntityReferenceFieldItemListInterface $includedComponentsItemList */
-    $includedComponentsItemList = $stack->get('includedComponents');
-    $includedComponents = $includedComponentsItemList->referencedEntities();
+    $includedComponents = $stack->getValue($stack, 'includedComponents');
 
     $includedComponent = array_values(array_filter($includedComponents, function ($includedComponent) use ($bundle) {
       $componentBundle = $includedComponent->bundle->get(0)->get('value')->getValue();

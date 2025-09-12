@@ -81,20 +81,24 @@ class SodaScsStackActions implements SodaScsStackActionsInterface {
    *
    * @param \Drupal\soda_scs_manager\Entity\SodaScsStackInterface $stack
    *   The SODa SCS Stack entity.
+   * @param string $snapshotMachineName
+   *   The snapshot machine name.
+   * @param int $timestamp
+   *   The timestamp.
    *
-   * @return SodaScsResult
+   * @return \Drupal\soda_scs_manager\ValueObject\SodaScsResult
    *   The result of the request.
    */
-  public function createSnapshot(SodaScsStackInterface $stack): SodaScsResult {
+  public function createSnapshot(SodaScsStackInterface $stack, string $snapshotMachineName, int $timestamp): SodaScsResult {
     switch ($stack->bundle()) {
       case 'soda_scs_wisski_stack':
-        return $this->sodaScsWisskiStackActions->createSnapshot($stack);
+        return $this->sodaScsWisskiStackActions->createSnapshot($stack, $snapshotMachineName, $timestamp);
 
       case 'soda_scs_jupyter_stack':
-        return $this->sodaScsJupyterStackActions->createSnapshot($stack);
+        return $this->sodaScsJupyterStackActions->createSnapshot($stack, $snapshotMachineName, $timestamp);
 
       case 'soda_scs_nextcloud_stack':
-        return $this->sodaScsNextcloudStackActions->createSnapshot($stack);
+        return $this->sodaScsNextcloudStackActions->createSnapshot($stack, $snapshotMachineName, $timestamp);
 
       default:
         throw new \Exception('Component type not supported for snapshot creation.');

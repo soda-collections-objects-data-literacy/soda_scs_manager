@@ -9,11 +9,59 @@ use Drupal\user\EntityOwnerInterface;
  * Interface for the SodaScsComponent entity.
  */
 interface SodaScsComponentInterface extends ContentEntityInterface, EntityOwnerInterface {
-    function getDescription();
-    function setDescription($description);
-    function getImageUrl();
-    function setImageUrl($image_url);
-    function getLabel();
-    function setLabel($label);
+
+  /**
+   * Gets the description.
+   *
+   * @return string
+   *   The description.
+   */
+  public function getDescription();
+
+  /**
+   * Sets the description.
+   *
+   * @param string $description
+   *   The description.
+   *
+   * @return $this
+   */
+  public function setDescription($description);
+
+  /**
+   * Gets the image URL.
+   *
+   * @return string
+   *   The image URL.
+   */
+  public function getImageUrl();
+
+  /**
+   * Sets the image URL.
+   *
+   * @param string $imageUrl
+   *   The image URL.
+   *
+   * @return $this
+   */
+  public function setImageUrl($imageUrl);
+
+  /**
+   * Gets the label.
+   *
+   * @return string
+   *   The label.
+   */
+  public function getLabel();
+
+  /**
+   * Sets the label.
+   *
+   * @param string $label
+   *   The label.
+   *
+   * @return $this
+   */
+  public function setLabel($label);
 
 }

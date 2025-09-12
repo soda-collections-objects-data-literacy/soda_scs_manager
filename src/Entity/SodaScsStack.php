@@ -92,7 +92,7 @@ class SodaScsStack extends ContentEntityBase implements SodaScsStackInterface {
    *   The referenced entities.
    */
   public function getValue(SodaScsStackInterface $stack, string $fieldName) {
-    if($stack->get($fieldName)->isEmpty()) {
+    if ($stack->get($fieldName)->isEmpty()) {
       return [];
     }
 
@@ -101,7 +101,8 @@ class SodaScsStack extends ContentEntityBase implements SodaScsStackInterface {
     $field = $stack->get($fieldName);
     if ($field_type == 'entity_reference') {
       return $field->referencedEntities();
-    } else {
+    }
+    else {
       return $field->getValue();
     }
 
@@ -114,7 +115,6 @@ class SodaScsStack extends ContentEntityBase implements SodaScsStackInterface {
    *
    *  setValue($stack, 'includedComponents', $componentId, 0);
    *
-   *
    * @param \Drupal\soda_scs_manager\Entity\SodaScsStackInterface $stack
    *   Stack.
    * @param string $fieldName
@@ -122,28 +122,35 @@ class SodaScsStack extends ContentEntityBase implements SodaScsStackInterface {
    * @param string $value
    *   Value to be put in $stack->field[$index]->value.
    * @param ?int $index
-   *   The delta i.e. $stack->field[$index]
+   *   The delta i.e. $stack->field[$index].
    * @param string $defaultValue
    *   The default values that will be written into the previous indexes.
    * @param bool $overwriteOldValues
-   *   TRUE to ignore previous index values and overwrite them with $default_value.
+   *   TRUE to ignore previous index values and
+   *   overwrite them with $defaultValue.
    */
-  public static function setValue(SodaScsStackInterface $stack, string $fieldName, string $value, ?int $index = NULL, string $defaultValue = "", bool $overwriteOldValues = FALSE)
-  {
+  public static function setValue(SodaScsStackInterface $stack, string $fieldName, string $value, ?int $index = NULL, string $defaultValue = "", bool $overwriteOldValues = FALSE) {
     $oldValues = $stack->get($fieldName)->getValue();
 
     // Grab old values and put them into $newValues array.
-
     $fieldType = $stack->get($fieldName)->getFieldDefinition()->getType();
     if ($fieldType == 'entity_reference') {
       foreach ($oldValues as $key => $oldValue) {
-        $newValues[$key] = $oldValues[$key];
+        $newValues[$key] = $oldValue;
       }
-    } else {
+    }
+    else {
       $newValues = [];
       foreach ($oldValues as $oldValue) {
-        $newValues[]["value"] = $oldValues["value"];
+        $newValues[]["value"] = $oldValue["value"];
       }
+    }
+
+    $currentCount = count($newValues ?? []);
+
+    // If index is NULL, append to the end.
+    if ($index === NULL) {
+      $index = $currentCount;
     }
 
     // Optionally overwrite previous values with the provided default.
@@ -153,13 +160,12 @@ class SodaScsStack extends ContentEntityBase implements SodaScsStackInterface {
       }
     }
 
-    $currentCount = count($newValues ?? []);
-
     // If index is within current bounds, insert and shift items to the right.
     if ($index < $currentCount) {
       if ($fieldType == 'entity_reference') {
         $insertItem = ['target_id' => $value];
-      } else {
+      }
+      else {
         $insertItem = ['value' => $value];
       }
       array_splice($newValues, $index, 0, [$insertItem]);
@@ -169,14 +175,16 @@ class SodaScsStack extends ContentEntityBase implements SodaScsStackInterface {
       for ($i = $currentCount; $i < $index; $i++) {
         if ($fieldType == 'entity_reference') {
           $newValues[$i] = $defaultValue;
-        } else {
+        }
+        else {
           $newValues[$i]['value'] = $defaultValue;
         }
       }
       // Set the value at the target index.
       if ($fieldType == 'entity_reference') {
         $newValues[$index]['target_id'] = $value;
-      } else {
+      }
+      else {
         $newValues[$index]['value'] = $value;
       }
     }
@@ -216,7 +224,7 @@ class SodaScsStack extends ContentEntityBase implements SodaScsStackInterface {
 
     $fields['created'] = BaseFieldDefinition::create('created')
       ->setLabel(new TranslatableMarkup('Created'))
-      ->setDescription(new TranslatableMarkup('The time that the SODa SCS Component was created.'))
+      ->setDescription(new TranslatableMarkup('The time that the bundled application was created.'))
       ->setRequired(TRUE)
       ->setReadOnly(TRUE)
       ->setTranslatable(FALSE)
@@ -230,7 +238,7 @@ class SodaScsStack extends ContentEntityBase implements SodaScsStackInterface {
 
     $fields['description'] = BaseFieldDefinition::create('text_long')
       ->setLabel(new TranslatableMarkup('Description'))
-      ->setDescription(new TranslatableMarkup('The description of the SODa SCS Component.'))
+      ->setDescription(new TranslatableMarkup('The description of the bundled application.'))
       ->setRequired(FALSE)
       ->setReadOnly(TRUE)
       ->setTranslatable(TRUE)
@@ -255,7 +263,7 @@ class SodaScsStack extends ContentEntityBase implements SodaScsStackInterface {
 
     $fields['imageUrl'] = BaseFieldDefinition::create('string')
       ->setLabel(new TranslatableMarkup('Image'))
-      ->setDescription(new TranslatableMarkup('The image of the SODa SCS Stack.'))
+      ->setDescription(new TranslatableMarkup('The image of the bundled application.'))
       ->setRequired(FALSE)
       ->setReadOnly(TRUE)
       ->setTranslatable(FALSE)
@@ -269,7 +277,7 @@ class SodaScsStack extends ContentEntityBase implements SodaScsStackInterface {
 
     // @todo Insure to have only dangling components as references.
     $fields['includedComponents'] = BaseFieldDefinition::create('entity_reference')
-      ->setLabel(new TranslatableMarkup('Included components'))
+      ->setLabel(new TranslatableMarkup('Included applications'))
       ->setSetting('target_type', 'soda_scs_component')
       ->setSetting('handler', 'default')
       ->setCardinality(FieldStorageDefinitionInterface::CARDINALITY_UNLIMITED)
@@ -341,7 +349,7 @@ class SodaScsStack extends ContentEntityBase implements SodaScsStackInterface {
 
     $fields['owner'] = BaseFieldDefinition::create('entity_reference')
       ->setLabel(new TranslatableMarkup('Owner'))
-      ->setDescription(new TranslatableMarkup('The owner of the SODa SCS Stack.'))
+      ->setDescription(new TranslatableMarkup('The owner of the bundled application.'))
       ->setSetting('target_type', 'user')
       ->setSetting('handler', 'default')
       ->setRequired(TRUE)
@@ -358,11 +366,9 @@ class SodaScsStack extends ContentEntityBase implements SodaScsStackInterface {
         'weight' => 30,
       ]);
 
-
-
     $fields['partOfProjects'] = BaseFieldDefinition::create('entity_reference')
       ->setLabel(new TranslatableMarkup('Project'))
-      ->setDescription(new TranslatableMarkup('The project this application belongs to.'))
+      ->setDescription(new TranslatableMarkup('The project this bundled application belongs to.'))
       ->setSetting('target_type', 'soda_scs_project')
       ->setSetting('handler', 'soda_scs_project_access')
       ->setRequired(FALSE)
@@ -381,7 +387,7 @@ class SodaScsStack extends ContentEntityBase implements SodaScsStackInterface {
 
     $fields['snapshots'] = BaseFieldDefinition::create('entity_reference')
       ->setLabel(new TranslatableMarkup('Snapshots'))
-      ->setDescription(new TranslatableMarkup('The snapshots of the SODa SCS Stack.'))
+      ->setDescription(new TranslatableMarkup('The snapshots of the bundled application.'))
       ->setSetting('target_type', 'soda_scs_snapshot')
       ->setSetting('handler', 'default')
       ->setCardinality(FieldStorageDefinitionInterface::CARDINALITY_UNLIMITED)
@@ -396,7 +402,7 @@ class SodaScsStack extends ContentEntityBase implements SodaScsStackInterface {
 
     $fields['updated'] = BaseFieldDefinition::create('changed')
       ->setLabel(new TranslatableMarkup('Updated'))
-      ->setDescription(new TranslatableMarkup('The time that the SODa SCS Component was last updated.'))
+      ->setDescription(new TranslatableMarkup('The time that the bundled application was last updated.'))
       ->setRequired(TRUE)
       ->setReadOnly(TRUE)
       ->setTranslatable(FALSE)

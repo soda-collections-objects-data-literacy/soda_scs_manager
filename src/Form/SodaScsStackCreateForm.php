@@ -150,7 +150,8 @@ class SodaScsStackCreateForm extends ContentEntityForm {
       $form['owner']['#access'] = FALSE;
     }
 
-    // Make the machineName field readonly and add JavaScript to auto-generate it.
+    // Make the machineName field readonly and
+    // add JavaScript to auto-generate it.
     if (isset($form['machineName'])) {
       // @todo Check if there is a better way to do this.
       // Add CSS classes for machine name generation.
@@ -240,7 +241,8 @@ class SodaScsStackCreateForm extends ContentEntityForm {
       }
     }
 
-    // Check if the machineName is already in use by another SodaScsComponent entity.
+    // Check if the machineName is already in use
+    // by another SodaScsComponent entity.
     $entity_query = $this->entityTypeManager->getStorage('soda_scs_component')->getQuery()
       ->accessCheck(FALSE)
       ->condition('machineName', $machineName);
@@ -259,7 +261,7 @@ class SodaScsStackCreateForm extends ContentEntityForm {
       $form_state->setErrorByName('machineName', $this->t('The machine name must not exceed 30 characters.'));
     }
 
-    return true;
+    return TRUE;
   }
 
   /**

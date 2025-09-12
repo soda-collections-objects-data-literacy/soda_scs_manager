@@ -53,11 +53,12 @@ interface SodaScsStackInterface extends ContentEntityInterface, EntityOwnerInter
    * @param string $value
    *   Value to be put in $stack->field[$index]->value.
    * @param ?int $index
-   *   The delta i.e. $stack->field[$index]
+   *   The delta i.e. $stack->field[$index].
    * @param string $defaultValue
    *   The default values that will be written into the previous indexes.
    * @param bool $overwriteOldValues
-   *   TRUE to ignore previous index values and overwrite them with $default_value.
+   *   TRUE to ignore previous index values and
+   *   overwrite them with $default_value.
    */
   public static function setValue(SodaScsStackInterface $stack, string $fieldName, string $value, ?int $index = NULL, string $defaultValue = "", bool $overwriteOldValues = FALSE);
 

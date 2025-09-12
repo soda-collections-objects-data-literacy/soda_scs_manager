@@ -596,6 +596,7 @@ class SodaScsTriplestoreComponentActions implements SodaScsComponentActionsInter
           'createContainerResponse' => $createContainerResponse,
           'metadata' => [
             'backupPath' => $snapshotPaths['backupPath'],
+            'relativeUrlBackupPath' => $snapshotPaths['relativeUrlBackupPath'],
             'contentFilePaths' => [
               'tarFilePath' => $snapshotPaths['absoluteTarFilePath'],
               'sha256FilePath' => $snapshotPaths['absoluteSha256FilePath'],

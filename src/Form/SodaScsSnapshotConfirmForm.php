@@ -17,6 +17,7 @@ use Drupal\Core\Utility\Error;
 use Drupal\file\Entity\File;
 use Psr\Log\LogLevel;
 use Drupal\Core\Session\AccountProxyInterface;
+use Drupal\Core\Language\LanguageManagerInterface;
 
 /**
  * Provides a confirmation form for creating snapshots.
@@ -101,6 +102,13 @@ class SodaScsSnapshotConfirmForm extends ConfirmFormBase {
   protected $currentUser;
 
   /**
+   * The language manager.
+   *
+   * @var \Drupal\Core\Language\LanguageManagerInterface
+   */
+  protected $languageManager;
+
+  /**
    * Constructs a new SodaScsSnapshotConfirmForm.
    *
    * @param \Drupal\Core\Entity\EntityTypeManagerInterface $entity_type_manager
@@ -121,6 +129,8 @@ class SodaScsSnapshotConfirmForm extends ConfirmFormBase {
    *   The logger factory.
    * @param \Drupal\Core\Session\AccountProxyInterface $current_user
    *   The current user.
+   * @param \Drupal\Core\Language\LanguageManagerInterface $language_manager
+   *   The language manager.
    */
   public function __construct(
     EntityTypeManagerInterface $entity_type_manager,
@@ -132,6 +142,7 @@ class SodaScsSnapshotConfirmForm extends ConfirmFormBase {
     SodaScsStackActionsInterface $sodaScsWisskiStackActions,
     LoggerChannelFactoryInterface $logger_factory,
     AccountProxyInterface $current_user,
+    LanguageManagerInterface $language_manager,
   ) {
     $this->entityTypeManager = $entity_type_manager;
     $this->sodaScsDockerRunServiceActions = $sodaScsDockerRunServiceActions;
@@ -142,6 +153,7 @@ class SodaScsSnapshotConfirmForm extends ConfirmFormBase {
     $this->sodaScsWisskiStackActions = $sodaScsWisskiStackActions;
     $this->loggerFactory = $logger_factory;
     $this->currentUser = $current_user;
+    $this->languageManager = $language_manager;
   }
 
   /**
@@ -157,7 +169,8 @@ class SodaScsSnapshotConfirmForm extends ConfirmFormBase {
       $container->get('soda_scs_manager.wisski_component.actions'),
       $container->get('soda_scs_manager.wisski_stack.actions'),
       $container->get('logger.factory'),
-      $container->get('current_user')
+      $container->get('current_user'),
+      $container->get('language_manager')
     );
   }
 
@@ -212,6 +225,15 @@ class SodaScsSnapshotConfirmForm extends ConfirmFormBase {
   public function submitForm(array &$form, FormStateInterface $form_state) {
     $values = $form_state->getValues();
     $snapshotMachineName = $this->sodaScsSnapshotHelpers->cleanMachineName($values['label']);
+
+    // Create the snapshot entity.
+    $snapshot = SodaScsSnapshot::create([
+      'label' => $values['label'],
+      'owner' => $this->currentUser->id(),
+      'langcode' => $this->languageManager->getCurrentLanguage()->getId(),
+    ]);
+
+    $snapshot->save();
 
     switch ($this->entity->bundle()) {
       case 'soda_scs_sql_component':
@@ -364,7 +386,8 @@ class SodaScsSnapshotConfirmForm extends ConfirmFormBase {
 
     // Create the bag of files.
     $createBagResult = $this->sodaScsSnapshotHelpers->createBagOfFiles(
-      $createSnapshotResult->data
+      $createSnapshotResult->data,
+      $snapshot
     );
 
     // @todo Check if the bag container is still running. Wait for it to be removed.
@@ -375,23 +398,18 @@ class SodaScsSnapshotConfirmForm extends ConfirmFormBase {
     ]);
     $file->save();
 
-    $signatureFile = File::create([
+    $checksumFile = File::create([
       'uri' => 'private://' . $createBagResult->data['metadata']['relativeSha256FilePath'],
       'uid' => $this->currentUser->id(),
       'status' => 1,
     ]);
-    $signatureFile->save();
+    $checksumFile->save();
 
     // Create the snapshot entity.
-    $snapshot = SodaScsSnapshot::create([
-      'label' => $values['label'],
-      'owner' => $this->currentUser->id(),
-      'langcode' => 'en',
-      'changed' => time(),
-      'created' => time(),
-      'file' => $file->id(),
-      'signatureFile' => $signatureFile->id(),
-    ]);
+    $snapshot->set('changed', time())
+      ->set('created', time())
+      ->set('file', $file->id())
+      ->set('checksumFile', $checksumFile->id());
 
     if ($this->entityType === 'soda_scs_stack') {
       $snapshot->set('snapshotOfStack', $this->entity->id());

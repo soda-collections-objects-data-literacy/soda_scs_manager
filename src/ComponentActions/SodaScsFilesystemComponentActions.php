@@ -129,7 +129,6 @@ class SodaScsFilesystemComponentActions implements SodaScsComponentActionsInterf
     TranslationInterface $stringTranslation,
   ) {
     // Services from container.
-
     $this->entityTypeBundleInfo = $entityTypeBundleInfo;
     $this->entityTypeManager = $entityTypeManager;
     $this->httpClient = $httpClient;
@@ -471,19 +470,20 @@ class SodaScsFilesystemComponentActions implements SodaScsComponentActionsInterf
    *
    * @param \Drupal\soda_scs_manager\Entity\SodaScsComponentInterface $component
    *   The SODa SCS Component.
-   * @param int $timestamp
-   *   The timestamp of the snapshot.
    * @param string $snapshotMachineName
    *   The machine name of the snapshot.
+   * @param int $timestamp
+   *   The timestamp of the snapshot.
    *
    * @return array
    *   Result information with the created snapshot.
    */
   public function createSnapshot(SodaScsComponentInterface $component, string $snapshotMachineName, int $timestamp): SodaScsResult {
     try {
-      // TODO: Implement createSnapshot() method.
-    } catch (\Exception $e) {
-      // TODO: Implement createSnapshot() method.
+      // @todo Implement createSnapshot() method.
+    }
+    catch (\Exception $e) {
+      // @todo Implement createSnapshot() method.
     }
 
     return SodaScsResult::success(
@@ -549,78 +549,77 @@ class SodaScsFilesystemComponentActions implements SodaScsComponentActionsInterf
   public function deleteComponent(SodaScsComponentInterface $entity): array {
     // Delete shared folders.
     try {
-        if (empty($entity->get('machineName')->value)) {
-          return [
-            'message' => 'Filesystem machine name is empty.',
-            'data' => [
-              'filesystemComponent' => NULL,
-              'createExecCommandForFolderAtAccessProxyResult' => NULL,
-              'startExecCommandForFolderAtAccessProxyResult' => NULL,
-              'createExecCommandForSetFolderPermissionInContainersResult' => NULL,
-              'startExecCommandForSetFolderPermissionInContainersResult' => NULL,
-            ],
-            'success' => FALSE,
-            'error' => NULL,
-          ];
-        }
-        $accessProxyDeleteDirCmd = [
-          'rmdir',
-          '-p',
-          '/shared/' . $entity->get('machineName')->value,
+      if (empty($entity->get('machineName')->value)) {
+        return [
+          'message' => 'Filesystem machine name is empty.',
+          'data' => [
+            'filesystemComponent' => NULL,
+            'createExecCommandForFolderAtAccessProxyResult' => NULL,
+            'startExecCommandForFolderAtAccessProxyResult' => NULL,
+            'createExecCommandForSetFolderPermissionInContainersResult' => NULL,
+            'startExecCommandForSetFolderPermissionInContainersResult' => NULL,
+          ],
+          'success' => FALSE,
+          'error' => NULL,
         ];
-
+      }
+      $accessProxyDeleteDirCmd = [
+        'rmdir',
+        '-p',
+        '/shared/' . $entity->get('machineName')->value,
+      ];
 
       // Delete shared folders via access proxy.
-        $accessProxyRequestParams = [
-          'containerName' => 'access-proxy',
-          'label' => $entity->get('label')->value,
-          'machineName' => $entity->get('machineName')->value,
-          'partOfProjects' => $entity->get('partOfProjects')->value,
-          'connectedComponents' => $entity->get('connectedComponents')->value,
-          'cmd' => $accessProxyDeleteDirCmd,
-          'user' => 'www-data',
-          'workingDir' => '',
-          'env' => [],
+      $accessProxyRequestParams = [
+        'containerName' => 'access-proxy',
+        'label' => $entity->get('label')->value,
+        'machineName' => $entity->get('machineName')->value,
+        'partOfProjects' => $entity->get('partOfProjects')->value,
+        'connectedComponents' => $entity->get('connectedComponents')->value,
+        'cmd' => $accessProxyDeleteDirCmd,
+        'user' => 'www-data',
+        'workingDir' => '',
+        'env' => [],
+      ];
+
+      // Create the exec command.
+      $createExecCommandForDeleteDirAtAccessProxyRequest = $this->sodaScsDockerExecServiceActions->buildCreateRequest($accessProxyRequestParams);
+      $createExecCommandForDeleteDirAtAccessProxyResult = $this->sodaScsDockerExecServiceActions->makeRequest($createExecCommandForDeleteDirAtAccessProxyRequest);
+
+      if (!$createExecCommandForDeleteDirAtAccessProxyResult['success']) {
+        return [
+          'message' => 'Could not create exec request for the shared folders via access proxy.',
+          'data' => [
+            'filesystemComponent' => NULL,
+            'createExecCommandForDeleteDirAtAccessProxyResult' => $createExecCommandForDeleteDirAtAccessProxyResult,
+            'startExecCommandForFolderAtAccessProxyResult' => NULL,
+          ],
+          'success' => FALSE,
+          'error' => $createExecCommandForDeleteDirAtAccessProxyResult['error'],
         ];
+      }
 
-        // Create the exec command.
-        $createExecCommandForDeleteDirAtAccessProxyRequest = $this->sodaScsDockerExecServiceActions->buildCreateRequest($accessProxyRequestParams);
-        $createExecCommandForDeleteDirAtAccessProxyResult = $this->sodaScsDockerExecServiceActions->makeRequest($createExecCommandForDeleteDirAtAccessProxyRequest);
+      // Get the exec command result.
+      $execCommandForDeleteDirAtAccessProxyResult = json_decode($createExecCommandForDeleteDirAtAccessProxyResult['data']['portainerResponse']->getBody()->getContents(), TRUE);
 
-        if (!$createExecCommandForDeleteDirAtAccessProxyResult['success']) {
-          return [
-            'message' => 'Could not create exec request for the shared folders via access proxy.',
-            'data' => [
-              'filesystemComponent' => NULL,
-              'createExecCommandForDeleteDirAtAccessProxyResult' => $createExecCommandForDeleteDirAtAccessProxyResult,
-              'startExecCommandForFolderAtAccessProxyResult' => NULL,
-            ],
-            'success' => FALSE,
-            'error' => $createExecCommandForDeleteDirAtAccessProxyResult['error'],
-          ];
-        }
+      // Start the exec command.
+      $startExecCommandForDeleteDirAtAccessProxyRequest = $this->sodaScsDockerExecServiceActions->buildStartRequest(['execId' => $execCommandForDeleteDirAtAccessProxyResult['Id']]);
+      $startExecCommandForDeleteDirAtAccessProxyResult = $this->sodaScsDockerExecServiceActions->makeRequest($startExecCommandForDeleteDirAtAccessProxyRequest);
 
-        // Get the exec command result.
-        $execCommandForDeleteDirAtAccessProxyResult = json_decode($createExecCommandForDeleteDirAtAccessProxyResult['data']['portainerResponse']->getBody()->getContents(), TRUE);
-
-        // Start the exec command.
-        $startExecCommandForDeleteDirAtAccessProxyRequest = $this->sodaScsDockerExecServiceActions->buildStartRequest(['execId' => $execCommandForDeleteDirAtAccessProxyResult['Id']]);
-        $startExecCommandForDeleteDirAtAccessProxyResult = $this->sodaScsDockerExecServiceActions->makeRequest($startExecCommandForDeleteDirAtAccessProxyRequest);
-
-        if (!$startExecCommandForDeleteDirAtAccessProxyResult['success']) {
-          return [
-            'message' => 'Could not start exec request for the shared folders via access proxy.',
-            'data' => [
-              'filesystemComponent' => NULL,
-              'createExecCommandForDeleteDirAtAccessProxyResult' => $createExecCommandForDeleteDirAtAccessProxyResult,
-              'startExecCommandForDeleteDirAtAccessProxyResult' => $startExecCommandForDeleteDirAtAccessProxyResult,
-              'createExecCommandForSetFolderPermissionInContainersResult' => NULL,
-              'startExecCommandForSetFolderPermissionInContainersResult' => NULL,
-            ],
-            'success' => FALSE,
-            'error' => $startExecCommandForDeleteDirAtAccessProxyResult['error'],
-          ];
-        }
+      if (!$startExecCommandForDeleteDirAtAccessProxyResult['success']) {
+        return [
+          'message' => 'Could not start exec request for the shared folders via access proxy.',
+          'data' => [
+            'filesystemComponent' => NULL,
+            'createExecCommandForDeleteDirAtAccessProxyResult' => $createExecCommandForDeleteDirAtAccessProxyResult,
+            'startExecCommandForDeleteDirAtAccessProxyResult' => $startExecCommandForDeleteDirAtAccessProxyResult,
+            'createExecCommandForSetFolderPermissionInContainersResult' => NULL,
+            'startExecCommandForSetFolderPermissionInContainersResult' => NULL,
+          ],
+          'success' => FALSE,
+          'error' => $startExecCommandForDeleteDirAtAccessProxyResult['error'],
+        ];
+      }
     }
     catch (\Exception $e) {
       Error::logException(

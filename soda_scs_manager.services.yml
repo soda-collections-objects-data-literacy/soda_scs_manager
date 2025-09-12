@@ -50,6 +50,10 @@ services:
       - '@soda_scs_manager.docker_exec_service.actions'
       - '@soda_scs_manager.docker_run_service.actions'
       - '@logger.factory'
+      - '@file_system'
+      - '@config.factory'
+      - '@transliteration'
+      - '@request_stack'
 
   soda_scs_manager.stack.helpers:
     class: Drupal\soda_scs_manager\Helpers\SodaScsStackHelpers

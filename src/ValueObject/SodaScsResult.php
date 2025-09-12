@@ -37,12 +37,13 @@ final readonly class SodaScsResult {
    *   Success message.
    *
    * @return self
+   *   The SodaScsResult object.
    */
   public static function success(array $data, string $message): self {
     return new self(
-      success: true,
+      success: TRUE,
       data: $data,
-      error: null,
+      error: NULL,
       message: $message,
     );
   }
@@ -56,11 +57,12 @@ final readonly class SodaScsResult {
    *   Human-readable message.
    *
    * @return self
+   *   The SodaScsResult object.
    */
   public static function failure(string $error, string $message): self {
     return new self(
-      success: false,
-      data: null,
+      success: FALSE,
+      data: NULL,
       error: $error,
       message: $message,
     );

@@ -28,14 +28,12 @@ interface SodaScsStackActionsInterface {
    *
    * @param \Drupal\soda_scs_manager\Entity\SodaScsStackInterface $stack
    *   The stack.
-   *
    * @param string $snapshotMachineName
    *   The snapshot machine name.
-   *
    * @param int $timestamp
    *   The timestamp.
    *
-   * @return SodaScsResult
+   * @return \Drupal\soda_scs_manager\ValueObject\SodaScsResult
    *   The result of the request.
    */
   public function createSnapshot(SodaScsStackInterface $stack, string $snapshotMachineName, int $timestamp): SodaScsResult;

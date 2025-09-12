@@ -367,7 +367,6 @@ class SodaScsWisskiComponentActions implements SodaScsComponentActionsInterface 
           }
         }
 
-
       }
       else {
         // If it is not a stack we set the values to empty strings.
@@ -579,8 +578,7 @@ class SodaScsWisskiComponentActions implements SodaScsComponentActionsInterface 
     $wisskiComponent->set('externalId', $portainerResponsePayload['Id']);
 
     // Create the default project group in the WissKI container.
-    // First create the exec command...
-
+    // First create the exec command.
     $createDefaultProjectGroupRequestParams = [
       'containerName' => $portainerResponsePayload['Name'] . '--drupal',
       'cmd' => ['groupadd', '-g', (string) $defaultProjectGroupId, 'default-project-group'],
@@ -609,11 +607,9 @@ class SodaScsWisskiComponentActions implements SodaScsComponentActionsInterface 
       throw new \Exception('Docker exec request failed: ' . $startDefaultProjectGroupResponse['error']);
     }
 
-    // Add the default project group to the www-data user in the WissKI container.
-
-    // Set the default group for the www-data user in the WissKI container.
-    // First create the exec command...
-
+    // Add the default project group to the www-data user
+    // in the WissKI container.
+    // First create the exec command.
     $createDockerExecRequestParams = [
       'containerName' => $portainerResponsePayload['Name'] . '--drupal',
       'cmd' => ['usermod', '-a', '-G', (string) $defaultProjectGroupId, 'www-data'],
@@ -660,12 +656,12 @@ class SodaScsWisskiComponentActions implements SodaScsComponentActionsInterface 
    *
    * @param \Drupal\soda_scs_manager\Entity\SodaScsComponentInterface $component
    *   The SODa SCS Component.
-   * @param int $timestamp
-   *   The timestamp of the snapshot.
    * @param string $snapshotMachineName
    *   The machine name of the snapshot.
+   * @param int $timestamp
+   *   The timestamp of the snapshot.
    *
-   * @return SodaScsResult
+   * @return \Drupal\soda_scs_manager\ValueObject\SodaScsResult
    *   Result information with the created snapshot.
    */
   public function createSnapshot(SodaScsComponentInterface $component, string $snapshotMachineName, int $timestamp): SodaScsResult {
@@ -745,6 +741,7 @@ class SodaScsWisskiComponentActions implements SodaScsComponentActionsInterface 
             'createContainerResponse' => $createContainerResponse,
             'metadata' => [
               'backupPath' => $snapshotPaths['backupPath'],
+              'relativeUrlBackupPath' => $snapshotPaths['relativeUrlBackupPath'],
               'contentFilePaths' => [
                 'tarFilePath' => $snapshotPaths['absoluteTarFilePath'],
                 'sha256FilePath' => $snapshotPaths['absoluteSha256FilePath'],

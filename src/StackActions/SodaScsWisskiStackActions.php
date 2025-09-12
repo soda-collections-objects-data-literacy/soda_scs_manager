@@ -227,7 +227,6 @@ class SodaScsWisskiStackActions implements SodaScsStackActionsInterface {
       $sqlComponent = $sqlComponentCreateResult['data']['sqlComponent'];
 
       // Add the SQL component to the stack.
-
       $stack->setValue($stack, 'includedComponents', $sqlComponent->id());
       $stack->imageUrl = 'public://soda_scs_manager/images/wisski-stack.svg';
     }
@@ -266,7 +265,7 @@ class SodaScsWisskiStackActions implements SodaScsStackActionsInterface {
       }
       $triplestoreComponent = $triplestoreComponentCreateResult['data']['triplestoreComponent'];
       /** @var \Drupal\soda_scs_manager\Entity\SodaScsComponentInterface $triplestoreComponent */
-      $stack->setValue($stack, 'includedComponents', $triplestoreComponent->id(), 1);
+      $stack->setValue($stack, 'includedComponents', $triplestoreComponent->id());
 
     }
     catch (\Exception $e) {
@@ -402,8 +401,12 @@ class SodaScsWisskiStackActions implements SodaScsStackActionsInterface {
    *
    * @param \Drupal\soda_scs_manager\Entity\SodaScsStackInterface $stack
    *   The stack.
+   * @param string $snapshotMachineName
+   *   The snapshot machine name.
+   * @param int $timestamp
+   *   The timestamp.
    *
-   * @return SodaScsResult
+   * @return \Drupal\soda_scs_manager\Helpers\SodaScsResult
    *   The result of the request.
    */
   public function createSnapshot(SodaScsStackInterface $stack, string $snapshotMachineName, int $timestamp): SodaScsResult {
@@ -419,7 +422,7 @@ class SodaScsWisskiStackActions implements SodaScsStackActionsInterface {
       data: [
         ...$wisskiComponentSnapshot->data,
         ...$sqlComponentSnapshot->data,
-        ...$triplestoreComponentSnapshot->data
+        ...$triplestoreComponentSnapshot->data,
       ],
       message: 'Successfully created WissKI stack snapshot.'
     );

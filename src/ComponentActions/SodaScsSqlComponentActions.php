@@ -14,7 +14,6 @@ use Drupal\Core\StringTranslation\StringTranslationTrait;
 use Drupal\Core\StringTranslation\TranslationInterface;
 use Drupal\Core\TypedData\Exception\MissingDataException;
 use Drupal\Core\Utility\Error;
-use Drupal\file\Entity\File;
 use Drupal\soda_scs_manager\Entity\SodaScsComponentInterface;
 use Drupal\soda_scs_manager\Entity\SodaScsStackInterface;
 use Drupal\soda_scs_manager\Exception\SodaScsSqlServiceException;
@@ -170,7 +169,8 @@ class SodaScsSqlComponentActions implements SodaScsComponentActionsInterface {
    */
   public function createComponent(SodaScsStackInterface|SodaScsComponentInterface $entity): array {
     try {
-      $sqlComponentBundleInfo = \Drupal::service('entity_type.bundle.info')->getBundleInfo('soda_scs_component')['soda_scs_sql_component'];
+      $bundleInfoService = \Drupal::service('entity_type.bundle.info');
+      $sqlComponentBundleInfo = $bundleInfoService->getBundleInfo('soda_scs_component')['soda_scs_sql_component'];
 
       if (!$sqlComponentBundleInfo) {
         throw new \Exception('SQL component bundle info not found');
@@ -343,12 +343,12 @@ class SodaScsSqlComponentActions implements SodaScsComponentActionsInterface {
    *
    * @param \Drupal\soda_scs_manager\Entity\SodaScsComponentInterface $component
    *   The SODa SCS Component.
-   * @param int $timestamp
-   *   The timestamp of the snapshot.
    * @param string $snapshotMachineName
    *   The machine name of the snapshot.
+   * @param int $timestamp
+   *   The timestamp of the snapshot.
    *
-   * @return SodaScsResult
+   * @return \Drupal\soda_scs_manager\ValueObject\SodaScsResult
    *   Result information with the created snapshot.
    */
   public function createSnapshot(SodaScsComponentInterface $component, string $snapshotMachineName, int $timestamp): SodaScsResult {
@@ -370,7 +370,7 @@ class SodaScsSqlComponentActions implements SodaScsComponentActionsInterface {
       if (empty($dbRootPassword)) {
         return SodaScsResult::failure(
           error: 'Database root password setting missing',
-          message: 'Snapshot creation failed: Missing database root password.',
+          message: 'Snapshot creation failed: Missing root password.',
         );
       }
       $dumpFilePath = $snapshotPaths['backupPathWithType'] . '/' . $dbName . '.sql';
@@ -427,7 +427,8 @@ class SodaScsSqlComponentActions implements SodaScsComponentActionsInterface {
         );
       }
 
-        // Check if the dump file size does not change, then set fileIsReady to TRUE.
+      // Check if the dump file size does not change,
+      // then set fileIsReady to TRUE.
       $previousFileSize = 0;
       while (!$fileIsReady && $attempts < $maxAttempts) {
         clearstatcache(TRUE, $dumpFilePath);
@@ -441,7 +442,6 @@ class SodaScsSqlComponentActions implements SodaScsComponentActionsInterface {
           $attempts++;
         }
       }
-
 
       // Exit if timeout is reached.
       if ($attempts === $maxAttempts) {
@@ -514,6 +514,7 @@ class SodaScsSqlComponentActions implements SodaScsComponentActionsInterface {
             'createContainerResponse' => $createContainerResponse,
             'metadata' => [
               'backupPath' => $snapshotPaths['backupPath'],
+              'relativeUrlBackupPath' => $snapshotPaths['relativeUrlBackupPath'],
               'contentFilePaths' => [
                 'tarFilePath' => $snapshotPaths['absoluteTarFilePath'],
                 'sha256FilePath' => $snapshotPaths['absoluteSha256FilePath'],

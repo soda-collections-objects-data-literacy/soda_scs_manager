@@ -157,12 +157,13 @@ class SodaScsComponent extends ContentEntityBase implements SodaScsComponentInte
    * {@inheritdoc}
    */
   public static function baseFieldDefinitions(EntityTypeInterface $entity_type) {
-    // Fetch any existing base field definitions from the parent class (= id, uuid, langcode, bundle).
+    // Fetch any existing base field definitions from
+    // the parent class (= id, uuid, langcode, bundle).
     $fields = parent::baseFieldDefinitions($entity_type);
 
     // @todo Implement the reuse of dangling components.
     $fields['connectedComponents'] = BaseFieldDefinition::create('entity_reference')
-      ->setLabel(new TranslatableMarkup('Connected Components'))
+      ->setLabel(new TranslatableMarkup('Connected applications'))
       ->setSetting('target_type', 'soda_scs_component')
       ->setSetting('handler', 'default')
       ->setRequired(FALSE)
@@ -179,7 +180,7 @@ class SodaScsComponent extends ContentEntityBase implements SodaScsComponentInte
 
     $fields['created'] = BaseFieldDefinition::create('created')
       ->setLabel(new TranslatableMarkup('Created'))
-      ->setDescription(new TranslatableMarkup('The time that the SODa SCS Component was created.'))
+      ->setDescription(new TranslatableMarkup('The time that the application was created.'))
       ->setRequired(TRUE)
       ->setReadOnly(TRUE)
       ->setDisplayConfigurable('form', FALSE)
@@ -192,7 +193,7 @@ class SodaScsComponent extends ContentEntityBase implements SodaScsComponentInte
 
     $fields['description'] = BaseFieldDefinition::create('text_long')
       ->setLabel(new TranslatableMarkup('Description'))
-      ->setDescription(new TranslatableMarkup('The description of the SODa SCS Component.'))
+      ->setDescription(new TranslatableMarkup('The description of the application.'))
       ->setRequired(FALSE)
       ->setReadOnly(TRUE)
       ->setDisplayConfigurable('form', FALSE)
@@ -211,7 +212,7 @@ class SodaScsComponent extends ContentEntityBase implements SodaScsComponentInte
 
     $fields['externalId'] = BaseFieldDefinition::create('string')
       ->setLabel(new TranslatableMarkup('External ID'))
-      ->setDescription(new TranslatableMarkup('The external ID of the SODa SCS Component.'))
+      ->setDescription(new TranslatableMarkup('The external ID of the application.'))
       ->setRequired(TRUE)
       ->setReadOnly(TRUE)
       ->setDisplayConfigurable('form', FALSE)
@@ -219,7 +220,7 @@ class SodaScsComponent extends ContentEntityBase implements SodaScsComponentInte
 
     $fields['health'] = BaseFieldDefinition::create('string')
       ->setLabel(new TranslatableMarkup('Health Status'))
-      ->setDescription(new TranslatableMarkup('The health status of the SODa SCS Component.'))
+      ->setDescription(new TranslatableMarkup('The health status of the application.'))
       ->setRequired(FALSE)
     // Ensure this is read-only as it will be updated via JavaScript.
       ->setReadOnly(TRUE)
@@ -235,7 +236,7 @@ class SodaScsComponent extends ContentEntityBase implements SodaScsComponentInte
 
     $fields['imageUrl'] = BaseFieldDefinition::create('string')
       ->setLabel(new TranslatableMarkup('Image'))
-      ->setDescription(new TranslatableMarkup('The image of the SODa SCS Component.'))
+      ->setDescription(new TranslatableMarkup('The image of the application.'))
       ->setRequired(FALSE)
       ->setReadOnly(TRUE)
       ->setDisplayConfigurable('view', FALSE)
@@ -265,7 +266,7 @@ class SodaScsComponent extends ContentEntityBase implements SodaScsComponentInte
 
     $fields['machineName'] = BaseFieldDefinition::create('string')
       ->setLabel(new TranslatableMarkup('Machine Name'))
-      ->setDescription(new TranslatableMarkup('The machine-readable name of the project.'))
+      ->setDescription(new TranslatableMarkup('The machine-readable name of the application.'))
       ->setRequired(TRUE)
       ->setSetting('max_length', 255)
       ->setDisplayOptions('form', [
@@ -289,7 +290,7 @@ class SodaScsComponent extends ContentEntityBase implements SodaScsComponentInte
 
     $fields['notes'] = BaseFieldDefinition::create('string_long')
       ->setLabel(new TranslatableMarkup('Notes'))
-      ->setDescription(new TranslatableMarkup('Notes about the SODa SCS application.'))
+      ->setDescription(new TranslatableMarkup('Notes about the application.'))
       ->setRequired(FALSE)
       ->setReadOnly(FALSE)
       ->setDisplayConfigurable('view', FALSE)
@@ -305,7 +306,7 @@ class SodaScsComponent extends ContentEntityBase implements SodaScsComponentInte
 
     $fields['owner'] = BaseFieldDefinition::create('entity_reference')
       ->setLabel(new TranslatableMarkup('Owner'))
-      ->setDescription(new TranslatableMarkup('The owner of the SODa SCS Component.'))
+      ->setDescription(new TranslatableMarkup('The owner of the application.'))
       ->setSetting('target_type', 'user')
       ->setSetting('handler', 'default')
       ->setRequired(TRUE)
@@ -343,7 +344,7 @@ class SodaScsComponent extends ContentEntityBase implements SodaScsComponentInte
 
     $fields['serviceKey'] = BaseFieldDefinition::create('entity_reference')
       ->setLabel(new TranslatableMarkup('Service Key'))
-      ->setDescription(new TranslatableMarkup('The service key associated with this component.'))
+      ->setDescription(new TranslatableMarkup('The service key associated with this application.'))
       ->setSetting('target_type', 'soda_scs_service_key')
       ->setSetting('handler', 'default')
       ->setCardinality(FieldStorageDefinitionInterface::CARDINALITY_UNLIMITED)
@@ -358,7 +359,7 @@ class SodaScsComponent extends ContentEntityBase implements SodaScsComponentInte
 
     $fields['snapshots'] = BaseFieldDefinition::create('entity_reference')
       ->setLabel(new TranslatableMarkup('Snapshots'))
-      ->setDescription(new TranslatableMarkup('The snapshots of the SODa SCS Component.'))
+      ->setDescription(new TranslatableMarkup('The snapshots of the application.'))
       ->setSetting('target_type', 'soda_scs_snapshot')
       ->setSetting('handler', 'default')
       ->setCardinality(FieldStorageDefinitionInterface::CARDINALITY_UNLIMITED)
@@ -373,7 +374,7 @@ class SodaScsComponent extends ContentEntityBase implements SodaScsComponentInte
 
     $fields['status'] = BaseFieldDefinition::create('boolean')
       ->setLabel(new TranslatableMarkup('Status'))
-      ->setDescription(new TranslatableMarkup('The status of the SODa SCS Component.'))
+      ->setDescription(new TranslatableMarkup('The status of the application.'))
       ->setRequired(TRUE)
       ->setReadOnly(TRUE)
       ->setDisplayConfigurable('view', FALSE)
@@ -385,7 +386,7 @@ class SodaScsComponent extends ContentEntityBase implements SodaScsComponentInte
 
     $fields['tags'] = BaseFieldDefinition::create('list_string')
       ->setLabel(new TranslatableMarkup('Tags'))
-      ->setDescription(new TranslatableMarkup('The tags of the SODa SCS Component.'))
+      ->setDescription(new TranslatableMarkup('The tags of the application.'))
       ->setCardinality(FieldStorageDefinitionInterface::CARDINALITY_UNLIMITED)
       ->setRequired(FALSE)
       ->setReadOnly(TRUE)
@@ -398,7 +399,7 @@ class SodaScsComponent extends ContentEntityBase implements SodaScsComponentInte
 
     $fields['updated'] = BaseFieldDefinition::create('changed')
       ->setLabel(new TranslatableMarkup('Updated'))
-      ->setDescription(new TranslatableMarkup('The time that the SODa SCS Component was last updated.'))
+      ->setDescription(new TranslatableMarkup('The time that the application was last updated.'))
       ->setRequired(TRUE)
       ->setReadOnly(TRUE)
       ->setDisplayConfigurable('view', FALSE)

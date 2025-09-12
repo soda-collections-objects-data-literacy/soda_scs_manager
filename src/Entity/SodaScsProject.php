@@ -89,13 +89,13 @@ class SodaScsProject extends ContentEntityBase implements SodaScsProjectInterfac
    */
   const GROUP_ID_START = 10000;
 
-    /**
+  /**
    * Get the default project for a user.
    *
    * @param \Drupal\user\UserInterface $user
    *   The user.
    *
-  * @return array[SodaScsProject]|NULL
+   * @return array[SodaScsProject]|null
    *   The default project for the user.
    */
   public static function loadByOwner(UserInterface $user) {
@@ -105,7 +105,6 @@ class SodaScsProject extends ContentEntityBase implements SodaScsProjectInterfac
     $result = $query->execute();
     return self::loadMultiple($result);
   }
-
 
   /**
    * {@inheritdoc}
@@ -253,6 +252,5 @@ class SodaScsProject extends ContentEntityBase implements SodaScsProjectInterfac
 
     return $fields;
   }
-
 
 }
