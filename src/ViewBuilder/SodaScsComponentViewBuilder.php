@@ -17,6 +17,8 @@ use Symfony\Component\DependencyInjection\ContainerInterface;
 class SodaScsComponentViewBuilder extends EntityViewBuilder {
 
   /**
+   * The config.
+   *
    * @var \Drupal\Core\Config\Config
    */
   protected $config;
@@ -41,6 +43,8 @@ class SodaScsComponentViewBuilder extends EntityViewBuilder {
    *   The theme registry.
    * @param \Drupal\Core\Entity\EntityDisplayRepositoryInterface $entity_display_repository
    *   The entity display repository.
+   * @param \Drupal\Core\Config\Config $config
+   *   The config.
    */
   public function __construct(EntityTypeInterface $entity_type, EntityRepositoryInterface $entity_repository, LanguageManagerInterface $language_manager, Registry $theme_registry, EntityDisplayRepositoryInterface $entity_display_repository, $config) {
     $this->entityTypeId = $entity_type->id();
@@ -99,14 +103,14 @@ class SodaScsComponentViewBuilder extends EntityViewBuilder {
       '#weight' => 10,
       '#title' => 'Bundle',
     ];
-    
+
     // Add custom theme suggestions.
     $build['#theme'] = 'soda_scs_component';
-    
+
     // Make entity and view_mode available to template suggestions.
     $build['#soda_scs_component'] = $entity;
     $build['#view_mode'] = $view_mode;
-    
+
     return $build;
   }
 

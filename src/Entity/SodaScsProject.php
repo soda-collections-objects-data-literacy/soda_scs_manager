@@ -69,11 +69,12 @@ use Drupal\user\UserInterface;
  *     "created",
  *     "description",
  *     "id",
+ *     "groupId",
+ *     "keycloakUuid",
  *     "label",
  *     "langcode",
  *     "machineName",
  *     "members",
- *     "keycloakUuid",
  *     "updated",
  *     "owner",
  *     "rights",
@@ -188,8 +189,6 @@ class SodaScsProject extends ContentEntityBase implements SodaScsProjectInterfac
     $fields['keycloakUuid'] = BaseFieldDefinition::create('string')
       ->setLabel(new TranslatableMarkup('Keycloak UUID'))
       ->setDescription(new TranslatableMarkup('The Keycloak UUID of the project group.'))
-      ->setComputed(TRUE)
-      ->setClass(SodaScsKeycloakUuidComputedItemList::class)
       ->setReadOnly(TRUE)
       ->setDisplayConfigurable('form', FALSE)
       ->setDisplayConfigurable('view', FALSE)

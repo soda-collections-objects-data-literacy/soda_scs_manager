@@ -27,6 +27,5 @@ class SodaScsGroupIdComputedItemList extends FieldItemList {
     $computedGroupId = (int) $entityId + (int) SodaScsProject::GROUP_ID_START;
     $this->list[0] = $this->createItem(0, $computedGroupId);
   }
+
 }
-
-

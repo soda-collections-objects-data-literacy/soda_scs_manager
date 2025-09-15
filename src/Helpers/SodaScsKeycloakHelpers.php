@@ -2,6 +2,7 @@
 
 namespace Drupal\soda_scs_manager\Helpers;
 
+use Drupal\soda_scs_manager\RequestActions\SodaScsKeycloakServiceGroupActions;
 use Drupal\soda_scs_manager\RequestActions\SodaScsServiceRequestInterface;
 
 /**
@@ -12,12 +13,16 @@ class SodaScsKeycloakHelpers {
   /**
    * Constructor.
    *
+   * @param \Drupal\soda_scs_manager\RequestActions\SodaScsKeycloakServiceGroupActions $sodaScsKeycloakServiceGroupActions
+   *   The Soda SCS keycloak service group actions.
    * @param \Drupal\soda_scs_manager\RequestActions\SodaScsServiceRequestInterface $sodaScsKeycloakServiceUserActions
    *   The Soda SCS keycloak service user actions.
    */
   public function __construct(
+    protected SodaScsKeycloakServiceGroupActions $sodaScsKeycloakServiceGroupActions,
     protected SodaScsServiceRequestInterface $sodaScsKeycloakServiceUserActions,
   ) {
+    $this->sodaScsKeycloakServiceGroupActions = $sodaScsKeycloakServiceGroupActions;
     $this->sodaScsKeycloakServiceUserActions = $sodaScsKeycloakServiceUserActions;
   }
 
@@ -75,6 +80,56 @@ class SodaScsKeycloakHelpers {
       if ($keycloakUser['username'] == $username) {
         return $keycloakUser;
       }
+    }
+    return NULL;
+  }
+
+  /**
+   * Get Keycloak group by name.
+   *
+   * @param string $keycloakToken
+   *   The keycloak token.
+   * @param string $name
+   *   The name of the group.
+   *
+   * @return array
+   *   The keycloak group.
+   */
+  public function getKeycloakGroup(string $keycloakToken, string $name) {
+    $keycloakGetGroupRequest = $this->sodaScsKeycloakServiceGroupActions->buildGetRequest([
+      'token' => $keycloakToken,
+      'routeParams' => ['groupId' => $name],
+    ]);
+    $keycloakGetGroupResponse = $this->sodaScsKeycloakServiceGroupActions->makeRequest($keycloakGetGroupRequest);
+    if ($keycloakGetGroupResponse['success']) {
+      return json_decode($keycloakGetGroupResponse['data']['keycloakResponse']->getBody()->getContents(), TRUE);
+    }
+    return NULL;
+  }
+
+  /**
+   * Add user to keycloak group.
+   *
+   * @param string $userId
+   *   The user id.
+   * @param string $groupId
+   *   The group id.
+   *
+   * @return array
+   *   The keycloak user.
+   */
+  public function addUserToKeycloakGroup(string $userId, string $groupId) {
+    $keycloakAddUserToGroupRequest = $this->sodaScsKeycloakServiceUserActions->buildUpdateRequest([
+      'type' => 'addUserToGroup',
+      'routeParams' => [
+        'userId' => $userId,
+        'groupId' => $groupId,
+      ],
+      'token' => $this->getKeycloakToken(),
+    ]);
+    $keycloakAddUserToGroupResponse = $this->sodaScsKeycloakServiceUserActions->makeRequest($keycloakAddUserToGroupRequest);
+    if ($keycloakAddUserToGroupResponse['success']) {
+      return $keycloakAddUserToGroupResponse['data']['keycloakResponse']->getBody()->getContents();
     }
     return NULL;
   }

@@ -219,16 +219,6 @@ function soda_scs_manager_entity_field_storage_info(EntityTypeInterface $entity_
 }
 
 /**
- * Implements hook_form_FORM_ID_alter() for soda_scs_manager_stack_create_form.
- */
-function soda_scs_manager_form_soda_scs_manager_stack_create_form_alter(&$form, &$form_state, $form_id) {
-  // Disable the partOfProjects field.
-  #if (isset($form['partOfProjects'])) {
-  #  $form['partOfProjects']['#access'] = FALSE;
-  #}
-}
-
-/**
  * Implements hook_form_FORM_ID_alter() for user_register_form.
  */
 function soda_scs_manager_form_user_register_form_alter(&$form, &$form_state, $form_id) {
@@ -769,11 +759,31 @@ function soda_scs_manager_file_download($uri) {
  * The groupId is now automatically set in the insert hook to avoid double save.
  */
 function _soda_scs_manager_create_default_project_for_user(UserInterface $user) {
+
   $project = SodaScsProject::create([
     'bundle' => 'default',
     'label' => $user->getDisplayName() . '\'s default project',
     'owner' => $user->id(),
   ]);
+
+  $project->save();
+
+  /** @var \Drupal\soda_scs_manager\Helpers\SodaScsProjectHelpers $projectHelpers */
+  $projectHelpers = \Drupal::service('soda_scs_manager.project.helpers');
+  $kcToken = $projectHelpers->getKeycloakToken();
+  if (!$kcToken) {
+    return;
+  }
+
+  $createProjectGroupResult = $projectHelpers->createProjectGroup($project);
+  if (!$createProjectGroupResult->success) {
+    return;
+  }
+  $keycloakUuid = $createProjectGroupResult->data['keycloakGroupData']->uuid;
+
+  if (is_string($keycloakUuid) && $keycloakUuid !== '') {
+    $project->set('keycloakUuid', $keycloakUuid);
+  }
 
   $project->save();
 

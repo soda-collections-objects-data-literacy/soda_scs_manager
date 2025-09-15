@@ -420,3 +420,46 @@ function soda_scs_manager_update_11007() {
   return t('Ensured user base fields exist: default_project, first_name, last_name, sso_user_id.');
 
 }
+
+/**
+ * Add keycloakUuid field and groupId field to project entity.
+ */
+function soda_scs_manager_update_11008() {
+  $definition_update_manager = \Drupal::entityDefinitionUpdateManager();
+  $fields = \Drupal::service('entity_field.manager')->getFieldStorageDefinitions('soda_scs_project');
+
+  if (!isset($fields['keycloakUuid'])) {
+    $fields['keycloakUuid'] = BaseFieldDefinition::create('string')
+      ->setLabel(new TranslatableMarkup('Keycloak UUID'))
+      ->setDescription(new TranslatableMarkup('The Keycloak UUID of the project group.'))
+      ->setReadOnly(TRUE)
+      ->setDisplayConfigurable('form', FALSE)
+      ->setDisplayConfigurable('view', FALSE)
+      ->setDisplayOptions('view', [
+        'label' => 'above',
+        'type' => 'string',
+        'weight' => 10,
+      ]);
+    $definition_update_manager->installFieldStorageDefinition('keycloakUuid', 'soda_scs_project', 'core', $fields['keycloakUuid']);
+  }
+  if (!isset($fields['groupId'])) {
+    $fields['groupId'] = BaseFieldDefinition::create('integer')
+      ->setLabel(new TranslatableMarkup('Permission Group ID'))
+      ->setDescription(new TranslatableMarkup('The permission group ID associated with the project.'))
+      ->setComputed(TRUE)
+      ->setClass(SodaScsGroupIdComputedItemList::class)
+      ->setReadOnly(TRUE)
+      ->setDisplayConfigurable('form', FALSE)
+      ->setDisplayConfigurable('view', FALSE)
+      ->setDisplayOptions('view', [
+        'label' => 'above',
+        'type' => 'integer',
+        'weight' => 10,
+      ]);
+  }
+  // Clear caches to refresh field definitions.
+  drupal_flush_all_caches();
+
+  return t('Ensured project base fields exist: keycloakUuid, groupId.');
+}
+

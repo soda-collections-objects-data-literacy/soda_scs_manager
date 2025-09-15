@@ -20,6 +20,7 @@ services:
   soda_scs_manager.keycloak_service.helpers:
     class: Drupal\soda_scs_manager\Helpers\SodaScsKeycloakHelpers
     arguments:
+      - '@soda_scs_manager.keycloak_service.group.actions'
       - '@soda_scs_manager.keycloak_service.user.actions'
 
   soda_scs_manager.project.helpers:

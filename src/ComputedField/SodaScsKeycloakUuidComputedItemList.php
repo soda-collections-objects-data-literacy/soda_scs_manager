@@ -18,6 +18,22 @@ class SodaScsKeycloakUuidComputedItemList extends FieldItemList {
   use StringTranslationTrait;
 
   /**
+   * Ensure the computed value exists before Drupal checks emptiness.
+   */
+  public function isEmpty() {
+    $this->ensureComputedValue();
+    return parent::isEmpty();
+  }
+
+  /**
+   * Ensure the computed value exists before retrieving it.
+   */
+  public function getValue() {
+    $this->ensureComputedValue();
+    return parent::getValue();
+  }
+
+  /**
    * {@inheritdoc}
    */
   protected function computeValue() {
@@ -69,7 +85,5 @@ class SodaScsKeycloakUuidComputedItemList extends FieldItemList {
       return;
     }
   }
+
 }
-
-
-

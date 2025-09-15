@@ -237,7 +237,6 @@ class SodaScsKeycloakServiceGroupActions implements SodaScsServiceRequestInterfa
       $success = TRUE;
     }
 
-
     // Replace any route parameters.
     if (!empty($requestParams['routeParams'])) {
       foreach ($requestParams['routeParams'] as $key => $value) {

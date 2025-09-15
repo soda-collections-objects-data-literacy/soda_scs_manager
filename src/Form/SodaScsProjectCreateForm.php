@@ -15,14 +15,12 @@ use Drupal\Core\Logger\LoggerChannelInterface;
 use Drupal\Core\Session\AccountProxyInterface;
 use Drupal\Core\Utility\Error;
 use Drupal\soda_scs_manager\ComponentActions\SodaScsComponentActionsInterface;
-use Drupal\soda_scs_manager\Entity\SodaScsProject;
 use Drupal\soda_scs_manager\Helpers\SodaScsProjectHelpers;
 use Drupal\soda_scs_manager\RequestActions\SodaScsServiceRequestInterface;
 use Drupal\soda_scs_manager\ServiceActions\SodaScsServiceActionsInterface;
 use Drupal\user\EntityOwnerTrait;
 use Psr\Log\LogLevel;
 use Symfony\Component\DependencyInjection\ContainerInterface;
-
 
 /**
  * Form controller for the ScsComponent entity create form.
@@ -151,6 +149,8 @@ class SodaScsProjectCreateForm extends ContentEntityForm {
    *   The Soda SCS API Actions service.
    * @param \Drupal\soda_scs_manager\RequestActions\SodaScsServiceRequestInterface $sodaScsKeycloakServiceUserActions
    *   The Soda SCS API Actions service.
+   * @param \Drupal\soda_scs_manager\Helpers\SodaScsProjectHelpers $sodaScsProjectHelpers
+   *   The Soda SCS Project Helpers service.
    * @param \Drupal\soda_scs_manager\ServiceActions\SodaScsServiceActionsInterface $sodaScsSqlServiceActions
    *   The Soda SCS SQL Service Actions service.
    * @param \Drupal\Component\Datetime\TimeInterface $time
@@ -260,167 +260,6 @@ class SodaScsProjectCreateForm extends ContentEntityForm {
    */
   public function validateForm(array &$form, FormStateInterface $form_state) {
     parent::validateForm($form, $form_state);
-    /* @todo Move this to a separate service. */
-    // Assign rights to all components...
-    foreach ($form_state->getValue('connectedComponents') as $componentId) {
-      /** @var \Drupal\soda_scs_manager\Entity\SodaScsComponent $component */
-      $component = $this->entityTypeManager->getStorage('soda_scs_component')->load($componentId['target_id']);
-      // ...and members mentioned in the form.
-      $members = $form_state->getValue('members');
-      foreach ($members as $memberId) {
-        if (!is_array($memberId) || !isset($memberId['target_id'])) {
-          continue;
-        }
-        /** @var \Drupal\user\Entity\User $member */
-        $member = $this->entityTypeManager->getStorage('user')->load($memberId['target_id']);
-        switch ($component->bundle()) {
-          case 'soda_scs_wisski_component':
-            $wisskiComponent = $component;
-            $wisskiMachineName = $wisskiComponent->machineName->value;
-            // Add group to keycloak user.
-            // First get a token for the Keycloak service client.
-            $keycloakBuildTokenRequest = $this->sodaScsKeycloakServiceClientActions->buildTokenRequest([]);
-            $keycloakMakeTokenRequest = $this->sodaScsKeycloakServiceClientActions->makeRequest($keycloakBuildTokenRequest);
-            if (!$keycloakMakeTokenRequest['success']) {
-              Error::logException(
-                $this->logger,
-                new \Exception('Keycloak token request failed.'),
-                'Keycloak token request failed. @message',
-                ['@message' => $keycloakMakeTokenRequest['error']],
-                LogLevel::ERROR
-              );
-              $form_state->setErrorByName('connectedComponents', $this->t('Keycloak token request failed. See logs for more details.'));
-              break;
-            }
-            $keycloakTokenResponseContents = json_decode($keycloakMakeTokenRequest['data']['keycloakResponse']->getBody()->getContents(), TRUE);
-            $keycloakToken = $keycloakTokenResponseContents['access_token'];
-
-            // Give rigths to the group members.
-            // 1. We need the UUID of the WissKI User Instance Group .
-            // Build the name of the group to add the user to.
-            $keycloakWisskiInstanceUserGroupName = $wisskiMachineName . '-user';
-
-            // Get all groups from Keycloak for group ids.
-            $keycloakBuildGetAllGroupsRequest = $this->sodaScsKeycloakServiceGroupActions->buildGetAllRequest([
-              'token' => $keycloakToken,
-            ]);
-            $keycloakMakeGetAllGroupsResponse = $this->sodaScsKeycloakServiceGroupActions->makeRequest($keycloakBuildGetAllGroupsRequest);
-
-            if (!$keycloakMakeGetAllGroupsResponse['success']) {
-              Error::logException(
-                $this->logger,
-                new \Exception('Keycloak get all groups request failed.'),
-                'Keycloak get all groups request failed. @message',
-                ['@message' => $keycloakMakeGetAllGroupsResponse['error']],
-                LogLevel::ERROR
-              );
-              $form_state->setErrorByName('connectedComponents', $this->t('Keycloak get all groups request failed. See logs for more details.'));
-              break;
-            }
-
-            $keycloakGroups = json_decode($keycloakMakeGetAllGroupsResponse['data']['keycloakResponse']->getBody()->getContents(), TRUE);
-            // Get the admin group id of the WissKI instance.
-            $keycloakWisskiInstanceUserGroup = array_filter($keycloakGroups, function ($group) use ($keycloakWisskiInstanceUserGroupName) {
-              return $group['name'] === $keycloakWisskiInstanceUserGroupName;
-            });
-            $keycloakWisskiInstanceUserGroup = reset($keycloakWisskiInstanceUserGroup);
-
-            // 2. We need the UUID of the keycloak user.
-            // Set up parameters to search for the keycloak user.
-            $getUserParams = [
-              'token' => $keycloakToken,
-              'queryParams' => [
-                'username' => $member->getDisplayName(),
-              ],
-            ];
-
-            // Get the user from Keycloak via getAllUsers,
-            // because wie do not have the uuid, but only the username.
-            $getAllUsersRequest = $this->sodaScsKeycloakServiceUserActions->buildGetAllRequest($getUserParams);
-            $getAllUsersResponse = $this->sodaScsKeycloakServiceUserActions->makeRequest($getAllUsersRequest);
-
-            if (!$getAllUsersResponse['success']) {
-              Error::logException(
-                $this->logger,
-                new \Exception('Keycloak get all users request failed.'),
-                'Keycloak get all users request failed. @message',
-                ['@message' => $getAllUsersResponse['error']],
-                LogLevel::ERROR
-              );
-              $form_state->setErrorByName('connectedComponents', $this->t('Keycloak get all users request failed. See logs for more details.'));
-              break;
-            }
-
-            $allUserData = json_decode($getAllUsersResponse['data']['keycloakResponse']->getBody()->getContents(), TRUE);
-            // Extract the UUID if user is found.
-            if (!empty($allUserData) && is_array($allUserData) && count($allUserData) > 0) {
-              $userData = $allUserData[0];
-            }
-            else {
-              Error::logException(
-                $this->logger,
-                new \Exception('Keycloak user not found.'),
-                'Keycloak user @username not found.',
-                ['@username' => $member->getDisplayName()],
-                LogLevel::ERROR
-              );
-              $form_state->setErrorByName(
-                'connectedComponents',
-                $this->t('Keycloak user not found. See logs for more details.'),
-              );
-              break;
-            }
-
-            // 3. Add user to admin group.
-            $keycloakBuildAddUserToGroupRequest = $this->sodaScsKeycloakServiceUserActions->buildUpdateRequest([
-              'type' => 'group',
-              'routeParams' => [
-                'userId' => $userData['id'],
-                'groupId' => $keycloakWisskiInstanceUserGroup['id'],
-              ],
-              'token' => $keycloakToken,
-            ]);
-            $keycloakMakeAddUserToGroupRequest = $this->sodaScsKeycloakServiceUserActions->makeRequest($keycloakBuildAddUserToGroupRequest);
-
-            if (!$keycloakMakeAddUserToGroupRequest['success']) {
-              Error::logException(
-                $this->logger,
-                new \Exception('Keycloak add user to admin group request failed.'),
-                'Keycloak add user to admin group request failed. @message',
-                ['@message' => $keycloakMakeAddUserToGroupRequest['error']],
-                LogLevel::ERROR
-              );
-              $form_state->setErrorByName(
-                'connectedComponents',
-                $this->t('Keycloak add user to admin group request failed: @error', [
-                  '@error' => $keycloakMakeAddUserToGroupRequest['error'],
-                ]),
-              );
-            }
-            break;
-
-          case 'soda_scs_sql_component':
-            $sqlComponent = $component;
-            $sqlMachineName = $sqlComponent->machineName->value;
-
-            // Grant all privileges for the database user.
-            $this->sodaScsSqlServiceActions->grantServiceRights($member->getDisplayName(), $sqlMachineName, ['ALL']);
-
-            break;
-
-          case 'soda_scs_triplestore_component':
-            $triplestoreComponent = $component;
-            $triplestoreMachineName = $triplestoreComponent->machineName->value;
-            break;
-
-          default:
-            $this->messenger()->addWarning($this->t('Component @component is not supported yet.', [
-              '@component' => $component->label(),
-            ]));
-            break;
-        }
-      }
-    }
   }
 
   /**
@@ -433,15 +272,31 @@ class SodaScsProjectCreateForm extends ContentEntityForm {
     /** @var \Drupal\soda_scs_manager\Entity\SodaScsProject $project */
     $project = $this->entity;
 
+    $kcToken = $this->sodaScsProjectHelpers->getKeycloakToken();
+    if (!$kcToken) {
+      return;
+    }
+
+    $createProjectGroupResult = $this->sodaScsProjectHelpers->createProjectGroup($project);
+    if (!$createProjectGroupResult->success) {
+      return;
+    }
+    $keycloakUuid = $createProjectGroupResult->data['keycloakGroupData']->uuid;
+
+    if (is_string($keycloakUuid) && $keycloakUuid !== '') {
+      $project->set('keycloakUuid', $keycloakUuid);
+      $project->save();
+    }
+
     // Sync keycloak group members with owner and project members.
     $syncKeycloakGroupMembersResponse = $this->sodaScsProjectHelpers->syncKeycloakGroupMembers($project);
-    if (!$syncKeycloakGroupMembersResponse['success']) {
+    if (!$syncKeycloakGroupMembersResponse->success) {
       $this->messenger()->addError($this->t('Failed to sync keycloak group members for project @project: See logs for details.', [
         '@project' => $project->label(),
       ]));
       $this->logger->error('Failed to sync keycloak group members for project @project: @error', [
         '@project' => $project->label(),
-        '@error' => $syncKeycloakGroupMembersResponse['error'],
+        '@error' => $syncKeycloakGroupMembersResponse->error,
       ]);
     }
 
