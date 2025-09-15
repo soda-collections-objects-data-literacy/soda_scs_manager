@@ -139,17 +139,19 @@ services:
       - '@http_client'
       - '@logger.factory'
       - '@messenger'
+      - '@soda_scs_manager.component.helpers'
       - '@soda_scs_manager.docker_exec_service.actions'
       - '@soda_scs_manager.docker_run_service.actions'
-      - '@soda_scs_manager.component.helpers'
-      - '@soda_scs_manager.snapshot.helpers'
-      - '@soda_scs_manager.stack.helpers'
+      - '@soda_scs_manager.keycloak_service.helpers'
       - '@soda_scs_manager.keycloak_service.client.actions'
       - '@soda_scs_manager.keycloak_service.group.actions'
       - '@soda_scs_manager.keycloak_service.user.actions'
       - '@soda_scs_manager.portainer_service.actions'
-      - '@soda_scs_manager.sql_service.actions'
+      - '@soda_scs_manager.project.helpers'
       - '@soda_scs_manager.service_key.actions'
+      - '@soda_scs_manager.snapshot.helpers'
+      - '@soda_scs_manager.sql_service.actions'
+      - '@soda_scs_manager.stack.helpers'
       - '@string_translation'
 
   # Service key actions
@@ -285,6 +287,16 @@ services:
       - '@messenger'
       - '@soda_scs_manager.service.helpers'
       - '@string_translation'
+
+# Snapshot actions
+  soda_scs_manager.snapshot.actions:
+    class: Drupal\soda_scs_manager\SnapshotActions\SodaScsSnapshotActions
+    arguments:
+      - '@soda_scs_manager.component.actions'
+      - '@soda_scs_manager.snapshot.helpers'
+      - '@soda_scs_manager.docker_run_service.actions'
+      - '@file_system'
+      - '@logger.factory'
 
 # Stack actions
   soda_scs_manager.stack.actions:

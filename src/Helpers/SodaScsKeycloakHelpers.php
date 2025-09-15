@@ -3,8 +3,10 @@
 namespace Drupal\soda_scs_manager\Helpers;
 
 use Drupal\soda_scs_manager\RequestActions\SodaScsServiceRequestInterface;
-use Drupal\user\UserInterface;
 
+/**
+ * Helper class for Soda SCS keycloak operations.
+ */
 class SodaScsKeycloakHelpers {
 
   /**
@@ -25,7 +27,6 @@ class SodaScsKeycloakHelpers {
    * @return string
    *   The keycloak token.
    */
-
   public function getKeycloakToken() {
     $keycloakTokenRequest = $this->sodaScsKeycloakServiceUserActions->buildTokenRequest();
     $keycloakTokenResponse = $this->sodaScsKeycloakServiceUserActions->makeRequest($keycloakTokenRequest);
@@ -34,7 +35,6 @@ class SodaScsKeycloakHelpers {
     }
     return NULL;
   }
-
 
   /**
    * Get all keycloak users.
@@ -46,7 +46,10 @@ class SodaScsKeycloakHelpers {
    *   The keycloak users.
    */
   public function getKeycloakUsers(string $keycloakToken) {
-    $keycloakGetAllUsersRequest = $this->sodaScsKeycloakServiceUserActions->buildGetAllRequest(['type' => 'user', 'token' => $keycloakToken]);
+    $keycloakGetAllUsersRequest = $this->sodaScsKeycloakServiceUserActions->buildGetAllRequest([
+      'type' => 'user',
+      'token' => $keycloakToken,
+    ]);
     $keycloakGetAllUsersResponse = $this->sodaScsKeycloakServiceUserActions->makeRequest($keycloakGetAllUsersRequest);
 
     if ($keycloakGetAllUsersResponse['success']) {
@@ -56,13 +59,12 @@ class SodaScsKeycloakHelpers {
   }
 
   /**
-   * Get a keycloak user by uid.
+   * Get a keycloak user by name.
    *
    * @param string $keycloakToken
    *   The keycloak token.
-   *
    * @param string $username
-   *   The uid of the user.
+   *   The name of the user.
    *
    * @return array
    *   The keycloak user.

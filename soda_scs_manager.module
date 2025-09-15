@@ -223,9 +223,9 @@ function soda_scs_manager_entity_field_storage_info(EntityTypeInterface $entity_
  */
 function soda_scs_manager_form_soda_scs_manager_stack_create_form_alter(&$form, &$form_state, $form_id) {
   // Disable the partOfProjects field.
-  if (isset($form['partOfProjects'])) {
-    $form['partOfProjects']['#access'] = FALSE;
-  }
+  #if (isset($form['partOfProjects'])) {
+  #  $form['partOfProjects']['#access'] = FALSE;
+  #}
 }
 
 /**

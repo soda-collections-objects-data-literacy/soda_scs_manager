@@ -299,6 +299,10 @@ class SodaScsPortainerServiceActions implements SodaScsServiceRequestInterface {
         "value" => $requestParams['openidConnectClientSecret'],
       ],
       [
+        "name" => "USER_GROUPS",
+        "value" => $requestParams['userGroups'],
+      ],
+      [
         "name" => "SERVICE_NAME",
         "value" => $requestParams['machineName'],
       ],

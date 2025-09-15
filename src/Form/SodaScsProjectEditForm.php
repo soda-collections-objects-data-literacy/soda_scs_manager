@@ -197,10 +197,8 @@ class SodaScsProjectEditForm extends ContentEntityForm {
 
     $this->sodaScsProjectHelpers->syncKeycloakGroupMembers($project);
 
-
     // Redirect to the components page.
     $form_state->setRedirect('entity.soda_scs_project.collection');
   }
-
 
 }

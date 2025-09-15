@@ -3,19 +3,20 @@
 namespace Drupal\soda_scs_manager\Form;
 
 use Drupal\Core\Entity\EntityTypeManagerInterface;
+use Drupal\Core\File\FileSystemInterface;
 use Drupal\Core\Form\ConfirmFormBase;
 use Drupal\Core\Form\FormStateInterface;
 use Drupal\Core\Logger\LoggerChannelFactoryInterface;
-use Drupal\Core\Url;
-use Drupal\soda_scs_manager\ComponentActions\SodaScsComponentActionsInterface;
-use Drupal\soda_scs_manager\Entity\SodaScsSnapshot;
-use Drupal\soda_scs_manager\RequestActions\SodaScsDockerRunServiceActions;
-use Drupal\soda_scs_manager\Helpers\SodaScsSnapshotHelpers;
-use Drupal\soda_scs_manager\StackActions\SodaScsStackActionsInterface;
-use Symfony\Component\DependencyInjection\ContainerInterface;
 use Drupal\Core\Utility\Error;
 use Drupal\file\Entity\File;
+use Drupal\soda_scs_manager\ComponentActions\SodaScsComponentActionsInterface;
+use Drupal\soda_scs_manager\Entity\SodaScsSnapshot;
+use Drupal\soda_scs_manager\Helpers\SodaScsSnapshotHelpers;
+use Drupal\soda_scs_manager\RequestActions\SodaScsDockerRunServiceActions;
+use Drupal\soda_scs_manager\SnapshotActions\SodaScsSnapshotActionsInterface;
+use Drupal\soda_scs_manager\StackActions\SodaScsStackActionsInterface;
 use Psr\Log\LogLevel;
+use Symfony\Component\DependencyInjection\ContainerInterface;
 
 /**
  * Provides a confirmation form for restoring snapshots.
@@ -42,6 +43,13 @@ class SodaScsSnapshotRestoreForm extends ConfirmFormBase {
    * @var \Drupal\soda_scs_manager\RequestActions\SodaScsDockerRunServiceActions
    */
   protected $sodaScsDockerRunServiceActions;
+
+  /**
+   * The Soda SCS Snapshot Actions.
+   *
+   * @var \Drupal\soda_scs_manager\SnapshotActions\SodaScsSnapshotActionsInterface
+   */
+  protected $sodaScsSnapshotActions;
 
   /**
    * The Soda SCS Snapshot Helpers.
@@ -86,12 +94,25 @@ class SodaScsSnapshotRestoreForm extends ConfirmFormBase {
   protected $loggerFactory;
 
   /**
+   * The file system service.
+   *
+   * @var \Drupal\Core\File\FileSystemInterface
+   */
+  protected $fileSystem;
+
+  /**
    * Constructs a new SodaScsSnapshotRestoreForm.
    *
    * @param \Drupal\Core\Entity\EntityTypeManagerInterface $entity_type_manager
    *   The entity type manager.
+   * @param \Drupal\Core\File\FileSystemInterface $file_system
+   *   The file system service.
+   * @param \Drupal\Core\Logger\LoggerChannelFactoryInterface $logger_factory
+   *   The logger factory.
    * @param \Drupal\soda_scs_manager\RequestActions\SodaScsDockerRunServiceActions $sodaScsDockerRunServiceActions
    *   The Soda SCS Docker Run Service Actions.
+   * @param \Drupal\soda_scs_manager\SnapshotActions\SodaScsSnapshotActionsInterface $sodaScsSnapshotActions
+   *   The Soda SCS Snapshot Actions.
    * @param \Drupal\soda_scs_manager\Helpers\SodaScsSnapshotHelpers $sodaScsSnapshotHelpers
    *   The Soda SCS Snapshot Helpers.
    * @param \Drupal\soda_scs_manager\ComponentActions\SodaScsComponentActionsInterface $sodaScsSqlComponentActions
@@ -102,27 +123,30 @@ class SodaScsSnapshotRestoreForm extends ConfirmFormBase {
    *   The Soda SCS WissKI Component Actions.
    * @param \Drupal\soda_scs_manager\StackActions\SodaScsStackActionsInterface $sodaScsWisskiStackActions
    *   The Soda SCS WissKI Stack Actions.
-   * @param \Drupal\Core\Logger\LoggerChannelFactoryInterface $logger_factory
-   *   The logger factory.
    */
   public function __construct(
     EntityTypeManagerInterface $entity_type_manager,
+    FileSystemInterface $file_system,
+    LoggerChannelFactoryInterface $logger_factory,
     SodaScsDockerRunServiceActions $sodaScsDockerRunServiceActions,
+    SodaScsSnapshotActionsInterface $sodaScsSnapshotActions,
     SodaScsSnapshotHelpers $sodaScsSnapshotHelpers,
     SodaScsComponentActionsInterface $sodaScsSqlComponentActions,
     SodaScsComponentActionsInterface $sodaScsTripleStoreComponentActions,
     SodaScsComponentActionsInterface $sodaScsWisskiComponentActions,
     SodaScsStackActionsInterface $sodaScsWisskiStackActions,
-    LoggerChannelFactoryInterface $logger_factory,
   ) {
+
     $this->entityTypeManager = $entity_type_manager;
+    $this->fileSystem = $file_system;
+    $this->loggerFactory = $logger_factory;
     $this->sodaScsDockerRunServiceActions = $sodaScsDockerRunServiceActions;
+    $this->sodaScsSnapshotActions = $sodaScsSnapshotActions;
     $this->sodaScsSnapshotHelpers = $sodaScsSnapshotHelpers;
     $this->sodaScsSqlComponentActions = $sodaScsSqlComponentActions;
     $this->sodaScsTripleStoreComponentActions = $sodaScsTripleStoreComponentActions;
     $this->sodaScsWisskiComponentActions = $sodaScsWisskiComponentActions;
     $this->sodaScsWisskiStackActions = $sodaScsWisskiStackActions;
-    $this->loggerFactory = $logger_factory;
   }
 
   /**
@@ -131,13 +155,15 @@ class SodaScsSnapshotRestoreForm extends ConfirmFormBase {
   public static function create(ContainerInterface $container) {
     return new static(
       $container->get('entity_type.manager'),
+      $container->get('file_system'),
+      $container->get('logger.factory'),
       $container->get('soda_scs_manager.docker_run_service.actions'),
+      $container->get('soda_scs_manager.snapshot.actions'),
       $container->get('soda_scs_manager.snapshot.helpers'),
       $container->get('soda_scs_manager.sql_component.actions'),
       $container->get('soda_scs_manager.triplestore_component.actions'),
       $container->get('soda_scs_manager.wisski_component.actions'),
       $container->get('soda_scs_manager.wisski_stack.actions'),
-      $container->get('logger.factory')
     );
   }
 
@@ -157,23 +183,6 @@ class SodaScsSnapshotRestoreForm extends ConfirmFormBase {
     if (!$this->snapshot) {
       throw new \Exception('Snapshot not found');
     }
-
-    // Verify that the snapshot has completed status.
-    if ($this->snapshot->get('status')->value !== 'completed') {
-      $this->messenger()->addError($this->t('Cannot restore from snapshot with status: @status', [
-        '@status' => $this->snapshot->get('status')->value,
-      ]));
-      $form['warning'] = [
-        '#markup' => '<p><strong>' . $this->t('This snapshot cannot be restored because it has not completed successfully.') . '</strong></p>',
-      ];
-      return $form;
-    }
-
-    // Show warning about data loss.
-    $form['warning'] = [
-      '#markup' => '<div class="messages messages--warning"><h4>' . $this->t('Warning: Data Loss Risk') . '</h4><p>' .
-        $this->t('Restoring this snapshot will <strong>permanently overwrite</strong> the current data in the target component or stack. This action cannot be undone.') . '</p></div>',
-    ];
 
     // Add checkbox to confirm understanding.
     $form['confirm_data_loss'] = [
@@ -210,7 +219,7 @@ class SodaScsSnapshotRestoreForm extends ConfirmFormBase {
 
     // Get the file URI and convert to system path.
     $fileUri = $snapshotFile->getFileUri();
-    $filePath = \Drupal::service('file_system')->realpath($fileUri);
+    $filePath = $this->fileSystem->realpath($fileUri);
 
     if (!$filePath || !file_exists($filePath)) {
       $this->messenger()->addError($this->t('Snapshot file does not exist on the filesystem.'));
@@ -221,18 +230,18 @@ class SodaScsSnapshotRestoreForm extends ConfirmFormBase {
     $checksumFile = File::load($this->snapshot->get('checksumFile')->target_id);
     if ($checksumFile) {
       $checksumUri = $checksumFile->getFileUri();
-      $checksumPath = \Drupal::service('file_system')->realpath($checksumUri);
+      $checksumPath = $this->fileSystem->realpath($checksumUri);
 
       if ($checksumPath && file_exists($checksumPath)) {
         $expectedChecksum = trim(file_get_contents($checksumPath));
         $actualChecksum = hash_file('sha256', $filePath);
 
         if (strpos($expectedChecksum, $actualChecksum) === FALSE) {
-          $this->messenger()->addError($this->t('Snapshot file checksum verification failed. The file may be corrupted.'));
+          $this->messenger()->addError($this->t('Snapshot restoration failed. See logs for more details.'));
           Error::logException(
             $this->loggerFactory->get('soda_scs_manager'),
             new \Exception('Checksum mismatch'),
-            $this->t('Snapshot restore failed: Checksum verification failed for snapshot @id', ['@id' => $this->snapshot->id()]),
+            $this->t('Snapshot restore failed: Checksum verification failed for snapshot @id. The file may be corrupted.', ['@id' => $this->snapshot->id()]),
             [],
             LogLevel::ERROR
           );
@@ -242,8 +251,8 @@ class SodaScsSnapshotRestoreForm extends ConfirmFormBase {
     }
 
     // Determine the target entity (component or stack).
-    $targetEntity = null;
-    $entityType = null;
+    $targetEntity = NULL;
+    $entityType = NULL;
 
     if (!$this->snapshot->get('snapshotOfComponent')->isEmpty()) {
       $targetEntity = $this->snapshot->get('snapshotOfComponent')->entity;
@@ -255,17 +264,24 @@ class SodaScsSnapshotRestoreForm extends ConfirmFormBase {
     }
 
     if (!$targetEntity) {
-      $this->messenger()->addError($this->t('Cannot determine target entity for restore.'));
+      $this->messenger()->addError($this->t('Snapshot restoration failed. See logs for more details.'));
+      Error::logException(
+        $this->loggerFactory->get('soda_scs_manager'),
+        new \Exception('Target entity not found'),
+        $this->t('Snapshot restore failed: Target entity not found for snapshot @id.', ['@id' => $this->snapshot->id()]),
+        [],
+        LogLevel::ERROR
+      );
       return;
     }
 
     // Perform the restore based on entity type and bundle.
     try {
       if ($entityType === 'component') {
-        $restoreResult = $this->restoreComponent($targetEntity, $filePath);
+        $restoreResult = $this->sodaScsSnapshotActions->restoreComponent($targetEntity, $filePath);
       }
       else {
-        $restoreResult = $this->restoreStack($targetEntity, $filePath);
+        $restoreResult = $this->sodaScsSnapshotActions->restoreStack($targetEntity, $filePath);
       }
 
       if ($restoreResult['success']) {
@@ -296,133 +312,6 @@ class SodaScsSnapshotRestoreForm extends ConfirmFormBase {
   }
 
   /**
-   * Restore a component from snapshot.
-   *
-   * @param \Drupal\soda_scs_manager\Entity\SodaScsComponentInterface $component
-   *   The component to restore to.
-   * @param string $snapshotFilePath
-   *   The path to the snapshot file.
-   *
-   * @return array
-   *   Result array with success status and any error messages.
-   */
-  protected function restoreComponent($component, $snapshotFilePath) {
-    // This is a placeholder implementation. The actual restore logic would need to:
-    // 1. Extract the snapshot file (tar.gz)
-    // 2. Based on component bundle, restore the appropriate data
-    // 3. For SQL components: restore database
-    // 4. For WissKI components: restore files
-    // 5. For triplestore components: restore RDF data
-
-    switch ($component->bundle()) {
-      case 'soda_scs_sql_component':
-        return $this->restoreSqlComponent($component, $snapshotFilePath);
-
-      case 'soda_scs_triplestore_component':
-        return $this->restoreTriplestoreComponent($component, $snapshotFilePath);
-
-      case 'soda_scs_wisski_component':
-        return $this->restoreWisskiComponent($component, $snapshotFilePath);
-
-      default:
-        return [
-          'success' => FALSE,
-          'error' => 'Unsupported component type: ' . $component->bundle(),
-        ];
-    }
-  }
-
-  /**
-   * Restore a stack from snapshot.
-   *
-   * @param \Drupal\soda_scs_manager\Entity\SodaScsStackInterface $stack
-   *   The stack to restore to.
-   * @param string $snapshotFilePath
-   *   The path to the snapshot file.
-   *
-   * @return array
-   *   Result array with success status and any error messages.
-   */
-  protected function restoreStack($stack, $snapshotFilePath) {
-    // Placeholder implementation for stack restore.
-    // This would need to handle multi-component stack restoration.
-
-    return [
-      'success' => FALSE,
-      'error' => 'Stack restore functionality not yet implemented.',
-    ];
-  }
-
-  /**
-   * Restore an SQL component from snapshot.
-   *
-   * @param \Drupal\soda_scs_manager\Entity\SodaScsComponentInterface $component
-   *   The SQL component to restore to.
-   * @param string $snapshotFilePath
-   *   The path to the snapshot file.
-   *
-   * @return array
-   *   Result array with success status and any error messages.
-   */
-  protected function restoreSqlComponent($component, $snapshotFilePath) {
-    // Placeholder implementation.
-    // Actual implementation would need to:
-    // 1. Extract the tar.gz file to get the SQL dump
-    // 2. Use Docker exec to restore the database in the SQL container
-
-    return [
-      'success' => FALSE,
-      'error' => 'SQL component restore functionality not yet implemented.',
-    ];
-  }
-
-  /**
-   * Restore a triplestore component from snapshot.
-   *
-   * @param \Drupal\soda_scs_manager\Entity\SodaScsComponentInterface $component
-   *   The triplestore component to restore to.
-   * @param string $snapshotFilePath
-   *   The path to the snapshot file.
-   *
-   * @return array
-   *   Result array with success status and any error messages.
-   */
-  protected function restoreTriplestoreComponent($component, $snapshotFilePath) {
-    // Placeholder implementation.
-    // Actual implementation would need to:
-    // 1. Extract the tar.gz file to get the N-Quads file
-    // 2. Use OpenGDB API to clear and reload the triplestore
-
-    return [
-      'success' => FALSE,
-      'error' => 'Triplestore component restore functionality not yet implemented.',
-    ];
-  }
-
-  /**
-   * Restore a WissKI component from snapshot.
-   *
-   * @param \Drupal\soda_scs_manager\Entity\SodaScsComponentInterface $component
-   *   The WissKI component to restore to.
-   * @param string $snapshotFilePath
-   *   The path to the snapshot file.
-   *
-   * @return array
-   *   Result array with success status and any error messages.
-   */
-  protected function restoreWisskiComponent($component, $snapshotFilePath) {
-    // Placeholder implementation.
-    // Actual implementation would need to:
-    // 1. Extract the tar.gz file to get the Drupal files
-    // 2. Use Docker to restore files to the WissKI volume
-
-    return [
-      'success' => FALSE,
-      'error' => 'WissKI component restore functionality not yet implemented.',
-    ];
-  }
-
-  /**
    * {@inheritdoc}
    */
   public function getQuestion() {
@@ -442,7 +331,7 @@ class SodaScsSnapshotRestoreForm extends ConfirmFormBase {
    * {@inheritdoc}
    */
   public function getDescription() {
-    $targetEntity = null;
+    $targetEntity = NULL;
     $entityLabel = '';
 
     if (!$this->snapshot->get('snapshotOfComponent')->isEmpty()) {
@@ -454,7 +343,7 @@ class SodaScsSnapshotRestoreForm extends ConfirmFormBase {
       $entityLabel = $targetEntity ? $targetEntity->label() : 'Unknown Stack';
     }
 
-    return $this->t('This action will restore the snapshot data to @entity_label, permanently overwriting its current state.', [
+    return $this->t('This action will restore the snapshot data of the (bundled) application <b>@entity_label</b>, permanently overwriting its current state.', [
       '@entity_label' => $entityLabel,
     ]);
   }

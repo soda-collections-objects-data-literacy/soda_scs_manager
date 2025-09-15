@@ -176,11 +176,12 @@ class SodaScsComponentActions implements SodaScsComponentActionsInterface {
    *
    * @param \Drupal\soda_scs_manager\Entity\SodaScsComponentInterface $component
    *   The component.
-   *
+   * @param string $snapshotMachineName
+   *   The machine name of the snapshot.
    * @param int $timestamp
    *   The timestamp of the snapshot.
    *
-   * @return SodaScsResult
+   * @return \Drupal\soda_scs_manager\ValueObject\SodaScsResult
    *   The result of the request.
    */
   public function createSnapshot(SodaScsComponentInterface $component, string $snapshotMachineName, int $timestamp): SodaScsResult {
