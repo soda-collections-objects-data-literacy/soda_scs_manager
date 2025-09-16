@@ -35,6 +35,14 @@ function soda_scs_manager_entity_base_field_info(EntityTypeInterface $entity_typ
       ->setDescription(new TranslatableMarkup('The default project for this user.'))
       ->setSetting('target_type', 'soda_scs_project')
       ->setSetting('target_bundles', ['default'])
+      ->setSetting('handler', 'soda_scs_project_access')
+      ->setSetting('handler_settings', [
+        'auto_create' => FALSE,
+        'sort' => [
+          'field' => 'label',
+          'direction' => 'ASC',
+        ],
+      ])
       ->setRequired(TRUE)
       ->setCardinality(1)
       ->setDisplayConfigurable('form', TRUE)
@@ -151,7 +159,7 @@ function soda_scs_manager_entity_bundle_info() {
     'class' => SodaScsComponentBundle::class,
     'description' => new TranslatableMarkup('A WissKI Component is a component of a WissKI Stack.'),
     'imageUrl' => 'public://soda_scs_manager/images/wisski.svg',
-    'tags' => ['ontology', 'content-management'],
+    'tags' => ['ontology', 'cms'],
   ];
 
   // Projects.
@@ -182,7 +190,7 @@ function soda_scs_manager_entity_bundle_info() {
     'class' => SodaScsStackBundle::class,
     'description' => new TranslatableMarkup('A WissKI Stack contains a WissKI, a Triplestore and a Database.'),
     'imageUrl' => 'public://soda_scs_manager/images/wisski-stack.svg',
-    'tags' => ['content-management', 'database', 'ontology', 'publishing', 'triplestore'],
+    'tags' => ['cms', 'database', 'ontology', 'publishing', 'triplestore'],
   ];
 
   $bundles['soda_scs_stack']['soda_scs_nextcloud_stack'] = [
