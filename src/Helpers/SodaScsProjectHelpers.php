@@ -665,7 +665,6 @@ class SodaScsProjectHelpers {
 
     // Get the group UUIDs of the project.
     // First get the group UUID from the project entity.
-
     if (!$project->get('keycloakUuid')->value) {
       $getAllGroupRequest = $this->sodaScsKeycloakServiceGroupActions->buildGetAllRequest([
         'token' => $this->getKeycloakToken(),
@@ -705,8 +704,7 @@ class SodaScsProjectHelpers {
       }
     }
 
-    // @todo: Implement wisski user group uuid.
-
+    // @todo Implement wisski user group uuid.
     foreach ($groupUuids as $groupUuid) {
       // Get group members.
       $groupMembersInKeycloakReq = $this->sodaScsKeycloakServiceGroupActions->buildGetAllRequest([

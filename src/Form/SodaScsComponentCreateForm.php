@@ -173,6 +173,7 @@ class SodaScsComponentCreateForm extends ContentEntityForm {
     // Set the imageUrl and description for the entity.
     $this->entity->set('imageUrl', $this->bundleInfo['imageUrl']);
     $this->entity->set('description', $this->bundleInfo['description']);
+    // @todo Do we need to set the health anymore?
     $this->entity->set('health', 'Unknown');
 
     // Build the form.

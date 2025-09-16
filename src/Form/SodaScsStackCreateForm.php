@@ -69,8 +69,6 @@ class SodaScsStackCreateForm extends ContentEntityForm {
    */
   protected SodaScsStackActionsInterface $sodaScsStackActions;
 
-  // Entity type manager variable is set in EntityForm.
-
   /**
    * Constructs a new SodaScsComponentCreateForm.
    *
@@ -163,6 +161,16 @@ class SodaScsStackCreateForm extends ContentEntityForm {
       $form['#attached']['library'][] = 'soda_scs_manager/machineNameGenerator';
     }
 
+    // Get the default project of the current user.
+    $currentUser = $this->currentUser->getAccount();
+    $defaultProjectOfCurrentUser = $currentUser->default_project;
+
+    // Set the default project of the current user
+    // as the default value of the partOfProjects field.
+    if (isset($form['partOfProjects']) && !empty($defaultProjectOfCurrentUser)) {
+      $form['partOfProjects']['widget']['#default_value'] = [$defaultProjectOfCurrentUser];
+    }
+
     // Hide the flavours field.
     $form['flavours']['#access'] = FALSE;
 
@@ -236,7 +244,7 @@ class SodaScsStackCreateForm extends ContentEntityForm {
     // Check if the machineName contains any disallowed words.
     foreach ($disallowed_words as $word) {
 
-      if ($machineName === $disallowed_words) {
+      if ($machineName === $word) {
         $form_state->setErrorByName('machineName', $this->t('The machineName cannot contain the word "@word"', ['@word' => $word]));
       }
     }
@@ -276,10 +284,11 @@ class SodaScsStackCreateForm extends ContentEntityForm {
     $stack = $this->entity;
     $stack->set('bundle', $this->bundle);
     $stack->set('created', $this->time->getRequestTime());
-    $stack->set('updated', $this->time->getRequestTime());
-    $stack->set('owner', $this->currentUser->getAccount()->id());
-    $stack->setLabel($form_state->getValue('label')[0]['value']);
     $stack->set('machineName', $form_state->getValue('machineName')[0]['value']);
+    $stack->set('owner', $this->currentUser->getAccount()->id());
+    $stack->set('partOfProjects', $form_state->getValue('partOfProjects'));
+    $stack->set('updated', $this->time->getRequestTime());
+    $stack->setLabel($form_state->getValue('label')[0]['value']);
 
     // Create external stack.
     $createStackResult = $this->sodaScsStackActions->createStack($stack);

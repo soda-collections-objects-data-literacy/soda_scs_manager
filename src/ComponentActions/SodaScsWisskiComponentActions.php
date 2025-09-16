@@ -255,43 +255,24 @@ class SodaScsWisskiComponentActions implements SodaScsComponentActionsInterface 
   public function createComponent(SodaScsStackInterface|SodaScsComponentInterface $entity): array {
     try {
 
+      // The owner of the entity and all members of linked project
+      // should have access to the WissKI instance. So we collect all
+      // the project colleques for role assignment and the userGroups
+      // for filesystem permissions groups.
       // Get the owner of the component.
       $owner = $entity->getOwner();
-
-      // Get the default project of the owner.
-      $defaultProjectId = $owner->get('default_project')->target_id;
-
-      if (empty($defaultProjectId)) {
-        throw new \Exception('Default project not found for user: ' . $owner->getDisplayName());
-      }
-
-      // Get the default project.
-      /** @var \Drupal\soda_scs_manager\Entity\SodaScsProjectInterface $defaultProject */
-      $defaultProject = $this->entityTypeManager->getStorage('soda_scs_project')->load($defaultProjectId);
-      $defaultProjectGroupId = $defaultProject->get('groupId')->value;
-
-      // Collect the project groups.
-      $userGroups = [];
-      $userGroups[] = $defaultProjectGroupId;
-
-      // Get project colleques.
-      // We collect them to add them all to the
-      // WissKI admin group of the instance.
-      // Get members of the default project.
-      /** @var \Drupal\Core\Field\EntityReferenceFieldItemList $defaultProjectMembersItemList */
-      $defaultProjectMembersItemList = $defaultProject->get('members');
-      $defaultProjectMembers = $defaultProjectMembersItemList->referencedEntities();
+      $projectColleques[] = $owner;
 
       // Get the members of the linked projects.
       /** @var \Drupal\Core\Field\EntityReferenceFieldItemList $linkedProjectsItemList */
-      $linkedProjectsItemList = $defaultProject->get('partOfProjects');
+      $linkedProjectsItemList = $entity->get('partOfProjects');
       $linkedProjects = $linkedProjectsItemList->referencedEntities();
       /** @var \Drupal\soda_scs_manager\Entity\SodaScsProjectInterface $linkedProject */
       foreach ($linkedProjects as $linkedProject) {
         /** @var \Drupal\Core\Field\EntityReferenceFieldItemList $linkedProjectMembersItemList */
         $linkedProjectMembersItemList = $linkedProject->get('members');
         $linkedProjectMembers = $linkedProjectMembersItemList->referencedEntities();
-        $projectColleques = array_merge($defaultProjectMembers, $linkedProjectMembers);
+        $projectColleques[] = $linkedProjectMembers;
         $userGroups[] = $linkedProject->get('groupId')->value;
       }
 
@@ -591,62 +572,6 @@ class SodaScsWisskiComponentActions implements SodaScsComponentActionsInterface 
     $portainerResponsePayload = json_decode($portainerCreateRequestResult['data']['portainerResponse']->getBody()->getContents(), TRUE);
     // Set the external ID.
     $wisskiComponent->set('externalId', $portainerResponsePayload['Id']);
-
-    // Create the default project group in the WissKI container.
-    // First create the exec command.
-    $createDefaultProjectGroupRequestParams = [
-      'containerName' => $portainerResponsePayload['Name'] . '--drupal',
-      'cmd' => ['groupadd', '-g', (string) $defaultProjectGroupId, 'default-project-group'],
-      'user' => 'root',
-    ];
-    $createDefaultProjectGroupRequest = $this->sodaScsDockerExecServiceActions->buildCreateRequest($createDefaultProjectGroupRequestParams);
-
-    $createDefaultProjectGroupResponse = $this->sodaScsDockerExecServiceActions->makeRequest($createDefaultProjectGroupRequest);
-
-    if (!$createDefaultProjectGroupResponse['success']) {
-      throw new \Exception('Docker exec request failed: ' . $createDefaultProjectGroupResponse['error']);
-    }
-
-    $jsonResponse = json_decode($createDefaultProjectGroupResponse['data']['portainerResponse']->getBody()->getContents(), TRUE);
-    $execId = $jsonResponse['Id'];
-
-    $startDefaultProjectGroupRequestParams = [
-      'execId' => $execId,
-    ];
-
-    // Then execute the exec command.
-    $startDefaultProjectGroupRequest = $this->sodaScsDockerExecServiceActions->buildStartRequest($startDefaultProjectGroupRequestParams);
-    $startDefaultProjectGroupResponse = $this->sodaScsDockerExecServiceActions->makeRequest($startDefaultProjectGroupRequest);
-
-    if (!$startDefaultProjectGroupResponse['success']) {
-      throw new \Exception('Docker exec request failed: ' . $startDefaultProjectGroupResponse['error']);
-    }
-
-    // Add the default project group to the www-data user
-    // in the WissKI container.
-    // First create the exec command.
-    $createDockerExecRequestParams = [
-      'containerName' => $portainerResponsePayload['Name'] . '--drupal',
-      'cmd' => ['usermod', '-a', '-G', (string) $defaultProjectGroupId, 'www-data'],
-      'user' => 'root',
-    ];
-
-    $createDockerExecRequest = $this->sodaScsDockerExecServiceActions->buildCreateRequest($createDockerExecRequestParams);
-    $createDockerExecResponse = $this->sodaScsDockerExecServiceActions->makeRequest($createDockerExecRequest);
-    if (!$createDockerExecResponse['success']) {
-      throw new \Exception('Docker exec request failed: ' . $createDockerExecResponse['error']);
-    }
-    $jsonResponse = json_decode($createDockerExecResponse['data']['portainerResponse']->getBody()->getContents(), TRUE);
-    $execId = $jsonResponse['Id'];
-    // Then execute the exec command.
-    $startDockerExecRequestParams = [
-      'execId' => $execId,
-    ];
-    $startDockerExecRequest = $this->sodaScsDockerExecServiceActions->buildStartRequest($startDockerExecRequestParams);
-    $startDockerExecResponse = $this->sodaScsDockerExecServiceActions->makeRequest($startDockerExecRequest);
-    if (!$startDockerExecResponse['success']) {
-      throw new \Exception('Docker exec request failed: ' . $startDockerExecResponse['error']);
-    }
 
     // Save the component.
     $wisskiComponent->save();

@@ -8,7 +8,6 @@ use Drupal\Core\Field\BaseFieldDefinition;
 use Drupal\Core\Field\FieldStorageDefinitionInterface;
 use Drupal\Core\StringTranslation\TranslatableMarkup;
 use Drupal\soda_scs_manager\ComputedField\SodaScsGroupIdComputedItemList;
-use Drupal\soda_scs_manager\ComputedField\SodaScsKeycloakUuidComputedItemList;
 use Drupal\user\EntityOwnerTrait;
 use Drupal\user\UserInterface;
 
@@ -35,7 +34,7 @@ use Drupal\user\UserInterface;
  *       "edit" = "Drupal\soda_scs_manager\Form\SodaScsProjectEditForm",
  *       "delete" = "Drupal\soda_scs_manager\Form\SodaScsProjectDeleteForm",
  *     },
- *     "access" = "Drupal\Core\Entity\EntityAccessControlHandler",
+ *     "access" = "Drupal\soda_scs_manager\Access\SodaScsProjectAccessControlHandler",
  *     "route_provider" = {
  *       "html" = "Drupal\Core\Entity\Routing\DefaultHtmlRouteProvider",
  *     },
