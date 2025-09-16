@@ -17,6 +17,47 @@
   }
 
   .soda-scs-manager--type--card {
-    @apply relative rounded-lg p-6 flex flex-col items-center text-center border-2 border-stone-200 hover:border-orange-400;
+    @apply relative p-6 flex flex-col items-center text-center h-full;
+  }
+
+  .soda-scs-manager--card-content-wrapper {
+    @apply relative rounded-lg p-6 flex flex-col items-center text-center border-2 border-stone-200 hover:border-orange-400  transition-all duration-300 ease-in-out opacity-100 max-h-[1000px] overflow-hidden h-[360px] sm:h-[380px] md:h-[420px] lg:h-[460px] xl:h-[480px];
+  }
+
+  .soda-scs-manager--card-body {
+    @apply grow;
+  }
+
+  /* Normalize media area so cards align visually regardless of image proportions. */
+  .soda-scs-manager--image-wrapper {
+    @apply w-full aspect-[4/3] flex items-center justify-center overflow-hidden;
+  }
+
+  .soda-scs-manager--card-img-top {
+    @apply max-h-full max-w-full h-full w-auto object-contain;
+  }
+
+  .soda-scs-manager--tag-filter-container {
+    @apply w-full;
+  }
+
+  .soda-scs-manager--tag-filter-button {
+    @apply shadow-sm hover:shadow-md transition-shadow;
+  }
+
+  .soda-scs-manager--tag-filter-button[aria-pressed="true"] {
+    @apply shadow-md font-semibold;
+  }
+
+  .soda-scs-manager--tag-filter-button[aria-pressed="true"] .soda-scs-manager--tag-remove {
+    @apply inline-block;
+  }
+
+  .soda-scs-manager--tag-remove {
+    @apply font-bold text-base ml-1;
+  }
+
+  .soda-scs-manager--type--card.hidden-by-filter {
+    @apply opacity-0 max-h-0 my-0 py-0 border-0 pointer-events-none;
   }
 }

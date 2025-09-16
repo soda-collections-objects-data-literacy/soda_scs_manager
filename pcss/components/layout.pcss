@@ -2,6 +2,14 @@
 /* These styles define layout structure components */
 
 @layer components {
+  /* Ensure card tags sit above the overlay link. */
+  .soda-scs-manager--card-tags {
+    @apply relative z-10;
+  }
+  .soda-scs-manager--card-tag {
+    @apply relative z-10 cursor-pointer;
+  }
+
   /* Component layout - 6 columns total */
   .soda-scs-manager--component--default {
     @apply grid grid-cols-6 gap-4;

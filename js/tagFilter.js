@@ -11,38 +11,72 @@
    */
   Drupal.behaviors.tagFilter = {
     attach: function (context, settings) {
-      // Get all tag filter buttons
+      // Get all tag filter buttons.
       const filterButtons = context.querySelectorAll('.soda-scs-manager--tag-filter-button');
 
-      // Initialize state
+      // Initialize state.
       const filterContainer = context.querySelector('.soda-scs-manager--tag-filter');
       if (!filterContainer) return;
 
       let activeTags = JSON.parse(filterContainer.dataset.activeTags || '[]');
 
-      // Add click event to each filter button
+      // Add events to each filter button.
       filterButtons.forEach(button => {
-        button.addEventListener('click', function() {
-          const tag = this.dataset.tag;
+        // Prevent duplicate binding.
+        if (button.dataset.tagFilterInit === 'true') return;
+        button.dataset.tagFilterInit = 'true';
 
-          // Toggle tag selection
-          if (activeTags.includes(tag)) {
-            // Remove tag
-            activeTags = activeTags.filter(t => t !== tag);
-            this.setAttribute('aria-pressed', 'false');
-            this.querySelector('.soda-scs-manager--tag-remove').classList.add('hidden');
-          } else {
-            // Add tag
-            activeTags.push(tag);
-            this.setAttribute('aria-pressed', 'true');
-            this.querySelector('.soda-scs-manager--tag-remove').classList.remove('hidden');
+        // Click handler.
+        button.addEventListener('click', function (event) {
+          // Prevent overlay link navigation and stop bubbling to card.
+          if (event) {
+            event.preventDefault();
+            event.stopPropagation();
           }
 
-          // Update active tags data attribute
+          const tag = this.dataset.tag || (this.textContent || '').trim();
+          if (!tag) return;
+
+          const isActive = activeTags.includes(tag);
+
+          // Toggle tag selection.
+          if (isActive) {
+            // Remove tag.
+            activeTags = activeTags.filter(activeTag => activeTag !== tag);
+          } else {
+            // Add tag.
+            activeTags.push(tag);
+          }
+
+          // Reflect state on all buttons for this tag.
+          const matchingButtons = context.querySelectorAll('.soda-scs-manager--tag-filter-button[data-tag="' + CSS.escape(tag) + '"]');
+          matchingButtons.forEach(matchBtn => {
+            matchBtn.setAttribute('aria-pressed', String(!isActive));
+            const removeIcon = matchBtn.querySelector('.soda-scs-manager--tag-remove');
+            if (removeIcon) {
+              if (isActive) {
+                removeIcon.classList.add('hidden');
+              } else {
+                removeIcon.classList.remove('hidden');
+              }
+            }
+          });
+
+          // Update active tags data attribute.
           filterContainer.dataset.activeTags = JSON.stringify(activeTags);
 
-          // Apply filtering
+          // Apply filtering.
           applyFiltering(context, activeTags);
+        });
+
+        // Keyboard accessibility: activate on Enter or Space.
+        button.addEventListener('keydown', function (event) {
+          const key = event.key;
+          if (key === 'Enter' || key === ' ') {
+            event.preventDefault();
+            event.stopPropagation();
+            this.click();
+          }
         });
       });
 

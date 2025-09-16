@@ -9,7 +9,7 @@
  */
 #}
 
-{% set all_tags = ['coding', 'content-management', 'data-cleaning', 'data-science', 'database', 'filesharing', 'office', 'ontology', 'publishing'] %}
+{% set all_tags = ['coding', 'cms', 'data-cleaning', 'data-science', 'database', 'filesharing', 'office', 'ontology', 'publishing'] %}
 
 <div class="soda-scs-manager--tag-filter-container p-2 rounded-lg align-center justify-center">
   <h3 class="text-stone-200 text-2xl font-bold p-1 text-center m-1 my-1">{{ 'Filter by Tags'|t }}</h3>
@@ -18,7 +18,7 @@
       <button class="soda-scs-manager--tag-filter-button rounded-full px-3 py-1.5 text-sm flex items-center gap-1.5 cursor-pointer transition-all
         {% if tag == 'coding' %}
           bg-purple-100 text-purple-700 hover:bg-purple-200
-        {% elseif tag == 'content-management' %}
+        {% elseif tag == 'cms' %}
           bg-blue-100 text-blue-700 hover:bg-blue-200
         {% elseif tag == 'database' %}
           bg-emerald-100 text-emerald-700 hover:bg-emerald-200
