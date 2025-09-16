@@ -71,30 +71,6 @@ soda_scs_manager.settings_menu_block:
   requirements:
     _permission: 'soda scs manager user'
 
-soda_scs_manager.application_desk:
-    title: 'Application desk'
-    description: 'List used applications by user'
-    parent: soda_scs_manager.settings_menu_block
-    route_name: soda_scs_manager.desk
-    requirements:
-      _permission: 'soda scs manager user'
-
-soda_scs_manager.application_store:
-    title: 'Application store'
-    description: 'List all available applications'
-    parent: soda_scs_manager.settings_menu_block
-    route_name: soda_scs_manager.store
-    requirements:
-      _permission: 'soda scs manager user'
-
-soda_scs_manager.application_documentation:
-    title: 'SODa SCS Manager documentation'
-    description: 'Documentation for SODa SCS Manager'
-    parent: soda_scs_manager.settings_menu_block
-    url: 'internal:/documentation'
-    requirements:
-      _access: 'TRUE'
-
 soda_scs_manager.settings:
     title: 'SODa SCS manager settings'
     description: 'Manage SODa SCS Manager settings'
