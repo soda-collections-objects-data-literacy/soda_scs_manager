@@ -25,7 +25,6 @@ use Drupal\soda_scs_manager\ValueObject\SodaScsResult;
 use GuzzleHttp\ClientInterface;
 use Psr\Log\LogLevel;
 
-
 /**
  * Class for SODa SCS Component filesystem actions.
  *
