@@ -94,7 +94,6 @@ class SodaScsTriplestoreComponentActions implements SodaScsComponentActionsInter
    */
   protected SodaScsRunRequestInterface $sodaScsDockerRunServiceActions;
 
-
   /**
    * Class constructor.
    */
@@ -467,7 +466,7 @@ class SodaScsTriplestoreComponentActions implements SodaScsComponentActionsInter
         'createRepoResponse' => $createRepoResponse,
         'getUserResponse' => $getUserResponse,
         'createUserResponse' => NULL,
-        'updateUserResponse' =>  NULL,
+        'updateUserResponse' => NULL,
 
       ],
       'success' => TRUE,
@@ -480,16 +479,16 @@ class SodaScsTriplestoreComponentActions implements SodaScsComponentActionsInter
    *
    * @param \Drupal\soda_scs_manager\Entity\SodaScsComponentInterface $component
    *   The SODa SCS Component.
-   * @param int $timestamp
-   *   The timestamp of the snapshot.
    * @param string $snapshotMachineName
    *   The machine name of the snapshot.
+   * @param int $timestamp
+   *   The timestamp of the snapshot.
    *
-   * @return array
+   * @return \Drupal\soda_scs_manager\ValueObject\SodaScsResult
    *   Result information with the created snapshot.
    */
   public function createSnapshot(SodaScsComponentInterface $component, string $snapshotMachineName, int $timestamp): SodaScsResult {
-    // Create paths
+    // Create paths.
     // @todo Abstract this.
     $snapshotPaths = $this->sodaScsSnapshotHelpers->constructSnapshotPaths($component, $snapshotMachineName, $timestamp);
 
@@ -889,13 +888,14 @@ class SodaScsTriplestoreComponentActions implements SodaScsComponentActionsInter
    * @param \Drupal\soda_scs_manager\Entity\SodaScsSnapshotInterface $snapshot
    *   The SODa SCS Snapshot.
    *
-   * @return SodaScsResult
+   * @return \Drupal\soda_scs_manager\ValueObject\SodaScsResult
    *   Result information with restored component.
-  */
+   */
   public function restoreFromSnapshot(SodaScsSnapshotInterface $snapshot): SodaScsResult {
     return SodaScsResult::success(
       message: 'Component restored from snapshot successfully.',
       data: [],
     );
   }
+
 }

@@ -32,7 +32,6 @@ use Drupal\soda_scs_manager\ValueObject\SodaScsResult;
 use GuzzleHttp\ClientInterface;
 use Psr\Log\LogLevel;
 
-
 /**
  * Handles the communication with the SCS user manager daemon.
  */
@@ -1017,13 +1016,14 @@ class SodaScsWisskiComponentActions implements SodaScsComponentActionsInterface 
    * @param \Drupal\soda_scs_manager\Entity\SodaScsSnapshotInterface $snapshot
    *   The SODa SCS Snapshot.
    *
-   * @return SodaScsResult
+   * @return \Drupal\soda_scs_manager\ValueObject\SodaScsResult
    *   Result information with restored component.
-  */
+   */
   public function restoreFromSnapshot(SodaScsSnapshotInterface $snapshot): SodaScsResult {
     return SodaScsResult::success(
       message: 'Component restored from snapshot successfully.',
       data: [],
     );
   }
+
 }

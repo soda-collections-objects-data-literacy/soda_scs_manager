@@ -10,18 +10,6 @@ use Drupal\soda_scs_manager\ValueObject\SodaScsResult;
  */
 interface SodaScsStackActionsInterface {
 
-  /**
-   * Creates a stack.
-   *
-   * @param \Drupal\soda_scs_manager\Entity\SodaScsStackInterface $stack
-   *   The stack.
-   *
-   * @return array
-   *   The result of the request.
-   *
-   * @throws \Exception
-   */
-  public function createStack(SodaScsStackInterface $stack): array;
 
   /**
    * Create a snapshot of a stack.
@@ -39,17 +27,17 @@ interface SodaScsStackActionsInterface {
   public function createSnapshot(SodaScsStackInterface $stack, string $snapshotMachineName, int $timestamp): SodaScsResult;
 
   /**
-   * Get all stacks of a bundle.
+   * Creates a stack.
    *
-   * @param string $bundle
-   *   The bundle.
-   * @param array $options
-   *   The options.
+   * @param \Drupal\soda_scs_manager\Entity\SodaScsStackInterface $stack
+   *   The stack.
    *
    * @return array
    *   The result of the request.
+   *
+   * @throws \Exception
    */
-  public function getStacks($bundle, $options): array;
+  public function createStack(SodaScsStackInterface $stack): array;
 
   /**
    * Read a stack.
@@ -63,15 +51,17 @@ interface SodaScsStackActionsInterface {
   public function getStack(SodaScsStackInterface $stack): array;
 
   /**
-   * Update a stack.
+   * Get all stacks of a bundle.
    *
-   * @param \Drupal\soda_scs_manager\Entity\SodaScsStackInterface $stack
-   *   The stack.
+   * @param string $bundle
+   *   The bundle.
+   * @param array $options
+   *   The options.
    *
    * @return array
    *   The result of the request.
    */
-  public function updateStack($stack): array;
+  public function getStacks($bundle, $options): array;
 
   /**
    * Delete a stack.
@@ -83,5 +73,16 @@ interface SodaScsStackActionsInterface {
    *   The result of the request.
    */
   public function deleteStack(SodaScsStackInterface $stack): array;
+
+    /**
+   * Update a stack.
+   *
+   * @param \Drupal\soda_scs_manager\Entity\SodaScsStackInterface $stack
+   *   The stack.
+   *
+   * @return array
+   *   The result of the request.
+   */
+  public function updateStack($stack): array;
 
 }

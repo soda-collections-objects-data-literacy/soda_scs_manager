@@ -6,6 +6,7 @@ use Drupal\Core\Config\Config;
 use Drupal\Core\Config\ConfigFactoryInterface;
 use Drupal\Core\Database\Connection;
 use Drupal\Core\DependencyInjection\DependencySerializationTrait;
+use Drupal\Core\Entity\EntityTypeBundleInfoInterface;
 use Drupal\Core\Entity\EntityTypeManagerInterface;
 use Drupal\Core\Logger\LoggerChannelFactoryInterface;
 use Drupal\Core\Logger\LoggerChannelInterface;
@@ -37,6 +38,13 @@ class SodaScsSqlComponentActions implements SodaScsComponentActionsInterface {
   use EntityOwnerTrait;
   use DependencySerializationTrait;
   use StringTranslationTrait;
+
+  /**
+   * The entity type bundle info.
+   *
+   * @var \Drupal\Core\Entity\EntityTypeBundleInfoInterface
+   */
+  protected EntityTypeBundleInfoInterface $entityTypeBundleInfo;
 
   /**
    * The database.
@@ -127,6 +135,7 @@ class SodaScsSqlComponentActions implements SodaScsComponentActionsInterface {
    * Class constructor.
    */
   public function __construct(
+    EntityTypeBundleInfoInterface $entityTypeBundleInfo,
     ConfigFactoryInterface $configFactory,
     Connection $database,
     EntityTypeManagerInterface $entityTypeManager,
@@ -142,6 +151,7 @@ class SodaScsSqlComponentActions implements SodaScsComponentActionsInterface {
     TranslationInterface $stringTranslation,
   ) {
     // Services from container.
+    $this->entityTypeBundleInfo = $entityTypeBundleInfo;
     $settings = $configFactory
       ->getEditable('soda_scs_manager.settings');
     $this->database = $database;
@@ -170,8 +180,7 @@ class SodaScsSqlComponentActions implements SodaScsComponentActionsInterface {
    */
   public function createComponent(SodaScsStackInterface|SodaScsComponentInterface $entity): array {
     try {
-      $bundleInfoService = \Drupal::service('entity_type.bundle.info');
-      $sqlComponentBundleInfo = $bundleInfoService->getBundleInfo('soda_scs_component')['soda_scs_sql_component'];
+      $sqlComponentBundleInfo = $this->entityTypeBundleInfo->getBundleInfo('soda_scs_component')['soda_scs_sql_component'];
 
       if (!$sqlComponentBundleInfo) {
         throw new \Exception('SQL component bundle info not found');
@@ -365,7 +374,8 @@ class SodaScsSqlComponentActions implements SodaScsComponentActionsInterface {
         );
       }
 
-      // Dump the database into the backup directory using the database container.
+      // Dump the database into the backup
+      // directory using the database container.
       $dbName = $component->get('machineName')->value;
       $dbRootPassword = $this->settings->get('dbRootPassword');
       if (empty($dbRootPassword)) {
@@ -437,21 +447,7 @@ class SodaScsSqlComponentActions implements SodaScsComponentActionsInterface {
         if ($currentFileSize > 0 && $currentFileSize === $previousFileSize) {
           $fileIsReady = TRUE;
         }
-        else if ($attempts == 5 && $currentFileSize === $previousFileSize) {
-          $containerInspectRequestParams = [
-            'routeParams' => [
-              'execId' => $execId,
-            ],
-          ];
-          $containerInspectRequest = $this->sodaScsDockerExecServiceActions->buildInspectRequest($containerInspectRequestParams);
-          $containerInspectResponse = $this->sodaScsDockerExecServiceActions->makeRequest($containerInspectRequest);
-          if (!$containerInspectResponse['success']) {
-            return SodaScsResult::failure(
-              error: $containerInspectResponse['error'],
-              message: 'Snapshot creation failed: Could not inspect container.',
-            );
-          }
-          $inspectContainerResponse = $containerInspectResponse['data']['portainerResponse']->getBody()->getContents();
+        elseif ($attempts == 5 && $currentFileSize === $previousFileSize) {
           Error::logException(
           $this->logger,
           new \Exception('Database dump file error'),
@@ -663,13 +659,14 @@ class SodaScsSqlComponentActions implements SodaScsComponentActionsInterface {
    * @param \Drupal\soda_scs_manager\Entity\SodaScsSnapshotInterface $snapshot
    *   The SODa SCS Snapshot.
    *
-   * @return SodaScsResult
+   * @return \Drupal\soda_scs_manager\ValueObject\SodaScsResult
    *   Result information with restored component.
-  */
+   */
   public function restoreFromSnapshot(SodaScsSnapshotInterface $snapshot): SodaScsResult {
     return SodaScsResult::success(
       message: 'Component restored from snapshot successfully.',
       data: [],
     );
   }
+
 }

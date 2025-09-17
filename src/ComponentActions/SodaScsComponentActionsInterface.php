@@ -34,11 +34,12 @@ interface SodaScsComponentActionsInterface {
    *
    * @param \Drupal\soda_scs_manager\Entity\SodaScsComponentInterface $component
    *   The SODa SCS Component to create the snapshot from.
-   *
+   * @param string $snapshotMachineName
+   *   The machine name of the snapshot.
    * @param int $timestamp
    *   The timestamp of the snapshot.
    *
-   * @return SodaScsResult
+   * @return \Drupal\soda_scs_manager\ValueObject\SodaScsResult
    *   Result information with the created snapshot.
    */
   public function createSnapshot(SodaScsComponentInterface $component, string $snapshotMachineName, int $timestamp): SodaScsResult;
@@ -94,10 +95,10 @@ interface SodaScsComponentActionsInterface {
   /**
    * Restore Component from Snapshot.
    *
-   * @param \Drupal\soda_scs_manager\Entity\SodaScsComponentInterface $component
-   *   The SODa SCS Component.
+   * @param \Drupal\soda_scs_manager\Entity\SodaScsSnapshotInterface $snapshot
+   *   The SODa SCS Snapshot.
    *
-   * @return SodaScsResult
+   * @return \Drupal\soda_scs_manager\ValueObject\SodaScsResult
    *   Result information with restored component.
    */
   public function restoreFromSnapshot(SodaScsSnapshotInterface $snapshot): SodaScsResult;
@@ -118,7 +119,5 @@ interface SodaScsComponentActionsInterface {
    *   Result information with updated component.
    */
   public function updateComponent(SodaScsComponentInterface $component): array;
-
-
 
 }
