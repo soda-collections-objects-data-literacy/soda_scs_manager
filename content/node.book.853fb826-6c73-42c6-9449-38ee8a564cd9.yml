@@ -1,0 +1,35 @@
+uuid: 853fb826-6c73-42c6-9449-38ee8a564cd9
+langcode: en
+type: node
+bundle: book
+id: '17'
+dependencies:
+  config:
+    - node.node_type.book
+    - field.field.node.book.body
+  entity:
+    - 'user:user:2c3f35f5-5577-4e78-8bbc-4ce1e3cffce3'
+fields:
+  nid: '17'
+  vid: '47'
+  revision_timestamp: '1754920114'
+  revision_uid:
+    target_id: '19'
+  revision_log: {  }
+  status: '1'
+  uid:
+    target_id: '19'
+  title: 'Creating a project'
+  created: '1754920107'
+  changed: '1754920114'
+  promote: '0'
+  sticky: '0'
+  default_langcode: '1'
+  revision_default: '1'
+  revision_translation_affected: '1'
+  path:
+    alias: /documentation/your-desk/creating-project
+    pid: '14'
+    langcode: en
+  menu_link: {  }
+  body: {  }

@@ -1,0 +1,36 @@
+uuid: c7564884-b369-44c9-8976-62ee6d445f9b
+langcode: en
+type: node
+bundle: book
+id: '4'
+dependencies:
+  config:
+    - node.node_type.book
+    - field.field.node.book.body
+  entity:
+    - 'user:user:2c3f35f5-5577-4e78-8bbc-4ce1e3cffce3'
+    - 'user:user:719b1eb9-7d9e-44c8-bd2b-32b320f43d6a'
+fields:
+  nid: '4'
+  vid: '36'
+  revision_timestamp: '1754473940'
+  revision_uid:
+    target_id: '19'
+  revision_log: {  }
+  status: '1'
+  uid:
+    target_id: '1'
+  title: 'Getting Started'
+  created: '1754383217'
+  changed: '1754473940'
+  promote: '0'
+  sticky: '0'
+  default_langcode: '1'
+  revision_default: '1'
+  revision_translation_affected: '1'
+  path:
+    alias: /documentation/getting-started
+    pid: '5'
+    langcode: en
+  menu_link: {  }
+  body: {  }

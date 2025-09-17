@@ -1,0 +1,38 @@
+uuid: 2a7f150f-f4d4-41ce-b46c-97197d4864ca
+langcode: en
+type: node
+bundle: book
+id: '7'
+dependencies:
+  config:
+    - node.node_type.book
+    - field.field.node.book.body
+  entity:
+    - 'user:user:2c3f35f5-5577-4e78-8bbc-4ce1e3cffce3'
+fields:
+  nid: '7'
+  vid: '42'
+  revision_timestamp: '1754494733'
+  revision_uid:
+    target_id: '19'
+  revision_log: {  }
+  status: '1'
+  uid:
+    target_id: '19'
+  title: 'Creating an account'
+  created: '1754387222'
+  changed: '1754494733'
+  promote: '0'
+  sticky: '0'
+  default_langcode: '1'
+  revision_default: '1'
+  revision_translation_affected: '1'
+  path:
+    alias: /documentation/getting-started/creating-account
+    pid: '10'
+    langcode: en
+  menu_link: {  }
+  body:
+    value: '<h2>Creating an account</h2><h3>Context</h3><p>Most of what the SCS has to offer is only visible to logged in users. Therefore the first step is to create a user account.</p><h3>Goals</h3><ul><li>Learn how to create an account</li></ul><h3>Prerequisites</h3><ul><li>Being affiliated with SODa or working on academic university collections</li><li>(A didmos-SSO-account if you wish to use it)</li></ul><h3>How to...</h3><h4>... create a new SCS account</h4><p>If you are new to the SCS you must navigate to the <a href="https://scs.sammlungen.io/user/register">sign up section</a> - either by clicking the link provided here or seeking out the "Log in" button in the navigation button. Above the fields to enter login data are three tabs that let you choose between "Log in" (for those with existing user data), "Create new account" and "Reset your password".</p><p>In this section we are looking for the second option to create a new account. Clicking on this will also redirect you to the <a href="https://scs.sammlungen.io/user/register">page for signing up</a>.</p><p>After putting in the data you wish to use to sign up and hitting the "Register" button our admins will receive a notice about a pending registration. Currently all sign ups for the Semantic Co-Working Space need to be approved manually, therefore we ask for a little bit of patience.</p><p>But once you''re account is approved you will receive a confirmation mail and you can proceed to <a href="https://scs.sammlungen.io/user/login">logging in</a> for the first time.</p><h4>... use didmos</h4><p>The SCS also integrates the <a href="https://daasi.de/en/federated-identity-and-access-management/iam-solutions/didmos/">external IAM-Framework "didmos" developed by DAASI</a>. If you already made a didmos account you can proceed straight to the "<a href="https://scs.sammlungen.io/user/login">Log in</a>" part.&nbsp;</p><p>If you wish to start using didmos now, you can <a href="https://portal.didmos.nfdi-aai.de/selfreg?lang=en">create a didmos account</a> before proceeding to the SCS login.</p><h3>Additional Resources</h3><ul><li>Further Information on <a href="https://daasi.de/en/federated-identity-and-access-management/iam-solutions/didmos/">didmos – the IAM Software Suite</a><br>&nbsp;</li></ul>'
+    summary: ''
+    format: basic_html

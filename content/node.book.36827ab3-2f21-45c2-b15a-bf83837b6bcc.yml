@@ -1,0 +1,38 @@
+uuid: 36827ab3-2f21-45c2-b15a-bf83837b6bcc
+langcode: en
+type: node
+bundle: book
+id: '15'
+dependencies:
+  config:
+    - node.node_type.book
+    - field.field.node.book.body
+  entity:
+    - 'user:user:2c3f35f5-5577-4e78-8bbc-4ce1e3cffce3'
+fields:
+  nid: '15'
+  vid: '41'
+  revision_timestamp: '1754486211'
+  revision_uid:
+    target_id: '19'
+  revision_log: {  }
+  status: '0'
+  uid:
+    target_id: '19'
+  title: '[Template]'
+  created: '1754485684'
+  changed: '1754486211'
+  promote: '0'
+  sticky: '0'
+  default_langcode: '1'
+  revision_default: '1'
+  revision_translation_affected: '1'
+  path:
+    alias: /documentation/template
+    pid: '9'
+    langcode: en
+  menu_link: {  }
+  body:
+    value: '<h2>[Title]</h2><h3>Context</h3><p>[How or where does this fit into the project as a whole?]</p><h3>Goals</h3><ul><li>[e.g. knowledge]</li><li>[or abilities]</li><li>[learned in this part]</li></ul><h3>Prerequisites</h3><ul><li>[e.g. another chapter with link]</li><li>[can be technical requirements as well as necessary knowledge]</li></ul><h3>[Content]</h3><h4>[with sub-headings]</h4><p>[structured content to guide the reader through the process of a task]</p><h4>[more sub-headings]</h4><p>[and more content]</p><h3>Additional Resources</h3><ul><li>Link1</li><li>Link2</li><li>Link3<br>&nbsp;</li></ul>'
+    summary: ''
+    format: basic_html

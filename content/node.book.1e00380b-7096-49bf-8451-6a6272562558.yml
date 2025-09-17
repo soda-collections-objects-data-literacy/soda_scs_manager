@@ -1,0 +1,38 @@
+uuid: 1e00380b-7096-49bf-8451-6a6272562558
+langcode: en
+type: node
+bundle: book
+id: '8'
+dependencies:
+  config:
+    - node.node_type.book
+    - field.field.node.book.body
+  entity:
+    - 'user:user:2c3f35f5-5577-4e78-8bbc-4ce1e3cffce3'
+fields:
+  nid: '8'
+  vid: '44'
+  revision_timestamp: '1754917818'
+  revision_uid:
+    target_id: '19'
+  revision_log: {  }
+  status: '1'
+  uid:
+    target_id: '19'
+  title: 'The "Store"'
+  created: '1754387951'
+  changed: '1754917818'
+  promote: '0'
+  sticky: '0'
+  default_langcode: '1'
+  revision_default: '1'
+  revision_translation_affected: '1'
+  path:
+    alias: /documentation/store
+    pid: '11'
+    langcode: en
+  menu_link: {  }
+  body:
+    value: '<p>The "Store" is the place where you can find all the availiable applications that the SCS offers.<br>Clicking on one of the cards for an application allows you to create a new access for/instance of that application.<br><br>&nbsp;</p>'
+    summary: ''
+    format: basic_html

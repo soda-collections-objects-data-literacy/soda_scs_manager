@@ -1,0 +1,38 @@
+uuid: ef8821be-d38c-42f7-af38-cc52e79f8596
+langcode: en
+type: node
+bundle: book
+id: '11'
+dependencies:
+  config:
+    - node.node_type.book
+    - field.field.node.book.body
+  entity:
+    - 'user:user:2c3f35f5-5577-4e78-8bbc-4ce1e3cffce3'
+fields:
+  nid: '11'
+  vid: '40'
+  revision_timestamp: '1754474768'
+  revision_uid:
+    target_id: '19'
+  revision_log: {  }
+  status: '1'
+  uid:
+    target_id: '19'
+  title: Documentation
+  created: '1754398461'
+  changed: '1754474768'
+  promote: '0'
+  sticky: '0'
+  default_langcode: '1'
+  revision_default: '1'
+  revision_translation_affected: '1'
+  path:
+    alias: /documentation
+    pid: '4'
+    langcode: en
+  menu_link: {  }
+  body:
+    value: '<h2>SODa Semantic Co-Working Space</h2><p>The SODa <strong>Semantic Co-Working Space (SCS)</strong> is an infrastructure that offers users a wide range of opportunities to network, research and learn. It is developed as part of the <a href="https://sammlungen.io/about">SODa project</a> and the technical basis for our services, best practices and content. Therefore it is made <strong>for people working with academic university collections</strong>.</p><p>Users can import data, documents, algorithms, models, etc. into the SCS or create, edit and make them accessible, as well as export them again. There is no limit to the amount of data.</p><p>The SCS enables Users to model, develop, transform, migrate, analyse, visualise, save, publish, enrich or process data with programming code. It offers <a href="#Applications">various applications</a> to accomplish these tasks. Most of them can be used as standalone <a href="#SingleApplications">Applications</a>, but some of them come in <a href="#BundledApplications">Bundles</a> as they rely on other components or work the best if you pair them up.</p><h2 id="Applications">Available Applications</h2><h3 id="BundledApplications">Bundled Applications:</h3><ul><li>JupyterHub + OpenRefine</li><li>WissKI + Triplestore + SQL Database</li><li>Nextcloud + Draw.io + OnlyOffice</li></ul><h3 id="SingleApplications">Single Applications:</h3><ul><li>Filesystem</li><li>SQL Database</li><li>Triplestore</li><li>WebProtégé</li><li>WissKI</li></ul><p>Learn how to <a href="https://scs.sammlungen.io/documentation/getting-started">get started</a> now.</p>'
+    summary: ''
+    format: basic_html

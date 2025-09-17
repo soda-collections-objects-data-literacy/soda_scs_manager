@@ -1,0 +1,39 @@
+uuid: 9b44f324-ab6e-4651-b1ba-c753f782802a
+langcode: en
+type: node
+bundle: page
+id: '1'
+dependencies:
+  config:
+    - node.node_type.page
+    - field.field.node.page.body
+  entity:
+    - 'user:user:2c3f35f5-5577-4e78-8bbc-4ce1e3cffce3'
+    - 'user:user:719b1eb9-7d9e-44c8-bd2b-32b320f43d6a'
+fields:
+  nid: '1'
+  vid: '43'
+  revision_timestamp: '1754908394'
+  revision_uid:
+    target_id: '19'
+  revision_log: {  }
+  status: '1'
+  uid:
+    target_id: '1'
+  title: 'Welcome to the SCS!'
+  created: '1745826356'
+  changed: '1754908394'
+  promote: '0'
+  sticky: '0'
+  default_langcode: '1'
+  revision_default: '1'
+  revision_translation_affected: '1'
+  path:
+    alias: /home
+    pid: '1'
+    langcode: en
+  menu_link: {  }
+  body:
+    value: '<h2>What is the SCS?</h2><p>The SODa <strong>Semantic Co-Working Space (SCS)</strong> is an infrastructure that offers users a wide range of opportunities to network, research and learn. It is developed as part of the <a href="https://sammlungen.io/about">SODa project</a> and the technical basis for our services, best practices and content.</p><h2>Who can use the SCS?</h2><p>The SCS is intended for people working with academic university collections. To use the Semantic Co-Working Space you will need to <a href="https://scs.sammlungen.io/user/register">sign up</a> for a new account or use the Single Sign-On (SSO) service <a href="https://daasi.de/en/federated-identity-and-access-management/iam-solutions/didmos/">didmos</a>.</p><p>Do you already have an account? <a href="https://scs.sammlungen.io/user/login">Login here</a>.&nbsp;</p><h2>What can you use it for?</h2><p>Users can import their data, documents, algorithms, models, etc. into the SCS or create, edit and make them accessible directly there, as well as export them again. There is no limit to the amount of data.&nbsp;</p><p>Users have various applications at their disposal that enable them to model, develop, transform, migrate, analyse, visualise, save, publish, enrich or process data with programming code.</p><p>The SCS offers a various applications to accomplish these tasks:</p><h3>Bundled Applications:</h3><ul><li>JupyterHub + OpenRefine</li><li>WissKI + Triplestore + SQL Database</li><li>Nextcloud + Draw.io + OnlyOffice</li></ul><h3>Single Applications:</h3><ul><li>Filesystem</li><li>SQL Database</li><li>Triplestore</li><li>WebProtégé</li><li>WissKI</li></ul><h2>How to SCS?</h2><p><a href="https://scs.sammlungen.io/user/login">Log in</a>, visit the "<a href="https://scs.sammlungen.io/soda-scs-manager/store">Store</a>" and select the applications you''d like to use. The applications selected for your account will be visible and accessible on your "<a href="https://scs.sammlungen.io/soda-scs-manager/desk">Desk</a>".</p>'
+    summary: ''
+    format: basic_html

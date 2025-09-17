@@ -1,0 +1,38 @@
+uuid: 1516a38d-12b2-44e1-acfa-f74c37371996
+langcode: en
+type: node
+bundle: book
+id: '10'
+dependencies:
+  config:
+    - node.node_type.book
+    - field.field.node.book.body
+  entity:
+    - 'user:user:2c3f35f5-5577-4e78-8bbc-4ce1e3cffce3'
+fields:
+  nid: '10'
+  vid: '48'
+  revision_timestamp: '1754920134'
+  revision_uid:
+    target_id: '19'
+  revision_log: {  }
+  status: '1'
+  uid:
+    target_id: '19'
+  title: 'Your "Desk"'
+  created: '1754389906'
+  changed: '1754920134'
+  promote: '0'
+  sticky: '0'
+  default_langcode: '1'
+  revision_default: '1'
+  revision_translation_affected: '1'
+  path:
+    alias: /documentation/your-desk
+    pid: '12'
+    langcode: en
+  menu_link: {  }
+  body:
+    value: '<p>The "Desk" shows all the application accounts/instances that you created or are shared with you as part of a <a href="https://scs.sammlungen.io/documentation/your-desk/creating-project">collaborative project</a>.</p>'
+    summary: ''
+    format: basic_html

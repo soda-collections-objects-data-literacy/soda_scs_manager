@@ -1,0 +1,35 @@
+uuid: 6b367ed4-65a0-4fff-b60c-107bb8bfed80
+langcode: en
+type: node
+bundle: book
+id: '16'
+dependencies:
+  config:
+    - node.node_type.book
+    - field.field.node.book.body
+  entity:
+    - 'user:user:2c3f35f5-5577-4e78-8bbc-4ce1e3cffce3'
+fields:
+  nid: '16'
+  vid: '46'
+  revision_timestamp: '1754920102'
+  revision_uid:
+    target_id: '19'
+  revision_log: {  }
+  status: '1'
+  uid:
+    target_id: '19'
+  title: 'Managing your applications'
+  created: '1754920086'
+  changed: '1754920102'
+  promote: '0'
+  sticky: '0'
+  default_langcode: '1'
+  revision_default: '1'
+  revision_translation_affected: '1'
+  path:
+    alias: /documentation/your-desk/managing-your-applications
+    pid: '13'
+    langcode: en
+  menu_link: {  }
+  body: {  }
