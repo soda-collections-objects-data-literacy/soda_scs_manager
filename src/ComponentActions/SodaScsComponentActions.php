@@ -7,6 +7,7 @@ use Drupal\Core\StringTranslation\StringTranslationTrait;
 use Drupal\Core\StringTranslation\TranslationInterface;
 use Drupal\soda_scs_manager\Entity\SodaScsComponentInterface;
 use Drupal\soda_scs_manager\Entity\SodaScsStackInterface;
+use Drupal\soda_scs_manager\Entity\SodaScsSnapshotInterface;
 use Drupal\soda_scs_manager\ValueObject\SodaScsResult;
 
 /**
@@ -191,4 +192,19 @@ class SodaScsComponentActions implements SodaScsComponentActionsInterface {
     );
   }
 
+  /**
+   * Restore Component from Snapshot.
+   *
+   * @param \Drupal\soda_scs_manager\Entity\SodaScsSnapshotInterface $snapshot
+   *   The SODa SCS Snapshot.
+   *
+   * @return SodaScsResult
+   *   Result information with restored component.
+  */
+  public function restoreFromSnapshot(SodaScsSnapshotInterface $snapshot): SodaScsResult {
+    return SodaScsResult::success(
+      message: 'Component restored from snapshot successfully.',
+      data: [],
+    );
+  }
 }

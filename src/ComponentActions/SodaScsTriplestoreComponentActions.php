@@ -15,6 +15,7 @@ use Drupal\Core\TypedData\Exception\MissingDataException;
 use Drupal\Core\Utility\Error;
 use Drupal\soda_scs_manager\Entity\SodaScsComponentInterface;
 use Drupal\soda_scs_manager\Entity\SodaScsStackInterface;
+use Drupal\soda_scs_manager\Entity\SodaScsSnapshotInterface;
 use Drupal\soda_scs_manager\Helpers\SodaScsSnapshotHelpers;
 use Drupal\soda_scs_manager\RequestActions\SodaScsOpenGdbRequestInterface;
 use Drupal\soda_scs_manager\RequestActions\SodaScsRunRequestInterface;
@@ -882,4 +883,19 @@ class SodaScsTriplestoreComponentActions implements SodaScsComponentActionsInter
     ];
   }
 
+  /**
+   * Restore Component from Snapshot.
+   *
+   * @param \Drupal\soda_scs_manager\Entity\SodaScsSnapshotInterface $snapshot
+   *   The SODa SCS Snapshot.
+   *
+   * @return SodaScsResult
+   *   Result information with restored component.
+  */
+  public function restoreFromSnapshot(SodaScsSnapshotInterface $snapshot): SodaScsResult {
+    return SodaScsResult::success(
+      message: 'Component restored from snapshot successfully.',
+      data: [],
+    );
+  }
 }

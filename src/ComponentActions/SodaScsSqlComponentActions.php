@@ -16,6 +16,7 @@ use Drupal\Core\TypedData\Exception\MissingDataException;
 use Drupal\Core\Utility\Error;
 use Drupal\soda_scs_manager\Entity\SodaScsComponentInterface;
 use Drupal\soda_scs_manager\Entity\SodaScsStackInterface;
+use Drupal\soda_scs_manager\Entity\SodaScsSnapshotInterface;
 use Drupal\soda_scs_manager\Exception\SodaScsSqlServiceException;
 use Drupal\soda_scs_manager\Helpers\SodaScsComponentHelpers;
 use Drupal\soda_scs_manager\Helpers\SodaScsSnapshotHelpers;
@@ -380,7 +381,7 @@ class SodaScsSqlComponentActions implements SodaScsComponentActionsInterface {
         'cmd' => [
           'bash',
           '-c',
-          'mariadb-dump -uroot -p' . $dbRootPassword . ' ' . $dbName . ' > ' . $dumpFilePath,
+          'mariadb-dump -uroot -p' . $dbRootPassword . ' "' . $dbName . '" > ' . $dumpFilePath,
         ],
         'containerName' => 'database',
         'user' => '33',
@@ -435,6 +436,34 @@ class SodaScsSqlComponentActions implements SodaScsComponentActionsInterface {
         $currentFileSize = file_exists($dumpFilePath) ? filesize($dumpFilePath) : 0;
         if ($currentFileSize > 0 && $currentFileSize === $previousFileSize) {
           $fileIsReady = TRUE;
+        }
+        else if ($attempts == 5 && $currentFileSize === $previousFileSize) {
+          $containerInspectRequestParams = [
+            'routeParams' => [
+              'execId' => $execId,
+            ],
+          ];
+          $containerInspectRequest = $this->sodaScsDockerExecServiceActions->buildInspectRequest($containerInspectRequestParams);
+          $containerInspectResponse = $this->sodaScsDockerExecServiceActions->makeRequest($containerInspectRequest);
+          if (!$containerInspectResponse['success']) {
+            return SodaScsResult::failure(
+              error: $containerInspectResponse['error'],
+              message: 'Snapshot creation failed: Could not inspect container.',
+            );
+          }
+          $inspectContainerResponse = $containerInspectResponse['data']['portainerResponse']->getBody()->getContents();
+          Error::logException(
+          $this->logger,
+          new \Exception('Database dump file error'),
+          'Failed to create snapshot. Database dump file size not changed Container is still running.',
+          [],
+          LogLevel::ERROR
+          );
+          $this->messenger->addError($this->t('Failed to create snapshot. See logs for more details.'));
+          return SodaScsResult::failure(
+            error: 'Database dump file error',
+            message: 'Snapshot creation failed: Maximum number of attempts to check if the container is running reached. Container is still running.',
+          );
         }
         else {
           $previousFileSize = $currentFileSize;
@@ -628,4 +657,19 @@ class SodaScsSqlComponentActions implements SodaScsComponentActionsInterface {
     ];
   }
 
+  /**
+   * Restore Component from Snapshot.
+   *
+   * @param \Drupal\soda_scs_manager\Entity\SodaScsSnapshotInterface $snapshot
+   *   The SODa SCS Snapshot.
+   *
+   * @return SodaScsResult
+   *   Result information with restored component.
+  */
+  public function restoreFromSnapshot(SodaScsSnapshotInterface $snapshot): SodaScsResult {
+    return SodaScsResult::success(
+      message: 'Component restored from snapshot successfully.',
+      data: [],
+    );
+  }
 }

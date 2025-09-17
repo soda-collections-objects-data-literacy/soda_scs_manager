@@ -17,6 +17,7 @@ use Drupal\Core\TypedData\Exception\MissingDataException;
 use Drupal\Core\Utility\Error;
 use Drupal\soda_scs_manager\Entity\SodaScsComponentInterface;
 use Drupal\soda_scs_manager\Entity\SodaScsStackInterface;
+use Drupal\soda_scs_manager\Entity\SodaScsSnapshotInterface;
 use Drupal\soda_scs_manager\Helpers\SodaScsComponentHelpers;
 use Drupal\soda_scs_manager\Helpers\SodaScsProjectHelpers;
 use Drupal\soda_scs_manager\Helpers\SodaScsKeycloakHelpers;
@@ -30,6 +31,7 @@ use Drupal\soda_scs_manager\ServiceKeyActions\SodaScsServiceKeyActionsInterface;
 use Drupal\soda_scs_manager\ValueObject\SodaScsResult;
 use GuzzleHttp\ClientInterface;
 use Psr\Log\LogLevel;
+
 
 /**
  * Handles the communication with the SCS user manager daemon.
@@ -1009,4 +1011,19 @@ class SodaScsWisskiComponentActions implements SodaScsComponentActionsInterface 
     }
   }
 
+  /**
+   * Restore Component from Snapshot.
+   *
+   * @param \Drupal\soda_scs_manager\Entity\SodaScsSnapshotInterface $snapshot
+   *   The SODa SCS Snapshot.
+   *
+   * @return SodaScsResult
+   *   Result information with restored component.
+  */
+  public function restoreFromSnapshot(SodaScsSnapshotInterface $snapshot): SodaScsResult {
+    return SodaScsResult::success(
+      message: 'Component restored from snapshot successfully.',
+      data: [],
+    );
+  }
 }

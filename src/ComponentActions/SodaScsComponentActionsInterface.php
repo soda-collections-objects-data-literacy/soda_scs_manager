@@ -3,6 +3,7 @@
 namespace Drupal\soda_scs_manager\ComponentActions;
 
 use Drupal\soda_scs_manager\Entity\SodaScsComponentInterface;
+use Drupal\soda_scs_manager\Entity\SodaScsSnapshotInterface;
 use Drupal\soda_scs_manager\Entity\SodaScsStackInterface;
 use Drupal\soda_scs_manager\ValueObject\SodaScsResult;
 
@@ -43,7 +44,10 @@ interface SodaScsComponentActionsInterface {
   public function createSnapshot(SodaScsComponentInterface $component, string $snapshotMachineName, int $timestamp): SodaScsResult;
 
   /**
-   * Get all SODa SCS Component.
+   * Delete SODa SCS Component.
+   *
+   * @param \Drupal\soda_scs_manager\Entity\SodaScsComponentInterface $component
+   *   The SODa SCS Component.
    *
    * @return array{
    *   message: string,
@@ -52,9 +56,9 @@ interface SodaScsComponentActionsInterface {
    *   error: string|null,
    *   statusCode: int,
    *   }
-   *   Result information with all component.
+   *   Result information with deleted component.
    */
-  public function getComponents(): array;
+  public function deleteComponent(SodaScsComponentInterface $component): array;
 
   /**
    * Get SODa SCS Component.
@@ -74,6 +78,31 @@ interface SodaScsComponentActionsInterface {
   public function getComponent(SodaScsComponentInterface $props): array;
 
   /**
+   * Get all SODa SCS Component.
+   *
+   * @return array{
+   *   message: string,
+   *   data: array[\Psr\Http\Message\ResponseInterface|\Exception],
+   *   success: bool,
+   *   error: string|null,
+   *   statusCode: int,
+   *   }
+   *   Result information with all component.
+   */
+  public function getComponents(): array;
+
+  /**
+   * Restore Component from Snapshot.
+   *
+   * @param \Drupal\soda_scs_manager\Entity\SodaScsComponentInterface $component
+   *   The SODa SCS Component.
+   *
+   * @return SodaScsResult
+   *   Result information with restored component.
+   */
+  public function restoreFromSnapshot(SodaScsSnapshotInterface $snapshot): SodaScsResult;
+
+  /**
    * Update SODa SCS Component.
    *
    * @param \Drupal\soda_scs_manager\Entity\SodaScsComponentInterface $component
@@ -90,21 +119,6 @@ interface SodaScsComponentActionsInterface {
    */
   public function updateComponent(SodaScsComponentInterface $component): array;
 
-  /**
-   * Delete SODa SCS Component.
-   *
-   * @param \Drupal\soda_scs_manager\Entity\SodaScsComponentInterface $component
-   *   The SODa SCS Component.
-   *
-   * @return array{
-   *   message: string,
-   *   data: array[\Psr\Http\Message\ResponseInterface|\Exception],
-   *   success: bool,
-   *   error: string|null,
-   *   statusCode: int,
-   *   }
-   *   Result information with deleted component.
-   */
-  public function deleteComponent(SodaScsComponentInterface $component): array;
+
 
 }
