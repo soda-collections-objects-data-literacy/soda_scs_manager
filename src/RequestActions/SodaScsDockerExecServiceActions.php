@@ -14,9 +14,8 @@ use Drupal\Core\Messenger\MessengerInterface;
 use Drupal\Core\StringTranslation\StringTranslationTrait;
 use Drupal\Core\StringTranslation\TranslationInterface;
 use Drupal\Core\Template\TwigEnvironment;
-use Drupal\soda_scs_manager\ServiceActions\SodaScsServiceActionsInterface;
 use Drupal\soda_scs_manager\Helpers\SodaScsServiceHelpers;
-use Drupal\soda_scs_manager\RequestActions\SodaScsExecRequestInterface;
+use Drupal\soda_scs_manager\ServiceActions\SodaScsServiceActionsInterface;
 use GuzzleHttp\ClientInterface;
 use Symfony\Component\HttpFoundation\RequestStack;
 
@@ -27,8 +26,6 @@ use Symfony\Component\HttpFoundation\RequestStack;
  * like "usermod -a -G www-data www-data" etc.
  *
  * @see https://docs.portainer.io/api/endpoints/docker/exec
- *
- *
  */
 class SodaScsDockerExecServiceActions implements SodaScsExecRequestInterface {
 
@@ -216,9 +213,11 @@ class SodaScsDockerExecServiceActions implements SodaScsExecRequestInterface {
    *
    * @param array $requestParams
    *   The request params.
-   * - 'cmd[string]': The command to run, i.e. ['mysqldump', '-u', 'root', '-p', 'password', 'database', 'table']
-   * - 'containerName': The name of the container to run the command in, i.e. 'database'
-   * - 'user': The user to run the command as, i.e. '33'
+   *     - 'cmd[string]': The command to run, i.e.
+   *    ['mysqldump', '-u', 'root', '-p', 'password', 'database', 'table']
+   *     - 'containerName': The name of the container
+   *    to run the command in, i.e. 'database'
+   *     - 'user': The user to run the command as, i.e. '33'.
    *
    * @return array
    *   The request array.

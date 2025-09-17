@@ -9,6 +9,7 @@ use Drupal\Core\StringTranslation\StringTranslationTrait;
 use Drupal\Core\StringTranslation\TranslationInterface;
 use Drupal\soda_scs_manager\ComponentActions\SodaScsComponentActionsInterface;
 use Drupal\soda_scs_manager\Entity\SodaScsStackInterface;
+use Drupal\soda_scs_manager\Entity\SodaScsSnapshotInterface;
 use Drupal\soda_scs_manager\ValueObject\SodaScsResult;
 use Drupal\soda_scs_manager\Helpers\SodaScsStackHelpers;
 use Drupal\Core\Utility\Error;
@@ -216,6 +217,22 @@ class SodaScsJupyterStackActions implements SodaScsStackActionsInterface {
         'error' => $e,
       ];
     }
+  }
+
+  /**
+   * Restore a Jupyter stack from snapshot.
+   *
+   * @param \Drupal\soda_scs_manager\Entity\SodaScsSnapshotInterface $snapshot
+   *   The stack.
+   *
+   * @return \Drupal\soda_scs_manager\ValueObject\SodaScsResult
+   *   The result of the request.
+   */
+  public function restoreFromSnapshot(SodaScsSnapshotInterface $snapshot): SodaScsResult {
+    return SodaScsResult::failure(
+      message: 'Not implemented.',
+      error: 'Jupyter stack restored from snapshot failed.',
+    );
   }
 
 }

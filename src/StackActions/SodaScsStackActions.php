@@ -6,6 +6,7 @@ use Drupal\Core\DependencyInjection\DependencySerializationTrait;
 use Drupal\Core\StringTranslation\StringTranslationTrait;
 use Drupal\Core\StringTranslation\TranslationInterface;
 use Drupal\soda_scs_manager\Entity\SodaScsStackInterface;
+use Drupal\soda_scs_manager\Entity\SodaScsSnapshotInterface;
 use Drupal\soda_scs_manager\ValueObject\SodaScsResult;
 
 /**
@@ -188,6 +189,25 @@ class SodaScsStackActions implements SodaScsStackActionsInterface {
       /* @todo Better error handling with trace info. */
       default:
         throw new \Exception('Component type not supported.');
+    }
+  }
+
+  /**
+   * Restore a stack from snapshot.
+   *
+   * @param \Drupal\soda_scs_manager\Entity\SodaScsSnapshotInterface $snapshot
+   *   The snapshot.
+   *
+   * @return \Drupal\soda_scs_manager\ValueObject\SodaScsResult
+   *   The result of the request.
+   */
+  public function restoreFromSnapshot(SodaScsSnapshotInterface $snapshot): SodaScsResult {
+    switch ($snapshot->get('snapshotOfStack')->entity->bundle()) {
+      case 'soda_scs_wisski_stack':
+        return $this->sodaScsWisskiStackActions->restoreFromSnapshot($snapshot);
+
+      default:
+        throw new \Exception('Stack type not supported.');
     }
   }
 

@@ -6,13 +6,10 @@ use Drupal\Core\DependencyInjection\DependencySerializationTrait;
 use Drupal\Core\Logger\LoggerChannelFactoryInterface;
 use Drupal\Core\Messenger\MessengerInterface;
 use Drupal\Core\StringTranslation\StringTranslationTrait;
-use Drupal\Core\StringTranslation\TranslationInterface;
-use Drupal\Core\TypedData\Exception\MissingDataException;
-use Drupal\soda_scs_manager\ComponentActions\SodaScsComponentActionsInterface;
-use Drupal\soda_scs_manager\Entity\SodaScsStackInterface;
-use Drupal\soda_scs_manager\Exception\SodaScsComponentException;
-use Drupal\soda_scs_manager\Helpers\SodaScsStackHelpers;
 use Drupal\Core\Utility\Error;
+use Drupal\soda_scs_manager\Entity\SodaScsSnapshotInterface;
+use Drupal\soda_scs_manager\Entity\SodaScsStackInterface;
+use Drupal\soda_scs_manager\Helpers\SodaScsStackHelpers;
 use Drupal\soda_scs_manager\ValueObject\SodaScsResult;
 use Psr\Log\LogLevel;
 
@@ -229,6 +226,22 @@ class SodaScsNextcloudStackActions implements SodaScsStackActionsInterface {
         'error' => $e,
       ];
     }
+  }
+
+  /**
+   * Restore a Nextcloud stack from snapshot.
+   *
+   * @param \Drupal\soda_scs_manager\Entity\SodaScsSnapshotInterface $snapshot
+   *   The stack.
+   *
+   * @return \Drupal\soda_scs_manager\ValueObject\SodaScsResult
+   *   The result of the request.
+   */
+  public function restoreFromSnapshot(SodaScsSnapshotInterface $snapshot): SodaScsResult {
+    return SodaScsResult::failure(
+      message: 'Not implemented.',
+      error: 'Nextcloud stack restored from snapshot failed.',
+    );
   }
 
 }

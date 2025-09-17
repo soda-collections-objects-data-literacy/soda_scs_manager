@@ -55,6 +55,7 @@ services:
       - '@config.factory'
       - '@transliteration'
       - '@request_stack'
+      - '@entity_type.manager'
 
   soda_scs_manager.stack.helpers:
     class: Drupal\soda_scs_manager\Helpers\SodaScsStackHelpers
@@ -141,6 +142,7 @@ services:
       - '@http_client'
       - '@logger.factory'
       - '@messenger'
+      - '@file_system'
       - '@soda_scs_manager.component.helpers'
       - '@soda_scs_manager.docker_exec_service.actions'
       - '@soda_scs_manager.docker_run_service.actions'
@@ -290,16 +292,6 @@ services:
       - '@soda_scs_manager.service.helpers'
       - '@string_translation'
 
-# Snapshot actions
-  soda_scs_manager.snapshot.actions:
-    class: Drupal\soda_scs_manager\SnapshotActions\SodaScsSnapshotActions
-    arguments:
-      - '@soda_scs_manager.component.actions'
-      - '@soda_scs_manager.snapshot.helpers'
-      - '@soda_scs_manager.docker_run_service.actions'
-      - '@file_system'
-      - '@logger.factory'
-
 # Stack actions
   soda_scs_manager.stack.actions:
     class: Drupal\soda_scs_manager\StackActions\SodaScsStackActions
@@ -332,9 +324,11 @@ services:
       - '@config.factory'
       - '@database'
       - '@entity_type.manager'
+      - '@file_system'
       - '@logger.factory'
       - '@messenger'
       - '@soda_scs_manager.stack.helpers'
+      - '@soda_scs_manager.snapshot.helpers'
       - '@soda_scs_manager.sql_component.actions'
       - '@soda_scs_manager.sql_service.actions'
       - '@soda_scs_manager.service_key.actions'

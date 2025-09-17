@@ -30,6 +30,17 @@ interface SodaScsRunRequestInterface {
   public function buildCreateRequest(array $requestParams): array;
 
   /**
+   * Builds the get all containers request for the Docker run API.
+   *
+   * @param array $requestParams
+   *   The request params.
+   *
+   * @return array
+   *   The request array.
+   */
+  public function buildGetAllRequest(array $requestParams): array;
+
+  /**
    * Builds the start container request for the Docker container API.
    *
    * @param array $requestParams

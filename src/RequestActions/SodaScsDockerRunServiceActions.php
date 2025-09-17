@@ -21,6 +21,8 @@ use Symfony\Component\HttpFoundation\RequestStack;
 
 /**
  * Handles Docker container run operations via Portainer API.
+ *
+ * @todo Seperate Container from Run actions maybe?.
  */
 class SodaScsDockerRunServiceActions implements SodaScsRunRequestInterface {
 
@@ -200,6 +202,58 @@ class SodaScsDockerRunServiceActions implements SodaScsRunRequestInterface {
   }
 
   /**
+   * Builds the get all containers request for the Docker run API.
+   *
+   * @param array $requestParams
+   *   The request params.
+   *
+   * @return array
+   *   The request array.
+   *
+   * @throws \Drupal\Core\TypedData\Exception\MissingDataException
+   */
+  public function buildGetAllRequest(array $requestParams): array {
+    $portainerServiceSettings = $this->sodaScsServiceHelpers->initPortainerServiceSettings();
+    $dockerApiSettings = $this->sodaScsServiceHelpers->initDockerApiSettings();
+    $dockerRunServiceSettings = $this->sodaScsServiceHelpers->initDockerRunServiceSettings();
+
+    $requestParams['routeParams']['endpointId'] = $portainerServiceSettings['endpointId'];
+
+    $route =
+      // https://portainer.scs.sammlungen.io
+      $portainerServiceSettings['host'] .
+      // /api/endpoints
+      $portainerServiceSettings['baseUrl'] .
+      // /{endpointId}/docker
+      $dockerApiSettings['baseUrl'] .
+      // /containers
+      $dockerRunServiceSettings['baseUrl'] .
+      // /json
+      $dockerRunServiceSettings['readAllUrl'];
+
+    // Replace any route parameters.
+    if (!empty($requestParams['routeParams'])) {
+      foreach ($requestParams['routeParams'] as $key => $value) {
+        $route = str_replace('{' . $key . '}', $value, $route);
+      }
+    }
+
+    // Add query parameters if they exist.
+    if (!empty($requestParams['queryParams'])) {
+      $route .= '?' . http_build_query($requestParams['queryParams']);
+    }
+
+    return [
+      'method' => 'GET',
+      'route' => $route,
+      'headers' => [
+        'Accept' => 'application/json',
+        'X-API-Key' => $portainerServiceSettings['authenticationToken'],
+      ],
+    ];
+  }
+
+  /**
    * Builds the create container request for the Docker run API.
    *
    * @param array $requestParams
@@ -343,19 +397,29 @@ class SodaScsDockerRunServiceActions implements SodaScsRunRequestInterface {
     $dockerApiSettings = $this->sodaScsServiceHelpers->initDockerApiSettings();
     $dockerRunServiceSettings = $this->sodaScsServiceHelpers->initDockerRunServiceSettings();
 
+    $requestParams['routeParams']['endpointId'] = $portainerServiceSettings['endpointId'];
+
     $route =
       // https://portainer.scs.sammlungen.io
       $portainerServiceSettings['host'] .
       // /api/endpoints
       $portainerServiceSettings['baseUrl'] .
       // /{endpointId}/docker
-      str_replace('{endpointId}', $portainerServiceSettings['endpointId'], $dockerApiSettings['baseUrl']) .
-      // /containers/{containerId}/stop
-      str_replace('{containerId}', $requestParams['containerId'], $dockerRunServiceSettings['stopUrl']);
+      $dockerApiSettings['baseUrl'] .
+      // /containers/
+      $dockerRunServiceSettings['baseUrl'] .
+      // /{containerId}/stop
+      $dockerRunServiceSettings['stopUrl'];
 
-    $query = [];
-    if (isset($requestParams['timeout'])) {
-      $query['t'] = $requestParams['timeout'];
+    // Replace any route parameters.
+    if (!empty($requestParams['routeParams'])) {
+      foreach ($requestParams['routeParams'] as $key => $value) {
+        $route = str_replace('{' . $key . '}', $value, $route);
+      }
+    }
+
+    if (!empty($requestParams['queryParams'])) {
+      $route .= '?' . http_build_query($requestParams['queryParams']);
     }
 
     return [
@@ -366,7 +430,6 @@ class SodaScsDockerRunServiceActions implements SodaScsRunRequestInterface {
         'Accept' => 'application/json',
         'X-API-Key' => $portainerServiceSettings['authenticationToken'],
       ],
-      'query' => !empty($query) ? $query : NULL,
     ];
   }
 

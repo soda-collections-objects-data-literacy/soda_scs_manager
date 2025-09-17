@@ -197,15 +197,34 @@ class SodaScsComponentActions implements SodaScsComponentActionsInterface {
    *
    * @param \Drupal\soda_scs_manager\Entity\SodaScsSnapshotInterface $snapshot
    *   The SODa SCS Snapshot.
+   * @param string $tempDir
+   *   The path to the temporary directory,
+   *   if the files are unpacked in case of stack restoration.
    *
    * @return \Drupal\soda_scs_manager\ValueObject\SodaScsResult
    *   Result information with restored component.
    */
-  public function restoreFromSnapshot(SodaScsSnapshotInterface $snapshot): SodaScsResult {
-    return SodaScsResult::success(
-      message: 'Component restored from snapshot successfully.',
-      data: [],
-    );
+  public function restoreFromSnapshot(SodaScsSnapshotInterface $snapshot, ?string $tempDir): SodaScsResult {
+    $component = $snapshot->get('snapshotOfComponent')->entity;
+    switch ($component->bundle()) {
+      case 'soda_scs_filesystem_component':
+        return $this->sodaScsFilesystemComponentActions->restoreFromSnapshot($snapshot, $tempDir);
+
+      case 'soda_scs_sql_component':
+        return $this->sodaScsSqlComponentActions->restoreFromSnapshot($snapshot, $tempDir);
+
+      case 'soda_scs_triplestore_component':
+        return $this->sodaScsTriplestoreComponentActions->restoreFromSnapshot($snapshot, $tempDir);
+
+      case 'soda_scs_wisski_component':
+        return $this->sodaScsWisskiComponentActions->restoreFromSnapshot($snapshot, $tempDir);
+
+      default:
+        return SodaScsResult::failure(
+          message: 'Component type not supported for restoration.',
+          error: 'Component type not supported for restoration.',
+        );
+    }
   }
 
 }

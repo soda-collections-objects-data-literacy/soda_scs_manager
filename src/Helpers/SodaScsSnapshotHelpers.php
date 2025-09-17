@@ -16,6 +16,7 @@ use Drupal\Core\File\FileSystemInterface;
 use Drupal\Core\Config\ConfigFactoryInterface;
 use Drupal\Component\Transliteration\TransliterationInterface;
 use Symfony\Component\HttpFoundation\RequestStack;
+use Drupal\Core\Entity\EntityTypeManagerInterface;
 
 /**
  * Helper class for snapshot operations.
@@ -83,6 +84,13 @@ class SodaScsSnapshotHelpers {
   protected $requestStack;
 
   /**
+   * The entity type manager.
+   *
+   * @var \Drupal\Core\Entity\EntityTypeManagerInterface
+   */
+  protected $entityTypeManager;
+
+  /**
    * {@inheritdoc}
    */
   public function __construct(
@@ -94,6 +102,7 @@ class SodaScsSnapshotHelpers {
     ConfigFactoryInterface $configFactory,
     TransliterationInterface $transliteration,
     RequestStack $requestStack,
+    EntityTypeManagerInterface $entityTypeManager,
   ) {
     $this->sodaScsComponentHelpers = $sodaScsComponentHelpers;
     $this->sodaScsDockerExecServiceActions = $sodaScsDockerExecServiceActions;
@@ -103,6 +112,7 @@ class SodaScsSnapshotHelpers {
     $this->configFactory = $configFactory;
     $this->transliteration = $transliteration;
     $this->requestStack = $requestStack;
+    $this->entityTypeManager = $entityTypeManager;
   }
 
   /**
@@ -166,7 +176,7 @@ class SodaScsSnapshotHelpers {
     $relativeTarFilePath = $relativeSnapshotBackupPath . '/' . $type . '/' . $tarFileName;
     // Get the relative sha256 file path, e.g.
     // scs_user/new-snapshot/2025-08-26/1724732400/files/new-snapshot--1724732400.files.tar.gz.sha256.
-    $relativeSha256FilePath = $relativeSnapshotBackupPath . '/' . $sha256FileName;
+    $relativeSha256FilePath = $relativeSnapshotBackupPath . '/' . $type . '/' . $sha256FileName;
     // Absolute tar file path, e.g.
     // /var/scs-manager/snapshots/scs_user/new-snapshot/2025-08-26/1724732400/files/new-snapshot--1724732400.files.tar.gz.
     $absoluteTarFilePath = $snapshotFullPath . $relativeTarFilePath;
@@ -293,7 +303,7 @@ class SodaScsSnapshotHelpers {
             $type = $componentBundle;
         }
         foreach ($componentData['metadata']['contentFileNames'] as $fileType => $contentFileName) {
-          $contentFiles[$type][$fileType] = $contentFileName;
+          $contentFiles[$type][$fileType] = (string) $contentFileName;
         }
       }
 
@@ -313,7 +323,7 @@ class SodaScsSnapshotHelpers {
       // Create the tar file names.
       $contentsTarFileName = $snapshotMachineName . '--' . $timestamp . '.contents.tar.gz';
       $contentsSha256FileName = $snapshotMachineName . '--' . $timestamp . '.contents.tar.gz.sha256';
-      $manifestFileName = $snapshotMachineName . '--' . $timestamp . '.manifest.json';
+      $manifestFileName = 'manifest.json';
 
       // Create the bag files array.
       $currentRequest = $this->requestStack->getCurrentRequest();
@@ -324,38 +334,37 @@ class SodaScsSnapshotHelpers {
       $checksumUrl = $schemeAndHost . $relativeUrlBackupPath . '/bag/' . $contentsSha256FileName;
       $bagFiles = [
         // @todo make this from variable.
-        "bagFile" => $bagUrl,
-        "checksumFile" => $checksumUrl,
-        "manifest" => $manifestFileName,
+        'bagFile' => (string) $bagUrl,
+        'checksumFile' => (string) $checksumUrl,
+        'manifest' => (string) $manifestFileName,
       ];
 
       $mappings = [];
       foreach ($snapshotData as $componentData) {
         $mappings[] = [
-          "bundle" => $componentData['componentBundle'],
-          "eid" => $componentData['componentId'],
-          "machineName" => $componentData['componentMachineName'],
-          "dumpFile" => $componentData['metadata']['contentFilePaths']['tarFilePath'],
-          "checksumFile" => $componentData['metadata']['contentFilePaths']['sha256FilePath'],
+          'bundle' => (string) $componentData['componentBundle'],
+          'eid' => (string) $componentData['componentId'],
+          'machineName' => (string) $componentData['componentMachineName'],
+          'dumpFile' => (string) $componentData['metadata']['contentFilePaths']['tarFilePath'],
+          'checksumFile' => (string) $componentData['metadata']['contentFilePaths']['sha256FilePath'],
         ];
       }
 
       // Create the manifest.
-      $manifest = json_encode([
-        "version" => "1.0",
-        "algorithm" => "sha256",
-        "created" => $timestamp,
-        "snapshotMachineName" => $snapshotMachineName,
+      $manifestArray = [
+        'version' => '1.0',
+        'algorithm' => 'sha256',
+        'created' => (int) $timestamp,
+        'snapshotMachineName' => (string) $snapshotMachineName,
         // @todo make this agnostic to the domain.
-        "snapshot" => "https://scs.sammlungen.io/soda-scs-manager/snapshot/" . $snapshot->id(),
-        "files" => [
-          "contentFiles" => $contentFiles,
-          "bagFiles" => $bagFiles,
+        'snapshot' => 'https://scs.sammlungen.io/soda-scs-manager/snapshot/' . $snapshot->id(),
+        'files' => [
+          'contentFiles' => $contentFiles,
+          'bagFiles' => $bagFiles,
         ],
-        "mapping" => $mappings,
-      ],
-        JSON_PRETTY_PRINT
-      );
+        'mapping' => $mappings,
+      ];
+      $manifest = json_encode($manifestArray, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES);
 
       // Create the content files string,
       // to get i.e. ../scs_user/new-wisski-component/2025-08-26/1724732400/files/new-wisski-component--1724732400.files.tar.gz.
@@ -391,8 +400,15 @@ class SodaScsSnapshotHelpers {
         }
       }
 
+      // Write manifest.json to the bag dir; avoid shell echo.
       $backupPath = reset($snapshotData)['metadata']['backupPath'];
-      $manifest = '"' . $manifest . '"';
+      $manifestWriteResult = $this->writeFileContent($bagPath . '/' . $manifestFileName, $manifest);
+      if (!$manifestWriteResult['success']) {
+        return SodaScsResult::failure(
+          error: $manifestWriteResult['error'],
+          message: 'Snapshot creation failed: Could not write manifest.json.',
+        );
+      }
       // Create the request params.
       $requestParams = [
         'name' => 'snapshot--' . $this->generateRandomSuffix() . '--' . $snapshotMachineName . '--bag',
@@ -403,7 +419,6 @@ class SodaScsSnapshotHelpers {
           'sh',
           '-c',
           'cd /backup/bag && ' .
-          'echo ' . $manifest . ' > ' . $manifestFileName . ' && ' .
           'tar czf ' . $contentsTarFileName . ' ' . $manifestFileName . ' ' . $contentFilesString . ' && ' .
           'sha256sum ' . $contentsTarFileName . ' > ' . $contentsSha256FileName,
         ],
@@ -894,6 +909,377 @@ class SodaScsSnapshotHelpers {
    */
   public function generateRandomSuffix() {
     return str_pad((string) random_int(0, 999999), 6, '0', STR_PAD_LEFT);
+  }
+
+  /**
+   * Validate the checksum of the snapshot file.
+   *
+   * @param \Drupal\soda_scs_manager\Entity\SodaScsSnapshotInterface $snapshot
+   *   The snapshot entity.
+   * @param string $filePath
+   *   The file path to validate.
+   *
+   * @return array
+   *   Array with success status and error message if validation fails.
+   */
+  public function validateSnapshotChecksum($snapshot, string $filePath): array {
+    /** @var \Drupal\file\Entity\File $checksumFile */
+    $checksumFile = $this->entityTypeManager->getStorage('file')->load($snapshot->get('checksumFile')->target_id);
+    if (!$checksumFile) {
+      return ['success' => TRUE];
+    }
+
+    $checksumUri = $checksumFile->getFileUri();
+    $checksumPath = $this->fileSystem->realpath($checksumUri);
+
+    if (!$checksumPath || !file_exists($checksumPath)) {
+      return ['success' => TRUE];
+    }
+
+    $expectedChecksum = trim(file_get_contents($checksumPath));
+    $actualChecksum = hash_file('sha256', $filePath);
+
+    if (strpos($expectedChecksum, $actualChecksum) === FALSE) {
+      Error::logException(
+        $this->logger,
+        new \Exception('Checksum mismatch'),
+        'Snapshot restore failed: Checksum verification failed for snapshot @id. The file may be corrupted.',
+        ['@id' => $snapshot->id()],
+        LogLevel::ERROR
+      );
+      return [
+        'success' => FALSE,
+        'error' => 'Checksum verification failed. The file may be corrupted.',
+      ];
+    }
+
+    return ['success' => TRUE];
+  }
+
+  /**
+   * Create a safe temporary directory for unpacking the snapshot.
+   *
+   * @return string|false
+   *   The temporary directory path or FALSE on failure.
+   */
+  public function createTemporaryDirectory(): string|false {
+    $tempBase = sys_get_temp_dir();
+    $tempDir = $tempBase . '/soda_scs_restore_' . uniqid();
+
+    if (!mkdir($tempDir, 0755, TRUE)) {
+      return FALSE;
+    }
+
+    return $tempDir;
+  }
+
+  /**
+   * Unpack the snapshot tar file to the temporary directory.
+   *
+   * @param string $filePath
+   *   The snapshot tar file path.
+   * @param string $tempDir
+   *   The temporary directory path.
+   *
+   * @return array
+   *   Array with success status and error message if unpacking fails.
+   */
+  public function unpackSnapshotToTempDirectory(string $filePath, string $tempDir): array {
+    try {
+      $command = sprintf('cd %s && tar -xzf %s', escapeshellarg($tempDir), escapeshellarg($filePath));
+      $output = [];
+      $returnCode = 0;
+      exec($command, $output, $returnCode);
+
+      if ($returnCode !== 0) {
+        return [
+          'success' => FALSE,
+          'error' => 'Failed to extract tar file: ' . implode("\n", $output),
+        ];
+      }
+
+      return ['success' => TRUE];
+    }
+    catch (\Exception $e) {
+      return [
+        'success' => FALSE,
+        'error' => 'Exception during extraction: ' . $e->getMessage(),
+      ];
+    }
+  }
+
+  /**
+   * Parse and validate the manifest.json file.
+   *
+   * @param string $manifestPath
+   *   The path to the manifest.json file.
+   *
+   * @return array
+   *   Array with success status, data, and error message if parsing fails.
+   */
+  public function parseAndValidateManifest(string $manifestPath): array {
+    if (!file_exists($manifestPath)) {
+      return [
+        'success' => FALSE,
+        'error' => 'Manifest file not found in snapshot.',
+      ];
+    }
+
+    $manifestContent = file_get_contents($manifestPath);
+    if ($manifestContent === FALSE) {
+      return [
+        'success' => FALSE,
+        'error' => 'Failed to read manifest file.',
+      ];
+    }
+
+    $manifestData = json_decode($manifestContent, TRUE);
+    if (json_last_error() !== JSON_ERROR_NONE) {
+      return [
+        'success' => FALSE,
+        'error' => 'Invalid JSON in manifest file: ' . json_last_error_msg(),
+      ];
+    }
+
+    // Validate required manifest structure.
+    $requiredFields = ['version', 'algorithm', 'created', 'snapshotMachineName', 'files', 'mapping'];
+    foreach ($requiredFields as $field) {
+      if (!isset($manifestData[$field])) {
+        return [
+          'success' => FALSE,
+          'error' => "Missing required field '{$field}' in manifest.",
+        ];
+      }
+    }
+
+    // Validate version.
+    if ($manifestData['version'] !== '1.0') {
+      return [
+        'success' => FALSE,
+        'error' => 'Unsupported manifest version: ' . $manifestData['version'],
+      ];
+    }
+
+    // Validate algorithm.
+    if ($manifestData['algorithm'] !== 'sha256') {
+      return [
+        'success' => FALSE,
+        'error' => 'Unsupported checksum algorithm: ' . $manifestData['algorithm'],
+      ];
+    }
+
+    return [
+      'success' => TRUE,
+      'data' => $manifestData,
+    ];
+  }
+
+  /**
+   * Handle bag files restoration if present.
+   *
+   * @param array $bagFiles
+   *   The bag files configuration from manifest.
+   * @param string $tempDir
+   *   The temporary directory path.
+   *
+   * @return array
+   *   Array with success status and restoration data.
+   */
+  public function handleBagFilesRestoration(array $bagFiles, string $tempDir): array {
+    try {
+      // If bagFile is a URL, download it first.
+      if (isset($bagFiles['bagFile']) && filter_var($bagFiles['bagFile'], FILTER_VALIDATE_URL)) {
+        $bagFilePath = $this->downloadBagFile($bagFiles['bagFile'], $tempDir);
+        if (!$bagFilePath) {
+          return [
+            'success' => FALSE,
+            'error' => 'Failed to download bag file.',
+          ];
+        }
+      }
+      else {
+        $bagFilePath = $tempDir . '/' . basename($bagFiles['bagFile']);
+      }
+
+      // Validate bag file checksum if provided.
+      if (isset($bagFiles['checksumFile'])) {
+        $checksumValidation = $this->validateBagFileChecksum($bagFiles['checksumFile'], $bagFilePath, $tempDir);
+        if (!$checksumValidation['success']) {
+          return $checksumValidation;
+        }
+      }
+
+      // Extract bag file if it exists.
+      if (file_exists($bagFilePath)) {
+        $extractResult = $this->extractBagFile($bagFilePath, $tempDir);
+        if (!$extractResult['success']) {
+          return $extractResult;
+        }
+      }
+
+      return ['success' => TRUE];
+    }
+    catch (\Exception $e) {
+      return [
+        'success' => FALSE,
+        'error' => 'Exception during bag files handling: ' . $e->getMessage(),
+      ];
+    }
+  }
+
+  /**
+   * Download a bag file from URL.
+   *
+   * @param string $url
+   *   The bag file URL.
+   * @param string $tempDir
+   *   The temporary directory path.
+   *
+   * @return string|false
+   *   The local file path or FALSE on failure.
+   */
+  private function downloadBagFile(string $url, string $tempDir): string|false {
+    $localPath = $tempDir . '/' . basename($url);
+
+    try {
+      $content = file_get_contents($url);
+      if ($content === FALSE) {
+        return FALSE;
+      }
+
+      if (file_put_contents($localPath, $content) === FALSE) {
+        return FALSE;
+      }
+
+      return $localPath;
+    }
+    catch (\Exception $e) {
+      return FALSE;
+    }
+  }
+
+  /**
+   * Validate bag file checksum.
+   *
+   * @param string $checksumUrl
+   *   The checksum file URL or path.
+   * @param string $bagFilePath
+   *   The bag file path.
+   * @param string $tempDir
+   *   The temporary directory path.
+   *
+   * @return array
+   *   Array with success status and error message if validation fails.
+   */
+  private function validateBagFileChecksum(string $checksumUrl, string $bagFilePath, string $tempDir): array {
+    // Download checksum file if it's a URL.
+    if (filter_var($checksumUrl, FILTER_VALIDATE_URL)) {
+      $checksumContent = file_get_contents($checksumUrl);
+      if ($checksumContent === FALSE) {
+        return [
+          'success' => FALSE,
+          'error' => 'Failed to download checksum file.',
+        ];
+      }
+    }
+    else {
+      $checksumPath = $tempDir . '/' . basename($checksumUrl);
+      if (!file_exists($checksumPath)) {
+        return ['success' => TRUE];
+      }
+      $checksumContent = file_get_contents($checksumPath);
+    }
+
+    $expectedChecksum = trim($checksumContent);
+    $actualChecksum = hash_file('sha256', $bagFilePath);
+
+    if (strpos($expectedChecksum, $actualChecksum) === FALSE) {
+      return [
+        'success' => FALSE,
+        'error' => 'Bag file checksum validation failed.',
+      ];
+    }
+
+    return ['success' => TRUE];
+  }
+
+  /**
+   * Extract bag file.
+   *
+   * @param string $bagFilePath
+   *   The bag file path.
+   * @param string $tempDir
+   *   The temporary directory path.
+   *
+   * @return array
+   *   Array with success status and error message if extraction fails.
+   */
+  private function extractBagFile(string $bagFilePath, string $tempDir): array {
+    try {
+      $bagExtractDir = $tempDir . '/bag_contents';
+      if (!mkdir($bagExtractDir, 0755, TRUE)) {
+        return [
+          'success' => FALSE,
+          'error' => 'Failed to create bag extraction directory.',
+        ];
+      }
+
+      $command = sprintf('cd %s && tar -xzf %s', escapeshellarg($bagExtractDir), escapeshellarg($bagFilePath));
+      $output = [];
+      $returnCode = 0;
+      exec($command, $output, $returnCode);
+
+      if ($returnCode !== 0) {
+        return [
+          'success' => FALSE,
+          'error' => 'Failed to extract bag file: ' . implode("\n", $output),
+        ];
+      }
+
+      return ['success' => TRUE];
+    }
+    catch (\Exception $e) {
+      return [
+        'success' => FALSE,
+        'error' => 'Exception during bag file extraction: ' . $e->getMessage(),
+      ];
+    }
+  }
+
+  /**
+   * Clean up the temporary directory.
+   *
+   * @param string $tempDir
+   *   The temporary directory path to clean up.
+   */
+  public function cleanupTemporaryDirectory(string $tempDir): void {
+    if (is_dir($tempDir)) {
+      try {
+        $iterator = new \RecursiveIteratorIterator(
+          new \RecursiveDirectoryIterator($tempDir, \RecursiveDirectoryIterator::SKIP_DOTS),
+          \RecursiveIteratorIterator::CHILD_FIRST
+        );
+
+        foreach ($iterator as $file) {
+          if ($file->isDir()) {
+            rmdir($file->getRealPath());
+          }
+          else {
+            unlink($file->getRealPath());
+          }
+        }
+        rmdir($tempDir);
+      }
+      catch (\Exception $e) {
+        Error::logException(
+          $this->logger,
+          $e,
+          'Failed to cleanup temporary directory: @message',
+          ['@message' => $e->getMessage()],
+          LogLevel::WARNING
+        );
+      }
+    }
   }
 
 }

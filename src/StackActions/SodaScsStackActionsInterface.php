@@ -3,13 +3,13 @@
 namespace Drupal\soda_scs_manager\StackActions;
 
 use Drupal\soda_scs_manager\Entity\SodaScsStackInterface;
+use Drupal\soda_scs_manager\Entity\SodaScsSnapshotInterface;
 use Drupal\soda_scs_manager\ValueObject\SodaScsResult;
 
 /**
  * Handles the communication with the SCS user manager daemon.
  */
 interface SodaScsStackActionsInterface {
-
 
   /**
    * Create a snapshot of a stack.
@@ -74,7 +74,7 @@ interface SodaScsStackActionsInterface {
    */
   public function deleteStack(SodaScsStackInterface $stack): array;
 
-    /**
+  /**
    * Update a stack.
    *
    * @param \Drupal\soda_scs_manager\Entity\SodaScsStackInterface $stack
@@ -84,5 +84,16 @@ interface SodaScsStackActionsInterface {
    *   The result of the request.
    */
   public function updateStack($stack): array;
+
+  /**
+   * Restore a stack from snapshot.
+   *
+   * @param \Drupal\soda_scs_manager\Entity\SodaScsSnapshotInterface $snapshot
+   *   The snapshot.
+   *
+   * @return \Drupal\soda_scs_manager\ValueObject\SodaScsResult
+   *   The result of the request.
+   */
+  public function restoreFromSnapshot(SodaScsSnapshotInterface $snapshot): SodaScsResult;
 
 }

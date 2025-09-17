@@ -97,11 +97,14 @@ interface SodaScsComponentActionsInterface {
    *
    * @param \Drupal\soda_scs_manager\Entity\SodaScsSnapshotInterface $snapshot
    *   The SODa SCS Snapshot.
+   * @param string|null $tempDir
+   *   The path to the temporary directory,
+   *   if the files are unpacked in case of stack restoration.
    *
    * @return \Drupal\soda_scs_manager\ValueObject\SodaScsResult
    *   Result information with restored component.
    */
-  public function restoreFromSnapshot(SodaScsSnapshotInterface $snapshot): SodaScsResult;
+  public function restoreFromSnapshot(SodaScsSnapshotInterface $snapshot, ?string $tempDir): SodaScsResult;
 
   /**
    * Update SODa SCS Component.

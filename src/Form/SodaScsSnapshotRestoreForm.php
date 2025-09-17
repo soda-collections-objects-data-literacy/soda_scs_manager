@@ -13,7 +13,6 @@ use Drupal\soda_scs_manager\ComponentActions\SodaScsComponentActionsInterface;
 use Drupal\soda_scs_manager\Entity\SodaScsSnapshot;
 use Drupal\soda_scs_manager\Helpers\SodaScsSnapshotHelpers;
 use Drupal\soda_scs_manager\RequestActions\SodaScsDockerRunServiceActions;
-use Drupal\soda_scs_manager\SnapshotActions\SodaScsSnapshotActionsInterface;
 use Drupal\soda_scs_manager\StackActions\SodaScsStackActionsInterface;
 use Psr\Log\LogLevel;
 use Symfony\Component\DependencyInjection\ContainerInterface;
@@ -24,13 +23,6 @@ use Symfony\Component\DependencyInjection\ContainerInterface;
 class SodaScsSnapshotRestoreForm extends ConfirmFormBase {
 
   /**
-   * The snapshot entity to restore from.
-   *
-   * @var \Drupal\soda_scs_manager\Entity\SodaScsSnapshot
-   */
-  protected $snapshot;
-
-  /**
    * The entity type manager.
    *
    * @var \Drupal\Core\Entity\EntityTypeManagerInterface
@@ -38,18 +30,39 @@ class SodaScsSnapshotRestoreForm extends ConfirmFormBase {
   protected $entityTypeManager;
 
   /**
+   * The file system service.
+   *
+   * @var \Drupal\Core\File\FileSystemInterface
+   */
+  protected $fileSystem;
+
+  /**
+   * The logger factory.
+   *
+   * @var \Drupal\Core\Logger\LoggerChannelFactoryInterface
+   */
+  protected $loggerFactory;
+
+  /**
+   * The snapshot entity to restore from.
+   *
+   * @var \Drupal\soda_scs_manager\Entity\SodaScsSnapshot
+   */
+  protected $snapshot;
+
+  /**
+   * The Soda SCS Component Actions.
+   *
+   * @var \Drupal\soda_scs_manager\ComponentActions\SodaScsComponentActionsInterface
+   */
+  protected $sodaScsComponentActions;
+
+  /**
    * The Soda SCS Docker Run Service Actions.
    *
    * @var \Drupal\soda_scs_manager\RequestActions\SodaScsDockerRunServiceActions
    */
   protected $sodaScsDockerRunServiceActions;
-
-  /**
-   * The Soda SCS Snapshot Actions.
-   *
-   * @var \Drupal\soda_scs_manager\SnapshotActions\SodaScsSnapshotActionsInterface
-   */
-  protected $sodaScsSnapshotActions;
 
   /**
    * The Soda SCS Snapshot Helpers.
@@ -64,6 +77,13 @@ class SodaScsSnapshotRestoreForm extends ConfirmFormBase {
    * @var \Drupal\soda_scs_manager\ComponentActions\SodaScsComponentActionsInterface
    */
   protected $sodaScsSqlComponentActions;
+
+  /**
+   * The Soda SCS Stack Actions.
+   *
+   * @var \Drupal\soda_scs_manager\StackActions\SodaScsStackActionsInterface
+   */
+  protected $sodaScsStackActions;
 
   /**
    * The Soda SCS Triple Store Component Actions.
@@ -87,20 +107,6 @@ class SodaScsSnapshotRestoreForm extends ConfirmFormBase {
   protected $sodaScsWisskiStackActions;
 
   /**
-   * The logger factory.
-   *
-   * @var \Drupal\Core\Logger\LoggerChannelFactoryInterface
-   */
-  protected $loggerFactory;
-
-  /**
-   * The file system service.
-   *
-   * @var \Drupal\Core\File\FileSystemInterface
-   */
-  protected $fileSystem;
-
-  /**
    * Constructs a new SodaScsSnapshotRestoreForm.
    *
    * @param \Drupal\Core\Entity\EntityTypeManagerInterface $entity_type_manager
@@ -109,14 +115,16 @@ class SodaScsSnapshotRestoreForm extends ConfirmFormBase {
    *   The file system service.
    * @param \Drupal\Core\Logger\LoggerChannelFactoryInterface $logger_factory
    *   The logger factory.
+   * @param \Drupal\soda_scs_manager\ComponentActions\SodaScsComponentActionsInterface $sodaScsComponentActions
+   *   The Soda SCS Component Actions.
    * @param \Drupal\soda_scs_manager\RequestActions\SodaScsDockerRunServiceActions $sodaScsDockerRunServiceActions
    *   The Soda SCS Docker Run Service Actions.
-   * @param \Drupal\soda_scs_manager\SnapshotActions\SodaScsSnapshotActionsInterface $sodaScsSnapshotActions
-   *   The Soda SCS Snapshot Actions.
    * @param \Drupal\soda_scs_manager\Helpers\SodaScsSnapshotHelpers $sodaScsSnapshotHelpers
    *   The Soda SCS Snapshot Helpers.
    * @param \Drupal\soda_scs_manager\ComponentActions\SodaScsComponentActionsInterface $sodaScsSqlComponentActions
    *   The Soda SCS SQL Component Actions.
+   * @param \Drupal\soda_scs_manager\StackActions\SodaScsStackActionsInterface $sodaScsStackActions
+   *   The Soda SCS Stack Actions.
    * @param \Drupal\soda_scs_manager\ComponentActions\SodaScsComponentActionsInterface $sodaScsTripleStoreComponentActions
    *   The Soda SCS Triple Store Component Actions.
    * @param \Drupal\soda_scs_manager\ComponentActions\SodaScsComponentActionsInterface $sodaScsWisskiComponentActions
@@ -128,10 +136,11 @@ class SodaScsSnapshotRestoreForm extends ConfirmFormBase {
     EntityTypeManagerInterface $entity_type_manager,
     FileSystemInterface $file_system,
     LoggerChannelFactoryInterface $logger_factory,
+    SodaScsComponentActionsInterface $sodaScsComponentActions,
     SodaScsDockerRunServiceActions $sodaScsDockerRunServiceActions,
-    SodaScsSnapshotActionsInterface $sodaScsSnapshotActions,
     SodaScsSnapshotHelpers $sodaScsSnapshotHelpers,
     SodaScsComponentActionsInterface $sodaScsSqlComponentActions,
+    SodaScsStackActionsInterface $sodaScsStackActions,
     SodaScsComponentActionsInterface $sodaScsTripleStoreComponentActions,
     SodaScsComponentActionsInterface $sodaScsWisskiComponentActions,
     SodaScsStackActionsInterface $sodaScsWisskiStackActions,
@@ -140,10 +149,11 @@ class SodaScsSnapshotRestoreForm extends ConfirmFormBase {
     $this->entityTypeManager = $entity_type_manager;
     $this->fileSystem = $file_system;
     $this->loggerFactory = $logger_factory;
+    $this->sodaScsComponentActions = $sodaScsComponentActions;
     $this->sodaScsDockerRunServiceActions = $sodaScsDockerRunServiceActions;
-    $this->sodaScsSnapshotActions = $sodaScsSnapshotActions;
     $this->sodaScsSnapshotHelpers = $sodaScsSnapshotHelpers;
     $this->sodaScsSqlComponentActions = $sodaScsSqlComponentActions;
+    $this->sodaScsStackActions = $sodaScsStackActions;
     $this->sodaScsTripleStoreComponentActions = $sodaScsTripleStoreComponentActions;
     $this->sodaScsWisskiComponentActions = $sodaScsWisskiComponentActions;
     $this->sodaScsWisskiStackActions = $sodaScsWisskiStackActions;
@@ -157,10 +167,11 @@ class SodaScsSnapshotRestoreForm extends ConfirmFormBase {
       $container->get('entity_type.manager'),
       $container->get('file_system'),
       $container->get('logger.factory'),
+      $container->get('soda_scs_manager.component.actions'),
       $container->get('soda_scs_manager.docker_run_service.actions'),
-      $container->get('soda_scs_manager.snapshot.actions'),
       $container->get('soda_scs_manager.snapshot.helpers'),
       $container->get('soda_scs_manager.sql_component.actions'),
+      $container->get('soda_scs_manager.stack.actions'),
       $container->get('soda_scs_manager.triplestore_component.actions'),
       $container->get('soda_scs_manager.wisski_component.actions'),
       $container->get('soda_scs_manager.wisski_stack.actions'),
@@ -278,13 +289,13 @@ class SodaScsSnapshotRestoreForm extends ConfirmFormBase {
     // Perform the restore based on entity type and bundle.
     try {
       if ($entityType === 'component') {
-        $restoreResult = $this->sodaScsSnapshotActions->restoreComponent($targetEntity, $filePath);
+        $restoreResult = $this->sodaScsComponentActions->restoreFromSnapshot($this->snapshot, NULL);
       }
       else {
-        $restoreResult = $this->sodaScsSnapshotActions->restoreStack($targetEntity, $filePath);
+        $restoreResult = $this->sodaScsStackActions->restoreFromSnapshot($this->snapshot);
       }
 
-      if ($restoreResult['success']) {
+      if ($restoreResult->success) {
         $this->messenger()->addMessage($this->t('Successfully restored snapshot %label to %entity_label.', [
           '%label' => $this->snapshot->label(),
           '%entity_label' => $targetEntity->label(),
@@ -292,7 +303,7 @@ class SodaScsSnapshotRestoreForm extends ConfirmFormBase {
       }
       else {
         $this->messenger()->addError($this->t('Failed to restore snapshot. @error', [
-          '@error' => $restoreResult['error'] ?? 'Unknown error',
+          '@error' => $restoreResult->error ?? 'Unknown error',
         ]));
       }
     }

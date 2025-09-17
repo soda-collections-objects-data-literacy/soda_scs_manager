@@ -11,6 +11,7 @@ use Drupal\Core\Entity\EntityTypeManagerInterface;
 use Drupal\Core\Logger\LoggerChannelFactoryInterface;
 use Drupal\Core\Logger\LoggerChannelInterface;
 use Drupal\Core\Messenger\MessengerInterface;
+use Drupal\Core\File\FileSystemInterface;
 use Drupal\Core\StringTranslation\StringTranslationTrait;
 use Drupal\Core\StringTranslation\TranslationInterface;
 use Drupal\Core\TypedData\Exception\MissingDataException;
@@ -81,6 +82,13 @@ class SodaScsWisskiComponentActions implements SodaScsComponentActionsInterface 
    * @var \Drupal\Core\Messenger\MessengerInterface
    */
   protected MessengerInterface $messenger;
+
+  /**
+   * The file system service.
+   *
+   * @var \Drupal\Core\File\FileSystemInterface
+   */
+  protected FileSystemInterface $fileSystem;
 
   /**
    * The SCS Docker exec service actions.
@@ -192,6 +200,7 @@ class SodaScsWisskiComponentActions implements SodaScsComponentActionsInterface 
     ClientInterface $httpClient,
     LoggerChannelFactoryInterface $loggerFactory,
     MessengerInterface $messenger,
+    FileSystemInterface $fileSystem,
     SodaScsComponentHelpers $sodaScsComponentHelpers,
     SodaScsExecRequestInterface $sodaScsDockerExecServiceActions,
     SodaScsRunRequestInterface $sodaScsDockerRunServiceActions,
@@ -216,6 +225,7 @@ class SodaScsWisskiComponentActions implements SodaScsComponentActionsInterface 
     $this->logger = $loggerFactory->get('soda_scs_manager');
     $this->messenger = $messenger;
     $this->sodaScsComponentHelpers = $sodaScsComponentHelpers;
+    $this->fileSystem = $fileSystem;
     $this->sodaScsDockerExecServiceActions = $sodaScsDockerExecServiceActions;
     $this->sodaScsDockerRunServiceActions = $sodaScsDockerRunServiceActions;
     $this->sodaScsKeycloakHelpers = $sodaScsKeycloakHelpers;
@@ -1015,15 +1025,314 @@ class SodaScsWisskiComponentActions implements SodaScsComponentActionsInterface 
    *
    * @param \Drupal\soda_scs_manager\Entity\SodaScsSnapshotInterface $snapshot
    *   The SODa SCS Snapshot.
+   * @param string|null $tempDirPath
+   *   The path to the temporary directory.
    *
    * @return \Drupal\soda_scs_manager\ValueObject\SodaScsResult
    *   Result information with restored component.
    */
-  public function restoreFromSnapshot(SodaScsSnapshotInterface $snapshot): SodaScsResult {
-    return SodaScsResult::success(
-      message: 'Component restored from snapshot successfully.',
-      data: [],
+  public function restoreFromSnapshot(SodaScsSnapshotInterface $snapshot, ?string $tempDirPath): SodaScsResult {
+    try {
+      /** @var \Drupal\soda_scs_manager\Entity\SodaScsComponentInterface|null $component */
+      $component = $snapshot->get('snapshotOfComponent')->entity ?? NULL;
+      if (!$component) {
+        return SodaScsResult::failure(
+          message: 'Snapshot is not linked to a component.',
+          error: 'Missing component on snapshot.',
+        );
+      }
+
+      $machineName = $component->get('machineName')->value;
+      $containerName = $machineName . '--drupal';
+
+      // 1) Get the container id.
+      $getAllContainersRequestParams = [
+        'queryParams' => [
+          'name' => $containerName,
+        ],
+      ];
+      $getAllContainersRequest = $this->sodaScsDockerRunServiceActions->buildGetAllRequest($getAllContainersRequestParams);
+      $getAllContainersResponse = $this->sodaScsDockerRunServiceActions->makeRequest($getAllContainersRequest);
+      if (!$getAllContainersResponse['success']) {
+        return SodaScsResult::failure(
+          message: 'Failed to get container id.',
+          error: (string) $getAllContainersResponse['error'],
+        );
+      }
+      $getAllContainersResponseContents = json_decode($getAllContainersResponse['data']['portainerResponse']->getBody()->getContents(), TRUE);
+      $containerId = $getAllContainersResponseContents[0]['Id'];
+
+      // 3) Inspect the container to find the Drupal volume physical path.
+      $inspectRequestParams = [
+        'routeParams' => [
+          'containerId' => $containerId,
+        ],
+      ];
+      $inspectRequest = $this->sodaScsDockerRunServiceActions->buildInspectRequest(
+        $inspectRequestParams,
+      );
+      $inspectResponse = $this->sodaScsDockerRunServiceActions->makeRequest($inspectRequest);
+      if (!$inspectResponse['success']) {
+        return SodaScsResult::failure(
+          message: 'Failed to inspect container.',
+          error: (string) $inspectResponse['error'],
+        );
+      }
+
+      $inspectPayload = json_decode($inspectResponse['data']['portainerResponse']->getBody()->getContents(), TRUE);
+      if (!is_array($inspectPayload) || !isset($inspectPayload['Mounts']) || !is_array($inspectPayload['Mounts'])) {
+        return SodaScsResult::failure(
+          message: 'Invalid inspect payload.',
+          error: 'Inspect response missing Mounts.',
+        );
+      }
+
+      // 2) Stop the container (best-effort).
+      try {
+        $stopRequestParams = [
+          'routeParams' => [
+            'containerId' => $containerId,
+          ],
+          'queryParams' => [
+            'timeout' => 30,
+          ],
+        ];
+        $stopRequest = $this->sodaScsDockerRunServiceActions->buildStopRequest($stopRequestParams);
+        $stopResponse = $this->sodaScsDockerRunServiceActions->makeRequest($stopRequest);
+        if (!$stopResponse['success']) {
+          return SodaScsResult::failure(
+            message: 'Failed to stop container.',
+            error: (string) $stopResponse['error'],
+          );
+        }
+      }
+      catch (\Throwable $e) {
+        // Continue even if stop fails (container might already be stopped).
+      }
+
+      $expectedVolumeName = $machineName . '_drupal-root';
+      $drupalMount = NULL;
+      foreach ($inspectPayload['Mounts'] as $mount) {
+        $name = $mount['Name'] ?? '';
+        $type = $mount['Type'] ?? '';
+        if ($type === 'volume' && ($name === $expectedVolumeName || (is_string($name) && function_exists('str_contains') ? str_contains($name, 'drupal-root') : strpos((string) $name, 'drupal-root') !== FALSE))) {
+          $drupalMount = $mount;
+          break;
+        }
+      }
+      if (!$drupalMount || empty($drupalMount['Source'])) {
+        return SodaScsResult::failure(
+          message: 'Drupal volume not found on container.',
+          error: 'Could not resolve physical volume path.',
+        );
+      }
+
+      $dataDir = rtrim($drupalMount['Source'], '/');
+      $volumeRoot = dirname($dataDir);
+      $rollbackDir = $volumeRoot . '/_data_rollback';
+      $newDir = $volumeRoot . '/_data_new';
+
+      // 4) Resolve the snapshot tar path.
+      $snapshotFile = $snapshot->getFile();
+      if (!$snapshotFile) {
+        return SodaScsResult::failure(
+          message: 'Snapshot file not found.',
+          error: 'Missing snapshot file on entity.',
+        );
+      }
+      $fileUri = $snapshotFile->getFileUri();
+      $filePath = $this->fileSystem->realpath($fileUri);
+      if (!$filePath || !file_exists($filePath)) {
+        return SodaScsResult::failure(
+          message: 'Snapshot file does not exist on the filesystem.',
+          error: 'Snapshot file missing on disk.',
+        );
+      }
+
+      // 5) Optional: checksum validate the snapshot file.
+      $checksumValidation = $this->sodaScsSnapshotHelpers->validateSnapshotChecksum($snapshot, $filePath);
+      if (!$checksumValidation['success']) {
+        return SodaScsResult::failure(
+          message: 'Checksum validation failed.',
+          error: (string) ($checksumValidation['error'] ?? 'Checksum failed'),
+        );
+      }
+
+      // 6) Prepare rollback and new directories.
+      if (is_dir($rollbackDir)) {
+        $this->removeDirectoryRecursively($rollbackDir);
+      }
+      if (is_dir($newDir)) {
+        $this->removeDirectoryRecursively($newDir);
+      }
+
+      // 7) Make a rollback copy of current _data.
+      $this->copyDirectoryRecursively($dataDir, $rollbackDir);
+
+      // 8) Unpack the snapshot tar into _data_new (host file ops).
+      if (!mkdir($newDir, 0755, TRUE) && !is_dir($newDir)) {
+        return SodaScsResult::failure(
+          message: 'Failed to prepare new data directory.',
+          error: 'Cannot create _data_new directory.',
+        );
+      }
+      $command = sprintf('tar -xzf %s -C %s', escapeshellarg($filePath), escapeshellarg($newDir));
+      $output = [];
+      $returnCode = 0;
+      exec($command, $output, $returnCode);
+      if ($returnCode !== 0) {
+        $this->removeDirectoryRecursively($newDir);
+        return SodaScsResult::failure(
+          message: 'Failed to extract snapshot contents.',
+          error: implode("\n", $output),
+        );
+      }
+
+      if ($this->directoryIsEmpty($newDir)) {
+        $this->removeDirectoryRecursively($newDir);
+        return SodaScsResult::failure(
+          message: 'Extracted snapshot is empty.',
+          error: 'No files extracted into _data_new.',
+        );
+      }
+
+      // 9) Replace _data with _data_new.
+      $this->removeDirectoryRecursively($dataDir);
+      if (!rename($newDir, $dataDir)) {
+        if (!is_dir($dataDir)) {
+          $this->copyDirectoryRecursively($rollbackDir, $dataDir);
+        }
+        return SodaScsResult::failure(
+          message: 'Failed to activate restored data.',
+          error: 'Cannot rename _data_new to _data.',
+        );
+      }
+
+      // 10) Remove rollback after successful switch.
+      $this->removeDirectoryRecursively($rollbackDir);
+
+      // 11) Start the container back up.
+      try {
+        $startRequest = $this->sodaScsDockerRunServiceActions->buildStartRequest([
+          'routeParams' => [
+            'containerId' => $containerId,
+          ],
+        ]);
+        $this->sodaScsDockerRunServiceActions->makeRequest($startRequest);
+      }
+      catch (\Throwable $e) {
+        return SodaScsResult::failure(
+          message: 'Data restored but failed to start container.',
+          error: $e->getMessage(),
+        );
+      }
+
+      return SodaScsResult::success(
+        message: 'Component restored from snapshot successfully.',
+        data: [
+          'containerName' => $containerName,
+          'containerId' => $containerId,
+          'volumeDataDir' => $dataDir,
+        ],
+      );
+    }
+    catch (\Throwable $e) {
+      Error::logException(
+        $this->logger,
+        $e,
+        'WissKI restore failed: @message',
+        ['@message' => $e->getMessage()],
+        LogLevel::ERROR
+      );
+      return SodaScsResult::failure(
+        message: 'Failed to restore component from snapshot.',
+        error: $e->getMessage(),
+      );
+    }
+  }
+
+  /**
+   * Recursively copies a directory.
+   *
+   * @param string $source
+   *   Source directory path.
+   * @param string $destination
+   *   Destination directory path.
+   */
+  private function copyDirectoryRecursively(string $source, string $destination): void {
+    $source = rtrim($source, '/');
+    $destination = rtrim($destination, '/');
+    if (!is_dir($source)) {
+      throw new \RuntimeException('Source directory does not exist: ' . $source);
+    }
+    if (!is_dir($destination) && !mkdir($destination, 0755, TRUE) && !is_dir($destination)) {
+      throw new \RuntimeException('Failed to create destination directory: ' . $destination);
+    }
+    $iterator = new \RecursiveIteratorIterator(
+      new \RecursiveDirectoryIterator($source, \RecursiveDirectoryIterator::SKIP_DOTS),
+      \RecursiveIteratorIterator::SELF_FIRST
     );
+    foreach ($iterator as $item) {
+      $absolutePath = $item->getPathname();
+      $relative = ltrim(substr($absolutePath, strlen($source)), DIRECTORY_SEPARATOR);
+      $targetPath = $destination . DIRECTORY_SEPARATOR . $relative;
+      if ($item->isDir()) {
+        if (!is_dir($targetPath) && !mkdir($targetPath, 0755, TRUE) && !is_dir($targetPath)) {
+          throw new \RuntimeException('Failed to create directory: ' . $targetPath);
+        }
+      }
+      else {
+        if (!copy($item->getPathname(), $targetPath)) {
+          throw new \RuntimeException('Failed to copy file to: ' . $targetPath);
+        }
+      }
+    }
+  }
+
+  /**
+   * Recursively removes a directory or file.
+   *
+   * @param string $path
+   *   Path to remove.
+   */
+  private function removeDirectoryRecursively(string $path): void {
+    if (!file_exists($path)) {
+      return;
+    }
+    if (is_file($path) || is_link($path)) {
+      @unlink($path);
+      return;
+    }
+    $iterator = new \RecursiveIteratorIterator(
+      new \RecursiveDirectoryIterator($path, \RecursiveDirectoryIterator::SKIP_DOTS),
+      \RecursiveIteratorIterator::CHILD_FIRST
+    );
+    foreach ($iterator as $fileinfo) {
+      if ($fileinfo->isDir()) {
+        @rmdir($fileinfo->getRealPath());
+      }
+      else {
+        @unlink($fileinfo->getRealPath());
+      }
+    }
+    @rmdir($path);
+  }
+
+  /**
+   * Checks whether a directory is empty.
+   *
+   * @param string $dir
+   *   Directory path.
+   *
+   * @return bool
+   *   TRUE if empty, FALSE otherwise.
+   */
+  private function directoryIsEmpty(string $dir): bool {
+    if (!is_dir($dir)) {
+      return TRUE;
+    }
+    $files = scandir($dir) ?: [];
+    return count($files) <= 2;
   }
 
 }

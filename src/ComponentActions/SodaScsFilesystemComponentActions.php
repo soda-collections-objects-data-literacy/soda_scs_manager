@@ -684,11 +684,13 @@ class SodaScsFilesystemComponentActions implements SodaScsComponentActionsInterf
    *
    * @param \Drupal\soda_scs_manager\Entity\SodaScsSnapshotInterface $snapshot
    *   The SODa SCS Snapshot.
+   * @param string|null $stackBagPath
+   *   The path to the stack bag.
    *
    * @return \Drupal\soda_scs_manager\ValueObject\SodaScsResult
    *   Result information with restored component.
    */
-  public function restoreFromSnapshot(SodaScsSnapshotInterface $snapshot): SodaScsResult {
+  public function restoreFromSnapshot(SodaScsSnapshotInterface $snapshot, ?string $stackBagPath): SodaScsResult {
     return SodaScsResult::success(
       message: 'Component restored from snapshot successfully.',
       data: [],

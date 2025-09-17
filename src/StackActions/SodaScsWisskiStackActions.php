@@ -17,10 +17,12 @@ use Drupal\Core\StringTranslation\TranslationInterface;
 use Drupal\Core\Template\TwigEnvironment;
 use Drupal\Core\TypedData\Exception\MissingDataException;
 use Drupal\soda_scs_manager\ComponentActions\SodaScsComponentActionsInterface;
+use Drupal\soda_scs_manager\Entity\SodaScsSnapshotInterface;
 use Drupal\soda_scs_manager\Entity\SodaScsStackInterface;
 use Drupal\soda_scs_manager\Exception\SodaScsComponentException;
 use Drupal\soda_scs_manager\Exception\SodaScsRequestException;
 use Drupal\soda_scs_manager\Helpers\SodaScsStackHelpers;
+use Drupal\soda_scs_manager\Helpers\SodaScsSnapshotHelpers;
 use Drupal\soda_scs_manager\RequestActions\SodaScsServiceRequestInterface;
 use Drupal\soda_scs_manager\ServiceActions\SodaScsServiceActionsInterface;
 use Drupal\soda_scs_manager\ServiceKeyActions\SodaScsServiceKeyActionsInterface;
@@ -29,6 +31,8 @@ use GuzzleHttp\ClientInterface;
 use Symfony\Component\HttpFoundation\RequestStack;
 use Drupal\Core\Utility\Error;
 use Psr\Log\LogLevel;
+use Drupal\file\Entity\File;
+use Drupal\Core\File\FileSystemInterface;
 
 /**
  * Handles the communication with the SCS user manager daemon.
@@ -58,6 +62,13 @@ class SodaScsWisskiStackActions implements SodaScsStackActionsInterface {
    * @var \Drupal\Core\Entity\EntityTypeManagerInterface
    */
   protected $entityTypeManager;
+
+  /**
+   * The file system service.
+   *
+   * @var \Drupal\Core\File\FileSystemInterface
+   */
+  protected FileSystemInterface $fileSystem;
 
   /**
    * The HTTP client.
@@ -114,6 +125,13 @@ class SodaScsWisskiStackActions implements SodaScsStackActionsInterface {
    * @var \Drupal\soda_scs_manager\Helpers\SodaScsStackHelpers
    */
   protected SodaScsStackHelpers $sodaScsStackHelpers;
+
+  /**
+   * The SCS snapshot helpers service.
+   *
+   * @var \Drupal\soda_scs_manager\Helpers\SodaScsSnapshotHelpers
+   */
+  protected SodaScsSnapshotHelpers $sodaScsSnapshotHelpers;
 
   /**
    * The SCS database actions service.
@@ -173,9 +191,11 @@ class SodaScsWisskiStackActions implements SodaScsStackActionsInterface {
     ConfigFactoryInterface $configFactory,
     Connection $database,
     EntityTypeManagerInterface $entityTypeManager,
+    FileSystemInterface $fileSystem,
     LoggerChannelFactoryInterface $loggerFactory,
     MessengerInterface $messenger,
     SodaScsStackHelpers $sodaScsStackHelpers,
+    SodaScsSnapshotHelpers $sodaScsSnapshotHelpers,
     SodaScsComponentActionsInterface $sodaScsSqlComponentActions,
     SodaScsServiceActionsInterface $sodaScsMysqlServiceActions,
     SodaScsServiceKeyActionsInterface $sodaScsServiceKeyActions,
@@ -190,10 +210,12 @@ class SodaScsWisskiStackActions implements SodaScsStackActionsInterface {
       ->getEditable('soda_scs_manager.settings');
     $this->database = $database;
     $this->entityTypeManager = $entityTypeManager;
+    $this->fileSystem = $fileSystem;
     $this->loggerFactory = $loggerFactory;
     $this->messenger = $messenger;
     $this->settings = $settings;
     $this->sodaScsStackHelpers = $sodaScsStackHelpers;
+    $this->sodaScsSnapshotHelpers = $sodaScsSnapshotHelpers;
     $this->sodaScsSqlComponentActions = $sodaScsSqlComponentActions;
     $this->sodaScsMysqlServiceActions = $sodaScsMysqlServiceActions;
     $this->sodaScsServiceKeyActions = $sodaScsServiceKeyActions;
@@ -730,6 +752,249 @@ class SodaScsWisskiStackActions implements SodaScsStackActionsInterface {
       'success' => TRUE,
       'error' => NULL,
     ];
+  }
+
+  /**
+   * Restore a WissKI stack from snapshot.
+   *
+   * @param \Drupal\soda_scs_manager\Entity\SodaScsSnapshotInterface $snapshot
+   *   The snapshot.
+   *
+   * @return \Drupal\soda_scs_manager\ValueObject\SodaScsResult
+   *   The result of the request.
+   */
+  public function restoreFromSnapshot(SodaScsSnapshotInterface $snapshot): SodaScsResult {
+    $snapshotFile = $snapshot->getFile();
+    if (!$snapshotFile) {
+      return SodaScsResult::failure(
+        error: 'Snapshot file not found.',
+        message: 'Snapshot file not found.',
+      );
+    }
+
+    // Get the file URI and convert to system path.
+    $fileUri = $snapshotFile->getFileUri();
+    $filePath = $this->fileSystem->realpath($fileUri);
+
+    if (!$filePath || !file_exists($filePath)) {
+      return SodaScsResult::failure(
+        error: 'Snapshot file does not exist on the filesystem.',
+        message: 'Snapshot file does not exist on the filesystem.',
+      );
+    }
+
+    // Step 1: Verify checksum of the snapshot tar file.
+    $checksumValidation = $this->sodaScsSnapshotHelpers->validateSnapshotChecksum($snapshot, $filePath);
+    if (!$checksumValidation['success']) {
+      return SodaScsResult::failure(
+        error: $checksumValidation['error'],
+        message: 'Checksum validation failed.',
+      );
+    }
+
+    // Step 2: Create safe temporary directory and unpack the snapshot.
+    $tempDir = $this->sodaScsSnapshotHelpers->createTemporaryDirectory();
+    if (!$tempDir) {
+      return SodaScsResult::failure(
+        error: 'Failed to create temporary directory.',
+        message: 'Failed to create temporary directory.',
+      );
+    }
+
+    $unpackResult = $this->sodaScsSnapshotHelpers->unpackSnapshotToTempDirectory($filePath, $tempDir);
+    if (!$unpackResult['success']) {
+      $this->sodaScsSnapshotHelpers->cleanupTemporaryDirectory($tempDir);
+      return SodaScsResult::failure(
+        error: $unpackResult['error'],
+        message: 'Failed to unpack snapshot.',
+      );
+    }
+
+    // Step 3: Parse and validate manifest.json.
+    $manifestPath = $tempDir . '/manifest.json';
+    $manifestData = $this->sodaScsSnapshotHelpers->parseAndValidateManifest($manifestPath);
+    if (!$manifestData['success']) {
+      $this->sodaScsSnapshotHelpers->cleanupTemporaryDirectory($tempDir);
+      return SodaScsResult::failure(
+        error: $manifestData['error'],
+        message: 'Failed to parse or validate manifest.',
+      );
+    }
+
+    // Step 4: Delegate restoration to components.
+    $restoreResult = $this->restoreComponentsFromManifest($manifestData['data'], $tempDir);
+    if (!$restoreResult['success']) {
+      $this->sodaScsSnapshotHelpers->cleanupTemporaryDirectory($tempDir);
+      return SodaScsResult::failure(
+        error: $restoreResult['error'],
+        message: 'Failed to restore components from manifest.',
+      );
+    }
+
+    // Step 5: Handle bag files if present.
+    if (isset($manifestData['data']['files']['bagFiles'])) {
+      $bagResult = $this->sodaScsSnapshotHelpers->handleBagFilesRestoration($manifestData['data']['files']['bagFiles'], $tempDir);
+      if (!$bagResult['success']) {
+        $this->sodaScsSnapshotHelpers->cleanupTemporaryDirectory($tempDir);
+        return SodaScsResult::failure(
+          error: $bagResult['error'],
+          message: 'Failed to handle bag files restoration.',
+        );
+      }
+    }
+
+    // Step 6: Cleanup temporary directory.
+    $this->sodaScsSnapshotHelpers->cleanupTemporaryDirectory($tempDir);
+
+    return SodaScsResult::success(
+      message: 'WissKI stack restored from snapshot successfully.',
+      data: $restoreResult['data'],
+    );
+  }
+
+  /**
+   * Restore components based on the manifest mapping.
+   *
+   * @param array $manifestData
+   *   The parsed manifest data.
+   * @param string $tempDir
+   *   The temporary directory path.
+   *
+   * @return array
+   *   Array with success status and restoration data.
+   */
+  private function restoreComponentsFromManifest(array $manifestData, string $tempDir): array {
+    $restorationResults = [];
+    $errors = [];
+
+    foreach ($manifestData['mapping'] as $componentMapping) {
+      $bundle = $componentMapping['bundle'];
+      $eid = $componentMapping['eid'];
+      $machineName = $componentMapping['machineName'];
+      $dumpFile = $componentMapping['dumpFile'];
+      $checksumFile = $componentMapping['checksumFile'];
+
+      // @todo Remove this once we have a generic restore from snapshot for all components.
+      if ($bundle !== 'soda_scs_wisski_component') {
+        continue;
+      }
+
+      // Validate checksum for component dump file.
+      if (isset($checksumFile) && file_exists($checksumFile)) {
+        $expectedChecksum = trim(file_get_contents($checksumFile));
+        $actualChecksum = hash_file('sha256', $dumpFile);
+
+        if (strpos($expectedChecksum, $actualChecksum) === FALSE) {
+          $errors[] = "Checksum validation failed for component {$machineName} ({$bundle}).";
+          continue;
+        }
+      }
+
+      // Load the component entity.
+      try {
+        $component = $this->entityTypeManager->getStorage('soda_scs_component')->load($eid);
+        if (!$component) {
+          $errors[] = "Component entity {$eid} not found.";
+          continue;
+        }
+
+        // Get the appropriate component action service.
+        $componentActions = $this->getComponentActionsForBundle($bundle);
+        if (!$componentActions) {
+          $errors[] = "No component actions found for bundle {$bundle}.";
+          continue;
+        }
+
+        // Create a pseudo snapshot entity for the component restoration.
+        $pseudoSnapshot = $this->createPseudoSnapshotForComponent($component, $dumpFile, $tempDir);
+
+        // Restore the component.
+        $restoreResult = $componentActions->restoreFromSnapshot($pseudoSnapshot, $tempDir);
+
+        if ($restoreResult->success) {
+          $restorationResults[$machineName] = $restoreResult;
+        }
+        else {
+          $errors[] = "Failed to restore component {$machineName}: " . $restoreResult->message;
+        }
+      }
+      catch (\Exception $e) {
+        $errors[] = "Exception while restoring component {$machineName}: " . $e->getMessage();
+      }
+    }
+
+    if (!empty($errors)) {
+      return [
+        'success' => FALSE,
+        'error' => 'Component restoration failed: ' . implode('; ', $errors),
+        'data' => $restorationResults,
+      ];
+    }
+
+    return [
+      'success' => TRUE,
+      'data' => $restorationResults,
+    ];
+  }
+
+  /**
+   * Get the appropriate component actions service for a bundle.
+   *
+   * @param string $bundle
+   *   The component bundle.
+   *
+   * @return \Drupal\soda_scs_manager\ComponentActions\SodaScsComponentActionsInterface|null
+   *   The component actions service or NULL if not found.
+   */
+  private function getComponentActionsForBundle(string $bundle): ?SodaScsComponentActionsInterface {
+    switch ($bundle) {
+      case 'soda_scs_wisski_component':
+        return $this->sodaScsWisskiComponentActions;
+
+      case 'soda_scs_sql_component':
+        return $this->sodaScsSqlComponentActions;
+
+      case 'soda_scs_triplestore_component':
+        return $this->sodaScsTriplestoreComponentActions;
+
+      default:
+        return NULL;
+    }
+  }
+
+  /**
+   * Create a pseudo snapshot entity for component restoration.
+   *
+   * @param \Drupal\soda_scs_manager\Entity\SodaScsComponentInterface $component
+   *   The component entity.
+   * @param string $dumpFile
+   *   The dump file path.
+   * @param string $tempDir
+   *   The temporary directory path.
+   *
+   * @return \Drupal\soda_scs_manager\Entity\SodaScsSnapshotInterface
+   *   A pseudo snapshot entity.
+   */
+  private function createPseudoSnapshotForComponent($component, string $dumpFile, string $tempDir): SodaScsSnapshotInterface {
+    // Create a temporary file entity for the dump file.
+    $fileUri = 'temporary://' . basename($dumpFile);
+    copy($dumpFile, $this->fileSystem->realpath($fileUri));
+
+    $file = File::create([
+      'uri' => $fileUri,
+      'filename' => basename($dumpFile),
+      'status' => 1,
+    ]);
+    $file->save();
+
+    // Create a pseudo snapshot entity.
+    $snapshot = $this->entityTypeManager->getStorage('soda_scs_snapshot')->create([
+      'label' => 'Pseudo snapshot for restoration',
+      'file' => $file->id(),
+      'snapshotOfComponent' => $component->id(),
+    ]);
+
+    return $snapshot;
   }
 
 }
