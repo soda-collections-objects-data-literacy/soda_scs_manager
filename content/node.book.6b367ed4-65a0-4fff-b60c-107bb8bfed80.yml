@@ -32,4 +32,6 @@ fields:
     pid: '13'
     langcode: en
   menu_link: {  }
+  content_translation_source: und
+  content_translation_outdated: '0'
   body: {  }

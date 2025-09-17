@@ -8,21 +8,21 @@ dependencies:
     - node.node_type.book
     - field.field.node.book.body
   entity:
-    - 'user:user:2c3f35f5-5577-4e78-8bbc-4ce1e3cffce3'
+    - 'user:user:3dfa0115-db04-4524-a196-a9dd9b1d18b6'
     - 'user:user:719b1eb9-7d9e-44c8-bd2b-32b320f43d6a'
 fields:
   nid: '4'
-  vid: '36'
-  revision_timestamp: '1754473940'
+  vid: '51'
+  revision_timestamp: '1758119614'
   revision_uid:
-    target_id: '19'
+    target_id: '34'
   revision_log: {  }
   status: '1'
   uid:
     target_id: '1'
   title: 'Getting Started'
   created: '1754383217'
-  changed: '1754473940'
+  changed: '1758119614'
   promote: '0'
   sticky: '0'
   default_langcode: '1'
@@ -33,4 +33,6 @@ fields:
     pid: '5'
     langcode: en
   menu_link: {  }
+  content_translation_source: und
+  content_translation_outdated: '0'
   body: {  }

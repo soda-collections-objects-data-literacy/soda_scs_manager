@@ -32,6 +32,8 @@ fields:
     pid: '11'
     langcode: en
   menu_link: {  }
+  content_translation_source: und
+  content_translation_outdated: '0'
   body:
     value: '<p>The "Store" is the place where you can find all the availiable applications that the SCS offers.<br>Clicking on one of the cards for an application allows you to create a new access for/instance of that application.<br><br>&nbsp;</p>'
     summary: ''

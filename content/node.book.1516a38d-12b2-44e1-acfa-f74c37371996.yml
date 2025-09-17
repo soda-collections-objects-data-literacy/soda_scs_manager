@@ -32,6 +32,8 @@ fields:
     pid: '12'
     langcode: en
   menu_link: {  }
+  content_translation_source: und
+  content_translation_outdated: '0'
   body:
     value: '<p>The "Desk" shows all the application accounts/instances that you created or are shared with you as part of a <a href="https://scs.sammlungen.io/documentation/your-desk/creating-project">collaborative project</a>.</p>'
     summary: ''
