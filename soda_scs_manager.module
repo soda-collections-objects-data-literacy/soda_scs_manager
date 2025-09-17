@@ -843,8 +843,11 @@ function _soda_scs_manager_create_default_filesystem_for_user(UserInterface $use
   // Create the default filesystem.
   $filesystem = SodaScsComponent::create([
     'bundle' => 'soda_scs_filesystem_component',
+    'description' => 'The default filesystem for the user.',
+    'imageUrl' => 'public://soda_scs_manager/images/filesystem.svg',
+    'health' => 'Unknown',
     'label' => $user->getDisplayName() . '\'s default filesystem',
-    'machineName' => 'fs-' . $user->getDisplayName() . '-default',
+    'machineName' => $user->getDisplayName() . '-default',
     'owner' => $user->id(),
     'partOfProjects' => [
       [
@@ -852,7 +855,8 @@ function _soda_scs_manager_create_default_filesystem_for_user(UserInterface $use
       ],
     ],
   ]);
-  $filesystem->save();
+
+  \Drupal::service('soda_scs_manager.component.actions')->createComponent($filesystem);
 }
 
 /**
