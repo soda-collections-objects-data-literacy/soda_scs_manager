@@ -436,9 +436,16 @@ class SodaScsWisskiStackActions implements SodaScsStackActionsInterface {
     $sqlComponent = $this->sodaScsStackHelpers->retrieveIncludedComponent($stack, 'soda_scs_sql_component');
     $triplestoreComponent = $this->sodaScsStackHelpers->retrieveIncludedComponent($stack, 'soda_scs_triplestore_component');
 
-    $wisskiComponentSnapshot = $this->sodaScsWisskiComponentActions->createSnapshot($wisskiComponent, $wisskiComponent->getLabel(), $timestamp);
-    $sqlComponentSnapshot = $this->sodaScsSqlComponentActions->createSnapshot($sqlComponent, $sqlComponent->getLabel(), $timestamp);
-    $triplestoreComponentSnapshot = $this->sodaScsTriplestoreComponentActions->createSnapshot($triplestoreComponent, $triplestoreComponent->getLabel(), $timestamp);
+    $wisskiComponentSnapshot = $this->sodaScsWisskiComponentActions->createSnapshot($wisskiComponent, $snapshotMachineName, $timestamp);
+    $sqlComponentSnapshot = $this->sodaScsSqlComponentActions->createSnapshot($sqlComponent, $snapshotMachineName, $timestamp);
+    $triplestoreComponentSnapshot = $this->sodaScsTriplestoreComponentActions->createSnapshot($triplestoreComponent, $snapshotMachineName, $timestamp);
+
+    if (!$wisskiComponentSnapshot->success || !$sqlComponentSnapshot->success || !$triplestoreComponentSnapshot->success) {
+      return SodaScsResult::failure(
+        error: 'Failed to create WissKI stack snapshot.',
+        message: 'Failed to create WissKI stack snapshot.',
+      );
+    }
 
     return SodaScsResult::success(
       data: [
