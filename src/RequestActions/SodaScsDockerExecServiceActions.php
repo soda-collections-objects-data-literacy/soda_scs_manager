@@ -390,7 +390,7 @@ class SodaScsDockerExecServiceActions implements SodaScsExecRequestInterface {
       'route' => $route,
       'headers' => [
         'Accept' => 'application/json',
-        'X-API-Key' => $portainerServiceSettings['portainerAuthenticationToken'],
+        'X-API-Key' => $portainerServiceSettings['authenticationToken'],
       ],
     ];
   }
