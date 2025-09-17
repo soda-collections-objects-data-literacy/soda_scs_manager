@@ -258,6 +258,10 @@ class SodaScsPortainerServiceActions implements SodaScsServiceRequestInterface {
         "value" => $requestParams['sqlServicePassword'],
       ],
       [
+        "name" => "DB_PORT",
+        "value" => $databaseServiceSettings['port'],
+      ],
+      [
         "name" => "DB_USER",
         "value" => $requestParams['username'],
       ],

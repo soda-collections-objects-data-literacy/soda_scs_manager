@@ -6,6 +6,7 @@ use Drupal\Core\Config\Config;
 use Drupal\Core\Config\ConfigFactoryInterface;
 use Drupal\Core\Database\Connection;
 use Drupal\Core\DependencyInjection\DependencySerializationTrait;
+use Drupal\Core\Entity\EntityTypeBundleInfoInterface;
 use Drupal\Core\Entity\EntityTypeManagerInterface;
 use Drupal\Core\Language\LanguageManagerInterface;
 use Drupal\Core\Logger\LoggerChannelFactoryInterface;
@@ -36,6 +37,13 @@ class SodaScsWisskiStackActions implements SodaScsStackActionsInterface {
 
   use DependencySerializationTrait;
   use StringTranslationTrait;
+
+  /**
+   * The bundle info.
+   *
+   * @var \Drupal\Core\Entity\EntityTypeBundleInfoInterface
+   */
+  protected EntityTypeBundleInfoInterface $bundleInfo;
 
   /**
    * The database.
@@ -161,6 +169,7 @@ class SodaScsWisskiStackActions implements SodaScsStackActionsInterface {
    * Class constructor.
    */
   public function __construct(
+    EntityTypeBundleInfoInterface $bundleInfo,
     ConfigFactoryInterface $configFactory,
     Connection $database,
     EntityTypeManagerInterface $entityTypeManager,
@@ -176,6 +185,7 @@ class SodaScsWisskiStackActions implements SodaScsStackActionsInterface {
     TranslationInterface $stringTranslation,
   ) {
     // Services from container.
+    $this->bundleInfo = $bundleInfo;
     $settings = $configFactory
       ->getEditable('soda_scs_manager.settings');
     $this->database = $database;
@@ -210,6 +220,18 @@ class SodaScsWisskiStackActions implements SodaScsStackActionsInterface {
    * @todo Refactor error handling.
    */
   public function createStack(SodaScsStackInterface $stack): array {
+
+    // Get the bundle info for the WissKI stack.
+    $bundleinfo = $this->bundleInfo->getBundleInfo('soda_scs_stack')['soda_scs_wisski_stack'];
+
+    if (!$bundleinfo) {
+      throw new \Exception('WissKI stack bundle info not found');
+    }
+
+    // Set the description and imageUrl for the stack.
+    $stack->set('description', $bundleinfo['description']);
+    $stack->set('imageUrl', $bundleinfo['imageUrl']);
+
     try {
       $sqlComponentCreateResult = $this->sodaScsSqlComponentActions->createComponent($stack);
 
@@ -228,7 +250,7 @@ class SodaScsWisskiStackActions implements SodaScsStackActionsInterface {
 
       // Add the SQL component to the stack.
       $stack->setValue($stack, 'includedComponents', $sqlComponent->id());
-      $stack->imageUrl = 'public://soda_scs_manager/images/wisski-stack.svg';
+
     }
     catch (\Exception $e) {
       Error::logException(

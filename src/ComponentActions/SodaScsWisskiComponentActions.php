@@ -272,7 +272,7 @@ class SodaScsWisskiComponentActions implements SodaScsComponentActionsInterface 
         /** @var \Drupal\Core\Field\EntityReferenceFieldItemList $linkedProjectMembersItemList */
         $linkedProjectMembersItemList = $linkedProject->get('members');
         $linkedProjectMembers = $linkedProjectMembersItemList->referencedEntities();
-        $projectColleques[] = $linkedProjectMembers;
+        $projectColleques = array_merge($projectColleques, $linkedProjectMembers);
         $userGroups[] = $linkedProject->get('groupId')->value;
       }
 
