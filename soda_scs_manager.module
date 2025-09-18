@@ -20,6 +20,7 @@ use Drupal\soda_scs_manager\Entity\SodaScsProject;
 use Drupal\soda_scs_manager\Entity\SodaScsComponent;
 use Drupal\Core\Url;
 use Symfony\Component\HttpFoundation\RedirectResponse;
+use Drupal\soda_scs_manager\Entity\SodaScsStack;
 
 /**
  * Implements hook_entity_base_field_info().
@@ -642,7 +643,7 @@ function soda_scs_manager_user_insert(UserInterface $user) {
   // Ensure the role exists and has the required permissions.
   _soda_scs_manager_ensure_scs_user_role();
   _soda_scs_manager_create_default_project_for_user($user);
-  _soda_scs_manager_create_default_filesystem_for_user($user);
+  _soda_scs_manager_create_default_applications_for_user($user);
   _soda_scs_manager_propagate_keycloak_user_data_to_fields($user);
 }
 
@@ -762,6 +763,31 @@ function soda_scs_manager_file_download($uri) {
 }
 
 /**
+ * Create default applications for new user.
+ */
+function _soda_scs_manager_create_default_applications_for_user(UserInterface $user) {
+  // Get the default project for the user.
+  $projects = SodaScsProject::loadByOwner($user);
+
+  if (empty($projects) || count($projects) > 1) {
+    $messenger = \Drupal::messenger();
+    $messenger->addError(t('Failed to create default applications for user: @username. No default project found.', ['@username' => $user->getDisplayName()]));
+    $logger = \Drupal::logger('soda_scs_manager');
+    $logger->error('Failed to create default applications for user: @username. No default project found.', ['@username' => $user->getDisplayName()]);
+    return;
+  }
+
+  // Get the default project. Should only be one.
+  /** @var \Drupal\soda_scs_manager\Entity\SodaScsProject $project */
+  $project = reset($projects);
+
+  _soda_scs_manager_create_default_filesystem_for_user($user, $project);
+  _soda_scs_manager_create_default_nextcloud_for_user($user, $project);
+  _soda_scs_manager_create_default_jupyter_for_user($user, $project);
+  _soda_scs_manager_create_default_webprotege_for_user($user, $project);
+}
+
+/**
  * Create default project for new user.
  *
  * The groupId is now automatically set in the insert hook to avoid double save.
@@ -824,21 +850,7 @@ function _soda_scs_manager_create_default_project_for_user(UserInterface $user) 
 /**
  * Create default filesystem for new user.
  */
-function _soda_scs_manager_create_default_filesystem_for_user(UserInterface $user) {
-  // Get the default project for the user.
-  $projects = SodaScsProject::loadByOwner($user);
-
-  if (empty($projects) || count($projects) > 1) {
-    $messenger = \Drupal::messenger();
-    $messenger->addError(t('Failed to create default filesystem for user: @username. No default project found.', ['@username' => $user->getDisplayName()]));
-    $logger = \Drupal::logger('soda_scs_manager');
-    $logger->error('Failed to create default filesystem for user: @username. No default project found.', ['@username' => $user->getDisplayName()]);
-    return;
-  }
-
-  // Get the default project. Should only be one.
-  /** @var \Drupal\soda_scs_manager\Entity\SodaScsProject $project */
-  $project = reset($projects);
+function _soda_scs_manager_create_default_filesystem_for_user(UserInterface $user, SodaScsProject $project) {
 
   // Create the default filesystem.
   $filesystem = SodaScsComponent::create([
@@ -857,6 +869,99 @@ function _soda_scs_manager_create_default_filesystem_for_user(UserInterface $use
   ]);
 
   \Drupal::service('soda_scs_manager.component.actions')->createComponent($filesystem);
+}
+
+/**
+ * Create default nextcloud for new user.
+ */
+function _soda_scs_manager_create_default_nextcloud_for_user(UserInterface $user, SodaScsProject $project) {
+  // Load the bundle info for the nextcloud stack.
+  $bundleinfo = \Drupal::service('entity_type.bundle.info')->getBundleInfo('soda_scs_stack')['soda_scs_nextcloud_stack'];
+
+  if (!$bundleinfo) {
+    throw new \Exception('Nextcloud stack bundle info not found');
+  }
+
+  $nextcloud = SodaScsStack::create([
+    'bundle' => 'soda_scs_nextcloud_stack',
+    'description' => $bundleinfo['description'],
+    'imageUrl' => $bundleinfo['imageUrl'],
+    'label' => $user->getDisplayName() . '\'s nextcloud',
+    'machineName' => $user->getDisplayName() . '-default',
+    'owner' => $user->id(),
+    'partOfProjects' => [
+      [
+        'target_id' => $project->id(),
+      ],
+    ],
+  ]);
+
+  \Drupal::service('soda_scs_manager.stack.actions')->createStack($nextcloud);
+}
+
+/**
+ * Create default jupyter for new user.
+ */
+function _soda_scs_manager_create_default_jupyter_for_user(UserInterface $user, SodaScsProject $project) {
+  // Load the bundle info for the jupyter stack.
+  $bundleinfo = \Drupal::service('entity_type.bundle.info')->getBundleInfo('soda_scs_stack')['soda_scs_jupyter_stack'];
+
+  if (!$bundleinfo) {
+    throw new \Exception('Jupyter stack bundle info not found');
+  }
+
+  $jupyter = SodaScsStack::create([
+    'bundle' => 'soda_scs_jupyter_stack',
+    'description' => $bundleinfo['description'],
+    'imageUrl' => $bundleinfo['imageUrl'],
+    'label' => $user->getDisplayName() . '\'s jupyter',
+    'machineName' => $user->getDisplayName() . '-default',
+    'owner' => $user->id(),
+    'partOfProjects' => [
+      [
+        'target_id' => $project->id(),
+      ],
+    ],
+  ]);
+
+  \Drupal::service('soda_scs_manager.stack.actions')->createStack($jupyter);
+}
+
+/**
+ * Create default webprotege for new user.
+ */
+function _soda_scs_manager_create_default_webprotege_for_user(UserInterface $user, SodaScsProject $project) {
+  // Load the bundle info for the webprotege stack.
+  $bundleinfo = \Drupal::service('entity_type.bundle.info')->getBundleInfo('soda_scs_component')['soda_scs_webprotege_component'];
+
+  if (!$bundleinfo) {
+    throw new \Exception('Webprotege stack bundle info not found');
+  }
+
+  $webprotege = SodaScsStack::create([
+    'bundle' => 'soda_scs_webprotege_component',
+    'description' => $bundleinfo['description'],
+    'imageUrl' => $bundleinfo['imageUrl'],
+    'label' => $user->getDisplayName() . '\'s webprotege',
+    'machineName' => $user->getDisplayName() . '-default',
+    'owner' => $user->id(),
+    'partOfProjects' => [
+      [
+        'target_id' => $project->id(),
+      ],
+    ],
+  ]);
+
+  \Drupal::service('soda_scs_manager.stack.actions')->createStack($webprotege);
+
+  // Create the default webprotege component.
+  $webprotegeComponent = SodaScsComponent::create([
+    'bundle' => 'soda_scs_webprotege_component',
+    'description' => $bundleinfo['description'],
+    'imageUrl' => $bundleinfo['imageUrl'],
+  ]);
+
+  \Drupal::service('soda_scs_manager.component.actions')->createComponent($webprotegeComponent);
 }
 
 /**

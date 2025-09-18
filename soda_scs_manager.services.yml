@@ -17,6 +17,19 @@ services:
       - '@soda_scs_manager.sql_service.actions'
       - '@string_translation'
 
+  soda_scs_manager.container.helpers:
+    class: Drupal\soda_scs_manager\Helpers\SodaScsContainerHelpers
+    arguments:
+      - '@logger.factory'
+      - '@soda_scs_manager.docker_run_service.actions'
+      - '@soda_scs_manager.docker_exec_service.actions'
+      - '@soda_scs_manager.helpers'
+
+  soda_scs_manager.helpers:
+    class: Drupal\soda_scs_manager\Helpers\SodaScsHelpers
+    arguments:
+      - '@string_translation'
+
   soda_scs_manager.keycloak_service.helpers:
     class: Drupal\soda_scs_manager\Helpers\SodaScsKeycloakHelpers
     arguments:
@@ -82,6 +95,7 @@ services:
       - '@soda_scs_manager.sql_component.actions'
       - '@soda_scs_manager.triplestore_component.actions'
       - '@soda_scs_manager.wisski_component.actions'
+      - '@soda_scs_manager.webprotege_component.actions'
       - '@string_translation'
 
   soda_scs_manager.filesystem_component.actions:
@@ -111,6 +125,7 @@ services:
       - '@logger.factory'
       - '@messenger'
       - '@soda_scs_manager.component.helpers'
+      - '@soda_scs_manager.helpers'
       - '@soda_scs_manager.snapshot.helpers'
       - '@soda_scs_manager.docker_exec_service.actions'
       - '@soda_scs_manager.docker_run_service.actions'
@@ -144,6 +159,7 @@ services:
       - '@messenger'
       - '@file_system'
       - '@soda_scs_manager.component.helpers'
+      - '@soda_scs_manager.container.helpers'
       - '@soda_scs_manager.docker_exec_service.actions'
       - '@soda_scs_manager.docker_run_service.actions'
       - '@soda_scs_manager.keycloak_service.helpers'
@@ -156,6 +172,14 @@ services:
       - '@soda_scs_manager.snapshot.helpers'
       - '@soda_scs_manager.sql_service.actions'
       - '@soda_scs_manager.stack.helpers'
+      - '@string_translation'
+
+  soda_scs_manager.webprotege_component.actions:
+    class: Drupal\soda_scs_manager\ComponentActions\SodaScsWebprotegeActions
+    arguments:
+      - '@entity_type.manager'
+      - '@logger.factory'
+      - '@messenger'
       - '@string_translation'
 
   # Service key actions

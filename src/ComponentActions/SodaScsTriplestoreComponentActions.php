@@ -21,6 +21,7 @@ use Drupal\soda_scs_manager\RequestActions\SodaScsOpenGdbRequestInterface;
 use Drupal\soda_scs_manager\RequestActions\SodaScsRunRequestInterface;
 use Drupal\soda_scs_manager\ServiceKeyActions\SodaScsServiceKeyActionsInterface;
 use Drupal\soda_scs_manager\ValueObject\SodaScsResult;
+use Drupal\soda_scs_manager\ValueObject\SodaScsSnapshotData;
 use Psr\Log\LogLevel;
 
 /**
@@ -527,11 +528,6 @@ class SodaScsTriplestoreComponentActions implements SodaScsComponentActionsInter
 
     $dumpData = $openGdbDumpResponse['data']['openGdbResponse']->getBody()->getContents();
 
-    // Log the response for debugging.
-    $logger = $this->loggerFactory->get('soda_scs_manager');
-    $logger->debug('Triplestore dump response length: @length', ['@length' => strlen($dumpData)]);
-    $logger->debug('Triplestore dump response (first 500 chars): @data', ['@data' => substr($dumpData, 0, 500)]);
-
     // Transform SPARQL JSON to N-Quads and save to filesystem.
     $nquadsResult = $this->sodaScsSnapshotHelpers->transformSparqlJsonToNquads($dumpData, $component, $snapshotPaths['backupPathWithType'], $timestamp);
     if (!$nquadsResult['success']) {
@@ -584,32 +580,34 @@ class SodaScsTriplestoreComponentActions implements SodaScsComponentActionsInter
       );
     }
 
+    $componentData = [
+      'componentBundle' => $component->bundle(),
+      'componentId' => $component->id(),
+      'componentMachineName' => $component->get('machineName')->value,
+      'snapshotContainerId' => $containerId,
+      'snapshotContainerName' => $containerName,
+      'createSnapshotContainerResponse' => $createContainerResponse,
+      'metadata' => [
+        'backupPath' => $snapshotPaths['backupPath'],
+        'relativeUrlBackupPath' => $snapshotPaths['relativeUrlBackupPath'],
+        'contentFilePaths' => [
+          'tarFilePath' => $snapshotPaths['absoluteTarFilePath'],
+          'sha256FilePath' => $snapshotPaths['absoluteSha256FilePath'],
+        ],
+        'contentFileNames' => [
+          'tarFileName' => $snapshotPaths['tarFileName'],
+          'sha256FileName' => $snapshotPaths['sha256FileName'],
+        ],
+        'snapshotMachineName' => $snapshotMachineName,
+        'timestamp' => $timestamp,
+      ],
+      'startSnapshotContainerResponse' => $startContainerResponse,
+    ];
+
     return SodaScsResult::success(
       message: 'Snapshot created successfully.',
       data: [
-        $component->bundle() => [
-          'componentBundle' => $component->bundle(),
-          'componentId' => $component->id(),
-          'componentMachineName' => $component->get('machineName')->value,
-          'containerId' => $containerId,
-          'containerName' => $containerName,
-          'createContainerResponse' => $createContainerResponse,
-          'metadata' => [
-            'backupPath' => $snapshotPaths['backupPath'],
-            'relativeUrlBackupPath' => $snapshotPaths['relativeUrlBackupPath'],
-            'contentFilePaths' => [
-              'tarFilePath' => $snapshotPaths['absoluteTarFilePath'],
-              'sha256FilePath' => $snapshotPaths['absoluteSha256FilePath'],
-            ],
-            'contentFileNames' => [
-              'tarFileName' => $snapshotPaths['tarFileName'],
-              'sha256FileName' => $snapshotPaths['sha256FileName'],
-            ],
-            'snapshotMachineName' => $snapshotMachineName,
-            'timestamp' => $timestamp,
-          ],
-          'startContainerResponse' => $startContainerResponse,
-        ],
+        $component->bundle() => SodaScsSnapshotData::fromArray($componentData),
       ],
     );
   }

@@ -5,19 +5,21 @@ namespace Drupal\soda_scs_manager\Form;
 use Drupal\Core\Entity\EntityTypeManagerInterface;
 use Drupal\Core\Form\ConfirmFormBase;
 use Drupal\Core\Form\FormStateInterface;
+use Drupal\Core\Language\LanguageManagerInterface;
 use Drupal\Core\Logger\LoggerChannelFactoryInterface;
+use Drupal\Core\Session\AccountProxyInterface;
 use Drupal\Core\Url;
-use Drupal\soda_scs_manager\ComponentActions\SodaScsComponentActionsInterface;
-use Drupal\soda_scs_manager\Entity\SodaScsSnapshot;
-use Drupal\soda_scs_manager\RequestActions\SodaScsDockerRunServiceActions;
-use Drupal\soda_scs_manager\Helpers\SodaScsSnapshotHelpers;
-use Drupal\soda_scs_manager\StackActions\SodaScsStackActionsInterface;
-use Symfony\Component\DependencyInjection\ContainerInterface;
 use Drupal\Core\Utility\Error;
 use Drupal\file\Entity\File;
+use Drupal\soda_scs_manager\ComponentActions\SodaScsComponentActionsInterface;
+use Drupal\soda_scs_manager\Entity\SodaScsSnapshot;
+use Drupal\soda_scs_manager\Helpers\SodaScsContainerHelpers;
+use Drupal\soda_scs_manager\Helpers\SodaScsHelpers;
+use Drupal\soda_scs_manager\Helpers\SodaScsSnapshotHelpers;
+use Drupal\soda_scs_manager\RequestActions\SodaScsDockerRunServiceActions;
+use Drupal\soda_scs_manager\StackActions\SodaScsStackActionsInterface;
 use Psr\Log\LogLevel;
-use Drupal\Core\Session\AccountProxyInterface;
-use Drupal\Core\Language\LanguageManagerInterface;
+use Symfony\Component\DependencyInjection\ContainerInterface;
 
 /**
  * Provides a confirmation form for creating snapshots.
@@ -46,11 +48,25 @@ class SodaScsSnapshotConfirmForm extends ConfirmFormBase {
   protected $entityTypeManager;
 
   /**
+   * The Soda SCS Container Helpers.
+   *
+   * @var \Drupal\soda_scs_manager\Helpers\SodaScsContainerHelpers
+   */
+  protected $sodaScsContainerHelpers;
+
+  /**
    * The Soda SCS Docker Run Service Actions.
    *
    * @var \Drupal\soda_scs_manager\RequestActions\SodaScsDockerRunServiceActions
    */
   protected $sodaScsDockerRunServiceActions;
+
+  /**
+   * The Soda SCS Helpers.
+   *
+   * @var \Drupal\soda_scs_manager\Helpers\SodaScsHelpers
+   */
+  protected $sodaScsHelpers;
 
   /**
    * The Soda SCS Snapshot Helpers.
@@ -113,8 +129,12 @@ class SodaScsSnapshotConfirmForm extends ConfirmFormBase {
    *
    * @param \Drupal\Core\Entity\EntityTypeManagerInterface $entity_type_manager
    *   The entity type manager.
+   * @param \Drupal\soda_scs_manager\Helpers\SodaScsContainerHelpers $sodaScsContainerHelpers
+   *   The Soda SCS Container Helpers.
    * @param \Drupal\soda_scs_manager\RequestActions\SodaScsDockerRunServiceActions $sodaScsDockerRunServiceActions
    *   The Soda SCS Docker Run Service Actions.
+   * @param \Drupal\soda_scs_manager\Helpers\SodaScsHelpers $sodaScsHelpers
+   *   The Soda SCS Helpers.
    * @param \Drupal\soda_scs_manager\Helpers\SodaScsSnapshotHelpers $sodaScsSnapshotHelpers
    *   The Soda SCS Snapshot Helpers.
    * @param \Drupal\soda_scs_manager\ComponentActions\SodaScsComponentActionsInterface $sodaScsSqlComponentActions
@@ -134,7 +154,9 @@ class SodaScsSnapshotConfirmForm extends ConfirmFormBase {
    */
   public function __construct(
     EntityTypeManagerInterface $entity_type_manager,
+    SodaScsContainerHelpers $sodaScsContainerHelpers,
     SodaScsDockerRunServiceActions $sodaScsDockerRunServiceActions,
+    SodaScsHelpers $sodaScsHelpers,
     SodaScsSnapshotHelpers $sodaScsSnapshotHelpers,
     SodaScsComponentActionsInterface $sodaScsSqlComponentActions,
     SodaScsComponentActionsInterface $sodaScsTripleStoreComponentActions,
@@ -145,7 +167,9 @@ class SodaScsSnapshotConfirmForm extends ConfirmFormBase {
     LanguageManagerInterface $language_manager,
   ) {
     $this->entityTypeManager = $entity_type_manager;
+    $this->sodaScsContainerHelpers = $sodaScsContainerHelpers;
     $this->sodaScsDockerRunServiceActions = $sodaScsDockerRunServiceActions;
+    $this->sodaScsHelpers = $sodaScsHelpers;
     $this->sodaScsSnapshotHelpers = $sodaScsSnapshotHelpers;
     $this->sodaScsSqlComponentActions = $sodaScsSqlComponentActions;
     $this->sodaScsTripleStoreComponentActions = $sodaScsTripleStoreComponentActions;
@@ -162,7 +186,9 @@ class SodaScsSnapshotConfirmForm extends ConfirmFormBase {
   public static function create(ContainerInterface $container) {
     return new self(
       $container->get('entity_type.manager'),
+      $container->get('soda_scs_manager.container.helpers'),
       $container->get('soda_scs_manager.docker_run_service.actions'),
+      $container->get('soda_scs_manager.helpers'),
       $container->get('soda_scs_manager.snapshot.helpers'),
       $container->get('soda_scs_manager.sql_component.actions'),
       $container->get('soda_scs_manager.triplestore_component.actions'),
@@ -270,116 +296,11 @@ class SodaScsSnapshotConfirmForm extends ConfirmFormBase {
       return;
     }
 
-    // Check if the snapshotcontainers are still running.
-    // @todo Abstract this to public function.
-    $containerIsRunning = TRUE;
-    $attempts = 0;
-    $maxAttempts = $this->sodaScsSnapshotHelpers->adjustMaxAttempts();
-    if ($maxAttempts === FALSE) {
-      Error::logException(
-      $this->loggerFactory->get('soda_scs_manager'),
-      new \Exception(''),
-      $this->t('The PHP request timeout is less than the required sleep interval of 5 seconds. Please increase your max_execution_time setting.'),
-      [],
-      LogLevel::ERROR
-      );
-      $this->messenger()->addError($this->t('Could not create snapshot. See logs for more details.'));
-      return;
-    }
-    while ($containerIsRunning && $attempts < $maxAttempts) {
-      foreach ($createSnapshotResult->data as $componentBundle => $componentData) {
-        $containerId = $componentData['containerId'];
-        // Inspect the container to check if it is running.
-        $containerInspectRequestParams = [
-          'routeParams' => [
-            'containerId' => $containerId,
-          ],
-        ];
-        $containerInspectRequest = $this->sodaScsDockerRunServiceActions->buildInspectRequest($containerInspectRequestParams);
-        $containerInspectResponse = $this->sodaScsDockerRunServiceActions->makeRequest($containerInspectRequest);
+    // Wait for the containers to finish. Delete them afterwards.
+    // @todo Deletion better via autoremove?
+    $containersFinishedResult = $this->sodaScsContainerHelpers->waitContainersToFinish($createSnapshotResult->data, FALSE, 'snapshot creation');
 
-        if ($containerInspectResponse['success'] === FALSE) {
-          Error::logException(
-            $this->loggerFactory->get('soda_scs_manager'),
-            new \Exception('Container inspection failed'),
-            'Failed to create snapshot. Could not inspect container: ' . $containerInspectResponse['error'],
-            [],
-            LogLevel::ERROR
-          );
-          $this->messenger()->addError($this->t('Failed to create snapshot. See logs for more details.'));
-          return;
-        }
-
-        // @todo Handle error code 404, because the container
-        // is not running/ already removed OR handle deletion
-        // over status of container.
-        $responseCode = $containerInspectResponse['data']['portainerResponse']->getStatusCode();
-        if ($responseCode !== 200) {
-          Error::logException(
-            $this->loggerFactory->get('soda_scs_manager'),
-            new \Exception('HTTP error'),
-            'Failed to create snapshot. Response code is not 200, but: ' . $responseCode,
-            [],
-            LogLevel::ERROR
-          );
-          $this->messenger()->addError($this->t('Failed to create snapshot. See logs for more details.'));
-          return;
-        }
-        // Get the container status.
-        $containerStatus = json_decode($containerInspectResponse['data']['portainerResponse']->getBody()->getContents(), TRUE);
-        $containerIsRunning = $containerStatus['State']['Running'];
-        if ($containerIsRunning) {
-          // If the container is running, wait for 5 seconds and try again.
-          sleep(5);
-          $attempts++;
-        }
-        else {
-          // Delete the temporarily created backup container
-          // if it is not running, but have no error.
-          if ($containerStatus['State']['ExitCode'] !== 0) {
-            Error::logException(
-              $this->loggerFactory->get('soda_scs_manager'),
-              new \Exception('Temporarily created backup container exited unexpectedly.'),
-              'Failed to create snapshot. Temporarily created backup container exited with exit code: ' . $containerStatus['State']['ExitCode'],
-              [],
-              LogLevel::ERROR
-            );
-            $this->messenger()->addError($this->t('Failed to create snapshot. See logs for more details.'));
-            return;
-          }
-          $deleteContainerRequestParams = [
-            'routeParams' => [
-              'containerId' => $containerId,
-            ],
-          ];
-
-          $deleteContainerRequest = $this->sodaScsDockerRunServiceActions->buildRemoveRequest($deleteContainerRequestParams);
-          $deleteContainerResponse = $this->sodaScsDockerRunServiceActions->makeRequest($deleteContainerRequest);
-          if (!$deleteContainerResponse['success']) {
-            Error::logException(
-              $this->loggerFactory->get('soda_scs_manager'),
-              new \Exception('Temporarily created backup container deletion failed'),
-              'Failed to create snapshot. Could not delete temporarily created backup container: ' . $deleteContainerResponse['error'],
-              [],
-              LogLevel::ERROR
-            );
-          }
-          $containerData[$componentBundle] = [
-            'containerId' => $containerId,
-            'containerStatus' => $containerStatus,
-          ];
-        }
-      }
-    }
-
-    if ($attempts === $maxAttempts) {
-      Error::logException(
-        $this->loggerFactory->get('soda_scs_manager'),
-        new \Exception('Container timeout'),
-        'Failed to create snapshot. Maximum number of attempts to check if the container is running reached. Container is still running.',
-        [],
-        LogLevel::ERROR
-      );
+    if (!$containersFinishedResult->success) {
       $this->messenger()->addError($this->t('Failed to create snapshot. See logs for more details.'));
       return;
     }

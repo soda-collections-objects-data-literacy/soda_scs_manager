@@ -21,9 +21,11 @@ use Drupal\soda_scs_manager\Entity\SodaScsStackInterface;
 use Drupal\soda_scs_manager\Entity\SodaScsSnapshotInterface;
 use Drupal\soda_scs_manager\Helpers\SodaScsComponentHelpers;
 use Drupal\soda_scs_manager\Helpers\SodaScsProjectHelpers;
+use Drupal\soda_scs_manager\ValueObject\SodaScsSnapshotData;
 use Drupal\soda_scs_manager\Helpers\SodaScsKeycloakHelpers;
 use Drupal\soda_scs_manager\Helpers\SodaScsSnapshotHelpers;
 use Drupal\soda_scs_manager\Helpers\SodaScsStackHelpers;
+use Drupal\soda_scs_manager\Helpers\SodaScsContainerHelpers;
 use Drupal\soda_scs_manager\RequestActions\SodaScsExecRequestInterface;
 use Drupal\soda_scs_manager\RequestActions\SodaScsRunRequestInterface;
 use Drupal\soda_scs_manager\RequestActions\SodaScsServiceRequestInterface;
@@ -119,6 +121,13 @@ class SodaScsWisskiComponentActions implements SodaScsComponentActionsInterface 
   protected SodaScsComponentHelpers $sodaScsComponentHelpers;
 
   /**
+   * The SCS container helpers service.
+   *
+   * @var \Drupal\soda_scs_manager\Helpers\SodaScsContainerHelpers
+   */
+  protected SodaScsContainerHelpers $sodaScsContainerHelpers;
+
+  /**
    * The SCS snapshot helpers service.
    *
    * @var \Drupal\soda_scs_manager\Helpers\SodaScsSnapshotHelpers
@@ -202,6 +211,7 @@ class SodaScsWisskiComponentActions implements SodaScsComponentActionsInterface 
     MessengerInterface $messenger,
     FileSystemInterface $fileSystem,
     SodaScsComponentHelpers $sodaScsComponentHelpers,
+    SodaScsContainerHelpers $sodaScsContainerHelpers,
     SodaScsExecRequestInterface $sodaScsDockerExecServiceActions,
     SodaScsRunRequestInterface $sodaScsDockerRunServiceActions,
     SodaScsKeycloakHelpers $sodaScsKeycloakHelpers,
@@ -226,6 +236,7 @@ class SodaScsWisskiComponentActions implements SodaScsComponentActionsInterface 
     $this->messenger = $messenger;
     $this->sodaScsComponentHelpers = $sodaScsComponentHelpers;
     $this->fileSystem = $fileSystem;
+    $this->sodaScsContainerHelpers = $sodaScsContainerHelpers;
     $this->sodaScsDockerExecServiceActions = $sodaScsDockerExecServiceActions;
     $this->sodaScsDockerRunServiceActions = $sodaScsDockerRunServiceActions;
     $this->sodaScsKeycloakHelpers = $sodaScsKeycloakHelpers;
@@ -273,6 +284,7 @@ class SodaScsWisskiComponentActions implements SodaScsComponentActionsInterface 
       // Get the owner of the component.
       $owner = $entity->getOwner();
       $projectColleques[] = $owner;
+      $userGroups = [];
 
       // Get the members of the linked projects.
       /** @var \Drupal\Core\Field\EntityReferenceFieldItemList $linkedProjectsItemList */
@@ -518,7 +530,7 @@ class SodaScsWisskiComponentActions implements SodaScsComponentActionsInterface 
         'keycloakUserGroup' => $keycloakWisskiInstanceUserGroupName,
         'machineName' => $machineName,
         'openidConnectClientSecret' => $openidConnectClientSecret,
-        'userGroups' => implode(' ', $userGroups),
+        'userGroups' => $userGroups ? implode(' ', $userGroups) : '',
         'sqlServicePassword' => $sqlComponentServiceKeyPassword,
         'triplestoreServicePassword' => $triplestoreComponentServiceKeyPassword,
         'triplestoreServiceToken' => $triplestoreComponentServiceTokenString,
@@ -581,8 +593,38 @@ class SodaScsWisskiComponentActions implements SodaScsComponentActionsInterface 
       ];
     }
     $portainerResponsePayload = json_decode($portainerCreateRequestResult['data']['portainerResponse']->getBody()->getContents(), TRUE);
-    // Set the external ID.
+
+    // Get the container name and id of the WissKI component container.
+    // Construct the request parameters.
+    $containerName = $machineName . '--drupal';
+    $dockerGetAllContainersRequestParams = [
+      'queryParams' => [
+        'all' => TRUE,
+        'filters' => json_encode(['name' => [$containerName]]),
+      ],
+    ];
+
+    // Build and make the get all containers request.
+    $dockerGetAllContainersRequest = $this->sodaScsDockerRunServiceActions->buildGetAllRequest($dockerGetAllContainersRequestParams);
+    $dockerGetAllContainersResponse = $this->sodaScsDockerRunServiceActions->makeRequest($dockerGetAllContainersRequest);
+    if (!$dockerGetAllContainersResponse['success']) {
+      return [
+        'message' => 'Docker request failed.',
+        'data' => [
+          'wisskiComponent' => NULL,
+          'dockerGetAllContainersResponse' => $dockerGetAllContainersResponse,
+        ],
+      ];
+    }
+
+    // Get the response payload.
+    $dockerGetAllContainersResponsePayload = json_decode($dockerGetAllContainersResponse['data']['portainerResponse']->getBody()->getContents(), TRUE);
+    $containerId = $dockerGetAllContainersResponsePayload[0]['Id'];
+
+    // Set the external ID and container name and id.
     $wisskiComponent->set('externalId', $portainerResponsePayload['Id']);
+    $wisskiComponent->set('containerId', $containerId);
+    $wisskiComponent->set('containerName', $containerName);
 
     // Save the component.
     $wisskiComponent->save();
@@ -618,6 +660,25 @@ class SodaScsWisskiComponentActions implements SodaScsComponentActionsInterface 
   public function createSnapshot(SodaScsComponentInterface $component, string $snapshotMachineName, int $timestamp): SodaScsResult {
     try {
 
+      // Stop the container.
+      // Construct the request parameters.
+      $stopWisskiContainerRequestParams = [
+        'routeParams' => [
+          'containerId' => $component->get('containerId')->value,
+        ],
+      ];
+
+      // Build and make the stop container request.
+      $stopWisskiContainerRequest = $this->sodaScsDockerRunServiceActions->buildStopRequest($stopWisskiContainerRequestParams);
+      $stopWisskiContainerResponse = $this->sodaScsDockerRunServiceActions->makeRequest($stopWisskiContainerRequest);
+      if (!$stopWisskiContainerResponse['success']) {
+        return SodaScsResult::failure(
+          error: $stopWisskiContainerResponse['error'],
+          message: 'Snapshot creation failed: Could not stop container.',
+        );
+      }
+
+      // @todo Check if the container is stopped.
       // @todo Abstract this.
       $snapshotPaths = $this->sodaScsSnapshotHelpers->constructSnapshotPaths($component, $snapshotMachineName, $timestamp);
 
@@ -630,11 +691,12 @@ class SodaScsWisskiComponentActions implements SodaScsComponentActionsInterface 
         );
       }
 
+      // We need a random int to avoid conflicts with other snapshots.
       $randomInt = $this->sodaScsSnapshotHelpers->generateRandomSuffix();
-      $containerName = 'snapshot--' . $randomInt . '--' . $snapshotMachineName . '--drupal';
+      $snapshotContainerName = 'snapshot--' . $randomInt . '--' . $snapshotMachineName . '--drupal';
       // Create and run the snapshot container to create tar and sha256 file.
-      $requestParams = [
-        'name' => $containerName,
+      $createSnapshotContainerRequestParams = [
+        'name' => $snapshotContainerName,
         'volumes' => NULL,
         'image' => 'alpine:latest',
         'user' => '33:33',
@@ -653,59 +715,96 @@ class SodaScsWisskiComponentActions implements SodaScsComponentActionsInterface 
       ];
 
       // Make the create container request.
-      $createContainerRequest = $this->sodaScsDockerRunServiceActions->buildCreateRequest($requestParams);
-      $createContainerResponse = $this->sodaScsDockerRunServiceActions->makeRequest($createContainerRequest);
+      $createSnapshotContainerRequest = $this->sodaScsDockerRunServiceActions->buildCreateRequest($createSnapshotContainerRequestParams);
+      $createSnapshotContainerResponse = $this->sodaScsDockerRunServiceActions->makeRequest($createSnapshotContainerRequest);
 
-      if (!$createContainerResponse['success']) {
+      if (!$createSnapshotContainerResponse['success']) {
         return SodaScsResult::failure(
-          error: $createContainerResponse['error'],
+          error: $createSnapshotContainerResponse['error'],
           message: 'Snapshot creation failed: Could not create snapshot container.',
         );
       }
 
       // Get container ID from response.
-      $containerId = json_decode($createContainerResponse['data']['portainerResponse']->getBody()->getContents(), TRUE)['Id'];
+      $snapshotContainerId = json_decode($createSnapshotContainerResponse['data']['portainerResponse']->getBody()->getContents(), TRUE)['Id'];
 
       // Make the start container request.
-      $startContainerRequest = $this->sodaScsDockerRunServiceActions->buildStartRequest([
+      $startSnapshotContainerRequest = $this->sodaScsDockerRunServiceActions->buildStartRequest([
         'routeParams' => [
-          'containerId' => $containerId,
+          'containerId' => $snapshotContainerId,
         ],
       ]);
-      $startContainerResponse = $this->sodaScsDockerRunServiceActions->makeRequest($startContainerRequest);
+      $startSnapshotContainerResponse = $this->sodaScsDockerRunServiceActions->makeRequest($startSnapshotContainerRequest);
 
-      if (!$startContainerResponse['success']) {
+      if (!$startSnapshotContainerResponse['success']) {
         return SodaScsResult::failure(
-          error: $startContainerResponse['error'],
+          error: $startSnapshotContainerResponse['error'],
           message: 'Snapshot creation failed: Could not start snapshot container.',
         );
       }
 
+      $componentData = [
+        'componentBundle' => $component->bundle(),
+        'componentId' => $component->id(),
+        'componentMachineName' => $component->get('machineName')->value,
+        'snapshotContainerId' => $snapshotContainerId,
+        'snapshotContainerName' => $snapshotContainerName,
+        'createSnapshotContainerResponse' => $createSnapshotContainerResponse,
+        'metadata' => [
+          'backupPath' => $snapshotPaths['backupPath'],
+          'relativeUrlBackupPath' => $snapshotPaths['relativeUrlBackupPath'],
+          'contentFilePaths' => [
+            'tarFilePath' => $snapshotPaths['absoluteTarFilePath'],
+            'sha256FilePath' => $snapshotPaths['absoluteSha256FilePath'],
+          ],
+          'contentFileNames' => [
+            'tarFileName' => $snapshotPaths['tarFileName'],
+            'sha256FileName' => $snapshotPaths['sha256FileName'],
+          ],
+          'snapshotMachineName' => $snapshotMachineName,
+          'timestamp' => $timestamp,
+        ],
+        'startSnapshotContainerResponse' => $startSnapshotContainerResponse,
+      ];
+
+      $snapshotContainerData = SodaScsSnapshotData::fromArray($componentData);
+
+      $containers = [
+        $component->bundle() => $snapshotContainerData,
+      ];
+
+      // Wait for the container to be finished.
+      $waitForSnapshotContainerToFinishResponse = $this->sodaScsContainerHelpers->waitContainersToFinish(
+        $containers,
+        FALSE,
+        'snapshot creation');
+      if (!$waitForSnapshotContainerToFinishResponse->success) {
+        return SodaScsResult::failure(
+          error: $waitForSnapshotContainerToFinishResponse->error,
+          message: 'Snapshot creation failed: Could not wait for container to finish.',
+        );
+      }
+
+      // Start the component container again.
+      $startWisskiContainerRequest = $this->sodaScsDockerRunServiceActions->buildStartRequest([
+        'routeParams' => [
+          'containerId' => $component->get('containerId')->value,
+        ],
+      ]);
+      $startWisskiContainerResponse = $this->sodaScsDockerRunServiceActions->makeRequest($startWisskiContainerRequest);
+
+      if (!$startWisskiContainerResponse['success']) {
+        return SodaScsResult::failure(
+          error: $startWisskiContainerResponse['error'],
+          message: 'Snapshot creation failed: Could not start container.',
+        );
+      }
+
+      $snapshotContainerData->startWisskiContainerResponse = $startWisskiContainerResponse;
+
       return SodaScsResult::success(
         data: [
-          $component->bundle() => [
-            'componentBundle' => $component->bundle(),
-            'componentId' => $component->id(),
-            'componentMachineName' => $component->get('machineName')->value,
-            'containerId' => $containerId,
-            'containerName' => $containerName,
-            'createContainerResponse' => $createContainerResponse,
-            'metadata' => [
-              'backupPath' => $snapshotPaths['backupPath'],
-              'relativeUrlBackupPath' => $snapshotPaths['relativeUrlBackupPath'],
-              'contentFilePaths' => [
-                'tarFilePath' => $snapshotPaths['absoluteTarFilePath'],
-                'sha256FilePath' => $snapshotPaths['absoluteSha256FilePath'],
-              ],
-              'contentFileNames' => [
-                'tarFileName' => $snapshotPaths['tarFileName'],
-                'sha256FileName' => $snapshotPaths['sha256FileName'],
-              ],
-              'snapshotMachineName' => $snapshotMachineName,
-              'timestamp' => $timestamp,
-            ],
-            'startContainerResponse' => $startContainerResponse,
-          ],
+          $component->bundle() => $snapshotContainerData,
         ],
         message: 'Created and started snapshot container successfully.',
       );
@@ -1045,10 +1144,12 @@ class SodaScsWisskiComponentActions implements SodaScsComponentActionsInterface 
       $machineName = $component->get('machineName')->value;
       $containerName = $machineName . '--drupal';
 
-      // 1) Get the container id.
+      // Get the container id of the WissKI component container,
+      // because routes do not work with container names.
       $getAllContainersRequestParams = [
         'queryParams' => [
-          'name' => $containerName,
+          'all' => TRUE,
+          'filters' => json_encode(['name' => [$containerName]]),
         ],
       ];
       $getAllContainersRequest = $this->sodaScsDockerRunServiceActions->buildGetAllRequest($getAllContainersRequestParams);
@@ -1062,179 +1163,159 @@ class SodaScsWisskiComponentActions implements SodaScsComponentActionsInterface 
       $getAllContainersResponseContents = json_decode($getAllContainersResponse['data']['portainerResponse']->getBody()->getContents(), TRUE);
       $containerId = $getAllContainersResponseContents[0]['Id'];
 
-      // 3) Inspect the container to find the Drupal volume physical path.
-      $inspectRequestParams = [
+      // Stop the container gracefully. Wait for 30 seconds.
+      $stopContainerRequestParams = [
         'routeParams' => [
           'containerId' => $containerId,
         ],
+        'queryParams' => [
+          't' => 30,
+        ],
       ];
-      $inspectRequest = $this->sodaScsDockerRunServiceActions->buildInspectRequest(
-        $inspectRequestParams,
-      );
-      $inspectResponse = $this->sodaScsDockerRunServiceActions->makeRequest($inspectRequest);
-      if (!$inspectResponse['success']) {
+      $stopContainerRequest = $this->sodaScsDockerRunServiceActions->buildStopRequest($stopContainerRequestParams);
+      $stopContainerResponse = $this->sodaScsDockerRunServiceActions->makeRequest($stopContainerRequest);
+      if (!$stopContainerResponse['success']) {
         return SodaScsResult::failure(
-          message: 'Failed to inspect container.',
-          error: (string) $inspectResponse['error'],
+          message: 'Failed to stop container.',
+          error: (string) $stopContainerResponse['error'],
         );
       }
-
-      $inspectPayload = json_decode($inspectResponse['data']['portainerResponse']->getBody()->getContents(), TRUE);
-      if (!is_array($inspectPayload) || !isset($inspectPayload['Mounts']) || !is_array($inspectPayload['Mounts'])) {
-        return SodaScsResult::failure(
-          message: 'Invalid inspect payload.',
-          error: 'Inspect response missing Mounts.',
-        );
-      }
-
-      // 2) Stop the container (best-effort).
-      try {
-        $stopRequestParams = [
-          'routeParams' => [
-            'containerId' => $containerId,
-          ],
-          'queryParams' => [
-            'timeout' => 30,
-          ],
-        ];
-        $stopRequest = $this->sodaScsDockerRunServiceActions->buildStopRequest($stopRequestParams);
-        $stopResponse = $this->sodaScsDockerRunServiceActions->makeRequest($stopRequest);
-        if (!$stopResponse['success']) {
-          return SodaScsResult::failure(
-            message: 'Failed to stop container.',
-            error: (string) $stopResponse['error'],
-          );
-        }
-      }
-      catch (\Throwable $e) {
-        // Continue even if stop fails (container might already be stopped).
-      }
-
-      $expectedVolumeName = $machineName . '_drupal-root';
-      $drupalMount = NULL;
-      foreach ($inspectPayload['Mounts'] as $mount) {
-        $name = $mount['Name'] ?? '';
-        $type = $mount['Type'] ?? '';
-        if ($type === 'volume' && ($name === $expectedVolumeName || (is_string($name) && function_exists('str_contains') ? str_contains($name, 'drupal-root') : strpos((string) $name, 'drupal-root') !== FALSE))) {
-          $drupalMount = $mount;
-          break;
-        }
-      }
-      if (!$drupalMount || empty($drupalMount['Source'])) {
-        return SodaScsResult::failure(
-          message: 'Drupal volume not found on container.',
-          error: 'Could not resolve physical volume path.',
-        );
-      }
-
-      $dataDir = rtrim($drupalMount['Source'], '/');
-      $volumeRoot = dirname($dataDir);
-      $rollbackDir = $volumeRoot . '/_data_rollback';
-      $newDir = $volumeRoot . '/_data_new';
-
-      // 4) Resolve the snapshot tar path.
+      // Back up current volume to rollback tar,
+      // then restore from snapshot into volume.
+      $volumeName = $machineName . '_drupal-root';
+      /** @var \Drupal\file\Entity\File|null $snapshotFile */
       $snapshotFile = $snapshot->getFile();
       if (!$snapshotFile) {
         return SodaScsResult::failure(
-          message: 'Snapshot file not found.',
-          error: 'Missing snapshot file on entity.',
+          message: 'Snapshot file not found on entity.',
+          error: 'Missing snapshot file.',
         );
       }
-      $fileUri = $snapshotFile->getFileUri();
-      $filePath = $this->fileSystem->realpath($fileUri);
-      if (!$filePath || !file_exists($filePath)) {
+      $snapshotUri = $snapshotFile->getFileUri();
+      $snapshotPath = $this->fileSystem->realpath($snapshotUri);
+      if (!$snapshotPath || !file_exists($snapshotPath)) {
         return SodaScsResult::failure(
-          message: 'Snapshot file does not exist on the filesystem.',
-          error: 'Snapshot file missing on disk.',
+          message: 'Snapshot file does not exist on filesystem.',
+          error: 'Snapshot file missing at path.',
         );
       }
+      $snapshotDir = dirname($snapshotPath);
+      $rollbackTarName = 'rollback--' . $volumeName . '--' . date('Ymd-His') . '.tar.gz';
+      $rollbackTarPath = $snapshotDir . '/' . $rollbackTarName;
 
-      // 5) Optional: checksum validate the snapshot file.
-      $checksumValidation = $this->sodaScsSnapshotHelpers->validateSnapshotChecksum($snapshot, $filePath);
-      if (!$checksumValidation['success']) {
+      // Create a short-lived container to back up the current volume.
+      $backupContainerCreateRequest = $this->sodaScsDockerRunServiceActions->buildCreateRequest([
+        'name' => 'rollback--' . $machineName . '--drupal',
+        'image' => 'alpine:latest',
+        'user' => '0:0',
+        'cmd' => ['sh', '-c', 'tar czf /backup/' . basename($rollbackTarPath) . ' -C /source .'],
+        'hostConfig' => [
+          'Binds' => [
+            $volumeName . ':/source:ro',
+            $snapshotDir . ':/backup',
+          ],
+          'AutoRemove' => TRUE,
+        ],
+      ]);
+      $backupContainerCreateResponse = $this->sodaScsDockerRunServiceActions->makeRequest($backupContainerCreateRequest);
+      if (!$backupContainerCreateResponse['success']) {
         return SodaScsResult::failure(
-          message: 'Checksum validation failed.',
-          error: (string) ($checksumValidation['error'] ?? 'Checksum failed'),
+          message: 'Failed to create rollback backup container.',
+          error: (string) $backupContainerCreateResponse['error'],
         );
       }
-
-      // 6) Prepare rollback and new directories.
-      if (is_dir($rollbackDir)) {
-        $this->removeDirectoryRecursively($rollbackDir);
-      }
-      if (is_dir($newDir)) {
-        $this->removeDirectoryRecursively($newDir);
-      }
-
-      // 7) Make a rollback copy of current _data.
-      $this->copyDirectoryRecursively($dataDir, $rollbackDir);
-
-      // 8) Unpack the snapshot tar into _data_new (host file ops).
-      if (!mkdir($newDir, 0755, TRUE) && !is_dir($newDir)) {
+      $backupContainerId = json_decode($backupContainerCreateResponse['data']['portainerResponse']->getBody()->getContents(), TRUE)['Id'];
+      $backupContainerStartRequest = $this->sodaScsDockerRunServiceActions->buildStartRequest([
+        'routeParams' => ['containerId' => $backupContainerId],
+      ]);
+      $backupContainerStartResponse = $this->sodaScsDockerRunServiceActions->makeRequest($backupContainerStartRequest);
+      if (!$backupContainerStartResponse['success']) {
         return SodaScsResult::failure(
-          message: 'Failed to prepare new data directory.',
-          error: 'Cannot create _data_new directory.',
-        );
-      }
-      $command = sprintf('tar -xzf %s -C %s', escapeshellarg($filePath), escapeshellarg($newDir));
-      $output = [];
-      $returnCode = 0;
-      exec($command, $output, $returnCode);
-      if ($returnCode !== 0) {
-        $this->removeDirectoryRecursively($newDir);
-        return SodaScsResult::failure(
-          message: 'Failed to extract snapshot contents.',
-          error: implode("\n", $output),
+          message: 'Failed to start rollback backup container.',
+          error: (string) $backupContainerStartResponse['error'],
         );
       }
 
-      if ($this->directoryIsEmpty($newDir)) {
-        $this->removeDirectoryRecursively($newDir);
-        return SodaScsResult::failure(
-          message: 'Extracted snapshot is empty.',
-          error: 'No files extracted into _data_new.',
-        );
-      }
+      // Restore into fresh state: purge volume and extract snapshot tar.
+      // Create restore container.
+      $restoreCmd = [
+        'sh',
+        '-c',
+        'rm -rf /volume/* /volume/.[!.]* /volume/..?* && ' .
+        'tar -xzf /restore/' . basename($snapshotPath) . ' -C /volume && ' .
+        'chown -R 33:33 /volume',
+      ];
+      $restoreContainerCreateRequest = $this->sodaScsDockerRunServiceActions->buildCreateRequest([
+        'name' => 'restore--' . $machineName . '--drupal',
+        'image' => 'alpine:latest',
+        'user' => '0:0',
+        'cmd' => $restoreCmd,
+        'hostConfig' => [
+          'Binds' => [
+            $volumeName . ':/volume',
+            $snapshotDir . ':/restore:ro',
+          ],
+          // @todo CHANGE THIS TO TRUE WHEN DONE TESTING.
+          'AutoRemove' => FALSE,
+        ],
+      ]);
+      $restoreContainerCreateResponse = $this->sodaScsDockerRunServiceActions->makeRequest($restoreContainerCreateRequest);
+      if (!$restoreContainerCreateResponse['success']) {
+        // Delete the backup container if the
+        // restore container creation failed.
+        $backupContainerDeleteRequestParams = [
+          'routeParams' => ['containerId' => $backupContainerId],
+        ];
+        $backupContainerDeleteRequest = $this->sodaScsDockerRunServiceActions->buildRemoveRequest($backupContainerDeleteRequestParams);
 
-      // 9) Replace _data with _data_new.
-      $this->removeDirectoryRecursively($dataDir);
-      if (!rename($newDir, $dataDir)) {
-        if (!is_dir($dataDir)) {
-          $this->copyDirectoryRecursively($rollbackDir, $dataDir);
+        $backupContainerDeleteResponse = $this->sodaScsDockerRunServiceActions->makeRequest($backupContainerDeleteRequest);
+        if (!$backupContainerDeleteResponse['success']) {
+          return SodaScsResult::failure(
+            message: 'Failed to delete backup container.',
+            error: (string) $backupContainerDeleteResponse['error'],
+          );
         }
         return SodaScsResult::failure(
-          message: 'Failed to activate restored data.',
-          error: 'Cannot rename _data_new to _data.',
+          message: 'Failed to create restore container.',
+          error: (string) $restoreContainerCreateResponse['error'],
+        );
+      }
+      $restoreContainerId = json_decode($restoreContainerCreateResponse['data']['portainerResponse']->getBody()->getContents(), TRUE)['Id'];
+
+      // Start the restore container.
+      $restoreContainerStartRequest = $this->sodaScsDockerRunServiceActions->buildStartRequest([
+        'routeParams' => ['containerId' => $restoreContainerId],
+      ]);
+      $restoreContainerStartResponse = $this->sodaScsDockerRunServiceActions->makeRequest($restoreContainerStartRequest);
+      if (!$restoreContainerStartResponse['success']) {
+        return SodaScsResult::failure(
+          message: 'Failed to start restore container.',
+          error: (string) $restoreContainerStartResponse['error'],
         );
       }
 
-      // 10) Remove rollback after successful switch.
-      $this->removeDirectoryRecursively($rollbackDir);
-
-      // 11) Start the container back up.
-      try {
-        $startRequest = $this->sodaScsDockerRunServiceActions->buildStartRequest([
-          'routeParams' => [
-            'containerId' => $containerId,
-          ],
-        ]);
-        $this->sodaScsDockerRunServiceActions->makeRequest($startRequest);
-      }
-      catch (\Throwable $e) {
+      // Start the original container again.
+      $startContainerRequest = $this->sodaScsDockerRunServiceActions->buildStartRequest([
+        'routeParams' => ['containerId' => $containerId],
+      ]);
+      $startContainerResponse = $this->sodaScsDockerRunServiceActions->makeRequest($startContainerRequest);
+      if (!$startContainerResponse['success']) {
         return SodaScsResult::failure(
-          message: 'Data restored but failed to start container.',
-          error: $e->getMessage(),
+          message: 'Restore completed, but failed to start the container.',
+          error: (string) $startContainerResponse['error'],
         );
       }
 
       return SodaScsResult::success(
-        message: 'Component restored from snapshot successfully.',
+        message: 'WissKI component restored from snapshot successfully.',
         data: [
-          'containerName' => $containerName,
           'containerId' => $containerId,
-          'volumeDataDir' => $dataDir,
+          'volumeName' => $volumeName,
+          'rollbackTarPath' => $rollbackTarPath,
+          'snapshotPath' => $snapshotPath,
         ],
       );
+
     }
     catch (\Throwable $e) {
       Error::logException(

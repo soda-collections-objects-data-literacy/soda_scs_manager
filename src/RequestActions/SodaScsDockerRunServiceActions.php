@@ -509,6 +509,8 @@ class SodaScsDockerRunServiceActions implements SodaScsRunRequestInterface {
     $dockerApiSettings = $this->sodaScsServiceHelpers->initDockerApiSettings();
     $dockerRunServiceSettings = $this->sodaScsServiceHelpers->initDockerRunServiceSettings();
 
+    $requestParams['routeParams']['endpointId'] = $portainerServiceSettings['endpointId'];
+
     $route =
       // https://portainer.scs.sammlungen.io
       $portainerServiceSettings['host'] .
@@ -516,7 +518,9 @@ class SodaScsDockerRunServiceActions implements SodaScsRunRequestInterface {
       $portainerServiceSettings['baseUrl'] .
       // /{endpointId}/docker
       $dockerApiSettings['baseUrl'] .
-      // /containers/{containerId}
+      // /containers/
+      $dockerRunServiceSettings['baseUrl'] .
+      // /{containerId}
       $dockerRunServiceSettings['removeUrl'];
 
     // Replace any route parameters.

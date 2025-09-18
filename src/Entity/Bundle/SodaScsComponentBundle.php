@@ -43,6 +43,30 @@ class SodaScsComponentBundle extends SodaScsComponent implements SodaScsComponen
             'herbal' => 'Conservation and Restoration',
           ]);
 
+        $definitions['containerId'] = BundleFieldDefinition::create('string')
+          ->setLabel(new TranslatableMarkup('Container ID'))
+          ->setDescription(new TranslatableMarkup('The ID of the container.'))
+          ->setDisplayConfigurable('form', FALSE)
+          ->setDisplayConfigurable('view', FALSE)
+          ->setReadOnly(TRUE)
+          ->setDisplayOptions('view', [
+            'label' => 'above',
+            'type' => 'string',
+            'weight' => 50,
+          ]);
+
+        $definitions['containerName'] = BundleFieldDefinition::create('string')
+          ->setLabel(new TranslatableMarkup('Container Name'))
+          ->setDescription(new TranslatableMarkup('The name of the container.'))
+          ->setDisplayConfigurable('form', FALSE)
+          ->setDisplayConfigurable('view', FALSE)
+          ->setReadOnly(TRUE)
+          ->setDisplayOptions('view', [
+            'label' => 'above',
+            'type' => 'string',
+            'weight' => 50,
+          ]);
+
         break;
 
       case 'soda_scs_filesystem_component':

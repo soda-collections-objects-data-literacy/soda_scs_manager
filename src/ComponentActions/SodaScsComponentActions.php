@@ -47,13 +47,21 @@ class SodaScsComponentActions implements SodaScsComponentActionsInterface {
   protected SodaScsComponentActionsInterface $sodaScsWisskiComponentActions;
 
   /**
+   * The SCS webprotege actions service.
+   *
+   * @var \Drupal\soda_scs_manager\ComponentActions\SodaScsComponentActionsInterface
+   */
+  protected SodaScsComponentActionsInterface $sodaScsWebprotegeComponentActions;
+
+  /**
    * Class constructor.
    */
-  public function __construct(SodaScsComponentActionsInterface $sodaScsFilesystemComponentActions, SodaScsComponentActionsInterface $sodaScsSqlComponentActions, SodaScsComponentActionsInterface $sodaScsTriplestoreComponentActions, SodaScsComponentActionsInterface $sodaScsWisskiComponentActions, TranslationInterface $stringTranslation) {
+  public function __construct(SodaScsComponentActionsInterface $sodaScsFilesystemComponentActions, SodaScsComponentActionsInterface $sodaScsSqlComponentActions, SodaScsComponentActionsInterface $sodaScsTriplestoreComponentActions, SodaScsComponentActionsInterface $sodaScsWisskiComponentActions, SodaScsComponentActionsInterface $sodaScsWebprotegeComponentActions, TranslationInterface $stringTranslation) {
     $this->sodaScsFilesystemComponentActions = $sodaScsFilesystemComponentActions;
     $this->sodaScsSqlComponentActions = $sodaScsSqlComponentActions;
     $this->sodaScsTriplestoreComponentActions = $sodaScsTriplestoreComponentActions;
     $this->sodaScsWisskiComponentActions = $sodaScsWisskiComponentActions;
+    $this->sodaScsWebprotegeComponentActions = $sodaScsWebprotegeComponentActions;
     $this->stringTranslation = $stringTranslation;
   }
 
@@ -82,6 +90,9 @@ class SodaScsComponentActions implements SodaScsComponentActionsInterface {
 
       case 'soda_scs_wisski_component':
         return $this->sodaScsWisskiComponentActions->createComponent($entity);
+
+      case 'soda_scs_webprotege_component':
+        return $this->sodaScsWebprotegeComponentActions->createComponent($entity);
 
       default:
         return [];
@@ -131,6 +142,9 @@ class SodaScsComponentActions implements SodaScsComponentActionsInterface {
       case 'soda_scs_wisski_component':
         return $this->sodaScsWisskiComponentActions->updateComponent($component);
 
+      case 'soda_scs_webprotege_component':
+        return $this->sodaScsWebprotegeComponentActions->updateComponent($component);
+
       default:
         return [];
     }
@@ -161,6 +175,9 @@ class SodaScsComponentActions implements SodaScsComponentActionsInterface {
 
       case 'soda_scs_triplestore_component':
         return $this->sodaScsTriplestoreComponentActions->deleteComponent($component);
+
+      case 'soda_scs_webprotege_component':
+        return $this->sodaScsWebprotegeComponentActions->deleteComponent($component);
 
       default:
         return [

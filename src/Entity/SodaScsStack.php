@@ -371,7 +371,7 @@ class SodaScsStack extends ContentEntityBase implements SodaScsStackInterface {
       ->setDescription(new TranslatableMarkup('The project this bundled application belongs to.'))
       ->setSetting('target_type', 'soda_scs_project')
       ->setSetting('handler', 'soda_scs_project_access')
-      ->setRequired(FALSE)
+      ->setRequired(TRUE)
       ->setCardinality(FieldStorageDefinitionInterface::CARDINALITY_UNLIMITED)
       ->setDisplayConfigurable('form', FALSE)
       ->setDisplayOptions('form', [

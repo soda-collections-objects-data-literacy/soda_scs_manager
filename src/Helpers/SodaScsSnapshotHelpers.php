@@ -302,16 +302,16 @@ class SodaScsSnapshotHelpers {
           default:
             $type = $componentBundle;
         }
-        foreach ($componentData['metadata']['contentFileNames'] as $fileType => $contentFileName) {
+        foreach ($componentData->metadata['contentFileNames'] as $fileType => $contentFileName) {
           $contentFiles[$type][$fileType] = (string) $contentFileName;
         }
       }
 
-      $snapshotMachineName = reset($snapshotData)['metadata']['snapshotMachineName'];
-      $timestamp = reset($snapshotData)['metadata']['timestamp'];
+      $snapshotMachineName = reset($snapshotData)->metadata['snapshotMachineName'];
+      $timestamp = reset($snapshotData)->metadata['timestamp'];
 
       // Create the bag directory.
-      $bagPath = reset($snapshotData)['metadata']['backupPath'] . '/bag';
+      $bagPath = reset($snapshotData)->metadata['backupPath'] . '/bag';
       $dirCreateResult = $this->createDir($bagPath);
       if (!$dirCreateResult['success']) {
         return SodaScsResult::failure(
@@ -329,7 +329,7 @@ class SodaScsSnapshotHelpers {
       $currentRequest = $this->requestStack->getCurrentRequest();
       $schemeAndHost = $currentRequest ? str_replace('http://', 'https://', $currentRequest->getSchemeAndHttpHost()) : '';
 
-      $relativeUrlBackupPath = reset($snapshotData)['metadata']['relativeUrlBackupPath'] ?? '';
+      $relativeUrlBackupPath = reset($snapshotData)->metadata['relativeUrlBackupPath'] ?? '';
       $bagUrl = $schemeAndHost . $relativeUrlBackupPath . '/bag/' . $contentsTarFileName;
       $checksumUrl = $schemeAndHost . $relativeUrlBackupPath . '/bag/' . $contentsSha256FileName;
       $bagFiles = [
@@ -342,11 +342,11 @@ class SodaScsSnapshotHelpers {
       $mappings = [];
       foreach ($snapshotData as $componentData) {
         $mappings[] = [
-          'bundle' => (string) $componentData['componentBundle'],
-          'eid' => (string) $componentData['componentId'],
-          'machineName' => (string) $componentData['componentMachineName'],
-          'dumpFile' => (string) $componentData['metadata']['contentFilePaths']['tarFilePath'],
-          'checksumFile' => (string) $componentData['metadata']['contentFilePaths']['sha256FilePath'],
+          'bundle' => (string) $componentData->componentBundle,
+          'eid' => (string) $componentData->componentId,
+          'machineName' => (string) $componentData->componentMachineName,
+          'dumpFile' => (string) $componentData->metadata['contentFilePaths']['tarFilePath'],
+          'checksumFile' => (string) $componentData->metadata['contentFilePaths']['sha256FilePath'],
         ];
       }
 
@@ -401,7 +401,7 @@ class SodaScsSnapshotHelpers {
       }
 
       // Write manifest.json to the bag dir; avoid shell echo.
-      $backupPath = reset($snapshotData)['metadata']['backupPath'];
+      $backupPath = reset($snapshotData)->metadata['backupPath'];
       $manifestWriteResult = $this->writeFileContent($bagPath . '/' . $manifestFileName, $manifest);
       if (!$manifestWriteResult['success']) {
         return SodaScsResult::failure(
@@ -596,8 +596,6 @@ class SodaScsSnapshotHelpers {
    */
   public function transformSparqlJsonToNquads($sparqlJsonData, SodaScsComponentInterface $component, $backupPath, int $timestamp) {
     try {
-      // Log the raw response for debugging.
-      $this->logger->debug('SPARQL response data: @data', ['@data' => substr($sparqlJsonData, 0, 500)]);
 
       // Check if we have any data at all.
       if (empty($sparqlJsonData)) {

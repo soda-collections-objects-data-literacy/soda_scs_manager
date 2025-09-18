@@ -397,8 +397,27 @@ class SodaScsPortainerServiceActions implements SodaScsServiceRequestInterface {
     $portainerServiceSettings = $this->sodaScsServiceHelpers->initPortainerServiceSettings();
     $portainerStacksSettings = $this->sodaScsServiceHelpers->initPortainerStacksSettings();
 
+    $requestParams['routeParams']['endpointId'] = $portainerServiceSettings['endpointId'];
+
     // Build route.
-    $route = $portainerServiceSettings['host'] . $portainerStacksSettings['baseUrl'] . str_replace('{stackId}', $requestParams['externalId'], $portainerStacksSettings['readOneUrl']);
+    // https://portainer.scs.sammlungen.io/
+    $route = $portainerServiceSettings['host'] .
+    // /stacks
+    $portainerStacksSettings['baseUrl'] .
+    // /{stackId}
+    $portainerStacksSettings['readOneUrl'];
+
+    // Replace any route parameters.
+    if (!empty($requestParams['routeParams'])) {
+      foreach ($requestParams['routeParams'] as $key => $value) {
+        $route = str_replace('{' . $key . '}', $value, $route);
+      }
+    }
+
+    // Add query parameters if they exist.
+    if (!empty($requestParams['queryParams'])) {
+      $route .= '?' . http_build_query($requestParams['queryParams']);
+    }
 
     return [
       'success' => TRUE,
