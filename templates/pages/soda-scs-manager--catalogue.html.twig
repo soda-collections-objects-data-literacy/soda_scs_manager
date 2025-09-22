@@ -1,14 +1,13 @@
 {#
 /**
  * @file
- * Default theme implementation for SODa SCS Manager desk page.
+ * Default theme implementation for SODa SCS Manager catalogue page.
  *
  * Available variables:
  * - attributes: HTML attributes for the container.
  * @ingroup themeable
  */
 #}
-
 {% set all_tags = ['coding', 'cms', 'data-cleaning', 'data-science', 'database', 'filesharing', 'office', 'ontology', 'publishing'] %}
 
 <div class="soda-scs-manager--tag-filter-container p-2 rounded-lg align-center justify-center">
@@ -45,24 +44,36 @@
     {% endfor %}
   </div>
 </div>
-    {% if entitiesByUser is not empty %}
-      {% for username, entities in entitiesByUser %}
-        <div class="text-center mb-8">
-          <h2 class="text-3xl font-bold text-stone-200 mb-4"> Applications of User {{ username }}</h2>
-        </div>
 
-        {% set entity_count = entities|length %}
-        {% set grid_class = 'grid-count-' ~ entity_count %}
+<h2 class="center text-center text-stone-200 text-8xl font-bold mb-10" id="bundled-applications">{{ 'Bundled Applications'|t }}</h2>
 
-        <div {{ attributes.addClass(grid_class) }} class="soda-scs-manager--view--grid mb-12">
-          {% for entity in entities %}
-            {{ entity }}
-          {% endfor %}
-        </div>
-      {% endfor %}
-    {% else %}
-      <div class="alert alert-info opacity-90 bg-slate-950 border-2 border-stone-200 shadow-lg shadow-cyan-500/50 p-4 rounded-lg text-center">
-        <p class="text-stone-200 text-xl">{{ 'No applications found.'|t }}</p>
-      </div>
-    {% endif %}
+{% if stacks is not empty %}
+  {% set stack_count = stacks|length %}
+  {% set grid_class = 'grid-count-' ~ stack_count %}
+
+  <div {{ attributes.addClass(grid_class) }} class="soda-scs-manager--view--grid">
+    {% for entity in stacks %}
+      {{ entity }}
+    {% endfor %}
   </div>
+{% else %}
+  <div class="alert alert-info opacity-20 bg-slate-950 border-2 border-stone-200 border-cyan-500 p-4 rounded-lg text-center">
+    <p class="text-stone-200 text-xl">{{ 'No stacks available.'|t }}</p>
+  </div>
+{% endif %}
+
+<h2 class="center text-center text-stone-200 text-8xl font-bold mb-10" id="single-applications">{{ 'Single Applications'|t }}</h2>
+{% if components is not empty %}
+  {% set component_count = components|length %}
+  {% set grid_class = 'grid-count-' ~ component_count %}
+
+  <div {{ attributes.addClass(grid_class) }} class="soda-scs-manager--view--grid">
+    {% for entity in components %}
+      {{ entity }}
+    {% endfor %}
+  </div>
+{% else %}
+  <div class="alert alert-info opacity-20 bg-slate-950 border-2 border-stone-200 border-cyan-500 p-4 rounded-lg text-center">
+    <p class="text-stone-200 text-xl">{{ 'No components available.'|t }}</p>
+  </div>
+{% endif %}

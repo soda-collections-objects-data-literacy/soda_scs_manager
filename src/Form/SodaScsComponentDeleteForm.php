@@ -82,7 +82,7 @@ class SodaScsComponentDeleteForm extends ContentEntityDeleteForm {
    * {@inheritdoc}
    */
   public function getCancelUrl() {
-    return new Url('soda_scs_manager.desk');
+    return new Url('soda_scs_manager.dashboard');
   }
 
   /**
@@ -123,7 +123,7 @@ class SodaScsComponentDeleteForm extends ContentEntityDeleteForm {
     // Directly delete the entity, bypassing the component actions.
     $component->delete();
     $this->messenger()->addWarning($this->t('Component force deleted.'));
-    $form_state->setRedirect('soda_scs_manager.desk');
+    $form_state->setRedirect('soda_scs_manager.dashboard');
   }
 
   /**
@@ -142,7 +142,7 @@ class SodaScsComponentDeleteForm extends ContentEntityDeleteForm {
       return;
     }
     $this->messenger()->addStatus($deleteComponentResult['message']);
-    $form_state->setRedirect('soda_scs_manager.desk');
+    $form_state->setRedirect('soda_scs_manager.dashboard');
   }
 
 }

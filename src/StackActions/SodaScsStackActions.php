@@ -73,7 +73,7 @@ class SodaScsStackActions implements SodaScsStackActionsInterface {
         return $this->sodaScsNextcloudStackActions->createStack($stack);
 
       default:
-        throw new \Exception('Component type not supported for creation.');
+        throw new \Exception('Stack type not supported for creation.');
     }
   }
 

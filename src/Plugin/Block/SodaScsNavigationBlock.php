@@ -53,18 +53,18 @@ class SodaScsNavigationBlock extends BlockBase {
                  </svg>',
       ],
       [
-        'title' => $this->t('Desk'),
-        'url' => Url::fromRoute('soda_scs_manager.desk'),
-        'icon' => 'desk',
+        'title' => $this->t('Dashboard'),
+        'url' => Url::fromRoute('soda_scs_manager.dashboard'),
+        'icon' => 'dashboard',
         'classes' => 'text-cyan-500',
         'svg' => '<svg width="24" height="24" class="w-6 h-6 mx-auto" fill="currentColor" class="text-cyan-500" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">
                    <path fill-rule="evenodd" d="M3 5a2 2 0 012-2h10a2 2 0 012 2v8a2 2 0 01-2 2h-2.22l.123.489.804.804A1 1 0 0113 18H7a1 1 0 01-.707-1.707l.804-.804L7.22 15H5a2 2 0 01-2-2V5zm5.771 7H5V5h10v7H8.771z" clip-rule="evenodd"></path>
                  </svg>',
       ],
       [
-        'title' => $this->t('Store'),
-        'url' => Url::fromRoute('soda_scs_manager.store'),
-        'icon' => 'store',
+        'title' => $this->t('Catalogue'),
+        'url' => Url::fromRoute('soda_scs_manager.catalogue'),
+        'icon' => 'catalogue',
         'classes' => 'text-pink-500',
         'svg' => '<svg width="24" height="24" class="w-6 h-6 mx-auto" fill="currentColor" class="text-pink-500" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">
                    <path d="M4 3a2 2 0 100 4h12a2 2 0 100-4H4z"></path>

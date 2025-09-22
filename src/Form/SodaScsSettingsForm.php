@@ -1015,6 +1015,28 @@ class SodaScsSettingsForm extends ConfigFormBase {
       '#description' => $this->t('The delete route, like "/{stackId}".'),
     ];
 
+    // Webprotege settings tab.
+    $form['webprotege'] = [
+      '#type' => 'details',
+      '#title' => $this->t('Webprotege settings'),
+      '#group' => 'tabs',
+      '#tree' => TRUE,
+    ];
+
+    // Webprotege instance routes.
+    $form['webprotege']['generalSettings'] = [
+      '#type' => 'fieldset',
+      '#title' => 'Instances routes for Webprotege components',
+    ];
+
+    // Base route.
+    $form['webprotege']['generalSettings']['host'] = [
+      '#type' => 'textfield',
+      '#title' => $this->t('Host'),
+      '#default_value' => $this->config('soda_scs_manager.settings')->get('webprotege')['generalSettings']['host'] ?? '',
+      '#description' => $this->t('The host, like "https://webprotege.scs.sammlungen.io".'),
+    ];
+
     // WissKI settings tab.
     $form['wisski'] = [
       '#type' => 'details',
@@ -1123,6 +1145,7 @@ class SodaScsSettingsForm extends ConfigFormBase {
       ->set('security', $form_state->getValue('security'))
       ->set('snapshotPath', $form_state->getValue('snapshotPath'))
       ->set('triplestore', $form_state->getValue('triplestore'))
+      ->set('webprotege', $form_state->getValue('webprotege'))
       ->set('wisski', $form_state->getValue('wisski'))
       ->save();
 

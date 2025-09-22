@@ -255,6 +255,13 @@ class SodaScsDockerExecServiceActions implements SodaScsExecRequestInterface {
           'Detach' => FALSE,
           'Tty' => FALSE,
           'User' => $requestParams['user'],
+          'WorkingDir' => $requestParams['workingDir'] ?? '',
+          'Env' => $requestParams['env'] ?? [],
+          'Privileged' => $requestParams['privileged'] ?? FALSE,
+          'AttachStdout' => $requestParams['attachStdout'] ?? FALSE,
+          'AttachStderr' => $requestParams['attachStderr'] ?? FALSE,
+          'AttachStdin' => $requestParams['attachStdin'] ?? FALSE,
+          'DetachKeys' => $requestParams['detachKeys'] ?? '',
         ]
       ),
     ];

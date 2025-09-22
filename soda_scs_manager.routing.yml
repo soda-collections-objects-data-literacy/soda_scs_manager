@@ -297,11 +297,11 @@ entity.soda_scs_stack.snapshot:
 
 # Pages
 # @todo: refactor to use entity type as parameter for just one route
-soda_scs_manager.desk:
-  path: '/soda-scs-manager/desk'
+soda_scs_manager.dashboard:
+  path: '/soda-scs-manager/dashboard'
   defaults:
     _controller: '\Drupal\soda_scs_manager\Controller\SodaScsManagerController::deskPage'
-    _title:  'Desk'
+    _title:  'Dashboard'
   requirements:
     _permission: 'soda scs manager user'
   options:
@@ -315,11 +315,11 @@ soda_scs_manager.start_page:
   requirements:
     _permission: 'soda scs manager user'
 
-soda_scs_manager.store:
-  path: '/soda-scs-manager/store'
+soda_scs_manager.catalogue:
+  path: '/soda-scs-manager/catalogue'
   defaults:
-    _controller: '\Drupal\soda_scs_manager\Controller\SodaScsManagerController::storePage'
-    _title: 'Store'
+    _controller: '\Drupal\soda_scs_manager\Controller\SodaScsManagerController::cataloguePage'
+    _title: 'Catalogue'
   requirements:
     _permission: 'soda scs manager user'
 

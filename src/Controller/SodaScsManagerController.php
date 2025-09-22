@@ -78,7 +78,7 @@ class SodaScsManagerController extends ControllerBase {
    * @return array
    *   The page build array.
    *
-   * @todo Join ComponentDesk and Stack desk to generic Desk.
+   * @todo Join ComponentDesk and Stack dashboard to generic Dashboard.
    * @todo Make admin permission more generic.
    */
   public function deskPage(): array {
@@ -227,7 +227,7 @@ class SodaScsManagerController extends ControllerBase {
     }
 
     $build = [
-      '#theme' => 'soda_scs_manager__desk',
+      '#theme' => 'soda_scs_manager__dashboard',
       '#attributes' => ['class' => 'container soda-scs-manager--view--grid'],
       '#entitiesByUser' => $entitiesByUser,
       '#cache' => [
@@ -250,11 +250,11 @@ class SodaScsManagerController extends ControllerBase {
    * @return array
    *   The page build array.
    */
-  public function storePage() {
+  public function cataloguePage() {
     // @todo Make this more generic.
     // Create the build array.
     $build = [
-      '#theme' => 'soda_scs_manager__store',
+      '#theme' => 'soda_scs_manager__catalogue',
       '#attributes' => ['class' => 'container soda-scs-manager--view--grid'],
       '#components' => [],
       '#stacks' => [],
@@ -268,6 +268,9 @@ class SodaScsManagerController extends ControllerBase {
 
     // Get all component bundles.
     $stackBundles = $this->bundleInfo->getBundleInfo('soda_scs_stack');
+
+    // Filter stack bundles to only include 'soda_scs_wisski_stack'.
+    $stackBundles = array_intersect_key($stackBundles, ['soda_scs_wisski_stack' => TRUE]);
 
     /** @var \Drupal\soda_scs_manager\Entity\Bundle\SodaScsStackBundle $stackBundle */
     foreach ($stackBundles as $id => $stackBundle) {
@@ -288,6 +291,16 @@ class SodaScsManagerController extends ControllerBase {
 
     // Get all component bundles.
     $componentBundles = $this->bundleInfo->getBundleInfo('soda_scs_component');
+
+    // Filter component bundles to only include
+    // 'soda_scs_filesystem_component',
+    // 'soda_scs_sql_component',
+    // 'soda_scs_triplestore_component'.
+    $componentBundles = array_intersect_key($componentBundles, [
+      'soda_scs_filesystem_component' => TRUE,
+      'soda_scs_sql_component' => TRUE,
+      'soda_scs_triplestore_component' => TRUE,
+    ]);
 
     /** @var \Drupal\soda_scs_manager\Entity\Bundle\SodaScsStackBundle $componentBundle */
     foreach ($componentBundles as $id => $componentBundle) {

@@ -310,7 +310,7 @@ class SodaScsStackCreateForm extends ContentEntityForm {
     }
 
     // Redirect to the components page.
-    $form_state->setRedirect('soda_scs_manager.desk');
+    $form_state->setRedirect('soda_scs_manager.dashboard');
   }
 
 }

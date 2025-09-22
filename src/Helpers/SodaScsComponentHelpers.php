@@ -25,13 +25,6 @@ class SodaScsComponentHelpers {
   use StringTranslationTrait;
 
   /**
-   * The Docker Volumes service actions.
-   *
-   * @var \Drupal\soda_scs_manager\ServiceActions\SodaScsServiceRequestInterface
-   */
-  protected SodaScsServiceRequestInterface $dockerVolumesServiceActions;
-
-  /**
    * The entity type manager.
    *
    * @var \Drupal\Core\Entity\EntityTypeManagerInterface
@@ -103,7 +96,6 @@ class SodaScsComponentHelpers {
 
   public function __construct(
     ConfigFactoryInterface $configFactory,
-    SodaScsServiceRequestInterface $dockerVolumesServiceActions,
     EntityTypeManagerInterface $entityTypeManager,
     ClientInterface $httpClient,
     LoggerChannelFactoryInterface $loggerFactory,
@@ -116,7 +108,6 @@ class SodaScsComponentHelpers {
     TranslationInterface $stringTranslation,
   ) {
     // Services from container.
-    $this->dockerVolumesServiceActions = $dockerVolumesServiceActions;
     $this->entityTypeManager = $entityTypeManager;
     $this->httpClient = $httpClient;
     $this->loggerFactory = $loggerFactory;
@@ -184,67 +175,73 @@ class SodaScsComponentHelpers {
    */
   public function checkFilesystemHealth(string $machineName) {
 
+    $accessProxycmd = [
+      'ls',
+      '-l',
+      '/shared/' . $machineName,
+    ];
+
+    $requestParams = [
+      'containerName' => 'access-proxy',
+      'cmd' => $accessProxycmd,
+      'user' => 'root',
+    ];
+
     // Check if Portainer service is available.
     try {
-      $requestParams = [
-        'routeParams' => [
-          'filesystemId' => $machineName,
-        ],
-        'type' => 'service',
-      ];
-      $healthRequest = $this->portainerServiceActions->buildHealthCheckRequest($requestParams);
-      $healthRequestResult = $this->portainerServiceActions->makeRequest($healthRequest);
-      if ($healthRequestResult['statusCode'] != 200) {
-        return [
-          "message" => 'Portainer is not available.',
-          'code' => $healthRequestResult['statusCode'],
-          'data' => $healthRequestResult['data'],
-          'success' => FALSE,
-          'error' => $healthRequestResult['error'],
-        ];
-      }
-    }
-    catch (\Exception $e) {
-      return [
-        "message" => 'Portainer is not available.',
-        'code' => $e->getCode(),
-        'success' => FALSE,
-        'data' => $e,
-        'error' => $e->getMessage(),
-      ];
-    }
 
-    try {
-      $requestParams = [
-        'routeParams' => [
-          'volumeId' => $machineName,
-        ],
-        'type' => 'instance',
-      ];
-      $healthRequest = $this->dockerVolumesServiceActions->buildHealthCheckRequest($requestParams);
-      $healthRequestResult = $this->dockerVolumesServiceActions->makeRequest($healthRequest);
-      if ($healthRequestResult['statusCode'] != 200) {
+      $execCreateRequest = $this->sodaScsDockerExecServiceActions->buildCreateRequest($requestParams);
+      $execCreateResult = $this->sodaScsDockerExecServiceActions->makeRequest($execCreateRequest);
+
+      if ($execCreateResult['statusCode'] != 201) {
         return [
-          "message" => 'Filesystem is not available.',
-          'code' => $healthRequestResult['statusCode'],
-          'data' => $healthRequestResult['data'],
+          "message" => 'Access proxy is not available.',
+          'code' => $execCreateResult['statusCode'],
+          'data' => $execCreateResult['data'],
           'success' => FALSE,
-          'error' => $healthRequestResult['error'],
+          'error' => $execCreateResult['error'],
         ];
       }
-      else {
+      $execCreateResultData = json_decode($execCreateResult['data']['portainerResponse']->getBody()->getContents(), TRUE);
+      $execStartRequest = $this->sodaScsDockerExecServiceActions->buildStartRequest(['execId' => $execCreateResultData['Id']]);
+      $execStartResult = $this->sodaScsDockerExecServiceActions->makeRequest($execStartRequest);      if ($execStartResult['statusCode'] != 200) {
         return [
-          "message" => $this->t("Filesystem is available."),
-          'code' => $healthRequestResult['statusCode'],
-          'data' => $healthRequestResult['data'],
-          'success' => TRUE,
-          'error' => '',
+          "message" => 'Access proxy is not available.',
+          'code' => $execStartResult['statusCode'],
+          'data' => $execStartResult['data'],
+          'success' => FALSE,
+          'error' => $execStartResult['error'],
         ];
       }
+      // Inspect the exec to retrieve the command exit code.
+      $execInspectRequest = $this->sodaScsDockerExecServiceActions->buildInspectRequest([
+        'routeParams' => [
+          'execId' => $execCreateResultData['Id'],
+        ],
+      ]);
+      $execInspectResult = $this->sodaScsDockerExecServiceActions->makeRequest($execInspectRequest);
+      if ($execInspectResult['statusCode'] != 200) {
+        return [
+          "message" => 'Access proxy exec inspect failed.',
+          'code' => $execInspectResult['statusCode'],
+          'data' => $execInspectResult['data'],
+          'success' => FALSE,
+          'error' => $execInspectResult['error'],
+        ];
+      }
+      $execInspectData = json_decode($execInspectResult['data']['portainerResponse']->getBody()->getContents(), TRUE);
+      $exitCode = $execInspectData['ExitCode'] ?? NULL;
+      return [
+        'message' => $exitCode === 0 ? 'Filesystem available.' : 'Filesystem not available.',
+        'code' => $execInspectResult['statusCode'],
+        'success' => $exitCode === 0,
+        'error' => $exitCode === 0 ? '' : 'Command exit code: ' . (string) $exitCode,
+        'exitCode' => $exitCode,
+      ];
     }
     catch (\Exception $e) {
       return [
-        "message" => 'Filesystem is not available.',
+        "message" => 'Access proxy is not available.',
         'code' => $e->getCode(),
         'success' => FALSE,
         'data' => $e,

@@ -62,8 +62,8 @@
 #  templates/block/block--system-branding-block.html.twig: n/a
 #  templates/navigation/menu-local-tasks.html.twig: n/a
 #  templates/node/node.html.twig: n/a
-#  templates/pages/soda-scs-manager--desk.html.twig: n/a
-#  templates/pages/soda-scs-manager--store.html.twig: n/a
+#  templates/pages/soda-scs-manager--dashboard.html.twig: n/a
+#  templates/pages/soda-scs-manager--catalogue.html.twig: n/a
 #
 #, fuzzy
 msgid ""
@@ -267,8 +267,8 @@ msgid "SODa SCS manager applications page"
 msgstr "SODa SCS-Manager Komponentenseite"
 
 #: soda_scs_manager.links.menu.yml:0
-msgid "Component store"
-msgstr "Komponenten-Store"
+msgid "Component catalogue"
+msgstr "Komponenten-Katalog"
 
 #: soda_scs_manager.links.menu.yml:0;0
 msgid "SODa SCS manager settings"
@@ -279,12 +279,12 @@ msgid "SODa SCS Manager"
 msgstr "SODa SCS-Manager"
 
 #: soda_scs_manager.links.menu.yml:0 src/Plugin/Block/SodaScsNavigationBlock.php:56
-msgid "Desk"
+msgid "Dashboard"
 msgstr "Schreibtisch"
 
 #: soda_scs_manager.links.menu.yml:0 soda_scs_manager.routing.yml:0 src/Plugin/Block/SodaScsNavigationBlock.php:65
-msgid "Store"
-msgstr "Store"
+msgid "catalogue"
+msgstr "Katalog"
 
 #: soda_scs_manager.links.menu.yml:0
 msgid "Manage SODa SCS Components"
@@ -1930,14 +1930,14 @@ msgstr "Sekundäre Registerkarten"
 msgid "Submitted by @author_name on @date"
 msgstr "Eingereicht von @author_name am @date"
 
-#: templates/pages/soda-scs-manager--desk.html.twig:20
+#: templates/pages/soda-scs-manager--dashboard.html.twig:20
 msgid "No"
 msgstr "Nein"
 
-#: templates/pages/soda-scs-manager--store.html.twig:14
+#: templates/pages/soda-scs-manager--catalogue.html.twig:14
 msgid "No stacks available."
 msgstr "Keine Stacks verfügbar."
 
-#: templates/pages/soda-scs-manager--store.html.twig:30
+#: templates/pages/soda-scs-manager--catalogue.html.twig:30
 msgid "No applications available."
 msgstr "Keine Komponenten verfügbar."

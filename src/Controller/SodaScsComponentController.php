@@ -66,15 +66,16 @@ class SodaScsComponentController extends ControllerBase {
         if (!$filesystemHealth) {
           return new JsonResponse([
             'status' => [
-              'message' => $this->t("Filesystem health check failed for component @component. Message: @message", ['@component' => $component->id(), '@message' => $filesystemHealth['message']]),
+              'message' => $this->t("Filesystem health check failed for component @component. Message: @message", [
+                '@component' => $component->id(),
+                '@message' => $filesystemHealth['message'],
+              ]),
               'success' => FALSE,
             ],
             'code' => $filesystemHealth['code'],
           ]);
         }
         return new JsonResponse(['status' => $filesystemHealth]);
-
-        break;
 
       case 'soda_scs_sql_component':
         $sqlHealth = $this->sodaScsComponentHelpers->checkSqlHealth($component->id());
@@ -123,7 +124,10 @@ class SodaScsComponentController extends ControllerBase {
         return new JsonResponse(
           [
             'status' => [
-              'message' => $this->t("Health check failed for component @component with message: @message", ['@component' => $component->id(), '@message' => 'Unknown component type.']),
+              'message' => $this->t("Health check failed for component @component with message: @message", [
+                '@component' => $component->id(),
+                '@message' => 'Unknown component type.',
+              ]),
               'success' => FALSE,
             ],
             'code' => 500,

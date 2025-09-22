@@ -97,20 +97,20 @@ soda_scs_manager.main_navigation:
   requirements:
     _access: 'TRUE'
 
-soda_scs_manager.menu.desk:
-  title: 'Desk'
+soda_scs_manager.menu.dashboard:
+  title: 'Dashboard'
   description: 'Your applications'
   parent: soda_scs_manager.main_navigation
-  route_name: soda_scs_manager.desk
+  route_name: soda_scs_manager.dashboard
   weight: 20
   requirements:
     _permission: 'soda scs manager user'
 
-soda_scs_manager.menu.store:
-  title: 'Store'
+soda_scs_manager.menu.catalogue:
+  title: 'Catalogue'
   description: 'Available applications'
   parent: soda_scs_manager.main_navigation
-  route_name: soda_scs_manager.store
+  route_name: soda_scs_manager.catalogue
   weight: 10
   requirements:
     _permission: 'soda scs manager user'

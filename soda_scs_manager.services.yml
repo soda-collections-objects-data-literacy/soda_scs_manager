@@ -5,7 +5,6 @@ services:
     class: Drupal\soda_scs_manager\Helpers\SodaScsComponentHelpers
     arguments:
       - '@config.factory'
-      - '@soda_scs_manager.docker_volumes_service.actions'
       - '@entity_type.manager'
       - '@http_client'
       - '@logger.factory'

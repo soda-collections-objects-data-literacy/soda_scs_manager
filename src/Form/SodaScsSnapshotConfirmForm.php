@@ -83,7 +83,7 @@ class SodaScsSnapshotConfirmForm extends ConfirmFormBase {
   protected $sodaScsSqlComponentActions;
 
   /**
-   * The Soda SCS Triple Store Component Actions.
+   * The Soda SCS Triplestore Component Actions.
    *
    * @var \Drupal\soda_scs_manager\ComponentActions\SodaScsComponentActionsInterface
    */
@@ -140,7 +140,7 @@ class SodaScsSnapshotConfirmForm extends ConfirmFormBase {
    * @param \Drupal\soda_scs_manager\ComponentActions\SodaScsComponentActionsInterface $sodaScsSqlComponentActions
    *   The Soda SCS SQL Component Actions.
    * @param \Drupal\soda_scs_manager\ComponentActions\SodaScsComponentActionsInterface $sodaScsTripleStoreComponentActions
-   *   The Soda SCS Triple Store Component Actions.
+   *   The Soda SCS Triplestore Component Actions.
    * @param \Drupal\soda_scs_manager\ComponentActions\SodaScsComponentActionsInterface $sodaScsWisskiComponentActions
    *   The Soda SCS WissKI Component Actions.
    * @param \Drupal\soda_scs_manager\StackActions\SodaScsStackActionsInterface $sodaScsWisskiStackActions

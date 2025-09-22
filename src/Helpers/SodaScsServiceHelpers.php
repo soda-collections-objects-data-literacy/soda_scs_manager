@@ -448,6 +448,21 @@ class SodaScsServiceHelpers {
   }
 
   /**
+   * Initialize Webprotege instance settings.
+   *
+   * @return array
+   *   The Webprotege instance settings.
+   */
+  public function initWebprotegeInstanceSettings() {
+    $webprotegeInstanceSettings['name'] = 'Webprotege instance';
+    $webprotegeInstanceSettings['host'] = $this->settings->get('webprotege.generalSettings.host');
+
+    $this->checkSettings($webprotegeInstanceSettings);
+
+    return $webprotegeInstanceSettings;
+  }
+
+  /**
    * Initialize WissKI instance settings.
    *
    * @return array

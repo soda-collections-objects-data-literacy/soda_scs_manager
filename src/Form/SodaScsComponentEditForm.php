@@ -47,7 +47,7 @@ class SodaScsComponentEditForm extends ContentEntityForm {
    *   The form state.
    */
   public function cancelForm(array &$form, FormStateInterface $form_state) {
-    $form_state->setRedirect('soda_scs_manager.desk');
+    $form_state->setRedirect('soda_scs_manager.dashboard');
   }
 
   /**
@@ -125,7 +125,7 @@ class SodaScsComponentEditForm extends ContentEntityForm {
     parent::save($form, $form_state);
 
     // Redirect to the components page.
-    $form_state->setRedirect('soda_scs_manager.desk');
+    $form_state->setRedirect('soda_scs_manager.dashboard');
   }
 
 }

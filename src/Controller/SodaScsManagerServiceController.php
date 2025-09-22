@@ -61,21 +61,26 @@ class SodaScsManagerServiceController extends ControllerBase {
    */
   public function generateComponentUrl(SodaScsComponent $soda_scs_component): TrustedRedirectResponse {
     $databaseSettings = $this->sodaScsServiceHelpers->initDatabaseServiceSettings();
-    $wisskiSettings = $this->sodaScsServiceHelpers->initWisskiInstanceSettings();
     $triplestoreSettings = $this->sodaScsServiceHelpers->initTriplestoreServiceSettings();
+    $webprotegeSettings = $this->sodaScsServiceHelpers->initWebprotegeInstanceSettings();
+    $wisskiSettings = $this->sodaScsServiceHelpers->initWisskiInstanceSettings();
 
     switch ($soda_scs_component->bundle()) {
+      case 'soda_scs_sql_component':
+        $url = $databaseSettings['managementHost'];
+        break;
+
       case 'soda_scs_triplestore_component':
         $url = $triplestoreSettings['host'];
+        break;
+
+      case 'soda_scs_webprotege_component':
+        $url = $webprotegeSettings['host'];
         break;
 
       case 'soda_scs_wisski_component':
         $machineName = $soda_scs_component->get('machineName')->value;
         $url = str_replace('{instanceId}', $machineName, $wisskiSettings['baseUrl']);
-        break;
-
-      case 'soda_scs_sql_component':
-        $url = $databaseSettings['managementHost'];
         break;
 
       default:

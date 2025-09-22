@@ -150,7 +150,7 @@ function soda_scs_manager_entity_bundle_info() {
   $bundles['soda_scs_component']['soda_scs_webprotege_component'] = [
     'label' => new TranslatableMarkup('WebProtégé'),
     'class' => SodaScsComponentBundle::class,
-    'description' => new TranslatableMarkup('A web-based tool for creating and editing OWL ontologies.'),
+    'description' => new TranslatableMarkup('A web-based tool for creating and editing OWL ontologies. Webprotege is not yet part of the Single Sign On (SSO) system. You will need to create an account and log in manually.'),
     'imageUrl' => 'public://soda_scs_manager/images/protege.svg',
     'tags' => ['ontology'],
   ];
@@ -432,21 +432,21 @@ function soda_scs_manager_theme($existing, $type, $theme, $path) {
       'render element' => 'elements',
       'template' => 'entity/soda-scs-component',
     ],
-    'soda_scs_manager__store' => [
+    'soda_scs_manager__catalogue' => [
       'variables' => [
         'components' => NULL,
         'stacks' => NULL,
         'attributes' => NULL,
       ],
-      'template' => 'pages/soda-scs-manager--store',
+      'template' => 'pages/soda-scs-manager--catalogue',
     ],
-    'soda_scs_manager__desk' => [
+    'soda_scs_manager__dashboard' => [
       'variables' => [
         'entitiesByUser' => NULL,
         'entity_type' => NULL,
         'attributes' => NULL,
       ],
-      'template' => 'pages/soda-scs-manager--desk',
+      'template' => 'pages/soda-scs-manager--dashboard',
     ],
     'soda_scs_manager__entity_card' => [
       'variables' => [
@@ -938,7 +938,7 @@ function _soda_scs_manager_create_default_webprotege_for_user(UserInterface $use
     throw new \Exception('Webprotege stack bundle info not found');
   }
 
-  $webprotege = SodaScsStack::create([
+  $webprotege = SodaScsComponent::create([
     'bundle' => 'soda_scs_webprotege_component',
     'description' => $bundleinfo['description'],
     'imageUrl' => $bundleinfo['imageUrl'],
@@ -952,16 +952,7 @@ function _soda_scs_manager_create_default_webprotege_for_user(UserInterface $use
     ],
   ]);
 
-  \Drupal::service('soda_scs_manager.stack.actions')->createStack($webprotege);
-
-  // Create the default webprotege component.
-  $webprotegeComponent = SodaScsComponent::create([
-    'bundle' => 'soda_scs_webprotege_component',
-    'description' => $bundleinfo['description'],
-    'imageUrl' => $bundleinfo['imageUrl'],
-  ]);
-
-  \Drupal::service('soda_scs_manager.component.actions')->createComponent($webprotegeComponent);
+  \Drupal::service('soda_scs_manager.component.actions')->createComponent($webprotege);
 }
 
 /**

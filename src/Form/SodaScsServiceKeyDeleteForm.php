@@ -87,7 +87,7 @@ class SodaScsServiceKeyDeleteForm extends ContentEntityDeleteForm {
     $serviceKey->delete();
 
     $this->messenger()->addStatus($this->t('Key deleted successfully.'));
-    // Redirect to the desk.
+    // Redirect to the dashboard.
     $form_state->setRedirect('entity.soda_scs_service_key.collection');
   }
 

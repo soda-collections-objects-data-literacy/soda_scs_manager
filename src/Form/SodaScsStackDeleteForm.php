@@ -107,7 +107,7 @@ class SodaScsStackDeleteForm extends ContentEntityDeleteForm {
     $stack = $this->entity;
     $stack->delete();
     $this->messenger()->addWarning($this->t('Stack force deleted.'));
-    $form_state->setRedirect('soda_scs_manager.desk');
+    $form_state->setRedirect('soda_scs_manager.dashboardboard');
   }
 
   /**
@@ -139,7 +139,7 @@ class SodaScsStackDeleteForm extends ContentEntityDeleteForm {
     }
 
     $this->messenger()->addStatus($deleteStackResult['message']);
-    $form_state->setRedirect('soda_scs_manager.desk');
+    $form_state->setRedirect('soda_scs_manager.dashboard');
   }
 
 }
