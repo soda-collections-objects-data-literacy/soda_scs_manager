@@ -180,9 +180,11 @@ class SodaScsStackActions implements SodaScsStackActionsInterface {
       case 'soda_scs_wisski_stack':
         return $this->sodaScsWisskiStackActions->deleteStack($stack);
 
+      // @todo Jupyter is not a stack, but an Account.
       case 'soda_scs_jupyter_stack':
         return $this->sodaScsJupyterStackActions->deleteStack($stack);
 
+      // @todo Jupyter is not a stack, but an Account.
       case 'soda_scs_nextcloud_stack':
         return $this->sodaScsNextcloudStackActions->deleteStack($stack);
 

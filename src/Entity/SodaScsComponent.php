@@ -81,7 +81,8 @@ use Drupal\user\EntityOwnerTrait;
  * )
  */
 class SodaScsComponent extends ContentEntityBase implements SodaScsComponentInterface {
-
+  // @todo We should split components and stack into better entities.
+  // i.e. Environment (WissKI, Jupyterhub), Instance (WissKI), Account (Nextcloud, Webprotege) and Resource (Filesystem, SQL, Triplestore).
   use EntityOwnerTrait;
 
   /**

@@ -197,6 +197,7 @@ class SodaScsSqlComponentActions implements SodaScsComponentActionsInterface {
       }
 
       $machineName = 'sql-' . $entity->get('machineName')->value;
+      // @todo We have the entity here already, so we should not create a new one.
       $sqlComponent = $this->entityTypeManager->getStorage('soda_scs_component')->create(
         [
           'bundle' => 'soda_scs_sql_component',

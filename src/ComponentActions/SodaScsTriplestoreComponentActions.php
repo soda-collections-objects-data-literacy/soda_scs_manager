@@ -141,6 +141,7 @@ class SodaScsTriplestoreComponentActions implements SodaScsComponentActionsInter
         throw new \Exception('Triplestore component bundle info not found');
       }
       $machineName = 'ts-' . $entity->get('machineName')->value;
+      // @todo We have the entity here already, so we should not create a new one.
       /** @var \Drupal\soda_scs_manager\Entity\SodaScsComponentInterface $triplestoreComponent */
       $triplestoreComponent = $this->entityTypeManager->getStorage('soda_scs_component')->create(
         [

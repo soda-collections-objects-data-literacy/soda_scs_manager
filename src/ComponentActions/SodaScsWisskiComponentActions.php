@@ -292,6 +292,10 @@ class SodaScsWisskiComponentActions implements SodaScsComponentActionsInterface 
       if (!$wisskiComponentBundleInfo) {
         throw new \Exception('WissKI component bundle info not found');
       }
+      // Set imageUrl and description for the WissKI component.
+      $component->set('imageUrl', $wisskiComponentBundleInfo['imageUrl']);
+      $component->set('description', $wisskiComponentBundleInfo['description']);
+
       // Get and set the machine name for the WissKI component.
       $machineName = 'wisski-' . $component->get('machineName')->value;
       $component->set('machineName', $machineName);
