@@ -13,6 +13,8 @@ use Drupal\Core\StringTranslation\StringTranslationTrait;
 use Drupal\soda_scs_manager\ServiceActions\SodaScsServiceActionsInterface;
 use Drupal\soda_scs_manager\RequestActions\SodaScsExecRequestInterface;
 use Drupal\soda_scs_manager\RequestActions\SodaScsServiceRequestInterface;
+use Drupal\soda_scs_manager\Entity\SodaScsComponentInterface;
+use Drupal\Core\TypedData\Exception\MissingDataException;
 
 /**
  * Helper functions for SCS components.
@@ -340,6 +342,53 @@ class SodaScsComponentHelpers {
    */
   public function createSecret() {
     return bin2hex(random_bytes(16));
+  }
+
+  /**
+   * Resolves linked SQL and triplestore components from an entity.
+   *
+   * Returns an array with keys: 'sql', 'triplestore', and 'dbName'.
+   * Values are NULL or strings if not present.
+   *
+   * @param \Drupal\soda_scs_manager\Entity\SodaScsComponentInterface $entity
+   *   The SODa SCS entity to inspect.
+   *
+   * @return array
+   *   Resolved components and database name with keys:
+   *   - sql:
+   *     \Drupal\soda_scs_manager\Entity\SodaScsComponentInterface|null.
+   *   - triplestore:
+   *     \Drupal\soda_scs_manager\Entity\SodaScsComponentInterface|null.
+   *   - dbName: string.
+   */
+  public function resolveConnectedComponents(SodaScsComponentInterface $entity): array {
+    $sqlComponent = NULL;
+    $triplestoreComponent = NULL;
+    try {
+      /** @var \Drupal\Core\Field\EntityReferenceFieldItemList|null $connectedComponents */
+      $connectedComponents = $entity->get('connectedComponents');
+      if ($connectedComponents) {
+        $connectedComponentEntities = $connectedComponents->referencedEntities();
+        foreach ($connectedComponentEntities as $connectedComponent) {
+          /** @var \Drupal\soda_scs_manager\Entity\SodaScsComponentInterface $connectedComponent */
+          $bundle = $connectedComponent->bundle();
+          if ($bundle === 'soda_scs_sql_component') {
+            $sqlComponent = $connectedComponent;
+          }
+          elseif ($bundle === 'soda_scs_triplestore_component') {
+            $triplestoreComponent = $connectedComponent;
+          }
+        }
+      }
+    }
+    catch (MissingDataException $e) {
+      // Ignore missing data; return nulls for unresolved components.
+    }
+
+    return [
+      'sql' => $sqlComponent,
+      'triplestore' => $triplestoreComponent,
+    ];
   }
 
 }

@@ -15,7 +15,6 @@ use Drupal\Core\StringTranslation\TranslationInterface;
 use Drupal\Core\Utility\Error;
 use Drupal\soda_scs_manager\Entity\SodaScsComponentInterface;
 use Drupal\soda_scs_manager\Entity\SodaScsSnapshotInterface;
-use Drupal\soda_scs_manager\Entity\SodaScsStackInterface;
 use Drupal\soda_scs_manager\Helpers\SodaScsStackHelpers;
 use Drupal\soda_scs_manager\RequestActions\SodaScsExecRequestInterface;
 use Drupal\soda_scs_manager\RequestActions\SodaScsServiceRequestInterface;
@@ -148,13 +147,13 @@ class SodaScsFilesystemComponentActions implements SodaScsComponentActionsInterf
   /**
    * Create SODa SCS Component.
    *
-   * @param \Drupal\soda_scs_manager\Entity\SodaScsStackInterface|\Drupal\soda_scs_manager\Entity\SodaScsComponentInterface $entity
+   * @param \Drupal\soda_scs_manager\Entity\SodaScsComponentInterface $entity
    *   The SODa SCS entity.
    *
    * @return array
    *   Result information with the created component.
    */
-  public function createComponent(SodaScsStackInterface|SodaScsComponentInterface $entity): array {
+  public function createComponent(SodaScsComponentInterface $entity): array {
 
     $createExecPermissionsResults = [];
     $startExecPermissionsResults = [];

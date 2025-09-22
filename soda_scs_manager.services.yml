@@ -168,6 +168,7 @@ services:
       - '@soda_scs_manager.keycloak_service.user.actions'
       - '@soda_scs_manager.portainer_service.actions'
       - '@soda_scs_manager.project.helpers'
+      - '@soda_scs_manager.service.helpers'
       - '@soda_scs_manager.service_key.actions'
       - '@soda_scs_manager.snapshot.helpers'
       - '@soda_scs_manager.sql_service.actions'
@@ -175,7 +176,7 @@ services:
       - '@string_translation'
 
   soda_scs_manager.webprotege_component.actions:
-    class: Drupal\soda_scs_manager\ComponentActions\SodaScsWebprotegeActions
+    class: Drupal\soda_scs_manager\ComponentActions\SodaScsWebprotegeComponentActions
     arguments:
       - '@entity_type.manager'
       - '@logger.factory'

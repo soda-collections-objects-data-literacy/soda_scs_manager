@@ -17,10 +17,10 @@ use Drupal\Core\StringTranslation\TranslationInterface;
 use Drupal\Core\TypedData\Exception\MissingDataException;
 use Drupal\Core\Utility\Error;
 use Drupal\soda_scs_manager\Entity\SodaScsComponentInterface;
-use Drupal\soda_scs_manager\Entity\SodaScsStackInterface;
 use Drupal\soda_scs_manager\Entity\SodaScsSnapshotInterface;
 use Drupal\soda_scs_manager\Helpers\SodaScsComponentHelpers;
 use Drupal\soda_scs_manager\Helpers\SodaScsProjectHelpers;
+use Drupal\soda_scs_manager\Helpers\SodaScsServiceHelpers;
 use Drupal\soda_scs_manager\ValueObject\SodaScsSnapshotData;
 use Drupal\soda_scs_manager\Helpers\SodaScsKeycloakHelpers;
 use Drupal\soda_scs_manager\Helpers\SodaScsSnapshotHelpers;
@@ -185,6 +185,13 @@ class SodaScsWisskiComponentActions implements SodaScsComponentActionsInterface 
   protected SodaScsProjectHelpers $sodaScsProjectHelpers;
 
   /**
+   * The SCS Service helpers service.
+   *
+   * @var \Drupal\soda_scs_manager\Helpers\SodaScsServiceHelpers
+   */
+  protected SodaScsServiceHelpers $sodaScsServiceHelpers;
+
+  /**
    * The SCS database actions service.
    *
    * @var \Drupal\soda_scs_manager\SodaScsServiceActionsInterface
@@ -220,6 +227,7 @@ class SodaScsWisskiComponentActions implements SodaScsComponentActionsInterface 
     SodaScsServiceRequestInterface $sodaScsKeycloakServiceUserActions,
     SodaScsServiceRequestInterface $sodaScsPortainerServiceActions,
     SodaScsProjectHelpers $sodaScsProjectHelpers,
+    SodaScsServiceHelpers $sodaScsServiceHelpers,
     SodaScsServiceKeyActionsInterface $sodaScsServiceKeyActions,
     SodaScsSnapshotHelpers $sodaScsSnapshotHelpers,
     SodaScsServiceActionsInterface $sodaScsSqlServiceActions,
@@ -245,6 +253,7 @@ class SodaScsWisskiComponentActions implements SodaScsComponentActionsInterface 
     $this->sodaScsKeycloakServiceUserActions = $sodaScsKeycloakServiceUserActions;
     $this->sodaScsPortainerServiceActions = $sodaScsPortainerServiceActions;
     $this->sodaScsProjectHelpers = $sodaScsProjectHelpers;
+    $this->sodaScsServiceHelpers = $sodaScsServiceHelpers;
     $this->sodaScsServiceKeyActions = $sodaScsServiceKeyActions;
     $this->sodaScsSnapshotHelpers = $sodaScsSnapshotHelpers;
     $this->sodaScsSqlServiceActions = $sodaScsSqlServiceActions;
@@ -253,7 +262,7 @@ class SodaScsWisskiComponentActions implements SodaScsComponentActionsInterface 
   }
 
   /**
-   * Creates a WissKI component entity with necessary dependencies.
+   * Create WissKI component.
    *
    * This function handles the creation of a WissKI component by:
    * - Retrieving information about the connected SQL and
@@ -267,28 +276,39 @@ class SodaScsWisskiComponentActions implements SodaScsComponentActionsInterface 
    * - Create the Wisski component entity.
    * - Linking the component to its parent stack if necessary.
    *
-   * @param \Drupal\soda_scs_manager\Entity\SodaScsStackInterface|\Drupal\soda_scs_manager\Entity\SodaScsComponentInterface $entity
-   *   The parent SODa SCS stack or
-   *   component that this WissKI component belongs to.
+   * @param \Drupal\soda_scs_manager\Entity\SodaScsComponentInterface $component
+   *   The SODa SCS component entity.
    *
    * @return array
    *   The created WissKI component configuration.
    */
-  public function createComponent(SodaScsStackInterface|SodaScsComponentInterface $entity): array {
+  public function createComponent(SodaScsComponentInterface $component): array {
     try {
 
-      // The owner of the entity and all members of linked project
+      // Get some basic information about the WissKI component.
+      // Get the bundle info for the WissKI component.
+      $bundleInfos = $this->bundleInfo->getBundleInfo('soda_scs_component');
+      $wisskiComponentBundleInfo = $bundleInfos['soda_scs_wisski_component'] ?? NULL;
+      if (!$wisskiComponentBundleInfo) {
+        throw new \Exception('WissKI component bundle info not found');
+      }
+      // Get and set the machine name for the WissKI component.
+      $machineName = 'wisski-' . $component->get('machineName')->value;
+      $component->set('machineName', $machineName);
+
+      // Collect the project colleques and user groups.
+      // The owner of the component and all members of linked project
       // should have access to the WissKI instance. So we collect all
       // the project colleques for role assignment and the userGroups
       // for filesystem permissions groups.
       // Get the owner of the component.
-      $owner = $entity->getOwner();
+      $owner = $component->getOwner();
       $projectColleques[] = $owner;
       $userGroups = [];
 
       // Get the members of the linked projects.
       /** @var \Drupal\Core\Field\EntityReferenceFieldItemList $linkedProjectsItemList */
-      $linkedProjectsItemList = $entity->get('partOfProjects');
+      $linkedProjectsItemList = $component->get('partOfProjects');
       $linkedProjects = $linkedProjectsItemList->referencedEntities();
       /** @var \Drupal\soda_scs_manager\Entity\SodaScsProjectInterface $linkedProject */
       foreach ($linkedProjects as $linkedProject) {
@@ -299,65 +319,34 @@ class SodaScsWisskiComponentActions implements SodaScsComponentActionsInterface 
         $userGroups[] = $linkedProject->get('groupId')->value;
       }
 
-      // Get the bundle info for the WissKI component.
-      $wisskiComponentBundleInfo = $this->bundleInfo->getBundleInfo('soda_scs_component')['soda_scs_wisski_component'];
-
-      if (!$wisskiComponentBundleInfo) {
-        throw new \Exception('WissKI component bundle info not found');
-      }
-
-      // Get the machine name for the WissKI component.
-      $machineName = 'wisski-' . $entity->get('machineName')->value;
-
-      // Get information about the connected SQL and triplestore components.
-      // Get included SQL component if this is a stack (not a component)
-      // @todo This is legacy code and should be refactored.
-      if ($entity instanceof SodaScsStackInterface) {
-        // Retrieve the SQL component that this WissKI component will use.
-        $sqlComponent = $this->sodaScsStackHelpers->retrieveIncludedComponent($entity, 'soda_scs_sql_component');
-        if (!$sqlComponent) {
-          throw new \Exception('SQL component not found for WissKI component');
-        }
-        $dbName = $sqlComponent->get('machineName')->value;
-      }
-
+      // Service key.
       // Create service key for WissKI component if it does not exist.
       $keyProps = [
         'bundle'  => 'soda_scs_wisski_component',
         'bundleLabel' => $wisskiComponentBundleInfo['label'],
         'type'  => 'password',
-        'userId'  => $entity->getOwnerId(),
-        'username' => $entity->getOwner()->getDisplayName(),
+        'userId'  => $component->getOwnerId(),
+        'username' => $component->getOwner()->getDisplayName(),
       ];
       $wisskiComponentServiceKeyEntity = $this->sodaScsServiceKeyActions->getServiceKey($keyProps) ?? $this->sodaScsServiceKeyActions->createServiceKey($keyProps);
       $wisskiComponentServiceKeyPassword = $wisskiComponentServiceKeyEntity->get('servicePassword')->value ?? throw new \Exception('WissKI service key password not found.');
 
-      // Create the WissKI component entity.
-      /** @var \Drupal\soda_scs_manager\Entity\SodaScsComponentInterface $wisskiComponent */
-      $wisskiComponent = $this->entityTypeManager->getStorage('soda_scs_component')->create(
-        [
-          'bundle' => 'soda_scs_wisski_component',
-          'label' => $entity->get('label')->value,
-          'machineName' => $machineName,
-          'owner'  => $entity->getOwner(),
-          'description' => $wisskiComponentBundleInfo['description'],
-          'imageUrl' => $wisskiComponentBundleInfo['imageUrl'],
-          'flavours' => $entity->get('flavours')->value,
-          'health' => 'Unknown',
-          'partOfProjects' => $entity->get('partOfProjects'),
-        ]
-      );
-
       // Add the service key to the WissKI component entity.
-      $wisskiComponent->serviceKey[] = $wisskiComponentServiceKeyEntity;
+      $component->serviceKey[] = $wisskiComponentServiceKeyEntity;
 
-      // If it is a stack, we need to retrieve the included components.
-      if ($entity instanceof SodaScsStackInterface) {
-        // Set the WissKI type to stack.
-        $wisskiType = 'stack';
+      // Get the connected components if any.
+      // Get information about the connected SQL and triplestore components.
+      $resolvedComponents = $this->sodaScsComponentHelpers->resolveConnectedComponents($component);
+      /** @var \Drupal\soda_scs_manager\Entity\SodaScsComponentInterface|null $sqlComponent */
+      $sqlComponent = $resolvedComponents['sql'];
 
-        // Get the SQL component.
-        $sqlComponent = $this->sodaScsStackHelpers->retrieveIncludedComponent($entity, 'soda_scs_sql_component');
+      /** @var \Drupal\soda_scs_manager\Entity\SodaScsComponentInterface|null $triplestoreComponent */
+      $triplestoreComponent = $resolvedComponents['triplestore'];
+
+      // SQL connection if any.
+      if ($sqlComponent) {
+        // Set the database name.
+        $dbName = $sqlComponent->get('machineName')->value;
 
         // Get the service key for the SQL component.
         $sqlKeyProps = [
@@ -370,8 +359,12 @@ class SodaScsWisskiComponentActions implements SodaScsComponentActionsInterface 
         $sqlComponentServiceKeyEntity = $this->sodaScsServiceKeyActions->getServiceKey($sqlKeyProps) ?? throw new \Exception('SQL service key not found.');
         $sqlComponentServiceKeyPassword = $sqlComponentServiceKeyEntity->get('servicePassword')->value ?? throw new \Exception('SQL service key password not found.');
 
-        // Get the triplestore component.
-        $triplestoreComponent = $this->sodaScsStackHelpers->retrieveIncludedComponent($entity, 'soda_scs_triplestore_component');
+      }
+
+      // Triplestore connection if any.
+      if ($triplestoreComponent) {
+
+        $triplestoreComponentMachineName = $triplestoreComponent->get('machineName')->value;
 
         // Get the password for the triplestore component.
         $triplestoreKeyProps = [
@@ -393,53 +386,44 @@ class SodaScsWisskiComponentActions implements SodaScsComponentActionsInterface 
         $triplestoreComponentServiceTokenEntity = $this->sodaScsServiceKeyActions->getServiceKey($triplestoreTokenProps) ?? throw new \Exception('Triplestore service token not found.');
         $triplestoreComponentServiceTokenString = $triplestoreComponentServiceTokenEntity->get('servicePassword')->value ?? throw new \Exception('Triplestore service token not found.');
 
-        // Get the flavours for the WissKI component.
-        // @todo Implement the flavour logic.
-        $flavoursList = $wisskiComponent->get('flavours')->value;
+      }
 
-        // Initialize the flavours string.
-        $flavours = '';
+      // Get the flavours for the WissKI component.
+      // @todo Implement the flavour logic.
+      $flavoursList = $component->get('flavours')->value;
 
-        // Process flavours array into a space-separated string.
-        if (is_array($flavoursList)) {
-          // Extract values from each flavour entry.
-          foreach ($flavoursList as $flavour) {
-            if (isset($flavour['value'])) {
-              $flavoursArray[] = $flavour['value'];
-            }
-          }
+      // Initialize the flavours string.
+      $flavours = '';
 
-          // Join flavours with spaces if any were found.
-          if (!empty($flavours)) {
-            $flavours = implode(' ', $flavoursArray);
+      // Process flavours array into a space-separated string.
+      if (is_array($flavoursList)) {
+        // Extract values from each flavour entry.
+        foreach ($flavoursList as $flavour) {
+          if (isset($flavour['value'])) {
+            $flavoursArray[] = $flavour['value'];
           }
         }
 
-      }
-      else {
-        // If it is not a stack we set the values to empty strings.
-        $dbName = '';
-        $wisskiComponentServiceKeyPassword = '';
-        $sqlComponentServiceKeyPassword = '';
-        $triplestoreComponentServiceKeyPassword = '';
-        $triplestoreComponentServiceTokenString = '';
-        $flavours = '';
-        $wisskiType = 'component';
+        // Join flavours with spaces if any were found.
+        if (!empty($flavours)) {
+          $flavours = implode(' ', $flavoursArray);
+        }
       }
 
       // Create random openid connect client secret.
       $openidConnectClientSecret = $this->sodaScsComponentHelpers->createSecret();
 
       // Create openid connect client.
+      $wisskiInstanceSettings = $this->sodaScsServiceHelpers->initWisskiInstanceSettings();
+      $wisskiInstanceUrl = str_replace('{instanceId}', $machineName, $wisskiInstanceSettings['baseUrl']);
       $keycloakBuildCreateClientRequest = $this->sodaScsKeycloakServiceClientActions->buildCreateRequest([
-        // @todo Use url of component.
         'clientId' => $machineName,
-        'name' => $entity->get('label')->value,
+        'name' => $component->get('label')->value,
         'description' => 'Change me',
         'token' => $this->sodaScsKeycloakHelpers->getKeycloakToken(),
-        'rootUrl' => 'https://' . $machineName . '.wisski.scs.sammlungen.io',
-        'adminUrl' => 'https://' . $machineName . '.wisski.scs.sammlungen.io',
-        'logoutUrl' => 'https://' . $machineName . '.wisski.scs.sammlungen.io/logout',
+        'rootUrl' => $wisskiInstanceUrl,
+        'adminUrl' => $wisskiInstanceUrl,
+        'logoutUrl' => $wisskiInstanceUrl . '/logout',
         // @todo Use secret from service key.
         'secret' => $openidConnectClientSecret,
       ]);
@@ -496,7 +480,7 @@ class SodaScsWisskiComponentActions implements SodaScsComponentActionsInterface 
         $keycloakWisskiInstanceAdminGroup = reset($keycloakWisskiInstanceAdminGroup);
       }
       $uuidsOfwisskiAdmins = [];
-      $uuidsOfwisskiAdmins[] = $this->sodaScsProjectHelpers->getUserSsoUuid($wisskiComponent->getOwner());
+      $uuidsOfwisskiAdmins[] = $this->sodaScsProjectHelpers->getUserSsoUuid($component->getOwner());
       foreach ($projectColleques as $member) {
         $uuidsOfwisskiAdmins[] = $this->sodaScsProjectHelpers->getUserSsoUuid($member);
       }
@@ -522,23 +506,24 @@ class SodaScsWisskiComponentActions implements SodaScsComponentActionsInterface 
 
       //
       // Create the WissKI instance at portainer.
+      // @todo Replace "wisski" at one point of the domain name.
       //
       $requestParams = [
-        'dbName' => $dbName,
+        'dbName' => $dbName ?? '',
         'flavours' => $flavours,
         'keycloakAdminGroup' => $keycloakWisskiInstanceAdminGroupName,
         'keycloakUserGroup' => $keycloakWisskiInstanceUserGroupName,
         'machineName' => $machineName,
         'openidConnectClientSecret' => $openidConnectClientSecret,
         'userGroups' => $userGroups ? implode(' ', $userGroups) : '',
-        'sqlServicePassword' => $sqlComponentServiceKeyPassword,
-        'triplestoreServicePassword' => $triplestoreComponentServiceKeyPassword,
-        'triplestoreServiceToken' => $triplestoreComponentServiceTokenString,
-        'tsRepository' => $triplestoreComponent->get('machineName')->value,
-        'userId' => $wisskiComponent->getOwnerId(),
-        'username' => $wisskiComponent->getOwner()->getDisplayName(),
+        'sqlServicePassword' => $sqlComponentServiceKeyPassword ?? '',
+        'triplestoreServicePassword' => $triplestoreComponentServiceKeyPassword ?? '',
+        'triplestoreServiceToken' => $triplestoreComponentServiceTokenString ?? '',
+        'tsRepository' => $triplestoreComponentMachineName ?? '',
+        'userId' => $component->getOwnerId(),
+        'username' => $component->getOwner()->getDisplayName(),
         'wisskiServicePassword' => $wisskiComponentServiceKeyPassword,
-        'wisskiType' => $wisskiType,
+        'wisskiType' => ($sqlComponent && $triplestoreComponent) ? 'bundled' : 'single',
       ];
       // Create the WissKI instance at portainer.
       $portainerCreateRequest = $this->sodaScsPortainerServiceActions->buildCreateRequest($requestParams);
@@ -622,20 +607,20 @@ class SodaScsWisskiComponentActions implements SodaScsComponentActionsInterface 
     $containerId = $dockerGetAllContainersResponsePayload[0]['Id'];
 
     // Set the external ID and container name and id.
-    $wisskiComponent->set('externalId', $portainerResponsePayload['Id']);
-    $wisskiComponent->set('containerId', $containerId);
-    $wisskiComponent->set('containerName', $containerName);
-
+    $component->set('externalId', $portainerResponsePayload['Id']);
+    $component->set('containerId', $containerId);
+    $component->set('containerName', $containerName);
+    $component->save();
     // Save the component.
-    $wisskiComponent->save();
+    $component->save();
 
-    $wisskiComponentServiceKeyEntity->scsComponent[] = $wisskiComponent->id();
+    $wisskiComponentServiceKeyEntity->scsComponent[] = $component->id();
     $wisskiComponentServiceKeyEntity->save();
 
     return [
       'message' => 'Created WissKI component.',
       'data' => [
-        'wisskiComponent' => $wisskiComponent,
+        'wisskiComponent' => $component,
         'portainerCreateRequestResult' => $portainerCreateRequestResult,
 
       ],
@@ -1330,90 +1315,6 @@ class SodaScsWisskiComponentActions implements SodaScsComponentActionsInterface 
         error: $e->getMessage(),
       );
     }
-  }
-
-  /**
-   * Recursively copies a directory.
-   *
-   * @param string $source
-   *   Source directory path.
-   * @param string $destination
-   *   Destination directory path.
-   */
-  private function copyDirectoryRecursively(string $source, string $destination): void {
-    $source = rtrim($source, '/');
-    $destination = rtrim($destination, '/');
-    if (!is_dir($source)) {
-      throw new \RuntimeException('Source directory does not exist: ' . $source);
-    }
-    if (!is_dir($destination) && !mkdir($destination, 0755, TRUE) && !is_dir($destination)) {
-      throw new \RuntimeException('Failed to create destination directory: ' . $destination);
-    }
-    $iterator = new \RecursiveIteratorIterator(
-      new \RecursiveDirectoryIterator($source, \RecursiveDirectoryIterator::SKIP_DOTS),
-      \RecursiveIteratorIterator::SELF_FIRST
-    );
-    foreach ($iterator as $item) {
-      $absolutePath = $item->getPathname();
-      $relative = ltrim(substr($absolutePath, strlen($source)), DIRECTORY_SEPARATOR);
-      $targetPath = $destination . DIRECTORY_SEPARATOR . $relative;
-      if ($item->isDir()) {
-        if (!is_dir($targetPath) && !mkdir($targetPath, 0755, TRUE) && !is_dir($targetPath)) {
-          throw new \RuntimeException('Failed to create directory: ' . $targetPath);
-        }
-      }
-      else {
-        if (!copy($item->getPathname(), $targetPath)) {
-          throw new \RuntimeException('Failed to copy file to: ' . $targetPath);
-        }
-      }
-    }
-  }
-
-  /**
-   * Recursively removes a directory or file.
-   *
-   * @param string $path
-   *   Path to remove.
-   */
-  private function removeDirectoryRecursively(string $path): void {
-    if (!file_exists($path)) {
-      return;
-    }
-    if (is_file($path) || is_link($path)) {
-      @unlink($path);
-      return;
-    }
-    $iterator = new \RecursiveIteratorIterator(
-      new \RecursiveDirectoryIterator($path, \RecursiveDirectoryIterator::SKIP_DOTS),
-      \RecursiveIteratorIterator::CHILD_FIRST
-    );
-    foreach ($iterator as $fileinfo) {
-      if ($fileinfo->isDir()) {
-        @rmdir($fileinfo->getRealPath());
-      }
-      else {
-        @unlink($fileinfo->getRealPath());
-      }
-    }
-    @rmdir($path);
-  }
-
-  /**
-   * Checks whether a directory is empty.
-   *
-   * @param string $dir
-   *   Directory path.
-   *
-   * @return bool
-   *   TRUE if empty, FALSE otherwise.
-   */
-  private function directoryIsEmpty(string $dir): bool {
-    if (!is_dir($dir)) {
-      return TRUE;
-    }
-    $files = scandir($dir) ?: [];
-    return count($files) <= 2;
   }
 
 }

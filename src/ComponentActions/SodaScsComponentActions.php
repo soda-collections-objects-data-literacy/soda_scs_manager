@@ -6,12 +6,20 @@ use Drupal\Core\DependencyInjection\DependencySerializationTrait;
 use Drupal\Core\StringTranslation\StringTranslationTrait;
 use Drupal\Core\StringTranslation\TranslationInterface;
 use Drupal\soda_scs_manager\Entity\SodaScsComponentInterface;
-use Drupal\soda_scs_manager\Entity\SodaScsStackInterface;
 use Drupal\soda_scs_manager\Entity\SodaScsSnapshotInterface;
 use Drupal\soda_scs_manager\ValueObject\SodaScsResult;
 
 /**
- * Handles the communication with the SCS user manager daemon.
+ * Orchestrates all CRUD actions to SODa SCS components.
+ *
+ * A component is a single application.
+ * It could be:
+ *   - an instance of a bare WissKI system
+ *     without a database and a triplestore,
+ *   - a database in MariaDB
+ *   - a repository in OpenGDB
+ *   - an account of Nextcloud, Jupyterhub or WebProtégé.
+ *   - a folder with user permissions on the filesystem.
  */
 class SodaScsComponentActions implements SodaScsComponentActionsInterface {
 
@@ -66,18 +74,17 @@ class SodaScsComponentActions implements SodaScsComponentActionsInterface {
   }
 
   /**
-   * Creates a stack.
+   * Creates a Component.
    *
-   * A stack consists of one or more components.
-   * We sort by type.
+   * Delegates the creation to the appropriate component actions service.
    *
-   * @param \Drupal\soda_scs_manager\Entity\SodaScsStackInterface|Drupal\soda_scs_manager\Entity\SodaScsComponentInterface $entity
+   * @param \Drupal\soda_scs_manager\Entity\SodaScsComponentInterface $entity
    *   The SODa SCS Component entity.
    *
    * @return array
    *   The result of the request.
    */
-  public function createComponent(SodaScsStackInterface|SodaScsComponentInterface $entity): array {
+  public function createComponent(SodaScsComponentInterface $entity): array {
     switch ($entity->bundle()) {
       case 'soda_scs_filesystem_component':
         return $this->sodaScsFilesystemComponentActions->createComponent($entity);
@@ -111,7 +118,7 @@ class SodaScsComponentActions implements SodaScsComponentActionsInterface {
   }
 
   /**
-   * Read a stack.
+   * Read a component.
    *
    * @param \Drupal\soda_scs_manager\Entity\SodaScsComponentInterface $component
    *   The component.
@@ -121,15 +128,15 @@ class SodaScsComponentActions implements SodaScsComponentActionsInterface {
    */
   public function getComponent($component): array {
     return [
-      'message' => 'Component read',
+      'message' => '',
       'data' => [],
-      'error' => NULL,
-      'success' => TRUE,
+      'error' => 'Not yet implemented.',
+      'success' => FALSE,
     ];
   }
 
   /**
-   * Updates a stack.
+   * Updates a component.
    *
    * @param \Drupal\soda_scs_manager\Entity\SodaScsComponentInterface $component
    *   The component.
@@ -151,7 +158,7 @@ class SodaScsComponentActions implements SodaScsComponentActionsInterface {
   }
 
   /**
-   * Deletes a stack.
+   * Deletes a component.
    *
    * @param \Drupal\soda_scs_manager\Entity\SodaScsComponentInterface $component
    *   The component.

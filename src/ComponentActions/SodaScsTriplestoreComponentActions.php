@@ -14,7 +14,6 @@ use Drupal\Core\StringTranslation\TranslationInterface;
 use Drupal\Core\TypedData\Exception\MissingDataException;
 use Drupal\Core\Utility\Error;
 use Drupal\soda_scs_manager\Entity\SodaScsComponentInterface;
-use Drupal\soda_scs_manager\Entity\SodaScsStackInterface;
 use Drupal\soda_scs_manager\Entity\SodaScsSnapshotInterface;
 use Drupal\soda_scs_manager\Helpers\SodaScsSnapshotHelpers;
 use Drupal\soda_scs_manager\RequestActions\SodaScsOpenGdbRequestInterface;
@@ -128,13 +127,13 @@ class SodaScsTriplestoreComponentActions implements SodaScsComponentActionsInter
   /**
    * Create Triplestore Component.
    *
-   * @param \Drupal\soda_scs_manager\Entity\SodaScsStackInterface|\Drupal\soda_scs_manager\Entity\SodaScsComponentInterface $entity
+   * @param \Drupal\soda_scs_manager\Entity\SodaScsComponentInterface $entity
    *   The SODa SCS entity.
    *
    * @return array
    *   The created component.
    */
-  public function createComponent(SodaScsStackInterface|SodaScsComponentInterface $entity): array {
+  public function createComponent(SodaScsComponentInterface $entity): array {
     try {
       $triplestoreComponentBundleInfo = $this->entityTypeBundleInfo->getBundleInfo('soda_scs_component')['soda_scs_triplestore_component'];
 

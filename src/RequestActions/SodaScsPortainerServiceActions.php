@@ -233,7 +233,7 @@ class SodaScsPortainerServiceActions implements SodaScsServiceRequestInterface {
 
     $trustedHost = str_replace('.', '\.', $instanceDomainName);
 
-    if ($requestParams['wisskiType'] == 'stack') {
+    if ($requestParams['wisskiType'] == 'bundled') {
       $repositoryURL = 'https://github.com/soda-collections-objects-data-literacy/wisski-base-stack.git';
     }
     else {

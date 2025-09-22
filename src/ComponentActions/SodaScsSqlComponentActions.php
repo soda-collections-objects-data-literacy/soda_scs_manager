@@ -16,7 +16,6 @@ use Drupal\Core\StringTranslation\TranslationInterface;
 use Drupal\Core\TypedData\Exception\MissingDataException;
 use Drupal\Core\Utility\Error;
 use Drupal\soda_scs_manager\Entity\SodaScsComponentInterface;
-use Drupal\soda_scs_manager\Entity\SodaScsStackInterface;
 use Drupal\soda_scs_manager\Entity\SodaScsSnapshotInterface;
 use Drupal\soda_scs_manager\Exception\SodaScsSqlServiceException;
 use Drupal\soda_scs_manager\Helpers\SodaScsComponentHelpers;
@@ -183,13 +182,13 @@ class SodaScsSqlComponentActions implements SodaScsComponentActionsInterface {
   /**
    * Create SQL.
    *
-   * @param \Drupal\soda_scs_manager\Entity\SodaScsStackInterface|\Drupal\soda_scs_manager\Entity\SodaScsComponentInterface $entity
+   * @param \Drupal\soda_scs_manager\Entity\SodaScsComponentInterface $entity
    *   The entity to create.
    *
    * @return array
    *   The result array with the created component.
    */
-  public function createComponent(SodaScsStackInterface|SodaScsComponentInterface $entity): array {
+  public function createComponent(SodaScsComponentInterface $entity): array {
     try {
       $sqlComponentBundleInfo = $this->entityTypeBundleInfo->getBundleInfo('soda_scs_component')['soda_scs_sql_component'];
 

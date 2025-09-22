@@ -13,13 +13,12 @@ use Drupal\Core\StringTranslation\StringTranslationTrait;
 use Drupal\Core\StringTranslation\TranslationInterface;
 use Drupal\soda_scs_manager\Entity\SodaScsComponentInterface;
 use Drupal\soda_scs_manager\Entity\SodaScsSnapshotInterface;
-use Drupal\soda_scs_manager\Entity\SodaScsStackInterface;
 use Drupal\soda_scs_manager\ValueObject\SodaScsResult;
 
 /**
  * WebProtégé component actions with CRUD-only behavior.
  */
-final class SodaScsWebprotegeActions implements SodaScsComponentActionsInterface {
+final class SodaScsWebprotegeComponentActions implements SodaScsComponentActionsInterface {
 
   use DependencySerializationTrait;
   use StringTranslationTrait;
@@ -56,9 +55,15 @@ final class SodaScsWebprotegeActions implements SodaScsComponentActionsInterface
   }
 
   /**
-   * {@inheritdoc}
+   * Create WebProtégé Component.
+   *
+   * @param \Drupal\soda_scs_manager\Entity\SodaScsComponentInterface $entity
+   *   The SODa SCS entity.
+   *
+   * @return array
+   *   The created component.
    */
-  public function createComponent(SodaScsStackInterface|SodaScsComponentInterface $entity): array {
+  public function createComponent(SodaScsComponentInterface $entity): array {
     if (!$entity instanceof SodaScsComponentInterface) {
       return [
         'message' => $this->t('Creating a WebProtégé component from a stack is not supported.'),

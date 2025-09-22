@@ -101,7 +101,10 @@ class SodaScsManagerServiceController extends ControllerBase {
 
     switch ($soda_scs_stack->bundle()) {
       case 'soda_scs_wisski_stack':
-        $url = str_replace('{instanceId}', $soda_scs_stack->get('machineName')->value, $wisskiSettings['baseUrl']);
+        // @todo: this is a stupid hack, replace it with a proper solution.
+        $machineName = $soda_scs_stack->get('machineName')->value;
+        $machineName = preg_replace('/^stack-/', 'wisski-', $machineName, 1);
+        $url = str_replace('{instanceId}', $machineName, $wisskiSettings['baseUrl']);
         break;
 
       case 'soda_scs_jupyter_stack':
@@ -117,4 +120,5 @@ class SodaScsManagerServiceController extends ControllerBase {
     }
     return new TrustedRedirectResponse($url);
   }
+
 }

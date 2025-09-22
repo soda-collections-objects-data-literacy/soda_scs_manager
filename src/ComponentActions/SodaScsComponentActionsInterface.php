@@ -4,7 +4,6 @@ namespace Drupal\soda_scs_manager\ComponentActions;
 
 use Drupal\soda_scs_manager\Entity\SodaScsComponentInterface;
 use Drupal\soda_scs_manager\Entity\SodaScsSnapshotInterface;
-use Drupal\soda_scs_manager\Entity\SodaScsStackInterface;
 use Drupal\soda_scs_manager\ValueObject\SodaScsResult;
 
 /**
@@ -15,8 +14,8 @@ interface SodaScsComponentActionsInterface {
   /**
    * Create SODa SCS Component.
    *
-   * @param \Drupal\soda_scs_manager\Entity\SodaScsStackInterface|\Drupal\soda_scs_manager\Entity\SodaScsComponentInterface $entity
-   *   The SODa SCS entity.
+   * @param \Drupal\soda_scs_manager\Entity\SodaScsComponentInterface $entity
+   *   The SODa SCS component.
    *
    * @return array{
    *   message: string,
@@ -27,7 +26,7 @@ interface SodaScsComponentActionsInterface {
    *   }
    *   Result information with the created component.
    */
-  public function createComponent(SodaScsStackInterface|SodaScsComponentInterface $entity): array;
+  public function createComponent(SodaScsComponentInterface $entity): array;
 
   /**
    * Create SODa SCS Snapshot.

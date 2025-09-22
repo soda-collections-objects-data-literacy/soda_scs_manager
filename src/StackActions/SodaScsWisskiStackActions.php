@@ -254,8 +254,24 @@ class SodaScsWisskiStackActions implements SodaScsStackActionsInterface {
     $stack->set('description', $bundleinfo['description']);
     $stack->set('imageUrl', $bundleinfo['imageUrl']);
 
+    // We need to parse the stack into components by creating a dummy entity
+    // with basic properties (label, machineName, owner, partOfProjects)
+    // and then calling the createComponent method for each component.
+    // We start with the SQL component.
+    $basicComponentProperties = [
+      'label' => $stack->get('label')->value,
+      'machineName' => $stack->get('machineName')->value,
+      'owner' => $stack->getOwnerId(),
+      'partOfProjects' => $stack->get('partOfProjects'),
+      'health' => 'Unknown',
+    ];
     try {
-      $sqlComponentCreateResult = $this->sodaScsSqlComponentActions->createComponent($stack);
+      // Create the SQL component.
+      $sqlComponent = $this->entityTypeManager->getStorage('soda_scs_component')->create([
+        'bundle' => 'soda_scs_sql_component',
+        ...$basicComponentProperties,
+      ]);
+      $sqlComponentCreateResult = $this->sodaScsSqlComponentActions->createComponent($sqlComponent);
 
       if (!$sqlComponentCreateResult['success']) {
         return [
@@ -294,7 +310,12 @@ class SodaScsWisskiStackActions implements SodaScsStackActionsInterface {
     }
 
     try {
-      $triplestoreComponentCreateResult = $this->sodaScsTriplestoreComponentActions->createComponent($stack);
+      // Create the triplestore component.
+      $triplestoreComponent = $this->entityTypeManager->getStorage('soda_scs_component')->create([
+        'bundle' => 'soda_scs_triplestore_component',
+        ...$basicComponentProperties,
+      ]);
+      $triplestoreComponentCreateResult = $this->sodaScsTriplestoreComponentActions->createComponent($triplestoreComponent);
       if (!$triplestoreComponentCreateResult['success']) {
         return [
           'message' => 'Could not create triplestore component.',
@@ -334,7 +355,14 @@ class SodaScsWisskiStackActions implements SodaScsStackActionsInterface {
     }
 
     try {
-      $wisskiComponentCreateResult = $this->sodaScsWisskiComponentActions->createComponent($stack);
+      // Create the WissKI component.
+      $wisskiComponent = $this->entityTypeManager->getStorage('soda_scs_component')->create([
+        ...$basicComponentProperties,
+        'bundle' => 'soda_scs_wisski_component',
+        'connectedComponents' => [$sqlComponent->id(), $triplestoreComponent->id()],
+        'flavours' => $stack->get('flavours')->value,
+      ]);
+      $wisskiComponentCreateResult = $this->sodaScsWisskiComponentActions->createComponent($wisskiComponent);
       if (!$wisskiComponentCreateResult['success']) {
         return [
           'message' => 'Could not create WissKI component.',
