@@ -37,6 +37,11 @@ entity.soda_scs_component.edit_form:
     _title: 'Edit ScsComponent'
   requirements:
     _permission: 'soda scs manager user'
+    _custom_access: '\Drupal\soda_scs_manager\Access\SodaScsComponentLinksTasksAccessControlHandler::accessEditForm'
+  options:
+    parameters:
+      soda_scs_component:
+        type: entity:soda_scs_component
 
 entity.soda_scs_component.delete_form:
   path: '/soda-scs-manager/component/{soda_scs_component}/delete'
@@ -49,6 +54,7 @@ entity.soda_scs_component.delete_form:
         type: entity:soda_scs_component
   requirements:
     _permission: 'soda scs manager user'
+    _custom_access: '\Drupal\soda_scs_manager\Access\SodaScsComponentLinksTasksAccessControlHandler::accessDeleteForm'
 
 entity.soda_scs_component.collection:
   path: '/soda-scs-manager/components'
@@ -65,6 +71,7 @@ entity.soda_scs_component.snapshot:
     _title: 'Create Snapshot'
   requirements:
     _permission: 'soda scs manager user'
+    _custom_access: '\Drupal\soda_scs_manager\Access\SodaScsComponentLinksTasksAccessControlHandler::accessSnapshotForm'
   options:
     parameters:
       soda_scs_component:
@@ -261,6 +268,11 @@ entity.soda_scs_stack.edit_form:
     _title: 'Edit Stack'
   requirements:
     _permission: 'soda scs manager user'
+    _custom_access: '\Drupal\soda_scs_manager\Access\SodaScsStackLinksTasksAccessControlHandler::accessEditForm'
+  options:
+    parameters:
+      soda_scs_stack:
+        type: entity:soda_scs_stack
 
 entity.soda_scs_stack.delete_form:
   path: '/soda-scs-manager/stack/{soda_scs_stack}/delete'
@@ -273,6 +285,7 @@ entity.soda_scs_stack.delete_form:
         type: entity:soda_scs_stack
   requirements:
     _permission: 'soda scs manager user'
+    _custom_access: '\Drupal\soda_scs_manager\Access\SodaScsStackLinksTasksAccessControlHandler::accessDeleteForm'
 
 
 entity.soda_scs_stack.collection:
@@ -290,6 +303,7 @@ entity.soda_scs_stack.snapshot:
     _title: 'Create Snapshot'
   requirements:
     _permission: 'soda scs manager user'
+    _custom_access: '\Drupal\soda_scs_manager\Access\SodaScsStackLinksTasksAccessControlHandler::accessSnapshotForm'
   options:
     parameters:
       soda_scs_stack:

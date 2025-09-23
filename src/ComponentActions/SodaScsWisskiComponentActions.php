@@ -26,6 +26,7 @@ use Drupal\soda_scs_manager\Helpers\SodaScsKeycloakHelpers;
 use Drupal\soda_scs_manager\Helpers\SodaScsSnapshotHelpers;
 use Drupal\soda_scs_manager\Helpers\SodaScsStackHelpers;
 use Drupal\soda_scs_manager\Helpers\SodaScsContainerHelpers;
+use Drupal\soda_scs_manager\Helpers\SodaScsHelpers;
 use Drupal\soda_scs_manager\RequestActions\SodaScsExecRequestInterface;
 use Drupal\soda_scs_manager\RequestActions\SodaScsRunRequestInterface;
 use Drupal\soda_scs_manager\RequestActions\SodaScsServiceRequestInterface;
@@ -128,6 +129,13 @@ class SodaScsWisskiComponentActions implements SodaScsComponentActionsInterface 
   protected SodaScsContainerHelpers $sodaScsContainerHelpers;
 
   /**
+   * The SCS helpers service.
+   *
+   * @var \Drupal\soda_scs_manager\Helpers\SodaScsHelpers
+   */
+  protected SodaScsHelpers $sodaScsHelpers;
+
+  /**
    * The SCS snapshot helpers service.
    *
    * @var \Drupal\soda_scs_manager\Helpers\SodaScsSnapshotHelpers
@@ -219,6 +227,7 @@ class SodaScsWisskiComponentActions implements SodaScsComponentActionsInterface 
     FileSystemInterface $fileSystem,
     SodaScsComponentHelpers $sodaScsComponentHelpers,
     SodaScsContainerHelpers $sodaScsContainerHelpers,
+    SodaScsHelpers $sodaScsHelpers,
     SodaScsExecRequestInterface $sodaScsDockerExecServiceActions,
     SodaScsRunRequestInterface $sodaScsDockerRunServiceActions,
     SodaScsKeycloakHelpers $sodaScsKeycloakHelpers,
@@ -242,9 +251,10 @@ class SodaScsWisskiComponentActions implements SodaScsComponentActionsInterface 
     $this->httpClient = $httpClient;
     $this->logger = $loggerFactory->get('soda_scs_manager');
     $this->messenger = $messenger;
-    $this->sodaScsComponentHelpers = $sodaScsComponentHelpers;
     $this->fileSystem = $fileSystem;
+    $this->sodaScsComponentHelpers = $sodaScsComponentHelpers;
     $this->sodaScsContainerHelpers = $sodaScsContainerHelpers;
+    $this->sodaScsHelpers = $sodaScsHelpers;
     $this->sodaScsDockerExecServiceActions = $sodaScsDockerExecServiceActions;
     $this->sodaScsDockerRunServiceActions = $sodaScsDockerRunServiceActions;
     $this->sodaScsKeycloakHelpers = $sodaScsKeycloakHelpers;
@@ -253,6 +263,7 @@ class SodaScsWisskiComponentActions implements SodaScsComponentActionsInterface 
     $this->sodaScsKeycloakServiceUserActions = $sodaScsKeycloakServiceUserActions;
     $this->sodaScsPortainerServiceActions = $sodaScsPortainerServiceActions;
     $this->sodaScsProjectHelpers = $sodaScsProjectHelpers;
+    $this->sodaScsStackHelpers = $sodaScsStackHelpers;
     $this->sodaScsServiceHelpers = $sodaScsServiceHelpers;
     $this->sodaScsServiceKeyActions = $sodaScsServiceKeyActions;
     $this->sodaScsSnapshotHelpers = $sodaScsSnapshotHelpers;
@@ -859,9 +870,13 @@ class SodaScsWisskiComponentActions implements SodaScsComponentActionsInterface 
    *   The result array of the created component.
    */
   public function deleteComponent(SodaScsComponentInterface $component): array {
-    $queryParams['externalId'] = $component->get('externalId')->value;
+    $requestParams = [
+      'routeParams' => [
+        'stackId' => $component->get('externalId')->value,
+      ],
+    ];
     try {
-      $portainerGetRequest = $this->sodaScsPortainerServiceActions->buildGetRequest($queryParams);
+      $portainerGetRequest = $this->sodaScsPortainerServiceActions->buildGetRequest($requestParams);
       $portainerGetResponse = $this->sodaScsPortainerServiceActions->makeRequest($portainerGetRequest);
       if (!$portainerGetResponse['success']) {
         return [
@@ -901,7 +916,7 @@ class SodaScsWisskiComponentActions implements SodaScsComponentActionsInterface 
       ];
     }
     try {
-      $portainerDeleteRequest = $this->sodaScsPortainerServiceActions->buildDeleteRequest($queryParams);
+      $portainerDeleteRequest = $this->sodaScsPortainerServiceActions->buildDeleteRequest($requestParams);
     }
     catch (MissingDataException $e) {
       Error::logException(
@@ -927,13 +942,13 @@ class SodaScsWisskiComponentActions implements SodaScsComponentActionsInterface 
     }
     try {
       /** @var array $portainerResponse */
-      $requestResult = $this->sodaScsPortainerServiceActions->makeRequest($portainerDeleteRequest);
-      if (!$requestResult['success']) {
+      $portainerDeleteResponse = $this->sodaScsPortainerServiceActions->makeRequest($portainerDeleteRequest);
+      if (!$portainerDeleteResponse['success']) {
         Error::logException(
           $this->logger,
-          new \Exception($requestResult['error']),
+          new \Exception($portainerDeleteResponse['error']),
           'Could not delete WissKI stack at portainer: @message',
-          ['@message' => $requestResult['error']],
+          ['@message' => $portainerDeleteResponse['error']],
           LogLevel::ERROR
         );
         $this->messenger->addError($this->t("Could not delete WissKI stack at portainer, but will delete the component anyway. See logs for more details."));
@@ -961,7 +976,7 @@ class SodaScsWisskiComponentActions implements SodaScsComponentActionsInterface 
         return [
           'message' => 'Cannot get WissKI component client uuid at keycloak.',
           'data' => [
-            'portainerResponse' => $requestResult,
+            'portainerResponse' => $portainerDeleteResponse,
             'keycloakClientResponse' => $keycloakMakeGetAllClientResponse,
           ],
         ];
@@ -983,7 +998,7 @@ class SodaScsWisskiComponentActions implements SodaScsComponentActionsInterface 
         return [
           'message' => 'Cannot delete WissKI component at keycloak.',
           'data' => [
-            'portainerResponse' => $requestResult,
+            'portainerResponse' => $portainerDeleteResponse,
             'keycloakClientResponse' => $keycloakMakeDeleteClientResponse,
             'keycloakAdminGroupResponse' => NULL,
             'keycloakUserGroupResponse' => NULL,
@@ -1032,7 +1047,7 @@ class SodaScsWisskiComponentActions implements SodaScsComponentActionsInterface 
         return [
           'message' => 'Cannot delete WissKI component admin group at keycloak.',
           'data' => [
-            'portainerResponse' => $requestResult,
+            'portainerResponse' => $portainerDeleteResponse,
             'keycloakClientResponse' => $keycloakMakeDeleteClientResponse,
             'keycloakAdminGroupResponse' => $keycloakMakeDeleteAdminGroupResponse,
             'keycloakUserGroupResponse' => NULL,
@@ -1057,7 +1072,7 @@ class SodaScsWisskiComponentActions implements SodaScsComponentActionsInterface 
         return [
           'message' => 'Cannot delete WissKI component user group at keycloak.',
           'data' => [
-            'portainerResponse' => $requestResult,
+            'portainerResponse' => $portainerDeleteResponse,
             'keycloakClientResponse' => $keycloakMakeDeleteClientResponse,
             'keycloakAdminGroupResponse' => $keycloakMakeDeleteAdminGroupResponse,
             'keycloakUserGroupResponse' => $keycloakMakeDeleteUserGroupResponse,
@@ -1074,14 +1089,14 @@ class SodaScsWisskiComponentActions implements SodaScsComponentActionsInterface 
       return [
         'message' => 'Deleted WissKI component.',
         'data' => [
-          'portainerResponse' => $requestResult,
+          'portainerResponse' => $portainerDeleteResponse,
           'keycloakClientResponse' => $keycloakMakeDeleteClientResponse,
           'keycloakAdminGroupResponse' => $keycloakMakeDeleteAdminGroupResponse,
           'keycloakUserGroupResponse' => $keycloakMakeDeleteUserGroupResponse,
         ],
         'success' => TRUE,
         'error' => NULL,
-        'statusCode' => $requestResult['statusCode'],
+        'statusCode' => $portainerDeleteResponse['statusCode'],
       ];
     }
     catch (\Exception $e) {
@@ -1111,6 +1126,13 @@ class SodaScsWisskiComponentActions implements SodaScsComponentActionsInterface 
   /**
    * Restore Component from Snapshot.
    *
+   * We get the container id of the WissKI component container,
+   * because routes do not work with container names.
+   * We stop the container gracefully. Wait for 30 seconds.
+   * We back up current volume to rollback tar.
+   * We restore into fresh state: purge volume and extract snapshot tar.
+   * We start the original container again.
+   *
    * @param \Drupal\soda_scs_manager\Entity\SodaScsSnapshotInterface $snapshot
    *   The SODa SCS Snapshot.
    * @param string|null $tempDirPath
@@ -1121,6 +1143,9 @@ class SodaScsWisskiComponentActions implements SodaScsComponentActionsInterface 
    */
   public function restoreFromSnapshot(SodaScsSnapshotInterface $snapshot, ?string $tempDirPath): SodaScsResult {
     try {
+      //
+      // Collect information about the snapshot's WissKI component.
+      //
       /** @var \Drupal\soda_scs_manager\Entity\SodaScsComponentInterface|null $component */
       $component = $snapshot->get('snapshotOfComponent')->entity ?? NULL;
       if (!$component) {
@@ -1152,7 +1177,10 @@ class SodaScsWisskiComponentActions implements SodaScsComponentActionsInterface 
       $getAllContainersResponseContents = json_decode($getAllContainersResponse['data']['portainerResponse']->getBody()->getContents(), TRUE);
       $containerId = $getAllContainersResponseContents[0]['Id'];
 
-      // Stop the container gracefully. Wait for 30 seconds.
+      //
+      // Stop the WissKI component container gracefully.
+      //
+      // Wait for 30 seconds before forcing stop.
       $stopContainerRequestParams = [
         'routeParams' => [
           'containerId' => $containerId,
@@ -1161,6 +1189,7 @@ class SodaScsWisskiComponentActions implements SodaScsComponentActionsInterface 
           't' => 30,
         ],
       ];
+      // Build and make the stop container request.
       $stopContainerRequest = $this->sodaScsDockerRunServiceActions->buildStopRequest($stopContainerRequestParams);
       $stopContainerResponse = $this->sodaScsDockerRunServiceActions->makeRequest($stopContainerRequest);
       if (!$stopContainerResponse['success']) {
@@ -1169,8 +1198,20 @@ class SodaScsWisskiComponentActions implements SodaScsComponentActionsInterface 
           error: (string) $stopContainerResponse['error'],
         );
       }
+
+      $waitForContainerStateResponse = $this->sodaScsContainerHelpers->waitForContainerState($containerId, 'exited');
+      if (!$waitForContainerStateResponse->success) {
+        return SodaScsResult::failure(
+          message: 'Failed to wait for container to stop.',
+          error: (string) $waitForContainerStateResponse->error,
+        );
+      }
+
+      //
       // Back up current volume to rollback tar,
       // then restore from snapshot into volume.
+      //
+      // Collect information about the snapshot.
       $volumeName = $machineName . '_drupal-root';
       /** @var \Drupal\file\Entity\File|null $snapshotFile */
       $snapshotFile = $snapshot->getFile();
@@ -1193,7 +1234,8 @@ class SodaScsWisskiComponentActions implements SodaScsComponentActionsInterface 
       $rollbackTarPath = $snapshotDir . '/' . $rollbackTarName;
 
       // Create a short-lived container to back up the current volume.
-      $backupContainerCreateRequest = $this->sodaScsDockerRunServiceActions->buildCreateRequest([
+      // Construct the request parameters.
+      $rollbackContainerCreateRequestParams = [
         'name' => 'rollback--' . $machineName . '--drupal',
         'image' => 'alpine:latest',
         'user' => '0:0',
@@ -1205,28 +1247,46 @@ class SodaScsWisskiComponentActions implements SodaScsComponentActionsInterface 
           ],
           'AutoRemove' => TRUE,
         ],
-      ]);
-      $backupContainerCreateResponse = $this->sodaScsDockerRunServiceActions->makeRequest($backupContainerCreateRequest);
-      if (!$backupContainerCreateResponse['success']) {
+      ];
+      // Build and make the create container request.
+      $rollbackContainerCreateRequest = $this->sodaScsDockerRunServiceActions->buildCreateRequest($rollbackContainerCreateRequestParams);
+      $rollbackContainerCreateResponse = $this->sodaScsDockerRunServiceActions->makeRequest($rollbackContainerCreateRequest);
+
+      // Check if the create container request was successful.
+      if (!$rollbackContainerCreateResponse['success']) {
         return SodaScsResult::failure(
           message: 'Failed to create rollback backup container.',
-          error: (string) $backupContainerCreateResponse['error'],
-        );
-      }
-      $backupContainerId = json_decode($backupContainerCreateResponse['data']['portainerResponse']->getBody()->getContents(), TRUE)['Id'];
-      $backupContainerStartRequest = $this->sodaScsDockerRunServiceActions->buildStartRequest([
-        'routeParams' => ['containerId' => $backupContainerId],
-      ]);
-      $backupContainerStartResponse = $this->sodaScsDockerRunServiceActions->makeRequest($backupContainerStartRequest);
-      if (!$backupContainerStartResponse['success']) {
-        return SodaScsResult::failure(
-          message: 'Failed to start rollback backup container.',
-          error: (string) $backupContainerStartResponse['error'],
+          error: (string) $rollbackContainerCreateResponse['error'],
         );
       }
 
-      // Restore into fresh state: purge volume and extract snapshot tar.
-      // Create restore container.
+      // Build and make the start container request.
+      $rollbackContainerId = json_decode($rollbackContainerCreateResponse['data']['portainerResponse']->getBody()->getContents(), TRUE)['Id'];
+      $rollbackContainerStartRequest = $this->sodaScsDockerRunServiceActions->buildStartRequest([
+        'routeParams' => ['containerId' => $rollbackContainerId],
+      ]);
+      $rollbackContainerStartResponse = $this->sodaScsDockerRunServiceActions->makeRequest($rollbackContainerStartRequest);
+      if (!$rollbackContainerStartResponse['success']) {
+        return SodaScsResult::failure(
+          message: 'Failed to start rollback backup container.',
+          error: (string) $rollbackContainerStartResponse['error'],
+        );
+      }
+
+      // Wait for the rollback container to finish.
+      $waitForRollbackContainerStateResponse = $this->sodaScsContainerHelpers->waitForContainerState($rollbackContainerId, 'exited');
+      if (!$waitForRollbackContainerStateResponse->success) {
+        return SodaScsResult::failure(
+          message: 'Failed to wait for rollback backup container to finish.',
+          error: (string) $waitForRollbackContainerStateResponse->error,
+        );
+      }
+
+      //
+      // Restore into fresh state: purge original drupalvolume
+      // and extract snapshot tar. Create restore container.
+      //
+      // Construct the request parameters.
       $restoreCmd = [
         'sh',
         '-c',
@@ -1234,7 +1294,8 @@ class SodaScsWisskiComponentActions implements SodaScsComponentActionsInterface 
         'tar -xzf /restore/' . basename($snapshotPath) . ' -C /volume && ' .
         'chown -R 33:33 /volume',
       ];
-      $restoreContainerCreateRequest = $this->sodaScsDockerRunServiceActions->buildCreateRequest([
+
+      $restoreContainerCreateRequestParams = [
         'name' => 'restore--' . $machineName . '--drupal',
         'image' => 'alpine:latest',
         'user' => '0:0',
@@ -1244,24 +1305,26 @@ class SodaScsWisskiComponentActions implements SodaScsComponentActionsInterface 
             $volumeName . ':/volume',
             $snapshotDir . ':/restore:ro',
           ],
-          // @todo CHANGE THIS TO TRUE WHEN DONE TESTING.
-          'AutoRemove' => FALSE,
+          'AutoRemove' => TRUE,
         ],
-      ]);
+      ];
+
+      // Build and make the create restore container request.
+      $restoreContainerCreateRequest = $this->sodaScsDockerRunServiceActions->buildCreateRequest($restoreContainerCreateRequestParams);
       $restoreContainerCreateResponse = $this->sodaScsDockerRunServiceActions->makeRequest($restoreContainerCreateRequest);
       if (!$restoreContainerCreateResponse['success']) {
-        // Delete the backup container if the
+        // Delete the rollback container if the
         // restore container creation failed.
-        $backupContainerDeleteRequestParams = [
-          'routeParams' => ['containerId' => $backupContainerId],
+        $rollbackContainerDeleteRequestParams = [
+          'routeParams' => ['containerId' => $rollbackContainerId],
         ];
-        $backupContainerDeleteRequest = $this->sodaScsDockerRunServiceActions->buildRemoveRequest($backupContainerDeleteRequestParams);
+        $rollbackContainerDeleteRequest = $this->sodaScsDockerRunServiceActions->buildRemoveRequest($rollbackContainerDeleteRequestParams);
 
-        $backupContainerDeleteResponse = $this->sodaScsDockerRunServiceActions->makeRequest($backupContainerDeleteRequest);
-        if (!$backupContainerDeleteResponse['success']) {
+        $rollbackContainerDeleteResponse = $this->sodaScsDockerRunServiceActions->makeRequest($rollbackContainerDeleteRequest);
+        if (!$rollbackContainerDeleteResponse['success']) {
           return SodaScsResult::failure(
-            message: 'Failed to delete backup container.',
-            error: (string) $backupContainerDeleteResponse['error'],
+            message: 'Failed to delete rollback container.',
+            error: (string) $rollbackContainerDeleteResponse['error'],
           );
         }
         return SodaScsResult::failure(
@@ -1269,9 +1332,9 @@ class SodaScsWisskiComponentActions implements SodaScsComponentActionsInterface 
           error: (string) $restoreContainerCreateResponse['error'],
         );
       }
+      // Build and make the start container request.
       $restoreContainerId = json_decode($restoreContainerCreateResponse['data']['portainerResponse']->getBody()->getContents(), TRUE)['Id'];
 
-      // Start the restore container.
       $restoreContainerStartRequest = $this->sodaScsDockerRunServiceActions->buildStartRequest([
         'routeParams' => ['containerId' => $restoreContainerId],
       ]);
@@ -1283,7 +1346,19 @@ class SodaScsWisskiComponentActions implements SodaScsComponentActionsInterface 
         );
       }
 
+      // Wait for the restore container to finish.
+      $waitForRestoreContainerStateResponse = $this->sodaScsContainerHelpers->waitForContainerState($restoreContainerId, 'exited');
+      if (!$waitForRestoreContainerStateResponse->success) {
+        return SodaScsResult::failure(
+          message: 'Failed to wait for restore container to finish.',
+          error: (string) $waitForRestoreContainerStateResponse->error,
+        );
+      }
+
+      //
       // Start the original container again.
+      //
+      // Build and make the start container request.
       $startContainerRequest = $this->sodaScsDockerRunServiceActions->buildStartRequest([
         'routeParams' => ['containerId' => $containerId],
       ]);

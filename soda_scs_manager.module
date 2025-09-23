@@ -732,7 +732,7 @@ function soda_scs_manager_file_download($uri) {
 
   $or = $query->orConditionGroup()
     ->condition('file.target_id', $fid)
-    ->condition('signatureFile.target_id', $fid);
+    ->condition('checksumFile.target_id', $fid);
 
   // Enforce owner-based access.
   $query

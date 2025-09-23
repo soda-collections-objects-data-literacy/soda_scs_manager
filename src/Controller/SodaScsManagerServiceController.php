@@ -29,11 +29,12 @@ class SodaScsManagerServiceController extends ControllerBase {
    * @var \Drupal\soda_scs_manager\Helpers\SodaScsServiceHelpers
    */
   protected SodaScsServiceHelpers $sodaScsServiceHelpers;
+
   /**
    * Class constructor.
    */
   public function __construct(
-    SodaScsServiceHelpers $sodaScsServiceHelpers
+    SodaScsServiceHelpers $sodaScsServiceHelpers,
   ) {
     $this->sodaScsServiceHelpers = $sodaScsServiceHelpers;
 
@@ -106,7 +107,8 @@ class SodaScsManagerServiceController extends ControllerBase {
 
     switch ($soda_scs_stack->bundle()) {
       case 'soda_scs_wisski_stack':
-        // @todo: this is a stupid hack, replace it with a proper solution.
+        // @todo This is a stupid hack,
+        // replace it with a proper solution.
         $machineName = $soda_scs_stack->get('machineName')->value;
         $machineName = preg_replace('/^stack-/', 'wisski-', $machineName, 1);
         $url = str_replace('{instanceId}', $machineName, $wisskiSettings['baseUrl']);

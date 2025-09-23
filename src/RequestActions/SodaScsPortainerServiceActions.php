@@ -447,7 +447,7 @@ class SodaScsPortainerServiceActions implements SodaScsServiceRequestInterface {
   /**
    * Builds the delete request for the Portainer service API.
    *
-   * @param array $queryParams
+   * @param array $requestParams
    *   The query parameters.
    *
    * @return array
@@ -455,13 +455,31 @@ class SodaScsPortainerServiceActions implements SodaScsServiceRequestInterface {
    *
    * @throws \Drupal\Core\TypedData\Exception\MissingDataException
    */
-  public function buildDeleteRequest(array $queryParams): array {
+  public function buildDeleteRequest(array $requestParams): array {
     // Initialize settings.
     $portainerServiceSettings = $this->sodaScsServiceHelpers->initPortainerServiceSettings();
     $portainerStacksSettings = $this->sodaScsServiceHelpers->initPortainerStacksSettings();
 
+    $requestParams['queryParams']['endpointId'] = $portainerServiceSettings['endpointId'];
+
     // Build route.
-    $route = $portainerServiceSettings['host'] . $portainerStacksSettings['baseUrl'] . str_replace('{stackId}', $queryParams['externalId'], $portainerStacksSettings['deleteUrl']) . '?endpointId=' . $portainerServiceSettings['endpointId'];
+    $route =
+    // https://portainer.scs.sammlungen.io
+    $portainerServiceSettings['host'] .
+    // /stacks
+    $portainerStacksSettings['baseUrl'] .
+    // /{stackId}
+    $portainerStacksSettings['deleteUrl'];
+
+    if (!empty($requestParams['routeParams'])) {
+      foreach ($requestParams['routeParams'] as $key => $value) {
+        $route = str_replace('{' . $key . '}', $value, $route);
+      }
+    }
+
+    if (!empty($requestParams['queryParams'])) {
+      $route .= '?' . http_build_query($requestParams['queryParams']);
+    }
 
     return [
       'success' => TRUE,

@@ -895,6 +895,7 @@ class SodaScsWisskiStackActions implements SodaScsStackActionsInterface {
     $restorationResults = [];
     $errors = [];
 
+    // Loop through the component mappings from the manifest.
     foreach ($manifestData['mapping'] as $componentMapping) {
       $bundle = $componentMapping['bundle'];
       $eid = $componentMapping['eid'];
@@ -903,7 +904,9 @@ class SodaScsWisskiStackActions implements SodaScsStackActionsInterface {
       $checksumFile = $componentMapping['checksumFile'];
 
       // @todo Remove this once we have a generic restore from snapshot for all components.
+      // @todo Implement SQL and Triplestore component restoration.
       if ($bundle !== 'soda_scs_wisski_component') {
+        $this->messenger->addError($this->t("Cannot restore components from manifest. Only WissKI components are supported."));
         continue;
       }
 
@@ -927,6 +930,8 @@ class SodaScsWisskiStackActions implements SodaScsStackActionsInterface {
         }
 
         // Get the appropriate component action service.
+        // @todo This is how we should do it in the future
+        // for all component and stack actions.
         $componentActions = $this->getComponentActionsForBundle($bundle);
         if (!$componentActions) {
           $errors[] = "No component actions found for bundle {$bundle}.";
