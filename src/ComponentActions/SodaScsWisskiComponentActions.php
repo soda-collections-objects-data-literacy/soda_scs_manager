@@ -710,7 +710,7 @@ class SodaScsWisskiComponentActions implements SodaScsComponentActionsInterface 
             $component->get('machineName')->value . '_drupal-root:/source',
             $snapshotPaths['backupPathWithType'] . ':/backup',
           ],
-          'AutoRemove' => FALSE,
+          'AutoRemove' => TRUE,
         ],
       ];
 
@@ -1186,12 +1186,13 @@ class SodaScsWisskiComponentActions implements SodaScsComponentActionsInterface 
           'containerId' => $containerId,
         ],
         'queryParams' => [
-          't' => 30,
+          't' => 300,
         ],
       ];
       // Build and make the stop container request.
       $stopContainerRequest = $this->sodaScsDockerRunServiceActions->buildStopRequest($stopContainerRequestParams);
       $stopContainerResponse = $this->sodaScsDockerRunServiceActions->makeRequest($stopContainerRequest);
+
       if (!$stopContainerResponse['success']) {
         return SodaScsResult::failure(
           message: 'Failed to stop container.',
@@ -1233,10 +1234,12 @@ class SodaScsWisskiComponentActions implements SodaScsComponentActionsInterface 
       $rollbackTarName = 'rollback--' . $volumeName . '--' . date('Ymd-His') . '.tar.gz';
       $rollbackTarPath = $snapshotDir . '/' . $rollbackTarName;
 
+      $rollbackContainerName = 'rollback--' . $machineName . '--drupal__' . $this->sodaScsSnapshotHelpers->generateRandomSuffix();
+
       // Create a short-lived container to back up the current volume.
       // Construct the request parameters.
       $rollbackContainerCreateRequestParams = [
-        'name' => 'rollback--' . $machineName . '--drupal',
+        'name' => $rollbackContainerName,
         'image' => 'alpine:latest',
         'user' => '0:0',
         'cmd' => ['sh', '-c', 'tar czf /backup/' . basename($rollbackTarPath) . ' -C /source .'],
@@ -1282,6 +1285,11 @@ class SodaScsWisskiComponentActions implements SodaScsComponentActionsInterface 
         );
       }
 
+      // Get the filepath on disk.
+      // @todo This is a temporary solution to get the filepath on disk.
+      // We need to find a better way to do this.
+      $tarFilePathOnDisk = $tempDirPath . '/drupal-data';
+
       //
       // Restore into fresh state: purge original drupalvolume
       // and extract snapshot tar. Create restore container.
@@ -1295,15 +1303,16 @@ class SodaScsWisskiComponentActions implements SodaScsComponentActionsInterface 
         'chown -R 33:33 /volume',
       ];
 
+      $restoreContainerName = 'restore--' . $machineName . '--drupal__' . $this->sodaScsSnapshotHelpers->generateRandomSuffix();
       $restoreContainerCreateRequestParams = [
-        'name' => 'restore--' . $machineName . '--drupal',
+        'name' => $restoreContainerName,
         'image' => 'alpine:latest',
         'user' => '0:0',
         'cmd' => $restoreCmd,
         'hostConfig' => [
           'Binds' => [
             $volumeName . ':/volume',
-            $snapshotDir . ':/restore:ro',
+            $tarFilePathOnDisk . ':/restore:ro',
           ],
           'AutoRemove' => TRUE,
         ],
@@ -1369,6 +1378,14 @@ class SodaScsWisskiComponentActions implements SodaScsComponentActionsInterface 
           error: (string) $startContainerResponse['error'],
         );
       }
+
+      // Log the restore success.
+      $this->logger->info('WissKI component @name (@machineName) restored from snapshot @snapshotName (@snapshotId) successfully.', [
+        'name' => $component->label(),
+        'machineName' => $machineName,
+        'snapshotName' => $snapshot->label(),
+        'snapshotId' => $snapshot->get('machineName')->value,
+      ]);
 
       return SodaScsResult::success(
         message: 'WissKI component restored from snapshot successfully.',

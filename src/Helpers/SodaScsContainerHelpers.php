@@ -355,6 +355,87 @@ class SodaScsContainerHelpers {
   }
 
   /**
+   * Wait for a container exec to finish.
+   *
+   * @param string $execId
+   *   The exec ID.
+   * @param string $desiredState
+   *   The desired state value from Docker inspect's State.Status
+   *   (e.g. "exited", "running").
+   *
+   * @return \Drupal\soda_scs_manager\ValueObject\SodaScsResult
+   *   Success when desired state is reached;
+   *   failure on timeout or inspect error.
+   */
+  public function waitForContainerExecState(string $execId, string $desiredState): SodaScsResult {
+    $attempts = 0;
+    $maxAttempts = $this->sodaScsHelpers->adjustMaxAttempts();
+
+    // If max attempts can not be calculated, return a failure result.
+    if ($maxAttempts === FALSE) {
+      return SodaScsResult::failure(
+        error: 'PHP request timeout error',
+        message: $this->t('Failed to wait for container exec state. The PHP request timeout is too low.'),
+      );
+    }
+
+    // While the attempts are less than the max attempts, inspect the container exec.
+    while ($attempts < $maxAttempts) {
+      $inspectRequest = $this->sodaScsDockerExecServiceActions->buildInspectRequest(['execId' => $execId]);
+      $inspectResponse = $this->sodaScsDockerExecServiceActions->makeRequest($inspectRequest);
+
+      // If the container exec is already removed, return a success result.
+      if ($inspectResponse['statusCode'] === 404) {
+        return SodaScsResult::success(
+          message: $this->t('Container exec already removed.'),
+          data: [
+            'state' => 'removed',
+            'responseStatusCode' => $inspectResponse['statusCode'],
+            'responseMessage' => $inspectResponse['error'],
+          ],
+        );
+      }
+
+      // If the inspect container exec request failed, return a failure result.
+      if (!$inspectResponse['success']) {
+        return SodaScsResult::failure(
+          message: $this->t('Failed to inspect container exec.'),
+          error: (string) $inspectResponse['error'],
+        );
+      }
+
+      // Get the inspect data.
+      $inspect = json_decode(
+        $inspectResponse['data']['portainerResponse']
+          ->getBody()
+          ->getContents(),
+        TRUE
+      );
+      $currentState = $inspect['State']['Status'] ?? ($inspect['State'] ?? NULL);
+
+      // If the current state is the desired state, return a success result.
+      if ($currentState === $desiredState) {
+        return SodaScsResult::success(
+          message: $this->t('Container exec reached desired state: @state.', ['@state' => $desiredState]),
+          data: [
+            'state' => $currentState,
+            'inspect' => $inspect,
+          ],
+        );
+      }
+
+      // Increment the attempts and sleep for 5 seconds.
+      $attempts++;
+      sleep(5);
+    }
+
+    return SodaScsResult::failure(
+      message: $this->t('Timed out waiting for container exec to reach state: @state.', ['@state' => $desiredState]),
+      error: 'Container exec state timeout',
+    );
+  }
+
+  /**
    * Delete the containers.
    *
    * @param array $containers

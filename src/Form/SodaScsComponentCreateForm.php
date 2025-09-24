@@ -12,6 +12,7 @@ use Drupal\Core\Entity\EntityTypeManagerInterface;
 use Drupal\Core\Form\FormStateInterface;
 use Drupal\Core\Logger\LoggerChannelFactoryInterface;
 use Drupal\Core\Session\AccountProxyInterface;
+use Drupal\Core\Url;
 use Drupal\soda_scs_manager\ComponentActions\SodaScsComponentActionsInterface;
 use Drupal\soda_scs_manager\RequestActions\SodaScsServiceRequestInterface;
 use Symfony\Component\DependencyInjection\ContainerInterface;
@@ -209,9 +210,17 @@ class SodaScsComponentCreateForm extends ContentEntityForm {
     }
 
     // Make partOfProjects field required for filesystem components.
+    // @todo This is deprecated and handled by the component entity.
     if ($this->bundle === 'soda_scs_filesystem_component' && isset($form['partOfProjects'])) {
       $form['partOfProjects']['widget']['#required'] = TRUE;
-      $form['partOfProjects']['widget']['#description'] = $this->t('This field is required for filesystem components.');
+      $form['partOfProjects']['widget']['#description'] = $this->t('Mandatory field. Choose existing project or add new project <a href=":url">here</a>.', [
+        ':url' => Url::fromRoute('entity.soda_scs_project.add_form')->toString(),
+      ]);
+
+      // Hide the sharedWith field.
+      // @todo This is deprecated and handled by projects
+      // so we have to remove it.
+      $form['sharedWith']['#access'] = FALSE;
     }
 
     // Change the label of the submit button.

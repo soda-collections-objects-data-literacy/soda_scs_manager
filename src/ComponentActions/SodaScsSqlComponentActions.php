@@ -19,6 +19,7 @@ use Drupal\soda_scs_manager\Entity\SodaScsComponentInterface;
 use Drupal\soda_scs_manager\Entity\SodaScsSnapshotInterface;
 use Drupal\soda_scs_manager\Exception\SodaScsSqlServiceException;
 use Drupal\soda_scs_manager\Helpers\SodaScsComponentHelpers;
+use Drupal\soda_scs_manager\Helpers\SodaScsContainerHelpers;
 use Drupal\soda_scs_manager\Helpers\SodaScsHelpers;
 use Drupal\soda_scs_manager\Helpers\SodaScsSnapshotHelpers;
 use Drupal\soda_scs_manager\RequestActions\SodaScsDockerExecServiceActions;
@@ -97,6 +98,13 @@ class SodaScsSqlComponentActions implements SodaScsComponentActionsInterface {
   protected SodaScsComponentHelpers $sodaScsComponentHelpers;
 
   /**
+   * The SCS Container Helpers service.
+   *
+   * @var \Drupal\soda_scs_manager\Helpers\SodaScsContainerHelpers
+   */
+  protected SodaScsContainerHelpers $sodaScsContainerHelpers;
+
+  /**
    * The SCS Helpers service.
    *
    * @var \Drupal\soda_scs_manager\Helpers\SodaScsHelpers
@@ -151,6 +159,7 @@ class SodaScsSqlComponentActions implements SodaScsComponentActionsInterface {
     LoggerChannelFactoryInterface $loggerFactory,
     MessengerInterface $messenger,
     SodaScsComponentHelpers $sodaScsComponentHelpers,
+    SodaScsContainerHelpers $sodaScsContainerHelpers,
     SodaScsHelpers $sodaScsHelpers,
     SodaScsSnapshotHelpers $sodaScsSnapshotHelpers,
     SodaScsDockerExecServiceActions $sodaScsDockerExecServiceActions,
@@ -170,6 +179,7 @@ class SodaScsSqlComponentActions implements SodaScsComponentActionsInterface {
     $this->messenger = $messenger;
     $this->settings = $settings;
     $this->sodaScsComponentHelpers = $sodaScsComponentHelpers;
+    $this->sodaScsContainerHelpers = $sodaScsContainerHelpers;
     $this->sodaScsHelpers = $sodaScsHelpers;
     $this->sodaScsSnapshotHelpers = $sodaScsSnapshotHelpers;
     $this->sodaScsDockerExecServiceActions = $sodaScsDockerExecServiceActions;
@@ -670,13 +680,135 @@ class SodaScsSqlComponentActions implements SodaScsComponentActionsInterface {
    *
    * @param \Drupal\soda_scs_manager\Entity\SodaScsSnapshotInterface $snapshot
    *   The SODa SCS Snapshot.
-   * @param string|null $stackBagPath
-   *   The path to the stack bag.
+   * @param string|null $tempDir
+   *   The path to the temporary directory.
    *
    * @return \Drupal\soda_scs_manager\ValueObject\SodaScsResult
    *   Result information with restored component.
    */
-  public function restoreFromSnapshot(SodaScsSnapshotInterface $snapshot, ?string $stackBagPath): SodaScsResult {
+  public function restoreFromSnapshot(SodaScsSnapshotInterface $snapshot, ?string $tempDir): SodaScsResult {
+    try {
+      //
+      // Collect information about the snapshot's SQL component.
+      //
+      /** @var \Drupal\soda_scs_manager\Entity\SodaScsComponentInterface|null $component */
+      $component = $snapshot->get('snapshotOfComponent')->entity ?? NULL;
+      if (!$component) {
+        return SodaScsResult::failure(
+          message: 'Snapshot is not linked to a component.',
+          error: 'Missing component on snapshot.',
+        );
+      }
+
+      $databaseName = $component->get('machineName')->value;
+      // @todo Should use the initDatabaseServiceSettings function.
+      $dbRootPassword = $this->settings->get('dbRootPassword');
+
+      //
+      // Backup current database to rollback tar.
+      //
+      $rollbackTarName = 'rollback--' . $databaseName . '--' . date('Ymd-His') . '.tar.gz';
+      $rollbackTarPath = $tempDir . '/' . $rollbackTarName;
+
+      $rollbackDatabaseExecRequestCommand = [
+        'bash',
+        '-c',
+        'mariadb-dump -uroot -p' . $dbRootPassword . ' "' . $databaseName . '" > ' . $rollbackTarPath,
+      ];
+
+      $rollbackDatabaseExecRequestParams = [
+        'cmd' => $rollbackDatabaseExecRequestCommand,
+        'containerName' => 'database',
+        'user' => 'root',
+      ];
+
+      $rollbackDatabaseExecRequest = $this->sodaScsDockerExecServiceActions->buildCreateRequest($rollbackDatabaseExecRequestParams);
+      $rollbackDatabaseExecResponse = $this->sodaScsDockerExecServiceActions->makeRequest($rollbackDatabaseExecRequest);
+      if (!$rollbackDatabaseExecResponse['success']) {
+        return SodaScsResult::failure(
+          error: $rollbackDatabaseExecResponse['error'],
+          message: 'Snapshot restoration failed: Could not backup database.',
+        );
+      }
+      $rollbackDatabaseExecId = json_decode($rollbackDatabaseExecResponse['data']['portainerResponse']->getBody()->getContents(), TRUE)['Id'];
+      $rollbackDatabaseExecStartRequest = $this->sodaScsDockerExecServiceActions->buildStartRequest(['execId' => $rollbackDatabaseExecId]);
+      $rollbackDatabaseExecStartResponse = $this->sodaScsDockerExecServiceActions->makeRequest($rollbackDatabaseExecStartRequest);
+      if (!$rollbackDatabaseExecStartResponse['success']) {
+        return SodaScsResult::failure(
+          error: $rollbackDatabaseExecStartResponse['error'],
+          message: 'Snapshot restoration failed: Could not start database rollback exec request.',
+        );
+      }
+
+      // Wait for the rollback database exec to finish.
+      $waitForRollbackDatabaseExecStateResponse = $this->sodaScsContainerHelpers->waitForContainerExecState($rollbackDatabaseExecId, 'exited');
+      if (!$waitForRollbackDatabaseExecStateResponse->success) {
+        return SodaScsResult::failure(
+          error: $waitForRollbackDatabaseExecStateResponse->error,
+          message: 'Snapshot restoration failed: Could not wait for database rollback exec to finish.',
+        );
+      }
+
+      //
+      // Restore database from snapshot.
+      //
+      // Construct restore command.
+      $restoreFromSnapshotExecRequestCommand = [
+        'bash',
+        '-c',
+        'mariadb -uroot -p' . $dbRootPassword . ' "' . $databaseName . '" < ' . $rollbackTarPath,
+      ];
+
+      // Construct restore request parameters.
+      $restoreFromSnapshotExecRequestParams = [
+        'cmd' => $restoreFromSnapshotExecRequestCommand,
+        'containerName' => 'database',
+        'user' => 'root',
+      ];
+
+      // Build and make the create restore exec request.
+      $restoreFromSnapshotRequest = $this->sodaScsDockerExecServiceActions->buildCreateRequest($restoreFromSnapshotExecRequestParams);
+      $restoreFromSnapshotResponse = $this->sodaScsDockerExecServiceActions->makeRequest($restoreFromSnapshotRequest);
+      if (!$restoreFromSnapshotResponse['success']) {
+        return SodaScsResult::failure(
+          error: $restoreFromSnapshotResponse['error'],
+          message: 'Snapshot restoration failed: Could not restore from snapshot.',
+        );
+      }
+
+      // Build and make the start restore exec request.
+      $restoreFromSnapshotExecId = json_decode($restoreFromSnapshotResponse['data']['portainerResponse']->getBody()->getContents(), TRUE)['Id'];
+      $restoreFromSnapshotExecStartRequest = $this->sodaScsDockerExecServiceActions->buildStartRequest(['execId' => $restoreFromSnapshotExecId]);
+      $restoreFromSnapshotExecStartResponse = $this->sodaScsDockerExecServiceActions->makeRequest($restoreFromSnapshotExecStartRequest);
+      if (!$restoreFromSnapshotExecStartResponse['success']) {
+        return SodaScsResult::failure(
+          error: $restoreFromSnapshotExecStartResponse['error'],
+          message: 'Snapshot restoration failed: Could not start restore from snapshot exec request.',
+        );
+      }
+
+      // Wait until the restoration is done.
+      $waitForRestoreFromSnapshotExecStateResponse = $this->sodaScsContainerHelpers->waitForContainerExecState($restoreFromSnapshotExecId, 'exited');
+      if (!$waitForRestoreFromSnapshotExecStateResponse->success) {
+        return SodaScsResult::failure(
+          error: $waitForRestoreFromSnapshotExecStateResponse->error,
+          message: 'Snapshot restoration failed: Could not wait for restore from snapshot exec to finish.',
+        );
+      }
+    }
+    catch (\Exception $e) {
+      Error::logException(
+        $this->logger,
+        $e,
+        'Snapshot restoration failed: @message',
+        ['@message' => $e->getMessage()],
+        LogLevel::ERROR
+      );
+      return SodaScsResult::failure(
+        error: $e->getMessage(),
+        message: 'Snapshot restoration failed.',
+      );
+    }
     return SodaScsResult::success(
       message: 'Component restored from snapshot successfully.',
       data: [],

@@ -158,7 +158,7 @@ function soda_scs_manager_entity_bundle_info() {
   $bundles['soda_scs_component']['soda_scs_wisski_component'] = [
     'label' => new TranslatableMarkup('WissKI'),
     'class' => SodaScsComponentBundle::class,
-    'description' => new TranslatableMarkup('A WissKI Component is a component of a WissKI Stack.'),
+    'description' => new TranslatableMarkup('A plain WissKI instance without data model and preconfigured triplestore connection.'),
     'imageUrl' => 'public://soda_scs_manager/images/wisski.svg',
     'tags' => ['ontology', 'cms'],
   ];
@@ -181,7 +181,7 @@ function soda_scs_manager_entity_bundle_info() {
   $bundles['soda_scs_stack']['soda_scs_jupyter_stack'] = [
     'label' => new TranslatableMarkup('JupyterHub'),
     'class' => SodaScsStackBundle::class,
-    'description' => new TranslatableMarkup('A JupyterHub Stack contains Jupyter and OpenRefine.'),
+    'description' => new TranslatableMarkup('A JupyterHub Environment contains Jupyter Notebooks and OpenRefine.'),
     'imageUrl' => 'public://soda_scs_manager/images/jupyterhub-stack.svg',
     'tags' => ['coding', 'data-science', 'data-cleaning'],
   ];
@@ -189,7 +189,7 @@ function soda_scs_manager_entity_bundle_info() {
   $bundles['soda_scs_stack']['soda_scs_wisski_stack'] = [
     'label' => new TranslatableMarkup('WissKI Environment'),
     'class' => SodaScsStackBundle::class,
-    'description' => new TranslatableMarkup('A WissKI Stack contains a WissKI, a Triplestore and a Database.'),
+    'description' => new TranslatableMarkup('A WissKI Environment contains a preconfigured WissKI, a Triplestore and a Database.'),
     'imageUrl' => 'public://soda_scs_manager/images/wisski-stack.svg',
     'tags' => ['cms', 'database', 'ontology', 'publishing', 'triplestore'],
   ];

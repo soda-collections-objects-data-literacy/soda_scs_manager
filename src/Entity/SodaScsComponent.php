@@ -324,6 +324,7 @@ class SodaScsComponent extends ContentEntityBase implements SodaScsComponentInte
         'weight' => 40,
       ]);
 
+    // @todo Set link to add new project in field description.
     $fields['partOfProjects'] = BaseFieldDefinition::create('entity_reference')
       ->setLabel(new TranslatableMarkup('Project'))
       ->setDescription(new TranslatableMarkup('The project this application belongs to.'))
