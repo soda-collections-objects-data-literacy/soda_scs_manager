@@ -5,16 +5,18 @@ namespace Drupal\soda_scs_manager\Helpers;
 use Drupal\Core\Config\Config;
 use Drupal\Core\Config\ConfigFactoryInterface;
 use Drupal\Core\Entity\EntityTypeManagerInterface;
-use GuzzleHttp\ClientInterface;
 use Drupal\Core\Logger\LoggerChannelFactoryInterface;
 use Drupal\Core\Messenger\MessengerInterface;
-use Drupal\Core\StringTranslation\TranslationInterface;
 use Drupal\Core\StringTranslation\StringTranslationTrait;
-use Drupal\soda_scs_manager\ServiceActions\SodaScsServiceActionsInterface;
+use Drupal\Core\StringTranslation\TranslationInterface;
+use Drupal\Core\TypedData\Exception\MissingDataException;
+use Drupal\soda_scs_manager\ComponentActions\SodaScsComponentActionsInterface;
+use Drupal\soda_scs_manager\Entity\SodaScsComponentInterface;
+use Drupal\soda_scs_manager\Entity\SodaScsSnapshotInterface;
 use Drupal\soda_scs_manager\RequestActions\SodaScsExecRequestInterface;
 use Drupal\soda_scs_manager\RequestActions\SodaScsServiceRequestInterface;
-use Drupal\soda_scs_manager\Entity\SodaScsComponentInterface;
-use Drupal\Core\TypedData\Exception\MissingDataException;
+use Drupal\soda_scs_manager\ServiceActions\SodaScsServiceActionsInterface;
+use GuzzleHttp\ClientInterface;
 
 /**
  * Helper functions for SCS components.
@@ -57,14 +59,14 @@ class SodaScsComponentHelpers {
    *
    * @var \Drupal\soda_scs_manager\ServiceActions\SodaScsServiceRequestInterface
    */
-  protected SodaScsServiceRequestInterface $openGdbServiceActions;
+  protected SodaScsServiceRequestInterface $sodaScsOpenGdbServiceActions;
 
   /**
    * The Portainer service actions.
    *
    * @var \Drupal\soda_scs_manager\ServiceActions\SodaScsServiceRequestInterface
    */
-  protected SodaScsServiceRequestInterface $portainerServiceActions;
+  protected SodaScsServiceRequestInterface $sodaScsPortainerServiceActions;
 
   /**
    * The settings.
@@ -92,7 +94,7 @@ class SodaScsComponentHelpers {
    *
    * @var \Drupal\soda_scs_manager\ServiceActions\SodaScsServiceActionsInterface
    */
-  protected SodaScsServiceActionsInterface $sqlServiceActions;
+  protected SodaScsServiceActionsInterface $sodaScsSqlServiceActions;
 
   public function __construct(
     ConfigFactoryInterface $configFactory,
@@ -100,11 +102,11 @@ class SodaScsComponentHelpers {
     ClientInterface $httpClient,
     LoggerChannelFactoryInterface $loggerFactory,
     MessengerInterface $messenger,
-    SodaScsServiceRequestInterface $openGdbServiceActions,
-    SodaScsServiceRequestInterface $portainerServiceActions,
     SodaScsExecRequestInterface $sodaScsDockerExecServiceActions,
+    SodaScsServiceRequestInterface $sodaScsOpenGdbServiceActions,
+    SodaScsServiceRequestInterface $sodaScsPortainerServiceActions,
     SodaScsServiceHelpers $sodaScsServiceHelpers,
-    SodaScsServiceActionsInterface $sqlServiceActions,
+    SodaScsServiceActionsInterface $sodaScsSqlServiceActions,
     TranslationInterface $stringTranslation,
   ) {
     // Services from container.
@@ -112,13 +114,12 @@ class SodaScsComponentHelpers {
     $this->httpClient = $httpClient;
     $this->loggerFactory = $loggerFactory;
     $this->messenger = $messenger;
-    $this->openGdbServiceActions = $openGdbServiceActions;
-    $this->portainerServiceActions = $portainerServiceActions;
-    $this->settings = $configFactory
-      ->getEditable('soda_scs_manager.settings');
+    $this->sodaScsOpenGdbServiceActions = $sodaScsOpenGdbServiceActions;
+    $this->sodaScsPortainerServiceActions = $sodaScsPortainerServiceActions;
+    $this->settings = $configFactory->getEditable('soda_scs_manager.settings');
     $this->sodaScsDockerExecServiceActions = $sodaScsDockerExecServiceActions;
     $this->sodaScsServiceHelpers = $sodaScsServiceHelpers;
-    $this->sqlServiceActions = $sqlServiceActions;
+    $this->sodaScsSqlServiceActions = $sodaScsSqlServiceActions;
     $this->stringTranslation = $stringTranslation;
   }
 
@@ -131,8 +132,8 @@ class SodaScsComponentHelpers {
         'type' => 'instance',
         'machineName' => $machineName,
       ];
-      $healthRequest = $this->portainerServiceActions->buildHealthCheckRequest($requestParams);
-      $healthRequestResult = $this->portainerServiceActions->makeRequest($healthRequest);
+      $healthRequest = $this->sodaScsPortainerServiceActions->buildHealthCheckRequest($requestParams);
+      $healthRequestResult = $this->sodaScsPortainerServiceActions->makeRequest($healthRequest);
 
       switch ($healthRequestResult['statusCode']) {
         case 200:
@@ -262,7 +263,7 @@ class SodaScsComponentHelpers {
     /** @var \Drupal\soda_scs_manager\Entity\SodaScsServiceKeyInterface $sqlServiceKey */
     $sqlServiceKey = $this->entityTypeManager->getStorage('soda_scs_service_key')->load($sqlServiceKeyId);
     $dbUserPassword = $sqlServiceKey->get('servicePassword')->value;
-    $fullAccess = $this->sqlServiceActions->userHasReadWriteAccessToDatabase($dbUser, $dbName, $dbUserPassword);
+    $fullAccess = $this->sodaScsSqlServiceActions->userHasReadWriteAccessToDatabase($dbUser, $dbName, $dbUserPassword);
     if (!$fullAccess) {
       return [
         'message' => $this->t("MariaDB health check failed for component @component.", ['@component' => $component->id()]),
@@ -301,8 +302,8 @@ class SodaScsComponentHelpers {
           'machineName' => $machineName,
         ],
       ];
-      $healthCheckRequest = $this->openGdbServiceActions->buildHealthCheckRequest($requestParams);
-      $healthCheckResult = $this->openGdbServiceActions->makeRequest($healthCheckRequest);
+      $healthCheckRequest = $this->sodaScsOpenGdbServiceActions->buildHealthCheckRequest($requestParams);
+      $healthCheckResult = $this->sodaScsOpenGdbServiceActions->makeRequest($healthCheckRequest);
       if ($healthCheckResult['statusCode'] != 200) {
         return [
           'message' => $this->t("Triplestore health check failed for component @component: @error", [

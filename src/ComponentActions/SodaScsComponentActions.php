@@ -3,6 +3,8 @@
 namespace Drupal\soda_scs_manager\ComponentActions;
 
 use Drupal\Core\DependencyInjection\DependencySerializationTrait;
+use Drupal\Core\Entity\EntityTypeManagerInterface;
+use Drupal\Core\Messenger\MessengerTrait;
 use Drupal\Core\StringTranslation\StringTranslationTrait;
 use Drupal\Core\StringTranslation\TranslationInterface;
 use Drupal\soda_scs_manager\Entity\SodaScsComponentInterface;
@@ -24,7 +26,15 @@ use Drupal\soda_scs_manager\ValueObject\SodaScsResult;
 class SodaScsComponentActions implements SodaScsComponentActionsInterface {
 
   use DependencySerializationTrait;
+  use MessengerTrait;
   use StringTranslationTrait;
+
+  /**
+   * The entity type manager.
+   *
+   * @var \Drupal\Core\Entity\EntityTypeManagerInterface
+   */
+  protected EntityTypeManagerInterface $entityTypeManager;
 
   /**
    * The SCS filesystem actions service.
@@ -64,7 +74,16 @@ class SodaScsComponentActions implements SodaScsComponentActionsInterface {
   /**
    * Class constructor.
    */
-  public function __construct(SodaScsComponentActionsInterface $sodaScsFilesystemComponentActions, SodaScsComponentActionsInterface $sodaScsSqlComponentActions, SodaScsComponentActionsInterface $sodaScsTriplestoreComponentActions, SodaScsComponentActionsInterface $sodaScsWisskiComponentActions, SodaScsComponentActionsInterface $sodaScsWebprotegeComponentActions, TranslationInterface $stringTranslation) {
+  public function __construct(
+    EntityTypeManagerInterface $entityTypeManager,
+    SodaScsComponentActionsInterface $sodaScsFilesystemComponentActions,
+    SodaScsComponentActionsInterface $sodaScsSqlComponentActions,
+    SodaScsComponentActionsInterface $sodaScsTriplestoreComponentActions,
+    SodaScsComponentActionsInterface $sodaScsWisskiComponentActions,
+    SodaScsComponentActionsInterface $sodaScsWebprotegeComponentActions,
+    TranslationInterface $stringTranslation,
+  ) {
+    $this->entityTypeManager = $entityTypeManager;
     $this->sodaScsFilesystemComponentActions = $sodaScsFilesystemComponentActions;
     $this->sodaScsSqlComponentActions = $sodaScsSqlComponentActions;
     $this->sodaScsTriplestoreComponentActions = $sodaScsTriplestoreComponentActions;
