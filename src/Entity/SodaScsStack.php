@@ -81,6 +81,23 @@ class SodaScsStack extends ContentEntityBase implements SodaScsStackInterface {
   protected $component;
 
   /**
+   * Load stacks by owner.
+   *
+   * @param int $ownerId
+   *   The owner ID.
+   *
+   * @return array
+   *   The stacks.
+   */
+  public static function loadByOwner($ownerId) {
+    $query = \Drupal::entityQuery('soda_scs_stack')
+      ->condition('owner', $ownerId)
+      ->accessCheck(FALSE);
+    $result = $query->execute();
+    return self::loadMultiple($result);
+  }
+
+  /**
    * Get the included Soda SCS Components.
    *
    * @param \Drupal\soda_scs_manager\Entity\SodaScsStackInterface $stack

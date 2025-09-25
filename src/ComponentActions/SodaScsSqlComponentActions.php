@@ -707,13 +707,13 @@ class SodaScsSqlComponentActions implements SodaScsComponentActionsInterface {
       //
       // Backup current database to rollback tar.
       //
-      $rollbackTarName = 'rollback--' . $databaseName . '--' . date('Ymd-His') . '.tar.gz';
-      $rollbackTarPath = $tempDir . '/' . $rollbackTarName;
+      $rollbackSqlName = 'rollback--' . $databaseName . '--' . date('Ymd-His') . '.sql';
+      $rollbackSqlPath = $tempDir . '/' . $rollbackSqlName;
 
       $rollbackDatabaseExecRequestCommand = [
         'bash',
         '-c',
-        'mariadb-dump -uroot -p' . $dbRootPassword . ' "' . $databaseName . '" > ' . $rollbackTarPath,
+        'mariadb-dump -uroot -p' . $dbRootPassword . ' "' . $databaseName . '" > ' . $rollbackSqlPath,
       ];
 
       $rollbackDatabaseExecRequestParams = [
@@ -741,7 +741,7 @@ class SodaScsSqlComponentActions implements SodaScsComponentActionsInterface {
       }
 
       // Wait for the rollback database exec to finish.
-      $waitForRollbackDatabaseExecStateResponse = $this->sodaScsContainerHelpers->waitForContainerExecState($rollbackDatabaseExecId, 'exited');
+      $waitForRollbackDatabaseExecStateResponse = $this->sodaScsContainerHelpers->waitForContainerExecState($rollbackDatabaseExecId, 0);
       if (!$waitForRollbackDatabaseExecStateResponse->success) {
         return SodaScsResult::failure(
           error: $waitForRollbackDatabaseExecStateResponse->error,
@@ -753,10 +753,11 @@ class SodaScsSqlComponentActions implements SodaScsComponentActionsInterface {
       // Restore database from snapshot.
       //
       // Construct restore command.
+      $snapshotSqlPath = $tempDir . '/sql/' . $databaseName . '.sql';
       $restoreFromSnapshotExecRequestCommand = [
         'bash',
         '-c',
-        'mariadb -uroot -p' . $dbRootPassword . ' "' . $databaseName . '" < ' . $rollbackTarPath,
+        'mariadb -uroot -p' . $dbRootPassword . ' "' . $databaseName . '" < ' . $snapshotSqlPath,
       ];
 
       // Construct restore request parameters.
@@ -766,35 +767,19 @@ class SodaScsSqlComponentActions implements SodaScsComponentActionsInterface {
         'user' => 'root',
       ];
 
-      // Build and make the create restore exec request.
-      $restoreFromSnapshotRequest = $this->sodaScsDockerExecServiceActions->buildCreateRequest($restoreFromSnapshotExecRequestParams);
-      $restoreFromSnapshotResponse = $this->sodaScsDockerExecServiceActions->makeRequest($restoreFromSnapshotRequest);
-      if (!$restoreFromSnapshotResponse['success']) {
+      // Execute the restore command and capture output.
+      // @todo This is much more elegant, we should make this everywhere like this.
+      $restoreFromSnapshotResponse = $this->sodaScsContainerHelpers->executeDockerExecCommand($restoreFromSnapshotExecRequestParams);
+
+      if (!$restoreFromSnapshotResponse->success) {
         return SodaScsResult::failure(
-          error: $restoreFromSnapshotResponse['error'],
-          message: 'Snapshot restoration failed: Could not restore from snapshot.',
+          error: $restoreFromSnapshotResponse->error,
+          message: 'Snapshot restoration failed: ' . $restoreFromSnapshotResponse->message,
         );
       }
 
-      // Build and make the start restore exec request.
-      $restoreFromSnapshotExecId = json_decode($restoreFromSnapshotResponse['data']['portainerResponse']->getBody()->getContents(), TRUE)['Id'];
-      $restoreFromSnapshotExecStartRequest = $this->sodaScsDockerExecServiceActions->buildStartRequest(['execId' => $restoreFromSnapshotExecId]);
-      $restoreFromSnapshotExecStartResponse = $this->sodaScsDockerExecServiceActions->makeRequest($restoreFromSnapshotExecStartRequest);
-      if (!$restoreFromSnapshotExecStartResponse['success']) {
-        return SodaScsResult::failure(
-          error: $restoreFromSnapshotExecStartResponse['error'],
-          message: 'Snapshot restoration failed: Could not start restore from snapshot exec request.',
-        );
-      }
-
-      // Wait until the restoration is done.
-      $waitForRestoreFromSnapshotExecStateResponse = $this->sodaScsContainerHelpers->waitForContainerExecState($restoreFromSnapshotExecId, 'exited');
-      if (!$waitForRestoreFromSnapshotExecStateResponse->success) {
-        return SodaScsResult::failure(
-          error: $waitForRestoreFromSnapshotExecStateResponse->error,
-          message: 'Snapshot restoration failed: Could not wait for restore from snapshot exec to finish.',
-        );
-      }
+      // The executeCommandWithOutput method already waits for completion
+      // and provides exit code.
     }
     catch (\Exception $e) {
       Error::logException(

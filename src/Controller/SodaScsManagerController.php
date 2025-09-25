@@ -81,7 +81,7 @@ class SodaScsManagerController extends ControllerBase {
    * @todo Join ComponentDesk and Stack dashboard to generic Dashboard.
    * @todo Make admin permission more generic.
    */
-  public function deskPage(): array {
+  public function dashboardPage(): array {
     $current_user = $this->currentUser();
 
     try {
@@ -139,17 +139,18 @@ class SodaScsManagerController extends ControllerBase {
       }
     }
 
+    // @todo This removes too much components from the dashboard.
     // Remove components that are already included in projects.
-    if (!empty($includedComponentIds)) {
-      foreach ($includedComponentIds as $componentId) {
-        if (isset($components[$componentId])) {
-          unset($components[$componentId]);
-        }
-        else {
-          $components[$componentId] = $this->entityTypeManager->getStorage('soda_scs_component')->load($componentId);
-        }
-      }
-    }
+#    if (!empty($includedComponentIds)) {
+#      foreach ($includedComponentIds as $componentId) {
+#        if (isset($components[$componentId])) {
+#          unset($components[$componentId]);
+#        }
+#        else {
+#          $components[$componentId] = $this->entityTypeManager->getStorage('soda_scs_component')->load($componentId);
+#        }
+#      }
+#    }
 
     try {
       $stackStorage = $this->entityTypeManager->getStorage('soda_scs_stack');

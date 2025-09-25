@@ -296,15 +296,6 @@ class SodaScsSnapshotConfirmForm extends ConfirmFormBase {
       return;
     }
 
-    // Wait for the containers to finish. Delete them afterwards.
-    // @todo Deletion better via autoremove?
-    $containersFinishedResult = $this->sodaScsContainerHelpers->waitContainersToFinish($createSnapshotResult->data, FALSE, 'snapshot creation');
-
-    if (!$containersFinishedResult->success) {
-      $this->messenger()->addError($this->t('Failed to create snapshot. See logs for more details.'));
-      return;
-    }
-
     // Create the bag of files.
     $createBagResult = $this->sodaScsSnapshotHelpers->createBagOfFiles(
       $createSnapshotResult->data,

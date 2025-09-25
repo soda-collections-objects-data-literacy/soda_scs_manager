@@ -258,8 +258,8 @@ class SodaScsDockerExecServiceActions implements SodaScsExecRequestInterface {
           'WorkingDir' => $requestParams['workingDir'] ?? '',
           'Env' => $requestParams['env'] ?? [],
           'Privileged' => $requestParams['privileged'] ?? FALSE,
-          'AttachStdout' => $requestParams['attachStdout'] ?? FALSE,
-          'AttachStderr' => $requestParams['attachStderr'] ?? FALSE,
+          'AttachStdout' => $requestParams['attachStdout'] ?? TRUE,
+          'AttachStderr' => $requestParams['attachStderr'] ?? TRUE,
           'AttachStdin' => $requestParams['attachStdin'] ?? FALSE,
           'DetachKeys' => $requestParams['detachKeys'] ?? '',
         ]
@@ -303,7 +303,7 @@ class SodaScsDockerExecServiceActions implements SodaScsExecRequestInterface {
       ],
       'body' => json_encode([
         'Detach' => FALSE,
-        'Tty' => TRUE,
+        'Tty' => FALSE,
       ]),
     ];
   }
@@ -374,8 +374,6 @@ class SodaScsDockerExecServiceActions implements SodaScsExecRequestInterface {
       $portainerServiceSettings['baseUrl'] .
       // /{endpointId}/docker
       $dockerApiSettings['baseUrl'] .
-      // /containers
-      $dockerExecServiceSettings['baseUrl'] .
       // /exec/{execId}/json.
       $dockerExecServiceSettings['inspectUrl'];
 

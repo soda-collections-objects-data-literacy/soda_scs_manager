@@ -163,6 +163,8 @@ class SodaScsPortainerServiceActions implements SodaScsServiceRequestInterface {
     if (isset($request['body'])) {
       $requestParams['body'] = $request['body'];
     }
+    $requestParams['timeout'] ??= 30;
+
     // Send the request.
     try {
       $response = $this->httpClient->request($request['method'], $request['route'], $requestParams);

@@ -399,6 +399,10 @@ class SodaScsDockerRunServiceActions implements SodaScsRunRequestInterface {
 
     $requestParams['routeParams']['endpointId'] = $portainerServiceSettings['endpointId'];
 
+    // Set timeout for request and container stop before force stop.
+    $requestParams['timeout'] ??= 30;
+    $requestParams['queryParams']['t'] = $requestParams['timeout'];
+
     $route =
       // https://portainer.scs.sammlungen.io
       $portainerServiceSettings['host'] .

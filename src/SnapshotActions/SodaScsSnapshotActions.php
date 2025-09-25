@@ -88,15 +88,15 @@ class SodaScsSnapshotActions implements SodaScsSnapshotActionsInterface {
    *
    * @param array $manifestData
    *   The parsed manifest data.
-   * @param \Drupal\soda_scs_manager\Entity\SodaScsSnapshotInterface|null $snapshot
-   *   The snapshot entity.
    * @param string $tempDir
    *   The temporary directory path.
+   * @param \Drupal\soda_scs_manager\Entity\SodaScsSnapshotInterface|null $snapshot
+   *   The snapshot entity.
    *
    * @return \Drupal\soda_scs_manager\ValueObject\SodaScsResult
    *   Array with success status and restoration data.
    */
-  public function restoreComponentsFromManifest(array $manifestData, ?SodaScsSnapshotInterface $snapshot = NULL, string $tempDir): SodaScsResult {
+  public function restoreComponentsFromManifest(array $manifestData, string $tempDir, ?SodaScsSnapshotInterface $snapshot = NULL): SodaScsResult {
     $restorationResults = [];
     $errors = [];
 
@@ -110,8 +110,8 @@ class SodaScsSnapshotActions implements SodaScsSnapshotActionsInterface {
 
       // @todo Remove this once we have a generic restore from snapshot for all components.
       // @todo Implement SQL and Triplestore component restoration.
-      if ($bundle !== 'soda_scs_wisski_component') {
-        $this->messenger->addError($this->t("Cannot restore components from manifest. Only WissKI components are supported."));
+      if ($bundle !== 'soda_scs_wisski_component' && $bundle !== 'soda_scs_sql_component' && $bundle !== 'soda_scs_triplestore_component') {
+        $this->messenger()->addError($this->t("Cannot restore components from manifest. Only WissKI components are supported."));
         continue;
       }
 
@@ -134,17 +134,12 @@ class SodaScsSnapshotActions implements SodaScsSnapshotActionsInterface {
           continue;
         }
 
-        // Get the appropriate component action service.
-        // @todo This is how we should do it in the future
-        // for all component and stack actions.
-        $componentActions = $this->sodaScsActionsHelper->getComponentActionsForBundle($bundle);
-        if (!$componentActions) {
-          $errors[] = "No component actions found for bundle {$bundle}.";
-          continue;
-        }
+        // Important: do not mutate the method parameter $snapshot here.
+        // Create or reuse a snapshot per component to ensure correct routing.
+        $componentSnapshot = $snapshot ?? $this->createPseudoSnapshotForComponent($component, $manifestData['snapshotMachineName'], $dumpFile, $tempDir);
 
-        // Restore the component.
-        $restoreResult = $componentActions->restoreFromSnapshot($snapshot, $tempDir);
+        // Restore the component using its own snapshot.
+        $restoreResult = $this->sodaScsComponentActions->restoreFromSnapshot($componentSnapshot, $tempDir);
 
         if ($restoreResult->success) {
           $restorationResults[$machineName] = $restoreResult;
@@ -239,11 +234,11 @@ class SodaScsSnapshotActions implements SodaScsSnapshotActionsInterface {
     }
 
     // Step 4: Delegate restoration to components.
-    $restoreResult = $this->restoreComponentsFromManifest($manifestData['data'], NULL, $tempDir);
-    if (!$restoreResult['success']) {
+    $restoreResult = $this->restoreComponentsFromManifest($manifestData['data'], $tempDir, NULL);
+    if (!$restoreResult->success) {
       $this->sodaScsSnapshotHelpers->cleanupTemporaryDirectory($tempDir);
       return SodaScsResult::failure(
-        error: $restoreResult['error'],
+        error: $restoreResult->error,
         message: 'Failed to restore components from manifest.',
       );
     }
@@ -252,8 +247,8 @@ class SodaScsSnapshotActions implements SodaScsSnapshotActionsInterface {
     $this->sodaScsSnapshotHelpers->cleanupTemporaryDirectory($tempDir);
 
     return SodaScsResult::success(
-      message: 'WissKI stack restored from snapshot successfully.',
-      data: $restoreResult['data'],
+      message: 'Snapshot restored successfully.',
+      data: $restoreResult->data,
     );
   }
 
@@ -262,6 +257,8 @@ class SodaScsSnapshotActions implements SodaScsSnapshotActionsInterface {
    *
    * @param \Drupal\soda_scs_manager\Entity\SodaScsComponentInterface $component
    *   The component entity.
+   * @param string $snapshotMachineName
+   *   The machine name of the snapshot.
    * @param string $dumpFile
    *   The dump file path.
    * @param string $tempDir
@@ -270,7 +267,7 @@ class SodaScsSnapshotActions implements SodaScsSnapshotActionsInterface {
    * @return \Drupal\soda_scs_manager\Entity\SodaScsSnapshotInterface
    *   A pseudo snapshot entity.
    */
-  public function createPseudoSnapshotForComponent($component, string $dumpFile, string $tempDir): SodaScsSnapshotInterface {
+  public function createPseudoSnapshotForComponent($component, string $snapshotMachineName, string $dumpFile, string $tempDir): SodaScsSnapshotInterface {
     // Create a temporary file entity for the dump file.
     $fileUri = 'temporary://' . basename($dumpFile);
     copy($dumpFile, $this->fileSystem->realpath($fileUri));
@@ -282,11 +279,30 @@ class SodaScsSnapshotActions implements SodaScsSnapshotActionsInterface {
     ]);
     $file->save();
 
+    switch ($component->bundle()) {
+      case 'soda_scs_wisski_component':
+        $type = 'wisski';
+        break;
+
+      case 'soda_scs_sql_component':
+        $type = 'sql';
+        break;
+
+      case 'soda_scs_triplestore_component':
+        $type = 'triplestore';
+        break;
+
+      case 'soda_scs_webprotege_component':
+      default:
+        $type = 'unknown';
+    }
+
     // Create a pseudo snapshot entity.
     $snapshot = $this->entityTypeManager->getStorage('soda_scs_snapshot')->create([
       'label' => 'Pseudo snapshot for restoration',
       'file' => $file->id(),
       'snapshotOfComponent' => $component->id(),
+      'machineName' => 'pseudosnapshot-' . $type . '-' . $component->get('machineName')->value,
     ]);
 
     return $snapshot;

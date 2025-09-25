@@ -86,6 +86,23 @@ class SodaScsComponent extends ContentEntityBase implements SodaScsComponentInte
   use EntityOwnerTrait;
 
   /**
+   * Load components by owner.
+   *
+   * @param int $ownerId
+   *   The owner ID.
+   *
+   * @return array
+   *   The components.
+   */
+  public static function loadByOwner($ownerId) {
+    $query = \Drupal::entityQuery('soda_scs_component')
+      ->condition('owner', $ownerId)
+      ->accessCheck(FALSE);
+    $result = $query->execute();
+    return self::loadMultiple($result);
+  }
+
+  /**
    * Returns the description of the SODa SCS Component.
    *
    * @return string

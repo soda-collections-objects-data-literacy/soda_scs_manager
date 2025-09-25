@@ -987,10 +987,191 @@ class SodaScsSnapshotHelpers {
    *
    * @return array
    *   Array with success status and error message if unpacking fails.
+   *
+   * @todo This is somehow redundant with the validate and unpack from manifest.
    */
   public function unpackSnapshotToTempDirectory(string $filePath, string $tempDir): array {
     try {
+      // Unpack the parent tar file.
       $command = sprintf('cd %s && tar -xzf %s', escapeshellarg($tempDir), escapeshellarg($filePath));
+      $output = [];
+      $returnCode = 0;
+      exec($command, $output, $returnCode);
+
+      if ($returnCode !== 0) {
+        return [
+          'success' => FALSE,
+          'error' => 'Failed to extract tar file: ' . implode("\n", $output),
+        ];
+      }
+
+      // After unpacking the main snapshot, recursively
+      // validate and unpack subdirectories.
+      $recursiveUnpackResult = $this->recursivelyValidateAndUnpackSubdirectories($tempDir);
+      if (!$recursiveUnpackResult['success']) {
+        return $recursiveUnpackResult;
+      }
+
+      return ['success' => TRUE];
+    }
+    catch (\Exception $e) {
+      return [
+        'success' => FALSE,
+        'error' => 'Exception during extraction: ' . $e->getMessage(),
+      ];
+    }
+  }
+
+  /**
+   * Recursively validate and unpack subdirectories containing tar.gz files.
+   *
+   * This method scans subdirectories for tar.gz and sha256 files,
+   * validates checksums, and unpacks the archives for nq and sql directories.
+   *
+   * @param string $tempDir
+   *   The temporary directory path containing the unpacked snapshot.
+   *
+   * @return array
+   *   Array with success status and error message if unpacking fails.
+   */
+  protected function recursivelyValidateAndUnpackSubdirectories(string $tempDir): array {
+    try {
+      // Define the subdirectories that may contain tar.gz files to unpack.
+      $unpackDirectories = ['nq', 'sql'];
+      // Also include drupal-data for validation but don't unpack it.
+      $allSubdirectories = ['drupal-data', 'nq', 'sql'];
+
+      // Scan for subdirectories in the temp directory.
+      $subdirectories = array_filter(glob($tempDir . '/*'), 'is_dir');
+
+      foreach ($subdirectories as $subdirectoryPath) {
+        $subdirectoryName = basename($subdirectoryPath);
+
+        // Skip if this is not one of our expected subdirectories.
+        if (!in_array($subdirectoryName, $allSubdirectories)) {
+          continue;
+        }
+
+        // Find tar.gz files in this subdirectory.
+        $tarFiles = glob($subdirectoryPath . '/*.tar.gz');
+
+        foreach ($tarFiles as $tarFilePath) {
+          $tarFileName = basename($tarFilePath);
+          $sha256FilePath = $tarFilePath . '.sha256';
+
+          // Validate checksum if sha256 file exists.
+          if (file_exists($sha256FilePath)) {
+            $validateResult = $this->validateFileChecksum($tarFilePath, $sha256FilePath);
+            if (!$validateResult['success']) {
+              return [
+                'success' => FALSE,
+                'error' => "Checksum validation failed for {$tarFileName} in {$subdirectoryName}: " . $validateResult['error'],
+              ];
+            }
+          }
+          else {
+            $this->logger->warning('No checksum file found for: @file', ['@file' => $tarFileName]);
+          }
+
+          // Unpack if this is in one of the directories
+          // that should be unpacked.
+          if (in_array($subdirectoryName, $unpackDirectories)) {
+            $unpackResult = $this->unpackTarFileInPlace($tarFilePath, $subdirectoryPath);
+            if (!$unpackResult['success']) {
+              return [
+                'success' => FALSE,
+                'error' => "Failed to unpack {$tarFileName} in {$subdirectoryName}: " . $unpackResult['error'],
+              ];
+            }
+          }
+        }
+      }
+
+      return ['success' => TRUE];
+    }
+    catch (\Exception $e) {
+      return [
+        'success' => FALSE,
+        'error' => 'Exception during recursive unpacking: ' . $e->getMessage(),
+      ];
+    }
+  }
+
+  /**
+   * Validate file checksum against a sha256 file.
+   *
+   * @param string $filePath
+   *   The file to validate.
+   * @param string $sha256FilePath
+   *   The path to the sha256 checksum file.
+   *
+   * @return array
+   *   Array with success status and error message if validation fails.
+   */
+  protected function validateFileChecksum(string $filePath, string $sha256FilePath): array {
+    try {
+      if (!file_exists($filePath)) {
+        return [
+          'success' => FALSE,
+          'error' => 'File does not exist: ' . $filePath,
+        ];
+      }
+
+      if (!file_exists($sha256FilePath)) {
+        return [
+          'success' => FALSE,
+          'error' => 'Checksum file does not exist: ' . $sha256FilePath,
+        ];
+      }
+
+      $expectedChecksum = trim(file_get_contents($sha256FilePath));
+      $actualChecksum = hash_file('sha256', $filePath);
+
+      if ($actualChecksum === FALSE) {
+        return [
+          'success' => FALSE,
+          'error' => 'Failed to calculate checksum for file: ' . $filePath,
+        ];
+      }
+
+      // The checksum file might contain the filename as well, so check if the checksum is contained in the file.
+      if (strpos($expectedChecksum, $actualChecksum) === FALSE) {
+        return [
+          'success' => FALSE,
+          'error' => "Checksum mismatch. Expected: {$expectedChecksum}, Actual: {$actualChecksum}",
+        ];
+      }
+
+      return ['success' => TRUE];
+    }
+    catch (\Exception $e) {
+      return [
+        'success' => FALSE,
+        'error' => 'Exception during checksum validation: ' . $e->getMessage(),
+      ];
+    }
+  }
+
+  /**
+   * Unpack a tar file in place within its directory.
+   *
+   * @param string $tarFilePath
+   *   The path to the tar.gz file.
+   * @param string $extractDir
+   *   The directory to extract to.
+   *
+   * @return array
+   *   Array with success status and error message if extraction fails.
+   */
+  protected function unpackTarFileInPlace(string $tarFilePath, string $extractDir): array {
+    try {
+      // Create extraction command.
+      $command = sprintf(
+        'cd %s && tar -xzf %s',
+        escapeshellarg($extractDir),
+        escapeshellarg($tarFilePath)
+      );
+
       $output = [];
       $returnCode = 0;
       exec($command, $output, $returnCode);
@@ -1007,7 +1188,7 @@ class SodaScsSnapshotHelpers {
     catch (\Exception $e) {
       return [
         'success' => FALSE,
-        'error' => 'Exception during extraction: ' . $e->getMessage(),
+        'error' => 'Exception during tar extraction: ' . $e->getMessage(),
       ];
     }
   }

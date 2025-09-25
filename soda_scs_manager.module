@@ -11,16 +11,18 @@ use Drupal\Core\Entity\EntityTypeInterface;
 use Drupal\Core\Field\BaseFieldDefinition;
 use Drupal\Core\Routing\RouteMatchInterface;
 use Drupal\Core\StringTranslation\TranslatableMarkup;
+use Drupal\Core\Url;
 use Drupal\soda_scs_manager\Entity\Bundle\SodaScsComponentBundle;
 use Drupal\soda_scs_manager\Entity\Bundle\SodaScsProjectsBundle;
 use Drupal\soda_scs_manager\Entity\Bundle\SodaScsServiceKeyBundle;
 use Drupal\soda_scs_manager\Entity\Bundle\SodaScsStackBundle;
-use Drupal\user\UserInterface;
-use Drupal\soda_scs_manager\Entity\SodaScsProject;
 use Drupal\soda_scs_manager\Entity\SodaScsComponent;
-use Drupal\Core\Url;
-use Symfony\Component\HttpFoundation\RedirectResponse;
+use Drupal\soda_scs_manager\Entity\SodaScsProject;
+use Drupal\soda_scs_manager\Entity\SodaScsServiceKey;
+use Drupal\soda_scs_manager\Entity\SodaScsSnapshot;
 use Drupal\soda_scs_manager\Entity\SodaScsStack;
+use Drupal\user\UserInterface;
+use Symfony\Component\HttpFoundation\RedirectResponse;
 
 /**
  * Implements hook_entity_base_field_info().
@@ -620,6 +622,44 @@ function soda_scs_manager_user_delete(UserInterface $user) {
       '@error' => $cleanTriplestoreUsers['error'],
     ]);
   }
+  // Clean enities.
+  $snapshots = SodaScsSnapshot::loadByOwner($user->id());
+  foreach ($snapshots as $snapshot) {
+    $snapshot->delete();
+  }
+
+  $components = SodaScsComponent::loadByOwner($user->id());
+  foreach ($components as $component) {
+    $component->delete();
+  }
+  $messenger->addMessage(t('Successfully deleted @count components for user @username', [
+    '@count' => count($components),
+    '@username' => $user->getDisplayName(),
+  ]));
+  $stacks = SodaScsStack::loadByOwner($user->id());
+  foreach ($stacks as $stack) {
+    $stack->delete();
+  }
+  $messenger->addMessage(t('Successfully deleted @count stacks for user @username', [
+    '@count' => count($stacks),
+    '@username' => $user->getDisplayName(),
+  ]));
+  $projects = SodaScsProject::loadByOwner($user->id());
+  foreach ($projects as $project) {
+    $project->delete();
+  }
+  $messenger->addMessage(t('Successfully deleted @count projects for user @username', [
+    '@count' => count($projects),
+    '@username' => $user->getDisplayName(),
+  ]));
+  $servicekeys = SodaScsServiceKey::loadByOwner($user->id());
+  foreach ($servicekeys as $servicekey) {
+    $servicekey->delete();
+  }
+  $messenger->addMessage(t('Successfully deleted @count service keys for user @username', [
+    '@count' => count($servicekeys),
+    '@username' => $user->getDisplayName(),
+  ]));
 }
 
 /**
@@ -767,7 +807,7 @@ function soda_scs_manager_file_download($uri) {
  */
 function _soda_scs_manager_create_default_applications_for_user(UserInterface $user) {
   // Get the default project for the user.
-  $projects = SodaScsProject::loadByOwner($user);
+  $projects = SodaScsProject::loadByOwner($user->id());
 
   if (empty($projects) || count($projects) > 1) {
     $messenger = \Drupal::messenger();
@@ -859,6 +899,7 @@ function _soda_scs_manager_create_default_filesystem_for_user(UserInterface $use
     'imageUrl' => 'public://soda_scs_manager/images/filesystem.svg',
     'health' => 'Unknown',
     'label' => $user->getDisplayName() . '\'s default filesystem',
+    // Why fs- prefix is not necessary?
     'machineName' => $user->getDisplayName() . '-default',
     'owner' => $user->id(),
     'partOfProjects' => [
@@ -887,7 +928,7 @@ function _soda_scs_manager_create_default_nextcloud_for_user(UserInterface $user
     'description' => $bundleinfo['description'],
     'imageUrl' => $bundleinfo['imageUrl'],
     'label' => $user->getDisplayName() . '\'s nextcloud',
-    'machineName' => $user->getDisplayName() . '-default',
+    'machineName' => 'nextcloud-' . $user->getDisplayName() . '-default',
     'owner' => $user->id(),
     'partOfProjects' => [
       [
@@ -915,7 +956,7 @@ function _soda_scs_manager_create_default_jupyter_for_user(UserInterface $user, 
     'description' => $bundleinfo['description'],
     'imageUrl' => $bundleinfo['imageUrl'],
     'label' => $user->getDisplayName() . '\'s jupyter',
-    'machineName' => $user->getDisplayName() . '-default',
+    'machineName' => 'jupyter-' . $user->getDisplayName() . '-default',
     'owner' => $user->id(),
     'partOfProjects' => [
       [
@@ -943,7 +984,7 @@ function _soda_scs_manager_create_default_webprotege_for_user(UserInterface $use
     'description' => $bundleinfo['description'],
     'imageUrl' => $bundleinfo['imageUrl'],
     'label' => $user->getDisplayName() . '\'s webprotege',
-    'machineName' => $user->getDisplayName() . '-default',
+    'machineName' => 'webprotege-' . $user->getDisplayName() . '-default',
     'owner' => $user->id(),
     'partOfProjects' => [
       [

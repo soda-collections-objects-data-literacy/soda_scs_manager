@@ -78,6 +78,23 @@ class SodaScsSnapshot extends ContentEntityBase implements SodaScsSnapshotInterf
   use EntityOwnerTrait;
 
   /**
+   * Load snapshots by owner.
+   *
+   * @param int $ownerId
+   *   The owner ID.
+   *
+   * @return array
+   *   The snapshots.
+   */
+  public static function loadByOwner($ownerId) {
+    $query = \Drupal::entityQuery('soda_scs_snapshot')
+      ->condition('owner', $ownerId)
+      ->accessCheck(FALSE);
+    $result = $query->execute();
+    return self::loadMultiple($result);
+  }
+
+  /**
    * {@inheritdoc}
    */
   public static function baseFieldDefinitions(EntityTypeInterface $entity_type) {

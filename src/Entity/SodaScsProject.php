@@ -92,15 +92,16 @@ class SodaScsProject extends ContentEntityBase implements SodaScsProjectInterfac
   /**
    * Get the default project for a user.
    *
-   * @param \Drupal\user\UserInterface $user
+   * @param int $ownerId
+   *   The owner ID.
    *   The user.
    *
    * @return array[SodaScsProject]|null
    *   The default project for the user.
    */
-  public static function loadByOwner(UserInterface $user) {
+  public static function loadByOwner($ownerId) {
     $query = \Drupal::entityQuery('soda_scs_project')
-      ->condition('owner', $user->id())
+      ->condition('owner', $ownerId)
       ->accessCheck(FALSE);
     $result = $query->execute();
     return self::loadMultiple($result);

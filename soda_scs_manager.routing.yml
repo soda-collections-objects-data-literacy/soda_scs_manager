@@ -314,7 +314,7 @@ entity.soda_scs_stack.snapshot:
 soda_scs_manager.dashboard:
   path: '/soda-scs-manager/dashboard'
   defaults:
-    _controller: '\Drupal\soda_scs_manager\Controller\SodaScsManagerController::deskPage'
+    _controller: '\Drupal\soda_scs_manager\Controller\SodaScsManagerController::dashboardPage'
     _title:  'Dashboard'
   requirements:
     _permission: 'soda scs manager user'

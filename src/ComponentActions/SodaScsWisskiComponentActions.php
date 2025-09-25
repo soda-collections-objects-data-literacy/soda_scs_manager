@@ -660,26 +660,63 @@ class SodaScsWisskiComponentActions implements SodaScsComponentActionsInterface 
   public function createSnapshot(SodaScsComponentInterface $component, string $snapshotMachineName, int $timestamp): SodaScsResult {
     try {
 
-      // Stop the container.
-      // Construct the request parameters.
-      $stopWisskiContainerRequestParams = [
+      //
+      // Inspect if the WissKI component
+      //
+      // Construct the inspect request parameters.
+      $inspectWisskicontainerRequestParams = [
         'routeParams' => [
           'containerId' => $component->get('containerId')->value,
         ],
       ];
-
-      // Build and make the stop container request.
-      $stopWisskiContainerRequest = $this->sodaScsDockerRunServiceActions->buildStopRequest($stopWisskiContainerRequestParams);
-      $stopWisskiContainerResponse = $this->sodaScsDockerRunServiceActions->makeRequest($stopWisskiContainerRequest);
-      if (!$stopWisskiContainerResponse['success']) {
+      // Build and send the inspect request.
+      $inspectWisskicontainerRequest = $this->sodaScsDockerRunServiceActions->buildInspectRequest($inspectWisskicontainerRequestParams);
+      $inspectWisskicontainerResponse = $this->sodaScsDockerRunServiceActions->makeRequest($inspectWisskicontainerRequest);
+      if (!$inspectWisskicontainerResponse['success']) {
         return SodaScsResult::failure(
-          error: $stopWisskiContainerResponse['error'],
-          message: 'Snapshot creation failed: Could not stop container.',
+          error: $inspectWisskicontainerResponse['error'],
+          message: 'Snapshot creation failed: Could not inspect container.',
         );
       }
+      $inspectWisskicontainerResponsePayload = json_decode($inspectWisskicontainerResponse['data']['portainerResponse']->getBody()->getContents(), TRUE);
+      $wisskiContainerState = $inspectWisskicontainerResponsePayload['State'];
 
-      // @todo Check if the container is stopped.
-      // @todo Abstract this.
+      if ($wisskiContainerState['Status'] !== 'running') {
+
+        //
+        // Stop the WissKI component container.
+        //
+        // Construct the request parameters.
+        $stopWisskiContainerRequestParams = [
+          'routeParams' => [
+            'containerId' => $component->get('containerId')->value,
+          ],
+        ];
+
+        // Build and make the stop container request.
+        $stopWisskiContainerRequest = $this->sodaScsDockerRunServiceActions->buildStopRequest($stopWisskiContainerRequestParams);
+        $stopWisskiContainerResponse = $this->sodaScsDockerRunServiceActions->makeRequest($stopWisskiContainerRequest);
+        if (!$stopWisskiContainerResponse['success']) {
+          return SodaScsResult::failure(
+            error: $stopWisskiContainerResponse['error'],
+            message: 'Snapshot creation failed: Could not stop container.',
+          );
+        }
+
+        // Wait for the container to be stopped.
+        $waitForContainerToStopResponse = $this->sodaScsContainerHelpers->waitForContainerState($component->get('containerId')->value, 'exited');
+        if (!$waitForContainerToStopResponse->success) {
+          return SodaScsResult::failure(
+            error: $waitForContainerToStopResponse->error,
+            message: 'Snapshot creation failed: Could not wait for container to stop.',
+          );
+        }
+      }
+
+      //
+      // Create the snapshot container.
+      //
+      // Get the snapshot paths.
       $snapshotPaths = $this->sodaScsSnapshotHelpers->constructSnapshotPaths($component, $snapshotMachineName, $timestamp);
 
       // Create the backup directory.
@@ -694,8 +731,8 @@ class SodaScsWisskiComponentActions implements SodaScsComponentActionsInterface 
       // We need a random int to avoid conflicts with other snapshots.
       $randomInt = $this->sodaScsSnapshotHelpers->generateRandomSuffix();
       $snapshotContainerName = 'snapshot--' . $randomInt . '--' . $snapshotMachineName . '--drupal';
-      // Create and run the snapshot container to create tar and sha256 file.
-      $createSnapshotContainerRequestParams = [
+      // Construct the snapshot container create request parameters.
+      $createSnapshotContainerRunCommandRequestParams = [
         'name' => $snapshotContainerName,
         'volumes' => NULL,
         'image' => 'alpine:latest',
@@ -714,9 +751,9 @@ class SodaScsWisskiComponentActions implements SodaScsComponentActionsInterface 
         ],
       ];
 
-      // Make the create container request.
-      $createSnapshotContainerRequest = $this->sodaScsDockerRunServiceActions->buildCreateRequest($createSnapshotContainerRequestParams);
-      $createSnapshotContainerResponse = $this->sodaScsDockerRunServiceActions->makeRequest($createSnapshotContainerRequest);
+      // Build the create request for docker run command and send it.
+      $createSnapshotContainerRunCommandRequest = $this->sodaScsDockerRunServiceActions->buildCreateRequest($createSnapshotContainerRunCommandRequestParams);
+      $createSnapshotContainerResponse = $this->sodaScsDockerRunServiceActions->makeRequest($createSnapshotContainerRunCommandRequest);
 
       if (!$createSnapshotContainerResponse['success']) {
         return SodaScsResult::failure(
@@ -728,27 +765,30 @@ class SodaScsWisskiComponentActions implements SodaScsComponentActionsInterface 
       // Get container ID from response.
       $snapshotContainerId = json_decode($createSnapshotContainerResponse['data']['portainerResponse']->getBody()->getContents(), TRUE)['Id'];
 
-      // Make the start container request.
-      $startSnapshotContainerRequest = $this->sodaScsDockerRunServiceActions->buildStartRequest([
+      // Build the start request for docker run command and send it.
+      $startSnapshotContainerRunCommandRequest = $this->sodaScsDockerRunServiceActions->buildStartRequest([
         'routeParams' => [
           'containerId' => $snapshotContainerId,
         ],
       ]);
-      $startSnapshotContainerResponse = $this->sodaScsDockerRunServiceActions->makeRequest($startSnapshotContainerRequest);
+      $startSnapshotContainerRunCommandResponse = $this->sodaScsDockerRunServiceActions->makeRequest($startSnapshotContainerRunCommandRequest);
 
-      if (!$startSnapshotContainerResponse['success']) {
+      if (!$startSnapshotContainerRunCommandResponse['success']) {
         return SodaScsResult::failure(
-          error: $startSnapshotContainerResponse['error'],
+          error: $startSnapshotContainerRunCommandResponse['error'],
           message: 'Snapshot creation failed: Could not start snapshot container.',
         );
       }
 
+      // Construct component data for the snapshot.
       $componentData = [
         'componentBundle' => $component->bundle(),
         'componentId' => $component->id(),
         'componentMachineName' => $component->get('machineName')->value,
         'snapshotContainerId' => $snapshotContainerId,
         'snapshotContainerName' => $snapshotContainerName,
+        'snapshotContainerStatus' => NULL,
+        'snapshotContainerRemoved' => NULL,
         'createSnapshotContainerResponse' => $createSnapshotContainerResponse,
         'metadata' => [
           'backupPath' => $snapshotPaths['backupPath'],
@@ -764,16 +804,21 @@ class SodaScsWisskiComponentActions implements SodaScsComponentActionsInterface 
           'snapshotMachineName' => $snapshotMachineName,
           'timestamp' => $timestamp,
         ],
-        'startSnapshotContainerResponse' => $startSnapshotContainerResponse,
+        'startSnapshotContainerResponse' => $startSnapshotContainerRunCommandResponse,
       ];
 
       $snapshotContainerData = SodaScsSnapshotData::fromArray($componentData);
 
+      // Since we can snapshot whole stack with multiple components,
+      // we need to construct an array with the component bundle as key
+      // and the snapshot data.
       $containers = [
         $component->bundle() => $snapshotContainerData,
       ];
 
-      // Wait for the container to be finished.
+      //
+      // Wait for the snapshot container to be finished.
+      //
       $waitForSnapshotContainerToFinishResponse = $this->sodaScsContainerHelpers->waitContainersToFinish(
         $containers,
         FALSE,
@@ -785,12 +830,18 @@ class SodaScsWisskiComponentActions implements SodaScsComponentActionsInterface 
         );
       }
 
+      //
       // Start the component container again.
-      $startWisskiContainerRequest = $this->sodaScsDockerRunServiceActions->buildStartRequest([
+      //
+      // Construct the request parameters.
+      $startWisskiContainerRequestParams = [
         'routeParams' => [
           'containerId' => $component->get('containerId')->value,
         ],
-      ]);
+      ];
+
+      // Build the start request for docker run command and send it.
+      $startWisskiContainerRequest = $this->sodaScsDockerRunServiceActions->buildStartRequest($startWisskiContainerRequestParams);
       $startWisskiContainerResponse = $this->sodaScsDockerRunServiceActions->makeRequest($startWisskiContainerRequest);
 
       if (!$startWisskiContainerResponse['success']) {
@@ -800,8 +851,10 @@ class SodaScsWisskiComponentActions implements SodaScsComponentActionsInterface 
         );
       }
 
+      // Set the start WissKI container response.
       $snapshotContainerData->startWisskiContainerResponse = $startWisskiContainerResponse;
 
+      // Return the success result.
       return SodaScsResult::success(
         data: [
           $component->bundle() => $snapshotContainerData,
@@ -1180,14 +1233,12 @@ class SodaScsWisskiComponentActions implements SodaScsComponentActionsInterface 
       //
       // Stop the WissKI component container gracefully.
       //
-      // Wait for 30 seconds before forcing stop.
+      // Wait for 30 seconds before forcing stop container.
       $stopContainerRequestParams = [
         'routeParams' => [
           'containerId' => $containerId,
         ],
-        'queryParams' => [
-          't' => 300,
-        ],
+        'timeout' => 60,
       ];
       // Build and make the stop container request.
       $stopContainerRequest = $this->sodaScsDockerRunServiceActions->buildStopRequest($stopContainerRequestParams);
@@ -1380,11 +1431,11 @@ class SodaScsWisskiComponentActions implements SodaScsComponentActionsInterface 
       }
 
       // Log the restore success.
-      $this->logger->info('WissKI component @name (@machineName) restored from snapshot @snapshotName (@snapshotId) successfully.', [
+      $this->logger->info('WissKI component @name (@componentMachineName) restored from snapshot @snapshotName (@snapshotMachineName) successfully.', [
         'name' => $component->label(),
-        'machineName' => $machineName,
+        'componentMachineName' => $component->get('machineName')->value,
+        'snapshotMachineName' => $snapshot->get('machineName')->value,
         'snapshotName' => $snapshot->label(),
-        'snapshotId' => $snapshot->get('machineName')->value,
       ]);
 
       return SodaScsResult::success(

@@ -465,10 +465,9 @@ class SodaScsOpenGdbServiceActions implements SodaScsOpenGdbRequestInterface {
    */
   public function buildDumpRequest(array $requestParams): array {
     $triplestoreServiceSettings = $this->sodaScsServiceHelpers->initTriplestoreServiceSettings();
-    
 
     // @todo Make this more flexible with settings.
-    $route = 
+    $route =
     // https://ts.scs.sammlungen.io
     $triplestoreServiceSettings['host'] .
     // /repositories/
@@ -498,6 +497,7 @@ class SodaScsOpenGdbServiceActions implements SodaScsOpenGdbRequestInterface {
         'Authorization' => 'Basic ' . base64_encode($triplestoreServiceSettings['adminUsername'] . ':' . $triplestoreServiceSettings['adminPassword']),
       ],
       'body' => !empty($requestParams['body']) ? json_encode($requestParams['body']) : '',
-    ]; 
+    ];
   }
+
 }

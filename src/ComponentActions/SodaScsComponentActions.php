@@ -229,10 +229,22 @@ class SodaScsComponentActions implements SodaScsComponentActionsInterface {
    *   The result of the request.
    */
   public function createSnapshot(SodaScsComponentInterface $component, string $snapshotMachineName, int $timestamp): SodaScsResult {
-    return SodaScsResult::success(
-      message: 'Snapshot created successfully.',
-      data: [],
-    );
+    switch ($component->bundle()) {
+      case 'soda_scs_wisski_component':
+        return $this->sodaScsWisskiComponentActions->createSnapshot($component, $snapshotMachineName, $timestamp);
+
+      case 'soda_scs_sql_component':
+        return $this->sodaScsSqlComponentActions->createSnapshot($component, $snapshotMachineName, $timestamp);
+
+      case 'soda_scs_triplestore_component':
+        return $this->sodaScsTriplestoreComponentActions->createSnapshot($component, $snapshotMachineName, $timestamp);
+
+      default:
+        return SodaScsResult::failure(
+          message: 'Component type not supported for snapshot creation.',
+          error: 'Component type not supported for snapshot creation.',
+        );
+    }
   }
 
   /**

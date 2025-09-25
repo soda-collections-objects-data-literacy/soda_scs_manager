@@ -97,6 +97,7 @@ services:
   soda_scs_manager.component.actions:
     class: Drupal\soda_scs_manager\ComponentActions\SodaScsComponentActions
     arguments:
+      - '@entity_type.manager'
       - '@soda_scs_manager.filesystem_component.actions'
       - '@soda_scs_manager.sql_component.actions'
       - '@soda_scs_manager.triplestore_component.actions'
@@ -119,6 +120,15 @@ services:
       - '@soda_scs_manager.sql_service.actions'
       - '@soda_scs_manager.stack.helpers'
       - '@string_translation'
+
+  soda_scs_manager.snapshot.actions:
+    class: Drupal\soda_scs_manager\SnapshotActions\SodaScsSnapshotActions
+    arguments:
+      - '@entity_type.manager'
+      - '@file_system'
+      - '@soda_scs_manager.actions.helpers'
+      - '@soda_scs_manager.component.actions'
+      - '@soda_scs_manager.snapshot.helpers'
 
   soda_scs_manager.sql_component.actions:
     class: Drupal\soda_scs_manager\ComponentActions\SodaScsSqlComponentActions
@@ -196,6 +206,7 @@ services:
     class: Drupal\soda_scs_manager\ServiceKeyActions\SodaScsServiceKeyActions
     arguments:
       - '@entity_type.manager'
+      - '@soda_scs_manager.opengdb_service.actions'
 
   # Service actions
 
@@ -353,21 +364,23 @@ services:
   soda_scs_manager.wisski_stack.actions:
     class: Drupal\soda_scs_manager\StackActions\SodaScsWisskiStackActions
     arguments:
-      - '@entity_type.bundle.info'
       - '@config.factory'
       - '@database'
+      - '@entity_type.bundle.info'
       - '@entity_type.manager'
       - '@file_system'
       - '@logger.factory'
       - '@messenger'
-      - '@soda_scs_manager.stack.helpers'
-      - '@soda_scs_manager.snapshot.helpers'
+      - '@soda_scs_manager.component.actions'
       - '@soda_scs_manager.sql_component.actions'
+      - '@soda_scs_manager.triplestore_component.actions'
+      - '@soda_scs_manager.wisski_component.actions'
       - '@soda_scs_manager.sql_service.actions'
       - '@soda_scs_manager.service_key.actions'
       - '@soda_scs_manager.portainer_service.actions'
-      - '@soda_scs_manager.triplestore_component.actions'
-      - '@soda_scs_manager.wisski_component.actions'
+      - '@soda_scs_manager.snapshot.actions'
+      - '@soda_scs_manager.snapshot.helpers'
+      - '@soda_scs_manager.stack.helpers'
       - '@string_translation'
 
 # Subscriber

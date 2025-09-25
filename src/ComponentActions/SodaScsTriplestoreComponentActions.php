@@ -172,6 +172,7 @@ class SodaScsTriplestoreComponentActions implements SodaScsComponentActionsInter
         'type'  => 'token',
         'userId'    => $entity->getOwnerId(),
         'username' => $entity->getOwner()->getDisplayName(),
+        'servicePassword' => $triplestoreComponentServiceKey->get('servicePassword')->value,
       ];
 
       if ($triplestoreComponentServiceToken = $this->sodaScsServiceKeyActions->getServiceKey($tokenProps)) {
@@ -244,7 +245,6 @@ class SodaScsTriplestoreComponentActions implements SodaScsComponentActionsInter
             ];
             $openGdbCreateUserRequest = $this->sodaScsOpenGdbServiceActions->buildCreateRequest($createUserRequestParams);
             $createUserResponse = $this->sodaScsOpenGdbServiceActions->makeRequest($openGdbCreateUserRequest);
-            $updateUserResponse = NULL;
 
             $this->messenger->addMessage($this->t("Created OpenGDB user: @username", ['@username' => $username]));
 
@@ -395,7 +395,7 @@ class SodaScsTriplestoreComponentActions implements SodaScsComponentActionsInter
             ],
           ];
           $openGdbUpdateUserRequest = $this->sodaScsOpenGdbServiceActions->buildUpdateRequest($updateUserRequestParams);
-          $updateUserResponse = $this->sodaScsOpenGdbServiceActions->makeRequest($openGdbUpdateUserRequest);
+          $this->sodaScsOpenGdbServiceActions->makeRequest($openGdbUpdateUserRequest);
           $createUserResponse = NULL;
         }
         catch (MissingDataException $e) {
@@ -507,7 +507,7 @@ class SodaScsTriplestoreComponentActions implements SodaScsComponentActionsInter
     $requestParams = [
       'type' => 'select',
       'queryParams' => [
-        'query' => 'SELECT ?s ?p ?o ?g WHERE { GRAPH ?g { ?s ?p ?o } }'
+        'query' => 'SELECT ?s ?p ?o ?g WHERE { GRAPH ?g { ?s ?p ?o } }',
       ],
       'routeParams' => [
         'repositoryId' => $component->get('machineName')->value,
@@ -892,9 +892,9 @@ class SodaScsTriplestoreComponentActions implements SodaScsComponentActionsInter
    *   Result information with restored component.
    */
   public function restoreFromSnapshot(SodaScsSnapshotInterface $snapshot, ?string $stackBagPath): SodaScsResult {
-    return SodaScsResult::success(
-      message: 'Component restored from snapshot successfully.',
-      data: [],
+    return SodaScsResult::failure(
+      message: 'Not yet implemented.',
+      error: 'Not yet implemented.',
     );
   }
 

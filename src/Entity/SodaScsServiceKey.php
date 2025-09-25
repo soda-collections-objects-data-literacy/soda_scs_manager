@@ -77,6 +77,24 @@ use Drupal\user\EntityOwnerTrait;
 class SodaScsServiceKey extends ContentEntityBase implements SodaScsServiceKeyInterface {
 
   use EntityOwnerTrait;
+
+  /**
+   * Load service keys by owner.
+   *
+   * @param int $ownerId
+   *   The owner ID.
+   *
+   * @return array
+   *   The service keys.
+   */
+  public static function loadByOwner($ownerId) {
+    $query = \Drupal::entityQuery('soda_scs_service_key')
+      ->condition('owner', $ownerId)
+      ->accessCheck(FALSE);
+    $result = $query->execute();
+    return self::loadMultiple($result);
+  }
+
   /**
    * The entity relation to the Soda SCS Component.
    *

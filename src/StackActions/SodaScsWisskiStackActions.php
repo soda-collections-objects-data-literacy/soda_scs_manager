@@ -8,6 +8,7 @@ use Drupal\Core\Database\Connection;
 use Drupal\Core\DependencyInjection\DependencySerializationTrait;
 use Drupal\Core\Entity\EntityTypeBundleInfoInterface;
 use Drupal\Core\Entity\EntityTypeManagerInterface;
+use Drupal\Core\File\FileSystemInterface;
 use Drupal\Core\Language\LanguageManagerInterface;
 use Drupal\Core\Logger\LoggerChannelFactoryInterface;
 use Drupal\Core\Mail\MailManagerInterface;
@@ -16,23 +17,22 @@ use Drupal\Core\StringTranslation\StringTranslationTrait;
 use Drupal\Core\StringTranslation\TranslationInterface;
 use Drupal\Core\Template\TwigEnvironment;
 use Drupal\Core\TypedData\Exception\MissingDataException;
+use Drupal\Core\Utility\Error;
 use Drupal\soda_scs_manager\ComponentActions\SodaScsComponentActionsInterface;
 use Drupal\soda_scs_manager\Entity\SodaScsSnapshotInterface;
 use Drupal\soda_scs_manager\Entity\SodaScsStackInterface;
 use Drupal\soda_scs_manager\Exception\SodaScsComponentException;
 use Drupal\soda_scs_manager\Exception\SodaScsRequestException;
-use Drupal\soda_scs_manager\Helpers\SodaScsStackHelpers;
 use Drupal\soda_scs_manager\Helpers\SodaScsSnapshotHelpers;
+use Drupal\soda_scs_manager\Helpers\SodaScsStackHelpers;
 use Drupal\soda_scs_manager\RequestActions\SodaScsServiceRequestInterface;
+use Drupal\soda_scs_manager\SnapshotActions\SodaScsSnapshotActionsInterface;
 use Drupal\soda_scs_manager\ServiceActions\SodaScsServiceActionsInterface;
 use Drupal\soda_scs_manager\ServiceKeyActions\SodaScsServiceKeyActionsInterface;
 use Drupal\soda_scs_manager\ValueObject\SodaScsResult;
 use GuzzleHttp\ClientInterface;
-use Symfony\Component\HttpFoundation\RequestStack;
-use Drupal\Core\Utility\Error;
 use Psr\Log\LogLevel;
-use Drupal\file\Entity\File;
-use Drupal\Core\File\FileSystemInterface;
+use Symfony\Component\HttpFoundation\RequestStack;
 
 /**
  * Handles the communication with the SCS user manager daemon.
@@ -47,7 +47,7 @@ class SodaScsWisskiStackActions implements SodaScsStackActionsInterface {
    *
    * @var \Drupal\Core\Entity\EntityTypeBundleInfoInterface
    */
-  protected EntityTypeBundleInfoInterface $bundleInfo;
+  protected EntityTypeBundleInfoInterface $entityTypeBundleInfo;
 
   /**
    * The database.
@@ -120,6 +120,20 @@ class SodaScsWisskiStackActions implements SodaScsStackActionsInterface {
   protected Config $settings;
 
   /**
+   * The SCS component actions service.
+   *
+   * @var \Drupal\soda_scs_manager\ComponentActions\SodaScsComponentActionsInterface
+   */
+  protected SodaScsComponentActionsInterface $sodaScsComponentActions;
+
+  /**
+   * The SCS SQL component actions service.
+   *
+   * @var \Drupal\soda_scs_manager\ComponentActions\SodaScsComponentActionsInterface
+   */
+  protected SodaScsComponentActionsInterface $sodaScsSqlComponentActions;
+
+  /**
    * The SCS component helpers service.
    *
    * @var \Drupal\soda_scs_manager\Helpers\SodaScsStackHelpers
@@ -134,18 +148,11 @@ class SodaScsWisskiStackActions implements SodaScsStackActionsInterface {
   protected SodaScsSnapshotHelpers $sodaScsSnapshotHelpers;
 
   /**
-   * The SCS database actions service.
-   *
-   * @var \Drupal\soda_scs_manager\ComponentActions\SodaScsComponentActionsInterface
-   */
-  protected SodaScsComponentActionsInterface $sodaScsSqlComponentActions;
-
-  /**
-   * The SCS database actions service.
+   * The SCS SQL actions service.
    *
    * @var \Drupal\soda_scs_manager\ServiceActions\SodaScsServiceActionsInterface
    */
-  protected SodaScsServiceActionsInterface $sodaScsMysqlServiceActions;
+  protected SodaScsServiceActionsInterface $sodaScsSqlServiceActions;
 
   /**
    * The SCS Portainer actions service.
@@ -163,14 +170,22 @@ class SodaScsWisskiStackActions implements SodaScsStackActionsInterface {
   protected SodaScsServiceKeyActionsInterface $sodaScsServiceKeyActions;
 
   /**
-   * The SCS triplestore actions service.
+   * The SCS snapshot actions service.
+   *
+   * @var \Drupal\soda_scs_manager\SnapshotActions\SodaScsSnapshotActionsInterface
+   */
+  protected SodaScsSnapshotActionsInterface $sodaScsSnapshotActions;
+
+  /**
+   * The SCS triplestore component helpers service.
    *
    * @var \Drupal\soda_scs_manager\ComponentActions\SodaScsComponentActionsInterface
    */
   protected SodaScsComponentActionsInterface $sodaScsTriplestoreComponentActions;
 
+
   /**
-   * The SCS database actions service.
+   * The SCS wisski component actions service.
    *
    * @var \Drupal\soda_scs_manager\ComponentActions\SodaScsComponentActionsInterface
    */
@@ -187,39 +202,42 @@ class SodaScsWisskiStackActions implements SodaScsStackActionsInterface {
    * Class constructor.
    */
   public function __construct(
-    EntityTypeBundleInfoInterface $bundleInfo,
     ConfigFactoryInterface $configFactory,
     Connection $database,
+    EntityTypeBundleInfoInterface $entityTypeBundleInfo,
     EntityTypeManagerInterface $entityTypeManager,
     FileSystemInterface $fileSystem,
     LoggerChannelFactoryInterface $loggerFactory,
     MessengerInterface $messenger,
-    SodaScsStackHelpers $sodaScsStackHelpers,
-    SodaScsSnapshotHelpers $sodaScsSnapshotHelpers,
+    SodaScsComponentActionsInterface $sodaScsComponentActions,
     SodaScsComponentActionsInterface $sodaScsSqlComponentActions,
-    SodaScsServiceActionsInterface $sodaScsMysqlServiceActions,
-    SodaScsServiceKeyActionsInterface $sodaScsServiceKeyActions,
-    SodaScsServiceRequestInterface $sodaScsPortainerServiceActions,
     SodaScsComponentActionsInterface $sodaScsTriplestoreComponentActions,
     SodaScsComponentActionsInterface $sodaScsWisskiComponentActions,
+    SodaScsServiceActionsInterface $sodaScsSqlServiceActions,
+    SodaScsServiceKeyActionsInterface $sodaScsServiceKeyActions,
+    SodaScsServiceRequestInterface $sodaScsPortainerServiceActions,
+    SodaScsSnapshotActionsInterface $sodaScsSnapshotActions,
+    SodaScsSnapshotHelpers $sodaScsSnapshotHelpers,
+    SodaScsStackHelpers $sodaScsStackHelpers,
     TranslationInterface $stringTranslation,
   ) {
     // Services from container.
-    $this->bundleInfo = $bundleInfo;
-    $settings = $configFactory
-      ->getEditable('soda_scs_manager.settings');
+    $settings = $configFactory->getEditable('soda_scs_manager.settings');
+    $this->entityTypeBundleInfo = $entityTypeBundleInfo;
     $this->database = $database;
     $this->entityTypeManager = $entityTypeManager;
     $this->fileSystem = $fileSystem;
     $this->loggerFactory = $loggerFactory;
     $this->messenger = $messenger;
     $this->settings = $settings;
-    $this->sodaScsStackHelpers = $sodaScsStackHelpers;
+    $this->sodaScsComponentActions = $sodaScsComponentActions;
+    $this->sodaScsPortainerServiceActions = $sodaScsPortainerServiceActions;
+    $this->sodaScsServiceKeyActions = $sodaScsServiceKeyActions;
+    $this->sodaScsSnapshotActions = $sodaScsSnapshotActions;
     $this->sodaScsSnapshotHelpers = $sodaScsSnapshotHelpers;
     $this->sodaScsSqlComponentActions = $sodaScsSqlComponentActions;
-    $this->sodaScsMysqlServiceActions = $sodaScsMysqlServiceActions;
-    $this->sodaScsServiceKeyActions = $sodaScsServiceKeyActions;
-    $this->sodaScsPortainerServiceActions = $sodaScsPortainerServiceActions;
+    $this->sodaScsSqlServiceActions = $sodaScsSqlServiceActions;
+    $this->sodaScsStackHelpers = $sodaScsStackHelpers;
     $this->sodaScsTriplestoreComponentActions = $sodaScsTriplestoreComponentActions;
     $this->sodaScsWisskiComponentActions = $sodaScsWisskiComponentActions;
     $this->stringTranslation = $stringTranslation;
@@ -244,7 +262,7 @@ class SodaScsWisskiStackActions implements SodaScsStackActionsInterface {
   public function createStack(SodaScsStackInterface $stack): array {
 
     // Get the bundle info for the WissKI stack.
-    $bundleinfo = $this->bundleInfo->getBundleInfo('soda_scs_stack')['soda_scs_wisski_stack'];
+    $bundleinfo = $this->entityTypeBundleInfo->getBundleInfo('soda_scs_stack')['soda_scs_wisski_stack'];
 
     if (!$bundleinfo) {
       throw new \Exception('WissKI stack bundle info not found');
@@ -350,7 +368,7 @@ class SodaScsWisskiStackActions implements SodaScsStackActionsInterface {
           'wisskiComponentCreateResult' => NULL,
         ],
         'success' => FALSE,
-        'error' => $triplestoreComponentCreateResult['error'],
+        'error' => $e->getMessage(),
       ];
     }
 
@@ -482,27 +500,22 @@ class SodaScsWisskiStackActions implements SodaScsStackActionsInterface {
    *   The result of the request.
    */
   public function createSnapshot(SodaScsStackInterface $stack, string $snapshotMachineName, int $timestamp): SodaScsResult {
-    $wisskiComponent = $this->sodaScsStackHelpers->retrieveIncludedComponent($stack, 'soda_scs_wisski_component');
-    $sqlComponent = $this->sodaScsStackHelpers->retrieveIncludedComponent($stack, 'soda_scs_sql_component');
-    $triplestoreComponent = $this->sodaScsStackHelpers->retrieveIncludedComponent($stack, 'soda_scs_triplestore_component');
-
-    $wisskiComponentSnapshot = $this->sodaScsWisskiComponentActions->createSnapshot($wisskiComponent, $snapshotMachineName, $timestamp);
-    $sqlComponentSnapshot = $this->sodaScsSqlComponentActions->createSnapshot($sqlComponent, $snapshotMachineName, $timestamp);
-    $triplestoreComponentSnapshot = $this->sodaScsTriplestoreComponentActions->createSnapshot($triplestoreComponent, $snapshotMachineName, $timestamp);
-
-    if (!$wisskiComponentSnapshot->success || !$sqlComponentSnapshot->success || !$triplestoreComponentSnapshot->success) {
-      return SodaScsResult::failure(
-        error: 'Failed to create WissKI stack snapshot.',
-        message: 'Failed to create WissKI stack snapshot.',
-      );
+    $includedComponents = $stack->get('includedComponents')->getValue();
+    $createSnapshotResults = [];
+    foreach ($includedComponents as $includedComponent) {
+      $component = $this->entityTypeManager->getStorage('soda_scs_component')->load($includedComponent['target_id']);
+      $createSnapshotResult = $this->sodaScsComponentActions->createSnapshot($component, $snapshotMachineName, $timestamp);
+      if (!$createSnapshotResult->success) {
+        return SodaScsResult::failure(
+          error: 'Failed to create WissKI stack snapshot.',
+          message: 'Failed to create WissKI stack snapshot.',
+        );
+      }
+      $createSnapshotResults = array_merge($createSnapshotResults, $createSnapshotResult->data);
     }
 
     return SodaScsResult::success(
-      data: [
-        ...$wisskiComponentSnapshot->data,
-        ...$sqlComponentSnapshot->data,
-        ...$triplestoreComponentSnapshot->data,
-      ],
+      data: $createSnapshotResults,
       message: 'Successfully created WissKI stack snapshot.'
     );
   }
@@ -792,7 +805,7 @@ class SodaScsWisskiStackActions implements SodaScsStackActionsInterface {
    *   The result of the request.
    */
   public function restoreFromSnapshot(SodaScsSnapshotInterface $snapshot): SodaScsResult {
-    return $this->sodaScsSnapshotHelpers->restoreFromSnapshot($snapshot, FALSE);
+    return $this->sodaScsSnapshotActions->restoreFromSnapshot($snapshot);
   }
 
 }

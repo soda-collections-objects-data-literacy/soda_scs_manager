@@ -110,12 +110,12 @@ class SodaScsContainerHelpers {
         message: 'Failed to wait for containers to finish. The PHP request timeout is less than the required sleep interval of 5 seconds. Please increase your max_execution_time setting.',
       );
     }
-    // Begin loop to check if the containers are running.
-    while ($containerIsRunning && $attempts < $maxAttempts) {
-      // Loop through the containers.
-      /** @var \Drupal\soda_scs_manager\ValueObject\SodaScsSnapshotData $containerData */
-      foreach ($containers as $type => $containerData) {
-        $containerId = $containerData->snapshotContainerId;
+    // Loop through the containers.
+    /** @var \Drupal\soda_scs_manager\ValueObject\SodaScsSnapshotData $containerData */
+    foreach ($containers as $type => $containerData) {
+      $containerId = $containerData->snapshotContainerId;
+      // Begin loop to check if the containers are running.
+      while ($containerIsRunning && $attempts < $maxAttempts) {
 
         if (!$containerId) {
           Error::logException(
@@ -142,6 +142,13 @@ class SodaScsContainerHelpers {
         // Build and make the inspect container request.
         $containerInspectRequest = $this->sodaScsDockerRunServiceActions->buildInspectRequest($containerInspectRequestParams);
         $containerInspectResponse = $this->sodaScsDockerRunServiceActions->makeRequest($containerInspectRequest);
+
+        // If the container is not found, it may be already removed.
+        if ($containerInspectResponse['statusCode'] === 404) {
+          $containers[$type]->snapshotContainerRemoved = TRUE;
+          $containerIsRunning = FALSE;
+          continue;
+        }
 
         // If the inspect container request failed, return a failure result.
         if ($containerInspectResponse['success'] === FALSE) {
@@ -367,7 +374,7 @@ class SodaScsContainerHelpers {
    *   Success when desired state is reached;
    *   failure on timeout or inspect error.
    */
-  public function waitForContainerExecState(string $execId, string $desiredState): SodaScsResult {
+  public function waitForContainerExecState(string $execId, int $desiredState): SodaScsResult {
     $attempts = 0;
     $maxAttempts = $this->sodaScsHelpers->adjustMaxAttempts();
 
@@ -379,9 +386,18 @@ class SodaScsContainerHelpers {
       );
     }
 
-    // While the attempts are less than the max attempts, inspect the container exec.
+    // While the attempts are less than the max attempts,
+    // inspect the container exec.
     while ($attempts < $maxAttempts) {
-      $inspectRequest = $this->sodaScsDockerExecServiceActions->buildInspectRequest(['execId' => $execId]);
+      // Construct the inspect request params.
+      $inspectRequestParams = [
+        'routeParams' => [
+          'execId' => $execId,
+        ],
+      ];
+
+      // Build and make the inspect container exec request.
+      $inspectRequest = $this->sodaScsDockerExecServiceActions->buildInspectRequest($inspectRequestParams);
       $inspectResponse = $this->sodaScsDockerExecServiceActions->makeRequest($inspectRequest);
 
       // If the container exec is already removed, return a success result.
@@ -411,10 +427,9 @@ class SodaScsContainerHelpers {
           ->getContents(),
         TRUE
       );
-      $currentState = $inspect['State']['Status'] ?? ($inspect['State'] ?? NULL);
+      $currentState = $inspect['ExitCode'] ?? NULL;
 
-      // If the current state is the desired state, return a success result.
-      if ($currentState === $desiredState) {
+      if ($inspect['Running'] === FALSE || $currentState === $desiredState) {
         return SodaScsResult::success(
           message: $this->t('Container exec reached desired state: @state.', ['@state' => $desiredState]),
           data: [
@@ -491,6 +506,102 @@ class SodaScsContainerHelpers {
       ]),
       data: $containers,
     );
+  }
+
+  /**
+   * Execute a command in a container and capture both output and exit code.
+   *
+   * @param array $requestParams
+   *   The request parameters:
+   *   - 'cmd': The command to run as an array.
+   *   - 'containerName': The container name.
+   *   - 'user': The user to run the command as.
+   *   - 'workingDir': Optional working directory.
+   *   - 'env': Optional environment variables.
+   *   - 'privileged': Optional privileged mode.
+   *
+   * @return \Drupal\soda_scs_manager\ValueObject\SodaScsResult
+   *   The Soda SCS result.
+   */
+  public function executeDockerExecCommand(array $requestParams): SodaScsResult {
+    // Create the exec command.
+    $createRequest = $this->sodaScsDockerExecServiceActions->buildCreateRequest($requestParams);
+    $createResponse = $this->sodaScsDockerExecServiceActions->makeRequest($createRequest);
+
+    if (!$createResponse['success']) {
+      return SodaScsResult::failure(
+        error: $createResponse['error'],
+        message: 'Failed to create exec command.',
+      );
+    }
+
+    // Extract exec ID.
+    $createResponseData = json_decode(
+      $createResponse['data']['portainerResponse']->getBody()->getContents(),
+      TRUE
+    );
+    $execId = $createResponseData['Id'];
+
+    // Start the exec command.
+    $startRequest = $this->sodaScsDockerExecServiceActions->buildStartRequest(['execId' => $execId]);
+    $startResponse = $this->sodaScsDockerExecServiceActions->makeRequest($startRequest);
+
+    if (!$startResponse['success']) {
+      return SodaScsResult::failure(
+        error: $startResponse['error'],
+        message: 'Failed to start exec command.',
+      );
+    }
+
+    // Capture and parse the command output from the start response.
+    $rawCommandOutput = $startResponse['data']['portainerResponse']->getBody()->getContents();
+    $commandOutput = $this->sodaScsHelpers->parseDockerExecOutput($rawCommandOutput);
+
+    // Wait for the command to complete.
+    $waitForContainerExecStateResponse = $this->waitForContainerExecState($execId, 0);
+    if (!$waitForContainerExecStateResponse->success) {
+      return SodaScsResult::failure(
+        error: $waitForContainerExecStateResponse->error,
+        message: 'Failed to wait for container exec state.',
+      );
+    }
+
+    $inspectRequest = $this->sodaScsDockerExecServiceActions->buildInspectRequest([
+      'routeParams' => ['execId' => $execId],
+    ]);
+    $inspectResponse = $this->sodaScsDockerExecServiceActions->makeRequest($inspectRequest);
+
+    if (!$inspectResponse['success']) {
+      return SodaScsResult::failure(
+        error: $inspectResponse['error'],
+        message: 'Failed to inspect exec command.',
+      );
+    }
+
+    $inspectData = json_decode(
+      $inspectResponse['data']['portainerResponse']->getBody()->getContents(),
+      TRUE
+    );
+
+    $exitCode = $inspectData['ExitCode'] ?? NULL;
+    if ($exitCode === 0) {
+      // Return the result.
+      return SodaScsResult::success(
+        message: 'Command executed successfully.',
+        data: [
+          'exitCode' => $exitCode,
+          'output' => $commandOutput,
+          'execId' => $execId,
+          'inspect' => $inspectData,
+        ],
+      );
+    }
+    else {
+      return SodaScsResult::failure(
+        message: "Command failed with exit code: {$exitCode}",
+        error: "{$commandOutput}",
+      );
+    }
   }
 
 }
