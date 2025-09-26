@@ -510,9 +510,136 @@ function soda_scs_manager_theme_suggestions_soda_scs_component_alter(array &$sug
 }
 
 /**
+ * Implements hook_ENTITY_TYPE_delete() for soda_scs_snapshot entities.
+ *
+ * Ensures connected file entities and on-disk files are deleted if unused.
+ * Also removes the snapshot from referencing entities' snapshots fields.
+ */
+function soda_scs_manager_soda_scs_snapshot_delete(SodaScsSnapshot $snapshot) {
+  $logger = \Drupal::logger('soda_scs_manager');
+
+  // Attempt to delete the snapshot directory if present.
+  try {
+    $snapshotDirectory = $snapshot->get('dir')->value;
+    if (is_string($snapshotDirectory) && $snapshotDirectory !== '') {
+      /** @var \Drupal\soda_scs_manager\Helpers\SodaScsSnapshotHelpers $helpers */
+      $helpers = \Drupal::service('soda_scs_manager.snapshot.helpers');
+      $helpers->deleteSnapshotDirectory($snapshotDirectory);
+    }
+  }
+  catch (\Throwable $e) {
+    $logger->error('Failed to delete snapshot directory for snapshot @id: @message', [
+      '@id' => $snapshot->id(),
+      '@message' => $e->getMessage(),
+    ]);
+  }
+
+  // Collect referenced files (archive and checksum).
+  $referencedFiles = [];
+  if (!$snapshot->get('file')->isEmpty() && $snapshot->get('file')->entity) {
+    $referencedFiles[] = $snapshot->get('file')->entity;
+  }
+  if (!$snapshot->get('checksumFile')->isEmpty() && $snapshot->get('checksumFile')->entity) {
+    $referencedFiles[] = $snapshot->get('checksumFile')->entity;
+  }
+
+  /** @var \Drupal\file\FileUsage\FileUsageInterface $fileUsage */
+  $fileUsage = \Drupal::service('file.usage');
+  $snapshotStorage = \Drupal::entityTypeManager()->getStorage('soda_scs_snapshot');
+
+  foreach ($referencedFiles as $file) {
+    try {
+      $fid = (int) $file->id();
+
+      // Check file usage service.
+      $usage = $fileUsage->listUsage($file);
+
+      // Double-check via entity query on snapshot fields.
+      $query = $snapshotStorage->getQuery()->accessCheck(FALSE);
+      $or = $query->orConditionGroup()
+        ->condition('file.target_id', $fid)
+        ->condition('checksumFile.target_id', $fid);
+      $referencingSnapshotIds = $query->condition($or)->execute();
+
+      if (empty($usage) && empty($referencingSnapshotIds)) {
+        $file->delete();
+      }
+    }
+    catch (\Throwable $e) {
+      $logger->error('Failed to delete file @fid for snapshot @id: @message', [
+        '@fid' => $file->id(),
+        '@id' => $snapshot->id(),
+        '@message' => $e->getMessage(),
+      ]);
+    }
+  }
+
+  // Remove this snapshot from referencing entities' snapshots fields.
+  try {
+    $snapshotId = (int) $snapshot->id();
+    $entityTypeManager = \Drupal::entityTypeManager();
+
+    // Components.
+    $componentStorage = $entityTypeManager->getStorage('soda_scs_component');
+    $componentIds = $componentStorage->getQuery()
+      ->condition('snapshots', $snapshotId)
+      ->accessCheck(FALSE)
+      ->execute();
+    if (!empty($componentIds)) {
+      /** @var \Drupal\soda_scs_manager\Entity\SodaScsComponent[] $components */
+      $components = $componentStorage->loadMultiple($componentIds);
+      foreach ($components as $component) {
+        $values = $component->get('snapshots')->getValue();
+        $filtered = [];
+        foreach ($values as $item) {
+          if ((int) ($item['target_id'] ?? 0) !== $snapshotId) {
+            $filtered[] = $item;
+          }
+        }
+        if (count($filtered) !== count($values)) {
+          $component->set('snapshots', $filtered);
+          $component->save();
+        }
+      }
+    }
+
+    // Stacks.
+    $stackStorage = $entityTypeManager->getStorage('soda_scs_stack');
+    $stackIds = $stackStorage->getQuery()
+      ->condition('snapshots', $snapshotId)
+      ->accessCheck(FALSE)
+      ->execute();
+    if (!empty($stackIds)) {
+      /** @var \Drupal\soda_scs_manager\Entity\SodaScsStack[] $stacks */
+      $stacks = $stackStorage->loadMultiple($stackIds);
+      foreach ($stacks as $stack) {
+        $values = $stack->get('snapshots')->getValue();
+        $filtered = [];
+        foreach ($values as $item) {
+          if ((int) ($item['target_id'] ?? 0) !== $snapshotId) {
+            $filtered[] = $item;
+          }
+        }
+        if (count($filtered) !== count($values)) {
+          $stack->set('snapshots', $filtered);
+          $stack->save();
+        }
+      }
+    }
+  }
+  catch (\Throwable $e) {
+    $logger->error('Failed to remove snapshot @id from referencing entities: @message', [
+      '@id' => $snapshot->id(),
+      '@message' => $e->getMessage(),
+    ]);
+  }
+}
+
+/**
  * Implements hook_user_delete().
  *
  * Deletes a user from Keycloak when a Drupal user is deleted.
+ * Also deletes the user's snapshots, components, stacks, projects, service keys, and enities.
  */
 function soda_scs_manager_user_delete(UserInterface $user) {
   // Get the Keycloak service user actions.
