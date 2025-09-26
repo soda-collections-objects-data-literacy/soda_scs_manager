@@ -462,18 +462,21 @@ class SodaScsOpenGdbServiceActions implements SodaScsOpenGdbRequestInterface {
    *
    * @return array
    *   The dump request.
+   *
+   * @todo Abstract this in settings. Why only repositories and not /rest/repositories as baseUrl?
    */
   public function buildDumpRequest(array $requestParams): array {
     $triplestoreServiceSettings = $this->sodaScsServiceHelpers->initTriplestoreServiceSettings();
+    $triplestoreRepositoriesSettings = $this->sodaScsServiceHelpers->initTriplestoreRepositoriesSettings();
 
     // @todo Make this more flexible with settings.
     $route =
     // https://ts.scs.sammlungen.io
     $triplestoreServiceSettings['host'] .
     // /repositories/
-    '/repositories/' .
+    '/repositories' .
     // {repositoryId}
-    '{repositoryId}';
+    '/{repositoryId}';
 
     // Replace any route parameters.
     if (!empty($requestParams['routeParams'])) {
@@ -497,6 +500,52 @@ class SodaScsOpenGdbServiceActions implements SodaScsOpenGdbRequestInterface {
         'Authorization' => 'Basic ' . base64_encode($triplestoreServiceSettings['adminUsername'] . ':' . $triplestoreServiceSettings['adminPassword']),
       ],
       'body' => !empty($requestParams['body']) ? json_encode($requestParams['body']) : '',
+    ];
+  }
+
+  /**
+   * Builds the replace repository request.
+   *
+   * @param array $requestParams
+   *   The request parameters.
+   *
+   * @return array
+   *   The replace repository request.
+   */
+  public function buildReplaceRepositoryRequest(array $requestParams): array {
+    $triplestoreServiceSettings = $this->sodaScsServiceHelpers->initTriplestoreServiceSettings();
+    $triplestoreRepositoriesSettings = $this->sodaScsServiceHelpers->initTriplestoreRepositoriesSettings();
+
+    $route =
+    // https://ts.scs.sammlungen.io
+    $triplestoreServiceSettings['host'] .
+    // /repositories
+    '/repositories' .
+    // {repositoryId}/statements
+    '/{repositoryId}/statements';
+
+    // Replace any route parameters.
+    if (!empty($requestParams['routeParams'])) {
+      foreach ($requestParams['routeParams'] as $key => $value) {
+        $route = str_replace('{' . $key . '}', $value, $route);
+      }
+    }
+
+    if (!empty($requestParams['queryParams'])) {
+      $route .= '?' . http_build_query($requestParams['queryParams']);
+    }
+
+    return [
+      'type' => 'replace',
+      'success' => TRUE,
+      'method' => 'PUT',
+      'route' => $route,
+      'headers' => [
+        'Content-Type' => 'text/x-nquads',
+        'Accept' => 'application/json',
+        'Authorization' => 'Basic ' . base64_encode($triplestoreServiceSettings['adminUsername'] . ':' . $triplestoreServiceSettings['adminPassword']),
+      ],
+      'body' => $requestParams['body'],
     ];
   }
 

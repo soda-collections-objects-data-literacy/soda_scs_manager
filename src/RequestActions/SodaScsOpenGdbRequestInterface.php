@@ -17,4 +17,16 @@ interface SodaScsOpenGdbRequestInterface extends SodaScsServiceRequestInterface 
  *   The dump request.
  */
 public function buildDumpRequest(array $requestParams): array;
+
+/**
+ * Builds the replace repository request.
+ *
+ * @param array $requestParams
+ *   The request parameters.
+ *
+ * @return array
+ *   The replace repository request.
+ */
+public function buildReplaceRepositoryRequest(array $requestParams): array;
+
 }

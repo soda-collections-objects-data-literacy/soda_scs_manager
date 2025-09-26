@@ -802,6 +802,7 @@ class SodaScsWisskiComponentActions implements SodaScsComponentActionsInterface 
             'sha256FileName' => $snapshotPaths['sha256FileName'],
           ],
           'snapshotMachineName' => $snapshotMachineName,
+          'snapshotDirectory' => $snapshotPaths['snapshotDirectory'],
           'timestamp' => $timestamp,
         ],
         'startSnapshotContainerResponse' => $startSnapshotContainerRunCommandResponse,
@@ -1193,6 +1194,8 @@ class SodaScsWisskiComponentActions implements SodaScsComponentActionsInterface 
    *
    * @return \Drupal\soda_scs_manager\ValueObject\SodaScsResult
    *   Result information with restored component.
+   *
+   * @todo Are rollback really working?
    */
   public function restoreFromSnapshot(SodaScsSnapshotInterface $snapshot, ?string $tempDirPath): SodaScsResult {
     try {
@@ -1229,6 +1232,10 @@ class SodaScsWisskiComponentActions implements SodaScsComponentActionsInterface 
       }
       $getAllContainersResponseContents = json_decode($getAllContainersResponse['data']['portainerResponse']->getBody()->getContents(), TRUE);
       $containerId = $getAllContainersResponseContents[0]['Id'];
+
+      //
+      // Check if the container is alreay stopped
+      //
 
       //
       // Stop the WissKI component container gracefully.

@@ -12,6 +12,7 @@ use Drupal\Core\Messenger\MessengerTrait;
 use Drupal\Core\StringTranslation\StringTranslationTrait;
 use Drupal\Core\Utility\Error;
 use Drupal\soda_scs_manager\Entity\SodaScsComponentInterface;
+use Drupal\soda_scs_manager\Exception\SodaScsHelpersException;
 use Drupal\soda_scs_manager\RequestActions\SodaScsDockerExecServiceActions;
 use Drupal\soda_scs_manager\RequestActions\SodaScsDockerRunServiceActions;
 use Drupal\soda_scs_manager\ValueObject\SodaScsResult;
@@ -117,6 +118,18 @@ class SodaScsSnapshotHelpers {
 
   /**
    * Constuct the snapshot paths.
+   *
+   * @param \Drupal\soda_scs_manager\Entity\SodaScsComponentInterface $component
+   *   The component.
+   * @param string $snapshotMachineName
+   *   The snapshot machine name.
+   * @param int $timestamp
+   *   The timestamp.
+   *
+   * @return array
+   *   The snapshot paths.
+   *
+   * @todo The path are overcomplex we should simplify this.
    */
   public function constructSnapshotPaths(SodaScsComponentInterface $component, $snapshotMachineName, string $timestamp): array {
     $bundle = $component->bundle();
@@ -157,6 +170,9 @@ class SodaScsSnapshotHelpers {
     $owner = $component->getOwner()->getDisplayName();
     // Get the date.
     $date = date('Y-m-d', $timestamp);
+    // The user bound single snapshot dir,
+    // e.g /var/scs-manager/snapshots/scs_user/new-snapshot.
+    $snapshotDirectory = $snapshotFullPath . '/' . $owner . '/' . $snapshotMachineName;
     // Get the component backup path,
     // e.g. scs_user/new-snapshot/2025-08-26/1724732400.
     $relativeSnapshotBackupPath = '/' . $owner . '/' . $snapshotMachineName . '/' . $date . '/' . $timestamp;
@@ -198,6 +214,7 @@ class SodaScsSnapshotHelpers {
       'relativeTarFilePath' => $relativeTarFilePath,
       'relativeUrlBackupPath' => $relativeUrlBackupPath,
       'sha256FileName' => $sha256FileName,
+      'snapshotDirectory' => $snapshotDirectory,
       'tarFileName' => $tarFileName,
       'type' => $type,
     ];
@@ -311,7 +328,9 @@ class SodaScsSnapshotHelpers {
       $timestamp = reset($snapshotData)->metadata['timestamp'];
 
       // Create the bag directory.
-      $bagPath = reset($snapshotData)->metadata['backupPath'] . '/bag';
+      $snapshotDirectory = reset($snapshotData)->metadata['snapshotDirectory'];
+      $singleSnapshotDirectory = reset($snapshotData)->metadata['backupPath'];
+      $bagPath = $singleSnapshotDirectory . '/bag';
       $dirCreateResult = $this->createDir($bagPath);
       if (!$dirCreateResult['success']) {
         return SodaScsResult::failure(
@@ -466,14 +485,16 @@ class SodaScsSnapshotHelpers {
           'startContainerResponse' => $startContainerResponse,
           'createContainerResponse' => $createContainerResponse,
           'metadata' => [
-            'contentsTarFileName' => $contentsTarFileName,
-            'contentsSha256FileName' => $contentsSha256FileName,
-            'contentsTarFilePath' => $bagPath . '/' . $contentsTarFileName,
-            'contentsSha256FilePath' => $bagPath . '/' . $contentsSha256FileName,
-            'relativeTarFilePath' => $relativeBagPath . '/' . $contentsTarFileName,
-            'relativeSha256FilePath' => $relativeBagPath . '/' . $contentsSha256FileName,
-            'manifestFileName' => $manifestFileName,
+            'backupPath' => $backupPath,
             'containerId' => $containerId,
+            'contentsSha256FileName' => $contentsSha256FileName,
+            'contentsSha256FilePath' => $bagPath . '/' . $contentsSha256FileName,
+            'contentsTarFileName' => $contentsTarFileName,
+            'contentsTarFilePath' => $bagPath . '/' . $contentsTarFileName,
+            'manifestFileName' => $manifestFileName,
+            'relativeSha256FilePath' => $relativeBagPath . '/' . $contentsSha256FileName,
+            'relativeTarFilePath' => $relativeBagPath . '/' . $contentsTarFileName,
+            'snapshotDirectory' => $snapshotDirectory,
           ],
         ],
         message: 'Created and started bag container successfully.',
@@ -510,47 +531,36 @@ class SodaScsSnapshotHelpers {
    *   The result of the operation.
    */
   public function createDir(string $path) {
-    try {
-      // Check if directory already exists.
-      if (is_dir($path)) {
-        return [
-          'message' => $this->t("Directory already exists."),
-          'success' => TRUE,
-          'error' => '',
-          'data' => ['path' => $path],
-          'statusCode' => 200,
-        ];
-      }
-
-      // Create the directory with proper permissions.
-      if (!mkdir($path, 0755, TRUE)) {
-        $error = 'Failed to create directory: ' . $path;
-        return [
-          'message' => $this->t("Failed to create directory: @path", ['@path' => $path]),
-          'success' => FALSE,
-          'error' => $error,
-          'data' => [],
-          'statusCode' => 500,
-        ];
-      }
-
-      return [
-        'message' => $this->t("Directory created successfully."),
-        'success' => TRUE,
-        'error' => '',
-        'data' => ['path' => $path],
-        'statusCode' => 200,
-      ];
+    // Check if directory already exists.
+    if (is_dir($path)) {
+      throw new SodaScsHelpersException(
+        message: 'Directory already exists.',
+        operationCategory: 'snapshot',
+        operation: 'create_dir',
+        context: ['path' => $path],
+        code: 0,
+      );
     }
-    catch (\Exception $e) {
-      return [
-        'message' => $this->t("Failed to create directory: @error", ['@error' => $e->getMessage()]),
-        'success' => FALSE,
-        'error' => $e->getMessage(),
-        'data' => $e,
-        'statusCode' => $e->getCode(),
-      ];
+
+    // Create the directory with proper permissions.
+    if (!mkdir($path, 0755, TRUE)) {
+      $error = 'Failed to create directory: ' . $path;
+      throw new SodaScsHelpersException(
+        message: $error,
+        operationCategory: 'snapshot',
+        operation: 'create_dir',
+        context: ['path' => $path],
+        code: 0,
+      );
     }
+
+    return [
+      'message' => $this->t("Directory created successfully."),
+      'success' => TRUE,
+      'error' => '',
+      'data' => ['path' => $path],
+      'statusCode' => 200,
+    ];
   }
 
   /**
@@ -584,8 +594,8 @@ class SodaScsSnapshotHelpers {
    *
    * @param string $sparqlJsonData
    *   The SPARQL JSON results as string.
-   * @param \Drupal\soda_scs_manager\Entity\SodaScsComponentInterface $component
-   *   The component entity.
+   * @param string $filename
+   *   The filename.
    * @param string $backupPath
    *   The backup directory path.
    * @param int $timestamp
@@ -594,7 +604,7 @@ class SodaScsSnapshotHelpers {
    * @return array
    *   Result array with success status and file information.
    */
-  public function transformSparqlJsonToNquads($sparqlJsonData, SodaScsComponentInterface $component, $backupPath, int $timestamp) {
+  public function transformSparqlJsonToNquads($sparqlJsonData, string $filename, $backupPath, int $timestamp) {
     try {
 
       // Check if we have any data at all.
@@ -653,7 +663,7 @@ class SodaScsSnapshotHelpers {
       }
 
       // Create the N-Quads file.
-      $fileName = $component->get('machineName')->value . '--' . (string) $timestamp . '.nq';
+      $fileName = $filename . '--' . (string) $timestamp . '.nq';
       $filePath = $backupPath . '/' . $fileName;
 
       // Write N-Quads to file using the createFile helper.
@@ -1134,7 +1144,8 @@ class SodaScsSnapshotHelpers {
         ];
       }
 
-      // The checksum file might contain the filename as well, so check if the checksum is contained in the file.
+      // The checksum file might contain the filename as well,
+      // so check if the checksum is contained in the file.
       if (strpos($expectedChecksum, $actualChecksum) === FALSE) {
         return [
           'success' => FALSE,
@@ -1462,6 +1473,41 @@ class SodaScsSnapshotHelpers {
           'Failed to cleanup temporary directory: @message',
           ['@message' => $e->getMessage()],
           LogLevel::WARNING
+        );
+      }
+    }
+  }
+
+  /**
+   * Delete snapshot directory.
+   *
+   * @param string $snapshotDirectory
+   *   The snapshot directory path to delete.
+   */
+  public function deleteSnapshotDirectory(string $snapshotDirectory): void {
+    if (is_dir($snapshotDirectory)) {
+      try {
+        $iterator = new \RecursiveIteratorIterator(
+          new \RecursiveDirectoryIterator($snapshotDirectory, \RecursiveDirectoryIterator::SKIP_DOTS),
+          \RecursiveIteratorIterator::CHILD_FIRST
+        );
+
+        foreach ($iterator as $file) {
+          if ($file->isDir()) {
+            rmdir($file->getRealPath());
+          }
+          else {
+            unlink($file->getRealPath());
+          }
+        }
+        rmdir($snapshotDirectory);
+      }
+      catch (\Exception $e) {
+        throw SodaScsHelpersException::snapshotFailed(
+          'Failed to delete snapshot directory: ' . $e->getMessage(),
+          'delete snapshot directory',
+          ['snapshotDirectory' => $snapshotDirectory],
+          $e,
         );
       }
     }

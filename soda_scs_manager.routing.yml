@@ -213,6 +213,10 @@ entity.soda_scs_snapshot.delete_form:
   defaults:
     _entity_form: 'soda_scs_snapshot.delete'
     _title: 'Delete SODa SCS Snapshot'
+  options:
+    parameters:
+      soda_scs_snapshot:
+        type: entity:soda_scs_snapshot
   requirements:
     _permission: 'soda scs manager user'
 
@@ -320,6 +324,15 @@ soda_scs_manager.dashboard:
     _permission: 'soda scs manager user'
   options:
     no_cache: TRUE
+
+soda_scs_manager.debug:
+  path: '/soda-scs-manager/debug'
+  defaults:
+    _controller: '\Drupal\system\Controller\SystemController::systemAdminMenuBlockPage'
+    _title: 'Debug Tools'
+  requirements:
+    _permission: 'soda scs manager admin'
+
 
 soda_scs_manager.start_page:
   path: '/soda-scs-manager'
@@ -446,4 +459,12 @@ soda_scs_manager.stack.service_link:
     parameters:
       soda_scs_stack:
         type: entity:soda_scs_stack
+
+soda_scs_manager.snapshot_debug:
+  path: '/soda-scs-manager/debug/snapshots'
+  defaults:
+    _title: 'Snapshot Debug Tools'
+    _form: '\Drupal\soda_scs_manager\Form\SodaScsSnapshotDebugForm'
+  requirements:
+    _permission: 'soda scs manager admin'
 

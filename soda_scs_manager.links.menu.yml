@@ -62,6 +62,7 @@ soda_scs_manager.administration.stacks:
 
 # Configuration pages
 
+# Settings pages
 soda_scs_manager.settings_menu_block:
   title: 'SODa SCS Manager'
   description: 'SODa SCS Manager settings and configurations'
@@ -87,6 +88,24 @@ soda_scs_manager.keycloak_users:
     requirements:
       _permission: 'soda scs manager admin'
 
+# Debug pages
+soda_scs_manager.debug_menu_block:
+  title: 'SODa SCS Manager Debug'
+  description: 'SODa SCS Manager debug tools'
+  parent: system.admin_config_development
+  route_name: soda_scs_manager.debug
+  weight: 100
+  requirements:
+    _permission: 'soda scs manager admin'
+
+soda_scs_manager.snapshot_debug:
+  title: 'Snapshot Debug'
+  description: 'Snapshot integrity tools'
+  parent: soda_scs_manager.debug_menu_block
+  route_name: soda_scs_manager.snapshot_debug
+  weight: 0
+
+# Structure pages
 # Menu items for the main navigation
 soda_scs_manager.main_navigation:
   title: 'SODa SCS Manager'

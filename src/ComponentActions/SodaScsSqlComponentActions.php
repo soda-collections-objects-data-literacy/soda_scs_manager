@@ -548,6 +548,7 @@ class SodaScsSqlComponentActions implements SodaScsComponentActionsInterface {
           message: 'Snapshot creation failed: Could not start snapshot container.',
         );
       }
+      // @todo This should be a centralized value object.
       $componentData = [
         'componentBundle' => $component->bundle(),
         'componentId' => $component->id(),
@@ -566,6 +567,7 @@ class SodaScsSqlComponentActions implements SodaScsComponentActionsInterface {
             'tarFileName' => $snapshotPaths['tarFileName'],
             'sha256FileName' => $snapshotPaths['sha256FileName'],
           ],
+          'snapshotDirectory' => $snapshotPaths['snapshotDirectory'],
           'snapshotMachineName' => $snapshotMachineName,
           'timestamp' => $timestamp,
         ],
@@ -680,13 +682,15 @@ class SodaScsSqlComponentActions implements SodaScsComponentActionsInterface {
    *
    * @param \Drupal\soda_scs_manager\Entity\SodaScsSnapshotInterface $snapshot
    *   The SODa SCS Snapshot.
-   * @param string|null $tempDir
+   * @param string|null $tempDirPath
    *   The path to the temporary directory.
    *
    * @return \Drupal\soda_scs_manager\ValueObject\SodaScsResult
    *   Result information with restored component.
+   *
+   *  @todo Are rollback really working?
    */
-  public function restoreFromSnapshot(SodaScsSnapshotInterface $snapshot, ?string $tempDir): SodaScsResult {
+  public function restoreFromSnapshot(SodaScsSnapshotInterface $snapshot, ?string $tempDirPath): SodaScsResult {
     try {
       //
       // Collect information about the snapshot's SQL component.
@@ -708,7 +712,7 @@ class SodaScsSqlComponentActions implements SodaScsComponentActionsInterface {
       // Backup current database to rollback tar.
       //
       $rollbackSqlName = 'rollback--' . $databaseName . '--' . date('Ymd-His') . '.sql';
-      $rollbackSqlPath = $tempDir . '/' . $rollbackSqlName;
+      $rollbackSqlPath = $tempDirPath . '/' . $rollbackSqlName;
 
       $rollbackDatabaseExecRequestCommand = [
         'bash',
@@ -752,8 +756,11 @@ class SodaScsSqlComponentActions implements SodaScsComponentActionsInterface {
       //
       // Restore database from snapshot.
       //
+      // Its already unpacked and validated within the
+      // SodaScsSnapshotActions::restoreFromSnapshot logic.
+      //
       // Construct restore command.
-      $snapshotSqlPath = $tempDir . '/sql/' . $databaseName . '.sql';
+      $snapshotSqlPath = $tempDirPath . '/sql/' . $databaseName . '.sql';
       $restoreFromSnapshotExecRequestCommand = [
         'bash',
         '-c',
