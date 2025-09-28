@@ -1234,36 +1234,52 @@ class SodaScsWisskiComponentActions implements SodaScsComponentActionsInterface 
       $containerId = $getAllContainersResponseContents[0]['Id'];
 
       //
-      // Check if the container is alreay stopped
-      //
-
-      //
-      // Stop the WissKI component container gracefully.
-      //
-      // Wait for 30 seconds before forcing stop container.
-      $stopContainerRequestParams = [
+      // Check if the container is alreay stopped.
+      // @todo Add a check if the container is already stopped.
+      $inspectContainerRequestParams = [
         'routeParams' => [
           'containerId' => $containerId,
         ],
-        'timeout' => 60,
       ];
-      // Build and make the stop container request.
-      $stopContainerRequest = $this->sodaScsDockerRunServiceActions->buildStopRequest($stopContainerRequestParams);
-      $stopContainerResponse = $this->sodaScsDockerRunServiceActions->makeRequest($stopContainerRequest);
-
-      if (!$stopContainerResponse['success']) {
+      $inspectContainerRequest = $this->sodaScsDockerRunServiceActions->buildInspectRequest($inspectContainerRequestParams);
+      $inspectContainerResponse = $this->sodaScsDockerRunServiceActions->makeRequest($inspectContainerRequest);
+      if (!$inspectContainerResponse['success']) {
         return SodaScsResult::failure(
-          message: 'Failed to stop container.',
-          error: (string) $stopContainerResponse['error'],
+          message: 'Failed to inspect container.',
+          error: (string) $inspectContainerResponse['error'],
         );
       }
+      $inspectContainerResponseContents = json_decode($inspectContainerResponse['data']['portainerResponse']->getBody()->getContents(), TRUE);
+      $containerState = $inspectContainerResponseContents['State'];
+      if ($containerState['Status'] === 'running') {
+        //
+        // Stop the WissKI component container gracefully.
+        //
+        // Wait for 30 seconds before forcing stop container.
+        $stopContainerRequestParams = [
+          'routeParams' => [
+            'containerId' => $containerId,
+          ],
+          'timeout' => 60,
+        ];
+        // Build and make the stop container request.
+        $stopContainerRequest = $this->sodaScsDockerRunServiceActions->buildStopRequest($stopContainerRequestParams);
+        $stopContainerResponse = $this->sodaScsDockerRunServiceActions->makeRequest($stopContainerRequest);
 
-      $waitForContainerStateResponse = $this->sodaScsContainerHelpers->waitForContainerState($containerId, 'exited');
-      if (!$waitForContainerStateResponse->success) {
-        return SodaScsResult::failure(
-          message: 'Failed to wait for container to stop.',
-          error: (string) $waitForContainerStateResponse->error,
-        );
+        if (!$stopContainerResponse['success']) {
+          return SodaScsResult::failure(
+            message: 'Failed to stop container.',
+            error: (string) $stopContainerResponse['error'],
+          );
+        }
+
+        $waitForContainerStateResponse = $this->sodaScsContainerHelpers->waitForContainerState($containerId, 'exited');
+        if (!$waitForContainerStateResponse->success) {
+          return SodaScsResult::failure(
+            message: 'Failed to wait for container to stop.',
+            error: (string) $waitForContainerStateResponse->error,
+          );
+        }
       }
 
       //
@@ -1438,10 +1454,11 @@ class SodaScsWisskiComponentActions implements SodaScsComponentActionsInterface 
       }
 
       // Log the restore success.
-      $this->logger->info('WissKI component @name (@componentMachineName) restored from snapshot @snapshotName (@snapshotMachineName) successfully.', [
+      // @todo Fix this.
+      $this->logger->info('WissKI component @name (@componentMachineName) restored from snapshot @snapshotName successfully.', [
         'name' => $component->label(),
         'componentMachineName' => $component->get('machineName')->value,
-        'snapshotMachineName' => $snapshot->get('machineName')->value,
+       // 'snapshotMachineName' => $snapshot->get('machineName')->value,
         'snapshotName' => $snapshot->label(),
       ]);
 

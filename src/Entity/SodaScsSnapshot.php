@@ -163,6 +163,18 @@ class SodaScsSnapshot extends ContentEntityBase implements SodaScsSnapshotInterf
         'weight' => 30,
       ]);
 
+    $fields['machineName'] = BaseFieldDefinition::create('string')
+      ->setLabel(new TranslatableMarkup('Machine Name'))
+      ->setDescription(new TranslatableMarkup('The machine name of the snapshot.'))
+      ->setRequired(TRUE)
+      ->setDisplayConfigurable('form', FALSE)
+      ->setDisplayConfigurable('view', TRUE)
+      ->setDisplayOptions('view', [
+        'label' => 'above',
+        'type' => 'string',
+        'weight' => 0,
+      ]);
+
     $fields['label'] = BaseFieldDefinition::create('string')
       ->setLabel(new TranslatableMarkup('Label'))
       ->setDescription(new TranslatableMarkup('The label of the snapshot.'))

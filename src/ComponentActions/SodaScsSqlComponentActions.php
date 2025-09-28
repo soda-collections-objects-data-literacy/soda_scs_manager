@@ -524,7 +524,7 @@ class SodaScsSqlComponentActions implements SodaScsComponentActionsInterface {
             $snapshotPaths['backupPathWithType'] . ':/source',
             $snapshotPaths['backupPathWithType'] . ':/backup',
           ],
-          'AutoRemove' => FALSE,
+          'AutoRemove' => TRUE,
         ],
       ]);
       $createContainerResponse = $this->sodaScsDockerRunServiceActions->makeRequest($createContainerRequest);

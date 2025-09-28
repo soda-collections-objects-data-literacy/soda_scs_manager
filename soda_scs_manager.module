@@ -639,7 +639,8 @@ function soda_scs_manager_soda_scs_snapshot_delete(SodaScsSnapshot $snapshot) {
  * Implements hook_user_delete().
  *
  * Deletes a user from Keycloak when a Drupal user is deleted.
- * Also deletes the user's snapshots, components, stacks, projects, service keys, and enities.
+ * Also deletes the user's snapshots, components, stacks, projects,
+ * service keys, and enities.
  */
 function soda_scs_manager_user_delete(UserInterface $user) {
   // Get the Keycloak service user actions.

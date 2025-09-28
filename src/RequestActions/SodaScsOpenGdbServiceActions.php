@@ -535,17 +535,26 @@ class SodaScsOpenGdbServiceActions implements SodaScsOpenGdbRequestInterface {
       $route .= '?' . http_build_query($requestParams['queryParams']);
     }
 
+    switch ($requestParams['format']) {
+      case 'nq':
+        $contentType = 'text/x-nquads';
+        break;
+
+      default:
+        throw new MissingDataException('Format is required for replace repository request.');
+    }
+
     return [
       'type' => 'replace',
       'success' => TRUE,
       'method' => 'PUT',
       'route' => $route,
       'headers' => [
-        'Content-Type' => 'text/x-nquads',
+        'Content-Type' => $contentType,
         'Accept' => 'application/json',
         'Authorization' => 'Basic ' . base64_encode($triplestoreServiceSettings['adminUsername'] . ':' . $triplestoreServiceSettings['adminPassword']),
       ],
-      'body' => $requestParams['body'],
+      'body' => $requestParams['body'] ?? throw new MissingDataException('Body is required for replace repository request.'),
     ];
   }
 

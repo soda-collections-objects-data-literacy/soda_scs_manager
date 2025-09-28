@@ -445,7 +445,7 @@ class SodaScsSnapshotHelpers {
           'Binds' => [
             $backupPath . ':/backup',
           ],
-          'AutoRemove' => FALSE,
+          'AutoRemove' => TRUE,
         ],
       ];
 
@@ -598,13 +598,13 @@ class SodaScsSnapshotHelpers {
    *   The filename.
    * @param string $backupPath
    *   The backup directory path.
-   * @param int $timestamp
+   * @param int|null $timestamp
    *   The timestamp.
    *
    * @return array
    *   Result array with success status and file information.
    */
-  public function transformSparqlJsonToNquads($sparqlJsonData, string $filename, $backupPath, int $timestamp) {
+  public function transformSparqlJsonToNquads($sparqlJsonData, string $filename, $backupPath, ?int $timestamp = NULL) {
     try {
 
       // Check if we have any data at all.
@@ -663,7 +663,7 @@ class SodaScsSnapshotHelpers {
       }
 
       // Create the N-Quads file.
-      $fileName = $filename . '--' . (string) $timestamp . '.nq';
+      $fileName = $filename . ($timestamp ? '--' . (string) $timestamp : '') . '.nq';
       $filePath = $backupPath . '/' . $fileName;
 
       // Write N-Quads to file using the createFile helper.

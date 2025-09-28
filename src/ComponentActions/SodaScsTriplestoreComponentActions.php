@@ -506,8 +506,8 @@ class SodaScsTriplestoreComponentActions implements SodaScsComponentActionsInter
 
       // Export the triplestore repository.
       $repositoryId = $component->get('machineName')->value;
-      $filename = $snapshotMachineName;
-      $this->sodaScsTriplestoreHelpers->exportTriplestoreRepository($repositoryId, $filename, $snapshotPaths['backupPathWithType'], 'nq', $timestamp);
+      $filename = $component->get('machineName')->value;
+      $this->sodaScsTriplestoreHelpers->exportTriplestoreRepository($repositoryId, $filename, $snapshotPaths['backupPathWithType'], 'nq');
 
       $randomInt = $this->sodaScsSnapshotHelpers->generateRandomSuffix();
       $containerName = 'snapshot--' . $randomInt . '--' . $snapshotMachineName . '--triplestore';
@@ -527,7 +527,7 @@ class SodaScsTriplestoreComponentActions implements SodaScsComponentActionsInter
             $snapshotPaths['backupPathWithType'] . ':/source',
             $snapshotPaths['backupPathWithType'] . ':/backup',
           ],
-          'AutoRemove' => FALSE,
+          'AutoRemove' => TRUE,
         ],
       ]);
       $createContainerResponse = $this->sodaScsDockerRunServiceActions->makeRequest($createContainerRequest);
@@ -582,8 +582,8 @@ class SodaScsTriplestoreComponentActions implements SodaScsComponentActionsInter
         message: 'Snapshot created successfully.',
         data: [
           $component->bundle() => SodaScsSnapshotData::fromArray($componentData),
-          ],
-        );
+        ],
+      );
     }
     catch (\Exception $e) {
       Error::logException(
@@ -897,12 +897,19 @@ class SodaScsTriplestoreComponentActions implements SodaScsComponentActionsInter
 
       $componentMachineName = $component->get('machineName')->value;
       $repositoryId = $componentMachineName;
-      $filename = 'rollback--' . $componentMachineName;
-
+      $rollbackFilename = 'rollback--' . $componentMachineName;
+      // @todo Abstract for different formats.
+      $nqPath = $tempDirPath . '/nq';
       //
       // Create a rollback backup of the existing triplestore repository.
       //
-      $this->sodaScsTriplestoreHelpers->exportTriplestoreRepository($repositoryId, $filename, $tempDirPath, 'nq', time());
+      $createRollbackResult = $this->sodaScsTriplestoreHelpers->exportTriplestoreRepository($repositoryId, $rollbackFilename, $nqPath, 'nq', time());
+      if (!$createRollbackResult->success) {
+        return SodaScsResult::failure(
+          message: 'Snapshot restoration failed.',
+          error: $createRollbackResult->message,
+        );
+      }
 
       //
       // Replace the existing triplestore repository with the snapshot.
@@ -910,7 +917,20 @@ class SodaScsTriplestoreComponentActions implements SodaScsComponentActionsInter
       // Its already unpacked and validated within the
       // SodaScsSnapshotActions::restoreFromSnapshot logic.
       //
-      $snapshotTriplestorePath = $tempDirPath . '/nq/' . $componentMachineName . '.nq';
+      $filename = $componentMachineName;
+      $importFilename = $nqPath . '/' . $filename . '.nq';
+      $importResult = $this->sodaScsTriplestoreHelpers->importTriplestoreRepository($repositoryId, $importFilename, 'nq', time());
+      if (!$importResult->success) {
+        return SodaScsResult::failure(
+          message: 'Snapshot restoration failed.',
+          error: $importResult->message,
+        );
+      }
+
+      return SodaScsResult::success(
+        message: 'Snapshot restoration successful.',
+        data: $importResult->data,
+      );
 
     }
     catch (\Exception $e) {

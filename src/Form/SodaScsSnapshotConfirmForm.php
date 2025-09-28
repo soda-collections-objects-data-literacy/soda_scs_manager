@@ -269,11 +269,7 @@ class SodaScsSnapshotConfirmForm extends ConfirmFormBase {
 
       $existingSnapshots = $this->entity->get('snapshots')->getValue();
 
-      if (!empty($existingSnapshots)) {
-        $this->messenger()->addError($this->t('Only one snapshot allowed per entity.'));
-        return;
-      }
-
+      // @todo implement only one snapshot allowed per entity.
       // Get the values from the form.
       $values = $form_state->getValues();
       $snapshotMachineName = $this->sodaScsSnapshotHelpers->cleanMachineName($values['label']);
