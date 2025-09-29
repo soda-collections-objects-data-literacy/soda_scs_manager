@@ -107,7 +107,7 @@ class SodaScsContainerHelpers {
       Error::logException(
       $this->loggerFactory->get('soda_scs_manager'),
       new \Exception(''),
-      $this->t('The PHP request timeout is less than the required sleep interval of 5 seconds. Please increase your max_execution_time setting.'),
+      (string) $this->t('The PHP request timeout is less than the required sleep interval of 5 seconds. Please increase your max_execution_time setting.'),
       [],
       LogLevel::ERROR
       );
@@ -128,14 +128,14 @@ class SodaScsContainerHelpers {
           Error::logException(
             $this->loggerFactory->get('soda_scs_manager'),
             new \Exception('Container ID not found'),
-            $this->t('Failed to create @context. Container ID not found.', ['@context' => $context]),
+            (string) $this->t('Failed to create @context. Container ID not found.', ['@context' => $context]),
             [],
             LogLevel::ERROR
           );
           $this->messenger()->addError($this->t('Failed to create @context. See logs for more details.', ['@context' => $context]));
           return SodaScsResult::failure(
             error: 'Container ID not found',
-            message: $this->t('Failed to create @context. Container ID not found.', ['@context' => $context]),
+            message: (string) $this->t('Failed to create @context. Container ID not found.', ['@context' => $context]),
           );
         }
         // Inspect the container to check if it is running.
@@ -162,7 +162,7 @@ class SodaScsContainerHelpers {
           Error::logException(
             $this->loggerFactory->get('soda_scs_manager'),
             new \Exception('Container inspection failed'),
-            $this->t('Failed to create containers for @context. Could not inspect container: @error', [
+            (string) $this->t('Failed to create containers for @context. Could not inspect container: @error', [
               '@context' => $context,
               '@error' => $containerInspectResponse['error'],
             ]),
@@ -172,7 +172,7 @@ class SodaScsContainerHelpers {
           $this->messenger()->addError($this->t('Failed to create @context. See logs for more details.', ['@context' => $context]));
           return SodaScsResult::failure(
             error: 'Container inspection failed',
-            message: $this->t('Failed to create @context. Could not inspect container: @error', [
+            message: (string) $this->t('Failed to create @context. Could not inspect container: @error', [
               '@context' => $context,
               '@error' => $containerInspectResponse['error'],
             ]),
@@ -187,7 +187,7 @@ class SodaScsContainerHelpers {
           Error::logException(
             $this->loggerFactory->get('soda_scs_manager'),
             new \Exception('HTTP error'),
-            $this->t('Failed to create @context. Response code is not 200, but: @responseCode', [
+            (string) $this->t('Failed to create @context. Response code is not 200, but: @responseCode', [
               '@context' => $context,
               '@responseCode' => $responseCode,
             ]),
@@ -197,7 +197,7 @@ class SodaScsContainerHelpers {
           $this->messenger()->addError($this->t('Failed to create @context. See logs for more details.', ['@context' => $context]));
           return SodaScsResult::failure(
             error: 'HTTP error',
-            message: $this->t('Failed to create @context. Response code is not 200, but: @responseCode', [
+            message: (string) $this->t('Failed to create @context. Response code is not 200, but: @responseCode', [
               '@context' => $context,
               '@responseCode' => $responseCode,
             ]),
@@ -218,7 +218,7 @@ class SodaScsContainerHelpers {
             Error::logException(
               $this->loggerFactory->get('soda_scs_manager'),
               new \Exception('Temporarily created backup container exited unexpectedly.'),
-              $this->t('Failed to create @context. Temporarily created backup container exited with exit code: @exitCode', [
+              (string) $this->t('Failed to create @context. Temporarily created backup container exited with exit code: @exitCode', [
                 '@context' => $context,
                 '@exitCode' => $containerStatus['State']['ExitCode'],
               ]),
@@ -231,7 +231,7 @@ class SodaScsContainerHelpers {
             }
             return SodaScsResult::failure(
               error: 'Temporarily created backup container exited unexpectedly',
-              message: $this->t('Failed to create @context. Temporarily created backup container exited with exit code: @exitCode', [
+              message: (string) $this->t('Failed to create @context. Temporarily created backup container exited with exit code: @exitCode', [
                 '@context' => $context,
                 '@exitCode' => $containerStatus['State']['ExitCode'],
               ]),
@@ -253,7 +253,7 @@ class SodaScsContainerHelpers {
       Error::logException(
         $this->loggerFactory->get('soda_scs_manager'),
         new \Exception('Container timeout'),
-        $this->t('Failed to create @context. Maximum number of attempts to check if the container is running reached. Container is still running.', ['@context' => $context]),
+        (string) $this->t('Failed to create @context. Maximum number of attempts to check if the container is running reached. Container is still running.', ['@context' => $context]),
         [],
         LogLevel::ERROR
       );
@@ -263,14 +263,14 @@ class SodaScsContainerHelpers {
       }
       return SodaScsResult::failure(
         error: 'Container timeout',
-        message: $this->t('Failed to create @context. Maximum number of attempts to check if the container is running reached. Container is still running.', [
+        message: (string) $this->t('Failed to create @context. Maximum number of attempts to check if the container is running reached. Container is still running.', [
           '@context' => $context,
         ]),
       );
     }
     // If the containers are finished, return a success result.
     return SodaScsResult::success(
-      message: $this->t('Containers finished successfully for @context.', [
+      message: (string) $this->t('Containers finished successfully for @context.', [
         '@context' => $context,
       ]),
       data: $containers,
@@ -303,7 +303,7 @@ class SodaScsContainerHelpers {
     if ($maxAttempts === FALSE) {
       return SodaScsResult::failure(
         error: 'PHP request timeout error',
-        message: $this->t('Failed to wait for container state. The PHP request timeout is too low.'),
+        message: (string) $this->t('Failed to wait for container state. The PHP request timeout is too low.'),
       );
     }
 
@@ -317,7 +317,7 @@ class SodaScsContainerHelpers {
       // If there is no container, it is already removed.
       if ($inspectResponse['statusCode'] === 404) {
         return SodaScsResult::success(
-          message: $this->t('Container already removed.'),
+          message: (string) $this->t('Container already removed.'),
           data: [
             $containerId => [
               'state' => 'removed',
@@ -331,7 +331,7 @@ class SodaScsContainerHelpers {
       // If the inspect container request failed, return a failure result.
       if (!$inspectResponse['success']) {
         return SodaScsResult::failure(
-          message: $this->t('Failed to inspect container.'),
+          message: (string) $this->t('Failed to inspect container.'),
           error: (string) $inspectResponse['error'],
         );
       }
@@ -348,7 +348,7 @@ class SodaScsContainerHelpers {
 
       if ($currentState === $desiredState) {
         return SodaScsResult::success(
-          message: $this->t('Container reached desired state: @state.', [
+          message: (string) $this->t('Container reached desired state: @state.', [
             '@state' => $desiredState,
           ]),
           data: [
@@ -363,7 +363,7 @@ class SodaScsContainerHelpers {
     }
 
     return SodaScsResult::failure(
-      message: $this->t('Timed out waiting for container to reach state: @state.', ['@state' => $desiredState]),
+      message: (string) $this->t('Timed out waiting for container to reach state: @state.', ['@state' => $desiredState]),
       error: 'Container state timeout',
     );
   }
@@ -389,7 +389,7 @@ class SodaScsContainerHelpers {
     if ($maxAttempts === FALSE) {
       return SodaScsResult::failure(
         error: 'PHP request timeout error',
-        message: $this->t('Failed to wait for container exec state. The PHP request timeout is too low.'),
+        message: (string) $this->t('Failed to wait for container exec state. The PHP request timeout is too low.'),
       );
     }
 
@@ -410,7 +410,7 @@ class SodaScsContainerHelpers {
       // If the container exec is already removed, return a success result.
       if ($inspectResponse['statusCode'] === 404) {
         return SodaScsResult::success(
-          message: $this->t('Container exec already removed.'),
+          message: (string) $this->t('Container exec already removed.'),
           data: [
             'state' => 'removed',
             'responseStatusCode' => $inspectResponse['statusCode'],
@@ -422,7 +422,7 @@ class SodaScsContainerHelpers {
       // If the inspect container exec request failed, return a failure result.
       if (!$inspectResponse['success']) {
         return SodaScsResult::failure(
-          message: $this->t('Failed to inspect container exec.'),
+          message: (string) $this->t('Failed to inspect container exec.'),
           error: (string) $inspectResponse['error'],
         );
       }
@@ -438,7 +438,7 @@ class SodaScsContainerHelpers {
 
       if ($inspect['Running'] === FALSE || $currentState === $desiredState) {
         return SodaScsResult::success(
-          message: $this->t('Container exec reached desired state: @state.', ['@state' => $desiredState]),
+          message: (string) $this->t('Container exec reached desired state: @state.', ['@state' => $desiredState]),
           data: [
             'state' => $currentState,
             'inspect' => $inspect,
@@ -452,7 +452,7 @@ class SodaScsContainerHelpers {
     }
 
     return SodaScsResult::failure(
-      message: $this->t('Timed out waiting for container exec to reach state: @state.', ['@state' => $desiredState]),
+      message: (string) $this->t('Timed out waiting for container exec to reach state: @state.', ['@state' => $desiredState]),
       error: 'Container exec state timeout',
     );
   }
@@ -490,7 +490,7 @@ class SodaScsContainerHelpers {
         Error::logException(
           $this->loggerFactory->get('soda_scs_manager'),
           new \Exception('Container deletion failed'),
-          $this->t('Failed to delete @context. Could not delete container: @error', [
+          (string) $this->t('Failed to delete @context. Could not delete container: @error', [
             '@context' => $context,
             '@error' => $deleteContainerResponse['error'],
           ]),
@@ -499,7 +499,7 @@ class SodaScsContainerHelpers {
         );
         return SodaScsResult::failure(
           error: 'Container deletion failed',
-          message: $this->t('Failed to delete @context. Could not delete container: @error', [
+          message: (string) $this->t('Failed to delete @context. Could not delete container: @error', [
             '@context' => $context,
             '@error' => $deleteContainerResponse['error'],
           ]),
@@ -508,7 +508,7 @@ class SodaScsContainerHelpers {
     }
     // If the containers are deleted successfully, return a success result.
     return SodaScsResult::success(
-      message: $this->t('Containers deleted successfully for @context.', [
+      message: (string) $this->t('Containers deleted successfully for @context.', [
         '@context' => $context,
       ]),
       data: $containers,
@@ -538,7 +538,7 @@ class SodaScsContainerHelpers {
     if (!$createResponse['success']) {
       return SodaScsResult::failure(
         error: $createResponse['error'],
-        message: 'Failed to create exec command.',
+        message: (string) $this->t('Failed to create exec command.'),
       );
     }
 
@@ -556,7 +556,7 @@ class SodaScsContainerHelpers {
     if (!$startResponse['success']) {
       return SodaScsResult::failure(
         error: $startResponse['error'],
-        message: 'Failed to start exec command.',
+        message: (string) $this->t('Failed to start exec command.'),
       );
     }
 

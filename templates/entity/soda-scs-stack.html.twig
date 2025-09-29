@@ -86,8 +86,18 @@
       {% endif %}
       </div>
       <div class="soda-scs-manager--stack--connectedstacks">
-      {% if elements.connectedstacks %}
-      {{ elements.connectedstacks }}
+      {% if elements.connectedStacks %}
+      {{ elements.connectedStacks }}
+      {% endif %}
+      </div>
+      <div class="soda-scs-manager--stack--connectedcomponents">
+      {% if elements.includedComponents %}
+      {{ elements.includedComponents }}
+      {% endif %}
+      </div>
+      <div class="soda-scs-manager--stack--connectedcomponents">
+      {% if elements.connectedComponents %}
+      {{ elements.connectedComponents }}
       {% endif %}
       </div>
       <div class="soda-scs-manager--stack--status">

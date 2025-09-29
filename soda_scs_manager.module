@@ -276,15 +276,15 @@ function soda_scs_manager_mail($key, &$message, $params) {
 
   switch ($key) {
     case 'registration_admin_notification':
-      $message['subject'] = t('New user registration on @site_name', ['@site_name' => $site_name], $options);
-      $message['body'][] = t('A new user has registered on @site_name.', ['@site_name' => $site_name], $options);
-      $message['body'][] = t('Username: @username', ['@username' => $params['username']], $options);
-      $message['body'][] = t('Email: @email', ['@email' => $params['email']], $options);
-      $message['body'][] = t('Name: @first_name @last_name', [
+      $message['subject'] = \Drupal::translation()->translate('New user registration on @site_name', ['@site_name' => $site_name], $options);
+      $message['body'][] = \Drupal::translation()->translate('A new user has registered on @site_name.', ['@site_name' => $site_name], $options);
+      $message['body'][] = \Drupal::translation()->translate('Username: @username', ['@username' => $params['username']], $options);
+      $message['body'][] = \Drupal::translation()->translate('Email: @email', ['@email' => $params['email']], $options);
+      $message['body'][] = \Drupal::translation()->translate('Name: @first_name @last_name', [
         '@first_name' => $params['first_name'],
         '@last_name' => $params['last_name'],
       ], $options);
-      $message['body'][] = t('To approve or reject this registration, visit: @url', [
+      $message['body'][] = \Drupal::translation()->translate('To approve or reject this registration, visit: @url', [
         '@url' => Url::fromRoute('soda_scs_manager.user_registration_approvals')
           ->setAbsolute()
           ->toString(),
@@ -292,25 +292,25 @@ function soda_scs_manager_mail($key, &$message, $params) {
       break;
 
     case 'registration_user_notification':
-      $message['subject'] = t('Your registration on @site_name', ['@site_name' => $site_name], $options);
-      $message['body'][] = t('Hello @username,', ['@username' => $params['username']], $options);
-      $message['body'][] = t('Thank you for registering on @site_name.', ['@site_name' => $site_name], $options);
-      $message['body'][] = t('Your registration is pending administrator approval. You will receive another email once your account is approved or rejected.', [], $options);
+      $message['subject'] = \Drupal::translation()->translate('Your registration on @site_name', ['@site_name' => $site_name], $options);
+      $message['body'][] = \Drupal::translation()->translate('Hello @username,', ['@username' => $params['username']], $options);
+      $message['body'][] = \Drupal::translation()->translate('Thank you for registering on @site_name.', ['@site_name' => $site_name], $options);
+      $message['body'][] = \Drupal::translation()->translate('Your registration is pending administrator approval. You will receive another email once your account is approved or rejected.', [], $options);
       break;
 
     case 'registration_approval':
-      $message['subject'] = t('Your account on @site_name has been approved', ['@site_name' => $site_name], $options);
-      $message['body'][] = t('Hello @username,', ['@username' => $params['username']], $options);
-      $message['body'][] = t('Your registration on @site_name has been approved.', ['@site_name' => $site_name], $options);
-      $message['body'][] = t('You can now log in at: @login_url', ['@login_url' => $params['login_url']], $options);
-      $message['body'][] = t('For security reasons, you will need to reset your password when you first log in.', [], $options);
+      $message['subject'] = \Drupal::translation()->translate('Your account on @site_name has been approved', ['@site_name' => $site_name], $options);
+      $message['body'][] = \Drupal::translation()->translate('Hello @username,', ['@username' => $params['username']], $options);
+      $message['body'][] = \Drupal::translation()->translate('Your registration on @site_name has been approved.', ['@site_name' => $site_name], $options);
+      $message['body'][] = \Drupal::translation()->translate('You can now log in at: @login_url', ['@login_url' => $params['login_url']], $options);
+      $message['body'][] = \Drupal::translation()->translate('For security reasons, you will need to reset your password when you first log in.', [], $options);
       break;
 
     case 'registration_rejection':
-      $message['subject'] = t('Your account on @site_name was not approved', ['@site_name' => $site_name], $options);
-      $message['body'][] = t('Hello @username,', ['@username' => $params['username']], $options);
-      $message['body'][] = t('Your registration on @site_name has been reviewed and was not approved at this time.', ['@site_name' => $site_name], $options);
-      $message['body'][] = t('If you believe this is an error, please contact the site administrators.', [], $options);
+      $message['subject'] = \Drupal::translation()->translate('Your account on @site_name was not approved', ['@site_name' => $site_name], $options);
+      $message['body'][] = \Drupal::translation()->translate('Hello @username,', ['@username' => $params['username']], $options);
+      $message['body'][] = \Drupal::translation()->translate('Your registration on @site_name has been reviewed and was not approved at this time.', ['@site_name' => $site_name], $options);
+      $message['body'][] = \Drupal::translation()->translate('If you believe this is an error, please contact the site administrators.', [], $options);
       break;
   }
 }
@@ -694,7 +694,7 @@ function soda_scs_manager_user_delete(UserInterface $user) {
     $deleteUserResponse = $keycloakServiceUserActions->makeRequest($deleteUserRequest);
 
     if ($deleteUserResponse['success']) {
-      $messenger->addMessage(t('Successfully deleted user from Keycloak: @username (ID: @id)', [
+      $messenger->addMessage(\Drupal::translation()->translate('Successfully deleted user from Keycloak: @username (ID: @id)', [
         '@username' => $user->getAccountName(),
         '@id' => $deleteUserParams['routeParams']['userId'],
       ]));
@@ -708,7 +708,7 @@ function soda_scs_manager_user_delete(UserInterface $user) {
     }
   }
   catch (\Exception $e) {
-    $messenger->addError(t('Failed to delete user from Keycloak: @error', [
+    $messenger->addError(\Drupal::translation()->translate('Failed to delete user from Keycloak: @error', [
       '@error' => $e->getMessage(),
     ]));
     $logger->error('Error deleting user @username from Keycloak: @error', [
@@ -721,11 +721,11 @@ function soda_scs_manager_user_delete(UserInterface $user) {
   $cleanDatabaseUsers = \Drupal::service('soda_scs_manager.sql_service.actions')->cleanServiceUsers($user->getDisplayName());
 
   if ($cleanDatabaseUsers['success']) {
-    $messenger->addMessage(t('Successfully cleaned database users for user: @username', ['@username' => $user->getDisplayName()]));
+    $messenger->addMessage(\Drupal::translation()->translate('Successfully cleaned database users for user: @username', ['@username' => $user->getDisplayName()]));
     $logger->notice('Successfully cleaned database users for user: @username', ['@username' => $user->getDisplayName()]);
   }
   else {
-    $messenger->addError(t('Failed to clean database users for user: @username', ['@username' => $user->getDisplayName()]));
+    $messenger->addError(\Drupal::translation()->translate('Failed to clean database users for user: @username', ['@username' => $user->getDisplayName()]));
     $logger->error('Failed to clean database users for user: @username. @message @error', [
       '@username' => $user->getDisplayName(),
       '@message' => $cleanDatabaseUsers['message'],
@@ -744,10 +744,10 @@ function soda_scs_manager_user_delete(UserInterface $user) {
   $cleanTriplestoreUsers = \Drupal::service('soda_scs_manager.opengdb_service.actions')->buildDeleteRequest($tsDeleteRequestParams);
 
   if ($cleanTriplestoreUsers['success']) {
-    $messenger->addMessage(t('Successfully cleaned triplestore users for user: @username', ['@username' => $user->getDisplayName()]));
+    $messenger->addMessage(\Drupal::translation()->translate('Successfully cleaned triplestore users for user: @username', ['@username' => $user->getDisplayName()]));
   }
   else {
-    $messenger->addError(t('Failed to clean triplestore users for user: @username', ['@username' => $user->getDisplayName()]));
+    $messenger->addError(\Drupal::translation()->translate('Failed to clean triplestore users for user: @username', ['@username' => $user->getDisplayName()]));
     $logger->error('Failed to clean triplestore users for user: @username. @message @error', [
       '@username' => $user->getDisplayName(),
       '@message' => $cleanTriplestoreUsers['message'],
@@ -764,7 +764,7 @@ function soda_scs_manager_user_delete(UserInterface $user) {
   foreach ($components as $component) {
     $component->delete();
   }
-  $messenger->addMessage(t('Successfully deleted @count components for user @username', [
+  $messenger->addMessage(\Drupal::translation()->translate('Successfully deleted @count components for user @username', [
     '@count' => count($components),
     '@username' => $user->getDisplayName(),
   ]));
@@ -772,7 +772,7 @@ function soda_scs_manager_user_delete(UserInterface $user) {
   foreach ($stacks as $stack) {
     $stack->delete();
   }
-  $messenger->addMessage(t('Successfully deleted @count stacks for user @username', [
+  $messenger->addMessage(\Drupal::translation()->translate('Successfully deleted @count stacks for user @username', [
     '@count' => count($stacks),
     '@username' => $user->getDisplayName(),
   ]));
@@ -780,7 +780,7 @@ function soda_scs_manager_user_delete(UserInterface $user) {
   foreach ($projects as $project) {
     $project->delete();
   }
-  $messenger->addMessage(t('Successfully deleted @count projects for user @username', [
+  $messenger->addMessage(\Drupal::translation()->translate('Successfully deleted @count projects for user @username', [
     '@count' => count($projects),
     '@username' => $user->getDisplayName(),
   ]));
@@ -788,7 +788,7 @@ function soda_scs_manager_user_delete(UserInterface $user) {
   foreach ($servicekeys as $servicekey) {
     $servicekey->delete();
   }
-  $messenger->addMessage(t('Successfully deleted @count service keys for user @username', [
+  $messenger->addMessage(\Drupal::translation()->translate('Successfully deleted @count service keys for user @username', [
     '@count' => count($servicekeys),
     '@username' => $user->getDisplayName(),
   ]));
@@ -943,7 +943,7 @@ function _soda_scs_manager_create_default_applications_for_user(UserInterface $u
 
   if (empty($projects) || count($projects) > 1) {
     $messenger = \Drupal::messenger();
-    $messenger->addError(t('Failed to create default applications for user: @username. No default project found.', ['@username' => $user->getDisplayName()]));
+    $messenger->addError(\Drupal::translation()->translate('Failed to create default applications for user: @username. No default project found.', ['@username' => $user->getDisplayName()]));
     $logger = \Drupal::logger('soda_scs_manager');
     $logger->error('Failed to create default applications for user: @username. No default project found.', ['@username' => $user->getDisplayName()]);
     return;
@@ -1001,7 +1001,7 @@ function _soda_scs_manager_create_default_project_for_user(UserInterface $user) 
   $syncKeycloakGroupMembersResult = \Drupal::service('soda_scs_manager.project.helpers')->syncKeycloakGroupMembers($project);
   if (!$syncKeycloakGroupMembersResult->success) {
     $messenger = \Drupal::messenger();
-    $messenger->addError(t('Failed to sync user and keycloak groups for user: @username. @error', [
+    $messenger->addError(\Drupal::translation()->translate('Failed to sync user and keycloak groups for user: @username. @error', [
       '@username' => $user->getDisplayName(),
       '@error' => $syncKeycloakGroupMembersResult->error,
     ]));
@@ -1013,7 +1013,7 @@ function _soda_scs_manager_create_default_project_for_user(UserInterface $user) 
   }
   else {
     $messenger = \Drupal::messenger();
-    $messenger->addMessage(t('Successfully synced user and keycloak groups for user: @username', ['@username' => $user->getDisplayName()]));
+    $messenger->addMessage(\Drupal::translation()->translate('Successfully synced user and keycloak groups for user: @username', ['@username' => $user->getDisplayName()]));
     $logger = \Drupal::logger('soda_scs_manager');
     $logger->notice('Successfully synced user and keycloak groups for user: @username', ['@username' => $user->getDisplayName()]);
   }

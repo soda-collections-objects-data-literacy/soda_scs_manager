@@ -177,7 +177,7 @@ class SodaScsSnapshotHelpers {
     // Get the owner of the component.
     $owner = $component->getOwner()->getDisplayName();
     // Get the date.
-    $date = date('Y-m-d', $timestamp);
+    $date = date('Y-m-d', (int) $timestamp);
     // The user bound single snapshot dir,
     // e.g /var/scs-manager/snapshots/scs_user/new-snapshot.
     $snapshotDirectory = $snapshotFullPath . '/' . $owner . '/' . $snapshotMachineName;
