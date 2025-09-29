@@ -10,6 +10,7 @@ use Drupal\Core\Form\FormStateInterface;
 use Drupal\Core\Url;
 use Drupal\soda_scs_manager\StackActions\SodaScsStackActionsInterface;
 use Symfony\Component\DependencyInjection\ContainerInterface;
+use Symfony\Component\DependencyInjection\Attribute\Autowire;
 
 /**
  * Provides a form for deleting Soda SCS Stack entities.
@@ -35,7 +36,13 @@ class SodaScsStackDeleteForm extends ContentEntityDeleteForm {
    * @param \Drupal\soda_scs_manager\StackActions\SodaScsStackActionsInterface $sodaScsStackActions
    *   The Soda SCS API Actions service.
    */
-  public function __construct(EntityRepositoryInterface $entity_repository, EntityTypeBundleInfoInterface $entity_type_bundle_info, TimeInterface $time, SodaScsStackActionsInterface $sodaScsStackActions) {
+  public function __construct(
+    EntityRepositoryInterface $entity_repository,
+    EntityTypeBundleInfoInterface $entity_type_bundle_info,
+    TimeInterface $time,
+    #[Autowire(service: 'soda_scs_manager.stack.actions')]
+    SodaScsStackActionsInterface $sodaScsStackActions,
+  ) {
     parent::__construct($entity_repository, $entity_type_bundle_info, $time);
     $this->entityRepository = $entity_repository;
     $this->entityTypeBundleInfo = $entity_type_bundle_info;
@@ -73,8 +80,11 @@ class SodaScsStackDeleteForm extends ContentEntityDeleteForm {
    * {@inheritdoc}
    */
   public function getCancelUrl() {
-    //TODO: Fix "page not found"
-    return Url::fromRoute('entity.soda_scs_stack.canonical', ['bundle' => $this->entity->bundle(), 'soda_scs_stack' => $this->entity->id()]);
+    // @todo Fix "page not found".
+    return Url::fromRoute('entity.soda_scs_stack.canonical', [
+      'bundle' => $this->entity->bundle(),
+      'soda_scs_stack' => $this->entity->id(),
+    ]);
   }
 
   /**

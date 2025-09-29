@@ -1,9 +1,12 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Drupal\soda_scs_manager\Helpers;
 
 use Drupal\Core\Config\Config;
 use Drupal\Core\Config\ConfigFactoryInterface;
+use Symfony\Component\DependencyInjection\Attribute\Autowire;
 use Drupal\Core\Entity\EntityTypeManagerInterface;
 use GuzzleHttp\ClientInterface;
 use Drupal\Core\Logger\LoggerChannelFactoryInterface;
@@ -19,6 +22,7 @@ use Drupal\soda_scs_manager\RequestActions\SodaScsServiceRequestInterface;
  *
  * @todo Use health check functions from the service actions.
  */
+#[Autowire(service: 'soda_scs_manager.service.helpers')]
 class SodaScsServiceHelpers {
   use StringTranslationTrait;
 

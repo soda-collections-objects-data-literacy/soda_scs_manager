@@ -1,7 +1,10 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Drupal\soda_scs_manager\Helpers;
 
+use Symfony\Component\DependencyInjection\Attribute\Autowire;
 use Drupal\soda_scs_manager\RequestActions\SodaScsOpenGdbRequestInterface;
 use Drupal\soda_scs_manager\Exception\SodaScsRequestException;
 use Drupal\soda_scs_manager\Exception\SodaScsHelpersException;
@@ -11,6 +14,7 @@ use Drupal\Core\Logger\LoggerChannelFactoryInterface;
 /**
  * Helper class for SCS triplestore operations.
  */
+#[Autowire(service: 'soda_scs_manager.triplestore_helpers')]
 class SodaScsTriplestoreHelpers {
 
   /**
@@ -46,7 +50,9 @@ class SodaScsTriplestoreHelpers {
    */
   public function __construct(
     LoggerChannelFactoryInterface $loggerFactory,
+    #[Autowire(service: 'soda_scs_manager.opengdb_service.actions')]
     SodaScsOpenGdbRequestInterface $sodaScsOpenGdbServiceActions,
+    #[Autowire(service: 'soda_scs_manager.snapshot.helpers')]
     SodaScsSnapshotHelpers $sodaScsSnapshotHelpers,
   ) {
     $this->loggerFactory = $loggerFactory;

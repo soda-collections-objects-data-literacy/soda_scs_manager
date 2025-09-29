@@ -1,7 +1,10 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Drupal\soda_scs_manager\StackActions;
 
+use Symfony\Component\DependencyInjection\Attribute\Autowire;
 use Drupal\Core\DependencyInjection\DependencySerializationTrait;
 use Drupal\Core\StringTranslation\StringTranslationTrait;
 use Drupal\Core\StringTranslation\TranslationInterface;
@@ -12,6 +15,7 @@ use Drupal\soda_scs_manager\ValueObject\SodaScsResult;
 /**
  * Handles the communication with the SCS user manager daemon.
  */
+#[Autowire(service: 'soda_scs_manager.stack.actions')]
 class SodaScsStackActions implements SodaScsStackActionsInterface {
 
   use DependencySerializationTrait;
@@ -42,7 +46,15 @@ class SodaScsStackActions implements SodaScsStackActionsInterface {
   /**
    * Class constructor.
    */
-  public function __construct(SodaScsStackActionsInterface $sodaScsJupyterStackActions, SodaScsStackActionsInterface $sodaScsNextcloudStackActions, SodaScsStackActionsInterface $sodaScsWisskiStackActions, TranslationInterface $stringTranslation) {
+  public function __construct(
+    #[Autowire(service: 'soda_scs_manager.jupyter_stack.actions')]
+    SodaScsStackActionsInterface $sodaScsJupyterStackActions,
+    #[Autowire(service: 'soda_scs_manager.nextcloud_stack.actions')]
+    SodaScsStackActionsInterface $sodaScsNextcloudStackActions,
+    #[Autowire(service: 'soda_scs_manager.wisski_stack.actions')]
+    SodaScsStackActionsInterface $sodaScsWisskiStackActions,
+    TranslationInterface $stringTranslation,
+  ) {
     $this->sodaScsJupyterStackActions = $sodaScsJupyterStackActions;
     $this->sodaScsNextcloudStackActions = $sodaScsNextcloudStackActions;
     $this->sodaScsWisskiStackActions = $sodaScsWisskiStackActions;

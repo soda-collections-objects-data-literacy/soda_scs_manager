@@ -1,7 +1,10 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Drupal\soda_scs_manager\SnapshotActions;
 
+use Symfony\Component\DependencyInjection\Attribute\Autowire;
 use Drupal\Core\Entity\EntityTypeManagerInterface;
 use Drupal\Core\Messenger\MessengerTrait;
 use Drupal\Core\StringTranslation\StringTranslationTrait;
@@ -16,6 +19,7 @@ use Drupal\soda_scs_manager\Helpers\SodaScsActionsHelper;
 /**
  * Interface for SODa SCS Snapshot actions.
  */
+#[Autowire(service: 'soda_scs_manager.snapshot.actions')]
 class SodaScsSnapshotActions implements SodaScsSnapshotActionsInterface {
   use MessengerTrait;
   use StringTranslationTrait;
@@ -72,8 +76,11 @@ class SodaScsSnapshotActions implements SodaScsSnapshotActionsInterface {
   public function __construct(
     EntityTypeManagerInterface $entityTypeManager,
     FileSystemInterface $fileSystem,
+    #[Autowire(service: 'soda_scs_manager.actions.helpers')]
     SodaScsActionsHelper $sodaScsActionsHelper,
+    #[Autowire(service: 'soda_scs_manager.component.actions')]
     SodaScsComponentActionsInterface $sodaScsComponentActions,
+    #[Autowire(service: 'soda_scs_manager.snapshot.helpers')]
     SodaScsSnapshotHelpers $sodaScsSnapshotHelpers,
   ) {
     $this->entityTypeManager = $entityTypeManager;

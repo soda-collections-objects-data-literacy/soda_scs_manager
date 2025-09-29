@@ -1,6 +1,10 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Drupal\soda_scs_manager\ComponentActions;
+
+use Symfony\Component\DependencyInjection\Attribute\Autowire;
 
 use Drupal\Core\Config\Config;
 use Drupal\Core\Config\ConfigFactoryInterface;
@@ -27,6 +31,7 @@ use Psr\Log\LogLevel;
 /**
  * Handles the communication with the SCS user manager daemon.
  */
+#[Autowire(service: 'soda_scs_manager.triplestore_component.actions')]
 class SodaScsTriplestoreComponentActions implements SodaScsComponentActionsInterface {
 
   use DependencySerializationTrait;
@@ -111,10 +116,15 @@ class SodaScsTriplestoreComponentActions implements SodaScsComponentActionsInter
     EntityTypeBundleInfoInterface $entityTypeBundleInfo,
     LoggerChannelFactoryInterface $loggerFactory,
     MessengerInterface $messenger,
+    #[Autowire(service: 'soda_scs_manager.opengdb_service.actions')]
     SodaScsOpenGdbRequestInterface $sodaScsOpenGdbServiceActions,
+    #[Autowire(service: 'soda_scs_manager.docker_run_service.actions')]
     SodaScsRunRequestInterface $sodaScsDockerRunServiceActions,
+    #[Autowire(service: 'soda_scs_manager.service_key.actions')]
     SodaScsServiceKeyActionsInterface $sodaScsServiceKeyActions,
+    #[Autowire(service: 'soda_scs_manager.snapshot.helpers')]
     SodaScsSnapshotHelpers $sodaScsSnapshotHelpers,
+    #[Autowire(service: 'soda_scs_manager.triplestore_helpers')]
     SodaScsTriplestoreHelpers $sodaScsTriplestoreHelpers,
   ) {
     // Services from container.
@@ -499,7 +509,7 @@ class SodaScsTriplestoreComponentActions implements SodaScsComponentActionsInter
   public function createSnapshot(SodaScsComponentInterface $component, string $snapshotMachineName, int $timestamp): SodaScsResult {
     try {
       // Create paths.
-      $snapshotPaths = $this->sodaScsSnapshotHelpers->constructSnapshotPaths($component, $snapshotMachineName, $timestamp);
+      $snapshotPaths = $this->sodaScsSnapshotHelpers->constructSnapshotPaths($component, $snapshotMachineName, (string) $timestamp);
 
       // Create the backup directory.
       $this->sodaScsSnapshotHelpers->createDir($snapshotPaths['backupPathWithType']);

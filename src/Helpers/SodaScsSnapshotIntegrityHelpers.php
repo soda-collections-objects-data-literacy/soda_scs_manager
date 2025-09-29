@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Drupal\soda_scs_manager\Helpers;
 
+use Symfony\Component\DependencyInjection\Attribute\Autowire;
 use Drupal\Core\Entity\EntityTypeManagerInterface;
 use Drupal\Core\Logger\LoggerChannelFactoryInterface;
 use Drupal\Core\Messenger\MessengerInterface;
@@ -12,6 +13,7 @@ use Drupal\Core\StringTranslation\StringTranslationTrait;
 /**
  * Helper class for snapshot integrity checks and cleanup.
  */
+#[Autowire(service: 'soda_scs_manager.snapshot.integrity.helpers')]
 class SodaScsSnapshotIntegrityHelpers {
 
   use StringTranslationTrait;

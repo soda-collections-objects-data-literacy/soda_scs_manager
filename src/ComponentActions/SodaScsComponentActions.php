@@ -1,7 +1,10 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Drupal\soda_scs_manager\ComponentActions;
 
+use Symfony\Component\DependencyInjection\Attribute\Autowire;
 use Drupal\Core\DependencyInjection\DependencySerializationTrait;
 use Drupal\Core\Entity\EntityTypeManagerInterface;
 use Drupal\Core\Messenger\MessengerTrait;
@@ -23,6 +26,7 @@ use Drupal\soda_scs_manager\ValueObject\SodaScsResult;
  *   - an account of Nextcloud, Jupyterhub or WebProtégé.
  *   - a folder with user permissions on the filesystem.
  */
+#[Autowire(service: 'soda_scs_manager.component.actions')]
 class SodaScsComponentActions implements SodaScsComponentActionsInterface {
 
   use DependencySerializationTrait;
@@ -76,10 +80,15 @@ class SodaScsComponentActions implements SodaScsComponentActionsInterface {
    */
   public function __construct(
     EntityTypeManagerInterface $entityTypeManager,
+    #[Autowire(service: 'soda_scs_manager.filesystem_component.actions')]
     SodaScsComponentActionsInterface $sodaScsFilesystemComponentActions,
+    #[Autowire(service: 'soda_scs_manager.sql_component.actions')]
     SodaScsComponentActionsInterface $sodaScsSqlComponentActions,
+    #[Autowire(service: 'soda_scs_manager.triplestore_component.actions')]
     SodaScsComponentActionsInterface $sodaScsTriplestoreComponentActions,
+    #[Autowire(service: 'soda_scs_manager.wisski_component.actions')]
     SodaScsComponentActionsInterface $sodaScsWisskiComponentActions,
+    #[Autowire(service: 'soda_scs_manager.webprotege_component.actions')]
     SodaScsComponentActionsInterface $sodaScsWebprotegeComponentActions,
     TranslationInterface $stringTranslation,
   ) {

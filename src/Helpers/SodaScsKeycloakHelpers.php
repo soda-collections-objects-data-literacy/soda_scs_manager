@@ -1,13 +1,17 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Drupal\soda_scs_manager\Helpers;
 
+use Symfony\Component\DependencyInjection\Attribute\Autowire;
 use Drupal\soda_scs_manager\RequestActions\SodaScsKeycloakServiceGroupActions;
 use Drupal\soda_scs_manager\RequestActions\SodaScsServiceRequestInterface;
 
 /**
  * Helper class for Soda SCS keycloak operations.
  */
+#[Autowire(service: 'soda_scs_manager.keycloak_service.helpers')]
 class SodaScsKeycloakHelpers {
 
   /**
@@ -19,7 +23,9 @@ class SodaScsKeycloakHelpers {
    *   The Soda SCS keycloak service user actions.
    */
   public function __construct(
+    #[Autowire(service: 'soda_scs_manager.keycloak_service.group.actions')]
     protected SodaScsKeycloakServiceGroupActions $sodaScsKeycloakServiceGroupActions,
+    #[Autowire(service: 'soda_scs_manager.keycloak_service.user.actions')]
     protected SodaScsServiceRequestInterface $sodaScsKeycloakServiceUserActions,
   ) {
     $this->sodaScsKeycloakServiceGroupActions = $sodaScsKeycloakServiceGroupActions;

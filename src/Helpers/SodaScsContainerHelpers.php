@@ -1,7 +1,10 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Drupal\soda_scs_manager\Helpers;
 
+use Symfony\Component\DependencyInjection\Attribute\Autowire;
 use Drupal\Core\Logger\LoggerChannelFactoryInterface;
 use Drupal\Core\Messenger\MessengerTrait;
 use Drupal\Core\StringTranslation\StringTranslationTrait;
@@ -14,6 +17,7 @@ use Psr\Log\LogLevel;
 /**
  * Helper class for Soda SCS container operations.
  */
+#[Autowire(service: 'soda_scs_manager.container.helpers')]
 class SodaScsContainerHelpers {
 
   use MessengerTrait;
@@ -62,8 +66,11 @@ class SodaScsContainerHelpers {
    */
   public function __construct(
     LoggerChannelFactoryInterface $loggerFactory,
+    #[Autowire(service: 'soda_scs_manager.docker_run_service.actions')]
     SodaScsDockerRunServiceActions $sodaScsDockerRunServiceActions,
+    #[Autowire(service: 'soda_scs_manager.docker_exec_service.actions')]
     SodaScsDockerExecServiceActions $sodaScsDockerExecServiceActions,
+    #[Autowire(service: 'soda_scs_manager.helpers')]
     SodaScsHelpers $sodaScsHelpers,
   ) {
     $this->loggerFactory = $loggerFactory;

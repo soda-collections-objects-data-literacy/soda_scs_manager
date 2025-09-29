@@ -1,7 +1,10 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Drupal\soda_scs_manager\Helpers;
 
+use Symfony\Component\DependencyInjection\Attribute\Autowire;
 use Drupal\Core\Config\Config;
 use Drupal\Core\Config\ConfigFactoryInterface;
 use Drupal\Core\Entity\EntityTypeManagerInterface;
@@ -17,6 +20,7 @@ use Drupal\soda_scs_manager\ValueObject\SodaScsKeycloakGroupData;
 /**
  * Helper class for SodaSCS project operations.
  */
+#[Autowire(service: 'soda_scs_manager.project.helpers')]
 class SodaScsProjectHelpers {
   use StringTranslationTrait;
 
@@ -26,10 +30,15 @@ class SodaScsProjectHelpers {
   public function __construct(
     protected ConfigFactoryInterface $configFactory,
     protected EntityTypeManagerInterface $entityTypeManager,
+    #[Autowire(service: 'externalauth.authmap')]
     protected AuthmapInterface $authmap,
+    #[Autowire(service: 'soda_scs_manager.service.helpers')]
     protected SodaScsServiceHelpers $sodaScsServiceHelpers,
+    #[Autowire(service: 'soda_scs_manager.keycloak_service.client.actions')]
     protected SodaScsServiceRequestInterface $sodaScsKeycloakServiceClientActions,
+    #[Autowire(service: 'soda_scs_manager.keycloak_service.group.actions')]
     protected SodaScsServiceRequestInterface $sodaScsKeycloakServiceGroupActions,
+    #[Autowire(service: 'soda_scs_manager.keycloak_service.user.actions')]
     protected SodaScsServiceRequestInterface $sodaScsKeycloakServiceUserActions,
   ) {
     $this->settings = $this->configFactory->getEditable('soda_scs_manager.settings');

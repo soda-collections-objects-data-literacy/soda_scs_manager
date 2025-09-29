@@ -1,7 +1,10 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Drupal\soda_scs_manager\ServiceKeyActions;
 
+use Symfony\Component\DependencyInjection\Attribute\Autowire;
 use Drupal\Core\DependencyInjection\DependencySerializationTrait;
 use Drupal\Core\Entity\EntityTypeManagerInterface;
 use Drupal\soda_scs_manager\Entity\SodaScsServiceKeyInterface;
@@ -9,6 +12,7 @@ use Drupal\soda_scs_manager\Entity\SodaScsServiceKeyInterface;
 /**
  * Handles the communication with the SCS user manager daemon.
  */
+#[Autowire(service: 'soda_scs_manager.service_key.actions')]
 class SodaScsServiceKeyActions implements SodaScsServiceKeyActionsInterface {
 
   use DependencySerializationTrait;

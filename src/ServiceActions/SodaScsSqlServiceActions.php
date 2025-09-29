@@ -1,10 +1,13 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Drupal\soda_scs_manager\ServiceActions;
 
 use Drupal\Core\Config\Config;
 use Drupal\Core\Config\ConfigFactoryInterface;
 use Drupal\Core\Database\Connection;
+use Symfony\Component\DependencyInjection\Attribute\Autowire;
 use Drupal\Core\Entity\EntityTypeManagerInterface;
 use Drupal\Core\Logger\LoggerChannelFactoryInterface;
 use Drupal\Core\Messenger\MessengerInterface;
@@ -24,6 +27,7 @@ use Psr\Log\LogLevel;
  *
  * @todo Sanitise mysql commands, no create, drop etc.
  */
+#[Autowire(service: 'soda_scs_manager.sql_service.actions')]
 class SodaScsSqlServiceActions implements SodaScsServiceActionsInterface {
 
   use StringTranslationTrait;
@@ -77,6 +81,7 @@ class SodaScsSqlServiceActions implements SodaScsServiceActionsInterface {
     EntityTypeManagerInterface $entityTypeManager,
     LoggerChannelFactoryInterface $loggerFactory,
     MessengerInterface $messenger,
+    #[Autowire(service: 'soda_scs_manager.service.helpers')]
     SodaScsServiceHelpers $sodaScsServiceHelpers,
     TranslationInterface $stringTranslation,
   ) {

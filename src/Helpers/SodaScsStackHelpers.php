@@ -1,17 +1,21 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Drupal\soda_scs_manager\Helpers;
 
+use Symfony\Component\DependencyInjection\Attribute\Autowire;
 use Drupal\Core\Messenger\MessengerInterface;
 use Drupal\Core\StringTranslation\StringTranslationTrait;
 use Drupal\Core\StringTranslation\TranslationInterface;
 use Drupal\soda_scs_manager\Entity\SodaScsComponentInterface;
 use Drupal\soda_scs_manager\Entity\SodaScsStackInterface;
-use Drupal\soda_scs_manager\Exception\SodaScsComponentException;
+use Drupal\soda_scs_manager\Exception\SodaScsComponentActionsException;
 
 /**
  * Helper functions for SCS components.
  */
+#[Autowire(service: 'soda_scs_manager.stack.helpers')]
 class SodaScsStackHelpers {
   use StringTranslationTrait;
 
@@ -59,7 +63,7 @@ class SodaScsStackHelpers {
       return $componentBundle === $bundle;
     }))[0] ?? NULL;
     if (!$includedComponent) {
-      throw new SodaScsComponentException('Component not found', 1);
+      throw new SodaScsComponentActionsException('Component not found', 1);
     }
     return $includedComponent;
   }

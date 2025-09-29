@@ -1,7 +1,10 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Drupal\soda_scs_manager\Helpers;
 
+use Symfony\Component\DependencyInjection\Attribute\Autowire;
 use Drupal\Component\Transliteration\TransliterationInterface;
 use Drupal\Core\Config\ConfigFactoryInterface;
 use Drupal\Core\Entity\EntityTypeManagerInterface;
@@ -22,6 +25,7 @@ use Symfony\Component\HttpFoundation\RequestStack;
 /**
  * Helper class for snapshot operations.
  */
+#[Autowire(service: 'soda_scs_manager.snapshot.helpers')]
 class SodaScsSnapshotHelpers {
 
   use StringTranslationTrait;
@@ -100,9 +104,13 @@ class SodaScsSnapshotHelpers {
     FileSystemInterface $fileSystem,
     LoggerChannelFactoryInterface $loggerFactory,
     RequestStack $requestStack,
+    #[Autowire(service: 'soda_scs_manager.component.helpers')]
     SodaScsComponentHelpers $sodaScsComponentHelpers,
+    #[Autowire(service: 'soda_scs_manager.docker_exec_service.actions')]
     SodaScsDockerExecServiceActions $sodaScsDockerExecServiceActions,
+    #[Autowire(service: 'soda_scs_manager.docker_run_service.actions')]
     SodaScsDockerRunServiceActions $sodaScsDockerRunServiceActions,
+    #[Autowire(service: 'transliteration')]
     TransliterationInterface $transliteration,
   ) {
     $this->configFactory = $configFactory;

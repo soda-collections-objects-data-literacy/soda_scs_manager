@@ -1,12 +1,16 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Drupal\soda_scs_manager\Helpers;
 
+use Symfony\Component\DependencyInjection\Attribute\Autowire;
 use Drupal\soda_scs_manager\ComponentActions\SodaScsComponentActionsInterface;
 
 /**
  * Helper class for Soda SCS actions.
  */
+#[Autowire(service: 'soda_scs_manager.actions.helpers')]
 class SodaScsActionsHelper {
 
   /**
@@ -41,8 +45,11 @@ class SodaScsActionsHelper {
    *   The SCS wisski component actions.
    */
   public function __construct(
+    #[Autowire(service: 'soda_scs_manager.sql_component.actions')]
     SodaScsComponentActionsInterface $sodaScsSqlComponentActions,
+    #[Autowire(service: 'soda_scs_manager.triplestore_component.actions')]
     SodaScsComponentActionsInterface $sodaScsTriplestoreComponentActions,
+    #[Autowire(service: 'soda_scs_manager.wisski_component.actions')]
     SodaScsComponentActionsInterface $sodaScsWisskiComponentActions,
   ) {
     $this->sodaScsSqlComponentActions = $sodaScsSqlComponentActions;

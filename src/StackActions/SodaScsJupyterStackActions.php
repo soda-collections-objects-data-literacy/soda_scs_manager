@@ -1,7 +1,10 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Drupal\soda_scs_manager\StackActions;
 
+use Symfony\Component\DependencyInjection\Attribute\Autowire;
 use Drupal\Core\DependencyInjection\DependencySerializationTrait;
 use Drupal\Core\Logger\LoggerChannelFactoryInterface;
 use Drupal\Core\Messenger\MessengerInterface;
@@ -18,6 +21,7 @@ use Psr\Log\LogLevel;
 /**
  * Handles the jupyter stack actions.
  */
+#[Autowire(service: 'soda_scs_manager.jupyter_stack.actions')]
 class SodaScsJupyterStackActions implements SodaScsStackActionsInterface {
 
   use DependencySerializationTrait;
@@ -57,6 +61,7 @@ class SodaScsJupyterStackActions implements SodaScsStackActionsInterface {
   public function __construct(
     LoggerChannelFactoryInterface $loggerFactory,
     MessengerInterface $messenger,
+    #[Autowire(service: 'soda_scs_manager.stack.helpers')]
     SodaScsStackHelpers $sodaScsStackHelpers,
     TranslationInterface $stringTranslation,
   ) {

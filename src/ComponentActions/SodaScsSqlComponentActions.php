@@ -1,7 +1,10 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Drupal\soda_scs_manager\ComponentActions;
 
+use Symfony\Component\DependencyInjection\Attribute\Autowire;
 use Drupal\Core\Config\Config;
 use Drupal\Core\Config\ConfigFactoryInterface;
 use Drupal\Core\Database\Connection;
@@ -35,6 +38,7 @@ use Psr\Log\LogLevel;
 /**
  * Handles the communication with the SCS user manager daemon.
  */
+#[Autowire(service: 'soda_scs_manager.sql_component.actions')]
 class SodaScsSqlComponentActions implements SodaScsComponentActionsInterface {
 
   use EntityOwnerTrait;
@@ -158,13 +162,21 @@ class SodaScsSqlComponentActions implements SodaScsComponentActionsInterface {
     ClientInterface $httpClient,
     LoggerChannelFactoryInterface $loggerFactory,
     MessengerInterface $messenger,
+    #[Autowire(service: 'soda_scs_manager.component.helpers')]
     SodaScsComponentHelpers $sodaScsComponentHelpers,
+    #[Autowire(service: 'soda_scs_manager.container.helpers')]
     SodaScsContainerHelpers $sodaScsContainerHelpers,
+    #[Autowire(service: 'soda_scs_manager.helpers')]
     SodaScsHelpers $sodaScsHelpers,
+    #[Autowire(service: 'soda_scs_manager.snapshot.helpers')]
     SodaScsSnapshotHelpers $sodaScsSnapshotHelpers,
+    #[Autowire(service: 'soda_scs_manager.docker_exec_service.actions')]
     SodaScsDockerExecServiceActions $sodaScsDockerExecServiceActions,
+    #[Autowire(service: 'soda_scs_manager.docker_run_service.actions')]
     SodaScsDockerRunServiceActions $sodaScsDockerRunServiceActions,
+    #[Autowire(service: 'soda_scs_manager.sql_service.actions')]
     SodaScsServiceActionsInterface $sodaScsMysqlServiceActions,
+    #[Autowire(service: 'soda_scs_manager.service_key.actions')]
     SodaScsServiceKeyActionsInterface $sodaScsServiceKeyActions,
     TranslationInterface $stringTranslation,
   ) {
@@ -384,7 +396,7 @@ class SodaScsSqlComponentActions implements SodaScsComponentActionsInterface {
    */
   public function createSnapshot(SodaScsComponentInterface $component, string $snapshotMachineName, int $timestamp): SodaScsResult {
     try {
-      $snapshotPaths = $this->sodaScsSnapshotHelpers->constructSnapshotPaths($component, $snapshotMachineName, $timestamp);
+      $snapshotPaths = $this->sodaScsSnapshotHelpers->constructSnapshotPaths($component, $snapshotMachineName, (string) $timestamp);
 
       // Create the backup directory (type-specific path).
       $dirCreateResult = $this->sodaScsSnapshotHelpers->createDir($snapshotPaths['backupPathWithType']);
@@ -448,7 +460,7 @@ class SodaScsSqlComponentActions implements SodaScsComponentActionsInterface {
         Error::logException(
           $this->logger,
           new \Exception(''),
-          $this->t('The PHP request timeout is less than the required sleep interval of 5 seconds. Please increase your max_execution_time setting.'),
+          (string) $this->t('The PHP request timeout is less than the required sleep interval of 5 seconds. Please increase your max_execution_time setting.'),
           [],
           LogLevel::ERROR
         );

@@ -1,7 +1,10 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Drupal\soda_scs_manager\ComponentActions;
 
+use Symfony\Component\DependencyInjection\Attribute\Autowire;
 use Drupal\Core\Config\Config;
 use Drupal\Core\Config\ConfigFactoryInterface;
 use Drupal\Core\DependencyInjection\DependencySerializationTrait;
@@ -29,6 +32,7 @@ use Psr\Log\LogLevel;
  *
  * @todo Provide correct result arrays in the data array.
  */
+#[Autowire(service: 'soda_scs_manager.filesystem_component.actions')]
 class SodaScsFilesystemComponentActions implements SodaScsComponentActionsInterface {
 
   use DependencySerializationTrait;
@@ -121,10 +125,15 @@ class SodaScsFilesystemComponentActions implements SodaScsComponentActionsInterf
     ClientInterface $httpClient,
     LoggerChannelFactoryInterface $loggerFactory,
     MessengerInterface $messenger,
+    #[Autowire(service: 'soda_scs_manager.docker_exec_service.actions')]
     SodaScsExecRequestInterface $sodaScsDockerExecServiceActions,
+    #[Autowire(service: 'soda_scs_manager.portainer_service.actions')]
     SodaScsServiceRequestInterface $sodaScsPortainerServiceActions,
+    #[Autowire(service: 'soda_scs_manager.service_key.actions')]
     SodaScsServiceKeyActionsInterface $sodaScsServiceKeyActions,
+    #[Autowire(service: 'soda_scs_manager.sql_service.actions')]
     SodaScsServiceActionsInterface $sodaScsSqlServiceActions,
+    #[Autowire(service: 'soda_scs_manager.stack.helpers')]
     SodaScsStackHelpers $sodaScsStackHelpers,
     TranslationInterface $stringTranslation,
   ) {

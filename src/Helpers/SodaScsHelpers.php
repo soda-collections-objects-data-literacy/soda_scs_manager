@@ -1,15 +1,32 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Drupal\soda_scs_manager\Helpers;
 
+use Symfony\Component\DependencyInjection\Attribute\Autowire;
 use Drupal\Core\StringTranslation\StringTranslationTrait;
+use Drupal\Core\StringTranslation\TranslationInterface;
 
 /**
  * Helper class for Soda SCS operations.
  */
+#[Autowire(service: 'soda_scs_manager.helpers')]
 class SodaScsHelpers {
 
   use StringTranslationTrait;
+
+  /**
+   * Constructs a SodaScsHelpers object.
+   *
+   * @param \Drupal\Core\StringTranslation\TranslationInterface $stringTranslation
+   *   The string translation service.
+   */
+  public function __construct(
+    TranslationInterface $stringTranslation,
+  ) {
+    $this->stringTranslation = $stringTranslation;
+  }
 
   /**
    * Adjusts the maxAttempts based on sleep interval.

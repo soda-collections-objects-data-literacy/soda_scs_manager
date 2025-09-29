@@ -1,9 +1,12 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Drupal\soda_scs_manager\RequestActions;
 
 use Drupal\Core\Config\Config;
 use Drupal\Core\Config\ConfigFactoryInterface;
+use Symfony\Component\DependencyInjection\Attribute\Autowire;
 use Drupal\Core\Logger\LoggerChannelFactoryInterface;
 use Drupal\Core\Messenger\MessengerInterface;
 use Drupal\Core\StringTranslation\StringTranslationTrait;
@@ -18,6 +21,7 @@ use Psr\Log\LogLevel;
 /**
  * Handles the communication with the SCS user manager daemon.
  */
+#[Autowire(service: 'soda_scs_manager.opengdb_service.actions')]
 class SodaScsOpenGdbServiceActions implements SodaScsOpenGdbRequestInterface {
 
   use StringTranslationTrait;
@@ -62,6 +66,7 @@ class SodaScsOpenGdbServiceActions implements SodaScsOpenGdbRequestInterface {
     ClientInterface $httpClient,
     LoggerChannelFactoryInterface $loggerFactory,
     MessengerInterface $messenger,
+    #[Autowire(service: 'soda_scs_manager.service.helpers')]
     SodaScsServiceHelpers $sodaScsServiceHelpers,
     TranslationInterface $stringTranslation,
   ) {

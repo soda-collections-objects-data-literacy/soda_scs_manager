@@ -1,7 +1,10 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Drupal\soda_scs_manager\Helpers;
 
+use Symfony\Component\DependencyInjection\Attribute\Autowire;
 use Drupal\Core\Config\Config;
 use Drupal\Core\Config\ConfigFactoryInterface;
 use Drupal\Core\Entity\EntityTypeManagerInterface;
@@ -23,6 +26,7 @@ use GuzzleHttp\ClientInterface;
  *
  * @todo Use health check functions from the service actions.
  */
+#[Autowire(service: 'soda_scs_manager.component.helpers')]
 class SodaScsComponentHelpers {
   use StringTranslationTrait;
 
@@ -102,10 +106,15 @@ class SodaScsComponentHelpers {
     ClientInterface $httpClient,
     LoggerChannelFactoryInterface $loggerFactory,
     MessengerInterface $messenger,
+    #[Autowire(service: 'soda_scs_manager.docker_exec_service.actions')]
     SodaScsExecRequestInterface $sodaScsDockerExecServiceActions,
+    #[Autowire(service: 'soda_scs_manager.opengdb_service.actions')]
     SodaScsServiceRequestInterface $sodaScsOpenGdbServiceActions,
+    #[Autowire(service: 'soda_scs_manager.portainer_service.actions')]
     SodaScsServiceRequestInterface $sodaScsPortainerServiceActions,
+    #[Autowire(service: 'soda_scs_manager.service.helpers')]
     SodaScsServiceHelpers $sodaScsServiceHelpers,
+    #[Autowire(service: 'soda_scs_manager.sql_service.actions')]
     SodaScsServiceActionsInterface $sodaScsSqlServiceActions,
     TranslationInterface $stringTranslation,
   ) {

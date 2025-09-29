@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Drupal\soda_scs_manager\ComponentActions;
 
+use Symfony\Component\DependencyInjection\Attribute\Autowire;
 use Drupal\Core\DependencyInjection\DependencySerializationTrait;
 use Drupal\Core\Entity\EntityTypeManagerInterface;
 use Drupal\Core\Logger\LoggerChannelFactoryInterface;
@@ -18,6 +19,7 @@ use Drupal\soda_scs_manager\ValueObject\SodaScsResult;
 /**
  * WebProtégé component actions with CRUD-only behavior.
  */
+#[Autowire(service: 'soda_scs_manager.webprotege_component.actions')]
 final class SodaScsWebprotegeComponentActions implements SodaScsComponentActionsInterface {
 
   use DependencySerializationTrait;

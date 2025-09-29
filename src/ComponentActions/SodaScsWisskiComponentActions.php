@@ -1,7 +1,10 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Drupal\soda_scs_manager\ComponentActions;
 
+use Symfony\Component\DependencyInjection\Attribute\Autowire;
 use Drupal\Core\Config\Config;
 use Drupal\Core\Config\ConfigFactoryInterface;
 use Drupal\Core\Database\Connection;
@@ -39,6 +42,7 @@ use Psr\Log\LogLevel;
 /**
  * Handles the communication with the SCS user manager daemon.
  */
+#[Autowire(service: 'soda_scs_manager.wisski_component.actions')]
 class SodaScsWisskiComponentActions implements SodaScsComponentActionsInterface {
 
   use DependencySerializationTrait;
@@ -225,21 +229,37 @@ class SodaScsWisskiComponentActions implements SodaScsComponentActionsInterface 
     LoggerChannelFactoryInterface $loggerFactory,
     MessengerInterface $messenger,
     FileSystemInterface $fileSystem,
+    #[Autowire(service: 'soda_scs_manager.component.helpers')]
     SodaScsComponentHelpers $sodaScsComponentHelpers,
+    #[Autowire(service: 'soda_scs_manager.container.helpers')]
     SodaScsContainerHelpers $sodaScsContainerHelpers,
+    #[Autowire(service: 'soda_scs_manager.helpers')]
     SodaScsHelpers $sodaScsHelpers,
+    #[Autowire(service: 'soda_scs_manager.docker_exec_service.actions')]
     SodaScsExecRequestInterface $sodaScsDockerExecServiceActions,
+    #[Autowire(service: 'soda_scs_manager.docker_run_service.actions')]
     SodaScsRunRequestInterface $sodaScsDockerRunServiceActions,
+    #[Autowire(service: 'soda_scs_manager.keycloak_service.helpers')]
     SodaScsKeycloakHelpers $sodaScsKeycloakHelpers,
+    #[Autowire(service: 'soda_scs_manager.keycloak_service.client.actions')]
     SodaScsServiceRequestInterface $sodaScsKeycloakServiceClientActions,
+    #[Autowire(service: 'soda_scs_manager.keycloak_service.group.actions')]
     SodaScsServiceRequestInterface $sodaScsKeycloakServiceGroupActions,
+    #[Autowire(service: 'soda_scs_manager.keycloak_service.user.actions')]
     SodaScsServiceRequestInterface $sodaScsKeycloakServiceUserActions,
+    #[Autowire(service: 'soda_scs_manager.portainer_service.actions')]
     SodaScsServiceRequestInterface $sodaScsPortainerServiceActions,
+    #[Autowire(service: 'soda_scs_manager.project.helpers')]
     SodaScsProjectHelpers $sodaScsProjectHelpers,
+    #[Autowire(service: 'soda_scs_manager.service.helpers')]
     SodaScsServiceHelpers $sodaScsServiceHelpers,
+    #[Autowire(service: 'soda_scs_manager.service_key.actions')]
     SodaScsServiceKeyActionsInterface $sodaScsServiceKeyActions,
+    #[Autowire(service: 'soda_scs_manager.snapshot.helpers')]
     SodaScsSnapshotHelpers $sodaScsSnapshotHelpers,
+    #[Autowire(service: 'soda_scs_manager.sql_service.actions')]
     SodaScsServiceActionsInterface $sodaScsSqlServiceActions,
+    #[Autowire(service: 'soda_scs_manager.stack.helpers')]
     SodaScsStackHelpers $sodaScsStackHelpers,
     TranslationInterface $stringTranslation,
   ) {
@@ -717,7 +737,7 @@ class SodaScsWisskiComponentActions implements SodaScsComponentActionsInterface 
       // Create the snapshot container.
       //
       // Get the snapshot paths.
-      $snapshotPaths = $this->sodaScsSnapshotHelpers->constructSnapshotPaths($component, $snapshotMachineName, $timestamp);
+      $snapshotPaths = $this->sodaScsSnapshotHelpers->constructSnapshotPaths($component, $snapshotMachineName, (string) $timestamp);
 
       // Create the backup directory.
       $dirCreateResult = $this->sodaScsSnapshotHelpers->createDir($snapshotPaths['backupPathWithType']);

@@ -5,6 +5,7 @@ namespace Drupal\soda_scs_manager\Form;
 use Drupal\Component\Datetime\TimeInterface;
 use Drupal\Core\Config\Config;
 use Drupal\Core\Config\ConfigFactoryInterface;
+use Symfony\Component\DependencyInjection\Attribute\Autowire;
 use Drupal\Core\Entity\ContentEntityForm;
 use Drupal\Core\Entity\EntityRepositoryInterface;
 use Drupal\Core\Entity\EntityTypeBundleInfoInterface;
@@ -96,6 +97,7 @@ class SodaScsStackCreateForm extends ContentEntityForm {
     ConfigFactoryInterface $configFactory,
     LoggerChannelFactoryInterface $loggerFactory,
     TimeInterface $time,
+    #[Autowire(service: 'soda_scs_manager.stack.actions')]
     SodaScsStackActionsInterface $sodaScsStackActions,
     EntityTypeManagerInterface $entityTypeManager,
   ) {
@@ -118,6 +120,7 @@ class SodaScsStackCreateForm extends ContentEntityForm {
       $container->get('config.factory'),
       $container->get('logger.factory'),
       $container->get('datetime.time'),
+      // Stack actions service resolved via #[Autowire] attribute
       $container->get('soda_scs_manager.stack.actions'),
       $container->get('entity_type.manager'),
     );

@@ -1,7 +1,10 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Drupal\soda_scs_manager\RequestActions;
 
+use Symfony\Component\DependencyInjection\Attribute\Autowire;
 use Drupal\Core\Config\Config;
 use Drupal\Core\Config\ConfigFactoryInterface;
 use Drupal\Core\Database\Connection;
@@ -24,6 +27,7 @@ use Symfony\Component\HttpFoundation\RequestStack;
 /**
  * Handles the communication with the SCS user manager daemon.
  */
+#[Autowire(service: 'soda_scs_manager.docker_volumes_service.actions')]
 class SodaScsDockerVolumesServiceActions implements SodaScsServiceRequestInterface {
 
   use DependencySerializationTrait;
@@ -133,8 +137,11 @@ class SodaScsDockerVolumesServiceActions implements SodaScsServiceRequestInterfa
     LoggerChannelFactoryInterface $loggerFactory,
     MessengerInterface $messenger,
     RequestStack $requestStack,
+    #[Autowire(service: 'soda_scs_manager.service.helpers')]
     SodaScsServiceHelpers $sodaScsServiceHelpers,
+    #[Autowire(service: 'soda_scs_manager.portainer_service.actions')]
     SodaScsServiceRequestInterface $sodaScsPortainerServiceActions,
+    #[Autowire(service: 'soda_scs_manager.sql_service.actions')]
     SodaScsServiceActionsInterface $sodaScsSqlServiceActions,
     TranslationInterface $stringTranslation,
     TwigEnvironment $twig,

@@ -1,7 +1,10 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Drupal\soda_scs_manager\RequestActions;
 
+use Symfony\Component\DependencyInjection\Attribute\Autowire;
 use Drupal\Core\Config\Config;
 use Drupal\Core\Config\ConfigFactoryInterface;
 use Drupal\Core\Entity\EntityTypeManagerInterface;
@@ -22,6 +25,7 @@ use Psr\Log\LogLevel;
  *
  * @todo Kill redundant param replacement etc.
  */
+#[Autowire(service: 'soda_scs_manager.keycloak_service.group.actions')]
 class SodaScsKeycloakServiceGroupActions implements SodaScsServiceRequestInterface {
 
   use StringTranslationTrait;
@@ -109,6 +113,7 @@ class SodaScsKeycloakServiceGroupActions implements SodaScsServiceRequestInterfa
     MessengerInterface $messenger,
     RequestStack $request_stack,
     LoggerChannelFactoryInterface $logger_factory,
+    #[Autowire(service: 'soda_scs_manager.service.helpers')]
     SodaScsServiceHelpers $sodaScsServiceHelpers,
     TranslationInterface $stringTranslation,
   ) {

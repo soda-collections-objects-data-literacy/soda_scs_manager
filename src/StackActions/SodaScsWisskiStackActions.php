@@ -1,7 +1,10 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Drupal\soda_scs_manager\StackActions;
 
+use Symfony\Component\DependencyInjection\Attribute\Autowire;
 use Drupal\Core\Config\Config;
 use Drupal\Core\Config\ConfigFactoryInterface;
 use Drupal\Core\Database\Connection;
@@ -38,6 +41,7 @@ use Symfony\Component\HttpFoundation\RequestStack;
 /**
  * Handles the communication with the SCS user manager daemon.
  */
+#[Autowire(service: 'soda_scs_manager.wisski_stack.actions')]
 class SodaScsWisskiStackActions implements SodaScsStackActionsInterface {
 
   use DependencySerializationTrait;
@@ -210,15 +214,25 @@ class SodaScsWisskiStackActions implements SodaScsStackActionsInterface {
     FileSystemInterface $fileSystem,
     LoggerChannelFactoryInterface $loggerFactory,
     MessengerInterface $messenger,
+    #[Autowire(service: 'soda_scs_manager.component.actions')]
     SodaScsComponentActionsInterface $sodaScsComponentActions,
+    #[Autowire(service: 'soda_scs_manager.sql_component.actions')]
     SodaScsComponentActionsInterface $sodaScsSqlComponentActions,
+    #[Autowire(service: 'soda_scs_manager.triplestore_component.actions')]
     SodaScsComponentActionsInterface $sodaScsTriplestoreComponentActions,
+    #[Autowire(service: 'soda_scs_manager.wisski_component.actions')]
     SodaScsComponentActionsInterface $sodaScsWisskiComponentActions,
+    #[Autowire(service: 'soda_scs_manager.sql_service.actions')]
     SodaScsServiceActionsInterface $sodaScsSqlServiceActions,
+    #[Autowire(service: 'soda_scs_manager.service_key.actions')]
     SodaScsServiceKeyActionsInterface $sodaScsServiceKeyActions,
+    #[Autowire(service: 'soda_scs_manager.portainer_service.actions')]
     SodaScsServiceRequestInterface $sodaScsPortainerServiceActions,
+    #[Autowire(service: 'soda_scs_manager.snapshot.actions')]
     SodaScsSnapshotActionsInterface $sodaScsSnapshotActions,
+    #[Autowire(service: 'soda_scs_manager.snapshot.helpers')]
     SodaScsSnapshotHelpers $sodaScsSnapshotHelpers,
+    #[Autowire(service: 'soda_scs_manager.stack.helpers')]
     SodaScsStackHelpers $sodaScsStackHelpers,
     TranslationInterface $stringTranslation,
   ) {
