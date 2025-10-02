@@ -1,0 +1,37 @@
+uuid: d520c9f7-8620-4b64-8bb9-3af5b158f98f
+langcode: en
+type: node
+bundle: book
+id: '57'
+dependencies:
+  config:
+    - node.node_type.book
+    - field.field.node.book.body
+  entity:
+    - 'user:user:83694812-fe3f-4bcc-9967-0d74373e94c9'
+fields:
+  nid: '57'
+  vid: '153'
+  revision_timestamp: '1759232815'
+  revision_uid:
+    target_id: '68'
+  revision_log: {  }
+  status: '1'
+  uid:
+    target_id: '68'
+  title: Projects
+  created: '1759232789'
+  changed: '1759232815'
+  promote: '0'
+  sticky: '0'
+  default_langcode: '1'
+  revision_default: '1'
+  revision_translation_affected: '1'
+  path:
+    alias: /docs/projects
+    pid: '62'
+    langcode: en
+  menu_link: {  }
+  content_translation_source: und
+  content_translation_outdated: '0'
+  body: {  }

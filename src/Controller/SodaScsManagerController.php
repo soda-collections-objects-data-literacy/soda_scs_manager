@@ -262,7 +262,7 @@ class SodaScsManagerController extends ControllerBase {
       '#attached' => [
         'library' => [
           'soda_scs_manager/globalStyling',
-          'soda_scs_manager/tag_filter',
+          'soda_scs_manager/tagFilter',
         ],
       ],
     ];

@@ -94,3 +94,85 @@
   width: 100%;
   height: 100%;
 }
+
+/* Button styling for field--name-field__use-button */
+.field--name-field__use-button {
+  display: inline-block;
+  padding: 0.5rem 1rem;
+  font-size: 0.875rem;
+  font-weight: 500;
+  line-height: 1.25;
+  text-align: center;
+  color: #fb923c;
+  background-color: transparent;
+  border: 2px solid #fb923c;
+  border-radius: 0.5rem;
+  cursor: pointer;
+  transition: all 0.15s ease-in-out;
+  text-decoration: none;
+}
+
+.field--name-field__use-button:hover {
+  background-color: #fb923c;
+  color: white;
+}
+
+.field--name-field__use-button:hover a {
+  color: white;
+}
+
+.field--name-field__use-button:focus {
+  outline: none;
+  box-shadow: 0 0 0 2px #fb923c, 0 0 0 4px rgba(251, 146, 60, 0.3);
+}
+
+.field--name-field__use-button:active {
+  background-color: #ea580c;
+  border-color: #ea580c;
+}
+
+/* Image sizing for field--name-field-media-image */
+.field--name-field-media-image img {
+  width: 150px;
+  height: 150px;
+  object-fit: contain;
+}
+
+#block-olivero-betaversionhelptext {
+  background-color: #fef3c7;
+  border: 2px solid #f59e0b;
+  border-radius: 0.5rem;
+  padding: 1rem;
+  margin: 1rem 0;
+  position: relative;
+}
+
+
+#block-olivero-betaversionhelptext .block__title {
+  color: #92400e;
+  font-weight: 600;
+  margin-bottom: 0.5rem;
+}
+
+#block-olivero-betaversionhelptext .block__content {
+  color: #78350f;
+  line-height: 1.5;
+}
+
+#block-olivero-betaversionhelptext .block__content .text-content p::before {
+  content: "⚠️";
+  font-size: 1.25rem;
+  margin-right: 0.5rem;
+  color: #f59e0b;
+  display: inline;
+}
+
+
+#block-olivero-betaversionhelptext a {
+  color: #92400e;
+  text-decoration: underline;
+}
+
+#block-olivero-betaversionhelptext a:hover {
+  color: #78350f;
+}

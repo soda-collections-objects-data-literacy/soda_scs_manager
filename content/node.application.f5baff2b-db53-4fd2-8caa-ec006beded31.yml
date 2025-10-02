@@ -1,0 +1,73 @@
+uuid: f5baff2b-db53-4fd2-8caa-ec006beded31
+langcode: en
+type: node
+bundle: application
+id: '45'
+dependencies:
+  config:
+    - node.node_type.application
+    - field.field.node.application.field__app__description
+    - field.field.node.application.field__app__link
+    - field.field.node.application.field__app__logo
+    - field.field.node.application.field__app__type
+    - field.field.node.application.field__use_button
+  entity:
+    - 'user:user:83694812-fe3f-4bcc-9967-0d74373e94c9'
+    - 'media:image:e94b5ec4-4002-4cab-8d74-5a853044c926'
+fields:
+  nid: '45'
+  vid: '180'
+  revision_timestamp: '1759395744'
+  revision_uid:
+    target_id: '68'
+  revision_log: {  }
+  status: '1'
+  uid:
+    target_id: '68'
+  title: 'JupyterLab with OpenRefine'
+  created: '1759127881'
+  changed: '1759395744'
+  promote: '1'
+  sticky: '0'
+  default_langcode: '1'
+  revision_default: '1'
+  revision_translation_affected: '1'
+  path:
+    alias: /app/jupyterlab
+    pid: '69'
+    langcode: en
+  menu_link: {  }
+  content_translation_source: und
+  content_translation_outdated: '0'
+  field__app__description:
+    value: '<h2>Overview</h2><p>JupyterLab is your personal data science workspace and a powerful, interactive environment where you can analyze data, create visualizations, and conduct research without needing to install any software on your computer.<br>When you access your JupyterLab environment, you get a complete toolkit for data analysis and research that includes everything you need to get started immediately.</p><h2>Contained softwares</h2><ul><li>Interactive Notebooks: Work with live documents that combine code, visualizations, and explanatory text all in one place. These notebooks let you experiment with data, test ideas, and document your research process step-by-step.<br>Multiple Programming Languages: Your environment comes ready with:<ul><li>Python - Perfect for data analysis, machine learning, and scientific computing</li><li>R - Ideal for statistical analysis and advanced data visualization</li><li>Julia - High-performance computing for complex mathematical operations</li></ul></li><li>OpenRefine Integration: Clean and transform messy datasets with an intuitive, visual interface. Perfect for preparing data before analysis or fixing inconsistencies in large datasets.</li><li>Connected File Storage: Your JupyterLab workspace seamlessly connects to your WissKI research environments, making it easy to share files, datasets, and results between different tools in your research workflow.</li></ul><h2>Possibilities</h2><p><strong>Process cultural heritage data</strong> with specialized tools and libraries.&nbsp;</p><p><strong>Prepare data for publication</strong> by cleaning, validating, and formatting your research data for sharing or integration with other systems like WissKI.</p><p><strong>Explore and Analyze Data</strong> by uploading datasets and immediately start exploring them with interactive charts, statistical summaries, and custom analysis scripts.<br><strong>Create compelling visualizations</strong> by generating publication-ready graphs, charts, and interactive visualizations to communicate your findings effectively.</p>'
+    summary: 'A JupyterLab environment contains Jupyter Notebooks and OpenRefine.'
+    format: full_html
+  field__app__link:
+    -
+      uri: 'https://jupyter.org/'
+      title: 'Website of the Jupyter project'
+      options: {  }
+    -
+      uri: 'https://openrefine.org/'
+      title: 'Website of OpenRefine'
+      options: {  }
+    -
+      uri: 'https://www.python.org/'
+      title: 'Website of the Python programming language'
+      options: {  }
+    -
+      uri: 'https://julialang.org/'
+      title: 'Website of the Julia programming language'
+      options: {  }
+    -
+      uri: 'https://www.r-project.org/about.html'
+      title: 'Website of the R statistical language and environment'
+      options: {  }
+  field__app__logo:
+    target_id: '2'
+  field__app__type: environment
+  field__use_button:
+    uri: 'https://jupyterhub.scs.sammlungen.io/'
+    title: 'Enter your JupyterLab'
+    options: {  }

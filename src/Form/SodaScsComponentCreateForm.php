@@ -223,6 +223,17 @@ class SodaScsComponentCreateForm extends ContentEntityForm {
       $form['sharedWith']['#access'] = FALSE;
     }
 
+    // Get the default project of the current user.
+    $currentUser = $this->currentUser->getAccount();
+    $defaultProjectOfCurrentUser = $currentUser->default_project;
+
+
+    // Set the default project of the current user
+    // as the default value of the partOfProjects field.
+    if (isset($form['partOfProjects']) && !empty($defaultProjectOfCurrentUser)) {
+      $form['partOfProjects']['widget']['#default_value'] = [$defaultProjectOfCurrentUser];
+    }
+
     // Change the label of the submit button.
     $form['actions']['submit']['#value'] = $this->t('CREATE');
     $form['actions']['submit']['#attributes']['class'][] = 'soda-scs-component--component--form-submit';

@@ -1,0 +1,40 @@
+uuid: f5ec0346-0274-4099-8e3c-ae87b07d6e52
+langcode: en
+type: node
+bundle: book
+id: '53'
+dependencies:
+  config:
+    - node.node_type.book
+    - field.field.node.book.body
+  entity:
+    - 'user:user:83694812-fe3f-4bcc-9967-0d74373e94c9'
+fields:
+  nid: '53'
+  vid: '148'
+  revision_timestamp: '1759232604'
+  revision_uid:
+    target_id: '68'
+  revision_log: {  }
+  status: '0'
+  uid:
+    target_id: '68'
+  title: 'Available applications'
+  created: '1759232580'
+  changed: '1759232604'
+  promote: '0'
+  sticky: '0'
+  default_langcode: '1'
+  revision_default: '1'
+  revision_translation_affected: '1'
+  path:
+    alias: /docs/apps
+    pid: '58'
+    langcode: en
+  menu_link: {  }
+  content_translation_source: und
+  content_translation_outdated: '0'
+  body:
+    value: '<h2>Context</h2><p>[How or where does this fit into the project as a whole?]</p><h2>Goals</h2><ul><li>[e.g. knowledge]</li><li>[or abilities]</li><li>[learned in this part]</li></ul><h2>Prerequisites</h2><ul><li>[e.g. another chapter with link]</li><li>[can be technical requirements as well as necessary knowledge]</li></ul><h2>[Content]</h2><h3>[with sub-headings]</h3><p>[structured content to guide the reader through the process of a task with <a href="/link/to/internal/page">internal</a>/<a href="https://external.page/link">external</a> links, dynamic links or buttons with contextual dependant target, <strong>fields</strong>, <em>field values</em> ]</p><h3>[more sub-headings]</h3><p>[and more content]</p><h2>Additional Resources</h2><ul><li>Link1</li><li>Link2</li><li>Link3</li></ul>'
+    summary: ''
+    format: basic_html

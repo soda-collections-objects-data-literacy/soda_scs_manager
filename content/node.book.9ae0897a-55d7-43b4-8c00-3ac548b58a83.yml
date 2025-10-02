@@ -1,0 +1,40 @@
+uuid: 9ae0897a-55d7-43b4-8c00-3ac548b58a83
+langcode: en
+type: node
+bundle: book
+id: '56'
+dependencies:
+  config:
+    - node.node_type.book
+    - field.field.node.book.body
+  entity:
+    - 'user:user:83694812-fe3f-4bcc-9967-0d74373e94c9'
+fields:
+  nid: '56'
+  vid: '161'
+  revision_timestamp: '1759233360'
+  revision_uid:
+    target_id: '68'
+  revision_log: {  }
+  status: '1'
+  uid:
+    target_id: '68'
+  title: Dashboard
+  created: '1759232731'
+  changed: '1759233360'
+  promote: '0'
+  sticky: '0'
+  default_langcode: '1'
+  revision_default: '1'
+  revision_translation_affected: '1'
+  path:
+    alias: /docs/dashboard
+    pid: '61'
+    langcode: en
+  menu_link: {  }
+  content_translation_source: und
+  content_translation_outdated: '0'
+  body:
+    value: '<p>The "Dashboard" shows all the application accounts/instances that you created or are shared with you as part of a <a href="https://scs.sammlungen.io/documentation/your-dashboard/creating-project">collaborative project</a>.</p><p>&nbsp;</p>'
+    summary: ''
+    format: basic_html

@@ -128,7 +128,7 @@ function _soda_scs_manager_create_documentation_page() {
       'status' => 1,
       'uid' => 1,
       'path' => [
-        'alias' => '/soda-scs-manager/documentation',
+        'alias' => '/soda-scs-manager/docs',
         'langcode' => 'en',
       ],
     ]);
@@ -317,7 +317,7 @@ function soda_scs_manager_update_11006() {
   // Create the documentation page.
   _soda_scs_manager_create_documentation_page();
 
-  return t('Documentation content type and page have been created with URL alias /soda-scs-manager/documentation.');
+  return t('Documentation content type and page have been created with URL alias /soda-scs-manager/docs.');
 }
 
 /**

@@ -149,7 +149,7 @@ function soda_scs_manager_entity_bundle_info() {
   $bundles['soda_scs_component']['soda_scs_filesystem_component'] = [
     'label' => new TranslatableMarkup('Filesystem'),
     'class' => SodaScsComponentBundle::class,
-    'description' => new TranslatableMarkup('A filesystem for storage of structured data. <a href="/app/filesystem">Learn more</a>'),
+    'description' => new TranslatableMarkup('A filesystem for storage of structured data. <a href="@link">Learn more</a>', ['@link' => '/app/filesystem']),
     'imageUrl' => 'public://soda_scs_manager/images/filesystem.svg',
     'tags' => ['filesharing'],
   ];
@@ -157,7 +157,7 @@ function soda_scs_manager_entity_bundle_info() {
   $bundles['soda_scs_component']['soda_scs_sql_component'] = [
     'label' => new TranslatableMarkup('SQL Database'),
     'class' => SodaScsComponentBundle::class,
-    'description' => new TranslatableMarkup('A relational database for storage of structured data. <a href="/app/sql">Learn more</a>'),
+    'description' => new TranslatableMarkup('A relational database for storage of structured data. <a href="@link">Learn more</a>', ['@link' => '/app/mariadb']),
     'imageUrl' => 'public://soda_scs_manager/images/sql.svg',
     'tags' => ['database'],
   ];
@@ -165,7 +165,7 @@ function soda_scs_manager_entity_bundle_info() {
   $bundles['soda_scs_component']['soda_scs_triplestore_component'] = [
     'label' => new TranslatableMarkup('Triplestore'),
     'class' => SodaScsComponentBundle::class,
-    'description' => new TranslatableMarkup('Graph database for storage of RDF data. <a href="/app/triplestore">Learn more</a>'),
+    'description' => new TranslatableMarkup('Graph database for storage of RDF data. <a href="@link">Learn more</a>', ['@link' => '/app/open-gdb']),
     'imageUrl' => 'public://soda_scs_manager/images/triplestore.svg',
     'tags' => ['database', 'triplestore'],
   ];
@@ -173,7 +173,7 @@ function soda_scs_manager_entity_bundle_info() {
   $bundles['soda_scs_component']['soda_scs_webprotege_component'] = [
     'label' => new TranslatableMarkup('WebProtégé'),
     'class' => SodaScsComponentBundle::class,
-    'description' => new TranslatableMarkup('A web-based tool for creating and editing OWL ontologies. Webprotege is not yet part of the Single Sign On (SSO) system. You will need to create an account and log in manually. <a href="/app/webprotege">Learn more</a>'),
+    'description' => new TranslatableMarkup('A web-based tool for creating and editing OWL ontologies. Webprotege is not yet part of the Single Sign On (SSO) system. You will need to create an account and log in manually. <a href="@link">Learn more</a>', ['@link' => '/app/webprotege']),
     'imageUrl' => 'public://soda_scs_manager/images/protege.svg',
     'tags' => ['ontology'],
   ];
@@ -181,7 +181,7 @@ function soda_scs_manager_entity_bundle_info() {
   $bundles['soda_scs_component']['soda_scs_wisski_component'] = [
     'label' => new TranslatableMarkup('WissKI'),
     'class' => SodaScsComponentBundle::class,
-    'description' => new TranslatableMarkup('A plain WissKI instance without data model and preconfigured triplestore connection.'),
+    'description' => new TranslatableMarkup('A plain WissKI instance without data model and preconfigured triplestore connection. <a href="@link">Learn more</a>', ['@link' => '/app/wisski']),
     'imageUrl' => 'public://soda_scs_manager/images/wisski.svg',
     'tags' => ['ontology', 'cms'],
   ];
@@ -204,7 +204,7 @@ function soda_scs_manager_entity_bundle_info() {
   $bundles['soda_scs_stack']['soda_scs_jupyter_stack'] = [
     'label' => new TranslatableMarkup('JupyterLab'),
     'class' => SodaScsStackBundle::class,
-    'description' => new TranslatableMarkup('A JupyterLab environment contains Jupyter Notebooks and OpenRefine. <a href="/app/jupyterlab">Learn more</a>'),
+    'description' => new TranslatableMarkup('A JupyterLab environment contains Jupyter Notebooks and OpenRefine. <a href="@link">Learn more</a>', ['@link' => '/app/jupyterlab']),
     'imageUrl' => 'public://soda_scs_manager/images/jupyterhub-stack.svg',
     'tags' => ['coding', 'data-science', 'data-cleaning'],
   ];
@@ -212,7 +212,7 @@ function soda_scs_manager_entity_bundle_info() {
   $bundles['soda_scs_stack']['soda_scs_wisski_stack'] = [
     'label' => new TranslatableMarkup('WissKI Environment'),
     'class' => SodaScsStackBundle::class,
-    'description' => new TranslatableMarkup('A WissKI environment contains a preconfigured WissKI, a Triplestore and a Database.'),
+    'description' => new TranslatableMarkup('A WissKI environment contains a preconfigured WissKI, a Triplestore and a Database. <a href="@link">Learn more</a>', ['@link' => '/app/wisski']),
     'imageUrl' => 'public://soda_scs_manager/images/wisski-stack.svg',
     'tags' => ['cms', 'database', 'ontology', 'publishing', 'triplestore'],
   ];
@@ -220,7 +220,7 @@ function soda_scs_manager_entity_bundle_info() {
   $bundles['soda_scs_stack']['soda_scs_nextcloud_stack'] = [
     'label' => new TranslatableMarkup('Nextcloud'),
     'class' => SodaScsStackBundle::class,
-    'description' => new TranslatableMarkup('A Nextcloud Environment contains Nextcloud, Draw.io and OnlyOffice. <a href="/app/nextcloud">Learn more</a>'),
+    'description' => new TranslatableMarkup('A Nextcloud Environment contains Nextcloud, Draw.io and OnlyOffice. <a href="@link">Learn more</a>', ['@link' => '/app/nextcloud']),
     'imageUrl' => 'public://soda_scs_manager/images/nextcloud-stack.svg',
     'tags' => ['filesharing', 'office', 'publishing'],
   ];

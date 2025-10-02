@@ -45,35 +45,20 @@
   </div>
 </div>
 
-<h2 class="center text-center text-stone-200 text-8xl font-bold mb-10" id="bundled-applications">{{ 'Bundled Applications'|t }}</h2>
+<h2 class="center text-center text-stone-200 text-8xl font-bold mb-10" id="applications">{{ 'Applications'|t }}</h2>
 
-{% if stacks is not empty %}
-  {% set stack_count = stacks|length %}
-  {% set grid_class = 'grid-count-' ~ stack_count %}
+{% set all_applications = stacks|merge(components) %}
+{% if all_applications is not empty %}
+  {% set application_count = all_applications|length %}
+  {% set grid_class = 'grid-count-' ~ application_count %}
 
   <div {{ attributes.addClass(grid_class) }} class="soda-scs-manager--view--grid">
-    {% for entity in stacks %}
+    {% for entity in all_applications %}
       {{ entity }}
     {% endfor %}
   </div>
 {% else %}
   <div class="alert alert-info opacity-20 bg-slate-950 border-2 border-stone-200 border-cyan-500 p-4 rounded-lg text-center">
-    <p class="text-stone-200 text-xl">{{ 'No stacks available.'|t }}</p>
-  </div>
-{% endif %}
-
-<h2 class="center text-center text-stone-200 text-8xl font-bold mb-10" id="single-applications">{{ 'Single Applications'|t }}</h2>
-{% if components is not empty %}
-  {% set component_count = components|length %}
-  {% set grid_class = 'grid-count-' ~ component_count %}
-
-  <div {{ attributes.addClass(grid_class) }} class="soda-scs-manager--view--grid">
-    {% for entity in components %}
-      {{ entity }}
-    {% endfor %}
-  </div>
-{% else %}
-  <div class="alert alert-info opacity-20 bg-slate-950 border-2 border-stone-200 border-cyan-500 p-4 rounded-lg text-center">
-    <p class="text-stone-200 text-xl">{{ 'No components available.'|t }}</p>
+    <p class="text-stone-200 text-xl">{{ 'No applications available.'|t }}</p>
   </div>
 {% endif %}

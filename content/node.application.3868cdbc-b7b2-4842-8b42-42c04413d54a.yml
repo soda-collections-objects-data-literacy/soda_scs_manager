@@ -1,0 +1,65 @@
+uuid: 3868cdbc-b7b2-4842-8b42-42c04413d54a
+langcode: en
+type: node
+bundle: application
+id: '46'
+dependencies:
+  config:
+    - node.node_type.application
+    - field.field.node.application.field__app__description
+    - field.field.node.application.field__app__link
+    - field.field.node.application.field__app__logo
+    - field.field.node.application.field__app__type
+    - field.field.node.application.field__use_button
+  entity:
+    - 'user:user:83694812-fe3f-4bcc-9967-0d74373e94c9'
+    - 'media:image:055b2ef1-7516-4413-892c-aa087c0d7451'
+fields:
+  nid: '46'
+  vid: '182'
+  revision_timestamp: '1759395780'
+  revision_uid:
+    target_id: '68'
+  revision_log: {  }
+  status: '1'
+  uid:
+    target_id: '68'
+  title: 'Nextcloud with OnlyOffice and draw.io'
+  created: '1759128883'
+  changed: '1759395780'
+  promote: '1'
+  sticky: '0'
+  default_langcode: '1'
+  revision_default: '1'
+  revision_translation_affected: '1'
+  path:
+    alias: /app/nextcloud
+    pid: '39'
+    langcode: en
+  menu_link: {  }
+  content_translation_source: und
+  content_translation_outdated: '0'
+  field__app__description:
+    value: '<h2>Overview</h2><p>Nextcloud is a file storage and collaboration platform that functions as your personal cloud workspace. It operates as a shared service where you receive an account rather than a dedicated environment, providing you with access to online storage and office productivity tools through a web interface.</p><h2>Containing software</h2><p>Your <strong>Nextcloud account</strong> includes integrated office applications for document creation and editing.&nbsp;</p><p><strong>OnlyOffice</strong> handles word processing, spreadsheets, and presentations, allowing you to create and edit documents directly in your browser.&nbsp;</p><p><strong>Draw.io</strong> provides diagramming capabilities for creating flowcharts, organizational charts, technical diagrams, and other visual representations of information.</p><h2>Possibilities</h2><p>The platform serves as a central office suite and file repository to SCS-external spaces where you can upload, organize, and share documents, images, and other files. You can access your files from any device with an internet connection and share them with collaborators through link sharing or direct user permissions.<br>The system handles version control automatically, maintaining previous versions of edited documents so you can track changes or revert to earlier versions when needed. Collaborative editing allows multiple users to work on the same document simultaneously, with changes synchronized in real-time.<br>Your files remain accessible as long as your account is active, providing reliable storage for research data, documentation, and collaborative work products that need to be shared among team members or integrated with other research platforms.</p>'
+    summary: ''
+    format: full_html
+  field__app__link:
+    -
+      uri: 'https://nextcloud.com/'
+      title: 'Website of the Nextcloud'
+      options: {  }
+    -
+      uri: 'https://www.drawio.com/'
+      title: 'Website of the draw.io diagramming software'
+      options: {  }
+    -
+      uri: 'https://www.onlyoffice.com'
+      title: 'Website of the OnlyOffice office suite'
+      options: {  }
+  field__app__logo:
+    target_id: '3'
+  field__app__type: environment
+  field__use_button:
+    uri: 'https://nextcloud.scs.sammlungen.io/'
+    title: 'Enter your Nextcloud'
+    options: {  }

@@ -182,7 +182,12 @@ class SodaScsStackHelpers {
    *   The health of the Jupyter stack.
    */
   public function checkJupyterHealth(string $machineName) {
-    return [];
+    return [
+      'message' => 'Jupyter health check not implemented yet.',
+      'code' => 501,
+      'success' => FALSE,
+      'error' => 'Jupyter health check not implemented yet.',
+    ];
   }
 
   /**
@@ -195,7 +200,12 @@ class SodaScsStackHelpers {
    *   The health of the Nextcloud stack.
    */
   public function checkNextcloudHealth(string $machineName) {
-    return [];
+    return [
+      'message' => 'Nextcloud health check not implemented yet.',
+      'code' => 501,
+      'success' => FALSE,
+      'error' => 'Nextcloud health check not implemented yet.',
+    ];
   }
 
 }
