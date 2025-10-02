@@ -1,0 +1,37 @@
+uuid: f6ae27e2-0627-4014-a2f8-e05243553ef2
+langcode: en
+type: node
+bundle: book
+id: '68'
+dependencies:
+  config:
+    - node.node_type.book
+    - field.field.node.book.body
+  entity:
+    - 'user:user:83694812-fe3f-4bcc-9967-0d74373e94c9'
+fields:
+  nid: '68'
+  vid: '202'
+  revision_timestamp: '1759406400'
+  revision_uid:
+    target_id: '68'
+  revision_log: {  }
+  status: '1'
+  uid:
+    target_id: '68'
+  title: Components
+  created: '1759406360'
+  changed: '1759406400'
+  promote: '0'
+  sticky: '0'
+  default_langcode: '1'
+  revision_default: '1'
+  revision_translation_affected: '1'
+  path:
+    alias: /docs/administration/components
+    pid: '74'
+    langcode: en
+  menu_link: {  }
+  content_translation_source: und
+  content_translation_outdated: '0'
+  body: {  }

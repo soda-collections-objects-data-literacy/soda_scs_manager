@@ -11,8 +11,8 @@ dependencies:
     - 'user:user:83694812-fe3f-4bcc-9967-0d74373e94c9'
 fields:
   nid: '56'
-  vid: '161'
-  revision_timestamp: '1759233360'
+  vid: '197'
+  revision_timestamp: '1759405665'
   revision_uid:
     target_id: '68'
   revision_log: {  }
@@ -21,7 +21,7 @@ fields:
     target_id: '68'
   title: Dashboard
   created: '1759232731'
-  changed: '1759233360'
+  changed: '1759405665'
   promote: '0'
   sticky: '0'
   default_langcode: '1'
@@ -35,6 +35,6 @@ fields:
   content_translation_source: und
   content_translation_outdated: '0'
   body:
-    value: '<p>The "Dashboard" shows all the application accounts/instances that you created or are shared with you as part of a <a href="https://scs.sammlungen.io/documentation/your-dashboard/creating-project">collaborative project</a>.</p><p>&nbsp;</p>'
+    value: '<h2>Context</h2><p>The Dashboard is your central hub for managing all deployed applications in the SODa Semantic Co-Working Space. It provides a comprehensive overview of your research environments, databases, storage, and applications, organized by team members for easy collaboration and monitoring.</p><h2>Goals</h2><ul><li>Understand how to navigate and use the Dashboard effectively</li><li>Learn how to monitor and manage your deployed applications</li><li>Develop the ability to access and configure running services</li></ul><h2>Prerequisites</h2><ul><li>An active SODa SCS Manager account</li></ul><h2>Understanding the Dashboard</h2><h3>Dashboard Layout</h3><p>The Dashboard displays all applications you have access to by displaying cards for individual applications. Each card provides essential information at a glance:</p><ul><li><strong>Application Name</strong>: The name you assigned during deployment</li><li><strong>Application Type</strong>: Research Environment, Database, Storage, or Single Application</li><li><strong>Description</strong>: Your notes about the application''s purpose</li><li><strong>Tags</strong>: Category tags for filtering and organization</li></ul><h3>Filtering Applications</h3><p>Use the tag filters at the top of the Dashboard to quickly find specific types of applications. Click on tags to filter by the application type or purpose.</p><h2>Managing Your Applications</h2><h3>Accessing an Application</h3><p>Click on any application card to view its detail page. From there, you can:</p><ul><li>View complete configuration details</li><li>Access connection information (URLs, credentials, endpoints)</li><li>Monitor health status and performance metrics</li></ul><h3>Editing Application Settings</h3><p>To modify an application''s configuration:</p><ol><li>Click on the application card to open its detail page</li><li>Click the "Edit" button in the task navigation.</li><li>Update the desired settings (note, project assignment, etc.)</li><li>Click "Save" to apply your changes</li></ol><p><strong>Note</strong>: Some technical settings may require redeployment. The system will notify you if this is necessary.</p><h3>Monitoring Application Health</h3><p>Each application card displays its current operational status. Status indicators include:</p><ul><li><strong>Running</strong>: Application is operational and accessible</li><li><strong>Starting</strong>: Application is being deployed or restarted</li><li><strong>Stopped</strong>: Application has been manually stopped</li><li><strong>Error</strong>: Application encountered an issue and requires attention</li></ul><p>Click on an application card to view detailed health information and troubleshooting options.</p><h3>Connecting Applications to Projects</h3><p>Projects help you organize related applications and collaborate with team members:</p><ol><li>Open the application''s detail page</li><li>Click "Edit"</li><li>Select or create a project from the "Project" dropdown</li><li>Click "Save"</li></ol><p>Applications connected to projects are accessible to all project members. <a href="/docs/project">Learn more about project management</a>.</p>'
     summary: ''
     format: basic_html

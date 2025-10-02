@@ -11,8 +11,8 @@ dependencies:
     - 'user:user:83694812-fe3f-4bcc-9967-0d74373e94c9'
 fields:
   nid: '60'
-  vid: '162'
-  revision_timestamp: '1759233614'
+  vid: '195'
+  revision_timestamp: '1759405225'
   revision_uid:
     target_id: '68'
   revision_log: {  }
@@ -21,7 +21,7 @@ fields:
     target_id: '68'
   title: Catalogue
   created: '1759232909'
-  changed: '1759233614'
+  changed: '1759405225'
   promote: '0'
   sticky: '0'
   default_langcode: '1'
@@ -35,6 +35,6 @@ fields:
   content_translation_source: und
   content_translation_outdated: '0'
   body:
-    value: '<p>The "Catalogue" is the place where you can find all the availiable applications that the SCS offers.<br>Clicking on one of the cards for an application allows you to create a new access for/instance of that application.<br><br>&nbsp;</p><p>&nbsp;</p>'
+    value: '<h2>Context</h2><p>The Catalogue is your starting point for deploying new applications in the SODa Semantic Co-Working Space. It provides a centralized overview of all available services that you can deploy with just a few clicks, making it easy to build your research infrastructure without technical expertise.</p><h2>Goals</h2><ul><li>Understand the different types of applications available in the Catalogue</li><li>Learn how to deploy your first application</li></ul><h2>Prerequisites</h2><ul><li>An active SODa SCS Manager account</li><li>Basic understanding of your research infrastructure needs</li></ul><h2>Understanding the Catalogue</h2><p>The Catalogue organizes available services into different categories: <strong>Environments</strong>, <strong>Databases</strong>, <strong>Storage</strong>, and <strong>Single Applications</strong>.</p><h3>Research Environments</h3><p>Complete, pre-configured research environments that are ready to use:</p><ul><li><a href="/app/wisski"><strong>WissKI</strong></a>: A complete system for knowledge representation and cultural heritage documentation, including all necessary databases, storage, and web application</li></ul><p>Environments save time by providing everything you need in one package, automatically configured to work together seamlessly.</p><h3>Databases</h3><p>Database services for storing and managing your research data:</p><ul><li><a href="/app/mariadb"><strong>SQL Database</strong></a>: Relational database for structured data storage</li><li><a href="/app/open-gdb"><strong>Triplestore</strong></a>: Semantic database for linked data and ontologies</li></ul><h3>Storage</h3><p>File management systems for your research files:</p><ul><li><a href="/app/shared-folder"><strong>Shared folder</strong></a>: Secure file storage and management system for documents, images, and other research materials</li></ul><h3>Single Applications</h3><ul><li><a href="/app/webprotege"><strong>Webprotege</strong></a>: Online ontology editor.</li></ul><h3>Deploying Your First Application</h3><h4>Step 1: Access the Catalogue</h4><p>Navigate to the <a href="/soda-scs-manager/catalogue">Catalogue</a>.</p><h4>Step 2: Browse Available Applications</h4><p>Review the available applications. Each card displays:</p><ul><li>Application name and type</li><li>Brief description of functionality</li><li>Tags indicating use cases</li><li>"Learn More" link for detailed information in the upper right corner of the card</li></ul><h4>Step 3: Select an Application</h4><p>Click on an application card to begin deployment. Choose based on your needs:</p><ul><li>Starting a new project? → Select a <a href="/app/wisski"><strong>WissKI environment</strong></a> to deploy a comprehensive research data management system.</li><li>Need data storage? → Choose a <a href="/app/mariadb"><strong>SQL Database</strong></a> or <a href="/app/open-gdb"><strong>Triplestore</strong></a>)</li><li>Managing files? → Choose <a href="/app/shared-folder"><strong>Shared Folder</strong></a></li></ul><p>With your SCS account you have also access to <a href="/app/nextcloud">Nextcloud with OnlyOffice and draw.io</a>, and <a href="/app/jupyterlab">JupyterLab with OpenRefine</a>. The links are already in your <a href="/docs/dashboard">Dashboard</a>.</p><h4>Step 4: Configure Your Application</h4><p>Fill in the required fields:</p><ul><li><strong>Name</strong>: A descriptive name for your application (e.g., "My Research Database")</li><li><strong>Note</strong>: Some personal notes.</li><li><strong>Project</strong>: <a href="/docs/project">Project</a> are the way to build an integrative framework of applications and users. Learn more about projects.</li></ul><h4>Step 5: Deploy</h4><p>Click <em>Create</em> to deploy your application. The SCS Manager will automatically provision and configure your new service.</p><h3>After Deployment</h3><p>Once deployed, your application will appear in your <a href="/docs/dashboard">Dashboard</a>.</p>'
     summary: ''
     format: basic_html
