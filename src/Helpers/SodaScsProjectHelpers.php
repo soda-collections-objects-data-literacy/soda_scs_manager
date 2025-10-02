@@ -198,8 +198,8 @@ class SodaScsProjectHelpers {
     // Data should be null if the group does not exist.
     if ($this->checkIfProjectGroupExists($project)['data']) {
       return SodaScsResult::failure(
-        $this->t('Keycloak group @projectGroupId for project @project already exists.'),
-        $this->t('Could not create Keycloak group @projectGroupId for project @project.', [
+        (string) $this->t('Keycloak group @projectGroupId for project @project already exists.'),
+        (string) $this->t('Could not create Keycloak group @projectGroupId for project @project.', [
           '@projectGroupId' => $project->get('groupId')->value,
           '@project' => $project->label(),
         ]),
@@ -210,8 +210,8 @@ class SodaScsProjectHelpers {
     $projectGroupId = (string) ($project->get('groupId')->value ?? '');
     if ($projectGroupId === '') {
       return SodaScsResult::failure(
-        $this->t('No project group ID found for project @project.'),
-        $this->t('Could not create Keycloak group @projectGroupId for project @project.', [
+        (string) $this->t('No project group ID found for project @project.'),
+        (string) $this->t('Could not create Keycloak group @projectGroupId for project @project.', [
           '@project' => $project->label(),
         ]),
       );
@@ -223,7 +223,7 @@ class SodaScsProjectHelpers {
     if (!$tokenResponse['success']) {
       return SodaScsResult::failure(
         $tokenResponse['error'],
-        $this->t('Could not create keycloak group with group id @projectGroupId for project @project.', [
+        (string) $this->t('Could not create keycloak group with group id @projectGroupId for project @project.', [
           '@projectGroupId' => $projectGroupId,
           '@project' => $project->label(),
         ]),
@@ -235,8 +235,8 @@ class SodaScsProjectHelpers {
     // Double check if token is set.
     if (!$kcToken) {
       return SodaScsResult::failure(
-        $this->t('No Keycloak token found.'),
-        $this->t('Could not create keycloak group with group id @projectGroupId for project @project.', [
+        (string) $this->t('No Keycloak token found.'),
+        (string) $this->t('Could not create keycloak group with group id @projectGroupId for project @project.', [
           '@projectGroupId' => $projectGroupId,
           '@project' => $project->label(),
         ]),
@@ -259,7 +259,7 @@ class SodaScsProjectHelpers {
     if (!$groupsRes['success']) {
       return SodaScsResult::failure(
         $groupsRes['error'],
-        $this->t('Failed to create Keycloak group @projectGroupId for project @project.', [
+        (string) $this->t('Failed to create Keycloak group @projectGroupId for project @project.', [
           '@projectGroupId' => $projectGroupId,
           '@project' => $project->label(),
         ]),
@@ -275,7 +275,7 @@ class SodaScsProjectHelpers {
     if (!$getAllGroupsRes['success']) {
       return SodaScsResult::failure(
         $getAllGroupsRes['error'],
-        $this->t('Failed to get Keycloak groups for project @project.', [
+        (string) $this->t('Failed to get Keycloak groups for project @project.', [
           '@project' => $project->label(),
         ]),
       );
@@ -297,7 +297,7 @@ class SodaScsProjectHelpers {
 
     return SodaScsResult::success(
       data: ['keycloakGroupData' => $groupData],
-      message: $this->t('Created Keycloak group @projectGroupId for project @project.', [
+      message: (string) $this->t('Created Keycloak group @projectGroupId for project @project.', [
         '@projectGroupId' => $projectGroupId,
         '@project' => $project->label(),
       ]),
@@ -656,7 +656,7 @@ class SodaScsProjectHelpers {
     if (!$ownerSsoUuid) {
       return SodaScsResult::failure(
         error: 'Owner has no SSO UUID',
-        message: $this->t('Owner @owner has no SSO UUID.', [
+        message: (string) $this->t('Owner @owner has no SSO UUID.', [
           '@owner' => $owner->getDisplayName(),
         ]),
       );
@@ -794,7 +794,7 @@ class SodaScsProjectHelpers {
         if (!$removeRes['success']) {
           return SodaScsResult::failure(
             $removeRes['error'],
-            $this->t('Failed to remove user @user from group @group in Keycloak for project @project.', [
+            (string) $this->t('Failed to remove user @user from group @group in Keycloak for project @project.', [
               '@user' => $kcUserUuid,
               '@group' => $groupUuid,
               '@project' => $project->label(),
@@ -810,7 +810,7 @@ class SodaScsProjectHelpers {
         'userIdsToAdd' => $userIdsToAdd,
         'userIdsToRemove' => $userIdsToRemove,
       ],
-      message: $this->t('Successfully synced keycloak group members for project @project.', [
+      message: (string) $this->t('Successfully synced keycloak group members for project @project.', [
         '@project' => $project->label(),
       ]),
     );
