@@ -5,10 +5,12 @@
  * Functions for the soda_scs_manager module.
  */
 
+use Drupal\Core\Asset\AttachedAssetsInterface;
 use Drupal\Core\Entity\Display\EntityViewDisplayInterface;
 use Drupal\Core\Entity\EntityInterface;
 use Drupal\Core\Entity\EntityTypeInterface;
 use Drupal\Core\Field\BaseFieldDefinition;
+use Drupal\Core\Language\LanguageInterface;
 use Drupal\Core\Routing\RouteMatchInterface;
 use Drupal\Core\StringTranslation\TranslatableMarkup;
 use Drupal\Core\Url;
@@ -23,6 +25,25 @@ use Drupal\soda_scs_manager\Entity\SodaScsSnapshot;
 use Drupal\soda_scs_manager\Entity\SodaScsStack;
 use Drupal\user\UserInterface;
 use Symfony\Component\HttpFoundation\RedirectResponse;
+
+/**
+ * Implements hook_css_alter().
+ *
+ * @todo Make a proper theme.
+ */
+function soda_scs_manager_css_alter(&$css, AttachedAssetsInterface $assets, LanguageInterface $language) {
+  $filePath = \Drupal::service('extension.list.module')->getPath('soda_scs_manager') . '/css/global.css';
+  if (!isset($css[$filePath])) {
+    $css[$filePath] = [
+      'weight' => 200,
+      'group' => 200,
+      'type' => 'file',
+      'data' => $filePath,
+      'media' => 'all',
+      'preprocess' => TRUE,
+    ];
+  }
+}
 
 /**
  * Implements hook_entity_base_field_info().

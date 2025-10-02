@@ -20,6 +20,8 @@ class SodaScsStackViewBuilder extends EntityViewBuilder {
     if (isset($build['flavours'])) {
       $build['flavours']['#access'] = FALSE;
     }
+    $build['#attached']['library'][] = 'soda_scs_manager/entityHelpers';
+    $build['#attached']['drupalSettings']['entityInfo']['healthUrl'] = '/soda-scs-manager/health/stack/' . $build['#soda_scs_stack']->id();
 
     return $build;
   }

@@ -5,9 +5,9 @@ declare(strict_types=1);
 namespace Drupal\soda_scs_manager\Helpers;
 
 use Symfony\Component\DependencyInjection\Attribute\Autowire;
-use Drupal\Core\Messenger\MessengerInterface;
+use Drupal\Core\Entity\EntityTypeManagerInterface;
+use Drupal\Core\Messenger\MessengerTrait;
 use Drupal\Core\StringTranslation\StringTranslationTrait;
-use Drupal\Core\StringTranslation\TranslationInterface;
 use Drupal\soda_scs_manager\Entity\SodaScsComponentInterface;
 use Drupal\soda_scs_manager\Entity\SodaScsStackInterface;
 use Drupal\soda_scs_manager\Exception\SodaScsComponentActionsException;
@@ -17,26 +17,40 @@ use Drupal\soda_scs_manager\Exception\SodaScsComponentActionsException;
  */
 #[Autowire(service: 'soda_scs_manager.stack.helpers')]
 class SodaScsStackHelpers {
+  use MessengerTrait;
   use StringTranslationTrait;
 
   /**
-   * The messenger.
+   * The entity type manager.
    *
-   * @var \Drupal\Core\Messenger\MessengerInterface
+   * @var \Drupal\Core\Entity\EntityTypeManagerInterface
    */
-  protected $messenger;
+  protected $entityTypeManager;
+
+
+  /**
+   * The Soda SCS component helpers.
+   *
+   * @var \Drupal\soda_scs_manager\Helpers\SodaScsComponentHelpers
+   */
+  protected $sodaScsComponentHelpers;
 
   /**
    * SodaScsStackHelpers constructor.
    *
-   * @param \Drupal\Core\Messenger\MessengerInterface $messenger
+   * @param \Drupal\Core\Entity\EntityTypeManagerInterface $entityTypeManager
+   *   The entity type manager.
+   * @param \Drupal\soda_scs_manager\Helpers\SodaScsComponentHelpers $sodaScsComponentHelpers
+   *   The Soda SCS component helpers.
    *   The messenger.
-   * @param \Drupal\Core\StringTranslation\TranslationInterface $stringTranslation
-   *   The string translation.
    */
-  public function __construct(MessengerInterface $messenger, TranslationInterface $stringTranslation) {
-    $this->messenger = $messenger;
-    $this->stringTranslation = $stringTranslation;
+  public function __construct(
+    EntityTypeManagerInterface $entityTypeManager,
+    #[Autowire(service: 'soda_scs_manager.component.helpers')]
+    SodaScsComponentHelpers $sodaScsComponentHelpers,
+  ) {
+    $this->entityTypeManager = $entityTypeManager;
+    $this->sodaScsComponentHelpers = $sodaScsComponentHelpers;
   }
 
   /**
@@ -102,6 +116,86 @@ class SodaScsStackHelpers {
     });
     $stack->set('includedComponents', $filteredComponents);
     $stack->save();
+  }
+
+  /**
+   * Check the health of a WissKI stack.
+   *
+   * @param string $machineName
+   *   The machine name of the WissKI stack.
+   *
+   * @return array
+   *   The health of the WissKI stack.
+   */
+  public function checkWisskiHealth(string $machineName) {
+    // Get the stack entity by machine name.
+    $stackStorage = $this->entityTypeManager->getStorage('soda_scs_stack');
+    $stackEntities = $stackStorage->loadByProperties(['machineName' => $machineName]);
+
+    if (empty($stackEntities)) {
+      return [
+        'message' => 'Stack not found.',
+        'code' => 404,
+        'success' => FALSE,
+        'error' => 'No stack found with machine name: ' . $machineName,
+      ];
+    }
+
+    /** @var \Drupal\soda_scs_manager\Entity\SodaScsStackInterface $stack */
+    $stack = reset($stackEntities);
+
+    // Get included components.
+    /** @var \Drupal\Core\Field\EntityReferenceFieldItemListInterface $includedComponentsItemList */
+    $includedComponentsItemList = $stack->get('includedComponents');
+    $includedComponents = $includedComponentsItemList->referencedEntities();
+
+    // Find the WissKI component.
+    $wisskiComponent = NULL;
+    foreach ($includedComponents as $component) {
+      /** @var \Drupal\soda_scs_manager\Entity\SodaScsComponentInterface $component */
+      if ($component->get('bundle')->value === 'soda_scs_wisski_component') {
+        $wisskiComponent = $component;
+        break;
+      }
+    }
+
+    if (!$wisskiComponent) {
+      return [
+        'message' => 'WissKI component not found in stack.',
+        'code' => 404,
+        'success' => FALSE,
+        'error' => 'No WissKI component found in stack: ' . $machineName,
+      ];
+    }
+
+    // Check the health of the WissKI component.
+    return $this->sodaScsComponentHelpers->drupalHealthCheck($wisskiComponent->get('machineName')->value);
+  }
+
+  /**
+   * Check the health of a Jupyter stack.
+   *
+   * @param string $machineName
+   *   The machine name of the Jupyter stack.
+   *
+   * @return array
+   *   The health of the Jupyter stack.
+   */
+  public function checkJupyterHealth(string $machineName) {
+    return [];
+  }
+
+  /**
+   * Check the health of a Nextcloud stack.
+   *
+   * @param string $machineName
+   *   The machine name of the Nextcloud stack.
+   *
+   * @return array
+   *   The health of the Nextcloud stack.
+   */
+  public function checkNextcloudHealth(string $machineName) {
+    return [];
   }
 
 }

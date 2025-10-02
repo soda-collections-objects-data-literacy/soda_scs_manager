@@ -278,6 +278,21 @@ class SodaScsStack extends ContentEntityBase implements SodaScsStackInterface {
         'weight' => 3,
       ]);
 
+    $fields['health'] = BaseFieldDefinition::create('string')
+      ->setLabel(new TranslatableMarkup('Health Status'))
+      ->setDescription(new TranslatableMarkup('The health status of the bundled application.'))
+      ->setRequired(FALSE)
+      ->setReadOnly(TRUE)
+      ->setTranslatable(FALSE)
+      ->setDisplayConfigurable('form', FALSE)
+      ->setDisplayConfigurable('view', FALSE)
+      ->setDisplayOptions('view', [
+        'label' => 'above',
+        'type' => 'string',
+        'default_value' => 'Unknown',
+        'weight' => 0,
+      ]);
+
     $fields['imageUrl'] = BaseFieldDefinition::create('string')
       ->setLabel(new TranslatableMarkup('Image'))
       ->setDescription(new TranslatableMarkup('The image of the bundled application.'))

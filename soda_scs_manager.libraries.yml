@@ -1,4 +1,4 @@
-componentHelpers:
+entityHelpers:
   version: 1.x
   js:
     js/updateHealthStatus.js: {}

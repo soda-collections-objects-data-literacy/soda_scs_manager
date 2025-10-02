@@ -1,12 +1,22 @@
 # Helpers
 
+# @todo Refactor to use entity type as parameter for just one route
 soda_scs_manager.component.health_check:
-  path: '/soda-scs-manager/health/{component_id}'
+  path: '/soda-scs-manager/health/component/{component_id}'
   defaults:
     _controller: '\Drupal\soda_scs_manager\Controller\SodaScsComponentController::componentStatus'
     _title:  'Component health check'
   requirements:
     _permission: 'soda scs manager user'
+
+soda_scs_manager.stack.health_check:
+  path: '/soda-scs-manager/health/stack/{stack_id}'
+  defaults:
+    _controller: '\Drupal\soda_scs_manager\Controller\SodaScsStackController::stackStatus'
+    _title:  'Stack health check'
+  requirements:
+    _permission: 'soda scs manager user'
+
 
 # Soda SCS Component Entities
 

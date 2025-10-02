@@ -1,0 +1,96 @@
+/* Responsive grid item styling */
+.views-view-responsive-grid__item {
+  display: flex;
+  height: 100%;
+  min-height: 200px;
+  border: 2px solid #e7e5e4;
+  border-radius: 0.5rem;
+  transition: border-color 0.3s ease-in-out;
+}
+
+.views-view-responsive-grid__item:hover {
+  border-color: #fb923c;
+}
+
+.views-view-responsive-grid__item-inner {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  width: 100%;
+  height: 100%;
+  padding: 1rem;
+  text-align: center;
+  position: relative;
+}
+
+/* Ensure consistent spacing and alignment for grid content */
+.views-view-responsive-grid__item .views-field {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+}
+
+/* Logo/image field styling */
+.views-view-responsive-grid__item .views-field-field__app__logo {
+  height: 100px;
+}
+
+.views-view-responsive-grid__item .views-field-field__app__logo .field-content {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.views-view-responsive-grid__item .views-field-field__app__logo img {
+  width: 80px;
+  height: 80px;
+  object-fit: contain;
+}
+
+/* Title field styling */
+.views-view-responsive-grid__item .views-field-title {
+  height: 100px;
+}
+
+.views-view-responsive-grid__item .views-field-title .field-content {
+  text-align: center;
+}
+
+.views-view-responsive-grid__item .views-field-title a {
+  font-size: 1.125rem;
+  font-weight: 500;
+  color: #111827;
+  text-decoration: none;
+  transition: color 0.2s ease-in-out;
+}
+
+.views-view-responsive-grid__item .views-field-title a:hover {
+  color: #2563eb;
+}
+
+/* Media wrapper styling */
+.views-view-responsive-grid__item .media {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+/* Remove contextual links styling in grid view */
+.views-view-responsive-grid__item .contextual {
+  display: none;
+}
+
+#block-olivero-views-block-applications-block-1 h2 {
+  font-size: var(--font-size-l);
+}
+
+.soda-scs-manager--app-link {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+}

@@ -82,8 +82,8 @@ class SodaScsComponentViewBuilder extends EntityViewBuilder {
     }
 
     $build['#attached']['library'][] = 'soda_scs_manager/security';
-    $build['#attached']['library'][] = 'soda_scs_manager/componentHelpers';
-    $build['#attached']['drupalSettings']['componentInfo']['healthUrl'] = '/soda-scs-manager/health/' . $build['#soda_scs_component']->id();
+    $build['#attached']['library'][] = 'soda_scs_manager/entityHelpers';
+    $build['#attached']['drupalSettings']['entityInfo']['healthUrl'] = '/soda-scs-manager/health/component/' . $build['#soda_scs_component']->id();
 
     return $build;
   }
