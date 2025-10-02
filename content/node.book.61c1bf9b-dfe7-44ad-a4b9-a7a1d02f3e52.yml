@@ -1,4 +1,4 @@
-uuid: 2a7f150f-f4d4-41ce-b46c-97197d4864ca
+uuid: 61c1bf9b-dfe7-44ad-a4b9-a7a1d02f3e52
 langcode: en
 type: node
 bundle: book
@@ -7,18 +7,16 @@ dependencies:
   config:
     - node.node_type.book
     - field.field.node.book.body
-  entity:
-    - 'user:user:2c3f35f5-5577-4e78-8bbc-4ce1e3cffce3'
 fields:
   nid: '7'
   vid: '42'
   revision_timestamp: '1754494733'
   revision_uid:
-    target_id: '19'
+    target_id: '0'
   revision_log: {  }
   status: '1'
   uid:
-    target_id: '19'
+    target_id: '0'
   title: 'Creating an account'
   created: '1754387222'
   changed: '1754494733'
@@ -28,8 +26,8 @@ fields:
   revision_default: '1'
   revision_translation_affected: '1'
   path:
-    alias: /documentation/getting-started/creating-account
-    pid: '10'
+    alias: /creating-account
+    pid: '43'
     langcode: en
   menu_link: {  }
   content_translation_source: und

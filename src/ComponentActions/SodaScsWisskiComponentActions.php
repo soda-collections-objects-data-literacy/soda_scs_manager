@@ -1271,16 +1271,16 @@ class SodaScsWisskiComponentActions implements SodaScsComponentActionsInterface 
       }
       $inspectContainerResponseContents = json_decode($inspectContainerResponse['data']['portainerResponse']->getBody()->getContents(), TRUE);
       $containerState = $inspectContainerResponseContents['State'];
-      if ($containerState['Status'] === 'running') {
+      if ($containerState['Running'] == TRUE) {
         //
         // Stop the WissKI component container gracefully.
         //
-        // Wait for 30 seconds before forcing stop container.
+        // Wait for 20 seconds before forcing stop container.
         $stopContainerRequestParams = [
           'routeParams' => [
             'containerId' => $containerId,
           ],
-          'timeout' => 60,
+          'timeout' => 20,
         ];
         // Build and make the stop container request.
         $stopContainerRequest = $this->sodaScsDockerRunServiceActions->buildStopRequest($stopContainerRequestParams);

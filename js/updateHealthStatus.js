@@ -19,16 +19,16 @@
             if ($data[0]['status']['success'] === true) {
               $("div.field--name-health div.field__item .dot").remove();
               $("div.field--name-health div.field__item").text('Running')
-              $("div.field--name-health div.field__label").removeClass('soda-scs-manager--component-status--api-error').removeAttr('title');
+              $("div.field--name-health div.field__label").removeClass('soda-scs-manager--entity-status--api-error').removeAttr('title');
             } else {
               $("div.field--name-health div.field__item").text($data[0]['status']['message'])
-              $("div.field--name-health div.field__label").addClass('soda-scs-manager--component-status--api-error').attr('title', $data[0]['status']['error']);
+              $("div.field--name-health div.field__label").addClass('soda-scs-manager--entity-status--api-error').attr('title', $data[0]['status']['error']);
             }
 
 
           }).fail(function (jqXHR, textStatus, errorThrown) {
             $("div.field--name-health div.field__item").text($data[0]['status']['message']);
-            $("div.field--name-health div.field__label").addClass('soda-scs-manager--component-status--api-error').attr('title', 'Health controller has internal error or is not reachable');
+            $("div.field--name-health div.field__label").addClass('soda-scs-manager--entity-status--api-error').attr('title', 'Health controller has internal error or is not reachable');
           });
         }, 3000)
       });

@@ -1,4 +1,4 @@
-uuid: 36827ab3-2f21-45c2-b15a-bf83837b6bcc
+uuid: 79f312d3-6949-4e09-827f-bee27d488ad4
 langcode: en
 type: node
 bundle: book
@@ -7,19 +7,16 @@ dependencies:
   config:
     - node.node_type.book
     - field.field.node.book.body
-  entity:
-    - 'user:user:3dfa0115-db04-4524-a196-a9dd9b1d18b6'
-    - 'user:user:2c3f35f5-5577-4e78-8bbc-4ce1e3cffce3'
 fields:
   nid: '15'
   vid: '67'
   revision_timestamp: '1758124211'
   revision_uid:
-    target_id: '34'
+    target_id: '0'
   revision_log: {  }
   status: '0'
   uid:
-    target_id: '19'
+    target_id: '0'
   title: '[Template]'
   created: '1754485684'
   changed: '1758124211'
@@ -27,10 +24,10 @@ fields:
   sticky: '0'
   default_langcode: '1'
   revision_default: '1'
-  revision_translation_affected: {  }
+  revision_translation_affected: '1'
   path:
-    alias: /documentation/template
-    pid: '9'
+    alias: /template
+    pid: '45'
     langcode: en
   menu_link: {  }
   content_translation_source: und

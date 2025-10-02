@@ -1,4 +1,4 @@
-uuid: 6778e315-f442-48ff-bfee-b76b663e1b00
+uuid: 46b35b6d-92ab-48cc-a67b-30444a116bba
 langcode: en
 type: node
 bundle: book
@@ -7,18 +7,16 @@ dependencies:
   config:
     - node.node_type.book
     - field.field.node.book.body
-  entity:
-    - 'user:user:3dfa0115-db04-4524-a196-a9dd9b1d18b6'
 fields:
   nid: '18'
   vid: '59'
   revision_timestamp: '1758123765'
   revision_uid:
-    target_id: '34'
+    target_id: '0'
   revision_log: {  }
   status: '1'
   uid:
-    target_id: '34'
+    target_id: '0'
   title: 'Get your first application'
   created: '1758119643'
   changed: '1758123765'
@@ -26,10 +24,10 @@ fields:
   sticky: '0'
   default_langcode: '1'
   revision_default: '1'
-  revision_translation_affected: {  }
+  revision_translation_affected: '1'
   path:
-    alias: /documentation/getting-started/get-your-first-application
-    pid: '15'
+    alias: /get-your-first-application
+    pid: '46'
     langcode: en
   menu_link: {  }
   content_translation_source: und

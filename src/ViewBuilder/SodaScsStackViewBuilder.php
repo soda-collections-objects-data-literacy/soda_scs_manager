@@ -30,9 +30,9 @@ class SodaScsStackViewBuilder extends EntityViewBuilder {
   protected function getBuildDefaults(EntityInterface $entity, $view_mode) {
     $build = parent::getBuildDefaults($entity, $view_mode);
 
-    $build['#theme'] = 'soda_scs_stack';
-    // Make entity and view_mode available to template suggestions.
+    $build['#theme'] = 'soda_scs_entity';
     $build['#soda_scs_stack'] = $entity;
+    $build['#entity_type'] = 'stack';
     $build['#view_mode'] = $view_mode;
 
     return $build;

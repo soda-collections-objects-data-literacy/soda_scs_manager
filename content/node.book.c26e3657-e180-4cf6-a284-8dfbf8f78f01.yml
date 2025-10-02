@@ -1,4 +1,4 @@
-uuid: 1e00380b-7096-49bf-8451-6a6272562558
+uuid: c26e3657-e180-4cf6-a284-8dfbf8f78f01
 langcode: en
 type: node
 bundle: book
@@ -7,18 +7,16 @@ dependencies:
   config:
     - node.node_type.book
     - field.field.node.book.body
-  entity:
-    - 'user:user:2c3f35f5-5577-4e78-8bbc-4ce1e3cffce3'
 fields:
   nid: '8'
   vid: '44'
   revision_timestamp: '1754917818'
   revision_uid:
-    target_id: '19'
+    target_id: '0'
   revision_log: {  }
   status: '1'
   uid:
-    target_id: '19'
+    target_id: '0'
   title: 'The "Catalogue"'
   created: '1754387951'
   changed: '1754917818'
@@ -28,8 +26,8 @@ fields:
   revision_default: '1'
   revision_translation_affected: '1'
   path:
-    alias: /documentation/catalogue
-    pid: '11'
+    alias: /catalogue
+    pid: '41'
     langcode: en
   menu_link: {  }
   content_translation_source: und

@@ -1,0 +1,153 @@
+/* Layout Entities */
+/* These styles define layout structure for entities. */
+
+@layer components {
+  /* Ensure card tags sit above the overlay link. */
+  .soda-scs-manager--card-tags {
+    @apply relative z-10;
+  }
+  .soda-scs-manager--card-tag {
+    @apply relative z-10 cursor-pointer;
+  }
+
+  /* entity connected components layout */
+  .soda-scs-manager--entity--connectedComponents {
+    @apply col-span-2;
+  }
+
+  /* entity created layout */
+  .soda-scs-manager--entity--created {
+    @apply col-span-2;
+  }
+
+  /* entity layout - 6 columns total */
+  .soda-scs-manager--entity--default {
+    @apply grid grid-cols-6 gap-4 font-['Inter'];
+  }
+
+  /* entity description styling */
+  .soda-scs-manager--entity--description, .soda-scs-manager--entity--description * {
+    @apply text-gray-700 mt-2 font-sans;
+
+  }
+
+  /* Description row - spans full header width */
+  .soda-scs-manager--entity--description-row {
+    @apply col-span-4;
+  }
+
+  /* entity footer layout */
+  .soda-scs-manager--entity--footer {
+    @apply col-span-4;
+  }
+
+  /* entity health styling */
+  .soda-scs-manager--entity--health {
+    @apply flex items-center;
+  }
+
+  /* Health row in right column */
+  .soda-scs-manager--entity--health-row {
+    @apply flex items-center;
+  }
+
+  /* entity header layout - spans 4 columns in the middle (columns 2-5) */
+  .soda-scs-manager--entity--header {
+    @apply grid grid-cols-4 col-span-4 col-start-2 gap-4;
+  }
+
+  /* entity header left column - 2 columns within header */
+  .soda-scs-manager--entity--header--left {
+    @apply col-span-2;
+  }
+
+  /* entity header right column - 2 columns within header */
+  .soda-scs-manager--entity--header--right {
+    @apply col-span-2 grid grid-rows-2 gap-2;
+  }
+
+  /* Header row within left column (thumbnail + title) */
+  .soda-scs-manager--entity--header-row {
+    @apply flex items-center gap-4;
+  }
+
+  /* entity included components layout */
+  .soda-scs-manager--entity--includedComponents {
+    @apply col-span-2;
+  }
+
+  /* entity info layout */
+  .soda-scs-manager--entity--info {
+    @apply col-span-4;
+  }
+
+  /* entity left column layout */
+  .soda-scs-manager--entity--left-column {
+    @apply col-span-4;
+  }
+
+  /* entity machine name styling */
+  .soda-scs-manager--entity--machine-name {
+    @apply text-sm text-gray-600;
+  }
+
+  /* Machine name row in right column */
+  .soda-scs-manager--entity--machine-name-row {
+    @apply flex items-center;
+  }
+
+  /* entity main layout */
+  .soda-scs-manager--entity--main {
+    @apply grid grid-cols-6 gap-4 col-span-6;
+  }
+
+  /* entity owner layout */
+  .soda-scs-manager--entity--owner {
+    @apply col-span-2;
+  }
+
+  /* entity part of stack layout */
+  .soda-scs-manager--entity--partOfStack {
+    @apply col-span-2;
+  }
+
+  /* entity right column layout */
+  .soda-scs-manager--entity--right-column {
+    @apply col-span-2;
+  }
+
+  /* entity service key layout */
+  .soda-scs-manager--entity--service-key {
+    @apply col-span-2;
+  }
+
+  /* entity snapshots layout */
+  .soda-scs-manager--entity--snapshots {
+    @apply col-span-2;
+  }
+
+  /* entity tags styling */
+  .soda-scs-manager--entity--tags {
+    @apply mt-2;
+  }
+
+  /* Tags row - spans full header width */
+  .soda-scs-manager--entity--tags-row {
+    @apply col-span-4;
+  }
+
+  /* entity thumbnail styling */
+  .soda-scs-manager--entity--thumbnail {
+    @apply flex-shrink-0 w-16 h-16;
+  }
+
+  /* entity title styling */
+  .soda-scs-manager--entity--title {
+    @apply text-xl font-semibold text-gray-900 m-0;
+  }
+
+  /* entity updated layout */
+  .soda-scs-manager--entity--updated {
+    @apply col-span-2;
+  }
+}

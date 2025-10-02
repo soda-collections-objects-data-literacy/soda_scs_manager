@@ -1,33 +1,33 @@
-uuid: f30e1003-2e14-40d5-9f9f-928003b9bba8
+uuid: 12ab6a5a-9dbe-4c1a-9113-599517f1fb29
 langcode: en
 type: node
 bundle: book
-id: '23'
+id: '25'
 dependencies:
   config:
     - node.node_type.book
     - field.field.node.book.body
-  entity:
-    - 'user:user:3dfa0115-db04-4524-a196-a9dd9b1d18b6'
 fields:
-  nid: '23'
-  vid: '64'
-  revision_timestamp: '1758124012'
+  nid: '25'
+  vid: '66'
+  revision_timestamp: '1758124113'
   revision_uid:
-    target_id: '34'
+    target_id: '0'
   revision_log: {  }
   status: '1'
   uid:
-    target_id: '34'
-  title: 'Nextcloud with draw.io and OnlyOffice'
-  created: '1758123979'
-  changed: '1758124012'
+    target_id: '0'
+  title: 'OpenGDB Triplestore'
+  created: '1758124050'
+  changed: '1758124113'
   promote: '0'
   sticky: '0'
   default_langcode: '1'
   revision_default: '1'
   revision_translation_affected: '1'
   path:
+    alias: /opengdb-triplestore
+    pid: '51'
     langcode: en
   menu_link: {  }
   content_translation_source: und

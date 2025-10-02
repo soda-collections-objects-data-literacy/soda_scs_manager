@@ -5,9 +5,10 @@
   "type": "module",
   "scripts": {
     "dev": "npx @tailwindcss/cli --input pcss/soda_scs_manager_theme.pcss --output css/style.css --watch",
-    "build": "npx @tailwindcss/cli --input pcss/soda_scs_manager_theme.pcss --output css/style.css --minify",
-    "build:map": "postcss pcss/soda_scs_manager_theme.pcss -o css/style.css --map",
-    "watch:map": "postcss pcss/soda_scs_manager_theme.pcss -o css/style.css --map --watch"
+    "build": "NODE_ENV=production postcss pcss/soda_scs_manager_theme.pcss -o css/style.css --map --config postcss.config.js",
+    "build:dev": "postcss pcss/soda_scs_manager_theme.pcss -o css/style.css --map --config postcss.config.js",
+    "watch": "postcss pcss/soda_scs_manager_theme.pcss -o css/style.css --map --watch --config postcss.config.js",
+    "clean": "rm -rf css/style.css*"
   },
   "dependencies": {
     "@tailwindcss/cli": "^4.0.0",
@@ -16,6 +17,7 @@
     "tailwindcss": "^4.0.0"
   },
   "devDependencies": {
-    "postcss-cli": "^11.0.1"
+    "postcss-cli": "^11.0.1",
+    "cssnano": "^7.0.6"
   }
 }

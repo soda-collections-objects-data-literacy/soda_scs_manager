@@ -11,6 +11,7 @@ use Drupal\Core\Field\BaseFieldDefinition;
 use Drupal\Core\File\FileExists;
 use Drupal\Core\File\FileSystemInterface;
 use Drupal\Core\StringTranslation\TranslatableMarkup;
+use Drupal\soda_scs_manager\ComputedField\SodaScsGroupIdComputedItemList;
 
 /**
  * Implements hook_install().
@@ -319,16 +320,17 @@ function soda_scs_manager_update_11006() {
   return t('Documentation content type and page have been created with URL alias /soda-scs-manager/documentation.');
 }
 
-
 /**
- * Add default_project, first_name, last_name, sso_user_id fields to user entity.
+ * Add new fields to user.
+ *
+ * Fields are: default_project, first_name, last_name, sso_user_id fields.
  */
 function soda_scs_manager_update_11007() {
   $definition_update_manager = \Drupal::entityDefinitionUpdateManager();
   $fields = \Drupal::service('entity_field.manager')->getFieldStorageDefinitions('user');
 
   if (!isset($fields['default_project'])) {
-      $fields['default_project'] = BaseFieldDefinition::create('entity_reference')
+    $fields['default_project'] = BaseFieldDefinition::create('entity_reference')
       ->setLabel(new TranslatableMarkup('Default Project'))
       ->setDescription(new TranslatableMarkup('The default project for this user.'))
       ->setSetting('target_type', 'soda_scs_project')
@@ -355,48 +357,48 @@ function soda_scs_manager_update_11007() {
           'link' => TRUE,
         ],
       ]);
-      $definition_update_manager->installFieldStorageDefinition('default_project', 'user', 'core', $fields['default_project']);
-    }
-    if (!isset($fields['first_name'])) {
-      $fields['first_name'] = BaseFieldDefinition::create('string')
-        ->setLabel(new TranslatableMarkup('First Name'))
-        ->setDescription(new TranslatableMarkup('The first name of the user.'))
-        ->setRequired(TRUE)
-        ->setDisplayConfigurable('form', TRUE)
-        ->setDisplayOptions('form', [
-          'type' => 'string_textfield',
-          'weight' => 10,
-          'label' => 'above',
-        ])
-        ->setDisplayConfigurable('view', TRUE)
-        ->setDisplayOptions('view', [
-          'type' => 'string',
-          'weight' => 10,
-          'label' => 'above',
-        ]);
-        $definition_update_manager->installFieldStorageDefinition('first_name', 'user', 'core', $fields['first_name']);
-    }
-    if (!isset($fields['last_name'])) {
-        $fields['last_name'] = BaseFieldDefinition::create('string')
-        ->setLabel(new TranslatableMarkup('Last Name'))
-        ->setDescription(new TranslatableMarkup('The last name of the user.'))
-        ->setRequired(TRUE)
-        ->setDisplayConfigurable('form', TRUE)
-        ->setDisplayOptions('form', [
-          'type' => 'string_textfield',
-          'weight' => 10,
-          'label' => 'above',
-        ])
-        ->setDisplayConfigurable('view', TRUE)
-        ->setDisplayOptions('view', [
-          'type' => 'string',
-          'weight' => 10,
-          'label' => 'above',
-        ]);
-        $definition_update_manager->installFieldStorageDefinition('last_name', 'user', 'core', $fields['last_name']);
-    }
-    if (!isset($fields['sso_user_id'])) {
-      $fields['sso_user_id'] = BaseFieldDefinition::create('string')
+    $definition_update_manager->installFieldStorageDefinition('default_project', 'user', 'core', $fields['default_project']);
+  }
+  if (!isset($fields['first_name'])) {
+    $fields['first_name'] = BaseFieldDefinition::create('string')
+      ->setLabel(new TranslatableMarkup('First Name'))
+      ->setDescription(new TranslatableMarkup('The first name of the user.'))
+      ->setRequired(TRUE)
+      ->setDisplayConfigurable('form', TRUE)
+      ->setDisplayOptions('form', [
+        'type' => 'string_textfield',
+        'weight' => 10,
+        'label' => 'above',
+      ])
+      ->setDisplayConfigurable('view', TRUE)
+      ->setDisplayOptions('view', [
+        'type' => 'string',
+        'weight' => 10,
+        'label' => 'above',
+      ]);
+    $definition_update_manager->installFieldStorageDefinition('first_name', 'user', 'core', $fields['first_name']);
+  }
+  if (!isset($fields['last_name'])) {
+    $fields['last_name'] = BaseFieldDefinition::create('string')
+      ->setLabel(new TranslatableMarkup('Last Name'))
+      ->setDescription(new TranslatableMarkup('The last name of the user.'))
+      ->setRequired(TRUE)
+      ->setDisplayConfigurable('form', TRUE)
+      ->setDisplayOptions('form', [
+        'type' => 'string_textfield',
+        'weight' => 10,
+        'label' => 'above',
+      ])
+      ->setDisplayConfigurable('view', TRUE)
+      ->setDisplayOptions('view', [
+        'type' => 'string',
+        'weight' => 10,
+        'label' => 'above',
+      ]);
+    $definition_update_manager->installFieldStorageDefinition('last_name', 'user', 'core', $fields['last_name']);
+  }
+  if (!isset($fields['sso_user_id'])) {
+    $fields['sso_user_id'] = BaseFieldDefinition::create('string')
       ->setLabel(new TranslatableMarkup('SSO User ID'))
       ->setDescription(new TranslatableMarkup('The SSO user ID of the user.'))
       ->setRequired(TRUE)
@@ -412,8 +414,8 @@ function soda_scs_manager_update_11007() {
         'weight' => 10,
         'label' => 'above',
       ]);
-      $definition_update_manager->installFieldStorageDefinition('sso_user_id', 'user', 'core', $fields['sso_user_id']);
-    }
+    $definition_update_manager->installFieldStorageDefinition('sso_user_id', 'user', 'core', $fields['sso_user_id']);
+  }
   // Clear caches to refresh field definitions.
   drupal_flush_all_caches();
 
@@ -456,10 +458,10 @@ function soda_scs_manager_update_11008() {
         'type' => 'integer',
         'weight' => 10,
       ]);
+    $definition_update_manager->installFieldStorageDefinition('groupId', 'soda_scs_project', 'core', $fields['groupId']);
   }
   // Clear caches to refresh field definitions.
   drupal_flush_all_caches();
 
   return t('Ensured project base fields exist: keycloakUuid, groupId.');
 }
-

@@ -24,7 +24,6 @@ use Drupal\Core\Utility\Error;
 use Drupal\soda_scs_manager\ComponentActions\SodaScsComponentActionsInterface;
 use Drupal\soda_scs_manager\Entity\SodaScsSnapshotInterface;
 use Drupal\soda_scs_manager\Entity\SodaScsStackInterface;
-use Drupal\soda_scs_manager\Exception\SodaScsComponentException;
 use Drupal\soda_scs_manager\Exception\SodaScsComponentActionsException;
 use Drupal\soda_scs_manager\Exception\SodaScsRequestException;
 use Drupal\soda_scs_manager\Helpers\SodaScsSnapshotHelpers;
@@ -287,6 +286,10 @@ class SodaScsWisskiStackActions implements SodaScsStackActionsInterface {
     $stack->set('description', $bundleinfo['description']);
     $stack->set('imageUrl', $bundleinfo['imageUrl']);
 
+    // Save the stack first so it has an ID that can be referenced by
+    // components.
+    $stack->save();
+
     // We need to parse the stack into components by creating a dummy entity
     // with basic properties (label, machineName, owner, partOfProjects)
     // and then calling the createComponent method for each component.
@@ -457,14 +460,17 @@ class SodaScsWisskiStackActions implements SodaScsStackActionsInterface {
     try {
       // Set the connected components for the SQL component.
       $sqlComponent->set('connectedComponents', $wisskiComponent->id());
+      $sqlComponent->set('partOfStack', $stack->id());
       $sqlComponent->save();
 
       // Set the connected components for the triplestore component.
       $triplestoreComponent->set('connectedComponents', $wisskiComponent->id());
+      $triplestoreComponent->set('partOfStack', $stack->id());
       $triplestoreComponent->save();
 
       // Set the connected components for the WissKI component.
       $wisskiComponent->set('connectedComponents', [$sqlComponent->id(), $triplestoreComponent->id()]);
+      $wisskiComponent->set('partOfStack', $stack->id());
       $wisskiComponent->save();
 
       $stack->set('machineName', 'stack-' . $stack->get('machineName')->value);

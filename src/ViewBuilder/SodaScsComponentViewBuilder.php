@@ -105,10 +105,9 @@ class SodaScsComponentViewBuilder extends EntityViewBuilder {
     ];
 
     // Add custom theme suggestions.
-    $build['#theme'] = 'soda_scs_component';
-
-    // Make entity and view_mode available to template suggestions.
+    $build['#theme'] = 'soda_scs_entity';
     $build['#soda_scs_component'] = $entity;
+    $build['#entity_type'] = 'component';
     $build['#view_mode'] = $view_mode;
 
     return $build;

@@ -1,4 +1,4 @@
-uuid: 21217962-2359-4f17-88d2-a440c321fb8f
+uuid: a85d4600-1c84-40f7-baa8-47ffc980f9ec
 langcode: en
 type: node
 bundle: book
@@ -7,18 +7,16 @@ dependencies:
   config:
     - node.node_type.book
     - field.field.node.book.body
-  entity:
-    - 'user:user:3dfa0115-db04-4524-a196-a9dd9b1d18b6'
 fields:
   nid: '19'
   vid: '60'
   revision_timestamp: '1758123860'
   revision_uid:
-    target_id: '34'
+    target_id: '0'
   revision_log: {  }
   status: '1'
   uid:
-    target_id: '34'
+    target_id: '0'
   title: 'Available Applications'
   created: '1758123819'
   changed: '1758123860'
@@ -28,8 +26,8 @@ fields:
   revision_default: '1'
   revision_translation_affected: '1'
   path:
-    alias: /documentation/available-applications
-    pid: '16'
+    alias: /available-applications
+    pid: '42'
     langcode: en
   menu_link: {  }
   content_translation_source: und
