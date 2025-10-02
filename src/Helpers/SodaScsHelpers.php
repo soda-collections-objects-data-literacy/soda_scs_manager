@@ -4,9 +4,11 @@ declare(strict_types=1);
 
 namespace Drupal\soda_scs_manager\Helpers;
 
-use Symfony\Component\DependencyInjection\Attribute\Autowire;
 use Drupal\Core\StringTranslation\StringTranslationTrait;
 use Drupal\Core\StringTranslation\TranslationInterface;
+use Drupal\soda_scs_manager\Entity\SodaScsComponentInterface;
+use Drupal\soda_scs_manager\Entity\SodaScsStackInterface;
+use Symfony\Component\DependencyInjection\Attribute\Autowire;
 
 /**
  * Helper class for Soda SCS operations.
@@ -160,6 +162,46 @@ class SodaScsHelpers {
 
     // Remove any leading/trailing whitespace.
     return trim($cleanedOutput);
+  }
+
+  /**
+   * Get type of entity.
+   *
+   * @param string $bundleId
+   *   The bundle ID.
+   *
+   * @return string
+   *   The type of entity.
+   */
+  public function getEntityType(string $bundleId): string {
+    switch ($bundleId) {
+      case 'soda_scs_wisski_stack':
+        return 'wisski';
+
+      case 'soda_scs_jupyter_stack':
+        return 'jupyter';
+
+      case 'soda_scs_nextcloud_stack':
+        return 'nextcloud';
+
+      case 'soda_scs_filesystem_component':
+        return 'filesystem';
+
+      case 'soda_scs_sql_component':
+        return 'mariadb';
+
+      case 'soda_scs_triplestore_component':
+        return 'open-gdb';
+
+      case 'soda_scs_webprotege_component':
+        return 'webprotege';
+
+      case 'soda_scs_wisski_component':
+        return 'wisski';
+
+      default:
+        return 'unknown';
+    }
   }
 
 }

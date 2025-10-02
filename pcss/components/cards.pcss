@@ -20,6 +20,37 @@
     @apply relative p-6 flex flex-col items-center text-center h-full;
   }
 
+  .soda-scs-manager--info-icon {
+    @apply absolute top-2 right-2 w-8 h-8 rounded-full border-0 cursor-pointer transition-all duration-200 ease-in-out;
+    @apply bg-white/90 hover:bg-white focus:bg-white;
+    @apply focus:outline-none focus:ring-2 focus:ring-orange-400/50;
+    @apply shadow-md hover:shadow-lg;
+    z-index: 50;
+
+    &::before {
+      content: '';
+      @apply absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      width: 20px;
+      height: 20px;
+      background-image: url('/modules/custom/soda_scs_manager/assets/images/info-icon.svg');
+      background-size: contain;
+      background-position: center;
+      background-repeat: no-repeat;
+      transition: all 0.2s ease-in-out;
+    }
+
+    &:hover::before {
+      background-image: url('/modules/custom/soda_scs_manager/assets/images/info-icon-hover.svg');
+    }
+
+    &:focus::before {
+      background-image: url('/modules/custom/soda_scs_manager/assets/images/info-icon-focus.svg');
+    }
+  }
+
   .soda-scs-manager--card-content-wrapper {
     @apply relative rounded-lg p-6 flex flex-col items-center text-center border-2 border-stone-200 hover:border-orange-400  transition-all duration-300 ease-in-out opacity-100 max-h-[1000px] overflow-hidden h-[360px] sm:h-[380px] md:h-[420px] lg:h-[460px] xl:h-[480px];
   }

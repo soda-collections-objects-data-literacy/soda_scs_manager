@@ -96,7 +96,7 @@
 }
 
 /* Button styling for field--name-field__use-button */
-.field--name-field__use-button {
+.main-content .field--name-field__use-button {
   display: inline-block;
   padding: 0.5rem 1rem;
   font-size: 0.875rem;
@@ -112,21 +112,21 @@
   text-decoration: none;
 }
 
-.field--name-field__use-button:hover {
+.main-content .field--name-field__use-button:hover {
   background-color: #fb923c;
   color: white;
 }
 
-.field--name-field__use-button:hover a {
+.main-content .field--name-field__use-button:hover a {
   color: white;
 }
 
-.field--name-field__use-button:focus {
+.main-content .field--name-field__use-button:focus {
   outline: none;
   box-shadow: 0 0 0 2px #fb923c, 0 0 0 4px rgba(251, 146, 60, 0.3);
 }
 
-.field--name-field__use-button:active {
+.main-content .field--name-field__use-button:active {
   background-color: #ea580c;
   border-color: #ea580c;
 }

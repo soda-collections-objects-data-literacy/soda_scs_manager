@@ -11,6 +11,7 @@ use Drupal\Core\Url;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 use Drupal\Core\Entity\EntityTypeBundleInfoInterface;
 use Drupal\user\Entity\User;
+use Drupal\soda_scs_manager\Helpers\SodaScsHelpers;
 
 /**
  * The SODa SCS Manager info controller.
@@ -39,23 +40,34 @@ class SodaScsManagerController extends ControllerBase {
   protected $bundleInfo;
 
   /**
+   * The Soda SCS helpers.
+   *
+   * @var \Drupal\soda_scs_manager\Helpers\SodaScsHelpers
+   */
+  protected $sodaScsHelpers;
+
+  /**
    * Class constructor.
    *
-   * @param \Drupal\Core\Entity\EntityTypeManagerInterface $entityTypeManager
-   *   The entity type manager.
-   * @param \Drupal\Core\Session\AccountInterface $currentUser
-   *   The current user.
    * @param \Drupal\Core\Entity\EntityTypeBundleInfoInterface $bundleInfo
    *   The bundle info service.
+   * @param \Drupal\Core\Session\AccountInterface $currentUser
+   *   The current user.
+   * @param \Drupal\Core\Entity\EntityTypeManagerInterface $entityTypeManager
+   *   The entity type manager.
+   * @param \Drupal\soda_scs_manager\Helpers\SodaScsHelpers $sodaScsHelpers
+   *   The Soda SCS helpers.
    */
   public function __construct(
-    EntityTypeManagerInterface $entityTypeManager,
-    AccountInterface $currentUser,
     EntityTypeBundleInfoInterface $bundleInfo,
+    AccountInterface $currentUser,
+    EntityTypeManagerInterface $entityTypeManager,
+    SodaScsHelpers $sodaScsHelpers,
   ) {
-    $this->entityTypeManager = $entityTypeManager;
-    $this->currentUser = $currentUser;
     $this->bundleInfo = $bundleInfo;
+    $this->currentUser = $currentUser;
+    $this->entityTypeManager = $entityTypeManager;
+    $this->sodaScsHelpers = $sodaScsHelpers;
   }
 
   /**
@@ -66,9 +78,10 @@ class SodaScsManagerController extends ControllerBase {
    */
   public static function create(ContainerInterface $container) {
     return new static(
-      $container->get('entity_type.manager'),
+      $container->get('entity_type.bundle.info'),
       $container->get('current_user'),
-      $container->get('entity_type.bundle.info')
+      $container->get('entity_type.manager'),
+      $container->get('soda_scs_manager.helpers'),
     );
   }
 
@@ -213,6 +226,7 @@ class SodaScsManagerController extends ControllerBase {
         '#type' => $bundleInfo['label']->render(),
         '#description' => $entity->get('description')->value,
         '#imageUrl' => $bundleInfo['imageUrl'],
+        '#learn_more_link' => '/app/' . $this->sodaScsHelpers->getEntityType($entity->bundle()),
         '#url' => Url::fromRoute('entity.' .
           $entity->getEntityTypeId() .
           '.canonical',
@@ -284,6 +298,7 @@ class SodaScsManagerController extends ControllerBase {
         '#imageUrl' => $stackBundle['imageUrl'],
         '#tags' => $stackBundle['tags'],
         '#url' => Url::fromRoute('entity.soda_scs_stack.add_form', ['bundle' => $id]),
+        '#learn_more_link' => '/app/' . $this->sodaScsHelpers->getEntityType($id),
         '#attached' => [
           'library' => ['soda_scs_manager/globalStyling'],
         ],
@@ -314,6 +329,7 @@ class SodaScsManagerController extends ControllerBase {
         '#imageUrl' => $componentBundle['imageUrl'],
         '#tags' => $componentBundle['tags'],
         '#url' => Url::fromRoute('entity.soda_scs_component.add_form', ['bundle' => $id]),
+        '#learn_more_link' => '/app/' . $this->sodaScsHelpers->getEntityType($id),
         '#attached' => [
           'library' => ['soda_scs_manager/globalStyling'],
         ],
