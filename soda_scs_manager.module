@@ -183,7 +183,7 @@ function soda_scs_manager_entity_bundle_info() {
     'class' => SodaScsComponentBundle::class,
     'description' => new TranslatableMarkup('A plain WissKI instance without data model and preconfigured triplestore connection.'),
     'imageUrl' => 'public://soda_scs_manager/images/wisski.svg',
-    'tags' => ['ontology', 'cms'],
+    'tags' => ['cms'],
   ];
 
   // Projects.
@@ -214,7 +214,7 @@ function soda_scs_manager_entity_bundle_info() {
     'class' => SodaScsStackBundle::class,
     'description' => new TranslatableMarkup('A WissKI environment contains a preconfigured WissKI, a Triplestore and a Database.'),
     'imageUrl' => 'public://soda_scs_manager/images/wisski-stack.svg',
-    'tags' => ['cms', 'database', 'ontology', 'publishing', 'triplestore'],
+    'tags' => ['cms', 'database', 'publishing', 'triplestore'],
   ];
 
   $bundles['soda_scs_stack']['soda_scs_nextcloud_stack'] = [

@@ -113,7 +113,7 @@
         // Filter cards based on active tags
         cards.forEach(card => {
           const cardTags = Array.from(card.querySelectorAll('.soda-scs-manager--card-tag'))
-            .map(tagEl => tagEl.textContent.trim());
+            .map(tagEl => tagEl.dataset.tag);
 
           console.log('Card tags:', cardTags);
 
