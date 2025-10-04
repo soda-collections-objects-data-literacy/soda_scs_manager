@@ -176,3 +176,19 @@
 #block-olivero-betaversionhelptext a:hover {
   color: #78350f;
 }
+
+/* Language interface menu styling */
+nav.menu--language-interface ul.links {
+  list-style: none;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 1rem;
+  margin: 0;
+}
+
+/* Text content ordered list styling */
+.text-content ol {
+  list-style-type: decimal;
+  list-style-position: inside;
+}
