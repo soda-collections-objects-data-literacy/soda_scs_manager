@@ -88,7 +88,7 @@ final class SodaScsComponentLinksTasksAccessControlHandler {
     $bundle = $soda_scs_component->bundle();
 
     // Hide the snapshot task for specific component types.
-    $hiddenBundles = ['soda_scs_webprotege_component'];
+    $hiddenBundles = ['soda_scs_webprotege_component', 'soda_scs_filesystem_component'];
     $result = in_array($bundle, $hiddenBundles, TRUE)
       ? AccessResult::forbidden()
       : AccessResult::allowed();
