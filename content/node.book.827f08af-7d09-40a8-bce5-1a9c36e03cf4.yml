@@ -11,8 +11,8 @@ dependencies:
     - 'user:user:83694812-fe3f-4bcc-9967-0d74373e94c9'
 fields:
   nid: '49'
-  vid: '144'
-  revision_timestamp: '1759232427'
+  vid: '215'
+  revision_timestamp: '1759605846'
   revision_uid:
     target_id: '68'
   revision_log: {  }
@@ -21,7 +21,7 @@ fields:
     target_id: '68'
   title: 'Getting started'
   created: '1759232406'
-  changed: '1759232427'
+  changed: '1759605846'
   promote: '0'
   sticky: '0'
   default_langcode: '1'
@@ -34,4 +34,7 @@ fields:
   menu_link: {  }
   content_translation_source: und
   content_translation_outdated: '0'
-  body: {  }
+  body:
+    value: '<h2>Context</h2><p>Welcome to the SODa Semantic Co-Working Space! This guide will help you take your first steps in using the SCS Manager to deploy and manage research infrastructure for academic university collections.</p><h2>What you''ll learn</h2><p>The Getting Started section covers the essential steps to begin working with the SCS:</p><ol><li><strong>Creating your account</strong> - Set up your SCS Manager account to access all available services</li><li><strong>Deploying your first application</strong> - Launch a WissKI environment and start working with your research data</li></ol><h2>Prerequisites</h2><p>None.</p><h2>Your Journey</h2><p>Follow these steps in order to get up and running:</p><h3>Step 1: Create Your Account</h3><p>Start by <a href="https://scs.sammlungen.io/docs/getting-started/account" data-entity-type="external">creating an account</a>. This is required to access most of the SCS features. Once your account is approved by our administrators, you''ll receive a confirmation email and can proceed to log in.</p><h3>Step 2: Deploy Your First Application</h3><p>After logging in, learn how to <a href="/docs/getting-started/1st-app">get your first application running</a>. We''ll walk you through deploying a WissKI environment, which includes everything you need to start managing your research data.</p><h2>What''s Next?</h2><p>Once you''ve completed these initial steps, you can explore:</p><ul><li><a href="/docs/interface">The interface</a> - Learn about the Catalogue, Dashboard, and Administration areas</li><li>Available applications - Discover all the tools and services at your disposal</li><li>Projects - Organize your applications and collaborate with others</li><li>Snapshots - Back up and restore your work</li></ul><h3>Need Help?</h3><p>If you encounter any issues or have questions, please contact your system administrator.</p>'
+    summary: ''
+    format: basic_html

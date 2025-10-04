@@ -38,7 +38,7 @@
         {% else %}
           bg-stone-100 text-stone-700 hover:bg-stone-200
         {% endif %}" data-tag="{{ tag }}">
-        {{ tag }}
+        {{ tag|t }}
         <span class="soda-scs-manager--tag-remove hidden">×</span>
       </button>
     {% endfor %}

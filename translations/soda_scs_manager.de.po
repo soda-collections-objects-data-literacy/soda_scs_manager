@@ -70,7 +70,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: SODa SCS Manager (0.0.1)\n"
 "POT-Creation-Date: 2025-04-22 10:52+0200\n"
-"PO-Revision-Date: 2025-04-22 10:52+0200\n"
+"PO-Revision-Date: 2025-10-04 20:45+0000\n"
 "Last-Translator: Robert Nasarek <r.nasarek@gnm.de>\n"
 "Language-Team: German <j.neubauer@gnm.de>\n"
 "MIME-Version: 1.0\n"
@@ -1941,3 +1941,335 @@ msgstr "Keine Stacks verfügbar."
 #: templates/pages/soda-scs-manager--catalogue.html.twig:30
 msgid "No applications available."
 msgstr "Keine Komponenten verfügbar."
+
+#: src/Form/SodaScsSettingsForm.php:101
+msgid "Administrator email"
+msgstr "Administrator-E-Mail"
+
+#: src/Form/SodaScsSettingsForm.php:103
+msgid "The administrator email, like admin@scs.sammlungen.io."
+msgstr "Die Administrator-E-Mail, wie admin@scs.sammlungen.io."
+
+#: src/Form/SodaScsSettingsForm.php:108
+msgid "Snapshot path"
+msgstr "Snapshot-Pfad"
+
+#: src/Form/SodaScsSettingsForm.php:110
+msgid "The snapshot path in addition to the private file system path, like /snapshots."
+msgstr "Der Snapshot-Pfad zusätzlich zum privaten Dateisystem-Pfad, wie /snapshots."
+
+#: src/Form/SodaScsSettingsForm.php:116
+msgid "Database settings"
+msgstr "Datenbankeinstellungen"
+
+#: src/Form/SodaScsSettingsForm.php:128
+msgid "Database host"
+msgstr "Datenbank-Host"
+
+#: src/Form/SodaScsSettingsForm.php:130
+msgid "The database host, like https://db.scs.sammlungen.io."
+msgstr "Der Datenbank-Host, wie https://db.scs.sammlungen.io."
+
+#: src/Form/SodaScsSettingsForm.php:134
+msgid "Database port"
+msgstr "Datenbank-Port"
+
+#: src/Form/SodaScsSettingsForm.php:136
+msgid "The database port, like 3306."
+msgstr "Der Datenbank-Port, wie 3306."
+
+#: src/Form/SodaScsSettingsForm.php:140
+msgid "Root password"
+msgstr "Root-Passwort"
+
+#: src/Form/SodaScsSettingsForm.php:142
+msgid "The root password, like root."
+msgstr "Das Root-Passwort, wie root."
+
+#: src/Form/SodaScsSettingsForm.php:147
+msgid "Management host"
+msgstr "Verwaltungs-Host"
+
+#: src/Form/SodaScsSettingsForm.php:149
+msgid "The management host, like https://adminer-db.scs.sammlungen.io."
+msgstr "Der Verwaltungs-Host, wie https://adminer-db.scs.sammlungen.io."
+
+#: src/Form/SodaScsSettingsForm.php:156
+msgid "JupyterHub settings"
+msgstr "JupyterHub-Einstellungen"
+
+#: src/Form/SodaScsSettingsForm.php:168
+msgid "Base URL"
+msgstr "Basis-URL"
+
+#: src/Form/SodaScsSettingsForm.php:170
+msgid "The base URL, like https://jupyterhub.scs.sammlungen.io."
+msgstr "Die Basis-URL, wie https://jupyterhub.scs.sammlungen.io."
+
+#: src/Form/SodaScsSettingsForm.php:177
+msgid "Keycloak settings"
+msgstr "Keycloak-Einstellungen"
+
+#: src/Form/SodaScsSettingsForm.php:190
+msgid "General Keycloak settings"
+msgstr "Allgemeine Keycloak-Einstellungen"
+
+#: src/Form/SodaScsSettingsForm.php:197
+msgid "Keycloak settings"
+msgstr "Keycloak-Einstellungen"
+
+#: src/Exception/SodaScsPortainerException.php:38
+msgid "Portainer request failed: @message"
+msgstr "Portainer-Anfrage fehlgeschlagen: @message"
+
+#: src/Exception/SodaScsPortainerException.php:59
+msgid "Service operation failed. Please try again later."
+msgstr "Dienstvorgang fehlgeschlagen. Bitte versuchen Sie es später erneut."
+
+#: src/Form/SodaScsComponentCreateForm.php:186
+msgid "Create a new @label"
+msgstr "Neue @label erstellen"
+
+#: src/Form/SodaScsComponentCreateForm.php:190
+msgid "What is that?"
+msgstr "Was ist das?"
+
+#: src/Form/SodaScsComponentCreateForm.php:216
+msgid "Mandatory field. Choose existing project or add new project <a href=\":url\">here</a>."
+msgstr "Pflichtfeld. Wählen Sie ein vorhandenes Projekt oder fügen Sie <a href=\":url\">hier</a> ein neues Projekt hinzu."
+
+#: src/Form/SodaScsComponentCreateForm.php:238
+msgid "CREATE"
+msgstr "ERSTELLEN"
+
+#: src/Form/SodaScsComponentCreateForm.php:258
+msgid "The machineName can only contain small letters, digits, minus, and underscore"
+msgstr "Der Maschinenname darf nur Kleinbuchstaben, Ziffern, Minus und Unterstrich enthalten"
+
+#: src/Form/SodaScsComponentCreateForm.php:308
+msgid "The machineName cannot contain the word \"@word\""
+msgstr "Der Maschinenname darf das Wort \"@word\" nicht enthalten"
+
+#: src/Form/SodaScsComponentCreateForm.php:319
+msgid "The machineName is already in use by another Soda SCS Component entity"
+msgstr "Der Maschinenname wird bereits von einer anderen Soda SCS-Komponenten-Entität verwendet"
+
+#: src/Helpers/SodaScsProjectHelpers.php:113;116
+msgid "No project group ID found for project @project."
+msgstr "Keine Projekt-Gruppen-ID für Projekt @project gefunden."
+
+#: src/Helpers/SodaScsProjectHelpers.php:129
+msgid "Failed to get Keycloak token."
+msgstr "Keycloak-Token konnte nicht abgerufen werden."
+
+#: src/Helpers/SodaScsProjectHelpers.php:140;141
+msgid "No Keycloak token found."
+msgstr "Kein Keycloak-Token gefunden."
+
+#: src/Helpers/SodaScsProjectHelpers.php:157
+msgid "Failed to get Keycloak groups for project @project."
+msgstr "Keycloak-Gruppen für Projekt @project konnten nicht abgerufen werden."
+
+#: src/Helpers/SodaScsProjectHelpers.php:170
+msgid "Keycloak group @projectGroupId for project @project already exists."
+msgstr "Keycloak-Gruppe @projectGroupId für Projekt @project existiert bereits."
+
+#: src/Helpers/SodaScsProjectHelpers.php:181
+msgid "Keycloak group @projectGroupId for project @project does not exist."
+msgstr "Keycloak-Gruppe @projectGroupId für Projekt @project existiert nicht."
+
+#: src/Helpers/SodaScsProjectHelpers.php:582
+msgid "Project group UUID is empty for project @project."
+msgstr "Projekt-Gruppen-UUID ist leer für Projekt @project."
+
+#: src/Helpers/SodaScsProjectHelpers.php:599
+msgid "Failed to delete project group @projectGroupUuid from Keycloak for project @project."
+msgstr "Projektgruppe @projectGroupUuid konnte nicht aus Keycloak für Projekt @project gelöscht werden."
+
+#: src/Helpers/SodaScsProjectHelpers.php:610
+msgid "Successfully deleted project group @projectGroupUuid from Keycloak for project @project."
+msgstr "Projektgruppe @projectGroupUuid erfolgreich aus Keycloak für Projekt @project gelöscht."
+
+#: src/Helpers/SodaScsProjectHelpers.php:732
+msgid "Failed to get group members from Keycloak for project @project."
+msgstr "Gruppenmitglieder konnten nicht aus Keycloak für Projekt @project abgerufen werden."
+
+#: src/Helpers/SodaScsProjectHelpers.php:771
+msgid "Failed to add user @user to group @group in Keycloak for project @project."
+msgstr "Benutzer @user konnte nicht zur Gruppe @group in Keycloak für Projekt @project hinzugefügt werden."
+
+#: templates/pages/soda-scs-manager--start-page.html.twig:15
+msgid "New here? Start <a href=\"@tour_url\">the beginners tour</a> to learn more about the possibilities."
+msgstr "Neu hier? Starten Sie <a href=\"@tour_url\">die Einführungstour</a>, um mehr über die Möglichkeiten zu erfahren."
+
+#: templates/pages/soda-scs-manager--start-page.html.twig:26
+msgid "Dashboard"
+msgstr "Dashboard"
+
+#: templates/pages/soda-scs-manager--start-page.html.twig:27
+msgid "Manage your applications in use"
+msgstr "Verwalten Sie Ihre verwendeten Anwendungen"
+
+#: templates/pages/soda-scs-manager--start-page.html.twig:38
+msgid "Catalogue"
+msgstr "Katalog"
+
+#: templates/pages/soda-scs-manager--start-page.html.twig:39
+msgid "Browse available applications"
+msgstr "Verfügbare Anwendungen durchsuchen"
+
+#: templates/pages/soda-scs-manager--start-page.html.twig:49
+msgid "Documentation"
+msgstr "Dokumentation"
+
+#: templates/pages/soda-scs-manager--start-page.html.twig:50
+msgid "Read guides and documentation"
+msgstr "Anleitungen und Dokumentation lesen"
+
+#: templates/pages/soda-scs-manager--start-page.html.twig:60
+msgid "Administration"
+msgstr "Verwaltung"
+
+#: templates/pages/soda-scs-manager--start-page.html.twig:61
+msgid "Configure system settings"
+msgstr "Systemeinstellungen konfigurieren"
+
+#: templates/pages/soda-scs-manager--tour.html.twig:13
+msgid "Beginners Tour"
+msgstr "Einführungstour"
+
+#: templates/pages/soda-scs-manager--dashboard.html.twig:51
+msgid "Applications of User @username"
+msgstr "Anwendungen von Benutzer @username"
+
+#: templates/cards/soda-scs-manager--entity-card.html.twig:31
+msgid "Filter by tag @tag"
+msgstr "Nach Tag @tag filtern"
+
+#: templates/cards/soda-scs-manager--entity-card.html.twig:36
+msgid "Learn more information about @title"
+msgstr "Mehr Informationen über @title erfahren"
+
+#: templates/cards/soda-scs-manager--entity-card.html.twig:37
+msgid "Learn more information"
+msgstr "Mehr Informationen erfahren"
+
+#: templates/pages/soda-scs-manager--dashboard.html.twig:42;templates/pages/soda-scs-manager--catalogue.html.twig:41;templates/cards/soda-scs-manager--entity-card.html.twig:31
+msgid "coding"
+msgstr "Programmierung"
+
+#: templates/pages/soda-scs-manager--dashboard.html.twig:42;templates/pages/soda-scs-manager--catalogue.html.twig:41;templates/cards/soda-scs-manager--entity-card.html.twig:31
+msgid "cms"
+msgstr "CMS"
+
+#: templates/pages/soda-scs-manager--dashboard.html.twig:42;templates/pages/soda-scs-manager--catalogue.html.twig:41;templates/cards/soda-scs-manager--entity-card.html.twig:31
+msgid "data-cleaning"
+msgstr "Datenbereinigung"
+
+#: templates/pages/soda-scs-manager--dashboard.html.twig:42;templates/pages/soda-scs-manager--catalogue.html.twig:41;templates/cards/soda-scs-manager--entity-card.html.twig:31
+msgid "data-science"
+msgstr "Datenwissenschaft"
+
+#: templates/pages/soda-scs-manager--dashboard.html.twig:42;templates/pages/soda-scs-manager--catalogue.html.twig:41;templates/cards/soda-scs-manager--entity-card.html.twig:31
+msgid "database"
+msgstr "Datenbank"
+
+#: templates/pages/soda-scs-manager--dashboard.html.twig:42;templates/pages/soda-scs-manager--catalogue.html.twig:41;templates/cards/soda-scs-manager--entity-card.html.twig:31
+msgid "filesharing"
+msgstr "Dateifreigabe"
+
+#: templates/pages/soda-scs-manager--dashboard.html.twig:42;templates/pages/soda-scs-manager--catalogue.html.twig:41;templates/cards/soda-scs-manager--entity-card.html.twig:31
+msgid "office"
+msgstr "Büro"
+
+#: templates/pages/soda-scs-manager--dashboard.html.twig:42;templates/pages/soda-scs-manager--catalogue.html.twig:41;templates/cards/soda-scs-manager--entity-card.html.twig:31
+msgid "ontology"
+msgstr "Ontologie"
+
+#: templates/pages/soda-scs-manager--dashboard.html.twig:42;templates/pages/soda-scs-manager--catalogue.html.twig:41;templates/cards/soda-scs-manager--entity-card.html.twig:31
+msgid "publishing"
+msgstr "Veröffentlichung"
+
+#: templates/pages/soda-scs-manager--dashboard.html.twig:42;templates/pages/soda-scs-manager--catalogue.html.twig:41;templates/cards/soda-scs-manager--entity-card.html.twig:31
+msgid "triplestore"
+msgstr "Triplestore"
+
+#: soda_scs_manager.module:150
+msgid "Shared Folder"
+msgstr "Gemeinsamer Ordner"
+
+#: soda_scs_manager.module:152
+msgid "A shared folder for distributing files across project and applications.."
+msgstr "Ein gemeinsamer Ordner zur Verteilung von Dateien über Projekte und Anwendungen hinweg."
+
+#: soda_scs_manager.module:158
+msgid "SQL Database"
+msgstr "SQL-Datenbank"
+
+#: soda_scs_manager.module:160
+msgid "A relational database for storage of structured data."
+msgstr "Eine relationale Datenbank zur Speicherung strukturierter Daten."
+
+#: soda_scs_manager.module:166
+msgid "Triplestore"
+msgstr "Triplestore"
+
+#: soda_scs_manager.module:168
+msgid "Graph database for storage of RDF data."
+msgstr "Graphdatenbank zur Speicherung von RDF-Daten."
+
+#: soda_scs_manager.module:174
+msgid "WebProtégé"
+msgstr "WebProtégé"
+
+#: soda_scs_manager.module:176
+msgid "A web-based tool for creating and editing OWL ontologies. Webprotege is not yet part of the Single Sign On (SSO) system. You will need to create an account and log in manually."
+msgstr "Ein webbasiertes Tool zum Erstellen und Bearbeiten von OWL-Ontologien. Webprotege ist noch nicht Teil des Single-Sign-On-Systems (SSO). Sie müssen ein Konto erstellen und sich manuell anmelden."
+
+#: soda_scs_manager.module:182
+msgid "WissKI"
+msgstr "WissKI"
+
+#: soda_scs_manager.module:184
+msgid "A plain WissKI instance without data model and preconfigured triplestore connection."
+msgstr "Eine einfache WissKI-Instanz ohne Datenmodell und vorkonfigurierte Triplestore-Verbindung."
+
+#: soda_scs_manager.module:191
+msgid "Default Project"
+msgstr "Standardprojekt"
+
+#: soda_scs_manager.module:193
+msgid "A Project is a collection of components and stacks."
+msgstr "Ein Projekt ist eine Sammlung von Komponenten und Stacks."
+
+#: soda_scs_manager.module:198
+msgid "Default Service Key"
+msgstr "Standard-Serviceschlüssel"
+
+#: soda_scs_manager.module:200
+msgid "A Service Key is a key for a service."
+msgstr "Ein Serviceschlüssel ist ein Schlüssel für einen Dienst."
+
+#: soda_scs_manager.module:205
+msgid "JupyterLab"
+msgstr "JupyterLab"
+
+#: soda_scs_manager.module:207
+msgid "A JupyterLab environment contains Jupyter Notebooks and OpenRefine."
+msgstr "Eine JupyterLab-Umgebung enthält Jupyter Notebooks und OpenRefine."
+
+#: soda_scs_manager.module:213
+msgid "WissKI Environment"
+msgstr "WissKI-Umgebung"
+
+#: soda_scs_manager.module:215
+msgid "A WissKI environment contains a preconfigured WissKI, a Triplestore and a Database."
+msgstr "Eine WissKI-Umgebung enthält ein vorkonfiguriertes WissKI, einen Triplestore und eine Datenbank."
+
+#: soda_scs_manager.module:221
+msgid "Nextcloud"
+msgstr "Nextcloud"
+
+#: soda_scs_manager.module:223
+msgid "A Nextcloud Environment contains Nextcloud, Draw.io and OnlyOffice."
+msgstr "Eine Nextcloud-Umgebung enthält Nextcloud, Draw.io und OnlyOffice."

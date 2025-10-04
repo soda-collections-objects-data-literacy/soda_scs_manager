@@ -11,8 +11,8 @@ dependencies:
     - 'user:user:83694812-fe3f-4bcc-9967-0d74373e94c9'
 fields:
   nid: '57'
-  vid: '153'
-  revision_timestamp: '1759232815'
+  vid: '220'
+  revision_timestamp: '1759606849'
   revision_uid:
     target_id: '68'
   revision_log: {  }
@@ -21,7 +21,7 @@ fields:
     target_id: '68'
   title: Projects
   created: '1759232789'
-  changed: '1759232815'
+  changed: '1759606849'
   promote: '0'
   sticky: '0'
   default_langcode: '1'
@@ -34,4 +34,7 @@ fields:
   menu_link: {  }
   content_translation_source: und
   content_translation_outdated: '0'
-  body: {  }
+  body:
+    value: '<h2>Context</h2><p>Projects are collaborative frameworks that organize related applications and team members together. They provide a structured way to manage access, share resources, and coordinate work across multiple applications within the SODa SCS.</p><h2>Goals</h2><ul><li>Understand what projects are and how they work</li><li>Learn how to create and manage projects</li><li>Know how to connect applications to projects</li><li>Organize team collaboration effectively</li></ul><h2>Prerequisites</h2><ul><li>An active <a href="/docs/getting-started/account">SODa SCS Manager account</a></li><li>At least one deployed application (recommended)</li><li>Familiarity with the <a href="/docs/dashboard">Dashboard</a></li></ul><h2>What Are Projects?</h2><p>A project is a collection of applications and team members working together on related research activities. When you connect applications to a project, all project members gain access to those applications, making collaboration seamless.</p><h3>Key Features</h3><ul><li><strong>Shared Access</strong> - All project members can access connected applications</li><li><strong>Organization</strong> - Group related applications by research topic or team</li><li><strong>Collaboration</strong> - Work together with colleagues on the same applications</li><li><strong>Default Project</strong> - Every user automatically has a personal default project</li></ul><h2>Working with Projects</h2><h3>Your Default Project</h3><p>When you first create an account, the system automatically creates a default project for you. This personal project contains your individually deployed applications and is named after your username.</p><p>Project membership has different effects depending on the application:</p><ul><li><strong>WissKI Environment</strong>: Project members can log in with their Keycloak account and receive an admin account in the WissKI</li><li><strong>Shared Folder</strong>: Can read from and write to the shared folder.<br>Instance. </li><li><strong>Nextcloud</strong>: No impact (yet)</li><li><strong>JupyterLab</strong>: No impact (yet)</li><li><strong>Webprotégé</strong>: No impact (yet)</li><li><strong>MariaDB/Adminer</strong>: No impact (yet)</li><li><strong>Open GDB</strong>: No impact (yet)</li></ul><h3>Creating a New Project</h3><p>To create a project for team collaboration:</p><ol><li>Navigate to your <a href="/docs/dashboard">Dashboard</a> respectively the main navigation and choose "Administration" and then "<a href="/soda-scs-manager/project/list">Projects</a>".</li><li>Click the "Add project" button.</li><li>Add a description explaining the project''s scope, add members and applications.</li><li>Save the project.</li></ol><h3>Add applications to projects</h3><p>When deploying a new application:</p><ol><li>Select an application from the <a href="/docs/catalogue">Catalogue</a></li><li>In the deployment form, choose a project from the <strong>Project</strong> dropdown</li><li>Complete the deployment</li></ol><p>For existing applications:</p><ol><li>Open the application''s detail page from your <a href="/docs/dashboard">Dashboard</a></li><li>Click "Edit"</li><li>Select a different project from the dropdown</li><li>Save your changes</li></ol><h3>Managing Project Membership</h3><p>Project administrators can add or remove team members to control who has access to the project''s applications. This is typically done through the <a href="/docs/interface/admin">Administration</a> area under SODa SCS Projects.</p><h2>Additional Resources</h2><ul><li><a href="/docs/dashboard">Managing Your Dashboard</a></li><li><a href="/docs/interface/admin">Administration Guide</a></li><li><a href="/docs/catalogue">Deploying Applications</a></li><li><a href="/docs/getting-started">Getting Started</a></li></ul>'
+    summary: ''
+    format: basic_html

@@ -11,8 +11,8 @@ dependencies:
     - 'user:user:83694812-fe3f-4bcc-9967-0d74373e94c9'
 fields:
   nid: '55'
-  vid: '178'
-  revision_timestamp: '1759391724'
+  vid: '212'
+  revision_timestamp: '1759604991'
   revision_uid:
     target_id: '68'
   revision_log: {  }
@@ -21,20 +21,20 @@ fields:
     target_id: '68'
   title: 'Get your first application'
   created: '1759232656'
-  changed: '1759391724'
+  changed: '1759604991'
   promote: '0'
   sticky: '0'
   default_langcode: '1'
   revision_default: '1'
-  revision_translation_affected: '1'
+  revision_translation_affected: {  }
   path:
-    alias: /apps/getting-started/1st-app
+    alias: /docs/getting-started/1st-app
     pid: '60'
     langcode: en
   menu_link: {  }
   content_translation_source: und
   content_translation_outdated: '0'
   body:
-    value: '<h2>Context</h2><p>Applications are the main tools in SCS. There are applications that can be deployed multiple times, including single applications such as databases or triplestores and bundled applications such as WissKI systems, which consist of a Drupal/WissKI, a triplestore, and a database. In addition, accounts are provided for Almende applications. These include Nextcloud, Jupyterhub, and Webprotege.&nbsp;</p><h2>Goals</h2><ul><li>You deploy a WissKI environment and log in to it.</li></ul><h2>Prerequisites</h2><ul><li>You have already <a href="/documentation/getting-started/creating-account">registered to the SCS</a>.</li></ul><h2>Content</h2><h3>Deploy your first application</h3><p>Navigate to the <a href="/soda-scs-manager/catalogue">Catalogue</a>. You see all available applications. Choose <em>WissKI Environment.</em> In the form that appears, give the application a <strong>Label </strong>(<strong>Machine name</strong> will be computed by typing), leave the <strong>Project</strong> assignment to your <strong>Username''s defaults project</strong> and if you like, you can have some <strong>Notes</strong> for your application. Click <em>CREATE</em>.&nbsp;</p><h3>Wait for the deployment</h3><p>You get redirected to the <a href="/soda-scs-manager/dashboard">Dashboard</a>, where you can see all of your applications and accounts. Choose the application you just created. You see an overview with links to connected <strong>Projects</strong> or the <strong>Owner</strong>. Since it''''s a bundled application, it consists of three <strong>Included applications</strong>. Click on the application with <em>(WissKI)</em> at the end. You see a <strong>Healthcheck</strong>, indicating if your application is <em>Running</em> or <em>not ready (yet)</em>. It takes several minutes, be patient.&nbsp;</p><p>If your application is <em>Running</em>, click on Catalogue in the tab bar. You get redirected to your WissKI instance.</p><h3>Login with single sign on</h3><p>Click on the Log in button in the upper right corner. Log in with SODa SCS Client. If asked, enter your single sign on credentials to login and seeing your user page. Congratulation you have deployed your first application!&nbsp;</p><h2>Additional Resources</h2><ul><li>More about the <a href="https://wiss-ki.eu">WissKI Environment</a>.<br>&nbsp;</li></ul>'
+    value: '<h2>Context</h2><p>Applications are the main tools in SCS. There are applications that can be deployed multiple times, including single applications such as databases or triplestores and bundled applications such as WissKI systems, which consist of a Drupal/WissKI, a triplestore, and a database. In addition, accounts are provided for Almende applications. These include Nextcloud, Jupyterhub, and Webprotege.&nbsp;</p><h2>Goals</h2><ul><li>You deploy a WissKI environment and log in to it.</li></ul><h2>Prerequisites</h2><ul><li>You have already <a href="/documentation/getting-started/creating-account">registered to the SCS</a>.</li></ul><h2>How to...</h2><h3>Deploy your first application</h3><p>Navigate to the <a href="/soda-scs-manager/catalogue">Catalogue</a>. You see all available applications. Choose <em>WissKI Environment.</em> In the form that appears, give the application a <strong>Label </strong>(<strong>Machine name</strong> will be computed by typing), leave the <strong>Project</strong> assignment to your <strong>Username''s defaults project</strong> and if you like, you can have some <strong>Notes</strong> for your application. Click <em>CREATE</em>.&nbsp;</p><h3>Wait for the deployment</h3><p>You get redirected to the <a href="/soda-scs-manager/dashboard">Dashboard</a>, where you can see all of your applications and accounts. Choose the application you just created. You see an overview with links to connected <strong>Projects</strong> or the <strong>Owner</strong>. Since it''''s a bundled application, it consists of three <strong>Included applications</strong>. Click on the application with <em>(WissKI)</em> at the end. You see a <strong>Healthcheck</strong>, indicating if your application is <em>Running</em> or <em>not ready (yet)</em>. It takes several minutes, be patient.&nbsp;</p><p>If your application is <em>Running</em>, click on Catalogue in the tab bar. You get redirected to your WissKI instance.</p><h3>Login with single sign on</h3><p>Click on the Log in button in the upper right corner. Log in with SODa SCS Client. If asked, enter your single sign on credentials to login and seeing your user page. Congratulation you have deployed your first application!&nbsp;</p><h2>Additional Resources</h2><ul><li>More about the <a href="https://wiss-ki.eu">WissKI Environment</a>.<br>&nbsp;</li></ul>'
     summary: ''
     format: basic_html

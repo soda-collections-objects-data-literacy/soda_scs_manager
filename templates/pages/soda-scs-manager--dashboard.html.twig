@@ -39,7 +39,7 @@
         {% else %}
           bg-stone-100 text-stone-700 hover:bg-stone-200
         {% endif %}" data-tag="{{ tag }}">
-        {{ tag }}
+        {{ tag|t }}
         <span class="soda-scs-manager--tag-remove hidden">×</span>
       </button>
     {% endfor %}
@@ -48,7 +48,7 @@
     {% if entitiesByUser is not empty %}
       {% for username, entities in entitiesByUser %}
         <div class="text-center mb-8">
-          <h2 class="text-3xl font-bold text-stone-200 mb-4"> Applications of User {{ username }}</h2>
+          <h2 class="text-3xl font-bold text-stone-200 mb-4">{{ 'Applications of User @username'|t({'@username': username}) }}</h2>
         </div>
 
         {% set entity_count = entities|length %}
