@@ -254,7 +254,7 @@ class SodaScsSnapshotRestoreForm extends ConfirmFormBase {
           Error::logException(
             $this->loggerFactory->get('soda_scs_manager'),
             new \Exception('Checksum mismatch'),
-            $this->t('Snapshot restore failed: Checksum verification failed for snapshot @id. The file may be corrupted.', ['@id' => $this->snapshot->id()]),
+            (string) $this->t('Snapshot restore failed: Checksum verification failed for snapshot @id. The file may be corrupted.', ['@id' => $this->snapshot->id()]),
             [],
             LogLevel::ERROR
           );
@@ -281,7 +281,7 @@ class SodaScsSnapshotRestoreForm extends ConfirmFormBase {
       Error::logException(
         $this->loggerFactory->get('soda_scs_manager'),
         new \Exception('Target entity not found'),
-        $this->t('Snapshot restore failed: Target entity not found for snapshot @id.', ['@id' => $this->snapshot->id()]),
+        (string) $this->t('Snapshot restore failed: Target entity not found for snapshot @id.', ['@id' => $this->snapshot->id()]),
         [],
         LogLevel::ERROR
       );
@@ -313,7 +313,7 @@ class SodaScsSnapshotRestoreForm extends ConfirmFormBase {
       Error::logException(
         $this->loggerFactory->get('soda_scs_manager'),
         $e,
-        $this->t('Snapshot restore failed: @message', ['@message' => $e->getMessage()]),
+        (string) $this->t('Snapshot restore failed: @message', ['@message' => $e->getMessage()]),
         [],
         LogLevel::ERROR
       );

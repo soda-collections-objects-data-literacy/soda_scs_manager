@@ -313,7 +313,7 @@ class SodaScsSnapshotConfirmForm extends ConfirmFormBase {
         Error::logException(
           $this->loggerFactory->get('soda_scs_manager'),
           new \Exception($error),
-          $this->t('Failed to create snapshot. @error', ['@error' => $error]),
+          (string) $this->t('Failed to create snapshot. @error', ['@error' => $error]),
           [],
           LogLevel::ERROR
         );
@@ -389,7 +389,7 @@ class SodaScsSnapshotConfirmForm extends ConfirmFormBase {
         Error::logException(
           $this->loggerFactory->get('soda_scs_manager'),
           $e,
-          $this->t('Safe cleanup after snapshot creation failed: @error', ['@error' => $e->getMessage()]),
+          (string) $this->t('Safe cleanup after snapshot creation failed: @error', ['@error' => $e->getMessage()]),
           [],
           LogLevel::WARNING
         );
@@ -400,7 +400,7 @@ class SodaScsSnapshotConfirmForm extends ConfirmFormBase {
       Error::logException(
         $this->loggerFactory->get('soda_scs_manager'),
         $e,
-        $this->t('Failed to create snapshot. @error', ['@error' => $e->getMessage()]),
+        (string) $this->t('Failed to create snapshot. @error', ['@error' => $e->getMessage()]),
         [],
         LogLevel::ERROR
       );
