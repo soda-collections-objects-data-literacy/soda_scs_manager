@@ -78,6 +78,70 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 
+#: src/Form/KeycloakUserRegistrationForm.php:139
+msgid "<p>Register for an account. Your registration will be reviewed by an administrator.</p>"
+msgstr "<p>Registrieren Sie sich für ein Konto. Ihre Registrierung wird von einem Administrator überprüft.</p>"
+
+#: src/Form/KeycloakUserRegistrationForm.php:144
+msgid "Email address"
+msgstr "E-Mail-Adresse"
+
+#: src/Form/KeycloakUserRegistrationForm.php:146
+msgid "Enter a valid email address. This will be used for communication and login."
+msgstr "Geben Sie eine gültige E-Mail-Adresse ein. Diese wird für die Kommunikation und die Anmeldung verwendet."
+
+#: src/Form/KeycloakUserRegistrationForm.php:151
+msgid "Username"
+msgstr "Benutzername"
+
+#: src/Form/KeycloakUserRegistrationForm.php:153
+msgid "Enter a username for your account."
+msgstr "Geben Sie einen Benutzernamen für Ihr Konto ein."
+
+#: src/Form/KeycloakUserRegistrationForm.php:158
+msgid "First name"
+msgstr "Vorname"
+
+#: src/Form/KeycloakUserRegistrationForm.php:160
+msgid "Enter your first name."
+msgstr "Geben Sie Ihren Vornamen ein."
+
+#: src/Form/KeycloakUserRegistrationForm.php:165
+msgid "Last name"
+msgstr "Nachname"
+
+#: src/Form/KeycloakUserRegistrationForm.php:167
+msgid "Enter your last name."
+msgstr "Geben Sie Ihren Nachnamen ein."
+
+#: src/Form/KeycloakUserRegistrationForm.php:173
+msgid "Enter the password you would like to use."
+msgstr "Geben Sie das Passwort ein, das Sie verwenden möchten."
+
+#: src/Form/KeycloakUserRegistrationForm.php:182
+msgid "Register"
+msgstr "Registrieren"
+
+#: src/Form/KeycloakUserRegistrationForm.php:196
+msgid "The email address %mail is not valid."
+msgstr "Die E-Mail-Adresse %mail ist nicht gültig."
+
+#: src/Form/KeycloakUserRegistrationForm.php:207
+msgid "There is already a pending registration for this email address."
+msgstr "Für diese E-Mail-Adresse liegt bereits eine ausstehende Registrierung vor."
+
+#: src/Form/KeycloakUserRegistrationForm.php:213
+msgid "Username may only contain alphanumeric characters and underscores."
+msgstr "Der Benutzername darf nur alphanumerische Zeichen und Unterstriche enthalten."
+
+#: src/Form/KeycloakUserRegistrationForm.php:224
+msgid "This username is already taken."
+msgstr "Dieser Benutzername ist bereits vergeben."
+
+#: src/Form/KeycloakUserRegistrationForm.php:314
+msgid "Your registration has been submitted and is pending approval. You will be notified by email when your account is approved."
+msgstr "Ihre Registrierung wurde übermittelt und wartet auf Freigabe. Sie werden per E-Mail benachrichtigt, sobald Ihr Konto genehmigt wurde."
+
 #: soda_scs_manager.module:41
 msgid "About"
 msgstr "Über"
@@ -761,6 +825,11 @@ msgstr "Aktualisiert"
 #: src/Entity/SodaScsComponent.php:371 src/Entity/SodaScsStack.php:278
 msgid "The time that the SODa SCS Component was last updated."
 msgstr "Der Zeitpunkt der letzten Aktualisierung der SODa SCS-Komponente."
+
+#: src/Entity/SodaScsStack.php:368
+msgid "Notes about the SODa SCS application."
+msgstr "Notizen über die SODa SCS Anwendung."
+
 
 #: src/Entity/SodaScsComponent.php:12;12 src/Entity/SodaScsServiceKey.php:119
 msgid "SODa SCS Component"
