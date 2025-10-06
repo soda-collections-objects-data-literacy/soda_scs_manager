@@ -158,14 +158,14 @@ class KeycloakUserRegistrationForm extends FormBase {
       '#type' => 'textfield',
       '#title' => $this->t('First name'),
       '#required' => TRUE,
-      '#description' => $this->t('Enter your first name.'),
+      '#description' => $this->t('Enter your first name. Only letters, spaces, hyphens, apostrophes, and periods are allowed.'),
     ];
 
     $form['last_name'] = [
       '#type' => 'textfield',
       '#title' => $this->t('Last name'),
       '#required' => TRUE,
-      '#description' => $this->t('Enter your last name.'),
+      '#description' => $this->t('Enter your last name. Only letters, spaces, hyphens, apostrophes, and periods are allowed.'),
     ];
 
     $form['password'] = [
@@ -212,6 +212,18 @@ class KeycloakUserRegistrationForm extends FormBase {
     $username = $form_state->getValue('username');
     if (!preg_match('/^[a-zA-Z0-9_]+$/', $username)) {
       $form_state->setErrorByName('username', $this->t('Username may only contain alphanumeric characters and underscores.'));
+    }
+
+    // Validate first name (no special characters except accented letters).
+    $firstName = $form_state->getValue('first_name');
+    if (!preg_match('/^[\p{L}\s\-\'\.]+$/u', $firstName)) {
+      $form_state->setErrorByName('first_name', $this->t('First name may only contain letters, spaces, hyphens, apostrophes, and periods.'));
+    }
+
+    // Validate last name (no special characters except accented letters).
+    $lastName = $form_state->getValue('last_name');
+    if (!preg_match('/^[\p{L}\s\-\'\.]+$/u', $lastName)) {
+      $form_state->setErrorByName('last_name', $this->t('Last name may only contain letters, spaces, hyphens, apostrophes, and periods.'));
     }
 
     // Check if username is already registered.
