@@ -38,7 +38,6 @@ use Psr\Log\LogLevel;
 /**
  * Handles the communication with the SCS user manager daemon.
  */
-#[Autowire(service: 'soda_scs_manager.sql_component.actions')]
 class SodaScsSqlComponentActions implements SodaScsComponentActionsInterface {
 
   use EntityOwnerTrait;

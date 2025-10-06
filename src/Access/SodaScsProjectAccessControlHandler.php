@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Drupal\soda_scs_manager\Access;
 
 use Drupal\Core\Access\AccessResult;

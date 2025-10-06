@@ -10,7 +10,6 @@ use Drupal\soda_scs_manager\ComponentActions\SodaScsComponentActionsInterface;
 /**
  * Helper class for Soda SCS actions.
  */
-#[Autowire(service: 'soda_scs_manager.actions.helpers')]
 class SodaScsActionsHelper {
 
   /**

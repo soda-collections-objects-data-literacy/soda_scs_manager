@@ -25,7 +25,6 @@ use Psr\Log\LogLevel;
  *
  * @todo Kill redundant param replacement etc.
  */
-#[Autowire(service: 'soda_scs_manager.keycloak_service.user.actions')]
 class SodaScsKeycloakServiceUserActions implements SodaScsServiceRequestInterface {
 
   use StringTranslationTrait;

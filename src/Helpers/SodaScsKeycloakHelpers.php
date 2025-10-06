@@ -11,7 +11,6 @@ use Drupal\soda_scs_manager\RequestActions\SodaScsServiceRequestInterface;
 /**
  * Helper class for Soda SCS keycloak operations.
  */
-#[Autowire(service: 'soda_scs_manager.keycloak_service.helpers')]
 class SodaScsKeycloakHelpers {
 
   /**

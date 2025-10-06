@@ -19,7 +19,6 @@ use Drupal\soda_scs_manager\Helpers\SodaScsActionsHelper;
 /**
  * Interface for SODa SCS Snapshot actions.
  */
-#[Autowire(service: 'soda_scs_manager.snapshot.actions')]
 class SodaScsSnapshotActions implements SodaScsSnapshotActionsInterface {
   use MessengerTrait;
   use StringTranslationTrait;

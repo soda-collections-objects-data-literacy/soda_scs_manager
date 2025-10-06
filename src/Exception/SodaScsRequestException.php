@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Drupal\soda_scs_manager\Exception;
 
 use GuzzleHttp\Psr7\Response;

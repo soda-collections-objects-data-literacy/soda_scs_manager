@@ -26,7 +26,6 @@ use Drupal\soda_scs_manager\ValueObject\SodaScsResult;
  *   - an account of Nextcloud, Jupyterhub or WebProtégé.
  *   - a folder with user permissions on the filesystem.
  */
-#[Autowire(service: 'soda_scs_manager.component.actions')]
 class SodaScsComponentActions implements SodaScsComponentActionsInterface {
 
   use DependencySerializationTrait;

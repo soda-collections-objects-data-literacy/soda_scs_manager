@@ -12,7 +12,6 @@ use Drupal\soda_scs_manager\Entity\SodaScsServiceKeyInterface;
 /**
  * Handles the communication with the SCS user manager daemon.
  */
-#[Autowire(service: 'soda_scs_manager.service_key.actions')]
 class SodaScsServiceKeyActions implements SodaScsServiceKeyActionsInterface {
 
   use DependencySerializationTrait;
@@ -42,7 +41,7 @@ class SodaScsServiceKeyActions implements SodaScsServiceKeyActionsInterface {
   public function generateRandomPassword(): string {
     $password = '';
     while (strlen($password) < 32) {
-      $password .= base_convert(random_int(0, 35), 10, 36);
+      $password .= base_convert((string)random_int(0, 35), 10, 36);
     }
     return substr($password, 0, 32);
   }

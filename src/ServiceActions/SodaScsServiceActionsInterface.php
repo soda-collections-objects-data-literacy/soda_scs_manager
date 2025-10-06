@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Drupal\soda_scs_manager\ServiceActions;
 
 use Drupal\soda_scs_manager\Entity\SodaScsComponentInterface;

@@ -19,7 +19,6 @@ use Drupal\soda_scs_manager\ValueObject\SodaScsResult;
 /**
  * WebProtégé component actions with CRUD-only behavior.
  */
-#[Autowire(service: 'soda_scs_manager.webprotege_component.actions')]
 final class SodaScsWebprotegeComponentActions implements SodaScsComponentActionsInterface {
 
   use DependencySerializationTrait;

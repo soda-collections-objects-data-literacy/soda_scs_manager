@@ -26,7 +26,6 @@ use Symfony\Component\HttpFoundation\RequestStack;
 /**
  * Handles the communication with the SCS user manager daemon.
  */
-#[Autowire(service: 'soda_scs_manager.portainer_service.actions')]
 class SodaScsPortainerServiceActions implements SodaScsServiceRequestInterface {
 
   use DependencySerializationTrait;

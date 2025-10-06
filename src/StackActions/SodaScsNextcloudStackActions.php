@@ -19,7 +19,6 @@ use Psr\Log\LogLevel;
 /**
  * Handles the communication with the SCS user manager daemon.
  */
-#[Autowire(service: 'soda_scs_manager.nextcloud_stack.actions')]
 class SodaScsNextcloudStackActions implements SodaScsStackActionsInterface {
 
   use DependencySerializationTrait;

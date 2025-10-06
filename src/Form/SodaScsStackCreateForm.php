@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Drupal\soda_scs_manager\Form;
 
 use Drupal\Component\Datetime\TimeInterface;
@@ -40,7 +42,6 @@ class SodaScsStackCreateForm extends ContentEntityForm {
    * @var string
    */
   protected string $bundle;
-
 
   /**
    * The current user.

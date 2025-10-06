@@ -21,7 +21,6 @@ use Psr\Log\LogLevel;
 /**
  * Handles the jupyter stack actions.
  */
-#[Autowire(service: 'soda_scs_manager.jupyter_stack.actions')]
 class SodaScsJupyterStackActions implements SodaScsStackActionsInterface {
 
   use DependencySerializationTrait;

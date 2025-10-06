@@ -15,7 +15,6 @@ use Drupal\soda_scs_manager\ValueObject\SodaScsResult;
 /**
  * Handles the communication with the SCS user manager daemon.
  */
-#[Autowire(service: 'soda_scs_manager.stack.actions')]
 class SodaScsStackActions implements SodaScsStackActionsInterface {
 
   use DependencySerializationTrait;

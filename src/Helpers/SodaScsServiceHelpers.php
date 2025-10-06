@@ -22,7 +22,6 @@ use Drupal\soda_scs_manager\RequestActions\SodaScsServiceRequestInterface;
  *
  * @todo Use health check functions from the service actions.
  */
-#[Autowire(service: 'soda_scs_manager.service.helpers')]
 class SodaScsServiceHelpers {
   use StringTranslationTrait;
 

@@ -27,7 +27,6 @@ use Symfony\Component\HttpFoundation\RequestStack;
  *
  * @todo Seperate Container from Run actions maybe?.
  */
-#[Autowire(service: 'soda_scs_manager.docker_run_service.actions')]
 class SodaScsDockerRunServiceActions implements SodaScsRunRequestInterface {
 
   use DependencySerializationTrait;

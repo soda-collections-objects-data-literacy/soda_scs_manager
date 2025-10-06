@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Drupal\soda_scs_manager\Form;
 
 use Drupal\Component\Datetime\TimeInterface;
@@ -32,7 +34,6 @@ use Symfony\Component\DependencyInjection\ContainerInterface;
  * and redirects to the components page.
  */
 class SodaScsComponentCreateForm extends ContentEntityForm {
-
 
   /**
    * The SODa SCS Component bundle.
@@ -226,7 +227,6 @@ class SodaScsComponentCreateForm extends ContentEntityForm {
     // Get the default project of the current user.
     $currentUser = $this->currentUser->getAccount();
     $defaultProjectOfCurrentUser = $currentUser->default_project;
-
 
     // Set the default project of the current user
     // as the default value of the partOfProjects field.

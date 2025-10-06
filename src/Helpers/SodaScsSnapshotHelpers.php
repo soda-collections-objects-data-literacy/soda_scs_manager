@@ -25,7 +25,6 @@ use Symfony\Component\HttpFoundation\RequestStack;
 /**
  * Helper class for snapshot operations.
  */
-#[Autowire(service: 'soda_scs_manager.snapshot.helpers')]
 class SodaScsSnapshotHelpers {
 
   use StringTranslationTrait;

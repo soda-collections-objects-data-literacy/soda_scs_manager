@@ -13,7 +13,6 @@ use Drupal\Core\StringTranslation\StringTranslationTrait;
 /**
  * Helper class for snapshot integrity checks and cleanup.
  */
-#[Autowire(service: 'soda_scs_manager.snapshot.integrity.helpers')]
 class SodaScsSnapshotIntegrityHelpers {
 
   use StringTranslationTrait;

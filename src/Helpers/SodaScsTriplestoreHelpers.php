@@ -14,7 +14,6 @@ use Drupal\Core\Logger\LoggerChannelFactoryInterface;
 /**
  * Helper class for SCS triplestore operations.
  */
-#[Autowire(service: 'soda_scs_manager.triplestore_helpers')]
 class SodaScsTriplestoreHelpers {
 
   /**

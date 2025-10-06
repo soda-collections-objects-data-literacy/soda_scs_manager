@@ -32,7 +32,6 @@ use Psr\Log\LogLevel;
  *
  * @todo Provide correct result arrays in the data array.
  */
-#[Autowire(service: 'soda_scs_manager.filesystem_component.actions')]
 class SodaScsFilesystemComponentActions implements SodaScsComponentActionsInterface {
 
   use DependencySerializationTrait;

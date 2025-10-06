@@ -40,7 +40,6 @@ use Symfony\Component\HttpFoundation\RequestStack;
 /**
  * Handles the communication with the SCS user manager daemon.
  */
-#[Autowire(service: 'soda_scs_manager.wisski_stack.actions')]
 class SodaScsWisskiStackActions implements SodaScsStackActionsInterface {
 
   use DependencySerializationTrait;

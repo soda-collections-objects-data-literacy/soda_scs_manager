@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Drupal\soda_scs_manager\Form;
 
 use Drupal\Component\Datetime\TimeInterface;
@@ -30,7 +32,6 @@ use Drupal\Core\Entity\EntityTypeManagerInterface;
  * and redirects to the components page.
  */
 class SodaScsServiceKeyCreateForm extends ContentEntityForm {
-
 
   /**
    * The SODa SCS Component bundle.

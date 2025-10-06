@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Drupal\soda_scs_manager\Plugin\Field\FieldWidget;
 
 use Drupal\Core\Entity\EntityTypeManagerInterface;
@@ -62,8 +64,6 @@ class SodaScsComponentNestedFieldsetWidget extends OptionsWidgetBase implements 
    */
   public function formElement(FieldItemListInterface $items, $delta, array $element, array &$form, FormStateInterface $form_state) {
     $element = parent::formElement($items, $delta, $element, $form, $form_state);
-
-
 
     // Get all available options from the base widget.
     $options = $this->getOptions($items->getEntity());
@@ -192,8 +192,6 @@ class SodaScsComponentNestedFieldsetWidget extends OptionsWidgetBase implements 
     return $values;
   }
 
-
-
    /**
    * Custom element validation handler for nested widgets.
    *
@@ -278,7 +276,6 @@ class SodaScsComponentNestedFieldsetWidget extends OptionsWidgetBase implements 
     // Set the flattened items as the value of this element.
     $form_state->setValueForElement($element, $items);
   }
-
 
   /**
    * {@inheritdoc}

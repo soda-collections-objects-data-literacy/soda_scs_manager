@@ -30,7 +30,6 @@ use Symfony\Component\HttpFoundation\RequestStack;
  *
  * @see https://docs.portainer.io/api/endpoints/docker/exec
  */
-#[Autowire(service: 'soda_scs_manager.docker_exec_service.actions')]
 class SodaScsDockerExecServiceActions implements SodaScsExecRequestInterface {
 
   use DependencySerializationTrait;

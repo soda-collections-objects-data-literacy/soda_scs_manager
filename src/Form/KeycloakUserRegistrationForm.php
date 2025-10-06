@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Drupal\soda_scs_manager\Form;
 
 use Drupal\Core\Database\Connection;
@@ -20,7 +22,6 @@ use Drupal\Component\Utility\EmailValidatorInterface;
  */
 class KeycloakUserRegistrationForm extends FormBase {
   use StringTranslationTrait;
-
 
   /**
    * The database connection service.

@@ -27,7 +27,6 @@ use Psr\Log\LogLevel;
  *
  * @todo Sanitise mysql commands, no create, drop etc.
  */
-#[Autowire(service: 'soda_scs_manager.sql_service.actions')]
 class SodaScsSqlServiceActions implements SodaScsServiceActionsInterface {
 
   use StringTranslationTrait;

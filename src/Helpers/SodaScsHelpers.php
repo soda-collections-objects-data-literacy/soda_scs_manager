@@ -13,7 +13,6 @@ use Symfony\Component\DependencyInjection\Attribute\Autowire;
 /**
  * Helper class for Soda SCS operations.
  */
-#[Autowire(service: 'soda_scs_manager.helpers')]
 class SodaScsHelpers {
 
   use StringTranslationTrait;

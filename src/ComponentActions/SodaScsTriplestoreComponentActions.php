@@ -31,7 +31,6 @@ use Psr\Log\LogLevel;
 /**
  * Handles the communication with the SCS user manager daemon.
  */
-#[Autowire(service: 'soda_scs_manager.triplestore_component.actions')]
 class SodaScsTriplestoreComponentActions implements SodaScsComponentActionsInterface {
 
   use DependencySerializationTrait;

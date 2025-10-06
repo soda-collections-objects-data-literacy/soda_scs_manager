@@ -20,7 +20,6 @@ use Drupal\soda_scs_manager\ValueObject\SodaScsKeycloakGroupData;
 /**
  * Helper class for SodaSCS project operations.
  */
-#[Autowire(service: 'soda_scs_manager.project.helpers')]
 class SodaScsProjectHelpers {
   use StringTranslationTrait;
 

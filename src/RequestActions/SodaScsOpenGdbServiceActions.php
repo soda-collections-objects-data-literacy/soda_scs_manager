@@ -21,7 +21,6 @@ use Psr\Log\LogLevel;
 /**
  * Handles the communication with the SCS user manager daemon.
  */
-#[Autowire(service: 'soda_scs_manager.opengdb_service.actions')]
 class SodaScsOpenGdbServiceActions implements SodaScsOpenGdbRequestInterface {
 
   use StringTranslationTrait;

@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Drupal\soda_scs_manager\Controller;
 
 use Symfony\Component\HttpFoundation\BinaryFileResponse;

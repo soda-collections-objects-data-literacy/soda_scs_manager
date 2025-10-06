@@ -1,4 +1,6 @@
 <?php
+
+declare(strict_types=1);
 // web/modules/custom/soda_scs_manager/src/Exception/SodaScsPortainerConnectionException.php
 namespace Drupal\soda_scs_manager\Exception;
 

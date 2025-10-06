@@ -26,7 +26,6 @@ use GuzzleHttp\ClientInterface;
  *
  * @todo Use health check functions from the service actions.
  */
-#[Autowire(service: 'soda_scs_manager.component.helpers')]
 class SodaScsComponentHelpers {
   use StringTranslationTrait;
 

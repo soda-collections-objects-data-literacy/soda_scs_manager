@@ -28,7 +28,6 @@ use Psr\Log\LogLevel;
  *
  * Implements actions for Keycloak service requests.
  */
-#[Autowire(service: 'soda_scs_manager.keycloak_service.client.actions')]
 class SodaScsKeycloakServiceClientActions implements SodaScsServiceRequestInterface {
 
   use StringTranslationTrait;

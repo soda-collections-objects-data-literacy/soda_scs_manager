@@ -17,7 +17,6 @@ use Psr\Log\LogLevel;
 /**
  * Helper class for Soda SCS container operations.
  */
-#[Autowire(service: 'soda_scs_manager.container.helpers')]
 class SodaScsContainerHelpers {
 
   use MessengerTrait;

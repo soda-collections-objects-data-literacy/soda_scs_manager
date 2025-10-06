@@ -15,7 +15,6 @@ use Drupal\soda_scs_manager\Exception\SodaScsComponentActionsException;
 /**
  * Helper functions for SCS components.
  */
-#[Autowire(service: 'soda_scs_manager.stack.helpers')]
 class SodaScsStackHelpers {
   use MessengerTrait;
   use StringTranslationTrait;

@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Drupal\soda_scs_manager\Exception;
 
 /**
@@ -274,5 +276,4 @@ class SodaScsHelpersException extends \Exception {
     return $pos !== FALSE ? substr($fullClassName, $pos + 1) : $fullClassName;
   }
 }
-
 
