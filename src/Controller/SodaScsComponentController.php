@@ -80,7 +80,8 @@ class SodaScsComponentController extends ControllerBase {
         return new JsonResponse(['status' => $filesystemHealth]);
 
       case 'soda_scs_sql_component':
-        $sqlHealth = $this->sodaScsComponentHelpers->checkSqlHealth($component->id());
+
+        $sqlHealth = $this->sodaScsComponentHelpers->checkSqlHealth((int) $component->id());
         if (!$sqlHealth) {
           return new JsonResponse(
             [
