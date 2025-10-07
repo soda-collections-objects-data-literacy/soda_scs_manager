@@ -14,17 +14,13 @@
       // Get all tag filter buttons.
       const filterButtons = context.querySelectorAll('.soda-scs-manager--tag-filter-button');
 
-      console.log('tagFilter behavior attached, found buttons:', filterButtons.length);
-
       // Initialize state.
       const filterContainer = context.querySelector('.soda-scs-manager--tag-filter');
       if (!filterContainer) {
-        console.log('No filter container found');
         return;
       }
 
       let activeTags = JSON.parse(filterContainer.dataset.activeTags || '[]');
-      console.log('Initial active tags:', activeTags);
 
       // Add events to each filter button.
       filterButtons.forEach(button => {
@@ -41,11 +37,9 @@
           }
 
           const tag = this.dataset.tag || (this.textContent || '').trim();
-          console.log('Button clicked, tag:', tag);
           if (!tag) return;
 
           const isActive = activeTags.includes(tag);
-          console.log('Tag is currently active:', isActive);
 
           // Toggle tag selection.
           if (isActive) {
@@ -98,9 +92,6 @@
         // Get all card elements
         const cards = context.querySelectorAll('.soda-scs-manager--type--card');
 
-        console.log('applyFiltering called with activeTags:', activeTags);
-        console.log('Found cards:', cards.length);
-
         // If no active tags, show all cards
         if (activeTags.length === 0) {
           cards.forEach(card => {
@@ -115,12 +106,8 @@
           const cardTags = Array.from(card.querySelectorAll('.soda-scs-manager--card-tag'))
             .map(tagEl => tagEl.dataset.tag);
 
-          console.log('Card tags:', cardTags);
-
           // Check if the card has at least one of the active tags
           const hasMatchingTag = activeTags.some(tag => cardTags.includes(tag));
-
-          console.log('Has matching tag:', hasMatchingTag);
 
           if (hasMatchingTag) {
             card.classList.remove('hidden-by-filter');
