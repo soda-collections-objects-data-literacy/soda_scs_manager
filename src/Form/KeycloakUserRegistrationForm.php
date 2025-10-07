@@ -249,7 +249,9 @@ class KeycloakUserRegistrationForm extends FormBase {
     $last_name = $form_state->getValue('last_name');
     $password = $form_state->getValue('password');
 
-    // @todo Make better password security.
+    // @todo Make better password security resp. controll if this is secure enough.K
+    // We use keycloak for login and it has its own password policy.
+    // So we don't need to hash the password here.
 
     // Save to database.
     $id = $this->connection->insert('keycloak_user_registration')
