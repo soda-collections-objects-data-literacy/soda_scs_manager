@@ -3,3 +3,8 @@ node_modules/*
 *.log
 .vscode/*
 .cursor/*
+css/
+*.map
+package-lock.json
+**/.env
+.env
