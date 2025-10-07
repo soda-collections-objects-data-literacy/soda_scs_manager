@@ -64,4 +64,18 @@ throbberOverlay:
     - core/drupalSettings
     - core/jquery
 
+component-list:
+  version: 1.x
+  dependencies:
+    - soda_scs_manager/globalStyling
+
+componentListHealthStatus:
+  version: 1.x
+  js:
+    js/componentListHealthStatus.js: {}
+  dependencies:
+    - core/jquery
+    - core/drupal
+    - core/once
+
 

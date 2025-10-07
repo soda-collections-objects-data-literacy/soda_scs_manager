@@ -1,0 +1,212 @@
+/**
+ * @file
+ * Styles for the SODa SCS Component list builder.
+ */
+
+/* Table wrapper for horizontal scrolling. */
+.soda-scs-component-list-wrapper {
+  @apply w-full overflow-x-auto;
+  max-width: 100%;
+  @apply rounded-lg shadow-md;
+
+  /* Custom scrollbar styling. */
+  scrollbar-width: thin;
+  scrollbar-color: rgb(198, 105, 0) rgb(243, 244, 246);
+
+  &::-webkit-scrollbar {
+    height: 8px;
+  }
+
+  &::-webkit-scrollbar-track {
+    @apply bg-gray-100 rounded;
+  }
+
+  &::-webkit-scrollbar-thumb {
+    background: linear-gradient(160deg, rgb(255, 138, 5) 0%, rgb(198, 105, 0) 78.66%);
+    @apply rounded;
+
+    &:hover {
+      background: rgb(198, 105, 0);
+    }
+  }
+}
+
+.soda-scs-component-list {
+  @apply w-full border-collapse;
+  min-width: 800px;
+
+  /* Table header styling. */
+  thead {
+    background: linear-gradient(160deg, rgb(255, 138, 5) 0%, rgb(198, 105, 0) 78.66%);
+
+    th {
+      @apply px-4 py-3 text-left text-sm font-semibold text-white uppercase tracking-wider;
+      border-bottom: 2px solid rgb(198, 105, 0);
+
+      &:first-child {
+        @apply rounded-tl-lg;
+      }
+
+      &:last-child {
+        @apply rounded-tr-lg;
+      }
+    }
+  }
+
+  /* Table body styling. */
+  tbody {
+    @apply bg-white divide-y divide-gray-200;
+
+    tr {
+      @apply transition-all duration-150 ease-in-out;
+
+      &:hover {
+        background-color: rgba(255, 138, 5, 0.05);
+        @apply shadow-sm;
+      }
+
+      &:nth-child(even) {
+        @apply bg-gray-50;
+
+        &:hover {
+          background-color: rgba(255, 138, 5, 0.05);
+        }
+      }
+
+      td {
+        @apply px-4 py-3 text-sm text-gray-900;
+        @apply whitespace-nowrap;
+
+        /* Name column - larger and bold. */
+        &:first-child {
+          @apply font-semibold text-base;
+
+          a {
+            color: rgb(198, 105, 0);
+            @apply hover:underline transition-colors duration-150;
+
+            &:hover {
+              color: rgb(255, 138, 5);
+            }
+          }
+        }
+
+        /* Machine name - monospace styling. */
+        code {
+          @apply bg-gray-100 px-2 py-1 rounded text-xs font-mono text-gray-700;
+          @apply border border-gray-300;
+        }
+
+        /* Owner links. */
+        a {
+          color: rgb(198, 105, 0);
+          @apply hover:underline transition-colors duration-150;
+
+          &:hover {
+            color: rgb(255, 138, 5);
+          }
+        }
+
+        /* Operations column. */
+        &:last-child {
+          @apply text-right;
+
+          .dropbutton-wrapper {
+            @apply inline-block;
+          }
+
+          .dropbutton {
+            @apply shadow-sm;
+
+            .dropbutton-widget {
+              @apply rounded-md border border-gray-300 bg-white;
+
+              li {
+                a,
+                button {
+                  @apply px-3 py-2 text-sm font-medium text-gray-700;
+                  @apply hover:bg-gray-50 hover:text-gray-900;
+                  @apply transition-colors duration-150;
+
+                  &.soda-scs-manager--service-link {
+                    @apply text-green-600 hover:text-green-800;
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+
+  /* Health status indicators. */
+  .component-health-status {
+    @apply inline-flex items-center text-sm font-medium;
+
+    &.health-pending {
+      @apply text-gray-500;
+    }
+
+    &.health-loading {
+      color: rgb(255, 138, 5);
+
+      .dots {
+        @apply inline-block w-4;
+      }
+    }
+
+    &.health-success {
+      .health-running {
+        @apply text-green-600 font-semibold;
+      }
+    }
+
+    &.health-error {
+      .health-error {
+        @apply text-red-600 font-semibold cursor-help;
+      }
+    }
+  }
+
+  /* Status badges. */
+  .status-active {
+    @apply inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium;
+    @apply bg-green-100 text-green-800 border border-green-200;
+
+    &::before {
+      content: '●';
+      @apply mr-1 text-green-500;
+    }
+  }
+
+  .status-inactive {
+    @apply inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium;
+    @apply bg-red-100 text-red-800 border border-red-200;
+
+    &::before {
+      content: '●';
+      @apply mr-1 text-red-500;
+    }
+  }
+}
+
+/* Responsive table. */
+@media (max-width: 1024px) {
+  .soda-scs-component-list {
+    @apply text-xs;
+
+    thead th {
+      @apply px-2 py-2;
+    }
+
+    tbody td {
+      @apply px-2 py-2;
+    }
+  }
+}
+
+/* Empty table message. */
+.soda-scs-component-list + .empty {
+  @apply text-center py-8 text-gray-500 italic;
+}

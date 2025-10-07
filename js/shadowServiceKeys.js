@@ -23,6 +23,7 @@
                 popup.style.background = 'lightgreen';
                 popup.style.padding = '5px';
                 popup.style.borderRadius = '5px';
+                popup.style.zIndex = '1000';
                 popup.textContent = 'copied password to clipboard';
                 document.body.appendChild(popup);
                 setTimeout(function () {
