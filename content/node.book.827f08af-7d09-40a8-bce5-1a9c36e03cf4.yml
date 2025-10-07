@@ -11,8 +11,8 @@ dependencies:
     - 'user:user:83694812-fe3f-4bcc-9967-0d74373e94c9'
 fields:
   nid: '49'
-  vid: '215'
-  revision_timestamp: '1759605846'
+  vid: '234'
+  revision_timestamp: '1759609890'
   revision_uid:
     target_id: '68'
   revision_log: {  }
@@ -26,7 +26,7 @@ fields:
   sticky: '0'
   default_langcode: '1'
   revision_default: '1'
-  revision_translation_affected: '1'
+  revision_translation_affected: {  }
   path:
     alias: /docs/getting-started
     pid: '54'
@@ -38,3 +38,26 @@ fields:
     value: '<h2>Context</h2><p>Welcome to the SODa Semantic Co-Working Space! This guide will help you take your first steps in using the SCS Manager to deploy and manage research infrastructure for academic university collections.</p><h2>What you''ll learn</h2><p>The Getting Started section covers the essential steps to begin working with the SCS:</p><ol><li><strong>Creating your account</strong> - Set up your SCS Manager account to access all available services</li><li><strong>Deploying your first application</strong> - Launch a WissKI environment and start working with your research data</li></ol><h2>Prerequisites</h2><p>None.</p><h2>Your Journey</h2><p>Follow these steps in order to get up and running:</p><h3>Step 1: Create Your Account</h3><p>Start by <a href="https://scs.sammlungen.io/docs/getting-started/account" data-entity-type="external">creating an account</a>. This is required to access most of the SCS features. Once your account is approved by our administrators, you''ll receive a confirmation email and can proceed to log in.</p><h3>Step 2: Deploy Your First Application</h3><p>After logging in, learn how to <a href="/docs/getting-started/1st-app">get your first application running</a>. We''ll walk you through deploying a WissKI environment, which includes everything you need to start managing your research data.</p><h2>What''s Next?</h2><p>Once you''ve completed these initial steps, you can explore:</p><ul><li><a href="/docs/interface">The interface</a> - Learn about the Catalogue, Dashboard, and Administration areas</li><li>Available applications - Discover all the tools and services at your disposal</li><li>Projects - Organize your applications and collaborate with others</li><li>Snapshots - Back up and restore your work</li></ul><h3>Need Help?</h3><p>If you encounter any issues or have questions, please contact your system administrator.</p>'
     summary: ''
     format: basic_html
+translations:
+  de:
+    status: '1'
+    uid:
+      target_id: '68'
+    title: 'Getting started'
+    created: '1759609859'
+    changed: '1759609890'
+    promote: '0'
+    sticky: '0'
+    default_langcode: '0'
+    revision_translation_affected: '1'
+    path:
+      alias: /docs/getting-started
+      pid: '83'
+      langcode: de
+    menu_link: {  }
+    content_translation_source: en
+    content_translation_outdated: '0'
+    body:
+      value: '<h2>Kontext</h2><p>Willkommen zum SODa Semantic Co-Working Space! Diese Anleitung hilft Ihnen bei den ersten Schritten mit dem SCS Manager zum Bereitstellen und Verwalten von Forschungsinfrastruktur für akademische Universitätssammlungen.</p><h2>Was Sie lernen werden</h2><p>Der Abschnitt "Erste Schritte" behandelt die wesentlichen Schritte, um mit dem SCS zu arbeiten:</p><ol><li><strong>Erstellen Ihres Kontos</strong> - Richten Sie Ihr SCS Manager-Konto ein, um auf alle verfügbaren Dienste zuzugreifen</li><li><strong>Bereitstellen Ihrer ersten Anwendung</strong> - Starten Sie eine WissKI-Umgebung und beginnen Sie mit der Arbeit an Ihren Forschungsdaten</li></ol><h2>Voraussetzungen</h2><p>Keine.</p><h2>Ihr Weg</h2><p>Folgen Sie diesen Schritten in der angegebenen Reihenfolge, um loszulegen:</p><h3>Schritt 1: Erstellen Sie Ihr Konto</h3><p>Beginnen Sie mit der <a href="https://scs.sammlungen.io/docs/getting-started/account" data-entity-type="external">Erstellung eines Kontos</a>. Dies ist erforderlich, um auf die meisten Funktionen des SCS zuzugreifen. Sobald Ihr Konto von unseren Administratoren genehmigt wurde, erhalten Sie eine Bestätigungs-E-Mail und können sich anmelden.</p><h3>Schritt 2: Stellen Sie Ihre erste Anwendung bereit</h3><p>Nach der Anmeldung erfahren Sie, wie Sie <a href="/docs/getting-started/1st-app">Ihre erste Anwendung zum Laufen bringen</a>. Wir führen Sie durch die Bereitstellung einer WissKI-Umgebung, die alles enthält, was Sie benötigen, um mit der Verwaltung Ihrer Forschungsdaten zu beginnen.</p><h2>Wie geht es weiter?</h2><p>Nachdem Sie diese ersten Schritte abgeschlossen haben, können Sie Folgendes erkunden:</p><ul><li><a href="/docs/interface">Die Benutzeroberfläche</a> - Erfahren Sie mehr über die Bereiche Katalog, Dashboard und Administration</li><li>Verfügbare Anwendungen - Entdecken Sie alle Werkzeuge und Dienste, die Ihnen zur Verfügung stehen</li><li>Projekte - Organisieren Sie Ihre Anwendungen und arbeiten Sie mit anderen zusammen</li><li>Snapshots - Sichern und stellen Sie Ihre Arbeit wieder her</li></ul><h3>Benötigen Sie Hilfe?</h3><p>Wenn Sie auf Probleme stoßen oder Fragen haben, wenden Sie sich bitte an Ihren Systemadministrator.</p>'
+      summary: ''
+      format: basic_html

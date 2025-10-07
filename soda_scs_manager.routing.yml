@@ -363,8 +363,8 @@ soda_scs_manager.catalogue:
 soda_scs_manager.administration:
   path: '/admin/config/soda-scs-manager'
   defaults:
-    _controller: '\Drupal\system\Controller\SystemController::systemAdminMenuBlockPage'
-    _title: 'WissKI cloud account manager'
+    _controller: '\Drupal\soda_scs_manager\Controller\SodaScsAdministrationController::administrationPage'
+    _title: 'SCS Administration'
   requirements:
     _permission: 'soda scs manager user'
 
@@ -372,7 +372,7 @@ soda_scs_manager.settings:
   path: '/admin/config/soda-scs-manager/settings'
   defaults:
     _form: '\Drupal\soda_scs_manager\Form\SodaScsSettingsForm'
-    _title:  'WissKI cloud account settings'
+    _title:  'SCS Settings'
   requirements:
     _permission: 'soda scs manager admin'
 

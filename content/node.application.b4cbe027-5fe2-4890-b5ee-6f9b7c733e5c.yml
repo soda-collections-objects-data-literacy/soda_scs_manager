@@ -16,8 +16,8 @@ dependencies:
     - 'media:image:b9dcc749-d9e0-4db5-8345-3f04565d20ba'
 fields:
   nid: '66'
-  vid: '193'
-  revision_timestamp: '1759404583'
+  vid: '256'
+  revision_timestamp: '1759615515'
   revision_uid:
     target_id: '68'
   revision_log: {  }
@@ -51,3 +51,34 @@ fields:
     uri: 'internal:/soda-scs-manager/component/add/soda_scs_filesystem_component'
     title: 'Add a shared folder'
     options: {  }
+translations:
+  de:
+    status: '1'
+    uid:
+      target_id: '68'
+    title: 'Geteilter Ordner'
+    created: '1759614801'
+    changed: '1759615515'
+    promote: '1'
+    sticky: '0'
+    default_langcode: '0'
+    revision_translation_affected: '1'
+    path:
+      alias: /app/shared-folder
+      pid: '97'
+      langcode: de
+    menu_link: {  }
+    content_translation_source: en
+    content_translation_outdated: '0'
+    field__app__description:
+      value: '<p>Overview</p><p>The shared folder is a directory with special permissions which can be attached to applications.</p><p>Possibilities</p><p>Connect your shared folders to projects to provide internal access to files between different applications.&nbsp;</p>'
+      summary: ''
+      format: full_html
+    field__app__link: {  }
+    field__app__logo:
+      target_id: '7'
+    field__app__type: storage_or_database
+    field__use_button:
+      uri: 'internal:/soda-scs-manager/component/add/soda_scs_filesystem_component'
+      title: 'Add a shared folder'
+      options: {  }

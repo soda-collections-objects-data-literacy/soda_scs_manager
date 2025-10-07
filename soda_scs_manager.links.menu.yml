@@ -13,7 +13,7 @@ soda_scs_manager.administration:
 ### Components
 soda_scs_manager.administration.components:
   title: 'SODa SCS Components'
-  description: 'Manage SODa SCS Components'
+  description: 'Manage single application like databases, Inter-App folders, etc.'
   parent: soda_scs_manager.administration
   route_name: entity.soda_scs_component.collection
   weight: 100
@@ -23,7 +23,7 @@ soda_scs_manager.administration.components:
 ### Projects
 soda_scs_manager.administration.projects:
   title: 'SODa SCS Projects'
-  description: 'Manage SODa SCS Projects'
+  description: 'Manage projects for collaboration and resource sharing.'
   parent: soda_scs_manager.administration
   route_name: entity.soda_scs_project.collection
   weight: 100
@@ -33,7 +33,7 @@ soda_scs_manager.administration.projects:
 ### Service Keys
 soda_scs_manager.administration.service_keys:
   title: 'SODa SCS Service Keys'
-  description: 'Manage SODa SCS Service Keys'
+  description: 'Manage service keys for applications and external services.'
   parent: soda_scs_manager.administration
   route_name: entity.soda_scs_service_key.collection
   weight: 100
@@ -43,7 +43,7 @@ soda_scs_manager.administration.service_keys:
 ### Snapshots
 soda_scs_manager.administration.snapshots:
   title: 'SODa SCS Snapshots'
-  description: 'Manage SODa SCS Snapshots'
+  description: 'Manage snapshots for backup and restore.'
   parent: soda_scs_manager.administration
   route_name: entity.soda_scs_snapshot.collection
   weight: 100
@@ -53,7 +53,7 @@ soda_scs_manager.administration.snapshots:
 ### Stacks
 soda_scs_manager.administration.stacks:
   title: 'SODa SCS Stacks'
-  description: 'Manage SODa SCS Stacks'
+  description: 'Manage suites and environment like JupyterLab, Nextcloud, etc.'
   parent: soda_scs_manager.administration
   route_name: entity.soda_scs_stack.collection
   weight: 100

@@ -16,8 +16,8 @@ dependencies:
     - 'media:image:2554ac8d-e9d0-495a-96ba-e54dff9b9b94'
 fields:
   nid: '64'
-  vid: '183'
-  revision_timestamp: '1759395989'
+  vid: '255'
+  revision_timestamp: '1759614907'
   revision_uid:
     target_id: '68'
   revision_log: {  }
@@ -31,7 +31,7 @@ fields:
   sticky: '0'
   default_langcode: '1'
   revision_default: '1'
-  revision_translation_affected: '1'
+  revision_translation_affected: {  }
   path:
     alias: /app/open-gdb
     pid: '70'
@@ -59,3 +59,42 @@ fields:
     uri: 'internal:/soda-scs-manager/component/add/soda_scs_triplestore_component'
     title: 'Get your Open GDB triplestore'
     options: {  }
+translations:
+  de:
+    status: '1'
+    uid:
+      target_id: '68'
+    title: 'Open GDB'
+    created: '1759614798'
+    changed: '1759614907'
+    promote: '1'
+    sticky: '0'
+    default_langcode: '0'
+    revision_translation_affected: '1'
+    path:
+      alias: /app/open-gdb
+      pid: '96'
+      langcode: de
+    menu_link: {  }
+    content_translation_source: en
+    content_translation_outdated: '0'
+    field__app__description:
+      value: '<h2>Übersicht</h2><p>OpenGDB ist ein RDF4J-basierter Triplestore, der den Standard-RDF4J-Server um umfassende Benutzerverwaltungs- und Sicherheitsfunktionen erweitert. Das System baut auf der Kernfunktionalität von RDF4J auf, indem es eine Django-basierte Authentifizierungsschicht, Repository-Verwaltungsfunktionen und Netzwerksicherheitskontrollen über einen spezialisierten Proxy hinzufügt, der den Zugriff auf interne Netzwerke über SPARQL-Abfragen verhindert. Die gesamte Lösung ist für die Bereitstellung mit Docker-Containern paketiert.</p><h2>Möglichkeiten</h2><p>OpenGDB ermöglicht Mehrbenutzerspeicherung von RDF-Daten, bei der Sie RDF-Daten mit Standard-SPARQL speichern und abfragen können, während Sie mehrere Repositories mit granularen Zugriffskontrollen pro Repository verwalten. Benutzer authentifizieren sich entweder über eine Weboberfläche oder API-Token, was Flexibilität für interaktiven und programmatischen Zugriff bietet.<br>Die Plattform bietet umfassende Repository-Verwaltungsfunktionen, die es Administratoren ermöglichen, RDF-Repositories zu erstellen und zu konfigurieren, während sie spezifische Benutzerberechtigungen für den Repository-Zugriff festlegen. Alle Verwaltungsoperationen sind über REST-API-Endpunkte zugänglich, was programmatische Administration und Integration in bestehende Systeme ermöglicht.<br>Sicherheit steht im Mittelpunkt: Das System blockiert SPARQL-SERVICE-Abfragen vom Zugriff auf localhost oder interne Netzwerke – wodurch eine häufige Schwachstelle in Triplestore-Bereitstellungen behoben wird. Die Leistung wird durch Token-basierte Authentifizierung optimiert, die die API-Antwortzeiten im Vergleich zur traditionellen sitzungsbasierten Authentifizierung erheblich verbessert. Benutzersitzungen und -berechtigungen werden über die Admin-Oberfläche von Django verwaltet.<br>Der API-Zugriff folgt Industriestandards und bietet GraphDB-kompatible REST-Endpunkte unter /rest/security/users und /rest/repositories/, während die volle Unterstützung für Standard-RDF4J-Protokolle beibehalten wird. Die Authentifizierung kann je nach Leistungsanforderungen entweder über Basic Authentication oder Token-basierte Methoden erfolgen.</p>'
+      summary: ''
+      format: full_html
+    field__app__link:
+      -
+        uri: 'https://github.com/FAU-CDI/open_gdb'
+        title: 'Repository of the Open GDB '
+        options: {  }
+      -
+        uri: 'https://rdf4j.org/'
+        title: 'Website of the RDF4J triplestore'
+        options: {  }
+    field__app__logo:
+      target_id: '5'
+    field__app__type: storage_or_database
+    field__use_button:
+      uri: 'internal:/soda-scs-manager/component/add/soda_scs_triplestore_component'
+      title: 'Get your Open GDB triplestore'
+      options: {  }

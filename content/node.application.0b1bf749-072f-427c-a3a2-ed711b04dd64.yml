@@ -16,22 +16,22 @@ dependencies:
     - 'media:image:ee30f1ac-02b2-4ff3-ba50-ded8c27469a6'
 fields:
   nid: '44'
-  vid: '185'
-  revision_timestamp: '1759396056'
+  vid: '251'
+  revision_timestamp: '1759613023'
   revision_uid:
     target_id: '68'
   revision_log: {  }
   status: '1'
   uid:
     target_id: '68'
-  title: WissKI
+  title: 'WissKI Environment'
   created: '1759126122'
-  changed: '1759396056'
+  changed: '1759611450'
   promote: '1'
   sticky: '0'
   default_langcode: '1'
   revision_default: '1'
-  revision_translation_affected: '1'
+  revision_translation_affected: {  }
   path:
     alias: /app/wisski
     pid: '68'
@@ -75,3 +75,58 @@ fields:
     uri: 'internal:/soda-scs-manager/stack/add/soda_scs_wisski_stack'
     title: 'Get a WissKI environment'
     options: {  }
+translations:
+  de:
+    status: '1'
+    uid:
+      target_id: '68'
+    title: 'WissKI Umgebung'
+    created: '1759611461'
+    changed: '1759613023'
+    promote: '1'
+    sticky: '0'
+    default_langcode: '0'
+    revision_translation_affected: '1'
+    path:
+      alias: /app/wisski
+      pid: '92'
+      langcode: de
+    menu_link: {  }
+    content_translation_source: en
+    content_translation_outdated: '0'
+    field__app__description:
+      value: '<p><a href="https://wiss-ki.eu" data-entity-type="external">WissKI</a> (<strong>Wiss</strong>enschaftliche <strong>K</strong>ommunikations<strong>I</strong>nfrastruktur) ist ein spezialisiertes Content-Management-System, das auf <a href="https://drupal.org" data-entity-type="external">Drupal</a> basiert und als digitale Plattform für die Verwaltung von Kulturgutobjekten, Museumssammlungen und wissenschaftlichen Forschungsdaten dient. In diesem System ist WissKI vorkonfiguriert, um (Universitäts-)Sammlungen zu erfassen und zu verwalten, und wird mit einem <a href="https://github.com/FAU-CDI/open_gdb" data-entity-type="external">OpenGDB-Triplestore</a>, einer <a href="https://mariadb.org" data-entity-type="external">MariaDB-Datenbank</a> sowie einem <a href="https://www.drupal.org/project/wisski_default_data_model" data-entity-type="external">Standard-Datenmodell</a> und Modul-Setup (<a href="https://wisski-barrels.de/" data-entity-type="external">WissKI Default Barrel</a>) ausgeliefert.&nbsp;</p>'
+      summary: 'Eine WissKI-Umgebung beinhaltet ein vorkonfiguriertes WissKI, einen Triplestore und eine Datenbank.'
+      format: full_html
+    field__app__link:
+      -
+        uri: 'https://wiss-ki.eu'
+        title: 'Website of the WissKI module'
+        options: {  }
+      -
+        uri: 'https://drupal.org'
+        title: 'Website of the Drupal content management system'
+        options: {  }
+      -
+        uri: 'https://www.drupal.org/project/wisski_default_data_model'
+        title: 'Repository of the recipe module for the WissKI default data model'
+        options: {  }
+      -
+        uri: 'https://wisski-barrels.de/barrels/default'
+        title: 'Overview of the WissKI default barrel'
+        options: {  }
+      -
+        uri: 'https://github.com/FAU-CDI/open_gdb'
+        title: 'Repository of the Open GDB triplestore'
+        options: {  }
+      -
+        uri: 'https://mariadb.org/'
+        title: 'Website of the MariaDB relational database'
+        options: {  }
+    field__app__logo:
+      target_id: '1'
+    field__app__type: environment
+    field__use_button:
+      uri: 'internal:/soda-scs-manager/stack/add/soda_scs_wisski_stack'
+      title: 'Hole Dir eine WissKI Umgebung'
+      options: {  }

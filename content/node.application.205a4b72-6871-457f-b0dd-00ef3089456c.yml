@@ -16,8 +16,8 @@ dependencies:
     - 'media:image:6eb3ed2b-b05c-4a3a-be09-e150f39cf3d1'
 fields:
   nid: '65'
-  vid: '184'
-  revision_timestamp: '1759396023'
+  vid: '254'
+  revision_timestamp: '1759614826'
   revision_uid:
     target_id: '68'
   revision_log: {  }
@@ -31,7 +31,7 @@ fields:
   sticky: '0'
   default_langcode: '1'
   revision_default: '1'
-  revision_translation_affected: '1'
+  revision_translation_affected: {  }
   path:
     alias: /app/webprotege
     pid: '71'
@@ -59,3 +59,42 @@ fields:
     uri: 'https://webprotege.scs.sammlungen.io/'
     title: 'Enter your Webprotégé'
     options: {  }
+translations:
+  de:
+    status: '1'
+    uid:
+      target_id: '68'
+    title: Webprotégé
+    created: '1759614803'
+    changed: '1759614826'
+    promote: '1'
+    sticky: '0'
+    default_langcode: '0'
+    revision_translation_affected: '1'
+    path:
+      alias: /app/webprotege
+      pid: '98'
+      langcode: de
+    menu_link: {  }
+    content_translation_source: en
+    content_translation_outdated: '0'
+    field__app__description:
+      value: '<h2>Overview</h2><p>WebProtégé is a free, open-source, web-based platform for collaborative ontology development that enables users to create, edit, and share OWL 2 ontologies directly through a web browser. The platform eliminates the need for local software installations while providing comprehensive tools for knowledge modeling and collaborative ontology engineering.</p><h2>Possibilities</h2><p data-start="149" data-end="532">WebProtégé enables collaborative ontology development where multiple users can work simultaneously on OWL 2 ontologies via a shared web interface. The platform supports the entire ontology lifecycle—from initial concept modeling to complex knowledge representation—featuring real-time collaboration tools that track changes and manage user contributions across distributed teams.</p><p data-start="534" data-end="932">The system provides comprehensive ontology editing capabilities, allowing users to create classes, properties, and individuals while defining complex relationships and constraints. Domain experts can contribute through customizable web forms tailored to specific knowledge domains, making ontology development accessible even to users without deep technical expertise in formal logic or OWL syntax.</p><p data-start="934" data-end="1275">Collaboration is facilitated through integrated discussion threads, detailed change tracking, and a revision history that preserves a complete audit trail of the ontology''s evolution. Users can comment on specific ontology elements, propose changes, and engage in structured discussions about modeling decisions directly within the platform.</p><p data-start="1277" data-end="1611">The platform supports multiple ontology formats, including RDF/XML, Turtle, OWL/XML, and OBO, ensuring interoperability with existing tools and workflows. Its import/export functionality facilitates integration with desktop ontology editors and other semantic web tools while maintaining format compatibility across different systems.</p>'
+      summary: ''
+      format: full_html
+    field__app__link:
+      -
+        uri: 'https://protegewiki.stanford.edu/wiki/WebProtege'
+        title: 'Link to the Webprotégé website'
+        options: {  }
+      -
+        uri: 'https://webprotege.scs.sammlungen.io/'
+        title: 'Homepage of the Webprotégé SCS instance'
+        options: {  }
+    field__app__logo:
+      target_id: '6'
+    field__app__type: single_application
+    field__use_button:
+      uri: 'https://webprotege.scs.sammlungen.io/'
+      title: 'Enter your Webprotégé'
+      options: {  }

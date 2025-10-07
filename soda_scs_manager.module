@@ -147,9 +147,9 @@ function soda_scs_manager_entity_base_field_info(EntityTypeInterface $entity_typ
 function soda_scs_manager_entity_bundle_info() {
   // Components.
   $bundles['soda_scs_component']['soda_scs_filesystem_component'] = [
-    'label' => new TranslatableMarkup('Shared Folder'),
+    'label' => new TranslatableMarkup('Inter-App folder'),
     'class' => SodaScsComponentBundle::class,
-    'description' => new TranslatableMarkup('A shared folder for distributing files across project and applications..'),
+    'description' => new TranslatableMarkup('A folder for sharing files across applications.'),
     'imageUrl' => 'public://soda_scs_manager/images/shared.svg',
     'tags' => ['filesharing'],
   ];
@@ -204,7 +204,7 @@ function soda_scs_manager_entity_bundle_info() {
   $bundles['soda_scs_stack']['soda_scs_jupyter_stack'] = [
     'label' => new TranslatableMarkup('JupyterLab'),
     'class' => SodaScsStackBundle::class,
-    'description' => new TranslatableMarkup('A JupyterLab environment contains Jupyter Notebooks and OpenRefine.'),
+    'description' => new TranslatableMarkup('A JupyterLab for coding and data science. Contains Jupyter Notebooks and OpenRefine.'),
     'imageUrl' => 'public://soda_scs_manager/images/jupyterhub-stack.svg',
     'tags' => ['coding', 'data-science', 'data-cleaning'],
   ];
@@ -220,7 +220,7 @@ function soda_scs_manager_entity_bundle_info() {
   $bundles['soda_scs_stack']['soda_scs_nextcloud_stack'] = [
     'label' => new TranslatableMarkup('Nextcloud'),
     'class' => SodaScsStackBundle::class,
-    'description' => new TranslatableMarkup('A Nextcloud Environment contains Nextcloud, Draw.io and OnlyOffice.'),
+    'description' => new TranslatableMarkup('An Office suite for collaboration and file sharing.'),
     'imageUrl' => 'public://soda_scs_manager/images/nextcloud-stack.svg',
     'tags' => ['filesharing', 'office', 'publishing'],
   ];
@@ -489,6 +489,25 @@ function soda_scs_manager_theme($existing, $type, $theme, $path) {
         'user' => NULL,
       ],
       'template' => 'pages/soda-scs-manager--start-page',
+    ],
+    'soda_scs_manager__administration' => [
+      'variables' => [
+        'cards' => NULL,
+        'attributes' => NULL,
+      ],
+      'template' => 'pages/soda-scs-manager--administration',
+    ],
+    'soda_scs_manager__admin_card' => [
+      'variables' => [
+        'title' => NULL,
+        'description' => NULL,
+        'icon' => NULL,
+        'icon_path' => NULL,
+        'icon_class' => NULL,
+        'url' => NULL,
+        'color' => NULL,
+      ],
+      'template' => 'cards/soda-scs-manager--admin-card',
     ],
 
   ];
@@ -1046,10 +1065,10 @@ function _soda_scs_manager_create_default_filesystem_for_user(UserInterface $use
   // Create the default filesystem.
   $filesystem = SodaScsComponent::create([
     'bundle' => 'soda_scs_filesystem_component',
-    'description' => 'The default Shared Folder for the user.',
+    'description' => t('The default Inter-App Folder for the user.'),
     'imageUrl' => 'public://soda_scs_manager/images/shared.svg',
     'health' => 'Unknown',
-    'label' => $user->getDisplayName() . '\'s default shared folder',
+    'label' => $user->getDisplayName() . '\'s default inter-app folder',
     // Why fs- prefix is not necessary?
     'machineName' => $user->getDisplayName() . '-default',
     'owner' => $user->id(),

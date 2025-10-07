@@ -16,8 +16,8 @@ dependencies:
     - 'media:image:e94b5ec4-4002-4cab-8d74-5a853044c926'
 fields:
   nid: '45'
-  vid: '180'
-  revision_timestamp: '1759395744'
+  vid: '248'
+  revision_timestamp: '1759612830'
   revision_uid:
     target_id: '68'
   revision_log: {  }
@@ -31,7 +31,7 @@ fields:
   sticky: '0'
   default_langcode: '1'
   revision_default: '1'
-  revision_translation_affected: '1'
+  revision_translation_affected: {  }
   path:
     alias: /app/jupyterlab
     pid: '69'
@@ -71,3 +71,54 @@ fields:
     uri: 'https://jupyterhub.scs.sammlungen.io/'
     title: 'Enter your JupyterLab'
     options: {  }
+translations:
+  de:
+    status: '1'
+    uid:
+      target_id: '68'
+    title: 'JupyterLab mit OpenRefine'
+    created: '1759611259'
+    changed: '1759612830'
+    promote: '1'
+    sticky: '0'
+    default_langcode: '0'
+    revision_translation_affected: '1'
+    path:
+      alias: /app/jupyterlab
+      pid: '91'
+      langcode: de
+    menu_link: {  }
+    content_translation_source: en
+    content_translation_outdated: '0'
+    field__app__description:
+      value: '<h2>Übersicht</h2><p>JupyterLab ist Ihr persönlicher Data-Science-Arbeitsbereich und eine leistungsstarke, interaktive Umgebung, in der Sie Daten analysieren, Visualisierungen erstellen und forschen können, ohne Software auf Ihrem Computer installieren zu müssen.<br>Wenn Sie auf Ihre JupyterLab-Umgebung zugreifen, erhalten Sie ein vollständiges Toolkit für Datenanalyse und Forschung, das alles enthält, was Sie benötigen, um sofort loszulegen.</p><h2>Enthaltene Software</h2><ul><li>Interaktive Notebooks: Arbeiten Sie mit lebendigen Dokumenten, die Code, Visualisierungen und erklärenden Text an einem Ort kombinieren. Diese Notebooks ermöglichen es Ihnen, mit Daten zu experimentieren, Ideen zu testen und Ihren Forschungsprozess Schritt für Schritt zu dokumentieren.<br>Mehrere Programmiersprachen: Ihre Umgebung ist bereit mit:<ul><li>Python - Perfekt für Datenanalyse, maschinelles Lernen und wissenschaftliches Rechnen</li><li>R - Ideal für statistische Analysen und erweiterte Datenvisualisierung</li><li>Julia - Hochleistungsrechnen für komplexe mathematische Operationen</li></ul></li><li>OpenRefine-Integration: Bereinigen und transformieren Sie unordentliche Datensätze mit einer intuitiven, visuellen Oberfläche. Perfekt für die Vorbereitung von Daten vor der Analyse oder zum Beheben von Inkonsistenzen in großen Datensätzen.</li><li>Verbundene Dateispeicherung: Ihr JupyterLab-Arbeitsbereich verbindet sich nahtlos mit Ihren WissKI-Forschungsumgebungen und macht es einfach, Dateien, Datensätze und Ergebnisse zwischen verschiedenen Werkzeugen in Ihrem Forschungsworkflow zu teilen.</li></ul><h2>Möglichkeiten</h2><p><strong>Kulturerbedaten verarbeiten</strong> mit spezialisierten Werkzeugen und Bibliotheken.&nbsp;</p><p><strong>Daten für die Veröffentlichung vorbereiten</strong>, indem Sie Ihre Forschungsdaten bereinigen, validieren und formatieren, um sie zu teilen oder mit anderen Systemen wie WissKI zu integrieren.</p><p><strong>Daten erkunden und analysieren</strong>, indem Sie Datensätze hochladen und sofort mit interaktiven Diagrammen, statistischen Zusammenfassungen und benutzerdefinierten Analyseskripten erkunden.<br><strong>Überzeugende Visualisierungen erstellen</strong>, indem Sie publikationsreife Grafiken, Diagramme und interaktive Visualisierungen generieren, um Ihre Erkenntnisse effektiv zu kommunizieren.</p>'
+      summary: 'Eine JupyterLab-Umgebung beinhaltet Jupyter Notebooks und OpenRefine.'
+      format: full_html
+    field__app__link:
+      -
+        uri: 'https://jupyter.org/'
+        title: 'Website des Jupyterprojekts'
+        options: {  }
+      -
+        uri: 'https://openrefine.org/'
+        title: 'Website von OpenRefine'
+        options: {  }
+      -
+        uri: 'https://www.python.org/'
+        title: 'Website der Pythonprogrammiersprache'
+        options: {  }
+      -
+        uri: 'https://julialang.org/'
+        title: 'Website der Juliaprogrammiersprache'
+        options: {  }
+      -
+        uri: 'https://www.r-project.org/about.html'
+        title: 'Website der R-Statistik- und Programmiersprache'
+        options: {  }
+    field__app__logo:
+      target_id: '2'
+    field__app__type: environment
+    field__use_button:
+      uri: 'https://jupyterhub.scs.sammlungen.io/'
+      title: 'Betritt Dein JupyterLab'
+      options: {  }

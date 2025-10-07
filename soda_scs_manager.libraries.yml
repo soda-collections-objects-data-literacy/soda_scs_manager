@@ -48,6 +48,11 @@ tagFilter:
     - core/drupal
     - soda_scs_manager/globalStyling
 
+administration:
+  version: 1.x
+  dependencies:
+    - soda_scs_manager/globalStyling
+
 # Give own css.
 throbberOverlay:
   version: 1.x

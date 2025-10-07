@@ -1,0 +1,141 @@
+/**
+ * @file
+ * Administration page styles for SODa SCS Manager.
+ */
+
+.soda-scs-manager--administration-page {
+  @apply max-w-7xl mx-auto px-4 py-8;
+}
+
+.soda-scs-manager--administration-header {
+  @apply mb-12 text-center;
+}
+
+.soda-scs-manager--administration-grid {
+  @apply grid gap-6;
+  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+  align-items: stretch;
+}
+
+/* Admin Card Styles. */
+.soda-scs-manager--admin-card {
+  @apply relative bg-slate-800 rounded-xl overflow-hidden transition-all duration-300 hover:shadow-2xl hover:scale-105;
+  border: 2px solid transparent;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+.soda-scs-manager--admin-card-link {
+  @apply flex items-center p-6 gap-4 no-underline text-stone-200;
+  text-decoration: none;
+  flex: 1;
+  min-height: 200px;
+}
+
+.soda-scs-manager--admin-card-icon {
+  @apply flex-shrink-0 w-16 h-16 rounded-lg flex items-center justify-center;
+}
+
+.soda-scs-manager--admin-card-icon svg,
+.soda-scs-manager--admin-card-icon-svg {
+  @apply w-10 h-10;
+}
+
+.soda-scs-manager--admin-card-icon-svg {
+  filter: brightness(0) saturate(100%) invert(1);
+  opacity: 0.9;
+}
+
+.soda-scs-manager--admin-card-content {
+  @apply flex-1;
+}
+
+.soda-scs-manager--admin-card-title {
+  @apply text-xl font-bold mb-2 text-stone-100;
+}
+
+.soda-scs-manager--admin-card-description {
+  @apply text-sm text-stone-400 leading-relaxed;
+}
+
+.soda-scs-manager--admin-card-arrow {
+  @apply flex-shrink-0 w-6 h-6 opacity-50 transition-all duration-300;
+}
+
+.soda-scs-manager--admin-card-arrow svg {
+  @apply w-full h-full;
+}
+
+.soda-scs-manager--admin-card:hover .soda-scs-manager--admin-card-arrow {
+  @apply opacity-100 translate-x-1;
+}
+
+/* Color variants. */
+.soda-scs-manager--admin-card-emerald {
+  @apply border-emerald-500/30 hover:border-emerald-500;
+}
+
+.soda-scs-manager--admin-card-emerald .soda-scs-manager--admin-card-icon {
+  @apply bg-emerald-500/20 text-emerald-400;
+}
+
+.soda-scs-manager--admin-card-blue {
+  @apply border-blue-500/30 hover:border-blue-500;
+}
+
+.soda-scs-manager--admin-card-blue .soda-scs-manager--admin-card-icon {
+  @apply bg-blue-500/20 text-blue-400;
+}
+
+.soda-scs-manager--admin-card-amber {
+  @apply border-amber-500/30 hover:border-amber-500;
+}
+
+.soda-scs-manager--admin-card-amber .soda-scs-manager--admin-card-icon {
+  @apply bg-amber-500/20 text-amber-400;
+}
+
+.soda-scs-manager--admin-card-purple {
+  @apply border-purple-500/30 hover:border-purple-500;
+}
+
+.soda-scs-manager--admin-card-purple .soda-scs-manager--admin-card-icon {
+  @apply bg-purple-500/20 text-purple-400;
+}
+
+.soda-scs-manager--admin-card-rose {
+  @apply border-rose-500/30 hover:border-rose-500;
+}
+
+.soda-scs-manager--admin-card-rose .soda-scs-manager--admin-card-icon {
+  @apply bg-rose-500/20 text-rose-400;
+}
+
+.soda-scs-manager--admin-card-slate {
+  @apply border-slate-500/30 hover:border-slate-500;
+}
+
+.soda-scs-manager--admin-card-slate .soda-scs-manager--admin-card-icon {
+  @apply bg-slate-500/20 text-slate-400;
+}
+
+/* Responsive design. */
+@media (max-width: 768px) {
+  .soda-scs-manager--administration-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .soda-scs-manager--admin-card-link {
+    @apply p-4;
+  }
+
+  .soda-scs-manager--admin-card-icon {
+    @apply w-12 h-12;
+  }
+
+  .soda-scs-manager--admin-card-icon svg {
+    @apply w-8 h-8;
+  }
+}
+

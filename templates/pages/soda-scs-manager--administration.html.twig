@@ -1,0 +1,31 @@
+{#
+/**
+ * @file
+ * Default theme implementation for SODa SCS Manager administration page.
+ *
+ * Available variables:
+ * - cards: Array of administration cards.
+ * - attributes: HTML attributes for the container.
+ *
+ * @ingroup themeable
+ */
+#}
+
+<div class="soda-scs-manager--administration-page">
+  <div class="soda-scs-manager--administration-header mb-8 text-center">
+    <p class="text-stone-400 text-xl">{{ 'Manage your SODa SCS Manager components, stacks, and settings'|t }}</p>
+  </div>
+
+  {% if cards is not empty %}
+    <div {{ attributes.addClass('soda-scs-manager--administration-grid') }}>
+      {% for card in cards %}
+        {{ card }}
+      {% endfor %}
+    </div>
+  {% else %}
+    <div class="alert alert-info opacity-20 bg-slate-950 border-2 border-stone-200 p-4 rounded-lg text-center">
+      <p class="text-stone-200 text-xl">{{ 'No administration sections available.'|t }}</p>
+    </div>
+  {% endif %}
+</div>
+
