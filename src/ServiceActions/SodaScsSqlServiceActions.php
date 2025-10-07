@@ -116,7 +116,12 @@ class SodaScsSqlServiceActions implements SodaScsServiceActionsInterface {
       $dbName = $component->get('machineName')->value;
 
       // Create the database.
-      $createDbCommand = "mysql -h $dbHost -uroot -p$dbRootPassword -e 'CREATE DATABASE `$dbName`;' 2>&1";
+      $createDbCommand = sprintf(
+        "mysql -h %s -uroot -p%s -e 'CREATE DATABASE `%s`;' 2>&1",
+        escapeshellarg($dbHost),
+        escapeshellarg($dbRootPassword),
+        escapeshellarg($dbName)
+      );
       $dbCreated = exec($createDbCommand, $createDbOutput, $createDbReturnVar);
 
       // Command failed.
@@ -187,7 +192,12 @@ class SodaScsSqlServiceActions implements SodaScsServiceActionsInterface {
     $dbRootPassword = $databaseSettings['rootPassword'];
 
     // Check if the database exists.
-    $checkDbCommand = "mysql -h $dbHost -uroot -p$dbRootPassword -e 'SHOW DATABASES LIKE \"$name\";' 2>&1";
+    $checkDbCommand = sprintf(
+      "mysql -h %s -uroot -p%s -e 'SHOW DATABASES LIKE \"%s\";' 2>&1",
+      escapeshellarg($dbHost),
+      escapeshellarg($dbRootPassword),
+      escapeshellarg($name)
+    );
     exec($checkDbCommand, $databaseExists, $checkDbReturnVar);
 
     // Check if the output contains the database name.
@@ -235,7 +245,13 @@ class SodaScsSqlServiceActions implements SodaScsServiceActionsInterface {
     $dbUserPassword = $serviceKey->get('servicePassword')->value;
 
     // Check if the database exists.
-    $alterUserCommand = "mysql -h $dbHost -uroot -p$dbRootPassword -e 'ALTER USER \"$dbUsername\"@\"%\" IDENTIFIED BY \"$dbUserPassword\"; FLUSH PRIVILEGES;' 2>&1";
+    $alterUserCommand = sprintf(
+      "mysql -h %s -uroot -p%s -e 'ALTER USER \"%s\"@\"%%\" IDENTIFIED BY \"%s\"; FLUSH PRIVILEGES;' 2>&1",
+      escapeshellarg($dbHost),
+      escapeshellarg($dbRootPassword),
+      escapeshellarg($dbUsername),
+      escapeshellarg($dbUserPassword)
+    );
     $alterUserResult = exec($alterUserCommand, $alterUserOutput, $alterUserReturnVar);
 
     return [
@@ -324,7 +340,13 @@ class SodaScsSqlServiceActions implements SodaScsServiceActionsInterface {
     }
 
     // Delete the database.
-    $deleteDbCommand = "mysql -h$dbHost -u$dbUsername -p$dbUserPassword -e 'DROP DATABASE `$dbName`;' 2>&1";
+    $deleteDbCommand = sprintf(
+      "mysql -h%s -u%s -p%s -e 'DROP DATABASE `%s`;' 2>&1",
+      escapeshellarg($dbHost),
+      escapeshellarg($dbUsername),
+      escapeshellarg($dbUserPassword),
+      escapeshellarg($dbName)
+    );
     exec($deleteDbCommand, $deleteDbOutput, $deleteDbReturnVar);
     if (is_array($deleteDbOutput)) {
       $deleteDbOutput = implode(", ", $deleteDbOutput);
@@ -369,7 +391,13 @@ class SodaScsSqlServiceActions implements SodaScsServiceActionsInterface {
     $dbHost = str_replace('https://', '', $databaseSettings['host']);
     $dbRootPassword = $databaseSettings['rootPassword'];
 
-    $createDbUserCommand = "mysql -h $dbHost -uroot -p$dbRootPassword -e 'CREATE USER \"$dbUser\"@\"%\" IDENTIFIED BY \"$dbUserPassword\"; FLUSH PRIVILEGES;' 2>&1";
+    $createDbUserCommand = sprintf(
+      "mysql -h %s -uroot -p%s -e 'CREATE USER \"%s\"@\"%%\" IDENTIFIED BY \"%s\"; FLUSH PRIVILEGES;' 2>&1",
+      escapeshellarg($dbHost),
+      escapeshellarg($dbRootPassword),
+      escapeshellarg($dbUser),
+      escapeshellarg($dbUserPassword)
+    );
     $dbUserCreated = exec($createDbUserCommand, $createDbUserOutput, $createDbUserReturnVar);
 
     return [
@@ -448,7 +476,12 @@ class SodaScsSqlServiceActions implements SodaScsServiceActionsInterface {
     $dbRootPassword = $databaseSettings['rootPassword'];
 
     // Check if the user exists.
-    $checkUserCommand = "mysql -h $dbHost -uroot -p$dbRootPassword -e 'SELECT EXISTS(SELECT 1 FROM mysql.user WHERE user = \"$dbUser\");' 2>&1";
+    $checkUserCommand = sprintf(
+      "mysql -h %s -uroot -p%s -e 'SELECT EXISTS(SELECT 1 FROM mysql.user WHERE user = \"%s\");' 2>&1",
+      escapeshellarg($dbHost),
+      escapeshellarg($dbRootPassword),
+      escapeshellarg($dbUser)
+    );
     $dbUserRead = exec($checkUserCommand, $checkUserCommandOutput, $checkUserReturnVar);
     return [
       'command' => $checkUserCommand,
@@ -493,9 +526,16 @@ class SodaScsSqlServiceActions implements SodaScsServiceActionsInterface {
     // Replace https:// with empty string.
     $dbHost = str_replace('https://', '', $databaseSettings['host']);
     $dbRootPassword = $databaseSettings['rootPassword'];
-    $rights = implode(', ', $rights);
+    $rightsString = implode(', ', $rights);
 
-    $grantRightsCommand = "mysql -h $dbHost -uroot -p$dbRootPassword -e 'GRANT $rights ON `$name`.* TO \"$dbUser\"@\"%\"; FLUSH PRIVILEGES;' 2>&1";
+    $grantRightsCommand = sprintf(
+      "mysql -h %s -uroot -p%s -e 'GRANT %s ON `%s`.* TO \"%s\"@\"%%\"; FLUSH PRIVILEGES;' 2>&1",
+      escapeshellarg($dbHost),
+      escapeshellarg($dbRootPassword),
+      $rightsString,
+      escapeshellarg($name),
+      escapeshellarg($dbUser)
+    );
     $grantRightsCommandResult = exec($grantRightsCommand, $grantRightsCommandOutput, $grantRightsCommandReturnVar);
     return [
       'command' => $grantRightsCommand,
@@ -520,7 +560,11 @@ class SodaScsSqlServiceActions implements SodaScsServiceActionsInterface {
     // Replace https:// with empty string.
     $dbHost = str_replace('https://', '', $databaseSettings['host']);
     $dbRootPassword = $databaseSettings['rootPassword'];
-    $flushPrivilegesCommand = "mysql -h $dbHost -uroot -p$dbRootPassword -e 'FLUSH PRIVILEGES;' 2>&1";
+    $flushPrivilegesCommand = sprintf(
+      "mysql -h %s -uroot -p%s -e 'FLUSH PRIVILEGES;' 2>&1",
+      escapeshellarg($dbHost),
+      escapeshellarg($dbRootPassword)
+    );
     $flushPrivilegesCommandResult = exec($flushPrivilegesCommand, $grantRightsCommandOutput, $grantRightsCommandReturnVar);
 
     // Log the flush privileges operation.
@@ -625,7 +669,12 @@ class SodaScsSqlServiceActions implements SodaScsServiceActionsInterface {
     $dbHost = str_replace('https://', '', $databaseSettings['host']);
 
     // Check if the user owns any databases.
-    $userOwnsAnyDatabasesCommand = "mysql -h$dbHost -u$dbUser -p$userPassword -e 'SELECT COUNT(*) FROM information_schema.SCHEMATA;' 2>&1";
+    $userOwnsAnyDatabasesCommand = sprintf(
+      "mysql -h%s -u%s -p%s -e 'SELECT COUNT(*) FROM information_schema.SCHEMATA;' 2>&1",
+      escapeshellarg($dbHost),
+      escapeshellarg($dbUser),
+      escapeshellarg($userPassword)
+    );
     $userOwnsAnyDatabasesCommandResult = exec($userOwnsAnyDatabasesCommand, $userOwnsAnyDatabasesOutput, $userOwnsAnyDatabasesReturnVar);
 
     // Log the database ownership check.
@@ -665,7 +714,13 @@ class SodaScsSqlServiceActions implements SodaScsServiceActionsInterface {
     $dbHost = str_replace('https://', '', $databaseSettings['host']);
 
     // Check if the user has read and write access to the database.
-    $checkPrivilegesCommand = "mysql -h $dbHost -u$dbUser -p$dbUserPassword -e 'SHOW GRANTS FOR \"$dbUser\"@\"%\";' 2>&1";
+    $checkPrivilegesCommand = sprintf(
+      "mysql -h %s -u%s -p%s -e 'SHOW GRANTS FOR \"%s\"@\"%%\";' 2>&1",
+      escapeshellarg($dbHost),
+      escapeshellarg($dbUser),
+      escapeshellarg($dbUserPassword),
+      escapeshellarg($dbUser)
+    );
     exec($checkPrivilegesCommand, $checkPrivilegesCommandOutput, $checkPrivilegesCommandReturnVar);
 
     if ($checkPrivilegesCommandReturnVar != 0) {
@@ -708,7 +763,12 @@ class SodaScsSqlServiceActions implements SodaScsServiceActionsInterface {
 
     $dbRootPassword = $databaseSettings['rootPassword'];
     // User does not own any databases, delete the user.
-    $deleteUserCommand = "mysql -h $dbHost -uroot -p$dbRootPassword -e 'DROP USER `$dbUser`@`%`; FLUSH PRIVILEGES;'";
+    $deleteUserCommand = sprintf(
+      "mysql -h %s -uroot -p%s -e 'DROP USER `%s`@`%%`; FLUSH PRIVILEGES;'",
+      escapeshellarg($dbHost),
+      escapeshellarg($dbRootPassword),
+      escapeshellarg($dbUser)
+    );
     $deleteUserCommandResult = exec($deleteUserCommand, $deleteUserOutput, $deleteUserReturnVar);
     return [
       'command' => $deleteUserCommand,

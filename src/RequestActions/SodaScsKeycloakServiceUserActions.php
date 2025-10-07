@@ -592,7 +592,6 @@ class SodaScsKeycloakServiceUserActions implements SodaScsServiceRequestInterfac
         ['@message' => $e->getMessage()],
         LogLevel::ERROR
       );
-      $this->loggerFactory->get('soda_scs_manager')->debug('Request details: @request', ['@request' => print_r($request, TRUE)]);
 
       return [
         'message' => $this->t('Request failed with code @code', ['@code' => $e->getCode()]),
