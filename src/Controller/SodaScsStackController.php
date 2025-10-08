@@ -64,7 +64,7 @@ class SodaScsStackController extends ControllerBase {
     switch ($bundle) {
       case 'soda_scs_wisski_stack':
         $wisskiHealth = $this->sodaScsStackHelpers
-          ->checkWisskiHealth($stack->get('machineName')->value);
+          ->checkWisskiHealth($stack);
         if (!$wisskiHealth) {
           return new JsonResponse([
             'status' => [

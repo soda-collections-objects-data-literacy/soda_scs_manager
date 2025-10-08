@@ -73,6 +73,7 @@ class SodaScsComponentController extends ControllerBase {
                 '@message' => $filesystemHealth['message'],
               ]),
               'success' => FALSE,
+              'status' => $filesystemHealth['status'],
             ],
             'code' => $filesystemHealth['code'],
           ]);
@@ -87,6 +88,7 @@ class SodaScsComponentController extends ControllerBase {
             [
               'status' => [
                 'message' => $this->t("MariaDB health check failed for component @component.", ['@component' => $component->id()]),
+                'status' => $sqlHealth['status'],
                 'success' => FALSE,
               ],
               'code' => $sqlHealth['code'],
@@ -102,6 +104,7 @@ class SodaScsComponentController extends ControllerBase {
           return new JsonResponse([
             'status' => [
               'message' => $this->t("Triplestore health check failed for component @component.", ['@component' => $component->id()]),
+              'status' => $triplestoreHealth['status'],
               'success' => FALSE,
             ],
             'code' => $triplestoreHealth['code'],
@@ -111,11 +114,12 @@ class SodaScsComponentController extends ControllerBase {
 
       case 'soda_scs_wisski_component':
         $wisskiHealth = $this->sodaScsComponentHelpers
-          ->drupalHealthCheck($component->get('machineName')->value);
+          ->drupalHealthCheck($component);
         if (!$wisskiHealth) {
           return new JsonResponse([
             'status' => [
               'message' => $this->t("WissKI health check failed for component @component.", ['@component' => $component->id()]),
+              'status' => $wisskiHealth['status'],
               'success' => FALSE,
             ],
             'code' => $wisskiHealth['code'],
@@ -131,6 +135,7 @@ class SodaScsComponentController extends ControllerBase {
                 '@component' => $component->id(),
                 '@message' => 'Unknown component type.',
               ]),
+              'status' => 'unknown',
               'success' => FALSE,
             ],
             'code' => 500,

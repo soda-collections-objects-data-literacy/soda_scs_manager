@@ -141,8 +141,8 @@ class SodaScsComponentNestedFieldsetWidget extends OptionsWidgetBase implements 
 
       // Sort bundles by label.
       uksort($ownerComponents, function($a, $b) use ($ownerComponents) {
-        $bundleA = reset($ownerComponents[$a])['bundle_label'];
-        $bundleB = reset($ownerComponents[$b])['bundle_label'];
+        $bundleA = (string) reset($ownerComponents[$a])['bundle_label'];
+        $bundleB = (string) reset($ownerComponents[$b])['bundle_label'];
         return strcasecmp($bundleA, $bundleB);
       });
 

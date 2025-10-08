@@ -16,6 +16,8 @@ use Psr\Log\LogLevel;
 
 /**
  * Helper class for Soda SCS container operations.
+ *
+ * @service soda_scs_manager.container.helpers
  */
 class SodaScsContainerHelpers {
 
@@ -610,4 +612,199 @@ class SodaScsContainerHelpers {
     }
   }
 
+  /**
+   * Inspect a container.
+   *
+   * @param string $containerId
+   *   The container ID.
+   *
+   * @param array|null $additionalRequestParams
+   *   The request parameters.
+   *
+   * @return \Drupal\soda_scs_manager\ValueObject\SodaScsResult
+   *   The Soda SCS result.
+   */
+  public function inspectContainer(string $containerId, ?array $additionalRequestParams = NULL): SodaScsResult {
+
+    $requestParams = [
+      'routeParams' => [
+        'containerId' => $containerId,
+      ],
+    ];
+    if ($additionalRequestParams) {
+      $requestParams = array_merge($requestParams, $additionalRequestParams);
+    }
+
+    $inspectContainerRequest = $this->sodaScsDockerRunServiceActions->buildInspectRequest($requestParams);
+    $inspectContainerResponse = $this->sodaScsDockerRunServiceActions->makeRequest($inspectContainerRequest);
+    if (!$inspectContainerResponse['success']) {
+      return SodaScsResult::failure(
+        message: 'Failed to inspect container.',
+        error: (string) $inspectContainerResponse['error'],
+      );
+    }
+    return SodaScsResult::success(
+      message: 'Container inspected successfully.',
+      data: [
+        $containerId => json_decode($inspectContainerResponse['data']['portainerResponse']->getBody()->getContents(), TRUE),
+      ],
+    );
+  }
+
+  /**
+   *  Restart a container.
+   *
+   *  Inspect the container state,
+   *  if it is running, stop it gracefully,
+   *  start the container again.
+   *
+   * @param string $containerId
+   *   The container ID.
+   *
+   * @return \Drupal\soda_scs_manager\ValueObject\SodaScsResult
+   *   The Soda SCS result.
+   */
+  public function restartContainer(string $containerId): SodaScsResult {
+    // Inspect the container state,
+    $inspectContainerResponse = $this->inspectContainer($containerId);
+
+    if (!$inspectContainerResponse->success) {
+      return $inspectContainerResponse;
+    }
+
+    $containerState = $inspectContainerResponse->data[$containerId]['State'];
+
+    // If the container is running, stop it gracefully.
+    if ($containerState['Status'] === 'running') {
+      $stopContainerResponse = $this->stopContainer($containerId);
+      if (!$stopContainerResponse->success) {
+        return $stopContainerResponse;
+      }
+    }
+
+    // Start the container again.
+    $startContainerResponse = $this->startContainer($containerId);
+    if (!$startContainerResponse->success) {
+      return $startContainerResponse;
+    }
+
+    return SodaScsResult::success(
+      message: 'Container restarted successfully.',
+      data: [
+        $containerId => $inspectContainerResponse->data[$containerId],
+      ],
+    );
+
+  }
+
+  /**
+   * Start a container.
+   *
+   * If the container is already running, return a success result.
+   * If the container is not running, start it.
+   * Wait for it to be started.
+   *
+   * @param string $containerId
+   *   The container ID.
+   *
+   * @return \Drupal\soda_scs_manager\ValueObject\SodaScsResult
+   *   The Soda SCS result.
+   */
+  public function startContainer(string $containerId): SodaScsResult {
+
+    $inspectContainerResponse = $this->inspectContainer($containerId);
+
+    if (!$inspectContainerResponse->success) {
+      return $inspectContainerResponse;
+    }
+
+    $containerState = $inspectContainerResponse->data[$containerId]['State'];
+    if ($containerState['Status'] === 'running') {
+      return SodaScsResult::success(
+        message: 'Container already running.',
+        data: [
+          $containerId => $inspectContainerResponse->data[$containerId],
+        ],
+      );
+    }
+
+    $startContainerRequest = $this->sodaScsDockerRunServiceActions->buildStartRequest([
+      'routeParams' => ['containerId' => $containerId],
+    ]);
+    $startContainerResponse = $this->sodaScsDockerRunServiceActions->makeRequest($startContainerRequest);
+    if (!$startContainerResponse['success']) {
+      return SodaScsResult::failure(
+        message: 'Failed to start container.',
+        error: (string) $startContainerResponse['error'],
+      );
+    }
+
+    // Wait for the container to be started.
+    $waitForContainerStateResponse = $this->waitForContainerState($containerId, 'running');
+    if (!$waitForContainerStateResponse->success) {
+      return $waitForContainerStateResponse;
+    }
+
+    return SodaScsResult::success(
+      message: 'Container started successfully.',
+      data: [
+        $containerId => json_decode($startContainerResponse['data']['portainerResponse']->getBody()->getContents(), TRUE),
+      ],
+    );
+  }
+
+  /**
+   * Stop a container.
+   *
+   * Inspect the container state,
+   * if it is not running, return a success result.
+   * if it is running, stop it gracefully.
+   * Wait for it to be stopped.
+   *
+   * @param string $containerId
+   *   The container ID.
+   *
+   * @return \Drupal\soda_scs_manager\ValueObject\SodaScsResult
+   *   The Soda SCS result.
+   */
+  public function stopContainer(string $containerId): SodaScsResult {
+    $inspectContainerResponse = $this->inspectContainer($containerId);
+
+    if (!$inspectContainerResponse->success) {
+      return $inspectContainerResponse;
+    }
+
+    $containerState = $inspectContainerResponse->data[$containerId]['State'];
+    if (!$containerState['Status'] === 'running') {
+      return SodaScsResult::success(
+        message: 'Container already stopped.',
+        data: [
+          $containerId => $inspectContainerResponse->data[$containerId],
+        ],
+      );
+    }
+    $stopContainerRequest = $this->sodaScsDockerRunServiceActions->buildStopRequest([
+      'routeParams' => ['containerId' => $containerId],
+    ]);
+    $stopContainerResponse = $this->sodaScsDockerRunServiceActions->makeRequest($stopContainerRequest);
+    if (!$stopContainerResponse['success']) {
+      return SodaScsResult::failure(
+        message: 'Failed to stop container.',
+        error: (string) $stopContainerResponse['error'],
+      );
+    }
+
+    // Wait for the container to be stopped.
+    $waitForContainerStateResponse = $this->waitForContainerState($containerId, 'exited');
+    if (!$waitForContainerStateResponse->success) {
+      return $waitForContainerStateResponse;
+    }
+
+    return SodaScsResult::success(
+      message: 'Container stopped successfully.',
+      data: [
+        $containerId => $inspectContainerResponse->data[$containerId],
+      ],
+    );
+  }
 }

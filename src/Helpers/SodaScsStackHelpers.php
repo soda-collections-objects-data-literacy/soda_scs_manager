@@ -126,17 +126,17 @@ class SodaScsStackHelpers {
    * @return array
    *   The health of the WissKI stack.
    */
-  public function checkWisskiHealth(string $machineName) {
+  public function checkWisskiHealth(SodaScsStackInterface $stack) {
     // Get the stack entity by machine name.
     $stackStorage = $this->entityTypeManager->getStorage('soda_scs_stack');
-    $stackEntities = $stackStorage->loadByProperties(['machineName' => $machineName]);
+    $stackEntities = $stackStorage->loadByProperties(['machineName' => $stack->get('machineName')->value]);
 
     if (empty($stackEntities)) {
       return [
         'message' => 'Stack not found.',
         'code' => 404,
         'success' => FALSE,
-        'error' => 'No stack found with machine name: ' . $machineName,
+        'error' => 'No stack found with machine name: ' . $stack->get('machineName')->value,
       ];
     }
 
@@ -163,12 +163,12 @@ class SodaScsStackHelpers {
         'message' => 'WissKI component not found in stack.',
         'code' => 404,
         'success' => FALSE,
-        'error' => 'No WissKI component found in stack: ' . $machineName,
+        'error' => 'No WissKI component found in stack: ' . $stack->get('machineName')->value,
       ];
     }
 
     // Check the health of the WissKI component.
-    return $this->sodaScsComponentHelpers->drupalHealthCheck($wisskiComponent->get('machineName')->value);
+    return $this->sodaScsComponentHelpers->drupalHealthCheck($wisskiComponent);
   }
 
   /**

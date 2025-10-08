@@ -79,6 +79,13 @@ class SodaScsComponentHelpers {
   protected Config $settings;
 
   /**
+   * The container helpers.
+   *
+   * @var \Drupal\soda_scs_manager\Helpers\SodaScsContainerHelpers
+   */
+  protected SodaScsContainerHelpers $sodaScsContainerHelpers;
+
+  /**
    * The Soda SCS Docker exec service actions.
    *
    * @var \Drupal\soda_scs_manager\RequestActions\SodaScsExecRequestInterface
@@ -105,6 +112,8 @@ class SodaScsComponentHelpers {
     ClientInterface $httpClient,
     LoggerChannelFactoryInterface $loggerFactory,
     MessengerInterface $messenger,
+    #[Autowire(service: 'soda_scs_manager.container.helpers')]
+    SodaScsContainerHelpers $sodaScsContainerHelpers,
     #[Autowire(service: 'soda_scs_manager.docker_exec_service.actions')]
     SodaScsExecRequestInterface $sodaScsDockerExecServiceActions,
     #[Autowire(service: 'soda_scs_manager.opengdb_service.actions')]
@@ -122,10 +131,11 @@ class SodaScsComponentHelpers {
     $this->httpClient = $httpClient;
     $this->loggerFactory = $loggerFactory;
     $this->messenger = $messenger;
+    $this->settings = $configFactory->getEditable('soda_scs_manager.settings');
+    $this->sodaScsContainerHelpers = $sodaScsContainerHelpers;
+    $this->sodaScsDockerExecServiceActions = $sodaScsDockerExecServiceActions;
     $this->sodaScsOpenGdbServiceActions = $sodaScsOpenGdbServiceActions;
     $this->sodaScsPortainerServiceActions = $sodaScsPortainerServiceActions;
-    $this->settings = $configFactory->getEditable('soda_scs_manager.settings');
-    $this->sodaScsDockerExecServiceActions = $sodaScsDockerExecServiceActions;
     $this->sodaScsServiceHelpers = $sodaScsServiceHelpers;
     $this->sodaScsSqlServiceActions = $sodaScsSqlServiceActions;
     $this->stringTranslation = $stringTranslation;
@@ -134,11 +144,44 @@ class SodaScsComponentHelpers {
   /**
    * Drupal instance health check.
    */
-  public function drupalHealthCheck(string $machineName) {
+  public function drupalHealthCheck(SodaScsComponentInterface $component) {
+    try {
+      $inspectContainerResponse = $this->sodaScsContainerHelpers->inspectContainer($component->get('containerId')->value);
+    }
+    catch (\Exception $e) {
+      return [
+        "message" => 'Component is not available.',
+        'code' => $e->getCode(),
+        'success' => FALSE,
+        'error' => $e->getMessage(),
+      ];
+    }
+
+    if (!$inspectContainerResponse->success) {
+      return [
+        "message" => 'Component is not available.',
+        'code' => 404,
+        'success' => FALSE,
+        'error' => $inspectContainerResponse->error,
+      ];
+    }
+
+    $containerStatus = $inspectContainerResponse->data[$component->get('containerId')->value]['State']['Status'];
+
+    if ($containerStatus != 'running') {
+      return [
+        "message" =>  (string) $this->t('Application status: @status', ['@status' => $containerStatus]),
+        "status" => $containerStatus,
+        'code' => 200,
+        'success' => TRUE,
+        'error' => '',
+      ];
+    }
+
     try {
       $requestParams = [
         'type' => 'instance',
-        'machineName' => $machineName,
+        'machineName' => $component->get('machineName')->value,
       ];
       $healthRequest = $this->sodaScsPortainerServiceActions->buildHealthCheckRequest($requestParams);
       $healthRequestResult = $this->sodaScsPortainerServiceActions->makeRequest($healthRequest);
@@ -146,7 +189,8 @@ class SodaScsComponentHelpers {
       switch ($healthRequestResult['statusCode']) {
         case 200:
           return [
-            "message" => 'Component is available.',
+            "message" => 'Application is available.',
+            "status" => 'running',
             'code' => $healthRequestResult['statusCode'],
             'success' => TRUE,
             'error' => '',
@@ -154,7 +198,8 @@ class SodaScsComponentHelpers {
 
         case 502:
           return [
-            "message" => 'Component not (yet) available.',
+            "message" => 'Application starts',
+            "status" => 'starting',
             'code' => $healthRequestResult['statusCode'],
             'success' => FALSE,
             'error' => $healthRequestResult['error'],
@@ -162,7 +207,8 @@ class SodaScsComponentHelpers {
 
         default:
           return [
-            "message" => 'Component is not available: ' . $healthRequestResult['statusCode'],
+            "message" => 'Component is not available',
+            "status" => 'unknown',
             'code' => $healthRequestResult['statusCode'],
             'success' => FALSE,
             'error' => $healthRequestResult['error'],
@@ -171,7 +217,8 @@ class SodaScsComponentHelpers {
     }
     catch (\Exception $e) {
       return [
-        "message" => 'Component is not available: ' . $e->getMessage(),
+        "message" => 'Component is not available',
+        "status" => 'unknown',
         'code' => $e->getCode(),
         'success' => FALSE,
         'error' => $e->getMessage(),
@@ -204,7 +251,7 @@ class SodaScsComponentHelpers {
 
       if ($execCreateResult['statusCode'] != 201) {
         return [
-          "message" => 'Access proxy is not available.',
+          "message" => 'Access proxy is not available',
           'code' => $execCreateResult['statusCode'],
           'data' => $execCreateResult['data'],
           'success' => FALSE,
@@ -215,7 +262,7 @@ class SodaScsComponentHelpers {
       $execStartRequest = $this->sodaScsDockerExecServiceActions->buildStartRequest(['execId' => $execCreateResultData['Id']]);
       $execStartResult = $this->sodaScsDockerExecServiceActions->makeRequest($execStartRequest);      if ($execStartResult['statusCode'] != 200) {
         return [
-          "message" => 'Access proxy is not available.',
+          "message" => 'Access proxy is not available',
           'code' => $execStartResult['statusCode'],
           'data' => $execStartResult['data'],
           'success' => FALSE,
@@ -231,7 +278,7 @@ class SodaScsComponentHelpers {
       $execInspectResult = $this->sodaScsDockerExecServiceActions->makeRequest($execInspectRequest);
       if ($execInspectResult['statusCode'] != 200) {
         return [
-          "message" => 'Access proxy exec inspect failed.',
+          "message" => 'Access proxy exec inspect failed',
           'code' => $execInspectResult['statusCode'],
           'data' => $execInspectResult['data'],
           'success' => FALSE,
@@ -250,7 +297,7 @@ class SodaScsComponentHelpers {
     }
     catch (\Exception $e) {
       return [
-        "message" => 'Access proxy is not available.',
+        "message" => 'Access proxy is not available',
         'code' => $e->getCode(),
         'success' => FALSE,
         'data' => $e,
@@ -275,11 +322,13 @@ class SodaScsComponentHelpers {
     if (!$fullAccess) {
       return [
         'message' => $this->t("MariaDB health check failed for component @component.", ['@component' => $component->id()]),
+        'status' => 'unhealthy',
         'success' => FALSE,
       ];
     }
     return [
       'message' => $this->t("MariaDB health check passed for component @component.", ['@component' => $component->id()]),
+      'status' => 'healthy',
       'success' => TRUE,
     ];
   }
@@ -318,6 +367,7 @@ class SodaScsComponentHelpers {
             '@component' => $component,
             '@error' => $healthCheckResult['error'],
           ]),
+          'status' => 'unknown',
           'success' => FALSE,
           'error' => $healthCheckResult['error'],
           'data' => $healthCheckResult['data'],
@@ -327,6 +377,7 @@ class SodaScsComponentHelpers {
         'message' => $this->t("Triplestore is healthy for component @component.", [
           '@component' => $component,
         ]),
+        'status' => 'healthy',
         'success' => TRUE,
       ];
     }
@@ -336,6 +387,7 @@ class SodaScsComponentHelpers {
           '@component' => $component,
           '@error' => $e->getMessage(),
         ]),
+        'status' => 'unknown',
         'success' => FALSE,
         'error' => $e->getMessage(),
         'data' => $e,

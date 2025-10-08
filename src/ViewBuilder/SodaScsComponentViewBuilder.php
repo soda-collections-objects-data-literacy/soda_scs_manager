@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Drupal\soda_scs_manager\ViewBuilder;
 
+
 use Drupal\Core\Entity\EntityViewBuilder;
 use Drupal\Core\Entity\EntityInterface;
 use Drupal\Core\Entity\EntityRepositoryInterface;
@@ -11,6 +12,7 @@ use Drupal\Core\Entity\EntityDisplayRepositoryInterface;
 use Drupal\Core\Entity\EntityTypeInterface;
 use Drupal\Core\Language\LanguageManagerInterface;
 use Drupal\Core\Theme\Registry;
+use Drupal\soda_scs_manager\Helpers\SodaScsContainerHelpers;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 
 /**
@@ -32,6 +34,7 @@ class SodaScsComponentViewBuilder extends EntityViewBuilder {
    */
   protected $sodaScsManagerSettings;
 
+
   /**
    * Constructs a new EntityViewBuilder.
    *
@@ -48,7 +51,15 @@ class SodaScsComponentViewBuilder extends EntityViewBuilder {
    * @param \Drupal\Core\Config\Config $config
    *   The config.
    */
-  public function __construct(EntityTypeInterface $entity_type, EntityRepositoryInterface $entity_repository, LanguageManagerInterface $language_manager, Registry $theme_registry, EntityDisplayRepositoryInterface $entity_display_repository, $config) {
+  public function __construct(
+    $config,
+    EntityDisplayRepositoryInterface $entity_display_repository,
+    EntityRepositoryInterface $entity_repository,
+    LanguageManagerInterface $language_manager,
+    SodaScsContainerHelpers $sodaScsContainerHelpers,
+    Registry $theme_registry,
+    EntityTypeInterface $entity_type,
+  ) {
     $this->entityTypeId = $entity_type->id();
     $this->entityType = $entity_type;
     $this->entityRepository = $entity_repository;
@@ -61,14 +72,18 @@ class SodaScsComponentViewBuilder extends EntityViewBuilder {
   /**
    * {@inheritdoc}
    */
-  public static function createInstance(ContainerInterface $container, EntityTypeInterface $entity_type) {
+  public static function createInstance(
+    ContainerInterface $container,
+    EntityTypeInterface $entity_type,
+  ) {
     return new static(
-      $entity_type,
+      $container->get('config.factory'),
+      $container->get('entity_display.repository'),
       $container->get('entity.repository'),
       $container->get('language_manager'),
+      $container->get('soda_scs_manager.container.helpers'),
       $container->get('theme.registry'),
-      $container->get('entity_display.repository'),
-      $container->get('config.factory')
+      $entity_type,
     );
   }
 
