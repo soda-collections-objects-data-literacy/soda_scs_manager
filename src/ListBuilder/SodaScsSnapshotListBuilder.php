@@ -86,6 +86,11 @@ class SodaScsSnapshotListBuilder extends EntityListBuilder {
    * {@inheritdoc}
    */
   public function buildRow(EntityInterface $entity) {
+    /** @var \Drupal\soda_scs_manager\Entity\SodaScsSnapshotInterface $entity */
+    if ($entity->getOwnerId() !== \Drupal::currentUser()->id() && !\Drupal::currentUser()->hasPermission('soda scs manager admin')) {
+      return [];
+    }
+
     /** @var \Drupal\soda_scs_manager\Entity\SodaScsSnapshot $entity */
     $row['id'] = $entity->id();
     $row['name'] = $entity->label();

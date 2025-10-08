@@ -29,6 +29,12 @@ class SodaScsStackListBuilder extends EntityListBuilder {
    * {@inheritdoc}
    */
   public function buildRow(EntityInterface $entity) {
+    /** @var \Drupal\soda_scs_manager\Entity\SodaScsStackInterface $entity */
+    if ($entity->getOwnerId() !== \Drupal::currentUser()->id() && !\Drupal::currentUser()->hasPermission('soda scs manager admin')) {
+      return [];
+    }
+
+
     /** @var \Drupal\soda_scs_manager\Entity\SodaScsComponentInterface $entity */
     $bundle = $entity->bundle();
     $row['type'] = $bundle;
@@ -54,6 +60,14 @@ class SodaScsStackListBuilder extends EntityListBuilder {
     }
 
     return $operations;
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function getCacheMaxAge() {
+    // Disable caching for this list builder.
+    return 0;
   }
 
   /**

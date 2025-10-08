@@ -56,7 +56,12 @@ class SodaScsComponentListBuilder extends EntityListBuilder {
    * {@inheritdoc}
    */
   public function buildRow(EntityInterface $entity) {
+
     /** @var \Drupal\soda_scs_manager\Entity\SodaScsComponentInterface $entity */
+    if ($entity->getOwnerId() !== \Drupal::currentUser()->id() && !\Drupal::currentUser()->hasPermission('soda scs manager admin')) {
+      return [];
+    }
+
     $bundle = $entity->bundle();
 
     // Create a link to the entity.
@@ -158,6 +163,9 @@ class SodaScsComponentListBuilder extends EntityListBuilder {
         'class' => ['soda-scs-component-list-wrapper'],
       ],
       'table'       => $build,
+      '#cache' => [
+        'max-age' => 0,
+      ],
     ];
 
     return $build;

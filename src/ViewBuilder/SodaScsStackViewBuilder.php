@@ -25,6 +25,11 @@ class SodaScsStackViewBuilder extends EntityViewBuilder {
     $build['#attached']['library'][] = 'soda_scs_manager/entityHelpers';
     $build['#attached']['drupalSettings']['entityInfo']['healthUrl'] = '/soda-scs-manager/health/stack/' . $build['#soda_scs_stack']->id();
 
+    // Disable caching.
+    $build['#cache'] = [
+      'max-age' => 0,
+    ];
+
     return $build;
   }
 

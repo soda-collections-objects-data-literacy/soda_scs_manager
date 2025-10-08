@@ -34,7 +34,7 @@ class SodaScsProjectListBuilder extends EntityListBuilder {
    */
   public function buildRow(EntityInterface $entity) {
     // @todo Make it private to user?
-    /** @var \Drupal\soda_scs_manager\Entity\SodaScsServiceKeyInterface $entity */
+    /** @var \Drupal\soda_scs_manager\Entity\SodaScsProjectInterface $entity */
     if ($entity->getOwnerId() === \Drupal::currentUser()->id() || \Drupal::currentUser()->hasPermission('soda scs manager admin')) {
 
       /** @var \Drupal\Core\Field\EntityReferenceFieldItemListInterface $scsComponentValues */

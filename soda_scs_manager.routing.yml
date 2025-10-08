@@ -8,6 +8,8 @@ soda_scs_manager.component.health_check:
     _title:  'Component health check'
   requirements:
     _permission: 'soda scs manager user'
+  options:
+    no_cache: TRUE
 
 soda_scs_manager.stack.health_check:
   path: '/soda-scs-manager/health/stack/{stack_id}'
@@ -16,6 +18,8 @@ soda_scs_manager.stack.health_check:
     _title:  'Stack health check'
   requirements:
     _permission: 'soda scs manager user'
+  options:
+    no_cache: TRUE
 
 
 # Soda SCS Component Entities
@@ -29,6 +33,7 @@ entity.soda_scs_component.canonical:
     parameters:
       soda_scs_component:
         type: entity:soda_scs_component
+    no_cache: TRUE
   requirements:
     _permission: 'soda scs manager user'
 
@@ -73,6 +78,8 @@ entity.soda_scs_component.collection:
     _title: 'Soda SCS Components'
   requirements:
     _permission: 'soda scs manager user'
+  options:
+    no_cache: TRUE
 
 entity.soda_scs_component.snapshot:
   path: '/soda-scs-manager/component/{soda_scs_component}/snapshot'
