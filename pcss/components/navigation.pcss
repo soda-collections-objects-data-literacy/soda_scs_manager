@@ -1,0 +1,23 @@
+/* Navigation Components */
+/* These styles define navigation components */
+
+@layer components {
+
+    @media (max-width: 75rem) {   
+        
+        .secondary-nav {
+            @apply !flex;
+        }
+
+        /* Should add spacing between User Account/Sign Up or Log in nav and Language Switcher nav */
+        
+        .secondary-nav__menu-item {
+            @apply gap-4 me-3;
+        }
+
+        /* Language Switcher items and internal spacing */
+        #block-olivero-languageswitcher .links {
+            @apply ms-4 !ps-6;
+        }
+    }
+}
