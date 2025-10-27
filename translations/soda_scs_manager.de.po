@@ -78,6 +78,10 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 
+# soda_scs_manager.routing.yml:403
+msgid "Register for an account"
+msgstr "Registrierung für einen Account"
+
 #: src/Form/KeycloakUserRegistrationForm.php:139
 msgid "<p>Register for an account. Your registration will be reviewed by an administrator.</p>"
 msgstr "<p>Registrieren Sie sich für ein Konto. Ihre Registrierung wird von einem Administrator überprüft.</p>"
