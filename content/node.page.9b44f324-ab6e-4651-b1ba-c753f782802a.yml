@@ -8,26 +8,27 @@ dependencies:
     - node.node_type.page
     - field.field.node.page.body
   entity:
-    - 'user:user:83694812-fe3f-4bcc-9967-0d74373e94c9'
+    - 'user:user:a2dca744-2dbc-4c66-8187-add9d4be6b7c'
     - 'user:user:719b1eb9-7d9e-44c8-bd2b-32b320f43d6a'
+    - 'user:user:83694812-fe3f-4bcc-9967-0d74373e94c9'
 fields:
   nid: '1'
-  vid: '264'
-  revision_timestamp: '1759822839'
+  vid: '265'
+  revision_timestamp: '1759838376'
   revision_uid:
-    target_id: '68'
+    target_id: '73'
   revision_log: {  }
   status: '1'
   uid:
     target_id: '1'
   title: 'Welcome to your Semantic Co-Working Space!'
   created: '1745826356'
-  changed: '1759397688'
+  changed: '1759838376'
   promote: '0'
   sticky: '0'
   default_langcode: '1'
   revision_default: '1'
-  revision_translation_affected: {  }
+  revision_translation_affected: '1'
   path:
     alias: /home
     pid: '1'
@@ -36,7 +37,7 @@ fields:
   content_translation_source: und
   content_translation_outdated: '0'
   body:
-    value: '<p><strong>The SODa Semantic Co-Working Space (SCS) is an infrastructure</strong> that offers users a wide range of opportunities to network, research and learn. It is developed as part of the <a href="https://sammlungen.io/about">SODa project</a> and the technical basis for our services, best practices and content.</p><p><strong>It is intended for people</strong> working with academic university collections. To use the Semantic Co-Working Space you will need to <a href="https://scs.sammlungen.io/user/register">sign up</a> for a new account or use the Single Sign-On (SSO) service <a href="https://daasi.de/en/federated-identity-and-access-management/iam-solutions/didmos/">didmos</a>.</p><p><strong>Users have various applications at their disposal</strong> that enable them to model, develop, transform, migrate, analyse, visualise, save, publish, enrich or process data with programming code.</p><p><strong>Import your data</strong> from previous projects into the SCS, <strong>create, edit and make them accessible</strong> directly there, and <strong>export or distribute</strong> it via various endpoints.</p><p><a href="/docs/getting-started">Learn how to get started here.</a></p>'
+    value: '<p><strong>The SODa Semantic Co-Working Space (SCS) is an infrastructure</strong> that offers users a wide range of opportunities to network, research and learn. It is developed as part of the <a href="https://sammlungen.io/about">SODa project</a> and the technical basis for our services, best practices and content.</p><p><strong>It is intended for people working with academic university collections.</strong> To use the Semantic Co-Working Space you will need to <a href="https://scs.sammlungen.io/user/register">sign up</a> for a new account or use the Single Sign-On (SSO) service <a href="https://daasi.de/en/federated-identity-and-access-management/iam-solutions/didmos/">didmos</a>.</p><p><strong>Users have various applications at their disposal</strong> that enable them to model, develop, transform, migrate, analyse, visualise, save, publish, enrich or process data with programming code.</p><p><strong>Import your data</strong> from previous projects into the SCS, <strong>create, edit and make them accessible</strong> directly there, and <strong>export or distribute</strong> it via various endpoints.</p><p><a href="/docs/getting-started">Learn how to get started here.</a></p>'
     summary: ''
     format: basic_html
 translations:
@@ -50,7 +51,7 @@ translations:
     promote: '0'
     sticky: '0'
     default_langcode: '0'
-    revision_translation_affected: '1'
+    revision_translation_affected: {  }
     path:
       alias: /home
       pid: '94'
