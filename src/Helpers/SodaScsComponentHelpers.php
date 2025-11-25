@@ -205,6 +205,26 @@ class SodaScsComponentHelpers {
             'error' => $healthRequestResult['error'],
           ];
 
+        case 0:
+          if ($containerStatus == 'running') {
+            return [
+              "message" => 'Starting',
+              "status" => 'starting',
+              'code' => $healthRequestResult['statusCode'],
+              'success' => FALSE,
+              'error' => $healthRequestResult['error'],
+            ];
+          }
+          else {
+            return [
+              "message" => 'Stopped',
+              "status" => 'stopped',
+              'code' => $healthRequestResult['statusCode'],
+              'success' => FALSE,
+              'error' => $healthRequestResult['error'],
+            ];
+          }
+
         default:
           return [
             "message" => 'Not available',
