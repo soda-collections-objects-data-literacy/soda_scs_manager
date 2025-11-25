@@ -189,7 +189,7 @@ class SodaScsComponentHelpers {
       switch ($healthRequestResult['statusCode']) {
         case 200:
           return [
-            "message" => 'Application is available.',
+            "message" => 'Available.',
             "status" => 'running',
             'code' => $healthRequestResult['statusCode'],
             'success' => TRUE,
@@ -198,7 +198,7 @@ class SodaScsComponentHelpers {
 
         case 502:
           return [
-            "message" => 'Application starts',
+            "message" => 'Starting',
             "status" => 'starting',
             'code' => $healthRequestResult['statusCode'],
             'success' => FALSE,
@@ -207,7 +207,7 @@ class SodaScsComponentHelpers {
 
         default:
           return [
-            "message" => 'Component is not available',
+            "message" => 'Not available',
             "status" => 'unknown',
             'code' => $healthRequestResult['statusCode'],
             'success' => FALSE,
@@ -217,7 +217,7 @@ class SodaScsComponentHelpers {
     }
     catch (\Exception $e) {
       return [
-        "message" => 'Component is not available',
+        "message" => 'Not available',
         "status" => 'unknown',
         'code' => $e->getCode(),
         'success' => FALSE,
