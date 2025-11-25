@@ -13,13 +13,20 @@
     @apply opacity-100 pointer-events-auto;
   }
 
+  .soda-scs-manager__throbber-overlay__content {
+    @apply flex flex-col items-center justify-center;
+  }
+
   .soda-scs-manager__throbber-overlay__spinner {
     @apply w-16 h-16 mb-4 border-4 border-orange-300 border-t-orange-500 rounded-full;
     @apply animate-spin;
   }
 
   .soda-scs-manager__throbber-overlay__message {
-    @apply text-xl
-    font-semibold text-center max-w-md px-6;
+    @apply text-xl font-semibold text-center max-w-md px-6;
+  }
+
+  .soda-scs-manager__throbber-overlay__info {
+    @apply mt-6 text-base text-center max-w-lg px-6 leading-relaxed;
   }
 }
