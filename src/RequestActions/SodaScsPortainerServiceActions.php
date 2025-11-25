@@ -20,7 +20,8 @@ use Drupal\Core\Template\TwigEnvironment;
 use Drupal\soda_scs_manager\Helpers\SodaScsServiceHelpers;
 use Drupal\soda_scs_manager\ServiceActions\SodaScsServiceActionsInterface;
 use GuzzleHttp\ClientInterface;
-
+use GuzzleHttp\Exception\RequestException;
+use GuzzleHttp\Psr7\Message;
 use Symfony\Component\HttpFoundation\RequestStack;
 
 /**
@@ -168,7 +169,7 @@ class SodaScsPortainerServiceActions implements SodaScsServiceRequestInterface {
     if (isset($request['body'])) {
       $requestParams['body'] = $request['body'];
     }
-    $requestParams['timeout'] ??= 30;
+    $requestParams['timeout'] ??= 600;
 
     // Send the request.
     try {
@@ -184,7 +185,39 @@ class SodaScsPortainerServiceActions implements SodaScsServiceRequestInterface {
         'error' => '',
       ];
     }
+    catch (RequestException $e) {
+      $logger = $this->loggerFactory->get('soda_scs_manager');
+      $requestDump = Message::toString($e->getRequest());
+      $responseDump = $e->hasResponse() ? Message::toString($e->getResponse()) : '';
+      $logger->error('Portainer request failed: @message', ['@message' => $e->getMessage()]);
+      $logger->debug('Failed Portainer request: %request', ['%request' => $requestDump]);
+      if ($responseDump !== '') {
+        $logger->debug('Failed Portainer response: %response', ['%response' => $responseDump]);
+      }
+
+      $detailedError = $e->getMessage();
+      if ($e->hasResponse()) {
+        $responseBody = (string) $e->getResponse()->getBody();
+        if ($responseBody !== '') {
+          $detailedError .= ' | body: ' . $responseBody;
+        }
+      }
+
+      return [
+        'message' => $this->t('Request failed with code @code', ['@code' => $e->getCode()]),
+        'data' => [
+          'portainerResponse' => $e,
+        ],
+        'statusCode' => $e->getCode(),
+        'success' => FALSE,
+        'error' => $detailedError,
+      ];
+    }
     catch (\Exception $e) {
+      $this->loggerFactory
+        ->get('soda_scs_manager')
+        ->error('Unexpected Portainer request failure: @message', ['@message' => $e->getMessage()]);
+
       return [
         'message' => $this->t('Request failed with code @code', ['@code' => $e->getCode()]),
         'data' => [
@@ -249,6 +282,10 @@ class SodaScsPortainerServiceActions implements SodaScsServiceRequestInterface {
 
     $env = [
       [
+        "name" => "APACHE_LOGGING",
+        "value" => "false",
+      ],
+      [
         "name" => "DB_DRIVER",
         "value" => "mysql",
       ],
@@ -271,6 +308,10 @@ class SodaScsPortainerServiceActions implements SodaScsServiceRequestInterface {
       [
         "name" => "DB_USER",
         "value" => $requestParams['username'],
+      ],
+      [
+        "name" => "DEBUG",
+        "value" => "false",
       ],
       [
         "name" => "DEFAULT_GRAPH",
@@ -304,6 +345,10 @@ class SodaScsPortainerServiceActions implements SodaScsServiceRequestInterface {
       [
         "name" => "KEYCLOAK_REALM",
         "value" => $keycloakGeneralSettings['realm'],
+      ],
+      [
+        "name" => "MODE",
+        "value" => "production",
       ],
       [
         "name" => "OPENID_CONNECT_CLIENT_SECRET",
@@ -348,6 +393,14 @@ class SodaScsPortainerServiceActions implements SodaScsServiceRequestInterface {
       [
         "name" => "WISSKI_BASE_IMAGE_VERSION",
         "value" => 'latest',
+      ],
+      [
+        "name" => "WISSKI_DEFAULT_DATA_MODEL_VERSION",
+        "value" => '1.x-dev',
+      ],
+      [
+        "name" => "WISSKI_STARTER_VERSION",
+        "value" => '1.x-dev',
       ],
       [
         "name" => "WISSKI_FLAVOURS",
