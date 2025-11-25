@@ -4,28 +4,64 @@ declare(strict_types=1);
 
 namespace Drupal\soda_scs_manager\ListBuilder;
 
+use Drupal\Core\Datetime\DateFormatterInterface;
 use Drupal\Core\Entity\EntityInterface;
 use Drupal\Core\Entity\EntityListBuilder;
+use Drupal\Core\Entity\EntityStorageInterface;
+use Drupal\Core\Entity\EntityTypeInterface;
 use Drupal\Core\Link;
 use Drupal\Core\Render\Markup;
 use Drupal\Core\Url;
+use Symfony\Component\DependencyInjection\ContainerInterface;
 
 /**
- * Defines a class to build a listing of SODa SCS Component entities.
+ * Defines a class to build a listing of SODa SCS Project entities.
  *
  * @ingroup soda_scs_manager
  */
 class SodaScsProjectListBuilder extends EntityListBuilder {
 
   /**
+   * The date formatter service.
+   *
+   * @var \Drupal\Core\Datetime\DateFormatterInterface
+   */
+  protected DateFormatterInterface $dateFormatter;
+
+  /**
+   * {@inheritdoc}
+   */
+  public static function createInstance(ContainerInterface $container, EntityTypeInterface $entity_type) {
+    $instance = parent::createInstance($container, $entity_type);
+    $instance->dateFormatter = $container->get('date.formatter');
+    return $instance;
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function load() {
+    $entityQuery = $this->storage->getQuery()
+      ->accessCheck(TRUE)
+      ->sort('owner', 'ASC')
+      ->sort('label', 'ASC')
+      ->pager(10);
+
+    $entityIds = $entityQuery->execute();
+
+    return $this->storage->loadMultiple($entityIds);
+  }
+
+  /**
    * {@inheritdoc}
    */
   public function buildHeader() {
-    $header['name'] = $this->t('Name');
-    $header['owner'] = $this->t('Owner');
-    $header['members'] = $this->t('Members');
+    $header['label']      = $this->t('Name');
+    $header['id']         = $this->t('ID');
+    $header['owner']      = $this->t('Owner');
+    $header['members']    = $this->t('Members');
     $header['components'] = $this->t('Components');
-    $header['rights'] = $this->t('Rights');
+    $header['created']    = $this->t('Created');
     return $header + parent::buildHeader();
   }
 
@@ -33,48 +69,90 @@ class SodaScsProjectListBuilder extends EntityListBuilder {
    * {@inheritdoc}
    */
   public function buildRow(EntityInterface $entity) {
-    // @todo Make it private to user?
-    /** @var \Drupal\soda_scs_manager\Entity\SodaScsProjectInterface $entity */
-    if ($entity->getOwnerId() === \Drupal::currentUser()->id() || \Drupal::currentUser()->hasPermission('soda scs manager admin')) {
 
-      /** @var \Drupal\Core\Field\EntityReferenceFieldItemListInterface $scsComponentValues */
-      $scsComponentValues = $entity->get('connectedComponents');
-      $referencedEntities = $scsComponentValues->referencedEntities();
-      $links = [];
-      foreach ($referencedEntities as $referencedEntity) {
-        $links[] = Link::fromTextAndUrl(
+    /** @var \Drupal\soda_scs_manager\Entity\SodaScsProjectInterface $entity */
+    if ($entity->getOwnerId() !== \Drupal::currentUser()->id() && !\Drupal::currentUser()->hasPermission('soda scs manager admin')) {
+      return [];
+    }
+
+    // Create a link to the entity.
+    $row['label'] = Link::fromTextAndUrl(
+      $entity->label(),
+      Url::fromRoute('entity.soda_scs_project.canonical', [
+        'soda_scs_project' => $entity->id(),
+      ])
+    )->toString();
+
+    // ID.
+    $row['id'] = $entity->id();
+
+    // Owner information.
+    $owner = $entity->getOwner();
+    if ($owner && $owner->id()) {
+      $row['owner'] = Link::fromTextAndUrl(
+        $owner->getDisplayName(),
+        Url::fromRoute('entity.user.canonical', ['user' => $owner->id()])
+      )->toString();
+    }
+    else {
+      $row['owner'] = $this->t('Unknown');
+    }
+
+    // Members references.
+    /** @var \Drupal\Core\Field\EntityReferenceFieldItemListInterface $members */
+    $members = $entity->get('members');
+    $referencedMembers = $members->referencedEntities();
+    $memberLinks = [];
+
+    /** @var \Drupal\user\Entity\User $referencedMember */
+    foreach ($referencedMembers as $referencedMember) {
+      $memberLinks[] = Link::fromTextAndUrl(
+        $referencedMember->getDisplayName(),
+        Url::fromRoute('entity.user.canonical', ['user' => $referencedMember->id()])
+      )->toString();
+    }
+
+    $row['members'] = !empty($memberLinks) ? Markup::create(implode(', ', $memberLinks)) : $this->t('None');
+
+    // Component references.
+    /** @var \Drupal\Core\Field\EntityReferenceFieldItemListInterface $scsComponentValues */
+    $scsComponentValues = $entity->get('connectedComponents');
+    $referencedEntities = $scsComponentValues->referencedEntities();
+    $componentLinks = [];
+
+    foreach ($referencedEntities as $referencedEntity) {
+      $componentLinks[] = Link::fromTextAndUrl(
         $referencedEntity->label(),
         Url::fromRoute('entity.soda_scs_component.canonical', ['soda_scs_component' => $referencedEntity->id()])
-        )->toString();
-      }
-
-      // Concatenate the links with a comma separator.
-      $linksString = implode(',</br>', $links);
-
-      /** @var \Drupal\Core\Field\EntityReferenceFieldItemListInterface $members */
-      $members = $entity->get('members');
-      $referencedMembers = $members->referencedEntities();
-      $members = [];
-      /** @var \Drupal\user\Entity\User $referencedMember */
-      foreach ($referencedMembers as $referencedMember) {
-        $members[] = Link::fromTextAndUrl(
-          $referencedMember->getDisplayName(),
-          Url::fromRoute('entity.user.canonical', ['user' => $referencedMember->id()])
-        )->toString();
-      }
-
-      // Markup::create to ensure the HTML is not escaped.
-      $row['name'] = Link::fromTextAndUrl(
-        $entity->label(),
-        Url::fromRoute('entity.soda_scs_project.canonical', ['soda_scs_project' => $entity->id()])
       )->toString();
-      $owner = $entity->getOwner();
-      $row['owner'] = ($owner && $owner->getDisplayName()) ? $owner->getDisplayName() : 'unknown';
-      $row['members'] = Markup::create(implode(', ', $members));
-      $row['components'] = Markup::create($linksString);
-      $row['rights'] = $entity->get('rights')->value;
-      return $row + parent::buildRow($entity);
     }
+
+    $row['components'] = !empty($componentLinks) ? Markup::create(implode(', ', $componentLinks)) : $this->t('None');
+
+    // Created date.
+    $created = $entity->get('created')->value;
+    $row['created'] = $this->dateFormatter->format($created, 'short');
+
+    return $row + parent::buildRow($entity);
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function buildOperations(EntityInterface $entity) {
+    /** @var \Drupal\soda_scs_manager\Entity\SodaScsProjectInterface $entity */
+    $operations = parent::buildOperations($entity);
+
+    // Ensure delete operation exists.
+    if (!isset($operations['#links']['delete'])) {
+      $operations['#links']['delete'] = [
+        'title' => $this->t('Delete'),
+        'weight' => 100,
+        'url' => Url::fromRoute('entity.soda_scs_project.delete_form', ['soda_scs_project' => $entity->id()]),
+      ];
+    }
+
+    return $operations;
   }
 
   /**
@@ -82,25 +160,22 @@ class SodaScsProjectListBuilder extends EntityListBuilder {
    */
   public function render() {
     $build = parent::render();
+
+    // Add security library.
     $build['table']['#attached']['library'][] = 'soda_scs_manager/security';
-    return $build;
-  }
 
-  /**
-   * {@inheritdoc}
-   *
-   * @todo Why I have to do this, this should be in the parent class
-   */
-  public function buildOperations(EntityInterface $entity) {
-    $operations = parent::buildOperations($entity);
+    // Add custom styling.
+    $build['table']['#attributes']['class'][] = 'soda-scs-table-list';
 
-    $operations['#links']['delete'] = [
-      'title' => $this->t('Delete'),
-      'weight' => 100,
-      'url' => Url::fromRoute('entity.soda_scs_project.delete_form', ['soda_scs_project' => $entity->id()]),
+    // Add pager.
+    $build['pager'] = [
+      '#type' => 'pager',
     ];
 
-    return $operations;
+    // Disable caching.
+    $build['#cache']['max-age'] = 0;
+
+    return $build;
   }
 
 }

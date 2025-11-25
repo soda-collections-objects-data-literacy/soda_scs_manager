@@ -4,24 +4,65 @@ declare(strict_types=1);
 
 namespace Drupal\soda_scs_manager\ListBuilder;
 
+use Drupal\Core\Datetime\DateFormatterInterface;
 use Drupal\Core\Entity\EntityInterface;
 use Drupal\Core\Entity\EntityListBuilder;
+use Drupal\Core\Entity\EntityStorageInterface;
+use Drupal\Core\Entity\EntityTypeInterface;
+use Drupal\Core\Link;
+use Drupal\Core\StringTranslation\TranslatableMarkup;
 use Drupal\Core\Url;
+use Symfony\Component\DependencyInjection\ContainerInterface;
 
 /**
- * Defines a class to build a listing of SODa SCS Component entities.
+ * Defines a class to build a listing of SODa SCS Stack entities.
  *
  * @ingroup soda_scs_manager
  */
 class SodaScsStackListBuilder extends EntityListBuilder {
 
   /**
+   * The date formatter service.
+   *
+   * @var \Drupal\Core\Datetime\DateFormatterInterface
+   */
+  protected DateFormatterInterface $dateFormatter;
+
+  /**
+   * {@inheritdoc}
+   */
+  public static function createInstance(ContainerInterface $container, EntityTypeInterface $entity_type) {
+    $instance = parent::createInstance($container, $entity_type);
+    $instance->dateFormatter = $container->get('date.formatter');
+    return $instance;
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function load() {
+    $entityQuery = $this->storage->getQuery()
+      ->accessCheck(TRUE)
+      ->sort('owner', 'ASC')
+      ->sort('bundle', 'ASC')
+      ->sort('label', 'ASC')
+      ->pager(10);
+
+    $entityIds = $entityQuery->execute();
+
+    return $this->storage->loadMultiple($entityIds);
+  }
+
+  /**
    * {@inheritdoc}
    */
   public function buildHeader() {
-    $header['type'] = $this->t('Type');
+    $header['label']       = $this->t('Name');
+    $header['id']          = $this->t('ID');
+    $header['type']        = $this->t('Type');
     $header['machineName'] = $this->t('Domain');
-    $header['operations'] = $this->t('Operations');
+    $header['owner']       = $this->t('Owner');
+    $header['created']     = $this->t('Created');
     return $header + parent::buildHeader();
   }
 
@@ -29,17 +70,69 @@ class SodaScsStackListBuilder extends EntityListBuilder {
    * {@inheritdoc}
    */
   public function buildRow(EntityInterface $entity) {
+
     /** @var \Drupal\soda_scs_manager\Entity\SodaScsStackInterface $entity */
     if ($entity->getOwnerId() !== \Drupal::currentUser()->id() && !\Drupal::currentUser()->hasPermission('soda scs manager admin')) {
       return [];
     }
 
-
-    /** @var \Drupal\soda_scs_manager\Entity\SodaScsComponentInterface $entity */
     $bundle = $entity->bundle();
-    $row['type'] = $bundle;
-    $row['machineName'] = $entity->get('machineName')->value;
+
+    // Create a link to the entity.
+    $row['label'] = Link::fromTextAndUrl(
+      $entity->label(),
+      Url::fromRoute('entity.soda_scs_stack.canonical', [
+        'soda_scs_stack' => $entity->id(),
+      ])
+    )->toString();
+
+    // ID.
+    $row['id'] = $entity->id();
+
+    // Format the bundle type to be more readable.
+    $row['type'] = $this->formatBundleType($bundle);
+
+    // Machine name / Domain.
+    $row['machineName'] = [
+      'data' => [
+        '#markup' => '<code>' . $entity->get('machineName')->value . '</code>',
+      ],
+    ];
+
+    // Owner information.
+    $owner = $entity->getOwner();
+    if ($owner && $owner->id()) {
+      $row['owner'] = Link::fromTextAndUrl(
+        $owner->getDisplayName(),
+        Url::fromRoute('entity.user.canonical', ['user' => $owner->id()])
+      )->toString();
+    }
+    else {
+      $row['owner'] = $this->t('Unknown');
+    }
+
+    // Created date.
+    $created = $entity->get('created')->value;
+    $row['created'] = $this->dateFormatter->format($created, 'short');
+
     return $row + parent::buildRow($entity);
+  }
+
+  /**
+   * Formats the bundle type to be more human-readable.
+   *
+   * @param string $bundle
+   *   The bundle machine name.
+   *
+   * @return \Drupal\Core\StringTranslation\TranslatableMarkup|string
+   *   The formatted bundle type.
+   */
+  protected function formatBundleType(string $bundle): TranslatableMarkup|string {
+    $typeMap = [
+      'soda_scs_stack' => $this->t('Stack'),
+    ];
+
+    return $typeMap[$bundle] ?? $bundle;
   }
 
   /**
@@ -63,14 +156,6 @@ class SodaScsStackListBuilder extends EntityListBuilder {
   }
 
   /**
-   * {@inheritdoc}
-   */
-  public function getCacheMaxAge() {
-    // Disable caching for this list builder.
-    return 0;
-  }
-
-  /**
    * Ensures the bundle parameter is included in URLs.
    *
    * @param \Drupal\Core\Url $url
@@ -81,17 +166,37 @@ class SodaScsStackListBuilder extends EntityListBuilder {
    * @return \Drupal\Core\Url
    *   The URL with bundle parameter.
    */
-  protected function ensureBundleParameter(Url $url, EntityInterface $entity) {
-    $route_name = $url->getRouteName();
-    $route_parameters = $url->getRouteParameters();
+  protected function ensureBundleParameter(Url $url, EntityInterface $entity): Url {
+    $routeName = $url->getRouteName();
+    $routeParameters = $url->getRouteParameters();
 
     // Add bundle parameter if the route requires it.
-    if (strpos($route_name, 'entity.soda_scs_stack.') === 0 && !isset($route_parameters['bundle'])) {
-      $route_parameters['bundle'] = $entity->bundle();
-      $url = Url::fromRoute($route_name, $route_parameters);
+    if (strpos($routeName, 'entity.soda_scs_stack.') === 0 && !isset($routeParameters['bundle'])) {
+      $routeParameters['bundle'] = $entity->bundle();
+      $url = Url::fromRoute($routeName, $routeParameters);
     }
 
     return $url;
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function render() {
+    $build = parent::render();
+
+    // Add custom styling.
+    $build['table']['#attributes']['class'][] = 'soda-scs-table-list';
+
+    // Add pager.
+    $build['pager'] = [
+      '#type' => 'pager',
+    ];
+
+    // Disable caching.
+    $build['#cache']['max-age'] = 0;
+
+    return $build;
   }
 
 }

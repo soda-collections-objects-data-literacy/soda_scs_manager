@@ -49,7 +49,7 @@ class SodaScsServiceKeyEditForm extends ContentEntityForm {
    *   The form state.
    */
   public function cancelForm(array &$form, FormStateInterface $form_state) {
-    $form_state->setRedirect('soda_scs_manager.service_keys');
+    $form_state->setRedirect('entity.soda_scs_service_key.collection');
   }
 
   /**
@@ -79,7 +79,9 @@ class SodaScsServiceKeyEditForm extends ContentEntityForm {
     parent::save($form, $form_state);
 
     // Redirect to the components page.
-    $form_state->setRedirect('soda_scs_manager.service_keys');
+    $form_state->setRedirect('entity.soda_scs_service_key.canonical', [
+      'soda_scs_service_key' => $this->entity->id(),
+    ]);
   }
 
 }

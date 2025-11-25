@@ -72,7 +72,7 @@ entity.soda_scs_component.delete_form:
     _custom_access: '\Drupal\soda_scs_manager\Access\SodaScsComponentLinksTasksAccessControlHandler::accessDeleteForm'
 
 entity.soda_scs_component.collection:
-  path: '/soda-scs-manager/components'
+  path: '/admin/structure/soda-scs-component/list'
   defaults:
     _entity_list: 'soda_scs_component'
     _title: 'Soda SCS Components'
@@ -138,7 +138,7 @@ entity.soda_scs_project.delete_form:
     _permission: 'soda scs manager user'
 
 entity.soda_scs_project.collection:
-  path: '/soda-scs-manager/project/list'
+  path: '/admin/structure/soda-scs-project/list'
   defaults:
     _entity_list: 'soda_scs_project'
     _title: 'SODa SCS Projects'
@@ -157,6 +157,8 @@ entity.soda_scs_service_key.canonical:
     parameters:
       soda_scs_service_key:
         type: entity:soda_scs_service_key
+  requirements:
+    _entity_access: 'soda_scs_service_key.view'
 
 entity.soda_scs_service_key.add_form:
   path: '/soda-scs-manager/service-key/add/{bundle}'
@@ -180,7 +182,7 @@ entity.soda_scs_service_key.delete_form:
     _permission: 'soda scs manager admin'
 
 entity.soda_scs_service_key.collection:
-  path: '/soda-scs-manager/service-key/list'
+  path: '/admin/structure/soda-scs-service-key/list'
   defaults:
     _entity_list: 'soda_scs_service_key'
     _title: 'SODa SCS Service Keys'
@@ -238,7 +240,7 @@ entity.soda_scs_snapshot.delete_form:
     _permission: 'soda scs manager user'
 
 entity.soda_scs_snapshot.collection:
-  path: '/soda-scs-manager/snapshot/list'
+  path: '/admin/structure/soda-scs-snapshot/list'
   defaults:
     _entity_list: 'soda_scs_snapshot'
     _title: 'SODa SCS Snapshots'
@@ -310,7 +312,7 @@ entity.soda_scs_stack.delete_form:
 
 
 entity.soda_scs_stack.collection:
-  path: '/admin/structure/soda-scs-stack'
+  path: '/admin/structure/soda-scs-stack/list'
   defaults:
     _entity_list: 'soda_scs_stack'
     _title: 'Stacks'
@@ -368,7 +370,7 @@ soda_scs_manager.catalogue:
     _permission: 'soda scs manager user'
 
 soda_scs_manager.administration:
-  path: '/admin/config/soda-scs-manager'
+  path: '/admin/structure/soda-scs-manager'
   defaults:
     _controller: '\Drupal\soda_scs_manager\Controller\SodaScsAdministrationController::administrationPage'
     _title: 'SCS Administration'

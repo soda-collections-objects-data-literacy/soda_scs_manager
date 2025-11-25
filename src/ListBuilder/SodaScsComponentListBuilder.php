@@ -41,6 +41,22 @@ class SodaScsComponentListBuilder extends EntityListBuilder {
   /**
    * {@inheritdoc}
    */
+  public function load() {
+    $entityQuery = $this->storage->getQuery()
+      ->accessCheck(TRUE)
+      ->sort('owner', 'ASC')
+      ->sort('bundle', 'ASC')
+      ->sort('label', 'ASC')
+      ->pager(10);
+
+    $entityIds = $entityQuery->execute();
+
+    return $this->storage->loadMultiple($entityIds);
+  }
+
+  /**
+   * {@inheritdoc}
+   */
   public function buildHeader() {
     $header['label']       = $this->t('Name');
     $header['id']          = $this->t('ID');
@@ -141,8 +157,7 @@ class SodaScsComponentListBuilder extends EntityListBuilder {
     $build = parent::render();
 
     // Add custom styling and health status JavaScript.
-    $build['table']['#attributes']['class'][] = 'soda-scs-component-list';
-    $build['table']['#attached']['library'][] = 'soda_scs_manager/component-list';
+    $build['table']['#attributes']['class'][] = 'soda-scs-table-list';
     $build['table']['#attached']['library'][] = 'soda_scs_manager/componentListHealthStatus';
 
     // Add data attributes to each row for JavaScript.
@@ -156,17 +171,13 @@ class SodaScsComponentListBuilder extends EntityListBuilder {
       }
     }
 
-    // Wrap the table in a scrollable container.
-    $build = [
-      '#type'       => 'container',
-      '#attributes' => [
-        'class' => ['soda-scs-component-list-wrapper'],
-      ],
-      'table'       => $build,
-      '#cache' => [
-        'max-age' => 0,
-      ],
+    // Add pager.
+    $build['pager'] = [
+      '#type' => 'pager',
     ];
+
+    // Disable caching.
+    $build['#cache']['max-age'] = 0;
 
     return $build;
   }

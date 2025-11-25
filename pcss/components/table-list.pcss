@@ -4,7 +4,7 @@
  */
 
 /* Table wrapper for horizontal scrolling. */
-.soda-scs-component-list-wrapper {
+.soda-scs-table-list-wrapper {
   @apply w-full overflow-x-auto;
   max-width: 100%;
   @apply rounded-lg shadow-md;
@@ -31,17 +31,17 @@
   }
 }
 
-.soda-scs-component-list {
+.soda-scs-table-list {
   @apply w-full border-collapse;
   min-width: 800px;
 
   /* Table header styling. */
   thead {
-    background: linear-gradient(160deg, rgb(255, 138, 5) 0%, rgb(198, 105, 0) 78.66%);
-
     th {
-      @apply px-4 py-3 text-left text-sm font-semibold text-white uppercase tracking-wider;
-      border-bottom: 2px solid rgb(198, 105, 0);
+      @apply px-4 py-3 text-left text-sm font-semibold uppercase tracking-wider;
+      max-width: 200px;
+      word-wrap: break-word;
+      white-space: normal;
 
       &:first-child {
         @apply rounded-tl-lg;
@@ -75,7 +75,9 @@
 
       td {
         @apply px-4 py-3 text-sm text-gray-900;
-        @apply whitespace-nowrap;
+        max-width: 200px;
+        word-wrap: break-word;
+        white-space: normal;
 
         /* Name column - larger and bold. */
         &:first-child {
@@ -193,7 +195,7 @@
 
 /* Responsive table. */
 @media (max-width: 1024px) {
-  .soda-scs-component-list {
+  .soda-scs-table-list {
     @apply text-xs;
 
     thead th {
@@ -207,6 +209,8 @@
 }
 
 /* Empty table message. */
-.soda-scs-component-list + .empty {
+.soda-scs-table-list + .empty {
   @apply text-center py-8 text-gray-500 italic;
 }
+
+

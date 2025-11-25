@@ -64,7 +64,7 @@ throbberOverlay:
     - core/drupalSettings
     - core/jquery
 
-component-list:
+table-list:
   version: 1.x
   dependencies:
     - soda_scs_manager/globalStyling

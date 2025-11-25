@@ -91,3 +91,9 @@ services:
     class: Drupal\soda_scs_manager\Routing\SodaScsDisableDrupalLoginRouteSubscriber
     tags:
       - { name: event_subscriber }
+
+  # Breadcrumb builder for list pages
+  soda_scs_manager.list_breadcrumb_builder:
+    class: Drupal\soda_scs_manager\Breadcrumb\SodaScsManagerListBreadcrumbBuilder
+    tags:
+      - { name: breadcrumb_builder, priority: 100 }

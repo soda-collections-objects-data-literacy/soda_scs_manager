@@ -62,7 +62,7 @@ use Drupal\user\UserInterface;
  *     "add-form" = "/soda-scs-manager/project/add/{bundle}",
  *     "edit-form" = "/soda-scs-manager/project/{soda_scs_project}/edit",
  *     "delete-form" = "/soda-scs-manager/project/{soda_scs_project}/delete",
- *     "collection" = "/soda-scs-manager/project/list",
+ *     "collection" = "/admin/structure/soda-scs-project/list",
  *   },
  *   config_export = {
  *     "bundle",

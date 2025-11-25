@@ -4,19 +4,20 @@ declare(strict_types=1);
 
 namespace Drupal\soda_scs_manager\ListBuilder;
 
-use Drupal\Core\Link;
-use Drupal\Core\Url;
-use Drupal\Core\Render\Markup;
+use Drupal\Core\Datetime\DateFormatterInterface;
 use Drupal\Core\Entity\EntityInterface;
 use Drupal\Core\Entity\EntityListBuilder;
-use Drupal\Core\Datetime\DateFormatterInterface;
 use Drupal\Core\Entity\EntityStorageInterface;
 use Drupal\Core\Entity\EntityTypeInterface;
-use Drupal\Core\Routing\RedirectDestinationInterface;
+use Drupal\Core\Link;
+use Drupal\Core\Render\Markup;
+use Drupal\Core\Url;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 
 /**
- * Provides a list builder for SODa SCS Snapshots.
+ * Defines a class to build a listing of SODa SCS Snapshot entities.
+ *
+ * @ingroup soda_scs_manager
  */
 class SodaScsSnapshotListBuilder extends EntityListBuilder {
 
@@ -25,60 +26,43 @@ class SodaScsSnapshotListBuilder extends EntityListBuilder {
    *
    * @var \Drupal\Core\Datetime\DateFormatterInterface
    */
-  protected $dateFormatter;
+  protected DateFormatterInterface $dateFormatter;
 
   /**
-   * The redirect destination service.
-   *
-   * @var \Drupal\Core\Routing\RedirectDestinationInterface
+   * {@inheritdoc}
    */
-  protected $redirectDestination;
-
-  /**
-   * Constructs a new SnapshotListBuilder object.
-   *
-   * @param \Drupal\Core\Entity\EntityTypeInterface $entityType
-   *   The entity type definition.
-   * @param \Drupal\Core\Entity\EntityStorageInterface $storage
-   *   The entity storage class.
-   * @param \Drupal\Core\Datetime\DateFormatterInterface $dateFormatter
-   *   The date formatter service.
-   * @param \Drupal\Core\Routing\RedirectDestinationInterface $redirectDestination
-   *   The redirect destination service.
-   */
-  public function __construct(
-    EntityTypeInterface $entityType,
-    EntityStorageInterface $storage,
-    DateFormatterInterface $dateFormatter,
-    RedirectDestinationInterface $redirectDestination,
-  ) {
-    parent::__construct($entityType, $storage);
-    $this->dateFormatter = $dateFormatter;
-    $this->redirectDestination = $redirectDestination;
+  public static function createInstance(ContainerInterface $container, EntityTypeInterface $entity_type) {
+    $instance = parent::createInstance($container, $entity_type);
+    $instance->dateFormatter = $container->get('date.formatter');
+    // RedirectDestination is available from parent class.
+    $instance->redirectDestination = $container->get('redirect.destination');
+    return $instance;
   }
 
   /**
    * {@inheritdoc}
    */
-  public static function createInstance(ContainerInterface $container, EntityTypeInterface $entityType) {
-    return new static(
-      $entityType,
-      $container->get('entity_type.manager')->getStorage($entityType->id()),
-      $container->get('date.formatter'),
-      $container->get('redirect.destination')
-    );
+  public function load() {
+    $entityQuery = $this->storage->getQuery()
+      ->accessCheck(TRUE)
+      ->sort('owner', 'ASC')
+      ->sort('label', 'ASC')
+      ->pager(10);
+
+    $entityIds = $entityQuery->execute();
+
+    return $this->storage->loadMultiple($entityIds);
   }
 
   /**
    * {@inheritdoc}
    */
   public function buildHeader() {
-    $header = [
-      'id' => $this->t('ID'),
-      'name' => $this->t('Name'),
-      'component' => $this->t('Component'),
-      'created' => $this->t('Created'),
-    ];
+    $header['label']     = $this->t('Name');
+    $header['id']        = $this->t('ID');
+    $header['component'] = $this->t('Component');
+    $header['owner']     = $this->t('Owner');
+    $header['created']   = $this->t('Created');
     return $header + parent::buildHeader();
   }
 
@@ -86,17 +70,25 @@ class SodaScsSnapshotListBuilder extends EntityListBuilder {
    * {@inheritdoc}
    */
   public function buildRow(EntityInterface $entity) {
+
     /** @var \Drupal\soda_scs_manager\Entity\SodaScsSnapshotInterface $entity */
     if ($entity->getOwnerId() !== \Drupal::currentUser()->id() && !\Drupal::currentUser()->hasPermission('soda scs manager admin')) {
       return [];
     }
 
-    /** @var \Drupal\soda_scs_manager\Entity\SodaScsSnapshot $entity */
-    $row['id'] = $entity->id();
-    $row['name'] = $entity->label();
+    // Create a link to the entity.
+    $row['label'] = Link::fromTextAndUrl(
+      $entity->label(),
+      Url::fromRoute('entity.soda_scs_snapshot.canonical', [
+        'soda_scs_snapshot' => $entity->id(),
+      ])
+    )->toString();
 
+    // ID.
+    $row['id'] = $entity->id();
+
+    // Component references.
     $referencedEntities = [];
-    // Get the component entity if associated.
     if (!$entity->get('snapshotOfComponent')->isEmpty()) {
       $referencedEntities = array_merge($referencedEntities, $entity->snapshotOfComponent->referencedEntities());
     }
@@ -104,14 +96,26 @@ class SodaScsSnapshotListBuilder extends EntityListBuilder {
     $links = [];
     foreach ($referencedEntities as $referencedEntity) {
       $links[] = Link::fromTextAndUrl(
-      $referencedEntity->id(),
-      Url::fromRoute('entity.soda_scs_component.canonical', ['soda_scs_component' => $referencedEntity->id()])
+        $referencedEntity->label(),
+        Url::fromRoute('entity.soda_scs_component.canonical', ['soda_scs_component' => $referencedEntity->id()])
       )->toString();
     }
 
-    // Concatenate the links with a comma separator.
-    $linksString = implode(', ', $links);
-    $row['component'] = Markup::create($linksString);
+    $row['component'] = !empty($links) ? Markup::create(implode(', ', $links)) : $this->t('None');
+
+    // Owner information.
+    $owner = $entity->getOwner();
+    if ($owner && $owner->id()) {
+      $row['owner'] = Link::fromTextAndUrl(
+        $owner->getDisplayName(),
+        Url::fromRoute('entity.user.canonical', ['user' => $owner->id()])
+      )->toString();
+    }
+    else {
+      $row['owner'] = $this->t('Unknown');
+    }
+
+    // Created date.
     $row['created'] = $this->dateFormatter->format($entity->getCreatedTime(), 'short');
 
     return $row + parent::buildRow($entity);
@@ -122,50 +126,37 @@ class SodaScsSnapshotListBuilder extends EntityListBuilder {
    */
   protected function getDefaultOperations(EntityInterface $entity) {
     $operations = parent::getDefaultOperations($entity);
-
-    // Add entity view operation if missing.
-    if ($entity->hasLinkTemplate('canonical') && !isset($operations['view'])) {
-      $operations['view'] = [
-        'title' => $this->t('View'),
-        'weight' => 0,
-        'url' => $entity->toUrl('canonical'),
-      ];
-    }
-
-    // Add edit operation if missing.
-    if ($entity->hasLinkTemplate('edit-form') && !isset($operations['edit'])) {
-      $operations['edit'] = [
-        'title' => $this->t('Edit'),
-        'weight' => 10,
-        'url' => $entity->toUrl('edit-form'),
-      ];
-    }
-
-    // Add delete operation if missing.
-    if ($entity->hasLinkTemplate('delete-form') && !isset($operations['delete'])) {
-      $operations['delete'] = [
-        'title' => $this->t('Delete'),
-        'weight' => 100,
-        'url' => $entity->toUrl('delete-form'),
-      ];
-    }
-
     $destination = $this->redirectDestination->getAsArray();
+
+    // Add redirect destination to all operations.
     foreach ($operations as $key => $operation) {
       $operations[$key]['query'] = $destination;
     }
 
-    // Add custom operations if needed.
-    if ($entity->access('view') && $entity->hasLinkTemplate('canonical')) {
-      $operations['view'] = [
-        'title' => $this->t('View'),
-        'weight' => 0,
-        'url' => $entity->toUrl('canonical'),
-        'query' => $destination,
-      ];
-    }
-
     return $operations;
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function render() {
+    $build = parent::render();
+
+    // Add empty message.
+    $build['table']['#empty'] = $this->t('No snapshots available.');
+
+    // Add pager.
+    $build['pager'] = [
+      '#type' => 'pager',
+    ];
+
+    // Add custom styling.
+    $build['table']['#attributes']['class'][] = 'soda-scs-table-list';
+
+    // Disable caching.
+    $build['#cache']['max-age'] = 0;
+
+    return $build;
   }
 
 }

@@ -45,7 +45,7 @@ use Drupal\user\EntityOwnerTrait;
  *     "add-form" = "/soda-scs-manager/service-key/add/{bundle}",
  *     "edit-form" = "/soda-scs-manager/service-key/{soda_scs_service_key}/edit",
  *     "delete-form" = "/soda-scs-manager/service-key/{soda_scs_service_key}/delete",
- *     "collection" = "/soda-scs-manager/service-key/list",
+ *     "collection" = "/admin/structure/soda-scs-service-key/list",
  *   },
  *   base_table = "soda_scs_service_key",
  *   data_table = "soda_scs_service_key_field_data",
