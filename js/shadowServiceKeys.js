@@ -4,7 +4,7 @@
       once('shadowServiceKeys', 'html', context).forEach(function () {
         const passwordElements = context.querySelectorAll('.soda-scs-manager--service-password, .field--name-servicepassword .field__item');
         if (passwordElements.length > 0) {
-          const shadowValue = '************click_to_view************';
+          const shadowValue = '***click_to_view***';
           passwordElements.forEach(function (element) {
             const passwordValue = element.textContent;
             element.textContent = shadowValue;
