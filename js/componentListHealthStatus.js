@@ -1,7 +1,7 @@
 (function ($, Drupal, drupalSettings, once) {
   Drupal.behaviors.componentListHealthStatus = {
     attach: function (context, settings) {
-      once('componentListHealthStatus', '.soda-scs-component-list tbody tr', context).forEach(function (row) {
+      once('componentListHealthStatus', '.soda-scs-table-list tbody tr', context).forEach(function (row) {
         const $row = $(row);
         const componentId = $row.data('component-id');
         const bundle = $row.data('component-bundle');
