@@ -8,11 +8,13 @@ use Drupal\Component\Plugin\Exception\InvalidPluginDefinitionException;
 use Drupal\Component\Plugin\Exception\PluginNotFoundException;
 use Drupal\Core\Controller\ControllerBase;
 use Drupal\Core\Entity\EntityTypeManagerInterface;
+use Drupal\Core\Form\FormBuilderInterface;
 use Drupal\Core\Session\AccountInterface;
 use Drupal\Core\Url;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 use Drupal\Core\Entity\EntityTypeBundleInfoInterface;
 use Drupal\user\Entity\User;
+use Drupal\soda_scs_manager\Form\SodaScsProjectMembershipForm;
 use Drupal\soda_scs_manager\Helpers\SodaScsHelpers;
 
 /**
@@ -243,10 +245,13 @@ class SodaScsManagerController extends ControllerBase {
       ];
     }
 
+    $membershipRequestsForm = $this->formBuilder()->getForm(SodaScsProjectMembershipForm::class);
+
     $build = [
       '#theme' => 'soda_scs_manager__dashboard',
       '#attributes' => ['class' => 'container soda-scs-manager--view--grid'],
       '#entitiesByUser' => $entitiesByUser,
+      '#membershipRequestsForm' => $membershipRequestsForm,
       '#cache' => [
         'max-age' => 0,
       ],

@@ -369,6 +369,16 @@ soda_scs_manager.catalogue:
   requirements:
     _permission: 'soda scs manager user'
 
+soda_scs_manager.notifications:
+  path: '/soda-scs-manager/notifications'
+  defaults:
+    _form: '\Drupal\soda_scs_manager\Form\SodaScsProjectMembershipForm'
+    _title: 'Notifications'
+  requirements:
+    _permission: 'soda scs manager user'
+  options:
+    no_cache: TRUE
+
 soda_scs_manager.administration:
   path: '/admin/structure/soda-scs-manager'
   defaults:

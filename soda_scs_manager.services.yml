@@ -32,6 +32,8 @@ services:
     class: Drupal\soda_scs_manager\Helpers\SodaScsContainerHelpers
   soda_scs_manager.project.helpers:
     class: Drupal\soda_scs_manager\Helpers\SodaScsProjectHelpers
+  soda_scs_manager.project_membership.helpers:
+    class: Drupal\soda_scs_manager\Helpers\SodaScsProjectMembershipHelpers
   soda_scs_manager.keycloak_service.helpers:
     class: Drupal\soda_scs_manager\Helpers\SodaScsKeycloakHelpers
   soda_scs_manager.stack.helpers:

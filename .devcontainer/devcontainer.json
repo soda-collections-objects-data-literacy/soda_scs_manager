@@ -1,0 +1,13 @@
+{
+  "name": "WissKI Test System - Drupal",
+  "workspaceFolder": "/opt/drupal",
+  "remoteUser": "root",
+  "settings": {
+    "terminal.integrated.defaultProfile.linux": "bash"
+  },
+  "extensions": [
+    "bmewburn.vscode-intelephense-client",
+    "felixfbecker.php-debug"
+  ]
+}
+

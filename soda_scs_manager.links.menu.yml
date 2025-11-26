@@ -134,6 +134,15 @@ soda_scs_manager.menu.catalogue:
   requirements:
     _permission: 'soda scs manager user'
 
+soda_scs_manager.menu.notifications:
+  title: 'Notifications'
+  description: 'Project invitations'
+  menu_name: main
+  route_name: soda_scs_manager.notifications
+  weight: 15
+  requirements:
+    _permission: 'soda scs manager user'
+
 soda_scs_manager.menu.documentation:
   title: 'Documentation'
   description: 'Documentation'

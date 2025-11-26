@@ -3,14 +3,14 @@
 
 @layer components {
 
-    @media (max-width: 75rem) {   
-        
+    @media (max-width: 75rem) {
+
         .secondary-nav {
             @apply !flex;
         }
 
         /* Should add spacing between User Account/Sign Up or Log in nav and Language Switcher nav */
-        
+
         .secondary-nav__menu-item {
             @apply gap-4 me-3;
         }
@@ -20,4 +20,83 @@
             @apply ms-4 !ps-6;
         }
     }
+
+    /* Desktop: ensure primary nav submenus open on hover of level‑1 items. */
+    @media (min-width: 75rem) {
+        /* Hide level‑2 menus by default (desktop) if not already hidden by Olivero. */
+        .primary-nav__menu--level-2 {
+            display: none;
+        }
+
+        /* Show level‑2 menu when hovering/focusing the top‑level item. */
+        .primary-nav__menu-item--level-1:hover   > .primary-nav__menu--level-2,
+        .primary-nav__menu-item--level-1:focus-within > .primary-nav__menu--level-2 {
+            display: block;
+        }
+    }
+}
+
+/* Notifications menu item styling. */
+.menu-item--notifications {
+  position: relative;
+
+  a {
+    @apply inline-flex items-center justify-center;
+  }
+
+  .notification-icon-wrapper {
+    @apply inline-flex items-center justify-center relative;
+    vertical-align: middle;
+  }
+
+  .notification-icon {
+    @apply inline-block text-slate-800;
+    font-size: 1.5rem;
+    line-height: 1;
+    vertical-align: middle;
+  }
+
+  .notification-dot {
+    @apply absolute;
+    @apply bg-red-600;
+    @apply rounded-full;
+    width: 8px;
+    height: 8px;
+    top: -3px;
+    right: -4px;
+    border: 2px solid white;
+    box-shadow: 0 0 4px rgba(0, 0, 0, 0.3);
+
+    /* Pulse animation for attention. */
+    animation: pulse-notification 2s ease-in-out infinite;
+  }
+
+  /* Visually hidden text for accessibility. */
+  .visually-hidden {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border: 0;
+  }
+}
+
+/* Only show the dot when there are notifications. */
+.menu-item--notifications:not(.has-notifications) .notification-dot {
+  display: none;
+}
+
+@keyframes pulse-notification {
+  0%, 100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.85;
+    transform: scale(1.15);
+  }
 }

@@ -1,0 +1,288 @@
+/**
+ * @file
+ * Styles for project member management tables.
+ */
+
+/* Table wrapper with full width and responsive overflow. */
+.project-members-table-wrapper {
+  @apply w-full;
+
+  /* Scrollable overflow when narrower than 1000px. */
+  @media (max-width: 1000px) {
+    @apply overflow-x-auto;
+
+    /* Custom scrollbar styling. */
+    scrollbar-width: thin;
+    scrollbar-color: rgb(198, 105, 0) rgb(243, 244, 246);
+
+    &::-webkit-scrollbar {
+      height: 8px;
+    }
+
+    &::-webkit-scrollbar-track {
+      @apply bg-gray-100 rounded;
+    }
+
+    &::-webkit-scrollbar-thumb {
+      background: linear-gradient(160deg, rgb(255, 138, 5) 0%, rgb(198, 105, 0) 78.66%);
+      @apply rounded;
+
+      &:hover {
+        background: rgb(198, 105, 0);
+      }
+    }
+  }
+}
+
+/* Project members table. */
+.project-members-table {
+  @apply w-full border-collapse;
+
+  /* Ensure full width on larger screens. */
+  @media (min-width: 1001px) {
+    width: 100%;
+  }
+
+  /* Minimum width for scrolling on smaller screens. */
+  @media (max-width: 1000px) {
+    min-width: 800px;
+  }
+
+  /* Table header styling. */
+  thead {
+    @apply bg-slate-800;
+
+    th {
+      @apply px-4 py-3 text-left text-sm font-semibold uppercase tracking-wider;
+      @apply text-stone-200;
+      word-wrap: break-word;
+      white-space: normal;
+
+      &:first-child {
+        @apply rounded-tl-lg;
+      }
+
+      &:last-child {
+        @apply rounded-tr-lg;
+        @apply text-center;
+      }
+    }
+  }
+
+  /* Table body styling. */
+  tbody {
+    @apply bg-white divide-y divide-gray-200;
+
+    tr {
+      @apply transition-all duration-150 ease-in-out;
+
+      &:hover {
+        background-color: rgba(255, 138, 5, 0.05);
+      }
+
+      &:nth-child(even) {
+        @apply bg-gray-50;
+
+        &:hover {
+          background-color: rgba(255, 138, 5, 0.05);
+        }
+      }
+
+      td {
+        @apply px-4 py-3 text-sm text-gray-900;
+        word-wrap: break-word;
+        white-space: normal;
+
+        /* Name column - bold. */
+        &:first-child {
+          @apply font-semibold;
+        }
+
+        /* Email column. */
+        &:nth-child(2) {
+          @apply text-gray-600;
+        }
+
+        /* Role column. */
+        &:nth-child(3) {
+          @apply text-gray-700;
+
+          strong {
+            color: rgb(198, 105, 0);
+          }
+        }
+
+        /* Actions column. */
+        &:last-child {
+          @apply text-center;
+          vertical-align: middle;
+
+          .dropbutton-wrapper {
+            @apply inline-flex;
+            vertical-align: middle;
+          }
+
+          button {
+            @apply inline-flex items-center justify-center;
+            @apply px-3 py-1.5 text-xs font-medium rounded;
+            @apply transition-all duration-150;
+
+            &.button--danger {
+              @apply bg-red-100 text-red-700 border border-red-300;
+
+              &:hover {
+                @apply bg-red-600 text-white border-red-700;
+              }
+            }
+
+            &.button--small {
+              @apply text-xs px-2 py-1;
+            }
+          }
+        }
+      }
+    }
+  }
+}
+
+/* Responsive adjustments. */
+@media (max-width: 768px) {
+  .project-members-table {
+    @apply text-xs;
+
+    thead th {
+      @apply px-2 py-2;
+    }
+
+    tbody td {
+      @apply px-2 py-2;
+    }
+  }
+}
+
+/* General dropbutton styling for all project member tables. */
+.project-members-table,
+.membership-requests-table {
+  /* Operations/Dropbutton styling. */
+  .dropbutton-wrapper {
+    @apply inline-block;
+
+    .dropbutton {
+      @apply shadow-sm;
+
+      .dropbutton-widget {
+        @apply rounded-md border border-gray-300 bg-white;
+        @apply flex items-stretch;
+
+        li {
+          @apply flex items-stretch;
+
+          &.dropbutton-action {
+            @apply border-r border-gray-200;
+
+            &:last-of-type {
+              @apply border-r-0;
+            }
+          }
+
+          &.dropbutton-toggle {
+            @apply border-l border-gray-300;
+          }
+
+          &.secondary-action {
+            @apply hidden;
+          }
+
+          a,
+          button[type="submit"] {
+            @apply flex items-center px-4 py-2 text-sm font-medium;
+            @apply transition-colors duration-150;
+            @apply text-gray-700;
+            text-decoration: none;
+            min-height: 36px;
+            border: none;
+            background: transparent;
+            cursor: pointer;
+
+            &:hover {
+              @apply bg-gray-50 text-gray-900;
+            }
+
+            &.membership-action-accept {
+              @apply text-green-700;
+
+              &:hover {
+                @apply bg-green-50 text-green-900;
+              }
+            }
+
+            &.membership-action-reject {
+              @apply text-red-700;
+
+              &:hover {
+                @apply bg-red-50 text-red-900;
+              }
+            }
+          }
+
+          button[type="button"] {
+            @apply flex items-center justify-center px-3 py-2;
+            @apply hover:bg-gray-50 transition-colors duration-150;
+            min-height: 36px;
+            min-width: 36px;
+            background: transparent;
+            border: none;
+            cursor: pointer;
+
+            .dropbutton-arrow {
+              @apply flex items-center;
+            }
+          }
+        }
+      }
+
+      /* When dropdown is open. */
+      &.open .dropbutton-widget {
+        @apply flex-wrap;
+
+        li.secondary-action {
+          @apply flex;
+          @apply border-t border-gray-200;
+          width: 100%;
+
+          a,
+          button[type="submit"] {
+            width: 100%;
+            justify-content: flex-start;
+          }
+        }
+      }
+    }
+  }
+}
+
+/* Details element styling for member sections. */
+details.current_members,
+details.pending_invitations {
+  @apply mb-4 border border-stone-700 rounded-lg;
+  @apply bg-slate-900;
+
+  summary {
+    @apply px-4 py-3 cursor-pointer;
+    @apply text-stone-200 font-semibold;
+    @apply transition-colors duration-150;
+
+    &:hover {
+      @apply bg-slate-800;
+    }
+  }
+
+  &[open] summary {
+    @apply border-b border-stone-700;
+  }
+
+  > div {
+    @apply p-4;
+  }
+}
+

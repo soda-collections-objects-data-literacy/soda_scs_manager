@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 /**
  * @file
  * Installation functions for SODa SCS Manager.
@@ -464,4 +466,26 @@ function soda_scs_manager_update_11008() {
   drupal_flush_all_caches();
 
   return t('Ensured project base fields exist: keycloakUuid, groupId.');
+}
+
+/**
+ * Install the project membership entity.
+ */
+function soda_scs_manager_update_11009() {
+  $definition_update_manager = \Drupal::entityDefinitionUpdateManager();
+  $entity_type_manager = \Drupal::entityTypeManager();
+  $entity_type = $entity_type_manager->getDefinition('soda_scs_project_membership', FALSE);
+
+  if (!$entity_type) {
+    return t('Project membership entity definition is not available.');
+  }
+
+  $definition_update_manager->installEntityType($entity_type);
+
+  $field_definitions = \Drupal::service('entity_field.manager')->getBaseFieldDefinitions('soda_scs_project_membership');
+  foreach ($field_definitions as $field_name => $definition) {
+    $definition_update_manager->installFieldStorageDefinition($field_name, 'soda_scs_project_membership', 'soda_scs_project_membership', $definition);
+  }
+
+  return t('Installed the project membership entity.');
 }

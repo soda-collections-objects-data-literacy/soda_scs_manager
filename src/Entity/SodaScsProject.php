@@ -211,11 +211,14 @@ class SodaScsProject extends ContentEntityBase implements SodaScsProjectInterfac
         'type' => 'entity_reference_autocomplete',
         'weight' => 30,
       ])
-      ->setDisplayConfigurable('view', FALSE)
+      ->setDisplayConfigurable('view', TRUE)
       ->setDisplayOptions('view', [
         'label' => 'above',
         'type' => 'entity_reference_label',
         'weight' => 30,
+        'settings' => [
+          'link' => FALSE,
+        ],
       ]);
 
     $fields['owner'] = BaseFieldDefinition::create('entity_reference')

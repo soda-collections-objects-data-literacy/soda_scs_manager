@@ -1353,3 +1353,45 @@ function _soda_scs_manager_sync_project_component_relationship(SodaScsProject $p
     }
   }
 }
+
+/**
+ * Implements hook_preprocess_menu().
+ */
+function soda_scs_manager_preprocess_menu(&$variables): void {
+  if ($variables['menu_name'] === 'main') {
+    foreach ($variables['items'] as $key => &$item) {
+      // Add icon to notifications menu item.
+      if (isset($item['url']) && $item['url']->getRouteName() === 'soda_scs_manager.notifications') {
+        // Count pending notifications.
+        $currentUser = \Drupal::currentUser();
+        $count = 0;
+
+        if ($currentUser->isAuthenticated()) {
+          $storage = \Drupal::entityTypeManager()->getStorage('soda_scs_project_membership');
+          $query = $storage->getQuery()
+            ->condition('recipient', $currentUser->id())
+            ->condition('status', 'pending')
+            ->accessCheck(FALSE);
+          $count = $query->count()->execute();
+        }
+
+        // Show only icon with red dot badge if there are pending notifications.
+        if ($count > 0) {
+          $item['title'] = new TranslatableMarkup('<span class="notification-icon-wrapper"><span class="notification-icon">✉</span><span class="notification-dot"></span></span><span class="visually-hidden">@title (@count)</span>', [
+            '@title' => $item['title'],
+            '@count' => $count,
+          ]);
+          $item['attributes']->addClass('menu-item--notifications');
+          $item['attributes']->addClass('has-notifications');
+        }
+        else {
+          $item['title'] = new TranslatableMarkup('<span class="notification-icon-wrapper"><span class="notification-icon">✉</span></span><span class="visually-hidden">@title</span>', [
+            '@title' => $item['title'],
+          ]);
+          $item['attributes']->addClass('menu-item--notifications');
+        }
+      }
+    }
+  }
+}
+

@@ -15,13 +15,14 @@ use Drupal\Core\Form\FormStateInterface;
 use Drupal\Core\Logger\LoggerChannelFactoryInterface;
 use Drupal\Core\Logger\LoggerChannelInterface;
 use Drupal\Core\Session\AccountProxyInterface;
-use Drupal\Core\Utility\Error;
 use Drupal\soda_scs_manager\ComponentActions\SodaScsComponentActionsInterface;
 use Drupal\soda_scs_manager\Helpers\SodaScsProjectHelpers;
+use Drupal\soda_scs_manager\Helpers\SodaScsProjectMembershipHelpers;
 use Drupal\soda_scs_manager\RequestActions\SodaScsServiceRequestInterface;
 use Drupal\soda_scs_manager\ServiceActions\SodaScsServiceActionsInterface;
+use Drupal\soda_scs_manager\Traits\SodaScsProjectMemberInvitationTrait;
 use Drupal\user\EntityOwnerTrait;
-use Psr\Log\LogLevel;
+use Drupal\user\UserInterface;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 
 /**
@@ -41,6 +42,7 @@ use Symfony\Component\DependencyInjection\ContainerInterface;
 class SodaScsProjectCreateForm extends ContentEntityForm {
 
   use EntityOwnerTrait;
+  use SodaScsProjectMemberInvitationTrait;
 
   /**
    * The SODa SCS Component bundle.
@@ -120,6 +122,13 @@ class SodaScsProjectCreateForm extends ContentEntityForm {
   protected SodaScsProjectHelpers $sodaScsProjectHelpers;
 
   /**
+   * The project membership manager.
+   *
+   * @var \Drupal\soda_scs_manager\Helpers\SodaScsProjectMembershipHelpers
+   */
+  protected SodaScsProjectMembershipHelpers $projectMembershipHelpers;
+
+  /**
    * The Soda SCS SQL Service Actions service.
    *
    * @var \Drupal\soda_scs_manager\ServiceActions\SodaScsServiceSqlServiceActionInterface
@@ -171,6 +180,7 @@ class SodaScsProjectCreateForm extends ContentEntityForm {
     SodaScsServiceRequestInterface $sodaScsKeycloakServiceGroupActions,
     SodaScsServiceRequestInterface $sodaScsKeycloakServiceUserActions,
     SodaScsProjectHelpers $sodaScsProjectHelpers,
+    SodaScsProjectMembershipHelpers $projectMembershipHelpers,
     SodaScsServiceActionsInterface $sodaScsSqlServiceActions,
     TimeInterface $time,
   ) {
@@ -185,6 +195,7 @@ class SodaScsProjectCreateForm extends ContentEntityForm {
     $this->sodaScsKeycloakServiceGroupActions = $sodaScsKeycloakServiceGroupActions;
     $this->sodaScsKeycloakServiceUserActions = $sodaScsKeycloakServiceUserActions;
     $this->sodaScsProjectHelpers = $sodaScsProjectHelpers;
+    $this->projectMembershipHelpers = $projectMembershipHelpers;
     $this->sodaScsSqlServiceActions = $sodaScsSqlServiceActions;
   }
 
@@ -205,6 +216,7 @@ class SodaScsProjectCreateForm extends ContentEntityForm {
       $container->get('soda_scs_manager.keycloak_service.group.actions'),
       $container->get('soda_scs_manager.keycloak_service.user.actions'),
       $container->get('soda_scs_manager.project.helpers'),
+      $container->get('soda_scs_manager.project_membership.helpers'),
       $container->get('soda_scs_manager.sql_service.actions'),
       $container->get('datetime.time'),
     );
@@ -254,6 +266,12 @@ class SodaScsProjectCreateForm extends ContentEntityForm {
       }
     }
 
+    if (isset($form['members'])) {
+      $form['members']['#access'] = FALSE;
+    }
+
+    $this->buildMemberInvitationElement($form, $form_state);
+
     return $form;
   }
 
@@ -262,6 +280,10 @@ class SodaScsProjectCreateForm extends ContentEntityForm {
    */
   public function validateForm(array &$form, FormStateInterface $form_state) {
     parent::validateForm($form, $form_state);
+
+    $disallowedIds = [(int) $this->currentUser->id()];
+    $existingMemberIds = $this->collectExistingMemberIds();
+    $this->validateMemberInvitations($form_state, $disallowedIds, $existingMemberIds);
   }
 
   /**
@@ -305,8 +327,49 @@ class SodaScsProjectCreateForm extends ContentEntityForm {
     $this->messenger()->addMessage($this->t('Project @project has been created.', [
       '@project' => $this->entity->label(),
     ]));
+
+    $requester = $this->loadCurrentUserEntity();
+    if ($requester) {
+      $this->dispatchMemberInvitations(
+        $form_state,
+        $project,
+        $requester,
+        $this->projectMembershipHelpers,
+        $this->messenger(),
+      );
+    }
     // Redirect to the project listing page.
     $form_state->setRedirect('entity.soda_scs_project.canonical', ['soda_scs_project' => $this->entity->id()]);
+  }
+
+  /**
+   * Collect existing member IDs from the entity.
+   */
+  private function collectExistingMemberIds(): array {
+    $ids = [];
+    /** @var \Drupal\soda_scs_manager\Entity\SodaScsProjectInterface $entity */
+    $entity = $this->entity;
+    if ($entity && !$entity->get('members')->isEmpty()) {
+      foreach ($entity->get('members')->getValue() as $item) {
+        $ids[] = (int) ($item['target_id'] ?? 0);
+      }
+    }
+    if ($entity && $entity->getOwnerId()) {
+      $ids[] = (int) $entity->getOwnerId();
+    }
+    return array_values(array_unique(array_filter($ids)));
+  }
+
+  /**
+   * Load the current user entity from storage.
+   */
+  private function loadCurrentUserEntity(): UserInterface|null {
+    /** @var \Drupal\user\UserInterface|null $user */
+    $user = $this->entityTypeManager->getStorage('user')->load($this->currentUser->id());
+    if (!$user) {
+      $this->messenger()->addError($this->t('Unable to load the current user account.'));
+    }
+    return $user;
   }
 
 }

@@ -45,6 +45,12 @@
     {% endfor %}
   </div>
 </div>
+{% if membershipRequestsForm %}
+  <div class="soda-scs-manager--notifications bg-slate-900 border border-stone-700 rounded-lg p-4 my-6 shadow-md shadow-cyan-500/20">
+    <h2 class="text-2xl font-semibold text-stone-200 mb-4 text-center">{{ 'Pending project invitations'|t }}</h2>
+    {{ membershipRequestsForm }}
+  </div>
+{% endif %}
     {% if entitiesByUser is not empty %}
       {% for username, entities in entitiesByUser %}
         <div class="text-center mb-8">
