@@ -396,11 +396,11 @@ class SodaScsPortainerServiceActions implements SodaScsServiceRequestInterface {
       ],
       [
         "name" => "WISSKI_DEFAULT_DATA_MODEL_VERSION",
-        "value" => '1.x-dev',
+        "value" => $requestParams['wisskiDefaultDataModelVersion'],
       ],
       [
         "name" => "WISSKI_STARTER_VERSION",
-        "value" => '1.x-dev',
+        "value" => $requestParams['wisskiStarterVersion'],
       ],
       [
         "name" => "WISSKI_FLAVOURS",

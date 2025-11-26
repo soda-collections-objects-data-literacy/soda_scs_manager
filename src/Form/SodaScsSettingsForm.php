@@ -1074,6 +1074,49 @@ class SodaScsSettingsForm extends ConfigFormBase {
       '#description' => $this->t('The health check route, like "/health".'),
     ];
 
+    $form['wisski']['recipes'] = [
+      '#type' => 'fieldset',
+      '#title' => 'Recipes configuration',
+    ];
+
+    $form['wisski']['recipes']['wisski_starter'] = [
+      '#type' => 'fieldset',
+      '#title' => 'WissKI Starter recipe',
+    ];
+
+    $form['wisski']['recipes']['wisski_starter']['wisski_starter_production_version'] = [
+      '#type' => 'textfield',
+      '#title' => $this->t('WissKI Starter production version'),
+      '#default_value' => $this->config('soda_scs_manager.settings')->get('wisski')['recipes']['wisski_starter']['wisski_starter_production_version'] ?? '',
+      '#description' => $this->t('The WissKI Starter production version, like "1.1.0".'),
+    ];
+
+    $form['wisski']['recipes']['wisski_starter']['wisski_starter_development_version'] = [
+      '#type' => 'textfield',
+      '#title' => $this->t('WissKI Starter development version'),
+      '#default_value' => $this->config('soda_scs_manager.settings')->get('wisski')['recipes']['wisski_starter']['wisski_starter_development_version'] ?? '',
+      '#description' => $this->t('The WissKI Starter development version, like "1.x-dev".'),
+    ];
+
+    $form['wisski']['recipes']['wisski_default_data_model'] = [
+      '#type' => 'fieldset',
+      '#title' => 'WissKI Default Data Model recipe',
+    ];
+
+    $form['wisski']['recipes']['wisski_default_data_model']['wisski_default_data_model_production_version'] = [
+      '#type' => 'textfield',
+      '#title' => $this->t('WissKI Default Data Model production version'),
+      '#default_value' => $this->config('soda_scs_manager.settings')->get('wisski')['recipes']['wisski_default_data_model']['wisski_default_data_model_production_version'] ?? '',
+      '#description' => $this->t('The WissKI Default Data Model production version, like "1.1.0".'),
+    ];
+
+    $form['wisski']['recipes']['wisski_default_data_model']['wisski_default_data_model_development_version'] = [
+      '#type' => 'textfield',
+      '#title' => $this->t('WissKI Default Data Model development version'),
+      '#default_value' => $this->config('soda_scs_manager.settings')->get('wisski')['recipes']['wisski_default_data_model']['wisski_default_data_model_development_version'] ?? '',
+      '#description' => $this->t('The WissKI Default Data Model development version, like "1.x-dev".'),
+    ];
+
     // Security settings tab.
     $form['security'] = [
       '#type' => 'details',

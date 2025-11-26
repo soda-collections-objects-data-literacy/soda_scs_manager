@@ -538,6 +538,13 @@ class SodaScsWisskiComponentActions implements SodaScsComponentActionsInterface 
         }
       }
 
+      // Set the recipe versions (if any).
+      // Recipe versions are set in the settings form
+      // (/admin/config/soda-scs-manager/settings -> WissKI tab).
+      // @todo Implement, that the user can choose, if it's a blank wisski etc.
+      $wisskiStarterVersion = $component->get('developmentInstance')->value ? $wisskiInstanceSettings['wisskiStarterDevelopmentVersion'] : $wisskiInstanceSettings['wisskiStarterProductionVersion'];
+      $wisskiDefaultDataModelVersion = $component->get('developmentInstance')->value ? $wisskiInstanceSettings['wisskiDefaultDataModelDevelopmentVersion'] : $wisskiInstanceSettings['wisskiDefaultDataModelProductionVersion'];
+
       //
       // Create the WissKI instance at portainer.
       // @todo Replace "wisski" at one point of the domain name.
@@ -557,6 +564,8 @@ class SodaScsWisskiComponentActions implements SodaScsComponentActionsInterface 
         'userId' => $component->getOwnerId(),
         'username' => $component->getOwner()->getDisplayName(),
         'wisskiServicePassword' => $wisskiComponentServiceKeyPassword,
+        'wisskiStarterVersion' => $wisskiStarterVersion,
+        'wisskiDefaultDataModelVersion' => $wisskiDefaultDataModelVersion,
         'wisskiType' => ($sqlComponent && $triplestoreComponent) ? 'bundled' : 'single',
       ];
       // Create the WissKI instance at portainer.

@@ -475,6 +475,10 @@ class SodaScsServiceHelpers {
     $wisskiInstanceSettings['name'] = 'WissKI instance';
     $wisskiInstanceSettings['baseUrl'] = $this->settings->get('wisski.instances.baseUrl');
     $wisskiInstanceSettings['healthCheckUrl'] = $this->settings->get('wisski.instances.misc.healthCheck.url');
+    $wisskiInstanceSettings['wisskiStarterProductionVersion'] = $this->settings->get('wisski.recipes.wisski_starter.wisski_starter_production_version');
+    $wisskiInstanceSettings['wisskiStarterDevelopmentVersion'] = $this->settings->get('wisski.recipes.wisski_starter.wisski_starter_development_version');
+    $wisskiInstanceSettings['wisskiDefaultDataModelProductionVersion'] = $this->settings->get('wisski.recipes.wisski_default_data_model.wisski_default_data_model_production_version');
+    $wisskiInstanceSettings['wisskiDefaultDataModelDevelopmentVersion'] = $this->settings->get('wisski.recipes.wisski_default_data_model.wisski_default_data_model_development_version');
 
     $this->checkSettings($wisskiInstanceSettings);
 

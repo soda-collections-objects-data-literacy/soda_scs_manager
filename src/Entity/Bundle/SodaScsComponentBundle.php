@@ -86,6 +86,16 @@ class SodaScsComponentBundle extends SodaScsComponent implements SodaScsComponen
         break;
 
       case 'soda_scs_wisski_component':
+        $definitions['developmentInstance'] = BundleFieldDefinition::create('boolean')
+          ->setLabel(new TranslatableMarkup('Development Instance'))
+          ->setDescription(new TranslatableMarkup('Whether this is a development instance. Nightly builds are used for development and testing.'))
+          ->setDisplayConfigurable('form', FALSE)
+          ->setDisplayConfigurable('view', FALSE)
+          ->setDisplayOptions('form', [
+            'type' => 'checkbox',
+            'weight' => 100,
+          ]);
+
         $definitions['flavours'] = BundleFieldDefinition::create('list_string')
           ->setLabel(new TranslatableMarkup('Flavour'))
           ->setDescription(new TranslatableMarkup('The flavour of the SODa SCS Component.'))

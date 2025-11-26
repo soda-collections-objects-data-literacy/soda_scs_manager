@@ -90,6 +90,9 @@ class SodaScsComponentNestedFieldsetWidget extends OptionsWidgetBase implements 
       $ownerId = $owner ? $owner->id() : 0;
 
       $bundle = $component->bundle();
+      if ($bundle != 'soda_scs_wisski_component') {
+        continue;
+      }
       $bundleLabel = $bundleInfo[$bundle]['label'] ?? $bundle;
 
       $groupedComponents[$ownerId][$bundle][] = [
