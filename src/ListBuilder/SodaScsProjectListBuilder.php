@@ -11,6 +11,7 @@ use Drupal\Core\Entity\EntityStorageInterface;
 use Drupal\Core\Entity\EntityTypeInterface;
 use Drupal\Core\Link;
 use Drupal\Core\Render\Markup;
+use Drupal\Core\Session\AccountProxyInterface;
 use Drupal\Core\Url;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 
@@ -29,11 +30,19 @@ class SodaScsProjectListBuilder extends EntityListBuilder {
   protected DateFormatterInterface $dateFormatter;
 
   /**
+   * The current user service.
+   *
+   * @var \Drupal\Core\Session\AccountProxyInterface
+   */
+  protected AccountProxyInterface $currentUser;
+
+  /**
    * {@inheritdoc}
    */
   public static function createInstance(ContainerInterface $container, EntityTypeInterface $entity_type) {
     $instance = parent::createInstance($container, $entity_type);
     $instance->dateFormatter = $container->get('date.formatter');
+    $instance->currentUser   = $container->get('current_user');
     return $instance;
   }
 
@@ -46,6 +55,9 @@ class SodaScsProjectListBuilder extends EntityListBuilder {
       ->sort('owner', 'ASC')
       ->sort('label', 'ASC')
       ->pager(10);
+    if (!$this->currentUser->hasPermission('soda scs manager admin')) {
+      $entityQuery->condition('owner', $this->currentUser->id());
+    }
 
     $entityIds = $entityQuery->execute();
 

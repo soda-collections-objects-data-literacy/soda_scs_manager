@@ -186,6 +186,22 @@ class SodaScsManagerController extends ControllerBase {
       // If the user does not have the 'manage soda scs manager'
       // permission, only load their own components.
       $stacks = $stackStorage->loadByProperties(['owner' => $current_user->id()]);
+
+      // Additionally, include WissKI stacks from projects where the user is a member.
+      if (!empty($projects)) {
+        $projectIds = array_keys($projects);
+        $query = $stackStorage->getQuery()
+          ->condition('bundle', 'soda_scs_wisski_stack')
+          ->condition('partOfProjects', $projectIds, 'IN')
+          ->accessCheck(TRUE);
+
+        $additionalStackIds = $query->execute();
+        if (!empty($additionalStackIds)) {
+          $additionalStacks = $stackStorage->loadMultiple($additionalStackIds);
+          // Merge while preserving existing stacks keyed by ID.
+          $stacks = $stacks + $additionalStacks;
+        }
+      }
     }
 
     // Get all component IDs that are included in stacks.
@@ -252,6 +268,7 @@ class SodaScsManagerController extends ControllerBase {
       '#attributes' => ['class' => 'container soda-scs-manager--view--grid'],
       '#entitiesByUser' => $entitiesByUser,
       '#membershipRequestsForm' => $membershipRequestsForm,
+      '#currentUsername' => $current_user->getDisplayName(),
       '#cache' => [
         'max-age' => 0,
       ],

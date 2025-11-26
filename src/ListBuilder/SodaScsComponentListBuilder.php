@@ -7,10 +7,9 @@ namespace Drupal\soda_scs_manager\ListBuilder;
 use Drupal\Core\Datetime\DateFormatterInterface;
 use Drupal\Core\Entity\EntityInterface;
 use Drupal\Core\Entity\EntityListBuilder;
-use Drupal\Core\Entity\EntityStorageInterface;
 use Drupal\Core\Entity\EntityTypeInterface;
 use Drupal\Core\Link;
-use Drupal\Core\Render\Markup;
+use Drupal\Core\Session\AccountProxyInterface;
 use Drupal\Core\StringTranslation\TranslatableMarkup;
 use Drupal\Core\Url;
 use Symfony\Component\DependencyInjection\ContainerInterface;
@@ -30,11 +29,19 @@ class SodaScsComponentListBuilder extends EntityListBuilder {
   protected DateFormatterInterface $dateFormatter;
 
   /**
+   * The current user service.
+   *
+   * @var \Drupal\Core\Session\AccountProxyInterface
+   */
+  protected AccountProxyInterface $currentUser;
+
+  /**
    * {@inheritdoc}
    */
   public static function createInstance(ContainerInterface $container, EntityTypeInterface $entity_type) {
     $instance = parent::createInstance($container, $entity_type);
     $instance->dateFormatter = $container->get('date.formatter');
+    $instance->currentUser   = $container->get('current_user');
     return $instance;
   }
 
@@ -46,8 +53,13 @@ class SodaScsComponentListBuilder extends EntityListBuilder {
       ->accessCheck(TRUE)
       ->sort('owner', 'ASC')
       ->sort('bundle', 'ASC')
-      ->sort('label', 'ASC')
-      ->pager(10);
+      ->sort('label', 'ASC');
+
+    if (!$this->currentUser->hasPermission('soda scs manager admin')) {
+      $entityQuery->condition('owner', $this->currentUser->id());
+    }
+
+    $entityQuery->pager(10);
 
     $entityIds = $entityQuery->execute();
 
@@ -74,10 +86,6 @@ class SodaScsComponentListBuilder extends EntityListBuilder {
   public function buildRow(EntityInterface $entity) {
 
     /** @var \Drupal\soda_scs_manager\Entity\SodaScsComponentInterface $entity */
-    if ($entity->getOwnerId() !== \Drupal::currentUser()->id() && !\Drupal::currentUser()->hasPermission('soda scs manager admin')) {
-      return [];
-    }
-
     $bundle = $entity->bundle();
 
     // Create a link to the entity.

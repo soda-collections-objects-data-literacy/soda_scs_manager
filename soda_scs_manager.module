@@ -468,6 +468,7 @@ function soda_scs_manager_theme($existing, $type, $theme, $path) {
         'entitiesByUser' => NULL,
         'entity_type' => NULL,
         'attributes' => NULL,
+        'currentUsername' => NULL,
       ],
       'template' => 'pages/soda-scs-manager--dashboard',
     ],
@@ -814,7 +815,7 @@ function soda_scs_manager_user_delete(UserInterface $user) {
     '@count' => count($stacks),
     '@username' => $user->getDisplayName(),
   ]));
-  $projects = SodaScsProject::loadByOwner($user->id());
+  $projects = (array) SodaScsProject::loadByOwner($user->id());
   foreach ($projects as $project) {
     $project->delete();
   }
@@ -977,7 +978,7 @@ function soda_scs_manager_file_download($uri) {
  */
 function _soda_scs_manager_create_default_applications_for_user(UserInterface $user) {
   // Get the default project for the user.
-  $projects = SodaScsProject::loadByOwner($user->id());
+  $projects = (array) SodaScsProject::loadByOwner($user->id());
 
   if (empty($projects) || count($projects) > 1) {
     $messenger = \Drupal::messenger();
@@ -1006,7 +1007,7 @@ function _soda_scs_manager_create_default_project_for_user(UserInterface $user) 
 
   $project = SodaScsProject::create([
     'bundle' => 'default',
-    'label' => $user->getDisplayName() . '\'s default project',
+    'label' => $user->getDisplayName() . ' default project',
     'owner' => $user->id(),
   ]);
 
@@ -1359,6 +1360,16 @@ function _soda_scs_manager_sync_project_component_relationship(SodaScsProject $p
  */
 function soda_scs_manager_preprocess_menu(&$variables): void {
   if ($variables['menu_name'] === 'main') {
+    // Ensure the main menu is cached per user so the notification badge
+    // reflects the current account's pending invitations.
+    if (!isset($variables['#cache'])) {
+      $variables['#cache'] = [];
+    }
+    if (!isset($variables['#cache']['contexts'])) {
+      $variables['#cache']['contexts'] = [];
+    }
+    $variables['#cache']['contexts'][] = 'user';
+
     foreach ($variables['items'] as $key => &$item) {
       // Add icon to notifications menu item.
       if (isset($item['url']) && $item['url']->getRouteName() === 'soda_scs_manager.notifications') {

@@ -54,7 +54,11 @@
     {% if entitiesByUser is not empty %}
       {% for username, entities in entitiesByUser %}
         <div class="text-center mb-8">
-          <h2 class="text-3xl font-bold text-stone-200 mb-4">{{ 'Applications of User @username'|t({'@username': username}) }}</h2>
+          {% if currentUsername is defined and username == currentUsername %}
+            <h2 class="text-3xl font-bold text-stone-200 mb-4">{{ 'Your applications'|t }}</h2>
+          {% else %}
+            <h2 class="text-3xl font-bold text-stone-200 mb-4">{{ 'Project membership applications'|t }}</h2>
+          {% endif %}
         </div>
 
         {% set entity_count = entities|length %}
