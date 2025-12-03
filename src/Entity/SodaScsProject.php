@@ -35,6 +35,7 @@ use Drupal\user\UserInterface;
  *       "add" = "Drupal\soda_scs_manager\Form\SodaScsProjectCreateForm",
  *       "edit" = "Drupal\soda_scs_manager\Form\SodaScsProjectEditForm",
  *       "delete" = "Drupal\soda_scs_manager\Form\SodaScsProjectDeleteForm",
+ *       "leave" = "Drupal\soda_scs_manager\Form\SodaScsProjectLeaveForm",
  *     },
  *     "access" = "Drupal\soda_scs_manager\Access\SodaScsProjectAccessControlHandler",
  *     "route_provider" = {

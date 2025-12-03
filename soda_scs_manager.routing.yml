@@ -139,6 +139,19 @@ entity.soda_scs_project.delete_form:
     _permission: 'soda scs manager user'
     _custom_access: '\Drupal\soda_scs_manager\Access\SodaScsProjectAccessControlHandler::accessDeleteForm'
 
+entity.soda_scs_project.leave_form:
+  path: '/soda-scs-manager/project/{soda_scs_project}/leave'
+  defaults:
+    _entity_form: 'soda_scs_project.leave'
+    _title: 'Leave SODa SCS Project'
+  options:
+    parameters:
+      soda_scs_project:
+        type: entity:soda_scs_project
+  requirements:
+    _permission: 'soda scs manager user'
+    _custom_access: '\Drupal\soda_scs_manager\Access\SodaScsProjectAccessControlHandler::accessLeaveForm'
+
 entity.soda_scs_project.collection:
   path: '/admin/structure/soda-scs-project/list'
   defaults:

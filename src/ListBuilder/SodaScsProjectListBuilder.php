@@ -55,8 +55,16 @@ class SodaScsProjectListBuilder extends EntityListBuilder {
       ->sort('owner', 'ASC')
       ->sort('label', 'ASC')
       ->pager(10);
+
     if (!$this->currentUser->hasPermission('soda scs manager admin')) {
-      $entityQuery->condition('owner', $this->currentUser->id());
+      $currentUserId = (int) $this->currentUser->id();
+
+      // Show projects where the current user is owner OR member.
+      $accessGroup = $entityQuery->orConditionGroup()
+        ->condition('owner', $currentUserId)
+        ->condition('members', $currentUserId);
+
+      $entityQuery->condition($accessGroup);
     }
 
     $entityIds = $entityQuery->execute();
@@ -83,8 +91,26 @@ class SodaScsProjectListBuilder extends EntityListBuilder {
   public function buildRow(EntityInterface $entity) {
 
     /** @var \Drupal\soda_scs_manager\Entity\SodaScsProjectInterface $entity */
-    if ($entity->getOwnerId() !== \Drupal::currentUser()->id() && !\Drupal::currentUser()->hasPermission('soda scs manager admin')) {
-      return [];
+    $currentUserId = (int) $this->currentUser->id();
+    $isAdmin = $this->currentUser->hasPermission('soda scs manager admin');
+
+    if (!$isAdmin) {
+      $isOwner = (int) $entity->getOwnerId() === $currentUserId;
+
+      $isMember = FALSE;
+      if ($entity->hasField('members') && !$entity->get('members')->isEmpty()) {
+        foreach ($entity->get('members')->getValue() as $memberItem) {
+          if ((int) ($memberItem['target_id'] ?? 0) === $currentUserId) {
+            $isMember = TRUE;
+            break;
+          }
+        }
+      }
+
+      // Skip rows where the user is neither owner nor member.
+      if (!$isOwner && !$isMember) {
+        return [];
+      }
     }
 
     // Create a link to the entity.
@@ -151,17 +177,69 @@ class SodaScsProjectListBuilder extends EntityListBuilder {
   /**
    * {@inheritdoc}
    */
+  protected function getDefaultOperations(EntityInterface $entity) {
+    /** @var \Drupal\soda_scs_manager\Entity\SodaScsProjectInterface $entity */
+    $operations = parent::getDefaultOperations($entity);
+
+    // Ensure view operation is always available for members and owners.
+    $currentUserId = (int) $this->currentUser->id();
+    $isAdmin = $this->currentUser->hasPermission('soda scs manager admin');
+    $isOwner = (int) $entity->getOwnerId() === $currentUserId;
+
+    $isMember = FALSE;
+    if ($entity->hasField('members') && !$entity->get('members')->isEmpty()) {
+      foreach ($entity->get('members')->getValue() as $memberItem) {
+        if ((int) ($memberItem['target_id'] ?? 0) === $currentUserId) {
+          $isMember = TRUE;
+          break;
+        }
+      }
+    }
+
+    // If user is admin, owner, or member, ensure view operation exists.
+    if (($isAdmin || $isOwner || $isMember) && !isset($operations['view'])) {
+      $operations['view'] = [
+        'title' => $this->t('View'),
+        'weight' => 0,
+        'url' => Url::fromRoute('entity.soda_scs_project.canonical', [
+          'soda_scs_project' => $entity->id(),
+        ]),
+      ];
+    }
+    // Only members (not owners or admins) can leave.
+    if ($isMember && !$isOwner && !$isAdmin) {
+      $operations['leave'] = [
+        'title' => $this->t('Leave'),
+        'weight' => 50,
+        'url' => Url::fromRoute('entity.soda_scs_project.leave_form', [
+          'soda_scs_project' => $entity->id(),
+        ]),
+      ];
+    }
+
+    return $operations;
+  }
+
+  /**
+   * {@inheritdoc}
+   */
   public function buildOperations(EntityInterface $entity) {
     /** @var \Drupal\soda_scs_manager\Entity\SodaScsProjectInterface $entity */
     $operations = parent::buildOperations($entity);
 
-    // Ensure delete operation exists.
-    if (!isset($operations['#links']['delete'])) {
-      $operations['#links']['delete'] = [
-        'title' => $this->t('Delete'),
-        'weight' => 100,
-        'url' => Url::fromRoute('entity.soda_scs_project.delete_form', ['soda_scs_project' => $entity->id()]),
-      ];
+    // Add "Leave Project" operation for members (not owners).
+    $currentUserId = (int) $this->currentUser->id();
+    $isAdmin = $this->currentUser->hasPermission('soda scs manager admin');
+    $isOwner = (int) $entity->getOwnerId() === $currentUserId;
+
+    $isMember = FALSE;
+    if ($entity->hasField('members') && !$entity->get('members')->isEmpty()) {
+      foreach ($entity->get('members')->getValue() as $memberItem) {
+        if ((int) ($memberItem['target_id'] ?? 0) === $currentUserId) {
+          $isMember = TRUE;
+          break;
+        }
+      }
     }
 
     return $operations;
