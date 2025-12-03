@@ -551,21 +551,22 @@ class SodaScsWisskiComponentActions implements SodaScsComponentActionsInterface 
       //
       $requestParams = [
         'dbName' => $dbName ?? '',
+        'defaultLanguage' => $component->get('defaultLanguage')->value,
         'flavours' => $flavours,
         'keycloakAdminGroup' => $keycloakWisskiInstanceAdminGroupName,
         'keycloakUserGroup' => $keycloakWisskiInstanceUserGroupName,
         'machineName' => $machineName,
         'openidConnectClientSecret' => $openidConnectClientSecret,
-        'userGroups' => $userGroups ? implode(' ', $userGroups) : '',
         'sqlServicePassword' => $sqlComponentServiceKeyPassword ?? '',
         'triplestoreServicePassword' => $triplestoreComponentServiceKeyPassword ?? '',
         'triplestoreServiceToken' => $triplestoreComponentServiceTokenString ?? '',
         'tsRepository' => $triplestoreComponentMachineName ?? '',
+        'userGroups' => $userGroups ? implode(' ', $userGroups) : '',
         'userId' => $component->getOwnerId(),
         'username' => $component->getOwner()->getDisplayName(),
+        'wisskiDefaultDataModelVersion' => $wisskiDefaultDataModelVersion,
         'wisskiServicePassword' => $wisskiComponentServiceKeyPassword,
         'wisskiStarterVersion' => $wisskiStarterVersion,
-        'wisskiDefaultDataModelVersion' => $wisskiDefaultDataModelVersion,
         'wisskiType' => ($sqlComponent && $triplestoreComponent) ? 'bundled' : 'single',
       ];
       // Create the WissKI instance at portainer.

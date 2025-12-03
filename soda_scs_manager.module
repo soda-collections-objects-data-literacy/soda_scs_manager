@@ -466,6 +466,7 @@ function soda_scs_manager_theme($existing, $type, $theme, $path) {
     'soda_scs_manager__dashboard' => [
       'variables' => [
         'entitiesByUser' => NULL,
+        'entitiesByProject' => NULL,
         'entity_type' => NULL,
         'attributes' => NULL,
         'currentUsername' => NULL,

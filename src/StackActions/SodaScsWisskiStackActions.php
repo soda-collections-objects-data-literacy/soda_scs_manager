@@ -394,6 +394,7 @@ class SodaScsWisskiStackActions implements SodaScsStackActionsInterface {
       $wisskiComponent = $this->entityTypeManager->getStorage('soda_scs_component')->create([
         ...$basicComponentProperties,
         'bundle' => 'soda_scs_wisski_component',
+        'defaultLanguage' => $stack->get('defaultLanguage')->value,
         'developmentInstance' => $stack->get('developmentInstance')->value,
         'connectedComponents' => [$sqlComponent->id(), $triplestoreComponent->id()],
         'flavours' => $stack->get('flavours')->value,

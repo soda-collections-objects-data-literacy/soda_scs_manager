@@ -16,6 +16,7 @@ use Drupal\Core\Entity\EntityTypeBundleInfoInterface;
 use Drupal\user\Entity\User;
 use Drupal\soda_scs_manager\Form\SodaScsProjectMembershipForm;
 use Drupal\soda_scs_manager\Helpers\SodaScsHelpers;
+use Drupal\Core\Entity\EntityStorageException;
 
 /**
  * The SODa SCS Manager info controller.
@@ -101,13 +102,9 @@ class SodaScsManagerController extends ControllerBase {
   public function dashboardPage(): array {
     $current_user = $this->currentUser();
 
+    // Load components of the projects.
     try {
       $projectStorage = $this->entityTypeManager->getStorage('soda_scs_project');
-    }
-    catch (InvalidPluginDefinitionException | PluginNotFoundException $e) {
-      // @todo Handle exception properly. */
-      return [];
-    }
 
     if ($current_user->hasPermission('soda scs manager admin')) {
       // If the user has the 'manage soda scs manager' permission,
@@ -122,6 +119,42 @@ class SodaScsManagerController extends ControllerBase {
       $projects = $projectStorage->loadByProperties(['members' => $current_user->id()]);
     }
 
+    // project components of the projects.
+      $projectComponents = [];
+      $entitiesByProject = [];
+      foreach ($projects as $project) {
+        $projectEntities = $project->get('connectedComponents')->referencedEntities();
+        foreach ($projectEntities as $projectEntity) {
+          $projectBundleInfo = $this->bundleInfo->getBundleInfo($projectEntity->getEntityTypeId())[$projectEntity->bundle()];
+          $projectLabel = $project->label();
+          $entitiesByProject[$projectLabel][] = [
+            '#theme' => 'soda_scs_manager__entity_card',
+            '#title' => $this->t('@bundle', ['@bundle' => $projectEntity->label()]),
+            '#type' => $projectBundleInfo['label']->render(),
+            '#description' => $projectEntity->get('description')->value,
+            '#imageUrl' => $projectBundleInfo['imageUrl'],
+            '#learn_more_link' => '/app/' . $this->sodaScsHelpers->getEntityType($projectEntity->bundle()),
+            '#url' => Url::fromRoute('entity.' .
+              $projectEntity->getEntityTypeId() .
+              '.canonical',
+              [
+                'bundle' => $projectEntity->bundle(),
+                $projectEntity->getEntityTypeId() => $projectEntity->id(),
+              ]),
+            '#tags' => $projectBundleInfo['tags'],
+            '#cache' => [
+              'max-age' => 0,
+            ],
+          ];
+        }
+      }
+    }
+    catch (EntityStorageException $e) {
+      $this->messenger()->addError($this->t('Error loading projects: @error', ['@error' => $e->getMessage()]));
+      return [];
+    }
+
+    // Load owned components.
     try {
       $componentStorage = $this->entityTypeManager->getStorage('soda_scs_component');
     }
@@ -141,34 +174,7 @@ class SodaScsManagerController extends ControllerBase {
       $components = $componentStorage->loadByProperties(['owner' => $current_user->id()]);
     }
 
-    // Get all component IDs that are included in projects.
-    $includedComponentIds = [];
-    /** @var \Drupal\soda_scs_manager\Entity\SodaScsProjectInterface $project */
-    foreach ($projects as $project) {
-      // Check if the project has an includedComponents field.
-      if ($project->hasField('connectedComponents') && !$project->get('connectedComponents')->isEmpty()) {
-        // Get the referenced component IDs.
-        /** @var \Drupal\Core\Field\EntityReferenceFieldItemListInterface $includedComponents */
-        $includedComponents = $project->get('connectedComponents');
-        foreach ($includedComponents->referencedEntities() as $component) {
-          $includedComponentIds[$component->id()] = $component->id();
-        }
-      }
-    }
-
-    // @todo This removes too much components from the dashboard.
-    // Remove components that are already included in projects.
-#    if (!empty($includedComponentIds)) {
-#      foreach ($includedComponentIds as $componentId) {
-#        if (isset($components[$componentId])) {
-#          unset($components[$componentId]);
-#        }
-#        else {
-#          $components[$componentId] = $this->entityTypeManager->getStorage('soda_scs_component')->load($componentId);
-#        }
-#      }
-#    }
-
+    // Load stacks.
     try {
       $stackStorage = $this->entityTypeManager->getStorage('soda_scs_stack');
     }
@@ -204,24 +210,23 @@ class SodaScsManagerController extends ControllerBase {
       }
     }
 
-    // Get all component IDs that are included in stacks.
-    $includedComponentIds = [];
+    $stackIncludedComponentIds = [];
     /** @var \Drupal\soda_scs_manager\Entity\SodaScsStackInterface $stack */
     foreach ($stacks as $stack) {
       // Check if the stack has an includedComponents field.
       if ($stack->hasField('includedComponents') && !$stack->get('includedComponents')->isEmpty()) {
         // Get the referenced component IDs.
-        /** @var \Drupal\Core\Field\EntityReferenceFieldItemListInterface $includedComponents */
-        $includedComponents = $stack->get('includedComponents');
-        foreach ($includedComponents->referencedEntities() as $component) {
-          $includedComponentIds[$component->id()] = $component->id();
+        /** @var \Drupal\Core\Field\EntityReferenceFieldItemListInterface $stackIncludedComponents */
+        $stackIncludedComponents = $stack->get('includedComponents');
+        foreach ($stackIncludedComponents->referencedEntities() as $component) {
+          $stackIncludedComponentIds[$component->id()] = $component->id();
         }
       }
     }
 
     // Remove components that are already included in stacks.
-    if (!empty($includedComponentIds)) {
-      foreach ($includedComponentIds as $componentId) {
+    if (!empty($stackIncludedComponentIds)) {
+      foreach ($stackIncludedComponentIds as $componentId) {
         if (isset($components[$componentId])) {
           unset($components[$componentId]);
         }
@@ -261,13 +266,11 @@ class SodaScsManagerController extends ControllerBase {
       ];
     }
 
-    $membershipRequestsForm = $this->formBuilder()->getForm(SodaScsProjectMembershipForm::class);
-
     $build = [
       '#theme' => 'soda_scs_manager__dashboard',
       '#attributes' => ['class' => 'container soda-scs-manager--view--grid'],
       '#entitiesByUser' => $entitiesByUser,
-      '#membershipRequestsForm' => $membershipRequestsForm,
+      '#entitiesByProject' => $entitiesByProject,
       '#currentUsername' => $current_user->getDisplayName(),
       '#cache' => [
         'max-age' => 0,

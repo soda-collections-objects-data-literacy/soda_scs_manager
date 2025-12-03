@@ -86,6 +86,29 @@ class SodaScsComponentBundle extends SodaScsComponent implements SodaScsComponen
         break;
 
       case 'soda_scs_wisski_component':
+        $definitions['defaultLanguage'] = BundleFieldDefinition::create('list_string')
+          ->setLabel(new TranslatableMarkup('Drupal/WissKI default language'))
+          ->setDescription(new TranslatableMarkup('The default language for the Drupal/WissKI interface.'))
+          ->setRequired(TRUE)
+          ->setDisplayConfigurable('form', FALSE)
+          ->setDisplayConfigurable('view', FALSE)
+          ->setDisplayOptions('form', [
+            'type' => 'options_buttons',
+            'weight' => 30,
+          ])
+          ->setDefaultValue('en')
+          ->setCardinality(1)
+          ->setDisplayOptions('view', [
+            'label' => 'above',
+            'type' => 'checklist',
+            'weight' => 30,
+          ])
+          ->setSetting('allowed_values', [
+            'en' => 'English',
+            'de' => 'German',
+          ]);
+
+
         $definitions['developmentInstance'] = BundleFieldDefinition::create('boolean')
           ->setLabel(new TranslatableMarkup('Development Instance'))
           ->setDescription(new TranslatableMarkup('Whether this is a development instance. Nightly builds are used for development and testing.'))
@@ -117,6 +140,7 @@ class SodaScsComponentBundle extends SodaScsComponent implements SodaScsComponen
             'woody' => '3D',
             'herbal' => 'Conservation and Restoration',
           ]);
+
 
         $definitions['containerId'] = BundleFieldDefinition::create('string')
           ->setLabel(new TranslatableMarkup('Container ID'))

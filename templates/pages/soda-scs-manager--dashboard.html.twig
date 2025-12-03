@@ -45,34 +45,46 @@
     {% endfor %}
   </div>
 </div>
-{% if membershipRequestsForm %}
-  <div class="soda-scs-manager--notifications bg-slate-900 border border-stone-700 rounded-lg p-4 my-6 shadow-md shadow-cyan-500/20">
-    <h2 class="text-2xl font-semibold text-stone-200 mb-4 text-center">{{ 'Pending project invitations'|t }}</h2>
-    {{ membershipRequestsForm }}
+
+{% if entitiesByUser is not empty %}
+  {% for username, entities in entitiesByUser %}
+    <div class="text-center mb-8">
+      {% if currentUsername is defined and username == currentUsername %}
+        <h2 class="text-3xl font-bold text-stone-200 mb-4">{{ 'Your applications'|t }}</h2>
+      {% else %}
+        <h2 class="text-3xl font-bold text-stone-200 mb-4">{{ 'Applications of User @username'|t({'@username': username}) }}</h2>
+      {% endif %}
+    </div>
+
+    {% set entityCount = entities|length %}
+    {% set gridClass = 'grid-count-' ~ entityCount %}
+
+    <div {{ attributes.addClass(gridClass) }} class="soda-scs-manager--view--grid mb-12">
+      {% for entity in entities %}
+        {{ entity }}
+      {% endfor %}
+    </div>
+  {% endfor %}
+{% endif %}
+
+{% if entitiesByProject is not empty %}
+  {% for project, entities in entitiesByProject %}
+    <div class="text-center mb-8">
+      <h2 class="text-3xl font-bold text-stone-200 mb-4">{{ 'Project "@project" membership applications'|t({'@project': project}) }}</h2>
+    </div>
+
+    {% set projectEntityCount = entities|length %}
+    {% set projectGridClass = 'grid-count-' ~ projectEntityCount %}
+    <div {{ attributes.addClass(projectGridClass) }} class="soda-scs-manager--view--grid mb-12">
+      {% for entity in entities %}
+        {{ entity }}
+      {% endfor %}
+    </div>
+  {% endfor %}
+{% endif %}
+
+{% if entitiesByUser is empty and entitiesByProject is empty %}
+  <div class="alert alert-info opacity-90 bg-slate-950 border-2 border-stone-200 shadow-lg shadow-cyan-500/50 p-4 rounded-lg text-center">
+    <p class="text-stone-200 text-xl">{{ 'No applications found.'|t }}</p>
   </div>
 {% endif %}
-    {% if entitiesByUser is not empty %}
-      {% for username, entities in entitiesByUser %}
-        <div class="text-center mb-8">
-          {% if currentUsername is defined and username == currentUsername %}
-            <h2 class="text-3xl font-bold text-stone-200 mb-4">{{ 'Your applications'|t }}</h2>
-          {% else %}
-            <h2 class="text-3xl font-bold text-stone-200 mb-4">{{ 'Project membership applications'|t }}</h2>
-          {% endif %}
-        </div>
-
-        {% set entity_count = entities|length %}
-        {% set grid_class = 'grid-count-' ~ entity_count %}
-
-        <div {{ attributes.addClass(grid_class) }} class="soda-scs-manager--view--grid mb-12">
-          {% for entity in entities %}
-            {{ entity }}
-          {% endfor %}
-        </div>
-      {% endfor %}
-    {% else %}
-      <div class="alert alert-info opacity-90 bg-slate-950 border-2 border-stone-200 shadow-lg shadow-cyan-500/50 p-4 rounded-lg text-center">
-        <p class="text-stone-200 text-xl">{{ 'No applications found.'|t }}</p>
-      </div>
-    {% endif %}
-  </div>

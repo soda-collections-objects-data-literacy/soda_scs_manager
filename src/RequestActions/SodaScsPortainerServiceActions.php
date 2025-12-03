@@ -319,6 +319,10 @@ class SodaScsPortainerServiceActions implements SodaScsServiceRequestInterface {
         "value" => $defaultGraphIri . '/contents/',
       ],
       [
+        "name" => "DRUPAL_LOCALE",
+        "value" => $requestParams['defaultLanguage'],
+      ],
+      [
         "name" => "DOMAIN",
         "value" => $instanceDomainName,
       ],

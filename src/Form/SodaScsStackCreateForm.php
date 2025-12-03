@@ -288,6 +288,7 @@ class SodaScsStackCreateForm extends ContentEntityForm {
     $stack = $this->entity;
     $stack->set('bundle', $this->bundle);
     $stack->set('created', $this->time->getRequestTime());
+    $stack->set('defaultLanguage', $form_state->getValue('defaultLanguage'));
     $stack->set('developmentInstance', $form_state->getValue('developmentInstance'));
     $stack->set('health', 'Unknown');
     $stack->set('machineName', $form_state->getValue('machineName')[0]['value']);
