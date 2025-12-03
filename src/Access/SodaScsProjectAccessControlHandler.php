@@ -45,6 +45,11 @@ final class SodaScsProjectAccessControlHandler extends EntityAccessControlHandle
         return AccessResult::forbidden()->cachePerUser()->addCacheableDependency($entity);
 
       case 'update':
+        // Only owners can edit projects.
+        if ($entity->getOwnerId() == $account->id()) {
+          return AccessResult::allowed()->cachePerUser()->addCacheableDependency($entity);
+        }
+        return AccessResult::forbidden()->cachePerUser()->addCacheableDependency($entity);
       case 'delete':
         // Only owners can edit or delete projects.
         if ($entity->getOwnerId() == $account->id()) {
