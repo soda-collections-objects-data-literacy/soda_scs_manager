@@ -122,9 +122,9 @@ entity.soda_scs_project.edit_form:
   defaults:
     _entity_form: 'soda_scs_project.edit'
     _title: 'Edit SODa SCS Project'
-    requirements:
-      _permission: 'soda scs manager user'
-      _custom_access: '\Drupal\soda_scs_manager\Access\SodaScsProjectAccessControlHandler::accessEditForm'
+  requirements:
+    _permission: 'soda scs manager user'
+    _custom_access: '\Drupal\soda_scs_manager\Access\SodaScsProjectAccessControlHandler::accessEditForm'
 
 entity.soda_scs_project.delete_form:
   path: '/soda-scs-manager/project/{soda_scs_project}/delete'
