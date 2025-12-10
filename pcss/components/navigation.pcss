@@ -33,6 +33,10 @@
         .primary-nav__menu-item--level-1:focus-within > .primary-nav__menu--level-2 {
             display: block;
         }
+
+        body:not(.is-always-mobile-nav) .secondary-nav {
+          @apply !ps-6;
+        }
     }
 }
 
