@@ -271,7 +271,8 @@ class SodaScsPortainerServiceActions implements SodaScsServiceRequestInterface {
 
     $instanceDomainName = str_replace('https://', '', $instanceDomain);
 
-    $trustedHost = str_replace('.', '\.', $instanceDomainName);
+    // @todo: This is a hack to trust the domain varnish name and the raw drupal domain name.
+    $trustedHost = '"^' . str_replace('.', '\.', $instanceDomainName) . '\$"' . ',"^raw\.' . str_replace('.', '\.', $instanceDomainName) . '\$"';
 
     if ($requestParams['wisskiType'] == 'bundled') {
       $repositoryURL = 'https://github.com/soda-collections-objects-data-literacy/wisski-base-stack.git';
@@ -427,6 +428,7 @@ class SodaScsPortainerServiceActions implements SodaScsServiceRequestInterface {
         'name' => $requestParams['machineName'],
         'repositoryAuthentication' => FALSE,
         'repositoryURL' => $repositoryURL,
+        'buildArgs' => $requestParams['buildArgs'] ?? [],
       ]),
     ];
   }
@@ -585,7 +587,7 @@ class SodaScsPortainerServiceActions implements SodaScsServiceRequestInterface {
         break;
 
       case 'instance':
-        $route = str_replace('{instanceId}', $requestParams['machineName'], $wisskiInstanceSettings['baseUrl']) . $wisskiInstanceSettings['healthCheckUrl'];
+        $route = str_replace('{instanceId}', "raw." . $requestParams['machineName'], $wisskiInstanceSettings['baseUrl']) . $wisskiInstanceSettings['healthCheckUrl'];
         break;
 
       default:
