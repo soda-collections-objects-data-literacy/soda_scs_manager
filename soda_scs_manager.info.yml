@@ -9,4 +9,5 @@ core_version_requirement: ^10 | ^11
 dependencies:
   - drupal:openid_connect
   - drupal:smtp
+  - drupal:field_group
 
