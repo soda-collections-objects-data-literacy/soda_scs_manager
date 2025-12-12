@@ -41,7 +41,7 @@ class SodaScsSettingsForm extends ConfigFormBase {
 
     // Add vertical tabs container.
     $form['tabs'] = [
-      '#type' => 'vertical_tabs',
+      '#type' => 'horizontal_tabs',
       '#default_tab' => 'edit-general',
     ];
 
@@ -1074,6 +1074,25 @@ class SodaScsSettingsForm extends ConfigFormBase {
       '#description' => $this->t('The health check route, like "/health".'),
     ];
 
+    $form['wisski']['images'] = [
+      '#type' => 'fieldset',
+      '#title' => 'Images configuration',
+    ];
+
+    $form['wisski']['images']['wisski_base_image_production_version'] = [
+      '#type' => 'textfield',
+      '#title' => $this->t('WissKI Base Image production version'),
+      '#default_value' => $this->config('soda_scs_manager.settings')->get('wisski')['images']['wisski_base_image_production_version'] ?? '',
+      '#description' => $this->t('The WissKI Base Image production version, like "1.0.0".'),
+    ];
+
+    $form['wisski']['images']['wisski_base_image_development_version'] = [
+      '#type' => 'textfield',
+      '#title' => $this->t('WissKI Base Image development version'),
+      '#default_value' => $this->config('soda_scs_manager.settings')->get('wisski')['images']['wisski_base_image_development_version'] ?? '',
+      '#description' => $this->t('The WissKI Base Image development version, like "1.x-dev".'),
+    ];
+
     $form['wisski']['recipes'] = [
       '#type' => 'fieldset',
       '#title' => 'Recipes configuration',
@@ -1115,6 +1134,25 @@ class SodaScsSettingsForm extends ConfigFormBase {
       '#title' => $this->t('WissKI Default Data Model development version'),
       '#default_value' => $this->config('soda_scs_manager.settings')->get('wisski')['recipes']['wisski_default_data_model']['wisski_default_data_model_development_version'] ?? '',
       '#description' => $this->t('The WissKI Default Data Model development version, like "1.x-dev".'),
+    ];
+
+    $form['wisski']['stacks'] = [
+      '#type' => 'fieldset',
+      '#title' => 'Recipes configuration',
+    ];
+
+    $form['wisski']['stacks']['wisski_stack_production_version'] = [
+      '#type' => 'textfield',
+      '#title' => $this->t('WissKI Stack production version'),
+      '#default_value' => $this->config('soda_scs_manager.settings')->get('wisski')['stacks']['wisski_stack_production_version'] ?? '',
+      '#description' => $this->t('The WissKI Stack production version, like "1.0.0".'),
+    ];
+
+    $form['wisski']['stacks']['wisski_stack_development_version'] = [
+      '#type' => 'textfield',
+      '#title' => $this->t('WissKI Stack development version'),
+      '#default_value' => $this->config('soda_scs_manager.settings')->get('wisski')['stacks']['wisski_stack_development_version'] ?? '',
+      '#description' => $this->t('The WissKI Stack development version, like "1.x-dev".'),
     ];
 
     // Security settings tab.
