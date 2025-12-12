@@ -272,7 +272,7 @@ class SodaScsPortainerServiceActions implements SodaScsServiceRequestInterface {
     $instanceDomainName = str_replace('https://', '', $instanceDomain);
 
     // @todo: This is a hack to trust the domain varnish name and the raw drupal domain name.
-    $trustedHost = '"^' . str_replace('.', '\.', $instanceDomainName) . '\$"' . ',"^raw\.' . str_replace('.', '\.', $instanceDomainName) . '\$"';
+    $trustedHost = '^' . str_replace('.', '\\.', $instanceDomainName) . '$|^raw\\.' . str_replace('.', '\\.', $instanceDomainName) . '$';
 
     if ($requestParams['wisskiType'] == 'bundled') {
       $repositoryURL = 'https://github.com/soda-collections-objects-data-literacy/wisski-base-stack.git';
