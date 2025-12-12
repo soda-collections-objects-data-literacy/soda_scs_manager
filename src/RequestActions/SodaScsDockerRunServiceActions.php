@@ -25,7 +25,8 @@ use Symfony\Component\HttpFoundation\RequestStack;
 /**
  * Handles Docker container run operations via Portainer API.
  *
- * @todo Seperate Container from Run actions maybe?.
+ * @todo Seperate container related requests from run
+ * related requests maybe?
  */
 class SodaScsDockerRunServiceActions implements SodaScsRunRequestInterface {
 

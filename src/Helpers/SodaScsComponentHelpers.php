@@ -170,7 +170,7 @@ class SodaScsComponentHelpers {
 
     if ($containerStatus != 'running') {
       return [
-        "message" =>  (string) $this->t('Application status: @status', ['@status' => $containerStatus]),
+        "message" => (string) $this->t('Application status: @status', ['@status' => $containerStatus]),
         "status" => $containerStatus,
         'code' => 200,
         'success' => TRUE,

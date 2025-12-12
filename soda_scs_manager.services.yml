@@ -30,6 +30,8 @@ services:
     class: Drupal\soda_scs_manager\Helpers\SodaScsComponentHelpers
   soda_scs_manager.container.helpers:
     class: Drupal\soda_scs_manager\Helpers\SodaScsContainerHelpers
+  soda_scs_manager.portainer.helpers:
+    class: Drupal\soda_scs_manager\Helpers\SodaScsPortainerHelpers
   soda_scs_manager.project.helpers:
     class: Drupal\soda_scs_manager\Helpers\SodaScsProjectHelpers
   soda_scs_manager.project_membership.helpers:

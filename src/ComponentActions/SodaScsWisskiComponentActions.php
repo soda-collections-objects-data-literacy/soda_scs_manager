@@ -184,7 +184,7 @@ class SodaScsWisskiComponentActions implements SodaScsComponentActionsInterface 
   /**
    * The SCS Portainer actions service.
    *
-   * @var \Drupal\soda_scs_manager\RequestActions\SodaScsServiceRequestInterface
+   * @var \Drupal\soda_scs_manager\RequestActions\SodaScsPortainerServiceActions
    */
   protected SodaScsServiceRequestInterface $sodaScsPortainerServiceActions;
 
@@ -953,12 +953,17 @@ class SodaScsWisskiComponentActions implements SodaScsComponentActionsInterface 
    *   The result array of the created component.
    */
   public function deleteComponent(SodaScsComponentInterface $component): array {
+    // Construct the request parameters.
+    // @todo We should use the correct wording of the params (path, query, body, etc.).
     $requestParams = [
       'routeParams' => [
         'stackId' => $component->get('externalId')->value,
       ],
     ];
     try {
+      // Build the get request for the portainer service.
+      // to get the stack informations and send it.
+      //
       $portainerGetRequest = $this->sodaScsPortainerServiceActions->buildGetRequest($requestParams);
       $portainerGetResponse = $this->sodaScsPortainerServiceActions->makeRequest($portainerGetRequest);
       if (!$portainerGetResponse['success']) {
@@ -999,6 +1004,8 @@ class SodaScsWisskiComponentActions implements SodaScsComponentActionsInterface 
       ];
     }
     try {
+      // Build the delete request with the informations from the portainer
+      // service.
       $portainerDeleteRequest = $this->sodaScsPortainerServiceActions->buildDeleteRequest($requestParams);
     }
     catch (MissingDataException $e) {
@@ -1024,6 +1031,7 @@ class SodaScsWisskiComponentActions implements SodaScsComponentActionsInterface 
       ];
     }
     try {
+      // Send the delete request to the portainer service.
       /** @var array $portainerResponse */
       $portainerDeleteResponse = $this->sodaScsPortainerServiceActions->makeRequest($portainerDeleteRequest);
       if (!$portainerDeleteResponse['success']) {
@@ -1036,7 +1044,35 @@ class SodaScsWisskiComponentActions implements SodaScsComponentActionsInterface 
         );
         $this->messenger->addError($this->t("Could not delete WissKI stack at portainer, but will delete the component anyway. See logs for more details."));
       }
+    }
+    catch (\Exception $e) {
+      Error::logException(
+        $this->logger,
+        $e,
+        'Cannot get WissKI component at portainer: @message',
+        ['@message' => $e->getMessage()],
+        LogLevel::ERROR
+      );
+    }
 
+    // Delete connected docker volumes of the WissKI component.
+    try {
+      //$removeVolumesOfComposeStackResponse = \Drupal::service('soda_scs_manager.portainer.helpers')->removeVolumesOfComposeStack($component->get('machineName')->value);
+    }
+    catch (\Exception $e) {
+      Error::logException(
+      $this->logger,
+      $e,
+      'Cannot delete WissKI component at keycloak: @message',
+      ['@message' => $e->getMessage()],
+      LogLevel::ERROR
+      );
+    }
+
+    try {
+      // Delete the client in keycloak.
+      // @todo export this to own helper function.
+      //
       // Request keycloak token.
       $keycloakBuildTokenRequest = $this->sodaScsKeycloakServiceClientActions->buildTokenRequest([]);
       $keycloakMakeTokenRequest = $this->sodaScsKeycloakServiceClientActions->makeRequest($keycloakBuildTokenRequest);

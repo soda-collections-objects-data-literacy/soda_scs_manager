@@ -120,8 +120,8 @@ class SodaScsStackHelpers {
   /**
    * Check the health of a WissKI stack.
    *
-   * @param string $machineName
-   *   The machine name of the WissKI stack.
+   * @param \Drupal\soda_scs_manager\Entity\SodaScsStackInterface $stack
+   *   The SODa SCS Stack.
    *
    * @return array
    *   The health of the WissKI stack.

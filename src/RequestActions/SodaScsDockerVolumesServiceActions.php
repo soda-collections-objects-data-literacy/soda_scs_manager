@@ -20,7 +20,6 @@ use Drupal\Core\Template\TwigEnvironment;
 use Drupal\Core\TypedData\Exception\MissingDataException;
 use Drupal\soda_scs_manager\ServiceActions\SodaScsServiceActionsInterface;
 use Drupal\soda_scs_manager\Helpers\SodaScsServiceHelpers;
-use Drupal\soda_scs_manager\RequestActions\SodaScsServiceRequestInterface;
 use GuzzleHttp\ClientInterface;
 use Symfony\Component\HttpFoundation\RequestStack;
 
@@ -245,14 +244,28 @@ class SodaScsDockerVolumesServiceActions implements SodaScsServiceRequestInterfa
     $dockerApiSettings = $this->sodaScsServiceHelpers->initDockerApiSettings();
     $dockerVolumeServiceSettings = $this->sodaScsServiceHelpers->initDockerVolumesServiceSettings();
 
-    $route = $portainerServiceSettings['host'] . $portainerServiceSettings['baseUrl'] . str_replace('{endpointId}', $portainerServiceSettings['portainerEndpointId'], $dockerApiSettings['baseUrl']) . $dockerVolumeServiceSettings['baseUrl'] . $dockerVolumeServiceSettings['createUrl'];
+    $requestParams['routeParams']['endpointId'] = $portainerServiceSettings['endpointId'];
+
+    $route = $portainerServiceSettings['host'] .
+      $portainerServiceSettings['baseUrl'] .
+      $dockerApiSettings['baseUrl'] .
+      $dockerVolumeServiceSettings['baseUrl'] .
+      $dockerVolumeServiceSettings['createUrl'];
+
+    // Replace any route parameters.
+    if (!empty($requestParams['routeParams'])) {
+      foreach ($requestParams['routeParams'] as $key => $value) {
+        $route = str_replace('{' . $key . '}', $value, $route);
+      }
+    }
+
     return [
       'method' => 'POST',
       'route' => $route,
       'headers' => [
         'Content-Type' => 'application/json',
         'Accept' => 'application/json',
-        'X-API-Key' => $portainerServiceSettings['portainerAuthenticationToken'],
+        'X-API-Key' => $portainerServiceSettings['authenticationToken'],
       ],
       'body' => json_encode(
         [
@@ -284,8 +297,34 @@ class SodaScsDockerVolumesServiceActions implements SodaScsServiceRequestInterfa
     $dockerApiSettings = $this->sodaScsServiceHelpers->initDockerApiSettings();
     $dockerVolumeServiceSettings = $this->sodaScsServiceHelpers->initDockerVolumesServiceSettings();
 
+    // Set route params.
+    $requestParams['routeParams']['endpointId'] = $portainerServiceSettings['endpointId'];
+    $requestParams['routeParams']['volumeId'] ??= $requestParams['machineName'] ?? NULL;
+
+    if (empty($requestParams['routeParams']['volumeId'])) {
+      throw new MissingDataException('Missing required route parameter: volumeId.');
+    }
+
     // Construct route.
-    $route = $portainerServiceSettings['host'] . $portainerServiceSettings['baseUrl'] . str_replace('{endpointId}', $portainerServiceSettings['portainerEndpointId'], $dockerApiSettings['baseUrl']) . $dockerVolumeServiceSettings['baseUrl'] . str_replace('{volumeId}', urlencode($requestParams['machineName']), $dockerVolumeServiceSettings['deleteUrl']);
+    $route =
+      // Host route.
+      $portainerServiceSettings['host'] .
+      // Base URL.
+      $portainerServiceSettings['baseUrl'] . $dockerApiSettings['baseUrl'] . $dockerVolumeServiceSettings['baseUrl'] .
+      // Delete URL.
+      $dockerVolumeServiceSettings['deleteUrl'];
+
+    // Replace any route parameters.
+    if (!empty($requestParams['routeParams'])) {
+      foreach ($requestParams['routeParams'] as $key => $value) {
+        $route = str_replace('{' . $key . '}', $value, $route);
+      }
+    }
+
+    // Add query parameters if they exist.
+    if (!empty($requestParams['queryParams'])) {
+      $route .= '?' . http_build_query($requestParams['queryParams']);
+    }
 
     return [
       'method' => 'DELETE',
@@ -293,7 +332,7 @@ class SodaScsDockerVolumesServiceActions implements SodaScsServiceRequestInterfa
       'headers' => [
         'Content-Type' => 'application/json',
         'Accept' => 'application/json',
-        'X-API-Key' => $portainerServiceSettings['portainerAuthenticationToken'],
+        'X-API-Key' => $portainerServiceSettings['authenticationToken'],
       ],
     ];
   }
@@ -365,14 +404,33 @@ class SodaScsDockerVolumesServiceActions implements SodaScsServiceRequestInterfa
     $dockerApiSettings = $this->sodaScsServiceHelpers->initDockerApiSettings();
     $dockerVolumeServiceSettings = $this->sodaScsServiceHelpers->initDockerVolumesServiceSettings();
 
-    $route = $portainerServiceSettings['host'] . $portainerServiceSettings['baseUrl'] . str_replace('{endpointId}', $portainerServiceSettings['portainerEndpointId'], $dockerApiSettings['baseUrl']) . $dockerVolumeServiceSettings['baseUrl'] . $dockerVolumeServiceSettings['readUrl'];
+    $requestParams['routeParams']['endpointId'] = $portainerServiceSettings['endpointId'];
+
+    $route = $portainerServiceSettings['host'] .
+      $portainerServiceSettings['baseUrl'] .
+      $dockerApiSettings['baseUrl'] .
+      $dockerVolumeServiceSettings['baseUrl'] .
+      $dockerVolumeServiceSettings['readAllUrl'];
+
+    // Replace any route parameters.
+    if (!empty($requestParams['routeParams'])) {
+      foreach ($requestParams['routeParams'] as $key => $value) {
+        $route = str_replace('{' . $key . '}', $value, $route);
+      }
+    }
+
+    // Add query parameters if they exist.
+    if (!empty($requestParams['queryParams'])) {
+      $route .= '?' . http_build_query($requestParams['queryParams']);
+    }
+
     return [
       'method' => 'GET',
       'route' => $route,
       'headers' => [
         'Content-Type' => 'application/json',
         'Accept' => 'application/json',
-        'X-API-Key' => $this->settings->get('wisski')['portainerOptions']['authenticationToken'],
+        'X-API-Key' => $portainerServiceSettings['authenticationToken'],
       ],
     ];
   }
@@ -393,14 +451,29 @@ class SodaScsDockerVolumesServiceActions implements SodaScsServiceRequestInterfa
     $dockerApiSettings = $this->sodaScsServiceHelpers->initDockerApiSettings();
     $dockerVolumeServiceSettings = $this->sodaScsServiceHelpers->initDockerVolumesServiceSettings();
 
-    $route = $portainerServiceSettings['host'] . $portainerServiceSettings['baseUrl'] . str_replace('{endpointId}', $portainerServiceSettings['portainerEndpointId'], $dockerApiSettings['baseUrl']) . $dockerVolumeServiceSettings['baseUrl'] . str_replace('{volumeId}', urlencode($requestParams['machineName']), $dockerVolumeServiceSettings['updateUrl']);
+    $requestParams['routeParams']['endpointId'] = $portainerServiceSettings['endpointId'];
+    $requestParams['routeParams']['volumeId'] ??= urlencode($requestParams['machineName']);
+
+    $route = $portainerServiceSettings['host'] .
+      $portainerServiceSettings['baseUrl'] .
+      $dockerApiSettings['baseUrl'] .
+      $dockerVolumeServiceSettings['baseUrl'] .
+      $dockerVolumeServiceSettings['updateUrl'];
+
+    // Replace any route parameters.
+    if (!empty($requestParams['routeParams'])) {
+      foreach ($requestParams['routeParams'] as $key => $value) {
+        $route = str_replace('{' . $key . '}', $value, $route);
+      }
+    }
+
     return [
       'method' => 'POST',
       'route' => $route,
       'headers' => [
         'Content-Type' => 'application/json',
         'Accept' => 'application/json',
-        'X-API-Key' => $portainerServiceSettings['portainerAuthenticationToken'],
+        'X-API-Key' => $portainerServiceSettings['authenticationToken'],
       ],
       'body' => json_encode(
         [
