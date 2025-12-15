@@ -617,7 +617,6 @@ class SodaScsContainerHelpers {
    *
    * @param string $containerId
    *   The container ID.
-   *
    * @param array|null $additionalRequestParams
    *   The request parameters.
    *
@@ -652,11 +651,10 @@ class SodaScsContainerHelpers {
   }
 
   /**
-   *  Restart a container.
+   * Restart a container.
    *
-   *  Inspect the container state,
-   *  if it is running, stop it gracefully,
-   *  start the container again.
+   * Inspect the container state, if it is running, stop it gracefully,
+   * start the container again.
    *
    * @param string $containerId
    *   The container ID.
@@ -665,7 +663,7 @@ class SodaScsContainerHelpers {
    *   The Soda SCS result.
    */
   public function restartContainer(string $containerId): SodaScsResult {
-    // Inspect the container state,
+    // Inspect the container state.
     $inspectContainerResponse = $this->inspectContainer($containerId);
 
     if (!$inspectContainerResponse->success) {
@@ -807,4 +805,5 @@ class SodaScsContainerHelpers {
       ],
     );
   }
+
 }
