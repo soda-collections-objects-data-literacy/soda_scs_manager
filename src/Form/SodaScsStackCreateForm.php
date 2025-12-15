@@ -121,7 +121,6 @@ class SodaScsStackCreateForm extends ContentEntityForm {
       $container->get('config.factory'),
       $container->get('logger.factory'),
       $container->get('datetime.time'),
-      // Stack actions service resolved via #[Autowire] attribute
       $container->get('soda_scs_manager.stack.actions'),
       $container->get('entity_type.manager'),
     );
@@ -151,6 +150,7 @@ class SodaScsStackCreateForm extends ContentEntityForm {
     if (!$this->currentUser->hasPermission('soda scs manager admin')) {
       $form['owner']['#access'] = FALSE;
       $form['developmentInstance']['#access'] = FALSE;
+      $form['automatedUpdates']['#access'] = FALSE;
     }
 
     // Make the machineName field readonly and

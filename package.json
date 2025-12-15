@@ -17,7 +17,8 @@
     "tailwindcss": "^4.0.0"
   },
   "devDependencies": {
-    "postcss-cli": "^11.0.1",
-    "cssnano": "^7.0.6"
+    "baseline-browser-mapping": "^2.9.7",
+    "cssnano": "^7.0.6",
+    "postcss-cli": "^11.0.1"
   }
 }

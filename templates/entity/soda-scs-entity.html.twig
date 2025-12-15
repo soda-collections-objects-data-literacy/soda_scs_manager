@@ -31,7 +31,7 @@
 		</div>
 		{# end of header left column #}
 
-		<div class="soda-scs-manager--entity-header--right">
+		<div class="soda-scs-manager--entity--header--right">
 			<div class="soda-scs-manager--entity--machine-name-row">
 				{% if elements.machineName %}
 					<div class="soda-scs-manager--entity--machine-name">
@@ -48,6 +48,20 @@
 			</div>
 		</div>
 		{# end of header right column #}
+
+    <div class="soda-scs-manager--entity--attributes-row">
+      <div class="soda-scs-manager--entity--automated-updates">
+          {{ elements.automatedUpdates }}
+      </div>
+      <div class="soda-scs-manager--entity--development-instance">
+          {{ elements.developmentInstance }}
+      </div>
+      <div class="soda-scs-manager--entity--default-language">
+        {% if elements.defaultLanguage %}
+          {{ elements.defaultLanguage }}
+        {% endif %}
+      </div>
+    </div>
 
 		<div class="soda-scs-manager--entity--description-row">
 			{% if elements.description %}

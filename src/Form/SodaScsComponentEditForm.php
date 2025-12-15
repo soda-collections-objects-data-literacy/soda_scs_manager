@@ -61,8 +61,11 @@ class SodaScsComponentEditForm extends ContentEntityForm {
     $component = $this->entity;
     $form = parent::buildForm($form, $form_state);
 
-    // Hide the flavours field.
+    // Hide unchangeable fields.
     $form['flavours']['#access'] = FALSE;
+    $form['automatedUpdates']['#access'] = FALSE;
+    $form['developmentInstance']['#access'] = FALSE;
+    $form['defaultLanguage']['#access'] = FALSE;
 
     // Make the machine name field read-only.
     if (isset($form['machineName'])) {

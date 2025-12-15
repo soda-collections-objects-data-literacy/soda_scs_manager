@@ -1,3 +1,13 @@
+# Components
+entity.soda_scs_component.automated_updates:
+  route_name: entity.soda_scs_component.automated_updates
+  title: 'Update all WissKI components'
+  appears_on:
+    - entity.soda_scs_component.collection
+  options:
+    attributes:
+      class: ['button', 'button--action', 'button--primary']
+
 # Project
 entity.soda_scs_project.add_form:
   route_name: entity.soda_scs_project.add_form

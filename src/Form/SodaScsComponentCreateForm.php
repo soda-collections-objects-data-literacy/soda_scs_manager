@@ -195,6 +195,8 @@ class SodaScsComponentCreateForm extends ContentEntityForm {
     $form['owner']['widget']['#default_value'] = $this->currentUser->id();
     if (!$this->currentUser->hasPermission('soda scs manager admin')) {
       $form['owner']['#access'] = FALSE;
+      $form['automatedUpdates']['#access'] = FALSE;
+      $form['developmentInstance']['#access'] = FALSE;
     }
 
     // Make the machineName field readonly and

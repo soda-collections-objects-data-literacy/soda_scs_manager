@@ -81,6 +81,16 @@ entity.soda_scs_component.collection:
   options:
     no_cache: TRUE
 
+entity.soda_scs_component.automated_updates:
+  path: '/soda-scs-manager/component/automated-updates'
+  defaults:
+    _form: '\Drupal\soda_scs_manager\Form\SodaScsComponentAutomatedUpdatesConfirmForm'
+    _title: 'Update all components'
+  requirements:
+    _permission: 'soda scs manager admin'
+  options:
+    no_cache: TRUE
+
 entity.soda_scs_component.snapshot:
   path: '/soda-scs-manager/component/{soda_scs_component}/snapshot'
   defaults:

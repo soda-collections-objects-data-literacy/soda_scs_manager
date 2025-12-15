@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace Drupal\soda_scs_manager\ViewBuilder;
 
-
 use Drupal\Core\Entity\EntityViewBuilder;
 use Drupal\Core\Entity\EntityInterface;
 use Drupal\Core\Entity\EntityRepositoryInterface;
@@ -12,7 +11,6 @@ use Drupal\Core\Entity\EntityDisplayRepositoryInterface;
 use Drupal\Core\Entity\EntityTypeInterface;
 use Drupal\Core\Language\LanguageManagerInterface;
 use Drupal\Core\Theme\Registry;
-use Drupal\soda_scs_manager\Helpers\SodaScsContainerHelpers;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 
 /**
@@ -34,29 +32,27 @@ class SodaScsComponentViewBuilder extends EntityViewBuilder {
    */
   protected $sodaScsManagerSettings;
 
-
   /**
    * Constructs a new EntityViewBuilder.
    *
-   * @param \Drupal\Core\Entity\EntityTypeInterface $entity_type
-   *   The entity type definition.
+   * @param \Drupal\Core\Config\Config $config
+   *   The config.
+   * @param \Drupal\Core\Entity\EntityDisplayRepositoryInterface $entity_display_repository
+   *   The entity display repository.
    * @param \Drupal\Core\Entity\EntityRepositoryInterface $entity_repository
    *   The entity repository service.
    * @param \Drupal\Core\Language\LanguageManagerInterface $language_manager
    *   The language manager.
    * @param \Drupal\Core\Theme\Registry $theme_registry
    *   The theme registry.
-   * @param \Drupal\Core\Entity\EntityDisplayRepositoryInterface $entity_display_repository
-   *   The entity display repository.
-   * @param \Drupal\Core\Config\Config $config
-   *   The config.
+   * @param \Drupal\Core\Entity\EntityTypeInterface $entity_type
+   *   The entity type definition.
    */
   public function __construct(
     $config,
     EntityDisplayRepositoryInterface $entity_display_repository,
     EntityRepositoryInterface $entity_repository,
     LanguageManagerInterface $language_manager,
-    SodaScsContainerHelpers $sodaScsContainerHelpers,
     Registry $theme_registry,
     EntityTypeInterface $entity_type,
   ) {
@@ -81,7 +77,6 @@ class SodaScsComponentViewBuilder extends EntityViewBuilder {
       $container->get('entity_display.repository'),
       $container->get('entity.repository'),
       $container->get('language_manager'),
-      $container->get('soda_scs_manager.container.helpers'),
       $container->get('theme.registry'),
       $entity_type,
     );

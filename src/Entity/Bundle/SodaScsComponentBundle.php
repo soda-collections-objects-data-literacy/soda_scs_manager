@@ -64,6 +64,7 @@ class SodaScsComponentBundle extends SodaScsComponent implements SodaScsComponen
             'type' => 'entity_reference_autocomplete',
             'weight' => 50,
           ])
+          ->setDisplayConfigurable('view', FALSE)
           ->setDisplayOptions('view', [
             'label' => 'above',
             'type' => 'entity_reference_label',
@@ -82,13 +83,30 @@ class SodaScsComponentBundle extends SodaScsComponent implements SodaScsComponen
           ->setDisplayOptions('form', [
             'type' => 'entity_reference_autocomplete',
             'weight' => 50,
-          ]);
+          ])
+          ->setDisplayConfigurable('view', FALSE);
         break;
 
       case 'soda_scs_wisski_component':
+        $definitions['automatedUpdates'] = BundleFieldDefinition::create('boolean')
+          ->setLabel(new TranslatableMarkup('Automated Updates'))
+          ->setDescription(new TranslatableMarkup('Allow centralised updates managed by the SCS administrator. Can not be changed after creation.'))
+          ->setDefaultValue(TRUE)
+          ->setDisplayConfigurable('form', FALSE)
+          ->setDisplayConfigurable('view', FALSE)
+          ->setDisplayOptions('form', [
+            'type' => 'checkbox',
+            'weight' => 100,
+          ])
+          ->setDisplayOptions('view', [
+            'label' => 'above',
+            'type' => 'boolean',
+            'weight' => 100,
+          ]);
+
         $definitions['defaultLanguage'] = BundleFieldDefinition::create('list_string')
           ->setLabel(new TranslatableMarkup('Drupal/WissKI default language'))
-          ->setDescription(new TranslatableMarkup('The default language for the Drupal/WissKI interface.'))
+          ->setDescription(new TranslatableMarkup('The default language for the Drupal/WissKI interface. Can not be changed after creation.'))
           ->setRequired(TRUE)
           ->setDisplayConfigurable('form', FALSE)
           ->setDisplayConfigurable('view', FALSE)
@@ -108,14 +126,20 @@ class SodaScsComponentBundle extends SodaScsComponent implements SodaScsComponen
             'de' => 'German',
           ]);
 
-
         $definitions['developmentInstance'] = BundleFieldDefinition::create('boolean')
           ->setLabel(new TranslatableMarkup('Development Instance'))
-          ->setDescription(new TranslatableMarkup('Whether this is a development instance. Nightly builds are used for development and testing.'))
+          ->setDescription(new TranslatableMarkup('Whether this is a development instance. Nightly builds are used for development and testing. Can not be changed after creation.'))
+          ->setSetting('on_label', 'Yes')
+          ->setSetting('off_label', 'No')
           ->setDisplayConfigurable('form', FALSE)
           ->setDisplayConfigurable('view', FALSE)
           ->setDisplayOptions('form', [
             'type' => 'checkbox',
+            'weight' => 100,
+          ])
+          ->setDisplayOptions('view', [
+            'label' => 'above',
+            'type' => 'boolean',
             'weight' => 100,
           ]);
 
