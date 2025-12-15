@@ -4,17 +4,16 @@ declare(strict_types=1);
 
 namespace Drupal\soda_scs_manager\ComponentActions;
 
-use Symfony\Component\DependencyInjection\Attribute\Autowire;
 use Drupal\Core\Config\Config;
 use Drupal\Core\Config\ConfigFactoryInterface;
 use Drupal\Core\Database\Connection;
 use Drupal\Core\DependencyInjection\DependencySerializationTrait;
 use Drupal\Core\Entity\EntityTypeBundleInfoInterface;
 use Drupal\Core\Entity\EntityTypeManagerInterface;
+use Drupal\Core\File\FileSystemInterface;
 use Drupal\Core\Logger\LoggerChannelFactoryInterface;
 use Drupal\Core\Logger\LoggerChannelInterface;
 use Drupal\Core\Messenger\MessengerInterface;
-use Drupal\Core\File\FileSystemInterface;
 use Drupal\Core\StringTranslation\StringTranslationTrait;
 use Drupal\Core\StringTranslation\TranslationInterface;
 use Drupal\Core\TypedData\Exception\MissingDataException;
@@ -22,22 +21,24 @@ use Drupal\Core\Utility\Error;
 use Drupal\soda_scs_manager\Entity\SodaScsComponentInterface;
 use Drupal\soda_scs_manager\Entity\SodaScsSnapshotInterface;
 use Drupal\soda_scs_manager\Helpers\SodaScsComponentHelpers;
-use Drupal\soda_scs_manager\Helpers\SodaScsProjectHelpers;
-use Drupal\soda_scs_manager\Helpers\SodaScsServiceHelpers;
-use Drupal\soda_scs_manager\ValueObject\SodaScsSnapshotData;
-use Drupal\soda_scs_manager\Helpers\SodaScsKeycloakHelpers;
-use Drupal\soda_scs_manager\Helpers\SodaScsSnapshotHelpers;
-use Drupal\soda_scs_manager\Helpers\SodaScsStackHelpers;
 use Drupal\soda_scs_manager\Helpers\SodaScsContainerHelpers;
 use Drupal\soda_scs_manager\Helpers\SodaScsHelpers;
+use Drupal\soda_scs_manager\Helpers\SodaScsKeycloakHelpers;
+use Drupal\soda_scs_manager\Helpers\SodaScsPortainerHelpers;
+use Drupal\soda_scs_manager\Helpers\SodaScsProjectHelpers;
+use Drupal\soda_scs_manager\Helpers\SodaScsServiceHelpers;
+use Drupal\soda_scs_manager\Helpers\SodaScsSnapshotHelpers;
+use Drupal\soda_scs_manager\Helpers\SodaScsStackHelpers;
 use Drupal\soda_scs_manager\RequestActions\SodaScsExecRequestInterface;
 use Drupal\soda_scs_manager\RequestActions\SodaScsRunRequestInterface;
 use Drupal\soda_scs_manager\RequestActions\SodaScsServiceRequestInterface;
 use Drupal\soda_scs_manager\ServiceActions\SodaScsServiceActionsInterface;
 use Drupal\soda_scs_manager\ServiceKeyActions\SodaScsServiceKeyActionsInterface;
 use Drupal\soda_scs_manager\ValueObject\SodaScsResult;
+use Drupal\soda_scs_manager\ValueObject\SodaScsSnapshotData;
 use GuzzleHttp\ClientInterface;
 use Psr\Log\LogLevel;
+use Symfony\Component\DependencyInjection\Attribute\Autowire;
 
 /**
  * Handles the communication with the SCS user manager daemon.
@@ -182,6 +183,13 @@ class SodaScsWisskiComponentActions implements SodaScsComponentActionsInterface 
   protected SodaScsServiceRequestInterface $sodaScsKeycloakServiceUserActions;
 
   /**
+   * The SCS Portainer helpers service.
+   *
+   * @var \Drupal\soda_scs_manager\Helpers\SodaScsPortainerHelpers
+   */
+  protected SodaScsPortainerHelpers $sodaScsPortainerHelpers;
+
+  /**
    * The SCS Portainer actions service.
    *
    * @var \Drupal\soda_scs_manager\RequestActions\SodaScsPortainerServiceActions
@@ -246,6 +254,8 @@ class SodaScsWisskiComponentActions implements SodaScsComponentActionsInterface 
     SodaScsServiceRequestInterface $sodaScsKeycloakServiceGroupActions,
     #[Autowire(service: 'soda_scs_manager.keycloak_service.user.actions')]
     SodaScsServiceRequestInterface $sodaScsKeycloakServiceUserActions,
+    #[Autowire(service: 'soda_scs_manager.portainer.helpers')]
+    SodaScsPortainerHelpers $sodaScsPortainerHelpers,
     #[Autowire(service: 'soda_scs_manager.portainer_service.actions')]
     SodaScsServiceRequestInterface $sodaScsPortainerServiceActions,
     #[Autowire(service: 'soda_scs_manager.project.helpers')]
@@ -280,6 +290,7 @@ class SodaScsWisskiComponentActions implements SodaScsComponentActionsInterface 
     $this->sodaScsKeycloakServiceClientActions = $sodaScsKeycloakServiceClientActions;
     $this->sodaScsKeycloakServiceGroupActions = $sodaScsKeycloakServiceGroupActions;
     $this->sodaScsKeycloakServiceUserActions = $sodaScsKeycloakServiceUserActions;
+    $this->sodaScsPortainerHelpers = $sodaScsPortainerHelpers;
     $this->sodaScsPortainerServiceActions = $sodaScsPortainerServiceActions;
     $this->sodaScsProjectHelpers = $sodaScsProjectHelpers;
     $this->sodaScsStackHelpers = $sodaScsStackHelpers;
@@ -1057,7 +1068,16 @@ class SodaScsWisskiComponentActions implements SodaScsComponentActionsInterface 
 
     // Delete connected docker volumes of the WissKI component.
     try {
-      //$removeVolumesOfComposeStackResponse = \Drupal::service('soda_scs_manager.portainer.helpers')->removeVolumesOfComposeStack($component->get('machineName')->value);
+      $removeVolumesOfComposeStackResponse = $this->sodaScsPortainerHelpers->removeVolumesOfComposeStack($component->get('machineName')->value);
+      if (!$removeVolumesOfComposeStackResponse->success) {
+        Error::logException(
+          $this->logger,
+          new \Exception($removeVolumesOfComposeStackResponse->error),
+          'Cannot delete WissKI component at keycloak: @message',
+          ['@message' => $removeVolumesOfComposeStackResponse->error],
+          LogLevel::ERROR
+        );
+      }
     }
     catch (\Exception $e) {
       Error::logException(

@@ -141,7 +141,6 @@ class SodaScsComponentBundle extends SodaScsComponent implements SodaScsComponen
             'herbal' => 'Conservation and Restoration',
           ]);
 
-
         $definitions['containerId'] = BundleFieldDefinition::create('string')
           ->setLabel(new TranslatableMarkup('Container ID'))
           ->setDescription(new TranslatableMarkup('The ID of the container.'))

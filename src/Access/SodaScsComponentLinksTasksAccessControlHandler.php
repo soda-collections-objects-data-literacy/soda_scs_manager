@@ -14,26 +14,6 @@ use Drupal\Core\Access\AccessResultInterface;
 final class SodaScsComponentLinksTasksAccessControlHandler {
 
   /**
-   * Determines access for the service link.
-   *
-   * @param \Drupal\soda_scs_manager\Entity\SodaScsComponentInterface $soda_scs_component
-   *   The SODa SCS Component entity.
-   *
-   * @return \Drupal\Core\Access\AccessResultInterface
-   *   TRUE if access is allowed, FALSE otherwise.
-   */
-  public static function accessServiceLink(SodaScsComponentInterface $soda_scs_component): AccessResultInterface {
-    $bundle = $soda_scs_component->bundle();
-
-    // Hide the "Show"/service link tab for filesystem components.
-    $result = ($bundle === 'soda_scs_filesystem_component')
-      ? AccessResult::forbidden()
-      : AccessResult::allowed();
-
-    return $result->addCacheableDependency($soda_scs_component);
-  }
-
-  /**
    * Determines access for the edit form.
    *
    * @param \Drupal\soda_scs_manager\Entity\SodaScsComponentInterface $soda_scs_component
@@ -69,6 +49,46 @@ final class SodaScsComponentLinksTasksAccessControlHandler {
     // Hide the delete task for specific component types.
     $hiddenBundles = ['soda_scs_webprotege_component'];
     $result = in_array($bundle, $hiddenBundles, TRUE)
+      ? AccessResult::forbidden()
+      : AccessResult::allowed();
+
+    return $result->addCacheableDependency($soda_scs_component);
+  }
+
+  /**
+   * Determines access for the installed Drupal packages task.
+   *
+   * @param \Drupal\soda_scs_manager\Entity\SodaScsComponentInterface $soda_scs_component
+   *   The SODa SCS Component entity.
+   *
+   * @return \Drupal\Core\Access\AccessResultInterface
+   *   TRUE if access is allowed, FALSE otherwise.
+   */
+  public static function accessInstalledDrupalPackagesTask(SodaScsComponentInterface $soda_scs_component): AccessResultInterface {
+    $bundle = $soda_scs_component->bundle();
+
+    // Show the installed Drupal packages task only for WissKI components.
+    $result = ($bundle === 'soda_scs_wisski_component')
+      ? AccessResult::allowed()
+      : AccessResult::forbidden();
+
+    return $result->addCacheableDependency($soda_scs_component);
+  }
+
+  /**
+   * Determines access for the service link.
+   *
+   * @param \Drupal\soda_scs_manager\Entity\SodaScsComponentInterface $soda_scs_component
+   *   The SODa SCS Component entity.
+   *
+   * @return \Drupal\Core\Access\AccessResultInterface
+   *   TRUE if access is allowed, FALSE otherwise.
+   */
+  public static function accessServiceLink(SodaScsComponentInterface $soda_scs_component): AccessResultInterface {
+    $bundle = $soda_scs_component->bundle();
+
+    // Hide the "Show"/service link tab for filesystem components.
+    $result = ($bundle === 'soda_scs_filesystem_component')
       ? AccessResult::forbidden()
       : AccessResult::allowed();
 

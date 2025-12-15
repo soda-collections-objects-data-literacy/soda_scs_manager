@@ -18,7 +18,7 @@ class SodaScsComponentBundleController extends ControllerBase {
    *   The title.
    */
   public function title(): string {
-    return $this->t('Component Bundles');
+    return (string) $this->t('Component Bundles');
   }
 
 }
