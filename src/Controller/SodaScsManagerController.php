@@ -8,13 +8,10 @@ use Drupal\Component\Plugin\Exception\InvalidPluginDefinitionException;
 use Drupal\Component\Plugin\Exception\PluginNotFoundException;
 use Drupal\Core\Controller\ControllerBase;
 use Drupal\Core\Entity\EntityTypeManagerInterface;
-use Drupal\Core\Form\FormBuilderInterface;
 use Drupal\Core\Session\AccountInterface;
 use Drupal\Core\Url;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 use Drupal\Core\Entity\EntityTypeBundleInfoInterface;
-use Drupal\user\Entity\User;
-use Drupal\soda_scs_manager\Form\SodaScsProjectMembershipForm;
 use Drupal\soda_scs_manager\Helpers\SodaScsHelpers;
 use Drupal\Core\Entity\EntityStorageException;
 
@@ -106,24 +103,27 @@ class SodaScsManagerController extends ControllerBase {
     try {
       $projectStorage = $this->entityTypeManager->getStorage('soda_scs_project');
 
-    if ($current_user->hasPermission('soda scs manager admin')) {
-      // If the user has the 'manage soda scs manager' permission,
-      // load all projects.
-      /** @var \Drupal\soda_scs_manager\Entity\SodaScsProject $projects */
-      $projects = $projectStorage->loadMultiple();
-    }
+      if ($current_user->hasPermission('soda scs manager admin')) {
+        // If the user has the 'manage soda scs manager' permission,
+        // load all projects.
+        /** @var \Drupal\soda_scs_manager\Entity\SodaScsProject $projects */
+        $projects = $projectStorage->loadMultiple();
+      }
 
-    else {
-      // If the user does not have the 'manage soda scs manager'
-      // permission, only load their own projects.
-      $projects = $projectStorage->loadByProperties(['members' => $current_user->id()]);
-    }
+      else {
+        // If the user does not have the 'manage soda scs manager'
+        // permission, only load their own projects.
+        $projects = $projectStorage->loadByProperties(['members' => $current_user->id()]);
+      }
 
-    // project components of the projects.
-      $projectComponents = [];
+      // Project components of the projects.
       $entitiesByProject = [];
+      /** @var \Drupal\soda_scs_manager\Entity\SodaScsProjectInterface $project */
       foreach ($projects as $project) {
-        $projectEntities = $project->get('connectedComponents')->referencedEntities();
+        /** @var \Drupal\Core\Field\EntityReferenceFieldItemListInterface $connectedComponents */
+        $connectedComponents = $project->get('connectedComponents');
+        $projectEntities = $connectedComponents->referencedEntities();
+        /** @var \Drupal\soda_scs_manager\Entity\SodaScsComponentInterface $projectEntity */
         foreach ($projectEntities as $projectEntity) {
           $projectBundleInfo = $this->bundleInfo->getBundleInfo($projectEntity->getEntityTypeId())[$projectEntity->bundle()];
           $projectLabel = $project->label();
@@ -193,7 +193,8 @@ class SodaScsManagerController extends ControllerBase {
       // permission, only load their own components.
       $stacks = $stackStorage->loadByProperties(['owner' => $current_user->id()]);
 
-      // Additionally, include WissKI stacks from projects where the user is a member.
+      // Additionally, include WissKI stacks from projects where the user is a
+      // member.
       if (!empty($projects)) {
         $projectIds = array_keys($projects);
         $query = $stackStorage->getQuery()
@@ -374,13 +375,16 @@ class SodaScsManagerController extends ControllerBase {
    */
   public function startPage(): array {
 
+    // Get the current user.
+    /** @var \Drupal\Core\Session\AccountInterface $currentUser */
     $currentUser = $this->currentUser();
-    /** @var \Drupal\user\UserInterface $user */
-    $user = User::load($currentUser->id());
+    /** @var \Drupal\user\UserInterface $userEntity */
+    $userEntity = $this->entityTypeManager->getStorage('user')->load($currentUser->id());
+    $userFirstName = $currentUser && $userEntity && $userEntity->hasField('first_name') ? $userEntity->get('first_name')->value : $currentUser->getAccountName();
     return [
       '#theme' => 'soda_scs_manager__start_page',
       '#attributes' => ['class' => ['container', 'mx-auto']],
-      '#user' => $user ? $user->get('first_name')->value : 'SCS User',
+      '#user' => $userFirstName,
       '#attached' => [
         'library' => ['soda_scs_manager/globalStyling'],
       ],
