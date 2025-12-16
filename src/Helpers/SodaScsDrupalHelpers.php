@@ -337,6 +337,10 @@ class SodaScsDrupalHelpers {
 
       // @todo We may parse the boolean to string 'development' or 'production' value.
       $mode = $component->get('developmentInstance')->value ? 'development' : 'production';
+
+      // @todo Secure the data before updating the Drupal packages.
+      // Secure the database before updating the Drupal packages.
+      // Secure composer.json and .lock (or tar the runtime dirs)
       // Remove the composer.lock file.
       $deleteComposerLockResponse = $this->sodaScsContainerHelpers->executeDockerExecCommand([
         'cmd'           => [
@@ -344,13 +348,20 @@ class SodaScsDrupalHelpers {
           '/opt/drupal/composer.lock',
         ],
         'containerName' => (string) $component->get('containerId')->value,
-        'user'          => 'www-data',
+        'user'          => 'root',
       ]);
       if (!$deleteComposerLockResponse->success) {
-        return SodaScsResult::failure(
-          error: $deleteComposerLockResponse->error,
-          message: (string) $this->t('Failed to remove composer.lock file.'),
-        );
+        // Ignore missing composer.lock file (it is safe to continue).
+        $deleteComposerLockError = (string) ($deleteComposerLockResponse->error ?? '');
+        $isMissingComposerLockOk = str_contains($deleteComposerLockError, "rm: cannot remove '/opt/drupal/composer.lock'")
+          && str_contains($deleteComposerLockError, 'No such file or directory');
+
+        if (!$isMissingComposerLockOk) {
+          return SodaScsResult::failure(
+            error: $deleteComposerLockResponse->error,
+            message: (string) $this->t('Failed to remove composer.lock file.'),
+          );
+        }
       }
       // Download the composer.json file from the git repository.
       $drupalPackageUrl = strtr('https://raw.githubusercontent.com/soda-collections-objects-data-literacy/drupal_packages/refs/heads/main/wisski_base/{mode}/{version}/composer.json', [
@@ -365,7 +376,7 @@ class SodaScsDrupalHelpers {
           '/opt/drupal/composer.json',
         ],
         'containerName' => (string) $component->get('containerId')->value,
-        'user'          => 'www-data',
+        'user'          => 'root',
       ]);
       if (!$downloadComposerJsonResponse->success) {
         return SodaScsResult::failure(
@@ -380,11 +391,9 @@ class SodaScsDrupalHelpers {
           'composer',
           'install',
           '--no-interaction',
-          '--no-ansi',
-          '--format=json',
         ],
         'containerName' => (string) $component->get('containerId')->value,
-        'user'          => 'www-data',
+        'user'          => 'root',
       ]);
       if (!$composerInstallResponse->success) {
         return SodaScsResult::failure(
@@ -402,6 +411,7 @@ class SodaScsDrupalHelpers {
         ],
       );
     }
+    // @todo Perform database update with drush updatedb (secure database before).
     catch (\Exception $e) {
       return SodaScsResult::failure(
         error: $e->getMessage(),
