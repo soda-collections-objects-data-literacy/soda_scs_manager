@@ -42,7 +42,7 @@ class SodaScsSettingsForm extends ConfigFormBase {
     // Add vertical tabs container.
     $form['tabs'] = [
       '#type' => 'horizontal_tabs',
-      '#default_tab' => 'edit-general',
+      '#default_tab' => 'info',
     ];
 
     $form['info'] = [
@@ -1074,85 +1074,58 @@ class SodaScsSettingsForm extends ConfigFormBase {
       '#description' => $this->t('The health check route, like "/health".'),
     ];
 
-    $form['wisski']['images'] = [
+    $form['wisski']['instances']['versions'] = [
       '#type' => 'fieldset',
-      '#title' => 'Images configuration',
+      '#title' => 'Versions configuration',
     ];
 
-    $form['wisski']['images']['wisski_base_image_production_version'] = [
+    $form['wisski']['instances']['versions']['production'] = [
       '#type' => 'textfield',
-      '#title' => $this->t('WissKI Base Image production version'),
-      '#default_value' => $this->config('soda_scs_manager.settings')->get('wisski')['images']['wisski_base_image_production_version'] ?? '',
-      '#description' => $this->t('The WissKI Base Image production version, like "1.0.0".'),
+      '#title' => $this->t('SCS WissKI production version'),
+      '#default_value' => $this->config('soda_scs_manager.settings')->get('wisski')['instances']['versions']['production'] ?? '',
+      '#description' => $this->t('The <a href="https://github.com/soda-collections-objects-data-literacy/wisski-base-stack" target="_blank">SCS WissKI production version</a>, like "1.0.0".'),
     ];
 
-    $form['wisski']['images']['wisski_base_image_development_version'] = [
-      '#type' => 'textfield',
-      '#title' => $this->t('WissKI Base Image development version'),
-      '#default_value' => $this->config('soda_scs_manager.settings')->get('wisski')['images']['wisski_base_image_development_version'] ?? '',
-      '#description' => $this->t('The WissKI Base Image development version, like "1.x-dev".'),
-    ];
-
-    $form['wisski']['recipes'] = [
+    // Other production versions are hardcoded as defaults in docker-compose.yml
+    // in stack repository.
+    $form['wisski']['instances']['versions']['development'] = [
       '#type' => 'fieldset',
-      '#title' => 'Recipes configuration',
+      '#title' => 'Development versions',
     ];
 
-    $form['wisski']['recipes']['wisski_starter'] = [
-      '#type' => 'fieldset',
-      '#title' => 'WissKI Starter recipe',
-    ];
-
-    $form['wisski']['recipes']['wisski_starter']['wisski_starter_production_version'] = [
+    $form['wisski']['instances']['versions']['development']['composeStack'] = [
       '#type' => 'textfield',
-      '#title' => $this->t('WissKI Starter production version'),
-      '#default_value' => $this->config('soda_scs_manager.settings')->get('wisski')['recipes']['wisski_starter']['wisski_starter_production_version'] ?? '',
-      '#description' => $this->t('The WissKI Starter production version, like "1.1.0".'),
+      '#title' => $this->t('WissKI compose stack version'),
+      '#default_value' => $this->config('soda_scs_manager.settings')->get('wisski')['instances']['versions']['development']['composeStack'] ?? '',
+      '#description' => $this->t('The <a href="https://github.com/soda-collections-objects-data-literacy/wisski-base-stack" target="_blank">WissKI compose stack dev version</a>, like "1.x".'),
     ];
 
-    $form['wisski']['recipes']['wisski_starter']['wisski_starter_development_version'] = [
+    $form['wisski']['instances']['versions']['development']['image'] = [
       '#type' => 'textfield',
-      '#title' => $this->t('WissKI Starter development version'),
-      '#default_value' => $this->config('soda_scs_manager.settings')->get('wisski')['recipes']['wisski_starter']['wisski_starter_development_version'] ?? '',
-      '#description' => $this->t('The WissKI Starter development version, like "1.x-dev".'),
+      '#title' => $this->t('WissKI image version'),
+      '#default_value' => $this->config('soda_scs_manager.settings')->get('wisski')['instances']['versions']['development']['image'] ?? '',
+      '#description' => $this->t('The <a href="https://github.com/soda-collections-objects-data-literacy/wisski-base-image" target="_blank">WissKI image dev version</a>, like "latest".'),
     ];
 
-    $form['wisski']['recipes']['wisski_default_data_model'] = [
-      '#type' => 'fieldset',
-      '#title' => 'WissKI Default Data Model recipe',
-    ];
-
-    $form['wisski']['recipes']['wisski_default_data_model']['wisski_default_data_model_production_version'] = [
+    $form['wisski']['instances']['versions']['development']['starterRecipe'] = [
       '#type' => 'textfield',
-      '#title' => $this->t('WissKI Default Data Model production version'),
-      '#default_value' => $this->config('soda_scs_manager.settings')->get('wisski')['recipes']['wisski_default_data_model']['wisski_default_data_model_production_version'] ?? '',
-      '#description' => $this->t('The WissKI Default Data Model production version, like "1.1.0".'),
+      '#title' => $this->t('WissKI starter version'),
+      '#default_value' => $this->config('soda_scs_manager.settings')->get('wisski')['instances']['versions']['development']['starterRecipe'] ?? '',
+      '#description' => $this->t('The <a href="https://drupal.org/project/wisski_starter" target="_blank">WissKI starter dev version</a>, like "1.x".'),
     ];
 
-    $form['wisski']['recipes']['wisski_default_data_model']['wisski_default_data_model_development_version'] = [
+    $form['wisski']['instances']['versions']['development']['defaultDataModelRecipe'] = [
       '#type' => 'textfield',
-      '#title' => $this->t('WissKI Default Data Model development version'),
-      '#default_value' => $this->config('soda_scs_manager.settings')->get('wisski')['recipes']['wisski_default_data_model']['wisski_default_data_model_development_version'] ?? '',
-      '#description' => $this->t('The WissKI Default Data Model development version, like "1.x-dev".'),
+      '#title' => $this->t('WissKI default data model version'),
+      '#default_value' => $this->config('soda_scs_manager.settings')->get('wisski')['instances']['versions']['development']['defaultDataModelRecipe'] ?? '',
+      '#description' => $this->t('The <a href="https://drupal.org/project/wisski_default_data_model" target="_blank">WissKI default data model dev version</a>, like "1.x".'),
     ];
 
-    $form['wisski']['stacks'] = [
-      '#type' => 'fieldset',
-      '#title' => 'Recipes configuration',
-    ];
-
-    $form['wisski']['stacks']['wisski_stack_production_version'] = [
+    $form['wisski']['instances']['versions']['development']['varnishImage'] = [
       '#type' => 'textfield',
-      '#title' => $this->t('WissKI Stack production version'),
-      '#default_value' => $this->config('soda_scs_manager.settings')->get('wisski')['stacks']['wisski_stack_production_version'] ?? '',
-      '#description' => $this->t('The WissKI Stack production version, like "1.0.0".'),
-    ];
-
-    $form['wisski']['stacks']['wisski_stack_development_version'] = [
-      '#type' => 'textfield',
-      '#title' => $this->t('WissKI Stack development version'),
-      '#default_value' => $this->config('soda_scs_manager.settings')->get('wisski')['stacks']['wisski_stack_development_version'] ?? '',
-      '#description' => $this->t('The WissKI Stack development version, like "1.x-dev".'),
+      '#title' => $this->t('WissKI varnish image version'),
+      '#default_value' => $this->config('soda_scs_manager.settings')->get('wisski')['instances']['versions']['development']['varnishImage'] ?? '',
+      '#description' => $this->t('The <a href="https://github.com/soda-collections-objects-data-literacy/wisski-varnish-image" target="_blank">WissKI varnish dev version</a>, like "latest".'),
     ];
 
     // Security settings tab.

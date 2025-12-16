@@ -475,11 +475,14 @@ class SodaScsServiceHelpers {
     $wisskiInstanceSettings['name'] = 'WissKI instance';
     $wisskiInstanceSettings['baseUrl'] = $this->settings->get('wisski.instances.baseUrl');
     $wisskiInstanceSettings['healthCheckUrl'] = $this->settings->get('wisski.instances.misc.healthCheck.url');
-    $wisskiInstanceSettings['wisskiStarterProductionVersion'] = $this->settings->get('wisski.recipes.wisski_starter.wisski_starter_production_version');
-    $wisskiInstanceSettings['wisskiStarterDevelopmentVersion'] = $this->settings->get('wisski.recipes.wisski_starter.wisski_starter_development_version');
-    $wisskiInstanceSettings['wisskiDefaultDataModelProductionVersion'] = $this->settings->get('wisski.recipes.wisski_default_data_model.wisski_default_data_model_production_version');
-    $wisskiInstanceSettings['wisskiDefaultDataModelDevelopmentVersion'] = $this->settings->get('wisski.recipes.wisski_default_data_model.wisski_default_data_model_development_version');
-
+    $wisskiInstanceSettings['productionVersion'] = $this->settings->get('wisski.instances.versions.production');
+    // Production versions are hardcoded as defaults in docker-compose.yml in
+    // stack repository.
+    $wisskiInstanceSettings['stackDevelopmentVersion'] = $this->settings->get('wisski.instances.versions.development.composeStack');
+    $wisskiInstanceSettings['imageDevelopmentVersion'] = $this->settings->get('wisski.instances.versions.development.image');
+    $wisskiInstanceSettings['starterRecipeDevelopmentVersion'] = $this->settings->get('wisski.instances.versions.development.starterRecipe');
+    $wisskiInstanceSettings['defaultDataModelRecipeDevelopmentVersion'] = $this->settings->get('wisski.instances.versions.development.defaultDataModelRecipe');
+    $wisskiInstanceSettings['varnishImageDevelopmentVersion'] = $this->settings->get('wisski.instances.versions.development.varnishImage');
     $this->checkSettings($wisskiInstanceSettings);
 
     return $wisskiInstanceSettings;

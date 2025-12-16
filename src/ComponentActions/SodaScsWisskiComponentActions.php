@@ -549,12 +549,30 @@ class SodaScsWisskiComponentActions implements SodaScsComponentActionsInterface 
         }
       }
 
-      // Set the recipe versions (if any).
-      // Recipe versions are set in the settings form
-      // (/admin/config/soda-scs-manager/settings -> WissKI tab).
-      // @todo Implement, that the user can choose, if it's a blank wisski etc.
-      $wisskiStarterVersion = $component->get('developmentInstance')->value ? $wisskiInstanceSettings['wisskiStarterDevelopmentVersion'] : $wisskiInstanceSettings['wisskiStarterProductionVersion'];
-      $wisskiDefaultDataModelVersion = $component->get('developmentInstance')->value ? $wisskiInstanceSettings['wisskiDefaultDataModelDevelopmentVersion'] : $wisskiInstanceSettings['wisskiDefaultDataModelProductionVersion'];
+      if ($component->get('developmentInstance')->value) {
+        $versionSettings = [
+          'mode' => 'development',
+          'varnishImageVersion' => $wisskiInstanceSettings['varnishImageDevelopmentVersion'],
+          'wisskiComposeStackVersion' => $wisskiInstanceSettings['stackDevelopmentVersion'],
+          'wisskiDefaultDataModelRecipeVersion' => $wisskiInstanceSettings['defaultDataModelRecipeDevelopmentVersion'],
+          'wisskiBaseImageVersion' => $wisskiInstanceSettings['imageDevelopmentVersion'],
+          'wisskiStarterRecipeVersion' => $wisskiInstanceSettings['starterRecipeDevelopmentVersion'],
+          'wisskiVersion' => '',
+        ];
+      }
+      else {
+        // Productions settings are hardcoded as defaults in docker-compose.yml
+        // in stack repository.
+        $versionSettings = [
+          'mode' => '',
+          'varnishImageVersion' => '',
+          'wisskiComposeStackVersion' => '',
+          'wisskiDefaultDataModelRecipeVersion' => '',
+          'wisskiBaseImageVersion' => '',
+          'wisskiStarterRecipeVersion' => '',
+          'wisskiVersion' => $wisskiInstanceSettings['productionVersion'],
+        ];
+      }
 
       //
       // Create the WissKI instance at portainer.
@@ -575,10 +593,9 @@ class SodaScsWisskiComponentActions implements SodaScsComponentActionsInterface 
         'userGroups' => $userGroups ? implode(' ', $userGroups) : '',
         'userId' => $component->getOwnerId(),
         'username' => $component->getOwner()->getDisplayName(),
-        'wisskiDefaultDataModelVersion' => $wisskiDefaultDataModelVersion,
-        'wisskiServicePassword' => $wisskiComponentServiceKeyPassword,
-        'wisskiStarterVersion' => $wisskiStarterVersion,
+        'wisskiServicePassword' => $wisskiComponentServiceKeyPassword ?? '',
         'wisskiType' => ($sqlComponent && $triplestoreComponent) ? 'bundled' : 'single',
+        ...$versionSettings,
       ];
       // Create the WissKI instance at portainer.
       $portainerCreateRequest = $this->sodaScsPortainerServiceActions->buildCreateRequest($requestParams);

@@ -284,10 +284,6 @@ class SodaScsPortainerServiceActions implements SodaScsServiceRequestInterface {
 
     $env = [
       [
-        "name" => "APACHE_LOGGING",
-        "value" => "false",
-      ],
-      [
         "name" => "DB_DRIVER",
         "value" => "mysql",
       ],
@@ -310,10 +306,6 @@ class SodaScsPortainerServiceActions implements SodaScsServiceRequestInterface {
       [
         "name" => "DB_USER",
         "value" => $requestParams['username'],
-      ],
-      [
-        "name" => "DEBUG",
-        "value" => "false",
       ],
       [
         "name" => "DEFAULT_GRAPH",
@@ -354,7 +346,7 @@ class SodaScsPortainerServiceActions implements SodaScsServiceRequestInterface {
       ],
       [
         "name" => "MODE",
-        "value" => "production",
+        "value" => $requestParams['mode'],
       ],
       [
         "name" => "OPENID_CONNECT_CLIENT_SECRET",
@@ -397,16 +389,20 @@ class SodaScsPortainerServiceActions implements SodaScsServiceRequestInterface {
         "value" => $triplestoreServiceSettings['host'] . '/repositories/' . $requestParams['tsRepository'] . '/statements',
       ],
       [
-        "name" => "WISSKI_BASE_IMAGE_VERSION",
-        "value" => 'latest',
+        "name" => "VARNISH_IMAGE_VERSION",
+        "value" => $requestParams['varnishImageVersion'],
       ],
       [
         "name" => "WISSKI_DEFAULT_DATA_MODEL_VERSION",
-        "value" => $requestParams['wisskiDefaultDataModelVersion'],
+        "value" => $requestParams['wisskiDefaultDataModelRecipeVersion'],
+      ],
+      [
+        "name" => "WISSKI_BASE_IMAGE_VERSION",
+        "value" => $requestParams['wisskiBaseImageVersion'],
       ],
       [
         "name" => "WISSKI_STARTER_VERSION",
-        "value" => $requestParams['wisskiStarterVersion'],
+        "value" => $requestParams['wisskiStarterRecipeVersion'],
       ],
       [
         "name" => "WISSKI_FLAVOURS",
@@ -429,6 +425,7 @@ class SodaScsPortainerServiceActions implements SodaScsServiceRequestInterface {
         'name' => $requestParams['machineName'],
         'repositoryAuthentication' => FALSE,
         'repositoryURL' => $repositoryURL,
+        "repositoryReferenceName" => $requestParams['wisskiVersion'] ? "refs/tags/" . $requestParams['wisskiVersion'] : '',
         'buildArgs' => $requestParams['buildArgs'] ?? [],
       ]),
     ];
