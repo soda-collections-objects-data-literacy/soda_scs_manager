@@ -108,4 +108,95 @@ class SodaScsDrupalHelpers {
     }
   }
 
+  /**
+   * Update the Drupal packages.
+   *
+   * Use docker exec command to:
+   * - Remove the composer.lock file,
+   * - update the composer.json file from git repository,
+   * - perform composer install.
+   *
+   * @todo make backup of the composer.json/ composer.lock files.
+   *
+   * @param \Drupal\soda_scs_manager\Entity\SodaScsComponentInterface $component
+   *   The component.
+   *
+   * @return \Drupal\soda_scs_manager\ValueObject\SodaScsResult
+   *   The Soda SCS result.
+   */
+  public function updateDrupalPackages(SodaScsComponentInterface $component): SodaScsResult {
+    try {
+      // Remove the composer.lock file.
+      $deleteComposerLockResponse = $this->sodaScsContainerHelpers->executeDockerExecCommand([
+        'cmd'           => [
+          'rm',
+          '/opt/drupal/composer.lock',
+        ],
+        'containerName' => (string) $component->get('containerId')->value,
+        'user'          => 'www-data',
+      ]);
+      if (!$deleteComposerLockResponse->success) {
+        return SodaScsResult::failure(
+          error: $deleteComposerLockResponse->error,
+          message: (string) $this->t('Failed to remove composer.lock file.'),
+        );
+      }
+      // Download the composer.json file from the git repository.
+      $drupalPackageUrl = strtr('https://raw.githubusercontent.com/soda-collections-objects-data-literacy/drupal_packages/refs/heads/main/wisski_base/{mode}/{version}/composer.json', [
+        '{mode}' => $component->get('mode')->value,
+        '{version}' => $component->get('version')->value,
+      ]);
+      $downloadComposerJsonResponse = $this->sodaScsContainerHelpers->executeDockerExecCommand([
+        'cmd'           => [
+          'wget',
+          $drupalPackageUrl,
+          '-O',
+          '/opt/drupal/composer.json',
+        ],
+        'containerName' => (string) $component->get('containerId')->value,
+        'user'          => 'www-data',
+      ]);
+      if (!$downloadComposerJsonResponse->success) {
+        return SodaScsResult::failure(
+          error: $downloadComposerJsonResponse->error,
+          message: (string) $this->t('Failed to download composer.json file.'),
+        );
+      }
+
+      // Perform composer install.
+      $composerInstallResponse = $this->sodaScsContainerHelpers->executeDockerExecCommand([
+        'cmd'           => [
+          'composer',
+          'install',
+          '--no-interaction',
+          '--no-ansi',
+          '--format=json',
+        ],
+        'containerName' => (string) $component->get('containerId')->value,
+        'user'          => 'www-data',
+      ]);
+      if (!$composerInstallResponse->success) {
+        return SodaScsResult::failure(
+          error: $composerInstallResponse->error,
+          message: (string) $this->t('Failed to perform composer install.'),
+        );
+      }
+
+      return SodaScsResult::success(
+        message: (string) $this->t('Drupal packages updated successfully.'),
+        data: [
+          'deleteComposerLock' => $deleteComposerLockResponse->data,
+          'downloadComposerJson' => $downloadComposerJsonResponse->data,
+          'composerInstall' => $composerInstallResponse->data,
+        ],
+      );
+    }
+    catch (\Exception $e) {
+      return SodaScsResult::failure(
+        error: $e->getMessage(),
+        message: (string) $this->t('Failed to update Drupal packages.'),
+      );
+    }
+  }
+
 }

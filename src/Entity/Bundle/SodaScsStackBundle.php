@@ -27,6 +27,7 @@ class SodaScsStackBundle extends SodaScsStack implements SodaScsStackInterface {
         $definitions['automatedUpdates'] = BundleFieldDefinition::create('boolean')
           ->setLabel(new TranslatableMarkup('Automated Updates'))
           ->setDescription(new TranslatableMarkup('Allow centralised updates managed by the SCS administrator. Can not be changed after creation.'))
+          ->setCardinality(1)
           ->setDefaultValue(TRUE)
           ->setDisplayConfigurable('form', FALSE)
           ->setDisplayConfigurable('view', FALSE)
@@ -44,14 +45,15 @@ class SodaScsStackBundle extends SodaScsStack implements SodaScsStackInterface {
           ->setLabel(new TranslatableMarkup('Drupal/WissKI default language'))
           ->setDescription(new TranslatableMarkup('The default language for the Drupal/WissKI interface. Can not be changed after creation.'))
           ->setRequired(TRUE)
+          ->setDefaultValue('en')
+          ->setCardinality(1)
           ->setDisplayConfigurable('form', FALSE)
           ->setDisplayConfigurable('view', FALSE)
           ->setDisplayOptions('form', [
             'type' => 'options_buttons',
             'weight' => 30,
           ])
-          ->setDefaultValue('en')
-          ->setCardinality(1)
+
           ->setDisplayOptions('view', [
             'label' => 'above',
             'type' => 'checklist',
@@ -65,6 +67,8 @@ class SodaScsStackBundle extends SodaScsStack implements SodaScsStackInterface {
         $definitions['developmentInstance'] = BundleFieldDefinition::create('boolean')
           ->setLabel(new TranslatableMarkup('Development instance'))
           ->setDescription(new TranslatableMarkup('Whether this is a development instance. Nightly builds are used for development and testing. Can not be changed after creation.'))
+          ->setCardinality(1)
+          ->setDefaultValue(FALSE)
           ->setSetting('on_label', 'Yes')
           ->setSetting('off_label', 'No')
           ->setDisplayConfigurable('form', FALSE)
@@ -99,6 +103,17 @@ class SodaScsStackBundle extends SodaScsStack implements SodaScsStackInterface {
             'fruity' => '2D',
             'woody' => '3D',
             'herbal' => 'Conservation and Restoration',
+          ]);
+
+        $definitions['version'] = BundleFieldDefinition::create('string')
+          ->setLabel(new TranslatableMarkup('Version'))
+          ->setDescription(new TranslatableMarkup('The WissKI version.'))
+          ->setDisplayConfigurable('form', FALSE)
+          ->setDisplayConfigurable('view', FALSE)
+          ->setDisplayOptions('view', [
+            'label' => 'above',
+            'type' => 'string',
+            'weight' => 50,
           ]);
         break;
     }

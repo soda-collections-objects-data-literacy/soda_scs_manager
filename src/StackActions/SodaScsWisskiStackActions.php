@@ -285,6 +285,14 @@ class SodaScsWisskiStackActions implements SodaScsStackActionsInterface {
     $stack->set('description', $bundleinfo['description']);
     $stack->set('imageUrl', $bundleinfo['imageUrl']);
 
+    // Set the version for the stack.
+    if ($stack->get('developmentInstance')->value) {
+      $stack->set('version', $this->settings->get('wisski.instances.versions.development.composeStack'));
+    }
+    else {
+      $stack->set('version', $this->settings->get('wisski.instances.versions.production'));
+    }
+
     // Save the stack first so it has an ID that can be referenced by
     // components.
     $stack->save();
@@ -393,11 +401,13 @@ class SodaScsWisskiStackActions implements SodaScsStackActionsInterface {
       // Create the WissKI component.
       $wisskiComponent = $this->entityTypeManager->getStorage('soda_scs_component')->create([
         ...$basicComponentProperties,
+        'automatedUpdates' => $stack->get('automatedUpdates')->value,
         'bundle' => 'soda_scs_wisski_component',
         'defaultLanguage' => $stack->get('defaultLanguage')->value,
         'developmentInstance' => $stack->get('developmentInstance')->value,
         'connectedComponents' => [$sqlComponent->id(), $triplestoreComponent->id()],
         'flavours' => $stack->get('flavours')->value,
+        'version' => $stack->get('version')->value,
       ]);
       $wisskiComponentCreateResult = $this->sodaScsWisskiComponentActions->createComponent($wisskiComponent);
       if (!$wisskiComponentCreateResult['success']) {
