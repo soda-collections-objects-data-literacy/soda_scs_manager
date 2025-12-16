@@ -488,6 +488,19 @@ soda_scs_manager.user_registration_reject:
 
 # Tasks
 
+soda_scs_manager.component.check_drupal_packages:
+  path: '/soda-scs-manager/component/check-drupal-packages/{soda_scs_component}'
+  defaults:
+    _controller: '\Drupal\soda_scs_manager\Controller\SodaScsComponentController::checkDrupalPackages'
+    _title: 'Check Drupal packages'
+  requirements:
+    _permission: 'soda scs manager admin'
+  options:
+    parameters:
+      soda_scs_component:
+        type: entity:soda_scs_component
+    no_cache: TRUE
+
 soda_scs_manager.component.installed_drupal_packages:
   path: '/soda-scs-manager/component/installed-drupal-packages/{soda_scs_component}'
   defaults:
@@ -507,6 +520,19 @@ soda_scs_manager.component.installed_drupal_packages_json:
   defaults:
     _controller: '\Drupal\soda_scs_manager\Controller\SodaScsComponentController::installedDrupalPackagesJson'
     _title: 'Installed Drupal packages (JSON)'
+  requirements:
+    _permission: 'soda scs manager admin'
+  options:
+    parameters:
+      soda_scs_component:
+        type: entity:soda_scs_component
+    no_cache: TRUE
+
+soda_scs_manager.component.update_drupal_packages:
+  path: '/soda-scs-manager/component/update-drupal-packages/{soda_scs_component}'
+  defaults:
+    _form: '\Drupal\soda_scs_manager\Form\SodaScsDrupalPackagesUpdateConfirmForm'
+    _title: 'Update Drupal packages'
   requirements:
     _permission: 'soda scs manager admin'
   options:

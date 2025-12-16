@@ -84,6 +84,13 @@
         &:first-child {
           @apply font-semibold text-base;
 
+          &.soda-scs-manager__drupal-package-name--outdated {
+            &::before {
+              content: '';
+              @apply inline-block w-2 h-2 rounded-full bg-red-600 mr-2 align-middle;
+            }
+          }
+
           a {
             color: rgb(198, 105, 0);
             @apply hover:underline transition-colors duration-150;

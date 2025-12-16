@@ -10,7 +10,10 @@ use Drupal\Core\Entity\EntityTypeManagerInterface;
 use Drupal\soda_scs_manager\Helpers\SodaScsComponentHelpers;
 use Drupal\soda_scs_manager\Helpers\SodaScsDrupalHelpers;
 use Drupal\soda_scs_manager\Entity\SodaScsComponentInterface;
+use Drupal\Core\Url;
 use Symfony\Component\HttpFoundation\JsonResponse;
+use Symfony\Component\HttpFoundation\RedirectResponse;
+use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 
 /**
@@ -174,12 +177,18 @@ class SodaScsComponentController extends ControllerBase {
    *   The render array.
    */
   public function installedDrupalPackages(SodaScsComponentInterface $soda_scs_component): array {
+
     $drupalPackages = $this->sodaScsDrupalHelpers->getInstalledDrupalPackages($soda_scs_component);
 
     $build = [
       // @todo Implement proper cache, when infos had changed.
       '#cache' => [
         'max-age' => 0,
+      ],
+      '#attached' => [
+        'library' => [
+          'soda_scs_manager/throbberOverlay',
+        ],
       ],
     ];
 
@@ -210,22 +219,48 @@ class SodaScsComponentController extends ControllerBase {
       if (!is_array($package)) {
         continue;
       }
+      $installedVersion = (string) ($package['version'] ?? '');
+      $availableVersion = (string) ($package['available'] ?? '');
+      $isOutdated = $installedVersion !== ''
+        && $availableVersion !== ''
+        && $availableVersion !== $installedVersion;
+
+      // Only show an "available" version when an update exists.
+      if (!$isOutdated) {
+        $availableVersion = '';
+      }
+
       $rows[] = [
-        ['data' => (string) ($package['name'] ?? ''), 'class' => ['soda-scs-manager--package-name']],
-        ['data' => (string) ($package['version'] ?? '')],
+        [
+          'data' => (string) ($package['name'] ?? ''),
+          'class' => array_values(array_filter([
+            'soda-scs-manager--package-name',
+            $isOutdated ? 'soda-scs-manager__drupal-package-name--outdated' : NULL,
+          ])),
+        ],
+        ['data' => $installedVersion],
+        ['data' => $availableVersion],
         ['data' => (string) ($package['description'] ?? '')],
       ];
     }
 
     $build['table'] = [
+      '#prefix' => '<div class="soda-scs-table-list-wrapper">',
+      '#suffix' => '</div>',
       '#type'   => 'table',
       '#header' => [
         $this->t('Package'),
         $this->t('Version'),
+        $this->t('Available'),
         $this->t('Description'),
       ],
       '#rows'   => $rows,
       '#empty'  => $this->t('No packages found.'),
+      '#attributes' => [
+        'class' => [
+          'soda-scs-table-list',
+        ],
+      ],
     ];
 
     return $build;
@@ -241,11 +276,53 @@ class SodaScsComponentController extends ControllerBase {
    *   The JSON response.
    */
   public function installedDrupalPackagesJson(SodaScsComponentInterface $soda_scs_component): JsonResponse {
-    $drupalPackages = $this->getInstalledDrupalPackagesResult($soda_scs_component);
+    $drupalPackages = $this->sodaScsDrupalHelpers->getInstalledDrupalPackages($soda_scs_component);
     if (!$drupalPackages->success) {
       return new JsonResponse(['status' => $drupalPackages->error], 500);
     }
     return new JsonResponse(['status' => $drupalPackages->data]);
+  }
+
+  /**
+   * Check the Drupal packages.
+   *
+   * This triggers a cached "latest versions" check. The installed packages page
+   * will then show the "Available" column based on the cached result.
+   *
+   * @param \Drupal\soda_scs_manager\Entity\SodaScsComponentInterface $soda_scs_component
+   *   The SODa SCS component.
+   * @param \Symfony\Component\HttpFoundation\Request $request
+   *   The request.
+   *
+   * @return \Symfony\Component\HttpFoundation\JsonResponse|\Symfony\Component\HttpFoundation\RedirectResponse
+   *   The JSON response or redirect response.
+   */
+  public function checkDrupalPackages(SodaScsComponentInterface $soda_scs_component, Request $request): JsonResponse|RedirectResponse {
+    $forceRefresh = (bool) $request->query->get('refresh', FALSE);
+    $latestResult = $this->sodaScsDrupalHelpers->getLatestDrupalPackages($soda_scs_component, $forceRefresh);
+
+    $wantsJson = str_contains((string) $request->headers->get('Accept'), 'application/json')
+      || (bool) $request->query->get('json', FALSE);
+
+    if ($wantsJson) {
+      if (!$latestResult->success) {
+        return new JsonResponse(['status' => $latestResult->error], 500);
+      }
+      return new JsonResponse(['status' => $latestResult->data]);
+    }
+
+    if ($latestResult->success) {
+      $this->messenger()->addStatus($latestResult->message);
+    }
+    else {
+      $this->messenger()->addError($this->t('Failed to check latest Drupal packages. @message', [
+        '@message' => $latestResult->message,
+      ]));
+    }
+
+    return new RedirectResponse(Url::fromRoute('soda_scs_manager.component.installed_drupal_packages', [
+      'soda_scs_component' => $soda_scs_component->id(),
+    ])->toString());
   }
 
 }

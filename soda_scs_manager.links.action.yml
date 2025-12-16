@@ -8,6 +8,25 @@ entity.soda_scs_component.automated_updates:
     attributes:
       class: ['button', 'button--action', 'button--primary']
 
+entity.soda_scs_component.update_drupal_packages:
+  route_name: soda_scs_manager.component.update_drupal_packages
+  title: 'Update Drupal packages'
+  appears_on:
+    - soda_scs_manager.component.installed_drupal_packages
+  options:
+    attributes:
+      class: ['button', 'button--action', 'button--primary']
+
+entity.soda_scs_component.check_drupal_packages:
+  route_name: soda_scs_manager.component.check_drupal_packages
+  title: 'Check for updates'
+  appears_on:
+    - soda_scs_manager.component.installed_drupal_packages
+  options:
+    attributes:
+      class: ['button', 'button--action', 'button--primary', 'soda-scs-manager__throbber-overlay-trigger']
+      data-throbber-message: 'Checking for updates, please wait.'
+
 # Project
 entity.soda_scs_project.add_form:
   route_name: entity.soda_scs_project.add_form

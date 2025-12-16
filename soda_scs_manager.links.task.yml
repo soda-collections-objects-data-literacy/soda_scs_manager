@@ -17,11 +17,12 @@ entity.soda_scs_component.edit_form:
 entity.soda_scs_component.installed_drupal_packages:
   route_name: soda_scs_manager.component.installed_drupal_packages
   base_route: entity.soda_scs_component.canonical
-  title: 'Installed Drupal packages'
+  title: 'Packages'
   weight: 60
   options:
     parameters:
       soda_scs_component: { type: entity:soda_scs_component }
+
 
 entity.soda_scs_component.service_link:
   route_name: soda_scs_manager.component.service_link

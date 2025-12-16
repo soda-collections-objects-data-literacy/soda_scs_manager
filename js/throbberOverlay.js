@@ -49,6 +49,22 @@
         });
       });
 
+      // Handle action links (e.g. "Check for updates") that cause a full-page load.
+      once('throbber-overlay-action-link', 'a.soda-scs-manager__throbber-overlay-trigger', context).forEach(function (link) {
+        $(link).on('click', function (e) {
+          // Only show overlay for normal left-click navigation (not new-tab / modified clicks).
+          const isNormalLeftClick = e.which === 1 && !e.metaKey && !e.ctrlKey && !e.shiftKey && !e.altKey;
+          if (!isNormalLeftClick) {
+            return;
+          }
+
+          const throbberMessage = $(this).attr('data-throbber-message') || Drupal.t('Performing action, please do not close the window');
+          $('.soda-scs-manager__throbber-overlay__message').text(throbberMessage);
+          $('.soda-scs-manager__throbber-overlay__info').html('');
+          $('.soda-scs-manager__throbber-overlay').addClass('soda-scs-manager__throbber-overlay--active');
+        });
+      });
+
       // Also handle submit button clicks for additional coverage.
       once('throbber-overlay-submit', '.soda-scs-component--component--form-submit, .soda-scs-stack--stack--form-submit', context).forEach(function(button) {
         $(button).on('click', function(e) {
