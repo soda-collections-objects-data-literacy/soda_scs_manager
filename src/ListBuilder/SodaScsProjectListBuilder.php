@@ -42,7 +42,7 @@ class SodaScsProjectListBuilder extends EntityListBuilder {
   public static function createInstance(ContainerInterface $container, EntityTypeInterface $entity_type) {
     $instance = parent::createInstance($container, $entity_type);
     $instance->dateFormatter = $container->get('date.formatter');
-    $instance->currentUser   = $container->get('current_user');
+    $instance->currentUser = $container->get('current_user');
     return $instance;
   }
 

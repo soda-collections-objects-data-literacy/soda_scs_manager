@@ -11,7 +11,6 @@ use Drupal\Core\Field\FieldStorageDefinitionInterface;
 use Drupal\Core\StringTranslation\TranslatableMarkup;
 use Drupal\soda_scs_manager\ComputedField\SodaScsGroupIdComputedItemList;
 use Drupal\user\EntityOwnerTrait;
-use Drupal\user\UserInterface;
 
 /**
  * SODa SCS Project.
@@ -138,7 +137,7 @@ class SodaScsProject extends ContentEntityBase implements SodaScsProjectInterfac
       ->setDisplayConfigurable('view', FALSE)
       ->setDisplayOptions('view', [
         'label' => 'above',
-        'type' => 'entity_reference_label',
+        'type' => 'soda_scs_component_label_with_type',
         'weight' => 40,
       ]);
 

@@ -394,6 +394,14 @@ msgstr "Ihre Komponenten"
 msgid "Available applications"
 msgstr "Verfügbare Komponenten"
 
+#: soda_scs_manager.links.menu.yml:138
+msgid "Notifications"
+msgstr "Benachrichtigungen"
+
+#: soda_scs_manager.links.menu.yml:156
+msgid "Administration"
+msgstr "Administration"
+
 #: soda_scs_manager.links.task.yml:0;0;0;0 src/ListBuilder/SodaScsSnapshotListBuilder.php:145
 msgid "View"
 msgstr "Ansehen"
@@ -1090,6 +1098,10 @@ msgstr "Projekt wird gelöscht: @label"
 #: src/Form/SodaScsProjectEditForm.php:71
 msgid "Abort"
 msgstr "Abbrechen"
+
+#: src/Form/SodaScsProjectMembershipForm:92
+msgid "You have no pending project invitations."
+msgstr "Sie haben keine ausstehenden Projekteinladungen."
 
 #: src/Form/SodaScsServiceKeyCreateForm.php:162
 msgid "Service key created successfully."
@@ -2205,7 +2217,7 @@ msgstr "Anleitungen und Dokumentation lesen"
 
 #: templates/pages/soda-scs-manager--start-page.html.twig:60
 msgid "Administration"
-msgstr "Verwaltung"
+msgstr "Administration"
 
 #: templates/pages/soda-scs-manager--start-page.html.twig:61
 msgid "Configure system settings"
@@ -2270,6 +2282,22 @@ msgstr "Veröffentlichung"
 #: templates/pages/soda-scs-manager--dashboard.html.twig:42;templates/pages/soda-scs-manager--catalogue.html.twig:41;templates/cards/soda-scs-manager--entity-card.html.twig:31
 msgid "triplestore"
 msgstr "Triplestore"
+
+#: soda_scs_manager.module:93
+msgid "First Name"
+msgstr "Vorname"
+
+#: soda_scs_manager.module:94
+msgid "The first name of the user."
+msgstr "Der Vorname des Nutzenden."
+
+#: soda_scs_manager.module:9109
+msgid "Last Name"
+msgstr "Nachname"
+
+#: soda_scs_manager.module:110
+msgid "The last name of the user."
+msgstr "Der Nachname des Nutzenden."
 
 #: soda_scs_manager.module:150
 msgid "Inter-App folder"
