@@ -42,7 +42,7 @@ class SodaScsSnapshotListBuilder extends EntityListBuilder {
   public static function createInstance(ContainerInterface $container, EntityTypeInterface $entity_type) {
     $instance = parent::createInstance($container, $entity_type);
     $instance->dateFormatter = $container->get('date.formatter');
-    $instance->currentUser   = $container->get('current_user');
+    $instance->currentUser = $container->get('current_user');
     // RedirectDestination is available from parent class.
     $instance->redirectDestination = $container->get('redirect.destination');
     return $instance;

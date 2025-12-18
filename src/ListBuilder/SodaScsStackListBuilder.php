@@ -7,7 +7,6 @@ namespace Drupal\soda_scs_manager\ListBuilder;
 use Drupal\Core\Datetime\DateFormatterInterface;
 use Drupal\Core\Entity\EntityInterface;
 use Drupal\Core\Entity\EntityListBuilder;
-use Drupal\Core\Entity\EntityStorageInterface;
 use Drupal\Core\Entity\EntityTypeInterface;
 use Drupal\Core\Link;
 use Drupal\Core\Session\AccountProxyInterface;
@@ -42,7 +41,7 @@ class SodaScsStackListBuilder extends EntityListBuilder {
   public static function createInstance(ContainerInterface $container, EntityTypeInterface $entity_type) {
     $instance = parent::createInstance($container, $entity_type);
     $instance->dateFormatter = $container->get('date.formatter');
-    $instance->currentUser   = $container->get('current_user');
+    $instance->currentUser = $container->get('current_user');
     return $instance;
   }
 
