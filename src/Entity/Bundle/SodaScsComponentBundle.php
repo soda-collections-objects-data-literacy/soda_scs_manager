@@ -13,6 +13,23 @@ use Drupal\soda_scs_manager\Entity\SodaScsComponentInterface;
 
 /**
  * A bundle class for SODa SCS Component.
+ *
+ * Adds additional fields to the component bundle.
+ * soda_scs_filesystem_component:
+ *   - shared with
+ * soda_scs_sql_component:
+ *   - part of stack
+ * soda_scs_triplestore_component:
+ *   - part of stack
+ * soda_scs_wisski_component:
+ *   - automated updates
+ *   - default language
+ *   - development instance
+ *   - flavours
+ *   - container id
+ *   - container name
+ *   - part of stack
+ *   - version.
  */
 class SodaScsComponentBundle extends SodaScsComponent implements SodaScsComponentInterface {
 

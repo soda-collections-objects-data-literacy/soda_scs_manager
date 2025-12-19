@@ -13,12 +13,71 @@ use Drupal\user\EntityOwnerInterface;
 interface SodaScsComponentInterface extends ContentEntityInterface, EntityOwnerInterface {
 
   /**
+   * Gets the container ID.
+   *
+   * @return string|null
+   *   The container ID or NULL when not available.
+   */
+  public function getContainerId(): ?string;
+
+  /**
+   * Gets the container name.
+   *
+   * @return string|null
+   *   The container name or NULL when not available.
+   */
+  public function getContainerName(): ?string;
+
+  /**
    * Gets the description.
    *
    * @return string
    *   The description.
    */
   public function getDescription();
+
+  /**
+   * Gets the image URL.
+   *
+   * @return string
+   *   The image URL.
+   */
+  public function getImageUrl();
+
+  /**
+   * Gets the label.
+   *
+   * @return string
+   *   The label.
+   */
+  public function getLabel();
+
+  /**
+   * Gets the parent stack.
+   *
+   * @return string|null
+   *   The parent stack or NULL when not available.
+   */
+  public function getPartOfStack(): ?string;
+
+  /**
+   * Gets the version.
+   *
+   * @return string|null
+   *   The version or NULL when not available.
+   */
+  public function getVersion(): ?string;
+
+  /**
+   * Loads components by owner.
+   *
+   * @param int $ownerId
+   *   The owner ID.
+   *
+   * @return static[]
+   *   The components.
+   */
+  public static function loadByOwner($ownerId): array;
 
   /**
    * Sets the description.
@@ -31,14 +90,6 @@ interface SodaScsComponentInterface extends ContentEntityInterface, EntityOwnerI
   public function setDescription($description);
 
   /**
-   * Gets the image URL.
-   *
-   * @return string
-   *   The image URL.
-   */
-  public function getImageUrl();
-
-  /**
    * Sets the image URL.
    *
    * @param string $imageUrl
@@ -47,14 +98,6 @@ interface SodaScsComponentInterface extends ContentEntityInterface, EntityOwnerI
    * @return $this
    */
   public function setImageUrl($imageUrl);
-
-  /**
-   * Gets the label.
-   *
-   * @return string
-   *   The label.
-   */
-  public function getLabel();
 
   /**
    * Sets the label.

@@ -88,20 +88,29 @@ class SodaScsComponent extends ContentEntityBase implements SodaScsComponentInte
   use EntityOwnerTrait;
 
   /**
-   * Load components by owner.
+   * Gets the container ID from a component if present.
    *
-   * @param int $ownerId
-   *   The owner ID.
-   *
-   * @return array
-   *   The components.
+   * @return string|null
+   *   The container ID or NULL when not available.
    */
-  public static function loadByOwner($ownerId) {
-    $query = \Drupal::entityQuery('soda_scs_component')
-      ->condition('owner', $ownerId)
-      ->accessCheck(FALSE);
-    $result = $query->execute();
-    return self::loadMultiple($result);
+  public function getContainerId(): ?string {
+    if (!$this->hasField('containerId') || $this->get('containerId')->isEmpty()) {
+      return NULL;
+    }
+    return (string) $this->get('containerId')->value;
+  }
+
+  /**
+   * Get container name from a component if present.
+   *
+   * @return string|null
+   *   The container name or NULL when not available.
+   */
+  public function getContainerName(): ?string {
+    if (!$this->hasField('containerName') || $this->get('containerName')->isEmpty()) {
+      return NULL;
+    }
+    return (string) $this->get('containerName')->value;
   }
 
   /**
@@ -112,6 +121,69 @@ class SodaScsComponent extends ContentEntityBase implements SodaScsComponentInte
    */
   public function getDescription() {
     return $this->description;
+  }
+
+  /**
+   * Returns the image of the SODa SCS Component.
+   *
+   * @return string
+   *   The image of the SODa SCS Component.
+   */
+  public function getImageUrl() {
+    return $this->imageUrl;
+  }
+
+  /**
+   * Returns the label of the SODa SCS Component.
+   *
+   * @return string
+   *   The label of the SODa SCS Component.
+   */
+  public function getLabel() {
+    return $this->label->value;
+  }
+
+  /**
+   * Gets the parent stack from a component if present.
+   *
+   * @return string|null
+   *   The parent stack or NULL when not available.
+   */
+  public function getPartOfStack(): ?string {
+    if (!$this->hasField('partOfStack') || $this->get('partOfStack')->isEmpty()) {
+      return NULL;
+    }
+    return (string) $this->get('parentStack')->value;
+  }
+
+  /**
+   * Get the version from a component if present.
+   *
+   * @return string|null
+   *   The version or NULL when not available.
+   */
+  public function getVersion(): ?string {
+    if (!$this->hasField('version') || $this->get('version')->isEmpty()) {
+      return NULL;
+    }
+    return (string) $this->get('version')->value;
+  }
+
+  /**
+   * Load components by owner.
+   *
+   * @param int $ownerId
+   *   The owner ID.
+   *
+   * @return static[]
+   *   The components.
+   */
+  public static function loadByOwner($ownerId): array {
+    $query = \Drupal::entityQuery('soda_scs_component')
+      ->condition('owner', $ownerId)
+      ->accessCheck(FALSE);
+    $result = $query->execute();
+    return self::loadMultiple($result);
   }
 
   /**
@@ -128,16 +200,6 @@ class SodaScsComponent extends ContentEntityBase implements SodaScsComponentInte
   }
 
   /**
-   * Returns the image of the SODa SCS Component.
-   *
-   * @return string
-   *   The image of the SODa SCS Component.
-   */
-  public function getImageUrl() {
-    return $this->imageUrl;
-  }
-
-  /**
    * Sets the image of the SODa SCS Component.
    *
    * @param string $imageUrl
@@ -148,16 +210,6 @@ class SodaScsComponent extends ContentEntityBase implements SodaScsComponentInte
   public function setImageUrl($imageUrl) {
     $this->imageUrl = $imageUrl;
     return $this;
-  }
-
-  /**
-   * Returns the label of the SODa SCS Component.
-   *
-   * @return string
-   *   The label of the SODa SCS Component.
-   */
-  public function getLabel() {
-    return $this->label->value;
   }
 
   /**

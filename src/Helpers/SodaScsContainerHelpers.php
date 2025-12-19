@@ -9,6 +9,7 @@ use Drupal\Core\Logger\LoggerChannelFactoryInterface;
 use Drupal\Core\Messenger\MessengerTrait;
 use Drupal\Core\StringTranslation\StringTranslationTrait;
 use Drupal\Core\Utility\Error;
+use Drupal\soda_scs_manager\Entity\SodaScsComponentInterface;
 use Drupal\soda_scs_manager\RequestActions\SodaScsDockerExecServiceActions;
 use Drupal\soda_scs_manager\RequestActions\SodaScsDockerRunServiceActions;
 use Drupal\soda_scs_manager\ValueObject\SodaScsResult;
@@ -803,6 +804,63 @@ class SodaScsContainerHelpers {
       data: [
         $containerId => $inspectContainerResponse->data[$containerId],
       ],
+    );
+  }
+
+  /**
+   * Ensures a directory exists inside the Drupal component container.
+   *
+   * @param \Drupal\soda_scs_manager\Entity\SodaScsComponentInterface $component
+   *   The component whose container should be used.
+   * @param string $directoryPath
+   *   Absolute directory path inside the container.
+   * @param string $user
+   *   User that should execute the command.
+   *
+   * @return \Drupal\soda_scs_manager\ValueObject\SodaScsResult
+   *   Result of the operation.
+   */
+  public function ensureContainerDirectory(SodaScsComponentInterface $component, string $directoryPath, string $user = 'www-data'): SodaScsResult {
+    $directoryPath = rtrim($directoryPath, '/');
+    if ($directoryPath === '') {
+      return SodaScsResult::failure(
+        error: 'Directory path is empty.',
+        message: (string) $this->t('Directory path can not be empty.'),
+      );
+    }
+
+    $containerId = $component->getContainerId();
+    if ($containerId === NULL) {
+      return SodaScsResult::failure(
+        error: 'Component container ID not found.',
+        message: (string) $this->t('Component container ID not found.'),
+      );
+    }
+
+    $response = $this->executeDockerExecCommand([
+      'cmd' => [
+        'mkdir',
+        '-p',
+        $directoryPath,
+      ],
+      'containerName' => $containerId,
+      'user' => $user,
+    ]);
+
+    if (!$response->success) {
+      $errorDetail = 'Failed to create directory inside the component container: ' . ($response->error ?? '');
+      return SodaScsResult::failure(
+        error: $errorDetail,
+        message: (string) $this->t('Failed to create directory inside the component container.'),
+      );
+    }
+
+    return SodaScsResult::success(
+      data: [
+        'path' => $directoryPath,
+        'exec' => $response->data,
+      ],
+      message: (string) $this->t('Directory ensured successfully.'),
     );
   }
 

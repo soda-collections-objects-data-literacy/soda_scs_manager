@@ -4,6 +4,9 @@ declare(strict_types=1);
 
 namespace Drupal\soda_scs_manager\ValueObject;
 
+use Drupal\Core\Utility\Error;
+use Psr\Log\LogLevel;
+
 /**
  * Response object for project group operations.
  *
@@ -62,6 +65,13 @@ final readonly class SodaScsResult {
    *   The SodaScsResult object.
    */
   public static function failure(string $error, string $message): self {
+    Error::logException(
+      \Drupal::logger('soda_scs_manager'),
+      new \Exception($error),
+      $error,
+      [],
+      LogLevel::ERROR,
+    );
     return new self(
       success: FALSE,
       data: NULL,
