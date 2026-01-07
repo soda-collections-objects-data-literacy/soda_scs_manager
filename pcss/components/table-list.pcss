@@ -3,6 +3,161 @@
  * Styles for the SODa SCS Component list builder.
  */
 
+/* Filter form styling. */
+.soda-scs-component-filters {
+  @apply mb-6;
+
+  .soda-scs-filters-form {
+    @apply w-full;
+  }
+
+  details,
+  .soda-scs-filter-details {
+    @apply border border-gray-300 rounded-lg bg-white shadow-sm;
+    @apply overflow-hidden;
+
+    summary,
+    .filter-summary {
+      @apply py-3 px-4 cursor-pointer font-semibold text-gray-700;
+      @apply hover:bg-gray-50 transition-colors duration-150;
+      @apply rounded-t-lg;
+      @apply flex items-center;
+      list-style: none;
+      gap: 0.5rem;
+
+      &::-webkit-details-marker {
+        @apply hidden;
+      }
+
+      &::marker {
+        display: none;
+      }
+
+      .filter-caret {
+        @apply text-gray-500 transition-transform duration-200;
+        @apply flex-shrink-0;
+        font-size: 0.75rem;
+        line-height: 1;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 1rem;
+        height: 1rem;
+      }
+
+      .filter-title {
+        @apply flex-grow;
+        white-space: nowrap;
+      }
+    }
+
+    &[open] {
+      summary,
+      .filter-summary {
+        @apply border-b border-gray-300;
+
+        .filter-caret {
+          transform: rotate(90deg);
+        }
+      }
+    }
+  }
+
+  .filter-fields {
+    @apply grid gap-4 p-4;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+
+    @media (min-width: 1024px) {
+      grid-template-columns: repeat(3, 1fr);
+    }
+  }
+
+  .form-item {
+    @apply flex flex-col;
+
+    label {
+      @apply block text-sm font-medium text-gray-700 mb-1;
+    }
+
+    input[type="text"],
+    .form-text {
+      @apply block w-full px-3 py-2 border border-gray-300 rounded-md;
+      @apply focus:ring-2 focus:ring-orange-500 focus:border-orange-500;
+      @apply transition-colors duration-150;
+
+      &::placeholder {
+        @apply text-gray-400;
+      }
+    }
+
+    select,
+    .form-select {
+      @apply block w-full px-3 py-2 border border-gray-300 rounded-md;
+      @apply focus:ring-2 focus:ring-orange-500 focus:border-orange-500;
+      @apply bg-white transition-colors duration-150;
+    }
+  }
+
+  .form-actions {
+    @apply flex gap-2 px-4 pb-4 pt-2;
+
+    button[type="submit"],
+    .form-submit {
+      @apply px-4 py-2 rounded-md font-medium;
+      @apply transition-shadow duration-150;
+      background: linear-gradient(160deg, rgb(255, 138, 5) 0%, rgb(198, 105, 0) 78.66%) !important;
+      @apply text-white;
+      border: none !important;
+      outline: none !important;
+
+      &:hover {
+        @apply shadow-md;
+        background: rgb(198, 105, 0) !important;
+        color: white !important;
+        outline: none !important;
+        border: none !important;
+      }
+
+      &:focus {
+        @apply ring-2 ring-orange-500 ring-offset-2;
+        outline: none !important;
+        border: none !important;
+      }
+
+      &:active {
+        outline: none !important;
+        border: none !important;
+      }
+    }
+
+    .button {
+      @apply px-4 py-2 rounded-md font-medium;
+      @apply bg-gray-200;
+      @apply transition-colors duration-150;
+      @apply no-underline;
+      color: rgb(55, 65, 81) !important;
+      border: 1px solid rgb(209, 213, 219) !important;
+      outline: none !important;
+
+      &:hover {
+        @apply bg-gray-300;
+        color: rgb(55, 65, 81) !important;
+        outline: none !important;
+        border: 1px solid rgb(209, 213, 219) !important;
+      }
+
+      &:focus {
+        outline: none !important;
+        border: 1px solid rgb(209, 213, 219) !important;
+      }
+
+      &:active {
+        outline: none !important;
+      }
+    }
+  }
+}
+
 /* Table wrapper for horizontal scrolling. */
 .soda-scs-table-list-wrapper {
   @apply w-full overflow-x-auto;
@@ -50,6 +205,45 @@
       &:last-child {
         @apply rounded-tr-lg;
         @apply text-center;
+      }
+
+      /* Sortable header styling. */
+      a.sortable-header {
+        @apply text-gray-700 no-underline;
+        @apply transition-colors duration-150;
+        @apply inline-flex items-center gap-1;
+        position: relative;
+
+        &:hover {
+          color: rgb(255, 138, 5);
+        }
+
+        /* Sort indicator using pseudo-element. */
+        &.is-active::after {
+          content: '';
+          @apply inline-block ml-1;
+          width: 0;
+          height: 0;
+          border-left: 4px solid transparent;
+          border-right: 4px solid transparent;
+        }
+
+        /* Ascending sort indicator (up arrow). */
+        &.is-active.sort-asc::after {
+          border-bottom: 6px solid currentColor;
+        }
+
+        /* Descending sort indicator (down arrow). */
+        &.is-active.sort-desc::after {
+          border-top: 6px solid currentColor;
+        }
+      }
+
+      &.is-active {
+        a.sortable-header {
+          color: rgb(198, 105, 0);
+          @apply font-bold;
+        }
       }
     }
   }
