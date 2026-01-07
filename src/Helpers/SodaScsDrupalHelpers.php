@@ -8,11 +8,9 @@ use Drupal\Component\Datetime\TimeInterface;
 use Drupal\Core\Cache\CacheBackendInterface;
 use Drupal\Core\Logger\LoggerChannelFactoryInterface;
 use Drupal\Core\StringTranslation\StringTranslationTrait;
-use Drupal\Core\Utility\Error;
 use Drupal\soda_scs_manager\Entity\SodaScsComponentInterface;
 use Drupal\soda_scs_manager\ServiceKeyActions\SodaScsServiceKeyActionsInterface;
 use Drupal\soda_scs_manager\ValueObject\SodaScsResult;
-use Psr\Log\LogLevel;
 use Symfony\Component\DependencyInjection\Attribute\Autowire;
 
 /**
@@ -173,6 +171,8 @@ class SodaScsDrupalHelpers {
    *   it is healthy.
    */
   private function ensureDrupalHealthy(SodaScsComponentInterface $component): ?SodaScsResult {
+
+    // Check if the Drupal instance is healthy.
     $health = $this->sodaScsComponentHelpers->drupalHealthCheck($component);
 
     $status = is_array($health) ? (string) ($health['status'] ?? '') : '';
@@ -193,7 +193,10 @@ class SodaScsDrupalHelpers {
       );
     }
 
-    return NULL;
+    return SodaScsResult::success(
+      data: $health,
+      message: (string) $this->t('Drupal is healthy.'),
+    );
   }
 
   /**
@@ -465,12 +468,157 @@ class SodaScsDrupalHelpers {
   }
 
   /**
+   * Performs a simple composer update for development mode.
+   *
+   * @param \Drupal\soda_scs_manager\Entity\SodaScsComponentInterface $component
+   *   The component.
+   *
+   * @return \Drupal\soda_scs_manager\ValueObject\SodaScsResult
+   *   The Soda SCS result.
+   */
+  protected function simpleComposerUpdate(SodaScsComponentInterface $component): SodaScsResult {
+    $composerUpdateResponse = $this->sodaScsContainerHelpers->executeDockerExecCommand([
+      'cmd'           => [
+        'composer',
+        'update',
+        '--no-interaction',
+      ],
+      'containerName' => (string) $component->get('containerId')->value,
+      'user'          => 'www-data',
+    ]);
+
+    if (!$composerUpdateResponse->success) {
+      $errorDetail = 'Failed to perform composer update: ' . ($composerUpdateResponse->error ?? '');
+      return SodaScsResult::failure(
+        error: $errorDetail,
+        message: (string) $this->t('Failed to update Drupal packages.'),
+      );
+    }
+
+    return SodaScsResult::success(
+      message: (string) $this->t('Drupal packages updated successfully.'),
+      data: [
+        'composerUpdate' => $composerUpdateResponse->data,
+      ],
+    );
+  }
+
+  /**
+   * Performs versioned composer update for production mode.
+   *
+   * Downloads composer.json and composer.lock from the git repository
+   * based on the component's version, then performs composer install.
+   *
+   * @param \Drupal\soda_scs_manager\Entity\SodaScsComponentInterface $component
+   *   The component.
+   * @param string $mode
+   *   The mode (production or development).
+   *
+   * @return \Drupal\soda_scs_manager\ValueObject\SodaScsResult
+   *   The Soda SCS result.
+   */
+  protected function versionedComposerUpdate(SodaScsComponentInterface $component, string $mode): SodaScsResult {
+    // Download the composer.json and composer.lock files from the git
+    // repository.
+    $drupalPackageUrl = strtr('https://raw.githubusercontent.com/soda-collections-objects-data-literacy/drupal_packages/refs/heads/main/wisski_base/{mode}/{version}/', [
+      '{mode}'    => $mode,
+      '{version}' => $component->get('version')->value,
+    ]);
+
+    $downloadComposerJsonResponse = $this->sodaScsContainerHelpers->executeDockerExecCommand([
+      'cmd'           => [
+        'wget',
+        $drupalPackageUrl . 'composer.json',
+        '-O',
+        '/opt/drupal/composer.json',
+        '&&',
+        'wget',
+        $drupalPackageUrl . 'composer.lock',
+        '-O',
+        '/opt/drupal/composer.lock',
+      ],
+      'containerName' => (string) $component->get('containerId')->value,
+      'user'          => 'www-data',
+    ]);
+
+    if (!$downloadComposerJsonResponse->success) {
+      $errorDetail = 'Failed to download composer.json file: ' . ($downloadComposerJsonResponse->error ?? '');
+      return SodaScsResult::failure(
+        error: $errorDetail,
+        message: (string) $this->t('Failed to update Drupal packages.'),
+      );
+    }
+
+    // Perform composer install.
+    $composerInstallResponse = $this->sodaScsContainerHelpers->executeDockerExecCommand([
+      'cmd'           => [
+        'composer',
+        'install',
+        '--no-interaction',
+      ],
+      'containerName' => (string) $component->get('containerId')->value,
+      'user'          => 'www-data',
+    ]);
+
+    if (!$composerInstallResponse->success) {
+      $errorDetail = 'Failed to perform composer install: ' . ($composerInstallResponse->error ?? '');
+      return SodaScsResult::failure(
+        error: $errorDetail,
+        message: (string) $this->t('Failed to update Drupal packages.'),
+      );
+    }
+
+    return SodaScsResult::success(
+      message: (string) $this->t('Drupal packages updated successfully.'),
+      data: [
+        'downloadComposerJson' => $downloadComposerJsonResponse->data,
+        'composerInstall'      => $composerInstallResponse->data,
+      ],
+    );
+  }
+
+  /**
+   * Updates the Drupal database using drush updatedb.
+   *
+   * @param \Drupal\soda_scs_manager\Entity\SodaScsComponentInterface $component
+   *   The component.
+   *
+   * @return \Drupal\soda_scs_manager\ValueObject\SodaScsResult
+   *   The Soda SCS result.
+   */
+  protected function updateDrupalDatabase(SodaScsComponentInterface $component): SodaScsResult {
+    $updateDbResponse = $this->sodaScsContainerHelpers->executeDockerExecCommand([
+      'cmd'           => [
+        'drush',
+        'updatedb',
+        '--yes',
+      ],
+      'containerName' => (string) $component->get('containerId')->value,
+      'user'          => 'www-data',
+    ]);
+
+    if (!$updateDbResponse->success) {
+      $errorDetail = 'Failed to update database: ' . ($updateDbResponse->error ?? '');
+      return SodaScsResult::failure(
+        error: $errorDetail,
+        message: (string) $this->t('Failed to update Drupal database.'),
+      );
+    }
+
+    return SodaScsResult::success(
+      message: (string) $this->t('Drupal database updated successfully.'),
+      data: [
+        'updatedb' => $updateDbResponse->data,
+      ],
+    );
+  }
+
+  /**
    * Update the Drupal packages.
    *
-   * Use docker exec command to:
-   * - Remove the composer.lock file,
-   * - update the composer.json file from git repository,
-   * - perform composer install.
+   * 1. Check if Drupal is healthy.
+   * 2. Secure the Drupal packages and database before updating.
+   * 3. Update the Drupal packages.
    *
    * @todo make backup of the composer.json/ composer.lock files.
    * @todo We may use a script on the server to update the Drupal packages
@@ -484,92 +632,101 @@ class SodaScsDrupalHelpers {
    */
   public function updateDrupalPackages(SodaScsComponentInterface $component): SodaScsResult {
     try {
-      if ($healthFailure = $this->ensureDrupalHealthy($component)) {
-        return $healthFailure;
+      // Initialize result data array.
+      $resultData = [];
+
+      // Ensure the Drupal instance is healthy.
+      $ensureDrupalHealthyResult = $this->ensureDrupalHealthy($component);
+      if (!$ensureDrupalHealthyResult->success) {
+        return SodaScsResult::failure(
+          error: 'Not updating packages: ' . ($ensureDrupalHealthyResult->error ?? ''),
+          message: (string) $this->t('Drupal is not healthy. Not updating packages.'),
+        );
       }
+      $resultData['ensureDrupalHealthy'] = $ensureDrupalHealthyResult->data;
 
       // Secure the Drupal packages and database before updating.
       $secureDrupalPackagesAndDatabaseResult = $this->secureDrupalPackagesAndDatabase($component);
       if (!$secureDrupalPackagesAndDatabaseResult->success) {
-        return $secureDrupalPackagesAndDatabaseResult;
+        return SodaScsResult::failure(
+          error: 'Failed to secure Drupal packages and database: ' . ($secureDrupalPackagesAndDatabaseResult->error ?? ''),
+          message: (string) $this->t('Failed to secure Drupal packages and database. Not updating packages.'),
+        );
       }
+      $resultData['secureDrupalPackagesAndDatabase'] = $secureDrupalPackagesAndDatabaseResult->data;
+      $backupPath = $secureDrupalPackagesAndDatabaseResult->data['backupPath'];
 
       // @todo We may parse the boolean to string 'development' or 'production' value.
       $mode = $component->get('developmentInstance')->value ? 'development' : 'production';
-
-      // @todo Secure the data before updating the Drupal packages.
-      // Secure the database before updating the Drupal packages.
-      // Secure composer.json and .lock (or tar the runtime dirs)
-      // Remove the composer.lock file.
-      $deleteComposerLockResponse = $this->sodaScsContainerHelpers->executeDockerExecCommand([
-        'cmd'           => [
-          'rm',
-          '/opt/drupal/composer.lock',
-        ],
-        'containerName' => (string) $component->get('containerId')->value,
-        'user'          => 'www-data',
-      ]);
-      if (!$deleteComposerLockResponse->success) {
-        // Ignore missing composer.lock file (it is safe to continue).
-        $deleteComposerLockError = (string) ($deleteComposerLockResponse->error ?? '');
-        $isMissingComposerLockOk = str_contains($deleteComposerLockError, "rm: cannot remove '/opt/drupal/composer.lock'")
-          && str_contains($deleteComposerLockError, 'No such file or directory');
-
-        if (!$isMissingComposerLockOk) {
-          $errorDetail = 'Failed to remove composer.lock file: ' . $deleteComposerLockResponse->error;
+      if ($mode === 'development') {
+        // In development mode, just run simple composer update.
+        $simpleComposerUpdateResult = $this->simpleComposerUpdate($component);
+        if (!$simpleComposerUpdateResult->success) {
+          $rollbackComposerUpdateResult = $this->rollbackComposerUpdate($component, $backupPath);
+          if (!$rollbackComposerUpdateResult->success) {
+            return SodaScsResult::failure(
+              error: 'Failed to rollback composer update: ' . ($rollbackComposerUpdateResult->error ?? ''),
+              message: (string) $this->t('Failed to rollback composer update. Not updating packages.'),
+            );
+          }
+          $resultData['rollbackComposerUpdate'] = $rollbackComposerUpdateResult->data;
           return SodaScsResult::failure(
-            error: $errorDetail,
-            message: (string) $this->t('Failed to update Drupal packages.'),
+            error: 'Failed to perform simple composer update: ' . ($simpleComposerUpdateResult->error ?? ''),
+            message: (string) $this->t('Failed to perform simple composer update. Not updating packages.'),
           );
         }
+        $resultData['simpleComposerUpdate'] = $simpleComposerUpdateResult->data;
       }
-      // Download the composer.json file from the git repository.
-      $drupalPackageUrl = strtr('https://raw.githubusercontent.com/soda-collections-objects-data-literacy/drupal_packages/refs/heads/main/wisski_base/{mode}/{version}/composer.json', [
-        '{mode}' => $mode,
-        '{version}' => $component->get('version')->value,
-      ]);
-      $downloadComposerJsonResponse = $this->sodaScsContainerHelpers->executeDockerExecCommand([
-        'cmd'           => [
-          'wget',
-          $drupalPackageUrl,
-          '-O',
-          '/opt/drupal/composer.json',
-        ],
-        'containerName' => (string) $component->get('containerId')->value,
-        'user'          => 'www-data',
-      ]);
-      if (!$downloadComposerJsonResponse->success) {
-        $errorDetail = 'Failed to download composer.json file: ' . ($downloadComposerJsonResponse->error ?? '');
-        return SodaScsResult::failure(
-          error: $errorDetail,
-          message: (string) $this->t('Failed to update Drupal packages.'),
-        );
+      else {
+        // In production mode, download versioned composer files and install.
+        $versionedComposerUpdateResult = $this->versionedComposerUpdate($component, $mode);
+        if (!$versionedComposerUpdateResult->success) {
+          $rollbackComposerUpdateResult = $this->rollbackComposerUpdate($component, $backupPath);
+          if (!$rollbackComposerUpdateResult->success) {
+            return SodaScsResult::failure(
+              error: 'Failed to rollback composer update: ' . ($rollbackComposerUpdateResult->error ?? ''),
+              message: (string) $this->t('Failed to rollback composer update. Not updating packages.'),
+            );
+          }
+          $resultData['rollbackComposerUpdate'] = $rollbackComposerUpdateResult->data;
+          return SodaScsResult::failure(
+            error: 'Failed to perform versioned composer update: ' . ($versionedComposerUpdateResult->error ?? ''),
+            message: (string) $this->t('Failed to perform versioned composer update. Not updating packages.'),
+          );
+        }
+        $resultData['versionedComposerUpdate'] = $versionedComposerUpdateResult->data;
       }
 
-      // Perform composer install.
-      $composerInstallResponse = $this->sodaScsContainerHelpers->executeDockerExecCommand([
-        'cmd'           => [
-          'composer',
-          'install',
-          '--no-interaction',
-        ],
-        'containerName' => (string) $component->get('containerId')->value,
-        'user'          => 'www-data',
-      ]);
-      if (!$composerInstallResponse->success) {
-        $errorDetail = 'Failed to perform composer install: ' . ($composerInstallResponse->error ?? '');
+      // Update the Drupal database with drush updatedb.
+      $databaseUpdateResult = $this->updateDrupalDatabase($component);
+      if (!$databaseUpdateResult->success) {
+        $rollbackComposerUpdateResult = $this->rollbackComposerUpdate($component, $backupPath);
+        if (!$rollbackComposerUpdateResult->success) {
+          return SodaScsResult::failure(
+            error: 'Failed to rollback composer update: ' . ($rollbackComposerUpdateResult->error ?? ''),
+            message: (string) $this->t('Failed to rollback composer update. Not updating packages.'),
+          );
+        }
+        $resultData['rollbackComposerUpdate'] = $rollbackComposerUpdateResult->data;
+        $rollbackDatabaseUpdateResult = $this->rollbackDatabaseUpdate($component, $backupPath);
+        if (!$rollbackDatabaseUpdateResult->success) {
+          return SodaScsResult::failure(
+            error: 'Failed to rollback database update: ' . ($rollbackDatabaseUpdateResult->error ?? ''),
+            message: (string) $this->t('Failed to rollback database update. Not updating packages.'),
+          );
+        }
+        $resultData['rollbackDatabaseUpdate'] = $rollbackDatabaseUpdateResult->data;
         return SodaScsResult::failure(
-          error: $errorDetail,
-          message: (string) $this->t('Failed to update Drupal packages.'),
+          error: 'Failed to update database: ' . ($databaseUpdateResult->error ?? ''),
+          message: (string) $this->t('Failed to update database. Not updating packages.'),
         );
       }
+      $resultData['databaseUpdate'] = $databaseUpdateResult->data;
 
       return SodaScsResult::success(
         message: (string) $this->t('Drupal packages updated successfully.'),
         data: [
-          'deleteComposerLock' => $deleteComposerLockResponse->data,
-          'downloadComposerJson' => $downloadComposerJsonResponse->data,
-          'composerInstall' => $composerInstallResponse->data,
+          'resultData' => $resultData,
         ],
       );
     }
@@ -676,8 +833,16 @@ class SodaScsDrupalHelpers {
   /**
    * Secure Drupal packages and database before updating.
    *
-   * Packs composer.json and composer.lock files to a tar file.
-   * Dump and tar the database.
+   * 1. Prepare for dumping.
+   *  1.1. Ensure the backup directory exists.
+   *  1.2. Set Drupal to maintainment mode.
+   *  1.3. Clear the Drupal cache.
+   * 2. Backup composer package informations.
+   *  2.1. Ensure the backup directory exists.
+   *  2.2. Pack the composer.json and composer.lock files to a tar file.
+   * 3. Dump the database.
+   *  3.1. Ensure the backup directory exists.
+   *  3.2. Dump the database to a tar file.
    *
    * @param \Drupal\soda_scs_manager\Entity\SodaScsComponentInterface $component
    *   The component.
@@ -693,21 +858,21 @@ class SodaScsDrupalHelpers {
         '{timestamp}' => $timestamp,
       ]);
 
-      // Backup composer package informations.
-      $backupComposerPackageInformationsResult = $this->backupComposerPackageInformations($component, $backupPath);
-      if (!$backupComposerPackageInformationsResult->success) {
-        $errorDetail = 'Failed to backup composer package informations: ' . ($backupComposerPackageInformationsResult->error ?? '');
+      // Prepare the backup directory, set Drupal to maintenance mode and
+      // clear the Drupal cache.
+      $preDumpStepsResult = $this->preDumpSteps($component, $backupPath);
+      if (!$preDumpStepsResult->success) {
+        $errorDetail = 'Failed to prepare pre-dump steps: ' . ($preDumpStepsResult->error ?? '');
         return SodaScsResult::failure(
           error: $errorDetail,
           message: (string) $this->t('Failed to secure Drupal packages and database.'),
         );
       }
 
-      // Prepare the backup directory, set Drupal to maintenance mode and
-      // clear the Drupal cache.
-      $preDumpStepsResult = $this->preDumpSteps($component, $backupPath);
-      if (!$preDumpStepsResult->success) {
-        $errorDetail = 'Failed to prepare pre-dump steps: ' . ($preDumpStepsResult->error ?? '');
+      // Backup composer package informations.
+      $backupComposerPackageInformationsResult = $this->backupComposerPackageInformations($component, $backupPath);
+      if (!$backupComposerPackageInformationsResult->success) {
+        $errorDetail = 'Failed to backup composer package informations: ' . ($backupComposerPackageInformationsResult->error ?? '');
         return SodaScsResult::failure(
           error: $errorDetail,
           message: (string) $this->t('Failed to secure Drupal packages and database.'),
@@ -727,6 +892,7 @@ class SodaScsDrupalHelpers {
       return SodaScsResult::success(
         message: (string) $this->t('Drupal packages and database secured successfully.'),
         data: [
+          'backupPath' => $backupPath,
           'backupComposerPackageInformations' => $backupComposerPackageInformationsResult->data,
           'dumpDatabase' => $dumpDatabaseResult->data,
         ],
@@ -742,6 +908,9 @@ class SodaScsDrupalHelpers {
 
   /**
    * Backup composer package informations.
+   *
+   * 1. Ensure the backup directory exists.
+   * 2. Pack the composer.json and composer.lock files to a tar file.
    *
    * @param \Drupal\soda_scs_manager\Entity\SodaScsComponentInterface $component
    *   The component.
@@ -766,8 +935,8 @@ class SodaScsDrupalHelpers {
       }
 
       // Pack the composer.json and composer.lock files to a tar file.
-      $composerJsonFilePath = '/opt/drupal/composer.json';
-      $composerLockFilePath = '/opt/drupal/composer.lock';
+      // Use -C to change to /opt/drupal and use relative paths
+      // for cleaner archive.
       $composerTarFilePath = $backupPath . '/composer.tar.gz';
 
       $composerTarResponse = $this->sodaScsContainerHelpers->executeDockerExecCommand([
@@ -775,8 +944,10 @@ class SodaScsDrupalHelpers {
           'tar',
           '-czf',
           $composerTarFilePath,
-          $composerJsonFilePath,
-          $composerLockFilePath,
+          '-C',
+          '/opt/drupal',
+          'composer.json',
+          'composer.lock',
         ],
         'containerName' => (string) $component->get('containerId')->value,
         'user'          => $user,
@@ -807,9 +978,9 @@ class SodaScsDrupalHelpers {
   /**
    * Prepares everything needed before dumping the database.
    *
-   * - Ensures the backup directory exists.
-   * - Sets Drupal to maintainment mode.
-   * - Clears the Drupal cache.
+   * 1. Ensures the backup directory exists.
+   * 2. Sets Drupal to maintainment mode.
+   * 3. Clears the Drupal cache.
    *
    * @param \Drupal\soda_scs_manager\Entity\SodaScsComponentInterface $drupalComponent
    *   The Drupal component.
@@ -865,6 +1036,143 @@ class SodaScsDrupalHelpers {
       return SodaScsResult::failure(
         error: 'Failed to prepare pre-dump steps: ' . $e->getMessage(),
         message: (string) $this->t('Failed to prepare pre-dump steps.'),
+      );
+    }
+  }
+
+  /**
+   * Rolls back the composer update.
+   *
+   * Unpacks the composer.tar.gz file from the backup directory to restore
+   * the composer.json and composer.lock files to /opt/drupal/.
+   *
+   * @param \Drupal\soda_scs_manager\Entity\SodaScsComponentInterface $component
+   *   The component.
+   * @param string $backupPath
+   *   The backup path.
+   *
+   * @return \Drupal\soda_scs_manager\ValueObject\SodaScsResult
+   *   The Soda SCS result.
+   */
+  private function rollbackComposerUpdate(SodaScsComponentInterface $component, string $backupPath): SodaScsResult {
+    try {
+      // Unpack the composer.tar.gz file to /opt/drupal directory.
+      // The -C flag changes to /opt/drupal before extraction, ensuring
+      // composer.json and composer.lock are restored to the correct location.
+      $composerTarResponse = $this->sodaScsContainerHelpers->executeDockerExecCommand([
+        'cmd'           => [
+          'tar',
+          '-xzf',
+          $backupPath . '/composer.tar.gz',
+          '-C',
+          '/opt/drupal',
+        ],
+        'containerName' => (string) $component->get('containerId')->value,
+        'user'          => 'www-data',
+      ]);
+      if (!$composerTarResponse->success) {
+        $errorDetail = 'Failed to unpack composer.tar.gz file: ' . ($composerTarResponse->error ?? '');
+        return SodaScsResult::failure(
+          error: $errorDetail,
+          message: (string) $this->t('Failed to rollback composer update.'),
+        );
+      }
+
+      return SodaScsResult::success(
+        data: ['skipped' => FALSE],
+        message: (string) $this->t('Composer package informations restored successfully.'),
+      );
+    }
+    catch (\Exception $e) {
+      return SodaScsResult::failure(
+        error: 'Failed to rollback composer update: ' . $e->getMessage(),
+        message: (string) $this->t('Failed to rollback composer update.'),
+      );
+    }
+  }
+
+  /**
+   * Rolls back the database update.
+   *
+   * Restores the database from the backup located in the backup path.
+   *
+   * @param \Drupal\soda_scs_manager\Entity\SodaScsComponentInterface $component
+   *   The Drupal component.
+   * @param string $backupPath
+   *   The backup path.
+   *
+   * @return \Drupal\soda_scs_manager\ValueObject\SodaScsResult
+   *   The Soda SCS result.
+   */
+  private function rollbackDatabaseUpdate(SodaScsComponentInterface $component, string $backupPath): SodaScsResult {
+    try {
+      // Get the database dump file path.
+      $dumpFilePath = $backupPath . '/database.dump.sql.gz';
+
+      // Get the connected SQL component.
+      $resolvedComponents = $this->sodaScsComponentHelpers->resolveConnectedComponents($component);
+      $sqlComponent = $resolvedComponents['sql'] ?? NULL;
+
+      if (!$sqlComponent) {
+        return SodaScsResult::failure(
+          error: 'Connected SQL component not found.',
+          message: (string) $this->t('Connected SQL component not found for the Drupal component.'),
+        );
+      }
+
+      // Get the database name.
+      $databaseName = $sqlComponent->get('machineName')->value;
+
+      // Get the client container name.
+      $clientContainerName = $component->get('containerName')->value;
+
+      // Get service key for the SQL component.
+      $sqlComponentServiceKey = $this->sodaScsServiceKeyActions->getServiceKey([
+        'bundle' => 'soda_scs_sql_component',
+        'type'   => 'password',
+        'userId' => $sqlComponent->getOwnerId(),
+      ]);
+      if (!$sqlComponentServiceKey) {
+        return SodaScsResult::failure(
+          error: 'SQL component service key not found for user.',
+          message: (string) $this->t('SQL component service key not found for user.'),
+        );
+      }
+
+      $sqlComponentServiceKeyPassword = $sqlComponentServiceKey->get('servicePassword')->value;
+
+      // Run the database restore command.
+      $restoreExecCommand = [
+        'bash',
+        '-c',
+        'set -o pipefail && gunzip -c ' . $dumpFilePath . ' | mariadb -hdatabase -u' . $sqlComponent->getOwner()->getDisplayName() . ' -p' . $sqlComponentServiceKeyPassword . ' "' . $databaseName . '"',
+      ];
+
+      $restoreExecResponse = $this->sodaScsContainerHelpers->executeDockerExecCommand([
+        'cmd'           => $restoreExecCommand,
+        'containerName' => $clientContainerName,
+        'user'          => 'www-data',
+      ]);
+
+      if (!$restoreExecResponse->success) {
+        return SodaScsResult::failure(
+          error: $restoreExecResponse->error ?? 'Failed to restore database from backup.',
+          message: (string) $this->t('Failed to restore database from backup.'),
+        );
+      }
+
+      return SodaScsResult::success(
+        data: [
+          'skipped' => FALSE,
+          'restore' => $restoreExecResponse->data,
+        ],
+        message: (string) $this->t('Database restored successfully from backup.'),
+      );
+    }
+    catch (\Exception $e) {
+      return SodaScsResult::failure(
+        error: 'Failed to rollback database update: ' . $e->getMessage(),
+        message: (string) $this->t('Failed to rollback database update.'),
       );
     }
   }

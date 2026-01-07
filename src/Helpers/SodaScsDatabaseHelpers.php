@@ -106,17 +106,21 @@ class SodaScsDatabaseHelpers {
   }
 
   /**
-   * Clears Drupal cache and dumps a database to a tar.gz file.
+   * Dumps a database to a tar.gz file.
    *
-   * The subject can be either a stack or a component:
-   * - If it is a stack, the included `soda_scs_sql_component` is used as
-   *   database component and the included `soda_scs_wisski_component` as
-   *   optional Drupal/WissKI component to run drush cache clear.
-   * - If it is a component and a `soda_scs_wisski_component`, the connected
-   *   `soda_scs_sql_component` is resolved via connectedComponents.
-   * - If it is a component and a `soda_scs_sql_component`, it is used directly
-   *   as database component. In this case drush cache clear is skipped because
-   *   there is no Drupal/WissKI container.
+   * 1. Build the SQL and Drupal component context.
+   *   The subject can be either a stack or either a wisski or a sql component,
+   *   so we need to build the context first:
+   *   - If it is a stack, the included `soda_scs_sql_component` is used as
+   *     database component and the included `soda_scs_wisski_component` as
+   *     optional Drupal/WissKI component to run drush cache clear.
+   *   - If it is a component and a `soda_scs_wisski_component`, the connected
+   *     `soda_scs_sql_component` is resolved via connectedComponents.
+   *   - If it is a component and a `soda_scs_sql_component`, it is used
+   *   directly as database component. In this case drush cache clear is
+   *   skipped because there is no Drupal/WissKI container.
+   * 2. Ensure the backup directory exists.
+   * 3. Dump the database to a tar file.
    *
    * @param string $backupPath
    *   The backup directory path where the dump tarball will be created.
@@ -145,6 +149,7 @@ class SodaScsDatabaseHelpers {
         );
       }
 
+      // Ensure the backup directory exists.
       $backupDirectoryResult = $this->sodaScsContainerHelpers->ensureContainerDirectory(
         $contextResult->data['drupalComponent'],
         $backupPath,
@@ -207,6 +212,7 @@ class SodaScsDatabaseHelpers {
    *   The Soda SCS result.
    */
   private function buildDatabaseContext(SodaScsComponentInterface|SodaScsStackInterface $subject): SodaScsResult {
+    // If the subject is a stack, retrieve the SQL and WissKI components.
     if ($subject instanceof SodaScsStackInterface) {
       try {
         $sqlComponent = $this->sodaScsStackHelpers->retrieveIncludedComponent($subject, 'soda_scs_sql_component');
@@ -228,8 +234,11 @@ class SodaScsDatabaseHelpers {
       );
     }
 
+    // If the subject is a component, retrieve the SQL and WissKI components.
     if ($subject instanceof SodaScsComponentInterface) {
       $bundle = $subject->bundle();
+      // If the subject is a SQL component, retrieve the WissKI component from
+      // the connected components.
       if ($bundle === 'soda_scs_sql_component') {
         // Get wisski component from connected components.
         $wisskiComponent = $this->sodaScsComponentHelpers->resolveConnectedComponents($subject)['wisski'] ?? NULL;
@@ -243,6 +252,8 @@ class SodaScsDatabaseHelpers {
         );
       }
 
+      // If the subject is a WissKI component, retrieve the SQL component from
+      // the connected components.
       if ($bundle === 'soda_scs_wisski_component') {
         $resolvedComponents = $this->sodaScsComponentHelpers->resolveConnectedComponents($subject);
         $sqlComponent = $resolvedComponents['sql'] ?? NULL;
@@ -277,6 +288,9 @@ class SodaScsDatabaseHelpers {
   /**
    * Executes the database dump command.
    *
+   * 1. Collect information about the database dump.
+   * 2. Run the database dump command.
+   *
    * @param \Drupal\soda_scs_manager\Entity\SodaScsComponentInterface $sqlComponent
    *   The SQL component.
    * @param string $backupPath
@@ -290,7 +304,9 @@ class SodaScsDatabaseHelpers {
   private function runDatabaseDump(SodaScsComponentInterface $sqlComponent, string $backupPath, ?SodaScsComponentInterface $clientComponent = NULL): SodaScsResult {
     try {
 
-      $dumpFilePath = $backupPath . '/database.dump.' . $this->time->getCurrentTime() . '.sql.gz';
+      // 1. Collect information about the database dump.
+      // The dump file path.
+      $dumpFilePath = $backupPath . '/database.dump.sql.gz';
       // Get the database name.
       $databaseName = $sqlComponent->get('machineName')->value;
 
@@ -312,7 +328,7 @@ class SodaScsDatabaseHelpers {
 
       $sqlComponentServiceKeyPassword = $sqlComponentServiceKey->get('servicePassword')->value;
 
-      // Run the database dump command.
+      // 2. Run the database dump command.
       $dumpExecCommand = [
         'bash',
         '-c',

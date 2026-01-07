@@ -143,6 +143,17 @@ class SodaScsComponentHelpers {
 
   /**
    * Drupal instance health check.
+   *
+   * 1. Check if the container is running.
+   * 2. Check if the container is healthy.
+   *
+   * @param \Drupal\soda_scs_manager\Entity\SodaScsComponentInterface $component
+   *   The component.
+   *
+   * @return array
+   *   The health check result.
+   *
+   * @todo Return a SodaScsResult object.
    */
   public function drupalHealthCheck(SodaScsComponentInterface $component) {
     try {
