@@ -95,6 +95,13 @@ class SodaScsSnapshotHelpers {
   protected $entityTypeManager;
 
   /**
+   * The SCS helpers.
+   *
+   * @var \Drupal\soda_scs_manager\Helpers\SodaScsHelpers
+   */
+  protected SodaScsHelpers $sodaScsHelpers;
+
+  /**
    * {@inheritdoc}
    */
   public function __construct(
@@ -111,6 +118,8 @@ class SodaScsSnapshotHelpers {
     SodaScsDockerRunServiceActions $sodaScsDockerRunServiceActions,
     #[Autowire(service: 'transliteration')]
     TransliterationInterface $transliteration,
+    #[Autowire(service: 'soda_scs_manager.helpers')]
+    SodaScsHelpers $sodaScsHelpers,
   ) {
     $this->configFactory = $configFactory;
     $this->entityTypeManager = $entityTypeManager;
@@ -121,6 +130,7 @@ class SodaScsSnapshotHelpers {
     $this->sodaScsDockerExecServiceActions = $sodaScsDockerExecServiceActions;
     $this->sodaScsDockerRunServiceActions = $sodaScsDockerRunServiceActions;
     $this->transliteration = $transliteration;
+    $this->sodaScsHelpers = $sodaScsHelpers;
   }
 
   /**
@@ -1456,10 +1466,26 @@ class SodaScsSnapshotHelpers {
    *   The temporary directory path to clean up.
    */
   public function cleanupTemporaryDirectory(string $tempDir): void {
-    if (is_dir($tempDir)) {
+    // Validate path for safe deletion.
+    $validationResult = $this->sodaScsHelpers->validatePathForSafeDeletion(
+      $tempDir,
+      forbiddenPaths: ['/', '/opt/drupal', '/opt/drupal/'],
+      requiredPatterns: ['/\b(tmp|cache|temp)\b/i'],
+    );
+
+    if (!$validationResult['isValid']) {
+      $this->logger->warning('Refused to cleanup temporary directory: @path (@error)', [
+        '@path' => $tempDir,
+        '@error' => $validationResult['errorCode'],
+      ]);
+      return;
+    }
+
+    $normalizedPath = $validationResult['normalizedPath'];
+    if (is_dir($normalizedPath)) {
       try {
         $iterator = new \RecursiveIteratorIterator(
-          new \RecursiveDirectoryIterator($tempDir, \RecursiveDirectoryIterator::SKIP_DOTS),
+          new \RecursiveDirectoryIterator($normalizedPath, \RecursiveDirectoryIterator::SKIP_DOTS),
           \RecursiveIteratorIterator::CHILD_FIRST
         );
 
@@ -1471,7 +1497,7 @@ class SodaScsSnapshotHelpers {
             unlink($file->getRealPath());
           }
         }
-        rmdir($tempDir);
+        rmdir($normalizedPath);
       }
       catch (\Exception $e) {
         Error::logException(
@@ -1490,12 +1516,31 @@ class SodaScsSnapshotHelpers {
    *
    * @param string $snapshotDirectory
    *   The snapshot directory path to delete.
+   *
+   * @throws \Drupal\soda_scs_manager\Exception\SodaScsHelpersException
+   *   If path validation fails or deletion fails.
    */
   public function deleteSnapshotDirectory(string $snapshotDirectory): void {
-    if (is_dir($snapshotDirectory)) {
+    // Validate path for safe deletion.
+    $validationResult = $this->sodaScsHelpers->validatePathForSafeDeletion(
+      $snapshotDirectory,
+      forbiddenPaths: ['/', '/opt/drupal', '/opt/drupal/'],
+      requiredPatterns: ['/\b(bkp|backup|snapshot)\b/i'],
+    );
+
+    if (!$validationResult['isValid']) {
+      throw SodaScsHelpersException::snapshotFailed(
+        'Invalid or unsafe snapshot directory path for deletion: ' . htmlspecialchars($snapshotDirectory) . ' (' . $validationResult['errorCode'] . ')',
+        'delete snapshot directory',
+        ['snapshotDirectory' => $snapshotDirectory, 'errorCode' => $validationResult['errorCode']],
+      );
+    }
+
+    $normalizedPath = $validationResult['normalizedPath'];
+    if (is_dir($normalizedPath)) {
       try {
         $iterator = new \RecursiveIteratorIterator(
-          new \RecursiveDirectoryIterator($snapshotDirectory, \RecursiveDirectoryIterator::SKIP_DOTS),
+          new \RecursiveDirectoryIterator($normalizedPath, \RecursiveDirectoryIterator::SKIP_DOTS),
           \RecursiveIteratorIterator::CHILD_FIRST
         );
 
@@ -1507,13 +1552,13 @@ class SodaScsSnapshotHelpers {
             unlink($file->getRealPath());
           }
         }
-        rmdir($snapshotDirectory);
+        rmdir($normalizedPath);
       }
       catch (\Exception $e) {
         throw SodaScsHelpersException::snapshotFailed(
           'Failed to delete snapshot directory: ' . $e->getMessage(),
           'delete snapshot directory',
-          ['snapshotDirectory' => $snapshotDirectory],
+          ['snapshotDirectory' => $normalizedPath],
           $e,
         );
       }

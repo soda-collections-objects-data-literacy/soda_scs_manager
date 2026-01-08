@@ -12,7 +12,6 @@
     attach: function (context, settings) {
       // Create the overlay element only once if it doesn't exist.
       if (!$('.soda-scs-manager__throbber-overlay', context).length) {
-
         $('body', context).append(`
           <div class="soda-scs-manager__throbber-overlay">
             <div class="soda-scs-manager__throbber-overlay__content">

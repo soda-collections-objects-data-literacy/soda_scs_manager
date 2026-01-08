@@ -27,6 +27,34 @@ use Drupal\user\UserInterface;
 use Symfony\Component\HttpFoundation\RedirectResponse;
 
 /**
+ * Implements hook_cron().
+ *
+ * Cleans up old progress tracking entries to prevent database overflow.
+ */
+function soda_scs_manager_cron() {
+  // Clean up progress entries older than 24 hours.
+  $maxAge = 86400;
+  $cutoff = \Drupal::time()->getRequestTime() - $maxAge;
+
+  try {
+    $deleted = \Drupal::database()->delete('soda_scs_progress')
+      ->condition('updated', $cutoff, '<')
+      ->execute();
+
+    if ($deleted > 0) {
+      \Drupal::logger('soda_scs_manager')->notice('Cleaned up @count old progress tracking entries.', [
+        '@count' => $deleted,
+      ]);
+    }
+  }
+  catch (\Exception $e) {
+    \Drupal::logger('soda_scs_manager')->error('Failed to clean up progress tracking entries: @message', [
+      '@message' => $e->getMessage(),
+    ]);
+  }
+}
+
+/**
  * Implements hook_css_alter().
  *
  * @todo Make a proper theme.

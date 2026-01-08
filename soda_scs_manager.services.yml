@@ -51,6 +51,15 @@ services:
   soda_scs_manager.triplestore_helpers:
     class: Drupal\soda_scs_manager\Helpers\SodaScsTriplestoreHelpers
 
+# Logger channel
+  logger.channel.soda_scs_manager:
+    parent: logger.channel_base
+    arguments: ['soda_scs_manager']
+
+# Progress tracking
+  soda_scs_manager.progress_tracker:
+    class: Drupal\soda_scs_manager\Progress\SodaScsProgressTracker
+
 # Request actions
   soda_scs_manager.opengdb_service.actions:
     class: Drupal\soda_scs_manager\RequestActions\SodaScsOpenGdbServiceActions

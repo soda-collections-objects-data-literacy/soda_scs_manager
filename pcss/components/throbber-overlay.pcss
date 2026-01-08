@@ -1,4 +1,4 @@
-/* Throbber Overlay Component */
+/* Throbber Overlay Component. */
 
 @layer components {
   .soda-scs-manager__throbber-overlay {
@@ -14,7 +14,7 @@
   }
 
   .soda-scs-manager__throbber-overlay__content {
-    @apply flex flex-col items-center justify-center;
+    @apply flex flex-col items-center justify-center max-w-2xl w-full px-6;
   }
 
   .soda-scs-manager__throbber-overlay__spinner {
@@ -22,11 +22,147 @@
     @apply animate-spin;
   }
 
+  .soda-scs-manager__throbber-overlay__spinner--success {
+    @apply border-green-300 border-t-green-500;
+    animation: none;
+  }
+
+  .soda-scs-manager__throbber-overlay__spinner--error {
+    @apply border-red-300 border-t-red-500;
+    animation: none;
+  }
+
   .soda-scs-manager__throbber-overlay__message {
-    @apply text-xl font-semibold text-center max-w-md px-6;
+    @apply text-xl font-semibold text-center max-w-md px-6 mb-4;
+  }
+
+  .soda-scs-manager__throbber-overlay__progress {
+    @apply w-full max-w-md mb-6;
+  }
+
+  .soda-scs-manager__throbber-overlay__steps {
+    @apply w-full max-w-lg mb-4;
+  }
+
+  .soda-scs-manager__throbber-overlay__logs {
+    @apply w-full max-w-lg mb-4;
   }
 
   .soda-scs-manager__throbber-overlay__info {
     @apply mt-6 text-base text-center max-w-lg px-6 leading-relaxed;
+  }
+
+  /* Progress Bar. */
+  .soda-scs-manager__progress-bar {
+    @apply w-full;
+  }
+
+  .soda-scs-manager__progress-bar__track {
+    @apply h-3 bg-gray-700 rounded-full overflow-hidden;
+  }
+
+  .soda-scs-manager__progress-bar__fill {
+    @apply h-full bg-gradient-to-r from-orange-400 to-orange-500 rounded-full;
+    @apply transition-all duration-500 ease-out;
+  }
+
+  .soda-scs-manager__progress-bar__text {
+    @apply text-sm text-gray-300 text-center mt-2;
+  }
+
+  /* Steps List. */
+  .soda-scs-manager__steps-list {
+    @apply list-none p-0 m-0 space-y-2;
+  }
+
+  .soda-scs-manager__step {
+    @apply flex items-center gap-3 px-4 py-2 rounded-lg;
+    @apply transition-all duration-300;
+  }
+
+  .soda-scs-manager__step--pending {
+    @apply text-gray-400 bg-gray-800/50;
+  }
+
+  .soda-scs-manager__step--running {
+    @apply text-orange-300 bg-orange-900/30 border border-orange-500/50;
+  }
+
+  .soda-scs-manager__step--completed {
+    @apply text-green-400 bg-green-900/30;
+  }
+
+  .soda-scs-manager__step--failed {
+    @apply text-red-400 bg-red-900/30;
+  }
+
+  .soda-scs-manager__step--skipped {
+    @apply text-gray-500 bg-gray-800/30 line-through;
+  }
+
+  .soda-scs-manager__step__icon {
+    @apply flex-shrink-0 w-5 h-5;
+  }
+
+  .soda-scs-manager__step__label {
+    @apply flex-grow text-sm font-medium;
+  }
+
+  .soda-scs-manager__step__message {
+    @apply text-xs opacity-70;
+  }
+
+  /* Icons. */
+  .soda-scs-manager__icon {
+    @apply w-5 h-5;
+  }
+
+  .soda-scs-manager__icon--completed {
+    @apply text-green-400;
+  }
+
+  .soda-scs-manager__icon--running {
+    @apply text-orange-400;
+  }
+
+  .soda-scs-manager__icon--failed {
+    @apply text-red-400;
+  }
+
+  .soda-scs-manager__icon--skipped {
+    @apply text-gray-500;
+  }
+
+  .soda-scs-manager__icon--pending {
+    @apply text-gray-500;
+  }
+
+  /* Logs. */
+  .soda-scs-manager__logs {
+    @apply bg-gray-900/50 rounded-lg p-3;
+  }
+
+  .soda-scs-manager__logs__title {
+    @apply text-xs text-gray-400 uppercase tracking-wider mb-2;
+  }
+
+  .soda-scs-manager__logs__list {
+    @apply list-none p-0 m-0 space-y-1 max-h-24 overflow-y-auto;
+  }
+
+  .soda-scs-manager__log {
+    @apply text-xs font-mono;
+  }
+
+  .soda-scs-manager__log--info {
+    @apply text-gray-300;
+  }
+
+  .soda-scs-manager__log--warning {
+    @apply text-yellow-400;
+  }
+
+  .soda-scs-manager__log--error {
+    @apply text-red-400;
   }
 }

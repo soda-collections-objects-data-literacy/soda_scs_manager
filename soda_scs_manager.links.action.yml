@@ -8,9 +8,9 @@ entity.soda_scs_component.automated_updates:
     attributes:
       class: ['button', 'button--action', 'button--primary']
 
-entity.soda_scs_component.update_drupal_packages:
-  route_name: soda_scs_manager.component.update_drupal_packages
-  title: 'Update Drupal packages'
+entity.soda_scs_component.set_package_environment:
+  route_name: soda_scs_manager.component.set_package_environment
+  title: 'Set package environment'
   appears_on:
     - soda_scs_manager.component.installed_drupal_packages
   options:

@@ -18,6 +18,7 @@ use Drupal\Core\StringTranslation\TranslationInterface;
 use Drupal\Core\Utility\Error;
 use Drupal\soda_scs_manager\Entity\SodaScsComponentInterface;
 use Drupal\soda_scs_manager\Entity\SodaScsSnapshotInterface;
+use Drupal\soda_scs_manager\Helpers\SodaScsHelpers;
 use Drupal\soda_scs_manager\Helpers\SodaScsStackHelpers;
 use Drupal\soda_scs_manager\RequestActions\SodaScsExecRequestInterface;
 use Drupal\soda_scs_manager\RequestActions\SodaScsServiceRequestInterface;
@@ -87,6 +88,13 @@ class SodaScsFilesystemComponentActions implements SodaScsComponentActionsInterf
   protected SodaScsStackHelpers $sodaScsStackHelpers;
 
   /**
+   * The SCS helpers.
+   *
+   * @var \Drupal\soda_scs_manager\Helpers\SodaScsHelpers
+   */
+  protected SodaScsHelpers $sodaScsHelpers;
+
+  /**
    * The SCS Docker Volumes actions service.
    *
    * @var \Drupal\soda_scs_manager\RequestActions\SodaScsExecRequestInterface
@@ -134,6 +142,8 @@ class SodaScsFilesystemComponentActions implements SodaScsComponentActionsInterf
     SodaScsServiceActionsInterface $sodaScsSqlServiceActions,
     #[Autowire(service: 'soda_scs_manager.stack.helpers')]
     SodaScsStackHelpers $sodaScsStackHelpers,
+    #[Autowire(service: 'soda_scs_manager.helpers')]
+    SodaScsHelpers $sodaScsHelpers,
     TranslationInterface $stringTranslation,
   ) {
     // Services from container.
@@ -149,6 +159,7 @@ class SodaScsFilesystemComponentActions implements SodaScsComponentActionsInterf
     $this->sodaScsServiceKeyActions = $sodaScsServiceKeyActions;
     $this->sodaScsSqlServiceActions = $sodaScsSqlServiceActions;
     $this->sodaScsStackHelpers = $sodaScsStackHelpers;
+    $this->sodaScsHelpers = $sodaScsHelpers;
     $this->stringTranslation = $stringTranslation;
   }
 
@@ -571,10 +582,35 @@ class SodaScsFilesystemComponentActions implements SodaScsComponentActionsInterf
           'error' => NULL,
         ];
       }
+
+      $deletePath = '/shared/' . $entity->get('machineName')->value;
+      // Validate path for safe deletion.
+      $validationResult = $this->sodaScsHelpers->validatePathForSafeDeletion(
+        $deletePath,
+        forbiddenPaths: ['/', '/shared'],
+        requiredPatterns: ['/\b(shared)\b/i'],
+      );
+
+      if (!$validationResult['isValid']) {
+        return [
+          'message' => 'Invalid or unsafe path for deletion: ' . htmlspecialchars($deletePath),
+          'data' => [
+            'filesystemComponent' => NULL,
+            'createExecCommandForFolderAtAccessProxyResult' => NULL,
+            'startExecCommandForFolderAtAccessProxyResult' => NULL,
+            'createExecCommandForSetFolderPermissionInContainersResult' => NULL,
+            'startExecCommandForSetFolderPermissionInContainersResult' => NULL,
+          ],
+          'success' => FALSE,
+          'error' => 'Path validation failed: ' . $validationResult['errorCode'],
+        ];
+      }
+
+      $normalizedPath = $validationResult['normalizedPath'];
       $accessProxyDeleteDirCmd = [
         'rmdir',
         '-p',
-        '/shared/' . $entity->get('machineName')->value,
+        $normalizedPath,
       ];
 
       // Delete shared folders via access proxy.

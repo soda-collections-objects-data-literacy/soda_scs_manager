@@ -1081,9 +1081,16 @@ class SodaScsSettingsForm extends ConfigFormBase {
 
     $form['wisski']['instances']['versions']['production'] = [
       '#type' => 'textfield',
-      '#title' => $this->t('SCS WissKI production version'),
+      '#title' => $this->t('SCS WissKI Base Image default production version'),
       '#default_value' => $this->config('soda_scs_manager.settings')->get('wisski')['instances']['versions']['production'] ?? '',
-      '#description' => $this->t('The <a href="https://github.com/soda-collections-objects-data-literacy/wisski-base-stack" target="_blank">SCS WissKI production version</a>, like "1.0.0".'),
+      '#description' => $this->t('The <a href="https://github.com/soda-collections-objects-data-literacy/wisski-base-stack" target="_blank">SCS WissKI default production version</a>, like "1.0.0".'),
+    ];
+
+    $form['wisski']['instances']['versions']['packageEnvironments'] = [
+      '#type' => 'textfield',
+      '#title' => $this->t('SCS Drupal/WissKI package environments'),
+      '#default_value' => $this->config('soda_scs_manager.settings')->get('wisski')['instances']['versions']['packageEnvironments'] ?? '',
+      '#description' => $this->t('The SCS Drupal/WissKI package environments, see available versions at <a href="https://github.com/soda-collections-objects-data-literacy/drupal_packages" target="_blank">SCS Drupal/WissKI package environments</a>. Use comma to separate versions, like "1.0.0,1.0.1,1.1.0".'),
     ];
 
     // Other production versions are hardcoded as defaults in docker-compose.yml

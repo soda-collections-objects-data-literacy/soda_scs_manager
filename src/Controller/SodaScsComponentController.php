@@ -43,16 +43,25 @@ class SodaScsComponentController extends ControllerBase {
   protected $entityTypeManager;
 
   /**
+   * The container.
+   *
+   * @var \Symfony\Component\DependencyInjection\ContainerInterface
+   */
+  protected ContainerInterface $container;
+
+  /**
    * {@inheritDoc}
    */
   public function __construct(
+    ContainerInterface $container,
+    EntityTypeManagerInterface $entity_type_manager,
     SodaScsComponentHelpers $sodaScsComponentHelpers,
     SodaScsDrupalHelpers $sodaScsDrupalHelpers,
-    EntityTypeManagerInterface $entity_type_manager,
   ) {
+    $this->container = $container;
+    $this->entityTypeManager = $entity_type_manager;
     $this->sodaScsComponentHelpers = $sodaScsComponentHelpers;
     $this->sodaScsDrupalHelpers = $sodaScsDrupalHelpers;
-    $this->entityTypeManager = $entity_type_manager;
   }
 
   /**
@@ -60,9 +69,10 @@ class SodaScsComponentController extends ControllerBase {
    */
   public static function create(ContainerInterface $container) {
     return new static(
+      $container,
+      $container->get('entity_type.manager'),
       $container->get('soda_scs_manager.component.helpers'),
       $container->get('soda_scs_manager.drupal.helpers'),
-      $container->get('entity_type.manager'),
     );
   }
 
@@ -243,6 +253,24 @@ class SodaScsComponentController extends ControllerBase {
         ['data' => (string) ($package['description'] ?? '')],
       ];
     }
+
+    $version = $soda_scs_component->get('version')->value ?? $this->t('Not set');
+    $build['version'] = [
+      '#type'   => 'container',
+      '#attributes' => [
+        'class' => [
+          'soda-scs-manager__version-info',
+        ],
+      ],
+      'label' => [
+        '#type'   => 'markup',
+        '#markup' => '<div class="soda-scs-manager__version-info__label">' . $this->t('Current Drupal/WissKI Environment Version') . '</div>',
+      ],
+      'value' => [
+        '#type'   => 'markup',
+        '#markup' => '<div class="soda-scs-manager__version-info__value">' . Html::escape($version) . '</div>',
+      ],
+    ];
 
     $build['table'] = [
       '#prefix' => '<div class="soda-scs-table-list-wrapper">',

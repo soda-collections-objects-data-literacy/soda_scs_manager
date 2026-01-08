@@ -163,6 +163,57 @@ function _soda_scs_manager_remove_default_blocks() {
  * Implements hook_schema().
  */
 function soda_scs_manager_schema() {
+  $schema['soda_scs_progress'] = [
+    'description' => 'Stores progress data for long-running operations.',
+    'fields' => [
+      'operation_id' => [
+        'type' => 'varchar',
+        'length' => 32,
+        'not null' => TRUE,
+        'description' => 'Primary Key: Unique operation ID (32 hex characters).',
+      ],
+      'operation_type' => [
+        'type' => 'varchar',
+        'length' => 64,
+        'not null' => TRUE,
+        'default' => '',
+        'description' => 'Type of operation (e.g., drupal_packages_update).',
+      ],
+      'status' => [
+        'type' => 'varchar',
+        'length' => 20,
+        'not null' => TRUE,
+        'default' => 'pending',
+        'description' => 'Status of the operation (pending, running, completed, failed).',
+      ],
+      'progress_data' => [
+        'type' => 'text',
+        'size' => 'big',
+        'not null' => FALSE,
+        'description' => 'JSON-encoded progress data including steps, logs, metadata.',
+      ],
+      'created' => [
+        'type' => 'int',
+        'not null' => TRUE,
+        'default' => 0,
+        'description' => 'Unix timestamp when the operation was created.',
+      ],
+      'updated' => [
+        'type' => 'int',
+        'not null' => TRUE,
+        'default' => 0,
+        'description' => 'Unix timestamp when the operation was last updated.',
+      ],
+    ],
+    'primary key' => ['operation_id'],
+    'indexes' => [
+      'status' => ['status'],
+      'created' => ['created'],
+      'updated' => ['updated'],
+      'operation_type' => ['operation_type'],
+    ],
+  ];
+
   $schema['keycloak_user_registration'] = [
     'description' => 'Stores user registrations pending admin approval before adding to Keycloak.',
     'fields' => [
@@ -468,3 +519,66 @@ function soda_scs_manager_update_11008() {
   return t('Ensured project base fields exist: keycloakUuid, groupId.');
 }
 
+/**
+ * Add soda_scs_progress table for progress tracking.
+ */
+function soda_scs_manager_update_11009() {
+  $schema = Database::getConnection()->schema();
+
+  if (!$schema->tableExists('soda_scs_progress')) {
+    $tableSchema = [
+      'description' => 'Stores progress data for long-running operations.',
+      'fields' => [
+        'operation_id' => [
+          'type' => 'varchar',
+          'length' => 32,
+          'not null' => TRUE,
+          'description' => 'Primary Key: Unique operation ID (32 hex characters).',
+        ],
+        'operation_type' => [
+          'type' => 'varchar',
+          'length' => 64,
+          'not null' => TRUE,
+          'default' => '',
+          'description' => 'Type of operation (e.g., drupal_packages_update).',
+        ],
+        'status' => [
+          'type' => 'varchar',
+          'length' => 20,
+          'not null' => TRUE,
+          'default' => 'pending',
+          'description' => 'Status of the operation (pending, running, completed, failed).',
+        ],
+        'progress_data' => [
+          'type' => 'text',
+          'size' => 'big',
+          'not null' => FALSE,
+          'description' => 'JSON-encoded progress data including steps, logs, metadata.',
+        ],
+        'created' => [
+          'type' => 'int',
+          'not null' => TRUE,
+          'default' => 0,
+          'description' => 'Unix timestamp when the operation was created.',
+        ],
+        'updated' => [
+          'type' => 'int',
+          'not null' => TRUE,
+          'default' => 0,
+          'description' => 'Unix timestamp when the operation was last updated.',
+        ],
+      ],
+      'primary key' => ['operation_id'],
+      'indexes' => [
+        'status' => ['status'],
+        'created' => ['created'],
+        'updated' => ['updated'],
+        'operation_type' => ['operation_type'],
+      ],
+    ];
+    $schema->createTable('soda_scs_progress', $tableSchema);
+    return t('Created soda_scs_progress table.');
+  }
+
+  return t('Table soda_scs_progress already exists.');
+}

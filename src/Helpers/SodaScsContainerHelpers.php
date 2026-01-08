@@ -837,14 +837,15 @@ class SodaScsContainerHelpers {
       );
     }
 
+    // Create directory as root, then set ownership and permissions.
     $response = $this->executeDockerExecCommand([
       'cmd' => [
-        'mkdir',
-        '-p',
-        $directoryPath,
+        'sh',
+        '-c',
+        "mkdir -p {$directoryPath} && chown www-data:www-data {$directoryPath} && chmod 775 {$directoryPath}",
       ],
       'containerName' => $containerId,
-      'user' => $user,
+      'user' => 'root',
     ]);
 
     if (!$response->success) {

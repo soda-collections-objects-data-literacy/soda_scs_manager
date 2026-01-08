@@ -475,6 +475,7 @@ class SodaScsServiceHelpers {
     $wisskiInstanceSettings['baseUrl'] = $this->settings->get('wisski.instances.baseUrl');
     $wisskiInstanceSettings['healthCheckUrl'] = $this->settings->get('wisski.instances.misc.healthCheck.url');
     $wisskiInstanceSettings['productionVersion'] = $this->settings->get('wisski.instances.versions.production');
+    $wisskiInstanceSettings['packageEnvironments'] = $this->settings->get('wisski.instances.versions.packageEnvironments');
     // Production versions are hardcoded as defaults in docker-compose.yml in
     // stack repository.
     $wisskiInstanceSettings['stackDevelopmentVersion'] = $this->settings->get('wisski.instances.versions.development.composeStack');

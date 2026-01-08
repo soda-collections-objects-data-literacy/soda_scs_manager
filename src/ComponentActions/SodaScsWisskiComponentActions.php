@@ -1470,6 +1470,21 @@ class SodaScsWisskiComponentActions implements SodaScsComponentActionsInterface 
       // Restore into fresh state: purge original drupalvolume
       // and extract snapshot tar. Create restore container.
       //
+      // Validate volume path for safe deletion (hardcoded /volume is safe,
+      // but we validate to ensure no path manipulation).
+      $volumePath = '/volume';
+      $validationResult = $this->sodaScsHelpers->validatePathForSafeDeletion(
+        $volumePath,
+        forbiddenPaths: ['/', '/opt/drupal', '/opt/drupal/'],
+        requiredPatterns: ['/\b(volume)\b/i'],
+      );
+
+      if (!$validationResult['isValid']) {
+        throw new \RuntimeException(
+          'Invalid volume path for restore operation: ' . htmlspecialchars($volumePath) . ' (' . $validationResult['errorCode'] . ')'
+        );
+      }
+
       // Construct the request parameters.
       $restoreCmd = [
         'sh',

@@ -6,9 +6,6 @@ namespace Drupal\soda_scs_manager\Helpers;
 
 use Drupal\Core\StringTranslation\StringTranslationTrait;
 use Drupal\Core\StringTranslation\TranslationInterface;
-use Drupal\soda_scs_manager\Entity\SodaScsComponentInterface;
-use Drupal\soda_scs_manager\Entity\SodaScsStackInterface;
-use Symfony\Component\DependencyInjection\Attribute\Autowire;
 
 /**
  * Helper class for Soda SCS operations.
@@ -201,6 +198,128 @@ class SodaScsHelpers {
       default:
         return 'unknown';
     }
+  }
+
+  /**
+   * Validates a backup path for safe deletion operations.
+   *
+   * This method performs security checks to ensure the path is safe for
+   * deletion operations. It validates path structure, prevents traversal
+   * attacks, and ensures hierarchical safety requirements are met.
+   *
+   * @param string $path
+   *   The path to validate.
+   * @param array $forbiddenPaths
+   *   Array of forbidden absolute paths that should not be deleted.
+   *   Defaults to ['/', '/opt/drupal', '/opt/drupal/'].
+   * @param array $requiredPatterns
+   *   Array of regex patterns that must match at least one path segment.
+   *   Defaults to ['/\b(bkp|backup|snapshot)\b/i'].
+   * @param bool $requireAbsolute
+   *   Whether the path must be absolute. Defaults to TRUE.
+   *
+   * @return array
+   *   Validation result array with keys: isValid (bool), errorCode
+   *   (string|null), errorMessage (string|null), normalizedPath (string).
+   */
+  public function validatePathForSafeDeletion(
+    string $path,
+    array $forbiddenPaths = ['/', '/opt/drupal', '/opt/drupal/'],
+    array $requiredPatterns = ['/\b(bkp|backup|snapshot|tmp|cache)\b/i'],
+    bool $requireAbsolute = TRUE,
+  ): array {
+    $normalizedPath = rtrim($path, '/');
+
+    // Validate path is not empty.
+    if (empty($normalizedPath)) {
+      return [
+        'isValid' => FALSE,
+        'errorCode' => 'empty',
+        'errorMessage' => 'Path cannot be empty.',
+        'normalizedPath' => $normalizedPath,
+      ];
+    }
+
+    // Validate path is not root directory.
+    if ($normalizedPath === '/') {
+      return [
+        'isValid' => FALSE,
+        'errorCode' => 'root',
+        'errorMessage' => 'Cannot delete root directory.',
+        'normalizedPath' => $normalizedPath,
+      ];
+    }
+
+    // Validate path is not in forbidden paths list.
+    foreach ($forbiddenPaths as $forbiddenPath) {
+      $normalizedForbidden = rtrim($forbiddenPath, '/');
+      if ($normalizedPath === $normalizedForbidden) {
+        return [
+          'isValid' => FALSE,
+          'errorCode' => 'forbidden',
+          'errorMessage' => sprintf('Path "%s" is forbidden for deletion.', htmlspecialchars($path)),
+          'normalizedPath' => $normalizedPath,
+        ];
+      }
+    }
+
+    // Validate path is absolute if required.
+    if ($requireAbsolute && $normalizedPath[0] !== '/') {
+      return [
+        'isValid' => FALSE,
+        'errorCode' => 'relative',
+        'errorMessage' => 'Path must be absolute.',
+        'normalizedPath' => $normalizedPath,
+      ];
+    }
+
+    // Validate path does not contain traversal sequences.
+    if (
+      strpos($normalizedPath, '../') !== FALSE ||
+      strpos($normalizedPath, '/..') !== FALSE ||
+      strpos($normalizedPath, '..') !== FALSE
+    ) {
+      return [
+        'isValid' => FALSE,
+        'errorCode' => 'traversal',
+        'errorMessage' => 'Path contains directory traversal sequences.',
+        'normalizedPath' => $normalizedPath,
+      ];
+    }
+
+    // Validate hierarchical safety: at least one segment must match required
+    // patterns.
+    if (!empty($requiredPatterns)) {
+      $segments = explode('/', trim($normalizedPath, '/'));
+      $matchesPattern = FALSE;
+      foreach ($segments as $segment) {
+        foreach ($requiredPatterns as $pattern) {
+          if (preg_match($pattern, $segment)) {
+            $matchesPattern = TRUE;
+            break 2;
+          }
+        }
+      }
+
+      if (!$matchesPattern) {
+        return [
+          'isValid' => FALSE,
+          'errorCode' => 'hierarchy',
+          'errorMessage' => sprintf(
+            'Path does not contain required hierarchy patterns: %s',
+            htmlspecialchars($path),
+          ),
+          'normalizedPath' => $normalizedPath,
+        ];
+      }
+    }
+
+    return [
+      'isValid' => TRUE,
+      'errorCode' => NULL,
+      'errorMessage' => NULL,
+      'normalizedPath' => $normalizedPath,
+    ];
   }
 
 }

@@ -1,5 +1,18 @@
 # Helpers
 
+# Progress tracking endpoint for AJAX polling.
+soda_scs_manager.progress.status:
+  path: '/soda-scs-manager/progress/{operation_id}'
+  defaults:
+    _controller: '\Drupal\soda_scs_manager\Controller\SodaScsProgressController::getProgress'
+    _title: 'Operation Progress'
+    _format: json
+  requirements:
+    _permission: 'soda scs manager user'
+    operation_id: '[a-f0-9]{32}'
+  options:
+    no_cache: TRUE
+
 # @todo Refactor to use entity type as parameter for just one route
 soda_scs_manager.component.health_check:
   path: '/soda-scs-manager/health/component/{component_id}'
@@ -528,11 +541,11 @@ soda_scs_manager.component.installed_drupal_packages_json:
         type: entity:soda_scs_component
     no_cache: TRUE
 
-soda_scs_manager.component.update_drupal_packages:
-  path: '/soda-scs-manager/component/update-drupal-packages/{soda_scs_component}'
+soda_scs_manager.component.set_package_environment:
+  path: '/soda-scs-manager/component/set-package-environment/{soda_scs_component}'
   defaults:
-    _form: '\Drupal\soda_scs_manager\Form\SodaScsDrupalPackagesUpdateConfirmForm'
-    _title: 'Update Drupal packages'
+    _form: '\Drupal\soda_scs_manager\Form\SodaScsComponentSetPackageEnvironmentConfirmForm'
+    _title: 'Set package environment'
   requirements:
     _permission: 'soda scs manager admin'
   options:
