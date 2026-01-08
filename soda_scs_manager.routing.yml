@@ -1,18 +1,5 @@
 # Helpers
 
-# Progress tracking endpoint for AJAX polling.
-soda_scs_manager.progress.status:
-  path: '/soda-scs-manager/progress/{operation_id}'
-  defaults:
-    _controller: '\Drupal\soda_scs_manager\Controller\SodaScsProgressController::getProgress'
-    _title: 'Operation Progress'
-    _format: json
-  requirements:
-    _permission: 'soda scs manager user'
-    operation_id: '[a-f0-9]{32}'
-  options:
-    no_cache: TRUE
-
 # @todo Refactor to use entity type as parameter for just one route
 soda_scs_manager.component.health_check:
   path: '/soda-scs-manager/health/component/{component_id}'
@@ -31,6 +18,17 @@ soda_scs_manager.stack.health_check:
     _title:  'Stack health check'
   requirements:
     _permission: 'soda scs manager user'
+  options:
+    no_cache: TRUE
+
+soda_scs_manager.progress.latest_step:
+  path: '/soda-scs-manager/progress/{operation_uuid}/latest-step'
+  defaults:
+    _controller: '\Drupal\soda_scs_manager\Controller\SodaScsProgressController::getLatestStep'
+    _title: 'Get latest step for operation'
+  requirements:
+    _permission: 'soda scs manager user'
+    operation_uuid: '[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}'
   options:
     no_cache: TRUE
 

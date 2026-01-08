@@ -163,57 +163,6 @@ function _soda_scs_manager_remove_default_blocks() {
  * Implements hook_schema().
  */
 function soda_scs_manager_schema() {
-  $schema['soda_scs_progress'] = [
-    'description' => 'Stores progress data for long-running operations.',
-    'fields' => [
-      'operation_id' => [
-        'type' => 'varchar',
-        'length' => 32,
-        'not null' => TRUE,
-        'description' => 'Primary Key: Unique operation ID (32 hex characters).',
-      ],
-      'operation_type' => [
-        'type' => 'varchar',
-        'length' => 64,
-        'not null' => TRUE,
-        'default' => '',
-        'description' => 'Type of operation (e.g., drupal_packages_update).',
-      ],
-      'status' => [
-        'type' => 'varchar',
-        'length' => 20,
-        'not null' => TRUE,
-        'default' => 'pending',
-        'description' => 'Status of the operation (pending, running, completed, failed).',
-      ],
-      'progress_data' => [
-        'type' => 'text',
-        'size' => 'big',
-        'not null' => FALSE,
-        'description' => 'JSON-encoded progress data including steps, logs, metadata.',
-      ],
-      'created' => [
-        'type' => 'int',
-        'not null' => TRUE,
-        'default' => 0,
-        'description' => 'Unix timestamp when the operation was created.',
-      ],
-      'updated' => [
-        'type' => 'int',
-        'not null' => TRUE,
-        'default' => 0,
-        'description' => 'Unix timestamp when the operation was last updated.',
-      ],
-    ],
-    'primary key' => ['operation_id'],
-    'indexes' => [
-      'status' => ['status'],
-      'created' => ['created'],
-      'updated' => ['updated'],
-      'operation_type' => ['operation_type'],
-    ],
-  ];
-
   $schema['keycloak_user_registration'] = [
     'description' => 'Stores user registrations pending admin approval before adding to Keycloak.',
     'fields' => [
@@ -285,6 +234,9 @@ function soda_scs_manager_schema() {
       'status' => ['status'],
     ],
   ];
+
+  $schema['soda_scs_operations'] = _soda_scs_manager_schema_operations();
+  $schema['soda_scs_steps'] = _soda_scs_manager_schema_steps();
 
   return $schema;
 }
@@ -520,65 +472,121 @@ function soda_scs_manager_update_11008() {
 }
 
 /**
- * Add soda_scs_progress table for progress tracking.
+ * Add soda_scs_operations and soda_scs_steps tables for long-running operations.
  */
 function soda_scs_manager_update_11009() {
   $schema = Database::getConnection()->schema();
+  $createdTables = [];
 
-  if (!$schema->tableExists('soda_scs_progress')) {
-    $tableSchema = [
-      'description' => 'Stores progress data for long-running operations.',
-      'fields' => [
-        'operation_id' => [
-          'type' => 'varchar',
-          'length' => 32,
-          'not null' => TRUE,
-          'description' => 'Primary Key: Unique operation ID (32 hex characters).',
-        ],
-        'operation_type' => [
-          'type' => 'varchar',
-          'length' => 64,
-          'not null' => TRUE,
-          'default' => '',
-          'description' => 'Type of operation (e.g., drupal_packages_update).',
-        ],
-        'status' => [
-          'type' => 'varchar',
-          'length' => 20,
-          'not null' => TRUE,
-          'default' => 'pending',
-          'description' => 'Status of the operation (pending, running, completed, failed).',
-        ],
-        'progress_data' => [
-          'type' => 'text',
-          'size' => 'big',
-          'not null' => FALSE,
-          'description' => 'JSON-encoded progress data including steps, logs, metadata.',
-        ],
-        'created' => [
-          'type' => 'int',
-          'not null' => TRUE,
-          'default' => 0,
-          'description' => 'Unix timestamp when the operation was created.',
-        ],
-        'updated' => [
-          'type' => 'int',
-          'not null' => TRUE,
-          'default' => 0,
-          'description' => 'Unix timestamp when the operation was last updated.',
-        ],
-      ],
-      'primary key' => ['operation_id'],
-      'indexes' => [
-        'status' => ['status'],
-        'created' => ['created'],
-        'updated' => ['updated'],
-        'operation_type' => ['operation_type'],
-      ],
-    ];
-    $schema->createTable('soda_scs_progress', $tableSchema);
-    return t('Created soda_scs_progress table.');
+  if (!$schema->tableExists('soda_scs_operations')) {
+    $schema->createTable('soda_scs_operations', _soda_scs_manager_schema_operations());
+    $createdTables[] = 'soda_scs_operations';
   }
 
-  return t('Table soda_scs_progress already exists.');
+  if (!$schema->tableExists('soda_scs_steps')) {
+    $schema->createTable('soda_scs_steps', _soda_scs_manager_schema_steps());
+    $createdTables[] = 'soda_scs_steps';
+  }
+
+  if (empty($createdTables)) {
+    return t('Tables soda_scs_operations and soda_scs_steps already exist.');
+  }
+
+  return t('Created tables: @tables.', ['@tables' => implode(', ', $createdTables)]);
+}
+
+/**
+ * Returns the schema definition for the soda_scs_operations table.
+ *
+ * @return array
+ *   The schema definition.
+ */
+function _soda_scs_manager_schema_operations(): array {
+  return [
+    'description' => 'Stores operation data for long-running operations.',
+    'fields' => [
+      'uuid' => [
+        'type' => 'varchar',
+        'length' => 36,
+        'not null' => TRUE,
+        'description' => 'Primary Key: Unique UUID (36 characters).',
+      ],
+      'operation_type' => [
+        'type' => 'varchar',
+        'length' => 64,
+        'not null' => TRUE,
+        'default' => '',
+        'description' => 'Type of operation (e.g., drupal_packages_update).',
+      ],
+      'status' => [
+        'type' => 'varchar',
+        'length' => 20,
+        'not null' => TRUE,
+        'default' => 'pending',
+        'description' => 'Status of the operation (pending, running, completed, failed).',
+      ],
+      'created' => [
+        'type' => 'int',
+        'not null' => TRUE,
+        'default' => 0,
+        'description' => 'Unix timestamp when the operation was created.',
+      ],
+      'updated' => [
+        'type' => 'int',
+        'not null' => TRUE,
+        'default' => 0,
+        'description' => 'Unix timestamp when the operation was last updated.',
+      ],
+    ],
+    'primary key' => ['uuid'],
+    'indexes' => [
+      'created' => ['created'],
+      'operation_type' => ['operation_type'],
+      'status' => ['status'],
+      'updated' => ['updated'],
+    ],
+  ];
+}
+
+/**
+ * Returns the schema definition for the soda_scs_steps table.
+ *
+ * @return array
+ *   The schema definition.
+ */
+function _soda_scs_manager_schema_steps(): array {
+  return [
+    'description' => 'Stores step data for long-running operations.',
+    'fields' => [
+      'uuid' => [
+        'type' => 'varchar',
+        'length' => 36,
+        'not null' => TRUE,
+        'description' => 'Primary Key: Unique UUID (36 characters).',
+      ],
+      'operation_uuid' => [
+        'type' => 'varchar',
+        'length' => 36,
+        'not null' => TRUE,
+        'default' => '',
+        'description' => 'Foreign key: References soda_scs_operations.uuid.',
+      ],
+      'message' => [
+        'type' => 'text',
+        'not null' => FALSE,
+        'description' => 'Message for the step.',
+      ],
+      'created' => [
+        'type' => 'int',
+        'not null' => TRUE,
+        'default' => 0,
+        'description' => 'Unix timestamp when the step was created.',
+      ],
+    ],
+    'primary key' => ['uuid'],
+    'indexes' => [
+      'created' => ['created'],
+      'operation_uuid' => ['operation_uuid'],
+    ],
+  ];
 }

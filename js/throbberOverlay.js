@@ -6,6 +6,63 @@
   'use strict';
 
   /**
+   * Polling interval ID for progress tracking.
+   *
+   * @type {number|null}
+   */
+  let progressPollInterval = null;
+
+  /**
+   * Start polling for progress updates.
+   *
+   * @param {string} operationUuid
+   *   The operation UUID to poll for.
+   */
+  function startProgressPolling(operationUuid) {
+    // Clear any existing polling interval.
+    if (progressPollInterval !== null) {
+      clearInterval(progressPollInterval);
+    }
+
+    // Poll every second.
+    progressPollInterval = setInterval(function() {
+      $.ajax({
+        url: Drupal.url('soda-scs-manager/progress/' + operationUuid + '/latest-step'),
+        method: 'GET',
+        dataType: 'json',
+        success: function(response) {
+          console.log('response.step.message', response.step.message);
+          if (response.step && response.step.message) {
+            // Update the throbber overlay message with the latest step.
+            console.log('response.step.message', response.step.message);
+            $('.soda-scs-manager__throbber-overlay__message').text(response.step.message);
+          }
+
+          // Check if operation is completed or failed.
+          if (response.operation && (response.operation.status === 'completed' || response.operation.status === 'failed')) {
+            stopProgressPolling();
+          }
+        },
+        error: function(xhr, status, error) {
+          // On error, stop polling but keep the overlay visible.
+          console.error('Failed to fetch progress:', error);
+          stopProgressPolling();
+        }
+      });
+    }, 1000);
+  }
+
+  /**
+   * Stop polling for progress updates.
+   */
+  function stopProgressPolling() {
+    if (progressPollInterval !== null) {
+      clearInterval(progressPollInterval);
+      progressPollInterval = null;
+    }
+  }
+
+  /**
    * Adds a throbber overlay to the page when forms are submitted.
    */
   Drupal.behaviors.sodaScsThrobberOverlay = {
@@ -43,8 +100,25 @@
             $('.soda-scs-manager__throbber-overlay__info').html('');
           }
 
+          // Check for operation UUID from form data attribute or drupalSettings.
+          const operationUuid = $form.data('operation-uuid') ||
+                                (settings.sodaScsManager && settings.sodaScsManager.operationUuid);
+
+          // Check if progress polling is supported for this form.
+          const progressPollingSupported = $form.data('progress-polling') === true ||
+                                           $form.data('progress-polling') === 'true' ||
+                                           (settings.sodaScsManager && settings.sodaScsManager.progressPolling === true);
+
           // Show the overlay on form submission.
           $('.soda-scs-manager__throbber-overlay').addClass('soda-scs-manager__throbber-overlay--active');
+
+          console.log('operationUuid', operationUuid);
+          console.log('progressPollingSupported', progressPollingSupported);
+          // Start polling if operation UUID is available and polling is supported.
+          if (operationUuid && progressPollingSupported) {
+            console.log('Starting polling');
+            startProgressPolling(operationUuid);
+          }
         });
       });
 
@@ -60,7 +134,24 @@
           const throbberMessage = $(this).attr('data-throbber-message') || Drupal.t('Performing action, please do not close the window');
           $('.soda-scs-manager__throbber-overlay__message').text(throbberMessage);
           $('.soda-scs-manager__throbber-overlay__info').html('');
+
+          // Check for operation UUID from link data attribute or drupalSettings.
+          const operationUuid = $(this).data('operation-uuid') ||
+                                (settings.sodaScsManager && settings.sodaScsManager.operationUuid);
+
+          // Check if progress polling is supported for this link.
+          const progressPollingSupported = $(this).data('progress-polling') === true ||
+                                           $(this).data('progress-polling') === 'true' ||
+                                           (settings.sodaScsManager && settings.sodaScsManager.progressPolling === true);
+          console.log('progressPollingSupported', progressPollingSupported);
+          console.log('operationUuid', operationUuid);
           $('.soda-scs-manager__throbber-overlay').addClass('soda-scs-manager__throbber-overlay--active');
+
+          // Start polling if operation UUID is available and polling is supported.
+          if (operationUuid && progressPollingSupported) {
+            console.log('Starting polling');
+            startProgressPolling(operationUuid);
+          }
         });
       });
 
@@ -88,10 +179,34 @@
             $('.soda-scs-manager__throbber-overlay__info').html('');
           }
 
+          // Check for operation UUID from form data attribute or drupalSettings.
+          const operationUuid = $form.data('operation-uuid') ||
+                                (settings.sodaScsManager && settings.sodaScsManager.operationUuid);
+
+          // Check if progress polling is supported for this form.
+          const progressPollingSupported = $form.data('progress-polling') === true ||
+                                           $form.data('progress-polling') === 'true' ||
+                                           (settings.sodaScsManager && settings.sodaScsManager.progressPolling === true);
+
           // Show the overlay before form submission.
           $('.soda-scs-manager__throbber-overlay').addClass('soda-scs-manager__throbber-overlay--active');
+
+          // Start polling if operation UUID is available and polling is supported.
+          if (operationUuid && progressPollingSupported) {
+            startProgressPolling(operationUuid);
+          }
         });
       });
+
+      // Check for operation UUID in drupalSettings on page load (for redirect scenarios).
+      if (settings.sodaScsManager && settings.sodaScsManager.operationUuid) {
+        const operationUuid = settings.sodaScsManager.operationUuid;
+        const progressPollingSupported = settings.sodaScsManager.progressPolling === true;
+        // Only start polling if overlay is already visible and polling is supported.
+        if ($('.soda-scs-manager__throbber-overlay').hasClass('soda-scs-manager__throbber-overlay--active') && progressPollingSupported) {
+          startProgressPolling(operationUuid);
+        }
+      }
     }
   };
 

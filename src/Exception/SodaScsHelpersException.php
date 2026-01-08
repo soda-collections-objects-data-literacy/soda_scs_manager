@@ -210,6 +210,30 @@ class SodaScsHelpersException extends \Exception {
   }
 
   /**
+   * Creates an exception for progress tracking failures.
+   *
+   * @param string $message
+   *   The error message.
+   * @param string $operation
+   *   The specific progress operation.
+   * @param array $context
+   *   Additional context.
+   * @param \Throwable|null $previous
+   *   The previous exception.
+   *
+   * @return static
+   *   The exception instance.
+   */
+  public static function progressFailed(
+    string $message,
+    string $operation,
+    array $context = [],
+    ?\Throwable $previous = NULL,
+  ): self {
+    return new self($message, 'progress', $operation, $context, 0, $previous);
+  }
+
+  /**
    * Gets the operation category.
    *
    * @return string

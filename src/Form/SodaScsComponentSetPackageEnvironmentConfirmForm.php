@@ -12,6 +12,7 @@ use Drupal\Core\Url;
 use Drupal\Core\Utility\Error;
 use Drupal\soda_scs_manager\Entity\SodaScsComponentInterface;
 use Drupal\soda_scs_manager\Helpers\SodaScsDrupalHelpers;
+use Drupal\soda_scs_manager\Helpers\SodaScsProgressHelper;
 use Drupal\soda_scs_manager\Helpers\SodaScsServiceHelpers;
 use Psr\Log\LogLevel;
 use Symfony\Component\DependencyInjection\ContainerInterface;
@@ -57,6 +58,13 @@ class SodaScsComponentSetPackageEnvironmentConfirmForm extends ConfirmFormBase {
   protected SodaScsServiceHelpers $sodaScsServiceHelpers;
 
   /**
+   * The progress helper service.
+   *
+   * @var \Drupal\soda_scs_manager\Helpers\SodaScsProgressHelper
+   */
+  protected SodaScsProgressHelper $sodaScsProgressHelper;
+
+  /**
    * Constructs a new SodaScsComponentSetPackageEnvironmentConfirmForm.
    *
    * @param \Drupal\Core\Cache\CacheTagsInvalidatorInterface $cacheTagsInvalidator
@@ -65,6 +73,8 @@ class SodaScsComponentSetPackageEnvironmentConfirmForm extends ConfirmFormBase {
    *   The logger factory.
    * @param \Drupal\soda_scs_manager\Helpers\SodaScsDrupalHelpers $sodaScsDrupalHelpers
    *   The SODa SCS Drupal helpers.
+   * @param \Drupal\soda_scs_manager\Helpers\SodaScsProgressHelper $sodaScsProgressHelper
+   *   The progress helper service.
    * @param \Drupal\soda_scs_manager\Helpers\SodaScsServiceHelpers $sodaScsServiceHelpers
    *   The SODa SCS service helpers.
    */
@@ -72,11 +82,13 @@ class SodaScsComponentSetPackageEnvironmentConfirmForm extends ConfirmFormBase {
     CacheTagsInvalidatorInterface $cacheTagsInvalidator,
     LoggerChannelFactoryInterface $logger_factory,
     SodaScsDrupalHelpers $sodaScsDrupalHelpers,
+    SodaScsProgressHelper $sodaScsProgressHelper,
     SodaScsServiceHelpers $sodaScsServiceHelpers,
   ) {
     $this->cacheTagsInvalidator = $cacheTagsInvalidator;
     $this->loggerFactory = $logger_factory;
     $this->sodaScsDrupalHelpers = $sodaScsDrupalHelpers;
+    $this->sodaScsProgressHelper = $sodaScsProgressHelper;
     $this->sodaScsServiceHelpers = $sodaScsServiceHelpers;
   }
 
@@ -88,6 +100,7 @@ class SodaScsComponentSetPackageEnvironmentConfirmForm extends ConfirmFormBase {
       $container->get('cache_tags.invalidator'),
       $container->get('logger.factory'),
       $container->get('soda_scs_manager.drupal.helpers'),
+      $container->get('soda_scs_manager.progress.helpers'),
       $container->get('soda_scs_manager.service.helpers'),
     );
   }
@@ -119,8 +132,14 @@ class SodaScsComponentSetPackageEnvironmentConfirmForm extends ConfirmFormBase {
       $form['actions']['submit']['#attributes']['class'][] = 'soda-scs-component--component--form-submit';
     }
 
+    // Enable progress polling for this form (drupal_packages_update operation).
+    $form['#attributes']['data-progress-polling'] = 'true';
+
     // Attach the throbber overlay library.
     $form['#attached']['library'][] = 'soda_scs_manager/throbberOverlay';
+    // Enable progress polling in drupalSettings as well.
+    $form['#attached']['drupalSettings']['sodaScsManager']['progressPolling'] = TRUE;
+    $form['#attached']['drupalSettings']['sodaScsManager']['operationUuid'] = $this->sodaScsProgressHelper->createOperation('drupal_packages_update');
 
     return $form;
   }
@@ -164,11 +183,13 @@ class SodaScsComponentSetPackageEnvironmentConfirmForm extends ConfirmFormBase {
    */
   public function submitForm(array &$form, FormStateInterface $form_state): void {
     $version = $form_state->getValue('version_dropdown', 'latest');
+    $operationUuid = $form['#attached']['drupalSettings']['sodaScsManager']['operationUuid'];
 
     try {
       $updateResult = $this->sodaScsDrupalHelpers->updateDrupalPackages(
         $this->component,
-        $version
+        $version,
+        $operationUuid
       );
 
       if ($updateResult->success) {
