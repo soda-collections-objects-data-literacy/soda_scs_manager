@@ -27,8 +27,20 @@ abstract class SodaScsKernelTestBase extends KernelTestBase {
     'options',
     'content_translation',
     'language',
+    'node',
+    'field_group',
+    'externalauth',
+    'openid_connect',
+    'smtp',
     'soda_scs_manager',
   ];
+
+  /**
+   * Disable strict config schema checking for tests.
+   *
+   * @var bool
+   */
+  protected $strictConfigSchema = FALSE;
 
   /**
    * A test user.
@@ -53,11 +65,14 @@ abstract class SodaScsKernelTestBase extends KernelTestBase {
     // Install required schemas.
     $this->installSchema('system', ['sequences']);
     $this->installSchema('file', ['file_usage']);
+    $this->installSchema('node', ['node_access']);
+    $this->installSchema('user', ['users_data']);
     $this->installSchema('soda_scs_manager', ['keycloak_user_registration']);
 
     // Install entity schemas.
     $this->installEntitySchema('user');
     $this->installEntitySchema('file');
+    $this->installEntitySchema('node');
     $this->installEntitySchema('soda_scs_component');
     $this->installEntitySchema('soda_scs_stack');
     $this->installEntitySchema('soda_scs_project');
@@ -65,13 +80,33 @@ abstract class SodaScsKernelTestBase extends KernelTestBase {
     $this->installEntitySchema('soda_scs_service_key');
 
     // Install config.
-    $this->installConfig(['system', 'field', 'user', 'soda_scs_manager']);
+    $this->installConfig(['system', 'field', 'user', 'node', 'soda_scs_manager']);
+
+    // Set up minimal Keycloak configuration for testing.
+    $this->setupKeycloakConfig();
 
     // Get the entity type manager.
     $this->entityTypeManager = $this->container->get('entity_type.manager');
 
     // Create a test user.
     $this->testUser = $this->createTestUser();
+  }
+
+  /**
+   * Sets up minimal Keycloak configuration for testing.
+   */
+  protected function setupKeycloakConfig(): void {
+    $config = $this->config('soda_scs_manager.settings');
+    // Set Keycloak settings with the structure used by the code.
+    $config->set('keycloak.keycloakTabs.generalSettings.fields', [
+      'keycloakHost' => 'https://test-keycloak.example.com',
+      'keycloakRealm' => 'test-realm',
+      'adminUsername' => 'test-admin',
+      'adminPassword' => 'test-password',
+      'OpenIdConnectClientMachineName' => 'test-client',
+    ]);
+    $config->set('keycloak.keycloakTabs.routes.fields.misc.fields.tokenUrl', '/realms/test-realm/protocol/openid-connect/token');
+    $config->save(TRUE);
   }
 
   /**

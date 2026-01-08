@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <phpunit xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-         xsi:noNamespaceSchemaLocation="../../../../vendor/phpunit/phpunit/phpunit.xsd"
+         xsi:noNamespaceSchemaLocation="../../../vendor/phpunit/phpunit/phpunit.xsd"
          bootstrap="../../../core/tests/bootstrap.php"
          cacheDirectory=".phpunit.cache"
          executionOrder="random"
@@ -9,8 +9,7 @@
          beStrictAboutOutputDuringTests="true"
          failOnRisky="true"
          failOnWarning="true"
-         colors="true"
-         verbose="true">
+         colors="true">
 
   <php>
     <!-- Set error reporting to E_ALL. -->
@@ -20,7 +19,8 @@
     <!-- Example SIMPLETEST_BASE_URL value: http://localhost -->
     <env name="SIMPLETEST_BASE_URL" value="http://localhost"/>
     <!-- Example SIMPLETEST_DB value: mysql://username:password@localhost/database_name#table_prefix -->
-    <env name="SIMPLETEST_DB" value="mysql://drupal:drupal@database/drupal"/>
+    <!-- Set SIMPLETEST_DB environment variable when running tests instead of hardcoding here -->
+    <env name="SIMPLETEST_DB" value=""/>
     <!-- Example BROWSERTEST_OUTPUT_DIRECTORY value: /path/to/webroot/sites/simpletest/browser_output -->
     <env name="BROWSERTEST_OUTPUT_DIRECTORY" value="/tmp/browser_output"/>
     <!-- To have browsertest output use an alternative base URL. For example if
@@ -47,7 +47,6 @@
   </testsuites>
 
   <coverage includeUncoveredFiles="true"
-            processUncoveredFiles="true"
             ignoreDeprecatedCodeUnits="true"
             disableCodeCoverageIgnore="true">
   </coverage>
