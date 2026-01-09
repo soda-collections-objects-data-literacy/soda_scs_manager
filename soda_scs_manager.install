@@ -496,6 +496,59 @@ function soda_scs_manager_update_11009() {
 }
 
 /**
+ * Convert created field to float for microsecond precision in soda_scs_steps table.
+ */
+function soda_scs_manager_update_11010() {
+  $schema = Database::getConnection()->schema();
+  $database = Database::getConnection();
+
+  if (!$schema->tableExists('soda_scs_steps')) {
+    return t('Table soda_scs_steps does not exist.');
+  }
+
+  if (!$schema->fieldExists('soda_scs_steps', 'created')) {
+    return t('Field created does not exist in soda_scs_steps table.');
+  }
+
+  // Check field type by querying information_schema.
+  $connection = Database::getConnection();
+  $database_name = $connection->getConnectionOptions()['database'];
+  $field_info = $connection->query(
+    "SELECT DATA_TYPE FROM information_schema.COLUMNS
+     WHERE TABLE_SCHEMA = :database
+     AND TABLE_NAME = :table
+     AND COLUMN_NAME = :column",
+    [
+      ':database' => $database_name,
+      ':table' => 'soda_scs_steps',
+      ':column' => 'created',
+    ]
+  )->fetchField();
+
+  // Only convert if field is currently int.
+  if ($field_info === 'int') {
+    // Change field type to float.
+    $spec = [
+      'type' => 'float',
+      'not null' => TRUE,
+      'default' => 0,
+      'description' => 'Unix timestamp with microsecond precision when the step was created.',
+    ];
+    $schema->changeField('soda_scs_steps', 'created', 'created', $spec);
+
+    // Convert existing integer timestamps to float (add microsecond precision).
+    // For existing records, convert to float format: timestamp.000000
+    $database->update('soda_scs_steps')
+      ->expression('created', 'CAST(created AS DECIMAL(20, 6))')
+      ->execute();
+
+    return t('Converted created field to float for microsecond precision.');
+  }
+
+  return t('Field created is already float type or different type (@type).', ['@type' => $field_info ?? 'unknown']);
+}
+
+/**
  * Returns the schema definition for the soda_scs_operations table.
  *
  * @return array
@@ -576,11 +629,12 @@ function _soda_scs_manager_schema_steps(): array {
         'not null' => FALSE,
         'description' => 'Message for the step.',
       ],
+
       'created' => [
-        'type' => 'int',
+        'type' => 'float',
         'not null' => TRUE,
         'default' => 0,
-        'description' => 'Unix timestamp when the step was created.',
+        'description' => 'Unix timestamp with microsecond precision when the step was created.',
       ],
     ],
     'primary key' => ['uuid'],

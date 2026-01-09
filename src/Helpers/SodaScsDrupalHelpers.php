@@ -6,6 +6,7 @@ namespace Drupal\soda_scs_manager\Helpers;
 
 use Drupal\Component\Datetime\TimeInterface;
 use Drupal\Core\Cache\CacheBackendInterface;
+use Drupal\Core\Entity\EntityTypeManagerInterface;
 use Drupal\Core\Logger\LoggerChannelFactoryInterface;
 use Drupal\Core\StringTranslation\StringTranslationTrait;
 use Drupal\soda_scs_manager\Entity\SodaScsComponentInterface;
@@ -34,6 +35,13 @@ class SodaScsDrupalHelpers {
    * @var \Drupal\Core\Cache\CacheBackendInterface
    */
   protected CacheBackendInterface $cacheBackend;
+
+  /**
+   * The entity type manager.
+   *
+   * @var \Drupal\Core\Entity\EntityTypeManagerInterface
+   */
+  protected EntityTypeManagerInterface $entityTypeManager;
 
   /**
    * The logger factory.
@@ -103,6 +111,8 @@ class SodaScsDrupalHelpers {
    *
    * @param \Drupal\Core\Cache\CacheBackendInterface $cacheBackend
    *   The cache backend.
+   * @param \Drupal\Core\Entity\EntityTypeManagerInterface $entityTypeManager
+   *   The entity type manager.
    * @param \Drupal\Core\Logger\LoggerChannelFactoryInterface $loggerFactory
    *   The logger factory.
    * @param \Drupal\soda_scs_manager\Helpers\SodaScsDatabaseHelpers $sodaScsDatabaseHelpers
@@ -125,6 +135,8 @@ class SodaScsDrupalHelpers {
   public function __construct(
     #[Autowire(service: 'cache.default')]
     CacheBackendInterface $cacheBackend,
+    #[Autowire(service: 'entity_type.manager')]
+    EntityTypeManagerInterface $entityTypeManager,
     #[Autowire(service: 'logger.factory')]
     LoggerChannelFactoryInterface $loggerFactory,
     #[Autowire(service: 'soda_scs_manager.database.helpers')]
@@ -145,6 +157,7 @@ class SodaScsDrupalHelpers {
     SodaScsProgressHelper $sodaScsProgressHelper,
   ) {
     $this->cacheBackend = $cacheBackend;
+    $this->entityTypeManager = $entityTypeManager;
     $this->loggerFactory = $loggerFactory;
     $this->sodaScsDatabaseHelpers = $sodaScsDatabaseHelpers;
     $this->sodaScsComponentHelpers = $sodaScsComponentHelpers;
@@ -742,7 +755,7 @@ class SodaScsDrupalHelpers {
   public function updateDrupalPackages(
     SodaScsComponentInterface $component,
     string $updateDrupalPackagesOperationUuid,
-    string $targetVersion = 'latest',
+    ?string $targetVersion = 'latest',
   ): SodaScsResult {
     try {
 
@@ -835,7 +848,7 @@ class SodaScsDrupalHelpers {
       }
       else {
         // In production mode, download versioned composer files and install.
-        $this->sodaScsProgressHelper->createStep($updateDrupalPackagesOperationUuid, 'Download versioned composer files and install');
+        $this->sodaScsProgressHelper->createStep($updateDrupalPackagesOperationUuid, 'Download versioned composer files and install packages');
         $versionedComposerUpdateResult = $this->versionedComposerUpdate($component, $mode, $actualVersion);
         if (!$versionedComposerUpdateResult->success) {
           // If the versioned composer update fails...
@@ -858,7 +871,7 @@ class SodaScsDrupalHelpers {
           );
         }
         // If the versioned composer update succeeds...
-        $this->sodaScsProgressHelper->createStep($updateDrupalPackagesOperationUuid, 'Downloaded versioned composer files and installed');
+        $this->sodaScsProgressHelper->createStep($updateDrupalPackagesOperationUuid, 'Downloaded versioned composer files and installed packages');
         $resultData['versionedComposerUpdate'] = $versionedComposerUpdateResult->data;
       }
 
@@ -907,9 +920,20 @@ class SodaScsDrupalHelpers {
           $actualVersion .= ' (' . $formatted . ')';
         }
       }
+
+      // Set the new version of the component and stack.
       $this->sodaScsProgressHelper->createStep($updateDrupalPackagesOperationUuid, 'Set new Drupal/WissKI environment version');
+      // Set the new version of the component.
       $component->set('version', $actualVersion);
       $component->save();
+
+      // Set the new version of the stack.
+      /** @var \Drupal\soda_scs_manager\Entity\SodaScsStackInterface $stack */
+      $stack = $this->entityTypeManager->getStorage('soda_scs_stack')->load($component->getPartOfStack());
+      if ($stack) {
+        $stack->set('version', $actualVersion);
+        $stack->save();
+      }
 
       // Post update steps.
       $this->sodaScsProgressHelper->createStep($updateDrupalPackagesOperationUuid, 'Perform post update steps');
@@ -1288,7 +1312,7 @@ class SodaScsDrupalHelpers {
           '--overwrite',
         ],
         'containerName' => (string) $component->get('containerId')->value,
-        'user'          => 'www-data',
+        'user'          => 'root',
       ]);
       if (!$composerTarResponse->success) {
         $errorDetail = 'Failed to unpack composer.tar.gz file: ' . ($composerTarResponse->error ?? '');

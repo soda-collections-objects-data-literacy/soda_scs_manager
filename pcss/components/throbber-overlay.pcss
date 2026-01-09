@@ -48,6 +48,13 @@
     @apply w-full max-w-lg mb-4;
   }
 
+  .soda-scs-manager__throbber-overlay__steps-container {
+    @apply w-full max-w-lg mb-4;
+    /* Fixed height container. */
+    height: 16rem;
+    overflow: hidden;
+  }
+
   .soda-scs-manager__throbber-overlay__info {
     @apply mt-6 text-base text-center max-w-lg px-6 leading-relaxed;
   }
@@ -72,12 +79,48 @@
 
   /* Steps List. */
   .soda-scs-manager__steps-list {
-    @apply list-none p-0 m-0 space-y-2;
+    @apply list-none p-0 m-0;
+    /* Fixed height with scrolling. */
+    height: 100%;
+    overflow-y: auto;
+    overflow-x: hidden;
+    /* Padding for spacing. */
+    padding: 0.5rem 0;
+  }
+
+  /* Consistent spacing between steps using margin-bottom. */
+  .soda-scs-manager__steps-list > .soda-scs-manager__step {
+    margin-top: 0;
+    margin-bottom: 0.5rem;
+  }
+
+  .soda-scs-manager__steps-list > .soda-scs-manager__step:first-child {
+    margin-top: 0;
+  }
+
+  .soda-scs-manager__steps-list > .soda-scs-manager__step:last-child {
+    margin-bottom: 0;
+  }
+
+  /* Custom scrollbar styling for steps list. */
+  .soda-scs-manager__steps-list::-webkit-scrollbar {
+    width: 6px;
+  }
+
+  .soda-scs-manager__steps-list::-webkit-scrollbar-track {
+    @apply bg-gray-800 rounded;
+  }
+
+  .soda-scs-manager__steps-list::-webkit-scrollbar-thumb {
+    @apply bg-gray-600 rounded;
+  }
+
+  .soda-scs-manager__steps-list::-webkit-scrollbar-thumb:hover {
+    @apply bg-gray-500;
   }
 
   .soda-scs-manager__step {
     @apply flex items-center gap-3 px-4 py-2 rounded-lg;
-    @apply transition-all duration-300;
   }
 
   .soda-scs-manager__step--pending {

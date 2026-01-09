@@ -153,7 +153,7 @@ class SodaScsComponent extends ContentEntityBase implements SodaScsComponentInte
     if (!$this->hasField('partOfStack') || $this->get('partOfStack')->isEmpty()) {
       return NULL;
     }
-    return (string) $this->get('parentStack')->value;
+    return (string) $this->get('partOfStack')->value;
   }
 
   /**

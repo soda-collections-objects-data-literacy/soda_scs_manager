@@ -75,13 +75,15 @@ class SodaScsProgressHelper {
    *   The operation type (e.g., 'drupal_packages_update').
    * @param string $status
    *   The initial status (default: 'started').
+   * @param string|null $operationUuid
+   *   The operation UUID to use. If NULL, a new UUID will be generated.
    *
    * @return string|null
    *   The operation UUID if created successfully, NULL otherwise.
    */
-  public function createOperation(string $operationType, string $status = 'started'): ?string {
+  public function createOperation(string $operationType, string $status = 'started', ?string $operationUuid = NULL): ?string {
     try {
-      $operationUuid = $this->generateUuid();
+      $operationUuid = $operationUuid ?? $this->generateUuid();
       $currentTime = $this->time->getCurrentTime();
       $this->database->insert('soda_scs_operations')
         ->fields([
@@ -269,11 +271,11 @@ class SodaScsProgressHelper {
   ): string {
     try {
       $stepId = $this->generateUuid();
-      $currentTime = $this->time->getCurrentTime();
+      $currentMicrotime = microtime(TRUE);
       $fields = [
         'uuid' => $stepId,
         'operation_uuid' => $operationId,
-        'created' => $currentTime,
+        'created' => $currentMicrotime,
       ];
 
       if ($message !== NULL) {
@@ -305,7 +307,9 @@ class SodaScsProgressHelper {
    * @param string|null $orderBy
    *   Optional field to order by (default: 'created').
    * @param string $direction
-   *   Order direction: 'ASC' or 'DESC' (default: 'ASC').
+   *   Order direction: 'ASC' or 'DESC' (default: 'DESC').
+   * @param int|null $limit
+   *   Optional limit on the number of results.
    *
    * @return array
    *   An array of step arrays.
@@ -315,6 +319,7 @@ class SodaScsProgressHelper {
     array $additionalConditions = [],
     ?string $orderBy = 'created',
     string $direction = 'DESC',
+    ?int $limit = NULL,
   ): array {
     try {
       $query = $this->database->select('soda_scs_steps', 's')
@@ -325,7 +330,14 @@ class SodaScsProgressHelper {
         $query->condition($field, $value);
       }
 
+      // Primary sort by created (now float with microsecond precision).
       $query->orderBy($orderBy, $direction);
+      // Secondary sort by uuid to ensure consistent ordering when timestamps are identical.
+      $query->orderBy('uuid', $direction);
+
+      if ($limit !== NULL && $limit > 0) {
+        $query->range(0, $limit);
+      }
 
       return $query->execute()->fetchAll(\PDO::FETCH_ASSOC);
     }
@@ -365,12 +377,69 @@ class SodaScsProgressHelper {
   }
 
   /**
+   * Delete operations older than the specified number of seconds.
+   *
+   * @param int $ageInSeconds
+   *   The age threshold in seconds (default: 7 days = 604800 seconds).
+   *
+   * @return array
+   *   An array with 'deleted_operations' and 'deleted_steps' counts.
+   */
+  public function deleteOldOperations(int $ageInSeconds = 604800): array {
+    $result = [
+      'deleted_operations' => 0,
+      'deleted_steps' => 0,
+    ];
+
+    try {
+      $cutoffTime = $this->time->getCurrentTime() - $ageInSeconds;
+
+      // Find all operations older than the cutoff time.
+      $query = $this->database->select('soda_scs_operations', 'o')
+        ->fields('o', ['uuid'])
+        ->condition('created', $cutoffTime, '<');
+      $oldOperationUuids = $query->execute()->fetchCol();
+
+      if (empty($oldOperationUuids)) {
+        return $result;
+      }
+
+      // Delete steps for each old operation.
+      foreach ($oldOperationUuids as $operationUuid) {
+        $stepsDeleted = $this->database->delete('soda_scs_steps')
+          ->condition('operation_uuid', $operationUuid)
+          ->execute();
+        $result['deleted_steps'] += $stepsDeleted;
+      }
+
+      // Delete the old operations.
+      $result['deleted_operations'] = $this->database->delete('soda_scs_operations')
+        ->condition('created', $cutoffTime, '<')
+        ->execute();
+
+      $this->logger->info('Deleted @operations old operations and @steps associated steps older than @age days.', [
+        '@operations' => $result['deleted_operations'],
+        '@steps' => $result['deleted_steps'],
+        '@age' => round($ageInSeconds / 86400, 1),
+      ]);
+
+      return $result;
+    }
+    catch (\Exception $e) {
+      $this->logger->error('Failed to delete old operations: @message', [
+        '@message' => $e->getMessage(),
+      ]);
+      return $result;
+    }
+  }
+
+  /**
    * Generate a new operation ID.
    *
    * @return string
    *   A 36-character UUID (UUID v4 with hyphens).
    */
-  private function generateUuid(): string {
+  public static function generateUuid(): string {
     return (new Php())->generate();
   }
 

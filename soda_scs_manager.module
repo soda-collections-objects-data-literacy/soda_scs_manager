@@ -1357,6 +1357,26 @@ function _soda_scs_manager_sync_project_component_relationship(SodaScsProject $p
 }
 
 /**
+ * Implements hook_cron().
+ *
+ * Deletes operations and their steps older than one week.
+ */
+function soda_scs_manager_cron() {
+  /** @var \Drupal\soda_scs_manager\Helpers\SodaScsProgressHelper $progressHelper */
+  $progressHelper = \Drupal::service('soda_scs_manager.progress.helpers');
+
+  // Delete operations older than 7 days (604800 seconds).
+  $result = $progressHelper->deleteOldOperations(604800);
+
+  if ($result['deleted_operations'] > 0 || $result['deleted_steps'] > 0) {
+    \Drupal::logger('soda_scs_manager')->info('Cron job: Deleted @operations operations and @steps steps older than 7 days.', [
+      '@operations' => $result['deleted_operations'],
+      '@steps' => $result['deleted_steps'],
+    ]);
+  }
+}
+
+/**
  * Implements hook_preprocess_menu().
  */
 function soda_scs_manager_preprocess_menu(&$variables): void {

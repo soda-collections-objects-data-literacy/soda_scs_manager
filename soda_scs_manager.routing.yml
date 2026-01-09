@@ -21,11 +21,11 @@ soda_scs_manager.stack.health_check:
   options:
     no_cache: TRUE
 
-soda_scs_manager.progress.latest_step:
-  path: '/soda-scs-manager/progress/{operation_uuid}/latest-step'
+soda_scs_manager.progress.latest_steps:
+  path: '/soda-scs-manager/progress/{operation_uuid}/latest-steps'
   defaults:
-    _controller: '\Drupal\soda_scs_manager\Controller\SodaScsProgressController::getLatestStep'
-    _title: 'Get latest step for operation'
+    _controller: '\Drupal\soda_scs_manager\Controller\SodaScsProgressController::getLatestSteps'
+    _title: 'Get latest steps for operation'
   requirements:
     _permission: 'soda scs manager user'
     operation_uuid: '[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}'

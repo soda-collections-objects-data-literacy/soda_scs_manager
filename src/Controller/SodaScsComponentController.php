@@ -206,7 +206,7 @@ class SodaScsComponentController extends ControllerBase {
     // Get operation UUID from query parameters or create a new one.
     $operationUuid = $request->query->get('operation_uuid');
     if (!$operationUuid) {
-      $operationUuid = $this->sodaScsProgressHelper->createOperation('drupal_packages_update');
+      $operationUuid = SodaScsProgressHelper::generateUuid();
     }
 
     $build = [

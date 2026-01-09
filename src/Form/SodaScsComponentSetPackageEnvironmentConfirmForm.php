@@ -192,14 +192,15 @@ class SodaScsComponentSetPackageEnvironmentConfirmForm extends ConfirmFormBase {
   public function submitForm(array &$form, FormStateInterface $form_state): void {
     $version = $form_state->getValue('version_dropdown', 'latest');
 
-    // Get operation UUID from form state (set in buildForm).
-    $operationUuid = $form_state->get('operationUuid');
+    // Create a new operation UUID for the update.
+    // @todo We may make this an own object in the future.
+    $operationUuid = $this->sodaScsProgressHelper->createOperation('drupal_packages_update', 'started', $form_state->get('operationUuid'));
 
     try {
       $updateResult = $this->sodaScsDrupalHelpers->updateDrupalPackages(
         $this->component,
+        $operationUuid,
         $version,
-        $operationUuid
       );
 
       if ($updateResult->success) {

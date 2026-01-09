@@ -24,18 +24,19 @@
       clearInterval(progressPollInterval);
     }
 
-    // Poll every second.
+    // Poll every 2 seconds.
     progressPollInterval = setInterval(function() {
       $.ajax({
-        url: Drupal.url('soda-scs-manager/progress/' + operationUuid + '/latest-step'),
+        url: Drupal.url('soda-scs-manager/progress/' + operationUuid + '/latest-steps'),
         method: 'GET',
         dataType: 'json',
+        data: {
+          limit: 5,
+        },
         success: function(response) {
-          console.log('response.step.message', response.step.message);
-          if (response.step && response.step.message) {
-            // Update the throbber overlay message with the latest step.
-            console.log('response.step.message', response.step.message);
-            $('.soda-scs-manager__throbber-overlay__info').text(response.step.message);
+          // Update steps list if we have steps.
+          if (response.steps && response.steps.length > 0) {
+            updateStepsList(response.steps);
           }
 
           // Check if operation is completed or failed.
@@ -49,7 +50,7 @@
           stopProgressPolling();
         }
       });
-    }, 1000);
+    }, 2000);
   }
 
   /**
@@ -60,6 +61,42 @@
       clearInterval(progressPollInterval);
       progressPollInterval = null;
     }
+  }
+
+  /**
+   * Update the steps list (simple replacement, no animations).
+   *
+   * @param {Array} steps
+   *   Array of step objects, ordered from newest to oldest.
+   */
+  function updateStepsList(steps) {
+    const $stepsList = $('.soda-scs-manager__steps-list');
+    if (!$stepsList.length) {
+      return;
+    }
+
+    // Build HTML for all steps (newest first).
+    let stepsHtml = '';
+    steps.forEach(function(step, index) {
+      const stepUuid = step.uuid || 'step-' + index + '-' + (step.message || '').substring(0, 20);
+      const message = step.message || '';
+
+      stepsHtml += `
+        <li class="soda-scs-manager__step soda-scs-manager__step--running"
+            data-step-uuid="${Drupal.checkPlain(stepUuid)}">
+          <div class="soda-scs-manager__step__icon">
+            <svg class="soda-scs-manager__icon soda-scs-manager__icon--running" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="2" fill="none" opacity="0.3"/>
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/>
+            </svg>
+          </div>
+          <div class="soda-scs-manager__step__label">${Drupal.checkPlain(message)}</div>
+        </li>
+      `;
+    });
+
+    // Replace the entire list.
+    $stepsList.html(stepsHtml);
   }
 
   /**
@@ -74,6 +111,9 @@
             <div class="soda-scs-manager__throbber-overlay__content">
               <div class="soda-scs-manager__throbber-overlay__spinner"></div>
               <div class="soda-scs-manager__throbber-overlay__message">Performing action, please do not close the window</div>
+              <div class="soda-scs-manager__throbber-overlay__steps-container">
+                <ul class="soda-scs-manager__steps-list"></ul>
+              </div>
               <div class="soda-scs-manager__throbber-overlay__info"></div>
             </div>
           </div>
