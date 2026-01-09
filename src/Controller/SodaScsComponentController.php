@@ -9,6 +9,7 @@ use Drupal\Core\Controller\ControllerBase;
 use Drupal\Core\Entity\EntityTypeManagerInterface;
 use Drupal\soda_scs_manager\Helpers\SodaScsComponentHelpers;
 use Drupal\soda_scs_manager\Helpers\SodaScsDrupalHelpers;
+use Drupal\soda_scs_manager\Helpers\SodaScsProgressHelper;
 use Drupal\soda_scs_manager\Entity\SodaScsComponentInterface;
 use Drupal\Core\Url;
 use Symfony\Component\HttpFoundation\JsonResponse;
@@ -36,6 +37,13 @@ class SodaScsComponentController extends ControllerBase {
   protected $sodaScsDrupalHelpers;
 
   /**
+   * The progress helper service.
+   *
+   * @var \Drupal\soda_scs_manager\Helpers\SodaScsProgressHelper
+   */
+  protected SodaScsProgressHelper $sodaScsProgressHelper;
+
+  /**
    * The entity type manager.
    *
    * @var \Drupal\Core\Entity\EntityTypeManagerInterface
@@ -57,11 +65,13 @@ class SodaScsComponentController extends ControllerBase {
     EntityTypeManagerInterface $entity_type_manager,
     SodaScsComponentHelpers $sodaScsComponentHelpers,
     SodaScsDrupalHelpers $sodaScsDrupalHelpers,
+    SodaScsProgressHelper $sodaScsProgressHelper,
   ) {
     $this->container = $container;
     $this->entityTypeManager = $entity_type_manager;
     $this->sodaScsComponentHelpers = $sodaScsComponentHelpers;
     $this->sodaScsDrupalHelpers = $sodaScsDrupalHelpers;
+    $this->sodaScsProgressHelper = $sodaScsProgressHelper;
   }
 
   /**
@@ -73,6 +83,7 @@ class SodaScsComponentController extends ControllerBase {
       $container->get('entity_type.manager'),
       $container->get('soda_scs_manager.component.helpers'),
       $container->get('soda_scs_manager.drupal.helpers'),
+      $container->get('soda_scs_manager.progress.helpers'),
     );
   }
 
@@ -182,13 +193,21 @@ class SodaScsComponentController extends ControllerBase {
    *
    * @param \Drupal\soda_scs_manager\Entity\SodaScsComponentInterface $soda_scs_component
    *   The SODa SCS component.
+   * @param \Symfony\Component\HttpFoundation\Request $request
+   *   The request.
    *
    * @return array
    *   The render array.
    */
-  public function installedDrupalPackages(SodaScsComponentInterface $soda_scs_component): array {
+  public function installedDrupalPackages(SodaScsComponentInterface $soda_scs_component, Request $request): array {
 
     $drupalPackages = $this->sodaScsDrupalHelpers->getInstalledDrupalPackages($soda_scs_component);
+
+    // Get operation UUID from query parameters or create a new one.
+    $operationUuid = $request->query->get('operation_uuid');
+    if (!$operationUuid) {
+      $operationUuid = $this->sodaScsProgressHelper->createOperation('drupal_packages_update');
+    }
 
     $build = [
       // @todo Implement proper cache, when infos had changed.
@@ -222,6 +241,39 @@ class SodaScsComponentController extends ControllerBase {
 
       return $build;
     }
+
+    // Add action buttons.
+    $build['actions'] = [
+      '#type' => 'container',
+      '#attributes' => [
+        'class' => ['soda-scs-manager__actions'],
+      ],
+      'set_package_environment' => [
+        '#type' => 'link',
+        '#title' => $this->t('Set package environment'),
+        '#url' => Url::fromRoute('soda_scs_manager.component.set_package_environment', [
+          'soda_scs_component' => $soda_scs_component->id(),
+        ], [
+          'query' => [
+            'operation_uuid' => $operationUuid,
+          ],
+        ]),
+        '#attributes' => [
+          'class' => ['button', 'button--action', 'button--primary'],
+        ],
+      ],
+      'check_drupal_packages' => [
+        '#type' => 'link',
+        '#title' => $this->t('Check for updates'),
+        '#url' => Url::fromRoute('soda_scs_manager.component.check_drupal_packages', [
+          'soda_scs_component' => $soda_scs_component->id(),
+        ]),
+        '#attributes' => [
+          'class' => ['button', 'button--action', 'button--primary', 'soda-scs-manager__throbber-overlay-trigger'],
+          'data-throbber-message' => 'Checking for updates, please wait.',
+        ],
+      ],
+    ];
 
     $packages = $drupalPackages->data['packages'] ?? [];
     $rows = [];

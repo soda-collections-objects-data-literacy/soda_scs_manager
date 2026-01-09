@@ -35,7 +35,7 @@
           if (response.step && response.step.message) {
             // Update the throbber overlay message with the latest step.
             console.log('response.step.message', response.step.message);
-            $('.soda-scs-manager__throbber-overlay__message').text(response.step.message);
+            $('.soda-scs-manager__throbber-overlay__info').text(response.step.message);
           }
 
           // Check if operation is completed or failed.

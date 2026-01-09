@@ -137,9 +137,17 @@ class SodaScsComponentSetPackageEnvironmentConfirmForm extends ConfirmFormBase {
 
     // Attach the throbber overlay library.
     $form['#attached']['library'][] = 'soda_scs_manager/throbberOverlay';
+
+    // Get operation UUID from query parameters or create a new one.
+    $request = $this->requestStack->getCurrentRequest();
+    $operationUuid = $request->query->get('operation_uuid');
+
+    // Store in form state for use in submitForm.
+    $form_state->set('operationUuid', $operationUuid);
+
     // Enable progress polling in drupalSettings as well.
     $form['#attached']['drupalSettings']['sodaScsManager']['progressPolling'] = TRUE;
-    $form['#attached']['drupalSettings']['sodaScsManager']['operationUuid'] = $this->sodaScsProgressHelper->createOperation('drupal_packages_update');
+    $form['#attached']['drupalSettings']['sodaScsManager']['operationUuid'] = $operationUuid;
 
     return $form;
   }
@@ -183,7 +191,9 @@ class SodaScsComponentSetPackageEnvironmentConfirmForm extends ConfirmFormBase {
    */
   public function submitForm(array &$form, FormStateInterface $form_state): void {
     $version = $form_state->getValue('version_dropdown', 'latest');
-    $operationUuid = $form['#attached']['drupalSettings']['sodaScsManager']['operationUuid'];
+
+    // Get operation UUID from form state (set in buildForm).
+    $operationUuid = $form_state->get('operationUuid');
 
     try {
       $updateResult = $this->sodaScsDrupalHelpers->updateDrupalPackages(

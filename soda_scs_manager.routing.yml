@@ -550,6 +550,8 @@ soda_scs_manager.component.set_package_environment:
     parameters:
       soda_scs_component:
         type: entity:soda_scs_component
+    query:
+      operation_uuid: string
     no_cache: TRUE
 
 soda_scs_manager.component.service_link:

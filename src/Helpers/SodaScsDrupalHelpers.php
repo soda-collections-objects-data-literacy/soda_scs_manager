@@ -730,23 +730,21 @@ class SodaScsDrupalHelpers {
    *
    * @param \Drupal\soda_scs_manager\Entity\SodaScsComponentInterface $component
    *   The component.
+   * @param string $updateDrupalPackagesOperationUuid
+   *   The operation UUID.
    * @param string $targetVersion
    *   The target version to update to. Defaults to 'latest' (production
    *   version).
-   * @param ?string $operationUuid
-   *   The operation UUID.
    *
    * @return \Drupal\soda_scs_manager\ValueObject\SodaScsResult
    *   The Soda SCS result.
    */
   public function updateDrupalPackages(
     SodaScsComponentInterface $component,
+    string $updateDrupalPackagesOperationUuid,
     string $targetVersion = 'latest',
-    ?string $operationUuid = NULL,
   ): SodaScsResult {
     try {
-      // Start update operation logging.
-      $updateDrupalPackagesOperationUuid = $operationUuid ?? $this->sodaScsProgressHelper->createOperation('drupal_packages_update');
 
       // Get mode from component.
       $mode = $component->get('developmentInstance')->value ? 'development' : 'production';
