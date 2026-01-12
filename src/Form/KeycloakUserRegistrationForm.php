@@ -78,10 +78,10 @@ class KeycloakUserRegistrationForm extends FormBase {
    *   The database connection.
    * @param \Drupal\Core\Entity\EntityTypeManagerInterface $entity_type_manager
    *   The entity type manager.
-   * @param \Drupal\Core\Messenger\MessengerInterface $messenger
-   *   The messenger service.
    * @param \Drupal\Core\Mail\MailManagerInterface $mail_manager
    *   The mail manager service.
+   * @param \Drupal\Core\Messenger\MessengerInterface $messenger
+   *   The messenger service.
    * @param \Drupal\Core\Password\PasswordGeneratorInterface $password_generator
    *   The password generator service.
    * @param \Drupal\Core\Password\PasswordInterface $password_hasher
@@ -147,6 +147,7 @@ class KeycloakUserRegistrationForm extends FormBase {
       '#description' => $this->t('Enter a valid email address. This will be used for communication and login.'),
     ];
 
+    // @todo Implement blacklist of usernames (no admin, root, etc.).
     $form['username'] = [
       '#type' => 'textfield',
       '#title' => $this->t('Username'),
@@ -212,6 +213,22 @@ class KeycloakUserRegistrationForm extends FormBase {
     $username = $form_state->getValue('username');
     if (!preg_match('/^[a-zA-Z0-9_]+$/', $username)) {
       $form_state->setErrorByName('username', $this->t('Username may only contain alphanumeric characters and underscores.'));
+    }
+
+    $blacklist = [
+      'admin',
+      'root',
+      'administrator',
+      'editor',
+      'anonymous',
+      'scs_manager',
+      'scs-manager',
+      'scs-user',
+      'scs_user',
+    ];
+
+    if (in_array($username, $blacklist)) {
+      $form_state->setErrorByName('username', $this->t('Username may not contain the word.'));
     }
 
     // Validate first name (no special characters except accented letters).
@@ -311,7 +328,7 @@ class KeycloakUserRegistrationForm extends FormBase {
     // Send notification to site admin about new registration that needs approval.
     $admin_email = $this->config('smtp.settings')->get('smtp_from');
     if (empty($admin_email)) {
-      // Fallback to site email if SMTP from is not set
+      // Fallback to site email if SMTP from is not set.
       $admin_email = $site_mail;
     }
 
