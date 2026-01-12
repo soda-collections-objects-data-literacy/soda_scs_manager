@@ -55,6 +55,14 @@ interface SodaScsComponentInterface extends ContentEntityInterface, EntityOwnerI
   /**
    * Gets the parent stack.
    *
+   * @return \Drupal\soda_scs_manager\Entity\SodaScsStackInterface|null
+   *   The parent stack or NULL when not available.
+   */
+  public function getPartOfStack(): ?SodaScsStackInterface;
+
+  /**
+   * Gets the parent stack.
+   *
    * @return int|null
    *   The parent stack or NULL when not available.
    */

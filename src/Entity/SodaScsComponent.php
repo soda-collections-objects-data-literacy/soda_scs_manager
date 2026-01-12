@@ -146,6 +146,16 @@ class SodaScsComponent extends ContentEntityBase implements SodaScsComponentInte
   /**
    * Gets the parent stack from a component if present.
    *
+   * @return \Drupal\soda_scs_manager\Entity\SodaScsStackInterface|null
+   *   The parent stack or NULL when not available.
+   */
+  public function getPartOfStack(): ?SodaScsStackInterface {
+    return $this->get('partOfStack')->entity;
+  }
+
+  /**
+   * Gets the parent stack from a component if present.
+   *
    * @return int|null
    *   The parent stack or NULL when not available.
    */

@@ -930,11 +930,9 @@ class SodaScsDrupalHelpers {
 
       // Set the new version of the stack.
       /** @var \Drupal\soda_scs_manager\Entity\SodaScsStackInterface $stack */
-      $stack = $this->entityTypeManager->getStorage('soda_scs_stack')->load($component->getPartOfStackId());
-      if ($stack) {
-        $stack->set('version', $actualVersion);
-        $stack->save();
-      }
+      $stack = $component->getPartOfStack();
+      $stack->set('version', $actualVersion);
+      $stack->save();
 
       // Post update steps.
       $this->sodaScsProgressHelper->createStep($updateDrupalPackagesOperationUuid, 'Perform post update steps');
