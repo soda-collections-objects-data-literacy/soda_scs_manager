@@ -94,7 +94,7 @@ class SodaScsComponent extends ContentEntityBase implements SodaScsComponentInte
    *   The container ID or NULL when not available.
    */
   public function getContainerId(): ?string {
-    if (!$this->hasField('containerId') || $this->get('containerId')->isEmpty()) {
+    if ($this->get('containerId')->isEmpty()) {
       return NULL;
     }
     return (string) $this->get('containerId')->value;
@@ -107,7 +107,7 @@ class SodaScsComponent extends ContentEntityBase implements SodaScsComponentInte
    *   The container name or NULL when not available.
    */
   public function getContainerName(): ?string {
-    if (!$this->hasField('containerName') || $this->get('containerName')->isEmpty()) {
+    if ($this->get('containerName')->isEmpty()) {
       return NULL;
     }
     return (string) $this->get('containerName')->value;
@@ -146,14 +146,14 @@ class SodaScsComponent extends ContentEntityBase implements SodaScsComponentInte
   /**
    * Gets the parent stack from a component if present.
    *
-   * @return string|null
+   * @return int|null
    *   The parent stack or NULL when not available.
    */
-  public function getPartOfStack(): ?string {
-    if (!$this->hasField('partOfStack') || $this->get('partOfStack')->isEmpty()) {
+  public function getPartOfStackId(): ?int {
+    if ($this->get('partOfStack')->isEmpty()) {
       return NULL;
     }
-    return (string) $this->get('partOfStack')->value;
+    return (int) $this->get('partOfStack')->target_id;
   }
 
   /**
@@ -163,7 +163,7 @@ class SodaScsComponent extends ContentEntityBase implements SodaScsComponentInte
    *   The version or NULL when not available.
    */
   public function getVersion(): ?string {
-    if (!$this->hasField('version') || $this->get('version')->isEmpty()) {
+    if ($this->get('version')->isEmpty()) {
       return NULL;
     }
     return (string) $this->get('version')->value;

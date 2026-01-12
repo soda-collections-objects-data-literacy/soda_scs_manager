@@ -15,6 +15,7 @@ use Drupal\Core\Session\AccountProxyInterface;
 use Drupal\Core\StringTranslation\TranslatableMarkup;
 use Drupal\Core\Url;
 use Drupal\soda_scs_manager\Helpers\SodaScsComponentHelpers;
+use Drupal\soda_scs_manager\Helpers\SodaScsProgressHelper;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 use Symfony\Component\HttpFoundation\RequestStack;
 
@@ -417,6 +418,8 @@ class SodaScsComponentListBuilder extends EntityListBuilder {
     // Created date.
     $created = $entity->get('created')->value;
     $row['created'] = $this->dateFormatter->format($created, 'short');
+
+    $row['operations']['data'] = $this->buildOperations($entity);
 
     return $row + parent::buildRow($entity);
   }
@@ -912,6 +915,72 @@ class SodaScsComponentListBuilder extends EntityListBuilder {
     $build['#cache']['max-age'] = 0;
 
     return $build;
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  protected function getDefaultOperations(EntityInterface $entity) {
+    $operations = parent::getDefaultOperations($entity);
+    // @todo Add view operation to the operations array.
+    if ($entity->access('view') && $entity->hasLinkTemplate('view')) {
+      $view_url = $this->ensureDestination($entity->toUrl('view'));
+      if (!empty($entity->label())) {
+        $label = $this->t('View @entity_label', ['@entity_label' => $entity->label()]);
+      }
+      else {
+        $label = $this->t('View @entity_bundle @entity_id', [
+          '@entity_bundle' => $entity->bundle(),
+          '@entity_id' => $entity->id(),
+        ]);
+      }
+      $attributes = $view_url->getOption('attributes') ?: [];
+      $attributes += ['aria-label' => $label];
+      $view_url->setOption('attributes', $attributes);
+
+      $operations['view'] = [
+        'title' => $this->t('View'),
+        'weight' => 10,
+        'url' => $view_url,
+      ];
+    }
+
+    // Show application.
+    $service_link_url = Url::fromRoute('soda_scs_manager.component.service_link', [
+      'soda_scs_component' => $entity->id(),
+    ]);
+    $attributes = $service_link_url->getOption('attributes') ?: [];
+    $attributes += ['aria-label' => $entity->label() . ' - ' . $this->t('Show Application')];
+    $service_link_url->setOption('attributes', $attributes);
+
+    $operations['service_link'] = [
+      'title' => $this->t('Show'),
+      'weight' => 60,
+      'url' => $service_link_url,
+    ];
+
+    // Package Update operation.
+    if ($this->currentUser->hasPermission('soda scs manager admin') && ($entity->bundle() === 'soda_scs_wisski_component')) {
+      // Add a "Package Update" operation for admins.
+      $package_update_url = Url::fromRoute('soda_scs_manager.component.set_package_environment', [
+        'soda_scs_component' => $entity->id(),
+      ], [
+        'query' => [
+          'operation_uuid' => SodaScsProgressHelper::generateUuid(),
+        ],
+      ]);
+      $attributes = $package_update_url->getOption('attributes') ?: [];
+      $attributes += ['aria-label' => $entity->label() . ' - ' . $this->t('Update Drupal Packages')];
+      $package_update_url->setOption('attributes', $attributes);
+
+      $operations['package_update'] = [
+        'title' => $this->t('Update Drupal Packages'),
+        'weight' => 99,
+        'url' => $package_update_url,
+      ];
+    }
+
+    return $operations;
   }
 
 }

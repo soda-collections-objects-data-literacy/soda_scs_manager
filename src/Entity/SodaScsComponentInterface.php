@@ -55,10 +55,10 @@ interface SodaScsComponentInterface extends ContentEntityInterface, EntityOwnerI
   /**
    * Gets the parent stack.
    *
-   * @return string|null
+   * @return int|null
    *   The parent stack or NULL when not available.
    */
-  public function getPartOfStack(): ?string;
+  public function getPartOfStackId(): ?int;
 
   /**
    * Gets the version.

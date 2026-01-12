@@ -589,7 +589,7 @@ class SodaScsDrupalHelpers {
       'cmd'           => [
         'sh',
         '-c',
-        'rm -f /opt/drupal/composer.json /opt/drupal/composer.lock',
+        'rm -rf /opt/drupal/vendor /opt/drupal/composer.json /opt/drupal/composer.lock',
       ],
       'containerName' => (string) $component->get('containerId')->value,
       'user'          => 'root',
@@ -816,6 +816,7 @@ class SodaScsDrupalHelpers {
       $resultData['secureDrupalPackagesAndDatabase'] = $secureDrupalPackagesAndDatabaseResult->data;
       $backupPath = $secureDrupalPackagesAndDatabaseResult->data['backupPath'];
 
+      // 3. Update the Drupal packages.
       if ($targetVersion === 'nightly') {
         // In development mode, just run simple composer update.
         $this->sodaScsProgressHelper->createStep($updateDrupalPackagesOperationUuid, 'Perform simple composer update');
@@ -875,7 +876,7 @@ class SodaScsDrupalHelpers {
         $resultData['versionedComposerUpdate'] = $versionedComposerUpdateResult->data;
       }
 
-      // Update the Drupal database with drush updatedb.
+      // 4. Update the Drupal database with drush updatedb.
       $this->sodaScsProgressHelper->createStep($updateDrupalPackagesOperationUuid, 'Perform database update');
       $databaseUpdateResult = $this->updateDrupalDatabase($component);
       if (!$databaseUpdateResult->success) {
@@ -909,9 +910,9 @@ class SodaScsDrupalHelpers {
       $resultData['databaseUpdate'] = $databaseUpdateResult->data;
 
       // Set the new version of the component.
-      // If $actualVersion is a nightly build, add human-readable timestamp in
-      // parenthesis.
       if (preg_match('/^nightly(?:-(\d+))?$/', $actualVersion, $matches)) {
+        // If $actualVersion is a nightly build, add human-readable timestamp in
+        // parenthesis.
         $timestamp = $matches[1] ?? NULL;
         if (is_string($timestamp) && ctype_digit($timestamp)) {
           // Format timestamp to human-readable (e.g., 2024-06-11 15:23:45 UTC).
@@ -929,7 +930,7 @@ class SodaScsDrupalHelpers {
 
       // Set the new version of the stack.
       /** @var \Drupal\soda_scs_manager\Entity\SodaScsStackInterface $stack */
-      $stack = $this->entityTypeManager->getStorage('soda_scs_stack')->load($component->getPartOfStack());
+      $stack = $this->entityTypeManager->getStorage('soda_scs_stack')->load($component->getPartOfStackId());
       if ($stack) {
         $stack->set('version', $actualVersion);
         $stack->save();
