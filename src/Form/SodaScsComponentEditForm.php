@@ -64,6 +64,7 @@ class SodaScsComponentEditForm extends ContentEntityForm {
     // Hide unchangeable fields.
     $form['flavours']['#access'] = FALSE;
     $form['automatedUpdates']['#access'] = FALSE;
+    $form['partOfStack']['#access'] = FALSE;
     $form['developmentInstance']['#access'] = FALSE;
     $form['defaultLanguage']['#access'] = FALSE;
 

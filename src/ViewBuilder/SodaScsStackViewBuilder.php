@@ -30,8 +30,6 @@ class SodaScsStackViewBuilder extends EntityViewBuilder {
       'max-age' => 0,
     ];
 
-    $test = \Drupal::service('soda_scs_manager.portainer.helpers')->removeVolumesOfComposeStack('wisski-test-prod-2');
-
     return $build;
   }
 

@@ -14,6 +14,7 @@ use Drupal\Core\Pager\PagerManagerInterface;
 use Drupal\Core\Session\AccountProxyInterface;
 use Drupal\Core\StringTranslation\TranslatableMarkup;
 use Drupal\Core\Url;
+use Drupal\soda_scs_manager\Helpers\SodaScsComponentHelpers;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 use Symfony\Component\HttpFoundation\RequestStack;
 
@@ -60,6 +61,13 @@ class SodaScsComponentListBuilder extends EntityListBuilder {
   protected PagerManagerInterface $pagerManager;
 
   /**
+   * The SODa SCS component helpers.
+   *
+   * @var \Drupal\soda_scs_manager\Helpers\SodaScsComponentHelpers
+   */
+  protected SodaScsComponentHelpers $sodaScsComponentHelpers;
+
+  /**
    * {@inheritdoc}
    */
   public static function createInstance(ContainerInterface $container, EntityTypeInterface $entity_type) {
@@ -69,6 +77,7 @@ class SodaScsComponentListBuilder extends EntityListBuilder {
     $instance->formBuilder = $container->get('form_builder');
     $instance->requestStack = $container->get('request_stack');
     $instance->pagerManager = $container->get('pager.manager');
+    $instance->sodaScsComponentHelpers = $container->get('soda_scs_manager.component.helpers');
     return $instance;
   }
 
@@ -267,6 +276,7 @@ class SodaScsComponentListBuilder extends EntityListBuilder {
     $header['machineName'] = $this->buildSortableHeader('machineName', $this->t('Machine Name'), $currentSort, $currentOrder);
     $header['owner'] = $this->buildSortableHeader('owner', $this->t('Owner'), $currentSort, $currentOrder);
     $header['health'] = $this->t('Health Status');
+    $header['version'] = $this->t('Version');
     $header['created'] = $this->buildSortableHeader('created', $this->t('Created'), $currentSort, $currentOrder);
 
     return $header + parent::buildHeader();
@@ -393,19 +403,120 @@ class SodaScsComponentListBuilder extends EntityListBuilder {
       $row['owner'] = $this->t('Unknown');
     }
 
-    // Health status - will be populated by JavaScript.
-    // @todo Implement health status.
+    // Health status - perform one-time health check.
+    $healthStatus = $this->getComponentHealthStatus($entity);
     $row['health'] = [
       'data' => [
-        '#markup' => '<span class="component-health-status health-pending">(not yet implemented)</span>',
+        '#markup' => $healthStatus['markup'],
       ],
     ];
+
+    // Version.
+    $row['version'] = $entity->bundle() === 'soda_scs_wisski_component' ? $entity->get('version')->value : $this->t('N/A');
 
     // Created date.
     $created = $entity->get('created')->value;
     $row['created'] = $this->dateFormatter->format($created, 'short');
 
     return $row + parent::buildRow($entity);
+  }
+
+  /**
+   * Get component health status by performing a one-time health check.
+   *
+   * @param \Drupal\Core\Entity\EntityInterface $entity
+   *   The component entity.
+   *
+   * @return array
+   *   An array with 'markup' key containing the health status HTML.
+   *
+   *  @todo Quick implementation, should be refactored with existing health check functions.
+   */
+  protected function getComponentHealthStatus(EntityInterface $entity): array {
+    /** @var \Drupal\soda_scs_manager\Entity\SodaScsComponentInterface $entity */
+    $bundle = $entity->bundle();
+    $healthResult = NULL;
+
+    try {
+      switch ($bundle) {
+        case 'soda_scs_wisski_component':
+          $healthResult = $this->sodaScsComponentHelpers->drupalHealthCheck($entity);
+          break;
+
+        case 'soda_scs_sql_component':
+          $healthResult = $this->sodaScsComponentHelpers->checkSqlHealth((int) $entity->id());
+          break;
+
+        case 'soda_scs_triplestore_component':
+          $healthResult = $this->sodaScsComponentHelpers->checkTriplestoreHealth(
+            $entity->get('machineName')->value,
+            $entity->get('machineName')->value,
+          );
+          break;
+
+        case 'soda_scs_filesystem_component':
+          $healthResult = $this->sodaScsComponentHelpers->checkFilesystemHealth(
+            $entity->get('machineName')->value,
+          );
+          break;
+
+        default:
+          // Unknown bundle type.
+          return [
+            'markup' => '<span class="component-health-status health-pending" title="Health check not available for this component type">N/A</span>',
+          ];
+      }
+    }
+    catch (\Exception $e) {
+      return [
+        'markup' => '<span class="component-health-status health-error" title="' . htmlspecialchars($e->getMessage(), ENT_QUOTES) . '">● Error</span>',
+      ];
+    }
+
+    // Format the health status based on the result.
+    if (!$healthResult || !is_array($healthResult)) {
+      return [
+        'markup' => '<span class="component-health-status health-error">● Unavailable</span>',
+      ];
+    }
+
+    $success = (bool) ($healthResult['success'] ?? FALSE);
+    $status = (string) ($healthResult['status'] ?? 'unknown');
+    $message = (string) ($healthResult['message'] ?? 'Unknown status');
+    $error = (string) ($healthResult['error'] ?? '');
+
+    // Determine CSS class and display text based on status.
+    // Check status first to ensure 'running' is always green.
+    if ($status === 'running') {
+      $cssClass = 'health-success';
+      $displayText = 'Running';
+    }
+    elseif ($status === 'healthy') {
+      $cssClass = 'health-success';
+      $displayText = 'Healthy';
+    }
+    elseif ($status === 'starting') {
+      $cssClass = 'health-loading';
+      $displayText = 'Starting';
+    }
+    elseif ($status === 'stopped') {
+      $cssClass = 'health-error';
+      $displayText = 'Stopped';
+    }
+    elseif ($success) {
+      $cssClass = 'health-success';
+      $displayText = $message;
+    }
+    else {
+      $cssClass = 'health-error';
+      $displayText = $message;
+    }
+
+    $title = $error ? htmlspecialchars($error, ENT_QUOTES) : htmlspecialchars($message, ENT_QUOTES);
+
+    return [
+      'markup' => '<span class="component-health-status ' . $cssClass . '" title="' . $title . '">' . htmlspecialchars($displayText, ENT_QUOTES) . '</span>',
+    ];
   }
 
   /**
