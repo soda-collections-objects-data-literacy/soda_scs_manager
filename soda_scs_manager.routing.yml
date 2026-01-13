@@ -5,7 +5,7 @@ soda_scs_manager.component.health_check:
   path: '/soda-scs-manager/health/component/{component_id}'
   defaults:
     _controller: '\Drupal\soda_scs_manager\Controller\SodaScsComponentController::componentStatus'
-    _title:  'Component health check'
+    _title:  'Component Health Check'
   requirements:
     _permission: 'soda scs manager user'
   options:
@@ -15,7 +15,7 @@ soda_scs_manager.stack.health_check:
   path: '/soda-scs-manager/health/stack/{stack_id}'
   defaults:
     _controller: '\Drupal\soda_scs_manager\Controller\SodaScsStackController::stackStatus'
-    _title:  'Stack health check'
+    _title:  'Stack Health Check'
   requirements:
     _permission: 'soda scs manager user'
   options:
@@ -39,7 +39,7 @@ entity.soda_scs_component.canonical:
   path: '/soda-scs-manager/component/{soda_scs_component}'
   defaults:
     _entity_view: 'soda_scs_component.default'
-    _title: 'ScsComponent'
+    _title: 'SCS Component'
   options:
     parameters:
       soda_scs_component:
@@ -52,7 +52,7 @@ entity.soda_scs_component.add_form:
   path: '/soda-scs-manager/component/add/{bundle}'
   defaults:
     _entity_form: 'soda_scs_component.add'
-    _title: 'Add ScsComponent'
+    _title: 'Add SCS Component'
   requirements:
     _permission: 'soda scs manager user'
 
@@ -60,7 +60,7 @@ entity.soda_scs_component.edit_form:
   path: '/soda-scs-manager/component/{soda_scs_component}/edit'
   defaults:
     _entity_form: 'soda_scs_component.edit'
-    _title: 'Edit ScsComponent'
+    _title: 'Edit SCS Component'
   requirements:
     _permission: 'soda scs manager user'
     _custom_access: '\Drupal\soda_scs_manager\Access\SodaScsComponentLinksTasksAccessControlHandler::accessEditForm'
@@ -73,7 +73,7 @@ entity.soda_scs_component.delete_form:
   path: '/soda-scs-manager/component/{soda_scs_component}/delete'
   defaults:
     _entity_form: 'soda_scs_component.delete'
-    _title: 'Delete ScsComponent'
+    _title: 'Delete SCS Component'
   options:
     parameters:
       soda_scs_component:

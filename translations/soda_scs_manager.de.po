@@ -96,11 +96,11 @@ msgstr "Geben Sie eine gültige E-Mail-Adresse ein. Diese wird für die Kommunik
 
 #: src/Form/KeycloakUserRegistrationForm.php:151
 msgid "Username"
-msgstr "Benutzername"
+msgstr "Username"
 
 #: src/Form/KeycloakUserRegistrationForm.php:153
 msgid "Enter a username for your account."
-msgstr "Geben Sie einen Benutzernamen für Ihr Konto ein."
+msgstr "Geben Sie einen Usernamen für Ihr Konto ein."
 
 #: src/Form/KeycloakUserRegistrationForm.php:158
 msgid "First name"
@@ -136,11 +136,11 @@ msgstr "Für diese E-Mail-Adresse liegt bereits eine ausstehende Registrierung v
 
 #: src/Form/KeycloakUserRegistrationForm.php:213
 msgid "Username may only contain alphanumeric characters and underscores."
-msgstr "Der Benutzername darf nur alphanumerische Zeichen und Unterstriche enthalten."
+msgstr "Der Username darf nur alphanumerische Zeichen und Unterstriche enthalten."
 
 #: src/Form/KeycloakUserRegistrationForm.php:224
 msgid "This username is already taken."
-msgstr "Dieser Benutzername ist bereits vergeben."
+msgstr "Dieser Username ist bereits vergeben."
 
 #: src/Form/KeycloakUserRegistrationForm.php:314
 msgid "Your registration has been submitted and is pending approval. You will be notified by email when your account is approved."
@@ -244,7 +244,7 @@ msgstr "Standardprojekt"
 
 #: soda_scs_manager.module:261
 msgid "A Project is a collection of applications."
-msgstr "Ein Projekt ist eine Sammlung von Komponenten."
+msgstr "Ein Projekt ist eine Sammlung von Anwendungen."
 
 #: soda_scs_manager.module:266
 msgid "Default Service Key"
@@ -296,7 +296,7 @@ msgstr "SODa SCS-Manager"
 
 #: soda_scs_manager.info.yml:0
 msgid "Sammlungen, Objekte, Datenkompetenzen Semantic Coworking Space Manager (SODa SCS Manager) module for managing SCS applications."
-msgstr "Sammlungen, Objekte, Datenkompetenzen Semantic Coworking Space Manager (SODa SCS Manager) Modul zur Verwaltung von SCS-Komponenten."
+msgstr "Sammlungen, Objekte, Datenkompetenzen Semantic Coworking Space Manager (SODa SCS Manager) Modul zur Verwaltung von SCS-Anwendungen."
 
 #: soda_scs_manager.info.yml:0
 msgid "SODa SCS"
@@ -312,7 +312,7 @@ msgstr "Serviceschlüssel hinzufügen"
 
 #: soda_scs_manager.links.menu.yml:0 src/Entity/SodaScsComponent.php:12;12
 msgid "SODa SCS applications"
-msgstr "SODa SCS-Komponenten"
+msgstr "SODa SCS-Anwendungen"
 
 #: soda_scs_manager.links.menu.yml:0 soda_scs_manager.routing.yml:0 src/Entity/SodaScsProject.php:14;14
 msgid "SODa SCS Projects"
@@ -332,15 +332,15 @@ msgstr "SODa SCS-Stacks"
 
 #: soda_scs_manager.links.menu.yml:0;0
 msgid "SODa SCS manager users page"
-msgstr "SODa SCS-Manager Benutzerseite"
+msgstr "SODa SCS-Manager User-Seite"
 
 #: soda_scs_manager.links.menu.yml:0;0
 msgid "SODa SCS manager applications page"
-msgstr "SODa SCS-Manager Komponentenseite"
+msgstr "SODa SCS-Manager Anwendungsseite"
 
 #: soda_scs_manager.links.menu.yml:0
 msgid "Component catalogue"
-msgstr "Komponenten-Katalog"
+msgstr "Anwendungskatalog"
 
 #: soda_scs_manager.links.menu.yml:0;0
 msgid "SODa SCS manager settings"
@@ -352,7 +352,7 @@ msgstr "SODa SCS-Manager"
 
 #: soda_scs_manager.links.menu.yml:0 src/Plugin/Block/SodaScsNavigationBlock.php:56
 msgid "Dashboard"
-msgstr "Schreibtisch"
+msgstr "Dashboard"
 
 #: soda_scs_manager.links.menu.yml:0 soda_scs_manager.routing.yml:0 src/Plugin/Block/SodaScsNavigationBlock.php:65
 msgid "catalogue"
@@ -380,19 +380,19 @@ msgstr "SODa SCS-Stacks verwalten"
 
 #: soda_scs_manager.links.menu.yml:0
 msgid "List all available applications and provide the possibility to install them"
-msgstr "Alle verfügbaren Komponenten auflisten und die Möglichkeit bieten, sie zu installieren"
+msgstr "Alle verfügbaren Anwendungen auflisten und die Möglichkeit bieten, sie zu installieren"
 
 #: soda_scs_manager.links.menu.yml:0
 msgid "Link to the SODa SCS Manager Component Page"
-msgstr "Link zur SODa SCS-Manager Komponentenseite"
+msgstr "Link zur SODa SCS-Manager Anwendungsseite"
 
 #: soda_scs_manager.links.menu.yml:0
 msgid "Your applications"
-msgstr "Ihre Komponenten"
+msgstr "Ihre Anwendungen"
 
 #: soda_scs_manager.links.menu.yml:0
 msgid "Available applications"
-msgstr "Verfügbare Komponenten"
+msgstr "Verfügbare Anwendungen"
 
 #: soda_scs_manager.links.menu.yml:138
 msgid "Notifications"
@@ -432,7 +432,7 @@ msgstr "SODa SCS-Manager Einstellungen und Konten verwalten"
 
 #: soda_scs_manager.permissions.yml:0
 msgid "SODa SCS Manager user"
-msgstr "SODa SCS-Manager Benutzer"
+msgstr "SODa SCS-Manager User"
 
 #: soda_scs_manager.permissions.yml:0
 msgid "Administer own Stacks, applications and Service Keys"
@@ -440,27 +440,27 @@ msgstr "Eigene Stacks, Komponenten und Serviceschlüssel verwalten"
 
 #: soda_scs_manager.permissions.yml:0
 msgid "Administer SODa SCS Component types"
-msgstr "SODa SCS-Komponententypen verwalten"
+msgstr "SODa SCS-Anwendungstypen verwalten"
 
 #: soda_scs_manager.permissions.yml:0
 msgid "Maintain the types SODa SCS Component entity."
-msgstr "Die Typen der SODa SCS-Komponentenentität pflegen."
+msgstr "Die Typen der SODa SCS-Anwendungsentität pflegen."
 
 #: soda_scs_manager.permissions.yml:0
 msgid "Create SODa SCS Component"
-msgstr "SODa SCS-Komponente erstellen"
+msgstr "SODa SCS-Anwendung erstellen"
 
 #: soda_scs_manager.permissions.yml:0
 msgid "View SODa SCS Component"
-msgstr "SODa SCS-Komponente anzeigen"
+msgstr "SODa SCS-Anwendung anzeigen"
 
 #: soda_scs_manager.permissions.yml:0
 msgid "Edit SODa SCS Component"
-msgstr "SODa SCS-Komponente bearbeiten"
+msgstr "SODa SCS-Anwendung bearbeiten"
 
 #: soda_scs_manager.permissions.yml:0
 msgid "Delete SODa SCS Component"
-msgstr "SODa SCS-Komponente löschen"
+msgstr "SODa SCS-Anwendung löschen"
 
 #: soda_scs_manager.permissions.yml:0
 msgid "Create SODa SCS Stack"
@@ -503,8 +503,8 @@ msgid "Create snapshots of applications."
 msgstr "Snapshots von Anwendungen erstellen."
 
 #: soda_scs_manager.routing.yml:0
-msgid "Component health check"
-msgstr "Komponenten-Zustandsprüfung"
+msgid "Component Health Check"
+msgstr "Health Check der Anwendung"
 
 #: soda_scs_manager.routing.yml:0 src/Entity/SodaScsSnapshot.php:162
 msgid "Stack"
@@ -527,16 +527,16 @@ msgid "Create Snapshot"
 msgstr "Snapshot erstellen"
 
 #: soda_scs_manager.routing.yml:0
-msgid "ScsComponent"
-msgstr "ScsComponent"
+msgid "SCS Component"
+msgstr "SCS Component"
 
 #: soda_scs_manager.routing.yml:0
-msgid "Add ScsComponent"
-msgstr "ScsComponent hinzufügen"
+msgid "Add SCS Component"
+msgstr "SCS Component hinzufügen"
 
 #: soda_scs_manager.routing.yml:0
-msgid "Delete ScsComponent"
-msgstr "ScsComponent löschen"
+msgid "Delete SCS Component"
+msgstr "SCS Component löschen"
 
 #: soda_scs_manager.routing.yml:0
 msgid "Soda SCS applications"
@@ -640,7 +640,7 @@ msgstr "Serviceschlüssel kann nicht geladen werden. Weitere Details finden Sie 
 
 #: src/ComponentActions/SodaScsSqlComponentActions.php:390
 msgid "Cannot clean database users. See logs for more details."
-msgstr "Datenbankbenutzer können nicht bereinigt werden. Weitere Details finden Sie in den Logs."
+msgstr "Datenbank-User können nicht bereinigt werden. Weitere Details finden Sie in den Logs."
 
 #: src/ComponentActions/SodaScsTriplestoreComponentActions.php:168;266;283;346;360 src/StackActions/SodaScsWisskiStackActions.php:539
 msgid "Cannot assemble request. See logs for more details."
@@ -648,7 +648,7 @@ msgstr "Anfrage kann nicht zusammengestellt werden. Weitere Details finden Sie i
 
 #: src/ComponentActions/SodaScsTriplestoreComponentActions.php:208
 msgid "Created OpenGDB user: @username"
-msgstr "OpenGDB-Benutzer erstellt: @username"
+msgstr "OpenGDB-User erstellt: @username"
 
 #: src/ComponentActions/SodaScsTriplestoreComponentActions.php:391
 msgid "Created triplestore component %machineName."
@@ -664,15 +664,15 @@ msgstr "Triplestore-Komponente %component konnte nicht gelöscht werden"
 
 #: src/ComponentActions/SodaScsTriplestoreComponentActions.php:534
 msgid "Could not get triplestore user of component %component"
-msgstr "Triplestore-Benutzer der Komponente %component konnte nicht abgerufen werden"
+msgstr "Triplestore-User der Komponente %component konnte nicht abgerufen werden"
 
 #: src/ComponentActions/SodaScsTriplestoreComponentActions.php:590
 msgid "Could not update triplestore user %username"
-msgstr "Triplestore-Benutzer %username konnte nicht aktualisiert werden"
+msgstr "Triplestore-User %username konnte nicht aktualisiert werden"
 
 #: src/ComponentActions/SodaScsTriplestoreComponentActions.php:619
 msgid "Could not delete OpenGDB user %username"
-msgstr "OpenGDB-Benutzer %username konnte nicht gelöscht werden"
+msgstr "OpenGDB-User %username konnte nicht gelöscht werden"
 
 #: src/ComponentActions/SodaScsTriplestoreComponentActions.php:633
 msgid "Deleted triplestore component %component"
@@ -1149,7 +1149,7 @@ msgstr "Platzhalter"
 
 #: src/Form/SodaScsSettingsForm.php:59
 msgid "You can use the following placeholders in the settings form:\n      <ul>\n        <li><strong>{containerId}</strong> - The Docker container ID</li>\n        <li><strong>{endpointId}</strong> - The Portainer endpoint ID</li>\n        <li><strong>{execId}</strong> - The Docker exec ID</li>\n        <li><strong>{instanceId}</strong> - The WissKI instance ID</li>\n        <li><strong>{realm}</strong> - The Keycloak realm</li>\n        <li><strong>{repositoryId}</strong> - The triplestore repository ID</li>\n        <li><strong>{stackId}</strong> - The Portainer stack ID</li>\n        <li><strong>{userId}</strong> - The triplestore user ID</li>\n        <li><strong>{volumeId}</strong> - The Docker volume ID</li>\n      </ul>\n      <br>\n      <ul>\n      <li><strong>{empty}</strong> - Use if there is no value</li>\n      </ul>\n      "
-msgstr "Sie können die folgenden Platzhalter im Einstellungsformular verwenden:\n      <ul>\n        <li><strong>{containerId}</strong> - Die Docker-Container-ID</li>\n        <li><strong>{endpointId}</strong> - Die Portainer-Endpunkt-ID</li>\n        <li><strong>{execId}</strong> - Die Docker-Exec-ID</li>\n        <li><strong>{instanceId}</strong> - Die WissKI-Instanz-ID</li>\n        <li><strong>{realm}</strong> - Der Keycloak-Realm</li>\n        <li><strong>{repositoryId}</strong> - Die Triplestore-Repository-ID</li>\n        <li><strong>{stackId}</strong> - Die Portainer-Stack-ID</li>\n        <li><strong>{userId}</strong> - Die Triplestore-Benutzer-ID</li>\n        <li><strong>{volumeId}</strong> - Die Docker-Volume-ID</li>\n      </ul>\n      <br>\n      <ul>\n      <li><strong>{empty}</strong> - Verwenden, wenn kein Wert vorhanden ist</li>\n      </ul>\n      "
+msgstr "Sie können die folgenden Platzhalter im Einstellungsformular verwenden:\n      <ul>\n        <li><strong>{containerId}</strong> - Die Docker-Container-ID</li>\n        <li><strong>{endpointId}</strong> - Die Portainer-Endpunkt-ID</li>\n        <li><strong>{execId}</strong> - Die Docker-Exec-ID</li>\n        <li><strong>{instanceId}</strong> - Die WissKI-Instanz-ID</li>\n        <li><strong>{realm}</strong> - Der Keycloak-Realm</li>\n        <li><strong>{repositoryId}</strong> - Die Triplestore-Repository-ID</li>\n        <li><strong>{stackId}</strong> - Die Portainer-Stack-ID</li>\n        <li><strong>{userId}</strong> - Die Triplestore-User-ID</li>\n        <li><strong>{volumeId}</strong> - Die Docker-Volume-ID</li>\n      </ul>\n      <br>\n      <ul>\n      <li><strong>{empty}</strong> - Verwenden, wenn kein Wert vorhanden ist</li>\n      </ul>\n      "
 
 #: src/Form/SodaScsSettingsForm.php:81;87;105;264
 msgid "General settings"
@@ -1221,11 +1221,11 @@ msgstr "Der Keycloak-Realm, wie wisski."
 
 #: src/Form/SodaScsSettingsForm.php:165;281
 msgid "Admin username"
-msgstr "Admin-Benutzername"
+msgstr "Admin-Username"
 
 #: src/Form/SodaScsSettingsForm.php:167
 msgid "The keycloak admin username, like admin."
-msgstr "Der Keycloak-Admin-Benutzername, wie admin."
+msgstr "Der Keycloak-Admin-Username, wie admin."
 
 #: src/Form/SodaScsSettingsForm.php:172;287
 msgid "Admin password"
@@ -1296,12 +1296,12 @@ msgid "The delete URL."
 msgstr "Die Löschen-URL."
 
 #: src/Form/SodaScsSettingsForm.php:236
-msgid "Health check URL"
-msgstr "Gesundheitscheck-URL"
+msgid "Health Check URL"
+msgstr "Health Check-URL"
 
 #: src/Form/SodaScsSettingsForm.php:238
-msgid "The health check URL."
-msgstr "Die Gesundheitscheck-URL."
+msgid "The Health Check URL."
+msgstr "Die Health Check-URL."
 
 #: src/Form/SodaScsSettingsForm.php:249
 msgid "Token URL"
@@ -1333,7 +1333,7 @@ msgstr "Der Triplestore-Port, wie 80."
 
 #: src/Form/SodaScsSettingsForm.php:283
 msgid "The admin username, like admin."
-msgstr "Der Admin-Benutzername, wie admin."
+msgstr "Der Admin-Username, wie admin."
 
 #: src/Form/SodaScsSettingsForm.php:289
 msgid "The admin password, like password."
@@ -1384,12 +1384,12 @@ msgid "The delete repositories route, like /{repositoryId}."
 msgstr "Die Löschen von Repository-Routen, wie /{repositoryId}."
 
 #: src/Form/SodaScsSettingsForm.php:354;427;513;517;801
-msgid "Health check route"
-msgstr "Gesundheitscheck-Route"
+msgid "Health Check route"
+msgstr "Health Check-Route"
 
 #: src/Form/SodaScsSettingsForm.php:356
-msgid "The health check route, like /{repositoryId}/size."
-msgstr "Die Gesundheitscheck-Route, wie /{repositoryId}/size."
+msgid "The Health Check route, like /{repositoryId}/size."
+msgstr "Die Health Check-Route, wie /{repositoryId}/size."
 
 #: src/Form/SodaScsSettingsForm.php:370
 msgid "The base URL, like /rest/security/users."
@@ -1397,7 +1397,7 @@ msgstr "Die Basis-URL, wie /rest/security/users."
 
 #: src/Form/SodaScsSettingsForm.php:381
 msgid "Create user route"
-msgstr "Benutzerroute erstellen"
+msgstr "Userroute erstellen"
 
 #: src/Form/SodaScsSettingsForm.php:383
 msgid "The create route, like /."
@@ -1405,7 +1405,7 @@ msgstr "Die Erstellen-Route, wie /."
 
 #: src/Form/SodaScsSettingsForm.php:388
 msgid "Read one user route"
-msgstr "Einzelne Benutzer-Lesen-Route"
+msgstr "Einzelne User-Lesen-Route"
 
 #: src/Form/SodaScsSettingsForm.php:390
 msgid "The read one route, like /{userId}."
@@ -1413,15 +1413,15 @@ msgstr "Die Einzelne Lesen-Route, wie /{userId}."
 
 #: src/Form/SodaScsSettingsForm.php:395
 msgid "Read all users route"
-msgstr "Alle Benutzer-Lesen-Routen"
+msgstr "Alle User-Lesen-Route"
 
 #: src/Form/SodaScsSettingsForm.php:397
 msgid "The read all route."
-msgstr "Die Alle Lesen-Routen."
+msgstr "Die Alle Lesen-Route."
 
 #: src/Form/SodaScsSettingsForm.php:402
 msgid "Update user route"
-msgstr "Benutzerroute aktualisieren"
+msgstr "Userroute aktualisieren"
 
 #: src/Form/SodaScsSettingsForm.php:404
 msgid "The update route, like /{userId}."
@@ -1429,15 +1429,15 @@ msgstr "Die Aktualisieren-Route, wie /{userId}."
 
 #: src/Form/SodaScsSettingsForm.php:409
 msgid "Delete user route"
-msgstr "Benutzerroute löschen"
+msgstr "Userroute löschen"
 
 #: src/Form/SodaScsSettingsForm.php:411
 msgid "The delete route, like /{userId}."
 msgstr "Die Löschen-Route, wie /{userId}."
 
 #: src/Form/SodaScsSettingsForm.php:429
-msgid "The health check route, like /protocol."
-msgstr "Die Gesundheitscheck-Route, wie /protocol."
+msgid "The Health Check route, like /protocol."
+msgstr "Die Health Check-Route, wie /protocol."
 
 #: src/Form/SodaScsSettingsForm.php:434;524
 msgid "Check"
@@ -1504,8 +1504,8 @@ msgid "The endpoint base URL, like /api/endpoints."
 msgstr "Die Endpunkt-Basis-URL, wie /api/endpoints."
 
 #: src/Form/SodaScsSettingsForm.php:519
-msgid "The health check route, like \"/{endpointId}\""
-msgstr "Die Gesundheitscheck-Route, wie \"/{endpointId}\""
+msgid "The Health Check route, like \"/{endpointId}\""
+msgstr "Die Health Check-Route, wie \"/{endpointId}\""
 
 #: src/Form/SodaScsSettingsForm.php:535
 msgid "Docker API routes"
@@ -1921,7 +1921,7 @@ msgstr "Anfragedetails: @request"
 
 #: src/RequestActions/SodaScsOpenGdbServiceActions.php:385
 msgid "OpenGDB user: @username does not exist. Try to create it for you..."
-msgstr "OpenGDB-Benutzer: @username existiert nicht. Versuchen, es für Sie zu erstellen..."
+msgstr "OpenGDB-User: @username existiert nicht. Versuchen, es für Sie zu erstellen..."
 
 #: src/RequestActions/SodaScsOpenGdbServiceActions.php:404
 msgid "OpenGDB request for @type failed. See logs for more details."
@@ -1949,19 +1949,19 @@ msgstr "Datenbank @name löschen."
 
 #: src/ServiceActions/SodaScsSqlServiceActions.php:371
 msgid "Can not communicate with the SCS user manager daemon."
-msgstr "Kann nicht mit dem SCS-Benutzer-Manager-Daemon kommunizieren."
+msgstr "Kann nicht mit dem SCS-User-Manager-Daemon kommunizieren."
 
 #: src/ServiceActions/SodaScsSqlServiceActions.php:495
 msgid "Can not delete the root user"
-msgstr "Kann den Root-Benutzer nicht löschen"
+msgstr "Kann den Root-User nicht löschen"
 
 #: src/ServiceActions/SodaScsSqlServiceActions.php:516
 msgid "User owns databases"
-msgstr "Benutzer besitzt Datenbanken"
+msgstr "User besitzt Datenbanken"
 
 #: src/ServiceActions/SodaScsSqlServiceActions.php:535
 msgid "User owned no databases, and was deleted"
-msgstr "Benutzer besaß keine Datenbanken und wurde gelöscht"
+msgstr "User besaß keine Datenbanken und wurde gelöscht"
 
 #: src/StackActions/SodaScsSqlStackActions.php:115 src/StackActions/SodaScsWisskiStackActions.php:232
 msgid "Could not create database component. See logs for more details."
@@ -2019,9 +2019,17 @@ msgstr "Sekundäre Registerkarten"
 msgid "Submitted by @author_name on @date"
 msgstr "Eingereicht von @author_name am @date"
 
+# templates/pages/soda-scs-manager--dashboard.html.twig:15
+msgid "Filter by Tags"
+msgstr "Nach Schlagwörtern filtern"
+
 #: templates/pages/soda-scs-manager--dashboard.html.twig:20
 msgid "No"
 msgstr "Nein"
+
+# templates/pages/soda-scs-manager--catalogue.html.twig:14
+msgid "Filter by Tags"
+msgstr "Nach Schlagwörtern filtern"
 
 #: templates/pages/soda-scs-manager--catalogue.html.twig:14
 msgid "No stacks available."
@@ -2029,7 +2037,7 @@ msgstr "Keine Stacks verfügbar."
 
 #: templates/pages/soda-scs-manager--catalogue.html.twig:30
 msgid "No applications available."
-msgstr "Keine Komponenten verfügbar."
+msgstr "Keine Applikationen verfügbar."
 
 #: src/Form/SodaScsSettingsForm.php:101
 msgid "Administrator email"
@@ -2185,7 +2193,7 @@ msgstr "Gruppenmitglieder konnten nicht aus Keycloak für Projekt @project abger
 
 #: src/Helpers/SodaScsProjectHelpers.php:771
 msgid "Failed to add user @user to group @group in Keycloak for project @project."
-msgstr "Benutzer @user konnte nicht zur Gruppe @group in Keycloak für Projekt @project hinzugefügt werden."
+msgstr "User @user konnte nicht zur Gruppe @group in Keycloak für Projekt @project hinzugefügt werden."
 
 #: templates/pages/soda-scs-manager--start-page.html.twig:15
 msgid "New here? Start <a href=\"@tour_url\">the beginners tour</a> to learn more about the possibilities."
@@ -2229,7 +2237,7 @@ msgstr "Einführungstour"
 
 #: templates/pages/soda-scs-manager--dashboard.html.twig:51
 msgid "Applications of User @username"
-msgstr "Anwendungen von Benutzer @username"
+msgstr "Anwendungen von User @username"
 
 #: templates/cards/soda-scs-manager--entity-card.html.twig:31
 msgid "Filter by tag @tag"

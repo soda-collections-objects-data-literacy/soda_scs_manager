@@ -309,9 +309,9 @@ class SodaScsSettingsForm extends ConfigFormBase {
 
     $form['keycloak']['keycloakTabs']['routes']['fields']['clients']['fields']['healthCheck']['fields']['url'] = [
       '#type' => 'textfield',
-      '#title' => $this->t('Health check URL'),
+      '#title' => $this->t('Health Check URL'),
       '#default_value' => $this->config('soda_scs_manager.settings')->get('keycloak')['keycloakTabs']['routes']['fields']['clients']['fields']['healthCheck']['fields']['url'] ?? '',
-      '#description' => $this->t('The health check URL.'),
+      '#description' => $this->t('The Health Check URL.'),
     ];
 
     $form['keycloak']['keycloakTabs']['routes']['fields']['groups'] = [
@@ -600,9 +600,9 @@ class SodaScsSettingsForm extends ConfigFormBase {
 
     $form['triplestore']['routes']['repositories']['healthCheck']['url'] = [
       '#type' => 'textfield',
-      '#title' => $this->t('Health check route'),
+      '#title' => $this->t('Health Check route'),
       '#default_value' => $this->config('soda_scs_manager.settings')->get('triplestore')['routes']['repositories']['healthCheck']['url'] ?? '',
-      '#description' => $this->t('The health check route, like /{repositoryId}/size.'),
+      '#description' => $this->t('The Health Check route, like /{repositoryId}/size.'),
     ];
 
     // Triplestore user routes.
@@ -669,13 +669,13 @@ class SodaScsSettingsForm extends ConfigFormBase {
     $form['triplestore']['routes']['misc']['healthCheck'] = [
       '#type' => 'fieldset',
       '#attributes' => ['id' => 'soda-scs--routes-subform--health-check'],
-      '#title' => 'Health check route',
+      '#title' => 'Health Check route',
     ];
     $form['triplestore']['routes']['misc']['healthCheck']['url'] = [
       '#type' => 'textfield',
-      '#title' => $this->t('Health check route'),
+      '#title' => $this->t('Health Check route'),
       '#default_value' => $this->config('soda_scs_manager.settings')->get('triplestore')['routes']['misc']['healthCheck']['url'] ?? '',
-      '#description' => $this->t('The health check route, like /protocol.'),
+      '#description' => $this->t('The Health Check route, like /protocol.'),
     ];
 
     $form['triplestore']['routes']['misc']['healthCheck']['check'] = [
@@ -755,17 +755,17 @@ class SodaScsSettingsForm extends ConfigFormBase {
       '#description' => $this->t('The endpoint base URL, like /api/endpoints.'),
     ];
 
-    // Portainer health check.
+    // Portainer Health Check.
     $form['portainer']['routes']['endpoints']['healthCheck'] = [
       '#type' => 'fieldset',
       '#attributes' => ['id' => 'soda-scs--routes-subform--health-check'],
-      '#title' => $this->t('Health check route'),
+      '#title' => $this->t('Health Check route'),
     ];
     $form['portainer']['routes']['endpoints']['healthCheck']['url'] = [
       '#type' => 'textfield',
-      '#title' => $this->t('Health check route'),
+      '#title' => $this->t('Health Check route'),
       '#default_value' => $this->config('soda_scs_manager.settings')->get('portainer')['routes']['endpoints']['healthCheck']['url'] ?? '',
-      '#description' => $this->t('The health check route, like "/{endpointId}"'),
+      '#description' => $this->t('The Health Check route, like "/{endpointId}"'),
     ];
 
     $form['portainer']['routes']['endpoints']['healthCheck']['check'] = [
@@ -1065,13 +1065,13 @@ class SodaScsSettingsForm extends ConfigFormBase {
     $form['wisski']['instances']['misc']['healthCheck'] = [
       '#type' => 'fieldset',
       '#attributes' => ['id' => 'soda-scs--routes-subform--health-check'],
-      '#title' => 'Health check route',
+      '#title' => 'Health Check route',
     ];
     $form['wisski']['instances']['misc']['healthCheck']['url'] = [
       '#type' => 'textfield',
-      '#title' => $this->t('Health check route'),
+      '#title' => $this->t('Health Check route'),
       '#default_value' => $this->config('soda_scs_manager.settings')->get('wisski')['instances']['misc']['healthCheck']['url'] ?? '',
-      '#description' => $this->t('The health check route, like "/health".'),
+      '#description' => $this->t('The Health Check route, like "/health".'),
     ];
 
     $form['wisski']['instances']['versions'] = [
