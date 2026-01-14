@@ -98,13 +98,16 @@ class SodaScsDisableDrupalLoginRouteSubscriber extends RouteSubscriberBase {
       return FALSE;
     }
 
-    // Check if the OpenID Connect client plugin exists.
+    // Check if the OpenID Connect client config exists and is enabled.
     try {
-      $pluginId = 'openid_connect.' . $clientMachineName;
-      return $this->openIdConnectClientManager->hasDefinition($pluginId);
+      $clientConfig = $this->configFactory->get('openid_connect.client.' . $clientMachineName);
+      if ($clientConfig->isNew() || !$clientConfig->get('status')) {
+        return FALSE;
+      }
+      return TRUE;
     }
     catch (\Exception $e) {
-      // If we can't check the plugin, assume SSO is not configured.
+      // If we can't check the client, assume SSO is not configured.
       return FALSE;
     }
   }
@@ -115,7 +118,8 @@ class SodaScsDisableDrupalLoginRouteSubscriber extends RouteSubscriberBase {
   protected function alterRoutes(RouteCollection $collection) {
     // Only deny access to Account related pages if SSO is configured.
     if ($this->isSsoConfigured()) {
-      // Deny access to default registration and password reset pages when using SSO.
+      // Deny access to default registration and password reset pages
+      // when using SSO.
       $routes = [
         'user.register',
         'user.pass',
