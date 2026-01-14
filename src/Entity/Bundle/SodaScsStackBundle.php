@@ -65,8 +65,8 @@ class SodaScsStackBundle extends SodaScsStack implements SodaScsStackInterface {
           ]);
 
         $definitions['developmentInstance'] = BundleFieldDefinition::create('boolean')
-          ->setLabel(new TranslatableMarkup('Development instance'))
-          ->setDescription(new TranslatableMarkup('Whether this is a development instance. Nightly builds are used for development and testing. Can not be changed after creation.'))
+          ->setLabel(new TranslatableMarkup('Development Instance'))
+          ->setDescription(new TranslatableMarkup('Whether this is a Development Instance. Nightly builds are used for development and testing. Can not be changed after creation.'))
           ->setCardinality(1)
           ->setDefaultValue(FALSE)
           ->setSetting('on_label', 'Yes')

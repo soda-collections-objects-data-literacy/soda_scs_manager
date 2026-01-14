@@ -764,11 +764,11 @@ msgstr "Die externe ID der SODa SCS-Komponente."
 
 #: src/Entity/SodaScsComponent.php:202
 msgid "Health Status"
-msgstr "Gesundheitsstatus"
+msgstr "Health Status"
 
 #: src/Entity/SodaScsComponent.php:203
-msgid "The health status of the SODa SCS Component."
-msgstr "Der Gesundheitsstatus der SODa SCS-Komponente."
+msgid "The Health Status of the SODa SCS Component."
+msgstr "Der Health Status der SODa SCS-Komponente."
 
 #: src/Entity/SodaScsComponent.php:218 src/Entity/SodaScsStack.php:168
 msgid "Image"
@@ -953,7 +953,7 @@ msgstr "Der Zeitpunkt der Erstellung des Snapshots."
 
 #: src/Entity/SodaScsSnapshot.php:108
 msgid "The label of the snapshot."
-msgstr "Das Etikett des Snapshots."
+msgstr "Die Bezeichnung des Snapshots."
 
 #: src/Entity/SodaScsSnapshot.php:125
 msgid "The owner of the snapshot."
@@ -985,7 +985,7 @@ msgstr "Das Image des SODa SCS Stacks."
 
 #: src/Entity/SodaScsStack.php:183
 msgid "Included applications"
-msgstr "Eingeschlossene Komponenten"
+msgstr "Enthaltene Komponenten"
 
 #: src/Entity/SodaScsStack.php:216
 msgid "The owner of the SODa SCS Stack."
@@ -1018,6 +1018,30 @@ msgstr "Geteilt mit"
 #: src/Entity/Bundle/SodaScsComponentBundle.php:50
 msgid "The applications that are shared with this component."
 msgstr "Die Komponenten, die mit dieser Komponente geteilt werden."
+
+# src/Entity/Bundle/SodaScsComponentBundle.php:109
+msgid "Automated Updates"
+msgstr "Automatische Updates"
+
+# src/Entity/Bundle/SodaScsComponentBundle.php:110
+msgid "Allow centralised updates managed by the SCS administrator. Can not be changed after creation."
+msgstr "Erlaubt zentralisierte Updates, die durch die SCS-Administration gemanaged werden. Dies kann nach der Erstellung nicht mehr geändert werden."
+
+# src/Entity/Bundle/SodaScsComponentBundle.php:126
+msgid "Drupal/WissKI default language"
+msgstr "Drupal/WissKI Standardsprache"
+
+# src/Entity/Bundle/SodaScsComponentBundle.php:127
+msgid "Drupal/WissKI default language"
+msgstr "Die Standardsprache für das Drupal/WissKI Interface."
+
+# src/Entity/Bundle/SodaScsComponentBundle.php:148
+msgid "Development Instance"
+msgstr "Entwicklungsinstanz"
+
+# src/Entity/Bundle/SodaScsComponentBundle.php:149
+msgid "Whether this is a Development Instance. Nightly builds are used for development and testing. Can not be changed after creation."
+msgstr "Gibt an, ob es sich um eine Entwicklungsinstanz handelt. Nightly Builds werden für die Entwicklung und Tests verwendet. Dies kann nach der Erstellung nicht mehr geändert werden."
 
 #: src/Entity/Bundle/SodaScsProjectsBundle.php:24
 msgid "Test fields"
@@ -1765,11 +1789,11 @@ msgstr "Die Gesundheitscheck-Route, wie \"/health\"."
 
 #: src/Form/SodaScsSnapshotConfirmForm.php:106
 msgid "Snapshot Label"
-msgstr "Snapshot-Etikett"
+msgstr "Snapshot-Bezeichnung"
 
 #: src/Form/SodaScsSnapshotConfirmForm.php:107
 msgid "Enter a label for this snapshot."
-msgstr "Geben Sie ein Etikett für diesen Snapshot ein."
+msgstr "Geben Sie ein Bezeichnung für diesen Snapshot ein."
 
 #: src/Form/SodaScsSnapshotConfirmForm.php:114
 msgid "Enter a description for this snapshot."
@@ -1810,6 +1834,66 @@ msgstr "Sind Sie sicher, dass Sie den Snapshot %label löschen möchten?"
 #: src/Form/SodaScsSnapshotDeleteForm.php:48
 msgid "Snapshot %label has been deleted."
 msgstr "Snapshot %label wurde gelöscht."
+
+# src/Form/SodaScsSnapshotRestoreForm.php:203
+msgid "I understand that this action will permanently overwrite existing data"
+msgid "Ich verstehe, dass diese Aktion vorhandene Daten dauerhaft überschreiben wird"
+
+# src/Form/SodaScsSnapshotRestoreForm.php:205
+msgid "You must acknowledge the risk of data loss to proceed."
+msgid "Sie müssen das Risiko eines Datenverlusts bestätigen, um fortzufahren."
+
+# src/Form/SodaScsSnapshotRestoreForm.php:213
+msgid "Restore Snapshot"
+msgid "Snapshot wiederherstellen"
+
+# src/Form/SodaScsSnapshotRestoreForm.php:229
+msgid "Snapshot file not found."
+msgid "Snapshot-Datei wurde nicht gefunden."
+
+# src/Form/SodaScsSnapshotRestoreForm.php:238
+msgid "Snapshot file does not exist on the filesystem."
+msgid "Die Snapshot-Datei existiert nicht im Dateisystem."
+
+# src/Form/SodaScsSnapshotRestoreForm.php:253
+msgid "Snapshot restoration failed. See logs for more details."
+msgid "Wiederherstellung aus Snapshot fehlgeschlagen. Weitere Details finden Sie in den Protokollen."
+
+# src/Form/SodaScsSnapshotRestoreForm.php:257
+msgid "Snapshot restore failed: Checksum verification failed for snapshot @id. The file may be corrupted."
+msgid "Snapshot-Wiederherstellung fehlgeschlagen: Prüfsummenverifizierung für Snapshot @id fehlgeschlagen. Die Datei ist möglicherweise beschädigt."
+
+# src/Form/SodaScsSnapshotRestoreForm.php:280
+msgid "Snapshot restoration failed. See logs for more details."
+msgid "Wiederherstellung aus Snapshot fehlgeschlagen. Weitere Details finden Sie in den Protokollen."
+
+# src/Form/SodaScsSnapshotRestoreForm.php:284
+msgid "Snapshot restore failed: Target entity not found for snapshot @id."
+msgid "Snapshot-Wiederherstellung fehlgeschlagen: Ziel-Entität für Snapshot @id nicht gefunden."
+
+# src/Form/SodaScsSnapshotRestoreForm.php:301
+msgid "Successfully restored snapshot %label to %entity_label."
+msgid "Snapshot %label erfolgreich auf %entity_label wiederhergestellt."
+
+# src/Form/SodaScsSnapshotRestoreForm.php:307
+msgid "Failed to restore snapshot. @error"
+msgid "Fehler beim Wiederherstellen aus Snapshot. @error"
+
+# src/Form/SodaScsSnapshotRestoreForm.php:316
+msgid "Snapshot restore failed: @message"
+msgid "Snapshot-Wiederherstellung fehlgeschlagen: @message"
+
+# src/Form/SodaScsSnapshotRestoreForm.php:320
+msgid "Failed to restore snapshot. See logs for more details."
+msgid "Snapshot konnte nicht wiederhergestellt werden. Weitere Details finden Sie in den Protokollen."
+
+# src/Form/SodaScsSnapshotRestoreForm.php:331
+msgid "Restore snapshot @label?"
+msgid "Snapshot @label wiederherstellen?"
+
+# src/Form/SodaScsSnapshotRestoreForm.php:359
+msgid "This action will restore the snapshot data of the (bundled) application <b>@entity_label</b>, permanently overwriting its current state."
+msgid "Diese Aktion wird die Snapshot-Daten der (gebündelten) Anwendung <b>@entity_label</b> wiederherstellen und deren aktuellen Zustand dauerhaft überschreiben."
 
 #: src/Form/SodaScsStackCreateForm.php:159
 msgid "CREATE"
@@ -2309,7 +2393,7 @@ msgstr "Der Nachname des Nutzenden."
 
 #: soda_scs_manager.module:150
 msgid "Inter-App folder"
-msgstr "Inter-App Ordner"
+msgstr "Inter-App-Ordner"
 
 #: soda_scs_manager.module:152
 msgid "A folder for sharing files across applications."

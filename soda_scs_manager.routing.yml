@@ -86,7 +86,7 @@ entity.soda_scs_component.collection:
   path: '/admin/structure/soda-scs-component/list'
   defaults:
     _entity_list: 'soda_scs_component'
-    _title: 'Soda SCS Components'
+    _title: 'SODa SCS Components'
   requirements:
     _permission: 'soda scs manager user'
   options:
@@ -351,7 +351,7 @@ entity.soda_scs_stack.collection:
   path: '/admin/structure/soda-scs-stack/list'
   defaults:
     _entity_list: 'soda_scs_stack'
-    _title: 'Stacks'
+    _title: 'SODa SCS Stacks'
   requirements:
     _permission: 'soda scs manager user'
 
