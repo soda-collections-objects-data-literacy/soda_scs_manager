@@ -251,13 +251,55 @@ function soda_scs_manager_entity_field_storage_info(EntityTypeInterface $entity_
 }
 
 /**
+ * Helper function to check if SSO OpenID Connect provider is configured.
+ *
+ * @return bool
+ *   TRUE if SSO is configured, FALSE otherwise.
+ */
+function _soda_scs_manager_is_sso_configured(): bool {
+  // Check if OpenID Connect module is enabled.
+  if (!\Drupal::moduleHandler()->moduleExists('openid_connect')) {
+    return FALSE;
+  }
+
+  // Check if plugin manager service is available.
+  if (!\Drupal::hasService('plugin.manager.openid_connect_client')) {
+    return FALSE;
+  }
+
+  try {
+    /** @var \Drupal\openid_connect\Plugin\OpenIDConnectClientManager $pluginManager */
+    $pluginManager = \Drupal::service('plugin.manager.openid_connect_client');
+
+    // Get the OpenID Connect client machine name from configuration.
+    $config = \Drupal::config('soda_scs_manager.settings');
+    $clientMachineName = $config->get('keycloak.keycloakTabs.generalSettings.fields.OpenIdConnectClientMachineName');
+
+    // If no client machine name is configured, SSO is not configured.
+    if (empty($clientMachineName)) {
+      return FALSE;
+    }
+
+    // Check if the OpenID Connect client plugin exists.
+    $pluginId = 'openid_connect.' . $clientMachineName;
+    return $pluginManager->hasDefinition($pluginId);
+  }
+  catch (\Exception $e) {
+    // If we can't check the plugin, assume SSO is not configured.
+    return FALSE;
+  }
+}
+
+/**
  * Implements hook_form_FORM_ID_alter() for user_register_form.
+ *
+ * Note: When SSO is configured, access to this route is blocked by
+ * SodaScsDisableDrupalLoginRouteSubscriber, so this hook won't run.
+ * When SSO is not configured, the default registration form is used.
  */
 function soda_scs_manager_form_user_register_form_alter(&$form, &$form_state, $form_id) {
-  // Disable native Drupal registration by redirecting to our custom form.
-  $response = new RedirectResponse(Url::fromRoute('soda_scs_manager.user_registration')->toString());
-  $response->send();
-  exit;
+  // Route access is handled by route subscriber.
+  // No action needed here.
 }
 
 /**
@@ -869,21 +911,30 @@ function soda_scs_manager_page_attachments(array &$attachments) {
 }
 
 /**
- * Implements hook_user_login().
+ * Implements hook_form_alter() for user_login_form.
  *
- * Redirects users to the SODa SCS Manager start page after login.
+ * Sets default destination to redirect users to the SODa SCS Manager start page after login.
  */
-function soda_scs_manager_user_login(UserInterface $account) {
+function soda_scs_manager_form_user_login_form_alter(&$form, &$form_state, $form_id) {
   // Get the current request.
   $request = \Drupal::request();
 
-  // Only redirect if there's no existing
-  // destination and not during AJAX requests.
+  // Only set destination if there's no existing destination and not during AJAX requests.
   if (!$request->query->has('destination') && !$request->isXmlHttpRequest()) {
-    // Redirect to the SODa SCS Manager start page.
-    $response = new RedirectResponse(Url::fromRoute('soda_scs_manager.start_page')->toString());
-    $response->send();
+    // Set destination via URL query parameter.
+    $destination = Url::fromRoute('soda_scs_manager.start_page')->toString();
+    $destinationUrl = Url::fromRoute('user.login', [], ['query' => ['destination' => $destination]]);
+    $form['#action'] = $destinationUrl->toString();
   }
+}
+
+/**
+ * Implements hook_user_login().
+ *
+ * Note: Redirect is handled via destination field in hook_form_alter().
+ */
+function soda_scs_manager_user_login(UserInterface $account) {
+  // Redirect logic handled via destination parameter in login form.
 }
 
 /**
