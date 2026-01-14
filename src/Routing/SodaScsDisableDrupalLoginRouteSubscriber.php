@@ -113,19 +113,22 @@ class SodaScsDisableDrupalLoginRouteSubscriber extends RouteSubscriberBase {
    * {@inheritdoc}
    */
   protected function alterRoutes(RouteCollection $collection) {
-    // Outright deny access to Account related pages that aren't the login page.
-    $routes = [
-      'user.register',
-      'user.pass',
-    ];
-    foreach ($routes as $route) {
-      if ($route = $collection->get($route)) {
-        $route->setRequirement('_access', 'FALSE');
+    // Only deny access to Account related pages if SSO is configured.
+    if ($this->isSsoConfigured()) {
+      // Deny access to default registration and password reset pages when using SSO.
+      $routes = [
+        'user.register',
+        'user.pass',
+      ];
+      foreach ($routes as $route) {
+        if ($route = $collection->get($route)) {
+          $route->setRequirement('_access', 'FALSE');
+        }
       }
-    }
-    // Override the login route only if SSO is configured.
-    if ($this->isSsoConfigured() && $route = $collection->get('user.login')) {
-      $route->setDefault('_form', '\Drupal\soda_scs_manager\Form\SodaScsDisableDrupalLoginForm');
+      // Override the login route to disable default Drupal login form.
+      if ($route = $collection->get('user.login')) {
+        $route->setDefault('_form', '\Drupal\soda_scs_manager\Form\SodaScsDisableDrupalLoginForm');
+      }
     }
 
   }
