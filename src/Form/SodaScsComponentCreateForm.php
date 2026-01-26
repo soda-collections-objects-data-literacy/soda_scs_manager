@@ -311,7 +311,7 @@ class SodaScsComponentCreateForm extends ContentEntityForm {
       }
     }
 
-    // Check if the machineName is already in use by another SodaScsComponent entity.
+    // Check if the machineName is already in use by another component entity.
     $entity_query = $this->entityTypeManager->getStorage('soda_scs_component')->getQuery()
       ->accessCheck(FALSE)
       ->condition('machineName', $machineName);
@@ -345,8 +345,25 @@ class SodaScsComponentCreateForm extends ContentEntityForm {
       return;
     }
 
+    switch ($this->bundle) {
+      case 'soda_scs_sql_component':
+        $componentId = $createComponentResult['data']['sqlComponent']->id();
+        break;
+
+      case 'soda_scs_triplestore_component':
+        $componentId = $createComponentResult['data']['triplestoreComponent']->id();
+        break;
+
+      case 'soda_scs_wisski_component':
+        $componentId = $createComponentResult['data']['wisskiComponent']->id();
+        break;
+
+      default:
+        $componentId = $this->entity->id() ?? throw new \Exception('Component ID not found');
+    }
+
     // Redirect to the components page.
-    $form_state->setRedirect('entity.soda_scs_component.canonical', ['soda_scs_component' => $this->entity->id()]);
+    $form_state->setRedirect('entity.soda_scs_component.canonical', ['soda_scs_component' => $componentId]);
   }
 
 }
