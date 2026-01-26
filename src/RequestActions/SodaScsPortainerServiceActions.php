@@ -289,7 +289,7 @@ class SodaScsPortainerServiceActions implements SodaScsServiceRequestInterface {
       ],
       [
         "name" => "DB_HOST",
-        "value" => str_replace('https://', '', $databaseServiceSettings['host']),
+        "value" => $databaseServiceSettings['host'],
       ],
       [
         "name" => "DB_NAME",
@@ -308,17 +308,17 @@ class SodaScsPortainerServiceActions implements SodaScsServiceRequestInterface {
         "value" => $requestParams['username'],
       ],
       [
-        "name" => "DEFAULT_GRAPH",
-        // @todo whats the best way of concat strings with vars?
-        "value" => $defaultGraphIri . '/contents/',
-      ],
-      [
         "name" => "DRUPAL_LOCALE",
         "value" => $requestParams['defaultLanguage'],
       ],
       [
-        "name" => "DOMAIN",
+        "name" => "DRUPAL_DOMAIN",
         "value" => $instanceDomainName,
+      ],
+      [
+        "name" => "DRUPAL_PRIVATE_FILES_DIR",
+        // @todo Set in RequestParams.
+        "value" => '/var/private-files/',
       ],
       [
         "name" => "DRUPAL_USER",
@@ -329,7 +329,15 @@ class SodaScsPortainerServiceActions implements SodaScsServiceRequestInterface {
         "value" => $requestParams['wisskiServicePassword'],
       ],
       [
-        "name" => "DRUPAL_TRUSTED_HOST",
+        "name" => "DRUPAL_PROXY_ADDRESSES",
+        "value" => $requestParams['proxyAddresses'] ?? '172.18.0.0/16|172.19.0.0/16',
+      ],
+      [
+        "name" => "DRUPAL_SITE_NAME",
+        "value" => $requestParams['machineName'],
+      ],
+      [
+        "name" => "DRUPAL_TRUSTED_HOSTS",
         "value" => $trustedHost,
       ],
       [
@@ -353,15 +361,15 @@ class SodaScsPortainerServiceActions implements SodaScsServiceRequestInterface {
         "value" => $requestParams['openidConnectClientSecret'],
       ],
       [
-        "name" => "USER_GROUPS",
-        "value" => $requestParams['userGroups'],
+        "name" => "REDIS_HOST",
+        "value" => $requestParams['redisHost'] ?? 'redis',
+      ],
+      [
+        "name" => "REDIS_PORT",
+        "value" => $requestParams['redisPort'] ?? '6379',
       ],
       [
         "name" => "SERVICE_NAME",
-        "value" => $requestParams['machineName'],
-      ],
-      [
-        "name" => "SITE_NAME",
         "value" => $requestParams['machineName'],
       ],
       [
@@ -389,12 +397,29 @@ class SodaScsPortainerServiceActions implements SodaScsServiceRequestInterface {
         "value" => $triplestoreServiceSettings['host'] . '/repositories/' . $requestParams['tsRepository'] . '/statements',
       ],
       [
+        "name" => "USER_GROUPS",
+        "value" => $requestParams['userGroups'],
+      ],
+      [
+        "name" => "VARNISH_BACKEND_HOST",
+        "value" => $requestParams['varnishBackendHost'] ?? $requestParams['machineName'] . '--drupal',
+      ],
+      [
+        "name" => "VARNISH_BACKEND_PORT",
+        "value" => $requestParams['varnishBackendPort'] ?? '80',
+      ],
+      [
         "name" => "VARNISH_IMAGE_VERSION",
         "value" => $requestParams['varnishImageVersion'],
       ],
       [
         "name" => "WISSKI_DEFAULT_DATA_MODEL_VERSION",
         "value" => $requestParams['wisskiDefaultDataModelRecipeVersion'],
+      ],
+      [
+        "name" => "WISSKI_DEFAULT_GRAPH",
+        // @todo whats the best way of concat strings with vars?
+        "value" => $defaultGraphIri . '/contents/',
       ],
       [
         "name" => "WISSKI_BASE_IMAGE_VERSION",
@@ -425,7 +450,7 @@ class SodaScsPortainerServiceActions implements SodaScsServiceRequestInterface {
         'name' => $requestParams['machineName'],
         'repositoryAuthentication' => FALSE,
         'repositoryURL' => $repositoryURL,
-        "repositoryReferenceName" => $requestParams['wisskiVersion'] ? "refs/tags/" . $requestParams['wisskiVersion'] : '',
+        "repositoryReferenceName" => $requestParams['wisskiComposeStackVersion'] ? "refs/tags/" . $requestParams['wisskiComposeStackVersion'] : '',
         'buildArgs' => $requestParams['buildArgs'] ?? [],
       ]),
     ];
