@@ -14,6 +14,7 @@ use Drupal\Core\StringTranslation\TranslationInterface;
 use Drupal\Core\TypedData\Exception\MissingDataException;
 use GuzzleHttp\ClientInterface;
 use GuzzleHttp\Exception\ClientException;
+use GuzzleHttp\Exception\ServerException;
 use Drupal\soda_scs_manager\Helpers\SodaScsServiceHelpers;
 use Drupal\Core\Utility\Error;
 use Psr\Log\LogLevel;
@@ -366,6 +367,7 @@ class SodaScsOpenGdbServiceActions implements SodaScsOpenGdbRequestInterface {
     if (isset($request['body'])) {
       $requestParams['body'] = $request['body'];
     }
+
     // Send the request.
     try {
       $response = $this->httpClient->request($request['method'], $request['route'], $requestParams);
@@ -413,6 +415,19 @@ class SodaScsOpenGdbServiceActions implements SodaScsOpenGdbRequestInterface {
           'error' => $e->getMessage(),
         ];
       }
+    }
+    catch (ServerException $e) {
+      $this->messenger->addError($this->t("OpenGDB request for @type failed. See logs for more details.", ['@type' => $request['type']]));
+      Error::logException($this->loggerFactory->get('soda_scs_manager'), $e, 'OpenGDB request failed: @message', ['@message' => $e->getMessage()], LogLevel::ERROR);
+      return [
+        'data' => [
+          'openGdbResponse' => $e,
+        ],
+        'error' => $e->getMessage(),
+        'message' => 'Request failed with code @code' . $e->getCode(),
+        'statusCode' => $e->getCode(),
+        'success' => FALSE,
+      ];
     }
     $this->messenger->addError($this->t("OpenGDB request for @type failed. See logs for more details.", ['@type' => $request['type']]));
     Error::logException($this->loggerFactory->get('soda_scs_manager'), $e, 'OpenGDB request failed: @message', ['@message' => $e->getMessage()], LogLevel::ERROR);
@@ -471,7 +486,6 @@ class SodaScsOpenGdbServiceActions implements SodaScsOpenGdbRequestInterface {
    */
   public function buildDumpRequest(array $requestParams): array {
     $triplestoreServiceSettings = $this->sodaScsServiceHelpers->initTriplestoreServiceSettings();
-    $triplestoreRepositoriesSettings = $this->sodaScsServiceHelpers->initTriplestoreRepositoriesSettings();
 
     // @todo Make this more flexible with settings.
     $route =
@@ -518,7 +532,6 @@ class SodaScsOpenGdbServiceActions implements SodaScsOpenGdbRequestInterface {
    */
   public function buildReplaceRepositoryRequest(array $requestParams): array {
     $triplestoreServiceSettings = $this->sodaScsServiceHelpers->initTriplestoreServiceSettings();
-    $triplestoreRepositoriesSettings = $this->sodaScsServiceHelpers->initTriplestoreRepositoriesSettings();
 
     $route =
     // https://ts.scs.sammlungen.io

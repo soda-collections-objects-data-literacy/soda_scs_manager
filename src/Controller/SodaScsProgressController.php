@@ -64,7 +64,8 @@ final class SodaScsProgressController extends ControllerBase {
       ], 404);
     }
 
-    // Get the latest steps (ordered by created_microtime for precise chronological order).
+    // Get the latest steps (ordered by created_microtime for precise
+    // chronological order).
     $steps = $this->sodaScsProgressHelper->findLatestStepsByOperation(
       $operation_uuid,
       [],
