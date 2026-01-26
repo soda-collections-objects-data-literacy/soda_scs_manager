@@ -6,6 +6,8 @@ namespace Drupal\soda_scs_manager\Form;
 
 use Drupal\Core\Entity\EntityConfirmFormBase;
 use Drupal\Core\Form\FormStateInterface;
+use Drupal\Core\StringTranslation\StringTranslationTrait;
+use Drupal\Core\StringTranslation\TranslatableMarkup;
 use Drupal\Core\Url;
 
 /**
@@ -13,10 +15,12 @@ use Drupal\Core\Url;
  */
 class SodaScsWisskiComponentVersionDeleteForm extends EntityConfirmFormBase {
 
+  use StringTranslationTrait;
+
   /**
    * {@inheritdoc}
    */
-  public function getQuestion(): \Drupal\Core\StringTranslation\TranslatableMarkup {
+  public function getQuestion(): TranslatableMarkup {
     /** @var \Drupal\soda_scs_manager\Entity\SodaScsWisskiComponentVersionInterface $entity */
     $entity = $this->entity;
     return $this->t('Are you sure you want to delete WissKI Component Version %version?', [
@@ -36,7 +40,7 @@ class SodaScsWisskiComponentVersionDeleteForm extends EntityConfirmFormBase {
   /**
    * {@inheritdoc}
    */
-  public function getConfirmText(): \Drupal\Core\StringTranslation\TranslatableMarkup {
+  public function getConfirmText(): TranslatableMarkup {
     return $this->t('Delete');
   }
 
