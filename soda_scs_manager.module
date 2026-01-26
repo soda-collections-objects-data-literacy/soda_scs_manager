@@ -34,6 +34,8 @@ use Symfony\Component\HttpFoundation\RedirectResponse;
 function soda_scs_manager_css_alter(&$css, AttachedAssetsInterface $assets, LanguageInterface $language) {
   $filePath = \Drupal::service('extension.list.module')->getPath('soda_scs_manager') . '/css/global.css';
   if (!isset($css[$filePath])) {
+    $fullPath = \Drupal::root() . '/' . $filePath;
+    $version = file_exists($fullPath) ? filemtime($fullPath) : NULL;
     $css[$filePath] = [
       'weight' => 200,
       'group' => 200,
@@ -41,6 +43,8 @@ function soda_scs_manager_css_alter(&$css, AttachedAssetsInterface $assets, Lang
       'data' => $filePath,
       'media' => 'all',
       'preprocess' => TRUE,
+      'version' => $version,
+      'license' => FALSE,
     ];
   }
 }
@@ -1233,6 +1237,7 @@ function _soda_scs_manager_ensure_scs_user_role() {
   }
 
   // Assign the required permissions to the custom role.
+  // @todo Check if all are needed, because we manage access owner based at many places.
   $permissions = [
     'create soda scs component',
     'create soda scs project',
