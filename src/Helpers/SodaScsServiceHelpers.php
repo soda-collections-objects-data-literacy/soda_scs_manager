@@ -474,18 +474,98 @@ class SodaScsServiceHelpers {
     $wisskiInstanceSettings['name'] = 'WissKI instance';
     $wisskiInstanceSettings['baseUrl'] = $this->settings->get('wisski.instances.baseUrl');
     $wisskiInstanceSettings['healthCheckUrl'] = $this->settings->get('wisski.instances.misc.healthCheck.url');
-    $wisskiInstanceSettings['productionVersion'] = $this->settings->get('wisski.instances.versions.production');
-    $wisskiInstanceSettings['packageEnvironments'] = $this->settings->get('wisski.instances.versions.packageEnvironments');
+
+    // Load versions from entities.
+    $versionStorage = $this->entityTypeManager->getStorage('soda_scs_wisski_component_ver');
+    $versionEntities = $versionStorage->loadMultiple();
+    $versions = [];
+    foreach ($versionEntities as $versionEntity) {
+      /** @var \Drupal\soda_scs_manager\Entity\SodaScsWisskiComponentVersionInterface $versionEntity */
+      $versions[] = [
+        'version' => $versionEntity->getVersion(),
+        'wisskiStack' => $versionEntity->getWisskiStack(),
+        'wisskiImage' => $versionEntity->getWisskiImage(),
+        'packageEnvironment' => $versionEntity->getPackageEnvironment(),
+      ];
+    }
+
+    // Get default version from settings or use first available.
+    $defaultVersionId = $this->settings->get('wisski.instances.versions.defaultVersion') ?? '';
+    $defaultVersion = NULL;
+    if ($defaultVersionId && isset($versionEntities[$defaultVersionId])) {
+      $defaultVersion = $versionEntities[$defaultVersionId];
+    }
+    elseif (!empty($versions)) {
+      // Use first version as default if no default is set.
+      $defaultVersion = reset($versionEntities);
+    }
+
+    if ($defaultVersion) {
+      /** @var \Drupal\soda_scs_manager\Entity\SodaScsWisskiComponentVersionInterface $defaultVersion */
+      $wisskiInstanceSettings['wisskiStackProductionVersion'] = $defaultVersion->getWisskiStack();
+      $wisskiInstanceSettings['wisskiBaseImageProductionVersion'] = $defaultVersion->getWisskiImage();
+      $wisskiInstanceSettings['defaultVersion'] = $defaultVersion->getVersion();
+    }
+    else {
+      $wisskiInstanceSettings['wisskiStackProductionVersion'] = '';
+      $wisskiInstanceSettings['wisskiBaseImageProductionVersion'] = '';
+      $wisskiInstanceSettings['defaultVersion'] = '';
+    }
+
+    // Collect all package environments.
+    $packageEnvironments = [];
+    foreach ($versions as $version) {
+      if (!empty($version['packageEnvironment'])) {
+        $packageEnvironments[] = $version['packageEnvironment'];
+      }
+    }
+    $wisskiInstanceSettings['packageEnvironments'] = implode(',', $packageEnvironments);
+
     // Production versions are hardcoded as defaults in docker-compose.yml in
     // stack repository.
-    $wisskiInstanceSettings['stackDevelopmentVersion'] = $this->settings->get('wisski.instances.versions.development.composeStack');
-    $wisskiInstanceSettings['imageDevelopmentVersion'] = $this->settings->get('wisski.instances.versions.development.image');
-    $wisskiInstanceSettings['starterRecipeDevelopmentVersion'] = $this->settings->get('wisski.instances.versions.development.starterRecipe');
-    $wisskiInstanceSettings['defaultDataModelRecipeDevelopmentVersion'] = $this->settings->get('wisski.instances.versions.development.defaultDataModelRecipe');
-    $wisskiInstanceSettings['varnishImageDevelopmentVersion'] = $this->settings->get('wisski.instances.versions.development.varnishImage');
+    $developmentVersions = $this->settings->get('wisski.instances.versions.development') ?? [];
+    $wisskiInstanceSettings['stackDevelopmentVersion'] = $developmentVersions['composeStack'] ?? '';
+    $wisskiInstanceSettings['imageDevelopmentVersion'] = $developmentVersions['image'] ?? '';
+    $wisskiInstanceSettings['starterRecipeDevelopmentVersion'] = $developmentVersions['starterRecipe'] ?? '';
+    $wisskiInstanceSettings['defaultDataModelRecipeDevelopmentVersion'] = $developmentVersions['defaultDataModelRecipe'] ?? '';
+    $wisskiInstanceSettings['varnishImageDevelopmentVersion'] = $developmentVersions['varnishImage'] ?? '';
+
     $this->checkSettings($wisskiInstanceSettings);
 
+    // No need to check.
+    // @todo Clean this up.
+    $wisskiInstanceSettings['versions'] = $versions;
+
     return $wisskiInstanceSettings;
+  }
+
+  /**
+   * Get WissKI version configuration by version number.
+   *
+   * @param string $versionNumber
+   *   The version number to look up (e.g., "1.0.0").
+   *
+   * @return array|null
+   *   The version configuration array or NULL if not found.
+   */
+  public function getWisskiVersionConfig(string $versionNumber): ?array {
+    $versionStorage = $this->entityTypeManager->getStorage('soda_scs_wisski_component_ver');
+    $versionEntities = $versionStorage->loadMultiple();
+
+    // Search for the version by version number.
+    foreach ($versionEntities as $versionEntity) {
+      /** @var \Drupal\soda_scs_manager\Entity\SodaScsWisskiComponentVersionInterface $versionEntity */
+      if ($versionEntity->getVersion() === $versionNumber) {
+        return [
+          'version' => $versionEntity->getVersion(),
+          'wisskiStack' => $versionEntity->getWisskiStack(),
+          'wisskiImage' => $versionEntity->getWisskiImage(),
+          'packageEnvironment' => $versionEntity->getPackageEnvironment(),
+        ];
+      }
+    }
+
+    return NULL;
   }
 
   /**
@@ -496,6 +576,16 @@ class SodaScsServiceHelpers {
    */
   private function checkSettings(array &$settings) {
     foreach ($settings as $key => &$value) {
+      if (is_array($value)) {
+        foreach ($value as $key2 => &$value2) {
+          if (empty($value2)) {
+            throw new MissingDataException($settings['name'] . ' ' . $key . ' ' . $key2 . ' setting is not set.');
+          }
+          else {
+            $value2 = str_replace('{empty}', '', $value2);
+          }
+        }
+      }
       if (empty($value)) {
         throw new MissingDataException($settings['name'] . ' ' . $key . ' setting is not set.');
       }

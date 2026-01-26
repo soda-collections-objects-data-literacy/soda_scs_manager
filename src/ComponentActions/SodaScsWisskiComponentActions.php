@@ -557,21 +557,56 @@ class SodaScsWisskiComponentActions implements SodaScsComponentActionsInterface 
           'wisskiDefaultDataModelRecipeVersion' => $wisskiInstanceSettings['defaultDataModelRecipeDevelopmentVersion'],
           'wisskiBaseImageVersion' => $wisskiInstanceSettings['imageDevelopmentVersion'],
           'wisskiStarterRecipeVersion' => $wisskiInstanceSettings['starterRecipeDevelopmentVersion'],
+          // Need to be empty for latest dev version.
           'wisskiVersion' => '',
         ];
       }
       else {
-        // Productions settings are hardcoded as defaults in docker-compose.yml
-        // in stack repository.
-        $versionSettings = [
-          'mode' => '',
-          'varnishImageVersion' => '',
-          'wisskiComposeStackVersion' => '',
-          'wisskiDefaultDataModelRecipeVersion' => '',
-          'wisskiBaseImageVersion' => '',
-          'wisskiStarterRecipeVersion' => '',
-          'wisskiVersion' => $wisskiInstanceSettings['productionVersion'],
-        ];
+        // Get component version to look up version config.
+        $componentVersion = $component->get('version')->value ?? '';
+        $versionConfig = NULL;
+
+        // Try to get version config from entities.
+        if (!empty($componentVersion)) {
+          $versionStorage = $this->entityTypeManager->getStorage('soda_scs_wisski_component_ver');
+          $versionEntities = $versionStorage->loadMultiple();
+          foreach ($versionEntities as $versionEntity) {
+            /** @var \Drupal\soda_scs_manager\Entity\SodaScsWisskiComponentVersionInterface $versionEntity */
+            if ($versionEntity->getVersion() === $componentVersion) {
+              $versionConfig = [
+                'wisskiStack' => $versionEntity->getWisskiStack(),
+                'wisskiImage' => $versionEntity->getWisskiImage(),
+                'packageEnvironment' => $versionEntity->getPackageEnvironment(),
+              ];
+              break;
+            }
+          }
+        }
+
+        // Use version config if found, otherwise fall back to default values.
+        if ($versionConfig) {
+          $versionSettings = [
+            'mode' => '',
+            'varnishImageVersion' => '',
+            'wisskiComposeStackVersion' => $versionConfig['wisskiStack'] ?? '',
+            'wisskiDefaultDataModelRecipeVersion' => '',
+            'wisskiBaseImageVersion' => $versionConfig['wisskiImage'] ?? '',
+            'wisskiStarterRecipeVersion' => '',
+            'wisskiVersion' => $versionConfig['packageEnvironment'] ?? '',
+          ];
+        }
+        else {
+          // Fall back to default values from settings.
+          $versionSettings = [
+            'mode' => '',
+            'varnishImageVersion' => '',
+            'wisskiComposeStackVersion' => $wisskiInstanceSettings['wisskiStackProductionVersion'] ?? '',
+            'wisskiDefaultDataModelRecipeVersion' => '',
+            'wisskiBaseImageVersion' => $wisskiInstanceSettings['wisskiBaseImageProductionVersion'] ?? '',
+            'wisskiStarterRecipeVersion' => '',
+            'wisskiVersion' => $componentVersion ?? '',
+          ];
+        }
       }
 
       //

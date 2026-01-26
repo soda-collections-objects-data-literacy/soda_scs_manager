@@ -4,9 +4,11 @@ declare(strict_types=1);
 
 namespace Drupal\soda_scs_manager\Form;
 
+use Drupal\Core\Entity\EntityTypeManagerInterface;
 use Drupal\Core\Form\ConfigFormBase;
 use Drupal\Core\Form\FormStateInterface;
 use Psr\Log\LogLevel;
+use Symfony\Component\DependencyInjection\ContainerInterface;
 
 /**
  * SODa SCS Manager in settings form.
@@ -15,6 +17,22 @@ use Psr\Log\LogLevel;
  * as defined in the SODa SCS Component bundles.
  */
 class SodaScsSettingsForm extends ConfigFormBase {
+
+  /**
+   * The entity type manager.
+   *
+   * @var \Drupal\Core\Entity\EntityTypeManagerInterface
+   */
+  protected EntityTypeManagerInterface $entityTypeManager;
+
+  /**
+   * {@inheritdoc}
+   */
+  public static function create(ContainerInterface $container): static {
+    $instance = parent::create($container);
+    $instance->entityTypeManager = $container->get('entity_type.manager');
+    return $instance;
+  }
 
   /**
    * {@inheritdoc}
@@ -95,7 +113,7 @@ class SodaScsSettingsForm extends ConfigFormBase {
       '#type' => 'textfield',
       '#title' => $this->t('SODa SCS host'),
       '#default_value' => $this->config('soda_scs_manager.settings')->get('scsHost'),
-      '#description' => $this->t('The SODa SCS host, like https://scs.sammlungen.io.'),
+      '#description' => $this->t('The SODa SCS host, like scs.sammlungen.io.'),
     ];
 
     $form['general']['fields']['administratorEmail'] = [
@@ -129,7 +147,7 @@ class SodaScsSettingsForm extends ConfigFormBase {
       '#type' => 'textfield',
       '#title' => $this->t('Database host'),
       '#default_value' => $this->config('soda_scs_manager.settings')->get('dbHost'),
-      '#description' => $this->t('The database host, like https://db.scs.sammlungen.io.'),
+      '#description' => $this->t('The database host, like db.scs.sammlungen.io.'),
     ];
     $form['database']['fields']['dbPort'] = [
       '#type' => 'textfield',
@@ -148,7 +166,7 @@ class SodaScsSettingsForm extends ConfigFormBase {
       '#type' => 'textfield',
       '#title' => $this->t('Management host'),
       '#default_value' => $this->config('soda_scs_manager.settings')->get('dbManagementHost'),
-      '#description' => $this->t('The management host, like https://adminer-db.scs.sammlungen.io.'),
+      '#description' => $this->t('The management host, like adminer-db.scs.sammlungen.io.'),
     ];
 
     // Jupyter settings tab.
@@ -203,7 +221,7 @@ class SodaScsSettingsForm extends ConfigFormBase {
       '#type' => 'textfield',
       '#title' => $this->t('Keycloak host'),
       '#default_value' => $this->config('soda_scs_manager.settings')->get('keycloak')['keycloakTabs']['generalSettings']['fields']['keycloakHost'] ?? '',
-      '#description' => $this->t('The keycloak host, like https://auth.sammlungen.io.'),
+      '#description' => $this->t('The keycloak host, like auth.sammlungen.io.'),
     ];
 
     $form['keycloak']['keycloakTabs']['generalSettings']['fields']['keycloakRealm'] = [
@@ -517,7 +535,7 @@ class SodaScsSettingsForm extends ConfigFormBase {
       '#type' => 'textfield',
       '#title' => $this->t('Triplestore host'),
       '#default_value' => $this->config('soda_scs_manager.settings')->get('triplestore')['generalSettings']['host'] ?? '',
-      '#description' => $this->t('The triplestore host, like https://ts.scs.sammlungen.io.'),
+      '#description' => $this->t('The triplestore host, like ts.scs.sammlungen.io.'),
     ];
     $form['triplestore']['generalSettings']['port'] = [
       '#type' => 'textfield',
@@ -717,7 +735,7 @@ class SodaScsSettingsForm extends ConfigFormBase {
       '#type' => 'textfield',
       '#title' => $this->t('Host'),
       '#default_value' => $this->config('soda_scs_manager.settings')->get('portainer')['portainerOptions']['host'] ?? '',
-      '#description' => $this->t('The host, like https://portainer.scs.sammlungen.io'),
+      '#description' => $this->t('The host, like portainer.scs.sammlungen.io'),
     ];
 
     $form['portainer']['portainerOptions']['authenticationToken'] = [
@@ -1036,7 +1054,7 @@ class SodaScsSettingsForm extends ConfigFormBase {
       '#type' => 'textfield',
       '#title' => $this->t('Host'),
       '#default_value' => $this->config('soda_scs_manager.settings')->get('webprotege')['generalSettings']['host'] ?? '',
-      '#description' => $this->t('The host, like "https://webprotege.scs.sammlungen.io".'),
+      '#description' => $this->t('The host, like "webprotege.scs.sammlungen.io".'),
     ];
 
     // WissKI settings tab.
@@ -1076,21 +1094,35 @@ class SodaScsSettingsForm extends ConfigFormBase {
 
     $form['wisski']['instances']['versions'] = [
       '#type' => 'fieldset',
-      '#title' => 'Versions configuration',
+      '#title' => 'WissKI component versions',
+      '#description' => $this->t('Manage WissKI component versions as separate entities. Select the default version to use for new components.'),
     ];
 
-    $form['wisski']['instances']['versions']['production'] = [
-      '#type' => 'textfield',
-      '#title' => $this->t('SCS WissKI Base Image default production version'),
-      '#default_value' => $this->config('soda_scs_manager.settings')->get('wisski')['instances']['versions']['production'] ?? '',
-      '#description' => $this->t('The <a href="https://github.com/soda-collections-objects-data-literacy/wisski-base-stack" target="_blank">SCS WissKI default production version</a>, like "1.0.0".'),
+    // Load available versions from entities.
+    $versionStorage = $this->entityTypeManager->getStorage('soda_scs_wisski_component_ver');
+    $versions = $versionStorage->loadMultiple();
+    $versionOptions = [];
+    foreach ($versions as $version) {
+      /** @var \Drupal\soda_scs_manager\Entity\SodaScsWisskiComponentVersionInterface $version */
+      $versionOptions[$version->id()] = $version->getVersion();
+    }
+
+    $form['wisski']['instances']['versions']['defaultVersion'] = [
+      '#type' => 'select',
+      '#title' => $this->t('Default WissKI component version'),
+      '#description' => $this->t('Select the default version to use when creating new WissKI components.'),
+      '#options' => $versionOptions,
+      '#default_value' => $this->config('soda_scs_manager.settings')->get('wisski')['instances']['versions']['defaultVersion'] ?? '',
+      '#empty_option' => $this->t('- Select a version -'),
+      '#required' => FALSE,
     ];
 
-    $form['wisski']['instances']['versions']['packageEnvironments'] = [
-      '#type' => 'textfield',
-      '#title' => $this->t('SCS Drupal/WissKI package environments'),
-      '#default_value' => $this->config('soda_scs_manager.settings')->get('wisski')['instances']['versions']['packageEnvironments'] ?? '',
-      '#description' => $this->t('The SCS Drupal/WissKI package environments, see available versions at <a href="https://github.com/soda-collections-objects-data-literacy/drupal_packages" target="_blank">SCS Drupal/WissKI package environments</a>. Use comma to separate versions, like "1.0.0,1.0.1,1.1.0".'),
+    $form['wisski']['instances']['versions']['manage_versions'] = [
+      '#type' => 'item',
+      '#title' => $this->t('Manage versions'),
+      '#markup' => $this->t('<a href="@url">Manage WissKI component versions</a>', [
+        '@url' => '/admin/config/soda-scs-manager/wisski-versions',
+      ]),
     ];
 
     // Other production versions are hardcoded as defaults in docker-compose.yml
@@ -1192,6 +1224,14 @@ class SodaScsSettingsForm extends ConfigFormBase {
    * {@inheritdoc}
    */
   public function submitForm(array &$form, FormStateInterface $form_state): void {
+    $wisskiValues = $form_state->getValue('wisski');
+
+    // Save default version selection.
+    if (isset($wisskiValues['instances']['versions']['defaultVersion'])) {
+      $existingWisski = $this->config('soda_scs_manager.settings')->get('wisski') ?? [];
+      $existingWisski['instances']['versions']['defaultVersion'] = $wisskiValues['instances']['versions']['defaultVersion'];
+      $wisskiValues = $existingWisski;
+    }
 
     // Save the configuration.
     $this->config('soda_scs_manager.settings')
@@ -1209,7 +1249,7 @@ class SodaScsSettingsForm extends ConfigFormBase {
       ->set('snapshotPath', $form_state->getValue('snapshotPath'))
       ->set('triplestore', $form_state->getValue('triplestore'))
       ->set('webprotege', $form_state->getValue('webprotege'))
-      ->set('wisski', $form_state->getValue('wisski'))
+      ->set('wisski', $wisskiValues)
       ->save();
 
     // Log the configuration change with secure logging.

@@ -31,3 +31,13 @@ entity.soda_scs_service_key.add_form:
   options:
     attributes:
       class: ['button', 'button--action', 'button--primary']
+
+# WissKI Component Version
+entity.soda_scs_wisski_component_ver.add_form:
+  route_name: entity.soda_scs_wisski_component_ver.add_form
+  title: 'Add version'
+  appears_on:
+    - entity.soda_scs_wisski_component_ver.collection
+  options:
+    attributes:
+      class: ['button', 'button--action', 'button--primary']

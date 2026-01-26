@@ -530,6 +530,29 @@ soda_scs_manager.settings:
                       type: string
                       label: 'Health check route'
                       description: 'The health check route, like "/health".'
+            versions:
+              type: sequence
+              label: 'WissKI component versions'
+              sequence:
+                type: mapping
+                label: 'WissKI component version'
+                mapping:
+                  version:
+                    type: string
+                    label: 'Version number'
+                    description: 'The version number, like "1.0.0".'
+                  wisskiStack:
+                    type: string
+                    label: 'WissKI stack version'
+                    description: 'The WissKI stack version for this component version.'
+                  wisskiImage:
+                    type: string
+                    label: 'WissKI image version'
+                    description: 'The WissKI image version for this component version.'
+                  packageEnvironment:
+                    type: string
+                    label: 'Package environment version'
+                    description: 'The package environment version for this component version.'
     security:
       type: mapping
       label: 'Security settings'
