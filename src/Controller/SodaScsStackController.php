@@ -60,68 +60,81 @@ class SodaScsStackController extends ControllerBase {
       return new JsonResponse(['status' => 'not_found'], 404);
     }
 
-    $bundle = $stack->get('bundle')->value;
-    switch ($bundle) {
-      case 'soda_scs_wisski_stack':
-        $wisskiHealth = $this->sodaScsStackHelpers
-          ->checkWisskiHealth($stack);
-        if (!$wisskiHealth) {
-          return new JsonResponse([
-            'status' => [
-              'message' => $this->t("WissKI health check failed for stack @stack. Message: @message", [
-                '@stack' => $stack->id(),
-                '@message' => $wisskiHealth['message'],
-              ]),
-              'success' => FALSE,
-            ],
-            'code' => $wisskiHealth['code'],
-          ]);
-        }
-        return new JsonResponse(['status' => $wisskiHealth]);
+    try {
+      $bundle = $stack->get('bundle')->value;
+      switch ($bundle) {
+        case 'soda_scs_wisski_stack':
+          $wisskiHealth = $this->sodaScsStackHelpers
+            ->checkWisskiHealth($stack);
+          if (!$wisskiHealth) {
+            return new JsonResponse([
+              'status' => [
+                'message' => $this->t("WissKI health check failed for stack @stack. Message: @message", [
+                  '@stack' => $stack->id(),
+                  '@message' => $wisskiHealth['message'],
+                ]),
+                'success' => FALSE,
+              ],
+              'code' => $wisskiHealth['code'],
+            ]);
+          }
+          return new JsonResponse(['status' => $wisskiHealth]);
 
-      case 'soda_scs_jupyter_stack':
-        $jupyterHealth = $this->sodaScsStackHelpers->checkJupyterHealth($stack->id());
-        if (!$jupyterHealth) {
+        case 'soda_scs_jupyter_stack':
+          $jupyterHealth = $this->sodaScsStackHelpers->checkJupyterHealth($stack->id());
+          if (!$jupyterHealth) {
+            return new JsonResponse(
+              [
+                'status' => [
+                  'message' => $this->t("Jupyter health check failed for stack @stack.", ['@stack' => $stack->id()]),
+                  'success' => FALSE,
+                ],
+                'code' => $jupyterHealth['code'],
+              ],
+            );
+          }
+          return new JsonResponse(['status' => $jupyterHealth]);
+
+        case 'soda_scs_nextcloud_stack':
+          $nextcloudHealth = $this->sodaScsStackHelpers
+            ->checkNextcloudHealth($stack->get('machineName')->value, $stack->get('machineName')->value);
+          if (!$nextcloudHealth) {
+            return new JsonResponse([
+              'status' => [
+                'message' => $this->t("Nextcloud health check failed for stack @stack.", ['@stack' => $stack->id()]),
+                'success' => FALSE,
+              ],
+              'code' => $nextcloudHealth['code'],
+            ]);
+          }
+          return new JsonResponse(['status' => $nextcloudHealth]);
+
+        default:
           return new JsonResponse(
             [
               'status' => [
-                'message' => $this->t("Jupyter health check failed for stack @stack.", ['@stack' => $stack->id()]),
+                'message' => $this->t("Health check failed for stack @stack with message: @message", [
+                  '@stack' => $stack->id(),
+                  '@message' => 'Unknown stack type.',
+                ]),
                 'success' => FALSE,
               ],
-              'code' => $jupyterHealth['code'],
+              'code' => 500,
             ],
+            500,
           );
-        }
-        return new JsonResponse(['status' => $jupyterHealth]);
-
-      case 'soda_scs_nextcloud_stack':
-        $nextcloudHealth = $this->sodaScsStackHelpers
-          ->checkNextcloudHealth($stack->get('machineName')->value, $stack->get('machineName')->value);
-        if (!$nextcloudHealth) {
-          return new JsonResponse([
-            'status' => [
-              'message' => $this->t("Nextcloud health check failed for stack @stack.", ['@stack' => $stack->id()]),
-              'success' => FALSE,
-            ],
-            'code' => $nextcloudHealth['code'],
-          ]);
-        }
-        return new JsonResponse(['status' => $nextcloudHealth]);
-
-      default:
-        return new JsonResponse(
-          [
-            'status' => [
-              'message' => $this->t("Health check failed for stack @stack with message: @message", [
-                '@stack' => $stack->id(),
-                '@message' => 'Unknown stack type.',
-              ]),
-              'success' => FALSE,
-            ],
-            'code' => 500,
-          ],
-          500,
-        );
+      }
+    }
+    catch (\Exception $e) {
+      return new JsonResponse([
+        'status' => [
+          'message' => $this->t("Health check failed for stack @stack with message: @message", [
+            '@stack' => $stack->id(),
+            '@message' => $e->getMessage(),
+          ]),
+        ],
+        'code' => $e->getCode(),
+      ], 500);
     }
   }
 
