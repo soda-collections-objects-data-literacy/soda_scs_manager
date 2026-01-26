@@ -311,7 +311,7 @@ class SodaScsComponentCreateForm extends ContentEntityForm {
       }
     }
 
-    // Check if the machineName is already in use by another component entity.
+    // Check if the machineName is already in use by another soda_scs_component entity.
     $entity_query = $this->entityTypeManager->getStorage('soda_scs_component')->getQuery()
       ->accessCheck(FALSE)
       ->condition('machineName', $machineName);
@@ -359,7 +359,8 @@ class SodaScsComponentCreateForm extends ContentEntityForm {
         break;
 
       default:
-        $componentId = $this->entity->id() ?? throw new \Exception('Component ID not found');
+        $componentId = $this->entity->id() ??
+        throw new \Exception('Component ID not found');
     }
 
     // Redirect to the components page.
