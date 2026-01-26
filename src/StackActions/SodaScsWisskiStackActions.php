@@ -290,7 +290,26 @@ class SodaScsWisskiStackActions implements SodaScsStackActionsInterface {
       $stack->set('version', $this->settings->get('wisski.instances.versions.development.composeStack'));
     }
     else {
-      $stack->set('version', $this->settings->get('wisski.instances.versions.production'));
+      // Get default version from settings or use first available version entity.
+      $defaultVersionId = $this->settings->get('wisski.instances.versions.defaultVersion') ?? '';
+      $versionStorage = $this->entityTypeManager->getStorage('soda_scs_wisski_component_ver');
+      $defaultVersion = NULL;
+      if ($defaultVersionId) {
+        $defaultVersion = $versionStorage->load($defaultVersionId);
+      }
+      if (!$defaultVersion) {
+        // Load first available version.
+        $versions = $versionStorage->loadMultiple();
+        $defaultVersion = !empty($versions) ? reset($versions) : NULL;
+      }
+      if ($defaultVersion) {
+        /** @var \Drupal\soda_scs_manager\Entity\SodaScsWisskiComponentVersionInterface $defaultVersion */
+        $stack->set('version', $defaultVersion->getVersion());
+      }
+      else {
+        // Fallback to empty if no version configured.
+        $stack->set('version', '');
+      }
     }
 
     // Save the stack first so it has an ID that can be referenced by
