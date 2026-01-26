@@ -1,13 +1,31 @@
 {
-  "name": "WissKI Test System - Drupal",
-  "workspaceFolder": "/opt/drupal",
+  "name": "SCS Manager System Drupal",
+  "workspaceFolder": "/opt/drupal/web/modules/custom/soda_scs_manager",
   "remoteUser": "root",
-  "settings": {
-    "terminal.integrated.defaultProfile.linux": "bash"
+  "customizations": {
+    "vscode": {
+      "settings": {
+        "terminal.integrated.defaultProfile.linux": "bash"
+      },
+      "extensions": [
+        "bmewburn.vscode-intelephense-client",
+        "xdebug.php-debug",
+        "drupal.drupal-snippets",
+        "drupal.drupal-8-snippets",
+        "ms-vscode.vscode-json",
+        "redhat.vscode-yaml",
+        "ms-azuretools.vscode-docker",
+        "eamodio.gitlens",
+        "editorconfig.editorconfig",
+        "dbaeumer.vscode-eslint",
+        "esbenp.prettier-vscode",
+        "bradlc.vscode-tailwindcss",
+        "formulahendry.auto-rename-tag",
+        "ms-vscode.vscode-typescript-next"
+      ]
+    }
   },
-  "extensions": [
-    "bmewburn.vscode-intelephense-client",
-    "felixfbecker.php-debug"
-  ]
+  "postCreateCommand": "cp xdebug-clean.ini /usr/local/etc/php/conf.d/zz-xdebug-custom.ini && pkill -USR2 php-fpm 2>/dev/null || true && echo '✓ XDebug configured' && echo '✓ Dev container ready'",
+  "features": {}
 }
 
