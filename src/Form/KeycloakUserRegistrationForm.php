@@ -137,7 +137,7 @@ class KeycloakUserRegistrationForm extends FormBase {
 
     $form['description'] = [
       '#type' => 'markup',
-      '#markup' => $this->t('<p>Register for an account. Your registration will be reviewed by an administrator.</p>'),
+      '#markup' => $this->t('<p><strong>Register for an account. You will receive an email, which confirm your registration. It will be reviewed by an administrator. You will receive another email, when your account is approved or rejected.</strong></p>'),
     ];
 
     $form['email'] = [
@@ -173,6 +173,20 @@ class KeycloakUserRegistrationForm extends FormBase {
       '#type' => 'password_confirm',
       '#required' => TRUE,
       '#description' => $this->t('Enter the password you would like to use.'),
+    ];
+
+    $form['terms_of_service'] = [
+      '#type' => 'checkbox',
+      '#description' => $this->t('I agree to the <a href="/terms-of-service" target="_blank">terms of service</a>'),
+      '#title' => $this->t('I agree to the terms of service'),
+      '#required' => TRUE,
+    ];
+
+    $form['privacy_policy'] = [
+      '#type' => 'checkbox',
+      '#description' => $this->t('I agree to the <a href="/imprint-privacy-policy" target="_blank">privacy policy</a>'),
+      '#title' => $this->t('I agree to the privacy policy'),
+      '#required' => TRUE,
     ];
 
     $form['actions'] = [
