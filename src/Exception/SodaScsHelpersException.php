@@ -88,7 +88,7 @@ class SodaScsHelpersException extends \Exception {
     string $operation = 'unknown',
     array $context = [],
     int $code = 0,
-    ?\Throwable $previous = null
+    ?\Throwable $previous = NULL,
   ) {
     $this->operationCategory = $operationCategory;
     $this->operation = $operation;
@@ -132,7 +132,7 @@ class SodaScsHelpersException extends \Exception {
     string $message,
     string $operation,
     array $context = [],
-    ?\Throwable $previous = null
+    ?\Throwable $previous = NULL,
   ): self {
     return new self($message, 'snapshot', $operation, $context, 0, $previous);
   }
@@ -156,7 +156,7 @@ class SodaScsHelpersException extends \Exception {
     string $message,
     string $operation,
     array $context = [],
-    ?\Throwable $previous = null
+    ?\Throwable $previous = NULL,
   ): self {
     return new self($message, 'filesystem', $operation, $context, 0, $previous);
   }
@@ -180,7 +180,7 @@ class SodaScsHelpersException extends \Exception {
     string $message,
     string $operation,
     array $context = [],
-    ?\Throwable $previous = null
+    ?\Throwable $previous = NULL,
   ): self {
     return new self($message, 'data_processing', $operation, $context, 0, $previous);
   }
@@ -204,7 +204,7 @@ class SodaScsHelpersException extends \Exception {
     string $message,
     string $operation,
     array $context = [],
-    ?\Throwable $previous = null
+    ?\Throwable $previous = NULL,
   ): self {
     return new self($message, 'configuration', $operation, $context, 0, $previous);
   }
@@ -299,5 +299,29 @@ class SodaScsHelpersException extends \Exception {
     $pos = strrpos($fullClassName, '\\');
     return $pos !== FALSE ? substr($fullClassName, $pos + 1) : $fullClassName;
   }
-}
 
+  /**
+   * Creates an exception for OpenGDB-related failures.
+   *
+   * @param string $message
+   *   The error message.
+   * @param string $operation
+   *   The specific OpenGDB operation.
+   * @param array $context
+   *   Additional context.
+   * @param \Throwable|null $previous
+   *   The previous exception.
+   *
+   * @return static
+   *   The exception instance.
+   */
+  public static function opengdbFailed(
+    string $message,
+    string $operation,
+    array $context = [],
+    ?\Throwable $previous = NULL,
+  ): self {
+    return new self($message, 'opengdb', $operation, $context, 0, $previous);
+  }
+
+}

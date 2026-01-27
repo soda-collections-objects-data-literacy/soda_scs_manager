@@ -10,6 +10,8 @@ use Drupal\soda_scs_manager\Exception\SodaScsRequestException;
 use Drupal\soda_scs_manager\Exception\SodaScsHelpersException;
 use Drupal\soda_scs_manager\ValueObject\SodaScsResult;
 use Drupal\Core\Logger\LoggerChannelFactoryInterface;
+use Drupal\Core\Entity\EntityTypeBundleInfoInterface;
+use Drupal\soda_scs_manager\ServiceKeyActions\SodaScsServiceKeyActionsInterface;
 
 /**
  * Helper class for SCS triplestore operations.
@@ -38,6 +40,27 @@ class SodaScsTriplestoreHelpers {
   protected SodaScsSnapshotHelpers $sodaScsSnapshotHelpers;
 
   /**
+   * The SCS Service Key actions.
+   *
+   * @var \Drupal\soda_scs_manager\ServiceKeyActions\SodaScsServiceKeyActionsInterface
+   */
+  protected SodaScsServiceKeyActionsInterface $sodaScsServiceKeyActions;
+
+  /**
+   * The SCS OpenGDB helpers.
+   *
+   * @var \Drupal\soda_scs_manager\Helpers\SodaScsOpenGdbHelpers
+   */
+  protected SodaScsOpenGdbHelpers $sodaScsOpenGdbHelpers;
+
+  /**
+   * The entity type bundle info.
+   *
+   * @var \Drupal\Core\Entity\EntityTypeBundleInfoInterface
+   */
+  protected EntityTypeBundleInfoInterface $entityTypeBundleInfo;
+
+  /**
    * Constructor.
    *
    * @param \Drupal\Core\Logger\LoggerChannelFactoryInterface $loggerFactory
@@ -46,6 +69,12 @@ class SodaScsTriplestoreHelpers {
    *   The SCS OpenGDB service actions.
    * @param \Drupal\soda_scs_manager\Helpers\SodaScsSnapshotHelpers $sodaScsSnapshotHelpers
    *   The SCS Snapshot helpers.
+   * @param \Drupal\soda_scs_manager\ServiceKeyActions\SodaScsServiceKeyActionsInterface $sodaScsServiceKeyActions
+   *   The SCS Service Key actions.
+   * @param \Drupal\soda_scs_manager\Helpers\SodaScsOpenGdbHelpers $sodaScsOpenGdbHelpers
+   *   The SCS OpenGDB helpers.
+   * @param \Drupal\Core\Entity\EntityTypeBundleInfoInterface $entityTypeBundleInfo
+   *   The entity type bundle info.
    */
   public function __construct(
     LoggerChannelFactoryInterface $loggerFactory,
@@ -53,10 +82,18 @@ class SodaScsTriplestoreHelpers {
     SodaScsOpenGdbRequestInterface $sodaScsOpenGdbServiceActions,
     #[Autowire(service: 'soda_scs_manager.snapshot.helpers')]
     SodaScsSnapshotHelpers $sodaScsSnapshotHelpers,
+    #[Autowire(service: 'soda_scs_manager.service_key.actions')]
+    SodaScsServiceKeyActionsInterface $sodaScsServiceKeyActions,
+    #[Autowire(service: 'soda_scs_manager.opengdb.helpers')]
+    SodaScsOpenGdbHelpers $sodaScsOpenGdbHelpers,
+    EntityTypeBundleInfoInterface $entityTypeBundleInfo,
   ) {
     $this->loggerFactory = $loggerFactory;
     $this->sodaScsOpenGdbServiceActions = $sodaScsOpenGdbServiceActions;
     $this->sodaScsSnapshotHelpers = $sodaScsSnapshotHelpers;
+    $this->sodaScsServiceKeyActions = $sodaScsServiceKeyActions;
+    $this->sodaScsOpenGdbHelpers = $sodaScsOpenGdbHelpers;
+    $this->entityTypeBundleInfo = $entityTypeBundleInfo;
   }
 
   /**
@@ -204,6 +241,89 @@ class SodaScsTriplestoreHelpers {
         'repositoryId' => $repositoryId,
       ],
     );
+  }
+
+  /**
+   * Ensure user data exists.
+   *
+   * Check if user service key password exists. If not, create it.
+   * Check if user token exists. If not, create it.
+   *
+   * @param \Drupal\soda_scs_manager\Entity\SodaScsTriplestoreComponent $component
+   *   The component entity.
+   *
+   * @return array
+   *   The result of the operation.
+   *
+   * @throws \Drupal\soda_scs_manager\Exception\SodaScsHelpersException
+   *   If the operation fails.
+   */
+  public function ensureUserDataExists($component) {
+    $bundleInfo = $this->entityTypeBundleInfo->getBundleInfo('soda_scs_component')['soda_scs_triplestore_component'];
+
+    // Check if service key password exists.
+    $keyPasswordProps = [
+      'bundle'  => $component->bundle(),
+      'bundleLabel' => $bundleInfo['label'],
+      'type'  => 'password',
+      'userId'    => $component->getOwnerId(),
+      'username' => $component->getOwner()->getDisplayName(),
+    ];
+
+    $componentServiceKeyPassword = $this->sodaScsServiceKeyActions->getServiceKey($keyPasswordProps);
+
+    if (!$componentServiceKeyPassword) {
+      // If no password service key, create one.
+      $componentServiceKeyPassword = $this->sodaScsServiceKeyActions->createServiceKey($keyPasswordProps);
+      // If there is no service, there may be no user either.
+    }
+
+    // Check if user exists. If not, create it.
+    $userData = $this->sodaScsOpenGdbHelpers->getUserDataByName($component->getOwner()->getDisplayName());
+    if (!$userData) {
+      $this->sodaScsOpenGdbHelpers->createUser($component->getOwner()->getDisplayName(), $componentServiceKeyPassword->get('servicePassword')->value);
+    }
+    else {
+      // If there is a user, update the the user credentials to sync with the
+      // service key.
+      $this->sodaScsOpenGdbHelpers->updateUser($component->getOwner()->getDisplayName(), $componentServiceKeyPassword->get('servicePassword')->value);
+    }
+    $userData = $this->sodaScsOpenGdbHelpers->getUserDataByName($component->getOwner()->getDisplayName());
+
+    $userData['password'] = $componentServiceKeyPassword->get('servicePassword')->value;
+
+    // Check if service key token exists.
+    $keyTokenProps = [
+      'bundle'  => 'soda_scs_triplestore_component',
+      'type'  => 'token',
+      'userId'    => $component->getOwnerId(),
+      'username' => $component->getOwner()->getDisplayName(),
+    ];
+
+    $componentServiceKeyToken = $this->sodaScsServiceKeyActions->getServiceKey($keyTokenProps);
+
+    if (!$componentServiceKeyToken) {
+      // If no token service key, create a new one for the user at OpenGDB.
+      $userToken = $this->sodaScsOpenGdbHelpers->createUserToken($component->getOwner()->getDisplayName(), $componentServiceKeyPassword->get('servicePassword')->value);
+
+      $keyTokenProps = [
+        'bundle'  => $component->bundle(),
+        'bundleLabel' => $bundleInfo['label'],
+        'token' => $userToken,
+        'type'  => 'token',
+        'userId'    => $component->getOwnerId(),
+        'username' => $component->getOwner()->getDisplayName(),
+      ];
+
+      // Create new service key token.
+      $componentServiceKeyToken = $this->sodaScsServiceKeyActions->createServiceKey($keyTokenProps);
+
+      $userData['token'] = $userToken;
+
+    }
+
+    return $userData;
+
   }
 
 }

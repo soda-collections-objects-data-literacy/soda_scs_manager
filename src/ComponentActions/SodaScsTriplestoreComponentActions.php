@@ -19,6 +19,7 @@ use Drupal\Core\Utility\Error;
 use Drupal\soda_scs_manager\Entity\SodaScsComponentInterface;
 use Drupal\soda_scs_manager\Entity\SodaScsSnapshotInterface;
 use Drupal\soda_scs_manager\Exception\SodaScsComponentActionsException;
+use Drupal\soda_scs_manager\Helpers\SodaScsOpenGdbHelpers;
 use Drupal\soda_scs_manager\Helpers\SodaScsSnapshotHelpers;
 use Drupal\soda_scs_manager\Helpers\SodaScsTriplestoreHelpers;
 use Drupal\soda_scs_manager\RequestActions\SodaScsOpenGdbRequestInterface;
@@ -72,6 +73,13 @@ class SodaScsTriplestoreComponentActions implements SodaScsComponentActionsInter
   protected SodaScsOpenGdbRequestInterface $sodaScsOpenGdbServiceActions;
 
   /**
+   * The SCS OpenGDB helpers service.
+   *
+   * @var \Drupal\soda_scs_manager\Helpers\SodaScsOpenGdbHelpers
+   */
+  protected SodaScsOpenGdbHelpers $sodaScsOpenGdbHelpers;
+
+  /**
    * The SCS Service Key actions service.
    *
    * @var \Drupal\soda_scs_manager\ServiceKeyActions\SodaScsServiceKeyActionsInterface
@@ -121,6 +129,8 @@ class SodaScsTriplestoreComponentActions implements SodaScsComponentActionsInter
     SodaScsRunRequestInterface $sodaScsDockerRunServiceActions,
     #[Autowire(service: 'soda_scs_manager.service_key.actions')]
     SodaScsServiceKeyActionsInterface $sodaScsServiceKeyActions,
+    #[Autowire(service: 'soda_scs_manager.opengdb.helpers')]
+    SodaScsOpenGdbHelpers $sodaScsOpenGdbHelpers,
     #[Autowire(service: 'soda_scs_manager.snapshot.helpers')]
     SodaScsSnapshotHelpers $sodaScsSnapshotHelpers,
     #[Autowire(service: 'soda_scs_manager.triplestore_helpers')]
@@ -136,6 +146,7 @@ class SodaScsTriplestoreComponentActions implements SodaScsComponentActionsInter
     $this->settings = $settings;
     $this->sodaScsOpenGdbServiceActions = $sodaScsOpenGdbServiceActions;
     $this->sodaScsDockerRunServiceActions = $sodaScsDockerRunServiceActions;
+    $this->sodaScsOpenGdbHelpers = $sodaScsOpenGdbHelpers;
     $this->sodaScsServiceKeyActions = $sodaScsServiceKeyActions;
     $this->sodaScsSnapshotHelpers = $sodaScsSnapshotHelpers;
     $this->sodaScsTriplestoreHelpers = $sodaScsTriplestoreHelpers;
@@ -172,29 +183,9 @@ class SodaScsTriplestoreComponentActions implements SodaScsComponentActionsInter
           'partOfProjects' => $entity->get('partOfProjects'),
         ]
       );
-      // Create service key if it does not exist.
-      $keyProps = [
-        'bundle'  => $triplestoreComponent->bundle(),
-        'bundleLabel' => $triplestoreComponentBundleInfo['label'],
-        'type'  => 'password',
-        'userId'    => $entity->getOwnerId(),
-        'username' => $entity->getOwner()->getDisplayName(),
-      ];
 
-      $triplestoreComponentServiceKey = $this->sodaScsServiceKeyActions->getServiceKey($keyProps) ?? $this->sodaScsServiceKeyActions->createServiceKey($keyProps);
-      $triplestoreComponent->serviceKey[] = $triplestoreComponentServiceKey;
-
-      $tokenProps = [
-        'bundle'  => 'soda_scs_triplestore_component',
-        'type'  => 'token',
-        'userId'    => $entity->getOwnerId(),
-        'username' => $entity->getOwner()->getDisplayName(),
-        'servicePassword' => $triplestoreComponentServiceKey->get('servicePassword')->value,
-      ];
-
-      if ($triplestoreComponentServiceToken = $this->sodaScsServiceKeyActions->getServiceKey($tokenProps)) {
-        $triplestoreComponent->serviceKey[] = $triplestoreComponentServiceToken;
-      }
+      // Ensure user data exists.
+      $userdata = $this->sodaScsTriplestoreHelpers->ensureUserDataExists($triplestoreComponent);
 
       $username = $triplestoreComponent->getOwner()->getDisplayName();
 
@@ -234,208 +225,49 @@ class SodaScsTriplestoreComponentActions implements SodaScsComponentActionsInter
         'error' => $e->getMessage(),
       ];
     }
+
     try {
-      // Look for existing user.
-      $getUserRequestParams = [
+      // Update existing user.
+      $roleBefore = ['ROLE_USER'];
+      $readRightsBefore = [];
+      $writeRightsBefore = [];
+      foreach ($userdata['grantedAuthorities'] as $authority) {
+        if (strpos($authority, 'ROLE_') === 0) {
+          $roleBefore = [$authority];
+        }
+        elseif (strpos($authority, 'READ_') === 0) {
+          $readRightsBefore[] = $authority;
+        }
+        elseif (strpos($authority, 'WRITE_') === 0) {
+          $writeRightsBefore[] = $authority;
+        }
+      }
+      $updateUserRequestParams = [
         'type' => 'user',
         'queryParams' => [],
-        'routeParams' => ['username' => $triplestoreComponent->getOwner()->getDisplayName()],
-      ];
+        'routeParams' => ['username' => $username],
+        'body' => [
 
-      $openGdbGetUserRequest = $this->sodaScsOpenGdbServiceActions->buildGetRequest($getUserRequestParams);
-      $getUserResponse = $this->sodaScsOpenGdbServiceActions->makeRequest($openGdbGetUserRequest);
-
-      // @todo Make good error handling
-      if ($getUserResponse['success'] === FALSE) {
-        $response = $getUserResponse['data']['openGdbResponse']->getResponse();
-        if ($response->getStatusCode() === 404) {
-          // If there is no create repo user, create one.
-          try {
-            $createUserRequestParams = [
-              'type' => 'user',
-              'queryParams' => [],
-              'routeParams' => ['username' => $username],
-              'body' => [
-                'password' => $triplestoreComponentServiceKey->get('servicePassword')->value,
-                'machineName' => $machineName,
-              ],
-            ];
-            $openGdbCreateUserRequest = $this->sodaScsOpenGdbServiceActions->buildCreateRequest($createUserRequestParams);
-            $createUserResponse = $this->sodaScsOpenGdbServiceActions->makeRequest($openGdbCreateUserRequest);
-
-            $this->messenger->addMessage($this->t("Created OpenGDB user: @username", ['@username' => $username]));
-
-            if (!$createUserResponse['success']) {
-              return [
-                'message' => 'Could not create user.',
-                'data' => [
-                  'createRepoResponse' => $createRepoResponse,
-                  'getUserResponse' => $getUserResponse,
-                  'createUserResponse' => $createUserResponse,
-                  'updateUserResponse' => NULL,
-                ],
-                'success' => FALSE,
-                'error' => $createUserResponse['error'],
-              ];
-            }
-
-            // Create user token.
-            try {
-              $createUserTokenRequestParams = [
-                'type' => 'user',
-                'queryParams' => [],
-                'routeParams' => [
-                  'username' => $username,
-                ],
-                'body' => [
-                  'username' => $username,
-                  'password' => $triplestoreComponentServiceKey->get('servicePassword')->value,
-                ],
-              ];
-              $openGdbCreateUserTokenRequest = $this->sodaScsOpenGdbServiceActions->buildTokenRequest($createUserTokenRequestParams);
-              $createUserTokenResponse = $this->sodaScsOpenGdbServiceActions->makeRequest($openGdbCreateUserTokenRequest);
-              if (!$createUserTokenResponse['success']) {
-                return [
-                  'message' => 'Could not create user token.',
-                  'data' => [
-                    'createRepoResponse' => $createRepoResponse,
-                    'getUserResponse' => $getUserResponse,
-                    'createUserResponse' => $createUserResponse,
-                    'updateUserResponse' => NULL,
-                  ],
-                  'success' => FALSE,
-                  'error' => $createUserResponse['error'],
-                ];
-              }
-              $createUserTokenData = json_decode($createUserTokenResponse['data']['openGdbResponse']->getBody()->getContents(), TRUE);
-              $tokenProps = [
-                'bundle'  => 'soda_scs_triplestore_component',
-                'bundleLabel' => $triplestoreComponentBundleInfo['label'],
-                'type'  => 'token',
-                'token' => $createUserTokenData['token'],
-                'userId'    => $entity->getOwnerId(),
-                'username' => $entity->getOwner()->getDisplayName(),
-              ];
-              $triplestoreComponentServiceToken = $this->sodaScsServiceKeyActions->createServiceKey($tokenProps);
-              $triplestoreComponent->serviceKey[] = $triplestoreComponentServiceToken;
-            }
-            catch (\Exception $e) {
-              Error::logException(
-                $this->loggerFactory->get('soda_scs_manager'),
-                $e,
-                'Cannot assemble Request: @message',
-                [
-                  '@message' => $e->getMessage(),
-                ],
-                LogLevel::ERROR
-              );
-              $this->messenger->addError($this->t("Cannot assemble request. See logs for more details."));
-              return [
-                'message' => 'Cannot assemble Request.',
-                'data' => [
-                  'createRepoResponse' => $createRepoResponse,
-                  'getUserResponse' => $getUserResponse,
-                  'createUserResponse' => $createUserResponse,
-                  'updateUserResponse' => NULL,
-                ],
-                'success' => FALSE,
-                'error' => $e->getMessage(),
-              ];
-            }
-
-          }
-          catch (MissingDataException $e) {
-            Error::logException(
-              $this->loggerFactory->get('soda_scs_manager'),
-              $e,
-              'Cannot assemble Request: @message',
-              [
-                '@message' => $e->getMessage(),
-              ],
-              LogLevel::ERROR
-            );
-            $this->messenger->addError($this->t("Cannot assemble request. See logs for more details."));
-            return [
-              'message' => 'Cannot assemble Request.',
-              'data' => [
-                'createRepoResponse' => $createRepoResponse,
-                'getUserResponse' => $getUserResponse,
-                'createUserResponse' => NULL,
-                'updateUserResponse' => NULL,
-              ],
-              'success' => FALSE,
-              'error' => $e->getMessage(),
-            ];
-          }
-        }
-      }
-      else {
-        try {
-          $getUserResponseData = json_decode($getUserResponse['data']['openGdbResponse']->getBody()->getContents(), TRUE);
-          // Update existing user.
-          $roleBefore = ['ROLE_USER'];
-          $readRightsBefore = [];
-          $writeRightsBefore = [];
-          foreach ($getUserResponseData['grantedAuthorities'] as $authority) {
-            if (strpos($authority, 'ROLE_') === 0) {
-              $roleBefore = [$authority];
-            }
-            elseif (strpos($authority, 'READ_') === 0) {
-              $readRightsBefore[] = $authority;
-            }
-            elseif (strpos($authority, 'WRITE_') === 0) {
-              $writeRightsBefore[] = $authority;
-            }
-          }
-          $updateUserRequestParams = [
-            'type' => 'user',
-            'queryParams' => [],
-            'routeParams' => ['username' => $username],
-            'body' => [
-
-              'grantedAuthorities' => array_merge(
-                $roleBefore,
-                $readRightsBefore,
-                $writeRightsBefore,
-                [
-                  "READ_REPO_$machineName",
-                  "WRITE_REPO_$machineName",
-                ]),
-              "appSettings" => [
-                "DEFAULT_INFERENCE" => TRUE,
-                "DEFAULT_SAMEAS" => TRUE,
-                "DEFAULT_VIS_GRAPH_SCHEMA" => TRUE,
-                "EXECUTE_COUNT" => TRUE,
-                "IGNORE_SHARED_QUERIES" => FALSE,
-              ],
-              // "dateUpdated" => \Drupal::time()->getRequestTime(),
-            ],
-          ];
-          $openGdbUpdateUserRequest = $this->sodaScsOpenGdbServiceActions->buildUpdateRequest($updateUserRequestParams);
-          $this->sodaScsOpenGdbServiceActions->makeRequest($openGdbUpdateUserRequest);
-          $createUserResponse = NULL;
-        }
-        catch (MissingDataException $e) {
-          Error::logException(
-            $this->loggerFactory->get('soda_scs_manager'),
-            $e,
-            'Cannot assemble Request: @message',
+          'grantedAuthorities' => array_merge(
+            $roleBefore,
+            $readRightsBefore,
+            $writeRightsBefore,
             [
-              '@message' => $e->getMessage(),
-            ],
-            LogLevel::ERROR
-          );
-          $this->messenger->addError($this->t("Cannot assemble request. See logs for more details."));
-          return [
-            'message' => 'Cannot assemble Request.',
-            'data' => [
-              'createRepoResponse' => NULL,
-            ],
-            'success' => FALSE,
-            'error' => $e->getMessage(),
-          ];
-        }
-      }
+              "READ_REPO_$machineName",
+              "WRITE_REPO_$machineName",
+            ]),
+          "appSettings" => [
+            "DEFAULT_INFERENCE" => TRUE,
+            "DEFAULT_SAMEAS" => TRUE,
+            "DEFAULT_VIS_GRAPH_SCHEMA" => TRUE,
+            "EXECUTE_COUNT" => TRUE,
+            "IGNORE_SHARED_QUERIES" => FALSE,
+          ],
+          // "dateUpdated" => \Drupal::time()->getRequestTime(),
+        ],
+      ];
+      $openGdbUpdateUserRequest = $this->sodaScsOpenGdbServiceActions->buildUpdateRequest($updateUserRequestParams);
+      $openGdbUpdateUserResponse = $this->sodaScsOpenGdbServiceActions->makeRequest($openGdbUpdateUserRequest);
     }
     catch (MissingDataException $e) {
       Error::logException(
@@ -451,10 +283,7 @@ class SodaScsTriplestoreComponentActions implements SodaScsComponentActionsInter
       return [
         'message' => 'Cannot assemble Request.',
         'data' => [
-          'createRepoResponse' => $createRepoResponse,
-          'getUserResponse' => NULL,
-          'createUserResponse' => NULL,
-          'updateUserResponse' => NULL,
+          'createRepoResponse' => NULL,
         ],
         'success' => FALSE,
         'error' => $e->getMessage(),
@@ -464,28 +293,12 @@ class SodaScsTriplestoreComponentActions implements SodaScsComponentActionsInter
     // Save the component.
     $triplestoreComponent->save();
 
-    // Save the service key.
-    $triplestoreComponentServiceKey->scsComponent[] = $triplestoreComponent->id();
-    $triplestoreComponentServiceKey->save();
-
-    // Save the service token.
-    /* @todo Make sure there is a triplestore component service token. */
-    if (empty($triplestoreComponentServiceToken)) {
-      throw new \Exception('There is no triplestore component service token.');
-    }
-
-    $triplestoreComponentServiceToken->scsComponent[] = $triplestoreComponent->id();
-    $triplestoreComponentServiceToken->save();
-
     return [
       'message' => $this->t('Created triplestore component %machineName.', ['%machineName' => $machineName]),
       'data' => [
         'triplestoreComponent' => $triplestoreComponent,
         'createRepoResponse' => $createRepoResponse,
-        'getUserResponse' => $getUserResponse,
-        'createUserResponse' => NULL,
-        'updateUserResponse' => NULL,
-
+        'userData' => $userdata,
       ],
       'success' => TRUE,
       'error' => NULL,

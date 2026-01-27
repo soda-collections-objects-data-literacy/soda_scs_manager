@@ -41,7 +41,7 @@ class SodaScsServiceKeyActions implements SodaScsServiceKeyActionsInterface {
   public function generateRandomPassword(): string {
     $password = '';
     while (strlen($password) < 32) {
-      $password .= base_convert((string)random_int(0, 35), 10, 36);
+      $password .= base_convert((string) random_int(0, 35), 10, 36);
     }
     return substr($password, 0, 32);
   }

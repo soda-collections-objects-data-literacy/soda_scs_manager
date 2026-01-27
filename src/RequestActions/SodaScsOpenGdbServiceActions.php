@@ -206,6 +206,7 @@ class SodaScsOpenGdbServiceActions implements SodaScsOpenGdbRequestInterface {
         'Accept' => 'application/json',
         'Authorization' => 'Basic ' . base64_encode($triplestoreServiceSettings['adminUsername'] . ':' . $triplestoreServiceSettings['adminPassword']),
       ],
+      'body' => $requestParams['body'] ?? '',
     ];
   }
 
@@ -445,7 +446,8 @@ class SodaScsOpenGdbServiceActions implements SodaScsOpenGdbRequestInterface {
   /**
    * Build token request.
    *
-   * @param array $requestParams
+   * @param array{body: array{username: string, password: string}} $requestParams
+   *
    *   The request parameters.
    *
    * @return array
@@ -458,7 +460,9 @@ class SodaScsOpenGdbServiceActions implements SodaScsOpenGdbRequestInterface {
 
     $route = $triplestoreServiceSettings['host'] . $triplestoreMiscSettings['tokenUrl'];
 
-    $body = json_encode($requestParams['body'] ?? []);
+    // Open GDB /api-token-auth/ expects form-urlencoded (Django token auth).
+    $bodyParams = $requestParams['body'] ?? [];
+    $body = is_array($bodyParams) ? http_build_query($bodyParams) : (string) $bodyParams;
 
     return [
       'type' => 'token',
@@ -466,7 +470,7 @@ class SodaScsOpenGdbServiceActions implements SodaScsOpenGdbRequestInterface {
       'method' => 'POST',
       'route' => $route,
       'headers' => [
-        'Content-Type' => 'application/json',
+        'Content-Type' => 'application/x-www-form-urlencoded',
         'Accept' => 'application/json',
       ],
       'body' => $body,
