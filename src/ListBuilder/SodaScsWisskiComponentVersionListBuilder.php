@@ -20,6 +20,8 @@ class SodaScsWisskiComponentVersionListBuilder extends ConfigEntityListBuilder {
     $header['wisskiStack'] = $this->t('WissKI Stack');
     $header['wisskiImage'] = $this->t('WissKI Image');
     $header['packageEnvironment'] = $this->t('Package Environment');
+    $header['wisskiDefaultDataModelRecipe'] = $this->t('WissKI Default Data Model Recipe');
+    $header['wisskiStarterRecipe'] = $this->t('WissKI Starter Recipe');
     return $header + parent::buildHeader();
   }
 
@@ -32,6 +34,8 @@ class SodaScsWisskiComponentVersionListBuilder extends ConfigEntityListBuilder {
     $row['wisskiStack'] = $entity->getWisskiStack();
     $row['wisskiImage'] = $entity->getWisskiImage();
     $row['packageEnvironment'] = $entity->getPackageEnvironment();
+    $row['wisskiDefaultDataModelRecipe'] = $entity->getWisskiDefaultDataModelRecipe();
+    $row['wisskiStarterRecipe'] = $entity->getWisskiStarterRecipe();
     return $row + parent::buildRow($entity);
   }
 

@@ -577,6 +577,8 @@ class SodaScsWisskiComponentActions implements SodaScsComponentActionsInterface 
                 'wisskiStack' => $versionEntity->getWisskiStack(),
                 'wisskiImage' => $versionEntity->getWisskiImage(),
                 'packageEnvironment' => $versionEntity->getPackageEnvironment(),
+                'wisskiDefaultDataModelRecipe' => $versionEntity->getWisskiDefaultDataModelRecipe(),
+                'wisskiStarterRecipe' => $versionEntity->getWisskiStarterRecipe(),
               ];
               break;
             }
@@ -589,9 +591,9 @@ class SodaScsWisskiComponentActions implements SodaScsComponentActionsInterface 
             'mode' => '',
             'varnishImageVersion' => '',
             'wisskiComposeStackVersion' => $versionConfig['wisskiStack'] ?? '',
-            'wisskiDefaultDataModelRecipeVersion' => '',
+            'wisskiDefaultDataModelRecipeVersion' => $versionConfig['wisskiDefaultDataModelRecipe'] ?? '',
             'wisskiBaseImageVersion' => $versionConfig['wisskiImage'] ?? '',
-            'wisskiStarterRecipeVersion' => '',
+            'wisskiStarterRecipeVersion' => $versionConfig['wisskiStarterRecipe'] ?? '',
             'wisskiVersion' => $versionConfig['packageEnvironment'] ?? '',
           ];
         }
@@ -601,9 +603,9 @@ class SodaScsWisskiComponentActions implements SodaScsComponentActionsInterface 
             'mode' => '',
             'varnishImageVersion' => '',
             'wisskiComposeStackVersion' => $wisskiInstanceSettings['wisskiStackProductionVersion'] ?? '',
-            'wisskiDefaultDataModelRecipeVersion' => '',
+            'wisskiDefaultDataModelRecipeVersion' => $wisskiInstanceSettings['defaultDataModelRecipeProductionVersion'] ?? '',
             'wisskiBaseImageVersion' => $wisskiInstanceSettings['wisskiBaseImageProductionVersion'] ?? '',
-            'wisskiStarterRecipeVersion' => '',
+            'wisskiStarterRecipeVersion' => $wisskiInstanceSettings['starterRecipeProductionVersion'] ?? '',
             'wisskiVersion' => $componentVersion ?? '',
           ];
         }

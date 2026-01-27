@@ -57,6 +57,24 @@ class SodaScsWisskiComponentVersionForm extends EntityForm {
       '#maxlength' => 255,
     ];
 
+    $form['wisskiDefaultDataModelRecipe'] = [
+      '#type' => 'textfield',
+      '#title' => $this->t('WissKI Default Data Model Recipe'),
+      '#description' => $this->t('The <a href="https://drupal.org/project/wisski_default_data_model" target="_blank">WissKI default data model recipe version</a>, like "1.x".'),
+      '#default_value' => $entity->getWisskiDefaultDataModelRecipe(),
+      '#required' => TRUE,
+      '#maxlength' => 255,
+    ];
+
+    $form['wisskiStarterRecipe'] = [
+      '#type' => 'textfield',
+      '#title' => $this->t('WissKI Starter Recipe'),
+      '#description' => $this->t('The <a href="https://drupal.org/project/wisski_starter" target="_blank">WissKI starter recipe version</a>, like "1.x".'),
+      '#default_value' => $entity->getWisskiStarterRecipe(),
+      '#required' => TRUE,
+      '#maxlength' => 255,
+    ];
+
     return $form;
   }
 

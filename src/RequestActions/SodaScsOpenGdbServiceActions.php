@@ -206,7 +206,6 @@ class SodaScsOpenGdbServiceActions implements SodaScsOpenGdbRequestInterface {
         'Accept' => 'application/json',
         'Authorization' => 'Basic ' . base64_encode($triplestoreServiceSettings['adminUsername'] . ':' . $triplestoreServiceSettings['adminPassword']),
       ],
-      'body' => $requestParams['body'] ?? '',
     ];
   }
 

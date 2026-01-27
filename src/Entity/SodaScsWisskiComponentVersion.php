@@ -52,6 +52,8 @@ use Drupal\Core\Config\Entity\ConfigEntityBase;
  *     "wisskiStack",
  *     "wisskiImage",
  *     "packageEnvironment",
+ *     "wisskiDefaultDataModelRecipe",
+ *     "wisskiStarterRecipe",
  *   }
  * )
  */
@@ -84,6 +86,20 @@ class SodaScsWisskiComponentVersion extends ConfigEntityBase implements SodaScsW
    * @var string
    */
   protected string $packageEnvironment = '';
+
+  /**
+   * The WissKI starter recipe version.
+   *
+   * @var string
+   */
+  protected string $wisskiStarterRecipe = '';
+
+  /**
+   * The WissKI default data model recipe version.
+   *
+   * @var string
+   */
+  protected string $wisskiDefaultDataModelRecipe = '';
 
   /**
    * {@inheritdoc}
@@ -146,6 +162,34 @@ class SodaScsWisskiComponentVersion extends ConfigEntityBase implements SodaScsW
    */
   public function label(): string {
     return $this->getVersion();
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function getWisskiStarterRecipe(): string {
+    return $this->wisskiStarterRecipe ?? '';
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function setWisskiStarterRecipe(string $wisskiStarterRecipe): void {
+    $this->wisskiStarterRecipe = $wisskiStarterRecipe;
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function getWisskiDefaultDataModelRecipe(): string {
+    return $this->wisskiDefaultDataModelRecipe ?? '';
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function setWisskiDefaultDataModelRecipe(string $wisskiDefaultDataModelRecipe): void {
+    $this->wisskiDefaultDataModelRecipe = $wisskiDefaultDataModelRecipe;
   }
 
 }

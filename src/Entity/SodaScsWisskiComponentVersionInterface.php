@@ -75,4 +75,36 @@ interface SodaScsWisskiComponentVersionInterface extends ConfigEntityInterface {
    */
   public function setPackageEnvironment(string $packageEnvironment): void;
 
+  /**
+   * Gets the WissKI starter recipe version.
+   *
+   * @return string
+   *   The WissKI starter recipe version.
+   */
+  public function getWisskiStarterRecipe(): string;
+
+  /**
+   * Sets the WissKI starter recipe version.
+   *
+   * @param string $wisskiStarterRecipe
+   *   The WissKI starter recipe version.
+   */
+  public function setWisskiStarterRecipe(string $wisskiStarterRecipe): void;
+
+  /**
+   * Gets the WissKI default data model recipe version.
+   *
+   * @return string
+   *   The WissKI default data model recipe version.
+   */
+  public function getWisskiDefaultDataModelRecipe(): string;
+
+  /**
+   * Sets the WissKI default data model recipe version.
+   *
+   * @param string $wisskiDefaultDataModelRecipe
+   *   The WissKI default data model recipe version.
+   */
+  public function setWisskiDefaultDataModelRecipe(string $wisskiDefaultDataModelRecipe): void;
+
 }
