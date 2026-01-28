@@ -425,24 +425,16 @@ class SodaScsSqlComponentActions implements SodaScsComponentActionsInterface {
           '-c',
           'mariadb-dump -uroot -p' . $dbRootPassword . ' "' . $dbName . '" > ' . $dumpFilePath,
         ],
-        'containerName' => 'database',
+        'containerName' => 'scs--database',
         'user' => '33',
       ]);
       $createDumpExecResponse = $this->sodaScsDockerExecServiceActions->makeRequest($createDumpExecRequest);
 
-      // Check if the dump exec request was successful.
-      if (!$createDumpExecResponse['success']) {
-        return SodaScsResult::failure(
-          error: $createDumpExecResponse['error'],
-          message: 'Snapshot creation failed: Could not create database dump exec request.',
-        );
-      }
-
+      // Create the dump execcreate request and execute it.
       // Create the dump exex start request and execut it.
       $execId = json_decode($createDumpExecResponse['data']['portainerResponse']->getBody()->getContents(), TRUE)['Id'];
       $startDumpExecRequest = $this->sodaScsDockerExecServiceActions->buildStartRequest(['execId' => $execId]);
       $startDumpExecResponse = $this->sodaScsDockerExecServiceActions->makeRequest($startDumpExecRequest);
-
       // Check if the dump exec start request was successful.
       if (!$startDumpExecResponse['success']) {
         return SodaScsResult::failure(
@@ -733,7 +725,7 @@ class SodaScsSqlComponentActions implements SodaScsComponentActionsInterface {
 
       $rollbackDatabaseExecRequestParams = [
         'cmd' => $rollbackDatabaseExecRequestCommand,
-        'containerName' => 'database',
+        'containerName' => 'scs--database',
         'user' => 'root',
       ];
 
@@ -781,7 +773,7 @@ class SodaScsSqlComponentActions implements SodaScsComponentActionsInterface {
       // Construct restore request parameters.
       $restoreFromSnapshotExecRequestParams = [
         'cmd' => $restoreFromSnapshotExecRequestCommand,
-        'containerName' => 'database',
+        'containerName' => 'scs--database',
         'user' => 'root',
       ];
 
