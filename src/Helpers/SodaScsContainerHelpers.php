@@ -217,25 +217,33 @@ class SodaScsContainerHelpers {
           // Delete the temporarily created backup container
           // if it is not running, but have a error return failure result.
           if ($containerStatus['State']['ExitCode'] !== 0) {
+            $containerName = $containerData->snapshotContainerName ?? $containerId;
+            $exitCode = $containerStatus['State']['ExitCode'];
             Error::logException(
               $this->loggerFactory->get('soda_scs_manager'),
               new \Exception('Temporarily created backup container exited unexpectedly.'),
-              (string) $this->t('Failed to create @context. Temporarily created backup container exited with exit code: @exitCode', [
+              (string) $this->t('Failed to create @context. Backup container @name exited with code @exitCode. Check container logs (e.g. docker logs @name) for the underlying error (e.g. volume mount, permissions, or path not available on node).', [
                 '@context' => $context,
-                '@exitCode' => $containerStatus['State']['ExitCode'],
+                '@name' => $containerName,
+                '@exitCode' => $exitCode,
               ]),
               [],
               LogLevel::ERROR
             );
-            $this->messenger()->addError($this->t('Failed to @context. See logs for more details.', ['@context' => $context]));
+            $this->messenger()->addError($this->t('Failed to create @context. Backup container @name exited with code @exitCode. See logs or run "docker logs @name" for details.', [
+              '@context' => $context,
+              '@name' => $containerName,
+              '@exitCode' => $exitCode,
+            ]));
             if ($deleteContainers) {
               $this->deleteContainers([$containers[$type]], $context);
             }
             return SodaScsResult::failure(
               error: 'Temporarily created backup container exited unexpectedly',
-              message: (string) $this->t('Failed to create @context. Temporarily created backup container exited with exit code: @exitCode', [
+              message: (string) $this->t('Failed to create @context. Backup container @name exited with exit code: @exitCode. Check container logs for the underlying error (e.g. volume mount, permissions, or backup path not available on the node where the container ran).', [
                 '@context' => $context,
-                '@exitCode' => $containerStatus['State']['ExitCode'],
+                '@name' => $containerName,
+                '@exitCode' => $exitCode,
               ]),
             );
           }

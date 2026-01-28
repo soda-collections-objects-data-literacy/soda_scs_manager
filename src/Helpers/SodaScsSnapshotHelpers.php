@@ -178,11 +178,28 @@ class SodaScsSnapshotHelpers {
 
     // Get the private file system path from Drupal's
     // file system settings. (/var/scs-manager/)
-    $privateFileSystemPath = $this->fileSystem->realpath("private://") ?? throw new \Exception('Private file system path not found');
+    $privateFileSystemPath = rtrim($this->fileSystem->realpath("private://") ?? throw new \Exception('Private file system path not found'), '/');
     // Get the snapshot path from the settings.
     $snapshotPath = $this->configFactory->get('soda_scs_manager.settings')->get('snapshotPath') ?? throw new \Exception('Snapshot path not found');
     // Full path to the snapshot directory, e.g. /var/scs-manager/snapshots.
-    $snapshotFullPath = $privateFileSystemPath . $snapshotPath;
+    // If path is already absolute under private, use as-is to avoid doubling.
+    $snapshotPathIsAbsolute = str_starts_with($snapshotPath, $privateFileSystemPath . '/')
+      || $snapshotPath === $privateFileSystemPath;
+    $snapshotFullPath = $snapshotPathIsAbsolute
+      ? rtrim($snapshotPath, '/')
+      : $privateFileSystemPath . $snapshotPath;
+
+    // Ensure the snapshot root exists and has proper permissions (33:33, 0775).
+    // The base /var/scs-manager directory is set up by container entrypoint.
+    if (!is_dir($snapshotFullPath)) {
+      @mkdir($snapshotFullPath, 0775, TRUE);
+    }
+    $this->fixDirectoryOwnership($snapshotFullPath);
+
+    // Path relative to private root for URL use (e.g. /snapshots).
+    $snapshotPathForUrl = $snapshotPathIsAbsolute
+      ? '/' . ltrim(substr(rtrim($snapshotPath, '/'), strlen($privateFileSystemPath)), '/')
+      : $snapshotPath;
     // Get the owner of the component.
     $owner = $component->getOwner()->getDisplayName();
     // Get the date.
@@ -219,7 +236,7 @@ class SodaScsSnapshotHelpers {
 
     // URL relative backup path.
     // e.g. /system/files/snapshots/rnsrk/new-snapshot/2025-08-26/1724732400.
-    $relativeUrlBackupPath = '/system/files' . $snapshotPath . '/' . $owner . '/' . $snapshotMachineName . '/' . $date . '/' . $timestamp;
+    $relativeUrlBackupPath = '/system/files' . $snapshotPathForUrl . '/' . $owner . '/' . $snapshotMachineName . '/' . $date . '/' . $timestamp;
 
     return [
       'absoluteSha256FilePath' => $absoluteSha256FilePath,
@@ -347,12 +364,34 @@ class SodaScsSnapshotHelpers {
       // Create the bag directory.
       $snapshotDirectory = reset($snapshotData)->metadata['snapshotDirectory'];
       $singleSnapshotDirectory = reset($snapshotData)->metadata['backupPath'];
+      // Ensure the snapshot backup path exists (component tar location).
+      clearstatcache(TRUE, $singleSnapshotDirectory);
+      if (!is_dir($singleSnapshotDirectory)) {
+        return SodaScsResult::failure(
+          error: 'Backup path does not exist',
+          message: (string) $this->t(
+            'Snapshot creation failed: Backup path does not exist. Path: @path',
+            ['@path' => $singleSnapshotDirectory]
+          ),
+        );
+      }
       $bagPath = $singleSnapshotDirectory . '/bag';
       $dirCreateResult = $this->createDir($bagPath);
       if (!$dirCreateResult['success']) {
         return SodaScsResult::failure(
           error: $dirCreateResult['error'],
           message: 'Snapshot creation failed: Could not create bag directory.',
+        );
+      }
+      // Verify the bag directory exists before starting the container.
+      clearstatcache(TRUE, $bagPath);
+      if (!is_dir($bagPath)) {
+        return SodaScsResult::failure(
+          error: 'Bag directory does not exist after creation',
+          message: (string) $this->t(
+            'Snapshot creation failed: Bag directory does not exist. Path: @path',
+            ['@path' => $bagPath]
+          ),
         );
       }
 
@@ -445,6 +484,10 @@ class SodaScsSnapshotHelpers {
           message: 'Snapshot creation failed: Could not write manifest.json.',
         );
       }
+
+      // Convert container path to host path for bind mount.
+      $hostBackupPath = $this->convertContainerPathToHostPath($backupPath);
+
       // Create the request params.
       $requestParams = [
         'name' => 'snapshot--' . $this->generateRandomSuffix() . '--' . $snapshotMachineName . '--bag',
@@ -454,15 +497,15 @@ class SodaScsSnapshotHelpers {
         'cmd' => [
           'sh',
           '-c',
-          'cd /backup/bag && ' .
+          'mkdir -p /backup/bag && cd /backup/bag && ' .
           'tar czf ' . $contentsTarFileName . ' ' . $manifestFileName . ' ' . $contentFilesString . ' && ' .
           'sha256sum ' . $contentsTarFileName . ' > ' . $contentsSha256FileName,
         ],
         'hostConfig' => [
           'Binds' => [
-            $backupPath . ':/backup',
+            $hostBackupPath . ':/backup',
           ],
-          'AutoRemove' => TRUE,
+          'AutoRemove' => FALSE,
         ],
       ];
 
@@ -533,6 +576,97 @@ class SodaScsSnapshotHelpers {
   }
 
   /**
+   * Convert container path to host path for bind mounts.
+   *
+   * When running inside a container, paths like /var/scs-manager/snapshots
+   * are bind-mounted from /srv/backups/scs-manager/snapshots on the host.
+   * Snapshot containers need the actual host path for their bind mounts.
+   *
+   * @param string $containerPath
+   *   Path as seen inside the Drupal container.
+   *
+   * @return string
+   *   Path on the host filesystem.
+   */
+  public function convertContainerPathToHostPath(string $containerPath): string {
+    // Map of container paths to host paths.
+    // This should match docker-compose volume bindings.
+    $pathMappings = [
+      '/var/scs-manager/snapshots' => '/srv/backups/scs-manager/snapshots',
+      '/var/scs-manager' => '/srv/backups/scs-manager',
+    ];
+
+    foreach ($pathMappings as $containerPrefix => $hostPrefix) {
+      if (str_starts_with($containerPath, $containerPrefix)) {
+        return $hostPrefix . substr($containerPath, strlen($containerPrefix));
+      }
+    }
+
+    // If no mapping found, return original path (might already be host path).
+    return $containerPath;
+  }
+
+  /**
+   * Fix directory ownership for www-data (33:33).
+   *
+   * Uses native PHP functions to set ownership. This works when the base
+   * snapshot directory is owned by www-data (set by container entrypoint).
+   *
+   * @param string $path
+   *   The absolute path to fix.
+   */
+  private function fixDirectoryOwnership(string $path): void {
+    clearstatcache(TRUE, $path);
+    $beforeStat = @stat($path);
+    $beforeOwner = $beforeStat ? $beforeStat['uid'] : 'unknown';
+    $beforeGroup = $beforeStat ? $beforeStat['gid'] : 'unknown';
+    $beforePerms = $beforeStat ? decoct($beforeStat['mode'] & 0777) : 'unknown';
+
+    // Get current process user info.
+    $processUid = posix_getuid();
+    $processGid = posix_getgid();
+    $processUser = posix_getpwuid($processUid);
+    $processUserName = $processUser ? $processUser['name'] : 'unknown';
+
+    $this->logger->debug(
+      'fixDirectoryOwnership: path=@path, PHP_user=@user(@uid:@gid), before_ownership=@before_owner:@before_group, before_perms=@before_perms',
+      [
+        '@path' => $path,
+        '@user' => $processUserName,
+        '@uid' => $processUid,
+        '@gid' => $processGid,
+        '@before_owner' => $beforeOwner,
+        '@before_group' => $beforeGroup,
+        '@before_perms' => $beforePerms,
+      ]
+    );
+
+    // Set permissions first (chmod doesn't require root).
+    $chmodResult = @chmod($path, 0775);
+    // Try to set ownership (works if parent is already www-data).
+    $chownResult = @chown($path, 33);
+    $chgrpResult = @chgrp($path, 33);
+
+    clearstatcache(TRUE, $path);
+    $afterStat = @stat($path);
+    $afterOwner = $afterStat ? $afterStat['uid'] : 'unknown';
+    $afterGroup = $afterStat ? $afterStat['gid'] : 'unknown';
+    $afterPerms = $afterStat ? decoct($afterStat['mode'] & 0777) : 'unknown';
+
+    $this->logger->info(
+      'fixDirectoryOwnership results: chmod=@chmod_ok, chown=@chown_ok, chgrp=@chgrp_ok, after_ownership=@after_owner:@after_group, after_perms=@after_perms',
+      [
+        '@chmod_ok' => $chmodResult ? 'success' : 'failed',
+        '@chown_ok' => $chownResult ? 'success' : 'failed',
+        '@chgrp_ok' => $chgrpResult ? 'success' : 'failed',
+        '@after_owner' => $afterOwner,
+        '@after_group' => $afterGroup,
+        '@after_perms' => $afterPerms,
+      ]
+    );
+  }
+
+  /**
    * Create directory using native PHP operations.
    *
    * @param string $path
@@ -548,27 +682,86 @@ class SodaScsSnapshotHelpers {
    *   The result of the operation.
    */
   public function createDir(string $path) {
-    // Check if directory already exists.
-    if (is_dir($path)) {
-      throw new SodaScsHelpersException(
-        message: 'Directory already exists.',
-        operationCategory: 'snapshot',
-        operation: 'create_dir',
-        context: ['path' => $path],
-        code: 0,
+    $existed = is_dir($path);
+
+    // Get current process user info for debugging.
+    $processUid = posix_getuid();
+    $processGid = posix_getgid();
+    $processUser = posix_getpwuid($processUid);
+    $processUserName = $processUser ? $processUser['name'] : 'unknown';
+
+    $this->logger->info(
+      'createDir called: path=@path, existed=@existed, PHP_running_as=@user(@uid:@gid)',
+      [
+        '@path' => $path,
+        '@existed' => $existed ? 'yes' : 'no',
+        '@user' => $processUserName,
+        '@uid' => $processUid,
+        '@gid' => $processGid,
+      ]
+    );
+
+    if (!$existed) {
+      // Check parent directory ownership before creating.
+      $parentDir = dirname($path);
+      if (is_dir($parentDir)) {
+        clearstatcache(TRUE, $parentDir);
+        $parentStat = @stat($parentDir);
+        $parentOwner = $parentStat ? $parentStat['uid'] : 'unknown';
+        $parentGroup = $parentStat ? $parentStat['gid'] : 'unknown';
+        $this->logger->debug(
+          'Parent directory ownership: path=@parent, owner=@owner:@group',
+          [
+            '@parent' => $parentDir,
+            '@owner' => $parentOwner,
+            '@group' => $parentGroup,
+          ]
+        );
+      }
+
+      // Create the directory with proper permissions
+      // (0775: owner and group can write).
+      if (!mkdir($path, 0775, TRUE)) {
+        $error = 'Failed to create directory: ' . $path;
+        throw new SodaScsHelpersException(
+          message: $error,
+          operationCategory: 'snapshot',
+          operation: 'create_dir',
+          context: ['path' => $path],
+          code: 0,
+        );
+      }
+
+      // Check ownership immediately after mkdir.
+      clearstatcache(TRUE, $path);
+      $afterMkdirStat = @stat($path);
+      $afterMkdirOwner = $afterMkdirStat ? $afterMkdirStat['uid'] : 'unknown';
+      $afterMkdirGroup = $afterMkdirStat ? $afterMkdirStat['gid'] : 'unknown';
+      $afterMkdirPerms = $afterMkdirStat ? decoct($afterMkdirStat['mode'] & 0777) : 'unknown';
+      $this->logger->info(
+        'Directory created by mkdir: owner=@owner:@group, perms=@perms',
+        [
+          '@owner' => $afterMkdirOwner,
+          '@group' => $afterMkdirGroup,
+          '@perms' => $afterMkdirPerms,
+        ]
       );
     }
 
-    // Create the directory with proper permissions.
-    if (!mkdir($path, 0755, TRUE)) {
-      $error = 'Failed to create directory: ' . $path;
-      throw new SodaScsHelpersException(
-        message: $error,
-        operationCategory: 'snapshot',
-        operation: 'create_dir',
-        context: ['path' => $path],
-        code: 0,
-      );
+    // Ensure directory is owned by www-data (33:33) and writable (0775).
+    // Required so snapshot containers running as user 33:33 can write.
+    $this->fixDirectoryOwnership($path);
+
+    // Verify directory exists (may be wrong path or on another node).
+    clearstatcache(TRUE, $path);
+    if (!is_dir($path)) {
+      return [
+        'message' => $this->t('Directory was not created.'),
+        'success' => FALSE,
+        'error' => 'Directory does not exist after create: ' . $path,
+        'data' => ['path' => $path],
+        'statusCode' => 500,
+      ];
     }
 
     return [

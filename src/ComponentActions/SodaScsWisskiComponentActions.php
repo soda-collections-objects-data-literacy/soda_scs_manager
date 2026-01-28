@@ -825,6 +825,13 @@ class SodaScsWisskiComponentActions implements SodaScsComponentActionsInterface 
       // We need a random int to avoid conflicts with other snapshots.
       $randomInt = $this->sodaScsSnapshotHelpers->generateRandomSuffix();
       $snapshotContainerName = 'snapshot--' . $randomInt . '--' . $snapshotMachineName . '--drupal';
+
+      // Convert container path to host path for bind mount.
+      // Inside Drupal container: /var/scs-manager/snapshots
+      // On host: /srv/backups/scs-manager/snapshots
+      $hostBackupPath = $this->sodaScsSnapshotHelpers
+        ->convertContainerPathToHostPath($snapshotPaths['backupPathWithType']);
+
       // Construct the snapshot container create request parameters.
       $createSnapshotContainerRunCommandRequestParams = [
         'name' => $snapshotContainerName,
@@ -839,9 +846,9 @@ class SodaScsWisskiComponentActions implements SodaScsComponentActionsInterface 
         'hostConfig' => [
           'Binds' => [
             $component->get('machineName')->value . '_drupal-root:/source',
-            $snapshotPaths['backupPathWithType'] . ':/backup',
+            $hostBackupPath . ':/backup',
           ],
-          'AutoRemove' => TRUE,
+          'AutoRemove' => FALSE,
         ],
       ];
 
@@ -1461,7 +1468,7 @@ class SodaScsWisskiComponentActions implements SodaScsComponentActionsInterface 
             $volumeName . ':/source:ro',
             $snapshotDir . ':/backup',
           ],
-          'AutoRemove' => TRUE,
+          'AutoRemove' => FALSE,
         ],
       ];
       // Build and make the create container request.
@@ -1542,7 +1549,7 @@ class SodaScsWisskiComponentActions implements SodaScsComponentActionsInterface 
             $volumeName . ':/volume',
             $tarFilePathOnDisk . ':/restore:ro',
           ],
-          'AutoRemove' => TRUE,
+          'AutoRemove' => FALSE,
         ],
       ];
 

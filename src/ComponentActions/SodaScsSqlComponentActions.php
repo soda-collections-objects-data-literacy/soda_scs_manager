@@ -512,6 +512,10 @@ class SodaScsSqlComponentActions implements SodaScsComponentActionsInterface {
       $containerName = 'snapshot--' . $randomInt . '--' . $snapshotMachineName . '--database';
       // @todo Abstract this to own function.
       // Create and run a short-lived container to tar and sign the SQL dump.
+      // Convert container path to host path for bind mount.
+      $hostBackupPath = $this->sodaScsSnapshotHelpers
+        ->convertContainerPathToHostPath($snapshotPaths['backupPathWithType']);
+
       $createContainerRequest = $this->sodaScsDockerRunServiceActions->buildCreateRequest([
         'name' => $containerName,
         'volumes' => NULL,
@@ -524,8 +528,8 @@ class SodaScsSqlComponentActions implements SodaScsComponentActionsInterface {
         ],
         'hostConfig' => [
           'Binds' => [
-            $snapshotPaths['backupPathWithType'] . ':/source',
-            $snapshotPaths['backupPathWithType'] . ':/backup',
+            $hostBackupPath . ':/source',
+            $hostBackupPath . ':/backup',
           ],
           'AutoRemove' => TRUE,
         ],

@@ -333,6 +333,11 @@ class SodaScsTriplestoreComponentActions implements SodaScsComponentActionsInter
 
       $randomInt = $this->sodaScsSnapshotHelpers->generateRandomSuffix();
       $containerName = 'snapshot--' . $randomInt . '--' . $snapshotMachineName . '--triplestore';
+
+      // Convert container path to host path for bind mount.
+      $hostBackupPath = $this->sodaScsSnapshotHelpers
+        ->convertContainerPathToHostPath($snapshotPaths['backupPathWithType']);
+
       // Create and run a short-lived container to tar and checksum the export.
       $createContainerRequest = $this->sodaScsDockerRunServiceActions->buildCreateRequest([
         'name' => $containerName,
@@ -346,8 +351,8 @@ class SodaScsTriplestoreComponentActions implements SodaScsComponentActionsInter
         ],
         'hostConfig' => [
           'Binds' => [
-            $snapshotPaths['backupPathWithType'] . ':/source',
-            $snapshotPaths['backupPathWithType'] . ':/backup',
+            $hostBackupPath . ':/source',
+            $hostBackupPath . ':/backup',
           ],
           'AutoRemove' => TRUE,
         ],
