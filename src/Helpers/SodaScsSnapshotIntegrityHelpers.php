@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace Drupal\soda_scs_manager\Helpers;
 
-use Symfony\Component\DependencyInjection\Attribute\Autowire;
 use Drupal\Core\Entity\EntityTypeManagerInterface;
 use Drupal\Core\Logger\LoggerChannelFactoryInterface;
 use Drupal\Core\Messenger\MessengerInterface;
@@ -707,7 +706,8 @@ class SodaScsSnapshotIntegrityHelpers {
    * @param int $newSnapshotId
    *   The snapshot ID that was just created.
    * @param int $gracePeriodSeconds
-   *   Time window to protect the current user's snapshots (default 600 seconds).
+   *   Time window to protect the current user's snapshots
+   *   (default 600 seconds).
    * @param bool $dryRun
    *   If TRUE, only report what would be deleted.
    *
