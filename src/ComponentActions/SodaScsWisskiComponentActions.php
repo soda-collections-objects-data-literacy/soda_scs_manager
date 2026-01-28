@@ -828,7 +828,7 @@ class SodaScsWisskiComponentActions implements SodaScsComponentActionsInterface 
 
       // Convert container path to host path for bind mount.
       // Inside Drupal container: /var/scs-manager/snapshots
-      // On host: /srv/backups/scs-manager/snapshots
+      // On host: /srv/backups/scs-manager/snapshots.
       $hostBackupPath = $this->sodaScsSnapshotHelpers
         ->convertContainerPathToHostPath($snapshotPaths['backupPathWithType']);
 
