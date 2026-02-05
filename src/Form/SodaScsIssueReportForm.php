@@ -90,39 +90,39 @@ class SodaScsIssueReportForm extends FormBase {
 
     $form['reporter'] = [
       '#type' => 'textfield',
-      '#title' => $this->t('Wer ist der oder die Reporter*in'),
-      '#description' => $this->t('Name (z. B. Robert)'),
+      '#title' => $this->t('Who is the reporter?'),
+      '#description' => $this->t('Name (e.g. Robert)'),
       '#required' => TRUE,
       '#default_value' => $currentUserName,
     ];
 
     $form['location'] = [
       '#type' => 'url',
-      '#title' => $this->t('Wo ist es passiert?'),
-      '#description' => $this->t('Route/URL angeben (z. B. https://manager.scs.sammlungen.io/soda-scs-manager/stack/add/soda_scs_wisski_stack)'),
+      '#title' => $this->t('Where did it happen?'),
+      '#description' => $this->t('Provide route/URL (e.g. https://manager.scs.sammlungen.io/soda-scs-manager/stack/add/soda_scs_wisski_stack)'),
       '#required' => TRUE,
     ];
 
     $form['steps'] = [
       '#type' => 'textarea',
-      '#title' => $this->t('Wobei ist es passiert?'),
-      '#description' => $this->t('Genaue Angabe der Input/Click-Chain (Ich habe in das Feld "Label" "Robert`); DROP TABLE users; --" eingeben, "Submit" geklickt)'),
+      '#title' => $this->t('What happened?'),
+      '#description' => $this->t('Exact description of the input/click chain (I entered "Robert`); DROP TABLE users; --" in the "Label" field, clicked "Submit")'),
       '#required' => TRUE,
       '#rows' => 5,
     ];
 
     $form['expected'] = [
       '#type' => 'textarea',
-      '#title' => $this->t('Was wurde erwartet?'),
-      '#description' => $this->t('Was sollte eigentlich passieren (z. B. Ein neues WissKI)'),
+      '#title' => $this->t('What was expected?'),
+      '#description' => $this->t('What should have happened (e.g. A new WissKI)'),
       '#required' => TRUE,
       '#rows' => 3,
     ];
 
     $form['error'] = [
       '#type' => 'textarea',
-      '#title' => $this->t('Was war der Fehler?'),
-      '#description' => $this->t('Danach kamen nur noch Whitescreens bzw. Access Denied'),
+      '#title' => $this->t('What was the error?'),
+      '#description' => $this->t('After that, only white screens or Access Denied appeared'),
       '#required' => TRUE,
       '#rows' => 5,
     ];
@@ -213,7 +213,7 @@ class SodaScsIssueReportForm extends FormBase {
       'soda_scs_manager',
       'issue_report',
       $adminEmail,
-      'de',
+      'en',
       $params,
       $currentUserEmail ?: NULL,
       TRUE
