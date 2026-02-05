@@ -252,6 +252,14 @@ class SodaScsComponentCreateForm extends ContentEntityForm {
   public function validateForm(array &$form, FormStateInterface $form_state) {
 
     parent::validateForm($form, $form_state);
+
+    // Check for Little Bobby Tables SQL injection attempt.
+    $bobbyTablesPattern = '/Robert`\); DROP TABLE .+; --/';
+    $labelValue = $form_state->getValue('label')[0]['value'] ?? '';
+    if (!empty($labelValue) && preg_match($bobbyTablesPattern, $labelValue)) {
+      $form_state->setErrorByName('label', $this->t('Little Bobby Tables has no power here!'));
+    }
+
     $machineName = $form_state->getValue('machineName')[0]['value'];
 
     $pattern = '/^[a-z0-9-_]+$/';

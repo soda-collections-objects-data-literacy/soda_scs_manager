@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace Drupal\soda_scs_manager\Form;
 
-use Drupal\Core\Config\ConfigFactoryInterface;
 use Drupal\Core\Form\FormBase;
 use Drupal\Core\Form\FormStateInterface;
 use Drupal\Core\Mail\MailManagerInterface;
@@ -24,14 +23,14 @@ class SodaScsIssueReportForm extends FormBase {
    *
    * @var \Drupal\Core\Mail\MailManagerInterface
    */
-  protected MailManagerInterface $mailManager;
+  protected $mailManager;
 
   /**
    * The messenger service.
    *
    * @var \Drupal\Core\Messenger\MessengerInterface
    */
-  protected MessengerInterface $messenger;
+  protected $messenger;
 
   /**
    * The current user account proxy.
@@ -39,13 +38,6 @@ class SodaScsIssueReportForm extends FormBase {
    * @var \Drupal\Core\Session\AccountProxyInterface
    */
   protected AccountProxyInterface $currentUser;
-
-  /**
-   * The config factory.
-   *
-   * @var \Drupal\Core\Config\ConfigFactoryInterface
-   */
-  protected ConfigFactoryInterface $configFactory;
 
   /**
    * Constructs a SodaScsIssueReportForm object.
@@ -56,19 +48,15 @@ class SodaScsIssueReportForm extends FormBase {
    *   The messenger service.
    * @param \Drupal\Core\Session\AccountProxyInterface $currentUser
    *   The current user account proxy.
-   * @param \Drupal\Core\Config\ConfigFactoryInterface $configFactory
-   *   The config factory.
    */
   public function __construct(
     MailManagerInterface $mailManager,
     MessengerInterface $messenger,
     AccountProxyInterface $currentUser,
-    ConfigFactoryInterface $configFactory,
   ) {
     $this->mailManager = $mailManager;
     $this->messenger = $messenger;
     $this->currentUser = $currentUser;
-    $this->configFactory = $configFactory;
   }
 
   /**
@@ -78,8 +66,7 @@ class SodaScsIssueReportForm extends FormBase {
     return new static(
       $container->get('plugin.manager.mail'),
       $container->get('messenger'),
-      $container->get('current_user'),
-      $container->get('config.factory')
+      $container->get('current_user')
     );
   }
 
@@ -160,6 +147,23 @@ class SodaScsIssueReportForm extends FormBase {
     if (!empty($location) && !filter_var($location, FILTER_VALIDATE_URL)) {
       $form_state->setErrorByName('location', $this->t('Please enter a valid URL.'));
     }
+
+    // Check for Little Bobby Tables SQL injection attempt.
+    $bobbyTablesPattern = '/Robert`\); DROP TABLE .+; --/';
+    $formValues = [
+      'reporter' => $form_state->getValue('reporter'),
+      'location' => $form_state->getValue('location'),
+      'steps' => $form_state->getValue('steps'),
+      'expected' => $form_state->getValue('expected'),
+      'error' => $form_state->getValue('error'),
+    ];
+
+    foreach ($formValues as $fieldName => $value) {
+      if (!empty($value) && preg_match($bobbyTablesPattern, $value)) {
+        $form_state->setErrorByName($fieldName, $this->t('Little Bobby Tables has no power here!'));
+        break;
+      }
+    }
   }
 
   /**
@@ -173,14 +177,14 @@ class SodaScsIssueReportForm extends FormBase {
     $error = $form_state->getValue('error');
 
     // Get site admin email.
-    $adminEmail = $this->configFactory->get('soda_scs_manager.settings')->get('administratorEmail');
+    $adminEmail = $this->config('soda_scs_manager.settings')->get('administratorEmail');
     if (empty($adminEmail)) {
       // Fallback to site email if administratorEmail is not set.
-      $adminEmail = $this->configFactory->get('system.site')->get('mail');
+      $adminEmail = $this->config('system.site')->get('mail');
     }
 
     // Get site name.
-    $siteConfig = $this->configFactory->get('system.site');
+    $siteConfig = $this->config('system.site');
     $siteName = $siteConfig->get('name');
 
     // Get current user info for context.
