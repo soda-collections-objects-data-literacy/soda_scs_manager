@@ -107,14 +107,19 @@ class SodaScsOpenGdbServiceActions implements SodaScsOpenGdbRequestInterface {
 
       case 'user':
         $url = $triplestoreUserSettings['baseUrl'] . str_replace('{userId}', $requestParams['routeParams']['username'], $triplestoreUserSettings['createUrl']);
-        $body = json_encode([
+        $body = [
           'password' => $requestParams['body']['password'],
           "grantedAuthorities" => [
             "ROLE_USER",
-            "READ_REPO_" . $requestParams['body']['machineName'],
-            "WRITE_REPO_" . $requestParams['body']['machineName'],
-          ],
-        ]);
+
+          ]
+        ];
+        // @todo We may not double parse body or request params here.
+        if (isset($requestParams['body']['machineName'])) {
+          $body['grantedAuthorities'][] = "READ_REPO_" . $requestParams['body']['machineName'];
+          $body['grantedAuthorities'][] = "WRITE_REPO_" . $requestParams['body']['machineName'];
+        }
+        $body = json_encode($body);
         break;
 
       default:
@@ -397,14 +402,9 @@ class SodaScsOpenGdbServiceActions implements SodaScsOpenGdbRequestInterface {
       // @todo User not exist is ok, try to make this no error
       elseif ($request['type'] === 'user' && $e->getCode() === 404) {
         $username = array_slice(explode('/', $request['route']), -1)[0];
-        $this->messenger
-          ->addWarning(
-            $this->t(
-              "OpenGDB user: @username does not exist. Try to create it for you...",
-              [
-                '@username' => $username,
-              ]
-            )
+        $this->loggerFactory->get('soda_scs_manager')
+          ->notice(
+            "OpenGDB user: @username does not exist. Create it now...", ['@username' => $username]
           );
         return [
           'message' => 'Request succeeded, but user does not exist.',

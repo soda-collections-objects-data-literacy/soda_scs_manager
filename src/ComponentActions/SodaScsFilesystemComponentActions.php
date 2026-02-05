@@ -227,9 +227,9 @@ class SodaScsFilesystemComponentActions implements SodaScsComponentActionsInterf
 
       foreach ($accessProxycmds as $accessProxycmd) {
         // Create shared folders via access proxy.
-        // @todo Create setting for access proxy.
+        $accessProxyContainerName = $this->settings->get('accessProxy.generalSettings.containerName') ?? 'scs--access-proxy';
         $accessProxyRequestParams = [
-          'containerName' => 'access-proxy',
+          'containerName' => $accessProxyContainerName,
           'label' => $entity->get('label')->value,
           'machineName' => $entity->get('machineName')->value,
           'partOfProjects' => $entity->get('partOfProjects')->value,
@@ -614,8 +614,10 @@ class SodaScsFilesystemComponentActions implements SodaScsComponentActionsInterf
       ];
 
       // Delete shared folders via access proxy.
+      // @todo Make this via service helpers initAccessProxySettings().
+      $accessProxyContainerName = $this->settings->get('accessProxy.generalSettings.containerName') ?? 'scs--access-proxy';
       $accessProxyRequestParams = [
-        'containerName' => 'access-proxy',
+        'containerName' => $accessProxyContainerName,
         'label' => $entity->get('label')->value,
         'machineName' => $entity->get('machineName')->value,
         'partOfProjects' => $entity->get('partOfProjects')->value,

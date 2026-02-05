@@ -268,8 +268,9 @@ class SodaScsComponentHelpers {
       '/shared/' . $machineName,
     ];
 
+    $accessProxyContainerName = $this->settings->get('accessProxy.generalSettings.containerName') ?? 'scs--access-proxy';
     $requestParams = [
-      'containerName' => 'access-proxy',
+      'containerName' => $accessProxyContainerName,
       'cmd' => $accessProxycmd,
       'user' => 'root',
     ];

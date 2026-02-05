@@ -165,7 +165,7 @@ class SodaScsKeycloakServiceGroupActions implements SodaScsServiceRequestInterfa
     // Build the route.
     $route =
       // Host route.
-      $keycloakGeneralSettings['host'] .
+      $keycloakGeneralSettings['url'] .
       // Base URL.
       $keycloakGroupsSettings['baseUrl'] .
       // Create URL.
@@ -227,7 +227,7 @@ class SodaScsKeycloakServiceGroupActions implements SodaScsServiceRequestInterfa
     // Build the route.
     $route =
       // Host route.
-      $keycloakGeneralSettings['host'] .
+      $keycloakGeneralSettings['url'] .
       // Base URL.
       str_replace('{realm}', $keycloakGeneralSettings['realm'], $keycloakGroupsSettings['baseUrl']);
 
@@ -288,7 +288,7 @@ class SodaScsKeycloakServiceGroupActions implements SodaScsServiceRequestInterfa
     // Build the route.
     $route =
       // Host route.
-      $keycloakGeneralSettings['host'] .
+      $keycloakGeneralSettings['url'] .
       // Base URL.
       $keycloakGroupsSettings['baseUrl'] .
       // Read one URL.
@@ -335,7 +335,7 @@ class SodaScsKeycloakServiceGroupActions implements SodaScsServiceRequestInterfa
     // Build the route.
     $route =
       // Host route.
-      $keycloakGeneralSettings['host'] .
+      $keycloakGeneralSettings['url'] .
       // Base URL.
       $keycloakGroupsSettings['baseUrl'] .
       // Health check URL.
@@ -395,7 +395,7 @@ class SodaScsKeycloakServiceGroupActions implements SodaScsServiceRequestInterfa
     // Build the route.
     $route =
       // Host route.
-      $keycloakGeneralSettings['host'] .
+      $keycloakGeneralSettings['url'] .
       // Base URL.
       $keycloakGroupsSettings['baseUrl'] .
       // Update URL.
@@ -453,7 +453,7 @@ class SodaScsKeycloakServiceGroupActions implements SodaScsServiceRequestInterfa
     // Build the route.
     $route =
       // Host route.
-      $keycloakGeneralSettings['host'] .
+      $keycloakGeneralSettings['url'] .
       // Base URL.
       $keycloakGroupsSettings['baseUrl'] .
       // Delete URL.
@@ -496,7 +496,7 @@ class SodaScsKeycloakServiceGroupActions implements SodaScsServiceRequestInterfa
   public function buildTokenRequest($requestParams = []): array {
     $keycloakGeneralSettings = $this->sodaScsServiceHelpers->initKeycloakGeneralSettings();
 
-    $route = $keycloakGeneralSettings['host'] .
+    $route = $keycloakGeneralSettings['url'] .
       // Token URL.
       $keycloakGeneralSettings['tokenUrl'];
 

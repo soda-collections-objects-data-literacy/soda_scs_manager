@@ -303,11 +303,20 @@ class SodaScsStackCreateForm extends ContentEntityForm {
 
     if (!$createStackResult['success']) {
       $error = $createStackResult['error'];
+      // Handle different error types: Exception object, string, or null/false.
+      if ($error instanceof \Exception) {
+        $exception = $error;
+        $errorMessage = $error->getMessage();
+      }
+      else {
+        $errorMessage = $error ?? 'Unknown error occurred';
+        $exception = new \Exception($errorMessage);
+      }
       Error::logException(
         $this->loggerFactory->get('soda_scs_manager'),
-        new \Exception($error),
+        $exception,
         'Cannot create stack: @message',
-        ['@message' => $error],
+        ['@message' => $errorMessage],
         LogLevel::ERROR
       );
       $this->messenger()->addMessage($this->t('Cannot create stack "@label". See logs for more details.', [

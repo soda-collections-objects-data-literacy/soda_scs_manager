@@ -46,10 +46,10 @@ soda_scs_manager.settings:
           type: mapping
           label: 'Keycloak settings'
           mapping:
-            keycloakHost:
+            keycloakUrl:
               type: string
-              label: 'Keycloak host'
-              description: 'The keycloak host, like https://auth.sammlungen.io.'
+              label: 'Keycloak URL'
+              description: 'The keycloak URL, like https://auth.scs.sammlungen.io.'
             keycloakRealm:
               type: string
               label: 'Keycloak realm'
@@ -553,6 +553,18 @@ soda_scs_manager.settings:
                     type: string
                     label: 'Package environment version'
                     description: 'The package environment version for this component version.'
+    accessProxy:
+      type: mapping
+      label: 'Access-Proxy settings'
+      mapping:
+        generalSettings:
+          type: mapping
+          label: 'General settings'
+          mapping:
+            containerName:
+              type: string
+              label: 'Container name'
+              description: 'The Access-Proxy container name, like scs--access-proxy.'
     security:
       type: mapping
       label: 'Security settings'

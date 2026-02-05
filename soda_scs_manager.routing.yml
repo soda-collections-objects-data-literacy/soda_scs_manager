@@ -497,6 +497,17 @@ soda_scs_manager.user_registration_reject:
       id:
         type: integer
 
+# Issue Reporting
+soda_scs_manager.issue_report:
+  path: '/soda-scs-manager/issue-report'
+  defaults:
+    _form: '\Drupal\soda_scs_manager\Form\SodaScsIssueReportForm'
+    _title: 'Issue Report'
+  requirements:
+    _permission: 'soda scs manager user'
+  options:
+    no_cache: TRUE
+
 # Tasks
 
 soda_scs_manager.component.check_drupal_packages:

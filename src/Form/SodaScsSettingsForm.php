@@ -217,11 +217,11 @@ class SodaScsSettingsForm extends ConfigFormBase {
       '#title' => $this->t('Keycloak settings'),
     ];
 
-    $form['keycloak']['keycloakTabs']['generalSettings']['fields']['keycloakHost'] = [
+    $form['keycloak']['keycloakTabs']['generalSettings']['fields']['keycloakUrl'] = [
       '#type' => 'textfield',
-      '#title' => $this->t('Keycloak host'),
-      '#default_value' => $this->config('soda_scs_manager.settings')->get('keycloak')['keycloakTabs']['generalSettings']['fields']['keycloakHost'] ?? '',
-      '#description' => $this->t('The keycloak host, like auth.sammlungen.io.'),
+      '#title' => $this->t('Keycloak URL'),
+      '#default_value' => $this->config('soda_scs_manager.settings')->get('keycloak')['keycloakTabs']['generalSettings']['fields']['keycloakUrl'] ?? '',
+      '#description' => $this->t('The keycloak URL, like https://auth.sammlungen.io.'),
     ];
 
     $form['keycloak']['keycloakTabs']['generalSettings']['fields']['keycloakRealm'] = [
@@ -1167,6 +1167,27 @@ class SodaScsSettingsForm extends ConfigFormBase {
       '#description' => $this->t('The <a href="https://github.com/soda-collections-objects-data-literacy/wisski-varnish-image" target="_blank">WissKI varnish dev version</a>, like "latest".'),
     ];
 
+    // Access-Proxy settings tab.
+    $form['accessProxy'] = [
+      '#type' => 'details',
+      '#title' => $this->t('Access-Proxy settings'),
+      '#group' => 'tabs',
+      '#tree' => TRUE,
+    ];
+
+    $form['accessProxy']['generalSettings'] = [
+      '#type' => 'fieldset',
+      '#title' => $this->t('General settings'),
+    ];
+
+    $form['accessProxy']['generalSettings']['containerName'] = [
+      '#type' => 'textfield',
+      '#title' => $this->t('Container name'),
+      '#default_value' => $this->config('soda_scs_manager.settings')->get('accessProxy')['generalSettings']['containerName'] ?? 'scs--access-proxy',
+      '#description' => $this->t('The Access-Proxy container name, like scs--access-proxy.'),
+      '#required' => TRUE,
+    ];
+
     // Security settings tab.
     $form['security'] = [
       '#type' => 'details',
@@ -1235,6 +1256,7 @@ class SodaScsSettingsForm extends ConfigFormBase {
 
     // Save the configuration.
     $this->config('soda_scs_manager.settings')
+      ->set('accessProxy', $form_state->getValue('accessProxy'))
       ->set('administratorEmail', $form_state->getValue('administratorEmail'))
       ->set('dbHost', $form_state->getValue('dbHost'))
       ->set('dbManagementHost', $form_state->getValue('dbManagementHost'))

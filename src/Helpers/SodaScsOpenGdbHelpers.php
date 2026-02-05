@@ -99,6 +99,8 @@ class SodaScsOpenGdbHelpers {
    *   The username of the user.
    * @param string $password
    *   The password of the user.
+   * @param string $machineName
+   *   The machine name of the repository.
    *
    * @return array
    *   The user.
@@ -106,7 +108,7 @@ class SodaScsOpenGdbHelpers {
    * @throws \Drupal\soda_scs_manager\Exception\SodaScsRequestException
    *   If the request fails.
    */
-  public function createUser(string $username, string $password) {
+  public function createUser(string $username, string $password, string $machineName = NULL) {
     try {
       $createUserRequestParams = [
         'type' => 'user',
@@ -114,6 +116,7 @@ class SodaScsOpenGdbHelpers {
         'routeParams' => ['username' => $username],
         'body' => [
           'password' => $password,
+          'machineName' => $machineName,
         ],
       ];
       $openGdbCreateUserRequest = $this->sodaScsOpenGdbServiceActions->buildCreateRequest($createUserRequestParams);
@@ -190,7 +193,8 @@ class SodaScsOpenGdbHelpers {
       $response = $this->sodaScsOpenGdbServiceActions->makeRequest($request);
       // Check if the request was successful.
       if (!$response['success']) {
-        throw SodaScsHelpersException::opengdbFailed('Failed to create service key token.', 'create_user_token', ['username' => $username], new \Exception($response['error']));
+        $errorMessage = $response['error'] ?? 'Unknown error occurred';
+        throw SodaScsHelpersException::opengdbFailed('Failed to create service key token.', 'create_user_token', ['username' => $username], new \Exception($errorMessage));
       }
       return json_decode($response['data']['openGdbResponse']->getBody()->getContents(), TRUE)['token'];
     }

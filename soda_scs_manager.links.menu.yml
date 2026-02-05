@@ -161,6 +161,15 @@ soda_scs_manager.menu.administration:
   requirements:
     _permission: 'soda scs manager user'
 
+soda_scs_manager.menu.issue_report:
+  title: 'Issue Report'
+  description: 'Report an issue'
+  parent: soda_scs_manager.main_navigation
+  route_name: soda_scs_manager.issue_report
+  weight: 50
+  requirements:
+    _permission: 'soda scs manager user'
+
 soda_scs_manager.user_registration_approvals:
   title: 'Keycloak User Registrations'
   description: 'Manage pending Keycloak user registrations'

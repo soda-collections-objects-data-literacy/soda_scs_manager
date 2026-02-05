@@ -1107,11 +1107,12 @@ class SodaScsWisskiComponentActions implements SodaScsComponentActionsInterface 
       /** @var array $portainerResponse */
       $portainerDeleteResponse = $this->sodaScsPortainerServiceActions->makeRequest($portainerDeleteRequest);
       if (!$portainerDeleteResponse['success']) {
+        $errorMessage = $portainerDeleteResponse['error'] ?? 'Unknown error occurred';
         Error::logException(
           $this->logger,
-          new \Exception($portainerDeleteResponse['error']),
+          new \Exception($errorMessage),
           'Could not delete WissKI stack at portainer: @message',
-          ['@message' => $portainerDeleteResponse['error']],
+          ['@message' => $errorMessage],
           LogLevel::ERROR
         );
         $this->messenger->addError($this->t("Could not delete WissKI stack at portainer, but will delete the component anyway. See logs for more details."));

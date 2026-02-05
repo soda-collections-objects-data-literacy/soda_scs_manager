@@ -279,6 +279,8 @@ class SodaScsTriplestoreHelpers {
     }
 
     // Check if user exists. If not, create it.
+    // Note: We don't pass machineName here because the repository doesn't exist yet.
+    // Repository permissions will be added later after the repository is created.
     $userData = $this->sodaScsOpenGdbHelpers->getUserDataByName($component->getOwner()->getDisplayName());
     if (!$userData) {
       $this->sodaScsOpenGdbHelpers->createUser($component->getOwner()->getDisplayName(), $componentServiceKeyPassword->get('servicePassword')->value);

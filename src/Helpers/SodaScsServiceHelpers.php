@@ -216,6 +216,21 @@ class SodaScsServiceHelpers {
   }
 
   /**
+   * Initialize Access-Proxy settings.
+   *
+   * @return array
+   *   The Access-Proxy settings.
+   */
+  public function initAccessProxySettings() {
+    $accessProxySettings['name'] = 'Access-Proxy';
+    $accessProxySettings['containerName'] = $this->settings->get('accessProxy.generalSettings.containerName') ?? 'scs--access-proxy';
+
+    $this->checkSettings($accessProxySettings);
+
+    return $accessProxySettings;
+  }
+
+  /**
    * Initialize JupyterHub settings.
    *
    * @return array
@@ -238,7 +253,7 @@ class SodaScsServiceHelpers {
    */
   public function initKeycloakGeneralSettings() {
     $keycloakSettings['name'] = 'Keycloak general';
-    $keycloakSettings['host'] = $this->settings->get('keycloak.keycloakTabs.generalSettings.fields.keycloakHost');
+    $keycloakSettings['url'] = $this->settings->get('keycloak.keycloakTabs.generalSettings.fields.keycloakUrl');
     $keycloakSettings['realm'] = $this->settings->get('keycloak.keycloakTabs.generalSettings.fields.keycloakRealm');
     $keycloakSettings['adminUsername'] = $this->settings->get('keycloak.keycloakTabs.generalSettings.fields.adminUsername');
     $keycloakSettings['adminPassword'] = $this->settings->get('keycloak.keycloakTabs.generalSettings.fields.adminPassword');

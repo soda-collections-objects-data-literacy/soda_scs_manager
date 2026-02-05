@@ -309,7 +309,7 @@ class SodaScsSnapshotConfirmForm extends ConfirmFormBase {
 
       if (!$createSnapshotResult->success) {
         $this->messenger()->addError($this->t('Failed to create snapshot. See logs for more details.'));
-        $error = $createSnapshotResult->error;
+        $error = $createSnapshotResult->error ?? 'Unknown error occurred';
         Error::logException(
           $this->loggerFactory->get('soda_scs_manager'),
           new \Exception($error),

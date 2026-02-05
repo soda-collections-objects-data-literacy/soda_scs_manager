@@ -353,6 +353,10 @@ class SodaScsPortainerServiceActions implements SodaScsServiceRequestInterface {
         "value" => $keycloakGeneralSettings['realm'],
       ],
       [
+        "name" => "KEYCLOAK_URL",
+        "value" => $keycloakGeneralSettings['url'],
+      ],
+      [
         "name" => "MODE",
         "value" => $requestParams['mode'],
       ],
@@ -371,6 +375,11 @@ class SodaScsPortainerServiceActions implements SodaScsServiceRequestInterface {
       [
         "name" => "SERVICE_NAME",
         "value" => $requestParams['machineName'],
+      ],
+      // @ todo Set in RequestParams.
+      [
+        "name" => "SHARED_DATA_VOLUME",
+        "value" => $requestParams['sharedDataVolume'] ?? 'scs--shared-data',
       ],
       [
         "name" => "TS_PASSWORD",

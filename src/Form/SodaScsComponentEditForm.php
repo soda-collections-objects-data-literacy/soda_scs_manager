@@ -96,14 +96,20 @@ class SodaScsComponentEditForm extends ContentEntityForm {
           }
         }
 
-        // Hide the original widget and show plain text instead.
-        $form['owner']['#access'] = FALSE;
-        $form['owner_display'] = [
-          '#type' => 'item',
-          '#title' => $this->t('Owner'),
-          '#markup' => $owner_name,
-          '#weight' => $form['owner']['#weight'] ?? 0,
-        ];
+        // Only non-administrators see the owner field as plain text.
+        $current_user = $this->currentUser();
+        $is_admin = $current_user->hasPermission('administer soda_scs_component');
+
+        if (!$is_admin) {
+          // Hide the original widget and show plain text instead.
+          $form['owner']['#access'] = FALSE;
+          $form['owner_display'] = [
+            '#type' => 'item',
+            '#title' => $this->t('Owner'),
+            '#markup' => $owner_name,
+            '#weight' => $form['owner']['#weight'] ?? 0,
+          ];
+        }
       }
     }
 

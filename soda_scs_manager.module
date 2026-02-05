@@ -379,6 +379,28 @@ function soda_scs_manager_mail($key, &$message, $params) {
       $message['body'][] = \Drupal::translation()->translate('Your registration on @site_name has been reviewed and was not approved at this time.', ['@site_name' => $site_name], $options);
       $message['body'][] = \Drupal::translation()->translate('If you believe this is an error, please contact the site administrators.', [], $options);
       break;
+
+    case 'issue_report':
+      $message['subject'] = \Drupal::translation()->translate('New issue report on @site_name', ['@site_name' => $site_name], $options);
+      $message['body'][] = \Drupal::translation()->translate('A new issue has been reported on @site_name.', ['@site_name' => $site_name], $options);
+      $message['body'][] = '';
+      $message['body'][] = \Drupal::translation()->translate('Reporter: @reporter', ['@reporter' => $params['reporter']], $options);
+      if (!empty($params['current_user_email'])) {
+        $message['body'][] = \Drupal::translation()->translate('User Email: @email', ['@email' => $params['current_user_email']], $options);
+        $message['body'][] = \Drupal::translation()->translate('User ID: @id', ['@id' => $params['current_user_id']], $options);
+      }
+      $message['body'][] = '';
+      $message['body'][] = \Drupal::translation()->translate('Location/URL: @location', ['@location' => $params['location']], $options);
+      $message['body'][] = '';
+      $message['body'][] = \Drupal::translation()->translate('Steps to reproduce:', [], $options);
+      $message['body'][] = $params['steps'];
+      $message['body'][] = '';
+      $message['body'][] = \Drupal::translation()->translate('Expected behavior:', [], $options);
+      $message['body'][] = $params['expected'];
+      $message['body'][] = '';
+      $message['body'][] = \Drupal::translation()->translate('Error description:', [], $options);
+      $message['body'][] = $params['error'];
+      break;
   }
 }
 
