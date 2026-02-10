@@ -381,7 +381,7 @@ function soda_scs_manager_mail($key, &$message, $params) {
       break;
 
     case 'issue_report':
-      $message['subject'] = \Drupal::translation()->translate('New issue report on @site_name', ['@site_name' => $site_name], $options);
+      $message['subject'] = \Drupal::translation()->translate('New issue report on @site_name: @title', ['@site_name' => $site_name, '@title' => $params['title']], $options);
       $message['body'][] = \Drupal::translation()->translate('A new issue has been reported on @site_name.', ['@site_name' => $site_name], $options);
       $message['body'][] = '';
       $message['body'][] = \Drupal::translation()->translate('Reporter: @reporter', ['@reporter' => $params['reporter']], $options);
@@ -390,6 +390,7 @@ function soda_scs_manager_mail($key, &$message, $params) {
         $message['body'][] = \Drupal::translation()->translate('User ID: @id', ['@id' => $params['current_user_id']], $options);
       }
       $message['body'][] = '';
+      $message['body'][] = \Drupal::translation()->translate('Title: @title', ['@title' => $params['title']], $options);
       $message['body'][] = \Drupal::translation()->translate('Location/URL: @location', ['@location' => $params['location']], $options);
       $message['body'][] = '';
       $message['body'][] = \Drupal::translation()->translate('Steps to reproduce:', [], $options);
@@ -403,10 +404,11 @@ function soda_scs_manager_mail($key, &$message, $params) {
       break;
 
     case 'issue_report_copy':
-      $message['subject'] = \Drupal::translation()->translate('[Copy] New issue report on @site_name', ['@site_name' => $site_name], $options);
+      $message['subject'] = \Drupal::translation()->translate('[Copy] New issue report on @site_name: @title', ['@site_name' => $site_name, '@title' => $params['title']], $options);
       $message['body'][] = \Drupal::translation()->translate('This is a copy of the issue report you submitted on @site_name.', ['@site_name' => $site_name], $options);
       $message['body'][] = '';
       $message['body'][] = \Drupal::translation()->translate('Reporter: @reporter', ['@reporter' => $params['reporter']], $options);
+      $message['body'][] = \Drupal::translation()->translate('Title: @title', ['@title' => $params['title']], $options);
       $message['body'][] = \Drupal::translation()->translate('Location/URL: @location', ['@location' => $params['location']], $options);
       $message['body'][] = '';
       $message['body'][] = \Drupal::translation()->translate('Steps to reproduce:', [], $options);

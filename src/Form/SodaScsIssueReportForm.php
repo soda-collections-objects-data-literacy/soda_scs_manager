@@ -96,6 +96,13 @@ class SodaScsIssueReportForm extends FormBase {
       '#default_value' => $currentUserName,
     ];
 
+    $form['title'] = [
+      '#type' => 'textfield',
+      '#title' => $this->t('Title:'),
+      '#description' => $this->t('Short description of the issue.'),
+      '#required' => TRUE,
+    ];
+
     $form['location'] = [
       '#type' => 'url',
       '#title' => $this->t('Where did it happen?'),
@@ -158,6 +165,7 @@ class SodaScsIssueReportForm extends FormBase {
     $bobbyTablesPattern = '/Robert`\); DROP TABLE .+; --/';
     $formValues = [
       'reporter' => $form_state->getValue('reporter'),
+      'title' => $form_state->getValue('title'),
       'location' => $form_state->getValue('location'),
       'steps' => $form_state->getValue('steps'),
       'expected' => $form_state->getValue('expected'),
@@ -177,6 +185,7 @@ class SodaScsIssueReportForm extends FormBase {
    */
   public function submitForm(array &$form, FormStateInterface $form_state): void {
     $reporter = $form_state->getValue('reporter');
+    $title = $form_state->getValue('title');
     $location = $form_state->getValue('location');
     $steps = $form_state->getValue('steps');
     $expected = $form_state->getValue('expected');
@@ -205,6 +214,7 @@ class SodaScsIssueReportForm extends FormBase {
     // Prepare email parameters.
     $params = [
       'reporter' => $reporter,
+      'title' => $title,
       'location' => $location,
       'steps' => $steps,
       'expected' => $expected,
