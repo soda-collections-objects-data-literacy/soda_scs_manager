@@ -31,7 +31,36 @@
         {% endif %}" data-tag="{{ tag }}" role="button" tabindex="0" aria-pressed="false" aria-label="{{ 'Filter by tag @tag'|t({'@tag': tag}) }}">{{ tag|t }}</span>
       {% endfor %}
     </div>
-    <div class="soda-scs-manager--card-content-wrapper">
+    <div class="soda-scs-manager--card-content-wrapper"
+      {% if entity_id %}data-entity-id="{{ entity_id }}"{% endif %}
+      {% if entity_type_id %}data-entity-type="{{ entity_type_id }}"{% endif %}>
+      {% if health_status %}
+        {% set healthClass = 'unknown' %}
+        {% set healthTitle = 'Unknown'|t %}
+        {% if health_status == 'running' or health_status == 'healthy' %}
+          {% set healthClass = 'running' %}
+          {% set healthTitle = 'Running'|t %}
+        {% elseif health_status == 'starting' or health_status == 'Unknown' %}
+          {% set healthClass = 'starting' %}
+          {% set healthTitle = 'Starting'|t %}
+        {% elseif health_status == 'stopped' %}
+          {% set healthClass = 'stopped' %}
+          {% set healthTitle = 'Stopped'|t %}
+        {% elseif health_status == 'unhealthy' or health_status == 'unknown' %}
+          {% set healthClass = 'failure' %}
+          {% set healthTitle = 'Failure'|t %}
+        {% endif %}
+      <span class="soda-scs-manager--health-icon soda-scs-manager--health-{{ healthClass }}"
+            aria-label="{{ 'Health status: @status'|t({'@status': healthTitle}) }}"
+            title="{{ healthTitle }}">
+      </span>
+      {% endif %}
+      {% if details_link %}
+      <a href="{{ details_link }}" class="soda-scs-manager--details-icon"
+              aria-label="{{ 'View details of @title'|t({'@title': title}) }}"
+              title="{{ 'View details'|t }}">
+      </a>
+      {% endif %}
       <button type="button" class="soda-scs-manager--info-icon"
               aria-label="{{ 'Learn more information about @title'|t({'@title': title}) }}"
               title="{{ 'Learn more information'|t }}">

@@ -128,28 +128,28 @@ class SodaScsManagerController extends ControllerBase {
           $projectBundleInfo = $this->bundleInfo->getBundleInfo($projectEntity->getEntityTypeId())[$projectEntity->bundle()];
           $projectLabel = $project->label();
 
-          // Determine the URL based on bundle type.
-          if ($projectEntity->bundle() === 'soda_scs_wisski_component') {
-            $url = Url::fromRoute('entity.' .
-              $projectEntity->getEntityTypeId() .
-              '.canonical',
-              [
-                'bundle' => $projectEntity->bundle(),
-                $projectEntity->getEntityTypeId() => $projectEntity->id(),
-              ]);
-          }
-          else {
-            // Use service link for non-WissKI components.
-            $url = Url::fromRoute('soda_scs_manager.component.service_link', [
-              'soda_scs_component' => $projectEntity->id(),
+          // Always use service link for the card URL.
+          $url = Url::fromRoute('soda_scs_manager.component.service_link', [
+            'soda_scs_component' => $projectEntity->id(),
+          ]);
+
+          $detailsLink = Url::fromRoute('entity.' .
+            $projectEntity->getEntityTypeId() .
+            '.canonical',
+            [
+              'bundle' => $projectEntity->bundle(),
+              $projectEntity->getEntityTypeId() => $projectEntity->id(),
             ]);
-          }
 
           $entitiesByProject[$projectLabel][] = [
             '#theme' => 'soda_scs_manager__entity_card',
             '#title' => $this->t('@bundle', ['@bundle' => $projectEntity->label()]),
             '#type' => $projectBundleInfo['label']->render(),
             '#description' => $projectEntity->get('description')->value,
+            '#details_link' => $detailsLink,
+            '#entity_id' => $projectEntity->id(),
+            '#entity_type_id' => $projectEntity->getEntityTypeId(),
+            '#health_status' => $projectEntity->get('health')->value ?? 'Unknown',
             '#imageUrl' => $projectBundleInfo['imageUrl'],
             '#learn_more_link' => '/app/' . $this->sodaScsHelpers->getEntityType($projectEntity->bundle()),
             '#url' => $url,
@@ -259,45 +259,35 @@ class SodaScsManagerController extends ControllerBase {
         $username = 'deleted user';
       }
 
-      // Determine the URL based on bundle type.
-      if ($entity->bundle() === 'soda_scs_wisski_component' || $entity->bundle() === 'soda_scs_wisski_stack') {
-        // WissKI components and stacks link to their canonical page.
-        $url = Url::fromRoute('entity.' .
-          $entity->getEntityTypeId() .
-          '.canonical',
-          [
-            'bundle' => $entity->bundle(),
-            $entity->getEntityTypeId() => $entity->id(),
-          ]);
-      }
-      elseif ($entity->getEntityTypeId() === 'soda_scs_component') {
-        // Use service link for non-WissKI components.
-        $url = Url::fromRoute('soda_scs_manager.component.service_link', [
-          'soda_scs_component' => $entity->id(),
-        ]);
-      }
-      elseif ($entity->getEntityTypeId() === 'soda_scs_stack') {
-        // Use service link for non-WissKI stacks.
+      // Always use service link for the card URL.
+      if ($entity->getEntityTypeId() === 'soda_scs_stack') {
         $url = Url::fromRoute('soda_scs_manager.stack.service_link', [
           'soda_scs_stack' => $entity->id(),
         ]);
       }
       else {
-        // Fallback to canonical route.
-        $url = Url::fromRoute('entity.' .
-          $entity->getEntityTypeId() .
-          '.canonical',
-          [
-            'bundle' => $entity->bundle(),
-            $entity->getEntityTypeId() => $entity->id(),
-          ]);
+        $url = Url::fromRoute('soda_scs_manager.component.service_link', [
+          'soda_scs_component' => $entity->id(),
+        ]);
       }
+
+      $detailsLink = Url::fromRoute('entity.' .
+        $entity->getEntityTypeId() .
+        '.canonical',
+        [
+          'bundle' => $entity->bundle(),
+          $entity->getEntityTypeId() => $entity->id(),
+        ]);
 
       $entitiesByUser[$username][] = [
         '#theme' => 'soda_scs_manager__entity_card',
         '#title' => $this->t('@bundle', ['@bundle' => $entity->label()]),
         '#type' => $bundleInfo['label']->render(),
         '#description' => $entity->get('description')->value,
+        '#details_link' => $detailsLink,
+        '#entity_id' => $entity->id(),
+        '#entity_type_id' => $entity->getEntityTypeId(),
+        '#health_status' => $entity->get('health')->value ?? 'Unknown',
         '#imageUrl' => $bundleInfo['imageUrl'],
         '#learn_more_link' => '/app/' . $this->sodaScsHelpers->getEntityType($entity->bundle()),
         '#url' => $url,
@@ -321,6 +311,7 @@ class SodaScsManagerController extends ControllerBase {
         'library' => [
           'soda_scs_manager/globalStyling',
           'soda_scs_manager/tagFilter',
+          'soda_scs_manager/dashboardHealthStatus',
         ],
       ],
     ];

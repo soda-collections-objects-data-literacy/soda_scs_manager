@@ -561,6 +561,10 @@ function soda_scs_manager_theme($existing, $type, $theme, $path) {
     'soda_scs_manager__entity_card' => [
       'variables' => [
         'description' => NULL,
+        'details_link' => NULL,
+        'entity_id' => NULL,
+        'entity_type_id' => NULL,
+        'health_status' => NULL,
         'imageUrl' => NULL,
         'learn_more_link' => NULL,
         'tags' => NULL,

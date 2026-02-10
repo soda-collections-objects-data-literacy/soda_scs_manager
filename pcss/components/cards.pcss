@@ -20,6 +20,84 @@
     @apply relative p-6 flex flex-col items-center text-center h-full;
   }
 
+  .soda-scs-manager--health-icon {
+    @apply absolute top-2 left-2 w-8 h-8 rounded-full border-0 transition-all duration-200 ease-in-out;
+    @apply bg-white/90;
+    @apply shadow-md;
+    z-index: 50;
+
+    &::before {
+      content: '';
+      @apply absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      width: 20px;
+      height: 20px;
+      background-size: contain;
+      background-position: center;
+      background-repeat: no-repeat;
+    }
+
+    &.soda-scs-manager--health-running::before {
+      background-image: url('/modules/custom/soda_scs_manager/assets/images/health-running.svg');
+    }
+
+    &.soda-scs-manager--health-starting::before {
+      background-image: url('/modules/custom/soda_scs_manager/assets/images/health-starting.svg');
+      animation: pulse 1.5s ease-in-out infinite;
+    }
+
+    &.soda-scs-manager--health-stopped::before {
+      background-image: url('/modules/custom/soda_scs_manager/assets/images/health-stopped.svg');
+    }
+
+    &.soda-scs-manager--health-failure::before {
+      background-image: url('/modules/custom/soda_scs_manager/assets/images/health-failure.svg');
+    }
+
+    &.soda-scs-manager--health-unknown::before {
+      background-image: url('/modules/custom/soda_scs_manager/assets/images/health-starting.svg');
+      animation: pulse 1.5s ease-in-out infinite;
+    }
+  }
+
+  @keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.4; }
+  }
+
+  .soda-scs-manager--details-icon {
+    @apply absolute top-2 right-12 w-8 h-8 rounded-full border-0 cursor-pointer transition-all duration-200 ease-in-out;
+    @apply bg-white/90 hover:bg-white focus:bg-white;
+    @apply focus:outline-none focus:ring-2 focus:ring-orange-400/50;
+    @apply shadow-md hover:shadow-lg;
+    z-index: 50;
+
+    &::before {
+      content: '';
+      @apply absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      width: 20px;
+      height: 20px;
+      background-image: url('/modules/custom/soda_scs_manager/assets/images/lens-icon.svg');
+      background-size: contain;
+      background-position: center;
+      background-repeat: no-repeat;
+      transition: all 0.2s ease-in-out;
+    }
+
+    &:hover::before {
+      background-image: url('/modules/custom/soda_scs_manager/assets/images/lens-icon-hover.svg');
+    }
+
+    &:focus::before {
+      background-image: url('/modules/custom/soda_scs_manager/assets/images/lens-icon-focus.svg');
+    }
+  }
+
   .soda-scs-manager--info-icon {
     @apply absolute top-2 right-2 w-8 h-8 rounded-full border-0 cursor-pointer transition-all duration-200 ease-in-out;
     @apply bg-white/90 hover:bg-white focus:bg-white;

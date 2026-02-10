@@ -78,4 +78,12 @@ componentListHealthStatus:
     - core/drupal
     - core/once
 
-
+dashboardHealthStatus:
+  version: 1.x
+  js:
+    js/dashboardHealthStatus.js: {}
+  dependencies:
+    - core/jquery
+    - core/drupal
+    - core/once
+    - soda_scs_manager/globalStyling
