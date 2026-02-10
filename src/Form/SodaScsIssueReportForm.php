@@ -127,6 +127,12 @@ class SodaScsIssueReportForm extends FormBase {
       '#rows' => 5,
     ];
 
+    $form['send_copy'] = [
+      '#type' => 'checkbox',
+      '#title' => $this->t('Send copy to my email'),
+      '#default_value' => FALSE,
+    ];
+
     $form['actions'] = [
       '#type' => 'actions',
     ];
@@ -218,6 +224,20 @@ class SodaScsIssueReportForm extends FormBase {
       $currentUserEmail ?: NULL,
       TRUE
     );
+
+    // Send copy to the reporter if requested.
+    $sendCopy = $form_state->getValue('send_copy');
+    if ($sendCopy && !empty($currentUserEmail)) {
+      $this->mailManager->mail(
+        'soda_scs_manager',
+        'issue_report_copy',
+        $currentUserEmail,
+        'en',
+        $params,
+        $currentUserEmail,
+        TRUE
+      );
+    }
 
     // Display success message.
     $this->messenger->addStatus($this->t('Your issue report has been submitted successfully. Thank you for your feedback!'));

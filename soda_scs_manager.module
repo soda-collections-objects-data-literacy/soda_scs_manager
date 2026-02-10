@@ -401,6 +401,23 @@ function soda_scs_manager_mail($key, &$message, $params) {
       $message['body'][] = \Drupal::translation()->translate('Error description:', [], $options);
       $message['body'][] = $params['error'];
       break;
+
+    case 'issue_report_copy':
+      $message['subject'] = \Drupal::translation()->translate('[Copy] New issue report on @site_name', ['@site_name' => $site_name], $options);
+      $message['body'][] = \Drupal::translation()->translate('This is a copy of the issue report you submitted on @site_name.', ['@site_name' => $site_name], $options);
+      $message['body'][] = '';
+      $message['body'][] = \Drupal::translation()->translate('Reporter: @reporter', ['@reporter' => $params['reporter']], $options);
+      $message['body'][] = \Drupal::translation()->translate('Location/URL: @location', ['@location' => $params['location']], $options);
+      $message['body'][] = '';
+      $message['body'][] = \Drupal::translation()->translate('Steps to reproduce:', [], $options);
+      $message['body'][] = $params['steps'];
+      $message['body'][] = '';
+      $message['body'][] = \Drupal::translation()->translate('Expected behavior:', [], $options);
+      $message['body'][] = $params['expected'];
+      $message['body'][] = '';
+      $message['body'][] = \Drupal::translation()->translate('Error description:', [], $options);
+      $message['body'][] = $params['error'];
+      break;
   }
 }
 
