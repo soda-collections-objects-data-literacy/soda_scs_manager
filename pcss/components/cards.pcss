@@ -169,4 +169,16 @@
   .soda-scs-manager--type--card.hidden-by-filter {
     @apply opacity-0 max-h-0 my-0 py-0 border-0 pointer-events-none;
   }
+
+  .soda-scs-manager--empty-filter-message {
+    @apply col-span-full text-center py-8 px-4;
+
+    p {
+      @apply text-stone-300 text-lg;
+    }
+
+    a {
+      @apply text-orange-400 hover:text-orange-300 underline transition-colors duration-200;
+    }
+  }
 }

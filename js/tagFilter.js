@@ -89,30 +89,55 @@
        * @param {Array} activeTags - Array of active tag names.
        */
       function applyFiltering(context, activeTags) {
-        // Get all card elements
+        // Get all card elements.
         const cards = context.querySelectorAll('.soda-scs-manager--type--card');
 
-        // If no active tags, show all cards
+        // Remove any existing empty-filter messages.
+        context.querySelectorAll('.soda-scs-manager--empty-filter-message').forEach(function (el) {
+          el.remove();
+        });
+
+        // If no active tags, show all cards.
         if (activeTags.length === 0) {
-          cards.forEach(card => {
-            // Allow the card to become visible first
+          cards.forEach(function (card) {
             card.classList.remove('hidden-by-filter');
           });
           return;
         }
 
-        // Filter cards based on active tags
-        cards.forEach(card => {
+        // Filter cards based on active tags.
+        cards.forEach(function (card) {
           const cardTags = Array.from(card.querySelectorAll('.soda-scs-manager--card-tag'))
-            .map(tagEl => tagEl.dataset.tag);
+            .map(function (tagEl) { return tagEl.dataset.tag; });
 
-          // Check if the card has at least one of the active tags
-          const hasMatchingTag = activeTags.some(tag => cardTags.includes(tag));
+          // Check if the card has at least one of the active tags.
+          const hasMatchingTag = activeTags.some(function (tag) { return cardTags.includes(tag); });
 
           if (hasMatchingTag) {
             card.classList.remove('hidden-by-filter');
           } else {
             card.classList.add('hidden-by-filter');
+          }
+        });
+
+        // Check each grid section for visible cards and show message if empty.
+        const grids = context.querySelectorAll('.soda-scs-manager--view--grid');
+        grids.forEach(function (grid) {
+          const gridCards = grid.querySelectorAll('.soda-scs-manager--type--card');
+          const visibleCards = Array.from(gridCards).filter(function (card) {
+            return !card.classList.contains('hidden-by-filter');
+          });
+
+          if (gridCards.length > 0 && visibleCards.length === 0) {
+            var tagLabel = activeTags.join(', ');
+            var message = document.createElement('div');
+            message.className = 'soda-scs-manager--empty-filter-message';
+            message.innerHTML = '<p>' +
+              Drupal.t('No <strong>@tags</strong> application found.', { '@tags': tagLabel }) +
+              ' <a href="/soda-scs-manager/catalogue">' +
+              Drupal.t('Go to the catalogue and create one!') +
+              '</a></p>';
+            grid.appendChild(message);
           }
         });
       }
