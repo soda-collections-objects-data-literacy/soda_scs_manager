@@ -56,12 +56,13 @@
       </span>
       {% endif %}
       {% if details_link %}
-      <a href="{{ details_link }}" class="soda-scs-manager--details-icon"
+      <button type="button" class="soda-scs-manager--card-icon soda-scs-manager--details-icon"
               aria-label="{{ 'View details of @title'|t({'@title': title}) }}"
               title="{{ 'View details'|t }}">
-      </a>
+              <a href="{{ details_link }}" class="soda-scs-manager--card-link"></a>
+      </button>
       {% endif %}
-      <button type="button" class="soda-scs-manager--info-icon"
+      <button type="button" class="soda-scs-manager--card-icon soda-scs-manager--info-icon"
               aria-label="{{ 'Learn more information about @title'|t({'@title': title}) }}"
               title="{{ 'Learn more information'|t }}">
               <a href="{{ learn_more_link }}" class="soda-scs-manager--card-link"></a>

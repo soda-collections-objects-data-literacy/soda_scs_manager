@@ -67,12 +67,27 @@
     50% { opacity: 0.4; }
   }
 
-  .soda-scs-manager--details-icon {
-    @apply absolute top-2 right-12 w-8 h-8 rounded-full border-0 cursor-pointer transition-all duration-200 ease-in-out;
-    @apply bg-white/90 hover:bg-white focus:bg-white;
-    @apply focus:outline-none focus:ring-2 focus:ring-orange-400/50;
+  .soda-scs-manager--card-icon {
+    @apply absolute top-2 w-8 h-8 rounded-full cursor-pointer;
+    @apply bg-white/90 hover:bg-white;
     @apply shadow-md hover:shadow-lg;
+    @apply outline-none;
     z-index: 50;
+    border: 2px solid transparent;
+    transition: background-color 0.2s ease-in-out, box-shadow 0.3s ease-in-out, border-color 0.4s ease-in-out, transform 0.2s ease-in-out;
+
+    &:hover {
+      @apply border-orange-300;
+    }
+
+    &:focus-visible {
+      @apply bg-white border-orange-400;
+    }
+
+    &:active {
+      @apply bg-white border-orange-400;
+      transform: scale(0.92);
+    }
 
     &::before {
       content: '';
@@ -82,51 +97,29 @@
       transform: translate(-50%, -50%);
       width: 20px;
       height: 20px;
-      background-image: url('/modules/custom/soda_scs_manager/assets/images/lens-icon.svg');
       background-size: contain;
       background-position: center;
       background-repeat: no-repeat;
-      transition: all 0.2s ease-in-out;
-    }
-
-    &:hover::before {
-      background-image: url('/modules/custom/soda_scs_manager/assets/images/lens-icon-hover.svg');
-    }
-
-    &:focus::before {
-      background-image: url('/modules/custom/soda_scs_manager/assets/images/lens-icon-focus.svg');
+      transition: background-image 0.2s ease-in-out;
     }
   }
 
+  .soda-scs-manager--details-icon {
+    @apply right-12;
+
+    &::before { background-image: url('/modules/custom/soda_scs_manager/assets/images/lens-icon.svg'); }
+    &:hover::before { background-image: url('/modules/custom/soda_scs_manager/assets/images/lens-icon-hover.svg'); }
+    &:focus-visible::before,
+    &:active::before { background-image: url('/modules/custom/soda_scs_manager/assets/images/lens-icon-focus.svg'); }
+  }
+
   .soda-scs-manager--info-icon {
-    @apply absolute top-2 right-2 w-8 h-8 rounded-full border-0 cursor-pointer transition-all duration-200 ease-in-out;
-    @apply bg-white/90 hover:bg-white focus:bg-white;
-    @apply focus:outline-none focus:ring-2 focus:ring-orange-400/50;
-    @apply shadow-md hover:shadow-lg;
-    z-index: 50;
+    @apply right-2;
 
-    &::before {
-      content: '';
-      @apply absolute;
-      top: 50%;
-      left: 50%;
-      transform: translate(-50%, -50%);
-      width: 20px;
-      height: 20px;
-      background-image: url('/modules/custom/soda_scs_manager/assets/images/info-icon.svg');
-      background-size: contain;
-      background-position: center;
-      background-repeat: no-repeat;
-      transition: all 0.2s ease-in-out;
-    }
-
-    &:hover::before {
-      background-image: url('/modules/custom/soda_scs_manager/assets/images/info-icon-hover.svg');
-    }
-
-    &:focus::before {
-      background-image: url('/modules/custom/soda_scs_manager/assets/images/info-icon-focus.svg');
-    }
+    &::before { background-image: url('/modules/custom/soda_scs_manager/assets/images/info-icon.svg'); }
+    &:hover::before { background-image: url('/modules/custom/soda_scs_manager/assets/images/info-icon-hover.svg'); }
+    &:focus-visible::before,
+    &:active::before { background-image: url('/modules/custom/soda_scs_manager/assets/images/info-icon-focus.svg'); }
   }
 
   .soda-scs-manager--card-content-wrapper {
