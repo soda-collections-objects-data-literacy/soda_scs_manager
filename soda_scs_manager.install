@@ -5,6 +5,10 @@ declare(strict_types=1);
 /**
  * @file
  * Installation functions for SODa SCS Manager.
+ *
+ * This file includes generic helper functions for safe entity and field updates
+ * with automatic backup/restore functionality. All backups are stored in:
+ * /opt/drupal/web/sites/default/bkp/tables/
  */
 
 use Drupal\block\Entity\Block;
@@ -240,6 +244,342 @@ function soda_scs_manager_schema() {
 
   return $schema;
 }
+
+/**
+ * Generic helper to backup config entities to file.
+ *
+ * Creates a timestamped JSON backup of all config entities matching the prefix.
+ *
+ * @param string $configPrefix
+ *   The config prefix to search for (e.g., 'soda_scs_manager.wisski_component_version.').
+ * @param string $backupName
+ *   The name for the backup file (e.g., 'wisski_component_version').
+ *
+ * @return array
+ *   Array with 'data' (backup data) and 'file' (backup file path).
+ *
+ * @throws \Exception
+ *   If backup creation fails.
+ */
+function _soda_scs_manager_backup_config_entities(string $configPrefix, string $backupName): array {
+  $configFactory = \Drupal::configFactory();
+  $configNames = $configFactory->listAll($configPrefix);
+  $backupData = [];
+
+  foreach ($configNames as $configName) {
+    $config = $configFactory->get($configName);
+    $backupData[$configName] = $config->getRawData();
+  }
+
+  // Create backup directory if it doesn't exist.
+  $backupDir = DRUPAL_ROOT . '/sites/default/bkp/tables';
+  if (!file_exists($backupDir)) {
+    mkdir($backupDir, 0755, TRUE);
+  }
+
+  // Create backup file with timestamp.
+  $timestamp = date('Y-m-d_H-i-s');
+  $backupFile = $backupDir . '/' . $backupName . '_backup_' . $timestamp . '.json';
+
+  try {
+    file_put_contents($backupFile, json_encode($backupData, JSON_PRETTY_PRINT));
+    \Drupal::logger('soda_scs_manager')->notice('Created backup file: @file with @count entities', [
+      '@file' => $backupFile,
+      '@count' => count($backupData),
+    ]);
+  }
+  catch (\Exception $e) {
+    \Drupal::logger('soda_scs_manager')->error('Failed to create backup file: @message', ['@message' => $e->getMessage()]);
+    throw new \Exception('Cannot proceed without successful backup. Error: ' . $e->getMessage());
+  }
+
+  return [
+    'data' => $backupData,
+    'file' => $backupFile,
+  ];
+}
+
+/**
+ * Generic helper to restore config entities from data array.
+ *
+ * @param array $backupData
+ *   The backup data array (configName => data).
+ *
+ * @throws \Exception
+ *   If restore fails.
+ */
+function _soda_scs_manager_restore_config_entities(array $backupData): void {
+  $configFactory = \Drupal::configFactory();
+
+  foreach ($backupData as $configName => $data) {
+    $configFactory->getEditable($configName)->setData($data)->save();
+  }
+}
+
+/**
+ * Generic helper to update a config entity type definition.
+ *
+ * Safely updates a config entity type by backing up data, updating the
+ * definition, and restoring data. Handles errors with automatic rollback.
+ *
+ * Example usage in an update hook:
+ * @code
+ * function soda_scs_manager_update_12345() {
+ *   return _soda_scs_manager_update_config_entity_type(
+ *     'my_entity_type',
+ *     'mymodule.my_entity_type.',
+ *     'my_entity_type'
+ *   );
+ * }
+ * @endcode
+ *
+ * @param string $entityTypeId
+ *   The entity type ID (e.g., 'soda_scs_wisski_component_ver').
+ * @param string $configPrefix
+ *   The config prefix (e.g., 'soda_scs_manager.wisski_component_version.').
+ * @param string $backupName
+ *   The name for backup files (e.g., 'wisski_component_version').
+ *
+ * @return \Drupal\Core\StringTranslation\TranslatableMarkup
+ *   Status message.
+ *
+ * @throws \Exception
+ *   If update fails.
+ */
+function _soda_scs_manager_update_config_entity_type(string $entityTypeId, string $configPrefix, string $backupName) {
+  $configFactory = \Drupal::configFactory();
+  $entityTypeManager = \Drupal::entityTypeManager();
+  $entityDefinitionUpdateManager = \Drupal::entityDefinitionUpdateManager();
+
+  // Clear the cache to ensure we have the latest entity type definition.
+  \Drupal::service('entity_type.manager')->clearCachedDefinitions();
+  \Drupal::service('entity_type.bundle.info')->clearCachedBundles();
+
+  // Check if the entity type exists.
+  $existingEntityType = $entityDefinitionUpdateManager->getEntityType($entityTypeId);
+
+  if ($existingEntityType) {
+    // Step 1: Backup existing config entities to memory and file.
+    $backup = _soda_scs_manager_backup_config_entities($configPrefix, $backupName);
+    $backupData = $backup['data'];
+    $backupFile = $backup['file'];
+
+    // Step 2: Delete the existing config entities (but keep backup).
+    foreach (array_keys($backupData) as $configName) {
+      $configFactory->getEditable($configName)->delete();
+    }
+
+    // Step 3: Uninstall and reinstall the entity type with new definition.
+    try {
+      $entityDefinitionUpdateManager->uninstallEntityType($existingEntityType);
+    }
+    catch (\Exception $e) {
+      // If uninstall fails, restore from backup and abort.
+      \Drupal::logger('soda_scs_manager')->error('Could not uninstall entity type @type: @message. Restoring from backup.', [
+        '@type' => $entityTypeId,
+        '@message' => $e->getMessage(),
+      ]);
+
+      // Restore from backup.
+      _soda_scs_manager_restore_config_entities($backupData);
+
+      throw new \Exception('Update failed. Data has been restored from backup. See logs for details.');
+    }
+
+    // Install the new entity type definition.
+    $newEntityType = $entityTypeManager->getDefinition($entityTypeId);
+    $entityDefinitionUpdateManager->installEntityType($newEntityType);
+
+    // Step 4: Restore the config entities from memory backup.
+    try {
+      _soda_scs_manager_restore_config_entities($backupData);
+    }
+    catch (\Exception $e) {
+      \Drupal::logger('soda_scs_manager')->error('Failed to restore data for @type: @message. Manual restore required from: @file', [
+        '@type' => $entityTypeId,
+        '@message' => $e->getMessage(),
+        '@file' => $backupFile,
+      ]);
+      throw new \Exception('Failed to restore data. Manual restore required from backup file: ' . $backupFile);
+    }
+
+    return t('Entity type @type has been updated. Restored @count entities. Backup saved to: @file', [
+      '@type' => $entityTypeId,
+      '@count' => count($backupData),
+      '@file' => $backupFile,
+    ]);
+  }
+  else {
+    // Entity type doesn't exist, install it fresh.
+    $entityType = $entityTypeManager->getDefinition($entityTypeId);
+    $entityDefinitionUpdateManager->installEntityType($entityType);
+
+    return t('Entity type @type has been installed.', ['@type' => $entityTypeId]);
+  }
+}
+
+/**
+ * Generic helper to update base fields on content entities.
+ *
+ * Safely updates base field definitions by backing up field data tables,
+ * updating the field definitions, and preserving data. Each field's data
+ * and revision tables are backed up separately.
+ *
+ * Example usage in an update hook:
+ * @code
+ * function soda_scs_manager_update_12346() {
+ *   return _soda_scs_manager_update_base_fields(
+ *     'soda_scs_component',
+ *     ['field_version', 'field_status'],
+ *     'soda_scs_component_fields'
+ *   );
+ * }
+ * @endcode
+ *
+ * @param string $entityTypeId
+ *   The entity type ID (e.g., 'soda_scs_component', 'user', 'node').
+ * @param array $fieldNames
+ *   Array of field names to update (e.g., ['field_name1', 'field_name2']).
+ * @param string $backupName
+ *   The name for backup files (e.g., 'soda_scs_component_fields').
+ *
+ * @return \Drupal\Core\StringTranslation\TranslatableMarkup
+ *   Status message.
+ *
+ * @throws \Exception
+ *   If update fails.
+ */
+function _soda_scs_manager_update_base_fields(string $entityTypeId, array $fieldNames, string $backupName) {
+  $database = Database::getConnection();
+  $entityTypeManager = \Drupal::entityTypeManager();
+  $entityDefinitionUpdateManager = \Drupal::entityDefinitionUpdateManager();
+  $entityFieldManager = \Drupal::service('entity_field.manager');
+
+  // Clear caches.
+  \Drupal::service('entity_type.manager')->clearCachedDefinitions();
+  \Drupal::service('entity_field.manager')->clearCachedFieldDefinitions();
+
+  $backupDir = DRUPAL_ROOT . '/sites/default/bkp/tables';
+  if (!file_exists($backupDir)) {
+    mkdir($backupDir, 0755, TRUE);
+  }
+
+  $timestamp = date('Y-m-d_H-i-s');
+  $updatedFields = [];
+
+  foreach ($fieldNames as $fieldName) {
+    $fieldStorageDefinition = $entityDefinitionUpdateManager->getFieldStorageDefinition($fieldName, $entityTypeId);
+
+    if (!$fieldStorageDefinition) {
+      \Drupal::logger('soda_scs_manager')->warning('Field @field does not exist on entity type @type, skipping.', [
+        '@field' => $fieldName,
+        '@type' => $entityTypeId,
+      ]);
+      continue;
+    }
+
+    // Determine table names.
+    $tableName = $entityTypeId . '__' . $fieldName;
+    $revisionTableName = $entityTypeId . '_revision__' . $fieldName;
+
+    // Backup main table.
+    if ($database->schema()->tableExists($tableName)) {
+      $backupFile = $backupDir . '/' . $backupName . '_' . $fieldName . '_' . $timestamp . '.sql';
+      $backupQuery = "SELECT * FROM {" . $tableName . "}";
+      $backupData = $database->query($backupQuery)->fetchAll(\PDO::FETCH_ASSOC);
+
+      file_put_contents($backupFile, json_encode($backupData, JSON_PRETTY_PRINT));
+      \Drupal::logger('soda_scs_manager')->notice('Backed up field @field to @file', [
+        '@field' => $fieldName,
+        '@file' => $backupFile,
+      ]);
+    }
+
+    // Backup revision table if exists.
+    if ($database->schema()->tableExists($revisionTableName)) {
+      $backupFile = $backupDir . '/' . $backupName . '_' . $fieldName . '_revision_' . $timestamp . '.sql';
+      $backupQuery = "SELECT * FROM {" . $revisionTableName . "}";
+      $backupData = $database->query($backupQuery)->fetchAll(\PDO::FETCH_ASSOC);
+
+      file_put_contents($backupFile, json_encode($backupData, JSON_PRETTY_PRINT));
+    }
+
+    // Get the new field definition from code.
+    $newFieldStorageDefinitions = $entityFieldManager->getFieldStorageDefinitions($entityTypeId);
+    $newFieldDefinition = $newFieldStorageDefinitions[$fieldName] ?? NULL;
+
+    if ($newFieldDefinition) {
+      // Update the field storage definition.
+      $entityDefinitionUpdateManager->updateFieldStorageDefinition($newFieldDefinition);
+      $updatedFields[] = $fieldName;
+    }
+  }
+
+  if (empty($updatedFields)) {
+    return t('No fields were updated for entity type @type.', ['@type' => $entityTypeId]);
+  }
+
+  return t('Updated fields for entity type @type: @fields. Backups saved to: @dir', [
+    '@type' => $entityTypeId,
+    '@fields' => implode(', ', $updatedFields),
+    '@dir' => $backupDir,
+  ]);
+}
+
+/**
+ * ============================================================================
+ * UPDATE HOOKS - USAGE GUIDE
+ * ============================================================================
+ *
+ * This file includes reusable helper functions for safe entity and field
+ * updates with automatic backup/restore. All backups are saved to:
+ * /opt/drupal/web/sites/default/bkp/tables/
+ *
+ * AVAILABLE HELPER FUNCTIONS:
+ *
+ * 1. _soda_scs_manager_update_config_entity_type()
+ *    Updates config entity type definitions with data preservation.
+ *
+ * 2. _soda_scs_manager_update_base_fields()
+ *    Updates base field definitions on content entities with data preservation.
+ *
+ * 3. _soda_scs_manager_backup_config_entities()
+ *    Creates timestamped JSON backup of config entities.
+ *
+ * 4. _soda_scs_manager_restore_config_entities()
+ *    Restores config entities from backup data array.
+ *
+ * 5. _soda_scs_manager_restore_from_backup()
+ *    Manually restore from backup file (for emergency recovery).
+ *
+ * EXAMPLE UPDATE HOOKS:
+ *
+ * // Update a config entity type.
+ * function soda_scs_manager_update_12000() {
+ *   return _soda_scs_manager_update_config_entity_type(
+ *     'my_config_entity',
+ *     'mymodule.my_config_entity.',
+ *     'my_config_entity'
+ *   );
+ * }
+ *
+ * // Update base fields on a content entity.
+ * function soda_scs_manager_update_12001() {
+ *   return _soda_scs_manager_update_base_fields(
+ *     'soda_scs_component',
+ *     ['field_name1', 'field_name2'],
+ *     'component_fields'
+ *   );
+ * }
+ *
+ * MANUAL RECOVERY:
+ *
+ * If an update fails and you need to manually restore from a backup file:
+ *
+ * drush php:eval "_soda_scs_manager_restore_from_backup('/opt/drupal/web/sites/default/bkp/tables/BACKUP_FILE.json')"
+ *
+ * ============================================================================
+ */
 
 /**
  * Set the default front page to the SCS Manager start page.
@@ -546,6 +886,47 @@ function soda_scs_manager_update_11010() {
   }
 
   return t('Field created is already float type or different type (@type).', ['@type' => $field_info ?? 'unknown']);
+}
+
+/**
+ * Install or update WissKI Component Version config entity type.
+ */
+function soda_scs_manager_update_11011() {
+  return _soda_scs_manager_update_config_entity_type(
+    'soda_scs_wisski_component_ver',
+    'soda_scs_manager.wisski_component_version.',
+    'wisski_component_version'
+  );
+}
+
+/**
+ * Helper function to manually restore config entities from backup file.
+ *
+ * Usage: drush php:eval "_soda_scs_manager_restore_from_backup('/path/to/backup.json')"
+ *
+ * @param string $backupFile
+ *   The full path to the backup JSON file.
+ *
+ * @return string
+ *   Status message.
+ *
+ * @throws \Exception
+ *   If backup file is invalid or restore fails.
+ */
+function _soda_scs_manager_restore_from_backup(string $backupFile): string {
+  if (!file_exists($backupFile)) {
+    throw new \Exception('Backup file not found: ' . $backupFile);
+  }
+
+  $backupData = json_decode(file_get_contents($backupFile), TRUE);
+
+  if (json_last_error() !== JSON_ERROR_NONE) {
+    throw new \Exception('Invalid JSON in backup file: ' . json_last_error_msg());
+  }
+
+  _soda_scs_manager_restore_config_entities($backupData);
+
+  return "Successfully restored " . count($backupData) . " entities from backup: " . basename($backupFile);
 }
 
 /**
