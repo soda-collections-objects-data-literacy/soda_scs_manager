@@ -127,6 +127,24 @@ class SodaScsManagerController extends ControllerBase {
         foreach ($projectEntities as $projectEntity) {
           $projectBundleInfo = $this->bundleInfo->getBundleInfo($projectEntity->getEntityTypeId())[$projectEntity->bundle()];
           $projectLabel = $project->label();
+
+          // Determine the URL based on bundle type.
+          if ($projectEntity->bundle() === 'soda_scs_wisski_component') {
+            $url = Url::fromRoute('entity.' .
+              $projectEntity->getEntityTypeId() .
+              '.canonical',
+              [
+                'bundle' => $projectEntity->bundle(),
+                $projectEntity->getEntityTypeId() => $projectEntity->id(),
+              ]);
+          }
+          else {
+            // Use service link for non-WissKI components.
+            $url = Url::fromRoute('soda_scs_manager.component.service_link', [
+              'soda_scs_component' => $projectEntity->id(),
+            ]);
+          }
+
           $entitiesByProject[$projectLabel][] = [
             '#theme' => 'soda_scs_manager__entity_card',
             '#title' => $this->t('@bundle', ['@bundle' => $projectEntity->label()]),
@@ -134,13 +152,7 @@ class SodaScsManagerController extends ControllerBase {
             '#description' => $projectEntity->get('description')->value,
             '#imageUrl' => $projectBundleInfo['imageUrl'],
             '#learn_more_link' => '/app/' . $this->sodaScsHelpers->getEntityType($projectEntity->bundle()),
-            '#url' => Url::fromRoute('entity.' .
-              $projectEntity->getEntityTypeId() .
-              '.canonical',
-              [
-                'bundle' => $projectEntity->bundle(),
-                $projectEntity->getEntityTypeId() => $projectEntity->id(),
-              ]),
+            '#url' => $url,
             '#tags' => $projectBundleInfo['tags'],
             '#cache' => [
               'max-age' => 0,
@@ -246,6 +258,41 @@ class SodaScsManagerController extends ControllerBase {
       else {
         $username = 'deleted user';
       }
+
+      // Determine the URL based on bundle type.
+      if ($entity->bundle() === 'soda_scs_wisski_component' || $entity->bundle() === 'soda_scs_wisski_stack') {
+        // WissKI components and stacks link to their canonical page.
+        $url = Url::fromRoute('entity.' .
+          $entity->getEntityTypeId() .
+          '.canonical',
+          [
+            'bundle' => $entity->bundle(),
+            $entity->getEntityTypeId() => $entity->id(),
+          ]);
+      }
+      elseif ($entity->getEntityTypeId() === 'soda_scs_component') {
+        // Use service link for non-WissKI components.
+        $url = Url::fromRoute('soda_scs_manager.component.service_link', [
+          'soda_scs_component' => $entity->id(),
+        ]);
+      }
+      elseif ($entity->getEntityTypeId() === 'soda_scs_stack') {
+        // Use service link for non-WissKI stacks.
+        $url = Url::fromRoute('soda_scs_manager.stack.service_link', [
+          'soda_scs_stack' => $entity->id(),
+        ]);
+      }
+      else {
+        // Fallback to canonical route.
+        $url = Url::fromRoute('entity.' .
+          $entity->getEntityTypeId() .
+          '.canonical',
+          [
+            'bundle' => $entity->bundle(),
+            $entity->getEntityTypeId() => $entity->id(),
+          ]);
+      }
+
       $entitiesByUser[$username][] = [
         '#theme' => 'soda_scs_manager__entity_card',
         '#title' => $this->t('@bundle', ['@bundle' => $entity->label()]),
@@ -253,13 +300,7 @@ class SodaScsManagerController extends ControllerBase {
         '#description' => $entity->get('description')->value,
         '#imageUrl' => $bundleInfo['imageUrl'],
         '#learn_more_link' => '/app/' . $this->sodaScsHelpers->getEntityType($entity->bundle()),
-        '#url' => Url::fromRoute('entity.' .
-          $entity->getEntityTypeId() .
-          '.canonical',
-          [
-            'bundle' => $entity->bundle(),
-            $entity->getEntityTypeId() => $entity->id(),
-          ]),
+        '#url' => $url,
         '#tags' => $bundleInfo['tags'],
         '#cache' => [
           'max-age' => 0,
