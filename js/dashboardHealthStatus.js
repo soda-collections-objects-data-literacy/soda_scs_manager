@@ -52,8 +52,12 @@
               }
             }
             else {
+              var status = (data && data.status && data.status.status) ? data.status.status : '';
               var message = (data && data.status && data.status.message) ? data.status.message : 'Error';
-              if (message === 'Stopped' || message === 'stopped') {
+              if (status === 'starting' || message === 'Starting' || message === 'starting') {
+                updateHealthIcon('starting', Drupal.t('Starting'));
+              }
+              else if (status === 'stopped' || message === 'Stopped' || message === 'stopped') {
                 updateHealthIcon('stopped', Drupal.t('Stopped'));
               }
               else {

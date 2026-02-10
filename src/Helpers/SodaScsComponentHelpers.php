@@ -428,6 +428,85 @@ class SodaScsComponentHelpers {
   }
 
   /**
+   * Check WebProtege health.
+   *
+   * Performs an HTTP GET request to the WebProtege host URL to verify
+   * the service is reachable and responding.
+   *
+   * @param \Drupal\soda_scs_manager\Entity\SodaScsComponentInterface $component
+   *   The component.
+   *
+   * @return array
+   *   The health check result.
+   */
+  public function checkWebprotegeHealth(SodaScsComponentInterface $component) {
+    try {
+      $webprotegeSettings = $this->sodaScsServiceHelpers->initWebprotegeInstanceSettings();
+      $url = $webprotegeSettings['host'];
+
+      if (empty($url)) {
+        return [
+          'message' => 'WebProtege URL not configured.',
+          'status' => 'unknown',
+          'code' => 500,
+          'success' => FALSE,
+          'error' => 'WebProtege host is not configured in settings.',
+        ];
+      }
+
+      // Ensure the URL has a scheme.
+      if (!preg_match('#^https?://#', $url)) {
+        $url = 'https://' . $url;
+      }
+
+      $response = $this->httpClient->request('GET', $url, [
+        'timeout' => 5,
+        'connect_timeout' => 3,
+        'http_errors' => FALSE,
+      ]);
+
+      $statusCode = $response->getStatusCode();
+
+      if ($statusCode >= 200 && $statusCode < 400) {
+        return [
+          'message' => 'Available.',
+          'status' => 'running',
+          'code' => $statusCode,
+          'success' => TRUE,
+          'error' => '',
+        ];
+      }
+
+      if ($statusCode === 502 || $statusCode === 503) {
+        return [
+          'message' => 'Starting',
+          'status' => 'starting',
+          'code' => $statusCode,
+          'success' => FALSE,
+          'error' => 'Service returned HTTP ' . $statusCode,
+        ];
+      }
+
+      return [
+        'message' => 'Not available',
+        'status' => 'stopped',
+        'code' => $statusCode,
+        'success' => FALSE,
+        'error' => 'Service returned HTTP ' . $statusCode,
+      ];
+    }
+    catch (\Exception $e) {
+      return [
+        'message' => 'Not available',
+        'status' => 'unknown',
+        'code' => $e->getCode(),
+        'success' => FALSE,
+        'error' => $e->getMessage(),
+      ];
+    }
+  }
+
+  /**
    * Create secret key.
    */
   public function createSecret() {

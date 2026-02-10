@@ -81,7 +81,7 @@ class SodaScsStackController extends ControllerBase {
           return new JsonResponse(['status' => $wisskiHealth]);
 
         case 'soda_scs_jupyter_stack':
-          $jupyterHealth = $this->sodaScsStackHelpers->checkJupyterHealth($stack->id());
+          $jupyterHealth = $this->sodaScsStackHelpers->checkJupyterHealth($stack);
           if (!$jupyterHealth) {
             return new JsonResponse(
               [
@@ -89,7 +89,7 @@ class SodaScsStackController extends ControllerBase {
                   'message' => $this->t("Jupyter health check failed for stack @stack.", ['@stack' => $stack->id()]),
                   'success' => FALSE,
                 ],
-                'code' => $jupyterHealth['code'],
+                'code' => $jupyterHealth['code'] ?? 500,
               ],
             );
           }
@@ -97,14 +97,14 @@ class SodaScsStackController extends ControllerBase {
 
         case 'soda_scs_nextcloud_stack':
           $nextcloudHealth = $this->sodaScsStackHelpers
-            ->checkNextcloudHealth($stack->get('machineName')->value, $stack->get('machineName')->value);
+            ->checkNextcloudHealth($stack);
           if (!$nextcloudHealth) {
             return new JsonResponse([
               'status' => [
                 'message' => $this->t("Nextcloud health check failed for stack @stack.", ['@stack' => $stack->id()]),
                 'success' => FALSE,
               ],
-              'code' => $nextcloudHealth['code'],
+              'code' => $nextcloudHealth['code'] ?? 500,
             ]);
           }
           return new JsonResponse(['status' => $nextcloudHealth]);

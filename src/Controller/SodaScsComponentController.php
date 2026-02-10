@@ -152,6 +152,21 @@ class SodaScsComponentController extends ControllerBase {
         }
         return new JsonResponse(['status' => $triplestoreHealth]);
 
+      case 'soda_scs_webprotege_component':
+        $webprotegeHealth = $this->sodaScsComponentHelpers
+          ->checkWebprotegeHealth($component);
+        if (!$webprotegeHealth) {
+          return new JsonResponse([
+            'status' => [
+              'message' => $this->t("WebProtege health check failed for component @component.", ['@component' => $component->id()]),
+              'status' => $webprotegeHealth['status'] ?? 'unknown',
+              'success' => FALSE,
+            ],
+            'code' => $webprotegeHealth['code'] ?? 500,
+          ]);
+        }
+        return new JsonResponse(['status' => $webprotegeHealth]);
+
       case 'soda_scs_wisski_component':
         $wisskiHealth = $this->sodaScsComponentHelpers
           ->drupalHealthCheck($component);

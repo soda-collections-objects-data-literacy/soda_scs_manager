@@ -11,6 +11,7 @@ use Drupal\Core\StringTranslation\StringTranslationTrait;
 use Drupal\soda_scs_manager\Entity\SodaScsComponentInterface;
 use Drupal\soda_scs_manager\Entity\SodaScsStackInterface;
 use Drupal\soda_scs_manager\Exception\SodaScsComponentActionsException;
+use GuzzleHttp\ClientInterface;
 
 /**
  * Helper functions for SCS components.
@@ -28,6 +29,13 @@ class SodaScsStackHelpers {
 
 
   /**
+   * The HTTP client.
+   *
+   * @var \GuzzleHttp\ClientInterface
+   */
+  protected ClientInterface $httpClient;
+
+  /**
    * The Soda SCS component helpers.
    *
    * @var \Drupal\soda_scs_manager\Helpers\SodaScsComponentHelpers
@@ -35,21 +43,36 @@ class SodaScsStackHelpers {
   protected $sodaScsComponentHelpers;
 
   /**
+   * The Soda SCS service helpers.
+   *
+   * @var \Drupal\soda_scs_manager\Helpers\SodaScsServiceHelpers
+   */
+  protected SodaScsServiceHelpers $sodaScsServiceHelpers;
+
+  /**
    * SodaScsStackHelpers constructor.
    *
    * @param \Drupal\Core\Entity\EntityTypeManagerInterface $entityTypeManager
    *   The entity type manager.
+   * @param \GuzzleHttp\ClientInterface $httpClient
+   *   The HTTP client.
    * @param \Drupal\soda_scs_manager\Helpers\SodaScsComponentHelpers $sodaScsComponentHelpers
    *   The Soda SCS component helpers.
-   *   The messenger.
+   * @param \Drupal\soda_scs_manager\Helpers\SodaScsServiceHelpers $sodaScsServiceHelpers
+   *   The Soda SCS service helpers.
    */
   public function __construct(
     EntityTypeManagerInterface $entityTypeManager,
+    ClientInterface $httpClient,
     #[Autowire(service: 'soda_scs_manager.component.helpers')]
     SodaScsComponentHelpers $sodaScsComponentHelpers,
+    #[Autowire(service: 'soda_scs_manager.service.helpers')]
+    SodaScsServiceHelpers $sodaScsServiceHelpers,
   ) {
     $this->entityTypeManager = $entityTypeManager;
+    $this->httpClient = $httpClient;
     $this->sodaScsComponentHelpers = $sodaScsComponentHelpers;
+    $this->sodaScsServiceHelpers = $sodaScsServiceHelpers;
   }
 
   /**
@@ -174,37 +197,160 @@ class SodaScsStackHelpers {
   /**
    * Check the health of a Jupyter stack.
    *
-   * @param string $machineName
-   *   The machine name of the Jupyter stack.
+   * Performs an HTTP GET request to the JupyterHub base URL to verify
+   * the service is reachable and responding.
+   *
+   * @param \Drupal\soda_scs_manager\Entity\SodaScsStackInterface $stack
+   *   The SODa SCS Stack.
    *
    * @return array
-   *   The health of the Jupyter stack.
+   *   The health check result.
    */
-  public function checkJupyterHealth(string $machineName) {
-    return [
-      'message' => 'Jupyter health check not implemented yet.',
-      'code' => 501,
-      'success' => FALSE,
-      'error' => 'Jupyter health check not implemented yet.',
-    ];
+  public function checkJupyterHealth(SodaScsStackInterface $stack) {
+    try {
+      $jupyterSettings = $this->sodaScsServiceHelpers->initJupyterHubSettings();
+      $url = $jupyterSettings['baseUrl'];
+
+      if (empty($url)) {
+        return [
+          'message' => 'JupyterHub URL not configured.',
+          'status' => 'unknown',
+          'code' => 500,
+          'success' => FALSE,
+          'error' => 'JupyterHub base URL is not configured in settings.',
+        ];
+      }
+
+      $response = $this->httpClient->request('GET', $url, [
+        'timeout' => 5,
+        'connect_timeout' => 3,
+        'http_errors' => FALSE,
+      ]);
+
+      $statusCode = $response->getStatusCode();
+
+      if ($statusCode >= 200 && $statusCode < 400) {
+        return [
+          'message' => 'Available.',
+          'status' => 'running',
+          'code' => $statusCode,
+          'success' => TRUE,
+          'error' => '',
+        ];
+      }
+
+      if ($statusCode === 502 || $statusCode === 503) {
+        return [
+          'message' => 'Starting',
+          'status' => 'starting',
+          'code' => $statusCode,
+          'success' => FALSE,
+          'error' => 'Service returned HTTP ' . $statusCode,
+        ];
+      }
+
+      return [
+        'message' => 'Not available',
+        'status' => 'stopped',
+        'code' => $statusCode,
+        'success' => FALSE,
+        'error' => 'Service returned HTTP ' . $statusCode,
+      ];
+    }
+    catch (\Exception $e) {
+      return [
+        'message' => 'Not available',
+        'status' => 'unknown',
+        'code' => $e->getCode(),
+        'success' => FALSE,
+        'error' => $e->getMessage(),
+      ];
+    }
   }
 
   /**
    * Check the health of a Nextcloud stack.
    *
-   * @param string $machineName
-   *   The machine name of the Nextcloud stack.
+   * Performs an HTTP GET request to the Nextcloud status endpoint to verify
+   * the service is reachable and responding.
+   *
+   * @param \Drupal\soda_scs_manager\Entity\SodaScsStackInterface $stack
+   *   The SODa SCS Stack.
    *
    * @return array
-   *   The health of the Nextcloud stack.
+   *   The health check result.
    */
-  public function checkNextcloudHealth(string $machineName) {
-    return [
-      'message' => 'Nextcloud health check not implemented yet.',
-      'code' => 501,
-      'success' => FALSE,
-      'error' => 'Nextcloud health check not implemented yet.',
-    ];
+  public function checkNextcloudHealth(SodaScsStackInterface $stack) {
+    try {
+      $nextcloudSettings = $this->sodaScsServiceHelpers->initNextcloudSettings();
+      $url = rtrim($nextcloudSettings['baseUrl'], '/') . '/status.php';
+
+      if (empty($nextcloudSettings['baseUrl'])) {
+        return [
+          'message' => 'Nextcloud URL not configured.',
+          'status' => 'unknown',
+          'code' => 500,
+          'success' => FALSE,
+          'error' => 'Nextcloud base URL is not configured in settings.',
+        ];
+      }
+
+      $response = $this->httpClient->request('GET', $url, [
+        'timeout' => 5,
+        'connect_timeout' => 3,
+        'http_errors' => FALSE,
+      ]);
+
+      $statusCode = $response->getStatusCode();
+
+      if ($statusCode === 200) {
+        $body = json_decode($response->getBody()->getContents(), TRUE);
+        if (is_array($body) && isset($body['installed']) && $body['installed'] === TRUE) {
+          return [
+            'message' => 'Available.',
+            'status' => 'running',
+            'code' => $statusCode,
+            'success' => TRUE,
+            'error' => '',
+          ];
+        }
+
+        return [
+          'message' => 'Available.',
+          'status' => 'running',
+          'code' => $statusCode,
+          'success' => TRUE,
+          'error' => '',
+        ];
+      }
+
+      if ($statusCode === 502 || $statusCode === 503) {
+        return [
+          'message' => 'Starting',
+          'status' => 'starting',
+          'code' => $statusCode,
+          'success' => FALSE,
+          'error' => 'Service returned HTTP ' . $statusCode,
+        ];
+      }
+
+      return [
+        'message' => 'Not available',
+        'status' => 'stopped',
+        'code' => $statusCode,
+        'success' => FALSE,
+        'error' => 'Service returned HTTP ' . $statusCode,
+      ];
+    }
+    catch (\Exception $e) {
+      return [
+        'message' => 'Not available',
+        'status' => 'unknown',
+        'code' => $e->getCode(),
+        'success' => FALSE,
+        'error' => $e->getMessage(),
+      ];
+    }
   }
 
 }
