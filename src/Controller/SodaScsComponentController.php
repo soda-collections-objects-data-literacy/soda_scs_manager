@@ -89,114 +89,119 @@ class SodaScsComponentController extends ControllerBase {
 
   /**
    * Check the status of a component.
+   *
+   * Returns 200 JSON so the frontend can show status without 500 errors.
    */
   public function componentStatus($component_id) {
-    /** @var \Drupal\soda_scs_manager\Entity\SodaScsComponentInterface $component */
-    $component = $this->entityTypeManager
-      ->getStorage('soda_scs_component')
-      ->load($component_id);
+    try {
+      /** @var \Drupal\soda_scs_manager\Entity\SodaScsComponentInterface|null $component */
+      $component = $this->entityTypeManager
+        ->getStorage('soda_scs_component')
+        ->load($component_id);
 
-    if (!$component) {
-      return new JsonResponse(['status' => 'not_found'], 404);
-    }
+      if (!$component) {
+        return new JsonResponse([
+          'status' => [
+            'success' => FALSE,
+            'status' => 'not_found',
+            'message' => $this->t('Component not found.'),
+          ],
+        ], 200);
+      }
 
-    $bundle = $component->get('bundle')->value;
-    switch ($bundle) {
-      case 'soda_scs_filesystem_component':
-        $filesystemHealth = $this->sodaScsComponentHelpers
-          ->checkFilesystemHealth($component->get('machineName')->value);
-        if (!$filesystemHealth) {
-          return new JsonResponse([
-            'status' => [
-              'message' => $this->t("Filesystem health check failed for component @component. Message: @message", [
-                '@component' => $component->id(),
-                '@message' => $filesystemHealth['message'],
-              ]),
-              'success' => FALSE,
-              'status' => $filesystemHealth['status'],
-            ],
-            'code' => $filesystemHealth['code'],
-          ]);
-        }
-        return new JsonResponse(['status' => $filesystemHealth]);
+      $bundle = $component->get('bundle')->value;
+      switch ($bundle) {
+        case 'soda_scs_filesystem_component':
+          $filesystemHealth = $this->sodaScsComponentHelpers
+            ->checkFilesystemHealth($component->get('machineName')->value);
+          if (!is_array($filesystemHealth) || empty($filesystemHealth['status'])) {
+            return new JsonResponse([
+              'status' => [
+                'message' => $this->t("Filesystem health check failed for component @component.", ['@component' => $component->id()]),
+                'success' => FALSE,
+                'status' => (is_array($filesystemHealth) && isset($filesystemHealth['status'])) ? $filesystemHealth['status'] : 'unavailable',
+              ],
+            ], 200);
+          }
+          return new JsonResponse(['status' => $filesystemHealth]);
 
-      case 'soda_scs_sql_component':
-
-        $sqlHealth = $this->sodaScsComponentHelpers->checkSqlHealth((int) $component->id());
-        if (!$sqlHealth) {
-          return new JsonResponse(
-            [
+        case 'soda_scs_sql_component':
+          $sqlHealth = $this->sodaScsComponentHelpers->checkSqlHealth((int) $component->id());
+          if (!is_array($sqlHealth) || empty($sqlHealth['status'])) {
+            return new JsonResponse([
               'status' => [
                 'message' => $this->t("MariaDB health check failed for component @component.", ['@component' => $component->id()]),
-                'status' => $sqlHealth['status'],
+                'status' => (is_array($sqlHealth) && isset($sqlHealth['status'])) ? $sqlHealth['status'] : 'unavailable',
                 'success' => FALSE,
               ],
-              'code' => $sqlHealth['code'],
-            ],
-          );
-        }
-        return new JsonResponse(['status' => $sqlHealth]);
+            ], 200);
+          }
+          return new JsonResponse(['status' => $sqlHealth]);
 
-      case 'soda_scs_triplestore_component':
-        $triplestoreHealth = $this->sodaScsComponentHelpers
-          ->checkTriplestoreHealth($component->get('machineName')->value, $component->get('machineName')->value);
-        if (!$triplestoreHealth) {
+        case 'soda_scs_triplestore_component':
+          $triplestoreHealth = $this->sodaScsComponentHelpers
+            ->checkTriplestoreHealth($component->get('machineName')->value, $component->get('machineName')->value);
+          if (!is_array($triplestoreHealth) || empty($triplestoreHealth['status'])) {
+            return new JsonResponse([
+              'status' => [
+                'message' => $this->t("Triplestore health check failed for component @component.", ['@component' => $component->id()]),
+                'status' => (is_array($triplestoreHealth) && isset($triplestoreHealth['status'])) ? $triplestoreHealth['status'] : 'unavailable',
+                'success' => FALSE,
+              ],
+            ], 200);
+          }
+          return new JsonResponse(['status' => $triplestoreHealth]);
+
+        case 'soda_scs_webprotege_component':
+          $webprotegeHealth = $this->sodaScsComponentHelpers
+            ->checkWebprotegeHealth($component);
+          if (!is_array($webprotegeHealth) || empty($webprotegeHealth['status'])) {
+            return new JsonResponse([
+              'status' => [
+                'message' => $this->t("WebProtege health check failed for component @component.", ['@component' => $component->id()]),
+                'status' => (is_array($webprotegeHealth) && isset($webprotegeHealth['status'])) ? $webprotegeHealth['status'] : 'unavailable',
+                'success' => FALSE,
+              ],
+            ], 200);
+          }
+          return new JsonResponse(['status' => $webprotegeHealth]);
+
+        case 'soda_scs_wisski_component':
+          $wisskiHealth = $this->sodaScsComponentHelpers
+            ->drupalHealthCheck($component);
+          if (!is_array($wisskiHealth) || empty($wisskiHealth['status'])) {
+            return new JsonResponse([
+              'status' => [
+                'message' => $this->t("WissKI health check failed for component @component.", ['@component' => $component->id()]),
+                'status' => (is_array($wisskiHealth) && isset($wisskiHealth['status'])) ? $wisskiHealth['status'] : 'unavailable',
+                'success' => FALSE,
+              ],
+            ], 200);
+          }
+          return new JsonResponse(['status' => $wisskiHealth]);
+
+        default:
           return new JsonResponse([
             'status' => [
-              'message' => $this->t("Triplestore health check failed for component @component.", ['@component' => $component->id()]),
-              'status' => $triplestoreHealth['status'],
-              'success' => FALSE,
-            ],
-            'code' => $triplestoreHealth['code'],
-          ]);
-        }
-        return new JsonResponse(['status' => $triplestoreHealth]);
-
-      case 'soda_scs_webprotege_component':
-        $webprotegeHealth = $this->sodaScsComponentHelpers
-          ->checkWebprotegeHealth($component);
-        if (!$webprotegeHealth) {
-          return new JsonResponse([
-            'status' => [
-              'message' => $this->t("WebProtege health check failed for component @component.", ['@component' => $component->id()]),
-              'status' => $webprotegeHealth['status'] ?? 'unknown',
-              'success' => FALSE,
-            ],
-            'code' => $webprotegeHealth['code'] ?? 500,
-          ]);
-        }
-        return new JsonResponse(['status' => $webprotegeHealth]);
-
-      case 'soda_scs_wisski_component':
-        $wisskiHealth = $this->sodaScsComponentHelpers
-          ->drupalHealthCheck($component);
-        if (!$wisskiHealth) {
-          return new JsonResponse([
-            'status' => [
-              'message' => $this->t("WissKI health check failed for component @component.", ['@component' => $component->id()]),
-              'status' => $wisskiHealth['status'],
-              'success' => FALSE,
-            ],
-            'code' => $wisskiHealth['code'],
-          ]);
-        }
-        return new JsonResponse(['status' => $wisskiHealth]);
-
-      default:
-        return new JsonResponse(
-          [
-            'status' => [
-              'message' => $this->t("Health check failed for component @component with message: @message", [
-                '@component' => $component->id(),
-                '@message' => 'Unknown component type.',
-              ]),
+              'message' => $this->t("Unknown component type @bundle.", ['@bundle' => $bundle]),
               'status' => 'unknown',
               'success' => FALSE,
             ],
-            'code' => 500,
-          ],
-          500,
-        );
+          ], 200);
+      }
+    }
+    catch (\Throwable $e) {
+      $this->getLogger('soda_scs_manager')->error('Health check failed for component @id: @message', [
+        '@id' => $component_id,
+        '@message' => $e->getMessage(),
+      ]);
+      return new JsonResponse([
+        'status' => [
+          'success' => FALSE,
+          'status' => 'unavailable',
+          'message' => $this->t('Service temporarily unavailable.'),
+        ],
+      ], 200);
     }
   }
 

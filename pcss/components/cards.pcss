@@ -123,7 +123,22 @@
   }
 
   .soda-scs-manager--card-content-wrapper {
-    @apply relative rounded-lg p-6 flex flex-col items-center text-center border-2 border-stone-200 hover:border-orange-400  transition-all duration-300 ease-in-out opacity-100 max-h-[1000px] overflow-hidden h-[360px] sm:h-[380px] md:h-[420px] lg:h-[460px] xl:h-[480px];
+    @apply relative rounded-lg p-6 flex flex-col items-center text-center border-2 border-stone-200 hover:border-orange-400 transition-all duration-300 ease-in-out opacity-100 max-h-[1000px] overflow-hidden h-[360px] sm:h-[380px] md:h-[420px] lg:h-[460px] xl:h-[480px];
+  }
+
+  /* Grey overlay when application is not running. */
+  .soda-scs-manager--card-content-wrapper.soda-scs-manager--card--not-running::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(120, 113, 108, 0.5);
+    border-radius: inherit;
+    pointer-events: auto;
+    z-index: 40;
+    @apply transition-opacity duration-300;
   }
 
   .soda-scs-manager--card-body {
@@ -172,6 +187,73 @@
 
     a {
       @apply text-orange-400 hover:text-orange-300 underline transition-colors duration-200;
+    }
+  }
+
+  /* Add Application Card Styles */
+  .soda-scs-manager--add-app-content {
+    @apply border-dashed border-stone-400 hover:border-orange-400;
+    @apply cursor-pointer;
+  }
+
+  .soda-scs-manager--add-app-button {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    width: 100%;
+    height: 100%;
+    @apply bg-transparent border-0 p-0 cursor-pointer z-10;
+  }
+
+  .soda-scs-manager--plus-icon-container {
+    @apply transition-all duration-300;
+  }
+
+  .soda-scs-manager--plus-icon {
+    @apply transition-all duration-300;
+  }
+
+  .soda-scs-manager--add-app-content:hover .soda-scs-manager--plus-icon {
+    @apply text-orange-400 scale-110;
+  }
+
+  /* Popup Modal Styles */
+  .soda-scs-manager--add-app-popup {
+    z-index: 9999;
+    @apply transition-opacity duration-300;
+  }
+
+  .soda-scs-manager--add-app-popup.hidden {
+    @apply opacity-0;
+  }
+
+  .soda-scs-manager--add-app-popup.flex {
+    @apply opacity-100;
+  }
+
+  /* Add app popup: one column on mobile, three on wide */
+  .soda-scs-manager--add-app-popup-inner {
+    max-height: 90vh;
+    @apply overflow-y-auto;
+  }
+
+  @media (max-width: 767px) {
+    .soda-scs-manager--add-app-popup {
+      @apply p-3;
+    }
+    
+    .soda-scs-manager--add-app-popup-inner {
+      @apply p-6 max-w-full;
+    }
+    
+    .soda-scs-manager--add-app-popup h2 {
+      @apply text-2xl mb-6;
+    }
+    
+    .soda-scs-manager--add-app-popup .grid {
+      @apply grid-cols-1 gap-4;
     }
   }
 }

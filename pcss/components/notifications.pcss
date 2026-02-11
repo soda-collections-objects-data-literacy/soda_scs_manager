@@ -1,7 +1,7 @@
 /* WissKI Ready Notification Popup */
 
 .wisski-ready-notification {
-  @apply fixed top-8 right-8 z-[9999] opacity-0 transition-opacity duration-300;
+  @apply fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-[9999] opacity-0 transition-opacity duration-300;
   @apply pointer-events-none;
   
   &.show {
@@ -56,10 +56,22 @@
   @apply font-semibold text-stone-800;
 }
 
+.wisski-ready-notification .notification-actions {
+  @apply flex justify-center mt-6;
+}
+
+.wisski-ready-notification .notification-ok-button {
+  @apply px-8 py-2 bg-green-600 text-white font-semibold rounded-lg;
+  @apply hover:bg-green-700 transition-colors duration-200;
+  @apply focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2;
+  @apply cursor-pointer border-0;
+  @apply shadow-md hover:shadow-lg;
+}
+
 /* Mobile responsive */
 @media (max-width: 640px) {
   .wisski-ready-notification {
-    @apply top-4 right-4 left-4;
+    @apply w-[calc(100%-2rem)] max-w-md;
   }
   
   .wisski-ready-notification .notification-content {
@@ -68,5 +80,9 @@
   
   .wisski-ready-notification h3 {
     @apply text-xl;
+  }
+  
+  .wisski-ready-notification .notification-ok-button {
+    @apply px-6 py-2 text-sm;
   }
 }

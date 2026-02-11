@@ -125,10 +125,14 @@ class SodaScsManagerController extends ControllerBase {
         $projectEntities = $connectedComponents->referencedEntities();
         /** @var \Drupal\soda_scs_manager\Entity\SodaScsComponentInterface $projectEntity */
         foreach ($projectEntities as $projectEntity) {
+          // Do not show Inter-App folder on the dashboard.
+          if ($projectEntity->bundle() === 'soda_scs_filesystem_component') {
+            continue;
+          }
+
           $projectBundleInfo = $this->bundleInfo->getBundleInfo($projectEntity->getEntityTypeId())[$projectEntity->bundle()];
           $projectLabel = $project->label();
 
-          // Always use service link for the card URL.
           $url = Url::fromRoute('soda_scs_manager.component.service_link', [
             'soda_scs_component' => $projectEntity->id(),
           ]);
@@ -249,8 +253,13 @@ class SodaScsManagerController extends ControllerBase {
     $entities = array_merge($components, $stacks);
 
     $entitiesByUser = [];
-    /** @var \Drupal\soda_scs_manager\Entity\SodaScsStackInterface $stack */
+    /** @var \Drupal\soda_scs_manager\Entity\SodaScsStackInterface|\Drupal\soda_scs_manager\Entity\SodaScsComponentInterface $entity */
     foreach ($entities as $entity) {
+      // Do not show Inter-App folder on the dashboard.
+      if ($entity->getEntityTypeId() === 'soda_scs_component' && $entity->bundle() === 'soda_scs_filesystem_component') {
+        continue;
+      }
+
       $bundleInfo = $this->bundleInfo->getBundleInfo($entity->getEntityTypeId())[$entity->bundle()];
       if ($entity->getOwner() !== NULL && $entity->getOwner()->getDisplayName() !== NULL) {
         $username = $entity->getOwner()->getDisplayName();
@@ -259,11 +268,16 @@ class SodaScsManagerController extends ControllerBase {
         $username = 'deleted user';
       }
 
-      // Always use service link for the card URL.
+      // Use service link for the card URL when available.
+      // Filesystem components don't have service links.
       if ($entity->getEntityTypeId() === 'soda_scs_stack') {
         $url = Url::fromRoute('soda_scs_manager.stack.service_link', [
           'soda_scs_stack' => $entity->id(),
         ]);
+      }
+      elseif ($entity->bundle() === 'soda_scs_filesystem_component') {
+        // Filesystem components have no service link, use NULL.
+        $url = NULL;
       }
       else {
         $url = Url::fromRoute('soda_scs_manager.component.service_link', [
@@ -298,6 +312,23 @@ class SodaScsManagerController extends ControllerBase {
       ];
     }
 
+    // Add the "Add Application" card as the first card for the current user.
+    $currentUsername = $current_user->getDisplayName();
+    if (!isset($entitiesByUser[$currentUsername])) {
+      $entitiesByUser[$currentUsername] = [];
+    }
+
+    $modulePath = $this->moduleHandler()->getModule('soda_scs_manager')->getPath();
+    $assetBase = '/' . $modulePath . '/assets/images/';
+
+    array_unshift($entitiesByUser[$currentUsername], [
+      '#theme' => 'soda_scs_manager__add_application_card',
+      '#asset_base' => $assetBase,
+      '#cache' => [
+        'max-age' => 0,
+      ],
+    ]);
+
     $build = [
       '#theme' => 'soda_scs_manager__dashboard',
       '#attributes' => ['class' => 'container soda-scs-manager--view--grid'],
@@ -312,6 +343,7 @@ class SodaScsManagerController extends ControllerBase {
           'soda_scs_manager/globalStyling',
           'soda_scs_manager/tagFilter',
           'soda_scs_manager/dashboardHealthStatus',
+          'soda_scs_manager/addApplicationPopup',
         ],
       ],
     ];
@@ -418,7 +450,10 @@ class SodaScsManagerController extends ControllerBase {
       '#attributes' => ['class' => ['container', 'mx-auto']],
       '#user' => $userFirstName,
       '#attached' => [
-        'library' => ['soda_scs_manager/globalStyling'],
+        'library' => [
+          'soda_scs_manager/globalStyling',
+          'soda_scs_manager/startPagePie',
+        ],
       ],
       '#cache' => [
         'max-age' => 0,

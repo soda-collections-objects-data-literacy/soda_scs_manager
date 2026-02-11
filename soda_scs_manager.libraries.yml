@@ -87,3 +87,22 @@ dashboardHealthStatus:
     - core/drupal
     - core/once
     - soda_scs_manager/globalStyling
+
+addApplicationPopup:
+  version: 1.x
+  js:
+    js/addApplicationPopup.js: {}
+  dependencies:
+    - core/jquery
+    - core/drupal
+    - core/once
+    - soda_scs_manager/globalStyling
+
+startPagePie:
+  version: 1.x
+  js:
+    js/startPagePie.js: {}
+  dependencies:
+    - core/drupal
+    - core/once
+    - soda_scs_manager/globalStyling

@@ -31,7 +31,8 @@
         {% endif %}" data-tag="{{ tag }}" role="button" tabindex="0" aria-pressed="false" aria-label="{{ 'Filter by tag @tag'|t({'@tag': tag}) }}">{{ tag|t }}</span>
       {% endfor %}
     </div>
-    <div class="soda-scs-manager--card-content-wrapper"
+    {% set isRunning = health_status == 'running' or health_status == 'healthy' %}
+    <div class="soda-scs-manager--card-content-wrapper{% if not isRunning %} soda-scs-manager--card--not-running{% endif %}"
       {% if entity_id %}data-entity-id="{{ entity_id }}"{% endif %}
       {% if entity_type_id %}data-entity-type="{{ entity_type_id }}"{% endif %}>
       {% if health_status %}
@@ -67,7 +68,9 @@
               title="{{ 'Learn more information'|t }}">
               <a href="{{ learn_more_link }}" class="soda-scs-manager--card-link"></a>
       </button>
+      {% if url %}
       <a href="{{ url }}" class="soda-scs-manager--card-link" target="_blank"></a>
+      {% endif %}
       <div class="soda-scs-manager--image-wrapper">
         <img class="soda-scs-manager--card-img-top " src="{{ file_url(imageUrl) }}" alt="{{ label }}">
       </div>

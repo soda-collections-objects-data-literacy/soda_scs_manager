@@ -602,6 +602,13 @@ function soda_scs_manager_theme($existing, $type, $theme, $path) {
       ],
       'template' => 'cards/soda-scs-manager--admin-card',
     ],
+    'soda_scs_manager__add_application_card' => [
+      'variables' => [
+        'attributes' => NULL,
+        'asset_base' => '',
+      ],
+      'template' => 'cards/soda-scs-manager--add-application-card',
+    ],
 
   ];
 }

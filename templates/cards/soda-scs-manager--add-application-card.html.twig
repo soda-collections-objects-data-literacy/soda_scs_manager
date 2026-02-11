@@ -1,0 +1,94 @@
+{#
+/**
+ * @file
+ * Template for the add application card with plus icon.
+ *
+ * Available variables:
+ * - attributes: HTML attributes for the card container.
+ */
+#}
+
+<div class="soda-scs-manager--type--card">
+  <div class="soda-scs-manager--card-type">
+    &nbsp;
+  </div>
+    <div class="soda-scs-manager--card-tags mb-4">
+      &nbsp;
+    </div>
+    <div class="soda-scs-manager--card-content-wrapper soda-scs-manager--add-app-content">
+      <button type="button"
+              class="soda-scs-manager--add-app-button"
+              aria-label="{{ 'Add new application'|t }}"
+              title="{{ 'Add new application'|t }}">
+      </button>
+      <div class="soda-scs-manager--image-wrapper">
+        <div class="soda-scs-manager--plus-icon-container flex items-center justify-center w-full h-full">
+          <svg xmlns="http://www.w3.org/2000/svg" class="soda-scs-manager--plus-icon w-32 h-32 text-stone-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+          </svg>
+        </div>
+      </div>
+      <div class="soda-scs-manager--card-body">
+        <h5 class="soda-scs-manager--card-title">{{ 'Add Application'|t }}</h5>
+        <p class="soda-scs-manager--card-text">{{ 'Click to add a new service'|t }}</p>
+      </div>
+    </div>
+</div>
+
+{# Popup Modal #}
+<div id="add-app-popup" class="soda-scs-manager--add-app-popup fixed inset-0 bg-black/30 hidden items-center justify-center p-4" aria-hidden="true">
+  <div class="soda-scs-manager--add-app-popup-inner bg-white rounded-lg shadow-2xl p-8 w-full max-w-4xl relative border-2 border-orange-400">
+    <button type="button"
+            class="absolute top-4 right-4 w-10 h-10 flex items-center justify-center text-stone-400 hover:text-stone-600 hover:bg-stone-100 rounded transition-colors"
+            id="close-popup"
+            aria-label="{{ 'Close popup'|t }}">
+      <svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+      </svg>
+    </button>
+
+    <h2 class="text-3xl font-bold text-stone-800 mb-8 text-center">{{ 'Select Application Type'|t }}</h2>
+
+    {% set assetBase = asset_base|default('/modules/custom/soda_scs_manager/assets/images/') %}
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-6 md:gap-8">
+      {# Database Card #}
+      <a href="/app/mariadb-adminer"
+
+         class="soda-scs-manager--add-app-popup-card rounded-xl p-6 md:p-8 transition-all border-2 border-stone-200 hover:border-orange-400 hover:shadow-lg bg-white hover:bg-stone-50">
+        <div class="flex flex-col items-center text-center">
+          <div class="rounded-xl p-4 mb-4 flex items-center justify-center w-20 h-20 md:w-24 md:h-24">
+            <img src="{{ assetBase }}sql.svg" alt="" class="w-14 h-14 md:w-16 md:h-16 object-contain" />
+          </div>
+          <h3 class="text-lg md:text-xl font-semibold text-stone-800 mb-2">{{ 'MariaDB Database'|t }}</h3>
+          <p class="text-stone-600 text-sm">{{ '+ more info'|t }}</p>
+        </div>
+      </a>
+
+      {# WissKI Card #}
+      <a href="/app/wisski"
+
+         class="soda-scs-manager--add-app-popup-card rounded-xl p-6 md:p-8 transition-all border-2 border-stone-200 hover:border-orange-400 hover:shadow-lg bg-white hover:bg-stone-50">
+        <div class="flex flex-col items-center text-center">
+          <div class="rounded-xl p-4 mb-4 flex items-center justify-center w-20 h-20 md:w-24 md:h-24">
+            <img src="{{ assetBase }}wisski.svg" alt="" class="w-14 h-14 md:w-16 md:h-16 object-contain" />
+          </div>
+          <h3 class="text-lg md:text-xl font-semibold text-stone-800 mb-2">{{ 'WissKI'|t }}</h3>
+          <p class="text-stone-600 text-sm">{{ '+ more info'|t }}</p>
+        </div>
+      </a>
+
+      {# Triplestore Card #}
+      <a href="/app/triplestore"
+
+         class="soda-scs-manager--add-app-popup-card rounded-xl p-6 md:p-8 transition-all border-2 border-stone-200 hover:border-orange-400 hover:shadow-lg bg-white hover:bg-stone-50">
+        <div class="flex flex-col items-center text-center">
+          <div class="rounded-xl p-4 mb-4 flex items-center justify-center w-20 h-20 md:w-24 md:h-24">
+            <img src="{{ assetBase }}triplestore.svg" alt="" class="w-14 h-14 md:w-16 md:h-16 object-contain" />
+          </div>
+          <h3 class="text-lg md:text-xl font-semibold text-stone-800 mb-2">{{ 'Triplestore'|t }}</h3>
+          <p class="text-stone-600 text-sm">{{ '+ more info'|t }}</p>
+        </div>
+      </a>
+    </div>
+  </div>
+</div>

@@ -32,12 +32,13 @@
           // Ensure proper URL formatting (remove trailing slash if present).
           var baseUrl = serviceLink.replace(/\/$/, '');
           var loginUrl = baseUrl + '/user/login';
-          
+
           $notification.html(
             '<div class="notification-content">' +
               '<button class="notification-close" aria-label="' + Drupal.t('Close notification') + '">&times;</button>' +
               '<div class="notification-icon">&#10003;</div>' +
               '<h3>' + Drupal.t('Your WissKI is ready!') + '</h3>' +
+              '<p>' + Drupal.t('If you visit for the first time, you need to login with SODa SCS Client.') + '</p>' +
               '<p>' + Drupal.t('Go to') + ' <a href="' + loginUrl + '" target="_blank">' + loginUrl + '</a></p>' +
               '<p>' + Drupal.t('Click on') + ' <strong>' + Drupal.t('Login with SODa SCS Client') + '</strong></p>' +
             '</div>'
@@ -50,32 +51,32 @@
             $notification.addClass('show');
           }, 100);
 
-          // Close button handler.
-          $notification.find('.notification-close').on('click', function() {
+          // Dismiss notification function.
+          function dismissNotification() {
             $notification.removeClass('show');
             setTimeout(function() {
               $notification.remove();
             }, 300);
-          });
+          }
 
-          // Auto-dismiss after 30 seconds.
-          setTimeout(function() {
-            if ($notification.hasClass('show')) {
-              $notification.removeClass('show');
-              setTimeout(function() {
-                $notification.remove();
-              }, 300);
-            }
-          }, 30000);
+          // Close button handler.
+          $notification.find('.notification-close').on('click', dismissNotification);
         }
 
-        // Map API response to health class.
+        // Map API response to health class and toggle overlay for not-running.
         function updateHealthIcon(healthClass, title) {
           $healthIcon
             .removeClass('soda-scs-manager--health-running soda-scs-manager--health-starting soda-scs-manager--health-stopped soda-scs-manager--health-failure soda-scs-manager--health-unknown')
             .addClass('soda-scs-manager--health-' + healthClass)
             .attr('title', title)
             .attr('aria-label', Drupal.t('Health status: @status', {'@status': title}));
+
+          if (healthClass === 'running') {
+            $wrapper.removeClass('soda-scs-manager--card--not-running');
+          }
+          else {
+            $wrapper.addClass('soda-scs-manager--card--not-running');
+          }
         }
 
         // Function to check health status.
@@ -84,13 +85,14 @@
             url: healthUrl,
             method: 'GET',
             timeout: 8000,
+            dataType: 'json',
           }).done(function (data) {
             var currentStatus = null;
-            
+
             if (data && data.status && data.status.success === true) {
               var status = data.status.status || 'running';
               currentStatus = status;
-              
+
               if (status === 'running' || status === 'healthy') {
                 updateHealthIcon('running', Drupal.t('Running'));
               }
@@ -108,7 +110,7 @@
               var status = (data && data.status && data.status.status) ? data.status.status : '';
               var message = (data && data.status && data.status.message) ? data.status.message : 'Error';
               currentStatus = status;
-              
+
               if (status === 'starting' || message === 'Starting' || message === 'starting') {
                 updateHealthIcon('starting', Drupal.t('Starting'));
               }
@@ -121,13 +123,13 @@
             }
 
             // Check for transition from starting to running for WissKI stacks.
-            if (entityType === 'soda_scs_stack' && 
-                previousStatus === 'starting' && 
+            if (entityType === 'soda_scs_stack' &&
+                previousStatus === 'starting' &&
                 (currentStatus === 'running' || currentStatus === 'healthy')) {
-              
+
               // Check if this is a WissKI stack by looking at the card type.
               var cardType = $wrapper.closest('.soda-scs-manager--type--card').find('.soda-scs-manager--card-type').text().trim();
-              
+
               if (cardType.toLowerCase().includes('wisski')) {
                 // Get the service URL from the JSON endpoint.
                 $.ajax({
