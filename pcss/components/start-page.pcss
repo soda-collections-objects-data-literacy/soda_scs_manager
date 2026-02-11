@@ -11,7 +11,7 @@
     @apply text-center mb-8 flex-shrink-0;
 
     h1 {
-      @apply text-3xl font-bold text-stone-800;
+      @apply text-3xl font-bold text-stone-400;
     }
   }
 
@@ -39,31 +39,51 @@
     overflow: visible;
   }
 
-  /* Segment group: slice + icon move together as one. */
+  /* Invisible full-sector path receives clicks so link area = hover area (no gaps). */
+  .soda-scs-manager--pie-hit {
+    cursor: pointer;
+    pointer-events: auto;
+  }
+
+  /* Visible slice and icon do not capture clicks; hit path does. */
   .soda-scs-manager--pie-segment {
+    pointer-events: none;
     transition: transform 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
     transform-origin: 100px 100px;
   }
 
-  /* Pie slices base styles. */
+  /* Pie slices: white fill; only borders (stroke) and icons are colored. */
+  /* Active segment is set by JS (data-active-segment on nav) so there are no gaps = no flicker. */
   .soda-scs-manager--pie-slice {
-    transition: filter 0.3s ease;
-    stroke: white;
+    fill: white;
+    transition: filter 0.3s ease, stroke 0.25s ease;
     stroke-width: 2;
     filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.1));
   }
 
-  /* Colour per segment. */
+  /* Default: light border color; full color when segment is active (JS sets data-active-segment). */
   .soda-scs-manager--pie-slice--dashboard {
-    color: #f97316;
+    stroke: #fcd34d; /* amber-300 */
   }
 
   .soda-scs-manager--pie-slice--admin {
-    color: #78716c;
+    stroke: #94a3b8; /* slate-400 */
   }
 
   .soda-scs-manager--pie-slice--docs {
-    color: #0ea5e9;
+    stroke: #93c5fd; /* blue-300 */
+  }
+
+  .soda-scs-manager--pie-nav[data-active-segment="dashboard"] .soda-scs-manager--pie-slice--dashboard {
+    stroke: #f59e0b; /* amber-500 */
+  }
+
+  .soda-scs-manager--pie-nav[data-active-segment="admin"] .soda-scs-manager--pie-slice--admin {
+    stroke: #64748b; /* slate-500 */
+  }
+
+  .soda-scs-manager--pie-nav[data-active-segment="docs"] .soda-scs-manager--pie-slice--docs {
+    stroke: #3b82f6; /* blue-500 */
   }
 
   .soda-scs-manager--pie-icon {
@@ -71,61 +91,166 @@
   }
 
   .soda-scs-manager--pie-icon svg {
-    fill: white;
     opacity: 0.9;
+    transition: fill 0.25s ease;
   }
 
-  /* Hover: whole segment (slice + icon) moves together; one transform, no clipping. */
-  .soda-scs-manager--pie-link:hover .soda-scs-manager--pie-segment,
+  /* Default: light icon color; full color when segment is active. */
+  .soda-scs-manager--pie-link:nth-of-type(1) .soda-scs-manager--pie-icon svg {
+    fill: #fbbf24; /* amber-400 */
+  }
+
+  .soda-scs-manager--pie-link:nth-of-type(2) .soda-scs-manager--pie-icon svg {
+    fill: #94a3b8; /* slate-400 */
+  }
+
+  .soda-scs-manager--pie-link:nth-of-type(3) .soda-scs-manager--pie-icon svg {
+    fill: #60a5fa; /* blue-400 */
+  }
+
+  .soda-scs-manager--pie-nav[data-active-segment="dashboard"] .soda-scs-manager--pie-link:nth-of-type(1) .soda-scs-manager--pie-icon svg {
+    fill: #d97706; /* amber-600 */
+  }
+
+  .soda-scs-manager--pie-nav[data-active-segment="admin"] .soda-scs-manager--pie-link:nth-of-type(2) .soda-scs-manager--pie-icon svg {
+    fill: #475569; /* slate-600 */
+  }
+
+  .soda-scs-manager--pie-nav[data-active-segment="docs"] .soda-scs-manager--pie-link:nth-of-type(3) .soda-scs-manager--pie-icon svg {
+    fill: #2563eb; /* blue-600 */
+  }
+
+  /* Active segment: move and drop-shadow (driven by data-active-segment, no gap flicker). */
+  .soda-scs-manager--pie-nav[data-active-segment="dashboard"] .soda-scs-manager--pie-link:nth-of-type(1) .soda-scs-manager--pie-segment {
+    transform: translate(15px, 0);
+  }
+
+  .soda-scs-manager--pie-nav[data-active-segment="dashboard"] .soda-scs-manager--pie-link:nth-of-type(1) .soda-scs-manager--pie-slice--dashboard {
+    filter: drop-shadow(0 6px 12px rgba(0, 0, 0, 0.2));
+  }
+
+  .soda-scs-manager--pie-nav[data-active-segment="admin"] .soda-scs-manager--pie-link:nth-of-type(2) .soda-scs-manager--pie-segment {
+    transform: translate(-8px, 13px);
+  }
+
+  .soda-scs-manager--pie-nav[data-active-segment="admin"] .soda-scs-manager--pie-link:nth-of-type(2) .soda-scs-manager--pie-slice--admin {
+    filter: drop-shadow(0 6px 12px rgba(0, 0, 0, 0.2));
+  }
+
+  .soda-scs-manager--pie-nav[data-active-segment="docs"] .soda-scs-manager--pie-link:nth-of-type(3) .soda-scs-manager--pie-segment {
+    transform: translate(-8px, -13px);
+  }
+
+  .soda-scs-manager--pie-nav[data-active-segment="docs"] .soda-scs-manager--pie-link:nth-of-type(3) .soda-scs-manager--pie-slice--docs {
+    filter: drop-shadow(0 6px 12px rgba(0, 0, 0, 0.2));
+  }
+
+  /* Focus: same active state when tabbing (link focus sets data-active-segment in JS). */
   .soda-scs-manager--pie-link:focus .soda-scs-manager--pie-segment {
     transform: translate(15px, 0);
   }
 
-  .soda-scs-manager--pie-link:hover .soda-scs-manager--pie-slice--dashboard,
-  .soda-scs-manager--pie-link:focus .soda-scs-manager--pie-slice--dashboard {
-    filter: drop-shadow(0 6px 12px rgba(0, 0, 0, 0.2));
-  }
-
-  .soda-scs-manager--pie-link:hover .soda-scs-manager--pie-slice--admin,
-  .soda-scs-manager--pie-link:focus .soda-scs-manager--pie-slice--admin {
-    filter: drop-shadow(0 6px 12px rgba(0, 0, 0, 0.2));
-  }
-
-  .soda-scs-manager--pie-link:hover .soda-scs-manager--pie-slice--docs,
-  .soda-scs-manager--pie-link:focus .soda-scs-manager--pie-slice--docs {
-    filter: drop-shadow(0 6px 12px rgba(0, 0, 0, 0.2));
-  }
-
-  .soda-scs-manager--pie-link:nth-of-type(2):hover .soda-scs-manager--pie-segment,
   .soda-scs-manager--pie-link:nth-of-type(2):focus .soda-scs-manager--pie-segment {
     transform: translate(-8px, 13px);
   }
 
-  .soda-scs-manager--pie-link:nth-of-type(3):hover .soda-scs-manager--pie-segment,
   .soda-scs-manager--pie-link:nth-of-type(3):focus .soda-scs-manager--pie-segment {
     transform: translate(-8px, -13px);
   }
 
-  /* Center circle. */
+  .soda-scs-manager--pie-link:focus .soda-scs-manager--pie-slice--dashboard,
+  .soda-scs-manager--pie-link:focus .soda-scs-manager--pie-slice--admin,
+  .soda-scs-manager--pie-link:focus .soda-scs-manager--pie-slice--docs {
+    filter: drop-shadow(0 6px 12px rgba(0, 0, 0, 0.2));
+  }
+
+  .soda-scs-manager--pie-link:focus .soda-scs-manager--pie-slice--dashboard {
+    stroke: #f59e0b;
+  }
+
+  .soda-scs-manager--pie-link:focus .soda-scs-manager--pie-slice--admin {
+    stroke: #64748b;
+  }
+
+  .soda-scs-manager--pie-link:focus .soda-scs-manager--pie-slice--docs {
+    stroke: #3b82f6;
+  }
+
+  .soda-scs-manager--pie-link:nth-of-type(1):focus .soda-scs-manager--pie-icon svg {
+    fill: #d97706;
+  }
+
+  .soda-scs-manager--pie-link:nth-of-type(2):focus .soda-scs-manager--pie-icon svg {
+    fill: #475569;
+  }
+
+  .soda-scs-manager--pie-link:nth-of-type(3):focus .soda-scs-manager--pie-icon svg {
+    fill: #2563eb;
+  }
+
+  /* Center circle: white fill; stroke matches active tile; border runs around when active. */
   .soda-scs-manager--pie-center {
     fill: white;
-    stroke: #e7e5e4;
+    stroke: #94a3b8; /* slate-400 default */
     stroke-width: 2;
     filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.1));
+    transition: stroke 0.25s ease;
+  }
+
+  /* Quick fill: draw the border once around the circle when a segment becomes active. */
+  .soda-scs-manager--pie-nav[data-active-segment="dashboard"] .soda-scs-manager--pie-center,
+  .soda-scs-manager--pie-nav[data-active-segment="admin"] .soda-scs-manager--pie-center,
+  .soda-scs-manager--pie-nav[data-active-segment="docs"] .soda-scs-manager--pie-center {
+    stroke-dasharray: 189;
+    animation: soda-scs-manager--pie-center-fill 0.45s ease-out forwards;
+  }
+
+  @keyframes soda-scs-manager--pie-center-fill {
+    0% {
+      stroke-dashoffset: 189;
+    }
+    100% {
+      stroke-dashoffset: 0;
+    }
+  }
+
+  .soda-scs-manager--pie-nav[data-active-segment="dashboard"] .soda-scs-manager--pie-center {
+    stroke: #f59e0b; /* amber-500 */
+  }
+
+  .soda-scs-manager--pie-nav[data-active-segment="admin"] .soda-scs-manager--pie-center {
+    stroke: #64748b; /* slate-500 */
+  }
+
+  .soda-scs-manager--pie-nav[data-active-segment="docs"] .soda-scs-manager--pie-center {
+    stroke: #3b82f6; /* blue-500 */
   }
 
   .soda-scs-manager--pie-center-text {
     font-size: 6px;
     font-weight: 700;
-    fill: #f97316;
+    fill: #334155; /* slate-700 default */
     text-anchor: middle;
     dominant-baseline: middle;
+    transition: fill 0.25s ease;
+  }
+
+  .soda-scs-manager--pie-nav[data-active-segment="dashboard"] .soda-scs-manager--pie-center-text {
+    fill: #d97706; /* amber-600 */
+  }
+
+  .soda-scs-manager--pie-nav[data-active-segment="admin"] .soda-scs-manager--pie-center-text {
+    fill: #475569; /* slate-600 */
+  }
+
+  .soda-scs-manager--pie-nav[data-active-segment="docs"] .soda-scs-manager--pie-center-text {
+    fill: #2563eb; /* blue-600 */
   }
 
   .soda-scs-manager--pie-center-text--sub {
     font-size: 7px;
     font-weight: 600;
-    fill: #78716c;
+    fill: #64748b; /* slate-500 */
   }
 
   /* Responsive: still fill container on small screens. */

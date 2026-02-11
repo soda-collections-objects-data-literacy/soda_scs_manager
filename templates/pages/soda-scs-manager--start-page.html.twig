@@ -17,13 +17,15 @@
   <div class="soda-scs-manager--pie-nav">
     <svg viewBox="0 0 200 200" class="soda-scs-manager--pie-svg">
       <defs>
+        {# Clip large enough to include center circle stroke (r=30 + stroke 2 → outer edge ~31). #}
         <clipPath id="soda-scs-manager--pie-center-clip">
-          <circle cx="100" cy="100" r="28" />
+          <circle cx="100" cy="100" r="32" />
         </clipPath>
       </defs>
 
-      {# Dashboard - right segment (donut ring); group moves as one. #}
+      {# Dashboard - right segment (330°–30°). Full-sector hit area so link area = hover area. #}
       <a href="{{ path('soda_scs_manager.dashboard') }}" class="soda-scs-manager--pie-link" data-pie-label="{{ 'Dashboard'|t }}">
+        <path class="soda-scs-manager--pie-hit" aria-hidden="true" d="M 100 100 L 177.94 55 A 90 90 0 0 1 177.94 145 Z" fill="transparent" />
         <g class="soda-scs-manager--pie-segment">
           <path class="soda-scs-manager--pie-slice soda-scs-manager--pie-slice--dashboard"
                 d="M145,22.06 A90,90 0 0,1 145,177.94 L115,125.98 A30,30 0 0,0 115,74.02 L145,22.06 Z"
@@ -36,8 +38,9 @@
         </g>
       </a>
 
-      {# Administration - bottom-left segment (donut ring, convex inner arc). #}
+      {# Administration - bottom-left segment (30°–180°). Full-sector hit area. #}
       <a href="{{ path('soda_scs_manager.administration') }}" class="soda-scs-manager--pie-link" data-pie-label="{{ 'Administration'|t }}">
+        <path class="soda-scs-manager--pie-hit" aria-hidden="true" d="M 100 100 L 177.94 145 A 90 90 0 0 1 10 100 Z" fill="transparent" />
         <g class="soda-scs-manager--pie-segment">
           <path class="soda-scs-manager--pie-slice soda-scs-manager--pie-slice--admin"
                 d="M145,177.94 A90,90 0 0,1 10,100 L70,100 A30,30 0 0,0 115,125.98 L145,177.94 Z"
@@ -50,8 +53,9 @@
         </g>
       </a>
 
-      {# Documentation - top-left segment (donut ring, convex inner arc). #}
+      {# Documentation - top-left segment (180°–330°). Full-sector hit area. #}
       <a href="/docs" class="soda-scs-manager--pie-link" data-pie-label="{{ 'Docs'|t }}">
+        <path class="soda-scs-manager--pie-hit" aria-hidden="true" d="M 100 100 L 10 100 A 90 90 0 0 1 177.94 55 Z" fill="transparent" />
         <g class="soda-scs-manager--pie-segment">
           <path class="soda-scs-manager--pie-slice soda-scs-manager--pie-slice--docs"
                 d="M10,100 A90,90 0 0,1 145,22.06 L115,74.02 A30,30 0 0,0 70,100 L10,100 Z"

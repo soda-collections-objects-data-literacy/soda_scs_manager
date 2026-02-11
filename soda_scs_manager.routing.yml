@@ -416,7 +416,7 @@ soda_scs_manager.notifications:
     no_cache: TRUE
 
 soda_scs_manager.administration:
-  path: '/admin/structure/soda-scs-manager'
+  path: '/soda-scs-manager/administration'
   defaults:
     _controller: '\Drupal\soda_scs_manager\Controller\SodaScsAdministrationController::administrationPage'
     _title: 'SCS Administration'

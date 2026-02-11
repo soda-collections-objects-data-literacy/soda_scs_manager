@@ -609,7 +609,6 @@ function soda_scs_manager_theme($existing, $type, $theme, $path) {
       ],
       'template' => 'cards/soda-scs-manager--add-application-card',
     ],
-
   ];
 }
 
