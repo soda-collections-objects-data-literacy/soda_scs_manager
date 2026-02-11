@@ -578,6 +578,20 @@ soda_scs_manager.component.service_link:
       soda_scs_component:
         type: entity:soda_scs_component
 
+soda_scs_manager.component.service_url_json:
+  path: '/soda-scs-manager/component/service-url/{soda_scs_component}'
+  defaults:
+    _controller: '\Drupal\soda_scs_manager\Controller\SodaScsManagerServiceController::getComponentServiceUrl'
+    _title: 'Get service URL'
+  requirements:
+    _permission: 'soda scs manager user'
+    _custom_access: '\Drupal\soda_scs_manager\Access\SodaScsComponentLinksTasksAccessControlHandler::accessServiceLink'
+  options:
+    parameters:
+      soda_scs_component:
+        type: entity:soda_scs_component
+    no_cache: TRUE
+
 soda_scs_manager.stack.service_link:
   path: '/soda-scs-manager/stack/service-link/{soda_scs_stack}'
   defaults:
@@ -590,6 +604,20 @@ soda_scs_manager.stack.service_link:
     parameters:
       soda_scs_stack:
         type: entity:soda_scs_stack
+
+soda_scs_manager.stack.service_url_json:
+  path: '/soda-scs-manager/stack/service-url/{soda_scs_stack}'
+  defaults:
+    _controller: '\Drupal\soda_scs_manager\Controller\SodaScsManagerServiceController::getStackServiceUrl'
+    _title: 'Get service URL'
+  requirements:
+    _permission: 'soda scs manager user'
+    _custom_access: '\Drupal\soda_scs_manager\Access\SodaScsStackLinksTasksAccessControlHandler::accessServiceLink'
+  options:
+    parameters:
+      soda_scs_stack:
+        type: entity:soda_scs_stack
+    no_cache: TRUE
 
 soda_scs_manager.snapshot_debug:
   path: '/soda-scs-manager/debug/snapshots'

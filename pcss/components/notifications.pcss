@@ -1,0 +1,72 @@
+/* WissKI Ready Notification Popup */
+
+.wisski-ready-notification {
+  @apply fixed top-8 right-8 z-[9999] opacity-0 transition-opacity duration-300;
+  @apply pointer-events-none;
+  
+  &.show {
+    @apply opacity-100 pointer-events-auto;
+  }
+}
+
+.wisski-ready-notification .notification-content {
+  @apply bg-white rounded-lg shadow-2xl p-6 max-w-md;
+  @apply border-2 border-green-500;
+  @apply relative;
+}
+
+.wisski-ready-notification .notification-close {
+  @apply absolute top-2 right-2 w-8 h-8;
+  @apply flex items-center justify-center;
+  @apply text-stone-400 hover:text-stone-600;
+  @apply text-2xl leading-none;
+  @apply bg-transparent border-0 cursor-pointer;
+  @apply transition-colors duration-200;
+  
+  &:hover {
+    @apply bg-stone-100 rounded;
+  }
+  
+  &:focus {
+    @apply outline-none ring-2 ring-green-500 ring-offset-2 rounded;
+  }
+}
+
+.wisski-ready-notification .notification-icon {
+  @apply text-5xl text-green-500 text-center mb-4;
+  @apply flex items-center justify-center w-16 h-16 mx-auto;
+  @apply bg-green-100 rounded-full;
+}
+
+.wisski-ready-notification h3 {
+  @apply text-2xl font-bold text-stone-800 mb-4 text-center;
+}
+
+.wisski-ready-notification p {
+  @apply text-stone-600 mb-2 text-center;
+}
+
+.wisski-ready-notification a {
+  @apply text-green-600 hover:text-green-700 underline;
+  @apply transition-colors duration-200;
+  @apply break-all;
+}
+
+.wisski-ready-notification strong {
+  @apply font-semibold text-stone-800;
+}
+
+/* Mobile responsive */
+@media (max-width: 640px) {
+  .wisski-ready-notification {
+    @apply top-4 right-4 left-4;
+  }
+  
+  .wisski-ready-notification .notification-content {
+    @apply max-w-full p-4;
+  }
+  
+  .wisski-ready-notification h3 {
+    @apply text-xl;
+  }
+}

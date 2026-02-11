@@ -88,6 +88,17 @@ class SodaScsIssueReportForm extends FormBase {
       $currentUserName = $currentUserAccount->getDisplayName();
     }
 
+    $form['info'] = [
+      '#type' => 'markup',
+      '#markup' => $this->t('This report will be used to create issues in the public issue tracker at <a href="https://github.com/soda-collections-objects-data-literacy/soda_scs_manager/issues" target="_blank">Soda SCS Manager GitHub Issue Tracker</a>. All personal data will be removed from the submitted report before publication. <strong>Please do not include sensitive data such as passwords, usernames, or other confidential information in any of the input fields.</strong>'),
+    ];
+
+    $form['info_understood'] = [
+      '#type' => 'checkbox',
+      '#title' => $this->t('I understand the information above.'),
+      '#required' => TRUE,
+    ];
+
     $form['reporter'] = [
       '#type' => 'textfield',
       '#title' => $this->t('Who is the reporter?'),
@@ -99,7 +110,7 @@ class SodaScsIssueReportForm extends FormBase {
     $form['title'] = [
       '#type' => 'textfield',
       '#title' => $this->t('Title:'),
-      '#description' => $this->t('Short description of the issue.'),
+      '#description' => $this->t('Short description of the issue. (e.g. "Soda SCS Manager: WissKI Stack Add Page: Access Denied")'),
       '#required' => TRUE,
     ];
 
@@ -129,7 +140,7 @@ class SodaScsIssueReportForm extends FormBase {
     $form['error'] = [
       '#type' => 'textarea',
       '#title' => $this->t('What was the error?'),
-      '#description' => $this->t('After that, only white screens or Access Denied appeared'),
+      '#description' => $this->t('If there was an error or irritation, please describe it here. (e.g. "After that, only white screens or Access Denied appeared")'),
       '#required' => TRUE,
       '#rows' => 5,
     ];
@@ -156,6 +167,10 @@ class SodaScsIssueReportForm extends FormBase {
    * {@inheritdoc}
    */
   public function validateForm(array &$form, FormStateInterface $form_state): void {
+    if (!$form_state->getValue('info_understood')) {
+      $form_state->setErrorByName('info_understood', $this->t('You must confirm that you understand the information above before submitting.'));
+    }
+
     $location = $form_state->getValue('location');
     if (!empty($location) && !filter_var($location, FILTER_VALIDATE_URL)) {
       $form_state->setErrorByName('location', $this->t('Please enter a valid URL.'));
