@@ -133,10 +133,7 @@
             var message = document.createElement('div');
             message.className = 'soda-scs-manager--empty-filter-message';
             message.innerHTML = '<p>' +
-              Drupal.t('No <strong>@tags</strong> application found.', { '@tags': tagLabel }) +
-              ' <a href="/soda-scs-manager/catalogue">' +
-              Drupal.t('Go to the catalogue and create one!') +
-              '</a></p>';
+              Drupal.t('No <strong>@tags</strong> application found.', { '@tags': tagLabel })
             grid.appendChild(message);
           }
         });
