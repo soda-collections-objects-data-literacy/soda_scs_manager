@@ -3,6 +3,15 @@
 
 @layer components {
 
+    nav ul {
+      list-style: none;
+    }
+
+    /* Target the class added by JavaScript */
+    nav[role="navigation"] a.is-active-page {
+      font-weight: bold !important;
+    }
+
     @media (max-width: 75rem) {
 
         .secondary-nav {

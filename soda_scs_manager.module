@@ -532,6 +532,13 @@ function soda_scs_manager_soda_scs_stack_view(array &$build, EntityInterface $en
     }
   }
 }
+/**
+ * Implements template_preprocess_HOOK() for book-tree theme.
+ */
+function soda_scs_manager_preprocess_book_tree(array &$variables) : void {
+  // Theme name: 'book-tree', library name: 'book-styling'. 
+  $variables['#attached']['library'][] = 'soda_scs_manager/book-styling';
+}
 
 /**
  * Implements hook_theme().

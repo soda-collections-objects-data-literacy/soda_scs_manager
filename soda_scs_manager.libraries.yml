@@ -1,3 +1,11 @@
+book-styling:
+  js:
+    js/book-active-page.js: {}
+  dependencies:
+    - core/jquery
+    - core/drupal
+    - core/jquery.once
+
 entityHelpers:
   version: 1.x
   js:
