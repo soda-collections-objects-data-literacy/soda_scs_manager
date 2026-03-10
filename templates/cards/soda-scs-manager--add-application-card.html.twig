@@ -52,7 +52,7 @@
     {% set assetBase = asset_base|default('/modules/custom/soda_scs_manager/assets/images/') %}
     <div class="grid grid-cols-1 md:grid-cols-3 gap-6 md:gap-8">
       {# Database Card #}
-      <a href="/app/mariadb-adminer"
+      <a href="/app/mariadb"
 
          class="soda-scs-manager--add-app-popup-card rounded-xl p-6 md:p-8 transition-all border-2 border-stone-200 hover:border-orange-400 hover:shadow-lg bg-white hover:bg-stone-50">
         <div class="flex flex-col items-center text-center">
@@ -70,22 +70,22 @@
          class="soda-scs-manager--add-app-popup-card rounded-xl p-6 md:p-8 transition-all border-2 border-stone-200 hover:border-orange-400 hover:shadow-lg bg-white hover:bg-stone-50">
         <div class="flex flex-col items-center text-center">
           <div class="rounded-xl p-4 mb-4 flex items-center justify-center w-20 h-20 md:w-24 md:h-24">
-            <img src="{{ assetBase }}wisski.svg" alt="" class="w-14 h-14 md:w-16 md:h-16 object-contain" />
+            <img src="{{ assetBase }}wisski-stack.svg" alt="" class="w-14 h-14 md:w-16 md:h-16 object-contain" />
           </div>
-          <h3 class="text-lg md:text-xl font-semibold text-stone-800 mb-2">{{ 'WissKI'|t }}</h3>
+          <h3 class="text-lg md:text-xl font-semibold text-stone-800 mb-2">{{ 'WissKI Environment'|t }}</h3>
           <p class="text-stone-600 text-sm">{{ '+ more info'|t }}</p>
         </div>
       </a>
 
       {# Triplestore Card #}
-      <a href="/app/triplestore"
+      <a href="/app/open-gdb"
 
          class="soda-scs-manager--add-app-popup-card rounded-xl p-6 md:p-8 transition-all border-2 border-stone-200 hover:border-orange-400 hover:shadow-lg bg-white hover:bg-stone-50">
         <div class="flex flex-col items-center text-center">
           <div class="rounded-xl p-4 mb-4 flex items-center justify-center w-20 h-20 md:w-24 md:h-24">
             <img src="{{ assetBase }}triplestore.svg" alt="" class="w-14 h-14 md:w-16 md:h-16 object-contain" />
           </div>
-          <h3 class="text-lg md:text-xl font-semibold text-stone-800 mb-2">{{ 'Triplestore'|t }}</h3>
+          <h3 class="text-lg md:text-xl font-semibold text-stone-800 mb-2">{{ 'Triplestore (Open GDB)'|t }}</h3>
           <p class="text-stone-600 text-sm">{{ '+ more info'|t }}</p>
         </div>
       </a>

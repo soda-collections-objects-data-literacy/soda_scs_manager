@@ -116,6 +116,11 @@ class SodaScsManagerController extends ControllerBase {
         $projects = $projectStorage->loadByProperties(['members' => $current_user->id()]);
       }
 
+      // Sort Projects by label
+      /*uasort($projects, function ($a, $b) {    
+          return strnatcasecmp($a->label(), $b->label());
+      });*/
+
       // Project components of the projects.
       $entitiesByProject = [];
       /** @var \Drupal\soda_scs_manager\Entity\SodaScsProjectInterface $project */
@@ -137,13 +142,23 @@ class SodaScsManagerController extends ControllerBase {
             'soda_scs_component' => $projectEntity->id(),
           ]);
 
-          $detailsLink = Url::fromRoute('entity.' .
-            $projectEntity->getEntityTypeId() .
-            '.canonical',
-            [
-              'bundle' => $projectEntity->bundle(),
-              $projectEntity->getEntityTypeId() => $projectEntity->id(),
-            ]);
+          if (in_array($projectEntity->bundle(), [
+            'soda_scs_wisski_component',
+            'soda_scs_wisski_stack',
+            'soda_scs_sql_component',
+            'soda_scs_triplestore_component',
+          ])) {
+            $detailsLink = Url::fromRoute('entity.' .
+              $projectEntity->getEntityTypeId() .
+              '.canonical',
+              [
+                'bundle' => $projectEntity->bundle(),
+                $projectEntity->getEntityTypeId() => $projectEntity->id(),
+              ]);
+          }
+          else {
+            $detailsLink = NULL;
+          }
 
           $entitiesByProject[$projectLabel][] = [
             '#theme' => 'soda_scs_manager__entity_card',
@@ -169,6 +184,9 @@ class SodaScsManagerController extends ControllerBase {
       $this->messenger()->addError($this->t('Error loading projects: @error', ['@error' => $e->getMessage()]));
       return [];
     }
+
+    // Sort projects by keys (= project title).
+    ksort($entitiesByProject);
 
     // Load owned components.
     try {
@@ -285,13 +303,23 @@ class SodaScsManagerController extends ControllerBase {
         ]);
       }
 
-      $detailsLink = Url::fromRoute('entity.' .
-        $entity->getEntityTypeId() .
-        '.canonical',
-        [
-          'bundle' => $entity->bundle(),
-          $entity->getEntityTypeId() => $entity->id(),
-        ]);
+      if (in_array($entity->bundle(), [
+        'soda_scs_wisski_component',
+        'soda_scs_wisski_stack',
+        'soda_scs_sql_component',
+        'soda_scs_triplestore_component',
+      ])) {
+        $detailsLink = Url::fromRoute('entity.' .
+          $entity->getEntityTypeId() .
+          '.canonical',
+          [
+            'bundle' => $entity->bundle(),
+            $entity->getEntityTypeId() => $entity->id(),
+          ]);
+      }
+      else {
+        $detailsLink = NULL;
+      }
 
       $entitiesByUser[$username][] = [
         '#theme' => 'soda_scs_manager__entity_card',
@@ -328,6 +356,12 @@ class SodaScsManagerController extends ControllerBase {
         'max-age' => 0,
       ],
     ]);
+
+    // Sort entitiesByUser alphabetically by using the keys (= usernames).
+    ksort($entitiesByUser);
+
+    // Move current user to the top of the list to always display them (and the "Add Application" button) first
+    $entitiesByUser = $this->moveKeyToFirstPosition($entitiesByUser, $currentUsername);
 
     $build = [
       '#theme' => 'soda_scs_manager__dashboard',
@@ -489,5 +523,22 @@ class SodaScsManagerController extends ControllerBase {
       '#theme' => 'soda_scs_manager_healthcheck_page',
     ];
   }
+
+  // Add function to re-order Dashboard order for admin people
+  public function moveKeyToFirstPosition(array $array, $key): array {  
+    // Step 1: Check if the key exists  
+    if (!array_key_exists($key, $array)) {  
+        return $array; // or throw an exception (see "Error Handling" below)  
+    }  
+ 
+    // Step 2: Extract the target element as a single-key array  
+    $targetElement = [$key => $array[$key]];  
+ 
+    // Step 3: Remove the target element from the original array  
+    unset($array[$key]);  
+ 
+    // Step 4: Merge the target element with the remaining array  
+    return $targetElement + $array;  
+  }  
 
 }
