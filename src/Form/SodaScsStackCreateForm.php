@@ -191,6 +191,9 @@ class SodaScsStackCreateForm extends ContentEntityForm {
       $form['partOfProjects']['widget']['#default_value'] = [$defaultProjectOfCurrentUser];
     }
 
+    # Hide the partOfProjects field.
+    $form['partOfProjects']['#access'] = FALSE;
+
     // Hide the flavours field.
     $form['flavours']['#access'] = FALSE;
 

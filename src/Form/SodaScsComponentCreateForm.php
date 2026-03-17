@@ -222,6 +222,9 @@ class SodaScsComponentCreateForm extends ContentEntityForm {
       $form['partOfProjects']['widget']['#default_value'] = [$defaultProjectOfCurrentUser];
     }
 
+    # Hide the partOfProjects field.
+    $form['partOfProjects']['#access'] = FALSE;
+
     // Change the label of the submit button.
     $form['actions']['submit']['#value'] = $this->t('CREATE');
     $form['actions']['submit']['#attributes']['class'][] = 'soda-scs-component--component--form-submit';

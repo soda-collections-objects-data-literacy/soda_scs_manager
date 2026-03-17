@@ -79,6 +79,9 @@ class SodaScsStackEditForm extends ContentEntityForm {
       ];
     }
 
+    # Hide the partOfProjects field.
+    $form['partOfProjects']['#access'] = FALSE;
+
     if (isset($form['owner'])) {
       // Get the current owner label.
       $owner_name = $this->t('Unknown');
