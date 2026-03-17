@@ -666,7 +666,7 @@ class SodaScsWisskiComponentActions implements SodaScsComponentActionsInterface 
         'keycloakUserGroup' => $keycloakWisskiInstanceUserGroupName,
         'machineName' => $machineName,
         'nextcloudAppPassword' => $nextcloudCredentials['appPassword'] ?? '',
-        'nextcloudUsername' => $nextcloudCredentials['username'] ?? '',
+        'nextcloudLoginName' => $nextcloudCredentials['username'] ?? '',
         'openidConnectClientSecret' => $openidConnectClientSecret,
         'sqlServicePassword' => $sqlComponentServiceKeyPassword ?? '',
         'triplestoreServicePassword' => $triplestoreComponentServiceKeyPassword ?? '',

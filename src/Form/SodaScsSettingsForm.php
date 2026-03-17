@@ -1164,7 +1164,7 @@ class SodaScsSettingsForm extends ConfigFormBase {
       '#type' => 'textfield',
       '#title' => $this->t('WissKI compose stack version'),
       '#default_value' => $this->config('soda_scs_manager.settings')->get('wisski')['instances']['versions']['development']['composeStack'] ?? '',
-      '#description' => $this->t('The <a href="https://github.com/soda-collections-objects-data-literacy/wisski-base-stack" target="_blank">WissKI compose stack dev version</a>, like "1.x".'),
+      '#description' => $this->t('The <a href="https://github.com/soda-collections-objects-data-literacy/wisski-base-stack" target="_blank">WissKI compose stack dev version</a>. Use a branch like "1.x" or tag like "2.3.0".'),
     ];
 
     $form['wisski']['instances']['versions']['development']['image'] = [
@@ -1276,10 +1276,13 @@ class SodaScsSettingsForm extends ConfigFormBase {
     $config = $this->config('soda_scs_manager.settings');
     $wisskiValues = $form_state->getValue('wisski');
 
-    // Save default version selection.
-    if (isset($wisskiValues['instances']['versions']['defaultVersion'])) {
-      $existingWisski = $config->get('wisski') ?? [];
-      $existingWisski['instances']['versions']['defaultVersion'] = $wisskiValues['instances']['versions']['defaultVersion'];
+    // Merge wisski form values with existing config.
+    $existingWisski = $config->get('wisski') ?? [];
+    if (isset($wisskiValues['instances'])) {
+      $existingWisski['instances'] = array_replace_recursive(
+        $existingWisski['instances'] ?? [],
+        $wisskiValues['instances']
+      );
       $wisskiValues = $existingWisski;
     }
 

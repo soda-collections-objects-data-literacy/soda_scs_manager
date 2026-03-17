@@ -81,6 +81,13 @@ services:
     class: Drupal\soda_scs_manager\RequestActions\SodaScsKeycloakServiceUserActions
   soda_scs_manager.docker_registry_service.actions:
     class: Drupal\soda_scs_manager\RequestActions\SodaScsDockerRegistryServiceActions
+  soda_scs_manager.nextcloud_http_client_factory:
+    class: Drupal\soda_scs_manager\HttpClient\NextcloudHttpClientFactory
+
+  soda_scs_manager.nextcloud_http_client:
+    class: GuzzleHttp\Client
+    factory: ['@soda_scs_manager.nextcloud_http_client_factory', 'create']
+
   soda_scs_manager.nextcloud_service.actions:
     class: Drupal\soda_scs_manager\RequestActions\SodaScsNextcloudServiceActions
 

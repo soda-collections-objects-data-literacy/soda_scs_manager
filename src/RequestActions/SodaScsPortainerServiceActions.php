@@ -251,6 +251,7 @@ class SodaScsPortainerServiceActions implements SodaScsServiceRequestInterface {
     // Initialize settings.
     $generalSettings = $this->sodaScsServiceHelpers->initGeneralSettings();
     $keycloakGeneralSettings = $this->sodaScsServiceHelpers->initKeycloakGeneralSettings();
+    $nextcloudServiceSettings = $this->sodaScsServiceHelpers->initNextcloudSettings();
     $portainerServiceSettings = $this->sodaScsServiceHelpers->initPortainerServiceSettings();
     $portainerStacksSettings = $this->sodaScsServiceHelpers->initPortainerStacksSettings();
     $triplestoreServiceSettings = $this->sodaScsServiceHelpers->initTriplestoreServiceSettings();
@@ -289,6 +290,32 @@ class SodaScsPortainerServiceActions implements SodaScsServiceRequestInterface {
     }
 
     $env = [
+      // General settings.
+      [
+        "name" => "MODE",
+        "value" => $requestParams['mode'],
+      ],
+      [
+        "name" => "SERVICE_NAME",
+        "value" => $requestParams['machineName'],
+      ],
+      [
+        "name" => "WISSKI_DEFAULT_DATA_MODEL_VERSION",
+        "value" => $requestParams['wisskiDefaultDataModelRecipeVersion'],
+      ],
+      [
+        "name" => "WISSKI_BASE_IMAGE_VERSION",
+        "value" => $requestParams['wisskiBaseImageVersion'],
+      ],
+      [
+        "name" => "WISSKI_FLAVOURS",
+        "value" => $requestParams['flavours'],
+      ],
+      [
+        "name" => "WISSKI_STARTER_VERSION",
+        "value" => $requestParams['wisskiStarterRecipeVersion'],
+      ],
+      // Database settings.
       [
         "name" => "DB_DRIVER",
         "value" => "mysql",
@@ -313,22 +340,19 @@ class SodaScsPortainerServiceActions implements SodaScsServiceRequestInterface {
         "name" => "DB_USER",
         "value" => $requestParams['username'],
       ],
-      [
-        "name" => "DRUPAL_LOCALE",
-        "value" => $requestParams['defaultLanguage'],
-      ],
+      // Drupal settings.
       [
         "name" => "DRUPAL_DOMAIN",
         "value" => $instanceDomainName,
       ],
       [
+        "name" => "DRUPAL_LOCALE",
+        "value" => $requestParams['defaultLanguage'],
+      ],
+      [
         "name" => "DRUPAL_PRIVATE_FILES_DIR",
         // @todo Set in RequestParams.
         "value" => '/var/private-files/',
-      ],
-      [
-        "name" => "DRUPAL_USER",
-        "value" => $requestParams['username'],
       ],
       [
         "name" => "DRUPAL_PASSWORD",
@@ -347,41 +371,49 @@ class SodaScsPortainerServiceActions implements SodaScsServiceRequestInterface {
         "value" => $trustedHost,
       ],
       [
+        "name" => "DRUPAL_USER",
+        "value" => $requestParams['username'],
+      ],
+      // Keycloak settings.
+      [
         "name" => "KEYCLOAK_ADMIN_GROUP",
         "value" => $requestParams['keycloakAdminGroup'],
-      ],
-      [
-        "name" => "KEYCLOAK_USER_GROUP",
-        "value" => $requestParams['keycloakUserGroup'],
       ],
       [
         "name" => "KEYCLOAK_REALM",
         "value" => $keycloakGeneralSettings['realm'],
       ],
       [
+        "name" => "KEYCLOAK_USER_GROUP",
+        "value" => $requestParams['keycloakUserGroup'],
+      ],
+      [
         "name" => "KEYCLOAK_URL",
         "value" => $keycloakGeneralSettings['url'],
       ],
+      // Nextcloud settings.
       [
-        "name" => "MODE",
-        "value" => $requestParams['mode'],
+        "name" => "NEXTCLOUD_BASE_URL",
+        "value" => $nextcloudServiceSettings['baseUrl'],
       ],
-      ...(!empty($requestParams['nextcloudUsername']) && !empty($requestParams['nextcloudAppPassword'])
-        ? [
-          [
-            "name" => "NEXTCLOUD_USER",
-            "value" => $requestParams['nextcloudUsername'],
-          ],
-          [
-            "name" => "NEXTCLOUD_APP_PASSWORD",
-            "value" => $requestParams['nextcloudAppPassword'],
-          ],
-        ]
-        : []),
+      [
+        "name" => "NEXTCLOUD_LOGIN_NAME",
+        "value" => $requestParams['nextcloudLoginName'],
+      ],
+      [
+        "name" => "NEXTCLOUD_APP_PASSWORD",
+        "value" => $requestParams['nextcloudAppPassword'],
+      ],
+      // OpenID Connect settings.
       [
         "name" => "OPENID_CONNECT_CLIENT_SECRET",
         "value" => $requestParams['openidConnectClientSecret'],
       ],
+      [
+        "name" => "USER_GROUPS",
+        "value" => $requestParams['userGroups'],
+      ],
+      // Redis settings.
       [
         "name" => "REDIS_HOST",
         "value" => $requestParams['redisHost'] ?? 'redis',
@@ -390,15 +422,7 @@ class SodaScsPortainerServiceActions implements SodaScsServiceRequestInterface {
         "name" => "REDIS_PORT",
         "value" => $requestParams['redisPort'] ?? '6379',
       ],
-      [
-        "name" => "SERVICE_NAME",
-        "value" => $requestParams['machineName'],
-      ],
-      // @ todo Set in RequestParams.
-      [
-        "name" => "SHARED_DATA_VOLUME",
-        "value" => $requestParams['sharedDataVolume'] ?? 'shared-data',
-      ],
+      // Triplestore settings.
       [
         "name" => "TS_PASSWORD",
         "value" => $requestParams['triplestoreServicePassword'],
@@ -424,9 +448,11 @@ class SodaScsPortainerServiceActions implements SodaScsServiceRequestInterface {
         "value" => $triplestoreServiceSettings['host'] . '/repositories/' . $requestParams['tsRepository'] . '/statements',
       ],
       [
-        "name" => "USER_GROUPS",
-        "value" => $requestParams['userGroups'],
+        "name" => "WISSKI_DEFAULT_GRAPH",
+        // @todo whats the best way of concat strings with vars?
+        "value" => $defaultGraphIri . '/contents/',
       ],
+      // Varnish settings.
       [
         "name" => "VARNISH_BACKEND_HOST",
         "value" => $requestParams['varnishBackendHost'] ?? $requestParams['machineName'] . '--drupal',
@@ -438,27 +464,6 @@ class SodaScsPortainerServiceActions implements SodaScsServiceRequestInterface {
       [
         "name" => "VARNISH_IMAGE_VERSION",
         "value" => $requestParams['varnishImageVersion'],
-      ],
-      [
-        "name" => "WISSKI_DEFAULT_DATA_MODEL_VERSION",
-        "value" => $requestParams['wisskiDefaultDataModelRecipeVersion'],
-      ],
-      [
-        "name" => "WISSKI_DEFAULT_GRAPH",
-        // @todo whats the best way of concat strings with vars?
-        "value" => $defaultGraphIri . '/contents/',
-      ],
-      [
-        "name" => "WISSKI_BASE_IMAGE_VERSION",
-        "value" => $requestParams['wisskiBaseImageVersion'],
-      ],
-      [
-        "name" => "WISSKI_STARTER_VERSION",
-        "value" => $requestParams['wisskiStarterRecipeVersion'],
-      ],
-      [
-        "name" => "WISSKI_FLAVOURS",
-        "value" => $requestParams['flavours'],
       ],
     ];
 
@@ -477,10 +482,36 @@ class SodaScsPortainerServiceActions implements SodaScsServiceRequestInterface {
         'name' => $requestParams['machineName'],
         'repositoryAuthentication' => FALSE,
         'repositoryURL' => $repositoryURL,
-        "repositoryReferenceName" => $requestParams['wisskiComposeStackVersion'] ? "refs/tags/" . $requestParams['wisskiComposeStackVersion'] : '',
+        "repositoryReferenceName" => $requestParams['wisskiComposeStackVersion'] ? $this->buildRepositoryRef($requestParams['wisskiComposeStackVersion']) : '',
         'buildArgs' => $requestParams['buildArgs'] ?? [],
       ]),
     ];
+  }
+
+  /**
+   * Builds the git repository ref for Portainer (tag or branch).
+   *
+   * Uses refs/tags/ for semantic versions (e.g. 1.0.0, 2.3.0) and refs/heads/
+   * for branch names (e.g. 1.x, 2.x, main). Values starting with refs/ are
+   * passed through as-is.
+   *
+   * @param string $version
+   *   The version or branch name (e.g. "1.x", "2.3.0", "refs/heads/main").
+   *
+   * @return string
+   *   The full git ref (e.g. "refs/tags/2.3.0" or "refs/heads/1.x").
+   */
+  protected function buildRepositoryRef(string $version): string {
+    $version = trim($version);
+    if (str_starts_with($version, 'refs/')) {
+      return $version;
+    }
+    // Semantic version pattern (e.g. 1.0.0, 2.3.0) → tag.
+    if (preg_match('/^\d+\.\d+(\.\d+)?$/', $version)) {
+      return "refs/tags/" . $version;
+    }
+    // Otherwise treat as branch (e.g. 1.x, 2.x, main).
+    return "refs/heads/" . $version;
   }
 
   /**
