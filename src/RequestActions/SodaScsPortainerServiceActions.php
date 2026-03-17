@@ -186,13 +186,16 @@ class SodaScsPortainerServiceActions implements SodaScsServiceRequestInterface {
       ];
     }
     catch (RequestException $e) {
-      $logger = $this->loggerFactory->get('soda_scs_manager');
-      $requestDump = Message::toString($e->getRequest());
-      $responseDump = $e->hasResponse() ? Message::toString($e->getResponse()) : '';
-      $logger->error('Portainer request failed: @message', ['@message' => $e->getMessage()]);
-      $logger->debug('Failed Portainer request: %request', ['%request' => $requestDump]);
-      if ($responseDump !== '') {
-        $logger->debug('Failed Portainer response: %response', ['%response' => $responseDump]);
+      $isHealthCheck = $request['isHealthCheck'] ?? FALSE;
+      if (!$isHealthCheck) {
+        $logger = $this->loggerFactory->get('soda_scs_manager');
+        $requestDump = Message::toString($e->getRequest());
+        $responseDump = $e->hasResponse() ? Message::toString($e->getResponse()) : '';
+        $logger->error('Portainer request failed: @message', ['@message' => $e->getMessage()]);
+        $logger->debug('Failed Portainer request: %request', ['%request' => $requestDump]);
+        if ($responseDump !== '') {
+          $logger->debug('Failed Portainer response: %response', ['%response' => $responseDump]);
+        }
       }
 
       $detailedError = $e->getMessage();
@@ -214,9 +217,12 @@ class SodaScsPortainerServiceActions implements SodaScsServiceRequestInterface {
       ];
     }
     catch (\Exception $e) {
-      $this->loggerFactory
-        ->get('soda_scs_manager')
-        ->error('Unexpected Portainer request failure: @message', ['@message' => $e->getMessage()]);
+      $isHealthCheck = $request['isHealthCheck'] ?? FALSE;
+      if (!$isHealthCheck) {
+        $this->loggerFactory
+          ->get('soda_scs_manager')
+          ->error('Unexpected Portainer request failure: @message', ['@message' => $e->getMessage()]);
+      }
 
       return [
         'message' => $this->t('Request failed with code @code', ['@code' => $e->getCode()]),
@@ -642,6 +648,7 @@ class SodaScsPortainerServiceActions implements SodaScsServiceRequestInterface {
       'success' => TRUE,
       'method' => 'GET',
       'route' => $route,
+      'isHealthCheck' => TRUE,
       'headers' => [
         'Content-Type' => 'application/json',
         'Accept' => 'application/json',

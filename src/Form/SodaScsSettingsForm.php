@@ -518,6 +518,34 @@ class SodaScsSettingsForm extends ConfigFormBase {
       '#description' => $this->t('The base URL, like https://nextcloud.scs.sammlungen.io. App passwords are created for the component owner using their OIDC token.'),
     ];
 
+    $form['nextcloud']['generalSettings']['oidcUsernamePrefix'] = [
+      '#type' => 'textfield',
+      '#title' => $this->t('OIDC username prefix'),
+      '#default_value' => $this->config('soda_scs_manager.settings')->get('nextcloud')['generalSettings']['oidcUsernamePrefix'] ?? 'keycloak-',
+      '#description' => $this->t('Prefix for user_oidc usernames when cloud/user returns a raw UUID. Must match your user_oidc provider identifier (e.g. keycloak-).'),
+    ];
+
+    $form['nextcloud']['generalSettings']['useBearerToken'] = [
+      '#type' => 'checkbox',
+      '#title' => $this->t('Use OIDC Bearer token for Nextcloud'),
+      '#default_value' => $this->config('soda_scs_manager.settings')->get('nextcloud')['generalSettings']['useBearerToken'] ?? FALSE,
+      '#description' => $this->t('When enabled, SCS Manager creates app passwords via Bearer token (no browser popup). When disabled (default), users must connect via the browser popup (Login Flow v2) at Connected Accounts. Disable for debugging or when tokens are unstable.'),
+    ];
+
+    $form['nextcloud']['generalSettings']['keycloakUsernameAttr'] = [
+      '#type' => 'textfield',
+      '#title' => $this->t('Keycloak attribute for Nextcloud username'),
+      '#default_value' => $this->config('soda_scs_manager.settings')->get('nextcloud')['generalSettings']['keycloakUsernameAttr'] ?? 'nextcloud_login_name',
+      '#description' => $this->t('Keycloak user attribute name for stored Nextcloud login (profile scope).'),
+    ];
+
+    $form['nextcloud']['generalSettings']['keycloakAppPasswordAttr'] = [
+      '#type' => 'textfield',
+      '#title' => $this->t('Keycloak attribute for Nextcloud app password'),
+      '#default_value' => $this->config('soda_scs_manager.settings')->get('nextcloud')['generalSettings']['keycloakAppPasswordAttr'] ?? 'nextcloud_app_password',
+      '#description' => $this->t('Keycloak user attribute name for stored Nextcloud app password (profile scope).'),
+    ];
+
     // Triplestore settings tab.
     $form['triplestore'] = [
       '#type' => 'details',

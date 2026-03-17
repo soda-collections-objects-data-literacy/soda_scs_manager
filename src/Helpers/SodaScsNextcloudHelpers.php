@@ -4,7 +4,10 @@ declare(strict_types=1);
 
 namespace Drupal\soda_scs_manager\Helpers;
 
+use Drupal\Core\Config\ConfigFactoryInterface;
 use Drupal\Core\Session\AccountProxyInterface;
+use Drupal\Core\Messenger\MessengerInterface;
+use Drupal\Core\StringTranslation\StringTranslationTrait;
 use Drupal\openid_connect\OpenIDConnectSessionInterface;
 use Drupal\user\UserInterface;
 use Symfony\Component\DependencyInjection\Attribute\Autowire;
@@ -18,6 +21,8 @@ use Drupal\soda_scs_manager\RequestActions\SodaScsNextcloudServiceActions;
  * - Login Flow v2: credentials stored in Keycloak via Connect flow.
  */
 class SodaScsNextcloudHelpers {
+
+  use StringTranslationTrait;
 
   /**
    * Keycloak attribute for stored Nextcloud username (profile scope).
@@ -34,8 +39,12 @@ class SodaScsNextcloudHelpers {
    *
    * @param \Drupal\soda_scs_manager\RequestActions\SodaScsNextcloudServiceActions $nextcloudServiceActions
    *   The Nextcloud service actions.
+   * @param \Drupal\Core\Config\ConfigFactoryInterface $configFactory
+   *   The config factory.
    * @param \Drupal\Core\Session\AccountProxyInterface $currentUser
    *   The current user.
+   * @param \Drupal\Core\Messenger\MessengerInterface $messenger
+   *   The messenger service.
    * @param \Drupal\openid_connect\OpenIDConnectSessionInterface $openIdConnectSession
    *   The OpenID Connect session for the current user's token.
    * @param \Drupal\soda_scs_manager\Helpers\SodaScsKeycloakHelpers $keycloakHelpers
@@ -46,8 +55,12 @@ class SodaScsNextcloudHelpers {
   public function __construct(
     #[Autowire(service: 'soda_scs_manager.nextcloud_service.actions')]
     protected SodaScsNextcloudServiceActions $nextcloudServiceActions,
+    #[Autowire(service: 'config.factory')]
+    protected ConfigFactoryInterface $configFactory,
     #[Autowire(service: 'current_user')]
     protected AccountProxyInterface $currentUser,
+    #[Autowire(service: 'messenger')]
+    protected MessengerInterface $messenger,
     #[Autowire(service: 'openid_connect.session')]
     protected OpenIDConnectSessionInterface $openIdConnectSession,
     #[Autowire(service: 'soda_scs_manager.keycloak_service.helpers')]
@@ -55,6 +68,22 @@ class SodaScsNextcloudHelpers {
     #[Autowire(service: 'soda_scs_manager.project.helpers')]
     protected SodaScsProjectHelpers $projectHelpers,
   ) {}
+
+  /**
+   * Returns the Keycloak attribute name for storing the Nextcloud username.
+   */
+  public function getKeycloakUsernameAttr(): string {
+    return $this->configFactory->get('soda_scs_manager.settings')
+      ->get('nextcloud.generalSettings.keycloakUsernameAttr') ?? self::ATTR_USERNAME;
+  }
+
+  /**
+   * Returns the Keycloak attribute name for storing the Nextcloud app password.
+   */
+  public function getKeycloakAppPasswordAttr(): string {
+    return $this->configFactory->get('soda_scs_manager.settings')
+      ->get('nextcloud.generalSettings.keycloakAppPasswordAttr') ?? self::ATTR_APP_PASSWORD;
+  }
 
   /**
    * Tests if stored credentials work against Nextcloud.
@@ -68,6 +97,7 @@ class SodaScsNextcloudHelpers {
    *   TRUE if the credentials work.
    */
   public function testStoredCredentials(string $username, string $appPassword): bool {
+    $username = $this->normalizeNextcloudUsername($username);
     $requestParams = [
       'appName' => 'test',
       'username' => $username,
@@ -77,6 +107,16 @@ class SodaScsNextcloudHelpers {
     $getRequest['timeout'] = 10;
     $getResponse = $this->nextcloudServiceActions->makeRequest($getRequest);
     return $getResponse['success'] ?? FALSE;
+  }
+
+  /**
+   * Returns whether Bearer token flow is enabled for Nextcloud.
+   *
+   * @return bool
+   *   TRUE when Bearer should be used; FALSE for Login Flow v2 only.
+   */
+  public function isBearerEnabled(): bool {
+    return $this->nextcloudServiceActions->getUseBearerToken();
   }
 
   /**
@@ -96,12 +136,13 @@ class SodaScsNextcloudHelpers {
     if (empty($keycloakUserId)) {
       return NULL;
     }
-    $attributes = $this->keycloakHelpers->getKeycloakUserAttributes($keycloakUserId);
-    $username = $attributes[self::ATTR_USERNAME][0] ?? NULL;
-    $appPassword = $attributes[self::ATTR_APP_PASSWORD][0] ?? NULL;
+    $attributes = $this->keycloakHelpers->getKeycloakUserAttributes($keycloakUserId) ?? [];
+    $username = $attributes[$this->getKeycloakUsernameAttr()][0] ?? NULL;
+    $appPassword = $attributes[$this->getKeycloakAppPasswordAttr()][0] ?? NULL;
     if (empty($username) || empty($appPassword)) {
       return NULL;
     }
+    $username = $this->normalizeNextcloudUsername($username);
     return [
       'username' => $username,
       'appPassword' => $appPassword,
@@ -188,6 +229,7 @@ class SodaScsNextcloudHelpers {
     if (empty($username)) {
       throw new \Exception('Failed to get Nextcloud username from response.');
     }
+    $username = $this->normalizeNextcloudUsername($username);
 
     return ['username' => $username];
   }
@@ -216,6 +258,11 @@ class SodaScsNextcloudHelpers {
       return $stored;
     }
 
+    // When Bearer is disabled, only use stored credentials (Login Flow v2).
+    if (!$this->nextcloudServiceActions->getUseBearerToken()) {
+      return NULL;
+    }
+
     // Flow B: auto-create via OIDC Bearer if the owner is the current user.
     if ((int) $this->currentUser->id() !== (int) $owner->id()) {
       return NULL;
@@ -241,8 +288,8 @@ class SodaScsNextcloudHelpers {
     $keycloakUserId = $this->projectHelpers->getUserSsoUuid($owner);
     if (!empty($keycloakUserId)) {
       $this->keycloakHelpers->setKeycloakUserAttributes($keycloakUserId, [
-        self::ATTR_USERNAME => [$credentials['username']],
-        self::ATTR_APP_PASSWORD => [$credentials['appPassword']],
+        $this->getKeycloakUsernameAttr() => [$credentials['username']],
+        $this->getKeycloakAppPasswordAttr() => [$credentials['appPassword']],
       ]);
     }
 
@@ -279,7 +326,7 @@ class SodaScsNextcloudHelpers {
     }
 
     $requestParams = [
-      'appName' => $appName,
+      'appName' => 'SCS Manager (' . $owner->getAccountName() . ')',
       'token' => $token,
     ];
 
@@ -287,6 +334,11 @@ class SodaScsNextcloudHelpers {
     $getRequest = $this->nextcloudServiceActions->buildGetRequest($requestParams);
     $getResponse = $this->nextcloudServiceActions->makeRequest($getRequest);
     if (!$getResponse['success']) {
+      // Provide a hint if the OIDC token exists but the request failed,
+      // possibly due to user mismatch between Drupal and Keycloak session.
+      if (!empty($token)) {
+        $this->messenger->addWarning($this->t('You may be logged in to Keycloak with a different user than your Drupal account. Please ensure you are logged in with the correct Keycloak user.'));
+      }
       throw new \Exception('Failed to get Nextcloud user info: ' . $getResponse['error']);
     }
 
@@ -295,6 +347,7 @@ class SodaScsNextcloudHelpers {
     if (empty($username)) {
       throw new \Exception('Failed to get Nextcloud username');
     }
+    $username = $this->normalizeNextcloudUsername($username);
 
     // Create the app password.
     $createRequest = $this->nextcloudServiceActions->buildCreateRequest($requestParams);
@@ -313,6 +366,34 @@ class SodaScsNextcloudHelpers {
       'username' => $username,
       'appPassword' => $appPassword,
     ];
+  }
+
+  /**
+   * Normalizes Nextcloud username for user_oidc (adds prefix if raw UUID).
+   *
+   * When cloud/user returns a raw UUID, user_oidc expects the full username
+   * with provider prefix (e.g. keycloak-{uuid}) for WebDAV/Basic auth.
+   *
+   * @param string $username
+   *   Username from cloud/user (id field).
+   *
+   * @return string
+   *   Normalized username with prefix if applicable.
+   */
+  public function normalizeNextcloudUsername(string $username): string {
+    $prefix = $this->nextcloudServiceActions->getOidcUsernamePrefix();
+    if (empty($prefix)) {
+      return $username;
+    }
+    // If already has the prefix, return as-is.
+    if (str_starts_with($username, $prefix)) {
+      return $username;
+    }
+    // If it looks like a raw UUID (8-4-4-4-12 hex), add the prefix.
+    if (preg_match('/^[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$/i', $username)) {
+      return $prefix . $username;
+    }
+    return $username;
   }
 
 }

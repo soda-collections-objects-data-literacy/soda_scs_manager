@@ -97,6 +97,7 @@ class SodaScsNextcloudServiceActions implements SodaScsServiceRequestInterface {
    */
   public function __construct(
     ConfigFactoryInterface $config_factory,
+    #[Autowire(service: 'soda_scs_manager.nextcloud_http_client')]
     ClientInterface $http_client,
     MessengerInterface $messenger,
     LoggerChannelFactoryInterface $logger_factory,
@@ -380,21 +381,29 @@ class SodaScsNextcloudServiceActions implements SodaScsServiceRequestInterface {
    * POST to /index.php/login/v2 (anonymous). Returns poll token and login URL.
    * See: https://docs.nextcloud.com/server/stable/developer_manual/client_apis/LoginFlow/
    *
+   * @param string|null $appName
+   *   Device label for Nextcloud (e.g. "SCS Manager (username)").
+   *
    * @return array
    *   Request array ready to pass to makeRequest().
    */
-  public function buildLoginFlowV2InitRequest(): array {
+  public function buildLoginFlowV2InitRequest(?string $appName = NULL): array {
     $nextcloudSettings = $this->sodaScsServiceHelpers->initNextcloudSettings();
     $route = rtrim($nextcloudSettings['baseUrl'], '/') . '/index.php/login/v2';
+
+    $headers = [
+      'Content-Type' => 'application/json',
+      'Accept' => 'application/json',
+    ];
+    if ($appName !== NULL && $appName !== '') {
+      $headers['User-Agent'] = $appName;
+    }
 
     return [
       'success' => TRUE,
       'method' => 'POST',
       'route' => $route,
-      'headers' => [
-        'Content-Type' => 'application/json',
-        'Accept' => 'application/json',
-      ],
+      'headers' => $headers,
     ];
   }
 
@@ -408,21 +417,52 @@ class SodaScsNextcloudServiceActions implements SodaScsServiceRequestInterface {
    *   The poll endpoint URL from init response.
    * @param string $token
    *   The poll token from init response.
+   * @param string|null $appName
+   *   Device label for Nextcloud (e.g. "SCS Manager (username)").
    *
    * @return array
    *   Request array ready to pass to makeRequest().
    */
-  public function buildLoginFlowV2PollRequest(string $pollEndpoint, string $token): array {
+  public function buildLoginFlowV2PollRequest(string $pollEndpoint, string $token, ?string $appName = NULL): array {
+    $headers = [
+      'Content-Type' => 'application/x-www-form-urlencoded',
+      'Accept' => 'application/json',
+    ];
+    if ($appName !== NULL && $appName !== '') {
+      $headers['User-Agent'] = $appName;
+    }
+
     return [
       'success' => TRUE,
       'method' => 'POST',
       'route' => $pollEndpoint,
-      'headers' => [
-        'Content-Type' => 'application/x-www-form-urlencoded',
-        'Accept' => 'application/json',
-      ],
+      'headers' => $headers,
       'body' => 'token=' . rawurlencode($token),
     ];
+  }
+
+  /**
+   * Returns the OIDC username prefix for user_oidc (e.g. keycloak-).
+   *
+   * @return string
+   *   The prefix to prepend when cloud/user returns a raw UUID.
+   */
+  public function getOidcUsernamePrefix(): string {
+    $settings = $this->sodaScsServiceHelpers->initNextcloudSettings();
+    return $settings['oidcUsernamePrefix'] ?? 'keycloak-';
+  }
+
+  /**
+   * Returns whether Bearer token flow is enabled for Nextcloud.
+   *
+   * When false (default), users must connect via browser popup (Login Flow v2).
+   *
+   * @return bool
+   *   TRUE if Bearer token should be used for app password creation.
+   */
+  public function getUseBearerToken(): bool {
+    $settings = $this->sodaScsServiceHelpers->initNextcloudSettings();
+    return (bool) ($settings['useBearerToken'] ?? FALSE);
   }
 
   /**

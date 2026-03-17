@@ -202,6 +202,22 @@ soda_scs_manager.settings:
               type: string
               label: 'Base URL'
               description: 'The base URL, like https://nextcloud.scs.sammlungen.io.'
+            oidcUsernamePrefix:
+              type: string
+              label: 'OIDC username prefix'
+              description: 'Prefix for user_oidc usernames, e.g. keycloak-.'
+            useBearerToken:
+              type: boolean
+              label: 'Use OIDC Bearer token for Nextcloud'
+              description: 'When true, create app passwords via Bearer. When false, users connect via browser popup.'
+            keycloakUsernameAttr:
+              type: string
+              label: 'Keycloak attribute for Nextcloud username'
+              description: 'Keycloak user attribute name for stored Nextcloud login (profile scope).'
+            keycloakAppPasswordAttr:
+              type: string
+              label: 'Keycloak attribute for Nextcloud app password'
+              description: 'Keycloak user attribute name for stored Nextcloud app password (profile scope).'
     triplestore:
       type: mapping
       label: 'Triplestore settings'

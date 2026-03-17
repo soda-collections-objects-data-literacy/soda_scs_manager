@@ -343,6 +343,8 @@ class SodaScsServiceHelpers {
   public function initNextcloudSettings() {
     $nextcloudSettings['name'] = 'Nextcloud';
     $nextcloudSettings['baseUrl'] = $this->settings->get('nextcloud.generalSettings.baseUrl');
+    $nextcloudSettings['oidcUsernamePrefix'] = $this->settings->get('nextcloud.generalSettings.oidcUsernamePrefix') ?? 'keycloak-';
+    $nextcloudSettings['useBearerToken'] = (bool) ($this->settings->get('nextcloud.generalSettings.useBearerToken') ?? FALSE);
 
     $this->checkSettings($nextcloudSettings);
 
@@ -593,20 +595,22 @@ class SodaScsServiceHelpers {
     foreach ($settings as $key => &$value) {
       if (is_array($value)) {
         foreach ($value as $key2 => &$value2) {
+          if (is_bool($value2)) {
+            continue;
+          }
           if (empty($value2)) {
             throw new MissingDataException($settings['name'] . ' ' . $key . ' ' . $key2 . ' setting is not set.');
           }
-          else {
-            $value2 = str_replace('{empty}', '', $value2);
-          }
+          $value2 = str_replace('{empty}', '', $value2);
         }
+      }
+      if (is_bool($value)) {
+        continue;
       }
       if (empty($value)) {
         throw new MissingDataException($settings['name'] . ' ' . $key . ' setting is not set.');
       }
-      else {
-        $value = str_replace('{empty}', '', $value);
-      }
+      $value = str_replace('{empty}', '', $value);
     }
   }
 

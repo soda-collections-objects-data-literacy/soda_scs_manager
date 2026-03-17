@@ -561,11 +561,25 @@ class SodaScsWisskiComponentActions implements SodaScsComponentActionsInterface 
         }
       }
 
-      // Ensure Nextcloud credentials exist (stored or auto-created via OIDC).
+      // Ensure Nextcloud credentials. Bearer: create app password; else use
+      // stored credentials from Login Flow v2 (browser popup).
       $owner = $component->getOwner();
       $nextcloudCredentials = NULL;
       if ($owner) {
-        $nextcloudCredentials = $this->sodaScsNextcloudHelpers->ensureCredentials($owner, $machineName);
+        if ($this->sodaScsNextcloudHelpers->isBearerEnabled()) {
+          try {
+            $nextcloudCredentials = $this->sodaScsNextcloudHelpers
+              ->createAppPassword($machineName, $owner);
+          }
+          catch (\Exception $e) {
+            $nextcloudCredentials = $this->sodaScsNextcloudHelpers
+              ->ensureCredentials($owner, $machineName);
+          }
+        }
+        else {
+          $nextcloudCredentials = $this->sodaScsNextcloudHelpers
+            ->ensureCredentials($owner, $machineName);
+        }
         if (!$nextcloudCredentials) {
           $connectUrl = Url::fromRoute('openid_connect.accounts_controller_index', [
             'user' => $owner->id(),

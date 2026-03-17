@@ -59,7 +59,8 @@ class SodaScsNextcloudConnectController extends ControllerBase {
       return new JsonResponse(['error' => 'Unauthorized'], 401);
     }
 
-    $request = $this->nextcloudServiceActions->buildLoginFlowV2InitRequest();
+    $appName = 'SCS Manager (' . $this->currentUser()->getAccountName() . ')';
+    $request = $this->nextcloudServiceActions->buildLoginFlowV2InitRequest($appName);
     $response = $this->nextcloudServiceActions->makeRequest($request);
 
     if (!$response['success']) {
@@ -111,9 +112,11 @@ class SodaScsNextcloudConnectController extends ControllerBase {
       ], 400);
     }
 
+    $appName = 'SCS Manager (' . $this->currentUser()->getAccountName() . ')';
     $pollRequest = $this->nextcloudServiceActions->buildLoginFlowV2PollRequest(
       $pollEndpoint,
-      $pollToken
+      $pollToken,
+      $appName
     );
     $response = $this->nextcloudServiceActions->makeRequest($pollRequest);
 
@@ -164,8 +167,8 @@ class SodaScsNextcloudConnectController extends ControllerBase {
     }
 
     $attributes = [
-      SodaScsNextcloudHelpers::ATTR_USERNAME => [$loginName],
-      SodaScsNextcloudHelpers::ATTR_APP_PASSWORD => [$appPassword],
+      $this->nextcloudHelpers->getKeycloakUsernameAttr() => [$loginName],
+      $this->nextcloudHelpers->getKeycloakAppPasswordAttr() => [$appPassword],
     ];
     if (!$this->keycloakHelpers->setKeycloakUserAttributes($keycloakUserId, $attributes)) {
       return new JsonResponse([
@@ -205,23 +208,25 @@ class SodaScsNextcloudConnectController extends ControllerBase {
       ], 200);
     }
 
-    // Primary: try Bearer token (OIDC) - no stored credentials needed.
+    // Primary: try Bearer token (OIDC) when enabled - skip when disabled.
     $bearerError = NULL;
-    try {
-      $result = $this->nextcloudHelpers->testNextcloudToken($user);
-      return new JsonResponse([
-        'connected' => TRUE,
-        'method' => 'bearer',
-        'username' => $result['username'] ?? NULL,
-      ], 200);
-    }
-    catch (\Exception $e) {
-      $bearerError = $e->getMessage();
-      $this->getLogger('soda_scs_manager')->debug(
-        'Nextcloud Bearer check failed: @error',
-        ['@error' => $bearerError]
-      );
-      // Bearer failed; fall back to stored credentials (Login Flow v2).
+    if ($this->nextcloudServiceActions->getUseBearerToken()) {
+      try {
+        $result = $this->nextcloudHelpers->testNextcloudToken($user);
+        return new JsonResponse([
+          'connected' => TRUE,
+          'method' => 'bearer',
+          'username' => $result['username'] ?? NULL,
+        ], 200);
+      }
+      catch (\Exception $e) {
+        $bearerError = $e->getMessage();
+        $this->getLogger('soda_scs_manager')->debug(
+          'Nextcloud Bearer check failed: @error',
+          ['@error' => $bearerError]
+        );
+        // Bearer failed; fall back to stored credentials (Login Flow v2).
+      }
     }
 
     $keycloakUserId = $this->projectHelpers->getUserSsoUuid($user);
@@ -233,9 +238,9 @@ class SodaScsNextcloudConnectController extends ControllerBase {
       ], 200);
     }
 
-    $attributes = $this->keycloakHelpers->getKeycloakUserAttributes($keycloakUserId);
-    $username = $attributes[SodaScsNextcloudHelpers::ATTR_USERNAME][0] ?? NULL;
-    $appPassword = $attributes[SodaScsNextcloudHelpers::ATTR_APP_PASSWORD][0] ?? NULL;
+    $attributes = $this->keycloakHelpers->getKeycloakUserAttributes($keycloakUserId) ?? [];
+    $username = $attributes[$this->nextcloudHelpers->getKeycloakUsernameAttr()][0] ?? NULL;
+    $appPassword = $attributes[$this->nextcloudHelpers->getKeycloakAppPasswordAttr()][0] ?? NULL;
 
     $storedConnected = !empty($username) && !empty($appPassword);
 
@@ -244,10 +249,14 @@ class SodaScsNextcloudConnectController extends ControllerBase {
       $storedConnected = $this->nextcloudHelpers->testStoredCredentials($username, $appPassword);
     }
 
+    $displayUsername = $storedConnected
+      ? $this->nextcloudHelpers->normalizeNextcloudUsername($username)
+      : NULL;
+
     return new JsonResponse([
       'connected' => $storedConnected,
       'method' => $storedConnected ? 'stored' : NULL,
-      'username' => $storedConnected ? $username : NULL,
+      'username' => $displayUsername,
       'bearer_error' => $bearerError,
     ], 200);
   }

@@ -113,15 +113,15 @@ class SodaScsKeycloakHelpers {
   }
 
   /**
-   * Get Keycloak user attributes by user ID (sub from OIDC).
+   * Get Keycloak user by ID (sub from OIDC).
    *
    * @param string $keycloakUserId
    *   The Keycloak user ID (OIDC sub claim).
    *
    * @return array|null
-   *   The user attributes map, or NULL if user not found or request failed.
+   *   The full user representation, or NULL if not found or request failed.
    */
-  public function getKeycloakUserAttributes(string $keycloakUserId): ?array {
+  public function getKeycloakUserById(string $keycloakUserId): ?array {
     $request = $this->sodaScsKeycloakServiceUserActions->buildGetRequest([
       'routeParams' => ['userId' => $keycloakUserId],
       'token' => $this->getKeycloakToken(),
@@ -131,11 +131,29 @@ class SodaScsKeycloakHelpers {
       return NULL;
     }
     $body = json_decode($response['data']['keycloakResponse']->getBody()->getContents(), TRUE);
-    return $body['attributes'] ?? [];
+    return is_array($body) ? $body : NULL;
+  }
+
+  /**
+   * Get Keycloak user attributes by user ID (sub from OIDC).
+   *
+   * @param string $keycloakUserId
+   *   The Keycloak user ID (OIDC sub claim).
+   *
+   * @return array|null
+   *   The user attributes map, or NULL if user not found or request failed.
+   */
+  public function getKeycloakUserAttributes(string $keycloakUserId): ?array {
+    $user = $this->getKeycloakUserById($keycloakUserId);
+    return $user !== NULL ? ($user['attributes'] ?? []) : NULL;
   }
 
   /**
    * Set Keycloak user attributes (merges with existing).
+   *
+   * Keycloak 24+ PUT replaces the entire user. Sending only attributes wipes
+   * firstName, lastName, email. We must fetch the full user, merge attributes,
+   * and PUT the complete representation back.
    *
    * @param string $keycloakUserId
    *   The Keycloak user ID (OIDC sub claim).
@@ -146,15 +164,18 @@ class SodaScsKeycloakHelpers {
    *   TRUE on success, FALSE on failure.
    */
   public function setKeycloakUserAttributes(string $keycloakUserId, array $attributes): bool {
-    $existing = $this->getKeycloakUserAttributes($keycloakUserId);
-    if ($existing === NULL) {
+    $user = $this->getKeycloakUserById($keycloakUserId);
+    if ($user === NULL) {
       return FALSE;
     }
+    $existing = $user['attributes'] ?? [];
     $merged = array_merge($existing, $attributes);
+    $user['attributes'] = $merged;
+
     $request = $this->sodaScsKeycloakServiceUserActions->buildUpdateRequest([
       'type' => 'updateUser',
       'routeParams' => ['userId' => $keycloakUserId],
-      'body' => ['attributes' => $merged],
+      'body' => $user,
       'token' => $this->getKeycloakToken(),
     ]);
     $response = $this->sodaScsKeycloakServiceUserActions->makeRequest($request);
