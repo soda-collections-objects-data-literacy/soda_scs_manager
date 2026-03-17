@@ -8,8 +8,6 @@ services:
 # Component actions
   soda_scs_manager.component.actions:
     class: Drupal\soda_scs_manager\ComponentActions\SodaScsComponentActions
-  soda_scs_manager.filesystem_component.actions:
-    class: Drupal\soda_scs_manager\ComponentActions\SodaScsFilesystemComponentActions
   soda_scs_manager.sql_component.actions:
     class: Drupal\soda_scs_manager\ComponentActions\SodaScsSqlComponentActions
   soda_scs_manager.triplestore_component.actions:

@@ -85,14 +85,7 @@ final class SodaScsComponentLinksTasksAccessControlHandler {
    *   TRUE if access is allowed, FALSE otherwise.
    */
   public static function accessServiceLink(SodaScsComponentInterface $soda_scs_component): AccessResultInterface {
-    $bundle = $soda_scs_component->bundle();
-
-    // Hide the "Show"/service link tab for filesystem components.
-    $result = ($bundle === 'soda_scs_filesystem_component')
-      ? AccessResult::forbidden()
-      : AccessResult::allowed();
-
-    return $result->addCacheableDependency($soda_scs_component);
+    return AccessResult::allowed()->addCacheableDependency($soda_scs_component);
   }
 
   /**
@@ -108,7 +101,7 @@ final class SodaScsComponentLinksTasksAccessControlHandler {
     $bundle = $soda_scs_component->bundle();
 
     // Hide the snapshot task for specific component types.
-    $hiddenBundles = ['soda_scs_webprotege_component', 'soda_scs_filesystem_component'];
+    $hiddenBundles = ['soda_scs_webprotege_component'];
     $result = in_array($bundle, $hiddenBundles, TRUE)
       ? AccessResult::forbidden()
       : AccessResult::allowed();

@@ -15,8 +15,6 @@
       <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium {{ bundle_class }}">
         {% if entity.bundle == 'soda_scs_triplestore_component' %}
           {{ 'Triplestore'|t }}
-        {% elseif entity.bundle == 'soda_scs_filesystem_component' %}
-          {{ 'Filesystem'|t }}
         {% elseif entity.bundle == 'soda_scs_sql_component' %}
           {{ 'SQL Database'|t }}
         {% elseif entity.bundle == 'soda_scs_webprotege_component' %}

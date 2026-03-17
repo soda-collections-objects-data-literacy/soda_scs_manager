@@ -20,7 +20,6 @@ class SodaScsComponentCrudTest extends SodaScsKernelTestBase {
    * @var array
    */
   protected array $componentBundles = [
-    'soda_scs_filesystem_component',
     'soda_scs_sql_component',
     'soda_scs_triplestore_component',
     'soda_scs_webprotege_component',
@@ -268,7 +267,6 @@ class SodaScsComponentCrudTest extends SodaScsKernelTestBase {
    */
   public static function componentBundleProvider(): array {
     return [
-      'filesystem component' => ['soda_scs_filesystem_component'],
       'sql component' => ['soda_scs_sql_component'],
       'triplestore component' => ['soda_scs_triplestore_component'],
       'webprotege component' => ['soda_scs_webprotege_component'],

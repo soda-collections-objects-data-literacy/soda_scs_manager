@@ -352,7 +352,7 @@ class SodaScsPortainerServiceActions implements SodaScsServiceRequestInterface {
       [
         "name" => "DRUPAL_PRIVATE_FILES_DIR",
         // @todo Set in RequestParams.
-        "value" => '/var/private-files/',
+        "value" => '/opt/drupal/web/private-files/',
       ],
       [
         "name" => "DRUPAL_PASSWORD",

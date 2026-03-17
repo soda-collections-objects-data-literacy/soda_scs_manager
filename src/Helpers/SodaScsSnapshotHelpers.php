@@ -152,10 +152,6 @@ class SodaScsSnapshotHelpers {
     $bundle = $component->bundle();
 
     switch ($bundle) {
-      case 'soda_scs_filesystem_component':
-        $type = 'files';
-        break;
-
       case 'soda_scs_wisski_component':
         $type = 'drupal-data';
         break;
@@ -330,10 +326,6 @@ class SodaScsSnapshotHelpers {
       $contentFiles = [];
       foreach ($snapshotData as $componentBundle => $componentData) {
         switch ($componentBundle) {
-          case 'soda_scs_filesystem_component':
-            $type = 'files';
-            break;
-
           case 'soda_scs_wisski_component':
             $type = 'drupal-data';
             break;
@@ -448,10 +440,6 @@ class SodaScsSnapshotHelpers {
         // @todo This is redundant, should be abstracted.
         foreach ($fileTypes as $fileType => $contentFileName) {
           switch ($bundle) {
-            case 'soda_scs_filesystem_component':
-              $type = 'files';
-              break;
-
             case 'soda_scs_wisski_component':
               $type = 'drupal-data';
               break;

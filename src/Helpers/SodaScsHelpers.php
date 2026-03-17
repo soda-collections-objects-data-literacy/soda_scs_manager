@@ -180,9 +180,6 @@ class SodaScsHelpers {
       case 'soda_scs_nextcloud_stack':
         return 'nextcloud';
 
-      case 'soda_scs_filesystem_component':
-        return 'shared-folder';
-
       case 'soda_scs_sql_component':
         return 'mariadb';
 

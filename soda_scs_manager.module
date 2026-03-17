@@ -150,14 +150,6 @@ function soda_scs_manager_entity_base_field_info(EntityTypeInterface $entity_typ
  */
 function soda_scs_manager_entity_bundle_info() {
   // Components.
-  $bundles['soda_scs_component']['soda_scs_filesystem_component'] = [
-    'label' => new TranslatableMarkup('Inter-App folder'),
-    'class' => SodaScsComponentBundle::class,
-    'description' => new TranslatableMarkup('A folder for sharing files across applications.'),
-    'imageUrl' => 'public://soda_scs_manager/images/shared.svg',
-    'tags' => ['filesharing'],
-  ];
-
   $bundles['soda_scs_component']['soda_scs_sql_component'] = [
     'label' => new TranslatableMarkup('SQL Database'),
     'class' => SodaScsComponentBundle::class,
@@ -1180,7 +1172,6 @@ function _soda_scs_manager_create_default_applications_for_user(UserInterface $u
   /** @var \Drupal\soda_scs_manager\Entity\SodaScsProject $project */
   $project = reset($projects);
 
-  _soda_scs_manager_create_default_filesystem_for_user($user, $project);
   _soda_scs_manager_create_default_nextcloud_for_user($user, $project);
   _soda_scs_manager_create_default_jupyter_for_user($user, $project);
   _soda_scs_manager_create_default_webprotege_for_user($user, $project);
@@ -1244,31 +1235,6 @@ function _soda_scs_manager_create_default_project_for_user(UserInterface $user) 
     $logger = \Drupal::logger('soda_scs_manager');
     $logger->notice('Successfully synced user and keycloak groups for user: @username', ['@username' => $user->getDisplayName()]);
   }
-}
-
-/**
- * Create default filesystem for new user.
- */
-function _soda_scs_manager_create_default_filesystem_for_user(UserInterface $user, SodaScsProject $project) {
-
-  // Create the default filesystem.
-  $filesystem = SodaScsComponent::create([
-    'bundle' => 'soda_scs_filesystem_component',
-    'description' => t('The default Inter-App Folder for the user.'),
-    'imageUrl' => 'public://soda_scs_manager/images/shared.svg',
-    'health' => 'Unknown',
-    'label' => $user->getDisplayName() . '\'s default inter-app folder',
-    // Why fs- prefix is not necessary?
-    'machineName' => $user->getDisplayName() . '-default',
-    'owner' => $user->id(),
-    'partOfProjects' => [
-      [
-        'target_id' => $project->id(),
-      ],
-    ],
-  ]);
-
-  \Drupal::service('soda_scs_manager.component.actions')->createComponent($filesystem);
 }
 
 /**

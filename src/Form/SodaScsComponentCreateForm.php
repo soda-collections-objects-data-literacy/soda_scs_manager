@@ -212,20 +212,6 @@ class SodaScsComponentCreateForm extends ContentEntityForm {
       $form['#attached']['library'][] = 'soda_scs_manager/machineNameGenerator';
     }
 
-    // Make partOfProjects field required for filesystem components.
-    // @todo This is deprecated and handled by the component entity.
-    if ($this->bundle === 'soda_scs_filesystem_component' && isset($form['partOfProjects'])) {
-      $form['partOfProjects']['widget']['#required'] = TRUE;
-      $form['partOfProjects']['widget']['#description'] = $this->t('Mandatory field. Choose existing project or add new project <a href=":url">here</a>.', [
-        ':url' => Url::fromRoute('entity.soda_scs_project.add_form')->toString(),
-      ]);
-
-      // Hide the sharedWith field.
-      // @todo This is deprecated and handled by projects
-      // so we have to remove it.
-      $form['sharedWith']['#access'] = FALSE;
-    }
-
     // Get the default project of the current user.
     $currentUser = $this->currentUser->getAccount();
     $defaultProjectOfCurrentUser = $currentUser->default_project;

@@ -900,6 +900,36 @@ function soda_scs_manager_update_11011() {
 }
 
 /**
+ * Remove soda_scs_filesystem_component entities and bundle config.
+ */
+function soda_scs_manager_update_11012() {
+  $storage = \Drupal::entityTypeManager()->getStorage('soda_scs_component');
+  $ids = $storage->getQuery()
+    ->condition('bundle', 'soda_scs_filesystem_component')
+    ->accessCheck(FALSE)
+    ->execute();
+
+  if (!empty($ids)) {
+    $entities = $storage->loadMultiple($ids);
+    $storage->delete($entities);
+  }
+
+  // Remove bundle config if it exists.
+  $config_factory = \Drupal::configFactory();
+  $config_name = 'language.content_settings.soda_scs_component.soda_scs_filesystem_component';
+  if ($config_factory->get($config_name)->get('id')) {
+    $config_factory->getEditable($config_name)->delete();
+  }
+
+  \Drupal::service('entity_type.bundle.info')->clearCachedBundles();
+
+  $count = count($ids);
+  return $count > 0
+    ? t('Removed @count filesystem component entity/entities and bundle config.', ['@count' => $count])
+    : t('Removed filesystem component bundle config. No entities to delete.');
+}
+
+/**
  * Helper function to manually restore config entities from backup file.
  *
  * Usage: drush php:eval "_soda_scs_manager_restore_from_backup('/path/to/backup.json')"

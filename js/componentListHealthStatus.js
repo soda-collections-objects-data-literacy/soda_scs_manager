@@ -12,10 +12,7 @@
         }
 
         // Only update health for components that support health checks.
-        if (
-          bundle === 'soda_scs_filesystem_component' ||
-          bundle === 'soda_scs_triplestore_component'
-        ) {
+        if (bundle === 'soda_scs_triplestore_component') {
           return;
         }
 

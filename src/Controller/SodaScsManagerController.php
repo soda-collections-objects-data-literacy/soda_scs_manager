@@ -130,11 +130,6 @@ class SodaScsManagerController extends ControllerBase {
         $projectEntities = $connectedComponents->referencedEntities();
         /** @var \Drupal\soda_scs_manager\Entity\SodaScsComponentInterface $projectEntity */
         foreach ($projectEntities as $projectEntity) {
-          // Do not show Inter-App folder on the dashboard.
-          if ($projectEntity->bundle() === 'soda_scs_filesystem_component') {
-            continue;
-          }
-
           $projectBundleInfo = $this->bundleInfo->getBundleInfo($projectEntity->getEntityTypeId())[$projectEntity->bundle()];
           $projectLabel = $project->label();
 
@@ -273,11 +268,6 @@ class SodaScsManagerController extends ControllerBase {
     $entitiesByUser = [];
     /** @var \Drupal\soda_scs_manager\Entity\SodaScsStackInterface|\Drupal\soda_scs_manager\Entity\SodaScsComponentInterface $entity */
     foreach ($entities as $entity) {
-      // Do not show Inter-App folder on the dashboard.
-      if ($entity->getEntityTypeId() === 'soda_scs_component' && $entity->bundle() === 'soda_scs_filesystem_component') {
-        continue;
-      }
-
       $bundleInfo = $this->bundleInfo->getBundleInfo($entity->getEntityTypeId())[$entity->bundle()];
       if ($entity->getOwner() !== NULL && $entity->getOwner()->getDisplayName() !== NULL) {
         $username = $entity->getOwner()->getDisplayName();
@@ -287,15 +277,10 @@ class SodaScsManagerController extends ControllerBase {
       }
 
       // Use service link for the card URL when available.
-      // Filesystem components don't have service links.
       if ($entity->getEntityTypeId() === 'soda_scs_stack') {
         $url = Url::fromRoute('soda_scs_manager.stack.service_link', [
           'soda_scs_stack' => $entity->id(),
         ]);
-      }
-      elseif ($entity->bundle() === 'soda_scs_filesystem_component') {
-        // Filesystem components have no service link, use NULL.
-        $url = NULL;
       }
       else {
         $url = Url::fromRoute('soda_scs_manager.component.service_link', [
@@ -435,11 +420,9 @@ class SodaScsManagerController extends ControllerBase {
     $componentBundles = $this->bundleInfo->getBundleInfo('soda_scs_component');
 
     // Filter component bundles to only include
-    // 'soda_scs_filesystem_component',
     // 'soda_scs_sql_component',
     // 'soda_scs_triplestore_component'.
     $componentBundles = array_intersect_key($componentBundles, [
-      'soda_scs_filesystem_component' => TRUE,
       'soda_scs_sql_component' => TRUE,
       'soda_scs_triplestore_component' => TRUE,
     ]);

@@ -111,20 +111,6 @@ class SodaScsComponentController extends ControllerBase {
 
       $bundle = $component->get('bundle')->value;
       switch ($bundle) {
-        case 'soda_scs_filesystem_component':
-          $filesystemHealth = $this->sodaScsComponentHelpers
-            ->checkFilesystemHealth($component->get('machineName')->value);
-          if (!is_array($filesystemHealth) || empty($filesystemHealth['status'])) {
-            return new JsonResponse([
-              'status' => [
-                'message' => $this->t("Filesystem health check failed for component @component.", ['@component' => $component->id()]),
-                'success' => FALSE,
-                'status' => (is_array($filesystemHealth) && isset($filesystemHealth['status'])) ? $filesystemHealth['status'] : 'unavailable',
-              ],
-            ], 200);
-          }
-          return new JsonResponse(['status' => $filesystemHealth]);
-
         case 'soda_scs_sql_component':
           $sqlHealth = $this->sodaScsComponentHelpers->checkSqlHealth((int) $component->id());
           if (!is_array($sqlHealth) || empty($sqlHealth['status'])) {

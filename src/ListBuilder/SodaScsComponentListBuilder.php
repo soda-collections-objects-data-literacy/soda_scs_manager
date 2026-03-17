@@ -457,12 +457,6 @@ class SodaScsComponentListBuilder extends EntityListBuilder {
           );
           break;
 
-        case 'soda_scs_filesystem_component':
-          $healthResult = $this->sodaScsComponentHelpers->checkFilesystemHealth(
-            $entity->get('machineName')->value,
-          );
-          break;
-
         default:
           // Unknown bundle type.
           return [
@@ -569,7 +563,6 @@ class SodaScsComponentListBuilder extends EntityListBuilder {
     // Type filter (dropdown).
     $typeOptions = [
       '' => $this->t('- Any -'),
-      'soda_scs_filesystem_component' => $this->t('Inter-App folder'),
       'soda_scs_sql_component' => $this->t('SQL Database'),
       'soda_scs_triplestore_component' => $this->t('Triplestore'),
       'soda_scs_webprotege_component' => $this->t('WebProtégé'),
@@ -748,7 +741,6 @@ class SodaScsComponentListBuilder extends EntityListBuilder {
     // Type dropdown with proper option elements.
     $typeOptions = [
       '' => $this->t('- Any Type -'),
-      'soda_scs_filesystem_component' => $this->t('Inter-App folder'),
       'soda_scs_sql_component' => $this->t('SQL Database'),
       'soda_scs_triplestore_component' => $this->t('Triplestore'),
       'soda_scs_webprotege_component' => $this->t('WebProtégé'),
@@ -856,7 +848,6 @@ class SodaScsComponentListBuilder extends EntityListBuilder {
    */
   protected function formatBundleType(string $bundle): TranslatableMarkup|string {
     $typeMap = [
-      'soda_scs_filesystem_component'  => $this->t('Inter-App folder'),
       'soda_scs_sql_component' => $this->t('SQL Database'),
       'soda_scs_triplestore_component' => $this->t('Triplestore'),
       'soda_scs_webprotege_component'  => $this->t('WebProtégé'),

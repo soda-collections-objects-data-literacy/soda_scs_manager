@@ -15,8 +15,6 @@ use Drupal\soda_scs_manager\Entity\SodaScsComponentInterface;
  * A bundle class for SODa SCS Component.
  *
  * Adds additional fields to the component bundle.
- * soda_scs_filesystem_component:
- *   - shared with
  * soda_scs_sql_component:
  *   - part of stack
  * soda_scs_triplestore_component:
@@ -39,36 +37,6 @@ class SodaScsComponentBundle extends SodaScsComponent implements SodaScsComponen
   public static function bundleFieldDefinitions(EntityTypeInterface $entity_type, $bundle, array $base_field_definitions) {
     $definitions = [];
     switch ($bundle) {
-      case 'soda_scs_filesystem_component':
-        $definitions['sharedWith'] = BundleFieldDefinition::create('entity_reference')
-          ->setLabel(new TranslatableMarkup('Shared With'))
-          ->setDescription(new TranslatableMarkup('The components that are shared with this component.'))
-          ->setSetting('target_type', 'soda_scs_component')
-          ->setSetting('handler', 'default')
-          ->setSetting('handler_settings', [
-            'target_bundles' => [
-              'soda_scs_wisski_component' => 'soda_scs_wisski_component',
-              'soda_scs_jupyter_component' => 'soda_scs_jupyter_component',
-            ],
-            'auto_create' => FALSE,
-            'filter' => [
-              'type' => 'soda_scs_component_access',
-            ],
-          ])
-          ->setCardinality(FieldStorageDefinitionInterface::CARDINALITY_UNLIMITED)
-          ->setDisplayConfigurable('form', FALSE)
-          ->setDisplayOptions('form', [
-            'type' => 'options_buttons',
-            'weight' => 50,
-          ])
-          ->setDisplayConfigurable('view', FALSE)
-          ->setDisplayOptions('view', [
-            'label' => 'above',
-            'type' => 'entity_reference_label',
-            'weight' => 50,
-          ]);
-        break;
-
       case 'soda_scs_sql_component':
         $definitions['partOfStack'] = BundleFieldDefinition::create('entity_reference')
           ->setLabel(new TranslatableMarkup('Part of Stack'))

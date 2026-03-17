@@ -24,7 +24,6 @@ use Drupal\soda_scs_manager\ValueObject\SodaScsResult;
  *   - a database in MariaDB
  *   - a repository in OpenGDB
  *   - an account of Nextcloud, Jupyterhub or WebProtégé.
- *   - a folder with user permissions on the filesystem.
  */
 class SodaScsComponentActions implements SodaScsComponentActionsInterface {
 
@@ -38,13 +37,6 @@ class SodaScsComponentActions implements SodaScsComponentActionsInterface {
    * @var \Drupal\Core\Entity\EntityTypeManagerInterface
    */
   protected EntityTypeManagerInterface $entityTypeManager;
-
-  /**
-   * The SCS filesystem actions service.
-   *
-   * @var \Drupal\soda_scs_manager\ComponentActions\SodaScsComponentActionsInterface
-   */
-  protected SodaScsComponentActionsInterface $sodaScsFilesystemComponentActions;
 
   /**
    * The SCS sql actions service.
@@ -79,8 +71,6 @@ class SodaScsComponentActions implements SodaScsComponentActionsInterface {
    */
   public function __construct(
     EntityTypeManagerInterface $entityTypeManager,
-    #[Autowire(service: 'soda_scs_manager.filesystem_component.actions')]
-    SodaScsComponentActionsInterface $sodaScsFilesystemComponentActions,
     #[Autowire(service: 'soda_scs_manager.sql_component.actions')]
     SodaScsComponentActionsInterface $sodaScsSqlComponentActions,
     #[Autowire(service: 'soda_scs_manager.triplestore_component.actions')]
@@ -92,7 +82,6 @@ class SodaScsComponentActions implements SodaScsComponentActionsInterface {
     TranslationInterface $stringTranslation,
   ) {
     $this->entityTypeManager = $entityTypeManager;
-    $this->sodaScsFilesystemComponentActions = $sodaScsFilesystemComponentActions;
     $this->sodaScsSqlComponentActions = $sodaScsSqlComponentActions;
     $this->sodaScsTriplestoreComponentActions = $sodaScsTriplestoreComponentActions;
     $this->sodaScsWisskiComponentActions = $sodaScsWisskiComponentActions;
@@ -113,9 +102,6 @@ class SodaScsComponentActions implements SodaScsComponentActionsInterface {
    */
   public function createComponent(SodaScsComponentInterface $entity): array {
     switch ($entity->bundle()) {
-      case 'soda_scs_filesystem_component':
-        return $this->sodaScsFilesystemComponentActions->createComponent($entity);
-
       case 'soda_scs_sql_component':
         return $this->sodaScsSqlComponentActions->createComponent($entity);
 
@@ -198,9 +184,6 @@ class SodaScsComponentActions implements SodaScsComponentActionsInterface {
   public function deleteComponent(SodaScsComponentInterface $component): array {
     // @todo slim down if there is no more logic
     switch ($component->bundle()) {
-      case 'soda_scs_filesystem_component':
-        return $this->sodaScsFilesystemComponentActions->deleteComponent($component);
-
       case 'soda_scs_wisski_component':
         return $this->sodaScsWisskiComponentActions->deleteComponent($component);
 
@@ -270,9 +253,6 @@ class SodaScsComponentActions implements SodaScsComponentActionsInterface {
   public function restoreFromSnapshot(SodaScsSnapshotInterface $snapshot, ?string $tempDir): SodaScsResult {
     $component = $snapshot->get('snapshotOfComponent')->entity;
     switch ($component->bundle()) {
-      case 'soda_scs_filesystem_component':
-        return $this->sodaScsFilesystemComponentActions->restoreFromSnapshot($snapshot, $tempDir);
-
       case 'soda_scs_sql_component':
         return $this->sodaScsSqlComponentActions->restoreFromSnapshot($snapshot, $tempDir);
 

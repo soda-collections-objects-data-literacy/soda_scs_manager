@@ -37,13 +37,6 @@ class SodaScsComponentActionsTest extends UnitTestCase {
   protected $entityTypeManager;
 
   /**
-   * The mocked filesystem component actions.
-   *
-   * @var \Drupal\soda_scs_manager\ComponentActions\SodaScsComponentActionsInterface|\Prophecy\Prophecy\ObjectProphecy
-   */
-  protected $filesystemComponentActions;
-
-  /**
    * The mocked SQL component actions.
    *
    * @var \Drupal\soda_scs_manager\ComponentActions\SodaScsComponentActionsInterface|\Prophecy\Prophecy\ObjectProphecy
@@ -86,7 +79,6 @@ class SodaScsComponentActionsTest extends UnitTestCase {
 
     // Create mock objects.
     $this->entityTypeManager = $this->prophesize(EntityTypeManagerInterface::class);
-    $this->filesystemComponentActions = $this->prophesize(SodaScsComponentActionsInterface::class);
     $this->sqlComponentActions = $this->prophesize(SodaScsComponentActionsInterface::class);
     $this->triplestoreComponentActions = $this->prophesize(SodaScsComponentActionsInterface::class);
     $this->wisskiComponentActions = $this->prophesize(SodaScsComponentActionsInterface::class);
@@ -96,37 +88,12 @@ class SodaScsComponentActionsTest extends UnitTestCase {
     // Create the service instance.
     $this->componentActions = new SodaScsComponentActions(
       $this->entityTypeManager->reveal(),
-      $this->filesystemComponentActions->reveal(),
       $this->sqlComponentActions->reveal(),
       $this->triplestoreComponentActions->reveal(),
       $this->wisskiComponentActions->reveal(),
       $this->webprotegeComponentActions->reveal(),
       $this->stringTranslation->reveal()
     );
-  }
-
-  /**
-   * Tests createComponent delegates to filesystem component actions.
-   *
-   * @covers ::createComponent
-   */
-  public function testCreateComponentFilesystem(): void {
-    $component = $this->prophesize(SodaScsComponentInterface::class);
-    $component->bundle()->willReturn('soda_scs_filesystem_component');
-
-    $expectedResult = [
-      'success' => TRUE,
-      'message' => 'Filesystem component created',
-      'data' => ['filesystemComponent' => $component->reveal()],
-    ];
-
-    $this->filesystemComponentActions
-      ->createComponent($component->reveal())
-      ->willReturn($expectedResult);
-
-    $result = $this->componentActions->createComponent($component->reveal());
-
-    $this->assertEquals($expectedResult, $result);
   }
 
   /**
@@ -258,12 +225,6 @@ class SodaScsComponentActionsTest extends UnitTestCase {
 
     // Set up expectation on the correct service.
     switch ($expectedService) {
-      case 'filesystem':
-        $this->filesystemComponentActions
-          ->deleteComponent($component->reveal())
-          ->willReturn($expectedResult);
-        break;
-
       case 'sql':
         $this->sqlComponentActions
           ->deleteComponent($component->reveal())
@@ -389,7 +350,6 @@ class SodaScsComponentActionsTest extends UnitTestCase {
    */
   public static function componentBundleProvider(): array {
     return [
-      'filesystem' => ['soda_scs_filesystem_component', 'filesystem'],
       'sql' => ['soda_scs_sql_component', 'sql'],
       'triplestore' => ['soda_scs_triplestore_component', 'triplestore'],
       'wisski' => ['soda_scs_wisski_component', 'wisski'],
