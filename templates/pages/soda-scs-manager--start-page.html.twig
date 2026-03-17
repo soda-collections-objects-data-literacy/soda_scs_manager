@@ -10,6 +10,25 @@
  */
 #}
 <div{{ attributes.addClass('soda-scs-manager--start-page') }}>
+  {# Connect Nextcloud modal - shown when user has not connected Nextcloud (Login Flow v2). #}
+  <div class="scs-manager--nextcloud-connect-wrapper">
+    <div class="scs-manager--nextcloud-connect-modal hidden fixed inset-0 z-50 flex items-center justify-center bg-black/50" aria-hidden="true" role="dialog" aria-labelledby="nextcloud-connect-title">
+      <div class="scs-manager--nextcloud-connect-modal-content bg-white rounded-lg shadow-xl p-6 max-w-md mx-4">
+        <h2 id="nextcloud-connect-title" class="text-xl font-semibold mb-4">{{ 'Connect your Nextcloud account'|t }}</h2>
+        <p class="text-gray-600 mb-4">{{ 'To use Nextcloud with WissKI and other components, connect your account once. A popup will open where you log in to Nextcloud. You can also connect later from your <a href=":url">Connected Accounts</a> page.'|t({':url': connected_accounts_url}) }}</p>
+        <p class="scs-manager--nextcloud-connect-status hidden mb-2 text-sm"></p>
+        <p class="scs-manager--nextcloud-connect-error hidden mb-2 text-sm text-red-600"></p>
+        <div class="flex gap-2">
+          <button type="button" class="scs-manager--nextcloud-connect-btn px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700">
+            {{ 'Connect Nextcloud'|t }}
+          </button>
+          <button type="button" class="scs-manager--nextcloud-connect-dismiss px-4 py-2 border rounded hover:bg-gray-100">
+            {{ 'Later'|t }}
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
   <div class="soda-scs-manager--header-section">
     <h1>{{ 'Hi @user!'|t({'@user': user}) }}</h1>
   </div>

@@ -17,6 +17,7 @@ use Drupal\Core\Messenger\MessengerInterface;
 use Drupal\Core\StringTranslation\StringTranslationTrait;
 use Drupal\Core\StringTranslation\TranslationInterface;
 use Drupal\Core\TypedData\Exception\MissingDataException;
+use Drupal\Core\Url;
 use Drupal\Core\Utility\Error;
 use Drupal\soda_scs_manager\Entity\SodaScsComponentInterface;
 use Drupal\soda_scs_manager\Entity\SodaScsSnapshotInterface;
@@ -24,6 +25,7 @@ use Drupal\soda_scs_manager\Helpers\SodaScsComponentHelpers;
 use Drupal\soda_scs_manager\Helpers\SodaScsContainerHelpers;
 use Drupal\soda_scs_manager\Helpers\SodaScsHelpers;
 use Drupal\soda_scs_manager\Helpers\SodaScsKeycloakHelpers;
+use Drupal\soda_scs_manager\Helpers\SodaScsNextcloudHelpers;
 use Drupal\soda_scs_manager\Helpers\SodaScsPortainerHelpers;
 use Drupal\soda_scs_manager\Helpers\SodaScsProjectHelpers;
 use Drupal\soda_scs_manager\Helpers\SodaScsServiceHelpers;
@@ -161,6 +163,13 @@ class SodaScsWisskiComponentActions implements SodaScsComponentActionsInterface 
   protected SodaScsKeycloakHelpers $sodaScsKeycloakHelpers;
 
   /**
+   * The SCS Nextcloud helpers service.
+   *
+   * @var \Drupal\soda_scs_manager\Helpers\SodaScsNextcloudHelpers
+   */
+  protected SodaScsNextcloudHelpers $sodaScsNextcloudHelpers;
+
+  /**
    * The SCS Keycloak actions service.
    *
    * @var \Drupal\soda_scs_manager\RequestActions\SodaScsServiceRequestInterface
@@ -248,6 +257,8 @@ class SodaScsWisskiComponentActions implements SodaScsComponentActionsInterface 
     SodaScsRunRequestInterface $sodaScsDockerRunServiceActions,
     #[Autowire(service: 'soda_scs_manager.keycloak_service.helpers')]
     SodaScsKeycloakHelpers $sodaScsKeycloakHelpers,
+    #[Autowire(service: 'soda_scs_manager.nextcloud.helpers')]
+    SodaScsNextcloudHelpers $sodaScsNextcloudHelpers,
     #[Autowire(service: 'soda_scs_manager.keycloak_service.client.actions')]
     SodaScsServiceRequestInterface $sodaScsKeycloakServiceClientActions,
     #[Autowire(service: 'soda_scs_manager.keycloak_service.group.actions')]
@@ -287,6 +298,7 @@ class SodaScsWisskiComponentActions implements SodaScsComponentActionsInterface 
     $this->sodaScsDockerExecServiceActions = $sodaScsDockerExecServiceActions;
     $this->sodaScsDockerRunServiceActions = $sodaScsDockerRunServiceActions;
     $this->sodaScsKeycloakHelpers = $sodaScsKeycloakHelpers;
+    $this->sodaScsNextcloudHelpers = $sodaScsNextcloudHelpers;
     $this->sodaScsKeycloakServiceClientActions = $sodaScsKeycloakServiceClientActions;
     $this->sodaScsKeycloakServiceGroupActions = $sodaScsKeycloakServiceGroupActions;
     $this->sodaScsKeycloakServiceUserActions = $sodaScsKeycloakServiceUserActions;
@@ -549,6 +561,23 @@ class SodaScsWisskiComponentActions implements SodaScsComponentActionsInterface 
         }
       }
 
+      // Ensure Nextcloud credentials exist (stored or auto-created via OIDC).
+      $owner = $component->getOwner();
+      $nextcloudCredentials = NULL;
+      if ($owner) {
+        $nextcloudCredentials = $this->sodaScsNextcloudHelpers->ensureCredentials($owner, $machineName);
+        if (!$nextcloudCredentials) {
+          $connectUrl = Url::fromRoute('openid_connect.accounts_controller_index', [
+            'user' => $owner->id(),
+          ])->toString();
+          throw new \Exception(sprintf(
+            'Nextcloud account is not connected for this user. Visit %s to connect before creating a WissKI stack.',
+            $connectUrl
+          ));
+        }
+      }
+
+      // Set the version settings for the WissKI component.
       if ($component->get('developmentInstance')->value) {
         $versionSettings = [
           'mode' => 'development',
@@ -622,6 +651,8 @@ class SodaScsWisskiComponentActions implements SodaScsComponentActionsInterface 
         'keycloakAdminGroup' => $keycloakWisskiInstanceAdminGroupName,
         'keycloakUserGroup' => $keycloakWisskiInstanceUserGroupName,
         'machineName' => $machineName,
+        'nextcloudAppPassword' => $nextcloudCredentials['appPassword'] ?? '',
+        'nextcloudUsername' => $nextcloudCredentials['username'] ?? '',
         'openidConnectClientSecret' => $openidConnectClientSecret,
         'sqlServicePassword' => $sqlComponentServiceKeyPassword ?? '',
         'triplestoreServicePassword' => $triplestoreComponentServiceKeyPassword ?? '',

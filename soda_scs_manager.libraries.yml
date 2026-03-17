@@ -114,3 +114,13 @@ startPagePie:
     - core/drupal
     - core/once
     - soda_scs_manager/globalStyling
+
+nextcloudConnect:
+  version: 1.x
+  js:
+    js/nextcloudConnect.js: {}
+  dependencies:
+    - core/drupal
+    - core/once
+    - core/drupalSettings
+    - soda_scs_manager/globalStyling

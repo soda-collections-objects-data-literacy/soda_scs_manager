@@ -120,16 +120,16 @@
         `);
       }
 
-      // Handle all SODA SCS forms.
-      once('throbber-overlay-form', 'form[id^="soda-scs"]', context).forEach(function(form) {
+      // Handle all SODA SCS forms (form IDs use underscores, e.g. soda_scs_manager_component_create_form).
+      once('throbber-overlay-form', 'form[id^="soda_scs"], form[id^="soda-scs"]', context).forEach(function(form) {
         const $form = $(form);
         const formId = $form.attr('id');
 
         // Handle form submission event.
         $form.on('submit', function(e) {
           // Check if this is a create form (component or stack).
-          const isCreateForm = formId === 'soda-scs-manager-component-create-form' ||
-                               formId === 'soda-scs-manager-stack-create-form';
+          const isCreateForm = formId === 'soda_scs_manager_component_create_form' ||
+                               formId === 'soda_scs_manager_stack_create_form';
 
           if (isCreateForm) {
             // Show special message for creation forms.
@@ -152,11 +152,8 @@
           // Show the overlay on form submission.
           $('.soda-scs-manager__throbber-overlay').addClass('soda-scs-manager__throbber-overlay--active');
 
-          console.log('operationUuid', operationUuid);
-          console.log('progressPollingSupported', progressPollingSupported);
           // Start polling if operation UUID is available and polling is supported.
           if (operationUuid && progressPollingSupported) {
-            console.log('Starting polling');
             startProgressPolling(operationUuid);
           }
         });
@@ -183,13 +180,10 @@
           const progressPollingSupported = $(this).data('progress-polling') === true ||
                                            $(this).data('progress-polling') === 'true' ||
                                            (settings.sodaScsManager && settings.sodaScsManager.progressPolling === true);
-          console.log('progressPollingSupported', progressPollingSupported);
-          console.log('operationUuid', operationUuid);
           $('.soda-scs-manager__throbber-overlay').addClass('soda-scs-manager__throbber-overlay--active');
 
           // Start polling if operation UUID is available and polling is supported.
           if (operationUuid && progressPollingSupported) {
-            console.log('Starting polling');
             startProgressPolling(operationUuid);
           }
         });
@@ -207,8 +201,8 @@
           }
 
           // Check if this is a create form (component or stack).
-          const isCreateForm = formId === 'soda-scs-manager-component-create-form' ||
-                               formId === 'soda-scs-manager-stack-create-form';
+          const isCreateForm = formId === 'soda_scs_manager_component_create_form' ||
+                               formId === 'soda_scs_manager_stack_create_form';
 
           if (isCreateForm) {
             // Show special message for creation forms.

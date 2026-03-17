@@ -8,34 +8,13 @@ use Drupal\Core\Config\ConfigFactoryInterface;
 use Drupal\Core\Extension\ModuleHandlerInterface;
 use Drupal\Core\Routing\RouteSubscriberBase;
 use Drupal\openid_connect\Plugin\OpenIDConnectClientManager;
-use Symfony\Component\DependencyInjection\ContainerInterface;
+use Symfony\Component\DependencyInjection\Attribute\Autowire;
 use Symfony\Component\Routing\RouteCollection;
 
 /**
  * Listens to the dynamic route events.
  */
 class SodaScsDisableDrupalLoginRouteSubscriber extends RouteSubscriberBase {
-
-  /**
-   * The config factory.
-   *
-   * @var \Drupal\Core\Config\ConfigFactoryInterface
-   */
-  protected ConfigFactoryInterface $configFactory;
-
-  /**
-   * The module handler.
-   *
-   * @var \Drupal\Core\Extension\ModuleHandlerInterface
-   */
-  protected ModuleHandlerInterface $moduleHandler;
-
-  /**
-   * The OpenID Connect client plugin manager.
-   *
-   * @var \Drupal\openid_connect\Plugin\OpenIDConnectClientManager|null
-   */
-  protected ?OpenIDConnectClientManager $openIdConnectClientManager = NULL;
 
   /**
    * Constructs a SodaScsDisableDrupalLoginRouteSubscriber object.
@@ -45,32 +24,14 @@ class SodaScsDisableDrupalLoginRouteSubscriber extends RouteSubscriberBase {
    * @param \Drupal\Core\Extension\ModuleHandlerInterface $moduleHandler
    *   The module handler.
    * @param \Drupal\openid_connect\Plugin\OpenIDConnectClientManager|null $openIdConnectClientManager
-   *   The OpenID Connect client plugin manager.
+   *   The OpenID Connect client plugin manager (optional if module disabled).
    */
   public function __construct(
-    ConfigFactoryInterface $configFactory,
-    ModuleHandlerInterface $moduleHandler,
-    ?OpenIDConnectClientManager $openIdConnectClientManager = NULL,
-  ) {
-    $this->configFactory = $configFactory;
-    $this->moduleHandler = $moduleHandler;
-    $this->openIdConnectClientManager = $openIdConnectClientManager;
-  }
-
-  /**
-   * {@inheritdoc}
-   */
-  public static function create(ContainerInterface $container) {
-    $openIdConnectClientManager = NULL;
-    if ($container->has('plugin.manager.openid_connect_client')) {
-      $openIdConnectClientManager = $container->get('plugin.manager.openid_connect_client');
-    }
-    return new static(
-      $container->get('config.factory'),
-      $container->get('module_handler'),
-      $openIdConnectClientManager,
-    );
-  }
+    protected ConfigFactoryInterface $configFactory,
+    protected ModuleHandlerInterface $moduleHandler,
+    #[Autowire(service: '?plugin.manager.openid_connect_client')]
+    protected ?OpenIDConnectClientManager $openIdConnectClientManager = NULL,
+  ) {}
 
   /**
    * Check if SSO OpenID Connect provider is configured.

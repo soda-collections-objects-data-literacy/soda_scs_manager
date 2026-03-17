@@ -15,6 +15,8 @@ use Drupal\Core\Entity\EntityTypeManagerInterface;
 use Drupal\Core\Form\FormStateInterface;
 use Drupal\Core\Logger\LoggerChannelFactoryInterface;
 use Drupal\Core\Session\AccountProxyInterface;
+use Drupal\Core\Url;
+use Drupal\soda_scs_manager\Helpers\SodaScsNextcloudHelpers;
 use Drupal\soda_scs_manager\StackActions\SodaScsStackActionsInterface;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 use Drupal\Core\Utility\Error;
@@ -72,6 +74,13 @@ class SodaScsStackCreateForm extends ContentEntityForm {
   protected SodaScsStackActionsInterface $sodaScsStackActions;
 
   /**
+   * The Nextcloud helpers.
+   *
+   * @var \Drupal\soda_scs_manager\Helpers\SodaScsNextcloudHelpers
+   */
+  protected SodaScsNextcloudHelpers $nextcloudHelpers;
+
+  /**
    * Constructs a new SodaScsComponentCreateForm.
    *
    * @param \Drupal\Core\Session\AccountProxyInterface $currentUser
@@ -90,6 +99,8 @@ class SodaScsStackCreateForm extends ContentEntityForm {
    *   The Soda SCS API Actions service.
    * @param \Drupal\Core\Entity\EntityTypeManagerInterface $entityTypeManager
    *   The entity type manager.
+   * @param \Drupal\soda_scs_manager\Helpers\SodaScsNextcloudHelpers $nextcloudHelpers
+   *   The Nextcloud helpers.
    */
   public function __construct(
     AccountProxyInterface $currentUser,
@@ -101,6 +112,8 @@ class SodaScsStackCreateForm extends ContentEntityForm {
     #[Autowire(service: 'soda_scs_manager.stack.actions')]
     SodaScsStackActionsInterface $sodaScsStackActions,
     EntityTypeManagerInterface $entityTypeManager,
+    #[Autowire(service: 'soda_scs_manager.nextcloud.helpers')]
+    SodaScsNextcloudHelpers $nextcloudHelpers,
   ) {
     parent::__construct($entity_repository, $entity_type_bundle_info, $time);
     $this->currentUser = $currentUser;
@@ -108,6 +121,7 @@ class SodaScsStackCreateForm extends ContentEntityForm {
     $this->loggerFactory = $loggerFactory;
     $this->sodaScsStackActions = $sodaScsStackActions;
     $this->entityTypeManager = $entityTypeManager;
+    $this->nextcloudHelpers = $nextcloudHelpers;
   }
 
   /**
@@ -123,6 +137,7 @@ class SodaScsStackCreateForm extends ContentEntityForm {
       $container->get('datetime.time'),
       $container->get('soda_scs_manager.stack.actions'),
       $container->get('entity_type.manager'),
+      $container->get('soda_scs_manager.nextcloud.helpers'),
     );
   }
 
@@ -280,6 +295,27 @@ class SodaScsStackCreateForm extends ContentEntityForm {
     // Check if the machineName is longer than 30 characters.
     if (strlen($machineName) > 30) {
       $form_state->setErrorByName('machineName', $this->t('The machine name must not exceed 30 characters.'));
+    }
+
+    // For WissKI stacks, ensure Nextcloud credentials are available.
+    // Tries stored credentials first; if missing, attempts auto-creation via
+    // the current OIDC token (Flow B). If both fail, block submission.
+    if ($this->bundle === 'soda_scs_wisski_stack') {
+      $owner = $this->entityTypeManager->getStorage('user')
+        ->load($this->currentUser->id());
+      if ($owner) {
+        $machineName = $form_state->getValue('machineName')[0]['value'] ?? 'scs-wisski';
+        $credentials = $this->nextcloudHelpers->ensureCredentials($owner, $machineName);
+        if ($credentials === NULL) {
+          $connectUrl = Url::fromRoute('openid_connect.accounts_controller_index', [
+            'user' => $this->currentUser->id(),
+          ])->toString();
+          $form_state->setErrorByName('', $this->t(
+            'Your Nextcloud account is not connected. <a href=":url">Connect your Nextcloud account</a> before creating a WissKI stack.',
+            [':url' => $connectUrl]
+          ));
+        }
+      }
     }
 
     return TRUE;

@@ -360,6 +360,18 @@ class SodaScsPortainerServiceActions implements SodaScsServiceRequestInterface {
         "name" => "MODE",
         "value" => $requestParams['mode'],
       ],
+      ...(!empty($requestParams['nextcloudUsername']) && !empty($requestParams['nextcloudAppPassword'])
+        ? [
+          [
+            "name" => "NEXTCLOUD_USER",
+            "value" => $requestParams['nextcloudUsername'],
+          ],
+          [
+            "name" => "NEXTCLOUD_APP_PASSWORD",
+            "value" => $requestParams['nextcloudAppPassword'],
+          ],
+        ]
+        : []),
       [
         "name" => "OPENID_CONNECT_CLIENT_SECRET",
         "value" => $requestParams['openidConnectClientSecret'],
@@ -379,7 +391,7 @@ class SodaScsPortainerServiceActions implements SodaScsServiceRequestInterface {
       // @ todo Set in RequestParams.
       [
         "name" => "SHARED_DATA_VOLUME",
-        "value" => $requestParams['sharedDataVolume'] ?? 'scs--shared-data',
+        "value" => $requestParams['sharedDataVolume'] ?? 'shared-data',
       ],
       [
         "name" => "TS_PASSWORD",

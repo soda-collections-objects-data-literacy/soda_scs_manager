@@ -587,6 +587,7 @@ function soda_scs_manager_theme($existing, $type, $theme, $path) {
       'variables' => [
         'attributes' => NULL,
         'user' => NULL,
+        'connected_accounts_url' => '',
       ],
       'template' => 'pages/soda-scs-manager--start-page',
     ],
@@ -970,6 +971,79 @@ function soda_scs_manager_user_insert(UserInterface $user) {
  */
 function soda_scs_manager_page_attachments(array &$attachments) {
   $attachments['#attached']['library'][] = 'soda_scs_manager/globalStyling';
+}
+
+/**
+ * Implements hook_form_alter() for openid_connect_accounts_form.
+ *
+ * Adds Nextcloud Connect section to the Connected Accounts page
+ * (/user/{user}/connected-accounts).
+ */
+function soda_scs_manager_form_openid_connect_accounts_form_alter(&$form, &$form_state, $form_id) {
+  $form['#attached']['library'][] = 'soda_scs_manager/nextcloudConnect';
+
+  $form['soda_scs_nextcloud'] = [
+    '#type' => 'fieldset',
+    '#title' => \Drupal::translation()->translate('Nextcloud'),
+    '#weight' => 20,
+  ];
+
+  $form['soda_scs_nextcloud']['wrapper'] = [
+    '#type' => 'container',
+    '#attributes' => [
+      'class' => [
+        'scs-manager--nextcloud-connect-wrapper',
+        'scs-manager--nextcloud-connect-inline',
+      ],
+    ],
+  ];
+
+  $form['soda_scs_nextcloud']['wrapper']['status'] = [
+    '#type' => 'markup',
+    '#markup' => '<p class="scs-manager--nextcloud-connect-status-inline" data-status="unknown">' . \Drupal::translation()->translate('Loading...') . '</p>',
+    '#weight' => 0,
+  ];
+
+  $form['soda_scs_nextcloud']['wrapper']['fallback_hint'] = [
+    '#type' => 'markup',
+    '#markup' => '<p class="scs-manager--nextcloud-connect-fallback-hint" style="margin-top:0.5em;font-size:0.9em;color:#666;">' . \Drupal::translation()->translate('If SSO does not work, connect via app password:') . '</p>',
+    '#weight' => 1,
+  ];
+
+  $form['soda_scs_nextcloud']['wrapper']['connect'] = [
+    '#type' => 'button',
+    '#value' => \Drupal::translation()->translate('Connect via app password'),
+    '#attributes' => [
+      'class' => ['scs-manager--nextcloud-connect-btn', 'button'],
+      'type' => 'button',
+    ],
+    '#weight' => 2,
+  ];
+
+  $form['soda_scs_nextcloud']['status_check'] = [
+    '#type' => 'container',
+    '#attributes' => [
+      'class' => ['scs-manager--nextcloud-status-check'],
+      'style' => 'margin-top: 1rem; padding-top: 1rem; border-top: 1px solid #ddd;',
+    ],
+    '#weight' => 10,
+  ];
+
+  $form['soda_scs_nextcloud']['status_check']['line'] = [
+    '#type' => 'markup',
+    '#markup' => '<p class="scs-manager--nextcloud-status-check-line"><span class="scs-manager--nextcloud-status-check-label">' . \Drupal::translation()->translate('Status') . ': </span><span class="scs-manager--nextcloud-status-check-result" data-status="unknown">' . \Drupal::translation()->translate('Checking...') . '</span></p>',
+    '#weight' => 0,
+  ];
+
+  $form['soda_scs_nextcloud']['status_check']['verify'] = [
+    '#type' => 'button',
+    '#value' => \Drupal::translation()->translate('Verify connection'),
+    '#attributes' => [
+      'class' => ['scs-manager--nextcloud-verify-btn', 'button', 'button--small'],
+      'type' => 'button',
+    ],
+    '#weight' => 1,
+  ];
 }
 
 /**

@@ -156,10 +156,10 @@ class SodaScsSettingsForm extends ConfigFormBase {
       '#description' => $this->t('The database port, like 3306.'),
     ];
     $form['database']['fields']['dbRootPassword'] = [
-      '#type' => 'textfield',
+      '#type' => 'password',
       '#title' => $this->t('Root password'),
-      '#default_value' => $this->config('soda_scs_manager.settings')->get('dbRootPassword'),
-      '#description' => $this->t('The root password, like root.'),
+      '#description' => $this->t('The database root password. Leave blank to keep the current value.'),
+      '#attributes' => ['autocomplete' => 'new-password'],
     ];
 
     $form['database']['fields']['dbManagementHost'] = [
@@ -239,10 +239,10 @@ class SodaScsSettingsForm extends ConfigFormBase {
     ];
 
     $form['keycloak']['keycloakTabs']['generalSettings']['fields']['adminPassword'] = [
-      '#type' => 'textfield',
+      '#type' => 'password',
       '#title' => $this->t('Admin password'),
-      '#default_value' => $this->config('soda_scs_manager.settings')->get('keycloak')['keycloakTabs']['generalSettings']['fields']['adminPassword'] ?? '',
-      '#description' => $this->t('The keycloak admin password, like admin.'),
+      '#description' => $this->t('The Keycloak admin password. Leave blank to keep the current value.'),
+      '#attributes' => ['autocomplete' => 'new-password'],
     ];
 
     $form['keycloak']['keycloakTabs']['generalSettings']['fields']['OpenIdConnectClientMachineName'] = [
@@ -515,7 +515,7 @@ class SodaScsSettingsForm extends ConfigFormBase {
       '#type' => 'textfield',
       '#title' => $this->t('Base URL'),
       '#default_value' => $this->config('soda_scs_manager.settings')->get('nextcloud')['generalSettings']['baseUrl'] ?? '',
-      '#description' => $this->t('The base URL, like https://nextcloud.scs.sammlungen.io.'),
+      '#description' => $this->t('The base URL, like https://nextcloud.scs.sammlungen.io. App passwords are created for the component owner using their OIDC token.'),
     ];
 
     // Triplestore settings tab.
@@ -550,10 +550,10 @@ class SodaScsSettingsForm extends ConfigFormBase {
       '#description' => $this->t('The admin username, like admin.'),
     ];
     $form['triplestore']['generalSettings']['adminPassword'] = [
-      '#type' => 'textfield',
+      '#type' => 'password',
       '#title' => $this->t('Admin password'),
-      '#default_value' => $this->config('soda_scs_manager.settings')->get('triplestore')['generalSettings']['adminPassword'] ?? '',
-      '#description' => $this->t('The admin password, like password.'),
+      '#description' => $this->t('The triplestore admin password. Leave blank to keep the current value.'),
+      '#attributes' => ['autocomplete' => 'new-password'],
     ];
 
     $form['triplestore']['routes'] = [
@@ -739,10 +739,10 @@ class SodaScsSettingsForm extends ConfigFormBase {
     ];
 
     $form['portainer']['portainerOptions']['authenticationToken'] = [
-      '#type' => 'textfield',
+      '#type' => 'password',
       '#title' => $this->t('Authentication token'),
-      '#default_value' => $this->config('soda_scs_manager.settings')->get('portainer')['portainerOptions']['authenticationToken'] ?? '',
-      '#description' => $this->t('The authentication token, like 1234'),
+      '#description' => $this->t('The Portainer API authentication token. Leave blank to keep the current value.'),
+      '#attributes' => ['autocomplete' => 'new-password'],
     ];
 
     $form['portainer']['portainerOptions']['endpointId'] = [
@@ -1245,31 +1245,64 @@ class SodaScsSettingsForm extends ConfigFormBase {
    * {@inheritdoc}
    */
   public function submitForm(array &$form, FormStateInterface $form_state): void {
+    $config = $this->config('soda_scs_manager.settings');
     $wisskiValues = $form_state->getValue('wisski');
 
     // Save default version selection.
     if (isset($wisskiValues['instances']['versions']['defaultVersion'])) {
-      $existingWisski = $this->config('soda_scs_manager.settings')->get('wisski') ?? [];
+      $existingWisski = $config->get('wisski') ?? [];
       $existingWisski['instances']['versions']['defaultVersion'] = $wisskiValues['instances']['versions']['defaultVersion'];
       $wisskiValues = $existingWisski;
     }
 
+    // Preserve password/token when left blank.
+    $dbRootPassword = $form_state->getValue(['database', 'fields', 'dbRootPassword'])
+      ?? $form_state->getValue('dbRootPassword');
+    if ($dbRootPassword === '' || $dbRootPassword === NULL) {
+      $dbRootPassword = $config->get('dbRootPassword');
+    }
+
+    $keycloakValues = $form_state->getValue('keycloak');
+    $keycloakAdminPassword = $keycloakValues['keycloakTabs']['generalSettings']['fields']['adminPassword'] ?? NULL;
+    if ($keycloakAdminPassword === '' || $keycloakAdminPassword === NULL) {
+      $existingKeycloak = $config->get('keycloak') ?? [];
+      $keycloakValues['keycloakTabs']['generalSettings']['fields']['adminPassword']
+        = $existingKeycloak['keycloakTabs']['generalSettings']['fields']['adminPassword'] ?? '';
+    }
+
+    $nextcloudValues = $form_state->getValue('nextcloud');
+    $triplestoreValues = $form_state->getValue('triplestore');
+    $triplestoreAdminPassword = $triplestoreValues['generalSettings']['adminPassword'] ?? NULL;
+    if ($triplestoreAdminPassword === '' || $triplestoreAdminPassword === NULL) {
+      $existingTriplestore = $config->get('triplestore') ?? [];
+      $triplestoreValues['generalSettings']['adminPassword']
+        = $existingTriplestore['generalSettings']['adminPassword'] ?? '';
+    }
+
+    $portainerValues = $form_state->getValue('portainer');
+    $portainerToken = $portainerValues['portainerOptions']['authenticationToken'] ?? NULL;
+    if ($portainerToken === '' || $portainerToken === NULL) {
+      $existingPortainer = $config->get('portainer') ?? [];
+      $portainerValues['portainerOptions']['authenticationToken']
+        = $existingPortainer['portainerOptions']['authenticationToken'] ?? '';
+    }
+
     // Save the configuration.
-    $this->config('soda_scs_manager.settings')
+    $config
       ->set('accessProxy', $form_state->getValue('accessProxy'))
       ->set('administratorEmail', $form_state->getValue('administratorEmail'))
       ->set('dbHost', $form_state->getValue('dbHost'))
       ->set('dbManagementHost', $form_state->getValue('dbManagementHost'))
       ->set('dbPort', $form_state->getValue('dbPort'))
-      ->set('dbRootPassword', $form_state->getValue('dbRootPassword'))
+      ->set('dbRootPassword', $dbRootPassword)
       ->set('jupyterhub', $form_state->getValue('jupyterhub'))
-      ->set('keycloak', $form_state->getValue('keycloak'))
-      ->set('nextcloud', $form_state->getValue('nextcloud'))
-      ->set('portainer', $form_state->getValue('portainer'))
+      ->set('keycloak', $keycloakValues)
+      ->set('nextcloud', $nextcloudValues)
+      ->set('portainer', $portainerValues)
       ->set('scsHost', $form_state->getValue('scsHost'))
       ->set('security', $form_state->getValue('security'))
       ->set('snapshotPath', $form_state->getValue('snapshotPath'))
-      ->set('triplestore', $form_state->getValue('triplestore'))
+      ->set('triplestore', $triplestoreValues)
       ->set('webprotege', $form_state->getValue('webprotege'))
       ->set('wisski', $wisskiValues)
       ->save();

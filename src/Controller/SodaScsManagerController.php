@@ -479,14 +479,20 @@ class SodaScsManagerController extends ControllerBase {
     /** @var \Drupal\user\UserInterface $userEntity */
     $userEntity = $this->entityTypeManager->getStorage('user')->load($currentUser->id());
     $userFirstName = $currentUser && $userEntity && $userEntity->hasField('first_name') ? $userEntity->get('first_name')->value : $currentUser->getAccountName();
+    $connectedAccountsUrl = Url::fromRoute('openid_connect.accounts_controller_index', [
+      'user' => $currentUser->id(),
+    ])->toString();
+
     return [
       '#theme' => 'soda_scs_manager__start_page',
       '#attributes' => ['class' => ['container', 'mx-auto']],
       '#user' => $userFirstName,
+      '#connected_accounts_url' => $connectedAccountsUrl,
       '#attached' => [
         'library' => [
           'soda_scs_manager/globalStyling',
           'soda_scs_manager/startPagePie',
+          'soda_scs_manager/nextcloudConnect',
         ],
       ],
       '#cache' => [

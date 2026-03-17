@@ -1,5 +1,39 @@
 # Helpers
 
+# Nextcloud Connect (Login Flow v2) - store credentials in Keycloak
+soda_scs_manager.nextcloud_connect_init:
+  path: '/soda-scs-manager/nextcloud/connect/init'
+  defaults:
+    _controller: '\Drupal\soda_scs_manager\Controller\SodaScsNextcloudConnectController::init'
+    _title: 'Init Nextcloud Connect'
+  requirements:
+    _permission: 'soda scs manager user'
+  methods: [POST]
+  options:
+    no_cache: TRUE
+
+soda_scs_manager.nextcloud_connect_poll:
+  path: '/soda-scs-manager/nextcloud/connect/poll'
+  defaults:
+    _controller: '\Drupal\soda_scs_manager\Controller\SodaScsNextcloudConnectController::poll'
+    _title: 'Poll Nextcloud Connect'
+  requirements:
+    _permission: 'soda scs manager user'
+  methods: [GET, POST]
+  options:
+    no_cache: TRUE
+
+soda_scs_manager.nextcloud_connect_status:
+  path: '/soda-scs-manager/nextcloud/connect/status'
+  defaults:
+    _controller: '\Drupal\soda_scs_manager\Controller\SodaScsNextcloudConnectController::status'
+    _title: 'Nextcloud Connect Status'
+  requirements:
+    _permission: 'soda scs manager user'
+  methods: [GET]
+  options:
+    no_cache: TRUE
+
 # @todo Refactor to use entity type as parameter for just one route
 soda_scs_manager.component.health_check:
   path: '/soda-scs-manager/health/component/{component_id}'
