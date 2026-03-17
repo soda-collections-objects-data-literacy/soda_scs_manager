@@ -7,6 +7,8 @@
 
 use Drupal\Core\Asset\AttachedAssetsInterface;
 use Drupal\Core\Entity\Display\EntityViewDisplayInterface;
+use Drupal\Core\Form\FormStateInterface;
+use Drupal\Core\Entity\ContentEntityInterface;
 use Drupal\Core\Entity\EntityInterface;
 use Drupal\Core\Entity\EntityTypeInterface;
 use Drupal\Core\Field\BaseFieldDefinition;
@@ -46,6 +48,84 @@ function soda_scs_manager_css_alter(&$css, AttachedAssetsInterface $assets, Lang
       'version' => $version,
       'license' => FALSE,
     ];
+  }
+}
+
+/**
+ * Implements hook_options_list_alter().
+ *
+ * For connectedComponents: add bundle label in parentheses, sort by bundle then name.
+ */
+function soda_scs_manager_options_list_alter(array &$options, array $context): void {
+  $field = $context['fieldDefinition'] ?? NULL;
+  if (!$field || $field->getName() !== 'connectedComponents') {
+    return;
+  }
+  if ($field->getSetting('target_type') !== 'soda_scs_component') {
+    return;
+  }
+
+  $bundles = \Drupal::service('entity_type.bundle.info')->getBundleInfo('soda_scs_component');
+  $storage = \Drupal::entityTypeManager()->getStorage('soda_scs_component');
+
+  $items = [];
+  foreach ($options as $key => $value) {
+    if ($key === '_none' || $key === '') {
+      continue;
+    }
+    if (is_array($value)) {
+      foreach ($value as $id => $label) {
+        $entity = $storage->load($id);
+        $bundle_label = $entity ? ($bundles[$entity->bundle()]['label'] ?? $entity->bundle()) : '';
+        $items[] = [
+          'id' => $id,
+          'label' => (string) $label,
+          'bundle_label' => (string) $bundle_label,
+        ];
+      }
+    }
+    else {
+      $entity = $storage->load($key);
+      $bundle_label = $entity ? ($bundles[$entity->bundle()]['label'] ?? $entity->bundle()) : '';
+      $items[] = [
+        'id' => $key,
+        'label' => (string) $value,
+        'bundle_label' => (string) $bundle_label,
+      ];
+    }
+  }
+
+  usort($items, function (array $a, array $b): int {
+    $c = strcasecmp($a['bundle_label'], $b['bundle_label']);
+    return $c !== 0 ? $c : strcasecmp($a['label'], $b['label']);
+  });
+
+  $new_options = [];
+  if (isset($options['_none'])) {
+    $new_options['_none'] = $options['_none'];
+  }
+  foreach ($items as $item) {
+    $suffix = $item['bundle_label'] ? ' (' . $item['bundle_label'] . ')' : '';
+    $new_options[$item['id']] = $item['label'] . $suffix;
+  }
+  $options = $new_options;
+}
+
+/**
+ * Implements hook_entity_display_build_alter().
+ *
+ * Hides connectedComponents on project when empty.
+ */
+function soda_scs_manager_entity_display_build_alter(array &$build, EntityInterface $entity, EntityViewDisplayInterface $display): void {
+  if (!$entity instanceof ContentEntityInterface || $entity->getEntityTypeId() !== 'soda_scs_project') {
+    return;
+  }
+  if (empty($build['connectedComponents'])) {
+    return;
+  }
+  $values = $entity->get('connectedComponents')->getValue();
+  if (empty($values)) {
+    $build['connectedComponents']['#access'] = FALSE;
   }
 }
 
@@ -425,11 +505,10 @@ function soda_scs_manager_preprocess_soda_scs_component(array &$variables) {
 /**
  * Implements hook_ENTITY_TYPE_delete() for soda_scs_component entities.
  *
- * Deletes the connectedComponents field on
- * projects when a component is deleted.
+ * Removes the deleted component from all projects' connectedComponents.
  */
 function soda_scs_manager_soda_scs_component_delete(SodaScsComponent $entity) {
-  _soda_scs_manager_sync_component_project_relationship($entity);
+  _soda_scs_manager_remove_component_from_projects($entity);
 }
 
 /**
@@ -528,7 +607,7 @@ function soda_scs_manager_soda_scs_stack_view(array &$build, EntityInterface $en
  * Implements template_preprocess_HOOK() for book-tree theme.
  */
 function soda_scs_manager_preprocess_book_tree(array &$variables) : void {
-  // Theme name: 'book-tree', library name: 'book-styling'. 
+  // Theme name: 'book-tree', library name: 'book-styling'.
   $variables['#attached']['library'][] = 'soda_scs_manager/book-styling';
 }
 
@@ -1172,9 +1251,9 @@ function _soda_scs_manager_create_default_applications_for_user(UserInterface $u
   /** @var \Drupal\soda_scs_manager\Entity\SodaScsProject $project */
   $project = reset($projects);
 
-  _soda_scs_manager_create_default_nextcloud_for_user($user, $project);
-  _soda_scs_manager_create_default_jupyter_for_user($user, $project);
-  _soda_scs_manager_create_default_webprotege_for_user($user, $project);
+  _soda_scs_manager_create_default_nextcloud_for_user($user);
+  _soda_scs_manager_create_default_jupyter_for_user($user);
+  _soda_scs_manager_create_default_webprotege_for_user($user);
 }
 
 /**
@@ -1240,7 +1319,7 @@ function _soda_scs_manager_create_default_project_for_user(UserInterface $user) 
 /**
  * Create default nextcloud for new user.
  */
-function _soda_scs_manager_create_default_nextcloud_for_user(UserInterface $user, SodaScsProject $project) {
+function _soda_scs_manager_create_default_nextcloud_for_user(UserInterface $user) {
   // Load the bundle info for the nextcloud stack.
   $bundleinfo = \Drupal::service('entity_type.bundle.info')->getBundleInfo('soda_scs_stack')['soda_scs_nextcloud_stack'];
 
@@ -1255,11 +1334,6 @@ function _soda_scs_manager_create_default_nextcloud_for_user(UserInterface $user
     'label' => $user->getDisplayName() . '\'s nextcloud',
     'machineName' => 'nextcloud-' . $user->getDisplayName() . '-default',
     'owner' => $user->id(),
-    'partOfProjects' => [
-      [
-        'target_id' => $project->id(),
-      ],
-    ],
   ]);
 
   \Drupal::service('soda_scs_manager.stack.actions')->createStack($nextcloud);
@@ -1268,7 +1342,7 @@ function _soda_scs_manager_create_default_nextcloud_for_user(UserInterface $user
 /**
  * Create default jupyter for new user.
  */
-function _soda_scs_manager_create_default_jupyter_for_user(UserInterface $user, SodaScsProject $project) {
+function _soda_scs_manager_create_default_jupyter_for_user(UserInterface $user) {
   // Load the bundle info for the jupyter stack.
   $bundleinfo = \Drupal::service('entity_type.bundle.info')->getBundleInfo('soda_scs_stack')['soda_scs_jupyter_stack'];
 
@@ -1283,11 +1357,6 @@ function _soda_scs_manager_create_default_jupyter_for_user(UserInterface $user, 
     'label' => $user->getDisplayName() . '\'s jupyter',
     'machineName' => 'jupyter-' . $user->getDisplayName() . '-default',
     'owner' => $user->id(),
-    'partOfProjects' => [
-      [
-        'target_id' => $project->id(),
-      ],
-    ],
   ]);
 
   \Drupal::service('soda_scs_manager.stack.actions')->createStack($jupyter);
@@ -1295,8 +1364,10 @@ function _soda_scs_manager_create_default_jupyter_for_user(UserInterface $user, 
 
 /**
  * Create default webprotege for new user.
+ *
+ * Webprotege is created but not added to any project (not part of default project).
  */
-function _soda_scs_manager_create_default_webprotege_for_user(UserInterface $user, SodaScsProject $project) {
+function _soda_scs_manager_create_default_webprotege_for_user(UserInterface $user) {
   // Load the bundle info for the webprotege stack.
   $bundleinfo = \Drupal::service('entity_type.bundle.info')->getBundleInfo('soda_scs_component')['soda_scs_webprotege_component'];
 
@@ -1311,11 +1382,6 @@ function _soda_scs_manager_create_default_webprotege_for_user(UserInterface $use
     'label' => $user->getDisplayName() . '\'s webprotege',
     'machineName' => 'webprotege-' . $user->getDisplayName() . '-default',
     'owner' => $user->id(),
-    'partOfProjects' => [
-      [
-        'target_id' => $project->id(),
-      ],
-    ],
   ]);
 
   \Drupal::service('soda_scs_manager.component.actions')->createComponent($webprotege);
@@ -1380,6 +1446,38 @@ function _soda_scs_manager_propagate_keycloak_user_data_to_fields(UserInterface 
     }
     // Save the user entity after updating fields.
     $user->save();
+  }
+}
+
+/**
+ * Removes a deleted component from all projects' connectedComponents.
+ *
+ * @param \Drupal\soda_scs_manager\Entity\SodaScsComponent $component
+ *   The component entity being deleted.
+ */
+function _soda_scs_manager_remove_component_from_projects(SodaScsComponent $component) {
+  $componentId = (int) $component->id();
+
+  $projectStorage = \Drupal::entityTypeManager()->getStorage('soda_scs_project');
+  $projectIds = $projectStorage->getQuery()
+    ->condition('connectedComponents', $componentId)
+    ->accessCheck(FALSE)
+    ->execute();
+
+  if (empty($projectIds)) {
+    return;
+  }
+
+  /** @var \Drupal\soda_scs_manager\Entity\SodaScsProject[] $projects */
+  $projects = $projectStorage->loadMultiple($projectIds);
+
+  foreach ($projects as $project) {
+    $componentRefs = $project->get('connectedComponents')->getValue();
+    $filtered = array_filter($componentRefs, function ($ref) use ($componentId) {
+      return (int) ($ref['target_id'] ?? 0) !== $componentId;
+    });
+    $project->set('connectedComponents', array_values($filtered));
+    $project->save();
   }
 }
 

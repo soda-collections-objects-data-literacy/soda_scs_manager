@@ -251,21 +251,6 @@ class SodaScsProjectCreateForm extends ContentEntityForm {
       '#weight' => -10,
     ];
 
-    // Restrict connectedComponents field to only
-    // show components owned by the current user
-    // unless they have admin permission.
-    if (isset($form['connectedComponents'])) {
-      $uid = $this->currentUser->id();
-      $is_admin = $this->currentUser->hasPermission('soda scs manager admin');
-
-      if (!$is_admin) {
-        // Modify the selection handler settings to only show user's components.
-        $form['connectedComponents']['widget']['#selection_settings']['filter'] = [
-          'owner' => $uid,
-        ];
-      }
-    }
-
     if (isset($form['members'])) {
       $form['members']['#access'] = FALSE;
     }

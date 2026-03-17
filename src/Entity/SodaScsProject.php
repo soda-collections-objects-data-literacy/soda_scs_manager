@@ -124,6 +124,11 @@ class SodaScsProject extends ContentEntityBase implements SodaScsProjectInterfac
       ->setSetting('handler', 'soda_scs_component_access')
       ->setSetting('handler_settings', [
         'auto_create' => FALSE,
+        'restrict_to_owner' => TRUE,
+        'target_bundles' => [
+          'soda_scs_wisski_component' => 'soda_scs_wisski_component',
+          'soda_scs_sql_component' => 'soda_scs_sql_component',
+        ],
         'sort' => [
           'field' => 'label',
           'direction' => 'ASC',
@@ -131,7 +136,7 @@ class SodaScsProject extends ContentEntityBase implements SodaScsProjectInterfac
       ])
       ->setDisplayConfigurable('form', FALSE)
       ->setDisplayOptions('form', [
-        'type' => 'soda_scs_component_nested_fieldset',
+        'type' => 'options_buttons',
         'weight' => 40,
       ])
       ->setDisplayConfigurable('view', FALSE)

@@ -37,29 +37,33 @@ class SodaScsComponentSelection extends DefaultSelection {
    */
   protected function addAccessConditions(QueryInterface $query) {
     $current_user = \Drupal::currentUser();
+    $handler_settings = $this->configuration['handler_settings'] ?? [];
 
     // If user has admin permission, don't restrict access unless specific owner filter is set.
-    if ($current_user->hasPermission('soda scs manager admin') && empty($this->configuration['handler_settings']['filter']['owner'])) {
+    if ($current_user->hasPermission('soda scs manager admin') && empty($handler_settings['filter']['owner'])) {
       return;
     }
 
     // If a specific owner is set in the filter, use that instead of the current user.
-    if (!empty($this->configuration['handler_settings']['filter']['owner'])) {
-      $uid = $this->configuration['handler_settings']['filter']['owner'];
-      // Only filter by this specific owner.
+    if (!empty($handler_settings['filter']['owner'])) {
+      $uid = $handler_settings['filter']['owner'];
       $query->condition('owner', $uid);
       return;
     }
 
-    $uid = $current_user->id();
+    $uid = (int) $current_user->id();
 
-    // Create an OR condition group.
+    // When restrict_to_owner is set (e.g. connectedComponents on project), non-admin
+    // users only see their own components. Otherwise, owner OR project members.
+    if (!empty($handler_settings['restrict_to_owner'])) {
+      $query->condition('owner', $uid);
+      return;
+    }
+
+    // Create an OR condition group: owner OR components in user's projects.
     $or_group = $query->orConditionGroup();
-
-    // Components where the user is the owner.
     $or_group->condition('owner', $uid);
 
-    // Components in projects where the user is owner or member.
     $project_query = \Drupal::entityQuery('soda_scs_project')
       ->accessCheck(TRUE);
 
@@ -71,11 +75,9 @@ class SodaScsComponentSelection extends DefaultSelection {
     $project_ids = $project_query->execute();
 
     if (!empty($project_ids)) {
-      // Add condition for components that belong to these projects.
       $or_group->condition('partOfProjects', $project_ids, 'IN');
     }
 
-    // Add the OR group to the main query.
     $query->condition($or_group);
   }
 
