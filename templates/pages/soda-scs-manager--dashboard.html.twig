@@ -46,6 +46,12 @@
   </div>
 </div>
 
+<div>
+  <button id="clear-all-tags" class="align-center justify-center rounded-full border border-default p-4 px-5 py-1.5 mt-5 text-sm flex bg-gray-200 text-gray-600 hover:bg-gray-300 cursor-pointer">
+    {{ '<b>🗑</b> Clear all filters <b>🗑</b>'|t }}
+  </button>
+</div>
+
 {% if entitiesByUser is not empty %}
   {% for username, entities in entitiesByUser %}
     <div class="text-center mb-8">

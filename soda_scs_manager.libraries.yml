@@ -1,6 +1,6 @@
 book-styling:
   js:
-    js/book-active-page.js: {}
+    js/bookActivePage.js: {}
   dependencies:
     - core/jquery
     - core/drupal

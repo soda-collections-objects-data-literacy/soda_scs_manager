@@ -80,6 +80,34 @@
             this.click();
           }
         });
+
+        // Deselect all tags.
+
+        const clearButton = context.querySelector('#clear-all-tags');
+        
+        if (clearButton) {
+          clearButton.addEventListener('click', function (event) {
+            event.preventDefault();
+            
+            // Remove all elements from activeTags array.
+            activeTags = [];
+            
+            // Update the container's data attribute.
+            filterContainer.dataset.activeTags = JSON.stringify(activeTags);
+
+            // Reset UI for all buttons.
+            filterButtons.forEach(button => {
+              button.setAttribute('aria-pressed', 'false');
+              const removeIcon = button.querySelector('.soda-scs-manager--tag-remove');
+
+              if (removeIcon) removeIcon.classList.add('hidden');
+            });
+
+            // Return to standard view and functionality.
+            applyFiltering(context, activeTags);
+
+          });
+        }
       });
 
       /**
