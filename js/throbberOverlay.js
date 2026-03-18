@@ -132,8 +132,8 @@
                                formId === 'soda_scs_manager_stack_create_form';
 
           if (isCreateForm) {
-            // Show special message for creation forms.
-            const infoMessage = Drupal.t('Please note: After creating the WissKI Environment, it can take up to 5 minutes to setup everything.<br><br>Please check the health status to monitor the startup progress.');
+            const infoMessage = (settings.sodaScsManager && settings.sodaScsManager.throbberInfo) ||
+              Drupal.t('Please note: After creating the WissKI Environment, it can take up to 5 minutes to setup everything.<br><br>Please check the health status to monitor the startup progress.');
             $('.soda-scs-manager__throbber-overlay__info').html(infoMessage);
           } else {
             // Clear any previous info message.
@@ -205,8 +205,8 @@
                                formId === 'soda_scs_manager_stack_create_form';
 
           if (isCreateForm) {
-            // Show special message for creation forms.
-            const infoMessage = Drupal.t('Please note: After creating the WissKI Environment, it can take up to 5 minutes to setup everything.<br><br>Please check the health status to monitor the startup progress.');
+            const infoMessage = (settings.sodaScsManager && settings.sodaScsManager.throbberInfo) ||
+              Drupal.t('Please note: After creating the WissKI Environment, it can take up to 5 minutes to setup everything.<br><br>Please check the health status to monitor the startup progress.');
             $('.soda-scs-manager__throbber-overlay__info').html(infoMessage);
           } else {
             // Clear any previous info message.
@@ -238,6 +238,9 @@
         const progressPollingSupported = settings.sodaScsManager.progressPolling === true;
         // Only start polling if overlay is already visible and polling is supported.
         if ($('.soda-scs-manager__throbber-overlay').hasClass('soda-scs-manager__throbber-overlay--active') && progressPollingSupported) {
+          if (settings.sodaScsManager.throbberInfo) {
+            $('.soda-scs-manager__throbber-overlay__info').html(settings.sodaScsManager.throbberInfo);
+          }
           startProgressPolling(operationUuid);
         }
       }
