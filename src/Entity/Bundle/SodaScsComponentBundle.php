@@ -58,6 +58,23 @@ class SodaScsComponentBundle extends SodaScsComponent implements SodaScsComponen
         break;
 
       case 'soda_scs_triplestore_component':
+        $definitions['publicRead'] = BundleFieldDefinition::create('boolean')
+          ->setLabel(new TranslatableMarkup('Public read access'))
+          ->setDescription(new TranslatableMarkup('Allow unauthenticated read access to the SPARQL endpoint.'))
+          ->setCardinality(1)
+          ->setDefaultValue(FALSE)
+          ->setDisplayConfigurable('form', FALSE)
+          ->setDisplayOptions('form', [
+            'type' => 'boolean_checkbox',
+            'weight' => 25,
+          ])
+          ->setDisplayConfigurable('view', FALSE)
+          ->setDisplayOptions('view', [
+            'label' => 'above',
+            'type' => 'boolean',
+            'weight' => 25,
+          ]);
+
         $definitions['partOfStack'] = BundleFieldDefinition::create('entity_reference')
           ->setLabel(new TranslatableMarkup('Part of Stack'))
           ->setDescription(new TranslatableMarkup('The stack that this component is part of.'))

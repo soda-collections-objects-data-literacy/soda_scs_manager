@@ -323,6 +323,12 @@ class SodaScsTriplestoreHelpers {
       $userData['token'] = $userToken;
 
     }
+    else {
+      $userData['token'] = $componentServiceKeyToken->get('servicePassword')->value;
+    }
+
+    $userData['passwordServiceKey'] = $componentServiceKeyPassword;
+    $userData['tokenServiceKey'] = $componentServiceKeyToken;
 
     return $userData;
 

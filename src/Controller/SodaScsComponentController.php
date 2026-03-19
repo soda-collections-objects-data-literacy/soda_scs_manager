@@ -179,7 +179,7 @@ class SodaScsComponentController extends ControllerBase {
     catch (\Throwable $e) {
       $this->getLogger('soda_scs_manager')->error('Health check failed for component @id: @message', [
         '@id' => $component_id,
-        '@message' => $e->getMessage(),
+        '@message' => (string) ($e->getMessage() ?? ''),
       ]);
       return new JsonResponse([
         'status' => [

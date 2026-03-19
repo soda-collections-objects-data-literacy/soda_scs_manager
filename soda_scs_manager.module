@@ -527,9 +527,18 @@ function soda_scs_manager_soda_scs_component_insert(SodaScsComponent $entity) {
  *
  * Updates the connectedComponents field on
  * projects when a component is updated.
+ * Syncs triplestore publicRead to the remote repository.
  */
 function soda_scs_manager_soda_scs_component_update(SodaScsComponent $entity) {
   _soda_scs_manager_sync_component_project_relationship($entity);
+
+  if ($entity->bundle() === 'soda_scs_triplestore_component') {
+    $componentActions = \Drupal::service('soda_scs_manager.component.actions');
+    $result = $componentActions->updateComponent($entity);
+    if (!$result['success']) {
+      \Drupal::messenger()->addWarning($result['message']);
+    }
+  }
 }
 
 /**

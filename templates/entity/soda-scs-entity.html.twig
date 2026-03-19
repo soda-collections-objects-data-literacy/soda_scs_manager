@@ -89,6 +89,11 @@
 
 	<main class="soda-scs-manager--entity--main">
 		<div class="soda-scs-manager--entity--left-column">
+			{% if elements.triplestoreCredentials %}
+				<div class="soda-scs-manager--entity--triplestore-credentials">
+					{{ elements.triplestoreCredentials }}
+				</div>
+			{% endif %}
 			<div class="soda-scs-manager--entity--service-key">
 				{% if elements.serviceKey %}
 					{{ elements.serviceKey }}

@@ -115,6 +115,7 @@ class SodaScsComponentEditForm extends ContentEntityForm {
     }
 
     $form['#attached']['library'][] = 'soda_scs_manager/globalStyling';
+
     $form['actions']['cancel'] = [
       '#type' => 'submit',
       '#value' => $this->t('Cancel'),

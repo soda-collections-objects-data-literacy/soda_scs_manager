@@ -930,6 +930,104 @@ function soda_scs_manager_update_11012() {
 }
 
 /**
+ * Add publicRead base field to soda_scs_component for triplestore public access.
+ */
+function soda_scs_manager_update_11013() {
+  $entity_field_manager = \Drupal::service('entity_field.manager');
+  $definition_update_manager = \Drupal::entityDefinitionUpdateManager();
+
+  $field_storage_definitions = $entity_field_manager->getFieldStorageDefinitions('soda_scs_component');
+  if (!isset($field_storage_definitions['publicRead'])) {
+    $entity_type = \Drupal::entityTypeManager()->getDefinition('soda_scs_component');
+    $base_fields = \Drupal\soda_scs_manager\Entity\SodaScsComponent::baseFieldDefinitions($entity_type);
+    $definition_update_manager->installFieldStorageDefinition(
+      'publicRead',
+      'soda_scs_component',
+      'soda_scs_manager',
+      $base_fields['publicRead']
+    );
+  }
+
+  return t('Added publicRead field to soda_scs_component entity.');
+}
+
+/**
+ * Add publicRead to triplestore component form display.
+ */
+function soda_scs_manager_update_11014() {
+  $form_display = \Drupal::entityTypeManager()
+    ->getStorage('entity_form_display')
+    ->load('soda_scs_component.soda_scs_triplestore_component.default');
+
+  if ($form_display && !$form_display->getComponent('publicRead')) {
+    $form_display->setComponent('publicRead', [
+      'type' => 'boolean_checkbox',
+      'weight' => 25,
+      'settings' => [
+        'display_label' => TRUE,
+      ],
+    ]);
+    $form_display->save();
+  }
+
+  return t('Added publicRead to triplestore component form display.');
+}
+
+/**
+ * Migrate publicRead from base field to triplestore bundle field.
+ */
+function soda_scs_manager_update_11015() {
+  $definition_update_manager = \Drupal::entityDefinitionUpdateManager();
+  $database = \Drupal::database();
+
+  // Backup existing publicRead values from the entity data table.
+  $existing_values = [];
+  if ($database->schema()->fieldExists('soda_scs_component_field_data', 'publicRead')) {
+    $existing_values = $database->select('soda_scs_component_field_data', 'e')
+      ->fields('e', ['id', 'publicRead'])
+      ->execute()
+      ->fetchAllKeyed();
+  }
+
+  // Uninstall the old base field storage definition (drops the column).
+  $old_definition = $definition_update_manager->getFieldStorageDefinition('publicRead', 'soda_scs_component');
+  if ($old_definition && $old_definition->isBaseField()) {
+    $definition_update_manager->uninstallFieldStorageDefinition($old_definition);
+  }
+
+  // Install the new bundle field definition.
+  $entity_field_manager = \Drupal::service('entity_field.manager');
+  $entity_field_manager->clearCachedFieldDefinitions();
+  $bundle_definitions = \Drupal\soda_scs_manager\Entity\Bundle\SodaScsComponentBundle::bundleFieldDefinitions(
+    \Drupal::entityTypeManager()->getDefinition('soda_scs_component'),
+    'soda_scs_triplestore_component',
+    []
+  );
+  if (isset($bundle_definitions['publicRead'])) {
+    $definition_update_manager->installFieldStorageDefinition(
+      'publicRead',
+      'soda_scs_component',
+      'soda_scs_manager',
+      $bundle_definitions['publicRead']
+    );
+  }
+
+  // Restore backed up values.
+  if (!empty($existing_values)) {
+    foreach ($existing_values as $id => $value) {
+      if (!empty($value)) {
+        $database->update('soda_scs_component_field_data')
+          ->fields(['publicRead' => $value])
+          ->condition('id', $id)
+          ->execute();
+      }
+    }
+  }
+
+  return t('Migrated publicRead from base field to triplestore bundle field.');
+}
+
+/**
  * Helper function to manually restore config entities from backup file.
  *
  * Usage: drush php:eval "_soda_scs_manager_restore_from_backup('/path/to/backup.json')"

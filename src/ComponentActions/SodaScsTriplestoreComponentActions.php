@@ -170,6 +170,10 @@ class SodaScsTriplestoreComponentActions implements SodaScsComponentActionsInter
       }
       $machineName = 'ts-' . $entity->get('machineName')->value;
       // @todo We have the entity here already, so we should not create a new one.
+      $publicRead = $entity->hasField('publicRead') && !$entity->get('publicRead')->isEmpty()
+        ? (bool) $entity->get('publicRead')->value
+        : FALSE;
+
       /** @var \Drupal\soda_scs_manager\Entity\SodaScsComponentInterface $triplestoreComponent */
       $triplestoreComponent = $this->entityTypeManager->getStorage('soda_scs_component')->create(
         [
@@ -181,11 +185,18 @@ class SodaScsTriplestoreComponentActions implements SodaScsComponentActionsInter
           'imageUrl' => $triplestoreComponentBundleInfo['imageUrl'],
           'health' => 'Unknown',
           'partOfProjects' => $entity->get('partOfProjects'),
+          'publicRead' => $publicRead,
         ]
       );
 
       // Ensure user data exists.
       $userdata = $this->sodaScsTriplestoreHelpers->ensureUserDataExists($triplestoreComponent);
+
+      // Link password and token service keys to the component.
+      $triplestoreComponent->set('serviceKey', [
+        $userdata['passwordServiceKey']->id(),
+        $userdata['tokenServiceKey']->id(),
+      ]);
 
       $username = $triplestoreComponent->getOwner()->getDisplayName();
 
@@ -197,7 +208,7 @@ class SodaScsTriplestoreComponentActions implements SodaScsComponentActionsInter
         'body' => [
           'machineName' => $machineName,
           'title' => $triplestoreComponent->label(),
-          'publicRead' => FALSE,
+          'publicRead' => $publicRead,
           'publicWrite' => FALSE,
         ],
       ];
@@ -455,14 +466,64 @@ class SodaScsTriplestoreComponentActions implements SodaScsComponentActionsInter
   /**
    * Update Triplestore component.
    *
+   * Syncs publicRead setting to the remote repository.
+   *
    * @param \Drupal\soda_scs_manager\Entity\SodaScsComponentInterface $component
    *   The SODa SCS component.
    *
    * @return array
-   *   The result array of the created component.
+   *   The result array of the update.
    */
   public function updateComponent(SodaScsComponentInterface $component): array {
-    return [];
+    $machineName = $component->get('machineName')->value;
+    $publicRead = $component->hasField('publicRead') && !$component->get('publicRead')->isEmpty()
+      ? (bool) $component->get('publicRead')->value
+      : FALSE;
+
+    try {
+      $updateRepoRequestParams = [
+        'type' => 'repository',
+        'queryParams' => [],
+        'routeParams' => ['machineName' => $machineName],
+        'body' => [
+          'publicRead' => $publicRead,
+          'publicWrite' => FALSE,
+        ],
+      ];
+      $openGdbUpdateRepoRequest = $this->sodaScsOpenGdbServiceActions->buildUpdateRequest($updateRepoRequestParams);
+      $openGdbUpdateRepoResponse = $this->sodaScsOpenGdbServiceActions->makeRequest($openGdbUpdateRepoRequest);
+
+      if (!$openGdbUpdateRepoResponse['success']) {
+        return [
+          'message' => $this->t('Could not update triplestore repository @machineName', ['@machineName' => $machineName]),
+          'data' => ['openGdbUpdateRepoResponse' => $openGdbUpdateRepoResponse],
+          'success' => FALSE,
+          'error' => $openGdbUpdateRepoResponse['error'] ?? NULL,
+        ];
+      }
+
+      return [
+        'message' => $this->t('Updated triplestore component @machineName', ['@machineName' => $machineName]),
+        'data' => ['openGdbUpdateRepoResponse' => $openGdbUpdateRepoResponse],
+        'success' => TRUE,
+        'error' => NULL,
+      ];
+    }
+    catch (\Exception $e) {
+      Error::logException(
+        $this->loggerFactory->get('soda_scs_manager'),
+        $e,
+        'Could not update triplestore repository: @message',
+        ['@message' => $e->getMessage()],
+        LogLevel::ERROR
+      );
+      return [
+        'message' => $this->t('Could not update triplestore component @machineName', ['@machineName' => $machineName]),
+        'data' => [],
+        'success' => FALSE,
+        'error' => $e->getMessage(),
+      ];
+    }
   }
 
   /**

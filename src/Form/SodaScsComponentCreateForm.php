@@ -14,7 +14,6 @@ use Drupal\Core\Entity\EntityTypeManagerInterface;
 use Drupal\Core\Form\FormStateInterface;
 use Drupal\Core\Logger\LoggerChannelFactoryInterface;
 use Drupal\Core\Session\AccountProxyInterface;
-use Drupal\Core\Url;
 use Drupal\soda_scs_manager\ComponentActions\SodaScsComponentActionsInterface;
 use Drupal\soda_scs_manager\RequestActions\SodaScsServiceRequestInterface;
 use Symfony\Component\DependencyInjection\ContainerInterface;
@@ -222,8 +221,11 @@ class SodaScsComponentCreateForm extends ContentEntityForm {
       $form['partOfProjects']['widget']['#default_value'] = [$defaultProjectOfCurrentUser];
     }
 
-    # Hide the partOfProjects field.
+    // Hide the partOfProjects field.
     $form['partOfProjects']['#access'] = FALSE;
+
+    // Hide partOfStack field.
+    $form['partOfStack']['#access'] = FALSE;
 
     // Change the label of the submit button.
     $form['actions']['submit']['#value'] = $this->t('CREATE');
@@ -312,7 +314,7 @@ class SodaScsComponentCreateForm extends ContentEntityForm {
       }
     }
 
-    // Check if the machineName is already in use by another soda_scs_component entity.
+    // Check if machineName is already in use by another soda_scs_component.
     $entity_query = $this->entityTypeManager->getStorage('soda_scs_component')->getQuery()
       ->accessCheck(FALSE)
       ->condition('machineName', $machineName);

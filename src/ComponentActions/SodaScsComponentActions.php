@@ -165,6 +165,9 @@ class SodaScsComponentActions implements SodaScsComponentActionsInterface {
       case 'soda_scs_webprotege_component':
         return $this->sodaScsWebprotegeComponentActions->updateComponent($component);
 
+      case 'soda_scs_triplestore_component':
+        return $this->sodaScsTriplestoreComponentActions->updateComponent($component);
+
       default:
         return [];
     }
