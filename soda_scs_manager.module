@@ -117,7 +117,7 @@ function soda_scs_manager_options_list_alter(array &$options, array $context): v
  * Hides connectedComponents on project when empty.
  */
 function soda_scs_manager_entity_display_build_alter(array &$build, array $context): void {
-  $entity = $context['entity'] ?? NULL;
+  $entity = $context['entity'];
   if (!$entity instanceof ContentEntityInterface || $entity->getEntityTypeId() !== 'soda_scs_project') {
     return;
   }
