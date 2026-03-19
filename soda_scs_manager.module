@@ -116,7 +116,8 @@ function soda_scs_manager_options_list_alter(array &$options, array $context): v
  *
  * Hides connectedComponents on project when empty.
  */
-function soda_scs_manager_entity_display_build_alter(array &$build, EntityInterface $entity, EntityViewDisplayInterface $display): void {
+function soda_scs_manager_entity_display_build_alter(array &$build, array $context): void {
+  $entity = $context['entity'] ?? NULL;
   if (!$entity instanceof ContentEntityInterface || $entity->getEntityTypeId() !== 'soda_scs_project') {
     return;
   }
@@ -897,30 +898,35 @@ function soda_scs_manager_user_delete(UserInterface $user) {
     $deleteUserParams['type'] = 'user';
     // Set the token.
     $deleteUserParams['token'] = $accessToken;
-    // Extract the Keycloak user ID.
-    $deleteUserParams['routeParams'] = [
-      'realm' => $keycloakGeneralSettings['realm'],
-      // @todo Create user helper service for this.
-      'userId' => \Drupal::service('soda_scs_manager.project.helpers')->getUserSsoUuid($user),
-    ];
-
-    // Build the delete request.
-    $deleteUserRequest = $keycloakServiceUserActions->buildDeleteRequest($deleteUserParams);
-    // Make the deleterequest.
-    $deleteUserResponse = $keycloakServiceUserActions->makeRequest($deleteUserRequest);
-
-    if ($deleteUserResponse['success']) {
-      $messenger->addMessage(\Drupal::translation()->translate('Successfully deleted user from Keycloak: @username (ID: @id)', [
-        '@username' => $user->getAccountName(),
-        '@id' => $deleteUserParams['routeParams']['userId'],
-      ]));
-      $logger->notice('Successfully deleted user from Keycloak: @username (ID: @id)', [
-        '@username' => $user->getAccountName(),
-        '@id' => $deleteUserParams['routeParams']['userId'],
-      ]);
+    // Extract the Keycloak user ID. Skip Keycloak delete if user has no SSO link.
+    $keycloakUserId = \Drupal::service('soda_scs_manager.project.helpers')->getUserSsoUuid($user);
+    if ($keycloakUserId === NULL || $keycloakUserId === '') {
+      $logger->notice('User @username has no Keycloak SSO link, skipping Keycloak delete.', ['@username' => $user->getAccountName()]);
     }
     else {
-      $logger->error('Failed to delete user from Keycloak: @error', ['@error' => $deleteUserResponse['error']]);
+      $deleteUserParams['routeParams'] = [
+        'realm' => $keycloakGeneralSettings['realm'],
+        'userId' => $keycloakUserId,
+      ];
+
+      // Build the delete request.
+      $deleteUserRequest = $keycloakServiceUserActions->buildDeleteRequest($deleteUserParams);
+      // Make the delete request.
+      $deleteUserResponse = $keycloakServiceUserActions->makeRequest($deleteUserRequest);
+
+      if ($deleteUserResponse['success']) {
+        $messenger->addMessage(\Drupal::translation()->translate('Successfully deleted user from Keycloak: @username (ID: @id)', [
+          '@username' => $user->getAccountName(),
+          '@id' => $keycloakUserId,
+        ]));
+        $logger->notice('Successfully deleted user from Keycloak: @username (ID: @id)', [
+          '@username' => $user->getAccountName(),
+          '@id' => $keycloakUserId,
+        ]);
+      }
+      else {
+        $logger->error('Failed to delete user from Keycloak: @error', ['@error' => $deleteUserResponse['error']]);
+      }
     }
   }
   catch (\Exception $e) {
@@ -1314,6 +1320,9 @@ function _soda_scs_manager_create_default_project_for_user(UserInterface $user) 
     $logger = \Drupal::logger('soda_scs_manager');
     $logger->notice('Successfully synced user and keycloak groups for user: @username', ['@username' => $user->getDisplayName()]);
   }
+
+  // Sync MariaDB access for project members (phpMyAdmin SSO).
+  \Drupal::service('soda_scs_manager.project_db_access.helpers')->syncProjectMembersDbAccess($project);
 }
 
 /**
@@ -1525,6 +1534,10 @@ function _soda_scs_manager_sync_component_project_relationship(SodaScsComponent 
       // Prevent infinite recursion by setting a flag.
       $project->syncing = TRUE;
       $project->save();
+      // Sync MariaDB access when an SQL component is added to a project.
+      if ($component->bundle() === 'soda_scs_sql_component') {
+        \Drupal::service('soda_scs_manager.project_db_access.helpers')->syncProjectMembersDbAccess($project);
+      }
     }
   }
 }

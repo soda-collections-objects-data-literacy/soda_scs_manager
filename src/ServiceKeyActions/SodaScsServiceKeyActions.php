@@ -57,7 +57,9 @@ class SodaScsServiceKeyActions implements SodaScsServiceKeyActionsInterface {
    */
   public function createServiceKey(array $props): SodaScsServiceKeyInterface {
 
-    $servicePassword = ($props['type'] === 'token') ? $props['token'] : $this->generateRandomPassword();
+    $servicePassword = ($props['type'] === 'token')
+      ? $props['token']
+      : ($props['password'] ?? $this->generateRandomPassword());
 
     $serviceKey = $this->entityTypeManager->getStorage('soda_scs_service_key')->create([
       'bundle' => $props['bundle'],

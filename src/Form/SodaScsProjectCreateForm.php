@@ -16,6 +16,7 @@ use Drupal\Core\Logger\LoggerChannelFactoryInterface;
 use Drupal\Core\Logger\LoggerChannelInterface;
 use Drupal\Core\Session\AccountProxyInterface;
 use Drupal\soda_scs_manager\ComponentActions\SodaScsComponentActionsInterface;
+use Drupal\soda_scs_manager\Helpers\SodaScsProjectDbAccessHelpers;
 use Drupal\soda_scs_manager\Helpers\SodaScsProjectHelpers;
 use Drupal\soda_scs_manager\Helpers\SodaScsProjectMembershipHelpers;
 use Drupal\soda_scs_manager\RequestActions\SodaScsServiceRequestInterface;
@@ -129,6 +130,13 @@ class SodaScsProjectCreateForm extends ContentEntityForm {
   protected SodaScsProjectMembershipHelpers $projectMembershipHelpers;
 
   /**
+   * Project DB access helpers (MariaDB/phpMyAdmin SSO for project members).
+   *
+   * @var \Drupal\soda_scs_manager\Helpers\SodaScsProjectDbAccessHelpers
+   */
+  protected SodaScsProjectDbAccessHelpers $projectDbAccessHelpers;
+
+  /**
    * The Soda SCS SQL Service Actions service.
    *
    * @var \Drupal\soda_scs_manager\ServiceActions\SodaScsServiceSqlServiceActionInterface
@@ -181,6 +189,7 @@ class SodaScsProjectCreateForm extends ContentEntityForm {
     SodaScsServiceRequestInterface $sodaScsKeycloakServiceUserActions,
     SodaScsProjectHelpers $sodaScsProjectHelpers,
     SodaScsProjectMembershipHelpers $projectMembershipHelpers,
+    SodaScsProjectDbAccessHelpers $projectDbAccessHelpers,
     SodaScsServiceActionsInterface $sodaScsSqlServiceActions,
     TimeInterface $time,
   ) {
@@ -196,6 +205,7 @@ class SodaScsProjectCreateForm extends ContentEntityForm {
     $this->sodaScsKeycloakServiceUserActions = $sodaScsKeycloakServiceUserActions;
     $this->sodaScsProjectHelpers = $sodaScsProjectHelpers;
     $this->projectMembershipHelpers = $projectMembershipHelpers;
+    $this->projectDbAccessHelpers = $projectDbAccessHelpers;
     $this->sodaScsSqlServiceActions = $sodaScsSqlServiceActions;
   }
 
@@ -217,6 +227,7 @@ class SodaScsProjectCreateForm extends ContentEntityForm {
       $container->get('soda_scs_manager.keycloak_service.user.actions'),
       $container->get('soda_scs_manager.project.helpers'),
       $container->get('soda_scs_manager.project_membership.helpers'),
+      $container->get('soda_scs_manager.project_db_access.helpers'),
       $container->get('soda_scs_manager.sql_service.actions'),
       $container->get('datetime.time'),
     );
@@ -299,6 +310,9 @@ class SodaScsProjectCreateForm extends ContentEntityForm {
 
     // Sync keycloak group members with owner and project members.
     $syncKeycloakGroupMembersResponse = $this->sodaScsProjectHelpers->syncKeycloakGroupMembers($project);
+    if ($syncKeycloakGroupMembersResponse->success) {
+      $this->projectDbAccessHelpers->syncProjectMembersDbAccess($project);
+    }
     if (!$syncKeycloakGroupMembersResponse->success) {
       $this->messenger()->addError($this->t('Failed to sync keycloak group members for project @project: See logs for details.', [
         '@project' => $project->label(),

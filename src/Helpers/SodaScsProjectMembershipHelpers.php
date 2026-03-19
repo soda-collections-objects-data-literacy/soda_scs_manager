@@ -39,6 +39,11 @@ final class SodaScsProjectMembershipHelpers {
   private SodaScsProjectHelpers $projectHelpers;
 
   /**
+   * Project DB access helpers (MariaDB/phpMyAdmin SSO for project members).
+   */
+  private SodaScsProjectDbAccessHelpers $projectDbAccessHelpers;
+
+  /**
    * The logger service.
    */
   private LoggerChannelInterface $logger;
@@ -56,6 +61,8 @@ final class SodaScsProjectMembershipHelpers {
     EntityTypeManagerInterface $entityTypeManager,
     #[Autowire(service: 'soda_scs_manager.project.helpers')]
     SodaScsProjectHelpers $projectHelpers,
+    #[Autowire(service: 'soda_scs_manager.project_db_access.helpers')]
+    SodaScsProjectDbAccessHelpers $projectDbAccessHelpers,
     #[Autowire(service: 'logger.factory')]
     LoggerChannelFactoryInterface $loggerFactory,
     #[Autowire(service: 'datetime.time')]
@@ -63,6 +70,7 @@ final class SodaScsProjectMembershipHelpers {
   ) {
     $this->entityTypeManager = $entityTypeManager;
     $this->projectHelpers = $projectHelpers;
+    $this->projectDbAccessHelpers = $projectDbAccessHelpers;
     $this->logger = $loggerFactory->get('soda_scs_manager');
     $this->time = $time;
   }
@@ -180,6 +188,7 @@ final class SodaScsProjectMembershipHelpers {
         $project->get('members')->appendItem($recipient->id());
         $project->save();
         $this->projectHelpers->syncKeycloakGroupMembers($project);
+        $this->projectDbAccessHelpers->syncProjectMembersDbAccess($project);
       }
 
       $request->setStatus(SodaScsProjectMembershipInterface::STATUS_ACCEPTED);

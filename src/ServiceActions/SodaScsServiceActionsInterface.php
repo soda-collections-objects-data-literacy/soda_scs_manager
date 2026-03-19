@@ -126,6 +126,19 @@ interface SodaScsServiceActionsInterface {
   public function grantServiceRights(string $user, string $name, array $rights): array;
 
   /**
+   * Revokes rights from a service user on a database.
+   *
+   * @param string $user
+   *   The name of the service user.
+   * @param string $name
+   *   The name of the database.
+   *
+   * @return array
+   *   Result information with command, execStatus, output.
+   */
+  public function revokeServiceRights(string $user, string $name): array;
+
+  /**
    * Flush the service privileges.
    *
    * @return array

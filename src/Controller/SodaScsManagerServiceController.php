@@ -84,7 +84,7 @@ class SodaScsManagerServiceController extends ControllerBase {
 
       case 'soda_scs_wisski_component':
         $machineName = $soda_scs_component->get('machineName')->value;
-        $url = str_replace('{instanceId}', "raw." . $machineName, $wisskiSettings['baseUrl']);
+        $url = str_replace('{instanceId}', $machineName, $wisskiSettings['baseUrl']);
         break;
 
       default:
@@ -161,7 +161,7 @@ class SodaScsManagerServiceController extends ControllerBase {
 
       case 'soda_scs_wisski_component':
         $machineName = $soda_scs_component->get('machineName')->value;
-        $url = str_replace('{instanceId}', "raw." . $machineName, $wisskiSettings['baseUrl']);
+        $url = str_replace('{instanceId}', $machineName, $wisskiSettings['baseUrl']);
         break;
 
       default:

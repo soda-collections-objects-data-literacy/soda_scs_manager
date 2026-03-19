@@ -668,7 +668,8 @@ class SodaScsPortainerServiceActions implements SodaScsServiceRequestInterface {
         break;
 
       case 'instance':
-        $route = str_replace('{instanceId}', "raw." . $requestParams['machineName'], $wisskiInstanceSettings['baseUrl']) . $wisskiInstanceSettings['healthCheckUrl'];
+        // Use public URL (without raw.) - /health is exposed on the main Drupal site.
+        $route = str_replace('{instanceId}', $requestParams['machineName'], $wisskiInstanceSettings['baseUrl']) . $wisskiInstanceSettings['healthCheckUrl'];
         break;
 
       default:

@@ -24,6 +24,8 @@ use Drupal\soda_scs_manager\Exception\SodaScsSqlServiceException;
 use Drupal\soda_scs_manager\Helpers\SodaScsComponentHelpers;
 use Drupal\soda_scs_manager\Helpers\SodaScsContainerHelpers;
 use Drupal\soda_scs_manager\Helpers\SodaScsHelpers;
+use Drupal\soda_scs_manager\Helpers\SodaScsKeycloakHelpers;
+use Drupal\soda_scs_manager\Helpers\SodaScsProjectHelpers;
 use Drupal\soda_scs_manager\Helpers\SodaScsSnapshotHelpers;
 use Drupal\soda_scs_manager\RequestActions\SodaScsDockerExecServiceActions;
 use Drupal\soda_scs_manager\RequestActions\SodaScsDockerRunServiceActions;
@@ -115,6 +117,20 @@ class SodaScsSqlComponentActions implements SodaScsComponentActionsInterface {
   protected SodaScsHelpers $sodaScsHelpers;
 
   /**
+   * The SCS Keycloak Helpers service.
+   *
+   * @var \Drupal\soda_scs_manager\Helpers\SodaScsKeycloakHelpers
+   */
+  protected SodaScsKeycloakHelpers $sodaScsKeycloakHelpers;
+
+  /**
+   * The SCS Project Helpers service.
+   *
+   * @var \Drupal\soda_scs_manager\Helpers\SodaScsProjectHelpers
+   */
+  protected SodaScsProjectHelpers $sodaScsProjectHelpers;
+
+  /**
    * The SCS Snapshot Helpers service.
    *
    * @var \Drupal\soda_scs_manager\Helpers\SodaScsSnapshotHelpers
@@ -167,6 +183,10 @@ class SodaScsSqlComponentActions implements SodaScsComponentActionsInterface {
     SodaScsContainerHelpers $sodaScsContainerHelpers,
     #[Autowire(service: 'soda_scs_manager.helpers')]
     SodaScsHelpers $sodaScsHelpers,
+    #[Autowire(service: 'soda_scs_manager.keycloak_service.helpers')]
+    SodaScsKeycloakHelpers $sodaScsKeycloakHelpers,
+    #[Autowire(service: 'soda_scs_manager.project.helpers')]
+    SodaScsProjectHelpers $sodaScsProjectHelpers,
     #[Autowire(service: 'soda_scs_manager.snapshot.helpers')]
     SodaScsSnapshotHelpers $sodaScsSnapshotHelpers,
     #[Autowire(service: 'soda_scs_manager.docker_exec_service.actions')]
@@ -192,6 +212,8 @@ class SodaScsSqlComponentActions implements SodaScsComponentActionsInterface {
     $this->sodaScsComponentHelpers = $sodaScsComponentHelpers;
     $this->sodaScsContainerHelpers = $sodaScsContainerHelpers;
     $this->sodaScsHelpers = $sodaScsHelpers;
+    $this->sodaScsKeycloakHelpers = $sodaScsKeycloakHelpers;
+    $this->sodaScsProjectHelpers = $sodaScsProjectHelpers;
     $this->sodaScsSnapshotHelpers = $sodaScsSnapshotHelpers;
     $this->sodaScsDockerExecServiceActions = $sodaScsDockerExecServiceActions;
     $this->sodaScsDockerRunServiceActions = $sodaScsDockerRunServiceActions;
@@ -233,11 +255,11 @@ class SodaScsSqlComponentActions implements SodaScsComponentActionsInterface {
       );
 
       $keyProps = [
-        'bundle'  => $sqlComponent->bundle(),
+        'bundle'    => $sqlComponent->bundle(),
         'bundleLabel' => $sqlComponentBundleInfo['label'],
-        'type'  => 'password',
-        'userId'  => $entity->getOwnerId(),
-        'username' => $entity->getOwner()->getDisplayName(),
+        'type'      => 'password',
+        'userId'    => $entity->getOwnerId(),
+        'username'  => $entity->getOwner()->getDisplayName(),
       ];
 
       // Create service key if it does not exist.
@@ -300,11 +322,11 @@ class SodaScsSqlComponentActions implements SodaScsComponentActionsInterface {
         );
       }
 
+      /** @var \Drupal\soda_scs_manager\Entity\SodaScsServiceKeyInterface $sqlServiceKeyEntity */
+      $userPassword = $sqlServiceKeyEntity->get('servicePassword')->value;
+
       if ($checkDbUserExistsResult['result'] == 0) {
-        // Database user does not exist
-        // Create the database user.
-        /** @var \Drupal\soda_scs_manager\Entity\SodaScsServiceKeyInterface $sqlServiceKeyEntity */
-        $userPassword = $sqlServiceKeyEntity->get('servicePassword')->value;
+        // Database user does not exist — create it with the service key password.
         $createDbUserResult = $this->sodaScsMysqlServiceActions->createServiceUser($dbUserName, $userPassword);
 
         // Command failed.
@@ -317,6 +339,16 @@ class SodaScsSqlComponentActions implements SodaScsComponentActionsInterface {
             $createDbUserResult['output']
           );
         }
+      }
+
+      // Sync the service key password to the Keycloak user attribute so that
+      // phpMyAdmin signon.php can read it from the JWT (mariadb_password claim).
+      $keycloakUserId = $this->sodaScsProjectHelpers->getUserSsoUuid($entity->getOwner());
+      if ($keycloakUserId) {
+        $this->sodaScsKeycloakHelpers->setKeycloakUserAttributes(
+          $keycloakUserId,
+          ['mariadb_password' => [$userPassword]]
+        );
       }
 
       // Grant rights to the database user.

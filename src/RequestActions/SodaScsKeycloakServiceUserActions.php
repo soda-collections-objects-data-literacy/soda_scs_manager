@@ -154,7 +154,7 @@ class SodaScsKeycloakServiceUserActions implements SodaScsServiceRequestInterfac
     // Replace any route parameters.
     if (!empty($requestParams['routeParams'])) {
       foreach ($requestParams['routeParams'] as $key => $value) {
-        $route = str_replace('{' . $key . '}', $value, $route);
+        $route = str_replace('{' . $key . '}', (string) $value, $route);
       }
     }
 
@@ -214,7 +214,7 @@ class SodaScsKeycloakServiceUserActions implements SodaScsServiceRequestInterfac
     // Replace any route parameters.
     if (!empty($requestParams['routeParams'])) {
       foreach ($requestParams['routeParams'] as $key => $value) {
-        $route = str_replace('{' . $key . '}', $value, $route);
+        $route = str_replace('{' . $key . '}', (string) $value, $route);
       }
     }
 
@@ -263,7 +263,7 @@ class SodaScsKeycloakServiceUserActions implements SodaScsServiceRequestInterfac
     // Replace any route parameters.
     if (!empty($requestParams['routeParams'])) {
       foreach ($requestParams['routeParams'] as $key => $value) {
-        $route = str_replace('{' . $key . '}', $value, $route);
+        $route = str_replace('{' . $key . '}', (string) $value, $route);
       }
     }
 
@@ -310,7 +310,7 @@ class SodaScsKeycloakServiceUserActions implements SodaScsServiceRequestInterfac
     // Replace any route parameters.
     if (!empty($requestParams['routeParams'])) {
       foreach ($requestParams['routeParams'] as $key => $value) {
-        $route = str_replace('{' . $key . '}', $value, $route);
+        $route = str_replace('{' . $key . '}', (string) $value, $route);
       }
     }
 
@@ -426,7 +426,7 @@ class SodaScsKeycloakServiceUserActions implements SodaScsServiceRequestInterfac
     // Replace any route parameters.
     if (!empty($requestParams['routeParams'])) {
       foreach ($requestParams['routeParams'] as $key => $value) {
-        $route = str_replace('{' . $key . '}', $value, $route);
+        $route = str_replace('{' . $key . '}', (string) $value, $route);
       }
     }
 
@@ -492,7 +492,7 @@ class SodaScsKeycloakServiceUserActions implements SodaScsServiceRequestInterfac
     // Replace any route parameters.
     if (!empty($requestParams['routeParams'])) {
       foreach ($requestParams['routeParams'] as $key => $value) {
-        $route = str_replace('{' . $key . '}', $value, $route);
+        $route = str_replace('{' . $key . '}', (string) $value, $route);
       }
     }
 

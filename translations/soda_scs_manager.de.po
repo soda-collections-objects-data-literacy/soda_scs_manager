@@ -614,6 +614,10 @@ msgstr "Unsere Hauptlinkseite"
 msgid "Edit Machine Name"
 msgstr "Maschinenname bearbeiten"
 
+#: soda_scs_manager.routing.yml:426
+msgid "Start page"
+msgstr "Startseite"
+
 #: src/ComponentActions/SodaScsComponentActions.php:165
 msgid "Could not delete component of type @bundle."
 msgstr "Komponente vom Typ @bundle konnte nicht gelöscht werden."
@@ -705,6 +709,30 @@ msgstr "WissKI-Komponente kann nicht gelöscht werden. Weitere Details finden Si
 #: src/ComponentActions/SodaScsWisskiComponentActions.php:358
 msgid "Portainer request failed: @error"
 msgstr "Portainer-Anfrage fehlgeschlagen: @error"
+
+#: src/Controller/SodaScsAdministrationController.php:26
+msgid "Manage single application components like databases, triplestores, etc."
+msgstr "Verwalten Sie singuläre Applikationskomponenten wie Datenbanken, Triplestores etc."
+
+#: src/Controller/SodaScsAdministrationController.php:36
+msgid "Manage application/research environments like JupyterLab, Nextcloud, etc."
+msgstr "Verwalten Sie Applikations-/Forschungsumgebungen wie JupyterLab, Nextcloud, etc."
+
+#: src/Controller/SodaScsAdministrationController.php:46
+msgid "Manage projects to collaborate with other users and share resources."
+msgstr "Verwalten Sie Projekte, um mit anderen Usern zu kollaborieren und Resourcen zu teilen."
+
+#: src/Controller/SodaScsAdministrationController.php:56
+msgid "Manage snapshots for backup and restore operations."
+msgstr "Verwalten Sie Snapshots für Backup- und Wiederherstellungsvorgänge."
+
+#: src/Controller/SodaScsAdministrationController.php:66
+msgid "Manage service keys for applications and external services."
+msgstr "Verwalten Sie Service Keys für Applikationen und externe Services."
+
+#: src/Controller/SodaScsAdministrationController.php:76
+msgid "Configure SODa SCS Manager settings and preferences."
+msgstr "Konfigurieren Sie SODa SCS Manager Einstellungen und Präferenzen."
 
 #: src/Controller/SodaScsComponentBundleController.php:19
 msgid "Component Bundles"
@@ -853,7 +881,7 @@ msgstr "SODa SCS-Komponente"
 
 #: src/Entity/SodaScsProject.php:100
 msgid "The SCS applications associated with this project."
-msgstr "Die mit diesem Projekt verbundenen SCS-Komponenten."
+msgstr "Die mit diesem Projekt verbundenen SCS Applikationen."
 
 #: src/Entity/SodaScsProject.php:129
 msgid "The time that the SODa SCS Project was created."
@@ -985,7 +1013,7 @@ msgstr "Das Image des SODa SCS Stacks."
 
 #: src/Entity/SodaScsStack.php:183
 msgid "Included applications"
-msgstr "Enthaltene Komponenten"
+msgstr "Enthaltene Applikationen"
 
 #: src/Entity/SodaScsStack.php:216
 msgid "The owner of the SODa SCS Stack."
@@ -1017,7 +1045,7 @@ msgstr "Geteilt mit"
 
 #: src/Entity/Bundle/SodaScsComponentBundle.php:50
 msgid "The applications that are shared with this component."
-msgstr "Die Komponenten, die mit dieser Komponente geteilt werden."
+msgstr "Die Applikationen, die mit dieser Komponente geteilt werden."
 
 # src/Entity/Bundle/SodaScsComponentBundle.php:109
 msgid "Automated Updates"
@@ -1069,7 +1097,7 @@ msgstr "Was ist das?"
 
 #: src/Form/SodaScsComponentCreateForm.php:210
 msgid "This field is required for filesystem applications."
-msgstr "Dieses Feld ist für Dateisystemkomponenten erforderlich."
+msgstr "Dieses Feld ist für Dateisystem-Applikation erforderlich."
 
 #: src/Form/SodaScsComponentCreateForm.php:214
 msgid "CREATE"
@@ -1957,7 +1985,7 @@ msgstr "Maschinenname"
 
 #: src/ListBuilder/SodaScsProjectListBuilder.php:26
 msgid "Applications"
-msgstr "Komponenten"
+msgstr "Applikationen"
 
 #: src/ListBuilder/SodaScsServiceKeyListBuilder.php:22
 msgid "Id"
@@ -2279,6 +2307,14 @@ msgstr "Gruppenmitglieder konnten nicht aus Keycloak für Projekt @project abger
 msgid "Failed to add user @user to group @group in Keycloak for project @project."
 msgstr "User @user konnte nicht zur Gruppe @group in Keycloak für Projekt @project hinzugefügt werden."
 
+#: templates/pages/soda-scs-manager--administration.html.twig:16
+msgid "Manage your SODa SCS Manager components, stacks, projects and settings"
+msgstr "Verwalten Sie Ihre SODa SCS Manager Komponenten, Stacks, Projekte and Einstellungen"
+
+#: templates/pages/soda-scs-manager--administration.html.twig:27
+msgid "No administration sections available"
+msgstr "Keine Administrationsbereiche verfügbar"
+
 #: templates/pages/soda-scs-manager--start-page.html.twig:15
 msgid "New here? Start <a href=\"@tour_url\">the beginners tour</a> to learn more about the possibilities."
 msgstr "Neu hier? Starten Sie <a href=\"@tour_url\">die Einführungstour</a>, um mehr über die Möglichkeiten zu erfahren."
@@ -2322,6 +2358,10 @@ msgstr "Einführungstour"
 #: templates/pages/soda-scs-manager--dashboard.html.twig:51
 msgid "Applications of User @username"
 msgstr "Anwendungen von User @username"
+
+#: templates/pages/soda-scs-manager--dashboard.html.twig:51
+msgid "Project "@project" membership applications"
+msgstr "Projekt "@project" Applikationen durch Mitgliedschaft"
 
 #: templates/cards/soda-scs-manager--entity-card.html.twig:31
 msgid "Filter by tag @tag"
@@ -2374,6 +2414,10 @@ msgstr "Veröffentlichung"
 #: templates/pages/soda-scs-manager--dashboard.html.twig:42;templates/pages/soda-scs-manager--catalogue.html.twig:41;templates/cards/soda-scs-manager--entity-card.html.twig:31
 msgid "triplestore"
 msgstr "Triplestore"
+
+#: templates/pages/soda-scs-manager--dashboard.html.twig:51;
+msgid "Clear all filters"
+msgstr "Alle Filter löschen"
 
 #: soda_scs_manager.module:93
 msgid "First Name"

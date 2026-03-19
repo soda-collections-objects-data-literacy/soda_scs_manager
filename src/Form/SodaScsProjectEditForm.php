@@ -15,6 +15,7 @@ use Drupal\Core\Form\FormStateInterface;
 use Drupal\Core\Logger\LoggerChannelFactoryInterface;
 use Drupal\Core\Logger\LoggerChannelInterface;
 use Drupal\Core\Session\AccountProxyInterface;
+use Drupal\soda_scs_manager\Helpers\SodaScsProjectDbAccessHelpers;
 use Drupal\soda_scs_manager\Helpers\SodaScsProjectHelpers;
 use Drupal\soda_scs_manager\Helpers\SodaScsProjectMembershipHelpers;
 use Drupal\soda_scs_manager\RequestActions\SodaScsServiceRequestInterface;
@@ -114,6 +115,13 @@ class SodaScsProjectEditForm extends ContentEntityForm {
   protected SodaScsProjectMembershipHelpers $projectMembershipHelpers;
 
   /**
+   * Project DB access helpers (MariaDB/phpMyAdmin SSO for project members).
+   *
+   * @var \Drupal\soda_scs_manager\Helpers\SodaScsProjectDbAccessHelpers
+   */
+  protected SodaScsProjectDbAccessHelpers $projectDbAccessHelpers;
+
+  /**
    * {@inheritdoc}
    */
   public static function create(ContainerInterface $container) {
@@ -130,6 +138,7 @@ class SodaScsProjectEditForm extends ContentEntityForm {
       $container->get('soda_scs_manager.keycloak_service.user.actions'),
       $container->get('soda_scs_manager.project.helpers'),
       $container->get('soda_scs_manager.project_membership.helpers'),
+      $container->get('soda_scs_manager.project_db_access.helpers'),
     );
   }
 
@@ -149,6 +158,7 @@ class SodaScsProjectEditForm extends ContentEntityForm {
     SodaScsServiceRequestInterface $sodaScsKeycloakServiceUserActions,
     SodaScsProjectHelpers $sodaScsProjectHelpers,
     SodaScsProjectMembershipHelpers $projectMembershipHelpers,
+    SodaScsProjectDbAccessHelpers $projectDbAccessHelpers,
   ) {
     parent::__construct($entity_repository, $entity_type_bundle_info, $time);
     $this->currentUser = $currentUser;
@@ -160,6 +170,7 @@ class SodaScsProjectEditForm extends ContentEntityForm {
     $this->sodaScsKeycloakServiceUserActions = $sodaScsKeycloakServiceUserActions;
     $this->sodaScsProjectHelpers = $sodaScsProjectHelpers;
     $this->projectMembershipHelpers = $projectMembershipHelpers;
+    $this->projectDbAccessHelpers = $projectDbAccessHelpers;
   }
 
   /**
@@ -434,6 +445,9 @@ class SodaScsProjectEditForm extends ContentEntityForm {
       return;
     }
 
+    // Revoke MariaDB access to project's SQL databases before removing.
+    $this->projectDbAccessHelpers->revokeProjectMemberDbAccess($member, $project);
+
     // Remove the member from the project.
     $members = $project->get('members')->getValue();
     $updatedMembers = array_filter($members, function ($item) use ($memberId) {
@@ -494,6 +508,7 @@ class SodaScsProjectEditForm extends ContentEntityForm {
     }
 
     $this->sodaScsProjectHelpers->syncKeycloakGroupMembers($project);
+    $this->projectDbAccessHelpers->syncProjectMembersDbAccess($project);
 
     // Redirect to the components page.
     $form_state->setRedirect('entity.soda_scs_project.collection');

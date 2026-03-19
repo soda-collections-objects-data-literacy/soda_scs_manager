@@ -162,11 +162,18 @@ class SodaScsSettingsForm extends ConfigFormBase {
       '#attributes' => ['autocomplete' => 'new-password'],
     ];
 
+    $form['database']['fields']['dbSsoPassword'] = [
+      '#type' => 'password',
+      '#title' => $this->t('SSO user password'),
+      '#description' => $this->t('Fallback password for phpMyAdmin signon when Keycloak mariadb_password attribute is not set (e.g. users without an SQL component yet). SCS_DBMS_SSO_DB_PASSWORD. Leave blank to keep the current value.'),
+      '#attributes' => ['autocomplete' => 'new-password'],
+    ];
+
     $form['database']['fields']['dbManagementHost'] = [
       '#type' => 'textfield',
       '#title' => $this->t('Management host'),
       '#default_value' => $this->config('soda_scs_manager.settings')->get('dbManagementHost'),
-      '#description' => $this->t('The management host, like adminer-db.scs.sammlungen.io.'),
+      '#description' => $this->t('The phpMyAdmin/DBMS host (SCS_DBMS_DOMAIN), e.g. dbms.scs.sammlungen.io.'),
     ];
 
     // Jupyter settings tab.
@@ -1293,6 +1300,12 @@ class SodaScsSettingsForm extends ConfigFormBase {
       $dbRootPassword = $config->get('dbRootPassword');
     }
 
+    $dbSsoPassword = $form_state->getValue(['database', 'fields', 'dbSsoPassword'])
+      ?? $form_state->getValue('dbSsoPassword');
+    if ($dbSsoPassword === '' || $dbSsoPassword === NULL) {
+      $dbSsoPassword = $config->get('dbSsoPassword');
+    }
+
     $keycloakValues = $form_state->getValue('keycloak');
     $keycloakAdminPassword = $keycloakValues['keycloakTabs']['generalSettings']['fields']['adminPassword'] ?? NULL;
     if ($keycloakAdminPassword === '' || $keycloakAdminPassword === NULL) {
@@ -1326,6 +1339,7 @@ class SodaScsSettingsForm extends ConfigFormBase {
       ->set('dbManagementHost', $form_state->getValue('dbManagementHost'))
       ->set('dbPort', $form_state->getValue('dbPort'))
       ->set('dbRootPassword', $dbRootPassword)
+      ->set('dbSsoPassword', $dbSsoPassword)
       ->set('jupyterhub', $form_state->getValue('jupyterhub'))
       ->set('keycloak', $keycloakValues)
       ->set('nextcloud', $nextcloudValues)

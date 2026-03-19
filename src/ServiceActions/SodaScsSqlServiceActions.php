@@ -546,6 +546,39 @@ class SodaScsSqlServiceActions implements SodaScsServiceActionsInterface {
   }
 
   /**
+   * Revokes rights from a database user on a database.
+   *
+   * @param string $dbUser
+   *   The name of the database user.
+   * @param string $name
+   *   The name of the database.
+   *
+   * @return array
+   *   Result information with command, execStatus, output.
+   */
+  public function revokeServiceRights(string $dbUser, string $name): array {
+    $databaseSettings = $this->sodaScsServiceHelpers->initDatabaseServiceSettings();
+    $dbHost = str_replace('https://', '', $databaseSettings['host']);
+    $dbRootPassword = $databaseSettings['rootPassword'];
+
+    $revokeRightsCommand = sprintf(
+      "mysql -h %s -uroot -p%s -e 'REVOKE ALL PRIVILEGES ON `%s`.* FROM \"%s\"@\"%%\"; FLUSH PRIVILEGES;' 2>&1",
+      escapeshellarg($dbHost),
+      escapeshellarg($dbRootPassword),
+      escapeshellarg($name),
+      escapeshellarg($dbUser)
+    );
+    $revokeRightsCommandResult = exec($revokeRightsCommand, $revokeRightsCommandOutput, $revokeRightsCommandReturnVar);
+
+    return [
+      'command' => $revokeRightsCommand,
+      'execStatus' => $revokeRightsCommandReturnVar,
+      'output' => $revokeRightsCommandOutput,
+      'result' => $revokeRightsCommandResult,
+    ];
+  }
+
+  /**
    * Flush the database privileges.
    *
    * @return array

@@ -11,6 +11,7 @@ use Drupal\Core\Entity\EntityTypeBundleInfoInterface;
 use Drupal\Core\Form\FormStateInterface;
 use Drupal\Core\Session\AccountProxyInterface;
 use Drupal\Core\Url;
+use Drupal\soda_scs_manager\Helpers\SodaScsProjectDbAccessHelpers;
 use Drupal\soda_scs_manager\Helpers\SodaScsProjectHelpers;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 
@@ -25,6 +26,13 @@ final class SodaScsProjectLeaveForm extends ContentEntityConfirmFormBase {
    * @var \Drupal\soda_scs_manager\Helpers\SodaScsProjectHelpers
    */
   protected SodaScsProjectHelpers $sodaScsProjectHelpers;
+
+  /**
+   * Project DB access helpers (MariaDB/phpMyAdmin SSO for project members).
+   *
+   * @var \Drupal\soda_scs_manager\Helpers\SodaScsProjectDbAccessHelpers
+   */
+  protected SodaScsProjectDbAccessHelpers $projectDbAccessHelpers;
 
   /**
    * The current user service.
@@ -52,10 +60,12 @@ final class SodaScsProjectLeaveForm extends ContentEntityConfirmFormBase {
     EntityTypeBundleInfoInterface $entityTypeBundleInfo,
     TimeInterface $time,
     SodaScsProjectHelpers $sodaScsProjectHelpers,
+    SodaScsProjectDbAccessHelpers $projectDbAccessHelpers,
     AccountProxyInterface $currentUser,
   ) {
     parent::__construct($entityRepository, $entityTypeBundleInfo, $time);
     $this->sodaScsProjectHelpers = $sodaScsProjectHelpers;
+    $this->projectDbAccessHelpers = $projectDbAccessHelpers;
     $this->currentUser = $currentUser;
   }
 
@@ -68,6 +78,7 @@ final class SodaScsProjectLeaveForm extends ContentEntityConfirmFormBase {
       $container->get('entity_type.bundle.info'),
       $container->get('datetime.time'),
       $container->get('soda_scs_manager.project.helpers'),
+      $container->get('soda_scs_manager.project_db_access.helpers'),
       $container->get('current_user'),
     );
   }
@@ -137,6 +148,12 @@ final class SodaScsProjectLeaveForm extends ContentEntityConfirmFormBase {
     if (!$isMember) {
       $this->messenger()->addError($this->t('You are not a member of this project.'));
       return;
+    }
+
+    /** @var \Drupal\user\UserInterface|null $currentUserEntity */
+    $currentUserEntity = \Drupal::entityTypeManager()->getStorage('user')->load($currentUserId);
+    if ($currentUserEntity) {
+      $this->projectDbAccessHelpers->revokeProjectMemberDbAccess($currentUserEntity, $project);
     }
 
     // Remove the current user from the members field.
