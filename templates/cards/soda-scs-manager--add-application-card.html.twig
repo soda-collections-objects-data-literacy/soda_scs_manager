@@ -5,6 +5,7 @@
  *
  * Available variables:
  * - attributes: HTML attributes for the card container.
+ * - popup_url_mariadb, popup_url_wisski, popup_url_open_gdb: localized app URLs.
  */
 #}
 
@@ -52,7 +53,7 @@
     {% set assetBase = asset_base|default('/modules/custom/soda_scs_manager/assets/images/') %}
     <div class="grid grid-cols-1 md:grid-cols-3 gap-6 md:gap-8">
       {# Database Card #}
-      <a href="/soda-scs-manager/app/mariadb"
+      <a href="{{ popup_url_mariadb }}"
 
          class="soda-scs-manager--add-app-popup-card rounded-xl p-6 md:p-8 transition-all border-2 border-stone-200 hover:border-orange-400 hover:shadow-lg bg-white hover:bg-stone-50">
         <div class="flex flex-col items-center text-center">
@@ -65,7 +66,7 @@
       </a>
 
       {# WissKI Card #}
-      <a href="/soda-scs-manager/app/wisski"
+      <a href="{{ popup_url_wisski }}"
 
          class="soda-scs-manager--add-app-popup-card rounded-xl p-6 md:p-8 transition-all border-2 border-stone-200 hover:border-orange-400 hover:shadow-lg bg-white hover:bg-stone-50">
         <div class="flex flex-col items-center text-center">
@@ -78,7 +79,7 @@
       </a>
 
       {# Triplestore Card #}
-      <a href="/soda-scs-manager/app/open-gdb"
+      <a href="{{ popup_url_open_gdb }}"
 
          class="soda-scs-manager--add-app-popup-card rounded-xl p-6 md:p-8 transition-all border-2 border-stone-200 hover:border-orange-400 hover:shadow-lg bg-white hover:bg-stone-50">
         <div class="flex flex-col items-center text-center">

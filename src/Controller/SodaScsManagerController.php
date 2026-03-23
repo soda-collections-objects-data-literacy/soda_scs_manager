@@ -166,7 +166,7 @@ class SodaScsManagerController extends ControllerBase {
             '#entity_type_id' => $projectEntity->getEntityTypeId(),
             '#health_status' => $projectEntity->get('health')->value ?? 'Unknown',
             '#imageUrl' => $projectBundleInfo['imageUrl'],
-            '#learn_more_link' => '/soda-scs-manager/app/' . $this->sodaScsHelpers->getEntityType($projectEntity->bundle()),
+            '#learn_more_link' => $this->internalPathUrl('soda-scs-manager/app/' . $this->sodaScsHelpers->getEntityType($projectEntity->bundle())),
             '#url' => $url,
             '#tags' => $projectBundleInfo['tags'],
             '#cache' => [
@@ -318,7 +318,7 @@ class SodaScsManagerController extends ControllerBase {
         '#entity_type_id' => $entity->getEntityTypeId(),
         '#health_status' => $entity->get('health')->value ?? 'Unknown',
         '#imageUrl' => $bundleInfo['imageUrl'],
-        '#learn_more_link' => '/soda-scs-manager/app/' . $this->sodaScsHelpers->getEntityType($entity->bundle()),
+        '#learn_more_link' => $this->internalPathUrl('soda-scs-manager/app/' . $this->sodaScsHelpers->getEntityType($entity->bundle())),
         '#url' => $url,
         '#tags' => $bundleInfo['tags'],
         '#cache' => [
@@ -339,6 +339,9 @@ class SodaScsManagerController extends ControllerBase {
     array_unshift($entitiesByUser[$currentUsername], [
       '#theme' => 'soda_scs_manager__add_application_card',
       '#asset_base' => $assetBase,
+      '#popup_url_mariadb' => $this->internalPathUrl('soda-scs-manager/app/mariadb'),
+      '#popup_url_wisski' => $this->internalPathUrl('soda-scs-manager/app/wisski'),
+      '#popup_url_open_gdb' => $this->internalPathUrl('soda-scs-manager/app/open-gdb'),
       '#cache' => [
         'max-age' => 0,
       ],
@@ -347,7 +350,7 @@ class SodaScsManagerController extends ControllerBase {
     // Sort entitiesByUser alphabetically by using the keys (= usernames).
     ksort($entitiesByUser);
 
-    // Move current user to the top of the list to always display them (and the "Add Application" button) first.
+    // Move current user to the top (and the "Add Application" button) first.
     $entitiesByUser = $this->moveKeyToFirstPosition($entitiesByUser, $currentUsername);
 
     $build = [
@@ -391,8 +394,7 @@ class SodaScsManagerController extends ControllerBase {
     ])->toString();
 
     // Book documentation root (path alias from content sync).
-    $documentationUrl = Url::fromUri('internal:/soda-scs-manager/documentation')
-      ->toString();
+    $documentationUrl = $this->internalPathUrl('soda-scs-manager/documentation');
 
     return [
       '#theme' => 'soda_scs_manager__start_page',
@@ -440,6 +442,23 @@ class SodaScsManagerController extends ControllerBase {
     return [
       '#theme' => 'soda_scs_manager_healthcheck_page',
     ];
+  }
+
+  /**
+   * Relative URL for an internal path, respecting interface language (prefix).
+   *
+   * @param string $path
+   *   Path without leading slash, e.g. soda-scs-manager/app/wisski.
+   *
+   * @return string
+   *   Generated path (may include a language prefix).
+   */
+  protected function internalPathUrl(string $path): string {
+    $path = ltrim($path, '/');
+    return Url::fromUri('internal:/' . $path, [
+      'language' => $this->languageManager()->getCurrentLanguage(),
+      'path_processing' => TRUE,
+    ])->toString();
   }
 
   /**
