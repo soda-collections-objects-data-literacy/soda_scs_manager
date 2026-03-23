@@ -166,7 +166,7 @@ class SodaScsManagerController extends ControllerBase {
             '#entity_type_id' => $projectEntity->getEntityTypeId(),
             '#health_status' => $projectEntity->get('health')->value ?? 'Unknown',
             '#imageUrl' => $projectBundleInfo['imageUrl'],
-            '#learn_more_link' => '/app/' . $this->sodaScsHelpers->getEntityType($projectEntity->bundle()),
+            '#learn_more_link' => '/soda-scs-manager/app/' . $this->sodaScsHelpers->getEntityType($projectEntity->bundle()),
             '#url' => $url,
             '#tags' => $projectBundleInfo['tags'],
             '#cache' => [
@@ -318,7 +318,7 @@ class SodaScsManagerController extends ControllerBase {
         '#entity_type_id' => $entity->getEntityTypeId(),
         '#health_status' => $entity->get('health')->value ?? 'Unknown',
         '#imageUrl' => $bundleInfo['imageUrl'],
-        '#learn_more_link' => '/app/' . $this->sodaScsHelpers->getEntityType($entity->bundle()),
+        '#learn_more_link' => '/soda-scs-manager/app/' . $this->sodaScsHelpers->getEntityType($entity->bundle()),
         '#url' => $url,
         '#tags' => $bundleInfo['tags'],
         '#cache' => [

@@ -12,13 +12,14 @@ dependencies:
     - field.field.node.application.field__app__type
     - field.field.node.application.field__use_button
   entity:
+    - 'user:user:c0c8dfaa-251c-4488-8615-38a83b7ced6c'
     - 'media:image:055b2ef1-7516-4413-892c-aa087c0d7451'
 fields:
   nid: '15'
-  vid: '90'
-  revision_timestamp: '1770647194'
+  vid: '112'
+  revision_timestamp: '1774298236'
   revision_uid:
-    target_id: '0'
+    target_id: '7'
   revision_log: {  }
   status: '1'
   uid:
@@ -30,9 +31,9 @@ fields:
   sticky: '0'
   default_langcode: '1'
   revision_default: '1'
-  revision_translation_affected: '1'
+  revision_translation_affected: {  }
   path:
-    alias: /app/nextcloud
+    alias: /soda-scs-manager/app/nextcloud
     pid: '14'
     langcode: en
   menu_link: {  }
@@ -69,13 +70,13 @@ translations:
       target_id: '0'
     title: 'Nextcloud mit OnlyOffice and draw.io'
     created: '1759612867'
-    changed: '1770647193'
+    changed: '1774298236'
     promote: '0'
     sticky: '0'
     default_langcode: '0'
     revision_translation_affected: '1'
     path:
-      alias: /app/nextcloud
+      alias: /soda-scs-manager/app/nextcloud
       pid: '16'
       langcode: de
     menu_link: {  }
@@ -88,20 +89,20 @@ translations:
     field__app__link:
       -
         uri: 'https://nextcloud.com/'
-        title: 'Website of the Nextcloud'
+        title: 'Website von Nextcloud'
         options: {  }
       -
         uri: 'https://www.drawio.com/'
-        title: 'Website of the draw.io diagramming software'
+        title: 'Website von der draw.io diagramming software'
         options: {  }
       -
         uri: 'https://www.onlyoffice.com'
-        title: 'Website of the OnlyOffice office suite'
+        title: 'Website der OnlyOffice office suite'
         options: {  }
     field__app__logo:
       target_id: '3'
     field__app__type: environment
     field__use_button:
       uri: 'https://nextcloud.scs.sammlungen.io/'
-      title: 'Enter your Nextcloud'
+      title: 'Zur SODa SCS Nextcloud'
       options: {  }

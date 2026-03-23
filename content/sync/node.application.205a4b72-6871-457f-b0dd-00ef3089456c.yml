@@ -12,27 +12,28 @@ dependencies:
     - field.field.node.application.field__app__type
     - field.field.node.application.field__use_button
   entity:
+    - 'user:user:c0c8dfaa-251c-4488-8615-38a83b7ced6c'
     - 'media:image:6eb3ed2b-b05c-4a3a-be09-e150f39cf3d1'
 fields:
   nid: '23'
-  vid: '23'
-  revision_timestamp: '1770647194'
+  vid: '109'
+  revision_timestamp: '1774298164'
   revision_uid:
-    target_id: '0'
+    target_id: '7'
   revision_log: {  }
   status: '1'
   uid:
     target_id: '0'
-  title: WebProtégé
+  title: Webprotégé
   created: '1759389060'
   changed: '1770647193'
   promote: '0'
   sticky: '0'
   default_langcode: '1'
   revision_default: '1'
-  revision_translation_affected: '1'
+  revision_translation_affected: {  }
   path:
-    alias: /app/webprotege
+    alias: /soda-scs-manager/app/webprotege
     pid: '29'
     langcode: en
   menu_link: {  }
@@ -63,37 +64,37 @@ translations:
     status: '1'
     uid:
       target_id: '0'
-    title: WebProtégé
+    title: Webprotégé
     created: '1759614803'
-    changed: '1770647193'
+    changed: '1774298164'
     promote: '0'
     sticky: '0'
     default_langcode: '0'
     revision_translation_affected: '1'
     path:
-      alias: /app/webprotege
+      alias: /soda-scs-manager/app/webprotege
       pid: '30'
       langcode: de
     menu_link: {  }
     content_translation_source: en
     content_translation_outdated: '0'
     field__app__description:
-      value: '<h2>Überblick</h2><p>WebProtégé ist eine freie, quelloffene, webbasierte Plattform für die gemeinsame Ontologieentwicklung. Nutzerinnen und Nutzer können OWL-2-Ontologien direkt im Webbrowser erstellen, bearbeiten und teilen. Es sind keine lokalen Installationen nötig; die Plattform bietet umfassende Werkzeuge für Wissensmodellierung und kollaboratives Ontologie-Engineering.</p><h2>Möglichkeiten</h2><p>WebProtégé unterstützt kollaborative Ontologieentwicklung: mehrere Personen arbeiten gleichzeitig an OWL-2-Ontologien über eine gemeinsame Weboberfläche. Die Plattform begleitet den gesamten Lebenszyklus – von ersten Konzeptmodellen bis zu anspruchsvoller Wissensrepräsentation – mit Echtzeit-Kollaboration, Änderungsnachverfolgung und koordinierter Einbindung verteilter Teams.</p><p>Das System bietet umfassende Bearbeitungsfunktionen für Klassen, Eigenschaften und Individuen sowie komplexe Beziehungen und Constraints. Fachexpertinnen und -experten können über anpassbare Webformulare beitragen, sodass Ontologieentwicklung auch ohne tiefe Kenntnis formaler Logik oder OWL-Syntax zugänglich bleibt.</p><p>Zusammenarbeit wird durch Diskussionsthreads, detailliertes Änderungs-Tracking und eine Revisionshistorie unterstützt, die die Entwicklung der Ontologie nachvollziehbar macht. Kommentare zu Elementen, Änderungsvorschläge und strukturierte Diskussionen sind direkt in der Plattform möglich.</p><p>Unterstützt werden mehrere Ontologieformate (RDF/XML, Turtle, OWL/XML, OBO) für interoperable Workflows. Import und Export erleichtern die Anbindung an Desktop-Editoren und andere Semantic-Web-Werkzeuge bei formatkonformer Weiterverarbeitung.</p>'
+      value: '<h2>Übersicht</h2><p>WebProtégé ist eine kostenlose, quelloffene, webbasierte Plattform für die kollaborative Ontologieentwicklung, die es Benutzern ermöglicht, OWL-2-Ontologien direkt über einen Webbrowser zu erstellen, zu bearbeiten und zu teilen. Die Plattform macht lokale Softwareinstallationen überflüssig und bietet gleichzeitig umfassende Werkzeuge für die Wissensmodellierung und das kollaborative Ontologie-Engineering.</p><h2>Möglichkeiten</h2><p>WebProtégé ermöglicht die kollaborative Ontologieentwicklung, bei der mehrere Benutzer über eine gemeinsame Weboberfläche gleichzeitig an OWL-2-Ontologien arbeiten können. Die Plattform unterstützt den gesamten Ontologie-Lebenszyklus – von der anfänglichen Konzeptmodellierung bis hin zur komplexen Wissensdarstellung – und bietet Tools für die Zusammenarbeit in Echtzeit, die Änderungen nachverfolgen und die Beiträge der Benutzer in verteilten Teams verwalten.<br>Das System bietet umfassende Funktionen zur Ontologiebearbeitung, mit denen Benutzer Klassen, Eigenschaften und Individuen erstellen und gleichzeitig komplexe Beziehungen und Einschränkungen definieren können. Fachexperten können über anpassbare Webformulare beitragen, die auf bestimmte Wissensdomänen zugeschnitten sind, wodurch die Ontologieentwicklung auch für Benutzer zugänglich wird, die keine tiefgreifenden technischen Kenntnisse in formaler Logik oder OWL-Syntax besitzen.<br>Die Zusammenarbeit wird durch integrierte Diskussionsstränge, detaillierte Änderungsverfolgung und einen Revisionsverlauf erleichtert, der einen vollständigen Prüfpfad der Ontologieentwicklung aufbewahrt. Benutzer können bestimmte Ontologieelemente kommentieren, Änderungen vorschlagen und direkt innerhalb der Plattform strukturierte Diskussionen über Modellierungsentscheidungen führen.<br>Die Plattform unterstützt mehrere Ontologieformate, darunter RDF/XML, Turtle, OWL/XML und OBO, und gewährleistet so die Interoperabilität mit bestehenden Tools und Arbeitsabläufen. Ihre Import-/Exportfunktionalität erleichtert die Integration mit Desktop-Ontologie-Editoren und anderen Semantic-Web-Tools und gewährleistet gleichzeitig die Formatkompatibilität zwischen verschiedenen Systemen.</p>'
       summary: ''
       format: full_html
     field__app__link:
       -
         uri: 'https://protegewiki.stanford.edu/wiki/WebProtege'
-        title: 'Link zur WebProtégé-Website (Stanford Wiki)'
+        title: 'Link zur Webprotégé Website'
         options: {  }
       -
         uri: 'https://webprotege.scs.sammlungen.io/'
-        title: 'Startseite der WebProtégé-SCS-Instanz'
+        title: 'Homepage des SODa SCS Webprotégé'
         options: {  }
     field__app__logo:
       target_id: '6'
     field__app__type: specialized_tool
     field__use_button:
       uri: 'https://webprotege.scs.sammlungen.io/'
-      title: 'WebProtégé öffnen'
+      title: 'Zu Webprotégé'
       options: {  }

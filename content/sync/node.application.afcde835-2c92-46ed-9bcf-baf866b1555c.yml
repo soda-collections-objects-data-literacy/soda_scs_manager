@@ -12,13 +12,14 @@ dependencies:
     - field.field.node.application.field__app__type
     - field.field.node.application.field__use_button
   entity:
+    - 'user:user:c0c8dfaa-251c-4488-8615-38a83b7ced6c'
     - 'media:image:2554ac8d-e9d0-495a-96ba-e54dff9b9b94'
 fields:
   nid: '18'
-  vid: '18'
-  revision_timestamp: '1770647194'
+  vid: '116'
+  revision_timestamp: '1774298292'
   revision_uid:
-    target_id: '0'
+    target_id: '7'
   revision_log: {  }
   status: '1'
   uid:
@@ -30,9 +31,9 @@ fields:
   sticky: '0'
   default_langcode: '1'
   revision_default: '1'
-  revision_translation_affected: '1'
+  revision_translation_affected: {  }
   path:
-    alias: /app/open-gdb
+    alias: /soda-scs-manager/app/open-gdb
     pid: '19'
     langcode: en
   menu_link: {  }
@@ -65,13 +66,13 @@ translations:
       target_id: '0'
     title: 'Open GDB'
     created: '1759614798'
-    changed: '1770647193'
+    changed: '1774298292'
     promote: '0'
     sticky: '0'
     default_langcode: '0'
     revision_translation_affected: '1'
     path:
-      alias: /app/open-gdb
+      alias: /soda-scs-manager/app/open-gdb
       pid: '20'
       langcode: de
     menu_link: {  }
@@ -84,16 +85,16 @@ translations:
     field__app__link:
       -
         uri: 'https://github.com/FAU-CDI/open_gdb'
-        title: 'Repository of the Open GDB '
+        title: 'Repository der Open GDB '
         options: {  }
       -
         uri: 'https://rdf4j.org/'
-        title: 'Website of the RDF4J triplestore'
+        title: 'Website der RDF4J Triplestore Software'
         options: {  }
     field__app__logo:
       target_id: '5'
     field__app__type: storage_or_database
     field__use_button:
       uri: 'internal:/soda-scs-manager/component/add/soda_scs_triplestore_component'
-      title: 'Get your Open GDB triplestore'
+      title: 'Erstelle einen Open GDB Triplestore'
       options: {  }

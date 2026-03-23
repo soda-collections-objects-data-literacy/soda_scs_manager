@@ -11,24 +11,24 @@ dependencies:
     - 'user:user:c0c8dfaa-251c-4488-8615-38a83b7ced6c'
 fields:
   nid: '42'
-  vid: '102'
-  revision_timestamp: '1773063035'
+  vid: '118'
+  revision_timestamp: '1774299918'
   revision_uid:
-    target_id: '0'
+    target_id: '7'
   revision_log: {  }
   status: '1'
   uid:
     target_id: '0'
   title: 'Imprint & privacy'
   created: '1773062757'
-  changed: '1773063035'
+  changed: '1774299918'
   promote: '0'
   sticky: '0'
   default_langcode: '1'
   revision_default: '1'
-  revision_translation_affected: '1'
+  revision_translation_affected: {  }
   path:
-    alias: /soda-scs-manager/documentation/your-applications
+    alias: /soda-scs-manager/your-applications
     pid: '66'
     langcode: en
   menu_link: {  }

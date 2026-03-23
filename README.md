@@ -18,11 +18,11 @@ It extends the Drupal framework with an administration panel for the SODa Semant
 ```bash
 drush content_entity_sync:export media --bundle=image
 drush content_entity_sync:export menu_link_content
-drush content_entity_sync:export node --bundle=application,book,page,documentation
+drush content_entity_sync:export node --bundle=application,book,page
 ```
 ### Import
 ```bash
-drush content_entity_sync:import node --bundle=application,book,page,documentation
+drush content_entity_sync:import node --bundle=application,book,page
 drush content_entity_sync:import media --bundle=image
 drush content_entity_sync:import menu_link_content
 ```

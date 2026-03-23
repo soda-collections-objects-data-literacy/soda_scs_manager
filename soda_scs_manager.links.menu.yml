@@ -128,6 +128,7 @@ soda_scs_manager.menu.dashboard:
 
 # Href from DocumentationInternalPathMenuLink; route for active trail in discovery alter.
 soda_scs_manager.menu.documentation:
+  class: Drupal\soda_scs_manager\Plugin\Menu\DocumentationInternalPathMenuLink
   title: 'Documentation'
   description: 'Documentation'
   parent: soda_scs_manager.main_navigation
@@ -166,6 +167,7 @@ soda_scs_manager.menu.notifications:
 # Anonymous (and unauthenticated) visitors: Documentation only. Hidden for logged-in
 # users in preprocess so they use the item under SODa SCS Manager.
 soda_scs_manager.anonymous_documentation:
+  class: Drupal\soda_scs_manager\Plugin\Menu\DocumentationInternalPathMenuLink
   title: 'Documentation'
   description: 'SODa SCS documentation'
   menu_name: main

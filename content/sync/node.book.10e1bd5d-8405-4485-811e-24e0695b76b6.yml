@@ -7,24 +7,26 @@ dependencies:
   config:
     - node.node_type.book
     - field.field.node.book.body
+  entity:
+    - 'user:user:c0c8dfaa-251c-4488-8615-38a83b7ced6c'
 fields:
   nid: '11'
-  vid: '26'
-  revision_timestamp: '1770647195'
+  vid: '119'
+  revision_timestamp: '1774300912'
   revision_uid:
-    target_id: '0'
+    target_id: '7'
   revision_log: {  }
   status: '1'
   uid:
     target_id: '0'
   title: Documentation
   created: '1759232162'
-  changed: '1770647193'
+  changed: '1774294284'
   promote: '0'
   sticky: '0'
   default_langcode: '1'
   revision_default: '1'
-  revision_translation_affected: '1'
+  revision_translation_affected: {  }
   path:
     alias: /soda-scs-manager/documentation
     pid: '11'
@@ -43,11 +45,11 @@ translations:
       target_id: '0'
     title: Dokumentation
     created: '1759609829'
-    changed: '1770647193'
+    changed: '1774300912'
     promote: '0'
     sticky: '0'
     default_langcode: '0'
-    revision_translation_affected: '1'
+    revision_translation_affected: {  }
     path:
       alias: /soda-scs-manager/documentation
       pid: '35'

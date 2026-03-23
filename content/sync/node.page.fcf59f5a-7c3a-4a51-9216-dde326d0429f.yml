@@ -11,8 +11,8 @@ dependencies:
     - 'user:user:c0c8dfaa-251c-4488-8615-38a83b7ced6c'
 fields:
   nid: '44'
-  vid: '70'
-  revision_timestamp: '1769499163'
+  vid: '117'
+  revision_timestamp: '1774299904'
   revision_uid:
     target_id: '7'
   revision_log: {  }
@@ -21,14 +21,14 @@ fields:
     target_id: '7'
   title: 'Terms of service'
   created: '1769498718'
-  changed: '1769499163'
+  changed: '1774299904'
   promote: '0'
   sticky: '0'
   default_langcode: '1'
   revision_default: '1'
-  revision_translation_affected: '1'
+  revision_translation_affected: {  }
   path:
-    alias: /soda-scs-manager/documentation/terms-of-service
+    alias: /soda-scs-manager/terms-of-service
     pid: '70'
     langcode: en
   menu_link: {  }

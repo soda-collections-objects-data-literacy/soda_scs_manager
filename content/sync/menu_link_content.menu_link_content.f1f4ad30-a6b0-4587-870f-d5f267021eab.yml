@@ -12,7 +12,7 @@ fields:
   revision_user: {  }
   revision_log_message: {  }
   enabled: '1'
-  title: 'Sign up'
+  title: 'Sign up '
   description: {  }
   menu_name: sign-up
   link:
@@ -28,9 +28,3 @@ fields:
   default_langcode: '1'
   revision_default: '1'
   revision_translation_affected: '1'
-translations:
-  de:
-    title: Registrieren
-    default_langcode: '0'
-    revision_translation_affected: '1'
-    content_translation_source: en

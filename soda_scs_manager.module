@@ -1670,7 +1670,6 @@ function soda_scs_manager_menu_links_discovered_alter(array &$links): void {
     if (!isset($links[$id])) {
       continue;
     }
-    $links[$id]['class'] = \Drupal\soda_scs_manager\Plugin\Menu\DocumentationInternalPathMenuLink::class;
     if ($node instanceof NodeInterface) {
       $links[$id]['route_name'] = 'entity.node.canonical';
       $links[$id]['route_parameters'] = ['node' => (string) $node->id()];
