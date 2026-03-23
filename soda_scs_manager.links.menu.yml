@@ -106,9 +106,10 @@ soda_scs_manager.snapshot_debug:
   weight: 0
 
 # Structure pages
-# Main navigation: authenticated users see the parent + children; anonymous users
-# only see soda_scs_manager.anonymous_documentation (top-level). Preprocess removes
-# that duplicate link when logged in — see soda_scs_manager_preprocess_menu().
+# Main navigation: "SODa SCS Manager" expands to Dashboard, Documentation, etc.;
+# Notifications is a separate top-level item beside it. Anonymous users only see
+# soda_scs_manager.anonymous_documentation (top-level). Preprocess removes that
+# duplicate Documentation link when logged in — see soda_scs_manager_preprocess_menu().
 soda_scs_manager.main_navigation:
   title: 'SODa SCS Manager'
   description: 'Overview of main tasks'
@@ -153,9 +154,9 @@ soda_scs_manager.menu.issue_report:
 soda_scs_manager.menu.notifications:
   title: 'Notifications'
   description: 'Project invitations'
-  parent: soda_scs_manager.main_navigation
+  menu_name: main
   route_name: soda_scs_manager.notifications
-  weight: 50
+  weight: 11
   requirements:
     _permission: 'soda scs manager user'
 
