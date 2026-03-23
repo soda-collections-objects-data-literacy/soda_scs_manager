@@ -23,7 +23,7 @@ fields:
   status: '1'
   uid:
     target_id: '0'
-  title: Webprotégé
+  title: WebProtégé
   created: '1759389060'
   changed: '1770647193'
   promote: '0'
@@ -63,7 +63,7 @@ translations:
     status: '1'
     uid:
       target_id: '0'
-    title: Webprotégé
+    title: WebProtégé
     created: '1759614803'
     changed: '1770647193'
     promote: '0'
@@ -78,22 +78,22 @@ translations:
     content_translation_source: en
     content_translation_outdated: '0'
     field__app__description:
-      value: '<h2>Overview</h2><p>WebProtégé is a free, open-source, web-based platform for collaborative ontology development that enables users to create, edit, and share OWL 2 ontologies directly through a web browser. The platform eliminates the need for local software installations while providing comprehensive tools for knowledge modeling and collaborative ontology engineering.</p><h2>Possibilities</h2><p data-start="149" data-end="532">WebProtégé enables collaborative ontology development where multiple users can work simultaneously on OWL 2 ontologies via a shared web interface. The platform supports the entire ontology lifecycle—from initial concept modeling to complex knowledge representation—featuring real-time collaboration tools that track changes and manage user contributions across distributed teams.</p><p data-start="534" data-end="932">The system provides comprehensive ontology editing capabilities, allowing users to create classes, properties, and individuals while defining complex relationships and constraints. Domain experts can contribute through customizable web forms tailored to specific knowledge domains, making ontology development accessible even to users without deep technical expertise in formal logic or OWL syntax.</p><p data-start="934" data-end="1275">Collaboration is facilitated through integrated discussion threads, detailed change tracking, and a revision history that preserves a complete audit trail of the ontology''s evolution. Users can comment on specific ontology elements, propose changes, and engage in structured discussions about modeling decisions directly within the platform.</p><p data-start="1277" data-end="1611">The platform supports multiple ontology formats, including RDF/XML, Turtle, OWL/XML, and OBO, ensuring interoperability with existing tools and workflows. Its import/export functionality facilitates integration with desktop ontology editors and other semantic web tools while maintaining format compatibility across different systems.</p>'
+      value: '<h2>Überblick</h2><p>WebProtégé ist eine freie, quelloffene, webbasierte Plattform für die gemeinsame Ontologieentwicklung. Nutzerinnen und Nutzer können OWL-2-Ontologien direkt im Webbrowser erstellen, bearbeiten und teilen. Es sind keine lokalen Installationen nötig; die Plattform bietet umfassende Werkzeuge für Wissensmodellierung und kollaboratives Ontologie-Engineering.</p><h2>Möglichkeiten</h2><p>WebProtégé unterstützt kollaborative Ontologieentwicklung: mehrere Personen arbeiten gleichzeitig an OWL-2-Ontologien über eine gemeinsame Weboberfläche. Die Plattform begleitet den gesamten Lebenszyklus – von ersten Konzeptmodellen bis zu anspruchsvoller Wissensrepräsentation – mit Echtzeit-Kollaboration, Änderungsnachverfolgung und koordinierter Einbindung verteilter Teams.</p><p>Das System bietet umfassende Bearbeitungsfunktionen für Klassen, Eigenschaften und Individuen sowie komplexe Beziehungen und Constraints. Fachexpertinnen und -experten können über anpassbare Webformulare beitragen, sodass Ontologieentwicklung auch ohne tiefe Kenntnis formaler Logik oder OWL-Syntax zugänglich bleibt.</p><p>Zusammenarbeit wird durch Diskussionsthreads, detailliertes Änderungs-Tracking und eine Revisionshistorie unterstützt, die die Entwicklung der Ontologie nachvollziehbar macht. Kommentare zu Elementen, Änderungsvorschläge und strukturierte Diskussionen sind direkt in der Plattform möglich.</p><p>Unterstützt werden mehrere Ontologieformate (RDF/XML, Turtle, OWL/XML, OBO) für interoperable Workflows. Import und Export erleichtern die Anbindung an Desktop-Editoren und andere Semantic-Web-Werkzeuge bei formatkonformer Weiterverarbeitung.</p>'
       summary: ''
       format: full_html
     field__app__link:
       -
         uri: 'https://protegewiki.stanford.edu/wiki/WebProtege'
-        title: 'Link to the Webprotégé website'
+        title: 'Link zur WebProtégé-Website (Stanford Wiki)'
         options: {  }
       -
         uri: 'https://webprotege.scs.sammlungen.io/'
-        title: 'Homepage of the Webprotégé SCS instance'
+        title: 'Startseite der WebProtégé-SCS-Instanz'
         options: {  }
     field__app__logo:
       target_id: '6'
     field__app__type: specialized_tool
     field__use_button:
       uri: 'https://webprotege.scs.sammlungen.io/'
-      title: 'Enter your Webprotégé'
+      title: 'WebProtégé öffnen'
       options: {  }

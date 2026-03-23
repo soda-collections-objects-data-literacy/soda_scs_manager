@@ -8,6 +8,7 @@ use Drupal\Core\Database\Connection;
 use Drupal\Core\Form\FormBase;
 use Drupal\Core\Form\FormStateInterface;
 use Drupal\Core\Mail\MailManagerInterface;
+use Drupal\Core\Render\Markup;
 use Drupal\Core\Entity\EntityTypeManagerInterface;
 use Drupal\Core\Messenger\MessengerInterface;
 use Drupal\Core\Password\PasswordGeneratorInterface;
@@ -130,6 +131,17 @@ class KeycloakUserRegistrationForm extends FormBase {
   }
 
   /**
+   * Drops #description so the checkbox label (linked #title) is not shown twice.
+   *
+   * Runs after hook_form_alter(), so contrib that adds a matching description
+   * cannot duplicate the visible text next to the legal checkboxes.
+   */
+  public static function removeLegalCheckboxDescription(array $element, FormStateInterface $form_state): array {
+    unset($element['#description']);
+    return $element;
+  }
+
+  /**
    * {@inheritdoc}
    */
   public function buildForm(array $form, FormStateInterface $form_state) {
@@ -137,7 +149,7 @@ class KeycloakUserRegistrationForm extends FormBase {
 
     $form['description'] = [
       '#type' => 'markup',
-      '#markup' => $this->t('<p><strong>Register for an account. You will receive an email, which confirm your registration. It will be reviewed by an administrator. You will receive another email, when your account is approved or rejected.</strong></p>'),
+      '#markup' => $this->t('<p><strong>Register for an account. You will receive an email confirming your registration. Your registration will be reviewed by an administrator. You will receive another email when your account is approved or rejected.</strong></p>'),
     ];
 
     $form['email'] = [
@@ -155,18 +167,20 @@ class KeycloakUserRegistrationForm extends FormBase {
       '#description' => $this->t('Enter a username for your account.'),
     ];
 
+    $nameFieldRules = (string) $this->t('Only letters, spaces, hyphens, apostrophes, and periods are allowed.');
+
     $form['first_name'] = [
       '#type' => 'textfield',
       '#title' => $this->t('First name'),
       '#required' => TRUE,
-      '#description' => $this->t('Enter your first name. Only letters, spaces, hyphens, apostrophes, and periods are allowed.'),
+      '#description' => $this->t('Enter your first name. @rules', ['@rules' => $nameFieldRules]),
     ];
 
     $form['last_name'] = [
       '#type' => 'textfield',
       '#title' => $this->t('Last name'),
       '#required' => TRUE,
-      '#description' => $this->t('Enter your last name. Only letters, spaces, hyphens, apostrophes, and periods are allowed.'),
+      '#description' => $this->t('Enter your last name. @rules', ['@rules' => $nameFieldRules]),
     ];
 
     $form['password'] = [
@@ -177,16 +191,16 @@ class KeycloakUserRegistrationForm extends FormBase {
 
     $form['terms_of_service'] = [
       '#type' => 'checkbox',
-      '#description' => $this->t('I agree to the <a href="/terms-of-service" target="_blank">terms of service</a>'),
-      '#title' => $this->t('I agree to the terms of service'),
+      '#title' => Markup::create($this->t('I agree to the <a href="/soda-scs-manager/terms-of-service" target="_blank">terms of service</a>')),
       '#required' => TRUE,
+      '#after_build' => [[static::class, 'removeLegalCheckboxDescription']],
     ];
 
     $form['privacy_policy'] = [
       '#type' => 'checkbox',
-      '#description' => $this->t('I agree to the <a href="/imprint-privacy-policy" target="_blank">privacy policy</a>'),
-      '#title' => $this->t('I agree to the privacy policy'),
+      '#title' => Markup::create($this->t('I agree to the <a href="/soda-scs-manager/imprint-privacy-policy" target="_blank">privacy policy</a>')),
       '#required' => TRUE,
+      '#after_build' => [[static::class, 'removeLegalCheckboxDescription']],
     ];
 
     $form['actions'] = [

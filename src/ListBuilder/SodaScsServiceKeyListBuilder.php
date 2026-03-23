@@ -73,7 +73,7 @@ class SodaScsServiceKeyListBuilder extends EntityListBuilder {
   public function buildHeader() {
     $header['label']     = $this->t('Name');
     $header['id']        = $this->t('ID');
-    $header['component'] = $this->t('Used by Component(s)');
+    $header['component'] = $this->t('Used by component(s)');
     $header['owner']     = $this->t('Owner');
     $header['type']      = $this->t('Type');
     $header['password']  = $this->t('Password');

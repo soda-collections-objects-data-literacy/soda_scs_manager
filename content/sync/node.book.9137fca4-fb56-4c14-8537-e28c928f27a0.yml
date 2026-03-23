@@ -49,7 +49,7 @@ translations:
     default_langcode: '0'
     revision_translation_affected: {  }
     path:
-      alias: /docs/your-applications
+      alias: /soda-scs-manager/documentation/your-applications
       pid: '73'
       langcode: de
     menu_link: {  }

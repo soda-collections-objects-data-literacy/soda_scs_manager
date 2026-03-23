@@ -126,11 +126,14 @@ soda_scs_manager.menu.dashboard:
   requirements:
     _permission: 'soda scs manager user'
 
+# Href from DocumentationInternalPathMenuLink; route for active trail in discovery alter.
 soda_scs_manager.menu.documentation:
   title: 'Documentation'
   description: 'Documentation'
   parent: soda_scs_manager.main_navigation
-  url: 'internal:/soda-scs-manager/documentation'
+  route_name: entity.node.canonical
+  route_parameters:
+    node: '1'
   weight: 20
 
 soda_scs_manager.menu.administration:
@@ -166,7 +169,9 @@ soda_scs_manager.anonymous_documentation:
   title: 'Documentation'
   description: 'SODa SCS documentation'
   menu_name: main
-  url: 'internal:/soda-scs-manager/documentation'
+  route_name: entity.node.canonical
+  route_parameters:
+    node: '1'
   weight: 10
 
 soda_scs_manager.user_registration_approvals:

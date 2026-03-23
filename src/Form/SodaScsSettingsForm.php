@@ -593,14 +593,14 @@ class SodaScsSettingsForm extends ConfigFormBase {
 
     $form['triplestore']['routes'] = [
       '#type' => 'fieldset',
-      '#title' => 'Routes for ' . $form_state->getValue('bundle') . ' service',
+      '#title' => $this->t('Triplestore service routes'),
     ];
 
     // Repositories routes.
     $form['triplestore']['routes']['repositories'] = [
       '#type' => 'fieldset',
       '#attributes' => ['id' => 'soda-scs--routes-subform--repositories'],
-      '#title' => 'Repositories routes',
+      '#title' => $this->t('Repositories routes'),
     ];
 
     $form['triplestore']['routes']['repositories']['baseUrl'] = [
@@ -613,7 +613,7 @@ class SodaScsSettingsForm extends ConfigFormBase {
     $form['triplestore']['routes']['repositories']['crud'] = [
       '#type' => 'fieldset',
       '#attributes' => ['id' => 'soda-scs--routes-subform--repositories-crud'],
-      '#title' => 'CRUD routes',
+      '#title' => $this->t('CRUD routes'),
     ];
 
     $form['triplestore']['routes']['repositories']['crud']['createUrl'] = [
@@ -662,7 +662,7 @@ class SodaScsSettingsForm extends ConfigFormBase {
     $form['triplestore']['routes']['users'] = [
       '#type' => 'fieldset',
       '#attributes' => ['id' => 'soda-scs--routes-subform--user'],
-      '#title' => 'User routes',
+      '#title' => $this->t('User routes'),
     ];
 
     $form['triplestore']['routes']['users']['baseUrl'] = [
@@ -675,7 +675,7 @@ class SodaScsSettingsForm extends ConfigFormBase {
     $form['triplestore']['routes']['users']['crud'] = [
       '#type' => 'fieldset',
       '#attributes' => ['id' => 'soda-scs--routes-subform--user-crud'],
-      '#title' => 'User CRUD routes',
+      '#title' => $this->t('User CRUD routes'),
     ];
 
     $form['triplestore']['routes']['users']['crud']['createUrl'] = [
@@ -716,13 +716,13 @@ class SodaScsSettingsForm extends ConfigFormBase {
     $form['triplestore']['routes']['misc'] = [
       '#type' => 'fieldset',
       '#attributes' => ['id' => 'soda-scs--routes-subform--misc'],
-      '#title' => 'Miscellaneous routes',
+      '#title' => $this->t('Miscellaneous routes'),
     ];
 
     $form['triplestore']['routes']['misc']['healthCheck'] = [
       '#type' => 'fieldset',
       '#attributes' => ['id' => 'soda-scs--routes-subform--health-check'],
-      '#title' => 'Health Check route',
+      '#title' => $this->t('Health Check route'),
     ];
     $form['triplestore']['routes']['misc']['healthCheck']['url'] = [
       '#type' => 'textfield',
@@ -743,7 +743,7 @@ class SodaScsSettingsForm extends ConfigFormBase {
     $form['triplestore']['routes']['misc']['token'] = [
       '#type' => 'fieldset',
       '#attributes' => ['id' => 'soda-scs--routes-subform--token'],
-      '#title' => 'Token route',
+      '#title' => $this->t('Token route'),
     ];
 
     $form['triplestore']['routes']['misc']['token']['tokenUrl'] = [
@@ -1081,7 +1081,7 @@ class SodaScsSettingsForm extends ConfigFormBase {
     // Webprotege instance routes.
     $form['webprotege']['generalSettings'] = [
       '#type' => 'fieldset',
-      '#title' => 'Instances routes for Webprotege components',
+      '#title' => $this->t('Instances routes for Webprotege components'),
     ];
 
     // Base route.
@@ -1103,7 +1103,7 @@ class SodaScsSettingsForm extends ConfigFormBase {
     // WissKI instance routes.
     $form['wisski']['instances'] = [
       '#type' => 'fieldset',
-      '#title' => 'Instances routes for WissKI components',
+      '#title' => $this->t('Instances routes for WissKI components'),
     ];
 
     // Base route.
@@ -1118,7 +1118,7 @@ class SodaScsSettingsForm extends ConfigFormBase {
     $form['wisski']['instances']['misc']['healthCheck'] = [
       '#type' => 'fieldset',
       '#attributes' => ['id' => 'soda-scs--routes-subform--health-check'],
-      '#title' => 'Health Check route',
+      '#title' => $this->t('Health Check route'),
     ];
     $form['wisski']['instances']['misc']['healthCheck']['url'] = [
       '#type' => 'textfield',
@@ -1129,7 +1129,7 @@ class SodaScsSettingsForm extends ConfigFormBase {
 
     $form['wisski']['instances']['versions'] = [
       '#type' => 'fieldset',
-      '#title' => 'WissKI component versions',
+      '#title' => $this->t('WissKI component versions'),
       '#description' => $this->t('Manage WissKI component versions as separate entities. Select the default version to use for new components.'),
     ];
 
@@ -1164,7 +1164,7 @@ class SodaScsSettingsForm extends ConfigFormBase {
     // in stack repository.
     $form['wisski']['instances']['versions']['development'] = [
       '#type' => 'fieldset',
-      '#title' => 'Development versions',
+      '#title' => $this->t('Development versions'),
     ];
 
     $form['wisski']['instances']['versions']['development']['composeStack'] = [

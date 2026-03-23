@@ -5,7 +5,7 @@ soda_scs_manager.settings:
     scsHost:
       type: string
       label: 'SODa SCS host'
-      description: 'The SODa SCS host, like https://scs.sammlungen.io.'
+      description: 'The SODa SCS host, like scs.sammlungen.io.'
     administratorEmail:
       type: string
       label: 'Administrator email'
@@ -13,7 +13,7 @@ soda_scs_manager.settings:
     dbHost:
       type: string
       label: 'Database host'
-      description: 'The database host, like https://db.scs.sammlungen.io.'
+      description: 'The database host, like db.scs.sammlungen.io.'
     dbPort:
       type: string
       label: 'Database port'
@@ -21,11 +21,11 @@ soda_scs_manager.settings:
     dbRootPassword:
       type: string
       label: 'Root password'
-      description: 'The root password, like root.'
+      description: 'The database root password. Leave blank to keep the current value.'
     dbManagementHost:
       type: string
       label: 'Management host'
-      description: 'The management host, like https://adminer-db.scs.sammlungen.io.'
+      description: 'The phpMyAdmin/DBMS host (SCS_DBMS_DOMAIN), e.g. dbms.scs.sammlungen.io.'
     jupyterhub:
       type: mapping
       label: 'JupyterHub settings'

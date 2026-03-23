@@ -47,8 +47,10 @@
 </div>
 
 <div>
-  <button id="clear-all-tags" class="align-center justify-center rounded-full border border-default p-4 px-5 py-1.5 mt-5 text-sm flex bg-gray-200 text-gray-600 hover:bg-gray-300 cursor-pointer">
-    {{ '<b>🗑</b> Clear all filters <b>🗑</b>'|t }}
+  <button id="clear-all-tags" type="button" class="align-center justify-center gap-1.5 rounded-full border border-default p-4 px-5 py-1.5 mt-5 text-sm flex bg-gray-200 text-gray-600 hover:bg-gray-300 cursor-pointer">
+    <span aria-hidden="true" class="font-bold">🗑</span>
+    {{ 'Clear all filters'|t }}
+    <span aria-hidden="true" class="font-bold">🗑</span>
   </button>
 </div>
 

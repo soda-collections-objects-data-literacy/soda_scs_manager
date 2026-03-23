@@ -82,9 +82,9 @@ msgstr ""
 msgid "Register for an account"
 msgstr "Registrierung für einen Account"
 
-#: src/Form/KeycloakUserRegistrationForm.php:139
-msgid "<p>Register for an account. Your registration will be reviewed by an administrator.</p>"
-msgstr "<p>Registrieren Sie sich für ein Konto. Ihre Registrierung wird von einem Administrator überprüft.</p>"
+#: src/Form/KeycloakUserRegistrationForm.php:140
+msgid "<p><strong>Register for an account. You will receive an email confirming your registration. Your registration will be reviewed by an administrator. You will receive another email when your account is approved or rejected.</strong></p>"
+msgstr "<p><strong>Registrieren Sie sich für ein Konto. Sie erhalten eine E-Mail zur Bestätigung Ihrer Registrierung. Ihre Registrierung wird von einem Administrator geprüft. Sie erhalten eine weitere E-Mail, sobald Ihr Konto genehmigt oder abgelehnt wurde.</strong></p>"
 
 #: src/Form/KeycloakUserRegistrationForm.php:144
 msgid "Email address"
@@ -102,27 +102,39 @@ msgstr "Username"
 msgid "Enter a username for your account."
 msgstr "Geben Sie einen Usernamen für Ihr Konto ein."
 
-#: src/Form/KeycloakUserRegistrationForm.php:158
+#: src/Form/KeycloakUserRegistrationForm.php:162
 msgid "First name"
 msgstr "Vorname"
 
-#: src/Form/KeycloakUserRegistrationForm.php:160
-msgid "Enter your first name."
-msgstr "Geben Sie Ihren Vornamen ein."
+#: src/Form/KeycloakUserRegistrationForm.php:158
+msgid "Only letters, spaces, hyphens, apostrophes, and periods are allowed."
+msgstr "Erlaubt sind nur Buchstaben, Leerzeichen, Bindestriche, Apostrophe und Punkte."
 
-#: src/Form/KeycloakUserRegistrationForm.php:165
+#: src/Form/KeycloakUserRegistrationForm.php:164
+msgid "Enter your first name. @rules"
+msgstr "Geben Sie Ihren Vornamen ein. @rules"
+
+#: src/Form/KeycloakUserRegistrationForm.php:169
 msgid "Last name"
 msgstr "Nachname"
 
-#: src/Form/KeycloakUserRegistrationForm.php:167
-msgid "Enter your last name."
-msgstr "Geben Sie Ihren Nachnamen ein."
+#: src/Form/KeycloakUserRegistrationForm.php:171
+msgid "Enter your last name. @rules"
+msgstr "Geben Sie Ihren Nachnamen ein. @rules"
 
-#: src/Form/KeycloakUserRegistrationForm.php:173
+#: src/Form/KeycloakUserRegistrationForm.php:177
 msgid "Enter the password you would like to use."
 msgstr "Geben Sie das Passwort ein, das Sie verwenden möchten."
 
-#: src/Form/KeycloakUserRegistrationForm.php:182
+#: src/Form/KeycloakUserRegistrationForm.php:183
+msgid "I agree to the <a href=\"/terms-of-service\" target=\"_blank\">terms of service</a>"
+msgstr "Ich stimme den <a href=\"/terms-of-service\" target=\"_blank\">Nutzungsbedingungen</a> zu."
+
+#: src/Form/KeycloakUserRegistrationForm.php:189
+msgid "I agree to the <a href=\"/imprint-privacy-policy\" target=\"_blank\">privacy policy</a>"
+msgstr "Ich stimme der <a href=\"/imprint-privacy-policy\" target=\"_blank\">Datenschutzerklärung</a> zu."
+
+#: src/Form/KeycloakUserRegistrationForm.php:199
 msgid "Register"
 msgstr "Registrieren"
 
@@ -190,22 +202,6 @@ msgstr "Dateisystem"
 msgid "A filesystem for storage of structured data."
 msgstr "Ein Dateisystem zur Speicherung strukturierter Daten."
 
-#: soda_scs_manager.module:217
-msgid "JupyterHub Account"
-msgstr "JupyterHub-Konto"
-
-#: soda_scs_manager.module:219
-msgid "A Jupyter web IDE for coding in Python."
-msgstr "Eine Jupyter Web-IDE für die Programmierung in Python."
-
-#: soda_scs_manager.module:224
-msgid "Nextcloud Account"
-msgstr "Nextcloud-Konto"
-
-#: soda_scs_manager.module:226
-msgid "A Nextcloud instance for cloud storage and file sharing."
-msgstr "Eine Nextcloud-Instanz für Cloud-Speicher und Dateifreigabe."
-
 #: soda_scs_manager.module:231
 msgid "SQL Database"
 msgstr "SQL-Datenbank"
@@ -254,29 +250,29 @@ msgstr "Standard-Serviceschlüssel"
 msgid "A Service Key is a key for a service."
 msgstr "Ein Serviceschlüssel ist ein Schlüssel für einen Dienst."
 
-#: soda_scs_manager.module:273
-msgid "JupyterHub Stack"
-msgstr "JupyterHub-Stack"
-
-#: soda_scs_manager.module:275
-msgid "A JupyterHub Stack contains Jupyter and OpenRefine."
-msgstr "Ein JupyterHub-Stack enthält Jupyter und OpenRefine."
-
-#: soda_scs_manager.module:280
-msgid "WissKI Stack"
-msgstr "WissKI-Stack"
-
 #: soda_scs_manager.module:282
-msgid "A WissKI Stack contains a WissKI, a Triplestore and a Database."
-msgstr "Ein WissKI-Stack enthält ein WissKI, einen Triplestore und eine Datenbank."
+msgid "JupyterLab"
+msgstr "JupyterLab"
 
-#: soda_scs_manager.module:287
-msgid "Nextcloud Stack"
-msgstr "Nextcloud-Stack"
+#: soda_scs_manager.module:284
+msgid "A JupyterLab for coding and data science. Contains Jupyter Notebooks and OpenRefine."
+msgstr "JupyterLab für Programmierung und Data Science. Enthält Jupyter Notebooks und OpenRefine."
 
-#: soda_scs_manager.module:289
-msgid "A Nextcloud Stack contains Nextcloud, Draw.io and Collabora."
-msgstr "Ein Nextcloud-Stack enthält Nextcloud, Draw.io und Collabora."
+#: soda_scs_manager.module:290
+msgid "WissKI Environment"
+msgstr "WissKI-Umgebung"
+
+#: soda_scs_manager.module:292
+msgid "A WissKI environment contains a preconfigured WissKI, a Triplestore and a Database."
+msgstr "Eine WissKI-Umgebung enthält ein vorkonfiguriertes WissKI, einen Triplestore und eine Datenbank."
+
+#: soda_scs_manager.module:298
+msgid "Nextcloud"
+msgstr "Nextcloud"
+
+#: soda_scs_manager.module:300
+msgid "An Office suite for collaboration and file sharing."
+msgstr "Eine Office-Suite für Zusammenarbeit und Dateifreigabe."
 
 #: soda_scs_manager.install:65
 msgid "Removed existing navigation block."
@@ -309,6 +305,18 @@ msgstr "Projekt hinzufügen"
 #: soda_scs_manager.links.action.yml:0
 msgid "Add service key"
 msgstr "Serviceschlüssel hinzufügen"
+
+#: soda_scs_manager.links.action.yml:0
+msgid "Add version"
+msgstr "Version hinzufügen"
+
+#: soda_scs_manager.links.action.yml:0
+msgid "Update all WissKI components"
+msgstr "Alle WissKI-Komponenten aktualisieren"
+
+#: soda_scs_manager.routing.yml:0
+msgid "Update all components"
+msgstr "Alle Komponenten aktualisieren"
 
 #: soda_scs_manager.links.menu.yml:0 src/Entity/SodaScsComponent.php:12;12
 msgid "SODa SCS applications"
@@ -401,6 +409,90 @@ msgstr "Benachrichtigungen"
 #: soda_scs_manager.links.menu.yml:156
 msgid "Administration"
 msgstr "Administration"
+
+#: soda_scs_manager.links.menu.yml:0
+msgid "SODa SCS Manager Administration"
+msgstr "SODa SCS-Manager-Administration"
+
+#: soda_scs_manager.links.menu.yml:0
+msgid "Manage SODa SCS Manager"
+msgstr "SODa SCS-Manager verwalten"
+
+#: soda_scs_manager.links.menu.yml:0
+msgid "SODa SCS Components"
+msgstr "SODa SCS-Komponenten"
+
+#: soda_scs_manager.links.menu.yml:0
+msgid "Manage single application like databases, Inter-App folders, etc."
+msgstr "Einzelanwendungen wie Datenbanken, Inter-App-Ordner usw. verwalten"
+
+#: soda_scs_manager.links.menu.yml:0
+msgid "Manage projects for collaboration and resource sharing."
+msgstr "Projekte für Zusammenarbeit und gemeinsame Ressourcen verwalten."
+
+#: soda_scs_manager.links.menu.yml:0
+msgid "Manage snapshots for backup and restore."
+msgstr "Snapshots für Sicherung und Wiederherstellung verwalten."
+
+#: soda_scs_manager.links.menu.yml:0
+msgid "Manage suites and environment like JupyterLab, Nextcloud, etc."
+msgstr "Suiten und Umgebungen wie JupyterLab, Nextcloud usw. verwalten"
+
+#: soda_scs_manager.links.menu.yml:0
+msgid "SODa SCS Manager settings and configurations"
+msgstr "Einstellungen und Konfiguration des SODa SCS-Managers"
+
+#: soda_scs_manager.links.menu.yml:0
+msgid "Manage SODa SCS Manager settings"
+msgstr "Einstellungen des SODa SCS-Managers verwalten"
+
+#: soda_scs_manager.links.menu.yml:0
+msgid "Keycloak users"
+msgstr "Keycloak-Benutzer"
+
+#: soda_scs_manager.links.menu.yml:0
+msgid "Manage Keycloak users"
+msgstr "Keycloak-Benutzer verwalten"
+
+#: soda_scs_manager.links.menu.yml:0
+msgid "SODa SCS Manager Debug"
+msgstr "SODa SCS-Manager (Debug)"
+
+#: soda_scs_manager.links.menu.yml:0
+msgid "SODa SCS Manager debug tools"
+msgstr "Debug-Werkzeuge des SODa SCS-Managers"
+
+#: soda_scs_manager.links.menu.yml:0
+msgid "Snapshot Debug"
+msgstr "Snapshot-Debug"
+
+#: soda_scs_manager.links.menu.yml:0
+msgid "Snapshot integrity tools"
+msgstr "Werkzeuge zur Snapshot-Integrität"
+
+#: soda_scs_manager.links.menu.yml:0
+msgid "Overview of main tasks"
+msgstr "Übersicht der Hauptaufgaben"
+
+#: soda_scs_manager.links.menu.yml:0
+msgid "Project invitations"
+msgstr "Projekteinladungen"
+
+#: soda_scs_manager.links.menu.yml:0
+msgid "SODa SCS documentation"
+msgstr "SODa SCS-Dokumentation"
+
+#: soda_scs_manager.links.menu.yml:0
+msgid "Report an issue"
+msgstr "Problem melden"
+
+#: soda_scs_manager.links.menu.yml:0
+msgid "Keycloak User Registrations"
+msgstr "Keycloak-Benutzerregistrierungen"
+
+#: soda_scs_manager.links.menu.yml:0
+msgid "Manage pending Keycloak user registrations"
+msgstr "Ausstehende Keycloak-Benutzerregistrierungen verwalten"
 
 #: soda_scs_manager.links.task.yml:0;0;0;0 src/ListBuilder/SodaScsSnapshotListBuilder.php:145
 msgid "View"
@@ -720,7 +812,7 @@ msgstr "Verwalten Sie Applikations-/Forschungsumgebungen wie JupyterLab, Nextclo
 
 #: src/Controller/SodaScsAdministrationController.php:46
 msgid "Manage projects to collaborate with other users and share resources."
-msgstr "Verwalten Sie Projekte, um mit anderen Usern zu kollaborieren und Resourcen zu teilen."
+msgstr "Verwalten Sie Projekte zur Zusammenarbeit mit anderen Nutzenden und zum Teilen von Ressourcen."
 
 #: src/Controller/SodaScsAdministrationController.php:56
 msgid "Manage snapshots for backup and restore operations."
@@ -728,11 +820,35 @@ msgstr "Verwalten Sie Snapshots für Backup- und Wiederherstellungsvorgänge."
 
 #: src/Controller/SodaScsAdministrationController.php:66
 msgid "Manage service keys for applications and external services."
-msgstr "Verwalten Sie Service Keys für Applikationen und externe Services."
+msgstr "Verwalten Sie Service-Schlüssel für Anwendungen und externe Dienste."
 
 #: src/Controller/SodaScsAdministrationController.php:76
 msgid "Configure SODa SCS Manager settings and preferences."
 msgstr "Konfigurieren Sie SODa SCS Manager Einstellungen und Präferenzen."
+
+#: src/Controller/SodaScsAdministrationController.php:25
+msgid "Components"
+msgstr "Komponenten"
+
+#: src/Controller/SodaScsAdministrationController.php:45
+msgid "Projects"
+msgstr "Projekte"
+
+#: src/Controller/SodaScsAdministrationController.php:55
+msgid "Snapshots"
+msgstr "Snapshots"
+
+#: src/Controller/SodaScsAdministrationController.php:65
+msgid "Service Keys"
+msgstr "Service-Schlüssel"
+
+#: soda_scs_manager.routing.yml:456 src/Breadcrumb/SodaScsManagerListBreadcrumbBuilder.php:53 templates/pages/soda-scs-manager--administration.html.twig:16
+msgid "SCS Administration"
+msgstr "SCS-Verwaltung"
+
+#: soda_scs_manager.routing.yml:529
+msgid "Issue Report"
+msgstr "Problembericht"
 
 #: src/Controller/SodaScsComponentBundleController.php:19
 msgid "Component Bundles"
@@ -792,11 +908,11 @@ msgstr "Die externe ID der SODa SCS-Komponente."
 
 #: src/Entity/SodaScsComponent.php:202
 msgid "Health Status"
-msgstr "Health Status"
+msgstr "Zustand"
 
 #: src/Entity/SodaScsComponent.php:203
 msgid "The Health Status of the SODa SCS Component."
-msgstr "Der Health Status der SODa SCS-Komponente."
+msgstr "Der Betriebszustand der SODa SCS-Komponente."
 
 #: src/Entity/SodaScsComponent.php:218 src/Entity/SodaScsStack.php:168
 msgid "Image"
@@ -1059,9 +1175,9 @@ msgstr "Erlaubt zentralisierte Updates, die durch die SCS-Administration gemanag
 msgid "Drupal/WissKI default language"
 msgstr "Drupal/WissKI Standardsprache"
 
-# src/Entity/Bundle/SodaScsComponentBundle.php:127
-msgid "Drupal/WissKI default language"
-msgstr "Die Standardsprache für das Drupal/WissKI Interface."
+# src/Entity/Bundle/SodaScsComponentBundle.php:112
+msgid "The default language for the Drupal/WissKI interface. Can not be changed after creation."
+msgstr "Die Standardsprache für das Drupal/WissKI-Interface. Kann nach der Erstellung nicht mehr geändert werden."
 
 # src/Entity/Bundle/SodaScsComponentBundle.php:148
 msgid "Development Instance"
@@ -1211,9 +1327,9 @@ msgstr "Allgemeine Einstellungen"
 msgid "SODa SCS host"
 msgstr "SODa SCS Host"
 
-#: src/Form/SodaScsSettingsForm.php:93
-msgid "The SODa SCS host, like https://scs.sammlungen.io."
-msgstr "Der SODa SCS Host, wie https://scs.sammlungen.io."
+#: src/Form/SodaScsSettingsForm.php:116 config/schema/soda_scs_manager.schema.yml:0
+msgid "The SODa SCS host, like scs.sammlungen.io."
+msgstr "Der SODa-SCS-Host, z. B. scs.sammlungen.io."
 
 #: src/Form/SodaScsSettingsForm.php:99
 msgid "Database settings"
@@ -1223,9 +1339,9 @@ msgstr "Datenbankeinstellungen"
 msgid "Database host"
 msgstr "Datenbank-Host"
 
-#: src/Form/SodaScsSettingsForm.php:113
-msgid "The database host, like https://db.scs.sammlungen.io."
-msgstr "Der Datenbank-Host, wie https://db.scs.sammlungen.io."
+#: src/Form/SodaScsSettingsForm.php:150 config/schema/soda_scs_manager.schema.yml:0
+msgid "The database host, like db.scs.sammlungen.io."
+msgstr "Der Datenbank-Host, z. B. db.scs.sammlungen.io."
 
 #: src/Form/SodaScsSettingsForm.php:117
 msgid "Database port"
@@ -1239,17 +1355,25 @@ msgstr "Der Datenbank-Port, wie 3306."
 msgid "Root password"
 msgstr "Root-Passwort"
 
-#: src/Form/SodaScsSettingsForm.php:125
-msgid "The root password, like root."
-msgstr "Das Root-Passwort, wie root."
+#: src/Form/SodaScsSettingsForm.php:161 config/schema/soda_scs_manager.schema.yml:0
+msgid "The database root password. Leave blank to keep the current value."
+msgstr "Das Datenbank-Root-Passwort. Leer lassen, um den aktuellen Wert beizubehalten."
+
+#: src/Form/SodaScsSettingsForm.php:167
+msgid "SSO user password"
+msgstr "SSO-Benutzerpasswort"
+
+#: src/Form/SodaScsSettingsForm.php:168
+msgid "Fallback password for phpMyAdmin signon when Keycloak mariadb_password attribute is not set (e.g. users without an SQL component yet). SCS_DBMS_SSO_DB_PASSWORD. Leave blank to keep the current value."
+msgstr "Ersatzpasswort für die phpMyAdmin-Signon-Anmeldung, wenn das Keycloak-Attribut mariadb_password nicht gesetzt ist (z. B. bei Nutzenden ohne SQL-Komponente). SCS_DBMS_SSO_DB_PASSWORD. Leer lassen, um den aktuellen Wert beizubehalten."
 
 #: src/Form/SodaScsSettingsForm.php:130
 msgid "Management host"
 msgstr "Verwaltungs-Host"
 
-#: src/Form/SodaScsSettingsForm.php:132
-msgid "The management host, like https://adminer-db.scs.sammlungen.io."
-msgstr "Der Verwaltungs-Host, wie https://adminer-db.scs.sammlungen.io."
+#: src/Form/SodaScsSettingsForm.php:176 config/schema/soda_scs_manager.schema.yml:0
+msgid "The phpMyAdmin/DBMS host (SCS_DBMS_DOMAIN), e.g. dbms.scs.sammlungen.io."
+msgstr "Der phpMyAdmin-/DBMS-Host (SCS_DBMS_DOMAIN), z. B. dbms.scs.sammlungen.io."
 
 #: src/Form/SodaScsSettingsForm.php:139;146
 msgid "Keycloak settings"
@@ -1366,6 +1490,70 @@ msgstr "Die Token-URL, wie /realms/master/protocol/openid-connect/token."
 #: src/Form/SodaScsSettingsForm.php:257
 msgid "Triplestore settings"
 msgstr "Triplestore-Einstellungen"
+
+#: src/Form/SodaScsSettingsForm.php:0
+msgid "Nextcloud settings"
+msgstr "Nextcloud-Einstellungen"
+
+#: src/Form/SodaScsSettingsForm.php:0
+msgid "Webprotege settings"
+msgstr "WebProtégé-Einstellungen"
+
+#: src/Form/SodaScsSettingsForm.php:0
+msgid "Access-Proxy settings"
+msgstr "Access-Proxy-Einstellungen"
+
+#: src/Form/SodaScsSettingsForm.php:0
+msgid "Security Settings"
+msgstr "Sicherheitseinstellungen"
+
+#: src/Form/SodaScsSettingsForm.php:0
+msgid "Triplestore service routes"
+msgstr "Routen für den Triplestore-Dienst"
+
+#: src/Form/SodaScsSettingsForm.php:0
+msgid "Repositories routes"
+msgstr "Repository-Routen"
+
+#: src/Form/SodaScsSettingsForm.php:0
+msgid "User routes"
+msgstr "Benutzer-Routen"
+
+#: src/Form/SodaScsSettingsForm.php:0
+msgid "User CRUD routes"
+msgstr "CRUD-Routen für Benutzer"
+
+#: src/Form/SodaScsSettingsForm.php:0
+msgid "Miscellaneous routes"
+msgstr "Sonstige Routen"
+
+#: src/Form/SodaScsSettingsForm.php:0
+msgid "Token route"
+msgstr "Token-Route"
+
+#: src/Form/SodaScsSettingsForm.php:0
+msgid "Instances routes for Webprotege components"
+msgstr "Instanz-Routen für WebProtégé-Komponenten"
+
+#: src/Form/SodaScsSettingsForm.php:0
+msgid "Instances routes for WissKI components"
+msgstr "Instanz-Routen für WissKI-Komponenten"
+
+#: src/Form/SodaScsSettingsForm.php:0
+msgid "WissKI component versions"
+msgstr "WissKI-Komponentenversionen"
+
+#: src/Form/SodaScsSettingsForm.php:0
+msgid "Development versions"
+msgstr "Entwicklungsversionen"
+
+#: src/Form/SodaScsSettingsForm.php:0
+msgid "Users routes"
+msgstr "Benutzer-Routen"
+
+#: src/Form/SodaScsSettingsForm.php:0
+msgid "Groups routes"
+msgstr "Gruppen-Routen"
 
 #: src/Form/SodaScsSettingsForm.php:269
 msgid "Triplestore host"
@@ -1865,63 +2053,59 @@ msgstr "Snapshot %label wurde gelöscht."
 
 # src/Form/SodaScsSnapshotRestoreForm.php:203
 msgid "I understand that this action will permanently overwrite existing data"
-msgid "Ich verstehe, dass diese Aktion vorhandene Daten dauerhaft überschreiben wird"
+msgstr "Ich verstehe, dass diese Aktion vorhandene Daten dauerhaft überschreiben wird"
 
 # src/Form/SodaScsSnapshotRestoreForm.php:205
 msgid "You must acknowledge the risk of data loss to proceed."
-msgid "Sie müssen das Risiko eines Datenverlusts bestätigen, um fortzufahren."
+msgstr "Sie müssen das Risiko eines Datenverlusts bestätigen, um fortzufahren."
 
 # src/Form/SodaScsSnapshotRestoreForm.php:213
 msgid "Restore Snapshot"
-msgid "Snapshot wiederherstellen"
+msgstr "Snapshot wiederherstellen"
 
 # src/Form/SodaScsSnapshotRestoreForm.php:229
 msgid "Snapshot file not found."
-msgid "Snapshot-Datei wurde nicht gefunden."
+msgstr "Snapshot-Datei wurde nicht gefunden."
 
 # src/Form/SodaScsSnapshotRestoreForm.php:238
 msgid "Snapshot file does not exist on the filesystem."
-msgid "Die Snapshot-Datei existiert nicht im Dateisystem."
+msgstr "Die Snapshot-Datei existiert nicht im Dateisystem."
 
 # src/Form/SodaScsSnapshotRestoreForm.php:253
 msgid "Snapshot restoration failed. See logs for more details."
-msgid "Wiederherstellung aus Snapshot fehlgeschlagen. Weitere Details finden Sie in den Protokollen."
+msgstr "Wiederherstellung aus Snapshot fehlgeschlagen. Weitere Details finden Sie in den Protokollen."
 
 # src/Form/SodaScsSnapshotRestoreForm.php:257
 msgid "Snapshot restore failed: Checksum verification failed for snapshot @id. The file may be corrupted."
-msgid "Snapshot-Wiederherstellung fehlgeschlagen: Prüfsummenverifizierung für Snapshot @id fehlgeschlagen. Die Datei ist möglicherweise beschädigt."
-
-# src/Form/SodaScsSnapshotRestoreForm.php:280
-msgid "Snapshot restoration failed. See logs for more details."
-msgid "Wiederherstellung aus Snapshot fehlgeschlagen. Weitere Details finden Sie in den Protokollen."
+msgstr "Snapshot-Wiederherstellung fehlgeschlagen: Prüfsummenverifizierung für Snapshot @id fehlgeschlagen. Die Datei ist möglicherweise beschädigt."
 
 # src/Form/SodaScsSnapshotRestoreForm.php:284
 msgid "Snapshot restore failed: Target entity not found for snapshot @id."
-msgid "Snapshot-Wiederherstellung fehlgeschlagen: Ziel-Entität für Snapshot @id nicht gefunden."
+msgstr "Snapshot-Wiederherstellung fehlgeschlagen: Ziel-Entität für Snapshot @id nicht gefunden."
 
 # src/Form/SodaScsSnapshotRestoreForm.php:301
 msgid "Successfully restored snapshot %label to %entity_label."
-msgid "Snapshot %label erfolgreich auf %entity_label wiederhergestellt."
+msgstr "Snapshot %label erfolgreich auf %entity_label wiederhergestellt."
 
 # src/Form/SodaScsSnapshotRestoreForm.php:307
 msgid "Failed to restore snapshot. @error"
-msgid "Fehler beim Wiederherstellen aus Snapshot. @error"
+msgstr "Fehler beim Wiederherstellen aus Snapshot. @error"
 
 # src/Form/SodaScsSnapshotRestoreForm.php:316
 msgid "Snapshot restore failed: @message"
-msgid "Snapshot-Wiederherstellung fehlgeschlagen: @message"
+msgstr "Snapshot-Wiederherstellung fehlgeschlagen: @message"
 
 # src/Form/SodaScsSnapshotRestoreForm.php:320
 msgid "Failed to restore snapshot. See logs for more details."
-msgid "Snapshot konnte nicht wiederhergestellt werden. Weitere Details finden Sie in den Protokollen."
+msgstr "Snapshot konnte nicht wiederhergestellt werden. Weitere Details finden Sie in den Protokollen."
 
 # src/Form/SodaScsSnapshotRestoreForm.php:331
 msgid "Restore snapshot @label?"
-msgid "Snapshot @label wiederherstellen?"
+msgstr "Snapshot @label wiederherstellen?"
 
 # src/Form/SodaScsSnapshotRestoreForm.php:359
 msgid "This action will restore the snapshot data of the (bundled) application <b>@entity_label</b>, permanently overwriting its current state."
-msgid "Diese Aktion wird die Snapshot-Daten der (gebündelten) Anwendung <b>@entity_label</b> wiederherstellen und deren aktuellen Zustand dauerhaft überschreiben."
+msgstr "Diese Aktion wird die Snapshot-Daten der (gebündelten) Anwendung <b>@entity_label</b> wiederherstellen und deren aktuellen Zustand dauerhaft überschreiben."
 
 #: src/Form/SodaScsStackCreateForm.php:159
 msgid "CREATE"
@@ -1974,6 +2158,138 @@ msgstr "Domain"
 #: src/ListBuilder/SodaScsComponentListBuilder.php:21 src/ListBuilder/SodaScsStackListBuilder.php:21
 msgid "Operations"
 msgstr "Operationen"
+
+#: src/ListBuilder/SodaScsComponentListBuilder.php:0
+msgid "Filters"
+msgstr "Filter"
+
+#: src/ListBuilder/SodaScsComponentListBuilder.php:0
+msgid "Apply Filters"
+msgstr "Filter anwenden"
+
+#: src/ListBuilder/SodaScsComponentListBuilder.php:0
+msgid "Apply"
+msgstr "Anwenden"
+
+#: src/ListBuilder/SodaScsComponentListBuilder.php:0
+msgid "Reset"
+msgstr "Zurücksetzen"
+
+#: src/ListBuilder/SodaScsComponentListBuilder.php:0
+msgid "Contains..."
+msgstr "Enthält …"
+
+#: src/ListBuilder/SodaScsComponentListBuilder.php:0
+msgid "Exact match"
+msgstr "Exakte Übereinstimmung"
+
+#: src/ListBuilder/SodaScsComponentListBuilder.php:0
+msgid "Exact"
+msgstr "Exakt"
+
+#: src/ListBuilder/SodaScsComponentListBuilder.php:0
+msgid "- Any -"
+msgstr "- Beliebig -"
+
+#: src/ListBuilder/SodaScsComponentListBuilder.php:0
+msgid "- Any Type -"
+msgstr "- Beliebiger Typ -"
+
+#: src/ListBuilder/SodaScsComponentListBuilder.php:0
+msgid "Username contains..."
+msgstr "Benutzername enthält …"
+
+#: src/ListBuilder/SodaScsComponentListBuilder.php:0
+msgid "Username..."
+msgstr "Benutzername …"
+
+#: src/ListBuilder/SodaScsComponentListBuilder.php:0
+msgid "Healthy"
+msgstr "Gesund"
+
+#: src/ListBuilder/SodaScsComponentListBuilder.php:0
+msgid "Warning"
+msgstr "Warnung"
+
+#: src/ListBuilder/SodaScsComponentListBuilder.php:0
+msgid "Error"
+msgstr "Fehler"
+
+#: src/ListBuilder/SodaScsComponentListBuilder.php:0
+msgid "Not yet implemented"
+msgstr "Noch nicht implementiert"
+
+#: src/ListBuilder/SodaScsComponentListBuilder.php:0
+msgid "Version"
+msgstr "Version"
+
+#: src/ListBuilder/SodaScsComponentListBuilder.php:0
+msgid "Sort by @field"
+msgstr "Sortieren nach @field"
+
+#: src/ListBuilder/SodaScsComponentListBuilder.php:0
+msgid "Unknown"
+msgstr "Unbekannt"
+
+#: src/ListBuilder/SodaScsComponentListBuilder.php:0
+msgid "N/A"
+msgstr "k. A."
+
+#: src/ListBuilder/SodaScsComponentListBuilder.php:0
+msgid "There are no SODa SCS Components available."
+msgstr "Es sind keine SODa SCS-Komponenten verfügbar."
+
+#: src/ListBuilder/SodaScsComponentListBuilder.php:0
+msgid "Health check not available for this component type"
+msgstr "Zustandsprüfung für diesen Komponententyp nicht verfügbar"
+
+#: src/ListBuilder/SodaScsComponentListBuilder.php:0
+msgid "● Error"
+msgstr "● Fehler"
+
+#: src/ListBuilder/SodaScsComponentListBuilder.php:0
+msgid "● Unavailable"
+msgstr "● Nicht verfügbar"
+
+#: src/ListBuilder/SodaScsComponentListBuilder.php:0
+msgid "Running"
+msgstr "Läuft"
+
+#: src/ListBuilder/SodaScsComponentListBuilder.php:0
+msgid "Starting"
+msgstr "Startet"
+
+#: src/ListBuilder/SodaScsComponentListBuilder.php:0
+msgid "Stopped"
+msgstr "Gestoppt"
+
+#: src/ListBuilder/SodaScsComponentListBuilder.php:0
+msgid "Unknown status"
+msgstr "Unbekannter Zustand"
+
+#: src/Helpers/SodaScsComponentHelpers.php:0
+msgid "Component is not available."
+msgstr "Komponente ist nicht verfügbar."
+
+#: src/Helpers/SodaScsComponentHelpers.php:0
+msgid "Available."
+msgstr "Verfügbar."
+
+#: src/Helpers/SodaScsComponentHelpers.php:0
+msgid "Not available"
+msgstr "Nicht verfügbar"
+
+#: src/Helpers/SodaScsComponentHelpers.php:0
+msgid "WebProtege URL not configured."
+msgstr "WebProtégé-URL nicht konfiguriert."
+
+#: src/Helpers/SodaScsComponentHelpers.php:0
+msgid "WebProtege host is not configured in settings."
+msgstr "WebProtégé-Host ist in den Einstellungen nicht konfiguriert."
+
+#: src/Helpers/SodaScsComponentHelpers.php:0
+msgid "Service returned HTTP @code."
+msgstr "Dienst hat HTTP @code zurückgegeben."
 
 #: src/ListBuilder/SodaScsProjectListBuilder.php:22 src/ListBuilder/SodaScsSnapshotListBuilder.php:76
 msgid "Name"
@@ -2167,101 +2483,17 @@ msgstr "Snapshot-Pfad"
 msgid "The snapshot path in addition to the private file system path, like /snapshots."
 msgstr "Der Snapshot-Pfad zusätzlich zum privaten Dateisystem-Pfad, wie /snapshots."
 
-#: src/Form/SodaScsSettingsForm.php:116
-msgid "Database settings"
-msgstr "Datenbankeinstellungen"
-
-#: src/Form/SodaScsSettingsForm.php:128
-msgid "Database host"
-msgstr "Datenbank-Host"
-
-#: src/Form/SodaScsSettingsForm.php:130
-msgid "The database host, like https://db.scs.sammlungen.io."
-msgstr "Der Datenbank-Host, wie https://db.scs.sammlungen.io."
-
-#: src/Form/SodaScsSettingsForm.php:134
-msgid "Database port"
-msgstr "Datenbank-Port"
-
-#: src/Form/SodaScsSettingsForm.php:136
-msgid "The database port, like 3306."
-msgstr "Der Datenbank-Port, wie 3306."
-
-#: src/Form/SodaScsSettingsForm.php:140
-msgid "Root password"
-msgstr "Root-Passwort"
-
-#: src/Form/SodaScsSettingsForm.php:142
-msgid "The root password, like root."
-msgstr "Das Root-Passwort, wie root."
-
-#: src/Form/SodaScsSettingsForm.php:147
-msgid "Management host"
-msgstr "Verwaltungs-Host"
-
-#: src/Form/SodaScsSettingsForm.php:149
-msgid "The management host, like https://adminer-db.scs.sammlungen.io."
-msgstr "Der Verwaltungs-Host, wie https://adminer-db.scs.sammlungen.io."
-
 #: src/Form/SodaScsSettingsForm.php:156
 msgid "JupyterHub settings"
 msgstr "JupyterHub-Einstellungen"
-
-#: src/Form/SodaScsSettingsForm.php:168
-msgid "Base URL"
-msgstr "Basis-URL"
 
 #: src/Form/SodaScsSettingsForm.php:170
 msgid "The base URL, like https://jupyterhub.scs.sammlungen.io."
 msgstr "Die Basis-URL, wie https://jupyterhub.scs.sammlungen.io."
 
-#: src/Form/SodaScsSettingsForm.php:177
-msgid "Keycloak settings"
-msgstr "Keycloak-Einstellungen"
-
 #: src/Form/SodaScsSettingsForm.php:190
 msgid "General Keycloak settings"
 msgstr "Allgemeine Keycloak-Einstellungen"
-
-#: src/Form/SodaScsSettingsForm.php:197
-msgid "Keycloak settings"
-msgstr "Keycloak-Einstellungen"
-
-#: src/Exception/SodaScsPortainerException.php:38
-msgid "Portainer request failed: @message"
-msgstr "Portainer-Anfrage fehlgeschlagen: @message"
-
-#: src/Exception/SodaScsPortainerException.php:59
-msgid "Service operation failed. Please try again later."
-msgstr "Dienstvorgang fehlgeschlagen. Bitte versuchen Sie es später erneut."
-
-#: src/Form/SodaScsComponentCreateForm.php:186
-msgid "Create a new @label"
-msgstr "Neue @label erstellen"
-
-#: src/Form/SodaScsComponentCreateForm.php:190
-msgid "What is that?"
-msgstr "Was ist das?"
-
-#: src/Form/SodaScsComponentCreateForm.php:216
-msgid "Mandatory field. Choose existing project or add new project <a href=\":url\">here</a>."
-msgstr "Pflichtfeld. Wählen Sie ein vorhandenes Projekt oder fügen Sie <a href=\":url\">hier</a> ein neues Projekt hinzu."
-
-#: src/Form/SodaScsComponentCreateForm.php:238
-msgid "CREATE"
-msgstr "ERSTELLEN"
-
-#: src/Form/SodaScsComponentCreateForm.php:258
-msgid "The machineName can only contain small letters, digits, minus, and underscore"
-msgstr "Der Maschinenname darf nur Kleinbuchstaben, Ziffern, Minus und Unterstrich enthalten"
-
-#: src/Form/SodaScsComponentCreateForm.php:308
-msgid "The machineName cannot contain the word \"@word\""
-msgstr "Der Maschinenname darf das Wort \"@word\" nicht enthalten"
-
-#: src/Form/SodaScsComponentCreateForm.php:319
-msgid "The machineName is already in use by another Soda SCS Component entity"
-msgstr "Der Maschinenname wird bereits von einer anderen Soda SCS-Komponenten-Entität verwendet"
 
 #: src/Helpers/SodaScsProjectHelpers.php:113;116
 msgid "No project group ID found for project @project."
@@ -2307,13 +2539,13 @@ msgstr "Gruppenmitglieder konnten nicht aus Keycloak für Projekt @project abger
 msgid "Failed to add user @user to group @group in Keycloak for project @project."
 msgstr "User @user konnte nicht zur Gruppe @group in Keycloak für Projekt @project hinzugefügt werden."
 
-#: templates/pages/soda-scs-manager--administration.html.twig:16
+#: templates/pages/soda-scs-manager--administration.html.twig:17
 msgid "Manage your SODa SCS Manager components, stacks, projects and settings"
-msgstr "Verwalten Sie Ihre SODa SCS Manager Komponenten, Stacks, Projekte and Einstellungen"
+msgstr "Verwalten Sie Ihre SODa SCS Manager Komponenten, Stacks, Projekte und Einstellungen."
 
-#: templates/pages/soda-scs-manager--administration.html.twig:27
-msgid "No administration sections available"
-msgstr "Keine Administrationsbereiche verfügbar"
+#: templates/pages/soda-scs-manager--administration.html.twig:28
+msgid "No administration sections available."
+msgstr "Keine Administrationsbereiche verfügbar."
 
 #: templates/pages/soda-scs-manager--start-page.html.twig:15
 msgid "New here? Start <a href=\"@tour_url\">the beginners tour</a> to learn more about the possibilities."
@@ -2355,13 +2587,117 @@ msgstr "Systemeinstellungen konfigurieren"
 msgid "Beginners Tour"
 msgstr "Einführungstour"
 
+#: templates/pages/soda-scs-manager--start-page.html.twig:17
+msgid "Connect your Nextcloud account"
+msgstr "Nextcloud-Konto verbinden"
+
+#: templates/pages/soda-scs-manager--start-page.html.twig:18
+msgid "To use Nextcloud with WissKI and other components, connect your account once. A popup will open where you log in to Nextcloud. You can also connect later from your <a href=\":url\">Connected Accounts</a> page."
+msgstr "Um Nextcloud mit WissKI und anderen Komponenten zu nutzen, verbinden Sie Ihr Konto einmalig. Es öffnet sich ein Pop-up zur Anmeldung bei Nextcloud. Sie können die Verbindung auch später über die Seite <a href=\":url\">Verbundene Konten</a> herstellen."
+
+#: templates/pages/soda-scs-manager--start-page.html.twig:23
+msgid "Connect Nextcloud"
+msgstr "Nextcloud verbinden"
+
+#: templates/pages/soda-scs-manager--start-page.html.twig:26
+msgid "Later"
+msgstr "Später"
+
+#: templates/pages/soda-scs-manager--start-page.html.twig:33
+msgid "Hi @user!"
+msgstr "Hallo @user!"
+
+#: templates/pages/soda-scs-manager--start-page.html.twig:76
+msgid "Docs"
+msgstr "Doku"
+
+#: src/Form/SodaScsIssueReportForm.php:93
+msgid "This report will be used to create issues in the public issue tracker at <a href=\"https://github.com/soda-collections-objects-data-literacy/soda_scs_manager/issues\" target=\"_blank\">Soda SCS Manager GitHub Issue Tracker</a>. All personal data will be removed from the submitted report before publication. <strong>Please do not include sensitive data such as passwords, usernames, or other confidential information in any of the input fields.</strong>"
+msgstr "Aus diesem Bericht werden Einträge im öffentlichen Issue-Tracker unter <a href=\"https://github.com/soda-collections-objects-data-literacy/soda_scs_manager/issues\" target=\"_blank\">Soda SCS Manager GitHub Issue Tracker</a> erstellt. Personenbezogene Daten werden vor der Veröffentlichung entfernt. <strong>Bitte geben Sie keine sensiblen Daten wie Passwörter, Benutzernamen oder vertrauliche Informationen in die Eingabefelder ein.</strong>"
+
+#: src/Form/SodaScsIssueReportForm.php:98
+msgid "I understand the information above."
+msgstr "Ich habe die obigen Informationen verstanden."
+
+#: src/Form/SodaScsIssueReportForm.php:104
+msgid "Who is the reporter?"
+msgstr "Wer meldet das Problem?"
+
+#: src/Form/SodaScsIssueReportForm.php:105
+msgid "Name (e.g. Robert)"
+msgstr "Name (z. B. Robert)"
+
+#: src/Form/SodaScsIssueReportForm.php:112
+msgid "Title:"
+msgstr "Titel:"
+
+#: src/Form/SodaScsIssueReportForm.php:113
+msgid "Short description of the issue. (e.g. \"Soda SCS Manager: WissKI Stack Add Page: Access Denied\")"
+msgstr "Kurze Beschreibung des Problems (z. B. „Soda SCS Manager: WissKI-Stack hinzufügen: Zugriff verweigert“)."
+
+#: src/Form/SodaScsIssueReportForm.php:119
+msgid "Where did it happen?"
+msgstr "Wo ist es passiert?"
+
+#: src/Form/SodaScsIssueReportForm.php:120
+msgid "Provide route/URL (e.g. https://manager.scs.sammlungen.io/soda-scs-manager/stack/add/soda_scs_wisski_stack)"
+msgstr "Route oder URL angeben (z. B. https://manager.scs.sammlungen.io/soda-scs-manager/stack/add/soda_scs_wisski_stack)"
+
+#: src/Form/SodaScsIssueReportForm.php:126
+msgid "What happened?"
+msgstr "Was ist passiert?"
+
+#: src/Form/SodaScsIssueReportForm.php:127
+msgid "Exact description of the input/click chain (I entered \"Robert`); DROP TABLE users; --\" in the \"Label\" field, clicked \"Submit\")"
+msgstr "Genaue Beschreibung der Eingaben und Klicks (z. B. „Robert`); DROP TABLE users; --“ ins Feld „Bezeichnung“ eingegeben, auf „Absenden“ geklickt)."
+
+#: src/Form/SodaScsIssueReportForm.php:134
+msgid "What was expected?"
+msgstr "Was hätten Sie erwartet?"
+
+#: src/Form/SodaScsIssueReportForm.php:135
+msgid "What should have happened (e.g. A new WissKI)"
+msgstr "Was sollte passieren? (z. B. eine neue WissKI-Umgebung)"
+
+#: src/Form/SodaScsIssueReportForm.php:142
+msgid "What was the error?"
+msgstr "Welcher Fehler trat auf?"
+
+#: src/Form/SodaScsIssueReportForm.php:143
+msgid "If there was an error or irritation, please describe it here. (e.g. \"After that, only white screens or Access Denied appeared\")"
+msgstr "Beschreiben Sie hier Fehler oder Auffälligkeiten (z. B. „Danach nur weiße Seiten oder ‚Zugriff verweigert‘“)."
+
+#: src/Form/SodaScsIssueReportForm.php:150
+msgid "Send copy to my email"
+msgstr "Kopie an meine E-Mail senden"
+
+#: src/Form/SodaScsIssueReportForm.php:160
+msgid "Submit"
+msgstr "Absenden"
+
+#: src/Form/SodaScsIssueReportForm.php:171
+msgid "You must confirm that you understand the information above before submitting."
+msgstr "Sie müssen bestätigen, dass Sie die obigen Informationen verstanden haben, bevor Sie absenden."
+
+#: src/Form/SodaScsIssueReportForm.php:176
+msgid "Please enter a valid URL."
+msgstr "Bitte geben Sie eine gültige URL ein."
+
+#: src/Form/SodaScsIssueReportForm.php:192
+msgid "Little Bobby Tables has no power here!"
+msgstr "Little Bobby Tables hat hier nichts zu sagen!"
+
+#: src/Form/SodaScsIssueReportForm.php:268
+msgid "Your issue report has been submitted successfully. Thank you for your feedback!"
+msgstr "Ihr Problembericht wurde erfolgreich übermittelt. Vielen Dank für Ihr Feedback!"
+
 #: templates/pages/soda-scs-manager--dashboard.html.twig:51
 msgid "Applications of User @username"
 msgstr "Anwendungen von User @username"
 
-#: templates/pages/soda-scs-manager--dashboard.html.twig:51
-msgid "Project "@project" membership applications"
-msgstr "Projekt "@project" Applikationen durch Mitgliedschaft"
+#: templates/pages/soda-scs-manager--dashboard.html.twig:79
+msgid "Project \"@project\" membership applications"
+msgstr "Projekt „@project“: Anwendungen über Mitgliedschaft"
 
 #: templates/cards/soda-scs-manager--entity-card.html.twig:31
 msgid "Filter by tag @tag"
@@ -2374,6 +2710,38 @@ msgstr "Mehr Informationen über @title erfahren"
 #: templates/cards/soda-scs-manager--entity-card.html.twig:37
 msgid "Learn more information"
 msgstr "Mehr Informationen erfahren"
+
+#: templates/cards/soda-scs-manager--add-application-card.html.twig:21
+msgid "Add new application"
+msgstr "Neue Anwendung hinzufügen"
+
+#: templates/cards/soda-scs-manager--add-application-card.html.twig:32
+msgid "Add Application"
+msgstr "Anwendung hinzufügen"
+
+#: templates/cards/soda-scs-manager--add-application-card.html.twig:33
+msgid "Click to add a new service"
+msgstr "Klicken Sie, um einen neuen Dienst hinzuzufügen"
+
+#: templates/cards/soda-scs-manager--add-application-card.html.twig:44
+msgid "Close popup"
+msgstr "Pop-up schließen"
+
+#: templates/cards/soda-scs-manager--add-application-card.html.twig:50
+msgid "Select Application Type"
+msgstr "Anwendungstyp auswählen"
+
+#: templates/cards/soda-scs-manager--add-application-card.html.twig:62
+msgid "MariaDB Database"
+msgstr "MariaDB-Datenbank"
+
+#: templates/cards/soda-scs-manager--add-application-card.html.twig:63
+msgid "+ more info"
+msgstr "+ mehr Infos"
+
+#: templates/cards/soda-scs-manager--add-application-card.html.twig:88
+msgid "Triplestore (Open GDB)"
+msgstr "Triplestore (Open GDB)"
 
 #: templates/pages/soda-scs-manager--dashboard.html.twig:42;templates/pages/soda-scs-manager--catalogue.html.twig:41;templates/cards/soda-scs-manager--entity-card.html.twig:31
 msgid "coding"
@@ -2415,7 +2783,7 @@ msgstr "Veröffentlichung"
 msgid "triplestore"
 msgstr "Triplestore"
 
-#: templates/pages/soda-scs-manager--dashboard.html.twig:51;
+#: templates/pages/soda-scs-manager--dashboard.html.twig:52
 msgid "Clear all filters"
 msgstr "Alle Filter löschen"
 
@@ -2483,37 +2851,101 @@ msgstr "Standardprojekt"
 msgid "A Project is a collection of components and stacks."
 msgstr "Ein Projekt ist eine Sammlung von Komponenten und Stacks."
 
-#: soda_scs_manager.module:198
-msgid "Default Service Key"
-msgstr "Standard-Serviceschlüssel"
+#: soda_scs_manager.module:1089
+msgid "Loading..."
+msgstr "Wird geladen…"
 
-#: soda_scs_manager.module:200
-msgid "A Service Key is a key for a service."
-msgstr "Ein Serviceschlüssel ist ein Schlüssel für einen Dienst."
+#: soda_scs_manager.module:1095
+msgid "If SSO does not work, connect via app password:"
+msgstr "Wenn SSO nicht funktioniert, verbinden Sie sich mit einem App-Passwort:"
 
-#: soda_scs_manager.module:205
-msgid "JupyterLab"
-msgstr "JupyterLab"
+#: soda_scs_manager.module:1101
+msgid "Connect via app password"
+msgstr "Mit App-Passwort verbinden"
 
-#: soda_scs_manager.module:207
-msgid "A JupyterLab environment contains Jupyter Notebooks and OpenRefine."
-msgstr "Eine JupyterLab-Umgebung enthält Jupyter Notebooks und OpenRefine."
+#: soda_scs_manager.module:1120
+msgid "Checking..."
+msgstr "Wird geprüft…"
 
-#: soda_scs_manager.module:213
-msgid "WissKI Environment"
-msgstr "WissKI-Umgebung"
+#: soda_scs_manager.module:1126
+msgid "Verify connection"
+msgstr "Verbindung prüfen"
 
-#: soda_scs_manager.module:215
-msgid "A WissKI environment contains a preconfigured WissKI, a Triplestore and a Database."
-msgstr "Eine WissKI-Umgebung enthält ein vorkonfiguriertes WissKI, einen Triplestore und eine Datenbank."
+#: js/nextcloudConnect.js
+msgid "Request timed out. Nextcloud may be slow or unreachable."
+msgstr "Zeitüberschreitung der Anfrage. Nextcloud reagiert möglicherweise langsam oder ist nicht erreichbar."
 
-#: soda_scs_manager.module:221
-msgid "Nextcloud"
-msgstr "Nextcloud"
+#: js/nextcloudConnect.js
+msgid "Server returned non-JSON response."
+msgstr "Der Server hat keine JSON-Antwort zurückgegeben."
 
-#: soda_scs_manager.module:223
-msgid "A Nextcloud Environment contains Nextcloud, Draw.io and OnlyOffice."
-msgstr "Eine Nextcloud-Umgebung enthält Nextcloud, Draw.io und OnlyOffice."
+#: js/nextcloudConnect.js
+msgid "Server error (HTTP @status). Please ensure you are logged in and try again."
+msgstr "Serverfehler (HTTP @status). Bitte stellen Sie sicher, dass Sie angemeldet sind, und versuchen Sie es erneut."
+
+#: js/nextcloudConnect.js
+msgid "Empty response from server."
+msgstr "Leere Antwort vom Server."
+
+#: js/nextcloudConnect.js
+msgid "Invalid server response. Please try again."
+msgstr "Ungültige Serverantwort. Bitte versuchen Sie es erneut."
+
+#: js/nextcloudConnect.js
+msgid "Not connected"
+msgstr "Nicht verbunden"
+
+#: js/nextcloudConnect.js
+msgid "Connected via SSO"
+msgstr "Über SSO verbunden"
+
+#: js/nextcloudConnect.js
+msgid "Connected via app password"
+msgstr "Über App-Passwort verbunden"
+
+#: js/nextcloudConnect.js
+msgid "Connected"
+msgstr "Verbunden"
+
+#: js/nextcloudConnect.js
+msgid "Bearer failed: @error"
+msgstr "Bearer fehlgeschlagen: @error"
+
+#: js/nextcloudConnect.js
+msgid "Unable to check status"
+msgstr "Status konnte nicht geprüft werden"
+
+#: js/nextcloudConnect.js
+msgid "Opening Nextcloud login..."
+msgstr "Nextcloud-Anmeldung wird geöffnet…"
+
+#: js/nextcloudConnect.js
+msgid "Failed to start Nextcloud login"
+msgstr "Nextcloud-Anmeldung konnte nicht gestartet werden"
+
+#: js/nextcloudConnect.js
+msgid "Please allow popups for this site to connect Nextcloud."
+msgstr "Bitte erlauben Sie Pop-ups für diese Website, um Nextcloud zu verbinden."
+
+#: js/nextcloudConnect.js
+msgid "Complete the login in the popup window..."
+msgstr "Bitte schließen Sie die Anmeldung im Pop-up-Fenster ab…"
+
+#: js/nextcloudConnect.js
+msgid "Nextcloud connected successfully!"
+msgstr "Nextcloud wurde erfolgreich verbunden!"
+
+#: js/nextcloudConnect.js
+msgid "Connection failed"
+msgstr "Verbindung fehlgeschlagen"
+
+#: js/shadowServiceKeys.js
+msgid "***click_to_view***"
+msgstr "***Zum Anzeigen klicken***"
+
+#: js/shadowServiceKeys.js
+msgid "Password copied to clipboard."
+msgstr "Passwort in die Zwischenablage kopiert."
 
 #: soda_scs_manager.module:1049
 msgid "The default Inter-App Folder for the user."

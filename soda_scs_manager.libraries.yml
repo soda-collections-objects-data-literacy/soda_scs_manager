@@ -46,6 +46,7 @@ security:
     js/shadowServiceKeys.js: {}
   dependencies:
     - core/drupal
+    - core/once
     - soda_scs_manager/globalStyling
 
 tagFilter:

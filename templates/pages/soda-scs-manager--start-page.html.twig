@@ -73,7 +73,8 @@
       </a>
 
       {# Documentation - top-left segment (180°–330°). Full-sector hit area. #}
-      <a href="/docs" class="soda-scs-manager--pie-link" data-pie-label="{{ 'Docs'|t }}">
+      {# internal:/soda-scs-manager/documentation — book root from content sync. #}
+      <a href="{{ documentation_url }}" class="soda-scs-manager--pie-link" data-pie-label="{{ 'Docs'|t }}">
         <path class="soda-scs-manager--pie-hit" aria-hidden="true" d="M 100 100 L 10 100 A 90 90 0 0 1 177.94 55 Z" fill="transparent" />
         <g class="soda-scs-manager--pie-segment">
           <path class="soda-scs-manager--pie-slice soda-scs-manager--pie-slice--docs"

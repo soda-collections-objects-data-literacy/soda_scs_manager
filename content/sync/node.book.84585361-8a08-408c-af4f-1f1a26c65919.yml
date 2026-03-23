@@ -28,7 +28,7 @@ fields:
   revision_default: '1'
   revision_translation_affected: '1'
   path:
-    alias: /docs/technische-dokumentation
+    alias: /soda-scs-manager/technical-documentation
     pid: '71'
     langcode: de
   menu_link: {  }

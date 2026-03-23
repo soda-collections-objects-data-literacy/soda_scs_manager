@@ -26,6 +26,7 @@ use Drupal\soda_scs_manager\Entity\SodaScsServiceKey;
 use Drupal\soda_scs_manager\Entity\SodaScsSnapshot;
 use Drupal\soda_scs_manager\Entity\SodaScsStack;
 use Drupal\user\UserInterface;
+use Drupal\node\NodeInterface;
 use Symfony\Component\HttpFoundation\RedirectResponse;
 
 /**
@@ -669,6 +670,7 @@ function soda_scs_manager_theme($existing, $type, $theme, $path) {
         'attributes' => NULL,
         'user' => NULL,
         'connected_accounts_url' => '',
+        'documentation_url' => '/soda-scs-manager/documentation',
       ],
       'template' => 'pages/soda-scs-manager--start-page',
     ],
@@ -1647,6 +1649,37 @@ function soda_scs_manager_cron() {
       '@operations' => $result['deleted_operations'],
       '@steps' => $result['deleted_steps'],
     ]);
+  }
+}
+
+/**
+ * Implements hook_menu_links_discovered_alter().
+ */
+function soda_scs_manager_menu_links_discovered_alter(array &$links): void {
+  // Content sync book root: node.book.10e1bd5d-8405-4485-811e-24e0695b76b6.yml
+  $documentation_book_uuid = '10e1bd5d-8405-4485-811e-24e0695b76b6';
+  $documentation_link_ids = [
+    'soda_scs_manager.menu.documentation',
+    'soda_scs_manager.anonymous_documentation',
+  ];
+  $storage = \Drupal::entityTypeManager()->getStorage('node');
+  $nodes = $storage->loadByProperties(['uuid' => $documentation_book_uuid]);
+  $node = reset($nodes);
+
+  foreach ($documentation_link_ids as $id) {
+    if (!isset($links[$id])) {
+      continue;
+    }
+    $links[$id]['class'] = \Drupal\soda_scs_manager\Plugin\Menu\DocumentationInternalPathMenuLink::class;
+    if ($node instanceof NodeInterface) {
+      $links[$id]['route_name'] = 'entity.node.canonical';
+      $links[$id]['route_parameters'] = ['node' => (string) $node->id()];
+      $links[$id]['cache_tags'] = array_merge($links[$id]['cache_tags'] ?? [], ['node:' . $node->id()]);
+    }
+    else {
+      $links[$id]['route_name'] = '<front>';
+      unset($links[$id]['route_parameters']);
+    }
   }
 }
 

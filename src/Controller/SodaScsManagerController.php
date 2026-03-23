@@ -116,9 +116,9 @@ class SodaScsManagerController extends ControllerBase {
         $projects = $projectStorage->loadByProperties(['members' => $current_user->id()]);
       }
 
-      // Sort Projects by label
-      /*uasort($projects, function ($a, $b) {    
-          return strnatcasecmp($a->label(), $b->label());
+      // Sort Projects by label.
+      /*uasort($projects, function ($a, $b) {
+      return strnatcasecmp($a->label(), $b->label());
       });*/
 
       // Project components of the projects.
@@ -159,7 +159,8 @@ class SodaScsManagerController extends ControllerBase {
             '#theme' => 'soda_scs_manager__entity_card',
             '#title' => $this->t('@bundle', ['@bundle' => $projectEntity->label()]),
             '#type' => $projectBundleInfo['label']->render(),
-            '#description' => $projectEntity->get('description')->value,
+            // Bundle description: translates with UI; stored field is English.
+            '#description' => $projectBundleInfo['description']->render(),
             '#details_link' => $detailsLink,
             '#entity_id' => $projectEntity->id(),
             '#entity_type_id' => $projectEntity->getEntityTypeId(),
@@ -310,7 +311,8 @@ class SodaScsManagerController extends ControllerBase {
         '#theme' => 'soda_scs_manager__entity_card',
         '#title' => $this->t('@bundle', ['@bundle' => $entity->label()]),
         '#type' => $bundleInfo['label']->render(),
-        '#description' => $entity->get('description')->value,
+        // Bundle description: translates with UI; stored field is English.
+        '#description' => $bundleInfo['description']->render(),
         '#details_link' => $detailsLink,
         '#entity_id' => $entity->id(),
         '#entity_type_id' => $entity->getEntityTypeId(),
@@ -345,7 +347,7 @@ class SodaScsManagerController extends ControllerBase {
     // Sort entitiesByUser alphabetically by using the keys (= usernames).
     ksort($entitiesByUser);
 
-    // Move current user to the top of the list to always display them (and the "Add Application" button) first
+    // Move current user to the top of the list to always display them (and the "Add Application" button) first.
     $entitiesByUser = $this->moveKeyToFirstPosition($entitiesByUser, $currentUsername);
 
     $build = [
@@ -371,84 +373,6 @@ class SodaScsManagerController extends ControllerBase {
   }
 
   /**
-   * List the available stacks.
-   *
-   * @return array
-   *   The page build array.
-   */
-  public function cataloguePage() {
-    // @todo Make this more generic.
-    // Create the build array.
-    $build = [
-      '#theme' => 'soda_scs_manager__catalogue',
-      '#attributes' => ['class' => 'container soda-scs-manager--view--grid'],
-      '#components' => [],
-      '#stacks' => [],
-      '#attached' => [
-        'library' => [
-          'soda_scs_manager/globalStyling',
-          'soda_scs_manager/tagFilter',
-        ],
-      ],
-    ];
-
-    // Get all component bundles.
-    $stackBundles = $this->bundleInfo->getBundleInfo('soda_scs_stack');
-
-    // Filter stack bundles to only include 'soda_scs_wisski_stack'.
-    $stackBundles = array_intersect_key($stackBundles, ['soda_scs_wisski_stack' => TRUE]);
-
-    /** @var \Drupal\soda_scs_manager\Entity\Bundle\SodaScsStackBundle $stackBundle */
-    foreach ($stackBundles as $id => $stackBundle) {
-
-      // Add the card to the build array.
-      $build['#stacks'][] = [
-        '#theme' => 'soda_scs_manager__entity_card',
-        '#title' => $this->t('@bundle', ['@bundle' => $stackBundle['label']]),
-        '#description' => $stackBundle['description'],
-        '#imageUrl' => $stackBundle['imageUrl'],
-        '#tags' => $stackBundle['tags'],
-        '#url' => Url::fromRoute('entity.soda_scs_stack.add_form', ['bundle' => $id]),
-        '#learn_more_link' => '/app/' . $this->sodaScsHelpers->getEntityType($id),
-        '#attached' => [
-          'library' => ['soda_scs_manager/globalStyling'],
-        ],
-      ];
-    }
-
-    // Get all component bundles.
-    $componentBundles = $this->bundleInfo->getBundleInfo('soda_scs_component');
-
-    // Filter component bundles to only include
-    // 'soda_scs_sql_component',
-    // 'soda_scs_triplestore_component'.
-    $componentBundles = array_intersect_key($componentBundles, [
-      'soda_scs_sql_component' => TRUE,
-      'soda_scs_triplestore_component' => TRUE,
-    ]);
-
-    /** @var \Drupal\soda_scs_manager\Entity\Bundle\SodaScsStackBundle $componentBundle */
-    foreach ($componentBundles as $id => $componentBundle) {
-
-      // Add the card to the build array.
-      $build['#components'][] = [
-        '#theme' => 'soda_scs_manager__entity_card',
-        '#title' => $this->t('@bundle', ['@bundle' => $componentBundle['label']]),
-        '#description' => $componentBundle['description'],
-        '#imageUrl' => $componentBundle['imageUrl'],
-        '#tags' => $componentBundle['tags'],
-        '#url' => Url::fromRoute('entity.soda_scs_component.add_form', ['bundle' => $id]),
-        '#learn_more_link' => '/app/' . $this->sodaScsHelpers->getEntityType($id),
-        '#attached' => [
-          'library' => ['soda_scs_manager/globalStyling'],
-        ],
-      ];
-    }
-
-    return $build;
-  }
-
-  /**
    * Start page for SCS Manager.
    *
    * @return array
@@ -466,11 +390,16 @@ class SodaScsManagerController extends ControllerBase {
       'user' => $currentUser->id(),
     ])->toString();
 
+    // Book documentation root (path alias from content sync).
+    $documentationUrl = Url::fromUri('internal:/soda-scs-manager/documentation')
+      ->toString();
+
     return [
       '#theme' => 'soda_scs_manager__start_page',
       '#attributes' => ['class' => ['container', 'mx-auto']],
       '#user' => $userFirstName,
       '#connected_accounts_url' => $connectedAccountsUrl,
+      '#documentation_url' => $documentationUrl,
       '#attached' => [
         'library' => [
           'soda_scs_manager/globalStyling',
@@ -513,21 +442,32 @@ class SodaScsManagerController extends ControllerBase {
     ];
   }
 
-  // Add function to re-order Dashboard order for admin people
-  public function moveKeyToFirstPosition(array $array, $key): array {  
-    // Step 1: Check if the key exists  
-    if (!array_key_exists($key, $array)) {  
-        return $array; // or throw an exception (see "Error Handling" below)  
-    }  
- 
-    // Step 2: Extract the target element as a single-key array  
-    $targetElement = [$key => $array[$key]];  
- 
-    // Step 3: Remove the target element from the original array  
-    unset($array[$key]);  
- 
-    // Step 4: Merge the target element with the remaining array  
-    return $targetElement + $array;  
-  }  
+  /**
+   * Add function to re-order Dashboard order for admin people.
+   *
+   * @param array $array
+   *   The array to re-order.
+   * @param string $key
+   *   The key to move to the first position.
+   *
+   * @return array
+   *   The re-ordered array.
+   */
+  public function moveKeyToFirstPosition(array $array, $key): array {
+    // Check if the key exists.
+    if (!array_key_exists($key, $array)) {
+      // Key not found, return original array.
+      return $array;
+    }
+
+    // Extract the target element as a single-key array.
+    $targetElement = [$key => $array[$key]];
+
+    // Remove the target element from the original array.
+    unset($array[$key]);
+
+    // Merge the target element with the remaining array.
+    return $targetElement + $array;
+  }
 
 }

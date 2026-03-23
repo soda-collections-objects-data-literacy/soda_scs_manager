@@ -1,10 +1,10 @@
-(function ($, Drupal, once) {
+(function (Drupal, once) {
   Drupal.behaviors.shadowServiceKeys = {
     attach: function (context, settings) {
       once('shadowServiceKeys', 'html', context).forEach(function () {
         const passwordElements = context.querySelectorAll('.soda-scs-manager--service-password, .field--name-servicepassword .field__item');
         if (passwordElements.length > 0) {
-          const shadowValue = '***click_to_view***';
+          const shadowValue = Drupal.t('***click_to_view***');
           passwordElements.forEach(function (element) {
             const passwordValue = element.textContent;
             element.textContent = shadowValue;
@@ -24,7 +24,7 @@
                 popup.style.padding = '5px';
                 popup.style.borderRadius = '5px';
                 popup.style.zIndex = '1000';
-                popup.textContent = 'copied password to clipboard';
+                popup.textContent = Drupal.t('Password copied to clipboard.');
                 document.body.appendChild(popup);
                 setTimeout(function () {
                     document.body.removeChild(popup);
@@ -39,5 +39,5 @@
       });
     }
   };
-})(jQuery, Drupal, once);
+})(Drupal, once);
 

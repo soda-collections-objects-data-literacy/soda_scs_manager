@@ -161,7 +161,7 @@ class SodaScsComponentHelpers {
     }
     catch (\Exception $e) {
       return [
-        "message" => 'Component is not available.',
+        "message" => (string) $this->t('Component is not available.'),
         'code' => $e->getCode(),
         'success' => FALSE,
         'error' => $e->getMessage(),
@@ -170,7 +170,7 @@ class SodaScsComponentHelpers {
 
     if (!$inspectContainerResponse->success) {
       return [
-        "message" => 'Component is not available.',
+        "message" => (string) $this->t('Component is not available.'),
         'code' => 404,
         'success' => FALSE,
         'error' => $inspectContainerResponse->error,
@@ -200,7 +200,7 @@ class SodaScsComponentHelpers {
       switch ($healthRequestResult['statusCode']) {
         case 200:
           return [
-            "message" => 'Available.',
+            "message" => (string) $this->t('Available.'),
             "status" => 'running',
             'code' => $healthRequestResult['statusCode'],
             'success' => TRUE,
@@ -209,7 +209,7 @@ class SodaScsComponentHelpers {
 
         case 502:
           return [
-            "message" => 'Starting',
+            "message" => (string) $this->t('Starting'),
             "status" => 'starting',
             'code' => $healthRequestResult['statusCode'],
             'success' => FALSE,
@@ -219,7 +219,7 @@ class SodaScsComponentHelpers {
         case 0:
           if ($containerStatus == 'running') {
             return [
-              "message" => 'Starting',
+              "message" => (string) $this->t('Starting'),
               "status" => 'starting',
               'code' => $healthRequestResult['statusCode'],
               'success' => FALSE,
@@ -228,7 +228,7 @@ class SodaScsComponentHelpers {
           }
           else {
             return [
-              "message" => 'Stopped',
+              "message" => (string) $this->t('Stopped'),
               "status" => 'stopped',
               'code' => $healthRequestResult['statusCode'],
               'success' => FALSE,
@@ -238,7 +238,7 @@ class SodaScsComponentHelpers {
 
         default:
           return [
-            "message" => 'Not available',
+            "message" => (string) $this->t('Not available'),
             "status" => 'unknown',
             'code' => $healthRequestResult['statusCode'],
             'success' => FALSE,
@@ -248,7 +248,7 @@ class SodaScsComponentHelpers {
     }
     catch (\Exception $e) {
       return [
-        "message" => 'Not available',
+        "message" => (string) $this->t('Not available'),
         "status" => 'unknown',
         'code' => $e->getCode(),
         'success' => FALSE,
@@ -365,11 +365,11 @@ class SodaScsComponentHelpers {
 
       if (empty($url)) {
         return [
-          'message' => 'WebProtege URL not configured.',
+          'message' => (string) $this->t('WebProtege URL not configured.'),
           'status' => 'unknown',
           'code' => 500,
           'success' => FALSE,
-          'error' => 'WebProtege host is not configured in settings.',
+          'error' => (string) $this->t('WebProtege host is not configured in settings.'),
         ];
       }
 
@@ -388,7 +388,7 @@ class SodaScsComponentHelpers {
 
       if ($statusCode >= 200 && $statusCode < 400) {
         return [
-          'message' => 'Available.',
+          'message' => (string) $this->t('Available.'),
           'status' => 'running',
           'code' => $statusCode,
           'success' => TRUE,
@@ -398,25 +398,25 @@ class SodaScsComponentHelpers {
 
       if ($statusCode === 502 || $statusCode === 503) {
         return [
-          'message' => 'Starting',
+          'message' => (string) $this->t('Starting'),
           'status' => 'starting',
           'code' => $statusCode,
           'success' => FALSE,
-          'error' => 'Service returned HTTP ' . $statusCode,
+          'error' => (string) $this->t('Service returned HTTP @code.', ['@code' => (string) $statusCode]),
         ];
       }
 
       return [
-        'message' => 'Not available',
+        'message' => (string) $this->t('Not available'),
         'status' => 'stopped',
         'code' => $statusCode,
         'success' => FALSE,
-        'error' => 'Service returned HTTP ' . $statusCode,
+        'error' => (string) $this->t('Service returned HTTP @code.', ['@code' => (string) $statusCode]),
       ];
     }
     catch (\Exception $e) {
       return [
-        'message' => 'Not available',
+        'message' => (string) $this->t('Not available'),
         'status' => 'unknown',
         'code' => $e->getCode(),
         'success' => FALSE,

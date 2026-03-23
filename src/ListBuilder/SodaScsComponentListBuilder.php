@@ -459,46 +459,53 @@ class SodaScsComponentListBuilder extends EntityListBuilder {
 
         default:
           // Unknown bundle type.
+          $naTitle = (string) $this->t('Health check not available for this component type');
+          $naLabel = (string) $this->t('N/A');
           return [
-            'markup' => '<span class="component-health-status health-pending" title="Health check not available for this component type">N/A</span>',
+            'markup' => '<span class="component-health-status health-pending" title="' . htmlspecialchars($naTitle, ENT_QUOTES) . '">' . htmlspecialchars($naLabel, ENT_QUOTES) . '</span>',
           ];
       }
     }
     catch (\Exception $e) {
+      $errorLabel = (string) $this->t('● Error');
       return [
-        'markup' => '<span class="component-health-status health-error" title="' . htmlspecialchars($e->getMessage(), ENT_QUOTES) . '">● Error</span>',
+        'markup' => '<span class="component-health-status health-error" title="' . htmlspecialchars($e->getMessage(), ENT_QUOTES) . '">' . htmlspecialchars($errorLabel, ENT_QUOTES) . '</span>',
       ];
     }
 
     // Format the health status based on the result.
     if (!$healthResult || !is_array($healthResult)) {
+      $unavailableLabel = (string) $this->t('● Unavailable');
       return [
-        'markup' => '<span class="component-health-status health-error">● Unavailable</span>',
+        'markup' => '<span class="component-health-status health-error">' . htmlspecialchars($unavailableLabel, ENT_QUOTES) . '</span>',
       ];
     }
 
     $success = (bool) ($healthResult['success'] ?? FALSE);
     $status = (string) ($healthResult['status'] ?? 'unknown');
-    $message = (string) ($healthResult['message'] ?? 'Unknown status');
+    $message = (string) ($healthResult['message'] ?? '');
+    if ($message === '') {
+      $message = (string) $this->t('Unknown status');
+    }
     $error = (string) ($healthResult['error'] ?? '');
 
     // Determine CSS class and display text based on status.
     // Check status first to ensure 'running' is always green.
     if ($status === 'running') {
       $cssClass = 'health-success';
-      $displayText = 'Running';
+      $displayText = (string) $this->t('Running');
     }
     elseif ($status === 'healthy') {
       $cssClass = 'health-success';
-      $displayText = 'Healthy';
+      $displayText = (string) $this->t('Healthy');
     }
     elseif ($status === 'starting') {
       $cssClass = 'health-loading';
-      $displayText = 'Starting';
+      $displayText = (string) $this->t('Starting');
     }
     elseif ($status === 'stopped') {
       $cssClass = 'health-error';
-      $displayText = 'Stopped';
+      $displayText = (string) $this->t('Stopped');
     }
     elseif ($success) {
       $cssClass = 'health-success';
