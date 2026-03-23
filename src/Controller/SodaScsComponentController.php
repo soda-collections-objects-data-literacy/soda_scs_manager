@@ -276,7 +276,7 @@ class SodaScsComponentController extends ControllerBase {
         ]),
         '#attributes' => [
           'class' => ['button', 'button--action', 'button--primary', 'soda-scs-manager__throbber-overlay-trigger'],
-          'data-throbber-message' => 'Checking for updates, please wait.',
+          'data-throbber-message' => $this->t('Checking for updates, please wait.'),
         ],
       ],
     ];

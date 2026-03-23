@@ -106,18 +106,20 @@
     attach: function (context, settings) {
       // Create the overlay element only once if it doesn't exist.
       if (!$('.soda-scs-manager__throbber-overlay', context).length) {
-        $('body', context).append(`
-          <div class="soda-scs-manager__throbber-overlay">
-            <div class="soda-scs-manager__throbber-overlay__content">
-              <div class="soda-scs-manager__throbber-overlay__spinner"></div>
-              <div class="soda-scs-manager__throbber-overlay__message">Performing action, please do not close the window</div>
-              <div class="soda-scs-manager__throbber-overlay__steps-container">
-                <ul class="soda-scs-manager__steps-list"></ul>
-              </div>
-              <div class="soda-scs-manager__throbber-overlay__info"></div>
-            </div>
-          </div>
-        `);
+        const defaultThrobberMsg = Drupal.t('Performing action, please do not close the window');
+        $('body', context).append(
+          '<div class="soda-scs-manager__throbber-overlay">' +
+            '<div class="soda-scs-manager__throbber-overlay__content">' +
+              '<div class="soda-scs-manager__throbber-overlay__spinner"></div>' +
+              '<div class="soda-scs-manager__throbber-overlay__message"></div>' +
+              '<div class="soda-scs-manager__throbber-overlay__info"></div>' +
+              '<div class="soda-scs-manager__throbber-overlay__steps-container">' +
+                '<ul class="soda-scs-manager__steps-list"></ul>' +
+              '</div>' +
+            '</div>' +
+          '</div>'
+        );
+        $('.soda-scs-manager__throbber-overlay__message').text(defaultThrobberMsg);
       }
 
       // Handle all SODA SCS forms (form IDs use underscores, e.g. soda_scs_manager_component_create_form).
@@ -132,8 +134,7 @@
                                formId === 'soda_scs_manager_stack_create_form';
 
           if (isCreateForm) {
-            const infoMessage = (settings.sodaScsManager && settings.sodaScsManager.throbberInfo) ||
-              Drupal.t('Please note: After creating the WissKI Environment, it can take up to 5 minutes to setup everything.<br><br>Please check the health status to monitor the startup progress.');
+            const infoMessage = (settings.sodaScsManager && settings.sodaScsManager.throbberInfo) || '';
             $('.soda-scs-manager__throbber-overlay__info').html(infoMessage);
           } else {
             // Clear any previous info message.
@@ -149,6 +150,9 @@
                                            $form.data('progress-polling') === 'true' ||
                                            (settings.sodaScsManager && settings.sodaScsManager.progressPolling === true);
 
+          const primaryMessage = (settings.sodaScsManager && settings.sodaScsManager.throbberPrimaryMessage) ||
+            Drupal.t('Performing action, please do not close the window');
+          $('.soda-scs-manager__throbber-overlay__message').text(primaryMessage);
           // Show the overlay on form submission.
           $('.soda-scs-manager__throbber-overlay').addClass('soda-scs-manager__throbber-overlay--active');
 
@@ -205,8 +209,7 @@
                                formId === 'soda_scs_manager_stack_create_form';
 
           if (isCreateForm) {
-            const infoMessage = (settings.sodaScsManager && settings.sodaScsManager.throbberInfo) ||
-              Drupal.t('Please note: After creating the WissKI Environment, it can take up to 5 minutes to setup everything.<br><br>Please check the health status to monitor the startup progress.');
+            const infoMessage = (settings.sodaScsManager && settings.sodaScsManager.throbberInfo) || '';
             $('.soda-scs-manager__throbber-overlay__info').html(infoMessage);
           } else {
             // Clear any previous info message.
@@ -222,6 +225,9 @@
                                            $form.data('progress-polling') === 'true' ||
                                            (settings.sodaScsManager && settings.sodaScsManager.progressPolling === true);
 
+          const primaryMessage = (settings.sodaScsManager && settings.sodaScsManager.throbberPrimaryMessage) ||
+            Drupal.t('Performing action, please do not close the window');
+          $('.soda-scs-manager__throbber-overlay__message').text(primaryMessage);
           // Show the overlay before form submission.
           $('.soda-scs-manager__throbber-overlay').addClass('soda-scs-manager__throbber-overlay--active');
 
@@ -238,6 +244,9 @@
         const progressPollingSupported = settings.sodaScsManager.progressPolling === true;
         // Only start polling if overlay is already visible and polling is supported.
         if ($('.soda-scs-manager__throbber-overlay').hasClass('soda-scs-manager__throbber-overlay--active') && progressPollingSupported) {
+          if (settings.sodaScsManager.throbberPrimaryMessage) {
+            $('.soda-scs-manager__throbber-overlay__message').text(settings.sodaScsManager.throbberPrimaryMessage);
+          }
           if (settings.sodaScsManager.throbberInfo) {
             $('.soda-scs-manager__throbber-overlay__info').html(settings.sodaScsManager.throbberInfo);
           }

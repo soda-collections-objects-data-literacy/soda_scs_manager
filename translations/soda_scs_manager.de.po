@@ -2950,3 +2950,19 @@ msgstr "Passwort in die Zwischenablage kopiert."
 #: soda_scs_manager.module:1049
 msgid "The default Inter-App Folder for the user."
 msgstr "Der Standard-Inter-App-Ordner des SCS-Nutzenden."
+
+#: js/throbberOverlay.js
+msgid "Performing action, please do not close the window"
+msgstr "Aktion wird ausgeführt, bitte schließen Sie das Fenster nicht."
+
+#: src/Controller/SodaScsComponentController.php
+msgid "Checking for updates, please wait."
+msgstr "Updates werden geprüft, bitte warten …"
+
+#: src/Form/SodaScsComponentCreateForm.php;src/Form/SodaScsStackCreateForm.php
+msgid "Creating your WissKI environment can take up to 5 minutes. Please do not close this window."
+msgstr "Die Einrichtung Ihrer WissKI-Umgebung kann bis zu 5 Minuten dauern. Bitte schließen Sie dieses Fenster nicht."
+
+#: src/Form/SodaScsComponentCreateForm.php;src/Form/SodaScsStackCreateForm.php
+msgid "Please note: After creating the WissKI Environment, it can take up to 5 minutes to setup everything.<br><br>Please check the health status to monitor the startup progress."
+msgstr "Hinweis: Nach dem Anlegen der WissKI-Umgebung kann die Einrichtung bis zu 5 Minuten dauern.<br><br>Bitte prüfen Sie den Gesundheitsstatus, um den Start zu verfolgen."
