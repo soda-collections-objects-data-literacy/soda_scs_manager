@@ -1,0 +1,61 @@
+uuid: 280a41c7-2f3e-4eb2-9138-74a144d515bd
+langcode: en
+type: node
+bundle: book
+id: '33'
+dependencies:
+  config:
+    - node.node_type.book
+    - field.field.node.book.body
+fields:
+  nid: '33'
+  vid: '46'
+  revision_timestamp: '1770647196'
+  revision_uid:
+    target_id: '0'
+  revision_log: {  }
+  status: '1'
+  uid:
+    target_id: '0'
+  title: 'Service keys (only for admins)'
+  created: '1759406446'
+  changed: '1770647193'
+  promote: '0'
+  sticky: '0'
+  default_langcode: '1'
+  revision_default: '1'
+  revision_translation_affected: '1'
+  path:
+    alias: /docs/interface/admin/service-keys
+    pid: '46'
+    langcode: en
+  menu_link: {  }
+  content_translation_source: und
+  content_translation_outdated: '0'
+  body:
+    value: '<h2>SODa SCS Service Keys</h2><p>Service Keys are authentication credentials that allow applications and external services to securely access SODa SCS resources. The Service Keys administration area manages all API keys, tokens, and credentials across the platform.</p><h3>What You Can Do</h3><ul><li>View all active service keys in the system</li><li>Generate new service keys for applications or integrations</li><li>Revoke compromised or unused service keys</li><li>Set expiration dates and access scopes for keys</li><li>Monitor service key usage and access patterns</li><li>Audit security events related to service keys</li></ul><h3>Managing Service Keys</h3><p>To manage service keys:</p><ol><li>Navigate to <strong>Administration → SODa SCS Service Keys</strong></li><li>Review the list of all service keys and their associated applications</li><li>Click "Add Service Key" to generate a new credential</li><li>Specify the key''s purpose, scope, and expiration</li><li>Copy the generated key securely (it will only be shown once)</li><li>Revoke keys immediately if they are compromised</li></ol><h3>Security Best Practices</h3><ul><li><strong>Use descriptive names</strong>: Clearly identify what each service key is used for</li><li><strong>Set expiration dates</strong>: Limit key lifetime to reduce security risks</li><li><strong>Rotate keys regularly</strong>: Update credentials on a schedule</li><li><strong>Revoke unused keys</strong>: Remove keys that are no longer needed</li><li><strong>Monitor usage</strong>: Watch for unusual access patterns</li><li><strong>Principle of least privilege</strong>: Grant only necessary permissions</li></ul>'
+    summary: ''
+    format: basic_html
+translations:
+  de:
+    status: '1'
+    uid:
+      target_id: '0'
+    title: Service-Keys
+    created: '1765897175'
+    changed: '1770647193'
+    promote: '0'
+    sticky: '0'
+    default_langcode: '0'
+    revision_translation_affected: '1'
+    path:
+      alias: /docs/administration/service-keys
+      pid: '62'
+      langcode: de
+    menu_link: {  }
+    content_translation_source: en
+    content_translation_outdated: '0'
+    body:
+      value: '<h2>SODa SCS Service-Keys</h2><p>Service-Keys sind Authentifizierungsdaten, die es Anwendungen und externen Diensten ermöglichen, sicher auf SODa SCS-Ressourcen zuzugreifen. Der Service-Keys-Verwaltungsbereich verwaltet alle API-Schlüssel, Token und Anmeldedaten auf der Plattform.</p><h3>Was Sie tun können</h3><ul><li>Alle aktiven Service-Keys im System anzeigen</li><li>Neue Service-Keys für Anwendungen oder Integrationen generieren</li><li>Kompromittierte oder ungenutzte Service-Keys widerrufen</li><li>Ablaufdaten und Zugriffsbereiche für Schlüssel festlegen</li><li>Service-Key-Nutzung und Zugriffsmuster überwachen</li><li>Sicherheitsereignisse im Zusammenhang mit Service-Keys prüfen</li></ul><h3>Verwalten von Service-Keys</h3><p>So verwalten Sie Service-Keys:</p><ol><li>Navigieren Sie zu <strong>Administration → SODa SCS Service-Keys</strong></li><li>Überprüfen Sie die Liste aller Service-Keys und ihrer zugehörigen Anwendungen</li><li>Klicken Sie auf "Service-Key hinzufügen", um eine neue Berechtigung zu generieren</li><li>Geben Sie den Zweck, Umfang und Ablauf des Schlüssels an</li><li>Kopieren Sie den generierten Schlüssel sicher (er wird nur einmal angezeigt)</li><li>Widerrufen Sie Schlüssel sofort, wenn sie kompromittiert wurden</li></ol><h3>Sicherheits-Best-Practices</h3><ul><li><strong>Beschreibende Namen verwenden</strong>: Identifizieren Sie klar, wofür jeder Service-Key verwendet wird</li><li><strong>Ablaufdaten festlegen</strong>: Begrenzen Sie die Schlüssellebensdauer, um Sicherheitsrisiken zu reduzieren</li><li><strong>Schlüssel regelmäßig rotieren</strong>: Anmeldedaten nach einem Zeitplan aktualisieren</li><li><strong>Ungenutzte Schlüssel widerrufen</strong>: Schlüssel entfernen, die nicht mehr benötigt werden</li><li><strong>Nutzung überwachen</strong>: Auf ungewöhnliche Zugriffsmuster achten</li><li><strong>Prinzip der geringsten Rechte</strong>: Nur notwendige Berechtigungen gewähren</li></ul>'
+      summary: ''
+      format: basic_html

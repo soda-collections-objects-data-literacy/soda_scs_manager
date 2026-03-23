@@ -1,0 +1,40 @@
+uuid: 055b2ef1-7516-4413-892c-aa087c0d7451
+langcode: en
+type: media
+bundle: image
+id: '3'
+dependencies:
+  config:
+    - media.media_type.image
+    - field.field.media.image.field_media_image
+  entity:
+    - 'file:file:eeb4eff2-535d-4633-b381-4ebc9bf53824'
+fields:
+  mid: '3'
+  vid: '3'
+  revision_created: '1770647193'
+  revision_user: {  }
+  revision_log_message: {  }
+  status: '1'
+  uid:
+    target_id: '0'
+  name: nextcloud-stack.svg
+  thumbnail:
+    target_id: '3'
+    alt: 'Logo of the Nextcloud environment with Onlyoffice and Draw.io.'
+    title: null
+    width: null
+    height: null
+  created: '1759129118'
+  changed: '1770647193'
+  default_langcode: '1'
+  revision_default: '1'
+  revision_translation_affected: '1'
+  path:
+    langcode: en
+  field_media_image:
+    target_id: '3'
+    alt: 'Logo of the Nextcloud environment with Onlyoffice and Draw.io.'
+    title: ''
+    width: null
+    height: null

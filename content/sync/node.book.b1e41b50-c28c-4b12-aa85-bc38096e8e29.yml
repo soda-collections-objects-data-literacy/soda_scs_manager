@@ -1,0 +1,35 @@
+uuid: b1e41b50-c28c-4b12-aa85-bc38096e8e29
+langcode: en
+type: node
+bundle: book
+id: '10'
+dependencies:
+  config:
+    - node.node_type.book
+    - field.field.node.book.body
+fields:
+  nid: '10'
+  vid: '10'
+  revision_timestamp: '1770647193'
+  revision_uid:
+    target_id: '0'
+  revision_log: {  }
+  status: '1'
+  uid:
+    target_id: '0'
+  title: Snapshots
+  created: '1759406556'
+  changed: '1770647193'
+  promote: '0'
+  sticky: '0'
+  default_langcode: '1'
+  revision_default: '1'
+  revision_translation_affected: '1'
+  path:
+    alias: /docs/snapshots
+    pid: '10'
+    langcode: en
+  menu_link: {  }
+  content_translation_source: und
+  content_translation_outdated: '0'
+  body: {  }

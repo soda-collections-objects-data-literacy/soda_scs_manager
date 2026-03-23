@@ -1,0 +1,40 @@
+uuid: 2554ac8d-e9d0-495a-96ba-e54dff9b9b94
+langcode: en
+type: media
+bundle: image
+id: '5'
+dependencies:
+  config:
+    - media.media_type.image
+    - field.field.media.image.field_media_image
+  entity:
+    - 'file:file:edbba5f3-3495-4b8b-9a45-266eb9e0428e'
+fields:
+  mid: '5'
+  vid: '5'
+  revision_created: '1770647193'
+  revision_user: {  }
+  revision_log_message: {  }
+  status: '1'
+  uid:
+    target_id: '0'
+  name: triplestore.svg
+  thumbnail:
+    target_id: '5'
+    alt: 'Logo of the Open GDB triplestore.'
+    title: null
+    width: null
+    height: null
+  created: '1759388514'
+  changed: '1770647193'
+  default_langcode: '1'
+  revision_default: '1'
+  revision_translation_affected: '1'
+  path:
+    langcode: en
+  field_media_image:
+    target_id: '5'
+    alt: 'Logo of the Open GDB triplestore.'
+    title: ''
+    width: null
+    height: null

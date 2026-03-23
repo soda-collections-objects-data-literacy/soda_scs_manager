@@ -1,0 +1,40 @@
+uuid: b9dcc749-d9e0-4db5-8345-3f04565d20ba
+langcode: en
+type: media
+bundle: image
+id: '7'
+dependencies:
+  config:
+    - media.media_type.image
+    - field.field.media.image.field_media_image
+  entity:
+    - 'file:file:d5e46680-dc01-4a70-ac97-3184bdc74cc8'
+fields:
+  mid: '7'
+  vid: '7'
+  revision_created: '1770647193'
+  revision_user: {  }
+  revision_log_message: {  }
+  status: '1'
+  uid:
+    target_id: '0'
+  name: shared.svg
+  thumbnail:
+    target_id: '7'
+    alt: 'Logo of the shared folder.'
+    title: null
+    width: null
+    height: null
+  created: '1759399204'
+  changed: '1770647193'
+  default_langcode: '1'
+  revision_default: '1'
+  revision_translation_affected: '1'
+  path:
+    langcode: en
+  field_media_image:
+    target_id: '7'
+    alt: 'Logo of the shared folder.'
+    title: ''
+    width: null
+    height: null

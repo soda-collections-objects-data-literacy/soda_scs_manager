@@ -1,0 +1,61 @@
+uuid: bc3ff212-513e-4ef8-acc7-5db78bbc327b
+langcode: en
+type: node
+bundle: book
+id: '39'
+dependencies:
+  config:
+    - node.node_type.book
+    - field.field.node.book.body
+fields:
+  nid: '39'
+  vid: '43'
+  revision_timestamp: '1770647196'
+  revision_uid:
+    target_id: '0'
+  revision_log: {  }
+  status: '1'
+  uid:
+    target_id: '0'
+  title: 'Administrative workflows'
+  created: '1765897271'
+  changed: '1770647193'
+  promote: '0'
+  sticky: '0'
+  default_langcode: '1'
+  revision_default: '1'
+  revision_translation_affected: '1'
+  path:
+    alias: /docs/interface/admin/administrative-workflows
+    pid: '58'
+    langcode: en
+  menu_link: {  }
+  content_translation_source: und
+  content_translation_outdated: '0'
+  body:
+    value: '<h3>Setting Up a New Research Team</h3><ol><li>Create a new project in <strong>SODa SCS Projects</strong></li><li>Add team members to the project</li><li>Deploy necessary Components or Stacks</li><li>Connect the applications to the project</li><li>Generate service keys if needed for integrations</li><li>Create initial snapshots for backup</li></ol><h3>Performing System Maintenance</h3><ol><li>Review all Components in <strong>SODa SCS Components</strong> for health issues</li><li>Create snapshots of critical applications before maintenance</li><li>Clean up unused service keys in <strong>SODa SCS Service Keys</strong></li><li>Delete old snapshots to free storage space</li><li>Archive or remove abandoned projects</li></ol><h3>Responding to Security Incidents</h3><ol><li>Immediately revoke compromised service keys</li><li>Review access logs for suspicious activity</li><li>Create snapshots of affected applications for forensics</li><li>Update project membership to remove unauthorized access</li><li>Generate new service keys with appropriate restrictions</li></ol><h2>Tips for Effective Administration</h2><ul><li><strong>Regular audits</strong>: Periodically review all areas to ensure proper configuration and security</li><li><strong>Documentation</strong>: Keep detailed notes about administrative decisions and changes</li><li><strong>Communication</strong>: Inform users before making changes that affect their applications</li><li><strong>Backup strategy</strong>: Maintain a consistent snapshot schedule for all critical applications</li><li><strong>Monitoring</strong>: Set up alerts for system issues and security events</li><li><strong>User support</strong>: Be available to help users with application issues and questions</li></ul>'
+    summary: ''
+    format: basic_html
+translations:
+  de:
+    status: '1'
+    uid:
+      target_id: '0'
+    title: 'Administrative Arbeitsabläufe'
+    created: '1765897302'
+    changed: '1770647193'
+    promote: '0'
+    sticky: '0'
+    default_langcode: '0'
+    revision_translation_affected: '1'
+    path:
+      alias: /docs/interface/admin/administrative-workflows
+      pid: '59'
+      langcode: de
+    menu_link: {  }
+    content_translation_source: en
+    content_translation_outdated: '0'
+    body:
+      value: '<h3>Einrichten eines neuen Forschungsteams</h3><ol><li>Erstellen Sie ein neues Projekt in <strong>SODa SCS Projekte</strong></li><li>Fügen Sie Teammitglieder zum Projekt hinzu</li><li>Stellen Sie notwendige Komponenten oder Stacks bereit</li><li>Verbinden Sie die Anwendungen mit dem Projekt</li><li>Generieren Sie bei Bedarf Service-Keys für Integrationen</li><li>Erstellen Sie erste Snapshots zur Sicherung</li></ol><h3>Durchführen von Systemwartung</h3><ol><li>Überprüfen Sie alle Komponenten in <strong>SODa SCS Komponenten</strong> auf Zustandsprobleme</li><li>Erstellen Sie Snapshots kritischer Anwendungen vor der Wartung</li><li>Räumen Sie ungenutzte Service-Keys in <strong>SODa SCS Service-Keys</strong> auf</li><li>Löschen Sie alte Snapshots, um Speicherplatz freizugeben</li><li>Archivieren oder entfernen Sie aufgegebene Projekte</li></ol><h3>Reaktion auf Sicherheitsvorfälle</h3><ol><li>Widerrufen Sie kompromittierte Service-Keys sofort</li><li>Überprüfen Sie Zugriffsprotokolle auf verdächtige Aktivitäten</li><li>Erstellen Sie Snapshots betroffener Anwendungen für forensische Zwecke</li><li>Aktualisieren Sie die Projektmitgliedschaft, um unbefugten Zugriff zu entfernen</li><li>Generieren Sie neue Service-Keys mit entsprechenden Einschränkungen</li></ol><h2>Tipps für effektive Administration</h2><ul><li><strong>Regelmäßige Audits</strong>: Überprüfen Sie alle Bereiche regelmäßig, um ordnungsgemäße Konfiguration und Sicherheit zu gewährleisten</li><li><strong>Dokumentation</strong>: Führen Sie detaillierte Aufzeichnungen über administrative Entscheidungen und Änderungen</li><li><strong>Kommunikation</strong>: Informieren Sie Benutzer, bevor Sie Änderungen vornehmen, die ihre Anwendungen betreffen</li><li><strong>Backup-Strategie</strong>: Pflegen Sie einen konsistenten Snapshot-Zeitplan für alle kritischen Anwendungen</li><li><strong>Überwachung</strong>: Richten Sie Warnmeldungen für Systemprobleme und Sicherheitsereignisse ein</li><li><strong>Benutzerunterstützung</strong>: Seien Sie verfügbar, um Benutzern bei Anwendungsproblemen und Fragen zu helfen</li></ul>'
+      summary: ''
+      format: basic_html

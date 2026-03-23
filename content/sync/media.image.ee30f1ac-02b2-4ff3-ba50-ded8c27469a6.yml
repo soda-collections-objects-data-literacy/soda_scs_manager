@@ -1,0 +1,40 @@
+uuid: ee30f1ac-02b2-4ff3-ba50-ded8c27469a6
+langcode: en
+type: media
+bundle: image
+id: '1'
+dependencies:
+  config:
+    - media.media_type.image
+    - field.field.media.image.field_media_image
+  entity:
+    - 'file:file:a8833dd3-d1a8-49b5-a4cd-0172a33c19be'
+fields:
+  mid: '1'
+  vid: '1'
+  revision_created: '1770647193'
+  revision_user: {  }
+  revision_log_message: {  }
+  status: '1'
+  uid:
+    target_id: '0'
+  name: wisski-stack.svg
+  thumbnail:
+    target_id: '1'
+    alt: 'Logo of the WissKI stack, with triplestore and database.'
+    title: null
+    width: null
+    height: null
+  created: '1759126131'
+  changed: '1770647193'
+  default_langcode: '1'
+  revision_default: '1'
+  revision_translation_affected: '1'
+  path:
+    langcode: en
+  field_media_image:
+    target_id: '1'
+    alt: 'Logo of the WissKI stack, with triplestore and database.'
+    title: ''
+    width: null
+    height: null

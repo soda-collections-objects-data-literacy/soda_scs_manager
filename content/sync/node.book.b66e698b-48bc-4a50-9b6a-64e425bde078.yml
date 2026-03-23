@@ -1,0 +1,61 @@
+uuid: b66e698b-48bc-4a50-9b6a-64e425bde078
+langcode: en
+type: node
+bundle: book
+id: '31'
+dependencies:
+  config:
+    - node.node_type.book
+    - field.field.node.book.body
+fields:
+  nid: '31'
+  vid: '32'
+  revision_timestamp: '1770647195'
+  revision_uid:
+    target_id: '0'
+  revision_log: {  }
+  status: '1'
+  uid:
+    target_id: '0'
+  title: Administration
+  created: '1759233282'
+  changed: '1770647193'
+  promote: '0'
+  sticky: '0'
+  default_langcode: '1'
+  revision_default: '1'
+  revision_translation_affected: '1'
+  path:
+    alias: /docs/interface/admin
+    pid: '45'
+    langcode: en
+  menu_link: {  }
+  content_translation_source: und
+  content_translation_outdated: '0'
+  body:
+    value: '<h2>Context</h2><p>The Administration area provides comprehensive management tools for all aspects of the SODa Semantic Co-Working Space. This section is designed for administrators and advanced users who need to oversee applications, projects, security, and system resources across the entire platform.</p><h2>Goals</h2><ul><li>Understand the different administration areas and their purposes</li><li>Learn how to manage applications, projects, and resources effectively</li><li>Gain knowledge about security management through service keys</li><li>Develop the ability to perform advanced administrative tasks</li></ul><h2>Prerequisites</h2><ul><li>Familiarity with the <a href="/app/dashboard">Dashboard</a> and <a href="/app/catalogue">Catalogue</a></li><li>Understanding of your organization''s infrastructure needs</li></ul><h2>Administration Overview</h2><p>The Administration section is divided into five main areas, each providing specialized management capabilities for different aspects of the SODa SCS Manager:</p><ul><li><a href="/node/32" data-entity-type="node" data-entity-uuid="f6ae27e2-0627-4014-a2f8-e05243553ef2" data-entity-substitution="canonical">Components</a></li><li><a href="/node/20" data-entity-type="node" data-entity-uuid="d520c9f7-8620-4b64-8bb9-3af5b158f98f" data-entity-substitution="canonical">Projects</a></li><li><a href="/node/33" data-entity-type="node" data-entity-uuid="280a41c7-2f3e-4eb2-9138-74a144d515bd" data-entity-substitution="canonical">Service keys</a></li><li><a href="/node/34" data-entity-type="node" data-entity-uuid="4f1dfad5-26ad-4fb7-9da5-82689597bc16" data-entity-substitution="canonical">Snapshots</a></li><li><a href="/node/35" data-entity-type="node" data-entity-uuid="1822ec6a-c731-44af-8678-b0b77e4f93a8" data-entity-substitution="canonical">Stacks</a></li></ul><h2>Additional Resources</h2><ul><li><a href="/app/dashboard">Dashboard Guide</a> - Understanding the user perspective</li><li><a href="/app/catalogue">Catalogue Guide</a> - Learn about available applications and stacks</li><li><a href="#">Security Best Practices</a> - Comprehensive security guidelines</li><li><a href="#">Backup and Recovery Guide</a> - Detailed snapshot management procedures</li><li><a href="#">User Management Reference</a> - Managing permissions and roles</li></ul>'
+    summary: ''
+    format: full_html
+translations:
+  de:
+    status: '1'
+    uid:
+      target_id: '0'
+    title: Administration
+    created: '1759610755'
+    changed: '1770647193'
+    promote: '0'
+    sticky: '0'
+    default_langcode: '0'
+    revision_translation_affected: '1'
+    path:
+      alias: /docs/interface/admin
+      pid: '49'
+      langcode: de
+    menu_link: {  }
+    content_translation_source: en
+    content_translation_outdated: '0'
+    body:
+      value: '<h2>Kontext</h2><p>Der Administrationsbereich bietet umfassende Verwaltungswerkzeuge für alle Aspekte des SODa Semantic Co-Working Space. Dieser Abschnitt ist für Administratoren und fortgeschrittene Benutzer konzipiert, die Anwendungen, Projekte, Sicherheit und Systemressourcen auf der gesamten Plattform überwachen müssen.</p><h2>Ziele</h2><ul><li>Verstehen Sie die verschiedenen Administrationsbereiche und ihre Zwecke</li><li>Lernen Sie, wie Sie Anwendungen, Projekte und Ressourcen effektiv verwalten</li><li>Gewinnen Sie Kenntnisse über Sicherheitsverwaltung durch Service-Keys</li><li>Entwickeln Sie die Fähigkeit, erweiterte administrative Aufgaben durchzuführen</li></ul><h2>Voraussetzungen</h2><ul><li>Vertrautheit mit dem <a href="/app/dashboard">Dashboard</a> und dem <a href="/app/catalogue">Katalog</a></li><li>Verständnis der Infrastrukturbedürfnisse Ihrer Organisation</li></ul><h2>Administrationsübersicht</h2><p>Der Administrationsbereich ist in fünf Hauptbereiche unterteilt, die jeweils spezialisierte Verwaltungsfunktionen für verschiedene Aspekte des SODa SCS Manager bieten:</p><ul><li><a href="/node/32" data-entity-type="node" data-entity-uuid="f6ae27e2-0627-4014-a2f8-e05243553ef2" data-entity-substitution="canonical">Komponenten</a></li><li><a href="/node/20" data-entity-type="node" data-entity-uuid="d520c9f7-8620-4b64-8bb9-3af5b158f98f" data-entity-substitution="canonical">Projekte</a></li><li><a href="/node/33" data-entity-type="node" data-entity-uuid="280a41c7-2f3e-4eb2-9138-74a144d515bd" data-entity-substitution="canonical">Service-Keys</a></li><li><a href="/node/34" data-entity-type="node" data-entity-uuid="4f1dfad5-26ad-4fb7-9da5-82689597bc16" data-entity-substitution="canonical">Snapshots</a></li><li><a href="/node/35" data-entity-type="node" data-entity-uuid="1822ec6a-c731-44af-8678-b0b77e4f93a8" data-entity-substitution="canonical">Stacks</a></li></ul><h2>Zusätzliche Ressourcen</h2><ul><li><a href="/app/dashboard">Dashboard-Leitfaden</a> - Die Benutzerperspektive verstehen</li><li><a href="/app/catalogue">Katalog-Leitfaden</a> - Erfahren Sie mehr über verfügbare Anwendungen und Stacks</li><li><a href="#">Sicherheits-Best-Practices</a> - Umfassende Sicherheitsrichtlinien</li><li><a href="#">Backup- und Wiederherstellungsleitfaden</a> - Detaillierte Snapshot-Verwaltungsverfahren</li><li><a href="#">Benutzerverwaltungsreferenz</a> - Verwaltung von Berechtigungen und Rollen</li></ul>'
+      summary: ''
+      format: full_html

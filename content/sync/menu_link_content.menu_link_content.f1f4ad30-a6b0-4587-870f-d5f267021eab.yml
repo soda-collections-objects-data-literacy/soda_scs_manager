@@ -1,0 +1,30 @@
+uuid: f1f4ad30-a6b0-4587-870f-d5f267021eab
+langcode: en
+type: menu_link_content
+bundle: menu_link_content
+id: '1'
+dependencies:
+  config:
+    - menu_link_content.menu_link_content_type.menu_link_content
+fields:
+  revision_id: '1'
+  revision_created: '1770647193'
+  revision_user: {  }
+  revision_log_message: {  }
+  enabled: '1'
+  title: 'Sign up '
+  description: {  }
+  menu_name: sign-up
+  link:
+    uri: 'internal:/user/register'
+    title: ''
+    options: {  }
+  external: '0'
+  rediscover: '1'
+  weight: '0'
+  expanded: '0'
+  parent: {  }
+  changed: '1770647193'
+  default_langcode: '1'
+  revision_default: '1'
+  revision_translation_affected: '1'

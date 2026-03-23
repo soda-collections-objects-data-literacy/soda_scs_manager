@@ -1,0 +1,61 @@
+uuid: 25124689-7328-4fee-a984-8012690d0628
+langcode: en
+type: node
+bundle: book
+id: '36'
+dependencies:
+  config:
+    - node.node_type.book
+    - field.field.node.book.body
+fields:
+  nid: '36'
+  vid: '37'
+  revision_timestamp: '1770647195'
+  revision_uid:
+    target_id: '0'
+  revision_log: {  }
+  status: '1'
+  uid:
+    target_id: '0'
+  title: Documentation
+  created: '1759403600'
+  changed: '1770647193'
+  promote: '0'
+  sticky: '0'
+  default_langcode: '1'
+  revision_default: '1'
+  revision_translation_affected: '1'
+  path:
+    alias: /docs/interface/documentation
+    pid: '50'
+    langcode: en
+  menu_link: {  }
+  content_translation_source: und
+  content_translation_outdated: '0'
+  body:
+    value: '<p>As you can see, you are already in on the documentation pages. Here you can find comprehensive help and guidance for using the SODa Semantic Co-Working Space. Browse the sections to learn about <a href="/docs/getting-started">getting started</a>, the <a href="/docs/interface">interface</a>, <a href="/docs/apps">applications</a>, <a href="/docs/projects">projects</a>, and more.If you need additional support, please contact your <a href="mailto:scs-manager@sammlungen.io">system administrator</a>.</p>'
+    summary: ''
+    format: basic_html
+translations:
+  de:
+    status: '1'
+    uid:
+      target_id: '0'
+    title: Dokumentation
+    created: '1765893734'
+    changed: '1770647193'
+    promote: '0'
+    sticky: '0'
+    default_langcode: '0'
+    revision_translation_affected: '1'
+    path:
+      alias: /docs/interface/dokumentation
+      pid: '51'
+      langcode: de
+    menu_link: {  }
+    content_translation_source: en
+    content_translation_outdated: '0'
+    body:
+      value: '<p>Wie Sie sehen, befinden Sie sich bereits auf den Seiten unserer Dokumentation. Hier finden Sie Hilfestellung und Hinweise zur Nutzung des SODa Semantic Co-Working Space. Durchsuchen Sie die verschiedenen Kapitel, um mehr über die <a href="/node/27" data-entity-type="node" data-entity-uuid="827f08af-7d09-40a8-bce5-1a9c36e03cf4" data-entity-substitution="canonical">ersten Schritte</a>, die <a href="/node/29" data-entity-type="node" data-entity-uuid="419acf14-58e3-4210-b710-04c298f88eb9" data-entity-substitution="canonical">Benutzeroberfläche</a>, <a href="/node/16" data-entity-type="node" data-entity-uuid="f5ec0346-0274-4099-8e3c-ae87b07d6e52" data-entity-substitution="canonical">verfügbare Anwendungen</a>, <a href="/node/20" data-entity-type="node" data-entity-uuid="d520c9f7-8620-4b64-8bb9-3af5b158f98f" data-entity-substitution="canonical">Projekte </a>und vieles mehr zu erfahren. Wenn Sie zusätzliche Unterstützung benötigen, wenden Sie sich bitte an Ihren <a href="mailto:scs-manager@sammlungen.io">Systemadministrator</a>.</p>'
+      summary: ''
+      format: basic_html

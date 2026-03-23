@@ -1,0 +1,61 @@
+uuid: 1822ec6a-c731-44af-8678-b0b77e4f93a8
+langcode: de
+type: node
+bundle: book
+id: '35'
+dependencies:
+  config:
+    - node.node_type.book
+    - field.field.node.book.body
+fields:
+  nid: '35'
+  vid: '41'
+  revision_timestamp: '1770647195'
+  revision_uid:
+    target_id: '0'
+  revision_log: {  }
+  status: '1'
+  uid:
+    target_id: '0'
+  title: Stacks
+  created: '1759406503'
+  changed: '1770647193'
+  promote: '0'
+  sticky: '0'
+  default_langcode: '1'
+  revision_default: '1'
+  revision_translation_affected: '1'
+  path:
+    alias: /docs/interface/admin/stacks
+    pid: '48'
+    langcode: de
+  menu_link: {  }
+  content_translation_source: und
+  content_translation_outdated: '0'
+  body:
+    value: '<h2>SODa SCS Stacks</h2><p>Stacks sind vorkonfigurierte Bündel von Komponenten, die zusammenarbeiten, um vollständige Forschungsumgebungen bereitzustellen. Der Stack-Verwaltungsbereich ermöglicht es Ihnen, diese integrierten Umgebungen auf der Plattform zu verwalten.</p><h3>Was Sie tun können</h3><ul><li>Alle bereitgestellten Stacks im System anzeigen</li><li>Stack-Konfigurationen und Komponentenverbindungen bearbeiten</li><li>Den Zustand aller Komponenten innerhalb eines Stacks überwachen</li><li>Stack-Mitgliedschaft und Zugriffsberechtigungen verwalten</li><li>Komponenten zu bestehenden Stacks hinzufügen oder entfernen</li><li>Ganze Stacks und ihre zugehörigen Komponenten löschen</li></ul><h3>Verwalten von Stacks</h3><p>So verwalten Sie Stacks:</p><ol><li>Navigieren Sie zu <strong>Administration → SODa SCS Stacks</strong></li><li>Zeigen Sie die Liste aller bereitgestellten Stacks an</li><li>Klicken Sie auf einen Stack, um seine enthaltenen Komponenten und Konfiguration zu sehen</li><li>Stack-Einstellungen bearbeiten oder Komponentenverbindungen ändern</li><li>Den Betriebsstatus aller Komponenten im Stack überwachen</li></ol><h3>Gängige Stack-Typen</h3><ul><li><strong>WissKI Stack</strong>: Vollständige Umgebung für Wissensrepräsentation mit Datenbank, Speicher und Webanwendung</li><li><strong>Benutzerdefinierte Stacks</strong>: Vom Benutzer erstellte Kombinationen von Komponenten, die auf spezifische Forschungsbedürfnisse zugeschnitten sind</li></ul>'
+    summary: ''
+    format: basic_html
+translations:
+  en:
+    status: '1'
+    uid:
+      target_id: '0'
+    title: Stacks
+    created: '1765897885'
+    changed: '1770647193'
+    promote: '0'
+    sticky: '0'
+    default_langcode: '0'
+    revision_translation_affected: '1'
+    path:
+      alias: /docs/interface/admin/stacks
+      pid: '56'
+      langcode: en
+    menu_link: {  }
+    content_translation_source: de
+    content_translation_outdated: '0'
+    body:
+      value: '<h2>SODa SCS Stacks</h2><p>Stacks are pre-configured bundles of Components that work together to provide complete research environments. The Stacks administration area allows you to manage these integrated environments across the platform.</p><h3>What You Can Do</h3><ul><li>View all deployed stacks in the system</li><li>Edit stack configurations and Component connections</li><li>Monitor the health of all Components within a stack</li><li>Manage stack membership and access permissions</li><li>Add or remove Components from existing stacks</li><li>Delete entire stacks and their associated Components</li></ul><h3>Managing Stacks</h3><p>To manage stacks:</p><ol><li>Navigate to <strong>Administration → SODa SCS Stacks</strong></li><li>View the list of all deployed stacks</li><li>Click on a stack to see its included Components and configuration</li><li>Edit stack settings or modify Component connections</li><li>Monitor the operational status of all Components in the stack</li></ol><h3>Common Stack Types</h3><ul><li><strong>WissKI Stack</strong>: Complete knowledge representation environment with database, storage, and web application</li><li><strong>Custom Stacks</strong>: User-created combinations of Components tailored to specific research needs</li></ul>'
+      summary: ''
+      format: basic_html

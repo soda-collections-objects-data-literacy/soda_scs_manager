@@ -1,0 +1,63 @@
+uuid: 9ae0897a-55d7-43b4-8c00-3ac548b58a83
+langcode: en
+type: node
+bundle: book
+id: '40'
+dependencies:
+  config:
+    - node.node_type.book
+    - field.field.node.book.body
+  entity:
+    - 'user:user:ffc4d493-e492-4cde-b9e9-a52ed02d84c9'
+fields:
+  nid: '40'
+  vid: '54'
+  revision_timestamp: '1773050306'
+  revision_uid:
+    target_id: '5'
+  revision_log: {  }
+  status: '1'
+  uid:
+    target_id: '0'
+  title: Dashboard
+  created: '1759232731'
+  changed: '1773050269'
+  promote: '0'
+  sticky: '0'
+  default_langcode: '1'
+  revision_default: '1'
+  revision_translation_affected: {  }
+  path:
+    alias: /docs/dashboard
+    pid: '63'
+    langcode: en
+  menu_link: {  }
+  content_translation_source: und
+  content_translation_outdated: '0'
+  body:
+    value: '<h2>Context</h2><p>The Dashboard is your central hub for managing all deployed applications in the SODa Semantic Co-Working Space. It provides a comprehensive overview of your research environments, databases, storage, and applications, organized by team members for easy collaboration and monitoring.</p><h2>Goals</h2><ul><li data-list-item-id="e223ca4ee916a25911b1d396b86bca105">Understand how to navigate and use the Dashboard effectively</li><li data-list-item-id="e1da74debd8fc81f91376250aa7f569ce">Learn how to monitor and manage your deployed applications</li><li data-list-item-id="ec8a8226e003257d17fbb4c39d71fe010">Develop the ability to access and configure running services</li></ul><h2>Prerequisites</h2><ul><li data-list-item-id="e13ebe6ecfff34ac88cfef68ad94a95ed">An active SODa SCS Manager account</li></ul><h2>Understanding the Dashboard</h2><h3>Dashboard Layout</h3><p>The Dashboard displays all applications you have access to by displaying cards for individual applications. Each card provides essential information at a glance:</p><ul><li data-list-item-id="eb9e9c2f93a4daee33b6830e4d7dcf25c"><strong>Application Name</strong>: The name you assigned during deployment</li><li data-list-item-id="e2be393420b5266431ea59317d934ae60"><strong>Application Type</strong>: Research Environment, Database, Storage, or Single Application</li><li data-list-item-id="e6a46a7bb9a994c64a2ad2c828861d1d1"><strong>Description</strong>: Your notes about the application''s purpose</li><li data-list-item-id="e1cd04250a0ca03efe20d2b6e35cd26a5"><strong>Tags</strong>: Category tags for filtering and organization</li></ul><h3>Filtering Applications</h3><p>Use the tag filters at the top of the Dashboard to quickly find specific types of applications. Click on tags to filter by the application type or purpose.</p><h3>Application cards</h3><p>At the top left of any application card you can see the <strong>health status</strong> of the application displayed.</p><p>Clicking on an application card will <strong>open the Application</strong>.</p><p>The looking glass at the top of the card can take you to the <a href="/node/41"><strong>detail view</strong></a> of the application. From there you can:</p><ul><li data-list-item-id="e8386392184bc92cca36a71b498a4acb6">View complete configuration details</li><li data-list-item-id="e926ffbf5d12b0c7ac003b55637be3a77">Access connection information (URLs, credentials, endpoints)</li><li data-list-item-id="e1f0934cde0ae62b52e22c1dde3567281">Monitor health status and performance metrics</li></ul>'
+    summary: ''
+    format: basic_html
+translations:
+  de:
+    status: '1'
+    uid:
+      target_id: '0'
+    title: Dashboard
+    created: '1759610591'
+    changed: '1773050306'
+    promote: '0'
+    sticky: '0'
+    default_langcode: '0'
+    revision_translation_affected: '1'
+    path:
+      alias: /docs/dashboard
+      pid: '65'
+      langcode: de
+    menu_link: {  }
+    content_translation_source: en
+    content_translation_outdated: '0'
+    body:
+      value: '<h2>Kontext</h2><p>Das Dashboard ist Ihre zentrale Übersicht zur Verwaltung aller bereitgestellten Anwendungen im SODa Semantic Co-Working Space. Es bietet einen umfassenden Überblick über Ihre Forschungsumgebungen, Datenbanken, Speicher und Anwendungen und organisiert diese nach Teammitgliedern, um Zusammenarbeit und Monitoring zu erleichtern.</p><h2>Ziele</h2><ul><li data-list-item-id="e223ca4ee916a25911b1d396b86bca105">Verstehen, wie man das Dashboard effektiv navigiert und nutzt</li><li data-list-item-id="e1da74debd8fc81f91376250aa7f569ce">Lernen, wie bereitgestellte Anwendungen überwacht und verwaltet werden</li><li data-list-item-id="ec8a8226e003257d17fbb4c39d71fe010">Die Fähigkeit entwickeln, auf laufende Dienste zuzugreifen und diese zu konfigurieren</li></ul><h2>Voraussetzungen</h2><ul><li data-list-item-id="e13ebe6ecfff34ac88cfef68ad94a95ed">Ein aktives SODa SCS Manager-Konto</li></ul><h2>Das Dashboard verstehen</h2><h3>Aufbau des Dashboards</h3><p>Das Dashboard zeigt alle Anwendungen an, auf die Sie Zugriff haben. Diese werden als Karten für einzelne Anwendungen dargestellt. Jede Karte zeigt auf einen Blick wichtige Informationen:</p><ul><li data-list-item-id="eb9e9c2f93a4daee33b6830e4d7dcf25c"><strong>Name der Anwendung</strong>: Der Name, den Sie bei der Bereitstellung vergeben haben</li><li data-list-item-id="e2be393420b5266431ea59317d934ae60"><strong>Anwendungstyp</strong>: Forschungsumgebung, Datenbank, Speicher oder Einzelanwendung</li><li data-list-item-id="e6a46a7bb9a994c64a2ad2c828861d1d1"><strong>Beschreibung</strong>: Ihre Notizen zum Zweck der Anwendung</li><li data-list-item-id="e1cd04250a0ca03efe20d2b6e35cd26a5"><strong>Tags</strong>: Kategorien zur Filterung und Organisation</li></ul><h3>Anwendungen filtern</h3><p>Verwenden Sie die Tag-Filter am oberen Rand des Dashboards, um schnell bestimmte Anwendungstypen zu finden. Klicken Sie auf Tags, um nach Anwendungstyp oder Zweck zu filtern.</p><h3>Anwendungskarten</h3><p>Oben links auf jeder Anwendungskarte wird der <strong>Health Status</strong> der Anwendung angezeigt.</p><p>Wenn Sie auf eine Anwendungskarte klicken, wird die <strong>Anwendung geöffnet</strong>.</p><p>Das Lupensymbol oben auf der Karte führt Sie zur <a href="/node/41"><strong>Detailansicht</strong></a> der Anwendung. Dort können Sie:</p><ul><li data-list-item-id="e8386392184bc92cca36a71b498a4acb6">vollständige Konfigurationsdetails anzeigen</li><li data-list-item-id="e926ffbf5d12b0c7ac003b55637be3a77">Verbindungsinformationen abrufen (URLs, Zugangsdaten, Endpunkte)</li><li data-list-item-id="e1f0934cde0ae62b52e22c1dde3567281">Status und Leistungsmetriken überwachen</li></ul>'
+      summary: ''
+      format: basic_html

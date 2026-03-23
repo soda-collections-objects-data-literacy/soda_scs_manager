@@ -1,0 +1,55 @@
+uuid: 98582e36-0679-4f71-be43-01f63ac70eec
+langcode: en
+type: node
+bundle: book
+id: '24'
+dependencies:
+  config:
+    - node.node_type.book
+    - field.field.node.book.body
+fields:
+  nid: '24'
+  vid: '24'
+  revision_timestamp: '1770647195'
+  revision_uid:
+    target_id: '0'
+  revision_log: {  }
+  status: '0'
+  uid:
+    target_id: '0'
+  title: 'Available WissKI Flavours'
+  created: '1761127838'
+  changed: '1770647193'
+  promote: '0'
+  sticky: '0'
+  default_langcode: '1'
+  revision_default: '1'
+  revision_translation_affected: '1'
+  path:
+    alias: /documentation/available-applications/wisski-environment/available-wisski-flavours
+    pid: '31'
+    langcode: en
+  menu_link: {  }
+  content_translation_source: und
+  content_translation_outdated: '0'
+  body: {  }
+translations:
+  de:
+    status: '0'
+    uid:
+      target_id: '0'
+    title: 'Verfügbare WissKI Flavours'
+    created: '1765890675'
+    changed: '1770647193'
+    promote: '0'
+    sticky: '0'
+    default_langcode: '0'
+    revision_translation_affected: '1'
+    path:
+      alias: /documentation/available-applications/wisski-environment/verfuegbare-wisski-flavours
+      pid: '32'
+      langcode: de
+    menu_link: {  }
+    content_translation_source: en
+    content_translation_outdated: '0'
+    body: {  }
