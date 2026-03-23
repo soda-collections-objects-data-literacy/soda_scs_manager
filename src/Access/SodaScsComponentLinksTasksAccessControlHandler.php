@@ -85,7 +85,15 @@ final class SodaScsComponentLinksTasksAccessControlHandler {
    *   TRUE if access is allowed, FALSE otherwise.
    */
   public static function accessServiceLink(SodaScsComponentInterface $soda_scs_component): AccessResultInterface {
-    return AccessResult::allowed()->addCacheableDependency($soda_scs_component);
+    $bundle = $soda_scs_component->bundle();
+
+    // Hide the Show tab for triplestore components.
+    $hiddenBundles = ['soda_scs_triplestore_component'];
+    $result = in_array($bundle, $hiddenBundles, TRUE)
+      ? AccessResult::forbidden()
+      : AccessResult::allowed();
+
+    return $result->addCacheableDependency($soda_scs_component);
   }
 
   /**
