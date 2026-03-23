@@ -26,7 +26,7 @@ fields:
   revision_default: '1'
   revision_translation_affected: '1'
   path:
-    alias: /docs/interface/admin/stacks
+    alias: /soda-scs-manager/documentation/interface/admin/stacks
     pid: '48'
     langcode: de
   menu_link: {  }
@@ -49,7 +49,7 @@ translations:
     default_langcode: '0'
     revision_translation_affected: '1'
     path:
-      alias: /docs/interface/admin/stacks
+      alias: /soda-scs-manager/documentation/interface/admin/stacks
       pid: '56'
       langcode: en
     menu_link: {  }

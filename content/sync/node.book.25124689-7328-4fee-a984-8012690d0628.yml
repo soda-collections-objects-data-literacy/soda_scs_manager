@@ -26,14 +26,14 @@ fields:
   revision_default: '1'
   revision_translation_affected: '1'
   path:
-    alias: /docs/interface/documentation
+    alias: /soda-scs-manager/documentation/interface/documentation
     pid: '50'
     langcode: en
   menu_link: {  }
   content_translation_source: und
   content_translation_outdated: '0'
   body:
-    value: '<p>As you can see, you are already in on the documentation pages. Here you can find comprehensive help and guidance for using the SODa Semantic Co-Working Space. Browse the sections to learn about <a href="/docs/getting-started">getting started</a>, the <a href="/docs/interface">interface</a>, <a href="/docs/apps">applications</a>, <a href="/docs/projects">projects</a>, and more.If you need additional support, please contact your <a href="mailto:scs-manager@sammlungen.io">system administrator</a>.</p>'
+    value: '<p>As you can see, you are already in on the documentation pages. Here you can find comprehensive help and guidance for using the SODa Semantic Co-Working Space. Browse the sections to learn about <a href="/soda-scs-manager/documentation/getting-started">getting started</a>, the <a href="/soda-scs-manager/documentation/interface">interface</a>, <a href="/soda-scs-manager/documentation/apps">applications</a>, <a href="/soda-scs-manager/documentation/projects">projects</a>, and more.If you need additional support, please contact your <a href="mailto:scs-manager@sammlungen.io">system administrator</a>.</p>'
     summary: ''
     format: basic_html
 translations:
@@ -49,7 +49,7 @@ translations:
     default_langcode: '0'
     revision_translation_affected: '1'
     path:
-      alias: /docs/interface/dokumentation
+      alias: /soda-scs-manager/documentation/interface/dokumentation
       pid: '51'
       langcode: de
     menu_link: {  }

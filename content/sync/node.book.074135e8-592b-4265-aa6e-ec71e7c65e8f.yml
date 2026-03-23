@@ -26,7 +26,7 @@ fields:
   revision_default: '1'
   revision_translation_affected: '1'
   path:
-    alias: /your-dashboard
+    alias: /soda-scs-manager/documentation/your-dashboard
     pid: '6'
     langcode: en
   menu_link: {  }

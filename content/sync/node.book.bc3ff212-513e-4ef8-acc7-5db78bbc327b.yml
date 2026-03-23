@@ -26,7 +26,7 @@ fields:
   revision_default: '1'
   revision_translation_affected: '1'
   path:
-    alias: /docs/interface/admin/administrative-workflows
+    alias: /soda-scs-manager/documentation/interface/admin/administrative-workflows
     pid: '58'
     langcode: en
   menu_link: {  }
@@ -49,7 +49,7 @@ translations:
     default_langcode: '0'
     revision_translation_affected: '1'
     path:
-      alias: /docs/interface/admin/administrative-workflows
+      alias: /soda-scs-manager/documentation/interface/admin/administrative-workflows
       pid: '59'
       langcode: de
     menu_link: {  }

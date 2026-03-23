@@ -26,7 +26,7 @@ fields:
   revision_default: '1'
   revision_translation_affected: '1'
   path:
-    alias: /docs/getting-started/1st-app
+    alias: /soda-scs-manager/documentation/getting-started/1st-app
     pid: '36'
     langcode: en
   menu_link: {  }
@@ -49,7 +49,7 @@ translations:
     default_langcode: '0'
     revision_translation_affected: '1'
     path:
-      alias: /docs/getting-started/1st-app
+      alias: /soda-scs-manager/documentation/getting-started/1st-app
       pid: '38'
       langcode: de
     menu_link: {  }

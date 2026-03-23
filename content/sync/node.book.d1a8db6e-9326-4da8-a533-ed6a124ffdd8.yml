@@ -26,7 +26,7 @@ fields:
   revision_default: '1'
   revision_translation_affected: '1'
   path:
-    alias: /managing-your-applications
+    alias: /soda-scs-manager/documentation/managing-your-applications
     pid: '4'
     langcode: en
   menu_link: {  }

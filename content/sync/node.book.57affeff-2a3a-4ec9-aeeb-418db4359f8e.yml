@@ -26,7 +26,7 @@ fields:
   revision_default: '1'
   revision_translation_affected: '1'
   path:
-    alias: /docs/template
+    alias: /soda-scs-manager/documentation/template
     pid: '57'
     langcode: en
   menu_link: {  }

@@ -26,7 +26,7 @@ fields:
   revision_default: '1'
   revision_translation_affected: '1'
   path:
-    alias: /docs/snapshots
+    alias: /soda-scs-manager/documentation/snapshots
     pid: '10'
     langcode: en
   menu_link: {  }

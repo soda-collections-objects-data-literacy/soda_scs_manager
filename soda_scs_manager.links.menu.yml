@@ -106,31 +106,22 @@ soda_scs_manager.snapshot_debug:
   weight: 0
 
 # Structure pages
-# Menu items for the main navigation
+# Main navigation: authenticated users see the parent + children; anonymous users
+# only see soda_scs_manager.anonymous_documentation (top-level). Preprocess removes
+# that duplicate link when logged in — see soda_scs_manager_preprocess_menu().
 soda_scs_manager.main_navigation:
   title: 'SODa SCS Manager'
   description: 'Overview of main tasks'
   menu_name: main
-  route_name: soda_scs_manager.menu.default
+  route_name: soda_scs_manager.start_page
   weight: 10
-  requirements:
-    _access: 'TRUE'
 
 soda_scs_manager.menu.dashboard:
   title: 'Dashboard'
   description: 'Your applications'
   parent: soda_scs_manager.main_navigation
   route_name: soda_scs_manager.dashboard
-  weight: 20
-  requirements:
-    _permission: 'soda scs manager user'
-
-soda_scs_manager.menu.notifications:
-  title: 'Notifications'
-  description: 'Project invitations'
-  menu_name: main
-  route_name: soda_scs_manager.notifications
-  weight: 15
+  weight: 10
   requirements:
     _permission: 'soda scs manager user'
 
@@ -138,17 +129,15 @@ soda_scs_manager.menu.documentation:
   title: 'Documentation'
   description: 'Documentation'
   parent: soda_scs_manager.main_navigation
-  url: 'internal:/docs'
-  weight: 30
-  requirements:
-    _access: 'TRUE'
+  url: 'internal:/soda-scs-manager/documentation'
+  weight: 20
 
 soda_scs_manager.menu.administration:
   title: 'Administration'
   description: 'Administration'
   parent: soda_scs_manager.main_navigation
   route_name: soda_scs_manager.administration
-  weight: 40
+  weight: 30
   requirements:
     _permission: 'soda scs manager user'
 
@@ -157,9 +146,27 @@ soda_scs_manager.menu.issue_report:
   description: 'Report an issue'
   parent: soda_scs_manager.main_navigation
   route_name: soda_scs_manager.issue_report
+  weight: 40
+  requirements:
+    _permission: 'soda scs manager user'
+
+soda_scs_manager.menu.notifications:
+  title: 'Notifications'
+  description: 'Project invitations'
+  parent: soda_scs_manager.main_navigation
+  route_name: soda_scs_manager.notifications
   weight: 50
   requirements:
     _permission: 'soda scs manager user'
+
+# Anonymous (and unauthenticated) visitors: Documentation only. Hidden for logged-in
+# users in preprocess so they use the item under SODa SCS Manager.
+soda_scs_manager.anonymous_documentation:
+  title: 'Documentation'
+  description: 'SODa SCS documentation'
+  menu_name: main
+  url: 'internal:/soda-scs-manager/documentation'
+  weight: 10
 
 soda_scs_manager.user_registration_approvals:
   title: 'Keycloak User Registrations'

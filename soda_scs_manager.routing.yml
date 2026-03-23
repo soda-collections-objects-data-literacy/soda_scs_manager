@@ -473,16 +473,6 @@ soda_scs_manager.tour:
   requirements:
     _permission: 'soda scs manager user'
 
-## Menu items for the main navigation
-
-soda_scs_manager.menu.default:
-  path: '/soda-scs-manager'
-  defaults:
-    _title: 'Start page'
-    _controller: '\Drupal\soda_scs_manager\Controller\SodaScsManagerController::startPage'
-  requirements:
-    _permission: 'soda scs manager user'
-
 # Keycloak User Registration
 
 soda_scs_manager.user_registration:

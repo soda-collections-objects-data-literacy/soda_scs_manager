@@ -26,7 +26,7 @@ fields:
   revision_default: '1'
   revision_translation_affected: '1'
   path:
-    alias: /creating-account
+    alias: /soda-scs-manager/documentation/creating-account
     pid: '2'
     langcode: en
   menu_link: {  }
