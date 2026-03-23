@@ -2960,8 +2960,8 @@ msgid "Checking for updates, please wait."
 msgstr "Updates werden geprüft, bitte warten …"
 
 #: src/Form/SodaScsComponentCreateForm.php;src/Form/SodaScsStackCreateForm.php
-msgid "Creating your WissKI environment can take up to 5 minutes. Please do not close this window."
-msgstr "Die Einrichtung Ihrer WissKI-Umgebung kann bis zu 5 Minuten dauern. Bitte schließen Sie dieses Fenster nicht."
+msgid "Creating your WissKI environment. Please do not close this window."
+msgstr "Die Einrichtung Ihrer WissKI-Umgebung beginnt. Bitte schließen Sie dieses Fenster nicht."
 
 #: src/Form/SodaScsComponentCreateForm.php;src/Form/SodaScsStackCreateForm.php
 msgid "Please note: After creating the WissKI Environment, it can take up to 5 minutes to setup everything.<br><br>Please check the health status to monitor the startup progress."

@@ -64,7 +64,7 @@ administration:
 
 # Give own css.
 throbberOverlay:
-  version: 1.x
+  version: 1.1
   js:
     js/throbberOverlay.js: {}
   dependencies:

@@ -100,6 +100,24 @@
   }
 
   /**
+   * Whether the form is a component or stack create form.
+   *
+   * Drupal HTML #id uses Html::getId() (underscores → hyphens). Prefer
+   * data-drupal-selector, which matches getId($form_id) and is stable for JS.
+   *
+   * @param {jQuery} $form
+   *
+   * @return {boolean}
+   */
+  function isSodaScsCreateForm($form) {
+    const selector = $form.attr('data-drupal-selector') || '';
+    return (
+      selector === 'soda-scs-manager-component-create-form' ||
+      selector === 'soda-scs-manager-stack-create-form'
+    );
+  }
+
+  /**
    * Adds a throbber overlay to the page when forms are submitted.
    */
   Drupal.behaviors.sodaScsThrobberOverlay = {
@@ -122,16 +140,13 @@
         $('.soda-scs-manager__throbber-overlay__message').text(defaultThrobberMsg);
       }
 
-      // Handle all SODA SCS forms (form IDs use underscores, e.g. soda_scs_manager_component_create_form).
+      // Handle all SODA SCS forms (HTML id is hyphenated, e.g. soda-scs-manager-component-create-form).
       once('throbber-overlay-form', 'form[id^="soda_scs"], form[id^="soda-scs"]', context).forEach(function(form) {
         const $form = $(form);
-        const formId = $form.attr('id');
 
         // Handle form submission event.
         $form.on('submit', function(e) {
-          // Check if this is a create form (component or stack).
-          const isCreateForm = formId === 'soda_scs_manager_component_create_form' ||
-                               formId === 'soda_scs_manager_stack_create_form';
+          const isCreateForm = isSodaScsCreateForm($form);
 
           if (isCreateForm) {
             const infoMessage = (settings.sodaScsManager && settings.sodaScsManager.throbberInfo) || '';
@@ -197,16 +212,13 @@
       once('throbber-overlay-submit', '.soda-scs-component--component--form-submit, .soda-scs-stack--stack--form-submit', context).forEach(function(button) {
         $(button).on('click', function(e) {
           const $form = $(this).closest('form');
-          const formId = $form.attr('id');
 
           // Don't show overlay if the form has validation errors.
           if (!$form[0].checkValidity()) {
             return;
           }
 
-          // Check if this is a create form (component or stack).
-          const isCreateForm = formId === 'soda_scs_manager_component_create_form' ||
-                               formId === 'soda_scs_manager_stack_create_form';
+          const isCreateForm = isSodaScsCreateForm($form);
 
           if (isCreateForm) {
             const infoMessage = (settings.sodaScsManager && settings.sodaScsManager.throbberInfo) || '';
