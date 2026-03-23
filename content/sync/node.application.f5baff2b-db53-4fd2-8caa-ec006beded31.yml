@@ -12,14 +12,13 @@ dependencies:
     - field.field.node.application.field__app__type
     - field.field.node.application.field__use_button
   entity:
-    - 'user:user:ffc4d493-e492-4cde-b9e9-a52ed02d84c9'
     - 'media:image:e94b5ec4-4002-4cab-8d74-5a853044c926'
 fields:
   nid: '25'
-  vid: '58'
+  vid: '107'
   revision_timestamp: '1773050597'
   revision_uid:
-    target_id: '5'
+    target_id: '0'
   revision_log: {  }
   status: '1'
   uid:

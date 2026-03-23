@@ -7,14 +7,12 @@ dependencies:
   config:
     - node.node_type.book
     - field.field.node.book.body
-  entity:
-    - 'user:user:ffc4d493-e492-4cde-b9e9-a52ed02d84c9'
 fields:
   nid: '41'
-  vid: '65'
+  vid: '95'
   revision_timestamp: '1773657056'
   revision_uid:
-    target_id: '5'
+    target_id: '0'
   revision_log: {  }
   status: '1'
   uid:
@@ -42,7 +40,7 @@ translations:
   de:
     status: '1'
     uid:
-      target_id: '5'
+      target_id: '0'
     title: 'Ihre Applikationen'
     created: '1773050484'
     changed: '1773657022'
@@ -51,8 +49,8 @@ translations:
     default_langcode: '0'
     revision_translation_affected: {  }
     path:
-      alias: /soda-scs-manager/documentation/your-applications
-      pid: '66'
+      alias: /docs/your-applications
+      pid: '73'
       langcode: de
     menu_link: {  }
     content_translation_source: en

@@ -9,7 +9,7 @@ dependencies:
     - field.field.node.book.body
 fields:
   nid: '36'
-  vid: '37'
+  vid: '101'
   revision_timestamp: '1770647195'
   revision_uid:
     target_id: '0'

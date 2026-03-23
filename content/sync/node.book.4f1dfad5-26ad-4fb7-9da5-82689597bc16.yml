@@ -9,11 +9,11 @@ dependencies:
     - field.field.node.book.body
 fields:
   nid: '34'
-  vid: '40'
+  vid: '81'
   revision_timestamp: '1770647195'
   revision_uid:
     target_id: '0'
-  revision_log: {  }
+  revision_log: 'Kopie der Revision vom <em class="placeholder">Mo. 19 Jan 2026 - 17:00</em>.'
   status: '1'
   uid:
     target_id: '0'

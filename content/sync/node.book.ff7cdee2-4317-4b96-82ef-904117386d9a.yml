@@ -7,14 +7,12 @@ dependencies:
   config:
     - node.node_type.book
     - field.field.node.book.body
-  entity:
-    - 'user:user:ffc4d493-e492-4cde-b9e9-a52ed02d84c9'
 fields:
   nid: '30'
-  vid: '55'
+  vid: '31'
   revision_timestamp: '1773050410'
   revision_uid:
-    target_id: '5'
+    target_id: '0'
   revision_log: {  }
   status: '0'
   uid:
