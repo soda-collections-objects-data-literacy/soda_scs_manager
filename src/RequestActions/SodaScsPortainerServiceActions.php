@@ -668,8 +668,11 @@ class SodaScsPortainerServiceActions implements SodaScsServiceRequestInterface {
         break;
 
       case 'instance':
-        // Use public URL (without raw.) - /health is exposed on the main Drupal site.
-        $route = str_replace('{instanceId}', $requestParams['machineName'], $wisskiInstanceSettings['baseUrl']) . $wisskiInstanceSettings['healthCheckUrl'];
+        // Use the raw backend host (raw.{host}) so the probe hits Drupal, not only
+        // Varnish. Varnish can accept connections before the WissKI backend is ready.
+        $instanceBase = str_replace('{instanceId}', $requestParams['machineName'], $wisskiInstanceSettings['baseUrl']);
+        $instanceBase = $this->wisskiRawBackendBaseUrl($instanceBase);
+        $route = rtrim($instanceBase, '/') . $wisskiInstanceSettings['healthCheckUrl'];
         break;
 
       default:
@@ -687,6 +690,51 @@ class SodaScsPortainerServiceActions implements SodaScsServiceRequestInterface {
         'X-API-Key' => $portainerServiceSettings['authenticationToken'],
       ],
     ];
+  }
+
+  /**
+   * Rewrites the WissKI instance base URL to the raw backend hostname.
+   *
+   * Traefik (or equivalent) should route raw.{instance} to Drupal while the
+   * public hostname may sit behind Varnish. Health checks must verify the app,
+   * not merely the cache edge.
+   */
+  private function wisskiRawBackendBaseUrl(string $baseUrl): string {
+    $parts = parse_url($baseUrl);
+    if ($parts === FALSE || empty($parts['host']) || empty($parts['scheme'])) {
+      return $baseUrl;
+    }
+    if (str_starts_with($parts['host'], 'raw.')) {
+      return $baseUrl;
+    }
+    $parts['host'] = 'raw.' . $parts['host'];
+    return $this->rebuildHttpUrlFromParsed($parts);
+  }
+
+  /**
+   * Rebuilds an HTTP(S) URL from parse_url() parts.
+   */
+  private function rebuildHttpUrlFromParsed(array $parts): string {
+    $url = $parts['scheme'] . '://';
+    if (!empty($parts['user'])) {
+      $url .= rawurlencode($parts['user']);
+      if (isset($parts['pass'])) {
+        $url .= ':' . rawurlencode($parts['pass']);
+      }
+      $url .= '@';
+    }
+    $url .= $parts['host'];
+    if (!empty($parts['port'])) {
+      $url .= ':' . $parts['port'];
+    }
+    $url .= $parts['path'] ?? '';
+    if (!empty($parts['query'])) {
+      $url .= '?' . $parts['query'];
+    }
+    if (!empty($parts['fragment'])) {
+      $url .= '#' . $parts['fragment'];
+    }
+    return $url;
   }
 
 }

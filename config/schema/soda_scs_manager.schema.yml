@@ -545,7 +545,7 @@ soda_scs_manager.settings:
                     url:
                       type: string
                       label: 'Health check route'
-                      description: 'The health check route, like "/health".'
+                      description: 'The health check path, like "/health". Requests use the raw backend host (raw.{instance host}) so Varnish does not satisfy the check before Drupal is ready.'
             versions:
               type: sequence
               label: 'WissKI component versions'

@@ -1124,7 +1124,7 @@ class SodaScsSettingsForm extends ConfigFormBase {
       '#type' => 'textfield',
       '#title' => $this->t('Health Check route'),
       '#default_value' => $this->config('soda_scs_manager.settings')->get('wisski')['instances']['misc']['healthCheck']['url'] ?? '',
-      '#description' => $this->t('The Health Check route, like "/health".'),
+      '#description' => $this->t('Path only, e.g. "/health". Health checks use the raw subdomain (raw. plus the instance hostname) so Drupal is probed, not only Varnish.'),
     ];
 
     $form['wisski']['instances']['versions'] = [
