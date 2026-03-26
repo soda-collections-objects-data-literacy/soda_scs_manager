@@ -315,6 +315,23 @@ class SodaScsWisskiComponentActions implements SodaScsComponentActionsInterface 
   }
 
   /**
+   * Docker volume name for WissKI Drupal files (/opt/drupal in the stack).
+   *
+   * The wisski-base-stack compose file names this volume
+   * "${SERVICE_NAME}--drupal-root" (double hyphen before drupal-root). The
+   * wrong "_drupal-root" suffix makes Docker use a separate empty volume.
+   *
+   * @param string $machineName
+   *   Component machine name (same as Portainer SERVICE_NAME / stack name).
+   *
+   * @return string
+   *   The named volume as created by Compose (e.g. wisski-foo--drupal-root).
+   */
+  private function wisskiDrupalFilesVolumeName(string $machineName): string {
+    return $machineName . '--drupal-root';
+  }
+
+  /**
    * Create WissKI component.
    *
    * This function handles the creation of a WissKI component by:
@@ -880,15 +897,15 @@ class SodaScsWisskiComponentActions implements SodaScsComponentActionsInterface 
         'name' => $snapshotContainerName,
         'volumes' => NULL,
         'image' => 'alpine:latest',
-        'user' => SodaScsSnapshotHelpers::snapshotDockerRunUser(),
+        'user' => SodaScsSnapshotHelpers::SNAPSHOT_VOLUME_ARCHIVE_DOCKER_USER,
         'cmd' => [
           'sh',
           '-c',
-          'tar czf /backup/' . $snapshotPaths['tarFileName'] . ' -C /source . && cd /backup && sha256sum ' . $snapshotPaths['tarFileName'] . ' > ' . $snapshotPaths['sha256FileName'],
+          'tar czf /backup/' . $snapshotPaths['tarFileName'] . ' -C /source . && cd /backup && sha256sum ' . $snapshotPaths['tarFileName'] . ' > ' . $snapshotPaths['sha256FileName'] . ' && chown ' . SodaScsSnapshotHelpers::SNAPSHOT_FILE_OWNER_UID . ':' . SodaScsSnapshotHelpers::SNAPSHOT_FILE_OWNER_GID . ' /backup/' . $snapshotPaths['tarFileName'] . ' /backup/' . $snapshotPaths['sha256FileName'],
         ],
         'hostConfig' => [
           'Binds' => [
-            $component->get('machineName')->value . '_drupal-root:/source',
+            $this->wisskiDrupalFilesVolumeName($component->get('machineName')->value) . ':/source',
             $hostBackupPath . ':/backup',
           ],
           'AutoRemove' => FALSE,
@@ -1478,7 +1495,7 @@ class SodaScsWisskiComponentActions implements SodaScsComponentActionsInterface 
       // then restore from snapshot into volume.
       //
       // Collect information about the snapshot.
-      $volumeName = $machineName . '_drupal-root';
+      $volumeName = $this->wisskiDrupalFilesVolumeName($machineName);
       /** @var \Drupal\file\Entity\File|null $snapshotFile */
       $snapshotFile = $snapshot->getFile();
       if (!$snapshotFile) {
@@ -1506,7 +1523,7 @@ class SodaScsWisskiComponentActions implements SodaScsComponentActionsInterface 
       $rollbackContainerCreateRequestParams = [
         'name' => $rollbackContainerName,
         'image' => 'alpine:latest',
-        'user' => '0:0',
+        'user' => SodaScsSnapshotHelpers::SNAPSHOT_VOLUME_ARCHIVE_DOCKER_USER,
         'cmd' => ['sh', '-c', 'tar czf /backup/' . basename($rollbackTarPath) . ' -C /source .'],
         'hostConfig' => [
           'Binds' => [
@@ -1587,7 +1604,7 @@ class SodaScsWisskiComponentActions implements SodaScsComponentActionsInterface 
       $restoreContainerCreateRequestParams = [
         'name' => $restoreContainerName,
         'image' => 'alpine:latest',
-        'user' => '0:0',
+        'user' => SodaScsSnapshotHelpers::SNAPSHOT_VOLUME_ARCHIVE_DOCKER_USER,
         'cmd' => $restoreCmd,
         'hostConfig' => [
           'Binds' => [

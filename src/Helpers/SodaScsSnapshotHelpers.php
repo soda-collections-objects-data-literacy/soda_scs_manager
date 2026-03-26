@@ -55,6 +55,15 @@ class SodaScsSnapshotHelpers {
   public const SNAPSHOT_FILE_OWNER_GID = 33;
 
   /**
+   * Docker API user for short-lived containers that archive named volumes.
+   *
+   * Volume trees are often root-owned; running as www-data yields unreadable
+   * paths and empty tarballs. Match rollback/restore Alpine containers; chown
+   * outputs to SNAPSHOT_FILE_OWNER_* after writing.
+   */
+  public const SNAPSHOT_VOLUME_ARCHIVE_DOCKER_USER = '0:0';
+
+  /**
    * Optional override in settings.php (rare); normally unused.
    */
   public const SNAPSHOT_FILESYSTEM_PATH_SETTINGS_KEY = 'soda_scs_manager.snapshot_filesystem_path';
