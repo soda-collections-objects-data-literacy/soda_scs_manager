@@ -1738,9 +1738,11 @@ function soda_scs_manager_preprocess_menu(&$variables): void {
 /**
  * Implements hook_preprocess_HOOK() for page.html.twig.
  *
- * Removes the primary local tasks block from the content_above region (Log in /
- * Register / Reset password on user routes). Navigation is provided by the
- * header menus instead.
+ * On user.login, user.register, and user.pass only: removes the primary local
+ * tasks block from the content_above region so Log in / Register / Reset
+ * password are not duplicated when navigation is already in the header menus.
+ *
+ * Other routes keep primary tabs (entity canonical, edit, etc.).
  *
  * This cannot be done in hook_preprocess_region(): by then
  * ThemePreprocess::preprocessRegion() has already set $variables['content'] to
@@ -1752,6 +1754,16 @@ function soda_scs_manager_preprocess_menu(&$variables): void {
  * via #lazy_builder arguments (block entity id).
  */
 function soda_scs_manager_preprocess_page(array &$variables): void {
+  $route_name = \Drupal::routeMatch()->getRouteName();
+  // Only strip duplicate auth tabs here; entity and admin pages need primary local tasks.
+  $strip_primary_tabs_routes = [
+    'user.login',
+    'user.pass',
+    'user.register',
+  ];
+  if (!in_array($route_name, $strip_primary_tabs_routes, TRUE)) {
+    return;
+  }
   if (empty($variables['page']['content_above']) || !is_array($variables['page']['content_above'])) {
     return;
   }
