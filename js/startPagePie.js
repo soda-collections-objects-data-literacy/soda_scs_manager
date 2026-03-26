@@ -9,17 +9,14 @@
   const CENTER = 100;
 
   /**
-   * Get segment name from angle in degrees (0 = right, 90 = bottom, clockwise).
-   * Dashboard right (330°–30°), Admin bottom-left (30°–180°), Docs top-left (180°–330°).
+   * Get segment name from angle in degrees (atan2: 0 = right, 90 = bottom, clockwise).
+   * Dashboard: right semicircle (angle ≤ 90° or ≥ 270°). Start page: left semicircle.
    */
   function segmentFromAngle(angleDeg) {
-    if (angleDeg >= 330 || angleDeg < 30) {
-      return 'dashboard';
+    if (angleDeg > 90 && angleDeg < 270) {
+      return 'start';
     }
-    if (angleDeg >= 30 && angleDeg < 180) {
-      return 'admin';
-    }
-    return 'docs';
+    return 'dashboard';
   }
 
   function initPieHover(nav) {
@@ -73,7 +70,7 @@
       }
       link.addEventListener('focus', () => {
         const slice = link.querySelector('[class*="soda-scs-manager--pie-slice--"]');
-        const segment = slice?.classList.contains('soda-scs-manager--pie-slice--dashboard') ? 'dashboard' : slice?.classList.contains('soda-scs-manager--pie-slice--admin') ? 'admin' : 'docs';
+        const segment = slice?.classList.contains('soda-scs-manager--pie-slice--start') ? 'start' : 'dashboard';
         nav.setAttribute('data-active-segment', segment);
         setCenterText(label);
       });

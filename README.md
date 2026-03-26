@@ -7,9 +7,7 @@ It extends the Drupal framework with an administration panel for the SODa Semant
 ## Prerequisites
 ### Development
 #### Theming
-- Install [node and nvm](https://github.com/nvm-sh/nvm).
-- Run `nvm install`
-- You can now style with tailwind in pcss and run `npm run dev` or `npm run build` for pcss compiling and `npm run build:map`or `npm run dev:map` for css mapping.
+- Tailwind and component styles live in the **soda_scs_manager_theme** subtheme (`web/themes/custom/soda_scs_manager_theme/pcss`), including `pcss/manager/` (migrated from this module). Install [Node](https://nodejs.org/) or [nvm](https://github.com/nvm-sh/nvm), then from that theme directory run `npm install` and `npm run build` (or `npm run watch` while developing).
 
 ## Install
 

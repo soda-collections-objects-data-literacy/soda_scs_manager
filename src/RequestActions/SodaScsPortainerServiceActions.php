@@ -164,14 +164,49 @@ class SodaScsPortainerServiceActions implements SodaScsServiceRequestInterface {
    *   The response array.
    */
   public function makeRequest($request): array {
-    // Assemble requestParams.
+    $result = $this->executePortainerHttpRequest($request, NULL);
+
+    $isHealthCheck = $request['isHealthCheck'] ?? FALSE;
+    if (
+      $isHealthCheck
+      && !$result['success']
+      && $this->isTlsPeerVerificationFailure((string) ($result['error'] ?? ''))
+    ) {
+      $this->loggerFactory->get('soda_scs_manager')->warning(
+        'Health check TLS verification failed (@error). Retrying without peer ' .
+        'verification. Prefer issuing a certificate whose SAN includes the raw ' .
+        'backend hostname (raw. plus the instance host), e.g. via Traefik.',
+        ['@error' => (string) ($result['error'] ?? '')]
+      );
+      $result = $this->executePortainerHttpRequest($request, FALSE);
+    }
+
+    return $result;
+  }
+
+  /**
+   * Executes a single HTTP request for Portainer or health-check use.
+   *
+   * @param array $request
+   *   Request array (method, route, headers, optional body).
+   * @param bool|null $verifySsl
+   *   TRUE/FALSE to set Guzzle verify option; NULL for HTTP client default.
+   *
+   * @return array
+   *   Result array with success, statusCode, error, data.
+   */
+  private function executePortainerHttpRequest(array $request, ?bool $verifySsl): array {
     $requestParams['headers'] = $request['headers'];
     if (isset($request['body'])) {
       $requestParams['body'] = $request['body'];
     }
     $requestParams['timeout'] ??= 600;
+    if ($verifySsl === FALSE) {
+      $requestParams['verify'] = FALSE;
+    }
 
-    // Send the request.
+    $isHealthCheck = $request['isHealthCheck'] ?? FALSE;
+
     try {
       $response = $this->httpClient->request($request['method'], $request['route'], $requestParams);
 
@@ -186,7 +221,6 @@ class SodaScsPortainerServiceActions implements SodaScsServiceRequestInterface {
       ];
     }
     catch (RequestException $e) {
-      $isHealthCheck = $request['isHealthCheck'] ?? FALSE;
       if (!$isHealthCheck) {
         $logger = $this->loggerFactory->get('soda_scs_manager');
         $requestDump = Message::toString($e->getRequest());
@@ -217,7 +251,6 @@ class SodaScsPortainerServiceActions implements SodaScsServiceRequestInterface {
       ];
     }
     catch (\Exception $e) {
-      $isHealthCheck = $request['isHealthCheck'] ?? FALSE;
       if (!$isHealthCheck) {
         $this->loggerFactory
           ->get('soda_scs_manager')
@@ -234,6 +267,43 @@ class SodaScsPortainerServiceActions implements SodaScsServiceRequestInterface {
         'error' => $e->getMessage(),
       ];
     }
+  }
+
+  /**
+   * Detects TLS/certificate verification failures from Guzzle/cURL messages.
+   */
+  private function isTlsPeerVerificationFailure(string $error): bool {
+    if ($error === '') {
+      return FALSE;
+    }
+    $lower = strtolower($error);
+    $markers = [
+      'ssl certificate problem',
+      'ssl: ',
+      'ssl operation failed',
+      'certificate verify failed',
+      'unable to verify the first certificate',
+      'self signed certificate',
+      'self-signed certificate',
+      'hostname does not match',
+      'does not match certificate',
+      'certificate has expired',
+      'unable to get local issuer certificate',
+      "peer's certificate",
+      'peers certificate',
+      'curl error 60',
+      'curl error 51',
+      'curl error 58',
+      'local issuer certificate',
+      'handshake failure',
+      'wrong version number',
+    ];
+    foreach ($markers as $marker) {
+      if (str_contains($lower, $marker)) {
+        return TRUE;
+      }
+    }
+    return FALSE;
   }
 
   /**
@@ -664,13 +734,24 @@ class SodaScsPortainerServiceActions implements SodaScsServiceRequestInterface {
     $wisskiInstanceSettings = $this->sodaScsServiceHelpers->initWisskiInstanceSettings();
     switch ($requestParams['type']) {
       case 'service':
-        $route = $portainerServiceSettings['host'] . $portainerServiceSettings['baseUrl'] . str_replace('{endpointId}', $portainerServiceSettings['endpointId'], $portainerServiceSettings['healthCheckUrl']);
+        $route = $portainerServiceSettings['host']
+          . $portainerServiceSettings['baseUrl']
+          . str_replace(
+            '{endpointId}',
+            $portainerServiceSettings['endpointId'],
+            $portainerServiceSettings['healthCheckUrl']
+          );
         break;
 
       case 'instance':
-        // Use the raw backend host (raw.{host}) so the probe hits Drupal, not only
-        // Varnish. Varnish can accept connections before the WissKI backend is ready.
-        $instanceBase = str_replace('{instanceId}', $requestParams['machineName'], $wisskiInstanceSettings['baseUrl']);
+        // Use the raw backend host (raw.{host}) so the probe hits Drupal,
+        // not only Varnish. Varnish can accept connections before the WissKI
+        // backend is ready.
+        $instanceBase = str_replace(
+          '{instanceId}',
+          $requestParams['machineName'],
+          $wisskiInstanceSettings['baseUrl']
+        );
         $instanceBase = $this->wisskiRawBackendBaseUrl($instanceBase);
         $route = rtrim($instanceBase, '/') . $wisskiInstanceSettings['healthCheckUrl'];
         break;

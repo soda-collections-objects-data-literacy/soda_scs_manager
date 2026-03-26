@@ -376,6 +376,16 @@ class SodaScsManagerController extends ControllerBase {
   }
 
   /**
+   * Redirects the manager base URL to the dashboard.
+   *
+   * @return \Symfony\Component\HttpFoundation\RedirectResponse
+   *   Redirect to the dashboard route.
+   */
+  public function redirectManagerRoot() {
+    return $this->redirect('soda_scs_manager.dashboard');
+  }
+
+  /**
    * Start page for SCS Manager.
    *
    * @return array
@@ -393,15 +403,11 @@ class SodaScsManagerController extends ControllerBase {
       'user' => $currentUser->id(),
     ])->toString();
 
-    // Book documentation root (path alias from content sync).
-    $documentationUrl = $this->internalPathUrl('soda-scs-manager/documentation');
-
     return [
       '#theme' => 'soda_scs_manager__start_page',
       '#attributes' => ['class' => ['container', 'mx-auto']],
       '#user' => $userFirstName,
       '#connected_accounts_url' => $connectedAccountsUrl,
-      '#documentation_url' => $documentationUrl,
       '#attached' => [
         'library' => [
           'soda_scs_manager/globalStyling',

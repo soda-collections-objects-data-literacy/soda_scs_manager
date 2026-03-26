@@ -127,5 +127,7 @@ services:
   # Breadcrumb builder for list pages
   soda_scs_manager.list_breadcrumb_builder:
     class: Drupal\soda_scs_manager\Breadcrumb\SodaScsManagerListBreadcrumbBuilder
+    arguments:
+      - '@current_user'
     tags:
       - { name: breadcrumb_builder, priority: 100 }

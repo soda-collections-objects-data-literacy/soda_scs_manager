@@ -41,9 +41,9 @@ function soda_scs_manager_install() {
     $file_system->copy($file->uri, $destination, FileExists::Replace);
   }
 
-  // Set the default front page to the soda_scs_manager start page.
+  // Set the default front page to the soda_scs_manager dashboard.
   \Drupal::configFactory()->getEditable('system.site')
-    ->set('page.front', '/soda-scs-manager')
+    ->set('page.front', '/soda-scs-manager/dashboard')
     ->save();
 
   // Remove specified blocks from layout.
@@ -62,6 +62,9 @@ function soda_scs_manager_install() {
     }
   }
 
+  // Show the Footer menu (Issue Report and any other footer links).
+  _soda_scs_manager_ensure_footer_menu_block();
+
   // Check if Olivero is the default theme and set custom color scheme.
   $default_theme = \Drupal::config('system.theme')->get('default');
   if ($default_theme === 'olivero') {
@@ -74,6 +77,60 @@ function soda_scs_manager_install() {
     // Clear caches to apply the theme changes.
     \Drupal::service('cache.render')->deleteAll();
   }
+}
+
+/**
+ * Places the core Footer menu block when missing, if the theme has a region.
+ *
+ * Ensures links registered for menu_name "footer" (e.g. Issue Report) render.
+ */
+function _soda_scs_manager_ensure_footer_menu_block(): void {
+  $theme_handler = \Drupal::service('theme_handler');
+  $theme = \Drupal::config('system.theme')->get('default');
+  if (!$theme_handler->themeExists($theme)) {
+    return;
+  }
+
+  $existing = \Drupal::entityTypeManager()->getStorage('block')
+    ->loadByProperties([
+      'plugin' => 'system_menu_block:footer',
+      'theme' => $theme,
+    ]);
+  if (!empty($existing)) {
+    return;
+  }
+
+  $extension = $theme_handler->getTheme($theme);
+  $regions = $extension->info['regions'] ?? [];
+  $region = NULL;
+  foreach (['footer_bottom', 'footer', 'footer_top'] as $candidate) {
+    if (isset($regions[$candidate])) {
+      $region = $candidate;
+      break;
+    }
+  }
+  if ($region === NULL) {
+    return;
+  }
+
+  $block = Block::create([
+    'id' => 'soda_scs_manager_footer_menu',
+    'theme' => $theme,
+    'plugin' => 'system_menu_block:footer',
+    'region' => $region,
+    'weight' => 10,
+    'status' => TRUE,
+    'settings' => [
+      'id' => 'system_menu_block:footer',
+      'label' => 'Footer menu',
+      'label_display' => FALSE,
+      'provider' => 'system',
+      'level' => 1,
+      'depth' => NULL,
+      'expand_all_items' => FALSE,
+    ],
+  ]);
+  $block->save();
 }
 
 /**
@@ -955,6 +1012,62 @@ function soda_scs_manager_update_11015() {
   }
 
   return t('Migrated publicRead from base field to triplestore bundle field.');
+}
+
+/**
+ * Move Issue Report to the Footer menu and ensure the footer menu block exists.
+ */
+function soda_scs_manager_update_11016() {
+  _soda_scs_manager_ensure_footer_menu_block();
+  \Drupal::service('menu_link.static.overrides')
+    ->deleteOverride('soda_scs_manager.menu.issue_report');
+  \Drupal::service('plugin.manager.menu.link')->rebuild();
+
+  return t('Issue Report is now in the Footer menu; footer menu block added when needed.');
+}
+
+/**
+ * Point the site front page at the dashboard; /soda-scs-manager redirects there.
+ */
+function soda_scs_manager_update_11017() {
+  $config = \Drupal::configFactory()->getEditable('system.site');
+  $front = $config->get('page.front');
+  if ($front === '/soda-scs-manager') {
+    $config->set('page.front', '/soda-scs-manager/dashboard')->save();
+    return t('Default front page updated from /soda-scs-manager to /soda-scs-manager/dashboard.');
+  }
+
+  return t('Default front page left unchanged (was not /soda-scs-manager).');
+}
+
+/**
+ * Clear Issue Report menu override again (footer-only); ensure footer block.
+ */
+function soda_scs_manager_update_11018() {
+  _soda_scs_manager_ensure_footer_menu_block();
+  \Drupal::service('menu_link.static.overrides')
+    ->deleteOverride('soda_scs_manager.menu.issue_report');
+  \Drupal::service('plugin.manager.menu.link')->rebuild();
+
+  return t('Issue Report static menu override cleared; footer menu block ensured.');
+}
+
+/**
+ * Flatten main menu: drop "SODa SCS Manager" parent; clear related overrides.
+ */
+function soda_scs_manager_update_11019() {
+  $overrides = \Drupal::service('menu_link.static.overrides');
+  foreach ([
+    'soda_scs_manager.main_navigation',
+    'soda_scs_manager.menu.dashboard',
+    'soda_scs_manager.menu.documentation',
+    'soda_scs_manager.menu.administration',
+  ] as $plugin_id) {
+    $overrides->deleteOverride($plugin_id);
+  }
+  \Drupal::service('plugin.manager.menu.link')->rebuild();
+
+  return t('Main menu flattened; SODa SCS Manager parent removed from discovery.');
 }
 
 

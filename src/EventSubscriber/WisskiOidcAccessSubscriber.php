@@ -108,7 +108,7 @@ class WisskiOidcAccessSubscriber implements EventSubscriberInterface {
     }
 
     $request = $this->requestStack->getCurrentRequest();
-    $destination = $request ? $request->getPathInfo() : '/soda-scs-manager';
+    $destination = $request ? $request->getPathInfo() : '/soda-scs-manager/dashboard';
 
     // Redirect to OIDC login (Keycloak) with destination back to this form.
     // openid_connect.login shows the client buttons; Keycloak SSO often

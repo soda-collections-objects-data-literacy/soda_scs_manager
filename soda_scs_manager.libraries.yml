@@ -18,9 +18,9 @@ entityHelpers:
 
 globalStyling:
   version: 1.x
-  css:
-    theme:
-      css/style.css: { weight: 100 }
+  dependencies:
+    # All Tailwind / module component CSS is built into the active theme bundle.
+    - soda_scs_manager_theme/global
 
 machineNameGenerator:
   version: 1.x

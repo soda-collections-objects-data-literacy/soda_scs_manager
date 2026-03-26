@@ -5,15 +5,16 @@
  * Functions for the soda_scs_manager module.
  */
 
-use Drupal\Core\Asset\AttachedAssetsInterface;
 use Drupal\Core\Entity\Display\EntityViewDisplayInterface;
 use Drupal\Core\Form\FormStateInterface;
 use Drupal\Core\Entity\ContentEntityInterface;
 use Drupal\Core\Entity\EntityInterface;
+use Drupal\Core\Menu\MenuLinkInterface;
 use Drupal\Core\Entity\EntityTypeInterface;
 use Drupal\Core\Field\BaseFieldDefinition;
-use Drupal\Core\Language\LanguageInterface;
+use Drupal\Core\Render\Element;
 use Drupal\Core\Routing\RouteMatchInterface;
+use Drupal\Core\Routing\StackedRouteMatchInterface;
 use Drupal\Core\StringTranslation\TranslatableMarkup;
 use Drupal\Core\Url;
 use Drupal\soda_scs_manager\Entity\Bundle\SodaScsComponentBundle;
@@ -28,29 +29,6 @@ use Drupal\soda_scs_manager\Entity\SodaScsStack;
 use Drupal\user\UserInterface;
 use Drupal\node\NodeInterface;
 use Symfony\Component\HttpFoundation\RedirectResponse;
-
-/**
- * Implements hook_css_alter().
- *
- * @todo Make a proper theme.
- */
-function soda_scs_manager_css_alter(&$css, AttachedAssetsInterface $assets, LanguageInterface $language) {
-  $filePath = \Drupal::service('extension.list.module')->getPath('soda_scs_manager') . '/css/global.css';
-  if (!isset($css[$filePath])) {
-    $fullPath = \Drupal::root() . '/' . $filePath;
-    $version = file_exists($fullPath) ? filemtime($fullPath) : NULL;
-    $css[$filePath] = [
-      'weight' => 200,
-      'group' => 200,
-      'type' => 'file',
-      'data' => $filePath,
-      'media' => 'all',
-      'preprocess' => TRUE,
-      'version' => $version,
-      'license' => FALSE,
-    ];
-  }
-}
 
 /**
  * Implements hook_options_list_alter().
@@ -455,7 +433,10 @@ function soda_scs_manager_mail($key, &$message, $params) {
       break;
 
     case 'issue_report':
-      $message['subject'] = \Drupal::translation()->translate('New issue report on @site_name: @title', ['@site_name' => $site_name, '@title' => $params['title']], $options);
+      $message['subject'] = \Drupal::translation()->translate('New issue report on @site_name: @title', [
+        '@site_name' => $site_name,
+        '@title' => $params['title'],
+      ], $options);
       $message['body'][] = \Drupal::translation()->translate('A new issue has been reported on @site_name.', ['@site_name' => $site_name], $options);
       $message['body'][] = '';
       $message['body'][] = \Drupal::translation()->translate('Reporter: @reporter', ['@reporter' => $params['reporter']], $options);
@@ -478,7 +459,10 @@ function soda_scs_manager_mail($key, &$message, $params) {
       break;
 
     case 'issue_report_copy':
-      $message['subject'] = \Drupal::translation()->translate('[Copy] New issue report on @site_name: @title', ['@site_name' => $site_name, '@title' => $params['title']], $options);
+      $message['subject'] = \Drupal::translation()->translate('[Copy] New issue report on @site_name: @title', [
+        '@site_name' => $site_name,
+        '@title' => $params['title'],
+      ], $options);
       $message['body'][] = \Drupal::translation()->translate('This is a copy of the issue report you submitted on @site_name.', ['@site_name' => $site_name], $options);
       $message['body'][] = '';
       $message['body'][] = \Drupal::translation()->translate('Reporter: @reporter', ['@reporter' => $params['reporter']], $options);
@@ -614,6 +598,7 @@ function soda_scs_manager_soda_scs_stack_view(array &$build, EntityInterface $en
     }
   }
 }
+
 /**
  * Implements template_preprocess_HOOK() for book-tree theme.
  */
@@ -670,7 +655,6 @@ function soda_scs_manager_theme($existing, $type, $theme, $path) {
         'attributes' => NULL,
         'user' => NULL,
         'connected_accounts_url' => '',
-        'documentation_url' => '/soda-scs-manager/documentation',
       ],
       'template' => 'pages/soda-scs-manager--start-page',
     ],
@@ -1140,7 +1124,7 @@ function soda_scs_manager_form_openid_connect_accounts_form_alter(&$form, &$form
 /**
  * Implements hook_form_alter() for user_login_form.
  *
- * Sets default destination to redirect users to the SODa SCS Manager start page after login.
+ * Sets default destination to redirect users to the SODa SCS Manager dashboard after login.
  */
 function soda_scs_manager_form_user_login_form_alter(&$form, &$form_state, $form_id) {
   // Get the current request.
@@ -1149,7 +1133,7 @@ function soda_scs_manager_form_user_login_form_alter(&$form, &$form_state, $form
   // Only set destination if there's no existing destination and not during AJAX requests.
   if (!$request->query->has('destination') && !$request->isXmlHttpRequest()) {
     // Set destination via URL query parameter.
-    $destination = Url::fromRoute('soda_scs_manager.start_page')->toString();
+    $destination = Url::fromRoute('soda_scs_manager.dashboard')->toString();
     $destinationUrl = Url::fromRoute('user.login', [], ['query' => ['destination' => $destination]]);
     $form['#action'] = $destinationUrl->toString();
   }
@@ -1659,7 +1643,6 @@ function soda_scs_manager_cron() {
  * Implements hook_menu_links_discovered_alter().
  */
 function soda_scs_manager_menu_links_discovered_alter(array &$links): void {
-  // Content sync book root: node.book.10e1bd5d-8405-4485-811e-24e0695b76b6.yml
   $documentation_book_uuid = '10e1bd5d-8405-4485-811e-24e0695b76b6';
   $documentation_link_ids = [
     'soda_scs_manager.menu.documentation',
@@ -1689,7 +1672,22 @@ function soda_scs_manager_menu_links_discovered_alter(array &$links): void {
  * Implements hook_preprocess_menu().
  */
 function soda_scs_manager_preprocess_menu(&$variables): void {
-  if ($variables['menu_name'] !== 'main') {
+  $menu_name = (string) ($variables['menu_name'] ?? '');
+
+  if ($menu_name === 'account') {
+    if (!isset($variables['#cache'])) {
+      $variables['#cache'] = [];
+    }
+    if (!isset($variables['#cache']['contexts'])) {
+      $variables['#cache']['contexts'] = [];
+    }
+    $variables['#cache']['contexts'][] = 'user';
+    $variables['#cache']['contexts'][] = 'url.path';
+    _soda_scs_manager_menu_mark_current_link_recursive($variables['items']);
+    return;
+  }
+
+  if ($menu_name !== 'main') {
     return;
   }
 
@@ -1703,17 +1701,333 @@ function soda_scs_manager_preprocess_menu(&$variables): void {
   }
   $variables['#cache']['contexts'][] = 'user';
 
-  // Logged-in users use Documentation under SODa SCS Manager; hide the
-  // anonymous-only top-level Documentation link.
+  // Two YAML links target the same documentation node route; both would pass
+  // access for anonymous users. Show one Documentation item per session state.
   if (\Drupal::currentUser()->isAuthenticated()) {
     unset($variables['items']['soda_scs_manager.anonymous_documentation']);
   }
+  else {
+    unset($variables['items']['soda_scs_manager.menu.documentation']);
+  }
+
+  // Retired parent link: flatten cached trees until rebuild picks up YAML.
+  if (isset($variables['items']['soda_scs_manager.main_navigation'])) {
+    $legacy_parent = $variables['items']['soda_scs_manager.main_navigation'];
+    unset($variables['items']['soda_scs_manager.main_navigation']);
+    if (!empty($legacy_parent['below']) && is_array($legacy_parent['below'])) {
+      foreach ($legacy_parent['below'] as $id => $child) {
+        if (!isset($variables['items'][$id])) {
+          $variables['items'][$id] = $child;
+        }
+      }
+    }
+  }
+
+  // Issue Report is for the Footer menu only; strip from main if mis-placed.
+  _soda_scs_manager_menu_remove_link_from_tree($variables['items'], 'soda_scs_manager.menu.issue_report');
 
   _soda_scs_manager_preprocess_menu_notifications_recursive($variables['items']);
+
+  // Exact current item: class + underline styling do not rely on active-link.js alone.
+  // The main menu block uses a BigPipe placeholder; markup can appear before JS runs.
+  _soda_scs_manager_menu_mark_current_link_recursive($variables['items']);
+  $variables['#cache']['contexts'][] = 'url.path';
+  $variables['#cache']['contexts'][] = 'url.path.is_front';
 }
 
 /**
- * Adds notification icon markup to the notifications link (including when nested).
+ * Implements hook_preprocess_HOOK() for page.html.twig.
+ *
+ * Removes the primary local tasks block from the content_above region (Log in /
+ * Register / Reset password on user routes). Navigation is provided by the
+ * header menus instead.
+ *
+ * This cannot be done in hook_preprocess_region(): by then
+ * ThemePreprocess::preprocessRegion() has already set $variables['content'] to
+ * the rendered #children string; the block render arrays are no longer
+ * available there.
+ *
+ * Most blocks (including local tasks) use BlockViewBuilder's #lazy_builder
+ * wrapper until render time, so #base_plugin_id is not set yet — match those
+ * via #lazy_builder arguments (block entity id).
+ */
+function soda_scs_manager_preprocess_page(array &$variables): void {
+  if (empty($variables['page']['content_above']) || !is_array($variables['page']['content_above'])) {
+    return;
+  }
+  $region = &$variables['page']['content_above'];
+  foreach (Element::children($region) as $key) {
+    $item = $region[$key];
+    if (!is_array($item)) {
+      continue;
+    }
+    $base_plugin_id = (string) ($item['#base_plugin_id'] ?? '');
+    $block_id = (string) ($item['#id'] ?? '');
+    $lazy_block_id = '';
+    if (isset($item['#lazy_builder'][1][0])) {
+      $lazy_block_id = (string) $item['#lazy_builder'][1][0];
+    }
+    if ($base_plugin_id === 'local_tasks_block' && str_contains($block_id, 'primary_local_tasks')) {
+      unset($region[$key]);
+      continue;
+    }
+    if ($lazy_block_id !== '' && str_contains($lazy_block_id, 'primary_local_tasks')) {
+      unset($region[$key]);
+    }
+  }
+}
+
+/**
+ * Adds is-active and aria-current="page" for the link matching the request.
+ *
+ * Like core active-link matching (path + query) for the top nav when BigPipe or
+ * delayed JS would otherwise hide the current item.
+ *
+ * When path comparison fails, compares route + parameters on the menu Url
+ * (PathValidator resolves internal: aliases to entity routes) or on the plugin.
+ *
+ * @param array $items
+ *   Menu tree from template_preprocess_menu(), by reference.
+ */
+function _soda_scs_manager_menu_mark_current_link_recursive(array &$items): void {
+  $route_match = \Drupal::routeMatch();
+  if ($route_match instanceof StackedRouteMatchInterface) {
+    $route_match = $route_match->getMasterRouteMatch();
+  }
+  if (!$route_match->getRouteName()) {
+    return;
+  }
+  $current_url = Url::fromRouteMatch($route_match);
+  $current_path = '';
+  if ($current_url->isRouted()) {
+    $current_path = $current_url->getInternalPath();
+  }
+  $request_query = \Drupal::request()->query->all();
+  ksort($request_query);
+
+  foreach ($items as &$item) {
+    if (!empty($item['url']) && $item['url'] instanceof Url) {
+      $url = $item['url'];
+      $is_current = FALSE;
+
+      if ($current_path !== '' && $url->isRouted() && !$url->isExternal()
+        && $url->getRouteName() !== '<nolink>') {
+        $link_query = $url->getOption('query') ?? [];
+        $is_current = (
+          _soda_scs_manager_menu_link_query_matches_request($link_query, $request_query)
+          && $url->getInternalPath() === $current_path
+        );
+      }
+
+      if (!$is_current && $url->isRouted() && !$url->isExternal()
+        && $url->getRouteName() !== '<nolink>') {
+        $is_current = _soda_scs_manager_menu_link_route_definition_matches_current(
+          $url->getRouteName(),
+          $url->getRouteParameters(),
+          $route_match,
+          $request_query,
+          $url,
+        );
+      }
+
+      if (!$is_current
+        && !empty($item['original_link'])
+        && $item['original_link'] instanceof MenuLinkInterface) {
+        $is_current = _soda_scs_manager_menu_link_route_matches_current(
+          $item['original_link'],
+          $route_match,
+          $request_query,
+          $url,
+        );
+      }
+
+      // "My account" uses route user.page (/user) but the profile is
+      // entity.user.canonical (/user/2); path and route names differ.
+      if (!$is_current && $url->isRouted() && !$url->isExternal()
+        && $url->getRouteName() === 'user.page') {
+        $is_current = _soda_scs_manager_menu_user_page_matches_canonical_profile(
+          $route_match,
+          $request_query,
+          $url,
+        );
+      }
+
+      // Home uses route <front> (internal path "" / URL /) while the configured
+      // front page is served by another route (e.g. dashboard, node/N).
+      if (!$is_current && $url->isRouted() && !$url->isExternal()
+        && $url->getRouteName() === '<front>') {
+        $is_current = _soda_scs_manager_menu_front_link_matches_current_page(
+          $request_query,
+          $url,
+        );
+      }
+
+      if ($is_current) {
+        $url->mergeOptions([
+          'attributes' => [
+            'class' => ['is-active'],
+            'aria-current' => 'page',
+          ],
+        ]);
+      }
+    }
+    if (!empty($item['below']) && is_array($item['below'])) {
+      _soda_scs_manager_menu_mark_current_link_recursive($item['below']);
+    }
+  }
+  unset($item);
+}
+
+/**
+ * TRUE if the request query string satisfies the menu link query option.
+ *
+ * When the link defines no query (empty), any request query is accepted so
+ * incidental parameters (e.g. ?destination=) do not block the active state.
+ */
+function _soda_scs_manager_menu_link_query_matches_request(
+  array $link_query,
+  array $request_query,
+): bool {
+  if ($link_query === []) {
+    return TRUE;
+  }
+  ksort($link_query);
+  ksort($request_query);
+  return $link_query === $request_query;
+}
+
+/**
+ * TRUE if "My account" (user.page) should match the current profile page.
+ *
+ * Core uses user.page for /user; the profile view is entity.user.canonical
+ * (/user/{user}). Mark active only when that user is the logged-in account.
+ */
+function _soda_scs_manager_menu_user_page_matches_canonical_profile(
+  RouteMatchInterface $route_match,
+  array $request_query,
+  Url $menu_url,
+): bool {
+  if ($route_match->getRouteName() !== 'entity.user.canonical') {
+    return FALSE;
+  }
+  $account = \Drupal::currentUser();
+  if (!$account->isAuthenticated()) {
+    return FALSE;
+  }
+  $user_param = $route_match->getParameter('user');
+  if ($user_param instanceof UserInterface) {
+    $page_uid = (string) $user_param->id();
+  }
+  elseif ($user_param !== NULL && $user_param !== '') {
+    $page_uid = (string) $user_param;
+  }
+  else {
+    return FALSE;
+  }
+  if ($page_uid !== (string) $account->id()) {
+    return FALSE;
+  }
+  $link_query = $menu_url->getOption('query') ?? [];
+
+  return _soda_scs_manager_menu_link_query_matches_request($link_query, $request_query);
+}
+
+/**
+ * TRUE if a menu link to the special front route should match this request.
+ *
+ * Core MenuActiveTrail treats <front> links as active on the configured home
+ * page even though that page uses another route (node, custom route, etc.).
+ */
+function _soda_scs_manager_menu_front_link_matches_current_page(
+  array $request_query,
+  Url $menu_url,
+): bool {
+  if (!\Drupal::service('path.matcher')->isFrontPage()) {
+    return FALSE;
+  }
+  $link_query = $menu_url->getOption('query') ?? [];
+
+  return _soda_scs_manager_menu_link_query_matches_request($link_query, $request_query);
+}
+
+/**
+ * TRUE if route name/parameters match the request (and query on $menu_url).
+ */
+function _soda_scs_manager_menu_link_route_definition_matches_current(
+  string $link_route,
+  array $link_route_params,
+  RouteMatchInterface $route_match,
+  array $request_query,
+  Url $menu_url,
+): bool {
+  if ($link_route === ''
+    || $link_route === '<nolink>'
+    || $link_route === '<button>') {
+    return FALSE;
+  }
+  if ($link_route !== $route_match->getRouteName()) {
+    return FALSE;
+  }
+  foreach ($link_route_params as $key => $expected) {
+    $current = $route_match->getParameter($key);
+    if ($current === NULL) {
+      return FALSE;
+    }
+    if ($current instanceof EntityInterface) {
+      $current = (string) $current->id();
+    }
+    else {
+      $current = (string) $current;
+    }
+    if ($current !== (string) $expected) {
+      return FALSE;
+    }
+  }
+
+  $link_query = $menu_url->getOption('query') ?? [];
+
+  return _soda_scs_manager_menu_link_query_matches_request($link_query, $request_query);
+}
+
+/**
+ * TRUE if the menu link plugin matches route, parameters, and query.
+ *
+ * Used when the menu Url is unrouted so PathValidator route data is absent.
+ */
+function _soda_scs_manager_menu_link_route_matches_current(
+  MenuLinkInterface $link,
+  RouteMatchInterface $route_match,
+  array $request_query,
+  Url $menu_url,
+): bool {
+  return _soda_scs_manager_menu_link_route_definition_matches_current(
+    $link->getRouteName(),
+    $link->getRouteParameters(),
+    $route_match,
+    $request_query,
+    $menu_url,
+  );
+}
+
+/**
+ * Removes a menu link (by plugin id) from a preprocessed menu tree at any depth.
+ *
+ * @param array $items
+ *   Menu items from template_preprocess_menu(), by reference.
+ * @param string $plugin_id
+ *   The menu link plugin ID to strip.
+ */
+function _soda_scs_manager_menu_remove_link_from_tree(array &$items, string $plugin_id): void {
+  unset($items[$plugin_id]);
+  foreach ($items as &$item) {
+    if (!empty($item['below']) && is_array($item['below'])) {
+      _soda_scs_manager_menu_remove_link_from_tree($item['below'], $plugin_id);
+    }
+  }
+}
+
+/**
+ * Adds visible notification label markup to the notifications link (including when nested).
  *
  * @param array $items
  *   Menu items from template_preprocess_menu() (by reference).
@@ -1734,7 +2048,8 @@ function _soda_scs_manager_preprocess_menu_notifications_recursive(array &$items
       }
 
       if ($count > 0) {
-        $item['title'] = new TranslatableMarkup('<span class="notification-icon-wrapper"><span class="notification-icon">✉</span><span class="notification-dot"></span></span><span class="visually-hidden">@title (@count)</span>', [
+        $item['title'] = new TranslatableMarkup('<span class="notification-icon-wrapper"><span class="notification-icon">@label</span><span class="notification-dot"></span></span><span class="visually-hidden">@title (@count)</span>', [
+          '@label' => t('Notifications'),
           '@title' => $item['title'],
           '@count' => $count,
         ]);
@@ -1742,7 +2057,8 @@ function _soda_scs_manager_preprocess_menu_notifications_recursive(array &$items
         $item['attributes']->addClass('has-notifications');
       }
       else {
-        $item['title'] = new TranslatableMarkup('<span class="notification-icon-wrapper"><span class="notification-icon">✉</span></span><span class="visually-hidden">@title</span>', [
+        $item['title'] = new TranslatableMarkup('<span class="notification-icon-wrapper"><span class="notification-icon">@label</span></span><span class="visually-hidden">@title</span>', [
+          '@label' => t('Notifications'),
           '@title' => $item['title'],
         ]);
         $item['attributes']->addClass('menu-item--notifications');
@@ -1753,4 +2069,3 @@ function _soda_scs_manager_preprocess_menu_notifications_recursive(array &$items
     }
   }
 }
-

@@ -218,6 +218,17 @@ class SodaScsComponentHelpers {
 
         case 0:
           if ($containerStatus == 'running') {
+            $err = (string) ($healthRequestResult['error'] ?? '');
+            // TLS often surfaces as code 0; do not show Starting for cert errors.
+            if ($this->httpFailureLooksLikeTlsPeerIssue($err)) {
+              return [
+                "message" => (string) $this->t('TLS certificate error'),
+                "status" => 'unhealthy',
+                'code' => $healthRequestResult['statusCode'],
+                'success' => FALSE,
+                'error' => $err,
+              ];
+            }
             return [
               "message" => (string) $this->t('Starting'),
               "status" => 'starting',
@@ -477,6 +488,45 @@ class SodaScsComponentHelpers {
       'sql' => $sqlComponent,
       'triplestore' => $triplestoreComponent,
     ];
+  }
+
+  /**
+   * Detects TLS/certificate verification failures.
+   *
+   * Mirrors criteria used for Portainer health-check TLS retry.
+   */
+  private function httpFailureLooksLikeTlsPeerIssue(string $error): bool {
+    if ($error === '') {
+      return FALSE;
+    }
+    $lower = strtolower($error);
+    $markers = [
+      'ssl certificate problem',
+      'ssl: ',
+      'ssl operation failed',
+      'certificate verify failed',
+      'unable to verify the first certificate',
+      'self signed certificate',
+      'self-signed certificate',
+      'hostname does not match',
+      'does not match certificate',
+      'certificate has expired',
+      'unable to get local issuer certificate',
+      "peer's certificate",
+      'peers certificate',
+      'curl error 60',
+      'curl error 51',
+      'curl error 58',
+      'local issuer certificate',
+      'handshake failure',
+      'wrong version number',
+    ];
+    foreach ($markers as $marker) {
+      if (str_contains($lower, $marker)) {
+        return TRUE;
+      }
+    }
+    return FALSE;
   }
 
 }

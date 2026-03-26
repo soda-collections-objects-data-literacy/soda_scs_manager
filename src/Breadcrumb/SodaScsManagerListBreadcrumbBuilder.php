@@ -8,6 +8,7 @@ use Drupal\Core\Breadcrumb\Breadcrumb;
 use Drupal\Core\Breadcrumb\BreadcrumbBuilderInterface;
 use Drupal\Core\Link;
 use Drupal\Core\Routing\RouteMatchInterface;
+use Drupal\Core\Session\AccountProxyInterface;
 use Drupal\Core\StringTranslation\StringTranslationTrait;
 
 /**
@@ -16,6 +17,10 @@ use Drupal\Core\StringTranslation\StringTranslationTrait;
 final class SodaScsManagerListBreadcrumbBuilder implements BreadcrumbBuilderInterface {
 
   use StringTranslationTrait;
+
+  public function __construct(
+    protected AccountProxyInterface $currentUser,
+  ) {}
 
   /**
    * {@inheritdoc}
@@ -39,8 +44,8 @@ final class SodaScsManagerListBreadcrumbBuilder implements BreadcrumbBuilderInte
   public function build(RouteMatchInterface $routeMatch): Breadcrumb {
     $breadcrumb = new Breadcrumb();
 
-    // Add cache context for the route.
-    $breadcrumb->addCacheContexts(['route']);
+    // Add cache context for the route and permission-dependent segments.
+    $breadcrumb->addCacheContexts(['route', 'user.permissions']);
 
     // Home link.
     $breadcrumb->addLink(Link::createFromRoute($this->t('Home'), '<front>'));
@@ -48,14 +53,15 @@ final class SodaScsManagerListBreadcrumbBuilder implements BreadcrumbBuilderInte
     // Structure link.
     $breadcrumb->addLink(Link::createFromRoute($this->t('Structure'), 'system.admin_structure'));
 
-    // SCS Administration link.
-    $breadcrumb->addLink(Link::createFromRoute(
-      $this->t('SCS Administration'),
-      'soda_scs_manager.administration'
-    ));
+    // Admin-only hub link (matches main navigation access).
+    if ($this->currentUser->hasPermission('soda scs manager admin')) {
+      $breadcrumb->addLink(Link::createFromRoute(
+        $this->t('SCS Administration'),
+        'soda_scs_manager.administration'
+      ));
+    }
 
     return $breadcrumb;
   }
 
 }
-

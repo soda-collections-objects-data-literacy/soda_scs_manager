@@ -106,21 +106,15 @@ soda_scs_manager.snapshot_debug:
   weight: 0
 
 # Structure pages
-# Main navigation: "SODa SCS Manager" expands to Dashboard, Documentation, etc.;
-# Notifications is a separate top-level item beside it. Anonymous users only see
-# soda_scs_manager.anonymous_documentation (top-level). Preprocess removes that
-# duplicate Documentation link when logged in — see soda_scs_manager_preprocess_menu().
-soda_scs_manager.main_navigation:
-  title: 'SODa SCS Manager'
-  description: 'Overview of main tasks'
-  menu_name: main
-  route_name: soda_scs_manager.start_page
-  weight: 10
-
+# Main menu: Dashboard, Documentation, Administration, and Notifications are
+# top-level items (no "SODa SCS Manager" parent). Issue Report is in the Footer
+# menu (see soda_scs_manager_install()). Anonymous users only see
+# soda_scs_manager.anonymous_documentation; authenticated users only see
+# soda_scs_manager.menu.documentation — see soda_scs_manager_preprocess_menu().
 soda_scs_manager.menu.dashboard:
   title: 'Dashboard'
   description: 'Your applications'
-  parent: soda_scs_manager.main_navigation
+  menu_name: main
   route_name: soda_scs_manager.dashboard
   weight: 10
   requirements:
@@ -131,7 +125,7 @@ soda_scs_manager.menu.documentation:
   class: Drupal\soda_scs_manager\Plugin\Menu\DocumentationInternalPathMenuLink
   title: 'Documentation'
   description: 'Documentation'
-  parent: soda_scs_manager.main_navigation
+  menu_name: main
   route_name: entity.node.canonical
   route_parameters:
     node: '1'
@@ -140,16 +134,16 @@ soda_scs_manager.menu.documentation:
 soda_scs_manager.menu.administration:
   title: 'Administration'
   description: 'Administration'
-  parent: soda_scs_manager.main_navigation
+  menu_name: main
   route_name: soda_scs_manager.administration
   weight: 30
   requirements:
-    _permission: 'soda scs manager user'
+    _permission: 'soda scs manager admin'
 
 soda_scs_manager.menu.issue_report:
   title: 'Issue Report'
   description: 'Report an issue'
-  parent: soda_scs_manager.main_navigation
+  menu_name: footer
   route_name: soda_scs_manager.issue_report
   weight: 40
   requirements:
@@ -164,8 +158,8 @@ soda_scs_manager.menu.notifications:
   requirements:
     _permission: 'soda scs manager user'
 
-# Anonymous (and unauthenticated) visitors: Documentation only. Hidden for logged-in
-# users in preprocess so they use the item under SODa SCS Manager.
+# Anonymous visitors: Documentation with public-facing title attribute. Hidden for
+# logged-in users in preprocess so they use soda_scs_manager.menu.documentation.
 soda_scs_manager.anonymous_documentation:
   class: Drupal\soda_scs_manager\Plugin\Menu\DocumentationInternalPathMenuLink
   title: 'Documentation'

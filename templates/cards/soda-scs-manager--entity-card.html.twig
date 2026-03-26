@@ -3,8 +3,10 @@
   <div class="soda-scs-manager--card-type">
     {{ type }}
   </div>
+    {% set tags_hidden_from_ui = ['data-science', 'publishing'] %}
     <div class="soda-scs-manager--card-tags mb-4">
       {% for tag in tags|sort %}
+        {% if tag not in tags_hidden_from_ui %}
         <span class="soda-scs-manager--tag-filter-button soda-scs-manager--card-tag rounded-full px-2 py-1 text-xs whitespace-nowrap
         {% if tag == 'coding' %}
           bg-purple-100 text-purple-700 hover:bg-purple-200
@@ -14,14 +16,10 @@
           bg-emerald-100 text-emerald-700 hover:bg-emerald-200
         {% elseif tag == 'data-cleaning' %}
           bg-green-100 text-green-700 hover:bg-green-200
-        {% elseif tag == 'data-science' %}
-          bg-teal-100 text-teal-700 hover:bg-teal-200
         {% elseif tag == 'filesharing' %}
           bg-cyan-100 text-cyan-700 hover:bg-cyan-200
         {% elseif tag == 'ontology' %}
           bg-indigo-100 text-indigo-700 hover:bg-indigo-200
-        {% elseif tag == 'publishing' %}
-          bg-amber-100 text-amber-700 hover:bg-amber-200
         {% elseif tag == 'office' %}
           bg-orange-100 text-orange-700 hover:bg-orange-200
         {% elseif tag == 'triplestore' %}
@@ -29,6 +27,7 @@
         {% else %}
           bg-stone-100 text-stone-700 hover:bg-stone-200
         {% endif %}" data-tag="{{ tag }}" role="button" tabindex="0" aria-pressed="false" aria-label="{{ 'Filter by tag @tag'|t({'@tag': tag}) }}">{{ tag|t }}</span>
+        {% endif %}
       {% endfor %}
     </div>
     {% set isRunning = health_status == 'running' or health_status == 'healthy' %}

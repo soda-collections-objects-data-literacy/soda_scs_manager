@@ -84,14 +84,14 @@
         // Deselect all tags.
 
         const clearButton = context.querySelector('#clear-all-tags');
-        
+
         if (clearButton) {
           clearButton.addEventListener('click', function (event) {
             event.preventDefault();
-            
+
             // Remove all elements from activeTags array.
             activeTags = [];
-            
+
             // Update the container's data attribute.
             filterContainer.dataset.activeTags = JSON.stringify(activeTags);
 

@@ -268,7 +268,7 @@ class SodaScsIssueReportForm extends FormBase {
     $this->messenger->addStatus($this->t('Your issue report has been submitted successfully. Thank you for your feedback!'));
 
     // Redirect to the start page.
-    $form_state->setRedirect('soda_scs_manager.start_page');
+    $form_state->setRedirect('soda_scs_manager.dashboard');
   }
 
 }

@@ -9,10 +9,11 @@
  */
 #}
 
-{% set all_tags = ['coding', 'cms', 'data-cleaning', 'data-science', 'database', 'filesharing', 'office', 'ontology', 'publishing'] %}
+{# data-science and publishing are omitted from the filter bar (and cards); they are not filterable. #}
+{% set all_tags = ['coding', 'cms', 'data-cleaning', 'database', 'filesharing', 'office', 'ontology'] %}
 
 <div class="soda-scs-manager--tag-filter-container p-2 rounded-lg align-center justify-center">
-  <h3 class="text-stone-200 text-2xl font-bold p-1 text-center m-1 my-1">{{ 'Filter by Tags'|t }}</h3>
+  <h3 class="soda-scs-manager--dashboard-heading-filter">{{ 'Filter by Tags'|t }}</h3>
   <div class="soda-scs-manager--tag-filter flex flex-wrap gap-2 justify-center" data-active-tags="[]">
     {% for tag in all_tags|sort %}
       <button class="soda-scs-manager--tag-filter-button rounded-full px-3 py-1.5 text-sm flex items-center gap-1.5 cursor-pointer transition-all
@@ -24,14 +25,10 @@
           bg-emerald-100 text-emerald-700 hover:bg-emerald-200
         {% elseif tag == 'data-cleaning' %}
           bg-green-100 text-green-700 hover:bg-green-200
-        {% elseif tag == 'data-science' %}
-          bg-teal-100 text-teal-700 hover:bg-teal-200
         {% elseif tag == 'filesharing' %}
           bg-cyan-100 text-cyan-700 hover:bg-cyan-200
         {% elseif tag == 'ontology' %}
           bg-indigo-100 text-indigo-700 hover:bg-indigo-200
-        {% elseif tag == 'publishing' %}
-          bg-amber-100 text-amber-700 hover:bg-amber-200
         {% elseif tag == 'office' %}
           bg-orange-100 text-orange-700 hover:bg-orange-200
         {% elseif tag == 'triplestore' %}
@@ -58,9 +55,9 @@
   {% for username, entities in entitiesByUser %}
     <div class="text-center mb-8">
       {% if currentUsername is defined and username == currentUsername %}
-        <h2 class="text-3xl font-bold text-stone-200 mb-4">{{ 'Your applications'|t }}</h2>
+        <h2 class="soda-scs-manager--dashboard-heading-section">{{ 'Your applications'|t }}</h2>
       {% else %}
-        <h2 class="text-3xl font-bold text-stone-200 mb-4">{{ 'Applications of User @username'|t({'@username': username}) }}</h2>
+        <h2 class="soda-scs-manager--dashboard-heading-section">{{ 'Applications of User @username'|t({'@username': username}) }}</h2>
       {% endif %}
     </div>
 
@@ -78,7 +75,7 @@
 {% if entitiesByProject is not empty %}
   {% for project, entities in entitiesByProject %}
     <div class="text-center mb-8">
-      <h2 class="text-3xl font-bold text-stone-200 mb-4">{{ 'Project "@project" membership applications'|t({'@project': project}) }}</h2>
+      <h2 class="soda-scs-manager--dashboard-heading-section">{{ 'Project "@project" membership applications'|t({'@project': project}) }}</h2>
     </div>
 
     {% set projectEntityCount = entities|length %}

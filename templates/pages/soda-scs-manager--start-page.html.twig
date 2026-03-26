@@ -3,7 +3,7 @@
  * @file
  * Default theme implementation for SODa SCS Manager start page.
  *
- * Segments are donut rings (inner r=30, outer r=90) so the center circle shows.
+ * Two semicircle segments (inner r=30, outer r=90): manager start (/soda-scs-manager/start) left, dashboard right.
  * Center circle and label are drawn last so they appear on top.
  *
  * @ingroup themeable
@@ -42,47 +42,32 @@
         </clipPath>
       </defs>
 
-      {# Dashboard - right segment (330°–30°). Full-sector hit area so link area = hover area. #}
+      {# Manager start (/soda-scs-manager/start) — left semicircle. Full-sector hit area. #}
+      <a href="{{ path('soda_scs_manager.start_page') }}" class="soda-scs-manager--pie-link" data-pie-label="{{ 'SODa SCS Manager'|t }}">
+        <path class="soda-scs-manager--pie-hit" aria-hidden="true" d="M 100 100 L 100 190 A 90 90 0 1 1 100 10 Z" fill="transparent" />
+        <g class="soda-scs-manager--pie-segment">
+          <path class="soda-scs-manager--pie-slice soda-scs-manager--pie-slice--start"
+                d="M 100 190 A 90 90 0 1 1 100 10 L 100 70 A 30 30 0 0 0 70 100 A 30 30 0 0 0 100 130 Z"
+                fill="currentColor" />
+          <g class="soda-scs-manager--pie-icon" transform="translate(52,88)">
+            <svg width="24" height="24" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+              {# Same layout icon as sidebar link to this route (SodaScsNavigationBlock). #}
+              <path d="M3 4a1 1 0 011-1h12a1 1 0 011 1v2a1 1 0 01-1 1H4a1 1 0 01-1-1V4zM3 10a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H4a1 1 0 01-1-1v-6zM14 9a1 1 0 00-1 1v6a1 1 0 001 1h2a1 1 0 001-1v-6a1 1 0 00-1-1h-2z"/>
+            </svg>
+          </g>
+        </g>
+      </a>
+
+      {# Dashboard - right semicircle. Full-sector hit area. #}
       <a href="{{ path('soda_scs_manager.dashboard') }}" class="soda-scs-manager--pie-link" data-pie-label="{{ 'Dashboard'|t }}">
-        <path class="soda-scs-manager--pie-hit" aria-hidden="true" d="M 100 100 L 177.94 55 A 90 90 0 0 1 177.94 145 Z" fill="transparent" />
+        <path class="soda-scs-manager--pie-hit" aria-hidden="true" d="M 100 100 L 100 10 A 90 90 0 1 1 100 190 Z" fill="transparent" />
         <g class="soda-scs-manager--pie-segment">
           <path class="soda-scs-manager--pie-slice soda-scs-manager--pie-slice--dashboard"
-                d="M145,22.06 A90,90 0 0,1 145,177.94 L115,125.98 A30,30 0 0,0 115,74.02 L145,22.06 Z"
+                d="M 100 10 A 90 90 0 1 1 100 190 L 100 130 A 30 30 0 0 1 130 100 A 30 30 0 0 1 100 70 Z"
                 fill="currentColor" />
-          <g class="soda-scs-manager--pie-icon" transform="translate(148,88)">
+          <g class="soda-scs-manager--pie-icon" transform="translate(124,88)">
             <svg width="24" height="24" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
               <path fill-rule="evenodd" d="M3 5a2 2 0 012-2h10a2 2 0 012 2v8a2 2 0 01-2 2h-2.22l.123.489.804.804A1 1 0 0113 18H7a1 1 0 01-.707-1.707l.804-.804L7.22 15H5a2 2 0 01-2-2V5zm5.771 7H5V5h10v7H8.771z" clip-rule="evenodd"></path>
-            </svg>
-          </g>
-        </g>
-      </a>
-
-      {# Administration - bottom-left segment (30°–180°). Full-sector hit area. #}
-      <a href="{{ path('soda_scs_manager.administration') }}" class="soda-scs-manager--pie-link" data-pie-label="{{ 'Administration'|t }}">
-        <path class="soda-scs-manager--pie-hit" aria-hidden="true" d="M 100 100 L 177.94 145 A 90 90 0 0 1 10 100 Z" fill="transparent" />
-        <g class="soda-scs-manager--pie-segment">
-          <path class="soda-scs-manager--pie-slice soda-scs-manager--pie-slice--admin"
-                d="M145,177.94 A90,90 0 0,1 10,100 L70,100 A30,30 0 0,0 115,125.98 L145,177.94 Z"
-                fill="currentColor" />
-          <g class="soda-scs-manager--pie-icon" transform="translate(58,140)">
-            <svg width="24" height="24" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
-              <path fill-rule="evenodd" d="M11.49 3.17c-.38-1.56-2.6-1.56-2.98 0a1.532 1.532 0 01-2.286.948c-1.372-.836-2.942.734-2.106 2.106.54.886.061 2.042-.947 2.287-1.561.379-1.561 2.6 0 2.978a1.532 1.532 0 01.947 2.287c-.836 1.372.734 2.942 2.106 2.106a1.532 1.532 0 012.287.947c.379 1.561 2.6 1.561 2.978 0a1.533 1.533 0 012.287-.947c1.372.836 2.942-.734 2.106-2.106a1.533 1.533 0 01.947-2.287c1.561-.379 1.561-2.6 0-2.978a1.532 1.532 0 01-.947-2.287c.836-1.372-.734-2.942-2.106-2.106a1.532 1.532 0 01-2.287-.947zM10 13a3 3 0 100-6 3 3 0 000 6z" clip-rule="evenodd"></path>
-            </svg>
-          </g>
-        </g>
-      </a>
-
-      {# Documentation - top-left segment (180°–330°). Full-sector hit area. #}
-      {# internal:/soda-scs-manager/documentation — book root from content sync. #}
-      <a href="{{ documentation_url }}" class="soda-scs-manager--pie-link" data-pie-label="{{ 'Docs'|t }}">
-        <path class="soda-scs-manager--pie-hit" aria-hidden="true" d="M 100 100 L 10 100 A 90 90 0 0 1 177.94 55 Z" fill="transparent" />
-        <g class="soda-scs-manager--pie-segment">
-          <path class="soda-scs-manager--pie-slice soda-scs-manager--pie-slice--docs"
-                d="M10,100 A90,90 0 0,1 145,22.06 L115,74.02 A30,30 0 0,0 70,100 L10,100 Z"
-                fill="currentColor" />
-          <g class="soda-scs-manager--pie-icon" transform="translate(58,36)">
-            <svg width="24" height="24" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
-              <path d="M9 4.804A7.968 7.968 0 005.5 4c-1.255 0-2.443.29-3.5.804v10A7.969 7.969 0 015.5 14c1.669 0 3.218.51 4.5 1.385A7.962 7.962 0 0114.5 14c1.255 0 2.443.29 3.5.804v-10A7.968 7.968 0 0014.5 4c-1.255 0-2.443.29-3.5.804V12a1 1 0 11-2 0V4.804z"/>
             </svg>
           </g>
         </g>

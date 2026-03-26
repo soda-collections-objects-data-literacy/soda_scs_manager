@@ -404,6 +404,13 @@ entity.soda_scs_stack.snapshot:
 
 # Pages
 # @todo: refactor to use entity type as parameter for just one route
+soda_scs_manager.manager_root:
+  path: '/soda-scs-manager'
+  defaults:
+    _controller: '\Drupal\soda_scs_manager\Controller\SodaScsManagerController::redirectManagerRoot'
+  requirements:
+    _permission: 'soda scs manager user'
+
 soda_scs_manager.dashboard:
   path: '/soda-scs-manager/dashboard'
   defaults:
@@ -424,12 +431,14 @@ soda_scs_manager.debug:
 
 
 soda_scs_manager.start_page:
-  path: '/soda-scs-manager'
+  path: '/soda-scs-manager/start'
   defaults:
     _controller: '\Drupal\soda_scs_manager\Controller\SodaScsManagerController::startPage'
     _title: 'SODa SCS Manager'
   requirements:
     _permission: 'soda scs manager user'
+  options:
+    no_cache: TRUE
 
 soda_scs_manager.notifications:
   path: '/soda-scs-manager/notifications'
@@ -447,7 +456,7 @@ soda_scs_manager.administration:
     _controller: '\Drupal\soda_scs_manager\Controller\SodaScsAdministrationController::administrationPage'
     _title: 'SCS Administration'
   requirements:
-    _permission: 'soda scs manager user'
+    _permission: 'soda scs manager admin'
 
 soda_scs_manager.settings:
   path: '/admin/config/soda-scs-manager/settings'
