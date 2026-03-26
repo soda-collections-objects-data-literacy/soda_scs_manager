@@ -410,6 +410,7 @@ class SodaScsTriplestoreComponentActions implements SodaScsComponentActionsInter
           ],
           'snapshotMachineName' => $snapshotMachineName,
           'snapshotDirectory' => $snapshotPaths['snapshotDirectory'],
+          'snapshotFilesystemRoot' => $snapshotPaths['snapshotFilesystemRoot'],
           'timestamp' => $timestamp,
 
         ],

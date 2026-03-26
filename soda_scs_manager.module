@@ -1161,7 +1161,12 @@ function soda_scs_manager_file_download($uri) {
     return NULL;
   }
   $target = $streamWrapperManager->getTarget($uri);
-  if (!\str_starts_with($target, 'snapshots/')) {
+  $filesSubpath = trim((string) (\Drupal::config('soda_scs_manager.settings')->get('snapshotFilesSubpath') ?: 'snapshots'), '/');
+  if ($filesSubpath === '') {
+    $filesSubpath = 'snapshots';
+  }
+  $snapshotTargetPrefix = $filesSubpath . '/';
+  if (!\str_starts_with($target, $snapshotTargetPrefix)) {
     return NULL;
   }
 

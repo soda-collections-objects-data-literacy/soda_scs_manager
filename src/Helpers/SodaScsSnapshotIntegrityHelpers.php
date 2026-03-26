@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Drupal\soda_scs_manager\Helpers;
 
+use Drupal\Core\Config\ConfigFactoryInterface;
 use Drupal\Core\Entity\EntityTypeManagerInterface;
 use Drupal\Core\Logger\LoggerChannelFactoryInterface;
 use Drupal\Core\Messenger\MessengerInterface;
@@ -38,6 +39,13 @@ class SodaScsSnapshotIntegrityHelpers {
   protected MessengerInterface $messenger;
 
   /**
+   * The config factory.
+   *
+   * @var \Drupal\Core\Config\ConfigFactoryInterface
+   */
+  protected ConfigFactoryInterface $configFactory;
+
+  /**
    * Constructs a new SodaScsSnapshotIntegrityHelpers.
    *
    * @param \Drupal\Core\Entity\EntityTypeManagerInterface $entityTypeManager
@@ -46,15 +54,19 @@ class SodaScsSnapshotIntegrityHelpers {
    *   The logger factory.
    * @param \Drupal\Core\Messenger\MessengerInterface $messenger
    *   The messenger service.
+   * @param \Drupal\Core\Config\ConfigFactoryInterface $configFactory
+   *   The config factory.
    */
   public function __construct(
     EntityTypeManagerInterface $entityTypeManager,
     LoggerChannelFactoryInterface $loggerFactory,
     MessengerInterface $messenger,
+    ConfigFactoryInterface $configFactory,
   ) {
     $this->entityTypeManager = $entityTypeManager;
     $this->loggerFactory = $loggerFactory;
     $this->messenger = $messenger;
+    $this->configFactory = $configFactory;
   }
 
   /**
@@ -418,6 +430,12 @@ class SodaScsSnapshotIntegrityHelpers {
       /** @var \Drupal\file\Entity\File[] $files */
       $files = $fileStorage->loadMultiple($fileIds);
 
+      $filesSubpath = trim((string) ($this->configFactory->get('soda_scs_manager.settings')->get('snapshotFilesSubpath') ?: 'snapshots'), '/');
+      if ($filesSubpath === '') {
+        $filesSubpath = 'snapshots';
+      }
+      $privateSnapshotPrefix = 'private://' . $filesSubpath . '/';
+
       foreach ($files as $file) {
         $fileUri = $file->getFileUri();
         $issues = [];
@@ -427,7 +445,7 @@ class SodaScsSnapshotIntegrityHelpers {
         if (strpos($fileUri, 'temporary://') !== FALSE ||
             strpos($fileUri, '.tar.gz') !== FALSE ||
             strpos($fileUri, '.sha256') !== FALSE ||
-            strpos($fileUri, 'private://snapshots/') !== FALSE) {
+            strpos($fileUri, $privateSnapshotPrefix) !== FALSE) {
           $isSnapshotRelated = TRUE;
         }
 

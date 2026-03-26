@@ -607,6 +607,7 @@ class SodaScsSqlComponentActions implements SodaScsComponentActionsInterface {
             'sha256FileName' => $snapshotPaths['sha256FileName'],
           ],
           'snapshotDirectory' => $snapshotPaths['snapshotDirectory'],
+          'snapshotFilesystemRoot' => $snapshotPaths['snapshotFilesystemRoot'],
           'snapshotMachineName' => $snapshotMachineName,
           'timestamp' => $timestamp,
         ],

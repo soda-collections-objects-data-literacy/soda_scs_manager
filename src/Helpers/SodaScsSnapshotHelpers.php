@@ -31,6 +31,11 @@ class SodaScsSnapshotHelpers {
   use MessengerTrait;
 
   /**
+   * Default snapshot root when soda_scs_manager.settings:snapshotPath is empty.
+   */
+  public const DEFAULT_SNAPSHOT_FILESYSTEM_PATH = '/srv/backups/scs-manager/snapshots';
+
+  /**
    * The component helpers.
    *
    * @var \Drupal\soda_scs_manager\Helpers\SodaScsComponentHelpers
@@ -172,18 +177,23 @@ class SodaScsSnapshotHelpers {
         $type = $bundle;
     }
 
-    // Get the private file system path from Drupal's
-    // file system settings. (/var/scs-manager/)
-    $privateFileSystemPath = rtrim($this->fileSystem->realpath("private://") ?? throw new \Exception('Private file system path not found'), '/');
-    // Get the snapshot path from the settings.
-    $snapshotPath = $this->configFactory->get('soda_scs_manager.settings')->get('snapshotPath') ?? throw new \Exception('Snapshot path not found');
+    $settings = $this->configFactory->get('soda_scs_manager.settings');
+    $rawSnapshotPath = rtrim(trim((string) ($settings->get('snapshotPath') ?? '')), '/');
+    if ($rawSnapshotPath === '') {
+      $rawSnapshotPath = self::DEFAULT_SNAPSHOT_FILESYSTEM_PATH;
+    }
+    if (!str_starts_with($rawSnapshotPath, '/')) {
+      throw new \Exception('Snapshot path must be an absolute filesystem path (e.g. /var/scs-manager/snapshots).');
+    }
     // Full path to the snapshot directory, e.g. /var/scs-manager/snapshots.
-    // If path is already absolute under private, use as-is to avoid doubling.
-    $snapshotPathIsAbsolute = str_starts_with($snapshotPath, $privateFileSystemPath . '/')
-      || $snapshotPath === $privateFileSystemPath;
-    $snapshotFullPath = $snapshotPathIsAbsolute
-      ? rtrim($snapshotPath, '/')
-      : $privateFileSystemPath . $snapshotPath;
+    $snapshotFullPath = rtrim($rawSnapshotPath, '/');
+    // Subdirectory under private:// for File entities and /system/files/... URLs.
+    // Must match the folder layout under the Drupal private files root (symlink if needed).
+    $filesSubpath = trim((string) ($settings->get('snapshotFilesSubpath') ?: 'snapshots'), '/');
+    if ($filesSubpath === '') {
+      $filesSubpath = 'snapshots';
+    }
+    $snapshotPathForUrl = '/' . $filesSubpath;
 
     // Ensure the snapshot root exists and has proper permissions (33:33, 0775).
     // The base /var/scs-manager directory is set up by container entrypoint.
@@ -191,11 +201,6 @@ class SodaScsSnapshotHelpers {
       @mkdir($snapshotFullPath, 0775, TRUE);
     }
     $this->fixDirectoryOwnership($snapshotFullPath);
-
-    // Path relative to private root for URL use (e.g. /snapshots).
-    $snapshotPathForUrl = $snapshotPathIsAbsolute
-      ? '/' . ltrim(substr(rtrim($snapshotPath, '/'), strlen($privateFileSystemPath)), '/')
-      : $snapshotPath;
     // Get the owner of the component.
     $owner = $component->getOwner()->getDisplayName();
     // Get the date.
@@ -245,6 +250,7 @@ class SodaScsSnapshotHelpers {
       'relativeUrlBackupPath' => $relativeUrlBackupPath,
       'sha256FileName' => $sha256FileName,
       'snapshotDirectory' => $snapshotDirectory,
+      'snapshotFilesystemRoot' => $snapshotFullPath,
       'tarFileName' => $tarFileName,
       'type' => $type,
     ];
@@ -526,7 +532,24 @@ class SodaScsSnapshotHelpers {
         );
       }
 
-      $relativeBagPath = str_replace($this->fileSystem->realpath("private://"), '', $bagPath);
+      $snapshotFilesystemRoot = (string) (reset($snapshotData)->metadata['snapshotFilesystemRoot'] ?? '');
+      $snapshotFilesystemRoot = $snapshotFilesystemRoot !== '' ? rtrim(str_replace('\\', '/', $snapshotFilesystemRoot), '/') : rtrim(str_replace('\\', '/', dirname($singleSnapshotDirectory, 4)), '/');
+      $bagPathNorm = str_replace('\\', '/', $bagPath);
+      $filesSubpath = trim((string) ($this->configFactory->get('soda_scs_manager.settings')->get('snapshotFilesSubpath') ?: 'snapshots'), '/');
+      if ($filesSubpath === '') {
+        $filesSubpath = 'snapshots';
+      }
+      if ($bagPathNorm !== $snapshotFilesystemRoot && !str_starts_with($bagPathNorm . '/', $snapshotFilesystemRoot . '/')) {
+        return SodaScsResult::failure(
+          error: 'Bag path outside snapshot root',
+          message: (string) $this->t(
+            'Snapshot creation failed: Bag path @bag is not under snapshot root @root.',
+            ['@bag' => $bagPath, '@root' => $snapshotFilesystemRoot]
+          ),
+        );
+      }
+      $underRoot = substr($bagPathNorm, strlen($snapshotFilesystemRoot));
+      $relativeBagPath = '/' . $filesSubpath . $underRoot;
 
       return SodaScsResult::success(
         data: [

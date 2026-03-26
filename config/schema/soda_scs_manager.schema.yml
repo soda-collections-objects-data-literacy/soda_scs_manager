@@ -10,6 +10,14 @@ soda_scs_manager.settings:
       type: string
       label: 'Administrator email'
       description: 'The administrator email, like admin@scs.sammlungen.io.'
+    snapshotPath:
+      type: string
+      label: 'Snapshot filesystem path'
+      description: 'Absolute path where snapshot archives are stored (default /srv/backups/scs-manager/snapshots).'
+    snapshotFilesSubpath:
+      type: string
+      label: 'Snapshot private files subpath'
+      description: 'Path segment under private:// for snapshot downloads, e.g. snapshots for private://snapshots/....'
     dbHost:
       type: string
       label: 'Database host'

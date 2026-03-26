@@ -6,6 +6,7 @@ namespace Drupal\soda_scs_manager\Form;
 
 use Drupal\Core\Entity\EntityTypeManagerInterface;
 use Drupal\Core\Form\ConfigFormBase;
+use Drupal\soda_scs_manager\Helpers\SodaScsSnapshotHelpers;
 use Drupal\Core\Form\FormStateInterface;
 use Psr\Log\LogLevel;
 use Symfony\Component\DependencyInjection\ContainerInterface;
@@ -123,11 +124,23 @@ class SodaScsSettingsForm extends ConfigFormBase {
       '#description' => $this->t('The administrator email, like admin@scs.sammlungen.io.'),
     ];
 
+    $snapshotPathConfig = $this->config('soda_scs_manager.settings')->get('snapshotPath');
     $form['general']['fields']['snapshotPath'] = [
       '#type' => 'textfield',
       '#title' => $this->t('Snapshot path'),
-      '#default_value' => $this->config('soda_scs_manager.settings')->get('snapshotPath'),
-      '#description' => $this->t('The snapshot path in addition to the private file system path, like /snapshots.'),
+      '#default_value' => ($snapshotPathConfig !== NULL && $snapshotPathConfig !== '')
+        ? $snapshotPathConfig
+        : SodaScsSnapshotHelpers::DEFAULT_SNAPSHOT_FILESYSTEM_PATH,
+      '#description' => $this->t(
+        'Absolute filesystem directory for snapshots. Default: @default. Not derived from Drupal private files; align with bind mounts and permissions on the server.',
+        ['@default' => SodaScsSnapshotHelpers::DEFAULT_SNAPSHOT_FILESYSTEM_PATH]
+      ),
+    ];
+    $form['general']['fields']['snapshotFilesSubpath'] = [
+      '#type' => 'textfield',
+      '#title' => $this->t('Snapshot private files subpath'),
+      '#default_value' => $this->config('soda_scs_manager.settings')->get('snapshotFilesSubpath') ?: 'snapshots',
+      '#description' => $this->t('Folder name under private:// for snapshot file entities and /system/files/... URLs (default: snapshots). That folder under the Drupal private files root should expose the same tree as the snapshot path (often via symlink).'),
     ];
 
     // Database settings tab.
@@ -1332,6 +1345,14 @@ class SodaScsSettingsForm extends ConfigFormBase {
     }
 
     // Save the configuration.
+    $snapshotPath = rtrim(trim((string) $form_state->getValue('snapshotPath')), '/');
+    if ($snapshotPath === '') {
+      $snapshotPath = SodaScsSnapshotHelpers::DEFAULT_SNAPSHOT_FILESYSTEM_PATH;
+    }
+    $snapshotFilesSubpath = trim((string) $form_state->getValue('snapshotFilesSubpath'), '/');
+    if ($snapshotFilesSubpath === '') {
+      $snapshotFilesSubpath = 'snapshots';
+    }
     $config
       ->set('accessProxy', $form_state->getValue('accessProxy'))
       ->set('administratorEmail', $form_state->getValue('administratorEmail'))
@@ -1346,7 +1367,8 @@ class SodaScsSettingsForm extends ConfigFormBase {
       ->set('portainer', $portainerValues)
       ->set('scsHost', $form_state->getValue('scsHost'))
       ->set('security', $form_state->getValue('security'))
-      ->set('snapshotPath', $form_state->getValue('snapshotPath'))
+      ->set('snapshotPath', $snapshotPath)
+      ->set('snapshotFilesSubpath', $snapshotFilesSubpath)
       ->set('triplestore', $triplestoreValues)
       ->set('webprotege', $form_state->getValue('webprotege'))
       ->set('wisski', $wisskiValues)

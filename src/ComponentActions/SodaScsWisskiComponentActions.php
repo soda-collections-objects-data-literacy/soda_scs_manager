@@ -949,6 +949,7 @@ class SodaScsWisskiComponentActions implements SodaScsComponentActionsInterface 
           ],
           'snapshotMachineName' => $snapshotMachineName,
           'snapshotDirectory' => $snapshotPaths['snapshotDirectory'],
+          'snapshotFilesystemRoot' => $snapshotPaths['snapshotFilesystemRoot'],
           'timestamp' => $timestamp,
         ],
         'startSnapshotContainerResponse' => $startSnapshotContainerRunCommandResponse,
