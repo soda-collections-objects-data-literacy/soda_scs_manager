@@ -23,7 +23,7 @@ mv modules/custom/soda_scs_manager/content/sync/content-bulk-export* modules/cus
 ```
 ### Import
 ```bash
-drush content:import modules/custom/soda_scs_manager/content/sync
+drush content:import modules/custom/soda_scs_manager/content/sync/content-bulk-export.zip
 ```
 
 ## Hooks
