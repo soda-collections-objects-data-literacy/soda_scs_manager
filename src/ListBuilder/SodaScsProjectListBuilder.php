@@ -7,7 +7,6 @@ namespace Drupal\soda_scs_manager\ListBuilder;
 use Drupal\Core\Datetime\DateFormatterInterface;
 use Drupal\Core\Entity\EntityInterface;
 use Drupal\Core\Entity\EntityListBuilder;
-use Drupal\Core\Entity\EntityStorageInterface;
 use Drupal\Core\Entity\EntityTypeInterface;
 use Drupal\Core\Link;
 use Drupal\Core\Render\Markup;
@@ -35,6 +34,16 @@ class SodaScsProjectListBuilder extends EntityListBuilder {
    * @var \Drupal\Core\Session\AccountProxyInterface
    */
   protected AccountProxyInterface $currentUser;
+
+  /**
+   * Component bundles counted in the project list Applications column.
+   *
+   * @var list<string>
+   */
+  private const APPLICATION_COMPONENT_BUNDLES = [
+    'soda_scs_sql_component',
+    'soda_scs_wisski_component',
+  ];
 
   /**
    * {@inheritdoc}
@@ -76,12 +85,12 @@ class SodaScsProjectListBuilder extends EntityListBuilder {
    * {@inheritdoc}
    */
   public function buildHeader() {
-    $header['label']      = $this->t('Name');
-    $header['id']         = $this->t('ID');
-    $header['owner']      = $this->t('Owner');
-    $header['members']    = $this->t('Members');
-    $header['components'] = $this->t('Components');
-    $header['created']    = $this->t('Created');
+    $header['label']        = $this->t('Name');
+    $header['id']           = $this->t('ID');
+    $header['owner']        = $this->t('Owner');
+    $header['members']      = $this->t('Members');
+    $header['applications'] = $this->t('Applications');
+    $header['created']      = $this->t('Created');
     return $header + parent::buildHeader();
   }
 
@@ -152,20 +161,22 @@ class SodaScsProjectListBuilder extends EntityListBuilder {
 
     $row['members'] = !empty($memberLinks) ? Markup::create(implode(', ', $memberLinks)) : $this->t('None');
 
-    // Component references.
+    // WissKI + SQL only; full component list is on the project page.
     /** @var \Drupal\Core\Field\EntityReferenceFieldItemListInterface $scsComponentValues */
     $scsComponentValues = $entity->get('connectedComponents');
-    $referencedEntities = $scsComponentValues->referencedEntities();
-    $componentLinks = [];
-
-    foreach ($referencedEntities as $referencedEntity) {
-      $componentLinks[] = Link::fromTextAndUrl(
-        $referencedEntity->label(),
-        Url::fromRoute('entity.soda_scs_component.canonical', ['soda_scs_component' => $referencedEntity->id()])
-      )->toString();
+    $applicationCount = 0;
+    if (!$scsComponentValues->isEmpty()) {
+      foreach ($scsComponentValues->referencedEntities() as $referencedComponent) {
+        $bundle = $referencedComponent->bundle();
+        if (in_array($bundle, self::APPLICATION_COMPONENT_BUNDLES, TRUE)) {
+          $applicationCount++;
+        }
+      }
     }
 
-    $row['components'] = !empty($componentLinks) ? Markup::create(implode(', ', $componentLinks)) : $this->t('None');
+    $row['applications'] = $applicationCount > 0
+      ? $this->formatPlural($applicationCount, '1', '@count')
+      : $this->t('None');
 
     // Created date.
     $created = $entity->get('created')->value;
