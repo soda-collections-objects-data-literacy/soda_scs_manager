@@ -359,6 +359,11 @@ class SodaScsPortainerServiceActions implements SodaScsServiceRequestInterface {
       $repositoryURL = 'https://github.com/soda-collections-objects-data-literacy/wisski-base-component.git';
     }
 
+    $composeStackVersion = (string) ($requestParams['wisskiComposeStackVersion'] ?? '');
+    $repositoryReferenceName = $composeStackVersion !== ''
+      ? $this->buildRepositoryRef($composeStackVersion)
+      : '';
+
     $env = [
       // General settings.
       [
@@ -537,6 +542,20 @@ class SodaScsPortainerServiceActions implements SodaScsServiceRequestInterface {
       ],
     ];
 
+    // Safe clone-debug line (no env secrets). Enable debug for soda_scs_manager
+    // to verify what the deployments/Portainer API receives for git clone.
+    $this->loggerFactory->get('soda_scs_manager')->debug(
+      'WissKI stack create (git clone params): route=@route repositoryURL=@repo repositoryReferenceName=@ref wisskiType=@type stack=@name composeStackVersionRaw=@raw',
+      [
+        '@route' => $route,
+        '@repo' => $repositoryURL,
+        '@ref' => $repositoryReferenceName !== '' ? $repositoryReferenceName : '(empty → default branch)',
+        '@type' => (string) ($requestParams['wisskiType'] ?? ''),
+        '@name' => (string) ($requestParams['machineName'] ?? ''),
+        '@raw' => $composeStackVersion !== '' ? $composeStackVersion : '(empty)',
+      ]
+    );
+
     return [
       'success' => TRUE,
       'method' => 'POST',
@@ -552,7 +571,7 @@ class SodaScsPortainerServiceActions implements SodaScsServiceRequestInterface {
         'name' => $requestParams['machineName'],
         'repositoryAuthentication' => FALSE,
         'repositoryURL' => $repositoryURL,
-        "repositoryReferenceName" => $requestParams['wisskiComposeStackVersion'] ? $this->buildRepositoryRef($requestParams['wisskiComposeStackVersion']) : '',
+        'repositoryReferenceName' => $repositoryReferenceName,
         'buildArgs' => $requestParams['buildArgs'] ?? [],
       ]),
     ];

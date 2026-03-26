@@ -21,6 +21,16 @@
     if (s === 'running' || s === 'healthy') return 'running';
     if (s === 'starting' || m === 'starting') return 'starting';
     if (s === 'stopped' || m === 'stopped') return 'stopped';
+    if (s === 'unhealthy') return 'error';
+    if (
+      s === 'unavailable' ||
+      s === 'unknown' ||
+      m === 'not available' ||
+      m.indexOf('component is not available') !== -1 ||
+      m.indexOf('service temporarily unavailable') !== -1
+    ) {
+      return 'starting';
+    }
     return 'error';
   }
 
@@ -75,8 +85,9 @@
             }
           }).fail(function () {
             stopLoading();
-            $healthItem.html(renderBadge('error', HEALTH_SYMBOLS.error, 'Health controller has internal error or is not reachable', 'Health controller has internal error or is not reachable'));
-            $healthLabel.addClass('soda-scs-manager--entity-status--api-error').attr('title', 'Health controller has internal error or is not reachable');
+            const transportTitle = Drupal.t('Could not refresh status');
+            $healthItem.html(renderBadge('starting', HEALTH_SYMBOLS.starting, Drupal.t('Checking…'), transportTitle));
+            $healthLabel.addClass('soda-scs-manager--entity-status--api-error').attr('title', transportTitle);
           });
         }
 

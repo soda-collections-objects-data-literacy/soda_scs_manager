@@ -13,7 +13,7 @@ entityHelpers:
   dependencies:
     - core/jquery
     - core/drupal
-    - core/jquery.once
+    - core/once
     - soda_scs_manager/globalStyling
 
 globalStyling:
@@ -125,3 +125,14 @@ nextcloudConnect:
     - core/once
     - core/drupalSettings
     - soda_scs_manager/globalStyling
+
+coworkingIntroWizard:
+  version: 1.4
+  js:
+    js/coworkingIntroWizard.js: {}
+  dependencies:
+    - core/drupal
+    - core/once
+    - core/drupalSettings
+    - soda_scs_manager/globalStyling
+    - soda_scs_manager/throbberOverlay

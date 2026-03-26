@@ -26,6 +26,7 @@ use Drupal\soda_scs_manager\Entity\SodaScsProject;
 use Drupal\soda_scs_manager\Entity\SodaScsServiceKey;
 use Drupal\soda_scs_manager\Entity\SodaScsSnapshot;
 use Drupal\soda_scs_manager\Entity\SodaScsStack;
+use Drupal\soda_scs_manager\Helpers\SodaScsSnapshotHelpers;
 use Drupal\user\UserInterface;
 use Drupal\node\NodeInterface;
 use Symfony\Component\HttpFoundation\RedirectResponse;
@@ -631,6 +632,10 @@ function soda_scs_manager_theme($existing, $type, $theme, $path) {
         'entity_type' => NULL,
         'attributes' => NULL,
         'currentUsername' => NULL,
+        'add_application_trigger' => NULL,
+        'intro_coworking_wizard' => FALSE,
+        'intro_asset_base' => '',
+        'intro_connected_accounts_url' => '',
       ],
       'template' => 'pages/soda-scs-manager--dashboard',
     ],
@@ -655,6 +660,9 @@ function soda_scs_manager_theme($existing, $type, $theme, $path) {
         'attributes' => NULL,
         'user' => NULL,
         'connected_accounts_url' => '',
+        'intro_coworking_wizard' => FALSE,
+        'intro_asset_base' => '',
+        'intro_connected_accounts_url' => '',
       ],
       'template' => 'pages/soda-scs-manager--start-page',
     ],
@@ -686,6 +694,15 @@ function soda_scs_manager_theme($existing, $type, $theme, $path) {
         'popup_url_open_gdb' => '',
       ],
       'template' => 'cards/soda-scs-manager--add-application-card',
+    ],
+    'soda_scs_manager__add_application_heading_trigger' => [
+      'variables' => [
+        'asset_base' => '',
+        'popup_url_mariadb' => '',
+        'popup_url_wisski' => '',
+        'popup_url_open_gdb' => '',
+      ],
+      'template' => 'cards/soda-scs-manager--add-application-heading-trigger',
     ],
   ];
 }
@@ -1161,7 +1178,7 @@ function soda_scs_manager_file_download($uri) {
     return NULL;
   }
   $target = $streamWrapperManager->getTarget($uri);
-  $snapshotTargetPrefix = \Drupal\soda_scs_manager\Helpers\SodaScsSnapshotHelpers::SNAPSHOT_PRIVATE_URI_SUBPATH . '/';
+  $snapshotTargetPrefix = SodaScsSnapshotHelpers::SNAPSHOT_PRIVATE_URI_SUBPATH . '/';
   if (!\str_starts_with($target, $snapshotTargetPrefix)) {
     return NULL;
   }

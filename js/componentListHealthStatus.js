@@ -42,15 +42,40 @@
               $healthCell.removeClass('health-error health-loading').addClass('health-success');
             }
             else {
+              const status = (data && data.status && data.status.status) ? data.status.status : '';
               const message = (data && data.status && data.status.message) ? data.status.message : 'Error';
               const error = (data && data.status && data.status.error) ? data.status.error : '';
-              $healthCell.html('<span class="health-error" title="' + error + '">● ' + message + '</span>');
-              $healthCell.removeClass('health-success health-loading').addClass('health-error');
+              const statusLower = (status || '').toLowerCase();
+              const messageLower = (message || '').toLowerCase();
+              const isProvisioning =
+                statusLower === 'starting' ||
+                statusLower === 'unavailable' ||
+                statusLower === 'unknown' ||
+                messageLower === 'starting' ||
+                messageLower === 'not available' ||
+                messageLower.indexOf('component is not available') !== -1 ||
+                messageLower.indexOf('service temporarily unavailable') !== -1;
+              if (statusLower === 'unhealthy') {
+                $healthCell.html('<span class="health-error" title="' + error + '">● ' + message + '</span>');
+                $healthCell.removeClass('health-success health-loading').addClass('health-error');
+              }
+              else if (isProvisioning) {
+                $healthCell.html('<span class="health-pending" title="' + error + '">● ' + Drupal.t('Starting') + '</span>');
+                $healthCell.removeClass('health-success health-loading health-error').addClass('health-pending');
+              }
+              else if (statusLower === 'stopped' || messageLower === 'stopped') {
+                $healthCell.html('<span class="health-error" title="' + error + '">● ' + message + '</span>');
+                $healthCell.removeClass('health-success health-loading').addClass('health-error');
+              }
+              else {
+                $healthCell.html('<span class="health-error" title="' + error + '">● ' + message + '</span>');
+                $healthCell.removeClass('health-success health-loading').addClass('health-error');
+              }
             }
           }).fail(function (jqXHR, textStatus, errorThrown) {
             clearInterval(dotsInterval);
-            $healthCell.html('<span class="health-error" title="Health controller error">● Unavailable</span>');
-            $healthCell.removeClass('health-success health-loading').addClass('health-error');
+            $healthCell.html('<span class="health-pending" title="">● ' + Drupal.t('Could not refresh status') + '</span>');
+            $healthCell.removeClass('health-success health-loading health-error').addClass('health-pending');
           });
         }
 

@@ -167,7 +167,7 @@ class SodaScsComponentCreateForm extends ContentEntityForm {
     // Ensure the entity has the correct bundle before building the form.
     if (!$this->entity->bundle() && $this->bundle) {
       $this->entity = $this->entityTypeManager->getStorage('soda_scs_component')->create([
-        'type' => $this->bundle,
+        'bundle' => $this->bundle,
       ]);
     }
 
@@ -179,6 +179,19 @@ class SodaScsComponentCreateForm extends ContentEntityForm {
 
     // Build the form.
     $form = parent::buildForm($form, $form_state);
+
+    // Optional ?label= from dashboard intro pre-fills WissKI create form.
+    $request = $this->getRequest();
+    if ($request && $this->bundle === 'soda_scs_wisski_component') {
+      $suggested = $request->query->get('label');
+      if (is_string($suggested)) {
+        $suggested = trim(strip_tags($suggested));
+        if ($suggested !== '' && isset($form['label']['widget'][0]['value'])) {
+          $form['label']['widget'][0]['value']['#default_value'] =
+            mb_substr($suggested, 0, 255);
+        }
+      }
+    }
 
     // Hide the flavours field.
     $form['flavours']['#access'] = FALSE;

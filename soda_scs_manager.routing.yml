@@ -215,6 +215,15 @@ entity.soda_scs_project.collection:
   requirements:
     _permission: 'soda scs manager user'
 
+# User-facing project list (same list builder as admin collection; used by main menu).
+soda_scs_manager.projects:
+  path: '/soda-scs-manager/projects'
+  defaults:
+    _entity_list: 'soda_scs_project'
+    _title: 'Projects'
+  requirements:
+    _permission: 'soda scs manager user'
+
 
 # SODa SCS Service Key Entities
 
@@ -420,6 +429,42 @@ soda_scs_manager.dashboard:
     _permission: 'soda scs manager user'
   options:
     no_cache: TRUE
+
+soda_scs_manager.coworking_intro_complete:
+  path: '/soda-scs-manager/intro/coworking/complete'
+  defaults:
+    _controller: '\Drupal\soda_scs_manager\Controller\SodaScsCoworkingIntroController::complete'
+    _title: 'Co-working intro complete'
+  requirements:
+    _permission: 'soda scs manager user'
+    _csrf_request_header_token: 'TRUE'
+  methods: [POST]
+  options:
+    no_cache: TRUE
+
+soda_scs_manager.coworking_intro_create_wisski:
+  path: '/soda-scs-manager/intro/coworking/create-wisski'
+  defaults:
+    _controller: '\Drupal\soda_scs_manager\Controller\SodaScsCoworkingIntroController::createWisski'
+    _title: 'Create WissKI stack from intro'
+  requirements:
+    _permission: 'soda scs manager user'
+    _csrf_request_header_token: 'TRUE'
+  methods: [POST]
+  options:
+    no_cache: TRUE
+
+soda_scs_manager.user_account_scs_manager:
+  path: '/user/{user}/scs-manager'
+  defaults:
+    _form: '\Drupal\soda_scs_manager\Form\SodaScsUserScsManagerSettingsForm'
+    _title: 'SCS Manager'
+  requirements:
+    _entity_access: 'user.update'
+  options:
+    parameters:
+      user:
+        type: entity:user
 
 soda_scs_manager.debug:
   path: '/soda-scs-manager/debug'

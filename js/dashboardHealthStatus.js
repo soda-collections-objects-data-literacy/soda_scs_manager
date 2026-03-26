@@ -110,12 +110,27 @@
               var status = (data && data.status && data.status.status) ? data.status.status : '';
               var message = (data && data.status && data.status.message) ? data.status.message : 'Error';
               currentStatus = status;
+              var statusLower = (status || '').toLowerCase();
+              var messageLower = (message || '').toLowerCase();
 
               if (status === 'starting' || message === 'Starting' || message === 'starting') {
                 updateHealthIcon('starting', Drupal.t('Starting'));
               }
               else if (status === 'stopped' || message === 'Stopped' || message === 'stopped') {
                 updateHealthIcon('stopped', Drupal.t('Stopped'));
+              }
+              else if (statusLower === 'unhealthy') {
+                updateHealthIcon('failure', message);
+              }
+              else if (
+                statusLower === 'unavailable' ||
+                statusLower === 'unknown' ||
+                messageLower === 'not available' ||
+                messageLower.indexOf('component is not available') !== -1 ||
+                messageLower.indexOf('service temporarily unavailable') !== -1
+              ) {
+                updateHealthIcon('starting', Drupal.t('Starting'));
+                currentStatus = 'starting';
               }
               else {
                 updateHealthIcon('failure', message);
@@ -150,7 +165,7 @@
             // Update previous status for next check.
             previousStatus = currentStatus;
           }).fail(function () {
-            updateHealthIcon('failure', Drupal.t('Unavailable'));
+            updateHealthIcon('unknown', Drupal.t('Could not refresh status'));
           });
         }
 

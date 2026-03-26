@@ -1,0 +1,16 @@
+{#
+/**
+ * @file
+ * Compact (+) control next to the "Your applications" heading; opens add-app modal.
+ *
+ * Available variables:
+ * - asset_base, popup_url_mariadb, popup_url_wisski, popup_url_open_gdb
+ */
+#}
+<button type="button"
+        class="soda-scs-manager--add-app-button soda-scs-manager--add-app-heading-button"
+        aria-label="{{ 'Add new application'|t }}"
+        title="{{ 'Add new application'|t }}">
+  <span aria-hidden="true" class="soda-scs-manager--add-app-heading-plus">+</span>
+</button>
+{% include '@soda_scs_manager/cards/soda-scs-manager--add-application-popup.html.twig' %}

@@ -8,12 +8,14 @@ use Drupal\Component\Plugin\Exception\InvalidPluginDefinitionException;
 use Drupal\Component\Plugin\Exception\PluginNotFoundException;
 use Drupal\Core\Controller\ControllerBase;
 use Drupal\Core\Entity\EntityTypeManagerInterface;
+use Drupal\Core\Language\LanguageInterface;
 use Drupal\Core\Session\AccountInterface;
 use Drupal\Core\Url;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 use Drupal\Core\Entity\EntityTypeBundleInfoInterface;
 use Drupal\soda_scs_manager\Helpers\SodaScsHelpers;
 use Drupal\Core\Entity\EntityStorageException;
+use Drupal\user\UserDataInterface;
 
 /**
  * The SODa SCS Manager info controller.
@@ -49,6 +51,13 @@ class SodaScsManagerController extends ControllerBase {
   protected $sodaScsHelpers;
 
   /**
+   * Per-user key-value data (onboarding flags).
+   *
+   * @var \Drupal\user\UserDataInterface
+   */
+  protected UserDataInterface $userData;
+
+  /**
    * Class constructor.
    *
    * @param \Drupal\Core\Entity\EntityTypeBundleInfoInterface $bundleInfo
@@ -59,17 +68,21 @@ class SodaScsManagerController extends ControllerBase {
    *   The entity type manager.
    * @param \Drupal\soda_scs_manager\Helpers\SodaScsHelpers $sodaScsHelpers
    *   The Soda SCS helpers.
+   * @param \Drupal\user\UserDataInterface $userData
+   *   User data for intro / onboarding flags.
    */
   public function __construct(
     EntityTypeBundleInfoInterface $bundleInfo,
     AccountInterface $currentUser,
     EntityTypeManagerInterface $entityTypeManager,
     SodaScsHelpers $sodaScsHelpers,
+    UserDataInterface $userData,
   ) {
     $this->bundleInfo = $bundleInfo;
     $this->currentUser = $currentUser;
     $this->entityTypeManager = $entityTypeManager;
     $this->sodaScsHelpers = $sodaScsHelpers;
+    $this->userData = $userData;
   }
 
   /**
@@ -84,6 +97,7 @@ class SodaScsManagerController extends ControllerBase {
       $container->get('current_user'),
       $container->get('entity_type.manager'),
       $container->get('soda_scs_manager.helpers'),
+      $container->get('user.data'),
     );
   }
 
@@ -327,7 +341,8 @@ class SodaScsManagerController extends ControllerBase {
       ];
     }
 
-    // Add the "Add Application" card as the first card for the current user.
+    // Ensure the current user has a section so "Your applications" and the (+)
+    // control show even with zero apps.
     $currentUsername = $current_user->getDisplayName();
     if (!isset($entitiesByUser[$currentUsername])) {
       $entitiesByUser[$currentUsername] = [];
@@ -336,22 +351,20 @@ class SodaScsManagerController extends ControllerBase {
     $modulePath = $this->moduleHandler()->getModule('soda_scs_manager')->getPath();
     $assetBase = '/' . $modulePath . '/assets/images/';
 
-    array_unshift($entitiesByUser[$currentUsername], [
-      '#theme' => 'soda_scs_manager__add_application_card',
-      '#asset_base' => $assetBase,
-      '#popup_url_mariadb' => $this->internalPathUrl('soda-scs-manager/app/mariadb'),
-      '#popup_url_wisski' => $this->internalPathUrl('soda-scs-manager/app/wisski'),
-      '#popup_url_open_gdb' => $this->internalPathUrl('soda-scs-manager/app/open-gdb'),
-      '#cache' => [
-        'max-age' => 0,
-      ],
-    ]);
-
     // Sort entitiesByUser alphabetically by using the keys (= usernames).
     ksort($entitiesByUser);
 
-    // Move current user to the top (and the "Add Application" button) first.
+    // Move current user to the top.
     $entitiesByUser = $this->moveKeyToFirstPosition($entitiesByUser, $currentUsername);
+
+    $uid = (int) $current_user->id();
+
+    $dashboardLibraries = [
+      'soda_scs_manager/globalStyling',
+      'soda_scs_manager/tagFilter',
+      'soda_scs_manager/dashboardHealthStatus',
+      'soda_scs_manager/addApplicationPopup',
+    ];
 
     $build = [
       '#theme' => 'soda_scs_manager__dashboard',
@@ -359,18 +372,26 @@ class SodaScsManagerController extends ControllerBase {
       '#entitiesByUser' => $entitiesByUser,
       '#entitiesByProject' => $entitiesByProject,
       '#currentUsername' => $current_user->getDisplayName(),
-      '#cache' => [
-        'max-age' => 0,
-      ],
-      '#attached' => [
-        'library' => [
-          'soda_scs_manager/globalStyling',
-          'soda_scs_manager/tagFilter',
-          'soda_scs_manager/dashboardHealthStatus',
-          'soda_scs_manager/addApplicationPopup',
+      '#add_application_trigger' => [
+        '#theme' => 'soda_scs_manager__add_application_heading_trigger',
+        '#asset_base' => $assetBase,
+        '#popup_url_mariadb' => $this->internalPathUrl('soda-scs-manager/app/mariadb'),
+        '#popup_url_wisski' => $this->internalPathUrl('soda-scs-manager/app/wisski'),
+        '#popup_url_open_gdb' => $this->internalPathUrl('soda-scs-manager/app/open-gdb'),
+        '#cache' => [
+          'max-age' => 0,
         ],
       ],
+      '#cache' => [
+        'max-age' => 0,
+        'contexts' => ['user'],
+      ],
+      '#attached' => [
+        'library' => $dashboardLibraries,
+      ],
     ];
+
+    $this->attachCoworkingIntroForUser($build, $uid);
 
     return $build;
   }
@@ -403,7 +424,8 @@ class SodaScsManagerController extends ControllerBase {
       'user' => $currentUser->id(),
     ])->toString();
 
-    return [
+    $uid = (int) $currentUser->id();
+    $build = [
       '#theme' => 'soda_scs_manager__start_page',
       '#attributes' => ['class' => ['container', 'mx-auto']],
       '#user' => $userFirstName,
@@ -417,8 +439,13 @@ class SodaScsManagerController extends ControllerBase {
       ],
       '#cache' => [
         'max-age' => 0,
+        'contexts' => ['user'],
       ],
     ];
+
+    $this->attachCoworkingIntroForUser($build, $uid);
+
+    return $build;
   }
 
   /**
@@ -451,6 +478,56 @@ class SodaScsManagerController extends ControllerBase {
   }
 
   /**
+   * Sets theme variables and assets for the co-working intro wizard.
+   *
+   * @param array $build
+   *   Render array for dashboard or start page.
+   * @param int $uid
+   *   User ID whose completion flag is read (normally the current user).
+   */
+  protected function attachCoworkingIntroForUser(array &$build, int $uid): void {
+    $lang = $this->languageManager()->getCurrentLanguage();
+    $modulePath = $this->moduleHandler()->getModule('soda_scs_manager')->getPath();
+    $assetBase = '/' . $modulePath . '/assets/images/';
+    $introCompleted = (bool) $this->userData->get('soda_scs_manager', $uid, 'coworking_intro_completed');
+    $showWizard = !$introCompleted;
+
+    $connectedAccountsUrl = Url::fromRoute('openid_connect.accounts_controller_index', [
+      'user' => $uid,
+    ], [
+      'language' => $lang,
+    ])->toString();
+
+    $build['#intro_coworking_wizard'] = $showWizard;
+    $build['#intro_asset_base'] = $assetBase;
+    $build['#intro_connected_accounts_url'] = $connectedAccountsUrl;
+
+    if (!$showWizard) {
+      return;
+    }
+
+    if (!isset($build['#attached']['library']) || !is_array($build['#attached']['library'])) {
+      $build['#attached']['library'] = [];
+    }
+    $build['#attached']['library'][] = 'soda_scs_manager/coworkingIntroWizard';
+    if (!in_array('soda_scs_manager/nextcloudConnect', $build['#attached']['library'], TRUE)) {
+      $build['#attached']['library'][] = 'soda_scs_manager/nextcloudConnect';
+    }
+
+    $introCompleteUrl = Url::fromRoute('soda_scs_manager.coworking_intro_complete', [], [
+      'language' => $lang,
+    ])->toString();
+    $introCreateWisskiUrl = $this->coworkingIntroWisskiQuickCreateUrl($lang);
+
+    $build['#attached']['drupalSettings']['sodaScsManager']['throbberPrimaryMessage'] = (string) $this->t('Creating your WissKI environment. Please do not close this window.');
+    $build['#attached']['drupalSettings']['sodaScsManager']['throbberInfo'] = (string) $this->t('Please note: After creating the WissKI Environment, it can take up to 5 minutes to setup everything.<br><br>Please check the health status to monitor the startup progress.');
+    $build['#attached']['drupalSettings']['sodaScsManager']['coworkingIntro'] = [
+      'completeUrl' => $introCompleteUrl,
+      'wisskiQuickCreateUrl' => $introCreateWisskiUrl,
+    ];
+  }
+
+  /**
    * Relative URL for an internal path, respecting interface language (prefix).
    *
    * @param string $path
@@ -465,6 +542,31 @@ class SodaScsManagerController extends ControllerBase {
       'language' => $this->languageManager()->getCurrentLanguage(),
       'path_processing' => TRUE,
     ])->toString();
+  }
+
+  /**
+   * Relative URL for the intro wizard POST endpoint that provisions WissKI.
+   *
+   * Uses the named route when the router knows it; otherwise falls back to the
+   * path from soda_scs_manager.routing.yml so fetch() still works before
+   * drush cr.
+   */
+  protected function coworkingIntroWisskiQuickCreateUrl(LanguageInterface $lang): string {
+    try {
+      return Url::fromRoute('soda_scs_manager.coworking_intro_create_wisski', [], [
+        'language' => $lang,
+      ])->toString();
+    }
+    catch (\Throwable) {
+      try {
+        return Url::fromUserInput('/soda-scs-manager/intro/coworking/create-wisski', [
+          'language' => $lang,
+        ])->toString();
+      }
+      catch (\Throwable) {
+        return '';
+      }
+    }
   }
 
   /**

@@ -178,3 +178,14 @@ soda_scs_manager.user_registration:
   base_route: user.page
   title: 'Create new account'
 
+# User profile — SCS Manager preferences (co-working intro).
+soda_scs_manager.user_account_scs_manager_tab:
+  route_name: soda_scs_manager.user_account_scs_manager
+  base_route: entity.user.canonical
+  title: 'SCS Manager'
+  weight: 25
+  options:
+    parameters:
+      user:
+        type: entity:user
+

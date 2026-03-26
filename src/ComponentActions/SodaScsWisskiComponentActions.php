@@ -658,7 +658,9 @@ class SodaScsWisskiComponentActions implements SodaScsComponentActionsInterface 
           ];
         }
         else {
-          // Fall back to default values from settings.
+          // Fall back to default values from settings (same source as the
+          // default WissKI version entity in site config).
+          $packageEnv = $wisskiInstanceSettings['packageEnvironmentProductionVersion'] ?? '';
           $versionSettings = [
             'mode' => '',
             'varnishImageVersion' => '',
@@ -666,7 +668,11 @@ class SodaScsWisskiComponentActions implements SodaScsComponentActionsInterface 
             'wisskiDefaultDataModelRecipeVersion' => $wisskiInstanceSettings['defaultDataModelRecipeProductionVersion'] ?? '',
             'wisskiBaseImageVersion' => $wisskiInstanceSettings['wisskiBaseImageProductionVersion'] ?? '',
             'wisskiStarterRecipeVersion' => $wisskiInstanceSettings['starterRecipeProductionVersion'] ?? '',
-            'wisskiVersion' => $componentVersion ?? '',
+            // Package environment: form stores component "version" as the
+            // version label; when empty, use the default version's package env.
+            'wisskiVersion' => $componentVersion !== '' && $componentVersion !== NULL
+              ? (string) $componentVersion
+              : (string) $packageEnv,
           ];
         }
       }

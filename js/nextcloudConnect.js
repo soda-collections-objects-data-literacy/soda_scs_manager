@@ -114,15 +114,23 @@
     }
   }
 
+  /**
+   * @param {HTMLElement} container
+   * @return {NodeListOf<HTMLButtonElement>}
+   */
+  function getConnectButtons(container) {
+    return container.querySelectorAll('.scs-manager--nextcloud-connect-btn');
+  }
+
   function setModalState(container, state, message = '') {
-    const connectBtn = container.querySelector('.scs-manager--nextcloud-connect-btn');
+    const connectBtns = getConnectButtons(container);
     const statusEl = container.querySelector('.scs-manager--nextcloud-connect-status');
     const statusInline = container.querySelector('.scs-manager--nextcloud-connect-status-inline');
     const errorEl = container.querySelector('.scs-manager--nextcloud-connect-error');
 
-    if (connectBtn) {
+    connectBtns.forEach((connectBtn) => {
       connectBtn.disabled = state === 'loading' || state === 'success';
-    }
+    });
     if (statusEl) {
       statusEl.textContent = message;
       statusEl.classList.toggle('hidden', !message);
@@ -187,13 +195,12 @@
   async function updateInlineStatus(container, isVerifying = false) {
     const fieldset = container.closest('fieldset');
     const statusEl = container.querySelector('.scs-manager--nextcloud-connect-status-inline');
-    const connectBtn = container.querySelector('.scs-manager--nextcloud-connect-btn');
+    const connectBtns = getConnectButtons(container);
     const fallbackHint = container.querySelector('.scs-manager--nextcloud-connect-fallback-hint');
     const verifyBtn = fieldset?.querySelector('.scs-manager--nextcloud-verify-btn');
     if (!statusEl) return;
 
-    // Hide fallback UI during load.
-    if (connectBtn) connectBtn.style.display = 'none';
+    // Hide fallback hint during load; keep connect buttons usable (e.g. intro slide).
     if (fallbackHint) fallbackHint.style.display = 'none';
     if (verifyBtn && isVerifying) verifyBtn.disabled = true;
     if (isVerifying) updateStatusCheckResult(fieldset, Drupal.t('Checking...'), 'checking');
@@ -209,12 +216,18 @@
         statusEl.dataset.method = data.method || '';
         statusEl.title = statusTitle;
         updateStatusCheckResult(fieldset, message, 'connected', statusTitle);
+        connectBtns.forEach((btn) => {
+          btn.style.display = 'none';
+        });
+        if (fallbackHint) fallbackHint.style.display = 'none';
       } else {
         statusEl.textContent = Drupal.t('Not connected');
         statusEl.dataset.status = 'disconnected';
         statusEl.dataset.method = '';
         updateStatusCheckResult(fieldset, Drupal.t('Not connected'), 'disconnected', '');
-        if (connectBtn) connectBtn.style.display = '';
+        connectBtns.forEach((btn) => {
+          btn.style.display = '';
+        });
         if (fallbackHint) fallbackHint.style.display = '';
       }
     } catch (e) {
@@ -222,7 +235,9 @@
       statusEl.textContent = errMsg;
       statusEl.dataset.status = 'error';
       updateStatusCheckResult(fieldset, errMsg, 'error');
-      if (connectBtn) connectBtn.style.display = '';
+      connectBtns.forEach((btn) => {
+        btn.style.display = '';
+      });
       if (fallbackHint) fallbackHint.style.display = '';
     }
     if (verifyBtn) verifyBtn.disabled = false;
@@ -289,15 +304,14 @@
     attach(context) {
       once('nextcloud-connect', '.scs-manager--nextcloud-connect-wrapper', context).forEach((container) => {
         const isInline = container.classList.contains('scs-manager--nextcloud-connect-inline');
-        const connectBtn = container.querySelector('.scs-manager--nextcloud-connect-btn');
         const verifyBtn = container.closest('fieldset')?.querySelector('.scs-manager--nextcloud-verify-btn');
 
-        if (connectBtn) {
+        getConnectButtons(container).forEach((connectBtn) => {
           connectBtn.addEventListener('click', () => {
             const onSuccess = isInline ? () => updateInlineStatus(container) : undefined;
             runConnectFlow(container, onSuccess);
           });
-        }
+        });
 
         if (verifyBtn) {
           verifyBtn.addEventListener('click', () => updateInlineStatus(container, true));

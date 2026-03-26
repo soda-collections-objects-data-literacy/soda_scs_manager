@@ -106,8 +106,8 @@ soda_scs_manager.snapshot_debug:
   weight: 0
 
 # Structure pages
-# Main menu: Dashboard, Documentation, Administration, and Notifications are
-# top-level items (no "SODa SCS Manager" parent). Issue Report is in the Footer
+# Main menu order (by weight): Home (standard.front_page, 0), Dashboard, Projects,
+# Documentation, Notifications, then Administration. Issue Report is in the Footer
 # menu (see soda_scs_manager_install()). Anonymous users only see
 # soda_scs_manager.anonymous_documentation; authenticated users only see
 # soda_scs_manager.menu.documentation — see soda_scs_manager_preprocess_menu().
@@ -120,6 +120,15 @@ soda_scs_manager.menu.dashboard:
   requirements:
     _permission: 'soda scs manager user'
 
+soda_scs_manager.menu.projects:
+  title: 'Projects'
+  description: 'Collaboration projects and memberships'
+  menu_name: main
+  route_name: soda_scs_manager.projects
+  weight: 11
+  requirements:
+    _permission: 'soda scs manager user'
+
 # Href from DocumentationInternalPathMenuLink; route for active trail in discovery alter.
 soda_scs_manager.menu.documentation:
   class: Drupal\soda_scs_manager\Plugin\Menu\DocumentationInternalPathMenuLink
@@ -129,7 +138,7 @@ soda_scs_manager.menu.documentation:
   route_name: entity.node.canonical
   route_parameters:
     node: '1'
-  weight: 20
+  weight: 12
 
 soda_scs_manager.menu.administration:
   title: 'Administration'
@@ -154,7 +163,7 @@ soda_scs_manager.menu.notifications:
   description: 'Project invitations'
   menu_name: main
   route_name: soda_scs_manager.notifications
-  weight: 11
+  weight: 13
   requirements:
     _permission: 'soda scs manager user'
 
@@ -168,7 +177,7 @@ soda_scs_manager.anonymous_documentation:
   route_name: entity.node.canonical
   route_parameters:
     node: '1'
-  weight: 10
+  weight: 12
 
 soda_scs_manager.user_registration_approvals:
   title: 'Keycloak User Registrations'

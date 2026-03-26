@@ -5,9 +5,17 @@
  *
  * Available variables:
  * - attributes: HTML attributes for the container.
+ * - add_application_trigger: Render array for (+) next to "Your applications" (current user).
+ * - intro_coworking_wizard: First-login intro carousel (boolean).
+ * - intro_asset_base: Base URL for module SVGs (e.g. /modules/custom/soda_scs_manager/assets/images/).
+ * - intro_connected_accounts_url: URL for Connected Accounts (Nextcloud hint).
  * @ingroup themeable
  */
 #}
+
+{% if intro_coworking_wizard %}
+  {% include '@soda_scs_manager/includes/soda-scs-manager--coworking-intro.html.twig' %}
+{% endif %}
 
 {# data-science and publishing are omitted from the filter bar (and cards); they are not filterable. #}
 {% set all_tags = ['coding', 'cms', 'data-cleaning', 'database', 'filesharing', 'office', 'ontology'] %}
@@ -53,9 +61,10 @@
 
 {% if entitiesByUser is not empty %}
   {% for username, entities in entitiesByUser %}
-    <div class="text-center mb-8">
+    <div class="mb-8 {% if currentUsername is defined and username == currentUsername %}soda-scs-manager--dashboard-heading-with-add{% else %}text-center{% endif %}">
       {% if currentUsername is defined and username == currentUsername %}
-        <h2 class="soda-scs-manager--dashboard-heading-section">{{ 'Your applications'|t }}</h2>
+        <h2 class="soda-scs-manager--dashboard-heading-section soda-scs-manager--dashboard-heading-section--inline">{{ 'Your applications'|t }}</h2>
+        {{ add_application_trigger }}
       {% else %}
         <h2 class="soda-scs-manager--dashboard-heading-section">{{ 'Applications of User @username'|t({'@username': username}) }}</h2>
       {% endif %}

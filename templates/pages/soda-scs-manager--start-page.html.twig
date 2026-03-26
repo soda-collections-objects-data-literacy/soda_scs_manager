@@ -6,10 +6,16 @@
  * Two semicircle segments (inner r=30, outer r=90): manager start (/soda-scs-manager/start) left, dashboard right.
  * Center circle and label are drawn last so they appear on top.
  *
+ * Optional variables:
+ * - intro_coworking_wizard, intro_asset_base, intro_connected_accounts_url: same as dashboard (first-login wizard).
+ *
  * @ingroup themeable
  */
 #}
 <div{{ attributes.addClass('soda-scs-manager--start-page') }}>
+  {% if intro_coworking_wizard %}
+    {% include '@soda_scs_manager/includes/soda-scs-manager--coworking-intro.html.twig' %}
+  {% endif %}
   {# Connect Nextcloud modal - shown when user has not connected Nextcloud (Login Flow v2). #}
   <div class="scs-manager--nextcloud-connect-wrapper">
     <div class="scs-manager--nextcloud-connect-modal hidden fixed inset-0 z-50 flex items-center justify-center bg-black/50" aria-hidden="true" role="dialog" aria-labelledby="nextcloud-connect-title">

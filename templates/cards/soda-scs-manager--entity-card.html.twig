@@ -40,13 +40,13 @@
         {% if health_status == 'running' or health_status == 'healthy' %}
           {% set healthClass = 'running' %}
           {% set healthTitle = 'Running'|t %}
-        {% elseif health_status == 'starting' or health_status == 'Unknown' %}
+        {% elseif health_status == 'starting' or health_status == 'Unknown' or health_status == 'unknown' or health_status == 'unavailable' %}
           {% set healthClass = 'starting' %}
           {% set healthTitle = 'Starting'|t %}
         {% elseif health_status == 'stopped' %}
           {% set healthClass = 'stopped' %}
           {% set healthTitle = 'Stopped'|t %}
-        {% elseif health_status == 'unhealthy' or health_status == 'unknown' %}
+        {% elseif health_status == 'unhealthy' %}
           {% set healthClass = 'failure' %}
           {% set healthTitle = 'Failure'|t %}
         {% endif %}

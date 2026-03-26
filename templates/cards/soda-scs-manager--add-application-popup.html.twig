@@ -1,0 +1,66 @@
+{#
+/**
+ * @file
+ * Shared modal for choosing application type (MariaDB, WissKI, Triplestore).
+ *
+ * Available variables:
+ * - asset_base: Base URL for module images.
+ * - popup_url_mariadb, popup_url_wisski, popup_url_open_gdb: localized app URLs.
+ */
+#}
+{% set assetBase = asset_base|default('/modules/custom/soda_scs_manager/assets/images/') %}
+<div id="add-app-popup" class="soda-scs-manager--add-app-popup fixed inset-0 bg-black/30 hidden items-center justify-center p-4" aria-hidden="true">
+  <div class="soda-scs-manager--add-app-popup-inner bg-white rounded-lg shadow-2xl p-8 w-full max-w-4xl relative border-2 border-orange-400">
+    <button type="button"
+            class="absolute top-4 right-4 w-10 h-10 flex items-center justify-center text-stone-400 hover:text-stone-600 hover:bg-stone-100 rounded transition-colors"
+            id="close-popup"
+            aria-label="{{ 'Close popup'|t }}">
+      <svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+      </svg>
+    </button>
+
+    <h2 class="text-3xl font-bold text-stone-800 mb-8 text-center">{{ 'Select Application Type'|t }}</h2>
+
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-6 md:gap-8">
+      {# Database Card #}
+      <a href="{{ popup_url_mariadb }}"
+
+         class="soda-scs-manager--add-app-popup-card rounded-xl p-6 md:p-8 transition-all border-2 border-stone-200 hover:border-orange-400 hover:shadow-lg bg-white hover:bg-stone-50">
+        <div class="flex flex-col items-center text-center">
+          <div class="rounded-xl p-4 mb-4 flex items-center justify-center w-20 h-20 md:w-24 md:h-24">
+            <img src="{{ assetBase }}sql.svg" alt="" class="w-14 h-14 md:w-16 md:h-16 object-contain" />
+          </div>
+          <h3 class="text-lg md:text-xl font-semibold text-stone-800 mb-2">{{ 'MariaDB Database'|t }}</h3>
+          <p class="text-stone-600 text-sm">{{ '+ more info'|t }}</p>
+        </div>
+      </a>
+
+      {# WissKI Card #}
+      <a href="{{ popup_url_wisski }}"
+
+         class="soda-scs-manager--add-app-popup-card rounded-xl p-6 md:p-8 transition-all border-2 border-stone-200 hover:border-orange-400 hover:shadow-lg bg-white hover:bg-stone-50">
+        <div class="flex flex-col items-center text-center">
+          <div class="rounded-xl p-4 mb-4 flex items-center justify-center w-20 h-20 md:w-24 md:h-24">
+            <img src="{{ assetBase }}wisski-stack.svg" alt="" class="w-14 h-14 md:w-16 md:h-16 object-contain" />
+          </div>
+          <h3 class="text-lg md:text-xl font-semibold text-stone-800 mb-2">{{ 'WissKI Environment'|t }}</h3>
+          <p class="text-stone-600 text-sm">{{ '+ more info'|t }}</p>
+        </div>
+      </a>
+
+      {# Triplestore Card #}
+      <a href="{{ popup_url_open_gdb }}"
+
+         class="soda-scs-manager--add-app-popup-card rounded-xl p-6 md:p-8 transition-all border-2 border-stone-200 hover:border-orange-400 hover:shadow-lg bg-white hover:bg-stone-50">
+        <div class="flex flex-col items-center text-center">
+          <div class="rounded-xl p-4 mb-4 flex items-center justify-center w-20 h-20 md:w-24 md:h-24">
+            <img src="{{ assetBase }}triplestore.svg" alt="" class="w-14 h-14 md:w-16 md:h-16 object-contain" />
+          </div>
+          <h3 class="text-lg md:text-xl font-semibold text-stone-800 mb-2">{{ 'Triplestore (Open GDB)'|t }}</h3>
+          <p class="text-stone-600 text-sm">{{ '+ more info'|t }}</p>
+        </div>
+      </a>
+    </div>
+  </div>
+</div>
