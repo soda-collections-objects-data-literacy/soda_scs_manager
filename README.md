@@ -16,15 +16,14 @@ It extends the Drupal framework with an administration panel for the SODa Semant
 ## Conent sync
 ### Export
 ```bash
-drush content_entity_sync:export media --bundle=image
-drush content_entity_sync:export menu_link_content
-drush content_entity_sync:export node --bundle=application,book,page
+# Navigate to web-root
+cd /opt/drupal/web
+drush content:export node modules/custom/soda_scs_manager/content/sync --all-content --translate --assets
+mv modules/custom/soda_scs_manager/content/sync/content-bulk-export* modules/custom/soda_scs_manager/content/sync/content-bulk-export.zip
 ```
 ### Import
 ```bash
-drush content_entity_sync:import node --bundle=application,book,page
-drush content_entity_sync:import media --bundle=image
-drush content_entity_sync:import menu_link_content
+drush content:import modules/custom/soda_scs_manager/content/sync
 ```
 
 ## Hooks
