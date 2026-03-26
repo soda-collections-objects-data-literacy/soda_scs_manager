@@ -503,9 +503,17 @@ class SodaScsComponentListBuilder extends EntityListBuilder {
       $cssClass = 'health-loading';
       $displayText = (string) $this->t('Starting');
     }
+    elseif ($status === 'paused') {
+      $cssClass = 'health-error';
+      $displayText = (string) $this->t('Paused');
+    }
     elseif ($status === 'stopped') {
       $cssClass = 'health-error';
       $displayText = (string) $this->t('Stopped');
+    }
+    elseif ($status === 'unavailable' || $status === 'unhealthy') {
+      $cssClass = 'health-error';
+      $displayText = $message;
     }
     elseif ($success) {
       $cssClass = 'health-success';

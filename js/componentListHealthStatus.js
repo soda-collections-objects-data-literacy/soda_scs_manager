@@ -49,9 +49,10 @@
               const messageLower = (message || '').toLowerCase();
               const isProvisioning =
                 statusLower === 'starting' ||
+                messageLower === 'starting';
+              const isUnavailable =
                 statusLower === 'unavailable' ||
-                statusLower === 'unknown' ||
-                messageLower === 'starting' ||
+                messageLower === 'unavailable' ||
                 messageLower === 'not available' ||
                 messageLower.indexOf('component is not available') !== -1 ||
                 messageLower.indexOf('service temporarily unavailable') !== -1;
@@ -59,11 +60,15 @@
                 $healthCell.html('<span class="health-error" title="' + error + '">● ' + message + '</span>');
                 $healthCell.removeClass('health-success health-loading').addClass('health-error');
               }
+              else if (isUnavailable || statusLower === 'unknown') {
+                $healthCell.html('<span class="health-error" title="' + error + '">● ' + message + '</span>');
+                $healthCell.removeClass('health-success health-loading health-pending').addClass('health-error');
+              }
               else if (isProvisioning) {
                 $healthCell.html('<span class="health-pending" title="' + error + '">● ' + Drupal.t('Starting') + '</span>');
                 $healthCell.removeClass('health-success health-loading health-error').addClass('health-pending');
               }
-              else if (statusLower === 'stopped' || messageLower === 'stopped') {
+              else if (statusLower === 'stopped' || messageLower === 'stopped' || statusLower === 'paused') {
                 $healthCell.html('<span class="health-error" title="' + error + '">● ' + message + '</span>');
                 $healthCell.removeClass('health-success health-loading').addClass('health-error');
               }

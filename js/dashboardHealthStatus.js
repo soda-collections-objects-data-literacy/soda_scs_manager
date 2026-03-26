@@ -119,18 +119,24 @@
               else if (status === 'stopped' || message === 'Stopped' || message === 'stopped') {
                 updateHealthIcon('stopped', Drupal.t('Stopped'));
               }
+              else if (statusLower === 'paused') {
+                updateHealthIcon('stopped', message);
+              }
               else if (statusLower === 'unhealthy') {
                 updateHealthIcon('failure', message);
               }
               else if (
                 statusLower === 'unavailable' ||
-                statusLower === 'unknown' ||
+                messageLower === 'unavailable' ||
                 messageLower === 'not available' ||
                 messageLower.indexOf('component is not available') !== -1 ||
                 messageLower.indexOf('service temporarily unavailable') !== -1
               ) {
-                updateHealthIcon('starting', Drupal.t('Starting'));
-                currentStatus = 'starting';
+                updateHealthIcon('failure', message);
+                currentStatus = 'unavailable';
+              }
+              else if (statusLower === 'unknown') {
+                updateHealthIcon('failure', message);
               }
               else {
                 updateHealthIcon('failure', message);

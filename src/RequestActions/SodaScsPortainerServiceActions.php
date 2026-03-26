@@ -240,12 +240,16 @@ class SodaScsPortainerServiceActions implements SodaScsServiceRequestInterface {
         }
       }
 
+      $statusCode = $e->hasResponse()
+        ? $e->getResponse()->getStatusCode()
+        : (int) $e->getCode();
+
       return [
-        'message' => $this->t('Request failed with code @code', ['@code' => $e->getCode()]),
+        'message' => $this->t('Request failed with code @code', ['@code' => $statusCode]),
         'data' => [
           'portainerResponse' => $e,
         ],
-        'statusCode' => $e->getCode(),
+        'statusCode' => $statusCode,
         'success' => FALSE,
         'error' => $detailedError,
       ];

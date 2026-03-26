@@ -21,16 +21,18 @@
     if (s === 'running' || s === 'healthy') return 'running';
     if (s === 'starting' || m === 'starting') return 'starting';
     if (s === 'stopped' || m === 'stopped') return 'stopped';
+    if (s === 'paused' || m === 'paused') return 'stopped';
     if (s === 'unhealthy') return 'error';
     if (
       s === 'unavailable' ||
-      s === 'unknown' ||
+      m === 'unavailable' ||
       m === 'not available' ||
       m.indexOf('component is not available') !== -1 ||
       m.indexOf('service temporarily unavailable') !== -1
     ) {
-      return 'starting';
+      return 'error';
     }
+    if (s === 'unknown') return 'error';
     return 'error';
   }
 
@@ -72,22 +74,26 @@
             if (status && status.success === true) {
               stopLoading();
               const variant = getStatusVariant(status.status, status.message);
-              const displayText = status.status || 'Running';
+              const displayText = status.message || status.status || Drupal.t('Running');
               $healthItem.html(renderBadge(variant, HEALTH_SYMBOLS[variant], displayText));
               $healthLabel.removeClass('soda-scs-manager--entity-status--api-error').removeAttr('title');
             } else {
               stopLoading();
               const variant = getStatusVariant(status && status.status, status && status.message);
-              const displayText = (status && status.message) ? status.message : 'Not available';
+              const displayText = (status && status.message) ? status.message : Drupal.t('Unavailable');
               const errorTitle = (status && status.error) ? status.error : '';
               $healthItem.html(renderBadge(variant, HEALTH_SYMBOLS[variant], displayText, errorTitle));
-              $healthLabel.addClass('soda-scs-manager--entity-status--api-error').attr('title', errorTitle);
+              if (variant === 'starting') {
+                $healthLabel.removeClass('soda-scs-manager--entity-status--api-error').removeAttr('title');
+              } else {
+                $healthLabel.addClass('soda-scs-manager--entity-status--api-error').attr('title', errorTitle);
+              }
             }
           }).fail(function () {
             stopLoading();
             const transportTitle = Drupal.t('Could not refresh status');
             $healthItem.html(renderBadge('starting', HEALTH_SYMBOLS.starting, Drupal.t('Checking…'), transportTitle));
-            $healthLabel.addClass('soda-scs-manager--entity-status--api-error').attr('title', transportTitle);
+            $healthLabel.removeClass('soda-scs-manager--entity-status--api-error').removeAttr('title');
           });
         }
 

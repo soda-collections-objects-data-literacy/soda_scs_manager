@@ -231,7 +231,7 @@ class SodaScsStackHelpers {
 
       if ($statusCode >= 200 && $statusCode < 400) {
         return [
-          'message' => 'Available.',
+          'message' => 'Available',
           'status' => 'running',
           'code' => $statusCode,
           'success' => TRUE,
@@ -307,7 +307,7 @@ class SodaScsStackHelpers {
         $body = json_decode($response->getBody()->getContents(), TRUE);
         if (is_array($body) && isset($body['installed']) && $body['installed'] === TRUE) {
           return [
-            'message' => 'Available.',
+            'message' => 'Available',
             'status' => 'running',
             'code' => $statusCode,
             'success' => TRUE,
@@ -316,7 +316,7 @@ class SodaScsStackHelpers {
         }
 
         return [
-          'message' => 'Available.',
+          'message' => 'Available',
           'status' => 'running',
           'code' => $statusCode,
           'success' => TRUE,
