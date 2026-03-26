@@ -8,6 +8,7 @@ use Symfony\Component\DependencyInjection\Attribute\Autowire;
 use Drupal\Component\Transliteration\TransliterationInterface;
 use Drupal\Core\Config\ConfigFactoryInterface;
 use Drupal\Core\Entity\EntityTypeManagerInterface;
+use Drupal\Core\Site\Settings;
 use Drupal\Core\File\FileSystemInterface;
 use Drupal\Core\Language\LanguageInterface;
 use Drupal\Core\Logger\LoggerChannelFactoryInterface;
@@ -31,9 +32,39 @@ class SodaScsSnapshotHelpers {
   use MessengerTrait;
 
   /**
-   * Default snapshot root when soda_scs_manager.settings:snapshotPath is empty.
+   * In-container snapshot root (bind-mount host dir here in Compose).
    */
-  public const DEFAULT_SNAPSHOT_FILESYSTEM_PATH = '/srv/backups/scs-manager/snapshots';
+  public const DEFAULT_SNAPSHOT_FILESYSTEM_PATH = '/var/scs-manager/snapshots';
+
+  /**
+   * Former default path; normalized to DEFAULT_SNAPSHOT_FILESYSTEM_PATH.
+   */
+  public const LEGACY_SNAPSHOT_FILESYSTEM_PATH = '/srv/backups/scs-manager/snapshots';
+
+  /**
+   * Numeric owner for snapshot files across containers (Drupal, DB dump, tar).
+   *
+   * Matches www-data in the official Drupal image; Docker API uses UID/GID,
+   * not the username, so database and Alpine sidecars can write the same tree.
+   */
+  public const SNAPSHOT_FILE_OWNER_UID = 33;
+
+  /**
+   * Numeric group for snapshot files (see SNAPSHOT_FILE_OWNER_UID).
+   */
+  public const SNAPSHOT_FILE_OWNER_GID = 33;
+
+  /**
+   * Optional override in settings.php (rare); normally unused.
+   */
+  public const SNAPSHOT_FILESYSTEM_PATH_SETTINGS_KEY = 'soda_scs_manager.snapshot_filesystem_path';
+
+  /**
+   * Subpath under private:// for snapshot-related file entities.
+   *
+   * Used for /system/files snapshot URLs.
+   */
+  public const SNAPSHOT_PRIVATE_URI_SUBPATH = 'snapshots';
 
   /**
    * The component helpers.
@@ -139,6 +170,70 @@ class SodaScsSnapshotHelpers {
   }
 
   /**
+   * Docker API user string for exec/run processes that write snapshot files.
+   */
+  public static function snapshotDockerRunUser(): string {
+    return sprintf('%d:%d', self::SNAPSHOT_FILE_OWNER_UID, self::SNAPSHOT_FILE_OWNER_GID);
+  }
+
+  /**
+   * Docker API user for exec-only (shell form uses uid alone).
+   */
+  public static function snapshotDockerExecUser(): string {
+    return (string) self::SNAPSHOT_FILE_OWNER_UID;
+  }
+
+  /**
+   * Resolved absolute filesystem root for snapshots.
+   *
+   * Order: $settings[SNAPSHOT_FILESYSTEM_PATH_SETTINGS_KEY], merged config
+   * snapshotPath (empty or legacy /srv/... → default), then
+   * DEFAULT_SNAPSHOT_FILESYSTEM_PATH.
+   *
+   * @return string
+   *   No trailing slash.
+   *
+   * @throws \Exception
+   *   When a configured path is not absolute.
+   */
+  protected function getSnapshotFilesystemRoot(): string {
+    $fromSiteSettings = rtrim(
+      trim((string) Settings::get(self::SNAPSHOT_FILESYSTEM_PATH_SETTINGS_KEY, '')),
+      '/',
+    );
+    if ($fromSiteSettings !== '') {
+      return $this->validateAbsoluteSnapshotRoot($fromSiteSettings);
+    }
+
+    $config = $this->configFactory->get('soda_scs_manager.settings');
+    $rawSnapshotPath = rtrim(trim((string) ($config->get('snapshotPath') ?? '')), '/');
+    if ($rawSnapshotPath !== '' && $rawSnapshotPath !== self::LEGACY_SNAPSHOT_FILESYSTEM_PATH) {
+      return $this->validateAbsoluteSnapshotRoot($rawSnapshotPath);
+    }
+
+    return $this->validateAbsoluteSnapshotRoot(self::DEFAULT_SNAPSHOT_FILESYSTEM_PATH);
+  }
+
+  /**
+   * Validates that the snapshot root is an absolute filesystem path.
+   *
+   * @param string $path
+   *   Absolute path, no trailing slash.
+   *
+   * @return string
+   *   The same path, validated.
+   *
+   * @throws \Exception
+   *   When the path is not absolute.
+   */
+  protected function validateAbsoluteSnapshotRoot(string $path): string {
+    if (!str_starts_with($path, '/')) {
+      throw new \Exception('Snapshot path must be an absolute filesystem path (e.g. /var/scs-manager/snapshots).');
+    }
+    return $path;
+  }
+
+  /**
    * Constuct the snapshot paths.
    *
    * @param \Drupal\soda_scs_manager\Entity\SodaScsComponentInterface $component
@@ -177,26 +272,12 @@ class SodaScsSnapshotHelpers {
         $type = $bundle;
     }
 
-    $settings = $this->configFactory->get('soda_scs_manager.settings');
-    $rawSnapshotPath = rtrim(trim((string) ($settings->get('snapshotPath') ?? '')), '/');
-    if ($rawSnapshotPath === '') {
-      $rawSnapshotPath = self::DEFAULT_SNAPSHOT_FILESYSTEM_PATH;
-    }
-    if (!str_starts_with($rawSnapshotPath, '/')) {
-      throw new \Exception('Snapshot path must be an absolute filesystem path (e.g. /var/scs-manager/snapshots).');
-    }
-    // Full path to the snapshot directory, e.g. /var/scs-manager/snapshots.
-    $snapshotFullPath = rtrim($rawSnapshotPath, '/');
-    // Subdirectory under private:// for File entities and /system/files/... URLs.
-    // Must match the folder layout under the Drupal private files root (symlink if needed).
-    $filesSubpath = trim((string) ($settings->get('snapshotFilesSubpath') ?: 'snapshots'), '/');
-    if ($filesSubpath === '') {
-      $filesSubpath = 'snapshots';
-    }
-    $snapshotPathForUrl = '/' . $filesSubpath;
+    // Full path to the snapshot directory; must match snapshot bind mounts
+    // in Drupal and services that write dumps (e.g. scs--database).
+    $snapshotFullPath = $this->getSnapshotFilesystemRoot();
+    $snapshotPathForUrl = '/' . self::SNAPSHOT_PRIVATE_URI_SUBPATH;
 
-    // Ensure the snapshot root exists and has proper permissions (33:33, 0775).
-    // The base /var/scs-manager directory is set up by container entrypoint.
+    // Snapshot root: SNAPSHOT_FILE_OWNER_UID:GID, 0775 (see fixDirectoryOwnership).
     if (!is_dir($snapshotFullPath)) {
       @mkdir($snapshotFullPath, 0775, TRUE);
     }
@@ -487,7 +568,7 @@ class SodaScsSnapshotHelpers {
         'name' => 'snapshot--' . $this->generateRandomSuffix() . '--' . $snapshotMachineName . '--bag',
         'volumes' => NULL,
         'image' => 'alpine:latest',
-        'user' => '33:33',
+        'user' => self::snapshotDockerRunUser(),
         'cmd' => [
           'sh',
           '-c',
@@ -535,10 +616,6 @@ class SodaScsSnapshotHelpers {
       $snapshotFilesystemRoot = (string) (reset($snapshotData)->metadata['snapshotFilesystemRoot'] ?? '');
       $snapshotFilesystemRoot = $snapshotFilesystemRoot !== '' ? rtrim(str_replace('\\', '/', $snapshotFilesystemRoot), '/') : rtrim(str_replace('\\', '/', dirname($singleSnapshotDirectory, 4)), '/');
       $bagPathNorm = str_replace('\\', '/', $bagPath);
-      $filesSubpath = trim((string) ($this->configFactory->get('soda_scs_manager.settings')->get('snapshotFilesSubpath') ?: 'snapshots'), '/');
-      if ($filesSubpath === '') {
-        $filesSubpath = 'snapshots';
-      }
       if ($bagPathNorm !== $snapshotFilesystemRoot && !str_starts_with($bagPathNorm . '/', $snapshotFilesystemRoot . '/')) {
         return SodaScsResult::failure(
           error: 'Bag path outside snapshot root',
@@ -549,7 +626,7 @@ class SodaScsSnapshotHelpers {
         );
       }
       $underRoot = substr($bagPathNorm, strlen($snapshotFilesystemRoot));
-      $relativeBagPath = '/' . $filesSubpath . $underRoot;
+      $relativeBagPath = '/' . self::SNAPSHOT_PRIVATE_URI_SUBPATH . $underRoot;
 
       return SodaScsResult::success(
         data: [
@@ -589,9 +666,9 @@ class SodaScsSnapshotHelpers {
   /**
    * Convert container path to host path for bind mounts.
    *
-   * When running inside a container, paths like /var/scs-manager/snapshots
-   * are bind-mounted from /srv/backups/scs-manager/snapshots on the host.
-   * Snapshot containers need the actual host path for their bind mounts.
+   * Map in-container DEFAULT_SNAPSHOT_FILESYSTEM_PATH to the host path used in
+   * Compose (host side of the bind mount). Portainer bind mounts need the host
+   * path.
    *
    * @param string $containerPath
    *   Path as seen inside the Drupal container.
@@ -603,7 +680,7 @@ class SodaScsSnapshotHelpers {
     // Map of container paths to host paths.
     // This should match docker-compose volume bindings.
     $pathMappings = [
-      '/var/scs-manager/snapshots' => '/srv/backups/scs-manager/snapshots',
+      self::DEFAULT_SNAPSHOT_FILESYSTEM_PATH => self::LEGACY_SNAPSHOT_FILESYSTEM_PATH,
       '/var/scs-manager' => '/srv/backups/scs-manager',
     ];
 
@@ -618,10 +695,7 @@ class SodaScsSnapshotHelpers {
   }
 
   /**
-   * Fix directory ownership for www-data (33:33).
-   *
-   * Uses native PHP functions to set ownership. This works when the base
-   * snapshot directory is owned by www-data (set by container entrypoint).
+   * Sets mode 0775 and attempts chown to snapshot file UID/GID.
    *
    * @param string $path
    *   The absolute path to fix.
@@ -655,8 +729,8 @@ class SodaScsSnapshotHelpers {
     // Set permissions first (chmod doesn't require root).
     $chmodResult = @chmod($path, 0775);
     // Try to set ownership (works if parent is already www-data).
-    $chownResult = @chown($path, 33);
-    $chgrpResult = @chgrp($path, 33);
+    $chownResult = @chown($path, self::SNAPSHOT_FILE_OWNER_UID);
+    $chgrpResult = @chgrp($path, self::SNAPSHOT_FILE_OWNER_GID);
 
     clearstatcache(TRUE, $path);
     $afterStat = @stat($path);
@@ -732,13 +806,20 @@ class SodaScsSnapshotHelpers {
 
       // Create the directory with proper permissions
       // (0775: owner and group can write).
-      if (!mkdir($path, 0775, TRUE)) {
-        $error = 'Failed to create directory: ' . $path;
+      if (!@mkdir($path, 0775, TRUE)) {
+        $phpError = error_get_last();
+        $detail = ($phpError && isset($phpError['message']))
+          ? ' (' . $phpError['message'] . ')'
+          : '';
+        $error = 'Failed to create directory: ' . $path . $detail;
         throw new SodaScsHelpersException(
           message: $error,
           operationCategory: 'snapshot',
           operation: 'create_dir',
-          context: ['path' => $path],
+          context: [
+            'path' => $path,
+            'php_error' => $phpError['message'] ?? '',
+          ],
           code: 0,
         );
       }
@@ -759,8 +840,7 @@ class SodaScsSnapshotHelpers {
       );
     }
 
-    // Ensure directory is owned by www-data (33:33) and writable (0775).
-    // Required so snapshot containers running as user 33:33 can write.
+    // 0775 + snapshot UID/GID so DB dump and Alpine sidecars can write.
     $this->fixDirectoryOwnership($path);
 
     // Verify directory exists (may be wrong path or on another node).
@@ -1192,7 +1272,7 @@ class SodaScsSnapshotHelpers {
    *   The temporary directory path or FALSE on failure.
    */
   public function createTemporaryDirectory(): string|false {
-    $tempBase = '/var/scs-manager/snapshots/tmp';
+    $tempBase = $this->getSnapshotFilesystemRoot() . '/tmp';
 
     // Create the base directory if it doesn't exist.
     if (!is_dir($tempBase) && !mkdir($tempBase, 0755, TRUE)) {

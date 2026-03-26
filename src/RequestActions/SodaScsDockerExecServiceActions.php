@@ -223,7 +223,8 @@ class SodaScsDockerExecServiceActions implements SodaScsExecRequestInterface {
    *    ['mysqldump', '-u', 'root', '-p', 'password', 'database', 'table']
    *     - 'containerName': The name of the container
    *    to run the command in, i.e. 'database'
-   *     - 'user': The user to run the command as, i.e. '33'.
+   *     - 'user': The user to run the command as (UID string, e.g. snapshot
+   *       writers use SodaScsSnapshotHelpers::snapshotDockerExecUser()).
    *
    * @return array
    *   The request array.

@@ -458,7 +458,7 @@ class SodaScsSqlComponentActions implements SodaScsComponentActionsInterface {
           'mariadb-dump -uroot -p' . $dbRootPassword . ' "' . $dbName . '" > ' . $dumpFilePath,
         ],
         'containerName' => 'scs--database',
-        'user' => '33',
+        'user' => SodaScsSnapshotHelpers::snapshotDockerExecUser(),
       ]);
       $createDumpExecResponse = $this->sodaScsDockerExecServiceActions->makeRequest($createDumpExecRequest);
 
@@ -552,7 +552,7 @@ class SodaScsSqlComponentActions implements SodaScsComponentActionsInterface {
         'name' => $containerName,
         'volumes' => NULL,
         'image' => 'alpine:latest',
-        'user' => '33:33',
+        'user' => SodaScsSnapshotHelpers::snapshotDockerRunUser(),
         'cmd' => [
           'sh',
           '-c',

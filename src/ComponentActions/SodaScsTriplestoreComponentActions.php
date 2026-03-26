@@ -354,7 +354,7 @@ class SodaScsTriplestoreComponentActions implements SodaScsComponentActionsInter
         'name' => $containerName,
         'volumes' => NULL,
         'image' => 'alpine:latest',
-        'user' => '33:33',
+        'user' => SodaScsSnapshotHelpers::snapshotDockerRunUser(),
         'cmd' => [
           'sh',
           '-c',

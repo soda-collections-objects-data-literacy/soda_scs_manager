@@ -3,5 +3,4 @@ security:
     sanitize_logs: true
     log_level: 'info'
 
-snapshotPath: '/srv/backups/scs-manager/snapshots'
-snapshotFilesSubpath: 'snapshots'
+snapshotPath: '/var/scs-manager/snapshots'

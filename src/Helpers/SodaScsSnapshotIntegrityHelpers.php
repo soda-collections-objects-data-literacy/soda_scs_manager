@@ -4,10 +4,12 @@ declare(strict_types=1);
 
 namespace Drupal\soda_scs_manager\Helpers;
 
-use Drupal\Core\Config\ConfigFactoryInterface;
 use Drupal\Core\Entity\EntityTypeManagerInterface;
+use Drupal\Core\File\FileSystemInterface;
 use Drupal\Core\Logger\LoggerChannelFactoryInterface;
 use Drupal\Core\Messenger\MessengerInterface;
+use Drupal\Core\StreamWrapper\StreamWrapperManager;
+use Drupal\Core\StreamWrapper\StreamWrapperManagerInterface;
 use Drupal\Core\StringTranslation\StringTranslationTrait;
 
 /**
@@ -39,11 +41,18 @@ class SodaScsSnapshotIntegrityHelpers {
   protected MessengerInterface $messenger;
 
   /**
-   * The config factory.
+   * The file system service.
    *
-   * @var \Drupal\Core\Config\ConfigFactoryInterface
+   * @var \Drupal\Core\File\FileSystemInterface
    */
-  protected ConfigFactoryInterface $configFactory;
+  protected FileSystemInterface $fileSystem;
+
+  /**
+   * The stream wrapper manager.
+   *
+   * @var \Drupal\Core\StreamWrapper\StreamWrapperManagerInterface
+   */
+  protected StreamWrapperManagerInterface $streamWrapperManager;
 
   /**
    * Constructs a new SodaScsSnapshotIntegrityHelpers.
@@ -54,19 +63,40 @@ class SodaScsSnapshotIntegrityHelpers {
    *   The logger factory.
    * @param \Drupal\Core\Messenger\MessengerInterface $messenger
    *   The messenger service.
-   * @param \Drupal\Core\Config\ConfigFactoryInterface $configFactory
-   *   The config factory.
+   * @param \Drupal\Core\File\FileSystemInterface $fileSystem
+   *   The file system service.
+   * @param \Drupal\Core\StreamWrapper\StreamWrapperManagerInterface $streamWrapperManager
+   *   The stream wrapper manager.
    */
   public function __construct(
     EntityTypeManagerInterface $entityTypeManager,
     LoggerChannelFactoryInterface $loggerFactory,
     MessengerInterface $messenger,
-    ConfigFactoryInterface $configFactory,
+    FileSystemInterface $fileSystem,
+    StreamWrapperManagerInterface $streamWrapperManager,
   ) {
     $this->entityTypeManager = $entityTypeManager;
     $this->loggerFactory = $loggerFactory;
     $this->messenger = $messenger;
-    $this->configFactory = $configFactory;
+    $this->fileSystem = $fileSystem;
+    $this->streamWrapperManager = $streamWrapperManager;
+  }
+
+  /**
+   * Whether a Drupal file URI or plain path exists.
+   *
+   * Avoids PHP file_exists() on stream URIs (e.g. private://).
+   */
+  protected function uriExists(string $uri): bool {
+    $scheme = StreamWrapperManager::getScheme($uri);
+    if ($scheme === FALSE || $scheme === '') {
+      return file_exists($uri);
+    }
+    if (!$this->streamWrapperManager->isValidScheme($scheme)) {
+      return FALSE;
+    }
+    $realpath = $this->fileSystem->realpath($uri);
+    return $realpath !== FALSE && file_exists($realpath);
   }
 
   /**
@@ -337,8 +367,8 @@ class SodaScsSnapshotIntegrityHelpers {
               $issues[] = 'Uses temporary file: ' . $fileUri;
               $isPseudo = TRUE;
             }
-            // Check if file actually exists.
-            if (!file_exists($file->getFileUri())) {
+            // Check if file actually exists (stream URIs: resolve via wrapper).
+            if (!$this->uriExists($fileUri)) {
               $issues[] = 'File does not exist: ' . $fileUri;
             }
           }
@@ -430,11 +460,7 @@ class SodaScsSnapshotIntegrityHelpers {
       /** @var \Drupal\file\Entity\File[] $files */
       $files = $fileStorage->loadMultiple($fileIds);
 
-      $filesSubpath = trim((string) ($this->configFactory->get('soda_scs_manager.settings')->get('snapshotFilesSubpath') ?: 'snapshots'), '/');
-      if ($filesSubpath === '') {
-        $filesSubpath = 'snapshots';
-      }
-      $privateSnapshotPrefix = 'private://' . $filesSubpath . '/';
+      $privateSnapshotPrefix = 'private://' . SodaScsSnapshotHelpers::SNAPSHOT_PRIVATE_URI_SUBPATH . '/';
 
       foreach ($files as $file) {
         $fileUri = $file->getFileUri();
@@ -450,8 +476,8 @@ class SodaScsSnapshotIntegrityHelpers {
         }
 
         if ($isSnapshotRelated) {
-          // Check if file actually exists.
-          if (!file_exists($fileUri)) {
+          // Check if file actually exists (stream URIs: resolve via wrapper).
+          if (!$this->uriExists($fileUri)) {
             $issues[] = 'File does not exist on filesystem';
           }
 

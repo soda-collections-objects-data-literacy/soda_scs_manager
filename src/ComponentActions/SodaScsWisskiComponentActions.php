@@ -871,9 +871,7 @@ class SodaScsWisskiComponentActions implements SodaScsComponentActionsInterface 
       $randomInt = $this->sodaScsSnapshotHelpers->generateRandomSuffix();
       $snapshotContainerName = 'snapshot--' . $randomInt . '--' . $snapshotMachineName . '--drupal';
 
-      // Convert container path to host path for bind mount.
-      // Inside Drupal container: /var/scs-manager/snapshots
-      // On host: /srv/backups/scs-manager/snapshots.
+      // Convert container path to host path for Portainer bind mounts.
       $hostBackupPath = $this->sodaScsSnapshotHelpers
         ->convertContainerPathToHostPath($snapshotPaths['backupPathWithType']);
 
@@ -882,7 +880,7 @@ class SodaScsWisskiComponentActions implements SodaScsComponentActionsInterface 
         'name' => $snapshotContainerName,
         'volumes' => NULL,
         'image' => 'alpine:latest',
-        'user' => '33:33',
+        'user' => SodaScsSnapshotHelpers::snapshotDockerRunUser(),
         'cmd' => [
           'sh',
           '-c',
@@ -1582,7 +1580,7 @@ class SodaScsWisskiComponentActions implements SodaScsComponentActionsInterface 
         '-c',
         'rm -rf /volume/* /volume/.[!.]* /volume/..?* && ' .
         'tar -xzf /restore/' . basename($snapshotPath) . ' -C /volume && ' .
-        'chown -R 33:33 /volume',
+        'chown -R ' . SodaScsSnapshotHelpers::SNAPSHOT_FILE_OWNER_UID . ':' . SodaScsSnapshotHelpers::SNAPSHOT_FILE_OWNER_GID . ' /volume',
       ];
 
       $restoreContainerName = 'restore--' . $machineName . '--drupal__' . $this->sodaScsSnapshotHelpers->generateRandomSuffix();

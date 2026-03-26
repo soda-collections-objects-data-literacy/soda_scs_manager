@@ -16,8 +16,31 @@ use Drupal\Core\Database\Database;
 use Drupal\Core\Field\BaseFieldDefinition;
 use Drupal\Core\File\FileExists;
 use Drupal\Core\File\FileSystemInterface;
+use Drupal\Core\Site\Settings;
 use Drupal\Core\StringTranslation\TranslatableMarkup;
 use Drupal\soda_scs_manager\ComputedField\SodaScsGroupIdComputedItemList;
+
+/**
+ * Implements hook_requirements().
+ */
+function soda_scs_manager_requirements($phase): array {
+  $requirements = [];
+  if ($phase !== 'runtime') {
+    return $requirements;
+  }
+
+  if (empty(Settings::get('file_private_path'))) {
+    $requirements['soda_scs_manager_private_file_path'] = [
+      'title' => t('SCS Manager: private files path'),
+      'severity' => REQUIREMENT_ERROR,
+      'description' => t(
+        'Snapshot file fields use private:// URIs. Drupal registers that stream wrapper only when $settings["file_private_path"] is set in settings.php. Without it, pages can throw InvalidStreamWrapperException. For the default Docker layout use the parent of the snapshot directory, e.g. /var/scs-manager when data is under /var/scs-manager/snapshots, so private://snapshots/… matches the bind mount. Rebuild caches after changing this.'
+      ),
+    ];
+  }
+
+  return $requirements;
+}
 
 /**
  * Implements hook_install().
