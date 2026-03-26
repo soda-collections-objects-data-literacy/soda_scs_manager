@@ -67,6 +67,10 @@
     50% { opacity: 0.4; }
   }
 
+  a.soda-scs-manager--card-icon {
+    @apply no-underline;
+  }
+
   .soda-scs-manager--card-icon {
     @apply absolute top-2 w-8 h-8 rounded-full cursor-pointer;
     @apply bg-white/90 hover:bg-white;
@@ -107,19 +111,33 @@
   .soda-scs-manager--details-icon {
     @apply right-12;
 
-    &::before { background-image: url('/modules/custom/soda_scs_manager/assets/images/lens-icon.svg'); }
-    &:hover::before { background-image: url('/modules/custom/soda_scs_manager/assets/images/lens-icon-hover.svg'); }
-    &:focus-visible::before,
-    &:active::before { background-image: url('/modules/custom/soda_scs_manager/assets/images/lens-icon-focus.svg'); }
-  }
-
-  .soda-scs-manager--info-icon {
-    @apply right-2;
-
     &::before { background-image: url('/modules/custom/soda_scs_manager/assets/images/info-icon.svg'); }
     &:hover::before { background-image: url('/modules/custom/soda_scs_manager/assets/images/info-icon-hover.svg'); }
     &:focus-visible::before,
     &:active::before { background-image: url('/modules/custom/soda_scs_manager/assets/images/info-icon-focus.svg'); }
+  }
+
+  .soda-scs-manager--card-icon.soda-scs-manager--book-icon {
+    @apply right-2;
+
+    &::before,
+    &:hover::before,
+    &:focus-visible::before,
+    &:active::before {
+      background-image: url('/modules/custom/soda_scs_manager/assets/images/book-icon.svg');
+    }
+
+    &:hover {
+      @apply border-blue-300;
+    }
+
+    &:focus-visible {
+      @apply border-blue-500;
+    }
+
+    &:active {
+      @apply border-blue-500;
+    }
   }
 
   .soda-scs-manager--card-content-wrapper {

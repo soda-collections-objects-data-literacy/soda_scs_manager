@@ -57,17 +57,15 @@
       </span>
       {% endif %}
       {% if details_link %}
-      <button type="button" class="soda-scs-manager--card-icon soda-scs-manager--details-icon"
-              aria-label="{{ 'View details of @title'|t({'@title': title}) }}"
-              title="{{ 'View details'|t }}">
-              <a href="{{ details_link }}" class="soda-scs-manager--card-link"></a>
-      </button>
+      <a href="{{ details_link }}"
+         class="soda-scs-manager--card-icon soda-scs-manager--details-icon"
+         aria-label="{{ 'View details of @title'|t({'@title': title}) }}"
+         title="{{ 'View details'|t }}"></a>
       {% endif %}
-      <button type="button" class="soda-scs-manager--card-icon soda-scs-manager--info-icon"
-              aria-label="{{ 'Learn more information about @title'|t({'@title': title}) }}"
-              title="{{ 'Learn more information'|t }}">
-              <a href="{{ learn_more_link }}" class="soda-scs-manager--card-link"></a>
-      </button>
+      <a href="{{ learn_more_link }}"
+         class="soda-scs-manager--card-icon soda-scs-manager--book-icon"
+         aria-label="{{ 'View documentation for @title'|t({'@title': title}) }}"
+         title="{{ 'Documentation'|t }}"></a>
       {% if url %}
       <a href="{{ url }}" class="soda-scs-manager--card-link" target="_blank"></a>
       {% endif %}
