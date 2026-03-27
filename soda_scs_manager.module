@@ -12,7 +12,6 @@ use Drupal\Core\Entity\EntityInterface;
 use Drupal\Core\Menu\MenuLinkInterface;
 use Drupal\Core\Entity\EntityTypeInterface;
 use Drupal\Core\Field\BaseFieldDefinition;
-use Drupal\Core\Render\Element;
 use Drupal\Core\Routing\RouteMatchInterface;
 use Drupal\Core\Routing\StackedRouteMatchInterface;
 use Drupal\Core\StringTranslation\TranslatableMarkup;
@@ -1701,6 +1700,7 @@ function soda_scs_manager_preprocess_menu(&$variables): void {
     }
     $variables['#cache']['contexts'][] = 'user';
     $variables['#cache']['contexts'][] = 'url.path';
+    _soda_scs_manager_preprocess_menu_account_user_display_name_recursive($variables['items']);
     _soda_scs_manager_menu_mark_current_link_recursive($variables['items']);
     return;
   }
@@ -1754,57 +1754,35 @@ function soda_scs_manager_preprocess_menu(&$variables): void {
 }
 
 /**
- * Implements hook_preprocess_HOOK() for page.html.twig.
+ * Replaces the "My account" label (user.page) with the current user's name.
  *
- * On user.login, user.register, and user.pass only: removes the primary local
- * tasks block from the content_above region so Log in / Register / Reset
- * password are not duplicated when navigation is already in the header menus.
- *
- * Other routes keep primary tabs (entity canonical, edit, etc.).
- *
- * This cannot be done in hook_preprocess_region(): by then
- * ThemePreprocess::preprocessRegion() has already set $variables['content'] to
- * the rendered #children string; the block render arrays are no longer
- * available there.
- *
- * Most blocks (including local tasks) use BlockViewBuilder's #lazy_builder
- * wrapper until render time, so #base_plugin_id is not set yet — match those
- * via #lazy_builder arguments (block entity id).
+ * @param array $items
+ *   Account menu items from template_preprocess_menu() (by reference).
  */
-function soda_scs_manager_preprocess_page(array &$variables): void {
-  $route_name = \Drupal::routeMatch()->getRouteName();
-  // Only strip duplicate auth tabs here; entity and admin pages need primary local tasks.
-  $strip_primary_tabs_routes = [
-    'user.login',
-    'user.pass',
-    'user.register',
-  ];
-  if (!in_array($route_name, $strip_primary_tabs_routes, TRUE)) {
+function _soda_scs_manager_preprocess_menu_account_user_display_name_recursive(array &$items): void {
+  $current = \Drupal::currentUser();
+  if (!$current->isAuthenticated()) {
     return;
   }
-  if (empty($variables['page']['content_above']) || !is_array($variables['page']['content_above'])) {
+  $user = \Drupal::entityTypeManager()->getStorage('user')->load($current->id());
+  $label = $user instanceof UserInterface ? $user->getDisplayName() : $current->getDisplayName();
+  if ($label === '') {
+    $label = $current->getAccountName();
+  }
+  if ($label === '') {
     return;
   }
-  $region = &$variables['page']['content_above'];
-  foreach (Element::children($region) as $key) {
-    $item = $region[$key];
-    if (!is_array($item)) {
-      continue;
+  foreach ($items as &$item) {
+    if (!empty($item['url']) && $item['url'] instanceof Url
+      && $item['url']->isRouted()
+      && $item['url']->getRouteName() === 'user.page') {
+      $item['title'] = $label;
     }
-    $base_plugin_id = (string) ($item['#base_plugin_id'] ?? '');
-    $block_id = (string) ($item['#id'] ?? '');
-    $lazy_block_id = '';
-    if (isset($item['#lazy_builder'][1][0])) {
-      $lazy_block_id = (string) $item['#lazy_builder'][1][0];
-    }
-    if ($base_plugin_id === 'local_tasks_block' && str_contains($block_id, 'primary_local_tasks')) {
-      unset($region[$key]);
-      continue;
-    }
-    if ($lazy_block_id !== '' && str_contains($lazy_block_id, 'primary_local_tasks')) {
-      unset($region[$key]);
+    if (!empty($item['below']) && is_array($item['below'])) {
+      _soda_scs_manager_preprocess_menu_account_user_display_name_recursive($item['below']);
     }
   }
+  unset($item);
 }
 
 /**
@@ -2057,14 +2035,55 @@ function _soda_scs_manager_menu_remove_link_from_tree(array &$items, string $plu
 }
 
 /**
+ * TRUE if this menu tree entry is the SCS Manager notifications page link.
+ *
+ * Matches the default YAML plugin id, the notifications route, internal path, and aliases.
+ *
+ * @param array $item
+ *   A single menu item from template_preprocess_menu().
+ * @param string $tree_key
+ *   The key for this item in the menu tree (menu link plugin id).
+ */
+function _soda_scs_manager_menu_item_is_notifications_link(array $item, string $tree_key): bool {
+  if ($tree_key === 'soda_scs_manager.menu.notifications') {
+    return TRUE;
+  }
+  if (!isset($item['url']) || !($item['url'] instanceof Url)) {
+    return FALSE;
+  }
+  $url = $item['url'];
+  if ($url->getRouteName() === 'soda_scs_manager.notifications') {
+    return TRUE;
+  }
+  if ($url->isExternal()) {
+    return FALSE;
+  }
+  try {
+    $internalPath = $url->getInternalPath();
+  }
+  catch (\Throwable) {
+    return FALSE;
+  }
+  $normalized = trim($internalPath, '/');
+  if ($normalized === 'soda-scs-manager/notifications') {
+    return TRUE;
+  }
+  if (\Drupal::hasService('path_alias.manager')) {
+    $systemPath = trim((string) \Drupal::service('path_alias.manager')->getPathByAlias('/' . ltrim($internalPath, '/')), '/');
+    return $systemPath === 'soda-scs-manager/notifications';
+  }
+  return FALSE;
+}
+
+/**
  * Adds visible notification label markup to the notifications link (including when nested).
  *
  * @param array $items
  *   Menu items from template_preprocess_menu() (by reference).
  */
 function _soda_scs_manager_preprocess_menu_notifications_recursive(array &$items): void {
-  foreach ($items as &$item) {
-    if (isset($item['url']) && $item['url']->getRouteName() === 'soda_scs_manager.notifications') {
+  foreach ($items as $tree_key => &$item) {
+    if (_soda_scs_manager_menu_item_is_notifications_link($item, (string) $tree_key)) {
       $currentUser = \Drupal::currentUser();
       $count = 0;
 
@@ -2084,6 +2103,7 @@ function _soda_scs_manager_preprocess_menu_notifications_recursive(array &$items
           '@count' => $count,
         ]);
         $item['attributes']->addClass('menu-item--notifications');
+        $item['attributes']->addClass('scs-manager--notifications-menu-item');
         $item['attributes']->addClass('has-notifications');
       }
       else {
@@ -2092,6 +2112,7 @@ function _soda_scs_manager_preprocess_menu_notifications_recursive(array &$items
           '@title' => $item['title'],
         ]);
         $item['attributes']->addClass('menu-item--notifications');
+        $item['attributes']->addClass('scs-manager--notifications-menu-item');
       }
     }
     if (!empty($item['below'])) {

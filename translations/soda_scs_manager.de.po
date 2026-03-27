@@ -82,9 +82,9 @@ msgstr ""
 msgid "Register for an account"
 msgstr "Registrierung für einen Account"
 
-#: src/Form/KeycloakUserRegistrationForm.php:140
-msgid "<p><strong>Register for an account. You will receive an email confirming your registration. Your registration will be reviewed by an administrator. You will receive another email when your account is approved or rejected.</strong></p>"
-msgstr "<p><strong>Registrieren Sie sich für ein Konto. Sie erhalten eine E-Mail zur Bestätigung Ihrer Registrierung. Ihre Registrierung wird von einem Administrator geprüft. Sie erhalten eine weitere E-Mail, sobald Ihr Konto genehmigt oder abgelehnt wurde.</strong></p>"
+#: src/Form/KeycloakUserRegistrationForm.php:152
+msgid "Register for an account. You will receive an email confirming your registration. Your registration will be reviewed by an administrator. You will receive another email when your account is approved or rejected."
+msgstr "Registrieren Sie sich für ein Konto. Sie erhalten eine E-Mail zur Bestätigung Ihrer Registrierung. Ihre Registrierung wird von einem Administrator geprüft. Sie erhalten eine weitere E-Mail, sobald Ihr Konto genehmigt oder abgelehnt wurde."
 
 #: src/Form/KeycloakUserRegistrationForm.php:144
 msgid "Email address"
@@ -102,39 +102,35 @@ msgstr "Username"
 msgid "Enter a username for your account."
 msgstr "Geben Sie einen Usernamen für Ihr Konto ein."
 
-#: src/Form/KeycloakUserRegistrationForm.php:162
+#: src/Form/KeycloakUserRegistrationForm.php:176
 msgid "First name"
 msgstr "Vorname"
 
-#: src/Form/KeycloakUserRegistrationForm.php:158
-msgid "Only letters, spaces, hyphens, apostrophes, and periods are allowed."
-msgstr "Erlaubt sind nur Buchstaben, Leerzeichen, Bindestriche, Apostrophe und Punkte."
-
-#: src/Form/KeycloakUserRegistrationForm.php:164
-msgid "Enter your first name. @rules"
-msgstr "Geben Sie Ihren Vornamen ein. @rules"
-
-#: src/Form/KeycloakUserRegistrationForm.php:169
+#: src/Form/KeycloakUserRegistrationForm.php:185
 msgid "Last name"
 msgstr "Nachname"
 
-#: src/Form/KeycloakUserRegistrationForm.php:171
-msgid "Enter your last name. @rules"
-msgstr "Geben Sie Ihren Nachnamen ein. @rules"
+#: src/Form/KeycloakUserRegistrationForm.php:178
+msgid "Enter your first name. Only letters, spaces, hyphens, apostrophes, and periods are allowed."
+msgstr "Geben Sie Ihren Vornamen ein. Erlaubt sind nur Buchstaben, Leerzeichen, Bindestriche, Apostrophe und Punkte."
 
-#: src/Form/KeycloakUserRegistrationForm.php:177
+#: src/Form/KeycloakUserRegistrationForm.php:187
+msgid "Enter your last name. Only letters, spaces, hyphens, apostrophes, and periods are allowed."
+msgstr "Geben Sie Ihren Nachnamen ein. Erlaubt sind nur Buchstaben, Leerzeichen, Bindestriche, Apostrophe und Punkte."
+
+#: src/Form/KeycloakUserRegistrationForm.php:195
 msgid "Enter the password you would like to use."
 msgstr "Geben Sie das Passwort ein, das Sie verwenden möchten."
 
-#: src/Form/KeycloakUserRegistrationForm.php:183
-msgid "I agree to the <a href=\"/terms-of-service\" target=\"_blank\">terms of service</a>"
-msgstr "Ich stimme den <a href=\"/terms-of-service\" target=\"_blank\">Nutzungsbedingungen</a> zu."
+#: src/Form/KeycloakUserRegistrationForm.php:200
+msgid "I agree to the <a href=\"/soda-scs-manager/terms-of-service\" target=\"_blank\">terms of service</a>"
+msgstr "Ich stimme den <a href=\"/soda-scs-manager/terms-of-service\" target=\"_blank\">Nutzungsbedingungen</a> zu."
 
-#: src/Form/KeycloakUserRegistrationForm.php:189
-msgid "I agree to the <a href=\"/imprint-privacy-policy\" target=\"_blank\">privacy policy</a>"
-msgstr "Ich stimme der <a href=\"/imprint-privacy-policy\" target=\"_blank\">Datenschutzerklärung</a> zu."
+#: src/Form/KeycloakUserRegistrationForm.php:207
+msgid "I agree to the <a href=\"/soda-scs-manager/imprint-privacy-policy\" target=\"_blank\">privacy policy</a>"
+msgstr "Ich stimme der <a href=\"/soda-scs-manager/imprint-privacy-policy\" target=\"_blank\">Datenschutzerklärung</a> zu."
 
-#: src/Form/KeycloakUserRegistrationForm.php:199
+#: src/Form/KeycloakUserRegistrationForm.php:218
 msgid "Register"
 msgstr "Registrieren"
 

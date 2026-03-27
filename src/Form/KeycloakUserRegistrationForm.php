@@ -17,6 +17,7 @@ use Drupal\Core\StringTranslation\StringTranslationTrait;
 use Drupal\Core\Url;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 use Drupal\Component\Utility\EmailValidatorInterface;
+use Drupal\Component\Utility\Html;
 
 /**
  * Provides a form for registering a user through Keycloak.
@@ -147,9 +148,12 @@ class KeycloakUserRegistrationForm extends FormBase {
   public function buildForm(array $form, FormStateInterface $form_state) {
     $form['#attached']['library'][] = 'soda_scs_manager/keycloak_registration';
 
+    $introText = (string) $this->t(
+      'Register for an account. You will receive an email confirming your registration. Your registration will be reviewed by an administrator. You will receive another email when your account is approved or rejected.'
+    );
     $form['description'] = [
       '#type' => 'markup',
-      '#markup' => $this->t('<p><strong>Register for an account. You will receive an email confirming your registration. Your registration will be reviewed by an administrator. You will receive another email when your account is approved or rejected.</strong></p>'),
+      '#markup' => Markup::create('<p><strong>' . Html::escape($introText) . '</strong></p>'),
     ];
 
     $form['email'] = [
@@ -167,20 +171,22 @@ class KeycloakUserRegistrationForm extends FormBase {
       '#description' => $this->t('Enter a username for your account.'),
     ];
 
-    $nameFieldRules = (string) $this->t('Only letters, spaces, hyphens, apostrophes, and periods are allowed.');
-
     $form['first_name'] = [
       '#type' => 'textfield',
       '#title' => $this->t('First name'),
       '#required' => TRUE,
-      '#description' => $this->t('Enter your first name. @rules', ['@rules' => $nameFieldRules]),
+      '#description' => $this->t(
+        'Enter your first name. Only letters, spaces, hyphens, apostrophes, and periods are allowed.'
+      ),
     ];
 
     $form['last_name'] = [
       '#type' => 'textfield',
       '#title' => $this->t('Last name'),
       '#required' => TRUE,
-      '#description' => $this->t('Enter your last name. @rules', ['@rules' => $nameFieldRules]),
+      '#description' => $this->t(
+        'Enter your last name. Only letters, spaces, hyphens, apostrophes, and periods are allowed.'
+      ),
     ];
 
     $form['password'] = [
@@ -253,6 +259,10 @@ class KeycloakUserRegistrationForm extends FormBase {
       'scs-manager',
       'scs-user',
       'scs_user',
+      'wisski_user',
+      'wisski_admin',
+      'wisski-user',
+      'wisski-admin',
     ];
 
     if (in_array($username, $blacklist)) {
