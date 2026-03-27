@@ -240,6 +240,7 @@ class SodaScsOpenGdbServiceActions implements SodaScsOpenGdbRequestInterface {
     $route = $triplestoreServiceSettings['host'] . $dynamicUrlPart;
 
     return [
+      'type' => $requestParams['type'],
       'success' => TRUE,
       'method' => 'GET',
       'route' => $route,
@@ -388,8 +389,9 @@ class SodaScsOpenGdbServiceActions implements SodaScsOpenGdbRequestInterface {
       ];
     }
     catch (ClientException $e) {
-      if ($request['type'] === 'repository' && $e->getCode() === 404) {
-        $this->messenger->addError($this->t("OpenGDB request for @type failed. See logs for more details.", ['@type' => $request['type']]));
+      $requestType = (string) ($request['type'] ?? 'OpenGDB');
+      if ($requestType === 'repository' && $e->getCode() === 404) {
+        $this->messenger->addError($this->t("OpenGDB request for @type failed. See logs for more details.", ['@type' => $requestType]));
         Error::logException($this->loggerFactory->get('soda_scs_manager'), $e, 'OpenGDB request failed: @message', ['@message' => $e->getMessage()], LogLevel::ERROR);
         return [
           'message' => 'Request failed, is the triplestore running?',
@@ -400,7 +402,7 @@ class SodaScsOpenGdbServiceActions implements SodaScsOpenGdbRequestInterface {
         ];
       }
       // @todo User not exist is ok, try to make this no error
-      elseif ($request['type'] === 'user' && $e->getCode() === 404) {
+      if ($requestType === 'user' && $e->getCode() === 404) {
         $username = array_slice(explode('/', $request['route']), -1)[0];
         $this->loggerFactory->get('soda_scs_manager')
           ->notice(
@@ -415,9 +417,7 @@ class SodaScsOpenGdbServiceActions implements SodaScsOpenGdbRequestInterface {
           'error' => $e->getMessage(),
         ];
       }
-    }
-    catch (ServerException $e) {
-      $this->messenger->addError($this->t("OpenGDB request for @type failed. See logs for more details.", ['@type' => $request['type']]));
+      $this->messenger->addError($this->t("OpenGDB request for @type failed. See logs for more details.", ['@type' => $requestType]));
       Error::logException($this->loggerFactory->get('soda_scs_manager'), $e, 'OpenGDB request failed: @message', ['@message' => $e->getMessage()], LogLevel::ERROR);
       return [
         'data' => [
@@ -429,17 +429,20 @@ class SodaScsOpenGdbServiceActions implements SodaScsOpenGdbRequestInterface {
         'success' => FALSE,
       ];
     }
-    $this->messenger->addError($this->t("OpenGDB request for @type failed. See logs for more details.", ['@type' => $request['type']]));
-    Error::logException($this->loggerFactory->get('soda_scs_manager'), $e, 'OpenGDB request failed: @message', ['@message' => $e->getMessage()], LogLevel::ERROR);
-    return [
-      'data' => [
-        'openGdbResponse' => $e,
-      ],
-      'error' => $e->getMessage(),
-      'message' => 'Request failed with code @code' . $e->getCode(),
-      'statusCode' => $e->getCode(),
-      'success' => FALSE,
-    ];
+    catch (ServerException $e) {
+      $requestType = (string) ($request['type'] ?? 'OpenGDB');
+      $this->messenger->addError($this->t("OpenGDB request for @type failed. See logs for more details.", ['@type' => $requestType]));
+      Error::logException($this->loggerFactory->get('soda_scs_manager'), $e, 'OpenGDB request failed: @message', ['@message' => $e->getMessage()], LogLevel::ERROR);
+      return [
+        'data' => [
+          'openGdbResponse' => $e,
+        ],
+        'error' => $e->getMessage(),
+        'message' => 'Request failed with code @code' . $e->getCode(),
+        'statusCode' => $e->getCode(),
+        'success' => FALSE,
+      ];
+    }
   }
 
   /**

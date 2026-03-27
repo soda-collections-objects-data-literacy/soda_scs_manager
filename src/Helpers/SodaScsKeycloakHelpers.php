@@ -4,9 +4,9 @@ declare(strict_types=1);
 
 namespace Drupal\soda_scs_manager\Helpers;
 
-use Symfony\Component\DependencyInjection\Attribute\Autowire;
 use Drupal\soda_scs_manager\RequestActions\SodaScsKeycloakServiceGroupActions;
 use Drupal\soda_scs_manager\RequestActions\SodaScsServiceRequestInterface;
+use Symfony\Component\DependencyInjection\Attribute\Autowire;
 
 /**
  * Helper class for Soda SCS keycloak operations.

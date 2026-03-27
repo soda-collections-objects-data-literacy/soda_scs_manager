@@ -103,7 +103,8 @@ services:
   soda_scs_manager.snapshot.actions:
     class: Drupal\soda_scs_manager\SnapshotActions\SodaScsSnapshotActions
 
-# Stack actions
+# Stack actions: _defaults autowires constructors; SodaScsStackActions uses
+  # #[Autowire] for jupyter/nextcloud/wisski stack services.
   soda_scs_manager.stack.actions:
     class: Drupal\soda_scs_manager\StackActions\SodaScsStackActions
   soda_scs_manager.jupyter_stack.actions:
@@ -113,21 +114,18 @@ services:
   soda_scs_manager.wisski_stack.actions:
     class: Drupal\soda_scs_manager\StackActions\SodaScsWisskiStackActions
 
-
-  # Event subscribers need explicit tagging
   soda_scs_manager.disable_drupal_login_route_subscriber:
     class: Drupal\soda_scs_manager\Routing\SodaScsDisableDrupalLoginRouteSubscriber
     tags:
-      - { name: event_subscriber }
+      # Run late so other route alters do not overwrite user.pass / user.login.
+      - { name: event_subscriber, priority: -100 }
   soda_scs_manager.wisski_oidc_access_subscriber:
     class: Drupal\soda_scs_manager\EventSubscriber\WisskiOidcAccessSubscriber
     tags:
       - { name: event_subscriber }
 
-  # Breadcrumb builder for list pages
+  # Breadcrumb: constructor autowired from _defaults (AccountProxyInterface).
   soda_scs_manager.list_breadcrumb_builder:
     class: Drupal\soda_scs_manager\Breadcrumb\SodaScsManagerListBreadcrumbBuilder
-    arguments:
-      - '@current_user'
     tags:
       - { name: breadcrumb_builder, priority: 100 }

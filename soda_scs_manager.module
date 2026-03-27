@@ -359,6 +359,53 @@ function soda_scs_manager_form_user_register_form_alter(&$form, &$form_state, $f
 }
 
 /**
+ * Implements hook_form_alter().
+ *
+ * Clarifies OpenID Connect Client ID for Keycloak: the login page
+ * "Forgot password?" link uses the same client_id sent on authorize.
+ */
+function soda_scs_manager_form_alter(
+  &$form,
+  FormStateInterface $form_state,
+  string $form_id,
+): void {
+  $oidc_forms = ['openid_connect_client_add_form', 'openid_connect_client_edit_form'];
+  if (!in_array($form_id, $oidc_forms, TRUE)) {
+    return;
+  }
+  if (!isset($form['settings']['client_id']) || !is_array($form['settings']['client_id'])) {
+    return;
+  }
+  $existing = $form['settings']['client_id']['#description'] ?? '';
+  $form['settings']['client_id']['#description'] = $existing . ' ' . t(<<<'EOT'
+With Keycloak, this must be the realm client's <em>Client ID</em> from Keycloak Admin (Clients → client → Settings), not your Drupal site URL. The site URL belongs in Valid redirect URIs. If Client ID is wrong here, Keycloak's "Forgot password?" link will show the wrong <code>client_id</code> query parameter.
+EOT
+  );
+  $form['settings']['client_id']['#element_validate'][] =
+    'soda_scs_manager_openid_connect_client_id_element_validate';
+}
+
+/**
+ * Element validate: warn if OIDC Client ID looks like a site URL.
+ */
+function soda_scs_manager_openid_connect_client_id_element_validate(
+  array &$element,
+  FormStateInterface $form_state,
+  array &$complete_form,
+): void {
+  $value = trim((string) ($element['#value'] ?? ''));
+  if ($value === '') {
+    return;
+  }
+  if (preg_match('#\Ahttps?://#i', $value)) {
+    \Drupal::messenger()->addWarning(t(<<<'EOT'
+This Client ID looks like a website URL. For Keycloak it must match the client's <em>Client ID</em> in the Keycloak admin console. Put your Drupal URL in Valid redirect URIs instead. Until this is corrected, the Keycloak login page "Forgot password?" link and SSO can misbehave.
+EOT
+    ));
+  }
+}
+
+/**
  * Implements hook_help().
  */
 function soda_scs_manager_help($route_name, RouteMatchInterface $route_match) {
