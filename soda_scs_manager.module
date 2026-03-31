@@ -258,9 +258,9 @@ function soda_scs_manager_entity_bundle_info() {
 
   // Stacks.
   $bundles['soda_scs_stack']['soda_scs_jupyter_stack'] = [
-    'label' => new TranslatableMarkup('JupyterLab'),
+    'label' => new TranslatableMarkup('JupyterHub Environment'),
     'class' => SodaScsStackBundle::class,
-    'description' => new TranslatableMarkup('A JupyterLab for coding and data science. Contains Jupyter Notebooks and OpenRefine.'),
+    'description' => new TranslatableMarkup('A JupyterHub for coding and data science. Contains Jupyter Notebooks and OpenRefine.'),
     'imageUrl' => 'public://soda_scs_manager/images/jupyterhub-stack.svg',
     'tags' => ['coding', 'data-science', 'data-cleaning'],
   ];
@@ -274,9 +274,9 @@ function soda_scs_manager_entity_bundle_info() {
   ];
 
   $bundles['soda_scs_stack']['soda_scs_nextcloud_stack'] = [
-    'label' => new TranslatableMarkup('Nextcloud'),
+    'label' => new TranslatableMarkup('Nextcloud Environment'),
     'class' => SodaScsStackBundle::class,
-    'description' => new TranslatableMarkup('An Office suite for collaboration and file sharing.'),
+    'description' => new TranslatableMarkup('An Office environment for collaboration and file sharing.'),
     'imageUrl' => 'public://soda_scs_manager/images/nextcloud-stack.svg',
     'tags' => ['filesharing', 'office', 'publishing'],
   ];
@@ -644,6 +644,14 @@ function soda_scs_manager_soda_scs_stack_view(array &$build, EntityInterface $en
       ];
     }
   }
+}
+
+/**
+ * Implements hook_preprocess_book_navigation().
+ */
+function soda_scs_manager_preprocess_book_navigation(&$variables) {
+  // Removes the 'tree' of child links but leaves the 'parent' and 'prev/next' page info.
+  $variables['tree'] = [];
 }
 
 /**
