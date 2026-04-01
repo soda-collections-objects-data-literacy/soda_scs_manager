@@ -13,7 +13,7 @@ soda_scs_manager.administration:
 ### Components
 soda_scs_manager.administration.components:
   title: 'SODa SCS Components'
-  description: 'Manage single application like databases, Inter-App folders, etc.'
+  description: 'Manage single application components like databases and triplestores.'
   parent: soda_scs_manager.administration
   route_name: entity.soda_scs_component.collection
   weight: 100
@@ -23,7 +23,7 @@ soda_scs_manager.administration.components:
 ### Projects
 soda_scs_manager.administration.projects:
   title: 'SODa SCS Projects'
-  description: 'Manage projects for collaboration and resource sharing.'
+  description: 'Manage projects to collaborate with other users and share resources.'
   parent: soda_scs_manager.administration
   route_name: entity.soda_scs_project.collection
   weight: 100
@@ -43,7 +43,7 @@ soda_scs_manager.administration.service_keys:
 ### Snapshots
 soda_scs_manager.administration.snapshots:
   title: 'SODa SCS Snapshots'
-  description: 'Manage snapshots for backup and restore.'
+  description: 'Manage snapshots for backup and restore operations.'
   parent: soda_scs_manager.administration
   route_name: entity.soda_scs_snapshot.collection
   weight: 100
@@ -53,7 +53,7 @@ soda_scs_manager.administration.snapshots:
 ### Stacks
 soda_scs_manager.administration.stacks:
   title: 'SODa SCS Stacks'
-  description: 'Manage suites and environment like JupyterLab, Nextcloud, etc.'
+  description: 'Manage application environments like JupyterHub and Nextcloud.'
   parent: soda_scs_manager.administration
   route_name: entity.soda_scs_stack.collection
   weight: 100
@@ -74,7 +74,7 @@ soda_scs_manager.settings_menu_block:
 
 soda_scs_manager.settings:
     title: 'SODa SCS manager settings'
-    description: 'Manage SODa SCS Manager settings'
+    description: 'Configure SODa SCS Manager settings and preferences.'
     parent: soda_scs_manager.settings_menu_block
     route_name: soda_scs_manager.settings
     requirements:

@@ -249,7 +249,7 @@ class SodaScsComponentCreateForm extends ContentEntityForm {
 
     if ($this->bundle === 'soda_scs_wisski_component') {
       $form['#attached']['drupalSettings']['sodaScsManager']['throbberPrimaryMessage'] = (string) $this->t('Creating your WissKI environment. Please do not close this window.');
-      $form['#attached']['drupalSettings']['sodaScsManager']['throbberInfo'] = (string) $this->t('Please note: After creating the WissKI Environment, it can take up to 5 minutes to setup everything.<br><br>Please check the health status to monitor the startup progress.');
+      $form['#attached']['drupalSettings']['sodaScsManager']['throbberInfo'] = (string) $this->t('Please note: After creating the WissKI Environment, it can take up to 5 minutes to setup everything.<br><br>Please check the Health Status to monitor the startup progress.');
     }
 
     return $form;

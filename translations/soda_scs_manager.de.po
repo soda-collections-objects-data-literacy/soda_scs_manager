@@ -80,7 +80,7 @@ msgstr ""
 
 # soda_scs_manager.routing.yml:403
 msgid "Register for an account"
-msgstr "Registrierung für einen Account"
+msgstr "Registrierung für ein Konto"
 
 #: src/Form/KeycloakUserRegistrationForm.php:152
 msgid "Register for an account. You will receive an email confirming your registration. Your registration will be reviewed by an administrator. You will receive another email when your account is approved or rejected."
@@ -154,121 +154,109 @@ msgstr "Dieser Username ist bereits vergeben."
 msgid "Your registration has been submitted and is pending approval. You will be notified by email when your account is approved."
 msgstr "Ihre Registrierung wurde übermittelt und wartet auf Freigabe. Sie werden per E-Mail benachrichtigt, sobald Ihr Konto genehmigt wurde."
 
-#: soda_scs_manager.module:41
-msgid "About"
-msgstr "Über"
-
-#: soda_scs_manager.module:42
-msgid "This module provides the functionality to create, validate and manage WissKI Cloud accounts."
-msgstr "Dieses Modul bietet die Funktionalität zum Erstellen, Validieren und Verwalten von WissKI Cloud-Konten."
-
-#: soda_scs_manager.module:44
-msgid "Configuration"
-msgstr "Konfiguration"
-
-#: soda_scs_manager.module:45
-msgid "Configuration is done on the <a href=\"@settingsPage\" targer=\"_blank\">settings page</a>."
-msgstr "Die Konfiguration erfolgt auf der <a href=\"@settingsPage\" targer=\"_blank\">Einstellungsseite</a>."
-
-#: soda_scs_manager.module:47
-msgid "Create WissKI Cloud Account"
-msgstr "WissKI Cloud-Konto erstellen"
-
-#: soda_scs_manager.module:48
-msgid "<a href=\"@createPage\" targer=\"_blank\">This page</a> allows you to create a WissKI Cloud account."
-msgstr "<a href=\"@createPage\" targer=\"_blank\">Diese Seite</a> ermöglicht es Ihnen, ein WissKI Cloud-Konto zu erstellen."
-
-#: soda_scs_manager.module:50
-msgid "Validate WissKI Cloud Account"
-msgstr "WissKI Cloud-Konto validieren"
-
-#: soda_scs_manager.module:51
-msgid "<a href=\"@validationPage\" targer=\"_blank\">This page</a> allows you to validate your account and check the status of the provision."
-msgstr "<a href=\"@validationPage\" targer=\"_blank\">Diese Seite</a> ermöglicht es Ihnen, Ihr Konto zu validieren und den Status der Bereitstellung zu überprüfen."
-
-#: soda_scs_manager.module:152
-msgid "A shared folder for distributing files across project and applications."
-msgstr "Ein geteilter Ordner, um dateien über Anwendungen hinweg zu teilen."
-
-#: soda_scs_manager.module:210
-msgid "Filesystem"
-msgstr "Dateisystem"
-
-#: soda_scs_manager.module:212
-msgid "A filesystem for storage of structured data."
-msgstr "Ein Dateisystem zur Speicherung strukturierter Daten."
-
-#: soda_scs_manager.module:231
+#: soda_scs_manager.module:214
 msgid "SQL Database"
 msgstr "SQL-Datenbank"
 
-#: soda_scs_manager.module:233
-msgid "A relational database for storage of structured data."
-msgstr "Eine relationale Datenbank zur Speicherung strukturierter Daten."
+#: soda_scs_manager.module:216
+msgid "A relational database for storage of structured data that can be managed through phpMyAdmin. This is the place to import and export, and query your data using SQL."
+msgstr "Eine relationale Datenbank zur Speicherung strukturierter Daten, die über phpMyAdmin verwaltet werden kann. Hier können Sie Ihre Daten importieren, exportieren und mit SQL abfragen."
 
-#: soda_scs_manager.module:237
+#: soda_scs_manager.module:222
 msgid "Triplestore"
 msgstr "Triplestore"
 
-#: soda_scs_manager.module:239
-msgid "Graph database for storage of RDF data."
-msgstr "Graphdatenbank zur Speicherung von RDF-Daten."
+#: soda_scs_manager.module:224
+msgid "An RDF4J-based Graph database for storage of RDF data that can be queried using SPARQL. It extends the standard RDF4J server with comprehensive user management and security features."
+msgstr "Eine auf RDF4J basierende Graphdatenbank zur Speicherung von RDF-Daten, die mit SPARQL abgefragt werden können. Sie erweitert RDF4J um Funktionen zur Benutzerverwaltung und Sicherheit."
 
-#: soda_scs_manager.module:244
+#: soda_scs_manager.module:230
 msgid "WebProtégé"
 msgstr "WebProtégé"
 
-#: soda_scs_manager.module:246
-msgid "A web-based tool for creating and editing OWL ontologies."
-msgstr "Ein webbasiertes Tool zum Erstellen und Bearbeiten von OWL-Ontologien."
+#: soda_scs_manager.module:232
+msgid "A web-based tool for creating and editing OWL ontologies. Webprotege is not yet part of the Single Sign On (SSO) system. You will need to create an account and log in manually."
+msgstr "Ein webbasiertes Tool zum Erstellen und Bearbeiten von OWL-Ontologien. Webprotégé ist noch nicht in das SSO-System integriert. Sie müssen ein Konto erstellen und sich manuell anmelden."
 
-#: soda_scs_manager.module:251
+#: soda_scs_manager.module:238
 msgid "WissKI"
 msgstr "WissKI"
 
-#: soda_scs_manager.module:253
-msgid "A WissKI Component is a component of a WissKI Stack."
-msgstr "Eine WissKI-Komponente ist ein Bestandteil eines WissKI-Stacks."
+#: soda_scs_manager.module:240
+msgid "WissKI is a digital platform for managing object and research data. This is a plain WissKI instance without data model and preconfigured triplestore connection."
+msgstr "WissKI ist eine digitale Plattform zur Verwaltung von Objekt- und Forschungsdaten. Hierbei handelt es sich um eine WissKI-Instanz ohne Datenmodell und ohne vorkonfigurierte Triplestore-Verbindung."
 
-#: soda_scs_manager.module:259
+#: soda_scs_manager.module:247
 msgid "Default Project"
 msgstr "Standardprojekt"
 
-#: soda_scs_manager.module:261
+#: soda_scs_manager.module:249
 msgid "A Project is a collection of applications."
 msgstr "Ein Projekt ist eine Sammlung von Anwendungen."
 
-#: soda_scs_manager.module:266
+#: soda_scs_manager.module:254
 msgid "Default Service Key"
 msgstr "Standard-Serviceschlüssel"
 
-#: soda_scs_manager.module:268
+#: soda_scs_manager.module:256
 msgid "A Service Key is a key for a service."
 msgstr "Ein Serviceschlüssel ist ein Schlüssel für einen Dienst."
 
-#: soda_scs_manager.module:282
-msgid "JupyterLab"
-msgstr "JupyterLab"
+#: soda_scs_manager.module:261
+msgid "JupyterHub Environment"
+msgstr "JupyterHub-Umgebung"
 
-#: soda_scs_manager.module:284
-msgid "A JupyterLab for coding and data science. Contains Jupyter Notebooks and OpenRefine."
-msgstr "JupyterLab für Programmierung und Data Science. Enthält Jupyter Notebooks und OpenRefine."
+#: soda_scs_manager.module:263
+msgid "Your personal data science workspace that contains Jupyter Notebooks and OpenRefine. JupyterHub is a powerful, interactive environment where you can e.g. analyze or visualise data."
+msgstr "Ihr persönlicher Arbeitsbereich mit Jupyter Notebooks und Open Refine. JupyterHub ist eine leistungsstarke, interaktive Umgebung, in der Sie beispielsweise Daten analysieren oder visualisieren können."
 
-#: soda_scs_manager.module:290
+#: soda_scs_manager.module:269
 msgid "WissKI Environment"
 msgstr "WissKI-Umgebung"
 
-#: soda_scs_manager.module:292
-msgid "A WissKI environment contains a preconfigured WissKI, a Triplestore and a Database."
-msgstr "Eine WissKI-Umgebung enthält ein vorkonfiguriertes WissKI, einen Triplestore und eine Datenbank."
+#: soda_scs_manager.module:271
+msgid "A WissKI Environment contains a preconfigured WissKI, a Triplestore and a Database to help users to produce and publish FAIR data that is accessible through Triplestore endpoints."
+msgstr "Umfasst ein vorkonfiguriertes WissKI, einen Triplestore und eine Datenbank, zur Erstellung und Veröffentlichung von FAIRen Daten, auf die über Triplestore-Endpunkte zugegriffen werden kann."
 
-#: soda_scs_manager.module:298
-msgid "Nextcloud"
-msgstr "Nextcloud"
+#: soda_scs_manager.module:277
+msgid "Nextcloud Environment"
+msgstr "Nextcloud-Umgebung"
 
-#: soda_scs_manager.module:300
-msgid "An Office suite for collaboration and file sharing."
-msgstr "Eine Office-Suite für Zusammenarbeit und Dateifreigabe."
+#: soda_scs_manager.module:279
+msgid "An Office environment for collaboration and file sharing that includes OnlyOffice and Draw.io (diagrams.net). Nextcloud can also be used to share files with other applications."
+msgstr "Eine Office-Umgebung für kollaborative Arbeit und Dateiaustausch, die OnlyOffice und Draw.io (diagrams.net) umfasst. Nextcloud kann auch zum Austausch von Dateien mit anderen Anwendungen genutzt werden."
+
+#: soda_scs_manager.module:416
+msgid "About"
+msgstr "Über"
+
+#: soda_scs_manager.module:417
+msgid "This module provides the functionality to create, validate and manage WissKI Cloud accounts."
+msgstr "Dieses Modul bietet die Funktionalität zum Erstellen, Validieren und Verwalten von WissKI Cloud-Konten."
+
+#: soda_scs_manager.module:419
+msgid "Configuration"
+msgstr "Konfiguration"
+
+#: soda_scs_manager.module:420
+msgid "Configuration is done on the <a href=\"@settingsPage\" targer=\"_blank\">settings page</a>."
+msgstr "Die Konfiguration erfolgt auf der <a href=\"@settingsPage\" targer=\"_blank\">Einstellungsseite</a>."
+
+#: soda_scs_manager.module:422
+msgid "Create WissKI Cloud Account"
+msgstr "WissKI Cloud-Konto erstellen"
+
+#: soda_scs_manager.module:423
+msgid "<a href=\"@createPage\" targer=\"_blank\">This page</a> allows you to create a WissKI Cloud account."
+msgstr "<a href=\"@createPage\" targer=\"_blank\">Diese Seite</a> ermöglicht es Ihnen, ein WissKI Cloud-Konto zu erstellen."
+
+#: soda_scs_manager.module:425
+msgid "Validate WissKI Cloud Account"
+msgstr "WissKI Cloud-Konto validieren"
+
+#: soda_scs_manager.module:426
+msgid "<a href=\"@validationPage\" targer=\"_blank\">This page</a> allows you to validate your account and check the status of the provision."
+msgstr "<a href=\"@validationPage\" targer=\"_blank\">Diese Seite</a> ermöglicht es Ihnen, Ihr Konto zu validieren und den Status der Bereitstellung zu überprüfen."
 
 #: soda_scs_manager.install:65
 msgid "Removed existing navigation block."
@@ -358,45 +346,21 @@ msgstr "SODa SCS-Manager"
 msgid "Dashboard"
 msgstr "Dashboard"
 
-#: soda_scs_manager.links.menu.yml:0 soda_scs_manager.routing.yml:0 src/Plugin/Block/SodaScsNavigationBlock.php:65
-msgid "catalogue"
-msgstr "Katalog"
-
-#: soda_scs_manager.links.menu.yml:0
-msgid "Manage SODa SCS Components"
-msgstr "SODa SCS-Komponenten verwalten"
-
-#: soda_scs_manager.links.menu.yml:0
-msgid "Manage SODa SCS Projects"
-msgstr "SODa SCS-Projekte verwalten"
-
-#: soda_scs_manager.links.menu.yml:0
-msgid "Manage SODa SCS Service Keys"
-msgstr "SODa SCS-Serviceschlüssel verwalten"
-
-#: soda_scs_manager.links.menu.yml:0
-msgid "Manage SODa SCS Snapshots"
-msgstr "SODa SCS-Snapshots verwalten"
-
-#: soda_scs_manager.links.menu.yml:0
-msgid "Manage SODa SCS Stacks"
-msgstr "SODa SCS-Stacks verwalten"
-
-#: soda_scs_manager.links.menu.yml:0
-msgid "List all available applications and provide the possibility to install them"
-msgstr "Alle verfügbaren Anwendungen auflisten und die Möglichkeit bieten, sie zu installieren"
-
-#: soda_scs_manager.links.menu.yml:0
-msgid "Link to the SODa SCS Manager Component Page"
-msgstr "Link zur SODa SCS-Manager Anwendungsseite"
-
 #: soda_scs_manager.links.menu.yml:0
 msgid "Your applications"
 msgstr "Ihre Anwendungen"
 
 #: soda_scs_manager.links.menu.yml:0
-msgid "Available applications"
-msgstr "Verfügbare Anwendungen"
+msgid "Projects"
+msgstr "Projekte"
+
+#: soda_scs_manager.links.menu.yml:0
+msgid "Collaboration projects and memberships"
+msgstr "Kollaborative Projekte und Mitgliedschaften"
+
+#: soda_scs_manager.links.menu.yml:0
+msgid "Documentation"
+msgstr "Dokumentation"
 
 #: soda_scs_manager.links.menu.yml:138
 msgid "Notifications"
@@ -419,8 +383,8 @@ msgid "SODa SCS Components"
 msgstr "SODa SCS-Komponenten"
 
 #: soda_scs_manager.links.menu.yml:0
-msgid "Manage single application like databases, Inter-App folders, etc."
-msgstr "Einzelanwendungen wie Datenbanken, Inter-App-Ordner usw. verwalten"
+msgid "Manage single application components like databases and triplestores."
+msgstr "Einzelanwendungen wie Datenbanken und Triplestores verwalten."
 
 #: soda_scs_manager.links.menu.yml:0
 msgid "Manage projects for collaboration and resource sharing."
@@ -431,8 +395,8 @@ msgid "Manage snapshots for backup and restore."
 msgstr "Snapshots für Sicherung und Wiederherstellung verwalten."
 
 #: soda_scs_manager.links.menu.yml:0
-msgid "Manage suites and environment like JupyterLab, Nextcloud, etc."
-msgstr "Suiten und Umgebungen wie JupyterLab, Nextcloud usw. verwalten"
+msgid "Manage application environments like JupyterHub and Nextcloud."
+msgstr "Applikationsumgebungen wie JupyterHub und Nextcloud verwalten"
 
 #: soda_scs_manager.links.menu.yml:0
 msgid "SODa SCS Manager settings and configurations"
@@ -799,12 +763,12 @@ msgid "Portainer request failed: @error"
 msgstr "Portainer-Anfrage fehlgeschlagen: @error"
 
 #: src/Controller/SodaScsAdministrationController.php:26
-msgid "Manage single application components like databases, triplestores, etc."
-msgstr "Verwalten Sie singuläre Applikationskomponenten wie Datenbanken, Triplestores etc."
+msgid "Manage single application components like databases and triplestores."
+msgstr "Verwalten Sie singuläre Applikationskomponenten wie Datenbanken und Triplestores."
 
 #: src/Controller/SodaScsAdministrationController.php:36
-msgid "Manage application/research environments like JupyterLab, Nextcloud, etc."
-msgstr "Verwalten Sie Applikations-/Forschungsumgebungen wie JupyterLab, Nextcloud, etc."
+msgid "Manage application environments like JupyterHub and Nextcloud."
+msgstr "Verwalten Sie Applikationsumgebungen wie JupyterHub und Nextcloud."
 
 #: src/Controller/SodaScsAdministrationController.php:46
 msgid "Manage projects to collaborate with other users and share resources."
@@ -840,7 +804,7 @@ msgstr "Service-Schlüssel"
 
 #: soda_scs_manager.routing.yml:456 src/Breadcrumb/SodaScsManagerListBreadcrumbBuilder.php:53 templates/pages/soda-scs-manager--administration.html.twig:16
 msgid "SCS Administration"
-msgstr "SCS-Verwaltung"
+msgstr "SCS-Administration"
 
 #: soda_scs_manager.routing.yml:529
 msgid "Issue Report"
@@ -904,7 +868,7 @@ msgstr "Die externe ID der SODa SCS-Komponente."
 
 #: src/Entity/SodaScsComponent.php:202
 msgid "Health Status"
-msgstr "Zustand"
+msgstr "Betriebszustand"
 
 #: src/Entity/SodaScsComponent.php:203
 msgid "The Health Status of the SODa SCS Component."
@@ -2427,6 +2391,66 @@ msgstr "Anfragefehler. Siehe Protokolle für weitere Details."
 msgid "Cannot delete triplestore component. See logs for more details."
 msgstr "Triplestore-Komponente kann nicht gelöscht werden. Siehe Protokolle für weitere Details."
 
+#: src/ViewBuilder/SodaScsComponentViewBuilder.php:156
+msgid "(not set)"
+msgstr "(nicht gesetzt)"
+
+#: src/ViewBuilder/SodaScsComponentViewBuilder.php:161
+msgid "Endpoint access"
+msgstr "Endpunkt-Zugriff"
+
+#: src/ViewBuilder/SodaScsComponentViewBuilder.php:165
+msgid "Public read"
+msgstr "Öffentliches Lesen"
+
+#: src/ViewBuilder/SodaScsComponentViewBuilder.php:166
+msgid "Yes"
+msgstr "Ja"
+
+#: src/ViewBuilder/SodaScsComponentViewBuilder.php:166
+msgid "No"
+msgstr "Nein"
+
+#: src/ViewBuilder/SodaScsComponentViewBuilder.php:167
+msgid "When enabled, the SPARQL endpoint is readable without authentication."
+msgstr "Wenn aktiviert, ist der SPARQL-Endpunkt ohne Authentifizierung lesbar."
+
+#: src/ViewBuilder/SodaScsComponentViewBuilder.php:172
+msgid "Read URL"
+msgstr "Lese-URL"
+
+#: src/ViewBuilder/SodaScsComponentViewBuilder.php:173
+msgid "(not configured)"
+msgstr "(nicht konfiguriert)"
+
+#: src/ViewBuilder/SodaScsComponentViewBuilder.php:175
+msgid "SPARQL read endpoint for SELECT queries."
+msgstr "SPARQL-Leseendpunkt für SELECT-Abfragen."
+
+#: src/ViewBuilder/SodaScsComponentViewBuilder.php:180
+msgid "Write URL"
+msgstr "Schreib-URL"
+
+#: src/ViewBuilder/SodaScsComponentViewBuilder.php:183
+msgid "SPARQL write endpoint for INSERT/UPDATE/DELETE."
+msgstr "SPARQL-Schreibendpunkt für INSERT/UPDATE/DELETE."
+
+#: src/ViewBuilder/SodaScsComponentViewBuilder.php:188
+msgid "Password"
+msgstr "Passwort"
+
+#: src/ViewBuilder/SodaScsComponentViewBuilder.php:191
+msgid "Use with Basic Auth for authentication. Click to copy."
+msgstr "Für die Authentifizierung mit Basic Auth verwenden. Zum Kopieren klicken."
+
+#: src/ViewBuilder/SodaScsComponentViewBuilder.php:196
+msgid "Token"
+msgstr "Token"
+
+#: src/ViewBuilder/SodaScsComponentViewBuilder.php:199
+msgid "Use as Bearer token for API authentication. Click to copy."
+msgstr "Als Bearer-Token für die API-Authentifizierung verwenden. Zum Kopieren klicken."
+
 #: templates/block/block--system-branding-block.html.twig:19;20;25
 msgid "Home"
 msgstr "Startseite"
@@ -2535,6 +2559,134 @@ msgstr "Gruppenmitglieder konnten nicht aus Keycloak für Projekt @project abger
 msgid "Failed to add user @user to group @group in Keycloak for project @project."
 msgstr "User @user konnte nicht zur Gruppe @group in Keycloak für Projekt @project hinzugefügt werden."
 
+#: /templates/includes/soda-scs-manager--coworking-intro.html.twig:16
+msgid "Welcome to the Semantic Co-Working Space"
+msgstr "Willkommen im Semantic Co-Working Space"
+
+#: /templates/includes/soda-scs-manager--coworking-intro.html.twig:17
+msgid "Skip introduction"
+msgstr "Einführung überspringen"
+
+#: /templates/includes/soda-scs-manager--coworking-intro.html.twig:22
+msgid "Welcome"
+msgstr "Willkommen"
+
+#: /templates/includes/soda-scs-manager--coworking-intro.html.twig:23
+msgid "Here you find all tools to support your work through the collection data life cycle – from capture and cleaning to publishing of FAIR and linked data."
+msgstr "Hier finden Sie alle Werkzeuge, die Sie während des gesamten Lebenszyklus von Sammlungsdaten unterstützen – von der Erfassung und Bereinigung bis zur Veröffentlichung von FAIR und Linked Data."
+
+#: /templates/includes/soda-scs-manager--coworking-intro.html.twig:24
+msgid "The next steps each highlight one application you can run from your dashboard."
+msgstr "Die nächsten Schritte stellen jeweils eine Anwendung vor, die Sie von Ihrem Dashboard aus starten können."
+
+#: /templates/includes/soda-scs-manager--coworking-intro.html.twig:33
+msgid "WissKI Environment"
+msgstr "WissKI-Umgebung"
+
+#: /templates/includes/soda-scs-manager--coworking-intro.html.twig:34
+msgid "Content-Management-System (CMS) for recording and publishing collection data in a scholarly context – your main environment for curated collection information."
+msgstr "Content-Management-System (CMS) zur Erfassung und Veröffentlichung von Sammlungsdaten im wissenschaftlichen Kontext – Ihre Hauptumgebung für kuratierte Sammlungsinformationen."
+
+#: /templates/includes/soda-scs-manager--coworking-intro.html.twig:45
+msgid "Nextcloud Environment"
+msgstr "Nextcloud-Umgebung"
+
+#: /templates/includes/soda-scs-manager--coworking-intro.html.twig:46
+msgid "File sharing and collaboration: OnlyOffice for documents and Draw.io (diagrams.net) for diagrams, integrated with your workspace."
+msgstr "Dateifreigabe und Zusammenarbeit: OnlyOffice für Dokumente und Draw.io (diagrams.net) für Diagramme, integriert in Ihren Arbeitsbereich."
+
+#: /templates/includes/soda-scs-manager--coworking-intro.html.twig:58
+msgid "JupyterHub Environment"
+msgstr "JupyterHub-Umgebung"
+
+#: /templates/includes/soda-scs-manager--coworking-intro.html.twig:59
+msgid "Notebooks and environments for coding, processing, and data cleaning – including OpenRefine for refining tabular and messy data."
+msgstr "Notebooks und Umgebungen für Programmierung, Verarbeitung und Datenbereinigung – einschließlich OpenRefine zur Verfeinerung tabellarischer und unstrukturierter Daten."
+
+#: /templates/includes/soda-scs-manager--coworking-intro.html.twig:71
+msgid "Ontology engineering in the browser – design and maintain the vocabularies that structure your collection and linked data."
+msgstr "Ontologie-Entwicklung im Browser – entwerfen und pflegen Sie die Vokabulare, die Ihre Sammlung und verknüpfte Daten strukturieren."
+
+#: /templates/includes/soda-scs-manager--coworking-intro.html.twig:83
+msgid "Relational database for structured collection data, with phpMyAdmin for browsing schemas, running SQL, and managing exports."
+msgstr "Relationale Datenbank für strukturierte Sammlungsdaten, mit phpMyAdmin zum Durchsuchen von Schemata, Ausführen von SQL und Verwalten von Exporten."
+
+#: /templates/includes/soda-scs-manager--coworking-intro.html.twig:95
+msgid "RDF graph storage with a SPARQL 1.1 endpoint – publish and query FAIR and linked collection data for reuse and integration."
+msgstr "RDF-Graph-Speicher mit SPARQL 1.1-Endpunkt – Veröffentlichung und Abfrage von FAIRen und verknüpften Sammlungsdaten zur Wiederverwendung und Integration."
+
+#: /templates/includes/soda-scs-manager--coworking-intro.html.twig:101
+msgid "Connect Nextcloud"
+msgstr "Nextcloud verbinden"
+
+#: /templates/includes/soda-scs-manager--coworking-intro.html.twig:102
+msgid "WissKI and other applications use your Nextcloud account for files and integrations. Start the connection here, or later from your account settings."
+msgstr "WissKI und andere Applikationen verwenden Ihr Nextcloud-Konto für Dateien und Integrationen. Starten Sie die Verbindung hier oder später in Ihren Kontoeinstellungen."
+
+#: /templates/includes/soda-scs-manager--coworking-intro.html.twig:105
+msgid "Checking connection…"
+msgstr "Verbindung wird geprüft…"
+
+#: /templates/includes/soda-scs-manager--coworking-intro.html.twig:106
+msgid "Allow popups for this site when prompted. If login fails, try again or use Connected Accounts below."
+msgstr "Erlauben Sie Popups für diese Seite, wenn Sie dazu aufgefordert werden. Falls die Anmeldung fehlschlägt, versuchen Sie es erneut oder verwenden Sie unten 'Verknüpfte Konten'."
+
+#: /templates/includes/soda-scs-manager--coworking-intro.html.twig:108
+msgid "For OpenID / SSO account linking:"
+msgstr "Für OpenID-/SSO-Kontoverknüpfung:"
+
+#: /templates/includes/soda-scs-manager--coworking-intro.html.twig:108
+msgid "Open Connected Accounts"
+msgstr "Verknüpfte Konten öffnen"
+
+#: /templates/includes/soda-scs-manager--coworking-intro.html.twig:112
+msgid "Create your first WissKI Environment"
+msgstr "Erstellen Sie Ihre erste WissKI-Umgebung"
+
+#: /templates/includes/soda-scs-manager--coworking-intro.html.twig:113
+msgid "Choose a short display name (max. 25 characters). We create a complete environment: database, triplestore, and WissKI. Provisioning starts immediately and may take several minutes."
+msgstr "Wählen Sie einen kurzen Anzeigenamen (max. 25 Zeichen). Wir erstellen eine vollständige Forschungsumgebung: Datenbank, Triplestore und WissKI. Die Bereitstellung beginnt sofort und kann mehrere Minuten dauern."
+
+#: /templates/includes/soda-scs-manager--coworking-intro.html.twig:114
+msgid "WissKI name"
+msgstr "WissKI-Name"
+
+#: /templates/includes/soda-scs-manager--coworking-intro.html.twig:115
+msgid "e.g. My collection workspace"
+msgstr "z. B. Mein Sammlungsarbeitsbereich"
+
+#: /templates/includes/soda-scs-manager--coworking-intro.html.twig:118
+msgid "Create WissKI Environment"
+msgstr "WissKI-Umgebung erstellen"
+
+#: /templates/includes/soda-scs-manager--coworking-intro.html.twig:119
+msgid "Finish without creating"
+msgstr "Ohne Erstellung abschließen"
+
+#: /templates/includes/soda-scs-manager--coworking-intro.html.twig:124
+msgid "WissKI Environment created"
+msgstr "WissKI-Umgebung erstellt"
+
+#: /templates/includes/soda-scs-manager--coworking-intro.html.twig:126
+msgid "Provisioning can take several minutes. You can monitor the applications Health Status from your dashboard or open the details page now."
+msgstr "Die Bereitstellung kann mehrere Minuten dauern. Sie können den Betriebszustand der Applikation über Ihr Dashboard überwachen oder jetzt die Detailseite öffnen."
+
+#: /templates/includes/soda-scs-manager--coworking-intro.html.twig:127
+msgid "Open application details"
+msgstr "Applikationsdetails öffnen"
+
+#: /templates/includes/soda-scs-manager--coworking-intro.html.twig:129
+msgid "Close introduction"
+msgstr "Einführung schließen"
+
+#: /templates/includes/soda-scs-manager--coworking-intro.html.twig:137
+msgid "Back"
+msgstr "Zurück"
+
+#: /templates/includes/soda-scs-manager--coworking-intro.html.twig:138
+msgid "Next"
+msgstr "Weiter"
+
 #: templates/pages/soda-scs-manager--administration.html.twig:17
 msgid "Manage your SODa SCS Manager components, stacks, projects and settings"
 msgstr "Verwalten Sie Ihre SODa SCS Manager Komponenten, Stacks, Projekte und Einstellungen."
@@ -2588,8 +2740,8 @@ msgid "Connect your Nextcloud account"
 msgstr "Nextcloud-Konto verbinden"
 
 #: templates/pages/soda-scs-manager--start-page.html.twig:18
-msgid "To use Nextcloud with WissKI and other components, connect your account once. A popup will open where you log in to Nextcloud. You can also connect later from your <a href=\":url\">Connected Accounts</a> page."
-msgstr "Um Nextcloud mit WissKI und anderen Komponenten zu nutzen, verbinden Sie Ihr Konto einmalig. Es öffnet sich ein Pop-up zur Anmeldung bei Nextcloud. Sie können die Verbindung auch später über die Seite <a href=\":url\">Verbundene Konten</a> herstellen."
+msgid "To use Nextcloud with WissKI and other applications, connect your account once. A popup will open where you log in to Nextcloud. You can also connect later from your <a href=\":url\">Connected Accounts</a> page."
+msgstr "Um Nextcloud mit WissKI und anderen Applikationen zu nutzen, verbinden Sie Ihr Konto einmalig. Es öffnet sich ein Pop-up zur Anmeldung bei Nextcloud. Sie können die Verbindung auch später über die Seite <a href=\":url\">Verbundene Konten</a> herstellen."
 
 #: templates/pages/soda-scs-manager--start-page.html.twig:23
 msgid "Connect Nextcloud"
@@ -2783,79 +2935,39 @@ msgstr "Triplestore"
 msgid "Clear all filters"
 msgstr "Alle Filter löschen"
 
-#: soda_scs_manager.module:93
+#: soda_scs_manager.module:157
 msgid "First Name"
 msgstr "Vorname"
 
-#: soda_scs_manager.module:94
+#: soda_scs_manager.module:158
 msgid "The first name of the user."
 msgstr "Der Vorname des Nutzenden."
 
-#: soda_scs_manager.module:9109
+#: soda_scs_manager.module:173
 msgid "Last Name"
 msgstr "Nachname"
 
-#: soda_scs_manager.module:110
+#: soda_scs_manager.module:174
 msgid "The last name of the user."
 msgstr "Der Nachname des Nutzenden."
 
-#: soda_scs_manager.module:150
-msgid "Inter-App folder"
-msgstr "Inter-App-Ordner"
+#: soda_scs_manager.module:189
+msgid "SSO User ID"
+msgstr "SSO-User-ID"
 
-#: soda_scs_manager.module:152
-msgid "A folder for sharing files across applications."
-msgstr "Ein Ordner zum Teilen von Dateien über Projekte und Anwendungen hinweg."
+#: soda_scs_manager.module:189
+msgid "The SSO user ID of the user."
+msgstr "Die SSO-User-ID des Nutzenden."
 
-#: soda_scs_manager.module:158
-msgid "SQL Database"
-msgstr "SQL-Datenbank"
-
-#: soda_scs_manager.module:160
-msgid "A relational database for storage of structured data."
-msgstr "Eine relationale Datenbank zur Speicherung strukturierter Daten."
-
-#: soda_scs_manager.module:166
-msgid "Triplestore"
-msgstr "Triplestore"
-
-#: soda_scs_manager.module:168
-msgid "Graph database for storage of RDF data."
-msgstr "Graphdatenbank zur Speicherung von RDF-Daten."
-
-#: soda_scs_manager.module:174
-msgid "WebProtégé"
-msgstr "WebProtégé"
-
-#: soda_scs_manager.module:176
-msgid "A web-based tool for creating and editing OWL ontologies. Webprotege is not yet part of the Single Sign On (SSO) system. You will need to create an account and log in manually."
-msgstr "Ein webbasiertes Tool zum Erstellen und Bearbeiten von OWL-Ontologien. Webprotege ist noch nicht Teil des Single-Sign-On-Systems (SSO). Sie müssen ein Konto erstellen und sich manuell anmelden."
-
-#: soda_scs_manager.module:182
-msgid "WissKI"
-msgstr "WissKI"
-
-#: soda_scs_manager.module:184
-msgid "A plain WissKI instance without data model and preconfigured triplestore connection."
-msgstr "Eine einfache WissKI-Instanz ohne Datenmodell und vorkonfigurierte Triplestore-Verbindung."
-
-#: soda_scs_manager.module:191
-msgid "Default Project"
-msgstr "Standardprojekt"
-
-#: soda_scs_manager.module:193
-msgid "A Project is a collection of components and stacks."
-msgstr "Ein Projekt ist eine Sammlung von Komponenten und Stacks."
-
-#: soda_scs_manager.module:1089
+#: soda_scs_manager.module:1149
 msgid "Loading..."
 msgstr "Wird geladen…"
 
-#: soda_scs_manager.module:1095
+#: soda_scs_manager.module:1155
 msgid "If SSO does not work, connect via app password:"
 msgstr "Wenn SSO nicht funktioniert, verbinden Sie sich mit einem App-Passwort:"
 
-#: soda_scs_manager.module:1101
+#: soda_scs_manager.module:1161
 msgid "Connect via app password"
 msgstr "Mit App-Passwort verbinden"
 
@@ -2866,6 +2978,34 @@ msgstr "Wird geprüft…"
 #: soda_scs_manager.module:1126
 msgid "Verify connection"
 msgstr "Verbindung prüfen"
+
+#: js/coworkingIntroWizard:54
+msgid "Creating your WissKI environment. Please do not close this window."
+msgstr "Die Einrichtung Ihrer WissKI-Umgebung beginnt. Bitte schließen Sie dieses Fenster nicht."
+
+#: js/coworkingIntroWizard:146
+msgid "Step @current of @total"
+msgstr "Schritt @current von @total"
+
+#: js/coworkingIntroWizard:235
+msgid "Please enter a name for your WissKI environment."
+msgstr "Bitte legen Sie einen Namen für Ihre WissKI-Umgebung fest."
+
+#: js/coworkingIntroWizard:245
+msgid "Automatic WissKI creation is not available. Rebuild the site cache (e.g. drush cr) or contact an administrator."
+msgstr "Die automatische Erstellung von WissKIs ist nicht verfügbar. Bitte leeren Sie den Website-Cache (z. B. mit dem Befehl „drush cr“) oder wenden Sie sich an einen Administrator."
+
+#: js/coworkingIntroWizard:257
+msgid "Could not load a security token. Reload the page and try again."
+msgstr "Security Token konnte nicht geladen werden. Laden Sie die Seite neu und versuchen Sie es erneut."
+
+#: js/coworkingIntroWizard:292
+msgid "You successfully started @name. It will appear on your dashboard while it is provisioned."
+msgstr "Sie haben @name erfolgreich gestartet. Es wird auf Ihrem Dashboard angezeigt, während es bereitgestellt wird."
+
+#: js/coworkingIntroWizard:309
+msgid "Request failed. Please try again."
+msgstr "Anfrage fehlgeschlagen. Bitte versuchen Sie es erneut."
 
 #: js/nextcloudConnect.js
 msgid "Request timed out. Nextcloud may be slow or unreachable."
@@ -2943,10 +3083,6 @@ msgstr "***Zum Anzeigen klicken***"
 msgid "Password copied to clipboard."
 msgstr "Passwort in die Zwischenablage kopiert."
 
-#: soda_scs_manager.module:1049
-msgid "The default Inter-App Folder for the user."
-msgstr "Der Standard-Inter-App-Ordner des SCS-Nutzenden."
-
 #: js/throbberOverlay.js
 msgid "Performing action, please do not close the window"
 msgstr "Aktion wird ausgeführt, bitte schließen Sie das Fenster nicht."
@@ -2960,5 +3096,5 @@ msgid "Creating your WissKI environment. Please do not close this window."
 msgstr "Die Einrichtung Ihrer WissKI-Umgebung beginnt. Bitte schließen Sie dieses Fenster nicht."
 
 #: src/Form/SodaScsComponentCreateForm.php;src/Form/SodaScsStackCreateForm.php
-msgid "Please note: After creating the WissKI Environment, it can take up to 5 minutes to setup everything.<br><br>Please check the health status to monitor the startup progress."
-msgstr "Hinweis: Nach dem Anlegen der WissKI-Umgebung kann die Einrichtung bis zu 5 Minuten dauern.<br><br>Bitte prüfen Sie den Gesundheitsstatus, um den Start zu verfolgen."
+msgid "Please note: After creating the WissKI Environment, it can take up to 5 minutes to setup everything.<br><br>Please check the Health Status to monitor the startup progress."
+msgstr "Hinweis: Nach dem Anlegen der WissKI-Umgebung kann die Einrichtung bis zu 5 Minuten dauern.<br><br>Bitte prüfen Sie den Betriebszustand, um den Start zu verfolgen."

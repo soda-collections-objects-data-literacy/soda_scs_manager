@@ -13,14 +13,14 @@
 <div id="scs-manager--coworking-intro" class="scs-manager--coworking-intro fixed inset-0 z-[60] flex items-center justify-center bg-slate-950/70 p-4" role="dialog" aria-modal="true" aria-labelledby="scs-manager--coworking-intro-title" data-coworking-intro-root>
   <div class="scs-manager--coworking-intro-panel bg-white rounded-xl shadow-2xl w-[min(900px,max(200px,50vw))] max-w-full overflow-hidden flex flex-col border border-stone-200">
     <div class="px-6 pt-6 pb-2 border-b border-stone-100 flex justify-between items-start gap-4">
-      <h2 id="scs-manager--coworking-intro-title" class="text-xl font-semibold text-stone-900 pr-2">{{ 'Welcome to the SCS Co-Working Space'|t }}</h2>
+      <h2 id="scs-manager--coworking-intro-title" class="text-xl font-semibold text-stone-900 pr-2">{{ 'Welcome to the Semantic Co-Working Space'|t }}</h2>
       <button type="button" class="scs-manager--coworking-intro-skip shrink-0 text-sm text-stone-500 hover:text-stone-800 underline" data-coworking-intro-skip>{{ 'Skip introduction'|t }}</button>
     </div>
 
     <div class="scs-manager--coworking-intro-scroll-body min-h-0 flex-1 overflow-y-auto px-6 py-5 text-stone-700 text-sm leading-relaxed">
       <div class="scs-manager--coworking-intro-slide" data-coworking-intro-slide="0">
         <p class="text-base font-medium text-stone-900 mb-3">{{ 'Welcome'|t }}</p>
-        <p class="mb-3">{{ 'Here you find all tools to support your work through the collection data life cycle—from capture and cleaning to publishing and FAIR-linked data.'|t }}</p>
+        <p class="mb-3">{{ 'Here you find all tools to support your work through the collection data life cycle – from capture and cleaning to publishing of FAIR and linked data.'|t }}</p>
         <p>{{ 'The next steps each highlight one application you can run from your dashboard.'|t }}</p>
       </div>
 
@@ -30,8 +30,8 @@
             <img src="{{ intro_asset_base }}wisski-stack.svg" alt="" width="160" height="112" loading="lazy" decoding="async" />
           </div>
           <div class="flex-1 min-w-0">
-            <p class="text-base font-semibold text-stone-900 mb-2">{{ 'WissKI'|t }}</p>
-            <p>{{ 'CMS for recording and publishing collection data in a scholarly context—your main environment for curated collection information.'|t }}</p>
+            <p class="text-base font-semibold text-stone-900 mb-2">{{ 'WissKI Environment'|t }}</p>
+            <p>{{ 'Content-Management-System (CMS) for recording and publishing collection data in a scholarly context – your main environment for curated collection information.'|t }}</p>
           </div>
         </div>
       </div>
@@ -42,7 +42,7 @@
             <img src="{{ intro_asset_base }}nextcloud-stack.svg" alt="" width="160" height="112" loading="lazy" decoding="async" />
           </div>
           <div class="flex-1 min-w-0">
-            <p class="text-base font-semibold text-stone-900 mb-2">{{ 'Nextcloud'|t }}</p>
+            <p class="text-base font-semibold text-stone-900 mb-2">{{ 'Nextcloud Environment'|t }}</p>
             <p>{{ 'File sharing and collaboration: OnlyOffice for documents and Draw.io (diagrams.net) for diagrams, integrated with your workspace.'|t }}</p>
           </div>
         </div>
@@ -52,11 +52,10 @@
         <div class="flex flex-col sm:flex-row gap-5 items-start">
           <div class="scs-manager--coworking-intro-app-slide-figure scs-manager--coworking-intro-app-slide-figure--stack flex flex-col items-center justify-center gap-2 rounded-lg bg-stone-100 border border-stone-200 p-3">
             <img src="{{ intro_asset_base }}jupyterhub-stack.svg" alt="" width="140" height="80" loading="lazy" decoding="async" />
-            <img src="{{ intro_asset_base }}openrefine.svg" alt="" width="100" height="48" loading="lazy" decoding="async" />
           </div>
           <div class="flex-1 min-w-0">
-            <p class="text-base font-semibold text-stone-900 mb-2">{{ 'JupyterHub'|t }}</p>
-            <p>{{ 'Notebooks and environments for coding, processing, and data cleaning—including OpenRefine for refining tabular and messy data.'|t }}</p>
+            <p class="text-base font-semibold text-stone-900 mb-2">{{ 'JupyterHub Environment'|t }}</p>
+            <p>{{ 'Notebooks and environments for coding, processing, and data cleaning – including OpenRefine for refining tabular and messy data.'|t }}</p>
           </div>
         </div>
       </div>
@@ -68,7 +67,7 @@
           </div>
           <div class="flex-1 min-w-0">
             <p class="text-base font-semibold text-stone-900 mb-2">{{ 'WebProtégé'|t }}</p>
-            <p>{{ 'Ontology engineering in the browser—design and maintain the vocabularies that structure your collection and linked data.'|t }}</p>
+            <p>{{ 'Ontology engineering in the browser – design and maintain the vocabularies that structure your collection and linked data.'|t }}</p>
           </div>
         </div>
       </div>
@@ -92,14 +91,14 @@
           </div>
           <div class="flex-1 min-w-0">
             <p class="text-base font-semibold text-stone-900 mb-2">{{ 'Triplestore'|t }}</p>
-            <p>{{ 'RDF graph storage with a SPARQL 1.1 endpoint—publish and query FAIR-linked collection data for reuse and integration.'|t }}</p>
+            <p>{{ 'RDF graph storage with a SPARQL 1.1 endpoint – publish and query FAIR and linked collection data for reuse and integration.'|t }}</p>
           </div>
         </div>
       </div>
 
       <div class="scs-manager--coworking-intro-slide hidden" data-coworking-intro-slide="7">
         <p class="text-base font-medium text-stone-900 mb-3">{{ 'Connect Nextcloud'|t }}</p>
-        <p class="mb-4">{{ 'WissKI and other components use your Nextcloud account for files and integrations. Start the connection here, or later from your account settings.'|t }}</p>
+        <p class="mb-4">{{ 'WissKI and other Applications use your Nextcloud account for files and integrations. Start the connection here, or later from your account settings.'|t }}</p>
         <div class="scs-manager--nextcloud-connect-wrapper scs-manager--nextcloud-connect-inline rounded-lg border border-stone-200 p-4 bg-stone-50">
           <button type="button" class="scs-manager--nextcloud-connect-btn w-full px-4 py-3 mb-4 bg-stone-800 text-white text-sm font-medium rounded-lg hover:bg-stone-900 focus:outline-none focus:ring-2 focus:ring-stone-500 focus:ring-offset-2">{{ 'Connect Nextcloud'|t }}</button>
           <p class="scs-manager--nextcloud-connect-status-inline mb-3 text-sm" data-status="unknown">{{ 'Checking connection…'|t }}</p>
@@ -109,22 +108,22 @@
       </div>
 
       <div class="scs-manager--coworking-intro-slide hidden" data-coworking-intro-slide="8">
-          <p class="text-base font-medium text-stone-900 mb-3">{{ 'Create your first WissKI stack'|t }}</p>
-          <p class="mb-3">{{ 'Choose a short display name (max. 25 characters). We create a full stack: database, triplestore, and WissKI. Provisioning starts immediately and may take several minutes.'|t }}</p>
+          <p class="text-base font-medium text-stone-900 mb-3">{{ 'Create your first WissKI Environment'|t }}</p>
+          <p class="mb-3">{{ 'Choose a short display name (max. 25 characters). We create a complete environment: database, triplestore, and WissKI. Provisioning starts immediately and may take several minutes.'|t }}</p>
         <label for="scs-manager--coworking-intro-wisski-name" class="block text-sm font-medium text-stone-800 mb-1">{{ 'WissKI name'|t }}</label>
         <input id="scs-manager--coworking-intro-wisski-name" type="text" class="w-full border border-stone-300 rounded-md px-3 py-2 text-stone-900 mb-3" maxlength="200" autocomplete="off" data-coworking-intro-wisski-name placeholder="{{ 'e.g. My collection workspace'|t }}" />
         <p class="text-xs text-stone-500 mb-3" data-coworking-intro-wisski-error role="alert" hidden></p>
         <div class="flex flex-col flex-nowrap justify-center gap-2 py-2.5">
-            <button type="button" class="scs-manager--coworking-intro-btn-create-wisski px-4 py-2 text-white text-sm rounded focus:outline-none focus:ring-2 focus:ring-[#e68500] focus:ring-offset-2" data-coworking-intro-open-wisski>{{ 'Create WissKI stack'|t }}</button>
+            <button type="button" class="scs-manager--coworking-intro-btn-create-wisski px-4 py-2 text-white text-sm rounded focus:outline-none focus:ring-2 focus:ring-[#e68500] focus:ring-offset-2" data-coworking-intro-open-wisski>{{ 'Create WissKI Environment'|t }}</button>
           <button type="button" class="px-4 py-2 border border-stone-300 text-sm rounded hover:bg-stone-50" data-coworking-intro-finish>{{ 'Finish without creating'|t }}</button>
         </div>
       </div>
 
       <div class="scs-manager--coworking-intro-slide hidden" data-coworking-intro-slide="9" data-coworking-intro-success-slide>
-          <p class="scs-manager--coworking-intro-success-title text-base font-semibold mb-3">{{ 'WissKI stack created'|t }}</p>
+          <p class="scs-manager--coworking-intro-success-title text-base font-semibold mb-3">{{ 'WissKI Environment created'|t }}</p>
         <p class="mb-3" data-coworking-intro-success-summary></p>
-        <p class="mb-4 text-sm text-stone-600">{{ 'Provisioning can take several minutes. You can monitor health from your dashboard or open the details page now.'|t }}</p>
-          <a href="#" class="inline-block mb-4 text-blue-700 underline hover:text-blue-900 text-sm font-medium" data-coworking-intro-success-details-link>{{ 'Open stack details'|t }}</a>
+        <p class="mb-4 text-sm text-stone-600">{{ 'Provisioning can take several minutes. You can monitor the applications Health Status from your dashboard or open the details page now.'|t }}</p>
+          <a href="#" class="inline-block mb-4 text-blue-700 underline hover:text-blue-900 text-sm font-medium" data-coworking-intro-success-details-link>{{ 'Open application details'|t }}</a>
         <div>
           <button type="button" class="px-4 py-2 bg-stone-800 text-white text-sm rounded hover:bg-stone-900" data-coworking-intro-close-success>{{ 'Close introduction'|t }}</button>
         </div>

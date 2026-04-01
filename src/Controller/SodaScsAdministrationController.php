@@ -23,7 +23,7 @@ final class SodaScsAdministrationController extends ControllerBase {
     $adminSections = [
       [
         'title' => $this->t('Components'),
-        'description' => $this->t('Manage single application components like databases, triplestores, etc.'),
+        'description' => $this->t('Manage single application components like databases and triplestores.'),
         'icon' => 'database-admin',
         'icon_path' => '/' . $modulePath . '/assets/images/database-admin.svg',
         'icon_class' => 'soda-scs-manager--admin-icon-database',
@@ -33,7 +33,7 @@ final class SodaScsAdministrationController extends ControllerBase {
       ],
       [
         'title' => $this->t('Stacks'),
-        'description' => $this->t('Manage application/research environments like JupyterLab, Nextcloud, etc.'),
+        'description' => $this->t('Manage application environments like JupyterHub and Nextcloud.'),
         'icon' => 'layers',
         'icon_path' => '/' . $modulePath . '/assets/images/layers.svg',
         'icon_class' => 'soda-scs-manager--admin-icon-layers',
