@@ -11,7 +11,7 @@ It extends the Drupal framework with an administration panel for the SODa Semant
 
 ## Install
 
-## Conent sync
+## Content sync
 ### Export
 ```bash
 # Navigate to web-root
