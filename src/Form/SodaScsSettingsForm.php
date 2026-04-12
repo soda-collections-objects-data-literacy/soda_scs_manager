@@ -205,7 +205,7 @@ class SodaScsSettingsForm extends ConfigFormBase {
       '#type' => 'textfield',
       '#title' => $this->t('Base URL'),
       '#default_value' => $this->config('soda_scs_manager.settings')->get('jupyterhub')['generalSettings']['baseUrl'] ?? '',
-      '#description' => $this->t('The base URL, like https://jupyterhub.scs.sammlungen.io.'),
+      '#description' => $this->t('The base URL, like https://code.scs.sammlungen.io.'),
     ];
 
     // Keycloak settings tab.

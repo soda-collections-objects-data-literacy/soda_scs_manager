@@ -354,6 +354,10 @@ msgstr "Ihre Anwendungen"
 msgid "Projects"
 msgstr "Projekte"
 
+#: src/ListBuilder/SodaScsProjectListBuilder.php
+msgid "Your projects"
+msgstr "Ihre Projekte"
+
 #: soda_scs_manager.links.menu.yml:0
 msgid "Collaboration projects and memberships"
 msgstr "Kollaborative Projekte und Mitgliedschaften"
@@ -904,11 +908,11 @@ msgstr "Notizen über die SODa SCS-Komponente."
 
 #: src/Entity/SodaScsComponent.php:288 src/Entity/SodaScsProject.php:210 src/Entity/SodaScsServiceKey.php:186 src/Entity/SodaScsSnapshot.php:124 src/Entity/SodaScsStack.php:215 src/ListBuilder/SodaScsProjectListBuilder.php:24 src/ListBuilder/SodaScsServiceKeyListBuilder.php:25
 msgid "Owner"
-msgstr "Besitzer"
+msgstr "Besitzende Person"
 
 #: src/Entity/SodaScsComponent.php:289
 msgid "The owner of the SODa SCS Component."
-msgstr "Der Besitzer der SODa SCS-Komponente."
+msgstr "Die besitzende Person der SODa SCS-Komponente."
 
 #: src/Entity/SodaScsComponent.php:307 src/Entity/SodaScsStack.php:258
 msgid "Project"
@@ -989,7 +993,7 @@ msgstr "Die mit dem Projekt verbundenen Mitglieder."
 
 #: src/Entity/SodaScsProject.php:211
 msgid "The owner of the SODa SCS Project."
-msgstr "Der Besitzer des SODa SCS-Projekts."
+msgstr "Die besitzende Person des SODa SCS-Projekts."
 
 #: src/Entity/SodaScsProject.php:229 src/ListBuilder/SodaScsProjectListBuilder.php:27
 msgid "Rights"
@@ -1061,7 +1065,7 @@ msgstr "Die Bezeichnung des Snapshots."
 
 #: src/Entity/SodaScsSnapshot.php:125
 msgid "The owner of the snapshot."
-msgstr "Der Besitzer des Snapshots."
+msgstr "Die besitzende Person des Snapshots."
 
 #: src/Entity/SodaScsSnapshot.php:143 src/ListBuilder/SodaScsSnapshotListBuilder.php:77
 msgid "Component"
@@ -1091,9 +1095,9 @@ msgstr "Das Image des SODa SCS Stacks."
 msgid "Included applications"
 msgstr "Enthaltene Applikationen"
 
-#: src/Entity/SodaScsStack.php:216
-msgid "The owner of the SODa SCS Stack."
-msgstr "Der Besitzer des SODa SCS Stacks."
+#: src/Entity/SodaScsStack.php:386
+msgid "The owner of the bundled application."
+msgstr "Die besitzende Person der gebündelten Anwendung."
 
 #: src/Entity/SodaScsStack.php:12;12
 msgid "Soda SCS Stack"
@@ -1106,6 +1110,14 @@ msgstr "Soda SCS Stacks"
 #: src/Entity/SodaScsStack.php:12
 msgid "Soda SCS Stack type"
 msgstr "Soda SCS Stack-Typ"
+
+#: src/Entity/Bundle/SodaScsComponentBundle.php:128 src/Entity/Bundle/SodaScsStackBundle.php:63
+msgid "English"
+msgstr "Englisch"
+
+#: src/Entity/Bundle/SodaScsComponentBundle.php:129 src/Entity/Bundle/SodaScsStackBundle.php:64
+msgid "German"
+msgstr "Deutsch"
 
 #: src/Entity/Bundle/SodaScsComponentBundle.php:25 src/Entity/Bundle/SodaScsStackBundle.php:25
 msgid "Flavour"
@@ -1961,7 +1973,7 @@ msgstr "Die Basis-URL, wie \"https://{instanceId}.scs.sammlungen.io\"."
 
 #: src/Form/SodaScsSettingsForm.php:803
 msgid "The health check route, like \"/health\"."
-msgstr "Die Gesundheitscheck-Route, wie \"/health\"."
+msgstr "Die Zustandsprüfung-Route, wie \"/health\"."
 
 #: src/Form/SodaScsSnapshotConfirmForm.php:106
 msgid "Snapshot Label"
@@ -2093,11 +2105,11 @@ msgstr "Dateisystem ist verfügbar."
 
 #: src/Helpers/SodaScsComponentHelpers.php:270
 msgid "MariaDB health check passed for component @component."
-msgstr "MariaDB-Gesundheitscheck für Komponente @component bestanden."
+msgstr "MariaDB-Zustandsprüfung für Komponente @component bestanden."
 
 #: src/Helpers/SodaScsComponentHelpers.php:298;316
 msgid "Triplestore health check failed for component @component: @error"
-msgstr "Triplestore-Gesundheitscheck für Komponente @component fehlgeschlagen: @error"
+msgstr "Triplestore-Zustandsprüfung für Komponente @component fehlgeschlagen: @error"
 
 #: src/Helpers/SodaScsComponentHelpers.php:308
 msgid "Triplestore is healthy for component @component."
@@ -2232,8 +2244,8 @@ msgid "Component is not available."
 msgstr "Komponente ist nicht verfügbar."
 
 #: src/Helpers/SodaScsComponentHelpers.php:0
-msgid "Available."
-msgstr "Verfügbar."
+msgid "Available"
+msgstr "Verfügbar"
 
 #: src/Helpers/SodaScsComponentHelpers.php:0
 msgid "Not available"
@@ -2508,8 +2520,8 @@ msgid "JupyterHub settings"
 msgstr "JupyterHub-Einstellungen"
 
 #: src/Form/SodaScsSettingsForm.php:170
-msgid "The base URL, like https://jupyterhub.scs.sammlungen.io."
-msgstr "Die Basis-URL, wie https://jupyterhub.scs.sammlungen.io."
+msgid "The base URL, like https://code.scs.sammlungen.io."
+msgstr "Die Basis-URL, wie https://code.scs.sammlungen.io."
 
 #: src/Form/SodaScsSettingsForm.php:190
 msgid "General Keycloak settings"

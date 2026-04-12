@@ -60,8 +60,8 @@ class SodaScsStackBundle extends SodaScsStack implements SodaScsStackInterface {
             'weight' => 30,
           ])
           ->setSetting('allowed_values', [
-            'en' => 'English',
-            'de' => 'German',
+            'en' => new TranslatableMarkup('English'),
+            'de' => new TranslatableMarkup('German'),
           ]);
 
         $definitions['developmentInstance'] = BundleFieldDefinition::create('boolean')
@@ -69,8 +69,8 @@ class SodaScsStackBundle extends SodaScsStack implements SodaScsStackInterface {
           ->setDescription(new TranslatableMarkup('Whether this is a Development Instance. Nightly builds are used for development and testing. Can not be changed after creation.'))
           ->setCardinality(1)
           ->setDefaultValue(FALSE)
-          ->setSetting('on_label', 'Yes')
-          ->setSetting('off_label', 'No')
+          ->setSetting('on_label', new TranslatableMarkup('Yes'))
+          ->setSetting('off_label', new TranslatableMarkup('No'))
           ->setDisplayConfigurable('form', FALSE)
           ->setDisplayConfigurable('view', FALSE)
           ->setDisplayOptions('form', [
