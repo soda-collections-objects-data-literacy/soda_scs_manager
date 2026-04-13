@@ -1,7 +1,8 @@
 (function ($, Drupal, once) {
   Drupal.behaviors.addApplicationPopup = {
     attach: function (context, settings) {
-      once('addApplicationPopup', '.soda-scs-manager--add-app-button', context).forEach(function (button) {
+      // Only <button> triggers: same class on <a> (e.g. projects page-title link) must navigate.
+      once('addApplicationPopup', 'button.soda-scs-manager--add-app-button', context).forEach(function (button) {
         var $button = $(button);
         var $popup = $('#add-app-popup');
         

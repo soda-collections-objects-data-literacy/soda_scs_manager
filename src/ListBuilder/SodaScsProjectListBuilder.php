@@ -10,6 +10,7 @@ use Drupal\Core\Entity\EntityListBuilder;
 use Drupal\Core\Entity\EntityTypeInterface;
 use Drupal\Core\Link;
 use Drupal\Core\Render\Markup;
+use Drupal\Core\Routing\RouteMatchInterface;
 use Drupal\Core\Session\AccountProxyInterface;
 use Drupal\Core\Url;
 use Symfony\Component\DependencyInjection\ContainerInterface;
@@ -22,6 +23,13 @@ use Symfony\Component\DependencyInjection\ContainerInterface;
 class SodaScsProjectListBuilder extends EntityListBuilder {
 
   /**
+   * The current user service.
+   *
+   * @var \Drupal\Core\Session\AccountProxyInterface
+   */
+  protected AccountProxyInterface $currentUser;
+
+  /**
    * The date formatter service.
    *
    * @var \Drupal\Core\Datetime\DateFormatterInterface
@@ -29,11 +37,11 @@ class SodaScsProjectListBuilder extends EntityListBuilder {
   protected DateFormatterInterface $dateFormatter;
 
   /**
-   * The current user service.
+   * The current route match.
    *
-   * @var \Drupal\Core\Session\AccountProxyInterface
+   * @var \Drupal\Core\Routing\RouteMatchInterface
    */
-  protected AccountProxyInterface $currentUser;
+  protected RouteMatchInterface $routeMatch;
 
   /**
    * Component bundles counted in the project list Applications column.
@@ -50,8 +58,9 @@ class SodaScsProjectListBuilder extends EntityListBuilder {
    */
   public static function createInstance(ContainerInterface $container, EntityTypeInterface $entity_type) {
     $instance = parent::createInstance($container, $entity_type);
-    $instance->dateFormatter = $container->get('date.formatter');
     $instance->currentUser = $container->get('current_user');
+    $instance->dateFormatter = $container->get('date.formatter');
+    $instance->routeMatch = $container->get('current_route_match');
     return $instance;
   }
 
@@ -262,6 +271,10 @@ class SodaScsProjectListBuilder extends EntityListBuilder {
   public function render() {
     $build = parent::render();
 
+    if ($this->routeMatch->getRouteName() === 'soda_scs_manager.projects') {
+      $build = ['projects_list_heading' => $this->buildProjectsListHeading()] + $build;
+    }
+
     // Add security library.
     $build['table']['#attached']['library'][] = 'soda_scs_manager/security';
 
@@ -275,6 +288,54 @@ class SodaScsProjectListBuilder extends EntityListBuilder {
 
     // Disable caching.
     $build['#cache']['max-age'] = 0;
+
+    return $build;
+  }
+
+  /**
+   * Heading row for the user-facing projects page.
+   *
+   * Matches the dashboard "Your applications" + control layout.
+   */
+  private function buildProjectsListHeading(): array {
+    $build = [
+      '#type' => 'container',
+      '#attributes' => [
+        'class' => [
+          'mb-8',
+          'soda-scs-manager--dashboard-heading-with-add',
+        ],
+      ],
+      '#cache' => [
+        'contexts' => [
+          'route',
+          'user',
+        ],
+      ],
+    ];
+
+    $build['title'] = [
+      '#type' => 'html_tag',
+      '#tag' => 'h2',
+      '#value' => $this->t('Your projects'),
+      '#attributes' => [
+        'class' => [
+          'soda-scs-manager--dashboard-heading-section',
+          'soda-scs-manager--dashboard-heading-section--inline',
+        ],
+      ],
+    ];
+
+    $addUrl = Url::fromRoute('entity.soda_scs_project.add_form', ['bundle' => 'soda_scs_project']);
+    if ($this->currentUser->hasPermission('create soda scs project') && $addUrl->access($this->currentUser)) {
+      $build['add_link'] = Link::fromTextAndUrl(
+        Markup::create('<span aria-hidden="true" class="soda-scs-manager--add-app-heading-plus">+</span>'),
+        $addUrl,
+      )->toRenderable();
+      $build['add_link']['#attributes']['aria-label'] = (string) $this->t('Add new project');
+      $build['add_link']['#attributes']['class'][] = 'soda-scs-manager--add-app-heading-button';
+      $build['add_link']['#attributes']['title'] = (string) $this->t('Add new project');
+    }
 
     return $build;
   }
