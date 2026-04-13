@@ -41,7 +41,7 @@ soda_scs_manager.settings:
             baseUrl:
               type: string
               label: 'Base URL'
-              description: 'The base URL, like https://jupyterhub.scs.sammlungen.io.'
+              description: 'The base URL, like https://code.scs.sammlungen.io.'
     keycloak:
       type: mapping
       label: 'Keycloak settings'
