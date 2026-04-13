@@ -94,7 +94,7 @@ entity.soda_scs_component.edit_form:
   path: '/soda-scs-manager/component/{soda_scs_component}/edit'
   defaults:
     _entity_form: 'soda_scs_component.edit'
-    _title: 'Edit SCS Component'
+    _title: 'Edit SODa SCS Component'
   requirements:
     _permission: 'soda scs manager user'
     _custom_access: '\Drupal\soda_scs_manager\Access\SodaScsComponentLinksTasksAccessControlHandler::accessEditForm'
@@ -367,7 +367,7 @@ entity.soda_scs_stack.edit_form:
   path: '/soda-scs-manager/stack/{soda_scs_stack}/edit'
   defaults:
     _entity_form: 'soda_scs_stack.edit'
-    _title: 'Edit Stack'
+    _title: 'Edit SODa SCSStack'
   requirements:
     _permission: 'soda scs manager user'
     _custom_access: '\Drupal\soda_scs_manager\Access\SodaScsStackLinksTasksAccessControlHandler::accessEditForm'

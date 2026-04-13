@@ -183,7 +183,7 @@ class SodaScsStackHelpers {
 
     if (!$wisskiComponent) {
       return [
-        'message' => 'WissKI component not found in stack.',
+        'message' => t('WissKI component not found in stack.'),
         'code' => 404,
         'success' => FALSE,
         'error' => 'No WissKI component found in stack: ' . $stack->get('machineName')->value,
@@ -231,7 +231,7 @@ class SodaScsStackHelpers {
 
       if ($statusCode >= 200 && $statusCode < 400) {
         return [
-          'message' => 'Available',
+          'message' => t('Available'),
           'status' => 'running',
           'code' => $statusCode,
           'success' => TRUE,
@@ -307,7 +307,7 @@ class SodaScsStackHelpers {
         $body = json_decode($response->getBody()->getContents(), TRUE);
         if (is_array($body) && isset($body['installed']) && $body['installed'] === TRUE) {
           return [
-            'message' => 'Available',
+            'message' => t('Available'),
             'status' => 'running',
             'code' => $statusCode,
             'success' => TRUE,
@@ -316,7 +316,7 @@ class SodaScsStackHelpers {
         }
 
         return [
-          'message' => 'Available',
+          'message' => t('Available'),
           'status' => 'running',
           'code' => $statusCode,
           'success' => TRUE,

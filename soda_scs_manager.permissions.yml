@@ -78,7 +78,7 @@ view soda scs snapshot:
   description: 'View snapshots of stacks and components.'
 
 edit soda scs snapshot:
-  title: 'Edit SCS Snapshots'
+  title: 'Edit SODa SCS Snapshots'
   description: 'Edit snapshots of stacks and components.'
 
 delete soda scs snapshot:

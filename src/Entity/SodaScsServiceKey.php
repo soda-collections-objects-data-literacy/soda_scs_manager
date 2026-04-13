@@ -192,8 +192,8 @@ class SodaScsServiceKey extends ContentEntityBase implements SodaScsServiceKeyIn
 
       ])
       ->setSetting('allowed_values', [
-        'password' => 'Password',
-        'token' => 'Token',
+        'password' => t('Password'),
+        'token' => t('Token'),
       ])
       ->setDisplayConfigurable('view', FALSE)
       ->setDisplayOptions('view', [

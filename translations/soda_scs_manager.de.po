@@ -59,6 +59,7 @@
 #  src/RequestActions/SodaScsOpenGdbServiceActions.php: n/a
 #  src/ServiceActions/SodaScsSqlServiceActions.php: n/a
 #  src/StackActions/SodaScsTriplestoreStackActions.php: n/a
+#  src/Traits/SodaScsProjectMemberInvitationTrait.php: n/a
 #  templates/block/block--system-branding-block.html.twig: n/a
 #  templates/navigation/menu-local-tasks.html.twig: n/a
 #  templates/node/node.html.twig: n/a
@@ -154,6 +155,10 @@ msgstr "Dieser Username ist bereits vergeben."
 msgid "Your registration has been submitted and is pending approval. You will be notified by email when your account is approved."
 msgstr "Ihre Registrierung wurde übermittelt und wartet auf Freigabe. Sie werden per E-Mail benachrichtigt, sobald Ihr Konto genehmigt wurde."
 
+#: soda_scs_manager.module:123
+msgid "The default project for this user. "
+msgstr "Das Standardprojekt für diesen Nutzenden."
+
 #: soda_scs_manager.module:214
 msgid "SQL Database"
 msgstr "SQL-Datenbank"
@@ -168,7 +173,7 @@ msgstr "Triplestore"
 
 #: soda_scs_manager.module:224
 msgid "An RDF4J-based Graph database for storage of RDF data that can be queried using SPARQL. It extends the standard RDF4J server with comprehensive user management and security features."
-msgstr "Eine auf RDF4J basierende Graphdatenbank zur Speicherung von RDF-Daten, die mit SPARQL abgefragt werden können. Sie erweitert RDF4J um Funktionen zur Benutzerverwaltung und Sicherheit."
+msgstr "Eine auf RDF4J basierende Graphdatenbank zur Speicherung von RDF-Daten, die mit SPARQL abgefragt werden können. Sie erweitert RDF4J um Funktionen zur User-Verwaltung und Sicherheit."
 
 #: soda_scs_manager.module:230
 msgid "WebProtégé"
@@ -412,11 +417,11 @@ msgstr "Einstellungen des SODa SCS-Managers verwalten"
 
 #: soda_scs_manager.links.menu.yml:0
 msgid "Keycloak users"
-msgstr "Keycloak-Benutzer"
+msgstr "Keycloak-User"
 
 #: soda_scs_manager.links.menu.yml:0
 msgid "Manage Keycloak users"
-msgstr "Keycloak-Benutzer verwalten"
+msgstr "Keycloak-User verwalten"
 
 #: soda_scs_manager.links.menu.yml:0
 msgid "SODa SCS Manager Debug"
@@ -452,11 +457,11 @@ msgstr "Problem melden"
 
 #: soda_scs_manager.links.menu.yml:0
 msgid "Keycloak User Registrations"
-msgstr "Keycloak-Benutzerregistrierungen"
+msgstr "Keycloak-User-Registrierungen"
 
 #: soda_scs_manager.links.menu.yml:0
 msgid "Manage pending Keycloak user registrations"
-msgstr "Ausstehende Keycloak-Benutzerregistrierungen verwalten"
+msgstr "Ausstehende Keycloak-User-Registrierungen verwalten"
 
 #: soda_scs_manager.links.task.yml:0;0;0;0 src/ListBuilder/SodaScsSnapshotListBuilder.php:145
 msgid "View"
@@ -593,10 +598,6 @@ msgstr "SCS Component hinzufügen"
 #: soda_scs_manager.routing.yml:0
 msgid "Delete SCS Component"
 msgstr "SCS Component löschen"
-
-#: soda_scs_manager.routing.yml:0
-msgid "Soda SCS applications"
-msgstr "Soda SCS-Anwendungen"
 
 #: soda_scs_manager.routing.yml:0
 msgid "SODa SCS Service Key"
@@ -890,6 +891,10 @@ msgstr "Das Image der SODa SCS-Komponente."
 msgid "Label"
 msgstr "Bezeichnung"
 
+#: src/Entity/SodaScsComponent.php:334
+msgid "Human-readable name."
+msgstr "Der menschenlesbare Name."
+
 #: src/Entity/SodaScsComponent.php:248 src/Entity/SodaScsProject.php:174 src/Entity/SodaScsStack.php:234
 msgid "Machine Name"
 msgstr "Maschinenname"
@@ -906,6 +911,10 @@ msgstr "Notizen"
 msgid "Notes about the SODa SCS Component."
 msgstr "Notizen über die SODa SCS-Komponente."
 
+#: src/Entity/SodaScsComponent.php:375
+msgid "Notes about the application."
+msgstr "Notizen über die Anwendung."
+
 #: src/Entity/SodaScsComponent.php:288 src/Entity/SodaScsProject.php:210 src/Entity/SodaScsServiceKey.php:186 src/Entity/SodaScsSnapshot.php:124 src/Entity/SodaScsStack.php:215 src/ListBuilder/SodaScsProjectListBuilder.php:24 src/ListBuilder/SodaScsServiceKeyListBuilder.php:25
 msgid "Owner"
 msgstr "Besitzende Person"
@@ -913,6 +922,10 @@ msgstr "Besitzende Person"
 #: src/Entity/SodaScsComponent.php:289
 msgid "The owner of the SODa SCS Component."
 msgstr "Die besitzende Person der SODa SCS-Komponente."
+
+#: src/Entity/SodaScsComponent.php:391
+msgid "The owner of the application."
+msgstr "Die besitzende Person der Anwendung."
 
 #: src/Entity/SodaScsComponent.php:307 src/Entity/SodaScsStack.php:258
 msgid "Project"
@@ -922,9 +935,13 @@ msgstr "Projekt"
 msgid "The project this application belongs to."
 msgstr "Das Projekt, zu dem diese Anwendung gehört."
 
-#: src/Entity/SodaScsComponent.php:327 src/Entity/SodaScsProject.php:99
+#: src/Entity/SodaScsComponent.php:327 src/Entity/SodaScsProject.php:120
 msgid "Connected applications"
 msgstr "Verbundene Komponenten"
+
+#: src/Entity/SodaScsProject.php:121
+msgid "The applications associated with this project."
+msgstr "Die Anwendungen, die mit diesem Projekt verbunden sind."
 
 #: src/Entity/SodaScsComponent.php:343
 msgid "Service Key"
@@ -982,6 +999,14 @@ msgstr "Die mit dem Projekt verbundene Berechtigungsgruppen-ID."
 #: src/Entity/SodaScsProject.php:156
 msgid "The label of the project."
 msgstr "Die Bezeichnung des Projekts."
+
+#: src/Entity/SodaScsProject.php:198
+msgid "The Keycloak UUID of the project group."
+msgstr "Die Keycloak UUID der Projektgruppe."
+
+#: src/Entity/SodaScsProject.php:209
+msgid "Members"
+msgstr "Mitglieder"
 
 #: src/Entity/SodaScsProject.php:198 src/ListBuilder/SodaScsProjectListBuilder.php:25
 msgid "Members"
@@ -1111,6 +1136,26 @@ msgstr "Soda SCS Stacks"
 msgid "Soda SCS Stack type"
 msgstr "Soda SCS Stack-Typ"
 
+#: src/Entity/Bundle/SodaScsComponentBundle.php:42
+msgid "Part of Stack"
+msgstr "Teil des Stacks"
+
+#: src/Entity/Bundle/SodaScsComponentBundle.php:42
+msgid "Part of Stack"
+msgstr "Teil des Stacks"
+
+#: src/Entity/Bundle/SodaScsComponentBundle.php:43
+msgid "The stack that this component is part of."
+msgstr "Der Stack, zu dem diese Komponente gehört."
+
+#: src/Entity/Bundle/SodaScsComponentBundle.php:62
+msgid "Public read access"
+msgstr "Öffentlicher Lesezugriff"
+
+#: src/Entity/Bundle/SodaScsComponentBundle.php:63
+msgid "Allow unauthenticated read access to the SPARQL endpoint."
+msgstr "Erlauben Sie den unauthentifizierten Lesezugriff auf den SPARQL-Endpunkt."
+
 #: src/Entity/Bundle/SodaScsComponentBundle.php:128 src/Entity/Bundle/SodaScsStackBundle.php:63
 msgid "English"
 msgstr "Englisch"
@@ -1151,13 +1196,45 @@ msgstr "Drupal/WissKI Standardsprache"
 msgid "The default language for the Drupal/WissKI interface. Can not be changed after creation."
 msgstr "Die Standardsprache für das Drupal/WissKI-Interface. Kann nach der Erstellung nicht mehr geändert werden."
 
-# src/Entity/Bundle/SodaScsComponentBundle.php:148
+# src/Entity/Bundle/SodaScsComponentBundle.php:133
 msgid "Development Instance"
 msgstr "Entwicklungsinstanz"
 
-# src/Entity/Bundle/SodaScsComponentBundle.php:149
+# src/Entity/Bundle/SodaScsComponentBundle.php:134
 msgid "Whether this is a Development Instance. Nightly builds are used for development and testing. Can not be changed after creation."
 msgstr "Gibt an, ob es sich um eine Entwicklungsinstanz handelt. Nightly Builds werden für die Entwicklung und Tests verwendet. Dies kann nach der Erstellung nicht mehr geändert werden."
+
+#: src/Entity/Bundle/SodaScsComponentBundle.php:137
+msgid "Yes"
+msgstr "Ja"
+
+#: src/Entity/Bundle/SodaScsComponentBundle.php:138
+msgid "No"
+msgstr "Nein"
+
+#: src/Entity/Bundle/SodaScsComponentBundle.php:174
+msgid "Container ID"
+msgstr "Container-ID"
+
+#: src/Entity/Bundle/SodaScsComponentBundle.php:175
+msgid "The ID of the container."
+msgstr "Die ID des Containers."
+
+#: src/Entity/Bundle/SodaScsComponentBundle.php:186
+msgid "Container Name"
+msgstr "Container-Name"
+
+#: src/Entity/Bundle/SodaScsComponentBundle.php:187
+msgid "The name of the container."
+msgstr "Der Name des Containers."
+
+#: src/Entity/Bundle/SodaScsComponentBundle.php:215
+msgid "Version"
+msgstr "Version"
+
+#: src/Entity/Bundle/SodaScsComponentBundle.php:216
+msgid "The WissKI version."
+msgstr "Die WissKI-Version."
 
 #: src/Entity/Bundle/SodaScsProjectsBundle.php:24
 msgid "Test fields"
@@ -1177,7 +1254,7 @@ msgstr "Dienstoperation fehlgeschlagen. Bitte versuchen Sie es später erneut."
 
 #: src/Form/SodaScsComponentCreateForm.php:181 src/Form/SodaScsStackCreateForm.php:139
 msgid "Create a new @label"
-msgstr "Erstellen Sie ein neues @label"
+msgstr "Erstellen Sie ein(e) neue(s) @label"
 
 #: src/Form/SodaScsComponentCreateForm.php:185
 msgid "What is that?"
@@ -1222,6 +1299,22 @@ msgstr "Komponente wird gelöscht: @label"
 #: src/Form/SodaScsProjectCreateForm.php:191
 msgid "A project with machine name \"@machine_name\" already exists. Please choose a different name."
 msgstr "Ein Projekt mit dem Maschinenname \"@machine_name\" existiert bereits. Bitte wählen Sie einen anderen Namen."
+
+#: src/Form/SodaScsProjectCreateForm.php:261
+msgid "Create a new project to organize your components."
+msgstr "Erstellen Sie ein neues Projekt, um Ihre Komponenten zu organisieren."
+
+#: src/Form/SodaScsProjectCreateForm.php:317
+msgid "Failed to sync keycloak group members for project @project: See logs for details."
+msgstr "Fehler bei der Synchronisierung der Keycloak Gruppenmitglieder für Projekt @project: Siehe Protokolle für weitere Details."
+
+#: src/Form/SodaScsProjectCreateForm.php:326
+msgid "Project @project has been created."
+msgstr "Projekt @project wurde erstellt."
+
+#: src/Form/SodaScsProjectCreateForm.php:369
+msgid "Unable to load the current user account."
+msgstr "Aktuelles User-Konto konnte nicht geladen werden."
 
 #: src/Form/SodaScsProjectDeleteForm.php:65
 msgid "Are you sure you want to delete project: @label?"
@@ -1333,7 +1426,7 @@ msgstr "Das Datenbank-Root-Passwort. Leer lassen, um den aktuellen Wert beizubeh
 
 #: src/Form/SodaScsSettingsForm.php:167
 msgid "SSO user password"
-msgstr "SSO-Benutzerpasswort"
+msgstr "SSO-User-Passwort"
 
 #: src/Form/SodaScsSettingsForm.php:168
 msgid "Fallback password for phpMyAdmin signon when Keycloak mariadb_password attribute is not set (e.g. users without an SQL component yet). SCS_DBMS_SSO_DB_PASSWORD. Leave blank to keep the current value."
@@ -1489,11 +1582,11 @@ msgstr "Repository-Routen"
 
 #: src/Form/SodaScsSettingsForm.php:0
 msgid "User routes"
-msgstr "Benutzer-Routen"
+msgstr "User-Routen"
 
 #: src/Form/SodaScsSettingsForm.php:0
 msgid "User CRUD routes"
-msgstr "CRUD-Routen für Benutzer"
+msgstr "CRUD-Routen für User"
 
 #: src/Form/SodaScsSettingsForm.php:0
 msgid "Miscellaneous routes"
@@ -1521,7 +1614,7 @@ msgstr "Entwicklungsversionen"
 
 #: src/Form/SodaScsSettingsForm.php:0
 msgid "Users routes"
-msgstr "Benutzer-Routen"
+msgstr "User-Routen"
 
 #: src/Form/SodaScsSettingsForm.php:0
 msgid "Groups routes"
@@ -2169,11 +2262,11 @@ msgstr "- Beliebiger Typ -"
 
 #: src/ListBuilder/SodaScsComponentListBuilder.php:0
 msgid "Username contains..."
-msgstr "Benutzername enthält …"
+msgstr "Username enthält …"
 
 #: src/ListBuilder/SodaScsComponentListBuilder.php:0
 msgid "Username..."
-msgstr "Benutzername …"
+msgstr "Username …"
 
 #: src/ListBuilder/SodaScsComponentListBuilder.php:0
 msgid "Healthy"
@@ -2307,6 +2400,14 @@ msgstr "SCS Komponentenauswahl"
 msgid "SCS Project Selection"
 msgstr "SCS Projektauswahl"
 
+#: src/Helpers/SodaScsDatabaseHelpers.php:224
+msgid "SQL or WissKI component not found in stack."
+msgstr "SQL- oder WissKI-Komponente nicht im Stack gefunden."
+
+#: src/Helpers/SodaScsStackHelpers.php:186
+msgid "WissKI component not found in stack."
+msgstr "WissKI-Komponente nicht im Stack gefunden."
+
 #: src/RequestActions/SodaScsDockerRegistryServiceActions.php:105
 msgid "Portainer request failed. See logs for more details."
 msgstr "Portainer-Anfrage fehlgeschlagen. Siehe Protokolle für weitere Details."
@@ -2402,6 +2503,26 @@ msgstr "Anfragefehler. Siehe Protokolle für weitere Details."
 #: src/StackActions/SodaScsWisskiStackActions.php:502;515
 msgid "Cannot delete triplestore component. See logs for more details."
 msgstr "Triplestore-Komponente kann nicht gelöscht werden. Siehe Protokolle für weitere Details."
+
+#: src/Traits/SodaScsProjectMemberInvitationTrait.php:37
+msgid "Invite members"
+msgstr "Mitglieder einladen"
+
+#: src/Traits/SodaScsProjectMemberInvitationTrait.php:38
+msgid "Enter usernames or e-mail addresses separated by commas or new lines. Each user will receive a request they can accept or reject."
+msgstr "Geben Sie Usernamen oder E-Mail-Adressen getrennt durch Kommas oder neue Zeilen ein. Jeder User erhält eine Anfrage, die er annehmen oder ablehnen kann."
+
+#: src/Traits/SodaScsProjectMemberInvitationTrait.php:73
+msgid "User \"@identifier\" could not be found."
+msgstr "User \"@identifier\" konnte nicht gefunden werden."
+
+#: src/Traits/SodaScsProjectMemberInvitationTrait.php:80
+msgid "You cannot invite @user."
+msgstr "Sie können @user nicht einladen."
+
+#: src/Traits/SodaScsProjectMemberInvitationTrait.php:87
+msgid "@user is already part of this project."
+msgstr "@user ist bereits Teil dieses Projekts."
 
 #: src/ViewBuilder/SodaScsComponentViewBuilder.php:156
 msgid "(not set)"
@@ -2773,7 +2894,7 @@ msgstr "Doku"
 
 #: src/Form/SodaScsIssueReportForm.php:93
 msgid "This report will be used to create issues in the public issue tracker at <a href=\"https://github.com/soda-collections-objects-data-literacy/soda_scs_manager/issues\" target=\"_blank\">Soda SCS Manager GitHub Issue Tracker</a>. All personal data will be removed from the submitted report before publication. <strong>Please do not include sensitive data such as passwords, usernames, or other confidential information in any of the input fields.</strong>"
-msgstr "Aus diesem Bericht werden Einträge im öffentlichen Issue-Tracker unter <a href=\"https://github.com/soda-collections-objects-data-literacy/soda_scs_manager/issues\" target=\"_blank\">Soda SCS Manager GitHub Issue Tracker</a> erstellt. Personenbezogene Daten werden vor der Veröffentlichung entfernt. <strong>Bitte geben Sie keine sensiblen Daten wie Passwörter, Benutzernamen oder vertrauliche Informationen in die Eingabefelder ein.</strong>"
+msgstr "Aus diesem Bericht werden Einträge im öffentlichen Issue-Tracker unter <a href=\"https://github.com/soda-collections-objects-data-literacy/soda_scs_manager/issues\" target=\"_blank\">Soda SCS Manager GitHub Issue Tracker</a> erstellt. Personenbezogene Daten werden vor der Veröffentlichung entfernt. <strong>Bitte geben Sie keine sensiblen Daten wie Passwörter, Usernamen oder vertrauliche Informationen in die Eingabefelder ein.</strong>"
 
 #: src/Form/SodaScsIssueReportForm.php:98
 msgid "I understand the information above."
@@ -2991,33 +3112,89 @@ msgstr "Wird geprüft…"
 msgid "Verify connection"
 msgstr "Verbindung prüfen"
 
-#: js/coworkingIntroWizard:54
+#: js/coworkingIntroWizard.js:54
 msgid "Creating your WissKI environment. Please do not close this window."
 msgstr "Die Einrichtung Ihrer WissKI-Umgebung beginnt. Bitte schließen Sie dieses Fenster nicht."
 
-#: js/coworkingIntroWizard:146
+#: js/coworkingIntroWizard.js:146
 msgid "Step @current of @total"
 msgstr "Schritt @current von @total"
 
-#: js/coworkingIntroWizard:235
+#: js/coworkingIntroWizard.js:235
 msgid "Please enter a name for your WissKI environment."
 msgstr "Bitte legen Sie einen Namen für Ihre WissKI-Umgebung fest."
 
-#: js/coworkingIntroWizard:245
+#: js/coworkingIntroWizard.js:245
 msgid "Automatic WissKI creation is not available. Rebuild the site cache (e.g. drush cr) or contact an administrator."
 msgstr "Die automatische Erstellung von WissKIs ist nicht verfügbar. Bitte leeren Sie den Website-Cache (z. B. mit dem Befehl „drush cr“) oder wenden Sie sich an einen Administrator."
 
-#: js/coworkingIntroWizard:257
+#: js/coworkingIntroWizard.js:257
 msgid "Could not load a security token. Reload the page and try again."
 msgstr "Security Token konnte nicht geladen werden. Laden Sie die Seite neu und versuchen Sie es erneut."
 
-#: js/coworkingIntroWizard:292
+#: js/coworkingIntroWizard.js:292
 msgid "You successfully started @name. It will appear on your dashboard while it is provisioned."
 msgstr "Sie haben @name erfolgreich gestartet. Es wird auf Ihrem Dashboard angezeigt, während es bereitgestellt wird."
 
-#: js/coworkingIntroWizard:309
+#: js/coworkingIntroWizard.js:309
 msgid "Request failed. Please try again."
 msgstr "Anfrage fehlgeschlagen. Bitte versuchen Sie es erneut."
+
+#: js/dashboardHealthStatus.js:38
+msgid "Close notification"
+msgstr "Benachrichtigung schließen"
+
+#: js/dashboardHealthStatus.js:40
+msgid "Your WissKI is ready!"
+msgstr "Ihr WissKI ist bereit!"
+
+#: js/dashboardHealthStatus.js:41
+msgid "If you visit for the first time, you need to login with SODa SCS Client."
+msgstr "Wenn Sie zum ersten Mal hier sind, müssen Sie sich mit dem SODa SCS Client anmelden."
+
+#: js/dashboardHealthStatus.js:42
+msgid "Go to"
+msgstr "Gehe zu"
+
+#: js/dashboardHealthStatus.js:43
+msgid "Click on"
+msgstr "Klicken Sie auf"
+
+#: js/dashboardHealthStatus.js:43
+msgid "Login with SODa SCS Client"
+msgstr "Mit SODa SCS Client anmelden"
+
+#: js/dashboardHealthStatus.js:72
+msgid "Health status: @status"
+msgstr "Betriebszustand: @status"
+
+#: js/dashboardHealthStatus.js:97
+msgid "Running"
+msgstr "Läuft"
+
+#: js/dashboardHealthStatus.js:100
+msgid "Starting"
+msgstr "Startet"
+
+#: js/dashboardHealthStatus.js:103
+msgid "Stopped"
+msgstr "Gestoppt"
+
+#: js/dashboardHealthStatus.js:106
+msgid "Running"
+msgstr "Läuft"
+
+#: js/dashboardHealthStatus.js:117
+msgid "Starting"
+msgstr "Startet"
+
+#: js/dashboardHealthStatus.js:120
+msgid "Stopped"
+msgstr "Gestoppt"
+
+#: js/dashboardHealthStatus.js:174
+msgid "Could not refresh status"
+msgstr "Zustand konnte nicht aktualisiert werden"
 
 #: js/nextcloudConnect.js
 msgid "Request timed out. Nextcloud may be slow or unreachable."
