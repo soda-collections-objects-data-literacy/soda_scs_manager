@@ -104,7 +104,7 @@ class SodaScsProjectDeleteForm extends ContentEntityDeleteForm {
     $project->delete();
 
     $this->messenger()->addStatus($this->t('Project @label has been deleted.', ['@label' => $project->label()]));
-    $form_state->setRedirect('entity.soda_scs_project.collection');
+    $form_state->setRedirect('soda_scs_manager.projects');
   }
 
 }
