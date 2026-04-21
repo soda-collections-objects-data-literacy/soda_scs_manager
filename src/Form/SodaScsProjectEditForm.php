@@ -189,7 +189,7 @@ class SodaScsProjectEditForm extends ContentEntityForm {
    *   The form state.
    */
   public function cancelForm(array &$form, FormStateInterface $form_state) {
-    $form_state->setRedirect('entity.soda_scs_project.collection');
+    $form_state->setRedirect('soda_scs_manager.projects');
   }
 
   /**
@@ -511,7 +511,7 @@ class SodaScsProjectEditForm extends ContentEntityForm {
     $this->projectDbAccessHelpers->syncProjectMembersDbAccess($project);
 
     // Redirect to the components page.
-    $form_state->setRedirect('entity.soda_scs_project.collection');
+    $form_state->setRedirect('soda_scs_manager.projects');
   }
 
   /**

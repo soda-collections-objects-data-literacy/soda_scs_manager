@@ -83,7 +83,7 @@ class SodaScsProjectDeleteForm extends ContentEntityDeleteForm {
    * {@inheritdoc}
    */
   public function getCancelUrl() {
-    return new Url('entity.soda_scs_project.collection');
+    return new Url('soda_scs_manager.projects');
   }
 
   /**

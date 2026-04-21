@@ -180,7 +180,7 @@ final class SodaScsProjectLeaveForm extends ContentEntityConfirmFormBase {
     }
 
     // Redirect to the project list.
-    $form_state->setRedirect('entity.soda_scs_project.collection');
+    $form_state->setRedirect('soda_scs_manager.projects');
   }
 
 }
