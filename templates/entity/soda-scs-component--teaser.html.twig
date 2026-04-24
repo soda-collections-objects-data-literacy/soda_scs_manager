@@ -30,8 +30,8 @@
     {# Component image and title #}
     <div class="flex items-start gap-3 mb-3">
       {% if entity.hasField('imageUrl') and entity.imageUrl.value %}
-        <div class="flex-shrink-0">
-          <img src="{{ file_url(entity.imageUrl.value) }}" alt="{{ entity.label }}" class="w-10 h-10 rounded" />
+        <div class="soda-scs-manager--component--thumbnail flex-shrink-0">
+          <img src="{{ file_url(entity.imageUrl.value) }}" alt="{{ entity.label }}" />
         </div>
       {% endif %}
       

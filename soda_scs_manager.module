@@ -10,6 +10,7 @@ use Drupal\Core\Form\FormStateInterface;
 use Drupal\Core\Entity\ContentEntityInterface;
 use Drupal\Core\Entity\EntityInterface;
 use Drupal\Core\Menu\MenuLinkInterface;
+use Drupal\Component\Utility\Html;
 use Drupal\Core\Entity\EntityTypeInterface;
 use Drupal\Core\Field\BaseFieldDefinition;
 use Drupal\Core\Routing\RouteMatchInterface;
@@ -583,13 +584,14 @@ function soda_scs_manager_soda_scs_component_view(array &$build, EntityInterface
     if ($imageUrl = $entity->get('imageUrl')->value) {
       $imageUrl = Drupal::service('file_url_generator')->generateAbsoluteString($imageUrl);
       $build['#attached']['library'][] = 'soda_scs_manager/globalStyling';
+      $alt = Html::escape($entity->label());
+      $src = Html::escape($imageUrl);
       // Add a custom render array for the imageUrl field.
       $build['imageUrl'] = [
         '#type' => 'markup',
-        '#markup' => '<img class="img-thumbnail soda-scs-manager--img--thumbnail" src="' . $imageUrl . '" alt="Image description" />',
-        // Ensure proper sanitization of the URL.
-        '#allowed_tags' => ['img'],
-      // Adjust the weight as needed.
+        '#markup' => '<div class="soda-scs-manager--component--thumbnail"><img src="' . $src . '" alt="' . $alt . '" /></div>',
+        '#allowed_tags' => ['div', 'img'],
+        // Adjust the weight as needed.
         '#weight' => 10,
       ];
     }
@@ -633,13 +635,14 @@ function soda_scs_manager_soda_scs_stack_view(array &$build, EntityInterface $en
     if ($imageUrl = $entity->get('imageUrl')->value) {
       $imageUrl = Drupal::service('file_url_generator')->generateAbsoluteString($imageUrl);
       $build['#attached']['library'][] = 'soda_scs_manager/globalStyling';
+      $alt = Html::escape($entity->label());
+      $src = Html::escape($imageUrl);
       // Add a custom render array for the imageUrl field.
       $build['imageUrl'] = [
         '#type' => 'markup',
-        '#markup' => '<img class="img-thumbnail soda-scs-manager--img--thumbnail" src="' . $imageUrl . '" alt="Image description" />',
-        // Ensure proper sanitization of the URL.
-        '#allowed_tags' => ['img'],
-      // Adjust the weight as needed.
+        '#markup' => '<div class="soda-scs-manager--component--thumbnail"><img src="' . $src . '" alt="' . $alt . '" /></div>',
+        '#allowed_tags' => ['div', 'img'],
+        // Adjust the weight as needed.
         '#weight' => 10,
       ];
     }
