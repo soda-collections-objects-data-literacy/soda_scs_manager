@@ -1116,9 +1116,27 @@ function soda_scs_manager_user_insert(UserInterface $user) {
 /**
  * Implements hook_page_attachments().
  *
- * Attaches the globalStyling library to all pages when the module is enabled.
+ * Attaches the globalStyling library on non-admin UI requests only.
+ *
+ * The bundle includes Tailwind preflight and module layout CSS; loading it under
+ * Gin (or any admin theme) overrides core/Gin form controls (e.g. Field UI
+ * formatter settings image buttons). Skip entirely there instead of patching
+ * admin CSS from the theme.
  */
 function soda_scs_manager_page_attachments(array &$attachments) {
+  $theme = \Drupal::config('system.theme');
+  $default_theme = $theme->get('default');
+  $admin_theme = $theme->get('admin') ?: $default_theme;
+  $active = \Drupal::theme()->getActiveTheme()->getName();
+
+  if ($admin_theme !== $default_theme && $active === $admin_theme) {
+    return;
+  }
+
+  if (\Drupal::service('router.admin_context')->isAdminRoute()) {
+    return;
+  }
+
   $attachments['#attached']['library'][] = 'soda_scs_manager/globalStyling';
 }
 
