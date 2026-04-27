@@ -161,7 +161,7 @@ class SodaScsComponentHelpers {
     }
     catch (\Exception $e) {
       return [
-        'message' => (string) $this->t('Component is not available.'),
+        'message' => (string) $this->t('Unavailable'),
         'status' => 'unavailable',
         'code' => $e->getCode(),
         'success' => FALSE,
@@ -171,7 +171,7 @@ class SodaScsComponentHelpers {
 
     if (!$inspectContainerResponse->success) {
       return [
-        'message' => (string) $this->t('Component is not available.'),
+        'message' => (string) $this->t('Unavailable'),
         'status' => 'unavailable',
         'code' => 404,
         'success' => FALSE,
@@ -266,13 +266,13 @@ class SodaScsComponentHelpers {
     $fullAccess = $this->sodaScsSqlServiceActions->userHasReadWriteAccessToDatabase($dbUser, $dbName, $dbUserPassword);
     if (!$fullAccess) {
       return [
-        'message' => $this->t("MariaDB health check failed for component @component.", ['@component' => $component->id()]),
+        'message' => $this->t("Unhealthy"),
         'status' => 'unhealthy',
         'success' => FALSE,
       ];
     }
     return [
-      'message' => $this->t("MariaDB health check passed for component @component.", ['@component' => $component->id()]),
+      'message' => $this->t("Healthy"),
       'status' => 'healthy',
       'success' => TRUE,
     ];
@@ -308,10 +308,7 @@ class SodaScsComponentHelpers {
       $healthCheckResult = $this->sodaScsOpenGdbServiceActions->makeRequest($healthCheckRequest);
       if ($healthCheckResult['statusCode'] != 200) {
         return [
-          'message' => $this->t("Triplestore health check failed for component @component: @error", [
-            '@component' => $component,
-            '@error' => $healthCheckResult['error'],
-          ]),
+          'message' => $this->t("Unhealthy"),
           'status' => 'unknown',
           'success' => FALSE,
           'error' => $healthCheckResult['error'],
@@ -319,19 +316,14 @@ class SodaScsComponentHelpers {
         ];
       }
       return [
-        'message' => $this->t("Triplestore is healthy for component @component.", [
-          '@component' => $component,
-        ]),
+        'message' => $this->t("Healthy"),
         'status' => 'healthy',
         'success' => TRUE,
       ];
     }
     catch (\Exception $e) {
       return [
-        'message' => $this->t("Triplestore health check failed for component @component: @error", [
-          '@component' => $component,
-          '@error' => $e->getMessage(),
-        ]),
+        'message' => $this->t("Unhealthy"),
         'status' => 'unknown',
         'success' => FALSE,
         'error' => $e->getMessage(),
@@ -359,7 +351,7 @@ class SodaScsComponentHelpers {
 
       if (empty($url)) {
         return [
-          'message' => (string) $this->t('WebProtege URL not configured.'),
+          'message' => (string) $this->t('Unhealthy'),
           'status' => 'unknown',
           'code' => 500,
           'success' => FALSE,
