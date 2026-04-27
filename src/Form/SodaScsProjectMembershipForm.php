@@ -17,7 +17,7 @@ use Drupal\user\UserInterface;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 
 /**
- * Form that lists pending project membership requests for the current user.
+ * Form that lists project membership notifications: pending and handled.
  */
 final class SodaScsProjectMembershipForm extends FormBase {
 
@@ -82,100 +82,180 @@ final class SodaScsProjectMembershipForm extends FormBase {
    * {@inheritdoc}
    */
   public function buildForm(array $form, FormStateInterface $form_state): array {
-    $requests = $this->loadPendingRequests();
+    $pending = $this->loadPendingRequests();
+    $handled = $this->loadHandledRequests();
 
     $form['#attributes']['class'][] = 'soda-scs-manager--membership-requests';
 
-    if (empty($requests)) {
+    if (empty($pending) && empty($handled)) {
       $form['empty'] = [
         '#type' => 'item',
-        '#markup' => '<p class="text-stone-400 text-center py-4">' . $this->t('You have no pending project invitations.') . '</p>',
+        '#markup' => '<p class="text-stone-400 text-center py-4">' . $this->t('You have no project invitations.') . '</p>',
       ];
       return $form;
     }
 
-    $form['table_wrapper'] = [
-      '#type' => 'container',
-      '#attributes' => ['class' => ['project-members-table-wrapper']],
-    ];
-
-    $form['table_wrapper']['requests'] = [
-      '#type' => 'table',
-      '#header' => [
-        'project' => $this->t('Project'),
-        'requester' => $this->t('Invited by'),
-        'created' => $this->t('Sent'),
-        'actions' => $this->t('Actions'),
-      ],
-      '#empty' => $this->t('You have no pending project invitations.'),
-      '#attributes' => ['class' => ['project-members-table', 'membership-requests-table']],
-    ];
-
-    foreach ($requests as $request) {
-      $requestId = $request->id();
-
-      $form['table_wrapper']['requests'][$requestId]['project'] = [
-        '#markup' => '<strong>' . $request->getProject()->label() . '</strong>',
+    if (empty($pending)) {
+      $form['no_pending'] = [
+        '#type' => 'item',
+        '#markup' => '<p class="text-stone-500 text-center py-2">' . $this->t('You have no pending project invitations.') . '</p>',
+      ];
+    }
+    else {
+      $form['table_wrapper'] = [
+        '#type' => 'container',
+        '#attributes' => ['class' => ['project-members-table-wrapper']],
       ];
 
-      $form['table_wrapper']['requests'][$requestId]['requester'] = [
-        '#markup' => $request->getRequester()->getDisplayName(),
+      $form['table_wrapper']['requests'] = [
+        '#type' => 'table',
+        '#header' => [
+          'project' => $this->t('Project'),
+          'requester' => $this->t('Invited by'),
+          'created' => $this->t('Sent'),
+          'actions' => $this->t('Actions'),
+        ],
+        '#empty' => $this->t('You have no pending project invitations.'),
+        '#attributes' => ['class' => ['project-members-table', 'membership-requests-table']],
       ];
 
-      $form['table_wrapper']['requests'][$requestId]['created'] = [
-        '#markup' => $this->dateFormatter->format($request->getCreatedTime(), 'short'),
-      ];
+      foreach ($pending as $request) {
+        $requestId = $request->id();
 
-      $form['table_wrapper']['requests'][$requestId]['actions'] = [
-        '#type' => 'operations',
-        '#links' => [
-          'accept' => [
-            'title' => $this->t('Accept'),
-            'url' => \Drupal\Core\Url::fromRoute('<current>'),
-            'attributes' => [
-              'class' => ['membership-action-accept'],
-              'data-request-id' => $requestId,
-              'onclick' => 'event.preventDefault(); this.closest("tr").querySelector(".membership-action-submit-accept").click();',
+        $form['table_wrapper']['requests'][$requestId]['project'] = [
+          '#markup' => '<strong>' . $request->getProject()->label() . '</strong>',
+        ];
+
+        $form['table_wrapper']['requests'][$requestId]['requester'] = [
+          '#markup' => $request->getRequester()->getDisplayName(),
+        ];
+
+        $form['table_wrapper']['requests'][$requestId]['created'] = [
+          '#markup' => $this->dateFormatter->format($request->getCreatedTime(), 'short'),
+        ];
+
+        $form['table_wrapper']['requests'][$requestId]['actions'] = [
+          '#type' => 'operations',
+          '#links' => [
+            'accept' => [
+              'title' => $this->t('Accept'),
+              'url' => \Drupal\Core\Url::fromRoute('<current>'),
+              'attributes' => [
+                'class' => ['membership-action-accept'],
+                'data-request-id' => $requestId,
+                'onclick' => 'event.preventDefault(); this.closest("tr").querySelector(".membership-action-submit-accept").click();',
+              ],
+            ],
+            'reject' => [
+              'title' => $this->t('Reject'),
+              'url' => \Drupal\Core\Url::fromRoute('<current>'),
+              'attributes' => [
+                'class' => ['membership-action-reject'],
+                'data-request-id' => $requestId,
+                'onclick' => 'event.preventDefault(); this.closest("tr").querySelector(".membership-action-submit-reject").click();',
+              ],
             ],
           ],
-          'reject' => [
-            'title' => $this->t('Reject'),
-            'url' => \Drupal\Core\Url::fromRoute('<current>'),
-            'attributes' => [
-              'class' => ['membership-action-reject'],
-              'data-request-id' => $requestId,
-              'onclick' => 'event.preventDefault(); this.closest("tr").querySelector(".membership-action-submit-reject").click();',
-            ],
+        ];
+
+        // Hidden submit buttons triggered by the operation links.
+        $form['table_wrapper']['requests'][$requestId]['hidden_accept'] = [
+          '#type' => 'submit',
+          '#value' => $this->t('Accept'),
+          '#name' => 'accept_request_' . $requestId,
+          '#request_id' => $requestId,
+          '#submit' => ['::acceptRequest'],
+          '#limit_validation_errors' => [],
+          '#attributes' => [
+            'class' => ['js-hide', 'membership-action-submit-accept'],
+            'style' => 'display:none;',
+          ],
+        ];
+
+        $form['table_wrapper']['requests'][$requestId]['hidden_reject'] = [
+          '#type' => 'submit',
+          '#value' => $this->t('Reject'),
+          '#name' => 'reject_request_' . $requestId,
+          '#request_id' => $requestId,
+          '#submit' => ['::rejectRequest'],
+          '#limit_validation_errors' => [],
+          '#attributes' => [
+            'class' => ['js-hide', 'membership-action-submit-reject'],
+            'style' => 'display:none;',
+          ],
+        ];
+      }
+    }
+
+    if (!empty($handled)) {
+      $handledHeadingClasses = [
+        'text-lg',
+        'font-semibold',
+        'text-stone-800',
+        'mb-3',
+      ];
+      if (!empty($pending)) {
+        $handledHeadingClasses = array_merge($handledHeadingClasses, [
+          'mt-6',
+          'pt-2',
+          'border-t',
+          'border-stone-200',
+        ]);
+      }
+
+      $form['handled_heading'] = [
+        '#type' => 'html_tag',
+        '#tag' => 'h2',
+        '#value' => $this->t('Handled invitations'),
+        '#attributes' => [
+          'class' => $handledHeadingClasses,
+        ],
+        '#weight' => 5,
+      ];
+
+      $form['handled_wrapper'] = [
+        '#type' => 'container',
+        '#attributes' => ['class' => ['project-members-table-wrapper', 'soda-scs-manager--handled-invitations']],
+        '#weight' => 6,
+      ];
+
+      $form['handled_wrapper']['handled'] = [
+        '#type' => 'table',
+        '#header' => [
+          'project' => $this->t('Project'),
+          'requester' => $this->t('Invited by'),
+          'created' => $this->t('Sent'),
+          'status' => $this->t('Result'),
+          'decided' => $this->t('Decided'),
+        ],
+        '#attributes' => [
+          'class' => [
+            'project-members-table',
+            'membership-requests-table',
+            'membership-handled-table',
           ],
         ],
       ];
 
-      // Hidden submit buttons triggered by the operation links.
-      $form['table_wrapper']['requests'][$requestId]['hidden_accept'] = [
-        '#type' => 'submit',
-        '#value' => $this->t('Accept'),
-        '#name' => 'accept_request_' . $requestId,
-        '#request_id' => $requestId,
-        '#submit' => ['::acceptRequest'],
-        '#limit_validation_errors' => [],
-        '#attributes' => [
-          'class' => ['js-hide', 'membership-action-submit-accept'],
-          'style' => 'display:none;',
-        ],
-      ];
-
-      $form['table_wrapper']['requests'][$requestId]['hidden_reject'] = [
-        '#type' => 'submit',
-        '#value' => $this->t('Reject'),
-        '#name' => 'reject_request_' . $requestId,
-        '#request_id' => $requestId,
-        '#submit' => ['::rejectRequest'],
-        '#limit_validation_errors' => [],
-        '#attributes' => [
-          'class' => ['js-hide', 'membership-action-submit-reject'],
-          'style' => 'display:none;',
-        ],
-      ];
+      foreach ($handled as $request) {
+        $rid = $request->id();
+        $form['handled_wrapper']['handled'][$rid]['project'] = [
+          '#markup' => '<strong>' . $request->getProject()->label() . '</strong>',
+        ];
+        $form['handled_wrapper']['handled'][$rid]['requester'] = [
+          '#markup' => $request->getRequester()->getDisplayName(),
+        ];
+        $form['handled_wrapper']['handled'][$rid]['created'] = [
+          '#markup' => $this->dateFormatter->format($request->getCreatedTime(), 'short'),
+        ];
+        $form['handled_wrapper']['handled'][$rid]['status'] = [
+          '#markup' => $this->getHandledStatusLabel($request->getStatus()),
+        ];
+        $decided = $request->getDecisionTime() ?? $request->getChangedTime();
+        $form['handled_wrapper']['handled'][$rid]['decided'] = [
+          '#markup' => $this->dateFormatter->format($decided, 'short'),
+        ];
+      }
     }
 
     $form['#cache']['max-age'] = 0;
@@ -242,6 +322,45 @@ final class SodaScsProjectMembershipForm extends FormBase {
     /** @var \Drupal\soda_scs_manager\Entity\SodaScsProjectMembershipInterface[] $requests */
     $requests = $storage->loadMultiple($ids);
     return $requests;
+  }
+
+  /**
+   * Load accepted and rejected membership requests for the current user (as recipient).
+   *
+   * @return \Drupal\soda_scs_manager\Entity\SodaScsProjectMembershipInterface[]
+   *   Newest first, limited to 50.
+   */
+  private function loadHandledRequests(): array {
+    $storage = $this->entityTypeManager->getStorage('soda_scs_project_membership');
+    $ids = $storage->getQuery()
+      ->condition('recipient', $this->currentUser->id())
+      ->condition('status', [
+        SodaScsProjectMembershipInterface::STATUS_ACCEPTED,
+        SodaScsProjectMembershipInterface::STATUS_REJECTED,
+      ], 'IN')
+      ->sort('decisionTime', 'DESC')
+      ->accessCheck(FALSE)
+      ->range(0, 50)
+      ->execute();
+
+    if (empty($ids)) {
+      return [];
+    }
+
+    /** @var \Drupal\soda_scs_manager\Entity\SodaScsProjectMembershipInterface[] $requests */
+    $requests = $storage->loadMultiple($ids);
+    return $requests;
+  }
+
+  /**
+   * Translated label for a handled membership request status.
+   */
+  private function getHandledStatusLabel(string $status): string {
+    return match ($status) {
+      SodaScsProjectMembershipInterface::STATUS_ACCEPTED => (string) $this->t('Accepted'),
+      SodaScsProjectMembershipInterface::STATUS_REJECTED => (string) $this->t('Rejected'),
+      default => (string) $this->t('Unknown'),
+    };
   }
 
   /**
