@@ -58,6 +58,68 @@
     return 'error';
   }
 
+  /**
+   * Normalize API health payload to a status string (matches dashboardHealthStatus.js).
+   */
+  function extractCurrentStatus(data) {
+    var currentStatus = null;
+    if (data && data.status && data.status.success === true) {
+      currentStatus = data.status.status || 'running';
+      return currentStatus;
+    }
+    if (data && data.status) {
+      var status = data.status.status ? data.status.status : '';
+      var message = data.status.message ? data.status.message : 'Error';
+      currentStatus = status;
+      var statusLower = (status || '').toLowerCase();
+      var messageLower = (message || '').toLowerCase();
+      if (status === 'starting' || message === 'Starting' || message === 'starting') {
+        // keep currentStatus as status
+      }
+      else if (
+        statusLower === 'unavailable' ||
+        messageLower === 'unavailable' ||
+        messageLower === 'not available' ||
+        messageLower.indexOf('component is not available') !== -1 ||
+        messageLower.indexOf('service temporarily unavailable') !== -1
+      ) {
+        currentStatus = 'unavailable';
+      }
+    }
+    return currentStatus;
+  }
+
+  function showWisskiReadyNotification(serviceLink) {
+    var $notification = $('<div class="wisski-ready-notification"></div>');
+    var loginUrl = serviceLink.replace(/\/$/, '');
+
+    $notification.html(
+      '<div class="notification-content">' +
+        '<button class="notification-close" aria-label="' + Drupal.t('Close notification') + '">&times;</button>' +
+        '<div class="notification-icon">&#10003;</div>' +
+        '<h3>' + Drupal.t('Your WissKI is ready!') + '</h3>' +
+        '<p>' + Drupal.t('If you visit for the first time, you need to login with SODa SCS Client.') + '</p>' +
+        '<p>' + Drupal.t('Go to') + ' <a href="' + loginUrl + '" target="_blank">' + loginUrl + '</a></p>' +
+        '<p>' + Drupal.t('Click on') + ' <strong>' + Drupal.t('Login with SODa SCS Client') + '</strong></p>' +
+      '</div>'
+    );
+
+    $('body').append($notification);
+
+    setTimeout(function () {
+      $notification.addClass('show');
+    }, 100);
+
+    function dismissNotification() {
+      $notification.removeClass('show');
+      setTimeout(function () {
+        $notification.remove();
+      }, 300);
+    }
+
+    $notification.find('.notification-close').on('click', dismissNotification);
+  }
+
   Drupal.behaviors.updateHealthStatus = {
     attach: function (context, settings) {
       once('updateHealthStatus', 'html', context).forEach(function () {
@@ -69,6 +131,30 @@
 
         let dotsInterval = null;
         let resolved = false;
+        let previousStatus = null;
+
+        function notifyWisskiReadyIfApplicable() {
+          var info = drupalSettings.entityInfo || {};
+          var direct = info.serviceLoginUrl ? String(info.serviceLoginUrl) : '';
+          if (direct) {
+            showWisskiReadyNotification(direct);
+            return;
+          }
+          var idMatch = (healthUrl || '').match(/\/health\/component\/(\d+)/);
+          if (!idMatch) {
+            return;
+          }
+          $.ajax({
+            url: '/soda-scs-manager/component/service-url/' + idMatch[1],
+            method: 'GET',
+            timeout: 5000,
+            dataType: 'json'
+          }).done(function (response) {
+            if (response && response.url) {
+              showWisskiReadyNotification(response.url);
+            }
+          });
+        }
 
         function stopLoading() {
           if (resolved) return;
@@ -93,6 +179,7 @@
             url: healthUrl,
             method: "GET",
           }).then(function (data) {
+            const currentStatus = extractCurrentStatus(data);
             const status = data && data.status ? data.status : data;
             if (status && status.success === true) {
               stopLoading();
@@ -112,6 +199,14 @@
                 $healthLabel.addClass('soda-scs-manager--entity-status--api-error').attr('title', errorTitle);
               }
             }
+
+            var entityBundle = drupalSettings.entityInfo && drupalSettings.entityInfo.bundle;
+            if ((entityBundle === 'soda_scs_wisski_component' || entityBundle === 'soda_scs_wisski_stack') &&
+                (previousStatus === 'starting' ) &&
+                (currentStatus === 'running' || currentStatus === 'healthy')) {
+              notifyWisskiReadyIfApplicable();
+            }
+            previousStatus = currentStatus;
           }).fail(function () {
             stopLoading();
             const transportTitle = Drupal.t('Could not refresh status');

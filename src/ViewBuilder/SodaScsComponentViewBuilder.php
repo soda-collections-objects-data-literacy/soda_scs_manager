@@ -107,14 +107,16 @@ class SodaScsComponentViewBuilder extends EntityViewBuilder {
 
     $build['#attached']['library'][] = 'soda_scs_manager/security';
     $build['#attached']['library'][] = 'soda_scs_manager/entityHelpers';
-    $build['#attached']['drupalSettings']['entityInfo']['healthUrl'] = '/soda-scs-manager/health/component/' . $build['#soda_scs_component']->id();
-
     // Triplestore: add dedicated credentials display (public, password, token).
     $entity = $build['#soda_scs_component'];
+    $build['#attached']['drupalSettings']['entityInfo']['healthUrl'] = '/soda-scs-manager/health/component/' . $entity->id();
+    $build['#attached']['drupalSettings']['entityInfo']['bundle'] = $entity->bundle();
+
     try {
       $serviceUrls = $this->sodaScsServiceHelpers->getComponentServiceAndLoginUrls($entity);
       if ($serviceUrls !== NULL && !empty($serviceUrls['loginUrl'])) {
         $build['#attached']['drupalSettings']['entityInfo']['serviceLoginUrl'] = $serviceUrls['loginUrl'];
+        $build['#attached']['drupalSettings']['entityInfo']['serviceUrl'] = $serviceUrls['url'];
       }
     }
     catch (MissingDataException $e) {

@@ -68,6 +68,7 @@ class SodaScsStackViewBuilder extends EntityViewBuilder {
     }
     $build['#attached']['library'][] = 'soda_scs_manager/entityHelpers';
     $build['#attached']['drupalSettings']['entityInfo']['healthUrl'] = '/soda-scs-manager/health/stack/' . $build['#soda_scs_stack']->id();
+    $build['#attached']['drupalSettings']['entityInfo']['bundle'] = $build['#soda_scs_stack']->bundle();
     $entity = $build['#soda_scs_stack'];
     try {
       $serviceUrls = $this->sodaScsServiceHelpers->getStackServiceAndLoginUrls($entity);
