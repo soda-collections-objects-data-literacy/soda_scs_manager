@@ -172,12 +172,7 @@ class SodaScsPortainerServiceActions implements SodaScsServiceRequestInterface {
       && !$result['success']
       && $this->isTlsPeerVerificationFailure((string) ($result['error'] ?? ''))
     ) {
-      $this->loggerFactory->get('soda_scs_manager')->warning(
-        'Health check TLS verification failed (@error). Retrying without peer ' .
-        'verification. Prefer issuing a certificate whose SAN includes the raw ' .
-        'backend hostname (raw. plus the instance host), e.g. via Traefik.',
-        ['@error' => (string) ($result['error'] ?? '')]
-      );
+      // Retry without peer verification; do not log (expected in dev with self-signed certs).
       $result = $this->executePortainerHttpRequest($request, FALSE);
     }
 
