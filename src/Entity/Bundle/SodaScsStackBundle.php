@@ -45,7 +45,7 @@ class SodaScsStackBundle extends SodaScsStack implements SodaScsStackInterface {
           ->setLabel(new TranslatableMarkup('Drupal/WissKI default language'))
           ->setDescription(new TranslatableMarkup('The default language for the Drupal/WissKI interface. Can not be changed after creation.'))
           ->setRequired(TRUE)
-          ->setDefaultValue('en')
+          ->setDefaultValue('de')
           ->setCardinality(1)
           ->setDisplayConfigurable('form', FALSE)
           ->setDisplayConfigurable('view', FALSE)

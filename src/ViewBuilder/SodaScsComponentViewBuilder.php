@@ -11,6 +11,8 @@ use Drupal\Core\Entity\EntityDisplayRepositoryInterface;
 use Drupal\Core\Entity\EntityTypeInterface;
 use Drupal\Core\Language\LanguageManagerInterface;
 use Drupal\Core\Theme\Registry;
+use Drupal\Core\TypedData\Exception\MissingDataException;
+use Drupal\soda_scs_manager\Helpers\SodaScsServiceHelpers;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 
 /**
@@ -31,6 +33,13 @@ class SodaScsComponentViewBuilder extends EntityViewBuilder {
    * @var \Drupal\soda_scs_manager\SodaScsManagerSettings
    */
   protected $sodaScsManagerSettings;
+
+  /**
+   * Service URL helpers (public service + login link for the health badge).
+   *
+   * @var \Drupal\soda_scs_manager\Helpers\SodaScsServiceHelpers
+   */
+  protected SodaScsServiceHelpers $sodaScsServiceHelpers;
 
   /**
    * Constructs a new EntityViewBuilder.
@@ -55,6 +64,7 @@ class SodaScsComponentViewBuilder extends EntityViewBuilder {
     LanguageManagerInterface $language_manager,
     Registry $theme_registry,
     EntityTypeInterface $entity_type,
+    SodaScsServiceHelpers $soda_scs_service_helpers,
   ) {
     $this->entityTypeId = $entity_type->id();
     $this->entityType = $entity_type;
@@ -63,6 +73,7 @@ class SodaScsComponentViewBuilder extends EntityViewBuilder {
     $this->themeRegistry = $theme_registry;
     $this->entityDisplayRepository = $entity_display_repository;
     $this->sodaScsManagerSettings = $config->get('soda_scs_manager.settings');
+    $this->sodaScsServiceHelpers = $soda_scs_service_helpers;
   }
 
   /**
@@ -79,6 +90,7 @@ class SodaScsComponentViewBuilder extends EntityViewBuilder {
       $container->get('language_manager'),
       $container->get('theme.registry'),
       $entity_type,
+      $container->get('soda_scs_manager.service.helpers'),
     );
   }
 
@@ -99,6 +111,15 @@ class SodaScsComponentViewBuilder extends EntityViewBuilder {
 
     // Triplestore: add dedicated credentials display (public, password, token).
     $entity = $build['#soda_scs_component'];
+    try {
+      $serviceUrls = $this->sodaScsServiceHelpers->getComponentServiceAndLoginUrls($entity);
+      if ($serviceUrls !== NULL && !empty($serviceUrls['loginUrl'])) {
+        $build['#attached']['drupalSettings']['entityInfo']['serviceLoginUrl'] = $serviceUrls['loginUrl'];
+      }
+    }
+    catch (MissingDataException $e) {
+      // Settings incomplete; health badge will not be linked.
+    }
     if ($entity->bundle() === 'soda_scs_triplestore_component') {
       $build['triplestoreCredentials'] = $this->buildTriplestoreCredentials($entity);
       $build['triplestoreCredentials']['#weight'] = 55;

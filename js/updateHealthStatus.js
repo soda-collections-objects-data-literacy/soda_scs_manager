@@ -6,12 +6,34 @@
     error: '⚠'
   };
 
-  function renderBadge(variant, symbol, text, title) {
+  function escapeAttr(value) {
+    return String(value)
+      .replace(/&/g, '&amp;')
+      .replace(/"/g, '&quot;')
+      .replace(/</g, '&lt;');
+  }
+
+  function renderBadge(variant, symbol, text, title, serviceLoginUrl) {
     const escapedText = $('<div>').text(text).html();
     const escapedTitle = title ? ' title="' + $('<div>').text(title).html() + '"' : '';
-    return '<span class="health-badge health-badge--' + variant + '"' + escapedTitle + '>' +
+    const inner =
       '<span class="health-badge__symbol" aria-hidden="true">' + symbol + '</span>' +
-      '<span class="health-badge__text">' + escapedText + '</span>' +
+      '<span class="health-badge__text">' + escapedText + '</span>';
+    const isRunningLink = Boolean(serviceLoginUrl) && variant === 'running';
+    if (isRunningLink) {
+      const linkTitle = escapeAttr(Drupal.t('Open the service login page in a new tab.'));
+      return (
+        '<a class="health-badge health-badge--' + variant + '"' +
+        ' href="' + escapeAttr(serviceLoginUrl) + '"' +
+        ' target="_blank" rel="noopener noreferrer"' +
+        (escapedTitle || (' title="' + linkTitle + '"')) +
+        '>' +
+        inner +
+        '</a>'
+      );
+    }
+    return '<span class="health-badge health-badge--' + variant + '"' + escapedTitle + '>' +
+      inner +
       '</span>';
   }
 
@@ -40,6 +62,7 @@
     attach: function (context, settings) {
       once('updateHealthStatus', 'html', context).forEach(function () {
         const healthUrl = drupalSettings.entityInfo.healthUrl;
+        const serviceLoginUrl = (drupalSettings.entityInfo && drupalSettings.entityInfo.serviceLoginUrl) ? String(drupalSettings.entityInfo.serviceLoginUrl) : '';
         const $healthItem = $("div.field--name-health div.field__item");
         const $healthLabel = $("div.field--name-health div.field__label");
         const dotSpan = $("<span class='dot'>.</span>");
@@ -75,14 +98,14 @@
               stopLoading();
               const variant = getStatusVariant(status.status, status.message);
               const displayText = status.message || status.status || Drupal.t('Running');
-              $healthItem.html(renderBadge(variant, HEALTH_SYMBOLS[variant], displayText));
+              $healthItem.html(renderBadge(variant, HEALTH_SYMBOLS[variant], displayText, undefined, serviceLoginUrl));
               $healthLabel.removeClass('soda-scs-manager--entity-status--api-error').removeAttr('title');
             } else {
               stopLoading();
               const variant = getStatusVariant(status && status.status, status && status.message);
               const displayText = (status && status.message) ? status.message : Drupal.t('Unavailable');
               const errorTitle = (status && status.error) ? status.error : '';
-              $healthItem.html(renderBadge(variant, HEALTH_SYMBOLS[variant], displayText, errorTitle));
+              $healthItem.html(renderBadge(variant, HEALTH_SYMBOLS[variant], displayText, errorTitle, ''));
               if (variant === 'starting') {
                 $healthLabel.removeClass('soda-scs-manager--entity-status--api-error').removeAttr('title');
               } else {
@@ -92,7 +115,7 @@
           }).fail(function () {
             stopLoading();
             const transportTitle = Drupal.t('Could not refresh status');
-            $healthItem.html(renderBadge('starting', HEALTH_SYMBOLS.starting, Drupal.t('Checking…'), transportTitle));
+            $healthItem.html(renderBadge('starting', HEALTH_SYMBOLS.starting, Drupal.t('Checking…'), transportTitle, ''));
             $healthLabel.removeClass('soda-scs-manager--entity-status--api-error').removeAttr('title');
           });
         }

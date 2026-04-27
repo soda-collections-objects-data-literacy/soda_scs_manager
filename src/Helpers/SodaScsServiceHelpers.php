@@ -13,8 +13,10 @@ use Drupal\Core\Messenger\MessengerInterface;
 use Drupal\Core\StringTranslation\TranslationInterface;
 use Drupal\Core\StringTranslation\StringTranslationTrait;
 use Drupal\Core\TypedData\Exception\MissingDataException;
-use Drupal\soda_scs_manager\ServiceActions\SodaScsServiceActionsInterface;
+use Drupal\soda_scs_manager\Entity\SodaScsComponent;
+use Drupal\soda_scs_manager\Entity\SodaScsStack;
 use Drupal\soda_scs_manager\RequestActions\SodaScsServiceRequestInterface;
+use Drupal\soda_scs_manager\ServiceActions\SodaScsServiceActionsInterface;
 
 /**
  * Helper functions for SCS components.
@@ -592,6 +594,85 @@ class SodaScsServiceHelpers {
     }
 
     return NULL;
+  }
+
+  /**
+   * Resolves the public service base URL and a login (or entry) URL for a component.
+   *
+   * @return array{url: string, loginUrl: string}|null
+   *   URLs for known component bundles, or NULL for unknown types.
+   */
+  public function getComponentServiceAndLoginUrls(SodaScsComponent $component): ?array {
+    $databaseSettings = $this->initDatabaseServiceSettings();
+    $triplestoreSettings = $this->initTriplestoreServiceSettings();
+    $webprotegeSettings = $this->initWebprotegeInstanceSettings();
+    $wisskiInstanceSettings = $this->initWisskiInstanceSettings();
+    $bundle = $component->bundle();
+
+    switch ($bundle) {
+      case 'soda_scs_sql_component':
+        $url = $databaseSettings['managementHost'];
+        $loginUrl = rtrim($url, '/') . '/';
+        return ['url' => $url, 'loginUrl' => $loginUrl];
+
+      case 'soda_scs_triplestore_component':
+        $url = $triplestoreSettings['host'];
+        $loginUrl = rtrim($url, '/') . '/';
+        return ['url' => $url, 'loginUrl' => $loginUrl];
+
+      case 'soda_scs_webprotege_component':
+        $url = $webprotegeSettings['host'];
+        $loginUrl = rtrim($url, '/') . '/';
+        return ['url' => $url, 'loginUrl' => $loginUrl];
+
+      case 'soda_scs_wisski_component':
+        $machineName = $component->get('machineName')->value;
+        $url = str_replace('{instanceId}', $machineName, $wisskiInstanceSettings['baseUrl']);
+        $base = rtrim($url, '/');
+        $loginUrl = $base . '/user/login';
+        return ['url' => $url, 'loginUrl' => $loginUrl];
+
+      default:
+        return NULL;
+    }
+  }
+
+  /**
+   * Resolves the public service base URL and a login (or entry) URL for a stack.
+   *
+   * @return array{url: string, loginUrl: string}|null
+   *   URLs for known stack bundles, or NULL for unknown types.
+   */
+  public function getStackServiceAndLoginUrls(SodaScsStack $stack): ?array {
+    $jupyterSettings = $this->initJupyterHubSettings();
+    $nextcloudSettings = $this->initNextcloudSettings();
+    $wisskiInstanceSettings = $this->initWisskiInstanceSettings();
+    $bundle = $stack->bundle();
+
+    switch ($bundle) {
+      case 'soda_scs_wisski_stack':
+        $machineName = $stack->get('machineName')->value;
+        $machineName = preg_replace('/^stack-/', 'wisski-', (string) $machineName, 1);
+        $url = str_replace('{instanceId}', $machineName, $wisskiInstanceSettings['baseUrl']);
+        $base = rtrim($url, '/');
+        $loginUrl = $base . '/user/login';
+        return ['url' => $url, 'loginUrl' => $loginUrl];
+
+      case 'soda_scs_jupyter_stack':
+        $url = $jupyterSettings['baseUrl'];
+        $base = rtrim($url, '/');
+        $loginUrl = $base . '/hub/login';
+        return ['url' => $url, 'loginUrl' => $loginUrl];
+
+      case 'soda_scs_nextcloud_stack':
+        $url = $nextcloudSettings['baseUrl'];
+        $base = rtrim($url, '/');
+        $loginUrl = $base . '/login';
+        return ['url' => $url, 'loginUrl' => $loginUrl];
+
+      default:
+        return NULL;
+    }
   }
 
   /**

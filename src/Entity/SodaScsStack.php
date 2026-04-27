@@ -325,6 +325,7 @@ class SodaScsStack extends ContentEntityBase implements SodaScsStackInterface {
 
     $fields['label'] = BaseFieldDefinition::create('string')
       ->setLabel(new TranslatableMarkup('Label'))
+      ->setDescription(new TranslatableMarkup('The label of the bundled application. Max length is 25 characters. Will be used to generate the machine name.'))
       ->setRequired(TRUE)
       ->setReadOnly(TRUE)
       ->setTranslatable(FALSE)
@@ -343,7 +344,7 @@ class SodaScsStack extends ContentEntityBase implements SodaScsStackInterface {
 
     $fields['machineName'] = BaseFieldDefinition::create('string')
       ->setLabel(new TranslatableMarkup('Machine Name'))
-      ->setDescription(new TranslatableMarkup('The machine-readable name.'))
+      ->setDescription(new TranslatableMarkup('The machine-readable name. This will be used for the URL of your application.'))
       ->setRequired(TRUE)
       ->setSetting('max_length', 255)
       ->setDisplayOptions('form', [

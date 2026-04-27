@@ -24,6 +24,10 @@ mv modules/custom/soda_scs_manager/content/sync/content-bulk-export* modules/cus
 drush content:import modules/custom/soda_scs_manager/content/sync/content-bulk-export.zip
 ```
 
+## Initial config
+### Permissions
+- SCS Users need "Manage own connected accounts" permissions.
+
 ## Hooks
 
 This file contains implementations of the following hooks:
