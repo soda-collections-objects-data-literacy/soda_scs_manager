@@ -234,32 +234,50 @@ function _soda_scs_manager_get_node_id_for_path_alias(string $lookup_alias): ?in
 }
 
 /**
- * Builds the Jupyter stack bundle description from CMS or a static fallback.
+ * Returns path aliases whose node body content drives stack/component bundle descriptions.
  *
- * Prefers the body field summary of the node at /soda-scs-manager/app/jupyter,
- * then the body value, then the fallback English copy.
+ * Must stay aligned with the paths passed to _soda_scs_manager_cms_app_page_description()
+ * in hook_entity_bundle_info() for each bundle.
+ */
+function _soda_scs_manager_cms_driven_app_path_aliases(): array {
+  return [
+    '/soda-scs-manager/app/jupyter',
+    '/soda-scs-manager/app/wisski',
+    '/soda-scs-manager/app/nextcloud',
+    '/soda-scs-manager/app/webprotege',
+    '/soda-scs-manager/app/open-gdb',
+    '/soda-scs-manager/app/mariadb',
+  ];
+}
+
+/**
+ * Builds a bundle description from a CMS app page (node body) or a static fallback.
+ *
+ * Prefers the body field summary, then the body value, of the node at the given
+ * path alias, then the fallback string.
+ *
+ * @param string $path_alias
+ *   Alias e.g. "/soda-scs-manager/app/jupyter".
+ * @param \Drupal\Core\StringTranslation\TranslatableMarkup $fallback
+ *   Shown when the node is missing, empty, or on re-entry while building.
  *
  * @return \Drupal\Core\StringTranslation\TranslatableMarkup
  *   Markup suitable for bundle info (supports ::render()).
  */
-function _soda_scs_manager_jupyter_stack_bundle_description(): TranslatableMarkup {
-  $fallback = new TranslatableMarkup('JupyterHub is your personal data science workspace and a powerful, interactive environment where you can analyze data, create visualizations, and conduct research without needing to install any software on your computer.
-
-When you access your JupyterHub environment, you get a complete toolkit for data analysis and research that includes everything you need to get started immediately.');
-
-  static $building = FALSE;
-  if ($building) {
+function _soda_scs_manager_cms_app_page_description(string $path_alias, TranslatableMarkup $fallback): TranslatableMarkup {
+  static $building = [];
+  $path_key = '/' . trim($path_alias, '/');
+  if (!empty($building[$path_key])) {
     return $fallback;
   }
-  $building = TRUE;
-
+  $building[$path_key] = TRUE;
   try {
     if (!\Drupal::moduleHandler()->moduleExists('node') ||
         !\Drupal::entityTypeManager()->hasDefinition('node') ||
         !\Drupal::moduleHandler()->moduleExists('filter')) {
       return $fallback;
     }
-    $nid = _soda_scs_manager_get_node_id_for_path_alias('/soda-scs-manager/app/jupyter');
+    $nid = _soda_scs_manager_get_node_id_for_path_alias($path_key);
     if (!$nid) {
       return $fallback;
     }
@@ -285,25 +303,27 @@ When you access your JupyterHub environment, you get a complete toolkit for data
     if ($raw === '' || trim(strip_tags($raw)) === '') {
       return $fallback;
     }
-    return new TranslatableMarkup('!jupyter_app_bundle_description', [
-      '!jupyter_app_bundle_description' => Markup::create($raw),
+    return new TranslatableMarkup('!cms_app_description', [
+      '!cms_app_description' => Markup::create($raw),
     ]);
   }
   catch (\Throwable) {
     return $fallback;
   }
   finally {
-    $building = FALSE;
+    unset($building[$path_key]);
   }
 }
 
 /**
- * Clears entity bundle info cache when the Jupyter app CMS page or its alias changes.
+ * Clears entity bundle info cache when any CMS app page or its path alias changes.
  */
-function _soda_scs_manager_invalidate_jupyter_stack_bundle_cache(EntityInterface $entity): void {
+function _soda_scs_manager_invalidate_cms_app_bundle_cache(EntityInterface $entity): void {
   if (!\Drupal::hasService('entity_type.bundle.info')) {
     return;
   }
+  $alias_paths = _soda_scs_manager_cms_driven_app_path_aliases();
+  $alias_set = array_fill_keys($alias_paths, TRUE);
   $bundle_info = \Drupal::service('entity_type.bundle.info');
   if ($entity->getEntityTypeId() === 'path_alias' && \Drupal::entityTypeManager()->hasDefinition('path_alias')) {
     $alias_candidates = [(string) ($entity->get('alias')->value ?? '')];
@@ -312,7 +332,7 @@ function _soda_scs_manager_invalidate_jupyter_stack_bundle_cache(EntityInterface
     }
     foreach ($alias_candidates as $alias_value) {
       $normalized = '/' . trim($alias_value, '/');
-      if ($normalized === '/soda-scs-manager/app/jupyter') {
+      if (isset($alias_set[$normalized])) {
         $bundle_info->clearCachedBundles();
         return;
       }
@@ -322,9 +342,12 @@ function _soda_scs_manager_invalidate_jupyter_stack_bundle_cache(EntityInterface
   if ($entity->getEntityTypeId() !== 'node') {
     return;
   }
-  $target_nid = _soda_scs_manager_get_node_id_for_path_alias('/soda-scs-manager/app/jupyter');
-  if ($target_nid && (int) $entity->id() === $target_nid) {
-    $bundle_info->clearCachedBundles();
+  foreach ($alias_paths as $app_path) {
+    $target_nid = _soda_scs_manager_get_node_id_for_path_alias($app_path);
+    if ($target_nid && (int) $entity->id() === $target_nid) {
+      $bundle_info->clearCachedBundles();
+      return;
+    }
   }
 }
 
@@ -336,7 +359,10 @@ function soda_scs_manager_entity_bundle_info() {
   $bundles['soda_scs_component']['soda_scs_sql_component'] = [
     'label' => new TranslatableMarkup('SQL Database'),
     'class' => SodaScsComponentBundle::class,
-    'description' => new TranslatableMarkup('A relational database for storage of structured data that can be managed through phpMyAdmin. This is the place to import and export, and query your data using SQL.'),
+    'description' => _soda_scs_manager_cms_app_page_description(
+      '/soda-scs-manager/app/mariadb',
+      new TranslatableMarkup('A relational database for storage of structured data that can be managed through phpMyAdmin. This is the place to import and export, and query your data using SQL.')
+    ),
     'imageUrl' => 'public://soda_scs_manager/images/sql.svg',
     'tags' => ['database'],
   ];
@@ -344,7 +370,10 @@ function soda_scs_manager_entity_bundle_info() {
   $bundles['soda_scs_component']['soda_scs_triplestore_component'] = [
     'label' => new TranslatableMarkup('Triplestore'),
     'class' => SodaScsComponentBundle::class,
-    'description' => new TranslatableMarkup('An RDF4J-based Graph database for storage of RDF data that can be queried using SPARQL. It extends the standard RDF4J server with comprehensive user management and security features.'),
+    'description' => _soda_scs_manager_cms_app_page_description(
+      '/soda-scs-manager/app/open-gdb',
+      new TranslatableMarkup('OpenGDB is an RDF4J-based triplestore that extends the standard RDF4J server with comprehensive user management and security features and provides a SPARQL1.1 Endpoint.')
+    ),
     'imageUrl' => 'public://soda_scs_manager/images/triplestore.svg',
     'tags' => ['database'],
   ];
@@ -352,7 +381,10 @@ function soda_scs_manager_entity_bundle_info() {
   $bundles['soda_scs_component']['soda_scs_webprotege_component'] = [
     'label' => new TranslatableMarkup('WebProtégé'),
     'class' => SodaScsComponentBundle::class,
-    'description' => new TranslatableMarkup('A web-based tool for creating and editing OWL ontologies. Webprotege is not yet part of the Single Sign On (SSO) system. You will need to create an account and log in manually.'),
+    'description' => _soda_scs_manager_cms_app_page_description(
+      '/soda-scs-manager/app/webprotege',
+      new TranslatableMarkup('WebProtégé is a free, open-source, web-based platform for collaborative ontology development that enables users to create, edit, and share OWL 2 ontologies directly through a web browser.')
+    ),
     'imageUrl' => 'public://soda_scs_manager/images/protege.svg',
     'tags' => ['ontology'],
   ];
@@ -383,7 +415,10 @@ function soda_scs_manager_entity_bundle_info() {
   $bundles['soda_scs_stack']['soda_scs_jupyter_stack'] = [
     'label' => new TranslatableMarkup('JupyterHub Environment'),
     'class' => SodaScsStackBundle::class,
-    'description' => _soda_scs_manager_jupyter_stack_bundle_description(),
+    'description' => _soda_scs_manager_cms_app_page_description(
+      '/soda-scs-manager/app/jupyter',
+      new TranslatableMarkup('JupyterHub is your personal data science workspace and a powerful, interactive environment where you can analyze data, create visualizations, and conduct research without needing to install any software on your computer.')
+    ),
     'imageUrl' => 'public://soda_scs_manager/images/jupyterhub-stack.svg',
     'tags' => ['coding', 'data-science', 'data-cleaning'],
   ];
@@ -391,7 +426,10 @@ function soda_scs_manager_entity_bundle_info() {
   $bundles['soda_scs_stack']['soda_scs_wisski_stack'] = [
     'label' => new TranslatableMarkup('WissKI Environment'),
     'class' => SodaScsStackBundle::class,
-    'description' => new TranslatableMarkup('A WissKI Environment contains a preconfigured WissKI, a Triplestore and a Database to help users to produce and publish FAIR data that is accessible through Triplestore endpoints.'),
+    'description' => _soda_scs_manager_cms_app_page_description(
+      '/soda-scs-manager/app/wisski',
+      new TranslatableMarkup('WissKI is a specialised system for managing and publishing research and cultural heritage data, built on the open-source CMS Drupal. It ships with a default data model to instantly record and publish FAIR data.')
+    ),
     'imageUrl' => 'public://soda_scs_manager/images/wisski-stack.svg',
     'tags' => ['cms', 'database', 'publishing'],
   ];
@@ -399,7 +437,10 @@ function soda_scs_manager_entity_bundle_info() {
   $bundles['soda_scs_stack']['soda_scs_nextcloud_stack'] = [
     'label' => new TranslatableMarkup('Nextcloud Environment'),
     'class' => SodaScsStackBundle::class,
-    'description' => new TranslatableMarkup('An Office environment for collaboration and file sharing that includes OnlyOffice and Draw.io (diagrams.net). Nextcloud can also be used to share files with other applications.'),
+    'description' => _soda_scs_manager_cms_app_page_description(
+      '/soda-scs-manager/app/nextcloud',
+      new TranslatableMarkup('Nextcloud is a file storage and collaboration platform that functions as your personal cloud workspace, which includes a OnlyOffice suite, Draw.io and SCS-Share Directory to share files across your JupyterHub and WissKI environments. ')
+    ),
     'imageUrl' => 'public://soda_scs_manager/images/nextcloud-stack.svg',
     'tags' => ['filesharing', 'office', 'publishing'],
   ];
@@ -411,21 +452,21 @@ function soda_scs_manager_entity_bundle_info() {
  * Implements hook_entity_insert().
  */
 function soda_scs_manager_entity_insert(EntityInterface $entity): void {
-  _soda_scs_manager_invalidate_jupyter_stack_bundle_cache($entity);
+  _soda_scs_manager_invalidate_cms_app_bundle_cache($entity);
 }
 
 /**
  * Implements hook_entity_update().
  */
 function soda_scs_manager_entity_update(EntityInterface $entity): void {
-  _soda_scs_manager_invalidate_jupyter_stack_bundle_cache($entity);
+  _soda_scs_manager_invalidate_cms_app_bundle_cache($entity);
 }
 
 /**
  * Implements hook_entity_delete().
  */
 function soda_scs_manager_entity_delete(EntityInterface $entity): void {
-  _soda_scs_manager_invalidate_jupyter_stack_bundle_cache($entity);
+  _soda_scs_manager_invalidate_cms_app_bundle_cache($entity);
 }
 
 /**
