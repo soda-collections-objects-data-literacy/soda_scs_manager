@@ -3025,8 +3025,8 @@ msgid "+ more info"
 msgstr "+ mehr Infos"
 
 #: templates/cards/soda-scs-manager--add-application-card.html.twig:88
-msgid "Triplestore (Open GDB)"
-msgstr "Triplestore (Open GDB)"
+msgid "Triplestore (OpenGDB)"
+msgstr "Triplestore (OpenGDB)"
 
 #: templates/pages/soda-scs-manager--dashboard.html.twig:42;templates/pages/soda-scs-manager--catalogue.html.twig:41;templates/cards/soda-scs-manager--entity-card.html.twig:31
 msgid "coding"
