@@ -31,9 +31,45 @@
       {% endfor %}
     </div>
     {% set isRunning = health_status == 'running' or health_status == 'healthy' %}
-    <div class="soda-scs-manager--card-content-wrapper{% if not isRunning %} soda-scs-manager--card--not-running{% endif %}"
+    {% set health_lower = health_status|default('')|lower %}
+    {% set overlayTone = '' %}
+    {% if not isRunning %}
+      {% if health_lower == 'starting' %}
+        {% set overlayTone = ' soda-scs-manager--card--status-starting' %}
+      {% elseif health_status == 'stopped' or health_status == 'paused' %}
+        {% set overlayTone = ' soda-scs-manager--card--status-stopped' %}
+      {% elseif health_status == 'Unknown' or health_status == 'unknown' %}
+        {% set overlayTone = '' %}
+      {% elseif health_status == 'unhealthy' or health_status == 'unavailable' %}
+        {% set overlayTone = ' soda-scs-manager--card--status-offline' %}
+      {% else %}
+        {% set overlayTone = ' soda-scs-manager--card--status-offline' %}
+      {% endif %}
+    {% endif %}
+    <div class="soda-scs-manager--card-content-wrapper{% if not isRunning %} soda-scs-manager--card--not-running{{ overlayTone }}{% endif %}"
       {% if entity_id %}data-entity-id="{{ entity_id }}"{% endif %}
       {% if entity_type_id %}data-entity-type="{{ entity_type_id }}"{% endif %}>
+      <div class="soda-scs-manager--card-status-banner" aria-live="polite">
+        {% if not isRunning %}
+          {% if health_lower == 'starting' %}
+            <div class="soda-scs-manager--card-status-banner__throbber" role="presentation" aria-hidden="true"></div>
+            <p class="soda-scs-manager--card-status-banner__primary">{{ 'Startup in progress'|t }}</p>
+            <p class="soda-scs-manager--card-status-banner__secondary">{{ 'Containers and services are being provisioned. This may take several minutes; status updates automatically.'|t }}</p>
+          {% elseif health_status == 'Unknown' or health_status == 'unknown' %}
+            <p class="soda-scs-manager--card-status-banner__primary">{{ 'Checking status'|t }}</p>
+            <p class="soda-scs-manager--card-status-banner__secondary">{{ 'We have not confirmed whether this application is running yet. The dashboard checks automatically in the background.'|t }}</p>
+          {% elseif health_status == 'stopped' or health_status == 'paused' %}
+            <p class="soda-scs-manager--card-status-banner__primary">{{ 'Stopped'|t }}</p>
+            <p class="soda-scs-manager--card-status-banner__secondary">{{ 'This application is not running.'|t }}</p>
+          {% elseif health_status == 'unhealthy' or health_status == 'unavailable' %}
+            <p class="soda-scs-manager--card-status-banner__primary">{{ 'Application offline'|t }}</p>
+            <p class="soda-scs-manager--card-status-banner__secondary">{{ 'If you need help, contact your site administrator.'|t }}</p>
+          {% else %}
+            <p class="soda-scs-manager--card-status-banner__primary">{{ 'Application offline'|t }}</p>
+            <p class="soda-scs-manager--card-status-banner__secondary">{{ 'If you need help, contact your site administrator.'|t }}</p>
+          {% endif %}
+        {% endif %}
+      </div>
       {% if health_status %}
         {% set healthClass = 'unknown' %}
         {% set healthTitle = 'Unknown'|t %}
@@ -43,9 +79,12 @@
         {% elseif health_status == 'unavailable' %}
           {% set healthClass = 'failure' %}
           {% set healthTitle = 'Unavailable'|t %}
-        {% elseif health_status == 'starting' or health_status == 'Unknown' or health_status == 'unknown' %}
+        {% elseif health_lower == 'starting' %}
           {% set healthClass = 'starting' %}
           {% set healthTitle = 'Starting'|t %}
+        {% elseif health_status == 'Unknown' or health_status == 'unknown' %}
+          {% set healthClass = 'unknown' %}
+          {% set healthTitle = 'Unknown'|t %}
         {% elseif health_status == 'paused' %}
           {% set healthClass = 'stopped' %}
           {% set healthTitle = 'Paused'|t %}

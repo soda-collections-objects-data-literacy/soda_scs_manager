@@ -94,6 +94,7 @@ dashboardHealthStatus:
   dependencies:
     - core/jquery
     - core/drupal
+    - core/drupalSettings
     - core/once
     - soda_scs_manager/globalStyling
 

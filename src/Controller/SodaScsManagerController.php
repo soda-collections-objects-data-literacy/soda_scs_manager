@@ -388,6 +388,11 @@ class SodaScsManagerController extends ControllerBase {
       ],
       '#attached' => [
         'library' => $dashboardLibraries,
+        'drupalSettings' => [
+          'sodaScsManager' => [
+            'dashboardAdminMail' => (string) ($this->config('system.site')->get('mail') ?? ''),
+          ],
+        ],
       ],
     ];
 

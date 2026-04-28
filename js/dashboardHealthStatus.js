@@ -1,4 +1,4 @@
-(function ($, Drupal, once) {
+(function ($, Drupal, once, drupalSettings) {
   Drupal.behaviors.dashboardHealthStatus = {
     attach: function (context, settings) {
       once('dashboardHealthStatus', '.soda-scs-manager--card-content-wrapper[data-entity-id]', context).forEach(function (wrapper) {
@@ -6,9 +6,15 @@
         var entityId = $wrapper.data('entity-id');
         var entityType = $wrapper.data('entity-type');
         var $healthIcon = $wrapper.find('.soda-scs-manager--health-icon');
+        var $banner = $wrapper.find('.soda-scs-manager--card-status-banner');
 
         if (!entityId || !entityType || !$healthIcon.length) {
           return;
+        }
+
+        function dashboardAdminMail() {
+          var sm = (drupalSettings && drupalSettings.sodaScsManager) ? drupalSettings.sodaScsManager : {};
+          return (sm.dashboardAdminMail && String(sm.dashboardAdminMail).trim()) ? String(sm.dashboardAdminMail).trim() : '';
         }
 
         // Store previous status for transition detection.
@@ -63,8 +69,66 @@
           $notification.find('.notification-close').on('click', dismissNotification);
         }
 
-        // Map API response to health class and toggle overlay for not-running.
-        function updateHealthIcon(healthClass, title) {
+        function setOverlayTone(tone) {
+          $wrapper
+            .removeClass('soda-scs-manager--card--status-starting soda-scs-manager--card--status-stopped soda-scs-manager--card--status-offline');
+          if (tone) {
+            $wrapper.addClass(tone);
+          }
+        }
+
+        function clearBanner() {
+          $banner.empty();
+        }
+
+        function setBannerStarting() {
+          clearBanner();
+          var $throbber = $('<div class="soda-scs-manager--card-status-banner__throbber" role="presentation" aria-hidden="true"></div>');
+          var $p1 = $('<p class="soda-scs-manager--card-status-banner__primary"></p>').text(Drupal.t('Startup in progress'));
+          var $p2 = $('<p class="soda-scs-manager--card-status-banner__secondary"></p>').text(
+            Drupal.t('Containers and services are being provisioned. This may take several minutes; status updates automatically.')
+          );
+          $banner.append($throbber, $p1, $p2);
+        }
+
+        function setBannerChecking() {
+          clearBanner();
+          var $p1 = $('<p class="soda-scs-manager--card-status-banner__primary"></p>').text(Drupal.t('Checking status'));
+          var $p2 = $('<p class="soda-scs-manager--card-status-banner__secondary"></p>').text(
+            Drupal.t('We have not confirmed whether this application is running yet. The dashboard checks automatically in the background.')
+          );
+          $banner.append($p1, $p2);
+        }
+
+        function setBannerStopped() {
+          clearBanner();
+          var $p1 = $('<p class="soda-scs-manager--card-status-banner__primary"></p>').text(Drupal.t('Stopped'));
+          var $p2 = $('<p class="soda-scs-manager--card-status-banner__secondary"></p>').text(Drupal.t('This application is not running.'));
+          $banner.append($p1, $p2);
+        }
+
+        function setBannerOffline(detailMessage) {
+          clearBanner();
+          var $p1 = $('<p class="soda-scs-manager--card-status-banner__primary"></p>').text(Drupal.t('Application offline'));
+          var mail = dashboardAdminMail();
+          var $p2 = $('<p class="soda-scs-manager--card-status-banner__secondary soda-scs-manager--card-status-banner__contact"></p>');
+          if (detailMessage) {
+            $p2.append($('<span class="soda-scs-manager--card-status-banner__detail"></span>').text(detailMessage));
+            $p2.append($('<br>'));
+          }
+          if (mail) {
+            $p2.append(document.createTextNode(Drupal.t('If you need help, contact') + ' '));
+            $p2.append($('<a>', { href: 'mailto:' + mail, class: 'soda-scs-manager--card-status-banner__mailto', text: mail }));
+            $p2.append(document.createTextNode('.'));
+          }
+          else {
+            $p2.append(document.createTextNode(Drupal.t('If you need help, contact your site administrator.')));
+          }
+          $banner.append($p1, $p2);
+        }
+
+        // Map API response to health class, overlay, and banner.
+        function updateHealthIcon(healthClass, title, bannerKind, bannerDetail) {
           $healthIcon
             .removeClass('soda-scs-manager--health-running soda-scs-manager--health-starting soda-scs-manager--health-stopped soda-scs-manager--health-failure soda-scs-manager--health-unknown')
             .addClass('soda-scs-manager--health-' + healthClass)
@@ -73,9 +137,31 @@
 
           if (healthClass === 'running') {
             $wrapper.removeClass('soda-scs-manager--card--not-running');
+            setOverlayTone('');
+            clearBanner();
           }
           else {
             $wrapper.addClass('soda-scs-manager--card--not-running');
+            if (bannerKind === 'starting') {
+              setOverlayTone('soda-scs-manager--card--status-starting');
+              setBannerStarting();
+            }
+            else if (bannerKind === 'checking') {
+              setOverlayTone('');
+              setBannerChecking();
+            }
+            else if (bannerKind === 'stopped') {
+              setOverlayTone('soda-scs-manager--card--status-stopped');
+              setBannerStopped();
+            }
+            else if (bannerKind === 'offline') {
+              setOverlayTone('soda-scs-manager--card--status-offline');
+              setBannerOffline(bannerDetail || '');
+            }
+            else {
+              setOverlayTone('soda-scs-manager--card--status-offline');
+              setBannerOffline(bannerDetail || '');
+            }
           }
         }
 
@@ -92,15 +178,19 @@
             if (data && data.status && data.status.success === true) {
               var status = data.status.status || 'running';
               currentStatus = status;
+              var statusOkLower = (status || '').toLowerCase();
 
-              if (status === 'running' || status === 'healthy') {
+              if (statusOkLower === 'running' || statusOkLower === 'healthy') {
                 updateHealthIcon('running', Drupal.t('Running'));
               }
-              else if (status === 'starting') {
-                updateHealthIcon('starting', Drupal.t('Starting'));
+              else if (statusOkLower === 'starting') {
+                updateHealthIcon('starting', Drupal.t('Starting'), 'starting');
               }
-              else if (status === 'stopped') {
-                updateHealthIcon('stopped', Drupal.t('Stopped'));
+              else if (statusOkLower === 'stopped') {
+                updateHealthIcon('stopped', Drupal.t('Stopped'), 'stopped');
+              }
+              else if (statusOkLower === 'unknown') {
+                updateHealthIcon('unknown', Drupal.t('Unknown'), 'checking');
               }
               else {
                 updateHealthIcon('running', Drupal.t('Running'));
@@ -113,17 +203,17 @@
               var statusLower = (status || '').toLowerCase();
               var messageLower = (message || '').toLowerCase();
 
-              if (status === 'starting' || message === 'Starting' || message === 'starting') {
-                updateHealthIcon('starting', Drupal.t('Starting'));
+              if (statusLower === 'starting') {
+                updateHealthIcon('starting', Drupal.t('Starting'), 'starting');
               }
               else if (status === 'stopped' || message === 'Stopped' || message === 'stopped') {
-                updateHealthIcon('stopped', Drupal.t('Stopped'));
+                updateHealthIcon('stopped', Drupal.t('Stopped'), 'stopped');
               }
               else if (statusLower === 'paused') {
-                updateHealthIcon('stopped', message);
+                updateHealthIcon('stopped', message, 'stopped');
               }
               else if (statusLower === 'unhealthy') {
-                updateHealthIcon('failure', message);
+                updateHealthIcon('failure', message, 'offline', message);
               }
               else if (
                 statusLower === 'unavailable' ||
@@ -132,14 +222,14 @@
                 messageLower.indexOf('component is not available') !== -1 ||
                 messageLower.indexOf('service temporarily unavailable') !== -1
               ) {
-                updateHealthIcon('failure', message);
+                updateHealthIcon('failure', message, 'offline', message);
                 currentStatus = 'unavailable';
               }
               else if (statusLower === 'unknown') {
-                updateHealthIcon('failure', message);
+                updateHealthIcon('unknown', Drupal.t('Unknown'), 'checking');
               }
               else {
-                updateHealthIcon('failure', message);
+                updateHealthIcon('failure', message, 'offline', message);
               }
             }
 
@@ -171,7 +261,8 @@
             // Update previous status for next check.
             previousStatus = currentStatus;
           }).fail(function () {
-            updateHealthIcon('unknown', Drupal.t('Could not refresh status'));
+            previousStatus = 'unknown';
+            updateHealthIcon('unknown', Drupal.t('Could not refresh status'), 'offline', Drupal.t('Could not reach the status service.'));
           });
         }
 
@@ -183,4 +274,4 @@
       });
     }
   };
-})(jQuery, Drupal, once);
+})(jQuery, Drupal, once, drupalSettings);

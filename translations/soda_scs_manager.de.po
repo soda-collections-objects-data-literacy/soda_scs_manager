@@ -3295,3 +3295,39 @@ msgstr "Die Einrichtung Ihrer WissKI-Umgebung beginnt. Bitte schließen Sie dies
 #: src/Form/SodaScsComponentCreateForm.php;src/Form/SodaScsStackCreateForm.php
 msgid "Please note: After creating the WissKI Environment, it can take up to 5 minutes to setup everything.<br><br>Please check the Health Status to monitor the startup progress."
 msgstr "Hinweis: Nach dem Anlegen der WissKI-Umgebung kann die Einrichtung bis zu 5 Minuten dauern.<br><br>Bitte prüfen Sie den Betriebszustand, um den Start zu verfolgen."
+
+#: js/dashboardHealthStatus.js templates/cards/soda-scs-manager--entity-card.html.twig
+msgid "Startup in progress"
+msgstr "Start läuft"
+
+#: js/dashboardHealthStatus.js templates/cards/soda-scs-manager--entity-card.html.twig
+msgid "Containers and services are being provisioned. This may take several minutes; status updates automatically."
+msgstr "Container und Dienste werden eingerichtet. Das kann einige Minuten dauern; der Zustand wird hier automatisch aktualisiert."
+
+#: js/dashboardHealthStatus.js templates/cards/soda-scs-manager--entity-card.html.twig
+msgid "This application is not running."
+msgstr "Diese Anwendung läuft derzeit nicht."
+
+#: js/dashboardHealthStatus.js templates/cards/soda-scs-manager--entity-card.html.twig
+msgid "Application offline"
+msgstr "Anwendung offline"
+
+#: js/dashboardHealthStatus.js templates/cards/soda-scs-manager--entity-card.html.twig
+msgid "If you need help, contact your site administrator."
+msgstr "Wenden Sie sich bei Bedarf an die Administratorin bzw. den Administrator der Website."
+
+#: js/dashboardHealthStatus.js
+msgid "If you need help, contact"
+msgstr "Wenden Sie sich bei Bedarf an"
+
+#: js/dashboardHealthStatus.js
+msgid "Could not reach the status service."
+msgstr "Der Statusdienst war nicht erreichbar."
+
+#: js/dashboardHealthStatus.js templates/cards/soda-scs-manager--entity-card.html.twig
+msgid "Checking status"
+msgstr "Status wird geprüft"
+
+#: js/dashboardHealthStatus.js templates/cards/soda-scs-manager--entity-card.html.twig
+msgid "We have not confirmed whether this application is running yet. The dashboard checks automatically in the background."
+msgstr "Es ist noch nicht bestätigt, ob diese Anwendung läuft. Das Dashboard prüft das automatisch im Hintergrund."
