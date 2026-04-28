@@ -2753,8 +2753,8 @@ msgid "Connect Nextcloud"
 msgstr "Nextcloud verbinden"
 
 #: /templates/includes/soda-scs-manager--coworking-intro.html.twig:102
-msgid "WissKI and other applications use your Nextcloud account for files and integrations. Start the connection here, or later from your account settings."
-msgstr "WissKI und andere Applikationen verwenden Ihr Nextcloud-Konto für Dateien und Integrationen. Starten Sie die Verbindung hier oder später in Ihren Kontoeinstellungen."
+msgid "A working Nextcloud connection is necessary so data and files can flow between WissKI and your other applications. Start the connection here, or later from your account settings."
+msgstr "Eine funktionierende Nextcloud-Verbindung ist nötig, damit Daten und Dateien zwischen WissKI und Ihren anderen Anwendungen ausgetauscht werden können. Starten Sie die Verbindung hier oder später in Ihren Kontoeinstellungen."
 
 #: /templates/includes/soda-scs-manager--coworking-intro.html.twig:105
 msgid "Checking connection…"
@@ -2772,17 +2772,21 @@ msgstr "Für OpenID-/SSO-Kontoverknüpfung:"
 msgid "Open Connected Accounts"
 msgstr "Verknüpfte Konten öffnen"
 
-#: /templates/includes/soda-scs-manager--coworking-intro.html.twig:112
+#: /templates/includes/soda-scs-manager--coworking-intro.html.twig:111
 msgid "Create your first WissKI Environment"
 msgstr "Erstellen Sie Ihre erste WissKI-Umgebung"
 
-#: /templates/includes/soda-scs-manager--coworking-intro.html.twig:113
-msgid "Choose a short display name (max. 25 characters). We create a complete environment: database, triplestore, and WissKI. Provisioning starts immediately and may take several minutes."
-msgstr "Wählen Sie einen kurzen Anzeigenamen (max. 25 Zeichen). Wir erstellen eine vollständige Forschungsumgebung: Datenbank, Triplestore und WissKI. Die Bereitstellung beginnt sofort und kann mehrere Minuten dauern."
+#: /templates/includes/soda-scs-manager--coworking-intro.html.twig:112
+msgid "We create a complete environment: database, triplestore, and WissKI. Provisioning starts immediately and may take several minutes."
+msgstr "Wir erstellen eine vollständige Forschungsumgebung: Datenbank, Triplestore und WissKI. Die Bereitstellung beginnt sofort und kann mehrere Minuten dauern."
 
-#: /templates/includes/soda-scs-manager--coworking-intro.html.twig:114
+#: /templates/includes/soda-scs-manager--coworking-intro.html.twig:113
 msgid "WissKI name"
 msgstr "WissKI-Name"
+
+#: /templates/includes/soda-scs-manager--coworking-intro.html.twig:114
+msgid "Use at most 25 characters: letters (A–Z, a–z), digits (0–9), and spaces. No other symbols."
+msgstr "Höchstens 25 Zeichen: Buchstaben (A–Z, a–z), Ziffern (0–9) und Leerzeichen. Keine anderen Zeichen."
 
 #: /templates/includes/soda-scs-manager--coworking-intro.html.twig:115
 msgid "e.g. My collection workspace"
@@ -3112,31 +3116,35 @@ msgstr "Wird geprüft…"
 msgid "Verify connection"
 msgstr "Verbindung prüfen"
 
-#: js/coworkingIntroWizard.js:54
+#: js/coworkingIntroWizard.js:65
 msgid "Creating your WissKI environment. Please do not close this window."
 msgstr "Die Einrichtung Ihrer WissKI-Umgebung beginnt. Bitte schließen Sie dieses Fenster nicht."
 
-#: js/coworkingIntroWizard.js:146
+#: js/coworkingIntroWizard.js:159
 msgid "Step @current of @total"
 msgstr "Schritt @current von @total"
 
-#: js/coworkingIntroWizard.js:235
+#: js/coworkingIntroWizard.js:261
 msgid "Please enter a name for your WissKI environment."
 msgstr "Bitte legen Sie einen Namen für Ihre WissKI-Umgebung fest."
 
-#: js/coworkingIntroWizard.js:245
+#: js/coworkingIntroWizard.js:266
+msgid "Use 1–25 characters: letters (A–Z, a–z), digits (0–9), and spaces only. No other symbols."
+msgstr "Verwenden Sie 1–25 Zeichen: nur Buchstaben (A–Z, a–z), Ziffern (0–9) und Leerzeichen. Keine anderen Zeichen."
+
+#: js/coworkingIntroWizard.js:278
 msgid "Automatic WissKI creation is not available. Rebuild the site cache (e.g. drush cr) or contact an administrator."
 msgstr "Die automatische Erstellung von WissKIs ist nicht verfügbar. Bitte leeren Sie den Website-Cache (z. B. mit dem Befehl „drush cr“) oder wenden Sie sich an einen Administrator."
 
-#: js/coworkingIntroWizard.js:257
+#: js/coworkingIntroWizard.js:291
 msgid "Could not load a security token. Reload the page and try again."
 msgstr "Security Token konnte nicht geladen werden. Laden Sie die Seite neu und versuchen Sie es erneut."
 
-#: js/coworkingIntroWizard.js:292
+#: js/coworkingIntroWizard.js:325
 msgid "You successfully started @name. It will appear on your dashboard while it is provisioned."
 msgstr "Sie haben @name erfolgreich gestartet. Es wird auf Ihrem Dashboard angezeigt, während es bereitgestellt wird."
 
-#: js/coworkingIntroWizard.js:309
+#: js/coworkingIntroWizard.js:343
 msgid "Request failed. Please try again."
 msgstr "Anfrage fehlgeschlagen. Bitte versuchen Sie es erneut."
 

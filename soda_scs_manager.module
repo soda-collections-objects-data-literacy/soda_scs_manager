@@ -15,6 +15,7 @@ use Drupal\Core\Entity\EntityTypeInterface;
 use Drupal\Core\Field\BaseFieldDefinition;
 use Drupal\Core\Routing\RouteMatchInterface;
 use Drupal\Core\Routing\StackedRouteMatchInterface;
+use Drupal\Core\Render\Markup;
 use Drupal\Core\StringTranslation\TranslatableMarkup;
 use Drupal\Core\Url;
 use Drupal\soda_scs_manager\Entity\Bundle\SodaScsComponentBundle;
@@ -207,6 +208,127 @@ function soda_scs_manager_entity_base_field_info(EntityTypeInterface $entity_typ
 }
 
 /**
+ * Resolves a node ID from a URL alias (leading slash optional).
+ *
+ * @param string $lookup_alias
+ *   Alias path, e.g. "/soda-scs-manager/app/jupyter".
+ *
+ * @return int|null
+ *   Node ID if the alias points at /node/{nid}, or NULL.
+ */
+function _soda_scs_manager_get_node_id_for_path_alias(string $lookup_alias): ?int {
+  if (!\Drupal::hasService('path_alias.manager')) {
+    return NULL;
+  }
+  $lookup_alias = '/' . trim($lookup_alias, '/');
+  try {
+    $path = \Drupal::service('path_alias.manager')->getPathByAlias($lookup_alias);
+  }
+  catch (\Throwable) {
+    return NULL;
+  }
+  if (!is_string($path) || !preg_match('#^/node/(\d+)$#', $path, $matches)) {
+    return NULL;
+  }
+  return (int) $matches[1];
+}
+
+/**
+ * Builds the Jupyter stack bundle description from CMS or a static fallback.
+ *
+ * Prefers the body field summary of the node at /soda-scs-manager/app/jupyter,
+ * then the body value, then the fallback English copy.
+ *
+ * @return \Drupal\Core\StringTranslation\TranslatableMarkup
+ *   Markup suitable for bundle info (supports ::render()).
+ */
+function _soda_scs_manager_jupyter_stack_bundle_description(): TranslatableMarkup {
+  $fallback = new TranslatableMarkup('JupyterHub is your personal data science workspace and a powerful, interactive environment where you can analyze data, create visualizations, and conduct research without needing to install any software on your computer.
+
+When you access your JupyterHub environment, you get a complete toolkit for data analysis and research that includes everything you need to get started immediately.');
+
+  static $building = FALSE;
+  if ($building) {
+    return $fallback;
+  }
+  $building = TRUE;
+
+  try {
+    if (!\Drupal::moduleHandler()->moduleExists('node') ||
+        !\Drupal::entityTypeManager()->hasDefinition('node') ||
+        !\Drupal::moduleHandler()->moduleExists('filter')) {
+      return $fallback;
+    }
+    $nid = _soda_scs_manager_get_node_id_for_path_alias('/soda-scs-manager/app/jupyter');
+    if (!$nid) {
+      return $fallback;
+    }
+    $node = \Drupal::entityTypeManager()->getStorage('node')->load($nid);
+    if (!$node instanceof NodeInterface || !$node->hasField('body') || $node->get('body')->isEmpty()) {
+      return $fallback;
+    }
+    $item = $node->get('body')->first();
+    if ($item === NULL) {
+      return $fallback;
+    }
+    $values = $item->toArray();
+    $format = $values['format'] ?? filter_fallback_format();
+    $summary = trim((string) ($values['summary'] ?? ''));
+    $value = (string) ($values['value'] ?? '');
+    $raw = '';
+    if ($summary !== '') {
+      $raw = check_markup($summary, $format, $node->language()->getId());
+    }
+    elseif ($value !== '') {
+      $raw = check_markup($value, $format, $node->language()->getId());
+    }
+    if ($raw === '' || trim(strip_tags($raw)) === '') {
+      return $fallback;
+    }
+    return new TranslatableMarkup('!jupyter_app_bundle_description', [
+      '!jupyter_app_bundle_description' => Markup::create($raw),
+    ]);
+  }
+  catch (\Throwable) {
+    return $fallback;
+  }
+  finally {
+    $building = FALSE;
+  }
+}
+
+/**
+ * Clears entity bundle info cache when the Jupyter app CMS page or its alias changes.
+ */
+function _soda_scs_manager_invalidate_jupyter_stack_bundle_cache(EntityInterface $entity): void {
+  if (!\Drupal::hasService('entity_type.bundle.info')) {
+    return;
+  }
+  $bundle_info = \Drupal::service('entity_type.bundle.info');
+  if ($entity->getEntityTypeId() === 'path_alias' && \Drupal::entityTypeManager()->hasDefinition('path_alias')) {
+    $alias_candidates = [(string) ($entity->get('alias')->value ?? '')];
+    if (method_exists($entity, 'getOriginal') && $entity->getOriginal()) {
+      $alias_candidates[] = (string) ($entity->getOriginal()->get('alias')->value ?? '');
+    }
+    foreach ($alias_candidates as $alias_value) {
+      $normalized = '/' . trim($alias_value, '/');
+      if ($normalized === '/soda-scs-manager/app/jupyter') {
+        $bundle_info->clearCachedBundles();
+        return;
+      }
+    }
+    return;
+  }
+  if ($entity->getEntityTypeId() !== 'node') {
+    return;
+  }
+  $target_nid = _soda_scs_manager_get_node_id_for_path_alias('/soda-scs-manager/app/jupyter');
+  if ($target_nid && (int) $entity->id() === $target_nid) {
+    $bundle_info->clearCachedBundles();
+  }
+}
+
+/**
  * Implements hook_entity_bundle_info().
  */
 function soda_scs_manager_entity_bundle_info() {
@@ -261,7 +383,7 @@ function soda_scs_manager_entity_bundle_info() {
   $bundles['soda_scs_stack']['soda_scs_jupyter_stack'] = [
     'label' => new TranslatableMarkup('JupyterHub Environment'),
     'class' => SodaScsStackBundle::class,
-    'description' => new TranslatableMarkup('Your personal data science workspace that contains Jupyter Notebooks and OpenRefine. JupyterHub is a powerful, interactive environment where you can e.g. analyze or visualise data.'),
+    'description' => _soda_scs_manager_jupyter_stack_bundle_description(),
     'imageUrl' => 'public://soda_scs_manager/images/jupyterhub-stack.svg',
     'tags' => ['coding', 'data-science', 'data-cleaning'],
   ];
@@ -283,6 +405,27 @@ function soda_scs_manager_entity_bundle_info() {
   ];
 
   return $bundles;
+}
+
+/**
+ * Implements hook_entity_insert().
+ */
+function soda_scs_manager_entity_insert(EntityInterface $entity): void {
+  _soda_scs_manager_invalidate_jupyter_stack_bundle_cache($entity);
+}
+
+/**
+ * Implements hook_entity_update().
+ */
+function soda_scs_manager_entity_update(EntityInterface $entity): void {
+  _soda_scs_manager_invalidate_jupyter_stack_bundle_cache($entity);
+}
+
+/**
+ * Implements hook_entity_delete().
+ */
+function soda_scs_manager_entity_delete(EntityInterface $entity): void {
+  _soda_scs_manager_invalidate_jupyter_stack_bundle_cache($entity);
 }
 
 /**
@@ -1158,6 +1301,28 @@ function _soda_scs_manager_coworking_intro_wisski_create_url(): string {
 }
 
 /**
+ * Name availability check URL for the co-working intro wizard (GET ?label=…).
+ */
+function _soda_scs_manager_coworking_intro_wisski_check_name_url(): string {
+  $lang = \Drupal::languageManager()->getCurrentLanguage();
+  try {
+    return Url::fromRoute('soda_scs_manager.coworking_intro_check_wisski_name', [], [
+      'language' => $lang,
+    ])->toString();
+  }
+  catch (\Throwable) {
+    try {
+      return Url::fromUserInput('/soda-scs-manager/intro/coworking/check-wisski-name', [
+        'language' => $lang,
+      ])->toString();
+    }
+    catch (\Throwable) {
+      return '';
+    }
+  }
+}
+
+/**
  * Implements hook_page_attachments().
  *
  * Attaches the globalStyling library on non-admin UI requests only.
@@ -1189,6 +1354,7 @@ function soda_scs_manager_page_attachments(array &$attachments) {
       'language' => $lang,
     ])->toString();
     $introCreateWisskiUrl = _soda_scs_manager_coworking_intro_wisski_create_url();
+    $introCheckWisskiNameUrl = _soda_scs_manager_coworking_intro_wisski_check_name_url();
     $attachments['#attached']['library'][] = 'soda_scs_manager/coworkingIntroWizard';
     if (!in_array('soda_scs_manager/nextcloudConnect', $attachments['#attached']['library'], TRUE)) {
       $attachments['#attached']['library'][] = 'soda_scs_manager/nextcloudConnect';
@@ -1198,6 +1364,7 @@ function soda_scs_manager_page_attachments(array &$attachments) {
     $attachments['#attached']['drupalSettings']['sodaScsManager']['coworkingIntro'] = [
       'completeUrl' => $introCompleteUrl,
       'wisskiQuickCreateUrl' => $introCreateWisskiUrl,
+      'wisskiNameCheckUrl' => $introCheckWisskiNameUrl,
     ];
   }
 }

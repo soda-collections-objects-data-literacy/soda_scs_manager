@@ -518,12 +518,14 @@ class SodaScsManagerController extends ControllerBase {
       'language' => $lang,
     ])->toString();
     $introCreateWisskiUrl = $this->coworkingIntroWisskiQuickCreateUrl($lang);
+    $introCheckWisskiNameUrl = $this->coworkingIntroWisskiNameCheckUrl($lang);
 
     $build['#attached']['drupalSettings']['sodaScsManager']['throbberPrimaryMessage'] = (string) $this->t('Creating your WissKI environment. Please do not close this window.');
     $build['#attached']['drupalSettings']['sodaScsManager']['throbberInfo'] = (string) $this->t('Please note: After creating the WissKI Environment, it can take up to 5 minutes to setup everything.<br><br>Please check the health status to monitor the startup progress.');
     $build['#attached']['drupalSettings']['sodaScsManager']['coworkingIntro'] = [
       'completeUrl' => $introCompleteUrl,
       'wisskiQuickCreateUrl' => $introCreateWisskiUrl,
+      'wisskiNameCheckUrl' => $introCheckWisskiNameUrl,
     ];
   }
 
@@ -560,6 +562,27 @@ class SodaScsManagerController extends ControllerBase {
     catch (\Throwable) {
       try {
         return Url::fromUserInput('/soda-scs-manager/intro/coworking/create-wisski', [
+          'language' => $lang,
+        ])->toString();
+      }
+      catch (\Throwable) {
+        return '';
+      }
+    }
+  }
+
+  /**
+   * Relative URL for the intro wizard GET that checks WissKI name availability.
+   */
+  protected function coworkingIntroWisskiNameCheckUrl(LanguageInterface $lang): string {
+    try {
+      return Url::fromRoute('soda_scs_manager.coworking_intro_check_wisski_name', [], [
+        'language' => $lang,
+      ])->toString();
+    }
+    catch (\Throwable) {
+      try {
+        return Url::fromUserInput('/soda-scs-manager/intro/coworking/check-wisski-name', [
           'language' => $lang,
         ])->toString();
       }

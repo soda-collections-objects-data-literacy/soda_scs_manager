@@ -98,7 +98,7 @@
 
       <div class="scs-manager--coworking-intro-slide hidden" data-coworking-intro-slide="7">
         <p class="text-base font-medium text-stone-900 mb-3">{{ 'Connect Nextcloud'|t }}</p>
-        <p class="mb-4">{{ 'WissKI and other Applications use your Nextcloud account for files and integrations. Start the connection here, or later from your account settings.'|t }}</p>
+        <p class="mb-4">{{ 'A working Nextcloud connection is necessary so data and files can flow between WissKI and your other applications. Start the connection here, or later from your account settings.'|t }}</p>
         <div class="scs-manager--nextcloud-connect-wrapper scs-manager--nextcloud-connect-inline rounded-lg border border-stone-200 p-4 bg-stone-50">
           <button type="button" class="scs-manager--nextcloud-connect-btn w-full px-4 py-3 mb-4 bg-stone-800 text-white text-sm font-medium rounded-lg hover:bg-stone-900 focus:outline-none focus:ring-2 focus:ring-stone-500 focus:ring-offset-2">{{ 'Connect Nextcloud'|t }}</button>
           <p class="scs-manager--nextcloud-connect-status-inline mb-3 text-sm" data-status="unknown">{{ 'Checking connection…'|t }}</p>
@@ -109,10 +109,11 @@
 
       <div class="scs-manager--coworking-intro-slide hidden" data-coworking-intro-slide="8">
           <p class="text-base font-medium text-stone-900 mb-3">{{ 'Create your first WissKI Environment'|t }}</p>
-          <p class="mb-3">{{ 'Choose a short display name (max. 25 characters). We create a complete environment: database, triplestore, and WissKI. Provisioning starts immediately and may take several minutes.'|t }}</p>
+          <p class="mb-3">{{ 'We create a complete environment: database, triplestore, and WissKI. Provisioning starts immediately and may take several minutes.'|t }}</p>
         <label for="scs-manager--coworking-intro-wisski-name" class="block text-sm font-medium text-stone-800 mb-1">{{ 'WissKI name'|t }}</label>
-        <input id="scs-manager--coworking-intro-wisski-name" type="text" class="w-full border border-stone-300 rounded-md px-3 py-2 text-stone-900 mb-3" maxlength="200" autocomplete="off" data-coworking-intro-wisski-name placeholder="{{ 'e.g. My collection workspace'|t }}" />
-        <p class="text-xs text-stone-500 mb-3" data-coworking-intro-wisski-error role="alert" hidden></p>
+        <p id="scs-manager--coworking-intro-wisski-name-hint" class="text-xs text-stone-500 mb-2">{{ 'Use at most 25 characters: letters (A–Z, a–z), digits (0–9), and spaces. No other symbols.'|t }}</p>
+        <input id="scs-manager--coworking-intro-wisski-name" type="text" class="w-full border border-stone-300 rounded-md px-3 py-2 text-stone-900 mb-1 focus:outline-none focus:ring-2 focus:ring-stone-200 focus:border-stone-400" maxlength="25" autocomplete="off" data-coworking-intro-wisski-name placeholder="{{ 'e.g. My collection workspace'|t }}" aria-describedby="scs-manager--coworking-intro-wisski-name-hint" />
+        <p id="scs-manager--coworking-intro-wisski-name-error" class="text-sm text-red-700 font-medium mb-3" data-coworking-intro-wisski-error role="alert" aria-live="polite" hidden></p>
         <div class="flex flex-col flex-nowrap justify-center gap-2 py-2.5">
             <button type="button" class="scs-manager--coworking-intro-btn-create-wisski px-4 py-2 text-white text-sm rounded focus:outline-none focus:ring-2 focus:ring-[#e68500] focus:ring-offset-2" data-coworking-intro-open-wisski>{{ 'Create WissKI Environment'|t }}</button>
           <button type="button" class="px-4 py-2 border border-stone-300 text-sm rounded hover:bg-stone-50" data-coworking-intro-finish>{{ 'Finish without creating'|t }}</button>
@@ -134,7 +135,7 @@
       <p class="text-xs text-stone-500" data-coworking-intro-step-label aria-live="polite"></p>
       <div class="flex gap-2">
         <button type="button" class="px-4 py-2 border border-stone-300 text-sm rounded hover:bg-white disabled:opacity-40 disabled:cursor-not-allowed" data-coworking-intro-back disabled>{{ 'Back'|t }}</button>
-        <button type="button" class="px-4 py-2 bg-stone-800 text-white text-sm rounded hover:bg-stone-900" data-coworking-intro-next>{{ 'Next'|t }}</button>
+        <button type="button" class="px-4 py-2 bg-stone-800 text-white text-sm rounded hover:bg-stone-900 disabled:opacity-40 disabled:cursor-not-allowed" data-coworking-intro-next>{{ 'Next'|t }}</button>
       </div>
     </div>
   </div>

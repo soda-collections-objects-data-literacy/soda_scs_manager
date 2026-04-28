@@ -9,6 +9,7 @@ use Drupal\Core\Entity\EntityTypeBundleInfoInterface;
 use Drupal\Core\Url;
 use Drupal\soda_scs_manager\Helpers\SodaScsServiceHelpers;
 use Drupal\soda_scs_manager\StackActions\SodaScsStackActionsInterface;
+use Drupal\soda_scs_manager\Validation\WisskiIntroReservedBaseSlugs;
 use Drupal\user\UserDataInterface;
 use Drupal\user\UserInterface;
 use Symfony\Component\DependencyInjection\ContainerInterface;
@@ -56,6 +57,43 @@ class SodaScsCoworkingIntroController extends ControllerBase {
   }
 
   /**
+   * Checks whether a label can be used (format + no stack/component machine name collision).
+   *
+   * Query: label (string). Returns JSON: { "available": bool, "error"?: string }.
+   */
+  public function checkWisskiName(Request $request): JsonResponse {
+    if ($this->currentUser()->isAnonymous()) {
+      return new JsonResponse(['available' => FALSE, 'error' => 'Unauthorized'], 401);
+    }
+
+    $labelRaw = $request->query->get('label', '');
+    if (!is_string($labelRaw)) {
+      $labelRaw = '';
+    }
+    $labelRaw = trim(strip_tags($labelRaw));
+    if ($labelRaw === '') {
+      return new JsonResponse(['available' => FALSE]);
+    }
+
+    $validated = $this->wisskiIntroLabelValidation($labelRaw);
+    if (!$validated['ok']) {
+      return new JsonResponse([
+        'available' => FALSE,
+        'error' => $validated['error'],
+      ]);
+    }
+
+    if ($this->wisskiQuickCreateNameFamilyInUse($validated['machineName'])) {
+      return new JsonResponse([
+        'available' => FALSE,
+        'error' => $this->nameAlreadyUsedMessage(),
+      ]);
+    }
+
+    return new JsonResponse(['available' => TRUE]);
+  }
+
+  /**
    * Creates a WissKI stack (MariaDB + triplestore + WissKI) like the stack add form.
    *
    * CSRF is enforced via route requirement _csrf_request_header_token.
@@ -82,51 +120,23 @@ class SodaScsCoworkingIntroController extends ControllerBase {
       ], 400);
     }
 
-    // Same limit as SodaScsStackCreateForm::validateForm().
-    $labelForStack = mb_substr($labelRaw, 0, 25);
-
     $bundle = 'soda_scs_wisski_stack';
     $bundleInfo = $this->entityTypeBundleInfo->getBundleInfo('soda_scs_stack')[$bundle] ?? NULL;
     if (!$bundleInfo) {
       return new JsonResponse(['success' => FALSE, 'error' => 'Configuration error'], 500);
     }
 
-    $machineName = $this->stackMachineNameFromLabel($labelForStack);
-    if ($machineName === '') {
-      return new JsonResponse([
-        'success' => FALSE,
-        'error' => (string) $this->t('Could not derive a valid machine name from that title. Use letters and numbers.'),
-      ], 400);
+    $validated = $this->wisskiIntroLabelValidation($labelRaw);
+    if (!$validated['ok']) {
+      return new JsonResponse(['success' => FALSE, 'error' => $validated['error']], $validated['status']);
     }
+    $labelForStack = $validated['labelForStack'];
+    $machineName = $validated['machineName'];
 
-    if (!preg_match('/^[a-z0-9-]+$/', $machineName)) {
+    if ($this->wisskiQuickCreateNameFamilyInUse($machineName)) {
       return new JsonResponse([
         'success' => FALSE,
-        'error' => (string) $this->t('The machine name can only contain small letters, digits, and minus.'),
-      ], 400);
-    }
-
-    if (strlen($machineName) > 30) {
-      return new JsonResponse([
-        'success' => FALSE,
-        'error' => (string) $this->t('The machine name must not exceed 30 characters.'),
-      ], 400);
-    }
-
-    $componentStorage = $this->entityTypeManager()->getStorage('soda_scs_component');
-    $existingComponent = $componentStorage->getQuery()
-      ->accessCheck(FALSE)
-      ->condition('machineName', $machineName)
-      ->execute();
-    $stackStorage = $this->entityTypeManager()->getStorage('soda_scs_stack');
-    $existingStack = $stackStorage->getQuery()
-      ->accessCheck(FALSE)
-      ->condition('machineName', $machineName)
-      ->execute();
-    if (!empty($existingComponent) || !empty($existingStack)) {
-      return new JsonResponse([
-        'success' => FALSE,
-        'error' => (string) $this->t('That name is already in use. Choose a different title.'),
+        'error' => $this->nameAlreadyUsedMessage(),
       ], 409);
     }
 
@@ -145,6 +155,7 @@ class SodaScsCoworkingIntroController extends ControllerBase {
       ], 503);
     }
 
+    $stackStorage = $this->entityTypeManager()->getStorage('soda_scs_stack');
     $stack = $stackStorage->create([
       'bundle' => $bundle,
       'label' => $labelForStack,
@@ -187,12 +198,117 @@ class SodaScsCoworkingIntroController extends ControllerBase {
   }
 
   /**
+   * User-visible message when the derived name family is already in use.
+   */
+  private function nameAlreadyUsedMessage(): string {
+    return (string) $this->t('A stack or application with this name already exists. Please choose a different name.');
+  }
+
+  /**
+   * Whether WissKI quick-create would collide with existing stack or component names.
+   *
+   * A label is turned into a base slug (e.g. "My first WissKI" → "my-first-wisski"). The
+   * WissKI stack path then materializes, matching SodaScsWisskiStackActions and
+   * SodaScsSqlComponentActions / SodaScsTriplestoreComponentActions / SodaScsWisskiComponentActions:
+   * stored machine names are stack-base, sql-base, ts-base, and wisski-base (each with a
+   * single prefix: "stack-", "sql-", "ts-", "wisski-").
+   *
+   * The stack row uses the bare base until createStack() applies the "stack-" prefix, so
+   * both bare base and stack-prefixed names are checked for stacks. Any component with the
+   * bare base as machineName is a conflict, matching the stack add form rule.
+   *
+   * @param string $baseSlug
+   *   The slug from stackMachineNameFromLabel() (not prefixed).
+   */
+  private function wisskiQuickCreateNameFamilyInUse(string $baseSlug): bool {
+    $stackSlugs = ['stack-' . $baseSlug, $baseSlug];
+    $componentSlugs = [
+      'sql-' . $baseSlug,
+      'ts-' . $baseSlug,
+      'wisski-' . $baseSlug,
+      $baseSlug,
+    ];
+
+    $stackQuery = $this->entityTypeManager()->getStorage('soda_scs_stack')->getQuery()
+      ->accessCheck(FALSE)
+      ->condition('machineName', $stackSlugs, 'IN')
+      ->range(0, 1);
+    if (!empty($stackQuery->execute())) {
+      return TRUE;
+    }
+
+    $componentQuery = $this->entityTypeManager()->getStorage('soda_scs_component')->getQuery()
+      ->accessCheck(FALSE)
+      ->condition('machineName', $componentSlugs, 'IN')
+      ->range(0, 1);
+    return !empty($componentQuery->execute());
+  }
+
+  /**
+   * Validates a WissKI quick-create label; shared by check + create.
+   *
+   * The machineName value in the success array is the base slug (before stack-/sql-/ts-/wisski-).
+   *
+   * @return array{ok: TRUE, labelForStack: string, machineName: string}|array{ok: FALSE, error: string, status: int}
+   */
+  private function wisskiIntroLabelValidation(string $labelRaw): array {
+    // Same limit as SodaScsStackCreateForm::validateForm().
+    $labelForStack = mb_substr($labelRaw, 0, 25);
+    if (!preg_match('/^[A-Za-z0-9 ]+$/u', $labelForStack)) {
+      return [
+        'ok' => FALSE,
+        'error' => (string) $this->t('Use 1–25 characters: letters (A–Z, a–z), digits (0–9), and spaces only. No other symbols.'),
+        'status' => 400,
+      ];
+    }
+
+    $machineName = $this->stackMachineNameFromLabel($labelForStack);
+    if ($machineName === '') {
+      return [
+        'ok' => FALSE,
+        'error' => (string) $this->t('Could not derive a valid machine name from that title. Use letters and numbers.'),
+        'status' => 400,
+      ];
+    }
+
+    if (!preg_match('/^[a-z0-9-]+$/', $machineName)) {
+      return [
+        'ok' => FALSE,
+        'error' => (string) $this->t('The machine name can only contain small letters, digits, and minus.'),
+        'status' => 400,
+      ];
+    }
+
+    if (strlen($machineName) > 30) {
+      return [
+        'ok' => FALSE,
+        'error' => (string) $this->t('The machine name must not exceed 30 characters.'),
+        'status' => 400,
+      ];
+    }
+
+    if (WisskiIntroReservedBaseSlugs::isReserved($machineName)) {
+      return [
+        'ok' => FALSE,
+        'error' => (string) $this->t('This name is reserved for system or infrastructure services. Please choose a different name.'),
+        'status' => 400,
+      ];
+    }
+
+    return [
+      'ok' => TRUE,
+      'labelForStack' => $labelForStack,
+      'machineName' => $machineName,
+    ];
+  }
+
+  /**
    * Machine name for stacks: a-z, 0-9, minus only; max 30 (stack create form).
    */
   private function stackMachineNameFromLabel(string $label): string {
     $lower = mb_strtolower($label);
     $replaced = preg_replace('/[^a-z0-9-]+/', '-', $lower);
-    $replaced = preg_replace('/^[^a-z]+/', '', (string) $replaced);
+    $replaced = preg_replace('/^[^a-z0-9]+/', '', (string) $replaced);
     $replaced = preg_replace('/-+$/', '', (string) $replaced);
     return mb_substr((string) $replaced, 0, 30);
   }

@@ -442,6 +442,17 @@ soda_scs_manager.coworking_intro_complete:
   options:
     no_cache: TRUE
 
+soda_scs_manager.coworking_intro_check_wisski_name:
+  path: '/soda-scs-manager/intro/coworking/check-wisski-name'
+  defaults:
+    _controller: '\Drupal\soda_scs_manager\Controller\SodaScsCoworkingIntroController::checkWisskiName'
+    _title: 'Check WissKI name from intro'
+  requirements:
+    _permission: 'soda scs manager user'
+  methods: [GET]
+  options:
+    no_cache: TRUE
+
 soda_scs_manager.coworking_intro_create_wisski:
   path: '/soda-scs-manager/intro/coworking/create-wisski'
   defaults:
