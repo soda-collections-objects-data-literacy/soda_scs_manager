@@ -891,7 +891,7 @@ function soda_scs_manager_theme($existing, $type, $theme, $path) {
         'learn_more_link' => NULL,
         'tags' => NULL,
         'title' => NULL,
-        'type' => NULL,
+        'bundle_label' => NULL,
         'url' => NULL,
       ],
       'template' => 'cards/soda-scs-manager--entity-card',
@@ -1667,7 +1667,7 @@ function _soda_scs_manager_create_default_project_for_user(UserInterface $user) 
 
   $project = SodaScsProject::create([
     'bundle' => 'default',
-    'label' => $user->getDisplayName() . ' default project',
+    'label' => $user->getDisplayName() . ' standard project',
     'owner' => $user->id(),
   ]);
 
