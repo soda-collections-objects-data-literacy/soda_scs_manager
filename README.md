@@ -28,6 +28,12 @@ drush content:import modules/custom/soda_scs_manager/content/sync/content-bulk-e
 ### Permissions
 - SCS Users need "Manage own connected accounts" permissions.
 
+## Translations
+If translations are outdated try to reimport (/admin/config/regional/translate/settings).
+'''bash
+drush locale:import de modules/custom/soda_scs_manager/translations/soda_scs_manager.de.po --type=customized --override=all
+'''
+
 ## Hooks
 
 This file contains implementations of the following hooks:

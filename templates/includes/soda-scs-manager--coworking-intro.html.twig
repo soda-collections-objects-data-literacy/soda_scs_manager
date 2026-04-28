@@ -12,26 +12,27 @@
 #}
 <div id="scs-manager--coworking-intro" class="scs-manager--coworking-intro fixed inset-0 z-[60] flex items-center justify-center bg-slate-950/70 p-4" role="dialog" aria-modal="true" aria-labelledby="scs-manager--coworking-intro-title" data-coworking-intro-root>
   <div class="scs-manager--coworking-intro-panel bg-white rounded-xl shadow-2xl w-[min(900px,max(200px,50vw))] max-w-full overflow-hidden flex flex-col border border-stone-200">
-    <div class="px-6 pt-6 pb-2 border-b border-stone-100 flex justify-between items-start gap-4">
-      <h2 id="scs-manager--coworking-intro-title" class="text-xl font-semibold text-stone-900 pr-2">{{ 'Welcome to the Semantic Co-Working Space'|t }}</h2>
-      <button type="button" class="scs-manager--coworking-intro-skip shrink-0 text-sm text-stone-500 hover:text-stone-800 underline" data-coworking-intro-skip>{{ 'Skip introduction'|t }}</button>
+    <div class="px-6 pt-6 pb-2 border-b border-stone-100 relative">
+      <div class="scs-manager--coworking-intro-skip-row">
+      <button type="button" class="scs-manager--coworking-intro-skip z-10 text-sm text-stone-500 hover:text-stone-800 underline text-end max-w-[min(12rem,42%)] leading-snug" data-coworking-intro-skip>{{ 'Skip introduction'|t }}</button>
+      </div>
+      <h2 id="scs-manager--coworking-intro-title" class="text-xl font-semibold text-stone-900 w-full max-w-full text-center pe-36 sm:pe-40">{{ 'Welcome to the Semantic Co-Working Space'|t }}</h2>
     </div>
 
-    <div class="scs-manager--coworking-intro-scroll-body min-h-0 flex-1 overflow-y-auto px-6 py-5 text-stone-700 text-sm leading-relaxed">
+    <div class="scs-manager--coworking-intro-scroll-body min-h-0 flex-1 overflow-y-auto px-6 text-stone-700 text-sm leading-relaxed">
       <div class="scs-manager--coworking-intro-slide" data-coworking-intro-slide="0">
         <p class="text-base font-medium text-stone-900 mb-3">{{ 'Welcome'|t }}</p>
         <p class="mb-3">{{ 'Here you find all tools to support your work through the collection data life cycle – from capture and cleaning to publishing of FAIR and linked data.'|t }}</p>
-        <p>{{ 'The next steps each highlight one application you can run from your dashboard.'|t }}</p>
+        <p>{{ 'The next steps highlight some features and help with the initial configuration and setup a WissKI environment.'|t }}</p>
       </div>
 
       <div class="scs-manager--coworking-intro-slide hidden scs-manager--coworking-intro-app-slide" data-coworking-intro-slide="1">
         <div class="flex flex-col sm:flex-row gap-5 items-start">
           <div class="scs-manager--coworking-intro-app-slide-figure flex items-center justify-center rounded-lg bg-stone-100 border border-stone-200 p-3">
-            <img src="{{ intro_asset_base }}wisski-stack.svg" alt="" width="160" height="112" loading="lazy" decoding="async" />
           </div>
           <div class="flex-1 min-w-0">
-            <p class="text-base font-semibold text-stone-900 mb-2">{{ 'WissKI Environment'|t }}</p>
-            <p>{{ 'Content-Management-System (CMS) for recording and publishing collection data in a scholarly context – your main environment for curated collection information.'|t }}</p>
+            <p class="text-base font-semibold text-stone-900 mb-2">{{ 'Manager of Services and Projects.'|t }}</p>
+            <p>{{ 'The Semantic Co-Working Space (SCS) provides selected applications for digital collection management. The SCS is the main access point to these applications and you can manage them in a user-friendly webinterface. The SCS is build to work together, so our main services support collaborative work and data integration between applications. You can easily share the access to your applications with other SCS users. You also find some information about the services and get help, if you are stuck.'|t }}</p>
           </div>
         </div>
       </div>
@@ -39,11 +40,10 @@
       <div class="scs-manager--coworking-intro-slide hidden scs-manager--coworking-intro-app-slide" data-coworking-intro-slide="2">
         <div class="flex flex-col sm:flex-row gap-5 items-start">
           <div class="scs-manager--coworking-intro-app-slide-figure flex items-center justify-center rounded-lg bg-stone-100 border border-stone-200 p-3">
-            <img src="{{ intro_asset_base }}nextcloud-stack.svg" alt="" width="160" height="112" loading="lazy" decoding="async" />
           </div>
           <div class="flex-1 min-w-0">
-            <p class="text-base font-semibold text-stone-900 mb-2">{{ 'Nextcloud Environment'|t }}</p>
-            <p>{{ 'File sharing and collaboration: OnlyOffice for documents and Draw.io (diagrams.net) for diagrams, integrated with your workspace.'|t }}</p>
+            <p class="text-base font-semibold text-stone-900 mb-2">{{ 'Your Dashboard'|t }}</p>
+            <p>{{ 'The Dashboard helps to manage your applications. Clicking on the application name will open the application in a new tab. Here you can create your own WissKI environment to manage your collection data, deploy a relational database or triplestore. The cards show the health status, and you can access the corresponding documentation pages and gain some more information on the application page.'|t }}</p>
           </div>
         </div>
       </div>
@@ -51,23 +51,21 @@
       <div class="scs-manager--coworking-intro-slide hidden scs-manager--coworking-intro-app-slide" data-coworking-intro-slide="3">
         <div class="flex flex-col sm:flex-row gap-5 items-start">
           <div class="scs-manager--coworking-intro-app-slide-figure scs-manager--coworking-intro-app-slide-figure--stack flex flex-col items-center justify-center gap-2 rounded-lg bg-stone-100 border border-stone-200 p-3">
-            <img src="{{ intro_asset_base }}jupyterhub-stack.svg" alt="" width="140" height="80" loading="lazy" decoding="async" />
           </div>
           <div class="flex-1 min-w-0">
-            <p class="text-base font-semibold text-stone-900 mb-2">{{ 'JupyterHub Environment'|t }}</p>
-            <p>{{ 'Notebooks and environments for coding, processing, and data cleaning – including OpenRefine for refining tabular and messy data.'|t }}</p>
+            <p class="text-base font-semibold text-stone-900 mb-2">{{ 'Projekt management'|t }}</p>
+            <p>{{ 'You can share the access to your applications with other SCS users by assigning them to projects. If someone add you to a project, you will receive an email notification and can accept or reject the invitation.'|t }}</p>
           </div>
         </div>
       </div>
 
       <div class="scs-manager--coworking-intro-slide hidden scs-manager--coworking-intro-app-slide" data-coworking-intro-slide="4">
         <div class="flex flex-col sm:flex-row gap-5 items-start">
-          <div class="scs-manager--coworking-intro-app-slide-figure flex items-center justify-center rounded-lg bg-stone-100 border border-stone-200 p-3">
-            <img src="{{ intro_asset_base }}protege.svg" alt="" width="160" height="112" loading="lazy" decoding="async" />
+          <div class="scs-manager--coworking-intro-app-slide-figure scs-manager--coworking-intro-app-slide-figure--stack flex flex-col items-center justify-center gap-2 rounded-lg bg-stone-100 border border-stone-200 p-3">
           </div>
           <div class="flex-1 min-w-0">
-            <p class="text-base font-semibold text-stone-900 mb-2">{{ 'WebProtégé'|t }}</p>
-            <p>{{ 'Ontology engineering in the browser – design and maintain the vocabularies that structure your collection and linked data.'|t }}</p>
+            <p class="text-base font-semibold text-stone-900 mb-2">{{ 'Account management'|t }}</p>
+            <p>{{ 'Manage your account settings, language and region, connected accounts and SCS Manager Settings (where you can reset this wizard by the way).'|t }}</p>
           </div>
         </div>
       </div>
@@ -75,28 +73,15 @@
       <div class="scs-manager--coworking-intro-slide hidden scs-manager--coworking-intro-app-slide" data-coworking-intro-slide="5">
         <div class="flex flex-col sm:flex-row gap-5 items-start">
           <div class="scs-manager--coworking-intro-app-slide-figure flex items-center justify-center rounded-lg bg-stone-100 border border-stone-200 p-3">
-            <img src="{{ intro_asset_base }}sql.svg" alt="" width="160" height="112" loading="lazy" decoding="async" />
           </div>
           <div class="flex-1 min-w-0">
-            <p class="text-base font-semibold text-stone-900 mb-2">{{ 'MariaDB'|t }}</p>
-            <p>{{ 'Relational database for structured collection data, with phpMyAdmin for browsing schemas, running SQL, and managing exports.'|t }}</p>
+            <p class="text-base font-semibold text-stone-900 mb-2">{{ 'Need help?'|t }}</p>
+            <p>{{ 'We have a extensive <a href="/soda-scs-manager/documentation" target="_blank" rel="noopener noreferrer">documentation</a>, where you find useful information and tutorials. Still get stuck? Contact our SCS support team at <a href="mailto:scs-manager@sammlungen.io">scs-manager@sammlungen.io</a>. '|t }}</p>
           </div>
         </div>
       </div>
 
-      <div class="scs-manager--coworking-intro-slide hidden scs-manager--coworking-intro-app-slide" data-coworking-intro-slide="6">
-        <div class="flex flex-col sm:flex-row gap-5 items-start">
-          <div class="scs-manager--coworking-intro-app-slide-figure flex items-center justify-center rounded-lg bg-stone-100 border border-stone-200 p-3">
-            <img src="{{ intro_asset_base }}triplestore.svg" alt="" width="160" height="112" loading="lazy" decoding="async" />
-          </div>
-          <div class="flex-1 min-w-0">
-            <p class="text-base font-semibold text-stone-900 mb-2">{{ 'Triplestore'|t }}</p>
-            <p>{{ 'RDF graph storage with a SPARQL 1.1 endpoint – publish and query FAIR and linked collection data for reuse and integration.'|t }}</p>
-          </div>
-        </div>
-      </div>
-
-      <div class="scs-manager--coworking-intro-slide hidden" data-coworking-intro-slide="7">
+      <div class="scs-manager--coworking-intro-slide hidden" data-coworking-intro-slide="6">
         <p class="text-base font-medium text-stone-900 mb-3">{{ 'Connect Nextcloud'|t }}</p>
         <p class="mb-4">{{ 'A working Nextcloud connection is necessary so data and files can flow between WissKI and your other applications. Start the connection here, or later from your account settings.'|t }}</p>
         <div class="scs-manager--nextcloud-connect-wrapper scs-manager--nextcloud-connect-inline rounded-lg border border-stone-200 p-4 bg-stone-50">
@@ -107,7 +92,7 @@
         <p class="mt-4 text-sm text-stone-600">{{ 'For OpenID / SSO account linking:'|t }} <a href="{{ intro_connected_accounts_url }}" class="text-blue-700 underline hover:text-blue-900">{{ 'Open Connected Accounts'|t }}</a></p>
       </div>
 
-      <div class="scs-manager--coworking-intro-slide hidden" data-coworking-intro-slide="8">
+      <div class="scs-manager--coworking-intro-slide hidden" data-coworking-intro-slide="7">
           <p class="text-base font-medium text-stone-900 mb-3">{{ 'Create your first WissKI Environment'|t }}</p>
           <p class="mb-3">{{ 'We create a complete environment: database, triplestore, and WissKI. Provisioning starts immediately and may take several minutes.'|t }}</p>
         <label for="scs-manager--coworking-intro-wisski-name" class="block text-sm font-medium text-stone-800 mb-1">{{ 'WissKI name'|t }}</label>
@@ -120,7 +105,7 @@
         </div>
       </div>
 
-      <div class="scs-manager--coworking-intro-slide hidden" data-coworking-intro-slide="9" data-coworking-intro-success-slide>
+      <div class="scs-manager--coworking-intro-slide hidden" data-coworking-intro-slide="8" data-coworking-intro-success-slide>
           <p class="scs-manager--coworking-intro-success-title text-base font-semibold mb-3">{{ 'WissKI Environment created'|t }}</p>
         <p class="mb-3" data-coworking-intro-success-summary></p>
         <p class="mb-4 text-sm text-stone-600">{{ 'Provisioning can take several minutes. You can monitor the applications Health Status from your dashboard or open the details page now.'|t }}</p>

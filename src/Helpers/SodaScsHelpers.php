@@ -6,7 +6,8 @@ namespace Drupal\soda_scs_manager\Helpers;
 
 use Drupal\Core\StringTranslation\StringTranslationTrait;
 use Drupal\Core\StringTranslation\TranslationInterface;
-
+use Drupal\Core\Url;
+use Drupal\Core\Language\LanguageManagerInterface;
 /**
  * Helper class for Soda SCS operations.
  */
@@ -14,16 +15,22 @@ class SodaScsHelpers {
 
   use StringTranslationTrait;
 
+  protected LanguageManagerInterface $languageManager;
+
   /**
    * Constructs a SodaScsHelpers object.
    *
    * @param \Drupal\Core\StringTranslation\TranslationInterface $stringTranslation
    *   The string translation service.
+   * @param \Drupal\Core\Language\LanguageManagerInterface $languageManager
+   *   The language manager service.
    */
   public function __construct(
     TranslationInterface $stringTranslation,
+    LanguageManagerInterface $languageManager,
   ) {
     $this->stringTranslation = $stringTranslation;
+    $this->languageManager = $languageManager;
   }
 
   /**
@@ -158,6 +165,25 @@ class SodaScsHelpers {
 
     // Remove any leading/trailing whitespace.
     return trim($cleanedOutput);
+  }
+
+    /**
+   * Relative URL for an internal path, respecting interface language (prefix).
+   *
+   * @param string $path
+   *   Internal path (with or without a leading slash), e.g.
+   *   soda-scs-manager/app/wisski or /soda-scs-manager/app/wisski.
+   *
+   * @return string
+   *   Generated path (may include a language prefix).
+   */
+  public function internalPathUrl(string $path): string {
+    $path = '/' . ltrim($path, '/');
+    // base:soda/… is parsed as host+splat; base:/soda/… yields a proper path.
+    return Url::fromUri('base:' . $path, [
+      'language' => $this->languageManager->getCurrentLanguage(),
+      'path_processing' => TRUE,
+    ])->toString();
   }
 
   /**

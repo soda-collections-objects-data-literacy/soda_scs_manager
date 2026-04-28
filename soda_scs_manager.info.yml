@@ -7,6 +7,7 @@ core_version_requirement: ^10 | ^11
 'interface translation project': soda_scs_manager
 'interface translation server pattern': modules/custom/%project/translations/%project.%language.po
 dependencies:
+  - drupal:language
   - drupal:openid_connect
   - drupal:smtp
   - drupal:field_group

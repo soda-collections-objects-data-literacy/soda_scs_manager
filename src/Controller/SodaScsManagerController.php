@@ -172,19 +172,20 @@ class SodaScsManagerController extends ControllerBase {
           $entitiesByProject[$projectLabel][] = [
             '#theme' => 'soda_scs_manager__entity_card',
             '#title' => $this->t('@bundle', ['@bundle' => $projectEntity->label()]),
-            '#type' => $projectBundleInfo['label']->render(),
-            // Bundle description: translates with UI; stored field is English.
-            '#description' => $projectBundleInfo['description']->render(),
+            // Not #type — that key is reserved for render elements. Late translate via Twig.
+            '#bundle_label' => $projectBundleInfo['label'],
+            '#description' => $projectBundleInfo['description'],
             '#details_link' => $detailsLink,
             '#entity_id' => $projectEntity->id(),
             '#entity_type_id' => $projectEntity->getEntityTypeId(),
             '#health_status' => $projectEntity->get('health')->value ?? 'Unknown',
             '#imageUrl' => $projectBundleInfo['imageUrl'],
-            '#learn_more_link' => $this->internalPathUrl('soda-scs-manager/app/' . $this->sodaScsHelpers->getEntityType($projectEntity->bundle())),
+            '#learn_more_link' => $this->sodaScsHelpers->internalPathUrl('soda-scs-manager/app/' . $this->sodaScsHelpers->getEntityType($projectEntity->bundle())),
             '#url' => $url,
             '#tags' => $projectBundleInfo['tags'],
             '#cache' => [
               'max-age' => 0,
+              'contexts' => ['languages:language_interface'],
             ],
           ];
         }
@@ -324,19 +325,19 @@ class SodaScsManagerController extends ControllerBase {
       $entitiesByUser[$username][] = [
         '#theme' => 'soda_scs_manager__entity_card',
         '#title' => $this->t('@bundle', ['@bundle' => $entity->label()]),
-        '#type' => $bundleInfo['label']->render(),
-        // Bundle description: translates with UI; stored field is English.
-        '#description' => $bundleInfo['description']->render(),
+        '#bundle_label' => $bundleInfo['label'],
+        '#description' => $bundleInfo['description'],
         '#details_link' => $detailsLink,
         '#entity_id' => $entity->id(),
         '#entity_type_id' => $entity->getEntityTypeId(),
         '#health_status' => $entity->get('health')->value ?? 'Unknown',
         '#imageUrl' => $bundleInfo['imageUrl'],
-        '#learn_more_link' => $this->internalPathUrl('soda-scs-manager/app/' . $this->sodaScsHelpers->getEntityType($entity->bundle())),
+        '#learn_more_link' => $this->sodaScsHelpers->internalPathUrl('soda-scs-manager/app/' . $this->sodaScsHelpers->getEntityType($entity->bundle())),
         '#url' => $url,
         '#tags' => $bundleInfo['tags'],
         '#cache' => [
           'max-age' => 0,
+          'contexts' => ['languages:language_interface'],
         ],
       ];
     }
@@ -375,16 +376,16 @@ class SodaScsManagerController extends ControllerBase {
       '#add_application_trigger' => [
         '#theme' => 'soda_scs_manager__add_application_heading_trigger',
         '#asset_base' => $assetBase,
-        '#popup_url_mariadb' => $this->internalPathUrl('soda-scs-manager/app/mariadb'),
-        '#popup_url_wisski' => $this->internalPathUrl('soda-scs-manager/app/wisski'),
-        '#popup_url_open_gdb' => $this->internalPathUrl('soda-scs-manager/app/open-gdb'),
+        '#popup_url_mariadb' => $this->sodaScsHelpers->internalPathUrl('soda-scs-manager/app/mariadb'),
+        '#popup_url_wisski' => $this->sodaScsHelpers->internalPathUrl('soda-scs-manager/app/wisski'),
+        '#popup_url_open_gdb' => $this->sodaScsHelpers->internalPathUrl('soda-scs-manager/app/open-gdb'),
         '#cache' => [
           'max-age' => 0,
         ],
       ],
       '#cache' => [
         'max-age' => 0,
-        'contexts' => ['user'],
+        'contexts' => ['user', 'languages:language_interface'],
       ],
       '#attached' => [
         'library' => $dashboardLibraries,
@@ -532,23 +533,6 @@ class SodaScsManagerController extends ControllerBase {
       'wisskiQuickCreateUrl' => $introCreateWisskiUrl,
       'wisskiNameCheckUrl' => $introCheckWisskiNameUrl,
     ];
-  }
-
-  /**
-   * Relative URL for an internal path, respecting interface language (prefix).
-   *
-   * @param string $path
-   *   Path without leading slash, e.g. soda-scs-manager/app/wisski.
-   *
-   * @return string
-   *   Generated path (may include a language prefix).
-   */
-  protected function internalPathUrl(string $path): string {
-    $path = ltrim($path, '/');
-    return Url::fromUri('internal:/' . $path, [
-      'language' => $this->languageManager()->getCurrentLanguage(),
-      'path_processing' => TRUE,
-    ])->toString();
   }
 
   /**

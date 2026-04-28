@@ -18,6 +18,11 @@ use Drupal\Core\Url;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 use Drupal\Component\Utility\EmailValidatorInterface;
 use Drupal\Component\Utility\Html;
+use Drupal\Core\Datetime\TimeZoneFormHelper;
+use Drupal\Core\Language\LanguageInterface;
+use Drupal\language\ConfigurableLanguageManagerInterface;
+use Drupal\user\Plugin\LanguageNegotiation\LanguageNegotiationUser;
+use Drupal\Core\Language\LanguageManagerInterface;
 
 /**
  * Provides a form for registering a user through Keycloak.
@@ -74,6 +79,13 @@ class KeycloakUserRegistrationForm extends FormBase {
   protected $emailValidator;
 
   /**
+   * The language manager.
+   *
+   * @var \Drupal\Core\Language\LanguageManagerInterface
+   */
+  protected LanguageManagerInterface $languageManager;
+
+  /**
    * Constructs a KeycloakUserRegistrationForm object.
    *
    * @param \Drupal\Core\Database\Connection $connection
@@ -90,6 +102,8 @@ class KeycloakUserRegistrationForm extends FormBase {
    *   The password hashing service.
    * @param \Drupal\Component\Utility\EmailValidatorInterface $email_validator
    *   The email validator service.
+   * @param \Drupal\Core\Language\LanguageManagerInterface $language_manager
+   *   The language manager.
    */
   public function __construct(
     Connection $connection,
@@ -99,6 +113,7 @@ class KeycloakUserRegistrationForm extends FormBase {
     PasswordGeneratorInterface $password_generator,
     PasswordInterface $password_hasher,
     EmailValidatorInterface $email_validator,
+    LanguageManagerInterface $language_manager,
   ) {
     $this->connection = $connection;
     $this->entityTypeManager = $entity_type_manager;
@@ -107,6 +122,7 @@ class KeycloakUserRegistrationForm extends FormBase {
     $this->passwordGenerator = $password_generator;
     $this->passwordHasher = $password_hasher;
     $this->emailValidator = $email_validator;
+    $this->languageManager = $language_manager;
   }
 
   /**
@@ -120,7 +136,8 @@ class KeycloakUserRegistrationForm extends FormBase {
       $container->get('messenger'),
       $container->get('password_generator'),
       $container->get('password'),
-      $container->get('email.validator')
+      $container->get('email.validator'),
+      $container->get('language_manager')
     );
   }
 
@@ -188,6 +205,41 @@ class KeycloakUserRegistrationForm extends FormBase {
         'Enter your last name. Only letters, spaces, hyphens, apostrophes, and periods are allowed.'
       ),
     ];
+
+    // Same language widget as the user account form (Site language / configurable languages).
+    $user_preferred_default = $this->languageManager->getCurrentLanguage()->getId();
+    $user_language_added = FALSE;
+    if ($this->languageManager instanceof ConfigurableLanguageManagerInterface) {
+      $negotiator = $this->languageManager->getNegotiator();
+      $user_language_added = $negotiator && $negotiator->isNegotiationMethodEnabled(LanguageNegotiationUser::METHOD_ID, LanguageInterface::TYPE_INTERFACE);
+    }
+
+    $form['interface_langcode'] = [
+      '#type' => 'language_select',
+      '#title' => $this->t('Site language'),
+      '#languages' => LanguageInterface::STATE_CONFIGURABLE,
+      '#default_value' => $user_preferred_default,
+      '#description' => $user_language_added
+        ? $this->t("This account's preferred language for emails and site presentation.")
+        : $this->t("This account's preferred language for emails."),
+      '#parents' => ['interface_langcode'],
+      '#required' => TRUE,
+    ];
+
+    // Same time zone widget as the user account form (grouped by region).
+    $system_date = $this->config('system.date');
+
+    $form['timezone'] = [
+      '#type' => 'select',
+      '#title' => $this->t('Time zone'),
+      '#parents' => ['timezone'],
+      '#default_value' => $system_date->get('timezone.default'),
+      '#options' => TimeZoneFormHelper::getOptionsListByRegion(FALSE),
+      '#description' => $this->t('Select the desired local time and time zone. Dates and times throughout this site will be displayed using this time zone.'),
+      '#required' => TRUE,
+      '#attributes' => ['class' => ['timezone-detect']],
+    ];
+    $form['timezone']['#attached']['library'][] = 'core/drupal.timezone';
 
     $form['password'] = [
       '#type' => 'password_confirm',
@@ -281,6 +333,21 @@ class KeycloakUserRegistrationForm extends FormBase {
       $form_state->setErrorByName('last_name', $this->t('Last name may only contain letters, spaces, hyphens, apostrophes, and periods.'));
     }
 
+    $langcode = (string) $form_state->getValue('interface_langcode');
+    $allowed = array_keys($this->languageManager->getLanguages(LanguageInterface::STATE_CONFIGURABLE));
+    if ($allowed === []) {
+      $allowed = array_keys($this->languageManager->getLanguages());
+    }
+    if ($langcode === '' || !in_array($langcode, $allowed, TRUE)) {
+      $form_state->setErrorByName('interface_langcode', $this->t('Please choose a valid site language.'));
+    }
+
+    $timezone = (string) $form_state->getValue('timezone');
+    $identifiers = \DateTimeZone::listIdentifiers();
+    if ($timezone === '' || !in_array($timezone, $identifiers, TRUE)) {
+      $form_state->setErrorByName('timezone', $this->t('Please choose a valid time zone.'));
+    }
+
     // Check if username is already registered.
     $query = $this->connection->select('keycloak_user_registration', 'kur')
       ->fields('kur', ['id'])
@@ -302,6 +369,8 @@ class KeycloakUserRegistrationForm extends FormBase {
     $username = $form_state->getValue('username');
     $first_name = $form_state->getValue('first_name');
     $last_name = $form_state->getValue('last_name');
+    $interface_langcode = $form_state->getValue('interface_langcode');
+    $timezone = $form_state->getValue('timezone');
     $password = $form_state->getValue('password');
 
     // @todo Make better password security resp. controll if this is secure enough.K
@@ -315,6 +384,8 @@ class KeycloakUserRegistrationForm extends FormBase {
         'username' => $username,
         'first_name' => $first_name,
         'last_name' => $last_name,
+        'interface_langcode' => $interface_langcode,
+        'timezone' => $timezone,
         'password' => $password,
         'status' => 'pending',
         'created' => time(),

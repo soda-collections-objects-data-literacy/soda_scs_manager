@@ -5,6 +5,7 @@
  * Functions for the soda_scs_manager module.
  */
 
+use Drupal\Core\Language\LanguageInterface;
 use Drupal\Core\Entity\Display\EntityViewDisplayInterface;
 use Drupal\Core\Form\FormStateInterface;
 use Drupal\Core\Entity\ContentEntityInterface;
@@ -322,32 +323,22 @@ function _soda_scs_manager_invalidate_cms_app_bundle_cache(EntityInterface $enti
   if (!\Drupal::hasService('entity_type.bundle.info')) {
     return;
   }
-  $alias_paths = _soda_scs_manager_cms_driven_app_path_aliases();
-  $alias_set = array_fill_keys($alias_paths, TRUE);
   $bundle_info = \Drupal::service('entity_type.bundle.info');
   if ($entity->getEntityTypeId() === 'path_alias' && \Drupal::entityTypeManager()->hasDefinition('path_alias')) {
     $alias_candidates = [(string) ($entity->get('alias')->value ?? '')];
     if (method_exists($entity, 'getOriginal') && $entity->getOriginal()) {
       $alias_candidates[] = (string) ($entity->getOriginal()->get('alias')->value ?? '');
-    }
-    foreach ($alias_candidates as $alias_value) {
-      $normalized = '/' . trim($alias_value, '/');
-      if (isset($alias_set[$normalized])) {
-        $bundle_info->clearCachedBundles();
-        return;
-      }
-    }
+    }   
     return;
   }
   if ($entity->getEntityTypeId() !== 'node') {
     return;
   }
-  foreach ($alias_paths as $app_path) {
-    $target_nid = _soda_scs_manager_get_node_id_for_path_alias($app_path);
+    $appPagePath = \Drupal::service('soda_scs_manager.helpers')->internalPathUrl('soda-scs-manager/app/' . \Drupal::service('soda_scs_manager.helpers')->getEntityType($entity->bundle()));
+    $target_nid = _soda_scs_manager_get_node_id_for_path_alias($appPagePath);
     if ($target_nid && (int) $entity->id() === $target_nid) {
       $bundle_info->clearCachedBundles();
       return;
-    }
   }
 }
 
@@ -1539,10 +1530,40 @@ function soda_scs_manager_form_user_login_form_alter(&$form, &$form_state, $form
 /**
  * Implements hook_user_login().
  *
+ * Syncs preferred interface language and timezone from Keycloak registration data (and
+ * Keycloak profile) on every login — not only on first account creation — so the site
+ * language follows the user's choice. Updates the session language parameter when the
+ * Language module is enabled so negotiation methods ordered before "User" still match.
+ *
  * Note: Redirect is handled via destination field in hook_form_alter() for the login form.
  */
 function soda_scs_manager_user_login(UserInterface $account) {
-  // Redirect logic handled via destination parameter in login form.
+  _soda_scs_manager_propagate_keycloak_user_data_to_fields($account);
+
+  if (!\Drupal::moduleHandler()->moduleExists('language')) {
+    return;
+  }
+
+  $preferred = $account->getPreferredLangcode();
+  if ($preferred === NULL || $preferred === '') {
+    return;
+  }
+
+  $language_manager = \Drupal::languageManager();
+  $languages = $language_manager->getLanguages();
+  if (!isset($languages[$preferred])) {
+    return;
+  }
+
+  $session_config = \Drupal::config('language.negotiation')->get('session');
+  $param = $session_config['parameter'] ?? 'language';
+
+  $request = \Drupal::request();
+  if ($request->hasSession()) {
+    $request->getSession()->set($param, $preferred);
+  }
+
+  $language_manager->reset();
 }
 
 /**
@@ -1838,6 +1859,40 @@ function _soda_scs_manager_propagate_keycloak_user_data_to_fields(UserInterface 
   $keycloakToken = $keycloakService->getKeycloakToken();
   $keycloakUser = $keycloakService->getKeycloakUser($keycloakToken, $user->getDisplayName());
 
+  // Apply language and time zone from an approved Keycloak self-registration row.
+  $db = \Drupal::database();
+  $regQuery = $db->select('keycloak_user_registration', 'kur')
+    ->fields('kur', ['interface_langcode', 'timezone'])
+    ->condition('status', 'approved');
+  $or = $regQuery->orConditionGroup()
+    ->condition('username', $user->getAccountName())
+    ->condition('email', $user->getEmail());
+  $registration = $regQuery
+    ->condition($or)
+    ->orderBy('updated', 'DESC')
+    ->range(0, 1)
+    ->execute()
+    ->fetchObject();
+
+  if ($registration) {
+    $langcode = $registration->interface_langcode ?? '';
+    if ($langcode !== '') {
+      $language_manager = \Drupal::languageManager();
+      $configured = $language_manager->getLanguages(LanguageInterface::STATE_CONFIGURABLE);
+      if (empty($configured)) {
+        $configured = $language_manager->getLanguages();
+      }
+      if (isset($configured[$langcode])) {
+        $user->set('preferred_langcode', $langcode);
+      }
+    }
+    $timezone = $registration->timezone ?? '';
+    $identifiers = \DateTimeZone::listIdentifiers();
+    if ($timezone !== '' && in_array($timezone, $identifiers, TRUE)) {
+      $user->set('timezone', $timezone);
+    }
+  }
+
   // If Keycloak data is available, propagate it to user fields.
   if (!empty($keycloakUser) && is_array($keycloakUser)) {
     if (!empty($keycloakUser['firstName'])) {
@@ -1850,6 +1905,10 @@ function _soda_scs_manager_propagate_keycloak_user_data_to_fields(UserInterface 
       $user->set('sso_user_id', $keycloakUser['id']);
     }
     // Save the user entity after updating fields.
+    $user->save();
+  }
+  elseif ($registration) {
+    // No Keycloak payload (e.g. token/API unavailable); still persist locale/tz.
     $user->save();
   }
 }

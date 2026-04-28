@@ -15,6 +15,20 @@ use Drupal\Tests\BrowserTestBase;
 class KeycloakUserRegistrationFormTest extends BrowserTestBase {
 
   /**
+   * Required legal checkboxes and locale fields for a valid registration POST.
+   *
+   * @return array<string, int|string>
+   */
+  private function registrationFormExtras(): array {
+    return [
+      'interface_langcode' => 'en',
+      'timezone' => 'Europe/Berlin',
+      'terms_of_service' => 1,
+      'privacy_policy' => 1,
+    ];
+  }
+
+  /**
    * {@inheritdoc}
    */
   protected static $modules = [
@@ -24,6 +38,7 @@ class KeycloakUserRegistrationFormTest extends BrowserTestBase {
     'text',
     'file',
     'options',
+    'language',
     'soda_scs_manager',
   ];
 
@@ -52,13 +67,15 @@ class KeycloakUserRegistrationFormTest extends BrowserTestBase {
    * Tests that the registration form renders correctly.
    */
   public function testRegistrationFormRenders(): void {
-    $this->drupalGet('/user/register/keycloak');
+    $this->drupalGet('/user/register');
 
     // Check form elements exist.
     $this->assertSession()->fieldExists('email');
     $this->assertSession()->fieldExists('username');
     $this->assertSession()->fieldExists('first_name');
     $this->assertSession()->fieldExists('last_name');
+    $this->assertSession()->fieldExists('interface_langcode');
+    $this->assertSession()->fieldExists('timezone');
     $this->assertSession()->fieldExists('pass[pass1]');
     $this->assertSession()->fieldExists('pass[pass2]');
     $this->assertSession()->buttonExists('Register');
@@ -68,17 +85,17 @@ class KeycloakUserRegistrationFormTest extends BrowserTestBase {
    * Tests email validation.
    */
   public function testEmailValidation(): void {
-    $this->drupalGet('/user/register/keycloak');
+    $this->drupalGet('/user/register');
 
     // Submit with invalid email.
-    $this->submitForm([
+    $this->submitForm(array_merge([
       'email' => 'invalid-email',
       'username' => 'testuser',
       'first_name' => 'Test',
       'last_name' => 'User',
       'pass[pass1]' => 'password123',
       'pass[pass2]' => 'password123',
-    ], 'Register');
+    ], $this->registrationFormExtras()), 'Register');
 
     // Check for validation error.
     $this->assertSession()->pageTextContains('is not valid');
@@ -88,17 +105,17 @@ class KeycloakUserRegistrationFormTest extends BrowserTestBase {
    * Tests username validation - only alphanumeric and underscores allowed.
    */
   public function testUsernameValidation(): void {
-    $this->drupalGet('/user/register/keycloak');
+    $this->drupalGet('/user/register');
 
     // Submit with invalid username (special characters).
-    $this->submitForm([
+    $this->submitForm(array_merge([
       'email' => 'test@example.com',
       'username' => 'test-user!@#',
       'first_name' => 'Test',
       'last_name' => 'User',
       'pass[pass1]' => 'password123',
       'pass[pass2]' => 'password123',
-    ], 'Register');
+    ], $this->registrationFormExtras()), 'Register');
 
     // Check for validation error.
     $this->assertSession()->pageTextContains('alphanumeric characters and underscores');
@@ -108,17 +125,17 @@ class KeycloakUserRegistrationFormTest extends BrowserTestBase {
    * Tests first name validation.
    */
   public function testFirstNameValidation(): void {
-    $this->drupalGet('/user/register/keycloak');
+    $this->drupalGet('/user/register');
 
     // Submit with invalid first name (numbers).
-    $this->submitForm([
+    $this->submitForm(array_merge([
       'email' => 'test@example.com',
       'username' => 'testuser',
       'first_name' => 'Test123',
       'last_name' => 'User',
       'pass[pass1]' => 'password123',
       'pass[pass2]' => 'password123',
-    ], 'Register');
+    ], $this->registrationFormExtras()), 'Register');
 
     // Check for validation error.
     $this->assertSession()->pageTextContains('First name may only contain');
@@ -128,17 +145,17 @@ class KeycloakUserRegistrationFormTest extends BrowserTestBase {
    * Tests last name validation.
    */
   public function testLastNameValidation(): void {
-    $this->drupalGet('/user/register/keycloak');
+    $this->drupalGet('/user/register');
 
     // Submit with invalid last name (special characters).
-    $this->submitForm([
+    $this->submitForm(array_merge([
       'email' => 'test@example.com',
       'username' => 'testuser',
       'first_name' => 'Test',
       'last_name' => 'User@123',
       'pass[pass1]' => 'password123',
       'pass[pass2]' => 'password123',
-    ], 'Register');
+    ], $this->registrationFormExtras()), 'Register');
 
     // Check for validation error.
     $this->assertSession()->pageTextContains('Last name may only contain');
@@ -151,17 +168,17 @@ class KeycloakUserRegistrationFormTest extends BrowserTestBase {
     $email = 'newuser_' . $this->randomMachineName() . '@example.com';
     $username = 'testuser_' . $this->randomMachineName();
 
-    $this->drupalGet('/user/register/keycloak');
+    $this->drupalGet('/user/register');
 
     // Submit valid registration.
-    $this->submitForm([
+    $this->submitForm(array_merge([
       'email' => $email,
       'username' => $username,
       'first_name' => 'Test',
       'last_name' => 'User',
       'pass[pass1]' => 'password123',
       'pass[pass2]' => 'password123',
-    ], 'Register');
+    ], $this->registrationFormExtras()), 'Register');
 
     // Check for success message.
     $this->assertSession()->pageTextContains('pending approval');
@@ -177,6 +194,8 @@ class KeycloakUserRegistrationFormTest extends BrowserTestBase {
     $this->assertEquals($username, $result['username']);
     $this->assertEquals('Test', $result['first_name']);
     $this->assertEquals('User', $result['last_name']);
+    $this->assertEquals('en', $result['interface_langcode']);
+    $this->assertEquals('Europe/Berlin', $result['timezone']);
     $this->assertEquals('pending', $result['status']);
   }
 
@@ -193,6 +212,8 @@ class KeycloakUserRegistrationFormTest extends BrowserTestBase {
         'username' => 'existinguser',
         'first_name' => 'Existing',
         'last_name' => 'User',
+        'interface_langcode' => 'en',
+        'timezone' => 'Europe/Berlin',
         'password' => 'hashedpassword',
         'status' => 'pending',
         'created' => time(),
@@ -200,17 +221,17 @@ class KeycloakUserRegistrationFormTest extends BrowserTestBase {
       ])
       ->execute();
 
-    $this->drupalGet('/user/register/keycloak');
+    $this->drupalGet('/user/register');
 
     // Try to register with the same email.
-    $this->submitForm([
+    $this->submitForm(array_merge([
       'email' => $email,
       'username' => 'newuser',
       'first_name' => 'New',
       'last_name' => 'User',
       'pass[pass1]' => 'password123',
       'pass[pass2]' => 'password123',
-    ], 'Register');
+    ], $this->registrationFormExtras()), 'Register');
 
     // Check for duplicate email error.
     $this->assertSession()->pageTextContains('already a pending registration');
@@ -229,6 +250,8 @@ class KeycloakUserRegistrationFormTest extends BrowserTestBase {
         'username' => $username,
         'first_name' => 'Existing',
         'last_name' => 'User',
+        'interface_langcode' => 'en',
+        'timezone' => 'Europe/Berlin',
         'password' => 'hashedpassword',
         'status' => 'pending',
         'created' => time(),
@@ -236,17 +259,17 @@ class KeycloakUserRegistrationFormTest extends BrowserTestBase {
       ])
       ->execute();
 
-    $this->drupalGet('/user/register/keycloak');
+    $this->drupalGet('/user/register');
 
     // Try to register with the same username.
-    $this->submitForm([
+    $this->submitForm(array_merge([
       'email' => 'new_' . $this->randomMachineName() . '@example.com',
       'username' => $username,
       'first_name' => 'New',
       'last_name' => 'User',
       'pass[pass1]' => 'password123',
       'pass[pass2]' => 'password123',
-    ], 'Register');
+    ], $this->registrationFormExtras()), 'Register');
 
     // Check for duplicate username error.
     $this->assertSession()->pageTextContains('username is already taken');
@@ -256,7 +279,7 @@ class KeycloakUserRegistrationFormTest extends BrowserTestBase {
    * Tests that required fields are enforced.
    */
   public function testRequiredFields(): void {
-    $this->drupalGet('/user/register/keycloak');
+    $this->drupalGet('/user/register');
 
     // Submit empty form.
     $this->submitForm([], 'Register');
@@ -266,23 +289,25 @@ class KeycloakUserRegistrationFormTest extends BrowserTestBase {
     $this->assertSession()->pageTextContains('Username field is required');
     $this->assertSession()->pageTextContains('First name field is required');
     $this->assertSession()->pageTextContains('Last name field is required');
+    $this->assertSession()->pageTextContains('Site language field is required');
+    $this->assertSession()->pageTextContains('Time zone field is required');
   }
 
   /**
    * Tests password confirmation validation.
    */
   public function testPasswordConfirmation(): void {
-    $this->drupalGet('/user/register/keycloak');
+    $this->drupalGet('/user/register');
 
     // Submit with non-matching passwords.
-    $this->submitForm([
+    $this->submitForm(array_merge([
       'email' => 'test@example.com',
       'username' => 'testuser',
       'first_name' => 'Test',
       'last_name' => 'User',
       'pass[pass1]' => 'password123',
       'pass[pass2]' => 'differentpassword',
-    ], 'Register');
+    ], $this->registrationFormExtras()), 'Register');
 
     // Check for password mismatch error.
     $this->assertSession()->pageTextContains('do not match');
@@ -295,17 +320,17 @@ class KeycloakUserRegistrationFormTest extends BrowserTestBase {
     $email = 'accented_' . $this->randomMachineName() . '@example.com';
     $username = 'accenteduser_' . $this->randomMachineName();
 
-    $this->drupalGet('/user/register/keycloak');
+    $this->drupalGet('/user/register');
 
     // Submit with accented characters in names.
-    $this->submitForm([
+    $this->submitForm(array_merge([
       'email' => $email,
       'username' => $username,
       'first_name' => 'José',
       'last_name' => 'García-López',
       'pass[pass1]' => 'password123',
       'pass[pass2]' => 'password123',
-    ], 'Register');
+    ], $this->registrationFormExtras()), 'Register');
 
     // Should succeed - accented characters are allowed.
     $this->assertSession()->pageTextContains('pending approval');
@@ -328,17 +353,17 @@ class KeycloakUserRegistrationFormTest extends BrowserTestBase {
     $email = 'apostrophe_' . $this->randomMachineName() . '@example.com';
     $username = 'apostropheuser_' . $this->randomMachineName();
 
-    $this->drupalGet('/user/register/keycloak');
+    $this->drupalGet('/user/register');
 
     // Submit with apostrophes in names.
-    $this->submitForm([
+    $this->submitForm(array_merge([
       'email' => $email,
       'username' => $username,
       'first_name' => "O'Brien",
       'last_name' => "O'Connor",
       'pass[pass1]' => 'password123',
       'pass[pass2]' => 'password123',
-    ], 'Register');
+    ], $this->registrationFormExtras()), 'Register');
 
     // Should succeed - apostrophes are allowed.
     $this->assertSession()->pageTextContains('pending approval');
@@ -352,16 +377,16 @@ class KeycloakUserRegistrationFormTest extends BrowserTestBase {
     $username = 'timestampuser_' . $this->randomMachineName();
     $beforeTime = time();
 
-    $this->drupalGet('/user/register/keycloak');
+    $this->drupalGet('/user/register');
 
-    $this->submitForm([
+    $this->submitForm(array_merge([
       'email' => $email,
       'username' => $username,
       'first_name' => 'Test',
       'last_name' => 'User',
       'pass[pass1]' => 'password123',
       'pass[pass2]' => 'password123',
-    ], 'Register');
+    ], $this->registrationFormExtras()), 'Register');
 
     $afterTime = time();
 
@@ -385,19 +410,19 @@ class KeycloakUserRegistrationFormTest extends BrowserTestBase {
     $email = 'redirect_' . $this->randomMachineName() . '@example.com';
     $username = 'redirectuser_' . $this->randomMachineName();
 
-    $this->drupalGet('/user/register/keycloak');
+    $this->drupalGet('/user/register');
 
-    $this->submitForm([
+    $this->submitForm(array_merge([
       'email' => $email,
       'username' => $username,
       'first_name' => 'Test',
       'last_name' => 'User',
       'pass[pass1]' => 'password123',
       'pass[pass2]' => 'password123',
-    ], 'Register');
+    ], $this->registrationFormExtras()), 'Register');
 
     // Check we're redirected (not still on registration form).
-    $this->assertSession()->addressNotEquals('/user/register/keycloak');
+    $this->assertSession()->addressNotEquals('/user/register');
   }
 
   /**
@@ -407,16 +432,16 @@ class KeycloakUserRegistrationFormTest extends BrowserTestBase {
     $email = 'underscore_' . $this->randomMachineName() . '@example.com';
     $username = 'test_user_' . $this->randomMachineName();
 
-    $this->drupalGet('/user/register/keycloak');
+    $this->drupalGet('/user/register');
 
-    $this->submitForm([
+    $this->submitForm(array_merge([
       'email' => $email,
       'username' => $username,
       'first_name' => 'Test',
       'last_name' => 'User',
       'pass[pass1]' => 'password123',
       'pass[pass2]' => 'password123',
-    ], 'Register');
+    ], $this->registrationFormExtras()), 'Register');
 
     // Should succeed.
     $this->assertSession()->pageTextContains('pending approval');
@@ -426,7 +451,7 @@ class KeycloakUserRegistrationFormTest extends BrowserTestBase {
    * Tests that the form has proper description texts.
    */
   public function testFormDescriptions(): void {
-    $this->drupalGet('/user/register/keycloak');
+    $this->drupalGet('/user/register');
 
     // Check that form has description/help text.
     $this->assertSession()->pageTextContains('reviewed by an administrator');

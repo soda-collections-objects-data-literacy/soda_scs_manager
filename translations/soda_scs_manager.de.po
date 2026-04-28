@@ -156,80 +156,80 @@ msgid "Your registration has been submitted and is pending approval. You will be
 msgstr "Ihre Registrierung wurde übermittelt und wartet auf Freigabe. Sie werden per E-Mail benachrichtigt, sobald Ihr Konto genehmigt wurde."
 
 #: soda_scs_manager.module:123
-msgid "The default project for this user. "
+msgid "The default project for this user."
 msgstr "Das Standardprojekt für diesen Nutzenden."
 
-#: soda_scs_manager.module:214
+#: soda_scs_manager.module:360
 msgid "SQL Database"
 msgstr "SQL-Datenbank"
 
-#: soda_scs_manager.module:216
+#: soda_scs_manager.module:364
 msgid "A relational database for storage of structured data that can be managed through phpMyAdmin. This is the place to import and export, and query your data using SQL."
 msgstr "Eine relationale Datenbank zur Speicherung strukturierter Daten, die über phpMyAdmin verwaltet werden kann. Hier können Sie Ihre Daten importieren, exportieren und mit SQL abfragen."
 
-#: soda_scs_manager.module:222
+#: soda_scs_manager.module:371
 msgid "Triplestore"
 msgstr "Triplestore"
 
-#: soda_scs_manager.module:224
-msgid "An RDF4J-based Graph database for storage of RDF data that can be queried using SPARQL. It extends the standard RDF4J server with comprehensive user management and security features."
-msgstr "Eine auf RDF4J basierende Graphdatenbank zur Speicherung von RDF-Daten, die mit SPARQL abgefragt werden können. Sie erweitert RDF4J um Funktionen zur User-Verwaltung und Sicherheit."
+#: soda_scs_manager.module:375
+msgid "OpenGDB is an RDF4J-based triplestore that extends the standard RDF4J server with comprehensive user management and security features and provides a SPARQL1.1 Endpoint."
+msgstr "OpenGDB ist ein auf RDF4J basierender Triplestore, der den Standard-RDF4J-Server um umfassende Benutzer- und Sicherheitsfunktionen erweitert und einen SPARQL-1.1-Endpunkt bereitstellt."
 
-#: soda_scs_manager.module:230
+#: soda_scs_manager.module:382
 msgid "WebProtégé"
 msgstr "WebProtégé"
 
-#: soda_scs_manager.module:232
-msgid "A web-based tool for creating and editing OWL ontologies. Webprotege is not yet part of the Single Sign On (SSO) system. You will need to create an account and log in manually."
-msgstr "Ein webbasiertes Tool zum Erstellen und Bearbeiten von OWL-Ontologien. Webprotégé ist noch nicht in das SSO-System integriert. Sie müssen ein Konto erstellen und sich manuell anmelden."
+#: soda_scs_manager.module:386
+msgid "WebProtégé is a free, open-source, web-based platform for collaborative ontology development that enables users to create, edit, and share OWL 2 ontologies directly through a web browser."
+msgstr "WebProtégé ist eine kostenlose, quelloffene, webbasierte Plattform für die gemeinsame Ontologieentwicklung, mit der Nutzerinnen und Nutzer OWL-2-Ontologien direkt im Browser erstellen, bearbeiten und teilen können."
 
-#: soda_scs_manager.module:238
+#: soda_scs_manager.module:393
 msgid "WissKI"
 msgstr "WissKI"
 
-#: soda_scs_manager.module:240
+#: soda_scs_manager.module:395
 msgid "WissKI is a digital platform for managing object and research data. This is a plain WissKI instance without data model and preconfigured triplestore connection."
 msgstr "WissKI ist eine digitale Plattform zur Verwaltung von Objekt- und Forschungsdaten. Hierbei handelt es sich um eine WissKI-Instanz ohne Datenmodell und ohne vorkonfigurierte Triplestore-Verbindung."
 
-#: soda_scs_manager.module:247
+#: soda_scs_manager.module:402
 msgid "Default Project"
 msgstr "Standardprojekt"
 
-#: soda_scs_manager.module:249
+#: soda_scs_manager.module:404
 msgid "A Project is a collection of applications."
 msgstr "Ein Projekt ist eine Sammlung von Anwendungen."
 
-#: soda_scs_manager.module:254
+#: soda_scs_manager.module:409
 msgid "Default Service Key"
 msgstr "Standard-Serviceschlüssel"
 
-#: soda_scs_manager.module:256
+#: soda_scs_manager.module:411
 msgid "A Service Key is a key for a service."
 msgstr "Ein Serviceschlüssel ist ein Schlüssel für einen Dienst."
 
-#: soda_scs_manager.module:261
+#: soda_scs_manager.module:416
 msgid "JupyterHub Environment"
 msgstr "JupyterHub-Umgebung"
 
-#: soda_scs_manager.module:263
-msgid "Your personal data science workspace that contains Jupyter Notebooks and OpenRefine. JupyterHub is a powerful, interactive environment where you can e.g. analyze or visualise data."
-msgstr "Ihr persönlicher Arbeitsbereich mit Jupyter Notebooks und Open Refine. JupyterHub ist eine leistungsstarke, interaktive Umgebung, in der Sie beispielsweise Daten analysieren oder visualisieren können."
+#: soda_scs_manager.module:420
+msgid "JupyterHub is your personal data science workspace and a powerful, interactive environment where you can analyze data, create visualizations, and conduct research without needing to install any software on your computer."
+msgstr "JupyterHub ist Ihr persönlicher Arbeitsbereich für Data Science und eine leistungsstarke, interaktive Umgebung, in der Sie Daten analysieren, Visualisierungen erstellen und forschen können – ohne Software auf Ihrem Rechner installieren zu müssen."
 
-#: soda_scs_manager.module:269
+#: soda_scs_manager.module:427
 msgid "WissKI Environment"
 msgstr "WissKI-Umgebung"
 
-#: soda_scs_manager.module:271
-msgid "A WissKI Environment contains a preconfigured WissKI, a Triplestore and a Database to help users to produce and publish FAIR data that is accessible through Triplestore endpoints."
-msgstr "Umfasst ein vorkonfiguriertes WissKI, einen Triplestore und eine Datenbank, zur Erstellung und Veröffentlichung von FAIRen Daten, auf die über Triplestore-Endpunkte zugegriffen werden kann."
+#: soda_scs_manager.module:431
+msgid "WissKI is a specialised system for managing and publishing research and cultural heritage data, built on the open-source CMS Drupal. It ships with a default data model to instantly record and publish FAIR data."
+msgstr "WissKI ist ein spezialisiertes System zur Verwaltung und Veröffentlichung von Forschungs- und Kulturerbedaten auf Basis des quelloffenen CMS Drupal. Es liefert ein Standarddatenmodell, mit dem Sie FAIR-Daten direkt erfassen und veröffentlichen können."
 
-#: soda_scs_manager.module:277
+#: soda_scs_manager.module:438
 msgid "Nextcloud Environment"
 msgstr "Nextcloud-Umgebung"
 
-#: soda_scs_manager.module:279
-msgid "An Office environment for collaboration and file sharing that includes OnlyOffice and Draw.io (diagrams.net). Nextcloud can also be used to share files with other applications."
-msgstr "Eine Office-Umgebung für kollaborative Arbeit und Dateiaustausch, die OnlyOffice und Draw.io (diagrams.net) umfasst. Nextcloud kann auch zum Austausch von Dateien mit anderen Anwendungen genutzt werden."
+#: soda_scs_manager.module:442
+msgid "Nextcloud is a file storage and collaboration platform that functions as your personal cloud workspace, which includes a OnlyOffice suite, Draw.io and SCS-Share Directory to share files across your JupyterHub and WissKI environments. "
+msgstr "Nextcloud ist eine Dateiablage- und Kollaborationsplattform, die als Ihre persönliche Cloud-Umgebung dient – mit OnlyOffice, Draw.io und SCS-Share Directory zum Austausch von Dateien zwischen JupyterHub und WissKI."
 
 #: soda_scs_manager.module:416
 msgid "About"

@@ -244,6 +244,20 @@ function soda_scs_manager_schema() {
         'default' => 0,
         'description' => 'Unix timestamp when the registration was last updated.',
       ],
+      'interface_langcode' => [
+        'type' => 'varchar',
+        'length' => 12,
+        'not null' => TRUE,
+        'default' => 'en',
+        'description' => 'Preferred Drupal interface language (en or de).',
+      ],
+      'timezone' => [
+        'type' => 'varchar',
+        'length' => 255,
+        'not null' => TRUE,
+        'default' => '',
+        'description' => 'IANA time zone identifier chosen at registration (same list as the user account form).',
+      ],
     ],
     'primary key' => ['id'],
     'indexes' => [
@@ -1091,6 +1105,80 @@ function soda_scs_manager_update_11019() {
   \Drupal::service('plugin.manager.menu.link')->rebuild();
 
   return t('Main menu flattened; SODa SCS Manager parent removed from discovery.');
+}
+
+/**
+ * Add interface language and region to Keycloak registration queue table.
+ */
+function soda_scs_manager_update_11020() {
+  $schema = Database::getConnection()->schema();
+  $table = 'keycloak_user_registration';
+  if (!$schema->fieldExists($table, 'interface_langcode')) {
+    $schema->addField($table, 'interface_langcode', [
+      'type' => 'varchar',
+      'length' => 12,
+      'not null' => TRUE,
+      'default' => 'en',
+      'description' => 'Preferred Drupal interface language (en or de).',
+    ]);
+  }
+  if (!$schema->fieldExists($table, 'region')) {
+    $schema->addField($table, 'region', [
+      'type' => 'varchar',
+      'length' => 32,
+      'not null' => TRUE,
+      'default' => '',
+      'description' => 'Registration region key used to set default timezone.',
+    ]);
+  }
+
+  return t('Keycloak registration table extended with interface language and region.');
+}
+
+/**
+ * Store IANA timezone on registration; migrate legacy region column if present.
+ */
+function soda_scs_manager_update_11021() {
+  $schema = Database::getConnection()->schema();
+  $table = 'keycloak_user_registration';
+  $connection = Database::getConnection();
+
+  if (!$schema->fieldExists($table, 'timezone')) {
+    $schema->addField($table, 'timezone', [
+      'type' => 'varchar',
+      'length' => 255,
+      'not null' => TRUE,
+      'default' => '',
+      'description' => 'IANA time zone identifier chosen at registration (same list as the user account form).',
+    ]);
+  }
+
+  if ($schema->fieldExists($table, 'region')) {
+    $region_to_tz = [
+      'de' => 'Europe/Berlin',
+      'at' => 'Europe/Vienna',
+      'ch' => 'Europe/Zurich',
+      'uk_ie' => 'Europe/London',
+      'eu_other' => 'Europe/Berlin',
+      'us' => 'America/New_York',
+      'other' => 'UTC',
+    ];
+    $rows = $connection->select($table, 'kur')
+      ->fields('kur', ['id', 'region'])
+      ->execute();
+    foreach ($rows as $row) {
+      $region = $row->region ?? '';
+      if ($region !== '' && isset($region_to_tz[$region])) {
+        $connection->update($table)
+          ->fields(['timezone' => $region_to_tz[$region]])
+          ->condition('id', $row->id)
+          ->execute();
+      }
+    }
+    $schema->dropField($table, 'region');
+  }
+
+  return t('Keycloak registration table now stores a full time zone identifier.');
 }
 
 

@@ -205,6 +205,18 @@
       nextBtn.disabled = !canProceedNext;
     }
 
+    const hideIntroSkip = index === SLIDE_NEXTCLOUD || index === SLIDE_WISSKI_FORM;
+    const skipBtn = root.querySelector('[data-coworking-intro-skip]');
+    if (skipBtn) {
+      skipBtn.classList.toggle('hidden', hideIntroSkip);
+    }
+    const introTitle = root.querySelector('#scs-manager--coworking-intro-title');
+    if (introTitle) {
+      const reserveSpaceForSkip = !hideIntroSkip;
+      introTitle.classList.toggle('pe-36', reserveSpaceForSkip);
+      introTitle.classList.toggle('sm:pe-40', reserveSpaceForSkip);
+    }
+
     const label = root.querySelector('[data-coworking-intro-step-label]');
     if (label) {
       label.textContent = Drupal.t('Step @current of @total', {
@@ -398,7 +410,16 @@
 
     if (skipBtn) {
       skipBtn.addEventListener('click', () => {
-        skipOrFinish();
+        if (index < SLIDE_NEXTCLOUD) {
+          index = SLIDE_NEXTCLOUD;
+          const scrollBody = root.querySelector('.scs-manager--coworking-intro-scroll-body');
+          if (scrollBody) {
+            scrollBody.scrollTop = 0;
+          }
+          updateStepUi(root, index, total, nextBtn);
+        } else {
+          skipOrFinish();
+        }
       });
     }
 

@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Drupal\soda_scs_manager\Form;
 
+use Drupal\Component\Utility\Html;
 use Drupal\Core\Database\Connection;
 use Drupal\Core\Form\FormBase;
 use Drupal\Core\Form\FormStateInterface;
@@ -112,7 +113,16 @@ class KeycloakUserApprovalForm extends FormBase {
 
     // Get all pending registrations.
     $query = $this->database->select('keycloak_user_registration', 'kur')
-      ->fields('kur', ['id', 'email', 'username', 'first_name', 'last_name', 'created'])
+      ->fields('kur', [
+        'id',
+        'email',
+        'username',
+        'first_name',
+        'last_name',
+        'interface_langcode',
+        'timezone',
+        'created',
+      ])
       ->condition('status', 'pending')
       ->orderBy('created', 'DESC');
 
@@ -133,6 +143,8 @@ class KeycloakUserApprovalForm extends FormBase {
         $this->t('Email'),
         $this->t('Username'),
         $this->t('Name'),
+        $this->t('Language'),
+        $this->t('Time zone'),
         $this->t('Date'),
         $this->t('Operations'),
       ],
@@ -156,6 +168,23 @@ class KeycloakUserApprovalForm extends FormBase {
 
       $form['registrations'][$registration->id]['name'] = [
         '#markup' => $registration->first_name . ' ' . $registration->last_name,
+      ];
+
+      $langcode = trim((string) ($registration->interface_langcode ?? ''));
+      if ($langcode === '') {
+        $lang_markup = (string) $this->t('—');
+      }
+      else {
+        $lang = \Drupal::languageManager()->getLanguage($langcode);
+        $lang_markup = Html::escape($lang ? $lang->getName() : $langcode);
+      }
+      $form['registrations'][$registration->id]['interface_langcode'] = [
+        '#markup' => $lang_markup,
+      ];
+
+      $tz = trim((string) ($registration->timezone ?? ''));
+      $form['registrations'][$registration->id]['timezone'] = [
+        '#markup' => $tz !== '' ? Html::escape($tz) : (string) $this->t('—'),
       ];
 
       $form['registrations'][$registration->id]['created'] = [
@@ -224,26 +253,35 @@ class KeycloakUserApprovalForm extends FormBase {
 
     $token = json_decode($tokenResponse['data']['keycloakResponse']->getBody()->getContents())->access_token;
 
+    $body = [
+      'enabled' => TRUE,
+      'username' => $registration->username,
+      'email' => $registration->email,
+      'firstName' => $registration->first_name,
+      'lastName' => $registration->last_name,
+      'credentials' => [
+        [
+          'type' => 'password',
+          'value' => $registration->password,
+          'temporary' => FALSE,
+        ],
+      ],
+      'emailVerified' => TRUE,
+    ];
+
+    $langcode = trim((string) ($registration->interface_langcode ?? ''));
+    if ($langcode !== '' && preg_match('/^[a-zA-Z0-9_-]+$/', $langcode)) {
+      $body['attributes'] = [
+        'locale' => [str_replace('_', '-', $langcode)],
+      ];
+    }
+
     $requestParams = [
       'token' => $token,
       'routeParams' => [
         'realm' => $keycloakGeneralSettings['realm'],
       ],
-      'body' => [
-        'enabled' => TRUE,
-        'username' => $registration->username,
-        'email' => $registration->email,
-        'firstName' => $registration->first_name,
-        'lastName' => $registration->last_name,
-        'credentials' => [
-          [
-            'type' => 'password',
-            'value' => $registration->password,
-            'temporary' => FALSE,
-          ],
-        ],
-        'emailVerified' => TRUE,
-      ],
+      'body' => $body,
     ];
 
     $createUserRequest = $this->keycloakServiceUserActions->buildCreateRequest($requestParams);
