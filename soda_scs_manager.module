@@ -1297,6 +1297,9 @@ function soda_scs_manager_user_insert(UserInterface $user) {
 
 /**
  * Whether the co-working intro should appear (front page, logged in, SCS user, not completed).
+ *
+ * Completion is stored in user.data (soda_scs_manager / coworking_intro_completed). The
+ * dashboard path uses SodaScsManagerController::attachCoworkingIntroForUser() with the same flag.
  */
 function _soda_scs_manager_coworking_intro_show_on_front_page(): bool {
   if (!\Drupal::service('path.matcher')->isFrontPage()) {
@@ -1363,6 +1366,10 @@ function _soda_scs_manager_coworking_intro_wisski_check_name_url(): string {
  * Gin (or any admin theme) overrides core/Gin form controls (e.g. Field UI
  * formatter settings image buttons). Skip entirely there instead of patching
  * admin CSS from the theme.
+ *
+ * On the front page for users who still owe the co-working intro, also attaches
+ * coworkingIntroWizard, nextcloudConnect, and drupalSettings.sodaScsManager.coworkingIntro
+ * (complete / WissKI create / name-check URLs plus throbber copy).
  */
 function soda_scs_manager_page_attachments(array &$attachments) {
   $theme = \Drupal::config('system.theme');
@@ -1404,8 +1411,9 @@ function soda_scs_manager_page_attachments(array &$attachments) {
 /**
  * Implements hook_page_bottom().
  *
- * Puts the co-working intro on the home page (/) for users who have not completed
- * the wizard, so it appears after a typical “redirect to home” post-login.
+ * Renders the intro modal on the site front page for first-time SCS users (see
+ * _soda_scs_manager_coworking_intro_show_on_front_page). hook_page_attachments adds
+ * coworkingIntroWizard + drupalSettings URLs; this hook only outputs the themed markup.
  */
 function soda_scs_manager_page_bottom(array &$page_bottom): void {
   if (!_soda_scs_manager_coworking_intro_show_on_front_page()) {

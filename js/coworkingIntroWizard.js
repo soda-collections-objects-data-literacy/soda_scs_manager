@@ -4,12 +4,71 @@
  */
 
 (function ($, Drupal, drupalSettings, once) {
+  /**
+   * Slide indices must match data-coworking-intro-slide in the Twig template
+   * (soda-scs-manager--coworking-intro.html.twig): 0 welcome, 1–5 feature slides,
+   * 6 Nextcloud, 7 WissKI name/create, 8 success. Copy blocks use data-coworking-intro-copy-rise.
+   */
   /** Index of the Nextcloud connect slide (0-based). */
-  const SLIDE_NEXTCLOUD = 7;
+  const SLIDE_NEXTCLOUD = 6;
   /** Index of the “name + Create” slide (0-based). */
-  const SLIDE_WISSKI_FORM = 8;
+  const SLIDE_WISSKI_FORM = 7;
   /** Index of the post-create success slide. */
-  const SLIDE_SUCCESS = 9;
+  const SLIDE_SUCCESS = 8;
+
+  const COWORKING_INTRO_ROOT_HIDDEN_CLASS = 'scs-manager--coworking-intro-root--hidden';
+  const COWORKING_INTRO_SLIDE_HIDDEN_CLASS = 'scs-manager--coworking-intro-slide--hidden';
+  const COWORKING_INTRO_FOOTER_CONTROL_HIDDEN_CLASS = 'scs-manager--coworking-intro-footer-control--hidden';
+  const COWORKING_INTRO_WISSKI_INPUT_INVALID_CLASS = 'scs-manager--coworking-intro-wisski-name-input--invalid';
+  const COWORKING_INTRO_SUCCESS_LINK_PENDING_CLASS = 'scs-manager--coworking-intro-success-details-link--pending';
+
+  /**
+   * Starts or restarts welcome-slide line/dot animation (in-panel; see intro-wizard.pcss).
+   * Uses a fresh data-coworking-intro-replay token so CSS animation restarts without removing
+   * the attribute first (that one-frame gap caused a visible flicker of the finished state).
+   *
+   * @param {HTMLElement} root
+   * @param {number} index
+   */
+  function syncCoworkingWelcomeDividerReplay(root, index) {
+    const welcomeDivider = root.querySelector('[data-coworking-intro-welcome-divider]');
+    if (!welcomeDivider) {
+      return;
+    }
+    if (index !== 0 || root.classList.contains(COWORKING_INTRO_ROOT_HIDDEN_CLASS)) {
+      welcomeDivider.removeAttribute('data-coworking-intro-replay');
+      return;
+    }
+    welcomeDivider.setAttribute('data-coworking-intro-replay', String(performance.now()));
+  }
+
+  /**
+   * Fade/slide-up for copy blocks (see intro-wizard.pcss; data-coworking-intro-copy-rise in Twig).
+   * Fresh data-coworking-intro-copy-replay restarts CSS animation when revisiting a slide.
+   *
+   * @param {HTMLElement} root
+   * @param {number} index
+   */
+  function syncCoworkingIntroCopyEntrance(root, index) {
+    root.querySelectorAll('[data-coworking-intro-copy-replay]').forEach((el) => {
+      el.removeAttribute('data-coworking-intro-copy-replay');
+    });
+    if (root.classList.contains(COWORKING_INTRO_ROOT_HIDDEN_CLASS)) {
+      return;
+    }
+    const slide = root.querySelector(`[data-coworking-intro-slide="${index}"]`);
+    if (!slide) {
+      return;
+    }
+    const copies = slide.querySelectorAll('[data-coworking-intro-copy-rise]');
+    if (!copies.length) {
+      return;
+    }
+    const token = String(performance.now());
+    copies.forEach((el) => {
+      el.setAttribute('data-coworking-intro-copy-replay', token);
+    });
+  }
 
   /**
    * @param {HTMLElement} root
@@ -139,8 +198,12 @@
    * @param {HTMLElement} root
    */
   function hideIntro(root) {
-    root.classList.add('hidden');
+    root.classList.add(COWORKING_INTRO_ROOT_HIDDEN_CLASS);
     root.setAttribute('aria-hidden', 'true');
+    root.querySelector('[data-coworking-intro-welcome-divider]')?.removeAttribute('data-coworking-intro-replay');
+    root.querySelectorAll('[data-coworking-intro-copy-replay]').forEach((el) => {
+      el.removeAttribute('data-coworking-intro-copy-replay');
+    });
   }
 
   /**
@@ -181,16 +244,14 @@
   }
 
   /**
-   * @param {HTMLElement} root
-   * @param {number} index
-   * @param {number} total
-   * @param {HTMLElement|null} nextBtn
+   * Shows one slide, updates Back/Next/Skip visibility and the step label.
+   * Next is disabled on the Nextcloud slide until data-status="connected" on the inline status element.
    */
   function updateStepUi(root, index, total, nextBtn) {
     const slides = root.querySelectorAll('[data-coworking-intro-slide]');
     slides.forEach((el) => {
       const n = parseInt(el.getAttribute('data-coworking-intro-slide'), 10);
-      el.classList.toggle('hidden', n !== index);
+      el.classList.toggle(COWORKING_INTRO_SLIDE_HIDDEN_CLASS, n !== index);
     });
 
     const backBtn = root.querySelector('[data-coworking-intro-back]');
@@ -199,7 +260,7 @@
     }
     if (nextBtn) {
       const hideNext = index >= SLIDE_WISSKI_FORM;
-      nextBtn.classList.toggle('hidden', hideNext);
+      nextBtn.classList.toggle(COWORKING_INTRO_FOOTER_CONTROL_HIDDEN_CLASS, hideNext);
       const onNextcloudSlide = index === SLIDE_NEXTCLOUD;
       const canProceedNext = !onNextcloudSlide || isNextcloudStatusConnected(root);
       nextBtn.disabled = !canProceedNext;
@@ -208,14 +269,9 @@
     const hideIntroSkip = index === SLIDE_NEXTCLOUD || index === SLIDE_WISSKI_FORM;
     const skipBtn = root.querySelector('[data-coworking-intro-skip]');
     if (skipBtn) {
-      skipBtn.classList.toggle('hidden', hideIntroSkip);
+      skipBtn.classList.toggle(COWORKING_INTRO_FOOTER_CONTROL_HIDDEN_CLASS, hideIntroSkip);
     }
     const introTitle = root.querySelector('#scs-manager--coworking-intro-title');
-    if (introTitle) {
-      const reserveSpaceForSkip = !hideIntroSkip;
-      introTitle.classList.toggle('pe-36', reserveSpaceForSkip);
-      introTitle.classList.toggle('sm:pe-40', reserveSpaceForSkip);
-    }
 
     const label = root.querySelector('[data-coworking-intro-step-label]');
     if (label) {
@@ -224,6 +280,9 @@
         '@total': String(total),
       });
     }
+
+    syncCoworkingWelcomeDividerReplay(root, index);
+    syncCoworkingIntroCopyEntrance(root, index);
   }
 
   /**
@@ -251,13 +310,11 @@
       if (invalid) {
         nameInput.setAttribute('aria-invalid', 'true');
         nameInput.setAttribute('aria-describedby', `${wisskiNameHintId} ${wisskiNameErrorMsgId}`);
-        nameInput.classList.remove('border-stone-300', 'focus:ring-stone-200', 'focus:border-stone-400');
-        nameInput.classList.add('border-red-600', 'ring-2', 'ring-red-200', 'focus:border-red-600', 'focus:ring-red-200');
+        nameInput.classList.add(COWORKING_INTRO_WISSKI_INPUT_INVALID_CLASS);
       } else {
         nameInput.setAttribute('aria-invalid', 'false');
         nameInput.setAttribute('aria-describedby', wisskiNameHintId);
-        nameInput.classList.add('border-stone-300', 'focus:ring-stone-200', 'focus:border-stone-400');
-        nameInput.classList.remove('border-red-600', 'ring-2', 'ring-red-200', 'focus:border-red-600', 'focus:ring-red-200');
+        nameInput.classList.remove(COWORKING_INTRO_WISSKI_INPUT_INVALID_CLASS);
       }
     }
 
@@ -403,6 +460,7 @@
       });
     }
 
+    /** Marks intro complete via POST (skip / finish-without-WissKI) then reloads. */
     async function skipOrFinish() {
       await persistIntroComplete(root);
       reloadDashboard();
@@ -525,10 +583,10 @@
           }
           if (successLink && data.redirectUrl) {
             successLink.setAttribute('href', data.redirectUrl);
-            successLink.classList.remove('pointer-events-none', 'opacity-50');
+            successLink.classList.remove(COWORKING_INTRO_SUCCESS_LINK_PENDING_CLASS);
           } else if (successLink) {
             successLink.setAttribute('href', '#');
-            successLink.classList.add('pointer-events-none', 'opacity-50');
+            successLink.classList.add(COWORKING_INTRO_SUCCESS_LINK_PENDING_CLASS);
           }
 
           index = SLIDE_SUCCESS;
