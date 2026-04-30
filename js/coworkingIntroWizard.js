@@ -248,6 +248,7 @@
    * Next is disabled on the Nextcloud slide until data-status="connected" on the inline status element.
    */
   function updateStepUi(root, index, total, nextBtn) {
+    root.setAttribute('data-coworking-intro-active-slide', String(index));
     const slides = root.querySelectorAll('[data-coworking-intro-slide]');
     slides.forEach((el) => {
       const n = parseInt(el.getAttribute('data-coworking-intro-slide'), 10);

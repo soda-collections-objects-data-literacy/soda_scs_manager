@@ -5,7 +5,8 @@
  *
  * Slide order is driven by data-coworking-intro-slide in this file (0..8). coworkingIntroWizard.js
  * uses the same indices for Next / Back gating, Nextcloud connection, and WissKI flow.
- * Slides 1–5 include a static line/dot divider (soda-scs-manager--coworking-intro-divider-static.html.twig).
+ * Steps 1–8: static line/dot under the panel title (panel divider); step 0 uses the animated divider inside the welcome slide.
+ * Slides 7–8 also include the same static divider inside the scroll area (before copy), matching the rhythm of the feature slides.
  * Main copy blocks use data-coworking-intro-copy-rise; coworkingIntroWizard.js sets data-coworking-intro-copy-replay per step.
  * Layout and Tailwind utilities live in soda_scs_manager_theme intro-wizard.pcss (scs-manager--coworking-intro-*).
  *
@@ -16,13 +17,17 @@
  * @ingroup themeable
  */
 #}
-<div id="scs-manager--coworking-intro" class="scs-manager--coworking-intro" role="dialog" aria-modal="true" aria-labelledby="scs-manager--coworking-intro-title" data-coworking-intro-root>
+<div id="scs-manager--coworking-intro" class="scs-manager--coworking-intro" role="dialog" aria-modal="true" aria-labelledby="scs-manager--coworking-intro-title" data-coworking-intro-root data-coworking-intro-active-slide="0">
   <div class="scs-manager--coworking-intro-panel">
     <div class="scs-manager--coworking-intro-header">
       <div class="scs-manager--coworking-intro-skip-row">
         <button type="button" class="scs-manager--coworking-intro-skip" data-coworking-intro-skip>{{ 'Skip introduction'|t }}</button>
       </div>
       <h2 id="scs-manager--coworking-intro-title" class="scs-manager--coworking-intro-title">{{ 'Welcome to the Semantic Co-Working Space!'|t }}</h2>
+    </div>
+
+    <div class="scs-manager--coworking-intro-panel-divider">
+      {% include '@soda_scs_manager/includes/soda-scs-manager--coworking-intro-divider-static.html.twig' %}
     </div>
 
     <div class="scs-manager--coworking-intro-scroll-body">
@@ -43,7 +48,6 @@
       </div>
 
       <div class="scs-manager--coworking-intro-slide scs-manager--coworking-intro-slide--hidden" data-coworking-intro-slide="1">
-        {% include '@soda_scs_manager/includes/soda-scs-manager--coworking-intro-divider-static.html.twig' %}
         <div class="scs-manager--coworking-intro-copy-rise" data-coworking-intro-copy-rise>
           <h3 class="scs-manager--coworking-intro-subtitle">{{ 'Manager of Services and Projects.'|t }}</h3>
           <p>{{ 'The Semantic Co-Working Space (SCS) provides selected applications for digital collection management. The SCS is the main access point to these applications and you can manage them in a user-friendly webinterface. The SCS is build to work together, so our main services support collaborative work and data integration between applications. You can easily share the access to your applications with other SCS users. You also find some information about the services and get help, if you are stuck.'|t }}</p>
@@ -51,7 +55,6 @@
       </div>
 
       <div class="scs-manager--coworking-intro-slide scs-manager--coworking-intro-slide--hidden" data-coworking-intro-slide="2">
-        {% include '@soda_scs_manager/includes/soda-scs-manager--coworking-intro-divider-static.html.twig' %}
         <div class="scs-manager--coworking-intro-copy-rise" data-coworking-intro-copy-rise>
           <h3 class="scs-manager--coworking-intro-subtitle">{{ 'Your Dashboard'|t }}</h3>
           <p>{{ 'The Dashboard helps to manage your applications. Clicking on the application name will open the application in a new tab. Here you can create your own WissKI environment to manage your collection data, deploy a relational database or triplestore. The cards show the health status, and you can access the corresponding documentation pages and gain some more information on the application page.'|t }}</p>
@@ -59,7 +62,6 @@
       </div>
 
       <div class="scs-manager--coworking-intro-slide scs-manager--coworking-intro-slide--hidden" data-coworking-intro-slide="3">
-        {% include '@soda_scs_manager/includes/soda-scs-manager--coworking-intro-divider-static.html.twig' %}
         <div class="scs-manager--coworking-intro-copy-rise" data-coworking-intro-copy-rise>
           <h3 class="scs-manager--coworking-intro-subtitle">{{ 'Projekt management'|t }}</h3>
           <p>{{ 'You can share the access to your applications with other SCS users by assigning them to projects. If someone add you to a project, you will receive an email notification and can accept or reject the invitation.'|t }}</p>
@@ -67,7 +69,6 @@
       </div>
 
       <div class="scs-manager--coworking-intro-slide scs-manager--coworking-intro-slide--hidden" data-coworking-intro-slide="4">
-        {% include '@soda_scs_manager/includes/soda-scs-manager--coworking-intro-divider-static.html.twig' %}
         <div class="scs-manager--coworking-intro-copy-rise" data-coworking-intro-copy-rise>
           <h3 class="scs-manager--coworking-intro-subtitle">{{ 'Account management'|t }}</h3>
           <p>{{ 'Manage your account settings, language and region, connected accounts and SCS Manager Settings (where you can reset this wizard by the way).'|t }}</p>
@@ -75,7 +76,6 @@
       </div>
 
       <div class="scs-manager--coworking-intro-slide scs-manager--coworking-intro-slide--hidden" data-coworking-intro-slide="5">
-        {% include '@soda_scs_manager/includes/soda-scs-manager--coworking-intro-divider-static.html.twig' %}
         <div class="scs-manager--coworking-intro-copy-rise" data-coworking-intro-copy-rise>
           <h3 class="scs-manager--coworking-intro-subtitle">{{ 'Need help?'|t }}</h3>
           <p>{{ 'We have a extensive <a href="/soda-scs-manager/documentation" target="_blank" rel="noopener noreferrer">documentation</a>, where you find useful information and tutorials. Still get stuck? Contact our SCS support team at <a href="mailto:scs-manager@sammlungen.io">scs-manager@sammlungen.io</a>. '|t }}</p>
@@ -98,6 +98,7 @@
 
       {# Slide 7: WissKI quick-create; POST + name check URLs from drupalSettings.sodaScsManager.coworkingIntro. #}
       <div class="scs-manager--coworking-intro-slide scs-manager--coworking-intro-slide--hidden" data-coworking-intro-slide="7">
+        {% include '@soda_scs_manager/includes/soda-scs-manager--coworking-intro-divider-static.html.twig' %}
         <div class="scs-manager--coworking-intro-copy-rise" data-coworking-intro-copy-rise>
           <h3 class="scs-manager--coworking-intro-subtitle">{{ 'Create your first WissKI Environment'|t }}</h3>
           <p class="scs-manager--coworking-intro-slide-lede">{{ 'We create a complete environment: database, triplestore, and WissKI. Provisioning starts immediately and may take several minutes.'|t }}</p>
@@ -114,6 +115,7 @@
 
       {# Slide 8: after successful WissKI create (server sets coworking_intro_completed); Close reloads the dashboard. #}
       <div class="scs-manager--coworking-intro-slide scs-manager--coworking-intro-slide--hidden" data-coworking-intro-slide="8" data-coworking-intro-success-slide>
+        {% include '@soda_scs_manager/includes/soda-scs-manager--coworking-intro-divider-static.html.twig' %}
         <div class="scs-manager--coworking-intro-copy-rise" data-coworking-intro-copy-rise>
           <h3 class="scs-manager--coworking-intro-success-title">{{ 'WissKI Environment created'|t }}</h3>
           <p class="scs-manager--coworking-intro-success-summary" data-coworking-intro-success-summary></p>
