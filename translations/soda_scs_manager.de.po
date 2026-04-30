@@ -2692,135 +2692,139 @@ msgstr "Gruppenmitglieder konnten nicht aus Keycloak für Projekt @project abger
 msgid "Failed to add user @user to group @group in Keycloak for project @project."
 msgstr "User @user konnte nicht zur Gruppe @group in Keycloak für Projekt @project hinzugefügt werden."
 
-#: /templates/includes/soda-scs-manager--coworking-intro.html.twig:16
-msgid "Welcome to the Semantic Co-Working Space"
-msgstr "Willkommen im Semantic Co-Working Space"
-
-#: /templates/includes/soda-scs-manager--coworking-intro.html.twig:17
+#: templates/includes/soda-scs-manager--coworking-intro.html.twig
 msgid "Skip introduction"
 msgstr "Einführung überspringen"
 
-#: /templates/includes/soda-scs-manager--coworking-intro.html.twig:22
-msgid "Welcome"
-msgstr "Willkommen"
+#: templates/includes/soda-scs-manager--coworking-intro.html.twig
+msgid "Welcome to the Semantic Co-Working Space!"
+msgstr "Willkommen im Semantic Co-Working Space!"
 
-#: /templates/includes/soda-scs-manager--coworking-intro.html.twig:23
+#: templates/includes/soda-scs-manager--coworking-intro.html.twig
+msgid "Hi there!"
+msgstr "Hallo!"
+
+#: templates/includes/soda-scs-manager--coworking-intro.html.twig
 msgid "Here you find all tools to support your work through the collection data life cycle – from capture and cleaning to publishing of FAIR and linked data."
-msgstr "Hier finden Sie alle Werkzeuge, die Sie während des gesamten Lebenszyklus von Sammlungsdaten unterstützen – von der Erfassung und Bereinigung bis zur Veröffentlichung von FAIR und Linked Data."
+msgstr "Hier finden Sie alle Werkzeuge, die Sie beim Lebenszyklus Ihrer Sammlungsdaten unterstützen – von Erfassung und Bereinigung bis zur Veröffentlichung als FAIR- und Linked Data."
 
-#: /templates/includes/soda-scs-manager--coworking-intro.html.twig:24
-msgid "The next steps each highlight one application you can run from your dashboard."
-msgstr "Die nächsten Schritte stellen jeweils eine Anwendung vor, die Sie von Ihrem Dashboard aus starten können."
+#: templates/includes/soda-scs-manager--coworking-intro.html.twig
+msgid "The next steps highlight some features and guide you through the initial configuration and help you set up a WissKI environment."
+msgstr "In den nächsten Schritten stellen wir Funktionen vor und führen Sie durch die Erstkonfiguration sowie die Einrichtung einer WissKI-Umgebung."
 
-#: /templates/includes/soda-scs-manager--coworking-intro.html.twig:33
-msgid "WissKI Environment"
-msgstr "WissKI-Umgebung"
+#: templates/includes/soda-scs-manager--coworking-intro.html.twig
+msgid "Manager of Services and Projects."
+msgstr "Manager für Dienste und Projekte."
 
-#: /templates/includes/soda-scs-manager--coworking-intro.html.twig:34
-msgid "Content-Management-System (CMS) for recording and publishing collection data in a scholarly context – your main environment for curated collection information."
-msgstr "Content-Management-System (CMS) zur Erfassung und Veröffentlichung von Sammlungsdaten im wissenschaftlichen Kontext – Ihre Hauptumgebung für kuratierte Sammlungsinformationen."
+#: templates/includes/soda-scs-manager--coworking-intro.html.twig
+msgid "The Semantic Co-Working Space (SCS) provides selected applications for digital collection management. The SCS is the main access point to these applications and you can manage them in a user-friendly webinterface. The SCS is build to work together, so our main services support collaborative work and data integration between applications. You can easily share the access to your applications with other SCS users. You also find some information about the services and get help, if you are stuck."
+msgstr "Der Semantic Co-Working Space (SCS) bietet ausgewählte Anwendungen für das digitale Sammlungsmanagement. Der SCS ist Ihr zentraler Zugang zu diesen Anwendungen; Sie verwalten sie in einer benutzerfreundlichen Weboberfläche. Der SCS ist auf Zusammenarbeit ausgelegt: Unsere Hauptdienste unterstützen gemeinsames Arbeiten und die Datenintegration zwischen Anwendungen. Sie können den Zugang zu Ihren Anwendungen einfach mit anderen SCS-Nutzenden teilen. Außerdem finden Sie Informationen zu den Diensten und Hilfe, wenn Sie nicht weiterkommen."
 
-#: /templates/includes/soda-scs-manager--coworking-intro.html.twig:45
-msgid "Nextcloud Environment"
-msgstr "Nextcloud-Umgebung"
+#: templates/includes/soda-scs-manager--coworking-intro.html.twig
+msgid "Your Dashboard"
+msgstr "Ihr Dashboard"
 
-#: /templates/includes/soda-scs-manager--coworking-intro.html.twig:46
-msgid "File sharing and collaboration: OnlyOffice for documents and Draw.io (diagrams.net) for diagrams, integrated with your workspace."
-msgstr "Dateifreigabe und Zusammenarbeit: OnlyOffice für Dokumente und Draw.io (diagrams.net) für Diagramme, integriert in Ihren Arbeitsbereich."
+#: templates/includes/soda-scs-manager--coworking-intro.html.twig
+msgid "The Dashboard helps to manage your applications. Clicking on the application name will open the application in a new tab. Here you can create your own WissKI environment to manage your collection data, deploy a relational database or triplestore. The cards show the health status, and you can access the corresponding documentation pages and gain some more information on the application page."
+msgstr "Im Dashboard verwalten Sie Ihre Anwendungen. Ein Klick auf den Anwendungsnamen öffnet die Anwendung in einem neuen Tab. Hier können Sie Ihre eigene WissKI-Umgebung zur Verwaltung Ihrer Sammlungsdaten anlegen sowie eine relationale Datenbank oder einen Triplestore bereitstellen. Die Karten zeigen den Betriebszustand; außerdem erreichen Sie die passende Dokumentation und weitere Informationen auf der jeweiligen Anwendungsseite."
 
-#: /templates/includes/soda-scs-manager--coworking-intro.html.twig:58
-msgid "JupyterHub Environment"
-msgstr "JupyterHub-Umgebung"
+#: templates/includes/soda-scs-manager--coworking-intro.html.twig
+msgid "Projekt management"
+msgstr "Projektmanagement"
 
-#: /templates/includes/soda-scs-manager--coworking-intro.html.twig:59
-msgid "Notebooks and environments for coding, processing, and data cleaning – including OpenRefine for refining tabular and messy data."
-msgstr "Notebooks und Umgebungen für Programmierung, Verarbeitung und Datenbereinigung – einschließlich OpenRefine zur Verfeinerung tabellarischer und unstrukturierter Daten."
+#: templates/includes/soda-scs-manager--coworking-intro.html.twig
+msgid "You can share the access to your applications with other SCS users by assigning them to projects. If someone add you to a project, you will receive an email notification and can accept or reject the invitation."
+msgstr "Sie können den Zugang zu Ihren Anwendungen mit anderen SCS-Nutzenden teilen, indem Sie diese Projekten zuweisen. Wenn Sie zu einem Projekt hinzugefügt werden, erhalten Sie eine E-Mail-Benachrichtigung und können die Einladung annehmen oder ablehnen."
 
-#: /templates/includes/soda-scs-manager--coworking-intro.html.twig:71
-msgid "Ontology engineering in the browser – design and maintain the vocabularies that structure your collection and linked data."
-msgstr "Ontologie-Entwicklung im Browser – entwerfen und pflegen Sie die Vokabulare, die Ihre Sammlung und verknüpfte Daten strukturieren."
+#: templates/includes/soda-scs-manager--coworking-intro.html.twig
+msgid "Account management"
+msgstr "Kontoverwaltung"
 
-#: /templates/includes/soda-scs-manager--coworking-intro.html.twig:83
-msgid "Relational database for structured collection data, with phpMyAdmin for browsing schemas, running SQL, and managing exports."
-msgstr "Relationale Datenbank für strukturierte Sammlungsdaten, mit phpMyAdmin zum Durchsuchen von Schemata, Ausführen von SQL und Verwalten von Exporten."
+#: templates/includes/soda-scs-manager--coworking-intro.html.twig
+msgid "Manage your account settings, language and region, connected accounts and SCS Manager Settings (where you can reset this wizard by the way)."
+msgstr "Verwalten Sie Ihre Kontoeinstellungen, Sprache und Region, verknüpfte Konten sowie die SCS-Manager-Einstellungen (wo Sie übrigens diese Einführung zurücksetzen können)."
 
-#: /templates/includes/soda-scs-manager--coworking-intro.html.twig:95
-msgid "RDF graph storage with a SPARQL 1.1 endpoint – publish and query FAIR and linked collection data for reuse and integration."
-msgstr "RDF-Graph-Speicher mit SPARQL 1.1-Endpunkt – Veröffentlichung und Abfrage von FAIRen und verknüpften Sammlungsdaten zur Wiederverwendung und Integration."
+#: templates/includes/soda-scs-manager--coworking-intro.html.twig
+msgid "Need help?"
+msgstr "Brauchen Sie Hilfe?"
 
-#: /templates/includes/soda-scs-manager--coworking-intro.html.twig:101
+#: templates/includes/soda-scs-manager--coworking-intro.html.twig
+msgid "We have a extensive <a href=\"/soda-scs-manager/documentation\" target=\"_blank\" rel=\"noopener noreferrer\">documentation</a>, where you find useful information and tutorials. Still get stuck? Contact our SCS support team at <a href=\"mailto:scs-manager@sammlungen.io\">scs-manager@sammlungen.io</a>. "
+msgstr "Unsere ausführliche <a href=\"/soda-scs-manager/documentation\" target=\"_blank\" rel=\"noopener noreferrer\">Dokumentation</a> enthält hilfreiche Informationen und Anleitungen. Sie kommen nicht weiter? Wenden Sie sich an unser SCS-Support-Team unter <a href=\"mailto:scs-manager@sammlungen.io\">scs-manager@sammlungen.io</a>. "
+
+#: templates/includes/soda-scs-manager--coworking-intro.html.twig
 msgid "Connect Nextcloud"
 msgstr "Nextcloud verbinden"
 
-#: /templates/includes/soda-scs-manager--coworking-intro.html.twig:102
+#: templates/includes/soda-scs-manager--coworking-intro.html.twig
 msgid "A working Nextcloud connection is necessary so data and files can flow between WissKI and your other applications. Start the connection here, or later from your account settings."
 msgstr "Eine funktionierende Nextcloud-Verbindung ist nötig, damit Daten und Dateien zwischen WissKI und Ihren anderen Anwendungen ausgetauscht werden können. Starten Sie die Verbindung hier oder später in Ihren Kontoeinstellungen."
 
-#: /templates/includes/soda-scs-manager--coworking-intro.html.twig:105
+#: templates/includes/soda-scs-manager--coworking-intro.html.twig
 msgid "Checking connection…"
 msgstr "Verbindung wird geprüft…"
 
-#: /templates/includes/soda-scs-manager--coworking-intro.html.twig:106
+#: templates/includes/soda-scs-manager--coworking-intro.html.twig
 msgid "Allow popups for this site when prompted. If login fails, try again or use Connected Accounts below."
-msgstr "Erlauben Sie Popups für diese Seite, wenn Sie dazu aufgefordert werden. Falls die Anmeldung fehlschlägt, versuchen Sie es erneut oder verwenden Sie unten 'Verknüpfte Konten'."
+msgstr "Erlauben Sie Popups für diese Seite, wenn Sie dazu aufgefordert werden. Falls die Anmeldung fehlschlägt, versuchen Sie es erneut oder nutzen Sie unten „Verknüpfte Konten“."
 
-#: /templates/includes/soda-scs-manager--coworking-intro.html.twig:108
+#: templates/includes/soda-scs-manager--coworking-intro.html.twig
 msgid "For OpenID / SSO account linking:"
 msgstr "Für OpenID-/SSO-Kontoverknüpfung:"
 
-#: /templates/includes/soda-scs-manager--coworking-intro.html.twig:108
+#: templates/includes/soda-scs-manager--coworking-intro.html.twig
 msgid "Open Connected Accounts"
 msgstr "Verknüpfte Konten öffnen"
 
-#: /templates/includes/soda-scs-manager--coworking-intro.html.twig:111
+#: templates/includes/soda-scs-manager--coworking-intro.html.twig
 msgid "Create your first WissKI Environment"
 msgstr "Erstellen Sie Ihre erste WissKI-Umgebung"
 
-#: /templates/includes/soda-scs-manager--coworking-intro.html.twig:112
+#: templates/includes/soda-scs-manager--coworking-intro.html.twig
 msgid "We create a complete environment: database, triplestore, and WissKI. Provisioning starts immediately and may take several minutes."
-msgstr "Wir erstellen eine vollständige Forschungsumgebung: Datenbank, Triplestore und WissKI. Die Bereitstellung beginnt sofort und kann mehrere Minuten dauern."
+msgstr "Wir erstellen eine vollständige Umgebung: Datenbank, Triplestore und WissKI. Die Bereitstellung beginnt sofort und kann mehrere Minuten dauern."
 
-#: /templates/includes/soda-scs-manager--coworking-intro.html.twig:113
+#: templates/includes/soda-scs-manager--coworking-intro.html.twig
 msgid "WissKI name"
 msgstr "WissKI-Name"
 
-#: /templates/includes/soda-scs-manager--coworking-intro.html.twig:114
+#: templates/includes/soda-scs-manager--coworking-intro.html.twig
 msgid "Use at most 25 characters: letters (A–Z, a–z), digits (0–9), and spaces. No other symbols."
 msgstr "Höchstens 25 Zeichen: Buchstaben (A–Z, a–z), Ziffern (0–9) und Leerzeichen. Keine anderen Zeichen."
 
-#: /templates/includes/soda-scs-manager--coworking-intro.html.twig:115
+#: templates/includes/soda-scs-manager--coworking-intro.html.twig
 msgid "e.g. My collection workspace"
 msgstr "z. B. Mein Sammlungsarbeitsbereich"
 
-#: /templates/includes/soda-scs-manager--coworking-intro.html.twig:118
+#: templates/includes/soda-scs-manager--coworking-intro.html.twig
 msgid "Create WissKI Environment"
 msgstr "WissKI-Umgebung erstellen"
 
-#: /templates/includes/soda-scs-manager--coworking-intro.html.twig:119
+#: templates/includes/soda-scs-manager--coworking-intro.html.twig
 msgid "Finish without creating"
 msgstr "Ohne Erstellung abschließen"
 
-#: /templates/includes/soda-scs-manager--coworking-intro.html.twig:124
+#: templates/includes/soda-scs-manager--coworking-intro.html.twig
 msgid "WissKI Environment created"
 msgstr "WissKI-Umgebung erstellt"
 
-#: /templates/includes/soda-scs-manager--coworking-intro.html.twig:126
+#: templates/includes/soda-scs-manager--coworking-intro.html.twig
 msgid "Provisioning can take several minutes. You can monitor the applications Health Status from your dashboard or open the details page now."
-msgstr "Die Bereitstellung kann mehrere Minuten dauern. Sie können den Betriebszustand der Applikation über Ihr Dashboard überwachen oder jetzt die Detailseite öffnen."
+msgstr "Die Bereitstellung kann mehrere Minuten dauern. Sie können den Betriebszustand der Anwendung über Ihr Dashboard überwachen oder jetzt die Detailseite öffnen."
 
-#: /templates/includes/soda-scs-manager--coworking-intro.html.twig:127
+#: templates/includes/soda-scs-manager--coworking-intro.html.twig
 msgid "Open application details"
-msgstr "Applikationsdetails öffnen"
+msgstr "Anwendungsdetails öffnen"
 
-#: /templates/includes/soda-scs-manager--coworking-intro.html.twig:129
+#: templates/includes/soda-scs-manager--coworking-intro.html.twig
 msgid "Close introduction"
 msgstr "Einführung schließen"
 
-#: /templates/includes/soda-scs-manager--coworking-intro.html.twig:137
+#: templates/includes/soda-scs-manager--coworking-intro.html.twig
 msgid "Back"
 msgstr "Zurück"
 
-#: /templates/includes/soda-scs-manager--coworking-intro.html.twig:138
+#: templates/includes/soda-scs-manager--coworking-intro.html.twig
 msgid "Next"
 msgstr "Weiter"
 
@@ -3116,6 +3120,22 @@ msgstr "Wird geprüft…"
 msgid "Verify connection"
 msgstr "Verbindung prüfen"
 
+#: js/coworkingIntroWizard.js
+msgid "Could not verify the name. Reload the page or try again in a moment."
+msgstr "Der Name konnte nicht geprüft werden. Laden Sie die Seite neu oder versuchen Sie es gleich erneut."
+
+#: js/coworkingIntroWizard.js
+msgid "A stack or application with this name already exists. Please choose a different name."
+msgstr "Ein Stack oder eine Anwendung mit diesem Namen existiert bereits. Bitte wählen Sie einen anderen Namen."
+
+#: js/coworkingIntroWizard.js
+msgid "Could not verify the name. Check your connection and try again."
+msgstr "Der Name konnte nicht geprüft werden. Prüfen Sie Ihre Verbindung und versuchen Sie es erneut."
+
+#: js/coworkingIntroWizard.js
+msgid "Could not create WissKI. Check the message below or try again."
+msgstr "WissKI konnte nicht erstellt werden. Lesen Sie die Meldung unten oder versuchen Sie es erneut."
+
 #: js/coworkingIntroWizard.js:65
 msgid "Creating your WissKI environment. Please do not close this window."
 msgstr "Die Einrichtung Ihrer WissKI-Umgebung beginnt. Bitte schließen Sie dieses Fenster nicht."
@@ -3142,7 +3162,7 @@ msgstr "Security Token konnte nicht geladen werden. Laden Sie die Seite neu und 
 
 #: js/coworkingIntroWizard.js:325
 msgid "You successfully started @name. It will appear on your dashboard while it is provisioned."
-msgstr "Sie haben @name erfolgreich gestartet. Es wird auf Ihrem Dashboard angezeigt, während es bereitgestellt wird."
+msgstr "Sie haben @name erfolgreich gestartet. Die Umgebung erscheint auf Ihrem Dashboard, während sie bereitgestellt wird."
 
 #: js/coworkingIntroWizard.js:343
 msgid "Request failed. Please try again."
