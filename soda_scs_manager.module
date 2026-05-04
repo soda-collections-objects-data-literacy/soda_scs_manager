@@ -655,6 +655,22 @@ function soda_scs_manager_mail($key, &$message, $params) {
       $message['body'][] = \Drupal::translation()->translate('If you believe this is an error, please contact the site administrators.', [], $options);
       break;
 
+    case 'project_membership_invitation':
+      $message['subject'] = \Drupal::translation()->translate('You have been invited to join @project on @site_name', [
+        '@project'   => $params['project_label'],
+        '@site_name' => $site_name,
+      ], $options);
+      $message['body'][] = \Drupal::translation()->translate('Hello @name,', ['@name' => $params['recipient_name']], $options);
+      $message['body'][] = \Drupal::translation()->translate('@requester has invited you to join the project "@project" on @site_name.', [
+        '@requester' => $params['requester_name'],
+        '@project'   => $params['project_label'],
+        '@site_name' => $site_name,
+      ], $options);
+      $message['body'][] = \Drupal::translation()->translate('You can accept or decline the invitation on your notifications page: @url', [
+        '@url' => $params['notifications_url'],
+      ], $options);
+      break;
+
     case 'issue_report':
       $message['subject'] = \Drupal::translation()->translate('New issue report on @site_name: @title', [
         '@site_name' => $site_name,

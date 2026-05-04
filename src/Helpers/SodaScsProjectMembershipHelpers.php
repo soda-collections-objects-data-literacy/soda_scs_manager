@@ -6,9 +6,12 @@ namespace Drupal\soda_scs_manager\Helpers;
 
 use Drupal\Component\Datetime\TimeInterface;
 use Drupal\Core\Entity\EntityTypeManagerInterface;
+use Drupal\Core\Language\LanguageManagerInterface;
 use Drupal\Core\Logger\LoggerChannelFactoryInterface;
 use Drupal\Core\Logger\LoggerChannelInterface;
+use Drupal\Core\Mail\MailManagerInterface;
 use Drupal\Core\StringTranslation\StringTranslationTrait;
+use Drupal\Core\Url;
 use Drupal\soda_scs_manager\Entity\SodaScsProjectInterface;
 use Drupal\soda_scs_manager\Entity\SodaScsProjectMembershipInterface;
 use Drupal\soda_scs_manager\Helpers\SodaScsProjectHelpers;
@@ -49,6 +52,16 @@ final class SodaScsProjectMembershipHelpers {
   private LoggerChannelInterface $logger;
 
   /**
+   * The language manager.
+   */
+  private LanguageManagerInterface $languageManager;
+
+  /**
+   * The mail manager.
+   */
+  private MailManagerInterface $mailManager;
+
+  /**
    * The time service.
    */
   private TimeInterface $time;
@@ -59,19 +72,25 @@ final class SodaScsProjectMembershipHelpers {
   public function __construct(
     #[Autowire(service: 'entity_type.manager')]
     EntityTypeManagerInterface $entityTypeManager,
+    #[Autowire(service: 'language_manager')]
+    LanguageManagerInterface $languageManager,
+    #[Autowire(service: 'logger.factory')]
+    LoggerChannelFactoryInterface $loggerFactory,
+    #[Autowire(service: 'plugin.manager.mail')]
+    MailManagerInterface $mailManager,
     #[Autowire(service: 'soda_scs_manager.project.helpers')]
     SodaScsProjectHelpers $projectHelpers,
     #[Autowire(service: 'soda_scs_manager.project_db_access.helpers')]
     SodaScsProjectDbAccessHelpers $projectDbAccessHelpers,
-    #[Autowire(service: 'logger.factory')]
-    LoggerChannelFactoryInterface $loggerFactory,
     #[Autowire(service: 'datetime.time')]
     TimeInterface $time,
   ) {
     $this->entityTypeManager = $entityTypeManager;
+    $this->languageManager = $languageManager;
+    $this->logger = $loggerFactory->get('soda_scs_manager');
+    $this->mailManager = $mailManager;
     $this->projectHelpers = $projectHelpers;
     $this->projectDbAccessHelpers = $projectDbAccessHelpers;
-    $this->logger = $loggerFactory->get('soda_scs_manager');
     $this->time = $time;
   }
 
@@ -126,6 +145,8 @@ final class SodaScsProjectMembershipHelpers {
       ]);
       $request->save();
       $created[] = $recipient->getDisplayName();
+
+      $this->sendInvitationEmail($project, $requester, $recipient);
     }
 
     if (empty($created)) {
@@ -262,6 +283,50 @@ final class SodaScsProjectMembershipHelpers {
         '@project' => $request->getProject()->label(),
       ]),
     );
+  }
+
+  /**
+   * Send an invitation email to the recipient.
+   *
+   * @param \Drupal\soda_scs_manager\Entity\SodaScsProjectInterface $project
+   *   The project the recipient is invited to.
+   * @param \Drupal\user\UserInterface $requester
+   *   The user who sent the invitation.
+   * @param \Drupal\user\UserInterface $recipient
+   *   The user receiving the invitation.
+   */
+  private function sendInvitationEmail(SodaScsProjectInterface $project, UserInterface $requester, UserInterface $recipient): void {
+    $recipientEmail = $recipient->getEmail();
+    if (empty($recipientEmail)) {
+      return;
+    }
+
+    $langcode = $recipient->getPreferredLangcode() ?: $this->languageManager->getDefaultLanguage()->getId();
+    $notificationsUrl = Url::fromRoute('soda_scs_manager.notifications')
+      ->setAbsolute()
+      ->toString();
+
+    $params = [
+      'notifications_url' => $notificationsUrl,
+      'project_label'     => $project->label(),
+      'recipient_name'    => $recipient->getDisplayName(),
+      'requester_name'    => $requester->getDisplayName(),
+    ];
+
+    $result = $this->mailManager->mail(
+      'soda_scs_manager',
+      'project_membership_invitation',
+      $recipientEmail,
+      $langcode,
+      $params,
+    );
+
+    if (!$result['result']) {
+      $this->logger->error('Failed to send invitation email to @email for project @project.', [
+        '@email'   => $recipientEmail,
+        '@project' => $project->label(),
+      ]);
+    }
   }
 
   /**
