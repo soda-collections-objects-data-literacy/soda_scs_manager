@@ -378,6 +378,7 @@ class SodaScsWisskiComponentActions implements SodaScsComponentActionsInterface 
       // Get the owner of the component.
       $owner = $component->getOwner();
       $projectColleques[] = $owner;
+      $allProjectMembers = [];
       $userGroups = [];
 
       // Get the members of the linked projects.
@@ -390,6 +391,7 @@ class SodaScsWisskiComponentActions implements SodaScsComponentActionsInterface 
         $linkedProjectMembersItemList = $linkedProject->get('members');
         $linkedProjectMembers = $linkedProjectMembersItemList->referencedEntities();
         $projectColleques = array_merge($projectColleques, $linkedProjectMembers);
+        $allProjectMembers = array_merge($allProjectMembers, $linkedProjectMembers);
         $userGroups[] = $linkedProject->get('groupId')->value;
       }
 
@@ -539,42 +541,62 @@ class SodaScsWisskiComponentActions implements SodaScsComponentActionsInterface 
         throw new \Exception('Keycloak create user group request failed: ' . $keycloakMakeCreateUserGroupResponse['error']);
       }
 
-      // Get all groups from Keycloak for group ids.
+      // Fetch all Keycloak groups to resolve admin and user group IDs.
       $keycloakBuildGetAllGroupsRequest = $this->sodaScsKeycloakServiceGroupActions->buildGetAllRequest([
         'token' => $this->sodaScsKeycloakHelpers->getKeycloakToken(),
       ]);
       $keycloakMakeGetAllGroupsResponse = $this->sodaScsKeycloakServiceGroupActions->makeRequest($keycloakBuildGetAllGroupsRequest);
 
-      if ($keycloakMakeGetAllGroupsResponse['success']) {
-        $keycloakGroups = json_decode($keycloakMakeGetAllGroupsResponse['data']['keycloakResponse']->getBody()->getContents(), TRUE);
-        // Get the admin group id of the WissKI instance.
-        $keycloakWisskiInstanceAdminGroup = array_filter($keycloakGroups, function ($group) use ($keycloakWisskiInstanceAdminGroupName) {
-          return $group['name'] === $keycloakWisskiInstanceAdminGroupName;
-        });
-        $keycloakWisskiInstanceAdminGroup = reset($keycloakWisskiInstanceAdminGroup);
-      }
-      $uuidsOfwisskiAdmins = [];
-      $uuidsOfwisskiAdmins[] = $this->sodaScsProjectHelpers->getUserSsoUuid($component->getOwner());
-      foreach ($projectColleques as $member) {
-        $uuidsOfwisskiAdmins[] = $this->sodaScsProjectHelpers->getUserSsoUuid($member);
+      if (!$keycloakMakeGetAllGroupsResponse['success']) {
+        throw new \Exception('Keycloak get all groups request failed: ' . $keycloakMakeGetAllGroupsResponse['error']);
       }
 
-      // Iterate over the uuids of the wisski
-      // admins and add them to the admin group.
-      foreach ($uuidsOfwisskiAdmins as $uuidOfwisskiAdmin) {
-        // Add user to admin group.
-        $keycloakBuildAddUserToGroupRequest = $this->sodaScsKeycloakServiceUserActions->buildUpdateRequest([
+      $keycloakGroups = json_decode($keycloakMakeGetAllGroupsResponse['data']['keycloakResponse']->getBody()->getContents(), TRUE);
+
+      $filteredAdminGroups = array_filter($keycloakGroups, function ($group) use ($keycloakWisskiInstanceAdminGroupName) {
+        return $group['name'] === $keycloakWisskiInstanceAdminGroupName;
+      });
+      $keycloakWisskiInstanceAdminGroup = reset($filteredAdminGroups);
+
+      $filteredUserGroups = array_filter($keycloakGroups, function ($group) use ($keycloakWisskiInstanceUserGroupName) {
+        return $group['name'] === $keycloakWisskiInstanceUserGroupName;
+      });
+      $keycloakWisskiInstanceUserGroup = reset($filteredUserGroups);
+
+      // Owner goes into the -admin group only.
+      $ownerSsoUuid = $this->sodaScsProjectHelpers->getUserSsoUuid($component->getOwner());
+      if ($ownerSsoUuid) {
+        $addOwnerToAdminGroupReq = $this->sodaScsKeycloakServiceUserActions->buildUpdateRequest([
           'type' => 'addUserToGroup',
           'routeParams' => [
-            'userId' => $uuidOfwisskiAdmin,
+            'userId' => $ownerSsoUuid,
             'groupId' => $keycloakWisskiInstanceAdminGroup['id'],
           ],
           'token' => $this->sodaScsKeycloakHelpers->getKeycloakToken(),
         ]);
-        $keycloakMakeAddUserToGroupRequest = $this->sodaScsKeycloakServiceUserActions->makeRequest($keycloakBuildAddUserToGroupRequest);
+        $addOwnerToAdminGroupRes = $this->sodaScsKeycloakServiceUserActions->makeRequest($addOwnerToAdminGroupReq);
+        if (!$addOwnerToAdminGroupRes['success']) {
+          throw new \Exception('Keycloak add owner to admin group request failed: ' . $addOwnerToAdminGroupRes['error']);
+        }
+      }
 
-        if (!$keycloakMakeAddUserToGroupRequest['success']) {
-          throw new \Exception('Keycloak add user to admin group request failed: ' . $keycloakMakeAddUserToGroupRequest['error']);
+      // Project members (non-owner) go into the -user group only.
+      foreach ($allProjectMembers as $member) {
+        $memberSsoUuid = $this->sodaScsProjectHelpers->getUserSsoUuid($member);
+        if (!$memberSsoUuid) {
+          continue;
+        }
+        $addMemberToUserGroupReq = $this->sodaScsKeycloakServiceUserActions->buildUpdateRequest([
+          'type' => 'addUserToGroup',
+          'routeParams' => [
+            'userId' => $memberSsoUuid,
+            'groupId' => $keycloakWisskiInstanceUserGroup['id'],
+          ],
+          'token' => $this->sodaScsKeycloakHelpers->getKeycloakToken(),
+        ]);
+        $addMemberToUserGroupRes = $this->sodaScsKeycloakServiceUserActions->makeRequest($addMemberToUserGroupReq);
+        if (!$addMemberToUserGroupRes['success']) {
+          throw new \Exception('Keycloak add member to user group request failed: ' . $addMemberToUserGroupRes['error']);
         }
       }
 
