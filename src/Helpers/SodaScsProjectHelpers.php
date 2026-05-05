@@ -616,25 +616,22 @@ class SodaScsProjectHelpers {
   /**
    * Sync the group members of a project.
    *
+   * Keycloak group assignment rules:
+   *  - Project group: owner + all members
+   *  - WissKI -admin group: owner only
+   *  - WissKI -user group: regular members only (not the owner)
+   *
    * @param \Drupal\soda_scs_manager\Entity\SodaScsProjectInterface $project
    *   The project entity.
    *
    * @return \Drupal\soda_scs_manager\ValueObject\SodaScsResult
    *   The result of the operation.
-   *
-   * @todo Name vars correctly if id, uuid local vs keycloak.
    */
-  public function syncKeycloakGroupMembers(SodaScsProjectInterface $project) {
-    // Get the project members from the given project entity (shall condition).
-    $projectMemberNamesFromProjectEntity = [];
-
-    // Get the owner of the project.
+  public function syncKeycloakGroupMembers(SodaScsProjectInterface $project): SodaScsResult {
+    // Resolve the owner's Keycloak UUID.
     $owner = $project->get('owner')->entity;
-
-    // Try to get the UUID from local SSO.
     $ownerSsoUuid = $this->getUserSsoUuid($owner);
 
-    // If owner hasno UUID, try to get it from Keycloak.
     if (!$ownerSsoUuid) {
       $getAllKeycloakUsersReq = $this->sodaScsKeycloakServiceUserActions->buildGetAllRequest([
         'token' => $this->getKeycloakToken(),
@@ -643,10 +640,11 @@ class SodaScsProjectHelpers {
       $getAllKeycloakUsersRes = $this->sodaScsKeycloakServiceUserActions->makeRequest($getAllKeycloakUsersReq);
 
       if ($getAllKeycloakUsersRes['success']) {
-        $getAllKeycloakUsers = json_decode($getAllKeycloakUsersRes['data']['keycloakResponse']->getBody()->getContents(), TRUE) ?? [];
-        foreach ($getAllKeycloakUsers as $keycloakUser) {
+        $allKeycloakUsers = json_decode($getAllKeycloakUsersRes['data']['keycloakResponse']->getBody()->getContents(), TRUE) ?? [];
+        foreach ($allKeycloakUsers as $keycloakUser) {
           if ($keycloakUser['username'] === $owner->getDisplayName()) {
             $ownerSsoUuid = $keycloakUser['id'];
+            break;
           }
         }
       }
@@ -660,19 +658,17 @@ class SodaScsProjectHelpers {
         ]),
       );
     }
-    $projectMemberNamesFromProjectEntity[$owner->getDisplayName()] = $ownerSsoUuid;
 
-    /** @var \Drupal\Core\Field\EntityReferenceFieldItemList $membersField */
-    $membersField = $project->get('members');
-
-    /** @var \Drupal\user\UserInterface $projectMember */
-    foreach ($membersField->referencedEntities() as $projectMember) {
+    // Resolve regular members' Keycloak UUIDs (owner excluded).
+    $memberSsoUuids = [];
+    foreach ($project->get('members')->referencedEntities() as $projectMember) {
       $ssoUuid = $this->getUserSsoUuid($projectMember);
-      $projectMemberNamesFromProjectEntity[$projectMember->getDisplayName()] = $ssoUuid;
+      if ($ssoUuid) {
+        $memberSsoUuids[] = $ssoUuid;
+      }
     }
 
-    // Get the group UUIDs of the project.
-    // First get the group UUID from the project entity.
+    // Ensure the project's Keycloak group UUID is cached locally.
     if (!$project->get('keycloakUuid')->value) {
       $getAllGroupRequest = $this->sodaScsKeycloakServiceGroupActions->buildGetAllRequest([
         'token' => $this->getKeycloakToken(),
@@ -680,139 +676,175 @@ class SodaScsProjectHelpers {
       ]);
       $getAllGroupsResponse = $this->sodaScsKeycloakServiceGroupActions->makeRequest($getAllGroupRequest);
       if ($getAllGroupsResponse['success']) {
-        $getAllGroups = json_decode($getAllGroupsResponse['data']['keycloakResponse']->getBody()->getContents(), TRUE) ?? [];
-        $project->set('keycloakUuid', $getAllGroups[0]['id']);
+        $groups = json_decode($getAllGroupsResponse['data']['keycloakResponse']->getBody()->getContents(), TRUE) ?? [];
+        $project->set('keycloakUuid', $groups[0]['id']);
         $project->save();
       }
     }
 
-    $groupUuids = [];
-    $groupUuids[$project->get('groupId')->value] = $project->get('keycloakUuid')->value;
+    // Project group: owner + all members.
+    $allMemberUuids = array_values(array_unique(array_merge([$ownerSsoUuid], $memberSsoUuids)));
+    $syncResult = $this->syncUsersToKeycloakGroup(
+      $project->get('keycloakUuid')->value,
+      $allMemberUuids,
+      $project->label(),
+    );
+    if (!$syncResult->success) {
+      return $syncResult;
+    }
 
-    // Then get the group uuid of the wisski admin groups
-    // of the connect wisski components..
-    /** @var \Drupal\Core\Field\EntityReferenceFieldItemList $connectedComponents */
-    $connectedComponents = $project->get('connectedComponents');
-    $connectedComponents = $connectedComponents->referencedEntities();
+    // WissKI component groups: owner → -admin, members → -user.
     /** @var \Drupal\soda_scs_manager\Entity\SodaScsComponentInterface $connectedComponent */
-    foreach ($connectedComponents as $connectedComponent) {
-      if ($connectedComponent->bundle() === 'soda_scs_wisski_component') {
-        // Construct the admin group name.
-        $wisskiComponentAdminGroupName = $connectedComponent->get('machineName')->value . '-admin';
-        // Get all groups from Keycloak for group name.
-        $getAllGroupsRequest = $this->sodaScsKeycloakServiceGroupActions->buildGetAllRequest([
-          'token' => $this->getKeycloakToken(),
-          'queryParams' => ['search' => $wisskiComponentAdminGroupName],
-        ]);
-        $getAllGroupsResponse = $this->sodaScsKeycloakServiceGroupActions->makeRequest($getAllGroupsRequest);
-        if ($getAllGroupsResponse['success']) {
-          $getAllGroups = json_decode($getAllGroupsResponse['data']['keycloakResponse']->getBody()->getContents(), TRUE) ?? [];
-          $groupUuids[$wisskiComponentAdminGroupName] = $getAllGroups[0]['id'];
+    foreach ($project->get('connectedComponents')->referencedEntities() as $connectedComponent) {
+      if ($connectedComponent->bundle() !== 'soda_scs_wisski_component') {
+        continue;
+      }
+
+      $machineName = $connectedComponent->get('machineName')->value;
+
+      // Resolve WissKI -admin group UUID and sync the project owner into it.
+      $adminGroupName = $machineName . '-admin';
+      $adminGroupUuid = $this->resolveKeycloakGroupUuid($adminGroupName);
+      if ($adminGroupUuid) {
+        $syncResult = $this->syncUsersToKeycloakGroup($adminGroupUuid, [$ownerSsoUuid], $project->label());
+        if (!$syncResult->success) {
+          return $syncResult;
+        }
+      }
+
+      // Resolve WissKI -user group UUID and sync regular members into it.
+      $userGroupName = $machineName . '-user';
+      $userGroupUuid = $this->resolveKeycloakGroupUuid($userGroupName);
+      if ($userGroupUuid) {
+        $syncResult = $this->syncUsersToKeycloakGroup($userGroupUuid, $memberSsoUuids, $project->label());
+        if (!$syncResult->success) {
+          return $syncResult;
         }
       }
     }
 
-    // @todo Implement wisski user group uuid.
-    foreach ($groupUuids as $groupUuid) {
-      // Get group members.
-      $groupMembersInKeycloakReq = $this->sodaScsKeycloakServiceGroupActions->buildGetAllRequest([
-        'type' => 'members',
-        'token' => $this->getKeycloakToken(),
-        'routeParams' => ['groupId' => $groupUuid],
-        'queryParams' => ['briefRepresentation' => 'false', 'populateHierarchy' => 'true'],
-      ]);
-      $groupMembersInKeycloakRes = $this->sodaScsKeycloakServiceGroupActions->makeRequest($groupMembersInKeycloakReq);
-
-      if (!$groupMembersInKeycloakRes['success']) {
-        return [
-          'success' => FALSE,
-          'data' => NULL,
-          'error'   => $groupMembersInKeycloakRes['error'],
-          'message' => $this->t('Failed to get group members from Keycloak for project @project.', [
-            '@project' => $project->label(),
-          ]),
-        ];
-      }
-      $groupMembersInKeycloak = json_decode($groupMembersInKeycloakRes['data']['keycloakResponse']->getBody()->getContents(), TRUE) ?? [];
-      $groupMemberNamesFromKeycloak = [];
-      foreach ($groupMembersInKeycloak as $groupMember) {
-        // Map Keycloak username to Keycloak user ID.
-        $groupMemberNamesFromKeycloak[$groupMember['username']] = $groupMember['id'];
-      }
-
-      // Compute additions and removals by comparing
-      // desired (from project) vs current (from Keycloak) user IDs.
-      $desiredUserIds = array_values(array_filter($projectMemberNamesFromProjectEntity));
-      $currentUserIds = array_values($groupMemberNamesFromKeycloak);
-
-      $userIdsToAdd = array_values(array_diff($desiredUserIds, $currentUserIds));
-      $userIdsToRemove = array_values(array_diff($currentUserIds, $desiredUserIds));
-
-      // Add missing users to the group.
-      foreach ($userIdsToAdd as $kcUserId) {
-        if (!is_string($kcUserId) || $kcUserId === '' || $groupUuid === '') {
-          continue;
-        }
-        $addReq = $this->sodaScsKeycloakServiceUserActions->buildUpdateRequest([
-          'type' => 'addUserToGroup',
-          'routeParams' => [
-            'userId' => $kcUserId,
-            'groupId' => $groupUuid,
-          ],
-          'token' => $this->getKeycloakToken(),
-        ]);
-        $addRes = $this->sodaScsKeycloakServiceUserActions->makeRequest($addReq);
-        if (!$addRes['success']) {
-          return [
-            'success' => FALSE,
-            'data' => NULL,
-            'error' => $addRes['error'],
-            'message' => $this->t('Failed to add user @user to group @group in Keycloak for project @project.', [
-              '@user' => $kcUserId,
-              '@group' => $groupUuid,
-              '@project' => $project->label(),
-            ]),
-          ];
-        }
-      }
-
-      // Remove users that should no longer be in the group.
-      foreach ($userIdsToRemove as $kcUserUuid) {
-        if (!is_string($kcUserUuid) || $kcUserUuid === '' || $groupUuid === '') {
-          continue;
-        }
-        $removeReq = $this->sodaScsKeycloakServiceUserActions->buildDeleteRequest([
-          'type' => 'removeUserFromGroup',
-          'routeParams' => [
-            'userId' => $kcUserUuid,
-            'groupId' => $groupUuid,
-          ],
-          'token' => $this->getKeycloakToken(),
-        ]);
-        $removeRes = $this->sodaScsKeycloakServiceUserActions->makeRequest($removeReq);
-        if (!$removeRes['success']) {
-          return SodaScsResult::failure(
-            $removeRes['error'],
-            (string) $this->t('Failed to remove user @user from group @group in Keycloak for project @project.', [
-              '@user' => $kcUserUuid,
-              '@group' => $groupUuid,
-              '@project' => $project->label(),
-            ]),
-          );
-        }
-      }
-    }
     return SodaScsResult::success(
-      data: [
-        'groupId' => $project->get('groupId')->value,
-        'groupUuid' => $groupUuid,
-        'userIdsToAdd' => $userIdsToAdd,
-        'userIdsToRemove' => $userIdsToRemove,
-      ],
+      data: ['groupId' => $project->get('groupId')->value],
       message: (string) $this->t('Successfully synced keycloak group members for project @project.', [
         '@project' => $project->label(),
       ]),
     );
+  }
+
+  /**
+   * Look up a Keycloak group UUID by name.
+   *
+   * @param string $groupName
+   *   The Keycloak group name to search for.
+   *
+   * @return string|null
+   *   The group UUID, or NULL if not found.
+   */
+  private function resolveKeycloakGroupUuid(string $groupName): ?string {
+    $request = $this->sodaScsKeycloakServiceGroupActions->buildGetAllRequest([
+      'token' => $this->getKeycloakToken(),
+      'queryParams' => ['search' => $groupName],
+    ]);
+    $response = $this->sodaScsKeycloakServiceGroupActions->makeRequest($request);
+    if (!$response['success']) {
+      return NULL;
+    }
+    $groups = json_decode($response['data']['keycloakResponse']->getBody()->getContents(), TRUE) ?? [];
+    return $groups[0]['id'] ?? NULL;
+  }
+
+  /**
+   * Sync a set of users into a Keycloak group (add missing, remove stale).
+   *
+   * @param string $groupUuid
+   *   The Keycloak group UUID.
+   * @param string[] $desiredSsoUuids
+   *   The Keycloak user UUIDs that should be members of the group.
+   * @param string $projectLabel
+   *   Used only for error messages.
+   *
+   * @return \Drupal\soda_scs_manager\ValueObject\SodaScsResult
+   *   Success or the first error encountered.
+   */
+  private function syncUsersToKeycloakGroup(string $groupUuid, array $desiredSsoUuids, string $projectLabel): SodaScsResult {
+    if ($groupUuid === '') {
+      return SodaScsResult::failure(
+        error: 'empty_group_uuid',
+        message: (string) $this->t('Cannot sync group with empty UUID for project @project.', [
+          '@project' => $projectLabel,
+        ]),
+      );
+    }
+
+    // Fetch current Keycloak group members.
+    $membersReq = $this->sodaScsKeycloakServiceGroupActions->buildGetAllRequest([
+      'type' => 'members',
+      'token' => $this->getKeycloakToken(),
+      'routeParams' => ['groupId' => $groupUuid],
+      'queryParams' => ['briefRepresentation' => 'false', 'populateHierarchy' => 'true'],
+    ]);
+    $membersRes = $this->sodaScsKeycloakServiceGroupActions->makeRequest($membersReq);
+
+    if (!$membersRes['success']) {
+      return SodaScsResult::failure(
+        error: $membersRes['error'],
+        message: (string) $this->t('Failed to get group members from Keycloak for project @project.', [
+          '@project' => $projectLabel,
+        ]),
+      );
+    }
+
+    $currentMembers = json_decode($membersRes['data']['keycloakResponse']->getBody()->getContents(), TRUE) ?? [];
+    $currentUuids = array_column($currentMembers, 'id');
+
+    $toAdd = array_values(array_diff($desiredSsoUuids, $currentUuids));
+    $toRemove = array_values(array_diff($currentUuids, $desiredSsoUuids));
+
+    foreach ($toAdd as $kcUserId) {
+      if (!is_string($kcUserId) || $kcUserId === '') {
+        continue;
+      }
+      $addReq = $this->sodaScsKeycloakServiceUserActions->buildUpdateRequest([
+        'type' => 'addUserToGroup',
+        'routeParams' => ['userId' => $kcUserId, 'groupId' => $groupUuid],
+        'token' => $this->getKeycloakToken(),
+      ]);
+      $addRes = $this->sodaScsKeycloakServiceUserActions->makeRequest($addReq);
+      if (!$addRes['success']) {
+        return SodaScsResult::failure(
+          error: $addRes['error'],
+          message: (string) $this->t('Failed to add user @user to group @group in Keycloak for project @project.', [
+            '@user' => $kcUserId,
+            '@group' => $groupUuid,
+            '@project' => $projectLabel,
+          ]),
+        );
+      }
+    }
+
+    foreach ($toRemove as $kcUserUuid) {
+      if (!is_string($kcUserUuid) || $kcUserUuid === '') {
+        continue;
+      }
+      $removeReq = $this->sodaScsKeycloakServiceUserActions->buildDeleteRequest([
+        'type' => 'removeUserFromGroup',
+        'routeParams' => ['userId' => $kcUserUuid, 'groupId' => $groupUuid],
+        'token' => $this->getKeycloakToken(),
+      ]);
+      $removeRes = $this->sodaScsKeycloakServiceUserActions->makeRequest($removeReq);
+      if (!$removeRes['success']) {
+        return SodaScsResult::failure(
+          error: $removeRes['error'],
+          message: (string) $this->t('Failed to remove user @user from group @group in Keycloak for project @project.', [
+            '@user' => $kcUserUuid,
+            '@group' => $groupUuid,
+            '@project' => $projectLabel,
+          ]),
+        );
+      }
+    }
+
+    return SodaScsResult::success(data: [], message: '');
   }
 
   /**
