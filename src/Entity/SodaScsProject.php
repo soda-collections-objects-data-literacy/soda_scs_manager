@@ -229,12 +229,12 @@ class SodaScsProject extends ContentEntityBase implements SodaScsProjectInterfac
     $fields['note'] = BaseFieldDefinition::create('text_long')
       ->setLabel(new TranslatableMarkup('Note'))
       ->setDescription(new TranslatableMarkup('The note associated with the project.'))
-      ->setDisplayConfigurable('form', TRUE)
+      ->setDisplayConfigurable('form', FALSE)
       ->setDisplayOptions('form', [
         'type' => 'text_textarea',
         'weight' => 30,
       ])
-      ->setDisplayConfigurable('view', TRUE)
+      ->setDisplayConfigurable('view', FALSE)
       ->setDisplayOptions('view', [
         'label' => 'above',
         'type' => 'text_default',
