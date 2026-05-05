@@ -1183,69 +1183,58 @@ function soda_scs_manager_update_11021() {
 
 
 /**
- * Migrate soda_scs_project note field from string_long to text_long.
- *
- * Preserves existing note values and assigns the 'plain_text' format.
+ * Install the note (text_long) base field on soda_scs_project.
  */
 function soda_scs_manager_update_11022() {
   $entity_field_manager = \Drupal::service('entity_field.manager');
   $definition_update_manager = \Drupal::entityDefinitionUpdateManager();
-  $database = \Drupal::database();
 
   $entity_type_id = 'soda_scs_project';
   $field_name = 'note';
 
-  // Clear caches so the new text_long definition is visible.
   \Drupal::service('entity_type.manager')->clearCachedDefinitions();
   $entity_field_manager->clearCachedFieldDefinitions();
 
-  $old_definition = $definition_update_manager->getFieldStorageDefinition($field_name, $entity_type_id);
-  if (!$old_definition) {
-    return t('Field @field does not exist on @type, skipping.', [
+  $existing = $definition_update_manager->getFieldStorageDefinition($field_name, $entity_type_id);
+  if ($existing) {
+    return t('Field @field already exists on @type, skipping.', [
       '@field' => $field_name,
       '@type' => $entity_type_id,
     ]);
   }
 
-  // Backup existing note values from the main entity data table.
-  $backup_dir = DRUPAL_ROOT . '/sites/default/bkp/tables';
-  if (!file_exists($backup_dir)) {
-    mkdir($backup_dir, 0755, TRUE);
-  }
-  $timestamp = date('Y-m-d_H-i-s');
-  $backup_file = $backup_dir . '/soda_scs_project_note_' . $timestamp . '.json';
-
-  $data_table = $entity_type_id . '_field_data';
-  $backup_data = [];
-  if ($database->schema()->tableExists($data_table) && $database->schema()->fieldExists($data_table, $field_name . '_value')) {
-    $backup_data = $database->select($data_table, 'e')
-      ->fields('e', ['id', $field_name . '_value'])
-      ->execute()
-      ->fetchAllKeyed();
-  }
-  file_put_contents($backup_file, json_encode($backup_data, JSON_PRETTY_PRINT));
-
-  // Update the storage definition (adds note_format column alongside note_value).
-  $new_definitions = $entity_field_manager->getFieldStorageDefinitions($entity_type_id);
-  if (!isset($new_definitions[$field_name])) {
-    throw new \Exception('New text_long definition for ' . $field_name . ' not found. Ensure entity class is updated.');
-  }
-  $definition_update_manager->updateFieldStorageDefinition($new_definitions[$field_name]);
-
-  // Assign a default format for all existing rows so they render correctly.
-  if (!empty($backup_data) && $database->schema()->fieldExists($data_table, $field_name . '_format')) {
-    $database->update($data_table)
-      ->fields([$field_name . '_format' => 'plain_text'])
-      ->isNull($field_name . '_format')
-      ->execute();
+  $definitions = $entity_field_manager->getFieldStorageDefinitions($entity_type_id);
+  if (!isset($definitions[$field_name])) {
+    throw new \Exception('Definition for ' . $field_name . ' not found on ' . $entity_type_id . '. Ensure the entity class is up to date.');
   }
 
-  return t('Migrated @field on @type from string_long to text_long. @count rows updated. Backup: @file', [
+  $definition_update_manager->installFieldStorageDefinition(
+    $field_name,
+    $entity_type_id,
+    'soda_scs_manager',
+    $definitions[$field_name]
+  );
+
+  return t('Installed @field (text_long) on @type.', [
     '@field' => $field_name,
     '@type' => $entity_type_id,
-    '@count' => count($backup_data),
-    '@file' => $backup_file,
   ]);
+}
+
+/**
+ * Uninstall the sharedWith base field from soda_scs_component.
+ */
+function soda_scs_manager_update_11023() {
+  $definition_update_manager = \Drupal::entityDefinitionUpdateManager();
+
+  $field_storage_definition = $definition_update_manager->getFieldStorageDefinition('sharedWith', 'soda_scs_component');
+  if (!$field_storage_definition) {
+    return t('Field sharedWith does not exist on soda_scs_component, skipping.');
+  }
+
+  $definition_update_manager->uninstallFieldStorageDefinition($field_storage_definition);
+
+  return t('Uninstalled sharedWith field from soda_scs_component.');
 }
 
 /**
