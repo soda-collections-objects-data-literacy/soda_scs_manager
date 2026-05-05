@@ -72,6 +72,31 @@ final class SodaScsProjectMembershipForm extends FormBase {
   }
 
   /**
+   * Explicitly register service IDs for DependencySerializationTrait.
+   *
+   * Drupal caches the form object as part of the form-state cache. When it is
+   * deserialized on a subsequent request, DependencySerializationTrait::__wakeup()
+   * re-injects services listed in $_serviceIds. The default __sleep() discovers
+   * services via ReverseContainer::getId(), which can silently fail for lazy/proxy
+   * services, leaving typed non-nullable properties uninitialized after deserialization.
+   * By overriding __sleep() we guarantee $_serviceIds is always correct.
+   */
+  public function __sleep(): array {
+    $this->_serviceIds = [
+      'entityTypeManager' => 'entity_type.manager',
+      'dateFormatter' => 'date.formatter',
+      'currentUser' => 'current_user',
+      'membershipHelpers' => 'soda_scs_manager.project_membership.helpers',
+      'messenger' => 'messenger',
+    ];
+    $vars = get_object_vars($this);
+    foreach (array_keys($this->_serviceIds) as $key) {
+      unset($vars[$key]);
+    }
+    return array_keys($vars);
+  }
+
+  /**
    * {@inheritdoc}
    */
   public function getFormId(): string {
