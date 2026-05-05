@@ -226,6 +226,21 @@ class SodaScsProject extends ContentEntityBase implements SodaScsProjectInterfac
         ],
       ]);
 
+    $fields['note'] = BaseFieldDefinition::create('text_long')
+      ->setLabel(new TranslatableMarkup('Note'))
+      ->setDescription(new TranslatableMarkup('The note associated with the project.'))
+      ->setDisplayConfigurable('form', TRUE)
+      ->setDisplayOptions('form', [
+        'type' => 'text_textarea',
+        'weight' => 30,
+      ])
+      ->setDisplayConfigurable('view', TRUE)
+      ->setDisplayOptions('view', [
+        'label' => 'above',
+        'type' => 'text_default',
+        'weight' => 30,
+      ]);
+
     $fields['owner'] = BaseFieldDefinition::create('entity_reference')
       ->setLabel(new TranslatableMarkup('Owner'))
       ->setDescription(new TranslatableMarkup('The owner of the SODa SCS Project.'))
