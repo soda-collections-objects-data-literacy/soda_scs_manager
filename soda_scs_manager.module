@@ -886,6 +886,8 @@ function soda_scs_manager_theme($existing, $type, $theme, $path) {
         'intro_connected_accounts_url' => '',
         'intro_gif_src' => '',
         'intro_mp4_src' => '',
+        'intro_mp4_src_2' => '',
+        'intro_mp4_src_3' => '',
       ],
       'template' => 'pages/soda-scs-manager--dashboard',
     ],
@@ -915,6 +917,8 @@ function soda_scs_manager_theme($existing, $type, $theme, $path) {
         'intro_connected_accounts_url' => '',
         'intro_gif_src' => '',
         'intro_mp4_src' => '',
+        'intro_mp4_src_2' => '',
+        'intro_mp4_src_3' => '',
       ],
       'template' => 'pages/soda-scs-manager--start-page',
     ],
@@ -962,6 +966,8 @@ function soda_scs_manager_theme($existing, $type, $theme, $path) {
         'intro_connected_accounts_url' => '',
         'intro_gif_src' => '',
         'intro_mp4_src' => '',
+        'intro_mp4_src_2' => '',
+        'intro_mp4_src_3' => '',
       ],
       'template' => 'includes/soda-scs-manager--coworking-intro',
     ],
@@ -1353,10 +1359,24 @@ function _soda_scs_manager_coworking_intro_public_url(string $relativeUnderRoot)
 }
 
 /**
- * Welcome-slide MP4 URL when assets/videos/intro.mp4 exists (preferred over GIF).
+ * Welcome-slide MP4 URL when assets/videos/slide_1.mp4 exists (preferred over GIF).
  */
 function _soda_scs_manager_coworking_intro_mp4_src(string $modulePath): string {
-  return _soda_scs_manager_coworking_intro_public_url($modulePath . '/assets/videos/intro.mp4');
+  return _soda_scs_manager_coworking_intro_public_url($modulePath . '/assets/videos/slide_1.mp4');
+}
+
+/**
+ * Slide-2 MP4 URL when assets/videos/slide_2.mp4 exists.
+ */
+function _soda_scs_manager_coworking_intro_mp4_src_2(string $modulePath): string {
+  return _soda_scs_manager_coworking_intro_public_url($modulePath . '/assets/videos/slide_2.mp4');
+}
+
+/**
+ * Slide-3 MP4 URL when assets/videos/slide_3.mp4 exists.
+ */
+function _soda_scs_manager_coworking_intro_mp4_src_3(string $modulePath): string {
+  return _soda_scs_manager_coworking_intro_public_url($modulePath . '/assets/videos/slide_3.mp4');
 }
 
 /**
@@ -1500,8 +1520,10 @@ function soda_scs_manager_page_bottom(array &$page_bottom): void {
   $page_bottom['soda_scs_manager_coworking_intro'] = [
     '#theme' => 'soda_scs_manager__coworking_intro',
     '#intro_asset_base' => '/' . $modulePath . '/assets/images/',
-    '#intro_gif_src' => _soda_scs_manager_coworking_intro_gif_src($modulePath),
-    '#intro_mp4_src' => _soda_scs_manager_coworking_intro_mp4_src($modulePath),
+    '#intro_gif_src'     => _soda_scs_manager_coworking_intro_gif_src($modulePath),
+    '#intro_mp4_src'     => _soda_scs_manager_coworking_intro_mp4_src($modulePath),
+    '#intro_mp4_src_2'   => _soda_scs_manager_coworking_intro_mp4_src_2($modulePath),
+    '#intro_mp4_src_3'   => _soda_scs_manager_coworking_intro_mp4_src_3($modulePath),
     '#intro_connected_accounts_url' => $connectedAccounts,
     '#weight' => 50,
     '#cache' => [

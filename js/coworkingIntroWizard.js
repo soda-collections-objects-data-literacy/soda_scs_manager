@@ -6,15 +6,15 @@
 (function ($, Drupal, drupalSettings, once) {
   /**
    * Slide indices must match data-coworking-intro-slide in the Twig template
-   * (soda-scs-manager--coworking-intro.html.twig): 0 welcome, 1–5 feature slides,
-   * 6 Nextcloud, 7 WissKI name/create, 8 success. Copy blocks use data-coworking-intro-copy-rise.
+   * (soda-scs-manager--coworking-intro.html.twig): 0 welcome, 1–2 feature slides,
+   * 3 Nextcloud, 4 WissKI name/create, 5 success. Copy blocks use data-coworking-intro-copy-rise.
    */
   /** Index of the Nextcloud connect slide (0-based). */
-  const SLIDE_NEXTCLOUD = 6;
+  const SLIDE_NEXTCLOUD = 3;
   /** Index of the “name + Create” slide (0-based). */
-  const SLIDE_WISSKI_FORM = 7;
+  const SLIDE_WISSKI_FORM = 4;
   /** Index of the post-create success slide. */
-  const SLIDE_SUCCESS = 8;
+  const SLIDE_SUCCESS = 5;
 
   const COWORKING_INTRO_ROOT_HIDDEN_CLASS = 'scs-manager--coworking-intro-root--hidden';
   const COWORKING_INTRO_SLIDE_HIDDEN_CLASS = 'scs-manager--coworking-intro-slide--hidden';

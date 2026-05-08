@@ -3,9 +3,9 @@
  * @file
  * Co-working introduction wizard markup (dashboard and start page).
  *
- * Slide order is driven by data-coworking-intro-slide in this file (0..8). coworkingIntroWizard.js
+ * Slide order is driven by data-coworking-intro-slide in this file (0..5). coworkingIntroWizard.js
  * uses the same indices for Next / Back gating, Nextcloud connection, and WissKI flow.
- * Steps 1–8: static line/dot under the panel title (panel divider); step 0 uses the animated divider inside the welcome slide.
+ * Steps 1–5: static line/dot under the panel title (panel divider); step 0 uses the animated divider inside the welcome slide.
  * Main copy blocks use data-coworking-intro-copy-rise; coworkingIntroWizard.js sets data-coworking-intro-copy-replay per step.
  * Layout and Tailwind utilities live in soda_scs_manager_theme intro-wizard.pcss (scs-manager--coworking-intro-*).
  *
@@ -13,7 +13,9 @@
  * - intro_asset_base: Base URL for module SVGs.
  * - intro_connected_accounts_url: Connected Accounts URL.
  * - intro_gif_src: GIF URL when MP4 is absent (assets/images or assets/videos intro.gif).
- * - intro_mp4_src: MP4 URL when present (assets/videos/intro.mp4); shown instead of GIF.
+ * - intro_mp4_src: MP4 URL for slide 0 Welcome (assets/videos/slide_1.mp4); shown instead of GIF.
+ * - intro_mp4_src_2: MP4 URL for slide 1 Manager of Services and Projects (assets/videos/slide_2.mp4).
+ * - intro_mp4_src_3: MP4 URL for slide 2 Your Dashboard (assets/videos/slide_3.mp4).
  *
  * @ingroup themeable
  */
@@ -32,7 +34,7 @@
     </div>
 
     <div class="scs-manager--coworking-intro-scroll-body">
-      {# Slides 0–5: onboarding copy. #}
+      {# Slides 0–2: onboarding copy. #}
       <div class="scs-manager--coworking-intro-slide" data-coworking-intro-slide="0">
         {# Same visual language as the page menu-bar divider; animates in-panel (see intro-wizard.pcss + coworkingIntroWizard.js). #}
         <div class="scs-manager--coworking-intro-welcome-divider" data-coworking-intro-welcome-divider role="presentation" aria-hidden="true">
@@ -42,14 +44,14 @@
           </div>
         </div>
         {% if intro_mp4_src %}
-          <div class="scs-manager--coworking-intro-welcome-visual-wrap">
+          <div class="scs-manager--coworking-intro-welcome-visual-wrap" data-coworking-intro-copy-rise>
             <video class="scs-manager--coworking-intro-welcome-visual" autoplay loop muted playsinline preload="metadata" aria-label="{{ 'Introduction to the Semantic Co-Working Space'|t }}" width="1080" height="600">
               <source src="{{ intro_mp4_src }}" type="video/mp4">
               {{ 'Your browser does not support the video tag.'|t }}
             </video>
           </div>
         {% elseif intro_gif_src %}
-          <div class="scs-manager--coworking-intro-welcome-visual-wrap">
+          <div class="scs-manager--coworking-intro-welcome-visual-wrap" data-coworking-intro-copy-rise>
             <img class="scs-manager--coworking-intro-welcome-visual" src="{{ intro_gif_src }}" alt="{{ 'Introduction to the Semantic Co-Working Space'|t }}" width="1080" height="600" loading="lazy" decoding="async">
           </div>
         {% endif %}
@@ -61,6 +63,14 @@
       </div>
 
       <div class="scs-manager--coworking-intro-slide scs-manager--coworking-intro-slide--hidden" data-coworking-intro-slide="1">
+        {% if intro_mp4_src_2 %}
+          <div class="scs-manager--coworking-intro-welcome-visual-wrap" data-coworking-intro-copy-rise>
+            <video class="scs-manager--coworking-intro-welcome-visual" autoplay loop muted playsinline preload="metadata" aria-label="{{ 'Manager of Services and Projects'|t }}" width="1080" height="600">
+              <source src="{{ intro_mp4_src_2 }}" type="video/mp4">
+              {{ 'Your browser does not support the video tag.'|t }}
+            </video>
+          </div>
+        {% endif %}
         <div class="scs-manager--coworking-intro-copy-rise" data-coworking-intro-copy-rise>
           <h3 class="scs-manager--coworking-intro-subtitle">{{ 'Manager of Services and Projects.'|t }}</h3>
           <p>{{ 'The Semantic Co-Working Space (SCS) provides selected applications for digital collection management. The SCS is the main access point to these applications and you can manage them in a user-friendly webinterface. The SCS is build to work together, so our main services support collaborative work and data integration between applications. You can easily share the access to your applications with other SCS users. You also find some information about the services and get help, if you are stuck.'|t }}</p>
@@ -68,35 +78,22 @@
       </div>
 
       <div class="scs-manager--coworking-intro-slide scs-manager--coworking-intro-slide--hidden" data-coworking-intro-slide="2">
+        {% if intro_mp4_src_3 %}
+          <div class="scs-manager--coworking-intro-welcome-visual-wrap" data-coworking-intro-copy-rise>
+            <video class="scs-manager--coworking-intro-welcome-visual" autoplay loop muted playsinline preload="metadata" aria-label="{{ 'Your Dashboard'|t }}" width="1080" height="600">
+              <source src="{{ intro_mp4_src_3 }}" type="video/mp4">
+              {{ 'Your browser does not support the video tag.'|t }}
+            </video>
+          </div>
+        {% endif %}
         <div class="scs-manager--coworking-intro-copy-rise" data-coworking-intro-copy-rise>
           <h3 class="scs-manager--coworking-intro-subtitle">{{ 'Your Dashboard'|t }}</h3>
           <p>{{ 'The Dashboard helps to manage your applications. Clicking on the application name will open the application in a new tab. Here you can create your own WissKI environment to manage your collection data, deploy a relational database or triplestore. The cards show the health status, and you can access the corresponding documentation pages and gain some more information on the application page.'|t }}</p>
         </div>
       </div>
 
+      {# Slide 3: shared Nextcloud connect UI (library soda_scs_manager/nextcloudConnect). #}
       <div class="scs-manager--coworking-intro-slide scs-manager--coworking-intro-slide--hidden" data-coworking-intro-slide="3">
-        <div class="scs-manager--coworking-intro-copy-rise" data-coworking-intro-copy-rise>
-          <h3 class="scs-manager--coworking-intro-subtitle">{{ 'Projekt management'|t }}</h3>
-          <p>{{ 'You can share the access to your applications with other SCS users by assigning them to projects. If someone add you to a project, you will receive an email notification and can accept or reject the invitation.'|t }}</p>
-        </div>
-      </div>
-
-      <div class="scs-manager--coworking-intro-slide scs-manager--coworking-intro-slide--hidden" data-coworking-intro-slide="4">
-        <div class="scs-manager--coworking-intro-copy-rise" data-coworking-intro-copy-rise>
-          <h3 class="scs-manager--coworking-intro-subtitle">{{ 'Account management'|t }}</h3>
-          <p>{{ 'Manage your account settings, language and region, connected accounts and SCS Manager Settings (where you can reset this wizard by the way).'|t }}</p>
-        </div>
-      </div>
-
-      <div class="scs-manager--coworking-intro-slide scs-manager--coworking-intro-slide--hidden" data-coworking-intro-slide="5">
-        <div class="scs-manager--coworking-intro-copy-rise" data-coworking-intro-copy-rise>
-          <h3 class="scs-manager--coworking-intro-subtitle">{{ 'Need help?'|t }}</h3>
-          <p>{{ 'We have a extensive <a href="/soda-scs-manager/documentation" target="_blank" rel="noopener noreferrer">documentation</a>, where you find useful information and tutorials. Still get stuck? Contact our SCS support team at <a href="mailto:scs-manager@sammlungen.io">scs-manager@sammlungen.io</a>. '|t }}</p>
-        </div>
-      </div>
-
-      {# Slide 6: shared Nextcloud connect UI (library soda_scs_manager/nextcloudConnect). #}
-      <div class="scs-manager--coworking-intro-slide scs-manager--coworking-intro-slide--hidden" data-coworking-intro-slide="6">
         <div class="scs-manager--coworking-intro-copy-rise" data-coworking-intro-copy-rise>
           <h3 class="scs-manager--coworking-intro-subtitle">{{ 'Connect Nextcloud'|t }}</h3>
           <p class="scs-manager--coworking-intro-slide-lede">{{ 'A working Nextcloud connection is necessary so data and files can flow between WissKI and your other applications. Start the connection here, or later from your account settings.'|t }}</p>
@@ -109,8 +106,8 @@
         </div>
       </div>
 
-      {# Slide 7: WissKI quick-create; POST + name check URLs from drupalSettings.sodaScsManager.coworkingIntro. #}
-      <div class="scs-manager--coworking-intro-slide scs-manager--coworking-intro-slide--hidden" data-coworking-intro-slide="7">
+      {# Slide 4: WissKI quick-create; POST + name check URLs from drupalSettings.sodaScsManager.coworkingIntro. #}
+      <div class="scs-manager--coworking-intro-slide scs-manager--coworking-intro-slide--hidden" data-coworking-intro-slide="4">
         <div class="scs-manager--coworking-intro-copy-rise" data-coworking-intro-copy-rise>
           <h3 class="scs-manager--coworking-intro-subtitle">{{ 'Create your first WissKI Environment'|t }}</h3>
           <p class="scs-manager--coworking-intro-slide-lede">{{ 'We create a complete environment: database, triplestore, and WissKI. Provisioning starts immediately and may take several minutes.'|t }}</p>
@@ -125,8 +122,8 @@
         </div>
       </div>
 
-      {# Slide 8: after successful WissKI create (server sets coworking_intro_completed); Close reloads the dashboard. #}
-      <div class="scs-manager--coworking-intro-slide scs-manager--coworking-intro-slide--hidden" data-coworking-intro-slide="8" data-coworking-intro-success-slide>
+      {# Slide 5: after successful WissKI create (server sets coworking_intro_completed); Close reloads the dashboard. #}
+      <div class="scs-manager--coworking-intro-slide scs-manager--coworking-intro-slide--hidden" data-coworking-intro-slide="5" data-coworking-intro-success-slide>
         <div class="scs-manager--coworking-intro-copy-rise" data-coworking-intro-copy-rise>
           <h3 class="scs-manager--coworking-intro-success-title">{{ 'WissKI Environment created'|t }}</h3>
           <p class="scs-manager--coworking-intro-success-summary" data-coworking-intro-success-summary></p>
