@@ -23,23 +23,26 @@ final class SodaScsProjectMembershipForm extends FormBase {
 
   /**
    * The date formatter service.
+   *
+   * Protected (not private) so DependencySerializationTrait::__wakeup() in
+   * FormBase can reinject services when the form is unserialized from cache.
    */
-  private DateFormatterInterface $dateFormatter;
+  protected DateFormatterInterface $dateFormatter;
 
   /**
    * The entity type manager.
    */
-  private EntityTypeManagerInterface $entityTypeManager;
+  protected EntityTypeManagerInterface $entityTypeManager;
 
   /**
    * The current user account proxy.
    */
-  private AccountProxyInterface $currentUser;
+  protected AccountProxyInterface $currentUser;
 
   /**
    * The membership manager.
    */
-  private SodaScsProjectMembershipHelpers $membershipHelpers;
+  protected SodaScsProjectMembershipHelpers $membershipHelpers;
 
   /**
    * Constructs the form.
@@ -252,6 +255,7 @@ final class SodaScsProjectMembershipForm extends FormBase {
           'created' => $this->t('Sent'),
           'status' => $this->t('Result'),
           'decided' => $this->t('Decided'),
+          'actions' => $this->t('Actions'),
         ],
         '#attributes' => [
           'class' => [
@@ -279,6 +283,36 @@ final class SodaScsProjectMembershipForm extends FormBase {
         $decided = $request->getDecisionTime() ?? $request->getChangedTime();
         $form['handled_wrapper']['handled'][$rid]['decided'] = [
           '#markup' => $this->dateFormatter->format($decided, 'short'),
+        ];
+
+        $confirmMessage = (string) $this->t('Remove this invitation from your list?');
+        $form['handled_wrapper']['handled'][$rid]['actions'] = [
+          '#type' => 'container',
+          'operations' => [
+            '#type' => 'operations',
+            '#links' => [
+              'remove' => [
+                'title' => $this->t('Remove'),
+                'url' => \Drupal\Core\Url::fromRoute('<current>'),
+                'attributes' => [
+                  'class' => ['membership-handled-remove'],
+                  'onclick' => 'event.preventDefault(); if(confirm(' . json_encode($confirmMessage) . ')) { this.closest("td").querySelector(".membership-handled-delete-submit").click(); }',
+                ],
+              ],
+            ],
+          ],
+          'hidden_delete_handled' => [
+            '#type' => 'submit',
+            '#value' => $this->t('Remove'),
+            '#name' => 'delete_handled_' . $rid,
+            '#request_id' => $rid,
+            '#submit' => ['::deleteHandledRequest'],
+            '#limit_validation_errors' => [],
+            '#attributes' => [
+              'class' => ['js-hide', 'membership-handled-delete-submit'],
+              'style' => 'display:none;',
+            ],
+          ],
         ];
       }
     }
@@ -322,6 +356,26 @@ final class SodaScsProjectMembershipForm extends FormBase {
 
     $result = $this->membershipHelpers->rejectRequest($request, $actor);
     $this->reportResult($result);
+    $form_state->setRebuild(TRUE);
+  }
+
+  /**
+   * Submit handler: remove a handled invitation record from the recipient's list.
+   */
+  public function deleteHandledRequest(array &$form, FormStateInterface $form_state): void {
+    $request = $this->loadHandledRequestForDeletion($form_state);
+    if (!$request) {
+      return;
+    }
+
+    try {
+      $request->delete();
+      $this->messenger->addStatus($this->t('The invitation has been removed from your list.'));
+    }
+    catch (\Throwable) {
+      $this->messenger->addError($this->t('Could not remove the invitation. Please try again.'));
+    }
+
     $form_state->setRebuild(TRUE);
   }
 
@@ -410,6 +464,43 @@ final class SodaScsProjectMembershipForm extends FormBase {
 
     if ((int) $request->getRecipient()->id() !== (int) $this->currentUser->id()) {
       $this->messenger->addError($this->t('You are not allowed to process this request.'));
+      return NULL;
+    }
+
+    return $request;
+  }
+
+  /**
+   * Load a handled request entity for deletion (recipient-only, non-pending).
+   */
+  private function loadHandledRequestForDeletion(FormStateInterface $form_state): SodaScsProjectMembershipInterface|null {
+    $trigger = $form_state->getTriggeringElement();
+    $requestId = (int) ($trigger['#request_id'] ?? 0);
+    if ($requestId <= 0) {
+      return NULL;
+    }
+
+    /** @var \Drupal\soda_scs_manager\Entity\SodaScsProjectMembershipInterface|null $request */
+    $request = $this->entityTypeManager
+      ->getStorage('soda_scs_project_membership')
+      ->load($requestId);
+
+    if (!$request) {
+      $this->messenger->addError($this->t('The selected request no longer exists.'));
+      return NULL;
+    }
+
+    if ((int) $request->getRecipient()->id() !== (int) $this->currentUser->id()) {
+      $this->messenger->addError($this->t('You are not allowed to remove this invitation.'));
+      return NULL;
+    }
+
+    $status = $request->getStatus();
+    if (!in_array($status, [
+      SodaScsProjectMembershipInterface::STATUS_ACCEPTED,
+      SodaScsProjectMembershipInterface::STATUS_REJECTED,
+    ], TRUE)) {
+      $this->messenger->addError($this->t('Only handled invitations can be removed.'));
       return NULL;
     }
 
