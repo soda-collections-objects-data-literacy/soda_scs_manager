@@ -244,6 +244,28 @@
   }
 
   /**
+   * Pauses and resets all slide videos except the one on the active slide, then
+   * restarts (from the beginning) any video on the newly-visible slide.
+   *
+   * @param {HTMLElement} root
+   * @param {number} index
+   */
+  function syncSlideVideos(root, index) {
+    root.querySelectorAll('[data-coworking-intro-slide]').forEach((slide) => {
+      const n = parseInt(slide.getAttribute('data-coworking-intro-slide'), 10);
+      slide.querySelectorAll('video').forEach((video) => {
+        if (n === index) {
+          video.currentTime = 0;
+          video.play().catch(() => {});
+        } else {
+          video.pause();
+          video.currentTime = 0;
+        }
+      });
+    });
+  }
+
+  /**
    * Shows one slide, updates Back/Next/Skip visibility and the step label.
    * Next is disabled on the Nextcloud slide until data-status="connected" on the inline status element.
    */
@@ -282,6 +304,7 @@
       });
     }
 
+    syncSlideVideos(root, index);
     syncCoworkingWelcomeDividerReplay(root, index);
     syncCoworkingIntroCopyEntrance(root, index);
   }
