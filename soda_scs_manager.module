@@ -884,6 +884,8 @@ function soda_scs_manager_theme($existing, $type, $theme, $path) {
         'intro_coworking_wizard' => FALSE,
         'intro_asset_base' => '',
         'intro_connected_accounts_url' => '',
+        'intro_gif_src' => '',
+        'intro_mp4_src' => '',
       ],
       'template' => 'pages/soda-scs-manager--dashboard',
     ],
@@ -911,6 +913,8 @@ function soda_scs_manager_theme($existing, $type, $theme, $path) {
         'intro_coworking_wizard' => FALSE,
         'intro_asset_base' => '',
         'intro_connected_accounts_url' => '',
+        'intro_gif_src' => '',
+        'intro_mp4_src' => '',
       ],
       'template' => 'pages/soda-scs-manager--start-page',
     ],
@@ -956,6 +960,8 @@ function soda_scs_manager_theme($existing, $type, $theme, $path) {
       'variables' => [
         'intro_asset_base' => '',
         'intro_connected_accounts_url' => '',
+        'intro_gif_src' => '',
+        'intro_mp4_src' => '',
       ],
       'template' => 'includes/soda-scs-manager--coworking-intro',
     ],
@@ -1330,6 +1336,48 @@ function _soda_scs_manager_coworking_intro_show_on_front_page(): bool {
 }
 
 /**
+ * Absolute URL path (with leading slash) to a module static file if it is readable.
+ *
+ * Honors Drupal's base path (e.g. /subdir) when the site is not at the domain root.
+ */
+function _soda_scs_manager_coworking_intro_public_url(string $relativeUnderRoot): string {
+  $relativeUnderRoot = ltrim(str_replace('\\', '/', $relativeUnderRoot), '/');
+  $full = \Drupal::root() . '/' . $relativeUnderRoot;
+  if (!is_readable($full)) {
+    return '';
+  }
+  $request = \Drupal::requestStack()->getCurrentRequest();
+  $base = $request ? $request->getBasePath() : '';
+  $path = '/' . $relativeUnderRoot;
+  return ($base !== '' ? rtrim($base, '/') : '') . $path;
+}
+
+/**
+ * Welcome-slide MP4 URL when assets/videos/intro.mp4 exists (preferred over GIF).
+ */
+function _soda_scs_manager_coworking_intro_mp4_src(string $modulePath): string {
+  return _soda_scs_manager_coworking_intro_public_url($modulePath . '/assets/videos/intro.mp4');
+}
+
+/**
+ * Welcome-slide GIF URL when assets/images/intro.gif or assets/videos/intro.gif exists.
+ *
+ * Expected intrinsic dimensions 1080×600; missing file yields '' so Twig omits the img block.
+ */
+function _soda_scs_manager_coworking_intro_gif_src(string $modulePath): string {
+  foreach ([
+    $modulePath . '/assets/images/intro.gif',
+    $modulePath . '/assets/videos/intro.gif',
+  ] as $relative) {
+    $url = _soda_scs_manager_coworking_intro_public_url($relative);
+    if ($url !== '') {
+      return $url;
+    }
+  }
+  return '';
+}
+
+/**
  * WissKI quick-create URL for the intro (same paths as the dashboard controller).
  */
 function _soda_scs_manager_coworking_intro_wisski_create_url(): string {
@@ -1452,6 +1500,8 @@ function soda_scs_manager_page_bottom(array &$page_bottom): void {
   $page_bottom['soda_scs_manager_coworking_intro'] = [
     '#theme' => 'soda_scs_manager__coworking_intro',
     '#intro_asset_base' => '/' . $modulePath . '/assets/images/',
+    '#intro_gif_src' => _soda_scs_manager_coworking_intro_gif_src($modulePath),
+    '#intro_mp4_src' => _soda_scs_manager_coworking_intro_mp4_src($modulePath),
     '#intro_connected_accounts_url' => $connectedAccounts,
     '#weight' => 50,
     '#cache' => [

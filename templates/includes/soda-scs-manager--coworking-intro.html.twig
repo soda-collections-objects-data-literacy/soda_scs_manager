@@ -12,6 +12,8 @@
  * Variables:
  * - intro_asset_base: Base URL for module SVGs.
  * - intro_connected_accounts_url: Connected Accounts URL.
+ * - intro_gif_src: GIF URL when MP4 is absent (assets/images or assets/videos intro.gif).
+ * - intro_mp4_src: MP4 URL when present (assets/videos/intro.mp4); shown instead of GIF.
  *
  * @ingroup themeable
  */
@@ -39,6 +41,18 @@
             <div class="scs-manager--coworking-intro-welcome-divider-dot"></div>
           </div>
         </div>
+        {% if intro_mp4_src %}
+          <div class="scs-manager--coworking-intro-welcome-visual-wrap">
+            <video class="scs-manager--coworking-intro-welcome-visual" autoplay loop muted playsinline preload="metadata" aria-label="{{ 'Introduction to the Semantic Co-Working Space'|t }}" width="1080" height="600">
+              <source src="{{ intro_mp4_src }}" type="video/mp4">
+              {{ 'Your browser does not support the video tag.'|t }}
+            </video>
+          </div>
+        {% elseif intro_gif_src %}
+          <div class="scs-manager--coworking-intro-welcome-visual-wrap">
+            <img class="scs-manager--coworking-intro-welcome-visual" src="{{ intro_gif_src }}" alt="{{ 'Introduction to the Semantic Co-Working Space'|t }}" width="1080" height="600" loading="lazy" decoding="async">
+          </div>
+        {% endif %}
         <div class="scs-manager--coworking-intro-welcome-content scs-manager--coworking-intro-copy-rise" data-coworking-intro-copy-rise>
           <h3 class="scs-manager--coworking-intro-subtitle">{{ 'Hi there!'|t }}</h3>
           <p>{{ 'Here you find all tools to support your work through the collection data life cycle – from capture and cleaning to publishing of FAIR and linked data.'|t }}</p>

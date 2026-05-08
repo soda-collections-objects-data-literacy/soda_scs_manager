@@ -512,6 +512,9 @@ class SodaScsManagerController extends ControllerBase {
       return;
     }
 
+    $build['#intro_gif_src'] = _soda_scs_manager_coworking_intro_gif_src($modulePath);
+    $build['#intro_mp4_src'] = _soda_scs_manager_coworking_intro_mp4_src($modulePath);
+
     if (!isset($build['#attached']['library']) || !is_array($build['#attached']['library'])) {
       $build['#attached']['library'] = [];
     }
