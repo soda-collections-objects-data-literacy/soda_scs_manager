@@ -202,6 +202,20 @@ final class SodaScsProjectMembershipHelpers {
     }
 
     $project = $request->getProject();
+    if ($project === NULL) {
+      try {
+        $request->delete();
+      }
+      catch (\Throwable) {
+        // Best-effort cleanup of orphaned request records.
+      }
+
+      return SodaScsResult::failure(
+        error: 'missing_project',
+        message: (string) $this->t('This invitation is no longer valid because the project was removed.'),
+      );
+    }
+
     $recipient = $request->getRecipient();
 
     try {
@@ -277,12 +291,69 @@ final class SodaScsProjectMembershipHelpers {
       );
     }
 
+    $project = $request->getProject();
+    $projectLabel = $project !== NULL ? $project->label() : (string) $this->t('Unknown project');
+
     return SodaScsResult::success(
       data: ['request' => $request->id()],
       message: (string) $this->t('Invitation for project @project has been rejected.', [
-        '@project' => $request->getProject()->label(),
+        '@project' => $projectLabel,
       ]),
     );
+  }
+
+  /**
+   * Remove orphaned membership requests and return those with a valid project.
+   *
+   * @param \Drupal\soda_scs_manager\Entity\SodaScsProjectMembershipInterface[] $requests
+   *   Membership requests keyed by entity ID.
+   *
+   * @return \Drupal\soda_scs_manager\Entity\SodaScsProjectMembershipInterface[]
+   *   Requests whose project entity still exists.
+   */
+  public function purgeOrphanedAndFilterRequests(array $requests): array {
+    $valid = [];
+
+    foreach ($requests as $key => $request) {
+      if (!$request instanceof SodaScsProjectMembershipInterface) {
+        continue;
+      }
+
+      if ($request->getProject() === NULL) {
+        try {
+          $request->delete();
+        }
+        catch (\Throwable $throwable) {
+          $this->logger->warning('Could not delete orphaned project membership @id: @message', [
+            '@id' => $request->id(),
+            '@message' => $throwable->getMessage(),
+          ]);
+        }
+        continue;
+      }
+
+      $valid[$key] = $request;
+    }
+
+    return $valid;
+  }
+
+  /**
+   * Delete all membership requests linked to a project.
+   */
+  public function deleteRequestsForProject(SodaScsProjectInterface $project): void {
+    $storage = $this->entityTypeManager->getStorage(self::REQUEST_ENTITY_TYPE);
+    $ids = $storage->getQuery()
+      ->condition('project', $project->id())
+      ->accessCheck(FALSE)
+      ->execute();
+
+    if (empty($ids)) {
+      return;
+    }
+
+    $requests = $storage->loadMultiple($ids);
+    $storage->delete($requests);
   }
 
   /**
@@ -348,13 +419,22 @@ final class SodaScsProjectMembershipHelpers {
    */
   private function hasPendingRequest(SodaScsProjectInterface $project, UserInterface $recipient): bool {
     $storage = $this->entityTypeManager->getStorage(self::REQUEST_ENTITY_TYPE);
-    $query = $storage->getQuery()
+    $ids = $storage->getQuery()
       ->condition('project', $project->id())
       ->condition('recipient', $recipient->id())
       ->condition('status', SodaScsProjectMembershipInterface::STATUS_PENDING)
-      ->accessCheck(FALSE);
+      ->accessCheck(FALSE)
+      ->execute();
 
-    return !empty($query->execute());
+    if (empty($ids)) {
+      return FALSE;
+    }
+
+    /** @var \Drupal\soda_scs_manager\Entity\SodaScsProjectMembershipInterface[] $requests */
+    $requests = $storage->loadMultiple($ids);
+    $valid = $this->purgeOrphanedAndFilterRequests($requests);
+
+    return !empty($valid);
   }
 
 }

@@ -31,10 +31,10 @@ interface SodaScsProjectMembershipInterface extends ContentEntityInterface, Enti
   /**
    * Get the related project entity.
    *
-   * @return \Drupal\soda_scs_manager\Entity\SodaScsProjectInterface
-   *   The project.
+   * @return \Drupal\soda_scs_manager\Entity\SodaScsProjectInterface|null
+   *   The project, or NULL when the project was deleted.
    */
-  public function getProject(): SodaScsProjectInterface;
+  public function getProject(): SodaScsProjectInterface|null;
 
   /**
    * Get the requester user entity.

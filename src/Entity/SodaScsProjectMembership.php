@@ -131,7 +131,8 @@ final class SodaScsProjectMembership extends ContentEntityBase implements SodaSc
 
     $label = $this->get('label')->value;
     if ($label === NULL || $label === '') {
-      $projectLabel = $this->getProject()->label();
+      $project = $this->getProject();
+      $projectLabel = $project !== NULL ? $project->label() : (string) $this->t('Unknown project');
       $recipientName = $this->getRecipient()->getDisplayName();
       $this->set('label', (string) $this->t('Invite @recipient to @project', [
         '@recipient' => $recipientName,
@@ -143,10 +144,9 @@ final class SodaScsProjectMembership extends ContentEntityBase implements SodaSc
   /**
    * {@inheritdoc}
    */
-  public function getProject(): SodaScsProjectInterface {
-    /** @var \Drupal\soda_scs_manager\Entity\SodaScsProjectInterface $project */
+  public function getProject(): SodaScsProjectInterface|null {
     $project = $this->get('project')->entity;
-    return $project;
+    return $project instanceof SodaScsProjectInterface ? $project : NULL;
   }
 
   /**

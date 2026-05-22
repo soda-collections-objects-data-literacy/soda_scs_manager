@@ -400,7 +400,7 @@ final class SodaScsProjectMembershipForm extends FormBase {
 
     /** @var \Drupal\soda_scs_manager\Entity\SodaScsProjectMembershipInterface[] $requests */
     $requests = $storage->loadMultiple($ids);
-    return $requests;
+    return $this->membershipHelpers->purgeOrphanedAndFilterRequests($requests);
   }
 
   /**
@@ -428,7 +428,7 @@ final class SodaScsProjectMembershipForm extends FormBase {
 
     /** @var \Drupal\soda_scs_manager\Entity\SodaScsProjectMembershipInterface[] $requests */
     $requests = $storage->loadMultiple($ids);
-    return $requests;
+    return $this->membershipHelpers->purgeOrphanedAndFilterRequests($requests);
   }
 
   /**
