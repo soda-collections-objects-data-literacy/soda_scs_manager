@@ -18,6 +18,7 @@ use Drupal\Core\Session\AccountProxyInterface;
 use Drupal\Core\Url;
 use Drupal\soda_scs_manager\Helpers\SodaScsNextcloudHelpers;
 use Drupal\soda_scs_manager\StackActions\SodaScsStackActionsInterface;
+use Drupal\soda_scs_manager\Validation\InputDisallowedTerms;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 use Drupal\Core\Utility\Error;
 use Psr\Log\LogLevel;
@@ -234,55 +235,10 @@ class SodaScsStackCreateForm extends ContentEntityForm {
       $form_state->setErrorByName('machineName', $this->t('The machineName can only contain small letters, digits, and minus.'));
     }
 
-    $disallowed_words = [
-      "all",
-      "alter",
-      "and",
-      "any",
-      "between",
-      "case",
-      "create",
-      "delete",
-      "drop",
-      "else",
-      "end",
-      "exists",
-      "false",
-      "from",
-      "group",
-      "having",
-      "if",
-      "in",
-      "insert",
-      "is",
-      "join",
-      "like",
-      "limit",
-      "not",
-      "null",
-      "offset",
-      "order",
-      "or",
-      "regexp",
-      "rlike",
-      "select",
-      "some",
-      "then",
-      "truncate",
-      "true",
-      "union",
-      "update",
-      "where",
-      "when",
-      "xor",
-    ];
-
-    // Check if the machineName contains any disallowed words.
-    foreach ($disallowed_words as $word) {
-
-      if ($machineName === $word) {
-        $form_state->setErrorByName('machineName', $this->t('The machineName cannot contain the word "@word"', ['@word' => $word]));
-      }
+    if (InputDisallowedTerms::isSqlMachineName($machineName)) {
+      $form_state->setErrorByName('machineName', $this->t('The machineName cannot contain the word "@word"', [
+        '@word' => mb_strtolower(trim($machineName)),
+      ]));
     }
 
     // Check if the machineName is already in use

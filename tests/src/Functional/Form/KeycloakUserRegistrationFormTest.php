@@ -122,6 +122,24 @@ class KeycloakUserRegistrationFormTest extends BrowserTestBase {
   }
 
   /**
+   * Tests username minimum length validation.
+   */
+  public function testUsernameMinimumLengthValidation(): void {
+    $this->drupalGet('/user/register');
+
+    $this->submitForm(array_merge([
+      'email' => 'test@example.com',
+      'username' => 'ab',
+      'first_name' => 'Test',
+      'last_name' => 'User',
+      'pass[pass1]' => 'password123',
+      'pass[pass2]' => 'password123',
+    ], $this->registrationFormExtras()), 'Register');
+
+    $this->assertSession()->pageTextContains('at least 3 characters');
+  }
+
+  /**
    * Tests first name validation.
    */
   public function testFirstNameValidation(): void {
@@ -138,7 +156,7 @@ class KeycloakUserRegistrationFormTest extends BrowserTestBase {
     ], $this->registrationFormExtras()), 'Register');
 
     // Check for validation error.
-    $this->assertSession()->pageTextContains('First name may only contain');
+    $this->assertSession()->pageTextContains('may not contain digits');
   }
 
   /**
@@ -147,18 +165,18 @@ class KeycloakUserRegistrationFormTest extends BrowserTestBase {
   public function testLastNameValidation(): void {
     $this->drupalGet('/user/register');
 
-    // Submit with invalid last name (special characters).
+    // Submit with invalid last name (digits).
     $this->submitForm(array_merge([
       'email' => 'test@example.com',
       'username' => 'testuser',
       'first_name' => 'Test',
-      'last_name' => 'User@123',
+      'last_name' => 'User123',
       'pass[pass1]' => 'password123',
       'pass[pass2]' => 'password123',
     ], $this->registrationFormExtras()), 'Register');
 
     // Check for validation error.
-    $this->assertSession()->pageTextContains('Last name may only contain');
+    $this->assertSession()->pageTextContains('may not contain digits');
   }
 
   /**
