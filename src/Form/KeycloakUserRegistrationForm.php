@@ -23,6 +23,9 @@ use Drupal\Core\Language\LanguageInterface;
 use Drupal\language\ConfigurableLanguageManagerInterface;
 use Drupal\user\Plugin\LanguageNegotiation\LanguageNegotiationUser;
 use Drupal\Core\Language\LanguageManagerInterface;
+use Drupal\soda_scs_manager\Validation\InputDisallowedTerms;
+use Drupal\soda_scs_manager\Validation\PersonalNameValidator;
+use Drupal\soda_scs_manager\Validation\UsernameValidator;
 
 /**
  * Provides a form for registering a user through Keycloak.
@@ -180,30 +183,33 @@ class KeycloakUserRegistrationForm extends FormBase {
       '#description' => $this->t('Enter a valid email address. This will be used for communication and login.'),
     ];
 
-    // @todo Implement blacklist of usernames (no admin, root, etc.).
     $form['username'] = [
       '#type' => 'textfield',
       '#title' => $this->t('Username'),
       '#required' => TRUE,
-      '#description' => $this->t('Enter a username for your account.'),
+      '#description' => $this->t(
+        'Enter at least @count characters. Only letters, digits, and underscores are allowed.',
+        ['@count' => InputDisallowedTerms::USERNAME_MIN_LENGTH],
+      ),
     ];
+
+    $nameFieldDescription = $this->t(
+      'Enter at least @count letters. Only letters, spaces, hyphens, apostrophes, and periods are allowed. Digits and reserved words are not allowed.',
+      ['@count' => InputDisallowedTerms::PERSONAL_NAME_MIN_LETTERS],
+    );
 
     $form['first_name'] = [
       '#type' => 'textfield',
       '#title' => $this->t('First name'),
       '#required' => TRUE,
-      '#description' => $this->t(
-        'Enter your first name. Only letters, spaces, hyphens, apostrophes, and periods are allowed.'
-      ),
+      '#description' => $nameFieldDescription,
     ];
 
     $form['last_name'] = [
       '#type' => 'textfield',
       '#title' => $this->t('Last name'),
       '#required' => TRUE,
-      '#description' => $this->t(
-        'Enter your last name. Only letters, spaces, hyphens, apostrophes, and periods are allowed.'
-      ),
+      '#description' => $nameFieldDescription,
     ];
 
     // Same language widget as the user account form (Site language / configurable languages).
@@ -295,42 +301,17 @@ class KeycloakUserRegistrationForm extends FormBase {
       $form_state->setErrorByName('email', $this->t('There is already a pending registration for this email address.'));
     }
 
-    // Validate username (only alphanumeric and underscores).
-    $username = $form_state->getValue('username');
-    if (!preg_match('/^[a-zA-Z0-9_]+$/', $username)) {
-      $form_state->setErrorByName('username', $this->t('Username may only contain alphanumeric characters and underscores.'));
+    $username = (string) $form_state->getValue('username');
+    $usernameViolation = UsernameValidator::validate($username);
+    if ($usernameViolation !== NULL) {
+      $form_state->setErrorByName('username', UsernameValidator::violationMessage($usernameViolation));
     }
 
-    $blacklist = [
-      'admin',
-      'root',
-      'administrator',
-      'editor',
-      'anonymous',
-      'scs_manager',
-      'scs-manager',
-      'scs-user',
-      'scs_user',
-      'wisski_user',
-      'wisski_admin',
-      'wisski-user',
-      'wisski-admin',
-    ];
-
-    if (in_array($username, $blacklist)) {
-      $form_state->setErrorByName('username', $this->t('Username may not contain the word.'));
-    }
-
-    // Validate first name (no special characters except accented letters).
-    $firstName = $form_state->getValue('first_name');
-    if (!preg_match('/^[\p{L}\s\-\'\.]+$/u', $firstName)) {
-      $form_state->setErrorByName('first_name', $this->t('First name may only contain letters, spaces, hyphens, apostrophes, and periods.'));
-    }
-
-    // Validate last name (no special characters except accented letters).
-    $lastName = $form_state->getValue('last_name');
-    if (!preg_match('/^[\p{L}\s\-\'\.]+$/u', $lastName)) {
-      $form_state->setErrorByName('last_name', $this->t('Last name may only contain letters, spaces, hyphens, apostrophes, and periods.'));
+    foreach (['first_name' => $this->t('First name'), 'last_name' => $this->t('Last name')] as $fieldName => $fieldLabel) {
+      $violation = PersonalNameValidator::validate((string) $form_state->getValue($fieldName));
+      if ($violation !== NULL) {
+        $form_state->setErrorByName($fieldName, PersonalNameValidator::violationMessage($violation, $fieldLabel));
+      }
     }
 
     $langcode = (string) $form_state->getValue('interface_langcode');
