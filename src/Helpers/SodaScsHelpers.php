@@ -237,7 +237,7 @@ class SodaScsHelpers {
    *   Defaults to ['/', '/opt/drupal', '/opt/drupal/'].
    * @param array $requiredPatterns
    *   Array of regex patterns that must match at least one path segment.
-   *   Defaults to ['/\b(bkp|backup|snapshot)\b/i'].
+   *   Defaults to ['/\b(bkp|backup|snapshots?)\b/i'].
    * @param bool $requireAbsolute
    *   Whether the path must be absolute. Defaults to TRUE.
    *
@@ -248,7 +248,7 @@ class SodaScsHelpers {
   public function validatePathForSafeDeletion(
     string $path,
     array $forbiddenPaths = ['/', '/opt/drupal', '/opt/drupal/'],
-    array $requiredPatterns = ['/\b(bkp|backup|snapshot|tmp|cache)\b/i'],
+    array $requiredPatterns = ['/\b(bkp|backup|snapshots?|tmp|cache)\b/i'],
     bool $requireAbsolute = TRUE,
   ): array {
     $normalizedPath = rtrim($path, '/');

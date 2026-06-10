@@ -1178,6 +1178,13 @@ class SodaScsSettingsForm extends ConfigFormBase {
       '#title' => $this->t('Development versions'),
     ];
 
+    $form['wisski']['instances']['versions']['development']['componentVersion'] = [
+      '#type' => 'textfield',
+      '#title' => $this->t('WissKI component version'),
+      '#default_value' => $this->config('soda_scs_manager.settings')->get('wisski')['instances']['versions']['development']['componentVersion'] ?? '',
+      '#description' => $this->t('Version label stored on development WissKI stacks and components (shown in snapshots as wisskiComponentVersion), e.g. "3.x-dev". Separate from the compose stack branch/tag below.'),
+    ];
+
     $form['wisski']['instances']['versions']['development']['composeStack'] = [
       '#type' => 'textfield',
       '#title' => $this->t('WissKI compose stack version'),

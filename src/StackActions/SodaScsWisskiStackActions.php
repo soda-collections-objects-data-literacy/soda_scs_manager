@@ -287,7 +287,12 @@ class SodaScsWisskiStackActions implements SodaScsStackActionsInterface {
 
     // Set the version for the stack.
     if ($stack->get('developmentInstance')->value) {
-      $stack->set('version', $this->settings->get('wisski.instances.versions.development.composeStack'));
+      $developmentVersions = $this->settings->get('wisski.instances.versions.development') ?? [];
+      $componentVersion = trim((string) ($developmentVersions['componentVersion'] ?? ''));
+      $stack->set(
+        'version',
+        $componentVersion !== '' ? $componentVersion : (string) ($developmentVersions['composeStack'] ?? ''),
+      );
     }
     else {
       // Get default version from settings or use first available version entity.

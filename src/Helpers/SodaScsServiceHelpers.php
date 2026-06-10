@@ -552,6 +552,7 @@ class SodaScsServiceHelpers {
     // Production versions are hardcoded as defaults in docker-compose.yml in
     // stack repository.
     $developmentVersions = $this->settings->get('wisski.instances.versions.development') ?? [];
+    $wisskiInstanceSettings['componentDevelopmentVersion'] = $developmentVersions['componentVersion'] ?? '';
     $wisskiInstanceSettings['stackDevelopmentVersion'] = $developmentVersions['composeStack'] ?? '';
     $wisskiInstanceSettings['imageDevelopmentVersion'] = $developmentVersions['image'] ?? '';
     $wisskiInstanceSettings['starterRecipeDevelopmentVersion'] = $developmentVersions['starterRecipe'] ?? '';

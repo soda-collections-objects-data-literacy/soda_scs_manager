@@ -51,6 +51,16 @@ class SodaScsWisskiComponentActions implements SodaScsComponentActionsInterface 
   use StringTranslationTrait;
 
   /**
+   * WissKI 3.x snapshot tar layout: top-level sites/ and private-files/ dirs.
+   */
+  private const WISSKI_SNAPSHOT_LAYOUT_3X = '3.x-two-volume';
+
+  /**
+   * WissKI 2.x snapshot tar layout: full /opt/drupal tree (drupal-root volume).
+   */
+  private const WISSKI_SNAPSHOT_LAYOUT_2X = '2.x-drupal-root';
+
+  /**
    * The bundle info.
    *
    * @var \Drupal\Core\Entity\EntityTypeBundleInfoInterface
@@ -315,20 +325,221 @@ class SodaScsWisskiComponentActions implements SodaScsComponentActionsInterface 
   }
 
   /**
-   * Docker volume name for WissKI Drupal files (/opt/drupal in the stack).
-   *
-   * The wisski-base-stack compose file names this volume
-   * "${SERVICE_NAME}--drupal-root" (double hyphen before drupal-root). The
-   * wrong "_drupal-root" suffix makes Docker use a separate empty volume.
+   * Docker volume for WissKI site state (/opt/drupal/web/sites).
    *
    * @param string $machineName
    *   Component machine name (same as Portainer SERVICE_NAME / stack name).
    *
    * @return string
-   *   The named volume as created by Compose (e.g. wisski-foo--drupal-root).
+   *   Named volume (e.g. wisski-foo--drupal-sites).
    */
-  private function wisskiDrupalFilesVolumeName(string $machineName): string {
-    return $machineName . '--drupal-root';
+  private function wisskiDrupalSitesVolumeName(string $machineName): string {
+    return $machineName . '--drupal-sites';
+  }
+
+  /**
+   * Docker volume for WissKI private files (/opt/drupal/private-files).
+   *
+   * @param string $machineName
+   *   Component machine name (same as Portainer SERVICE_NAME / stack name).
+   *
+   * @return string
+   *   Named volume (e.g. wisski-foo--drupal-private-files).
+   */
+  private function wisskiDrupalPrivateFilesVolumeName(string $machineName): string {
+    return $machineName . '--drupal-private-files';
+  }
+
+  /**
+   * Persistent WissKI Drupal volumes snapshotted in 3.x (sites + private files).
+   *
+   * @param string $machineName
+   *   Component machine name.
+   *
+   * @return array{sites: string, privateFiles: string}
+   *   Volume names keyed by role.
+   */
+  private function wisskiDrupalPersistentVolumeNames(string $machineName): array {
+    return [
+      'sites' => $this->wisskiDrupalSitesVolumeName($machineName),
+      'privateFiles' => $this->wisskiDrupalPrivateFilesVolumeName($machineName),
+    ];
+  }
+
+  /**
+   * Shell command to archive both WissKI persistent volumes into one tar.
+   *
+   * Tar members are top-level sites/ and private-files/ (3.x layout).
+   */
+  private function buildWisskiSnapshotArchiveCommand(string $tarFileName, string $sha256FileName): string {
+    $owner = SodaScsSnapshotHelpers::SNAPSHOT_FILE_OWNER_UID . ':' . SodaScsSnapshotHelpers::SNAPSHOT_FILE_OWNER_GID;
+    return 'mkdir -p /staging/sites /staging/private-files && ' .
+      'cp -a /source-sites/. /staging/sites/ && ' .
+      'cp -a /source-private/. /staging/private-files/ && ' .
+      'tar czf /backup/' . $tarFileName . ' -C /staging sites private-files && ' .
+      'rm -rf /staging && ' .
+      'cd /backup && sha256sum ' . $tarFileName . ' > ' . $sha256FileName . ' && ' .
+      'chown ' . $owner . ' /backup/' . $tarFileName . ' /backup/' . $sha256FileName;
+  }
+
+  /**
+   * Shell command to purge both volumes and restore from a snapshot tar.
+   *
+   * Supports 3.x (sites/, private-files/) and 2.x (web/sites/, private-files/).
+   */
+  private function buildWisskiRestoreFromTarCommand(string $tarFileName): string {
+    $owner = SodaScsSnapshotHelpers::SNAPSHOT_FILE_OWNER_UID . ':' . SodaScsSnapshotHelpers::SNAPSHOT_FILE_OWNER_GID;
+    return 'STAGING=/staging && ' .
+      'mkdir -p "$STAGING" && ' .
+      'rm -rf /volume-sites/* /volume-sites/.[!.]* /volume-sites/..?* && ' .
+      'rm -rf /volume-private/* /volume-private/.[!.]* /volume-private/..?* && ' .
+      'tar -xzf /restore/' . $tarFileName . ' -C "$STAGING" && ' .
+      'if [ -d "$STAGING/sites" ]; then ' .
+      'cp -a "$STAGING/sites/." /volume-sites/ && cp -a "$STAGING/private-files/." /volume-private/; ' .
+      'elif [ -d "$STAGING/web/sites" ]; then ' .
+      'cp -a "$STAGING/web/sites/." /volume-sites/ && ' .
+      '[ -d "$STAGING/private-files" ] && cp -a "$STAGING/private-files/." /volume-private/ || true; ' .
+      'else echo "Unrecognized WissKI snapshot layout" >&2; exit 1; fi && ' .
+      'rm -rf "$STAGING" && chown -R ' . $owner . ' /volume-sites /volume-private';
+  }
+
+  /**
+   * Shell command to archive both volumes for rollback (same layout as snapshot).
+   */
+  private function buildWisskiRollbackArchiveCommand(string $rollbackTarFileName): string {
+    return 'mkdir -p /staging/sites /staging/private-files && ' .
+      'cp -a /source-sites/. /staging/sites/ && ' .
+      'cp -a /source-private/. /staging/private-files/ && ' .
+      'tar czf /backup/' . $rollbackTarFileName . ' -C /staging sites private-files && ' .
+      'rm -rf /staging';
+  }
+
+  /**
+   * Resolves Portainer/env version pins for a WissKI component.
+   *
+   * @param \Drupal\soda_scs_manager\Entity\SodaScsComponentInterface $component
+   *   The WissKI component.
+   *
+   * @return array{
+   *   mode: string,
+   *   varnishImageVersion: string,
+   *   wisskiComposeStackVersion: string,
+   *   wisskiDefaultDataModelRecipeVersion: string,
+   *   wisskiBaseImageVersion: string,
+   *   wisskiStarterRecipeVersion: string,
+   *   wisskiVersion: string,
+   * }
+   *   Version settings passed to Portainer on stack create.
+   */
+  private function resolveWisskiVersionSettings(SodaScsComponentInterface $component): array {
+    $wisskiInstanceSettings = $this->sodaScsServiceHelpers->initWisskiInstanceSettings();
+
+    if ($component->get('developmentInstance')->value) {
+      return [
+        'mode' => 'development',
+        'varnishImageVersion' => $wisskiInstanceSettings['varnishImageDevelopmentVersion'],
+        'wisskiComposeStackVersion' => $wisskiInstanceSettings['stackDevelopmentVersion'],
+        'wisskiDefaultDataModelRecipeVersion' => $wisskiInstanceSettings['defaultDataModelRecipeDevelopmentVersion'],
+        'wisskiBaseImageVersion' => $wisskiInstanceSettings['imageDevelopmentVersion'],
+        'wisskiStarterRecipeVersion' => $wisskiInstanceSettings['starterRecipeDevelopmentVersion'],
+        'wisskiVersion' => '',
+      ];
+    }
+
+    $componentVersion = $component->get('version')->value ?? '';
+    $versionConfig = NULL;
+
+    if (!empty($componentVersion)) {
+      $versionStorage = $this->entityTypeManager->getStorage('soda_scs_wisski_component_ver');
+      $versionEntities = $versionStorage->loadMultiple();
+      foreach ($versionEntities as $versionEntity) {
+        /** @var \Drupal\soda_scs_manager\Entity\SodaScsWisskiComponentVersionInterface $versionEntity */
+        if ($versionEntity->getVersion() === $componentVersion) {
+          $versionConfig = [
+            'wisskiStack' => $versionEntity->getWisskiStack(),
+            'wisskiImage' => $versionEntity->getWisskiImage(),
+            'packageEnvironment' => $versionEntity->getPackageEnvironment(),
+            'wisskiDefaultDataModelRecipe' => $versionEntity->getWisskiDefaultDataModelRecipe(),
+            'wisskiStarterRecipe' => $versionEntity->getWisskiStarterRecipe(),
+          ];
+          break;
+        }
+      }
+    }
+
+    if ($versionConfig) {
+      return [
+        'mode' => '',
+        'varnishImageVersion' => '',
+        'wisskiComposeStackVersion' => $versionConfig['wisskiStack'] ?? '',
+        'wisskiDefaultDataModelRecipeVersion' => $versionConfig['wisskiDefaultDataModelRecipe'] ?? '',
+        'wisskiBaseImageVersion' => $versionConfig['wisskiImage'] ?? '',
+        'wisskiStarterRecipeVersion' => $versionConfig['wisskiStarterRecipe'] ?? '',
+        'wisskiVersion' => $versionConfig['packageEnvironment'] ?? '',
+      ];
+    }
+
+    $packageEnv = $wisskiInstanceSettings['packageEnvironmentProductionVersion'] ?? '';
+    return [
+      'mode' => '',
+      'varnishImageVersion' => '',
+      'wisskiComposeStackVersion' => $wisskiInstanceSettings['wisskiStackProductionVersion'] ?? '',
+      'wisskiDefaultDataModelRecipeVersion' => $wisskiInstanceSettings['defaultDataModelRecipeProductionVersion'] ?? '',
+      'wisskiBaseImageVersion' => $wisskiInstanceSettings['wisskiBaseImageProductionVersion'] ?? '',
+      'wisskiStarterRecipeVersion' => $wisskiInstanceSettings['starterRecipeProductionVersion'] ?? '',
+      'wisskiVersion' => $componentVersion !== '' && $componentVersion !== NULL
+        ? (string) $componentVersion
+        : (string) $packageEnv,
+    ];
+  }
+
+  /**
+   * WissKI release metadata stored on snapshots and copied into manifest.json.
+   *
+   * @param \Drupal\soda_scs_manager\Entity\SodaScsComponentInterface $component
+   *   The WissKI component.
+   * @param array $versionSettings
+   *   Output of resolveWisskiVersionSettings().
+   *
+   * @return array<string, string>
+   *   Non-empty version fields for snapshot metadata / manifest mapping.
+   */
+  private function buildWisskiSnapshotVersionMetadata(SodaScsComponentInterface $component, array $versionSettings): array {
+    $metadata = [
+      'wisskiVolumeLayout' => self::WISSKI_SNAPSHOT_LAYOUT_3X,
+      'wisskiBaseImageVersion' => (string) ($versionSettings['wisskiBaseImageVersion'] ?? ''),
+      'wisskiComposeStackVersion' => (string) ($versionSettings['wisskiComposeStackVersion'] ?? ''),
+      'wisskiComponentVersion' => (string) ($component->get('version')->value ?? ''),
+      'wisskiVersion' => (string) ($versionSettings['wisskiVersion'] ?? ''),
+    ];
+
+    if ($component->get('developmentInstance')->value) {
+      $metadata['wisskiDevelopmentInstance'] = '1';
+    }
+
+    return array_filter($metadata, static fn(string $value): bool => $value !== '');
+  }
+
+  /**
+   * Sets the component version label when missing (development instances).
+   *
+   * Production stacks/components set version at entity creation; development
+   * instances use wisski.instances.versions.development.componentVersion.
+   */
+  private function applyDefaultWisskiComponentVersion(SodaScsComponentInterface $component): void {
+    if (!($component->get('version')->value ?? '')) {
+      if (!$component->get('developmentInstance')->value) {
+        return;
+      }
+      $wisskiInstanceSettings = $this->sodaScsServiceHelpers->initWisskiInstanceSettings();
+      $componentVersion = trim((string) ($wisskiInstanceSettings['componentDevelopmentVersion'] ?? ''));
+      if ($componentVersion === '') {
+        $componentVersion = trim((string) ($wisskiInstanceSettings['stackDevelopmentVersion'] ?? ''));
+      }
+      if ($componentVersion !== '') {
+        $component->set('version', $componentVersion);
+      }
+    }
   }
 
   /**
@@ -369,6 +580,8 @@ class SodaScsWisskiComponentActions implements SodaScsComponentActionsInterface 
       // Get and set the machine name for the WissKI component.
       $machineName = 'wisski-' . $component->get('machineName')->value;
       $component->set('machineName', $machineName);
+
+      $this->applyDefaultWisskiComponentVersion($component);
 
       // Collect the project colleques and user groups.
       // The owner of the component and all members of linked project
@@ -630,74 +843,7 @@ class SodaScsWisskiComponentActions implements SodaScsComponentActionsInterface 
         }
       }
 
-      // Set the version settings for the WissKI component.
-      if ($component->get('developmentInstance')->value) {
-        $versionSettings = [
-          'mode' => 'development',
-          'varnishImageVersion' => $wisskiInstanceSettings['varnishImageDevelopmentVersion'],
-          'wisskiComposeStackVersion' => $wisskiInstanceSettings['stackDevelopmentVersion'],
-          'wisskiDefaultDataModelRecipeVersion' => $wisskiInstanceSettings['defaultDataModelRecipeDevelopmentVersion'],
-          'wisskiBaseImageVersion' => $wisskiInstanceSettings['imageDevelopmentVersion'],
-          'wisskiStarterRecipeVersion' => $wisskiInstanceSettings['starterRecipeDevelopmentVersion'],
-          // Need to be empty for latest dev version.
-          'wisskiVersion' => '',
-        ];
-      }
-      else {
-        // Get component version to look up version config.
-        $componentVersion = $component->get('version')->value ?? '';
-        $versionConfig = NULL;
-
-        // Try to get version config from entities.
-        if (!empty($componentVersion)) {
-          $versionStorage = $this->entityTypeManager->getStorage('soda_scs_wisski_component_ver');
-          $versionEntities = $versionStorage->loadMultiple();
-          foreach ($versionEntities as $versionEntity) {
-            /** @var \Drupal\soda_scs_manager\Entity\SodaScsWisskiComponentVersionInterface $versionEntity */
-            if ($versionEntity->getVersion() === $componentVersion) {
-              $versionConfig = [
-                'wisskiStack' => $versionEntity->getWisskiStack(),
-                'wisskiImage' => $versionEntity->getWisskiImage(),
-                'packageEnvironment' => $versionEntity->getPackageEnvironment(),
-                'wisskiDefaultDataModelRecipe' => $versionEntity->getWisskiDefaultDataModelRecipe(),
-                'wisskiStarterRecipe' => $versionEntity->getWisskiStarterRecipe(),
-              ];
-              break;
-            }
-          }
-        }
-
-        // Use version config if found, otherwise fall back to default values.
-        if ($versionConfig) {
-          $versionSettings = [
-            'mode' => '',
-            'varnishImageVersion' => '',
-            'wisskiComposeStackVersion' => $versionConfig['wisskiStack'] ?? '',
-            'wisskiDefaultDataModelRecipeVersion' => $versionConfig['wisskiDefaultDataModelRecipe'] ?? '',
-            'wisskiBaseImageVersion' => $versionConfig['wisskiImage'] ?? '',
-            'wisskiStarterRecipeVersion' => $versionConfig['wisskiStarterRecipe'] ?? '',
-            'wisskiVersion' => $versionConfig['packageEnvironment'] ?? '',
-          ];
-        }
-        else {
-          // Fall back to default values from settings (same source as the
-          // default WissKI version entity in site config).
-          $packageEnv = $wisskiInstanceSettings['packageEnvironmentProductionVersion'] ?? '';
-          $versionSettings = [
-            'mode' => '',
-            'varnishImageVersion' => '',
-            'wisskiComposeStackVersion' => $wisskiInstanceSettings['wisskiStackProductionVersion'] ?? '',
-            'wisskiDefaultDataModelRecipeVersion' => $wisskiInstanceSettings['defaultDataModelRecipeProductionVersion'] ?? '',
-            'wisskiBaseImageVersion' => $wisskiInstanceSettings['wisskiBaseImageProductionVersion'] ?? '',
-            'wisskiStarterRecipeVersion' => $wisskiInstanceSettings['starterRecipeProductionVersion'] ?? '',
-            // Package environment: form stores component "version" as the
-            // version label; when empty, use the default version's package env.
-            'wisskiVersion' => $componentVersion !== '' && $componentVersion !== NULL
-              ? (string) $componentVersion
-              : (string) $packageEnv,
-          ];
-        }
-      }
+      $versionSettings = $this->resolveWisskiVersionSettings($component);
 
       //
       // Create the WissKI instance at portainer.
@@ -920,6 +1066,8 @@ class SodaScsWisskiComponentActions implements SodaScsComponentActionsInterface 
       $hostBackupPath = $this->sodaScsSnapshotHelpers
         ->convertContainerPathToHostPath($snapshotPaths['backupPathWithType']);
 
+      $wisskiVolumes = $this->wisskiDrupalPersistentVolumeNames($component->get('machineName')->value);
+
       // Construct the snapshot container create request parameters.
       $createSnapshotContainerRunCommandRequestParams = [
         'name' => $snapshotContainerName,
@@ -929,11 +1077,15 @@ class SodaScsWisskiComponentActions implements SodaScsComponentActionsInterface 
         'cmd' => [
           'sh',
           '-c',
-          'tar czf /backup/' . $snapshotPaths['tarFileName'] . ' -C /source . && cd /backup && sha256sum ' . $snapshotPaths['tarFileName'] . ' > ' . $snapshotPaths['sha256FileName'] . ' && chown ' . SodaScsSnapshotHelpers::SNAPSHOT_FILE_OWNER_UID . ':' . SodaScsSnapshotHelpers::SNAPSHOT_FILE_OWNER_GID . ' /backup/' . $snapshotPaths['tarFileName'] . ' /backup/' . $snapshotPaths['sha256FileName'],
+          $this->buildWisskiSnapshotArchiveCommand(
+            $snapshotPaths['tarFileName'],
+            $snapshotPaths['sha256FileName'],
+          ),
         ],
         'hostConfig' => [
           'Binds' => [
-            $this->wisskiDrupalFilesVolumeName($component->get('machineName')->value) . ':/source',
+            $wisskiVolumes['sites'] . ':/source-sites:ro',
+            $wisskiVolumes['privateFiles'] . ':/source-private:ro',
             $hostBackupPath . ':/backup',
           ],
           'AutoRemove' => FALSE,
@@ -969,6 +1121,9 @@ class SodaScsWisskiComponentActions implements SodaScsComponentActionsInterface 
         );
       }
 
+      $wisskiVersionSettings = $this->resolveWisskiVersionSettings($component);
+      $wisskiVersionMetadata = $this->buildWisskiSnapshotVersionMetadata($component, $wisskiVersionSettings);
+
       // Construct component data for the snapshot.
       $componentData = [
         'componentBundle' => $component->bundle(),
@@ -979,7 +1134,7 @@ class SodaScsWisskiComponentActions implements SodaScsComponentActionsInterface 
         'snapshotContainerStatus' => NULL,
         'snapshotContainerRemoved' => NULL,
         'createSnapshotContainerResponse' => $createSnapshotContainerResponse,
-        'metadata' => [
+        'metadata' => array_merge([
           'backupPath' => $snapshotPaths['backupPath'],
           'relativeUrlBackupPath' => $snapshotPaths['relativeUrlBackupPath'],
           'contentFilePaths' => [
@@ -994,7 +1149,7 @@ class SodaScsWisskiComponentActions implements SodaScsComponentActionsInterface 
           'snapshotDirectory' => $snapshotPaths['snapshotDirectory'],
           'snapshotFilesystemRoot' => $snapshotPaths['snapshotFilesystemRoot'],
           'timestamp' => $timestamp,
-        ],
+        ], $wisskiVersionMetadata),
         'startSnapshotContainerResponse' => $startSnapshotContainerRunCommandResponse,
       ];
 
@@ -1519,11 +1674,10 @@ class SodaScsWisskiComponentActions implements SodaScsComponentActionsInterface 
       }
 
       //
-      // Back up current volume to rollback tar,
-      // then restore from snapshot into volume.
+      // Back up current volumes to rollback tar,
+      // then restore from snapshot into both volumes.
       //
-      // Collect information about the snapshot.
-      $volumeName = $this->wisskiDrupalFilesVolumeName($machineName);
+      $wisskiVolumes = $this->wisskiDrupalPersistentVolumeNames($machineName);
       /** @var \Drupal\file\Entity\File|null $snapshotFile */
       $snapshotFile = $snapshot->getFile();
       if (!$snapshotFile) {
@@ -1541,21 +1695,22 @@ class SodaScsWisskiComponentActions implements SodaScsComponentActionsInterface 
         );
       }
       $snapshotDir = dirname($snapshotPath);
-      $rollbackTarName = 'rollback--' . $volumeName . '--' . date('Ymd-His') . '.tar.gz';
+      $snapshotTarFileName = basename($snapshotPath);
+      $rollbackTarName = 'rollback--' . $machineName . '--drupal-volumes--' . date('Ymd-His') . '.tar.gz';
       $rollbackTarPath = $snapshotDir . '/' . $rollbackTarName;
 
       $rollbackContainerName = 'rollback--' . $machineName . '--drupal__' . $this->sodaScsSnapshotHelpers->generateRandomSuffix();
 
-      // Create a short-lived container to back up the current volume.
-      // Construct the request parameters.
+      // Create a short-lived container to back up the current volumes.
       $rollbackContainerCreateRequestParams = [
         'name' => $rollbackContainerName,
         'image' => 'alpine:latest',
         'user' => SodaScsSnapshotHelpers::SNAPSHOT_VOLUME_ARCHIVE_DOCKER_USER,
-        'cmd' => ['sh', '-c', 'tar czf /backup/' . basename($rollbackTarPath) . ' -C /source .'],
+        'cmd' => ['sh', '-c', $this->buildWisskiRollbackArchiveCommand(basename($rollbackTarPath))],
         'hostConfig' => [
           'Binds' => [
-            $volumeName . ':/source:ro',
+            $wisskiVolumes['sites'] . ':/source-sites:ro',
+            $wisskiVolumes['privateFiles'] . ':/source-private:ro',
             $snapshotDir . ':/backup',
           ],
           'AutoRemove' => FALSE,
@@ -1595,37 +1750,16 @@ class SodaScsWisskiComponentActions implements SodaScsComponentActionsInterface 
         );
       }
 
-      // Get the filepath on disk.
-      // @todo This is a temporary solution to get the filepath on disk.
-      // We need to find a better way to do this.
-      $tarFilePathOnDisk = $tempDirPath . '/drupal-data';
+      // Directory containing the snapshot tar (pseudo-snapshot copy or bag unpack).
+      $restoreMountPath = dirname($snapshotPath);
 
       //
-      // Restore into fresh state: purge original drupalvolume
-      // and extract snapshot tar. Create restore container.
+      // Restore into fresh state: purge both volumes and extract snapshot tar.
       //
-      // Validate volume path for safe deletion (hardcoded /volume is safe,
-      // but we validate to ensure no path manipulation).
-      $volumePath = '/volume';
-      $validationResult = $this->sodaScsHelpers->validatePathForSafeDeletion(
-        $volumePath,
-        forbiddenPaths: ['/', '/opt/drupal', '/opt/drupal/'],
-        requiredPatterns: ['/\b(volume)\b/i'],
-      );
-
-      if (!$validationResult['isValid']) {
-        throw new \RuntimeException(
-          'Invalid volume path for restore operation: ' . htmlspecialchars($volumePath) . ' (' . $validationResult['errorCode'] . ')'
-        );
-      }
-
-      // Construct the request parameters.
       $restoreCmd = [
         'sh',
         '-c',
-        'rm -rf /volume/* /volume/.[!.]* /volume/..?* && ' .
-        'tar -xzf /restore/' . basename($snapshotPath) . ' -C /volume && ' .
-        'chown -R ' . SodaScsSnapshotHelpers::SNAPSHOT_FILE_OWNER_UID . ':' . SodaScsSnapshotHelpers::SNAPSHOT_FILE_OWNER_GID . ' /volume',
+        $this->buildWisskiRestoreFromTarCommand($snapshotTarFileName),
       ];
 
       $restoreContainerName = 'restore--' . $machineName . '--drupal__' . $this->sodaScsSnapshotHelpers->generateRandomSuffix();
@@ -1636,8 +1770,9 @@ class SodaScsWisskiComponentActions implements SodaScsComponentActionsInterface 
         'cmd' => $restoreCmd,
         'hostConfig' => [
           'Binds' => [
-            $volumeName . ':/volume',
-            $tarFilePathOnDisk . ':/restore:ro',
+            $wisskiVolumes['sites'] . ':/volume-sites',
+            $wisskiVolumes['privateFiles'] . ':/volume-private',
+            $restoreMountPath . ':/restore:ro',
           ],
           'AutoRemove' => FALSE,
         ],
@@ -1717,7 +1852,7 @@ class SodaScsWisskiComponentActions implements SodaScsComponentActionsInterface 
         message: 'WissKI component restored from snapshot successfully.',
         data: [
           'containerId' => $containerId,
-          'volumeName' => $volumeName,
+          'volumeNames' => $wisskiVolumes,
           'rollbackTarPath' => $rollbackTarPath,
           'snapshotPath' => $snapshotPath,
         ],

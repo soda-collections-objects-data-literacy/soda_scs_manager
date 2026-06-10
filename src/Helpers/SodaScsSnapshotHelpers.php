@@ -406,6 +406,37 @@ class SodaScsSnapshotHelpers {
   }
 
   /**
+   * WissKI-specific manifest mapping fields from snapshot component metadata.
+   *
+   * @param array $metadata
+   *   Component snapshot metadata from createSnapshot().
+   *
+   * @return array<string, string>
+   *   Version and layout fields for manifest.json mapping entries.
+   */
+  public function extractWisskiManifestMappingMetadata(array $metadata): array {
+    $keys = [
+      'wisskiVolumeLayout',
+      'wisskiBaseImageVersion',
+      'wisskiComposeStackVersion',
+      'wisskiComponentVersion',
+      'wisskiVersion',
+      'wisskiDevelopmentInstance',
+    ];
+    $extras = [];
+    foreach ($keys as $key) {
+      if (!isset($metadata[$key])) {
+        continue;
+      }
+      $value = (string) $metadata[$key];
+      if ($value !== '') {
+        $extras[$key] = $value;
+      }
+    }
+    return $extras;
+  }
+
+  /**
    * Create bag of files.
    *
    * Get the files in a snapshot directory, tar it,
@@ -504,13 +535,17 @@ class SodaScsSnapshotHelpers {
 
       $mappings = [];
       foreach ($snapshotData as $componentData) {
-        $mappings[] = [
+        $mapping = [
           'bundle' => (string) $componentData->componentBundle,
           'eid' => (string) $componentData->componentId,
           'machineName' => (string) $componentData->componentMachineName,
           'dumpFile' => (string) $componentData->metadata['contentFilePaths']['tarFilePath'],
           'checksumFile' => (string) $componentData->metadata['contentFilePaths']['sha256FilePath'],
         ];
+        if ($componentData->componentBundle === 'soda_scs_wisski_component') {
+          $mapping = array_merge($mapping, $this->extractWisskiManifestMappingMetadata($componentData->metadata));
+        }
+        $mappings[] = $mapping;
       }
 
       // Create the manifest.
@@ -1358,7 +1393,8 @@ class SodaScsSnapshotHelpers {
     try {
       // Define the subdirectories that may contain tar.gz files to unpack.
       $unpackDirectories = ['nq', 'sql'];
-      // Also include drupal-data for validation but don't unpack it.
+      // drupal-data: validate checksum only; WissKI restore reads the tar
+      // directly (3.x layout: sites/ + private-files/; 2.x: web/sites/ + …).
       $allSubdirectories = ['drupal-data', 'nq', 'sql'];
 
       // Scan for subdirectories in the temp directory.
@@ -1815,10 +1851,11 @@ class SodaScsSnapshotHelpers {
    */
   public function deleteSnapshotDirectory(string $snapshotDirectory): void {
     // Validate path for safe deletion.
+    $snapshotRoot = $this->getSnapshotFilesystemRoot();
     $validationResult = $this->sodaScsHelpers->validatePathForSafeDeletion(
       $snapshotDirectory,
-      forbiddenPaths: ['/', '/opt/drupal', '/opt/drupal/'],
-      requiredPatterns: ['/\b(bkp|backup|snapshot)\b/i'],
+      forbiddenPaths: ['/', '/opt/drupal', '/opt/drupal/', $snapshotRoot],
+      requiredPatterns: ['/\b(bkp|backup|snapshots?)\b/i'],
     );
 
     if (!$validationResult['isValid']) {
