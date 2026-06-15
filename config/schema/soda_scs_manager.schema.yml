@@ -538,6 +538,10 @@ soda_scs_manager.settings:
               type: string
               label: 'Base route'
               description: 'The base URL, like "https://{instanceId}.scs.sammlungen.io".'
+            proxyAddresses:
+              type: string
+              label: 'Drupal reverse proxy addresses'
+              description: 'Passed to WissKI stacks as DRUPAL_PROXY_ADDRESSES: auto (detect Docker CIDRs), none (standalone), or pipe-separated CIDRs.'
             misc:
               type: mapping
               label: 'Miscellaneous routes'

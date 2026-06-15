@@ -434,7 +434,7 @@ class SodaScsPortainerServiceActions implements SodaScsServiceRequestInterface {
       ],
       [
         "name" => "DRUPAL_PROXY_ADDRESSES",
-        "value" => $requestParams['proxyAddresses'] ?? '172.18.0.0/16|172.19.0.0/16',
+        "value" => $requestParams['proxyAddresses'] ?? 'auto',
       ],
       [
         "name" => "DRUPAL_SITE_NAME",

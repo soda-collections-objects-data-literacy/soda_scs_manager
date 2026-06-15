@@ -1125,6 +1125,14 @@ class SodaScsSettingsForm extends ConfigFormBase {
       '#description' => $this->t('The base URL, like "https://{instanceId}.scs.sammlungen.io".'),
     ];
 
+    $form['wisski']['instances']['proxyAddresses'] = [
+      '#type' => 'textfield',
+      '#title' => $this->t('Drupal reverse proxy addresses'),
+      '#default_value' => $this->config('soda_scs_manager.settings')->get('wisski')['instances']['proxyAddresses'] ?? 'auto',
+      '#description' => $this->t('Portainer env DRUPAL_PROXY_ADDRESSES for new WissKI stacks. Use <code>auto</code> behind Traefik (recommended on SCS), <code>none</code> for standalone stacks without TLS edge, or pipe-separated CIDRs (e.g. <code>172.20.0.0/16|192.168.64.0/20</code>). Requires wisski-base-image with sync-reverse-proxy.'),
+      '#required' => TRUE,
+    ];
+
     // Misc routes.
     $form['wisski']['instances']['misc']['healthCheck'] = [
       '#type' => 'fieldset',

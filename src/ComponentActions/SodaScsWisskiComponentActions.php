@@ -868,6 +868,7 @@ class SodaScsWisskiComponentActions implements SodaScsComponentActionsInterface 
         'username' => $component->getOwner()->getDisplayName(),
         'wisskiServicePassword' => $wisskiComponentServiceKeyPassword ?? '',
         'wisskiType' => ($sqlComponent && $triplestoreComponent) ? 'bundled' : 'single',
+        'proxyAddresses' => $wisskiInstanceSettings['proxyAddresses'] ?? 'auto',
         ...$versionSettings,
       ];
       // Create the WissKI instance at portainer.

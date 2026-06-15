@@ -493,6 +493,7 @@ class SodaScsServiceHelpers {
     $wisskiInstanceSettings['name'] = 'WissKI instance';
     $wisskiInstanceSettings['baseUrl'] = $this->settings->get('wisski.instances.baseUrl');
     $wisskiInstanceSettings['healthCheckUrl'] = $this->settings->get('wisski.instances.misc.healthCheck.url');
+    $wisskiInstanceSettings['proxyAddresses'] = $this->settings->get('wisski.instances.proxyAddresses') ?: 'auto';
 
     // Load versions from entities.
     $versionStorage = $this->entityTypeManager->getStorage('soda_scs_wisski_component_ver');
