@@ -344,6 +344,48 @@ class SodaScsNextcloudServiceActions implements SodaScsServiceRequestInterface {
   }
 
   /**
+   * Builds a request to delete a Nextcloud user via the OCS provisioning API.
+   *
+   * Nextcloud endpoint: DELETE /ocs/v1.php/cloud/users/{userid}.
+   * Requires Nextcloud admin credentials in module settings.
+   *
+   * @param array $requestParams
+   *   Required:
+   *     - 'userId' (string): Nextcloud username to delete.
+   *
+   * @return array
+   *   Request array ready to pass to makeRequest().
+   */
+  public function buildDeleteUserRequest(array $requestParams): array {
+    $nextcloudSettings = $this->sodaScsServiceHelpers->initNextcloudSettings();
+    $adminUsername = (string) ($nextcloudSettings['adminUsername'] ?? '');
+    $adminPassword = (string) ($nextcloudSettings['adminPassword'] ?? '');
+    if ($adminUsername === '' || $adminPassword === '') {
+      return [
+        'success' => FALSE,
+        'method' => '',
+        'route' => '',
+        'headers' => [],
+        'error' => 'Nextcloud admin credentials are not configured.',
+      ];
+    }
+
+    $userId = (string) ($requestParams['userId'] ?? '');
+    $route = rtrim($nextcloudSettings['baseUrl'], '/') . '/ocs/v1.php/cloud/users/' . rawurlencode($userId);
+
+    return [
+      'success' => TRUE,
+      'method' => 'DELETE',
+      'route' => $route,
+      'headers' => [
+        'OCS-APIRequest' => 'true',
+        'Accept' => 'application/json',
+        'Authorization' => 'Basic ' . base64_encode($adminUsername . ':' . $adminPassword),
+      ],
+    ];
+  }
+
+  /**
    * Not applicable for Nextcloud; returns an empty stub.
    *
    * Nextcloud uses Basic Auth or OIDC Bearer tokens directly — there is no

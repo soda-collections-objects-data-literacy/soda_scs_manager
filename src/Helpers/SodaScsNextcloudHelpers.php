@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Drupal\soda_scs_manager\Helpers;
 
 use Drupal\Core\Config\ConfigFactoryInterface;
+use Drupal\Core\Logger\LoggerChannelFactoryInterface;
 use Drupal\Core\Session\AccountProxyInterface;
 use Drupal\Core\Messenger\MessengerInterface;
 use Drupal\Core\StringTranslation\StringTranslationTrait;
@@ -51,6 +52,8 @@ class SodaScsNextcloudHelpers {
    *   The Keycloak helpers.
    * @param \Drupal\soda_scs_manager\Helpers\SodaScsProjectHelpers $projectHelpers
    *   The project helpers.
+   * @param \Drupal\Core\Logger\LoggerChannelFactoryInterface $loggerFactory
+   *   The logger factory.
    */
   public function __construct(
     #[Autowire(service: 'soda_scs_manager.nextcloud_service.actions')]
@@ -67,6 +70,7 @@ class SodaScsNextcloudHelpers {
     protected SodaScsKeycloakHelpers $keycloakHelpers,
     #[Autowire(service: 'soda_scs_manager.project.helpers')]
     protected SodaScsProjectHelpers $projectHelpers,
+    protected LoggerChannelFactoryInterface $loggerFactory,
   ) {}
 
   /**
@@ -132,19 +136,202 @@ class SodaScsNextcloudHelpers {
    *   Array with 'username' and 'appPassword' keys, or NULL if not stored.
    */
   public function getStoredNextcloudCredentials(UserInterface $owner): ?array {
+    return $this->getValidatedStoredNextcloudCredentials($owner);
+  }
+
+  /**
+   * Returns stored credentials only when they match the Keycloak sub.
+   *
+   * Stale credentials (e.g. after Keycloak user recreation) are cleared from
+   * Keycloak and treated as missing so the Connect flow can run again.
+   *
+   * @param \Drupal\user\UserInterface $owner
+   *   The Drupal user.
+   *
+   * @return array|null
+   *   Array with 'username' and 'appPassword', or NULL.
+   */
+  public function getValidatedStoredNextcloudCredentials(UserInterface $owner): ?array {
     $keycloakUserId = $this->projectHelpers->getUserSsoUuid($owner);
     if (empty($keycloakUserId)) {
       return NULL;
     }
+
+    $raw = $this->readStoredNextcloudCredentials($keycloakUserId);
+    if ($raw === NULL) {
+      return NULL;
+    }
+
+    if (!$this->storedUsernameMatchesKeycloakSub($keycloakUserId, $raw['username'])) {
+      $this->clearStoredNextcloudCredentials($keycloakUserId);
+      $this->loggerFactory->get('soda_scs_manager')->notice(
+        'Cleared stale Nextcloud credentials for Keycloak user @id (stored @stored, expected @expected).',
+        [
+          '@id' => $keycloakUserId,
+          '@stored' => $raw['username'],
+          '@expected' => $this->expectedNextcloudUsernameForKeycloakId($keycloakUserId),
+        ]
+      );
+      return NULL;
+    }
+
+    if (!$this->testStoredCredentials($raw['username'], $raw['appPassword'])) {
+      $this->clearStoredNextcloudCredentials($keycloakUserId);
+      $this->loggerFactory->get('soda_scs_manager')->notice(
+        'Cleared invalid Nextcloud app password for Keycloak user @id.',
+        ['@id' => $keycloakUserId]
+      );
+      return NULL;
+    }
+
+    return $raw;
+  }
+
+  /**
+   * Clears stored Nextcloud credentials when they no longer match Keycloak sub.
+   *
+   * Called on login after Keycloak user recreation or SSO relinking.
+   *
+   * @param \Drupal\user\UserInterface $owner
+   *   The Drupal user.
+   *
+   * @return bool
+   *   TRUE when stale credentials were cleared.
+   */
+  public function invalidateMismatchedStoredCredentials(UserInterface $owner): bool {
+    $keycloakUserId = $this->projectHelpers->getUserSsoUuid($owner);
+    if (empty($keycloakUserId)) {
+      return FALSE;
+    }
+
+    $raw = $this->readStoredNextcloudCredentials($keycloakUserId);
+    if ($raw === NULL) {
+      return FALSE;
+    }
+
+    if ($this->storedUsernameMatchesKeycloakSub($keycloakUserId, $raw['username'])) {
+      return FALSE;
+    }
+
+    $this->clearStoredNextcloudCredentials($keycloakUserId);
+    $this->loggerFactory->get('soda_scs_manager')->notice(
+      'Invalidated Nextcloud credentials for Drupal user @name after Keycloak SSO change.',
+      ['@name' => $owner->getAccountName()]
+    );
+    return TRUE;
+  }
+
+  /**
+   * Deletes the Nextcloud account(s) linked to a Keycloak user.
+   *
+   * Revokes the stored app password when present, then deletes the expected
+   * user_oidc account via the OCS API when admin credentials are configured.
+   * Also attempts to delete a previously stored username when it differs
+   * (orphaned account from an old Keycloak sub).
+   *
+   * @param string $keycloakUserId
+   *   Keycloak user ID (OIDC sub).
+   *
+   * @return bool
+   *   TRUE when cleanup ran without fatal errors.
+   */
+  public function deleteNextcloudAccountForKeycloakUser(string $keycloakUserId): bool {
+    $logger = $this->loggerFactory->get('soda_scs_manager');
+    $ok = TRUE;
+    $raw = $this->readStoredNextcloudCredentials($keycloakUserId);
+
+    if ($raw !== NULL && !empty($raw['appPassword'])) {
+      $revoke = $this->nextcloudServiceActions->buildDeleteRequest([
+        'username' => $raw['username'],
+        'password' => $raw['appPassword'],
+      ]);
+      if ($revoke['success'] ?? FALSE) {
+        $response = $this->nextcloudServiceActions->makeRequest($revoke);
+        if (!$response['success']) {
+          $logger->warning('Could not revoke Nextcloud app password for @user: @error', [
+            '@user' => $raw['username'],
+            '@error' => $response['error'] ?? 'unknown',
+          ]);
+        }
+      }
+    }
+
+    $usernames = array_unique(array_filter([
+      $this->expectedNextcloudUsernameForKeycloakId($keycloakUserId),
+      $raw['username'] ?? NULL,
+    ]));
+
+    foreach ($usernames as $username) {
+      $delete = $this->nextcloudServiceActions->buildDeleteUserRequest(['userId' => $username]);
+      if (!($delete['success'] ?? FALSE)) {
+        $logger->notice('Skipping Nextcloud user delete for @user: @error', [
+          '@user' => $username,
+          '@error' => $delete['error'] ?? 'not configured',
+        ]);
+        continue;
+      }
+      $response = $this->nextcloudServiceActions->makeRequest($delete);
+      if ($response['success']) {
+        $logger->notice('Deleted Nextcloud user @user for Keycloak id @id.', [
+          '@user' => $username,
+          '@id' => $keycloakUserId,
+        ]);
+      }
+      else {
+        $ok = FALSE;
+        $logger->warning('Failed to delete Nextcloud user @user: @error', [
+          '@user' => $username,
+          '@error' => $response['error'] ?? 'unknown',
+        ]);
+      }
+    }
+
+    $this->clearStoredNextcloudCredentials($keycloakUserId);
+    return $ok;
+  }
+
+  /**
+   * Returns the Nextcloud username expected for a Keycloak user ID.
+   */
+  public function expectedNextcloudUsernameForKeycloakId(string $keycloakUserId): string {
+    return $this->normalizeNextcloudUsername($keycloakUserId);
+  }
+
+  /**
+   * Checks whether a stored Nextcloud username belongs to the Keycloak sub.
+   */
+  public function storedUsernameMatchesKeycloakSub(string $keycloakUserId, string $storedUsername): bool {
+    $expected = $this->expectedNextcloudUsernameForKeycloakId($keycloakUserId);
+    $normalized = $this->normalizeNextcloudUsername($storedUsername);
+    return strcasecmp($normalized, $expected) === 0;
+  }
+
+  /**
+   * Removes Nextcloud credential attributes from Keycloak.
+   */
+  public function clearStoredNextcloudCredentials(string $keycloakUserId): bool {
+    return $this->keycloakHelpers->removeKeycloakUserAttributes($keycloakUserId, [
+      $this->getKeycloakUsernameAttr(),
+      $this->getKeycloakAppPasswordAttr(),
+    ]);
+  }
+
+  /**
+   * Reads Nextcloud credentials from Keycloak without validation.
+   *
+   * @return array{username: string, appPassword: string}|null
+   *   Credentials or NULL when not stored.
+   */
+  protected function readStoredNextcloudCredentials(string $keycloakUserId): ?array {
     $attributes = $this->keycloakHelpers->getKeycloakUserAttributes($keycloakUserId) ?? [];
     $username = $attributes[$this->getKeycloakUsernameAttr()][0] ?? NULL;
     $appPassword = $attributes[$this->getKeycloakAppPasswordAttr()][0] ?? NULL;
     if (empty($username) || empty($appPassword)) {
       return NULL;
     }
-    $username = $this->normalizeNextcloudUsername($username);
+
     return [
-      'username' => $username,
+      'username' => $this->normalizeNextcloudUsername($username),
       'appPassword' => $appPassword,
     ];
   }
@@ -252,8 +439,7 @@ class SodaScsNextcloudHelpers {
    *   not be obtained by either method.
    */
   public function ensureCredentials(UserInterface $owner, string $appName = 'SCS Manager'): ?array {
-    // Fast path: already stored.
-    $stored = $this->getStoredNextcloudCredentials($owner);
+    $stored = $this->getValidatedStoredNextcloudCredentials($owner);
     if ($stored !== NULL) {
       return $stored;
     }

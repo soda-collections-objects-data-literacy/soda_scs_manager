@@ -154,6 +154,8 @@ class SodaScsNextcloudConnectController extends ControllerBase {
       ], 502);
     }
 
+    $loginName = $this->nextcloudHelpers->normalizeNextcloudUsername($loginName);
+
     $user = $this->entityTypeManager()->getStorage('user')->load($this->currentUser()->id());
     if (!$user) {
       return new JsonResponse(['error' => 'User not found'], 500);
@@ -163,6 +165,14 @@ class SodaScsNextcloudConnectController extends ControllerBase {
     if (empty($keycloakUserId)) {
       return new JsonResponse([
         'error' => 'User is not linked to Keycloak. Log in via Keycloak first.',
+      ], 400);
+    }
+
+    if (!$this->nextcloudHelpers->storedUsernameMatchesKeycloakSub($keycloakUserId, $loginName)) {
+      return new JsonResponse([
+        'error' => $this->t('The Nextcloud account you logged into does not match your Keycloak user. Log out of Nextcloud in the popup, then sign in with the same Keycloak account you use for SCS Manager.'),
+        'expected' => $this->nextcloudHelpers->expectedNextcloudUsernameForKeycloakId($keycloakUserId),
+        'received' => $loginName,
       ], 400);
     }
 
@@ -238,26 +248,15 @@ class SodaScsNextcloudConnectController extends ControllerBase {
       ], 200);
     }
 
-    $attributes = $this->keycloakHelpers->getKeycloakUserAttributes($keycloakUserId) ?? [];
-    $username = $attributes[$this->nextcloudHelpers->getKeycloakUsernameAttr()][0] ?? NULL;
-    $appPassword = $attributes[$this->nextcloudHelpers->getKeycloakAppPasswordAttr()][0] ?? NULL;
-
-    $storedConnected = !empty($username) && !empty($appPassword);
-
-    // Only report "stored" if stored credentials work against Nextcloud.
-    if ($storedConnected) {
-      $storedConnected = $this->nextcloudHelpers->testStoredCredentials($username, $appPassword);
-    }
-
-    $displayUsername = $storedConnected
-      ? $this->nextcloudHelpers->normalizeNextcloudUsername($username)
-      : NULL;
+    $stored = $this->nextcloudHelpers->getValidatedStoredNextcloudCredentials($user);
+    $storedConnected = $stored !== NULL;
 
     return new JsonResponse([
       'connected' => $storedConnected,
       'method' => $storedConnected ? 'stored' : NULL,
-      'username' => $displayUsername,
+      'username' => $stored['username'] ?? NULL,
       'bearer_error' => $bearerError,
+      'needs_reconnect' => !$storedConnected && $bearerError === NULL,
     ], 200);
   }
 

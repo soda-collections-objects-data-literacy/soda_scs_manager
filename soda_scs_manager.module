@@ -1182,8 +1182,9 @@ function soda_scs_manager_soda_scs_snapshot_delete(SodaScsSnapshot $snapshot) {
  * Implements hook_user_delete().
  *
  * Deletes a user from Keycloak when a Drupal user is deleted.
- * Also deletes the user's snapshots, components, stacks, projects,
- * service keys, and enities.
+ * Also stops the Jupyter notebook container (volume is kept),
+ * deletes linked Nextcloud accounts (when admin API credentials are set),
+ * the user's snapshots, components, stacks, projects, service keys, and enities.
  */
 function soda_scs_manager_user_delete(UserInterface $user) {
   // Get the Keycloak service user actions.
@@ -1195,8 +1196,42 @@ function soda_scs_manager_user_delete(UserInterface $user) {
   // Get the messenger.
   $messenger = \Drupal::messenger();
 
-  // Log the user deletion.
-  $logger->notice('Deleting user from Keycloak: @username', ['@username' => $user->getAccountName()]);
+  $jupyterStopResult = \Drupal::service('soda_scs_manager.jupyter.helpers')
+    ->stopNotebookContainerForUser($user);
+  if ($jupyterStopResult['success'] && !empty($jupyterStopResult['stopped'])) {
+    $messenger->addMessage(\Drupal::translation()->translate('Stopped Jupyter notebook container @container for user @username.', [
+      '@container' => $jupyterStopResult['containerName'],
+      '@username' => $user->getAccountName(),
+    ]));
+  }
+  elseif (!$jupyterStopResult['success']) {
+    $messenger->addWarning(\Drupal::translation()->translate('Could not stop Jupyter notebook container for user @username. See logs for details.', [
+      '@username' => $user->getAccountName(),
+    ]));
+  }
+
+  // Get the Keycloak user ID.
+  $keycloakUserId = \Drupal::service('soda_scs_manager.project.helpers')->getUserSsoUuid($user);
+
+  // Skip Keycloak delete if user has no SSO link.
+  if ($keycloakUserId === NULL || $keycloakUserId === '') {
+      $logger->notice('User @username has no Keycloak SSO link, skipping Keycloak delete.', ['@username' => $user->getAccountName()]);
+      return;
+  }
+
+  // Delete the user from Nextcloud.
+  if ($keycloakUserId !== NULL && $keycloakUserId !== '') {
+    \Drupal::service('soda_scs_manager.nextcloud.helpers')
+      ->deleteNextcloudAccountForKeycloakUser($keycloakUserId);
+    $messenger->addMessage(\Drupal::translation()->translate('Successfully deleted user from Nextcloud: @username (ID: @id)', [
+      '@username' => $user->getAccountName(),
+      '@id' => $keycloakUserId,
+    ]));
+    $logger->notice('Successfully deleted user from Nextcloud: @username (ID: @id)', [
+      '@username' => $user->getAccountName(),
+      '@id' => $keycloakUserId,
+    ]);
+  }
 
   try {
 
@@ -1220,35 +1255,29 @@ function soda_scs_manager_user_delete(UserInterface $user) {
     $deleteUserParams['type'] = 'user';
     // Set the token.
     $deleteUserParams['token'] = $accessToken;
-    // Extract the Keycloak user ID. Skip Keycloak delete if user has no SSO link.
-    $keycloakUserId = \Drupal::service('soda_scs_manager.project.helpers')->getUserSsoUuid($user);
-    if ($keycloakUserId === NULL || $keycloakUserId === '') {
-      $logger->notice('User @username has no Keycloak SSO link, skipping Keycloak delete.', ['@username' => $user->getAccountName()]);
-    }
-    else {
-      $deleteUserParams['routeParams'] = [
+
+    $deleteUserParams['routeParams'] = [
         'realm' => $keycloakGeneralSettings['realm'],
         'userId' => $keycloakUserId,
       ];
 
-      // Build the delete request.
-      $deleteUserRequest = $keycloakServiceUserActions->buildDeleteRequest($deleteUserParams);
-      // Make the delete request.
-      $deleteUserResponse = $keycloakServiceUserActions->makeRequest($deleteUserRequest);
+    // Build the delete request.
+    $deleteUserRequest = $keycloakServiceUserActions->buildDeleteRequest($deleteUserParams);
+    // Make the delete request.
+    $deleteUserResponse = $keycloakServiceUserActions->makeRequest($deleteUserRequest);
 
-      if ($deleteUserResponse['success']) {
-        $messenger->addMessage(\Drupal::translation()->translate('Successfully deleted user from Keycloak: @username (ID: @id)', [
-          '@username' => $user->getAccountName(),
-          '@id' => $keycloakUserId,
-        ]));
-        $logger->notice('Successfully deleted user from Keycloak: @username (ID: @id)', [
-          '@username' => $user->getAccountName(),
-          '@id' => $keycloakUserId,
-        ]);
-      }
-      else {
-        $logger->error('Failed to delete user from Keycloak: @error', ['@error' => $deleteUserResponse['error']]);
-      }
+    if ($deleteUserResponse['success']) {
+      $messenger->addMessage(\Drupal::translation()->translate('Successfully deleted user from Keycloak: @username (ID: @id)', [
+        '@username' => $user->getAccountName(),
+        '@id' => $keycloakUserId,
+      ]));
+      $logger->notice('Successfully deleted user from Keycloak: @username (ID: @id)', [
+        '@username' => $user->getAccountName(),
+        '@id' => $keycloakUserId,
+      ]);
+    }
+    else {
+      $logger->error('Failed to delete user from Keycloak: @error', ['@error' => $deleteUserResponse['error']]);
     }
   }
   catch (\Exception $e) {
@@ -1675,6 +1704,8 @@ function soda_scs_manager_form_user_login_form_alter(&$form, &$form_state, $form
  */
 function soda_scs_manager_user_login(UserInterface $account) {
   _soda_scs_manager_propagate_keycloak_user_data_to_fields($account);
+  \Drupal::service('soda_scs_manager.nextcloud.helpers')
+    ->invalidateMismatchedStoredCredentials($account);
 
   if (!\Drupal::moduleHandler()->moduleExists('language')) {
     return;

@@ -42,6 +42,10 @@ soda_scs_manager.settings:
               type: string
               label: 'Base URL'
               description: 'The base URL, like https://code.scs.sammlungen.io.'
+            containerNamePrefix:
+              type: string
+              label: 'Notebook container name prefix'
+              description: 'Prefix for DockerSpawner notebook containers (default jupyter-). Full name is prefix plus Drupal account name.'
     keycloak:
       type: mapping
       label: 'Keycloak settings'
@@ -222,6 +226,14 @@ soda_scs_manager.settings:
               type: string
               label: 'Keycloak attribute for Nextcloud app password'
               description: 'Keycloak user attribute name for stored Nextcloud app password (profile scope).'
+            adminUsername:
+              type: string
+              label: 'Nextcloud admin username'
+              description: 'Optional. Required to delete Nextcloud users when a Drupal account is removed.'
+            adminPassword:
+              type: string
+              label: 'Nextcloud admin password'
+              description: 'Optional. Used with admin username for Nextcloud user cleanup on account deletion.'
     triplestore:
       type: mapping
       label: 'Triplestore settings'

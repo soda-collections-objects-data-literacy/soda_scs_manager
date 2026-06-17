@@ -208,6 +208,13 @@ class SodaScsSettingsForm extends ConfigFormBase {
       '#description' => $this->t('The base URL, like https://code.scs.sammlungen.io.'),
     ];
 
+    $form['jupyterhub']['generalSettings']['containerNamePrefix'] = [
+      '#type' => 'textfield',
+      '#title' => $this->t('Notebook container name prefix'),
+      '#default_value' => $this->config('soda_scs_manager.settings')->get('jupyterhub')['generalSettings']['containerNamePrefix'] ?? 'jupyter-',
+      '#description' => $this->t('DockerSpawner notebook container prefix. Full container name is prefix plus Drupal account name (e.g. jupyter-peter).'),
+    ];
+
     // Keycloak settings tab.
     // @see \Drupal\soda_scs_manager\Helpers\SodaScsServiceHelpers::initKeycloakSettings().
     $form['keycloak'] = [
@@ -562,6 +569,20 @@ class SodaScsSettingsForm extends ConfigFormBase {
       '#title' => $this->t('Keycloak attribute for Nextcloud app password'),
       '#default_value' => $this->config('soda_scs_manager.settings')->get('nextcloud')['generalSettings']['keycloakAppPasswordAttr'] ?? 'nextcloud_app_password',
       '#description' => $this->t('Keycloak user attribute name for stored Nextcloud app password (profile scope).'),
+    ];
+
+    $form['nextcloud']['generalSettings']['adminUsername'] = [
+      '#type' => 'textfield',
+      '#title' => $this->t('Nextcloud admin username'),
+      '#default_value' => $this->config('soda_scs_manager.settings')->get('nextcloud')['generalSettings']['adminUsername'] ?? '',
+      '#description' => $this->t('Optional. Required to delete Nextcloud users when a Drupal account is removed via SCS Manager.'),
+    ];
+
+    $form['nextcloud']['generalSettings']['adminPassword'] = [
+      '#type' => 'password',
+      '#title' => $this->t('Nextcloud admin password'),
+      '#description' => $this->t('Optional. Leave blank to keep the current value.'),
+      '#attributes' => ['autocomplete' => 'new-password'],
     ];
 
     // Triplestore settings tab.
@@ -1341,6 +1362,13 @@ class SodaScsSettingsForm extends ConfigFormBase {
     }
 
     $nextcloudValues = $form_state->getValue('nextcloud');
+    $nextcloudAdminPassword = $nextcloudValues['generalSettings']['adminPassword'] ?? NULL;
+    if ($nextcloudAdminPassword === '' || $nextcloudAdminPassword === NULL) {
+      $existingNextcloud = $config->get('nextcloud') ?? [];
+      $nextcloudValues['generalSettings']['adminPassword']
+        = $existingNextcloud['generalSettings']['adminPassword'] ?? '';
+    }
+
     $triplestoreValues = $form_state->getValue('triplestore');
     $triplestoreAdminPassword = $triplestoreValues['generalSettings']['adminPassword'] ?? NULL;
     if ($triplestoreAdminPassword === '' || $triplestoreAdminPassword === NULL) {

@@ -15,6 +15,7 @@ use Drupal\Core\StringTranslation\StringTranslationTrait;
 use Drupal\Core\TypedData\Exception\MissingDataException;
 use Drupal\soda_scs_manager\Entity\SodaScsComponent;
 use Drupal\soda_scs_manager\Entity\SodaScsStack;
+use Drupal\soda_scs_manager\Helpers\SodaScsJupyterHelpers;
 use Drupal\soda_scs_manager\RequestActions\SodaScsServiceRequestInterface;
 use Drupal\soda_scs_manager\ServiceActions\SodaScsServiceActionsInterface;
 
@@ -241,6 +242,8 @@ class SodaScsServiceHelpers {
   public function initJupyterHubSettings() {
     $jupyterHubSettings['name'] = 'JupyterHub';
     $jupyterHubSettings['baseUrl'] = $this->settings->get('jupyterhub.generalSettings.baseUrl');
+    $jupyterHubSettings['containerNamePrefix'] = $this->settings->get('jupyterhub.generalSettings.containerNamePrefix')
+      ?: SodaScsJupyterHelpers::DEFAULT_CONTAINER_NAME_PREFIX;
 
     $this->checkSettings($jupyterHubSettings);
 
@@ -347,6 +350,8 @@ class SodaScsServiceHelpers {
     $nextcloudSettings['baseUrl'] = $this->settings->get('nextcloud.generalSettings.baseUrl');
     $nextcloudSettings['oidcUsernamePrefix'] = $this->settings->get('nextcloud.generalSettings.oidcUsernamePrefix') ?? 'keycloak-';
     $nextcloudSettings['useBearerToken'] = (bool) ($this->settings->get('nextcloud.generalSettings.useBearerToken') ?? FALSE);
+    $nextcloudSettings['adminUsername'] = $this->settings->get('nextcloud.generalSettings.adminUsername') ?: '{empty}';
+    $nextcloudSettings['adminPassword'] = $this->settings->get('nextcloud.generalSettings.adminPassword') ?: '{empty}';
 
     $this->checkSettings($nextcloudSettings);
 

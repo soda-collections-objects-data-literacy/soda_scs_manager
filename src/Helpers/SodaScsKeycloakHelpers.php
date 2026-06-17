@@ -183,6 +183,38 @@ class SodaScsKeycloakHelpers {
   }
 
   /**
+   * Removes Keycloak user attributes (merges with existing user representation).
+   *
+   * @param string $keycloakUserId
+   *   The Keycloak user ID (OIDC sub claim).
+   * @param array $attributeNames
+   *   Attribute keys to remove.
+   *
+   * @return bool
+   *   TRUE on success, FALSE on failure.
+   */
+  public function removeKeycloakUserAttributes(string $keycloakUserId, array $attributeNames): bool {
+    $user = $this->getKeycloakUserById($keycloakUserId);
+    if ($user === NULL) {
+      return FALSE;
+    }
+    $existing = $user['attributes'] ?? [];
+    foreach ($attributeNames as $name) {
+      unset($existing[$name]);
+    }
+    $user['attributes'] = $existing;
+
+    $request = $this->sodaScsKeycloakServiceUserActions->buildUpdateRequest([
+      'type' => 'updateUser',
+      'routeParams' => ['userId' => $keycloakUserId],
+      'body' => $user,
+      'token' => $this->getKeycloakToken(),
+    ]);
+    $response = $this->sodaScsKeycloakServiceUserActions->makeRequest($request);
+    return $response['success'];
+  }
+
+  /**
    * Add user to keycloak group.
    *
    * @param string $userId
