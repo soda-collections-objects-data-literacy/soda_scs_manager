@@ -450,6 +450,7 @@ class SodaScsManagerController extends ControllerBase {
     ];
 
     $this->attachCoworkingIntroForUser($build, $uid);
+    _soda_scs_manager_attach_nextcloud_connect_settings($build);
 
     return $build;
   }
@@ -524,6 +525,7 @@ class SodaScsManagerController extends ControllerBase {
     if (!in_array('soda_scs_manager/nextcloudConnect', $build['#attached']['library'], TRUE)) {
       $build['#attached']['library'][] = 'soda_scs_manager/nextcloudConnect';
     }
+    _soda_scs_manager_attach_nextcloud_connect_settings($build);
 
     $introCompleteUrl = Url::fromRoute('soda_scs_manager.coworking_intro_complete', [], [
       'language' => $lang,

@@ -18,12 +18,17 @@ use Drupal\soda_scs_manager\RequestActions\SodaScsNextcloudServiceActions;
  * Helper class for Nextcloud operations.
  *
  * Supports two credential flows:
- * - OIDC Bearer: createAppPassword (requires shared Keycloak client).
+ * - OIDC Bearer: validate token, then create app password (OCS or occ fallback).
  * - Login Flow v2: credentials stored in Keycloak via Connect flow.
  */
 class SodaScsNextcloudHelpers {
 
   use StringTranslationTrait;
+
+  /**
+   * Default Docker container for occ app-password provisioning.
+   */
+  public const DEFAULT_OCC_CONTAINER = 'nextcloud--nextcloud';
 
   /**
    * Keycloak attribute for stored Nextcloud username (profile scope).
@@ -54,6 +59,8 @@ class SodaScsNextcloudHelpers {
    *   The project helpers.
    * @param \Drupal\Core\Logger\LoggerChannelFactoryInterface $loggerFactory
    *   The logger factory.
+   * @param \Drupal\soda_scs_manager\Helpers\SodaScsContainerHelpers $containerHelpers
+   *   Docker exec helper for occ fallbacks on SSO-only accounts.
    */
   public function __construct(
     #[Autowire(service: 'soda_scs_manager.nextcloud_service.actions')]
@@ -71,7 +78,28 @@ class SodaScsNextcloudHelpers {
     #[Autowire(service: 'soda_scs_manager.project.helpers')]
     protected SodaScsProjectHelpers $projectHelpers,
     protected LoggerChannelFactoryInterface $loggerFactory,
+    #[Autowire(service: 'soda_scs_manager.container.helpers')]
+    protected SodaScsContainerHelpers $containerHelpers,
   ) {}
+
+  /**
+   * User-facing message when Drive SSO or credential provisioning fails.
+   */
+  public function getUserFacingSsoConnectionError(): string {
+    return (string) $this->t(
+      'Connecting Drive via SSO failed. Please try again. If the problem persists, contact your site administrator.'
+    );
+  }
+
+  /**
+   * Logs technical Nextcloud SSO failure details for administrators.
+   */
+  protected function logNextcloudSsoFailure(string $operation, string $detail): void {
+    $this->loggerFactory->get('soda_scs_manager')->warning(
+      'Nextcloud SSO @operation failed: @detail',
+      ['@operation' => $operation, '@detail' => $detail],
+    );
+  }
 
   /**
    * Returns the Keycloak attribute name for storing the Nextcloud username.
@@ -101,7 +129,7 @@ class SodaScsNextcloudHelpers {
    *   TRUE if the credentials work.
    */
   public function testStoredCredentials(string $username, string $appPassword): bool {
-    $username = $this->normalizeNextcloudUsername($username);
+    $username = $this->resolveOccUsername($username);
     $requestParams = [
       'appName' => 'test',
       'username' => $username,
@@ -303,7 +331,11 @@ class SodaScsNextcloudHelpers {
   public function storedUsernameMatchesKeycloakSub(string $keycloakUserId, string $storedUsername): bool {
     $expected = $this->expectedNextcloudUsernameForKeycloakId($keycloakUserId);
     $normalized = $this->normalizeNextcloudUsername($storedUsername);
-    return strcasecmp($normalized, $expected) === 0;
+    if (strcasecmp($normalized, $expected) === 0) {
+      return TRUE;
+    }
+    // Legacy Drive accounts (e.g. sociallogin) may use the raw Keycloak sub.
+    return strcasecmp($storedUsername, $keycloakUserId) === 0;
   }
 
   /**
@@ -331,9 +363,67 @@ class SodaScsNextcloudHelpers {
     }
 
     return [
-      'username' => $this->normalizeNextcloudUsername($username),
+      'username' => $username,
       'appPassword' => $appPassword,
     ];
+  }
+
+  /**
+   * Resolves the Nextcloud account id used for occ and Basic auth.
+   *
+   * Prefer the raw id from cloud/user. Legacy sociallogin users often use the
+   * Keycloak sub without the user_oidc prefix.
+   */
+  protected function resolveOccUsername(string $cloudUserId): string {
+    $prefix = $this->nextcloudServiceActions->getOidcUsernamePrefix();
+    if ($prefix !== '' && str_starts_with($cloudUserId, $prefix)) {
+      $without = substr($cloudUserId, strlen($prefix));
+      if (preg_match('/^[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$/i', $without)) {
+        return $without;
+      }
+    }
+    return $cloudUserId;
+  }
+
+  /**
+   * Creates an app password via occ (SSO accounts cannot use OCS getapppassword).
+   */
+  protected function createAppPasswordViaOcc(string $cloudUserId): ?string {
+    $container = (string) ($this->configFactory->get('soda_scs_manager.settings')
+      ->get('nextcloud.generalSettings.occContainerName') ?? '');
+    if ($container === '') {
+      $container = self::DEFAULT_OCC_CONTAINER;
+    }
+
+    $occUser = $this->resolveOccUsername($cloudUserId);
+    $result = $this->containerHelpers->executeDockerExecCommand([
+      'cmd' => [
+        'php',
+        '/var/www/html/occ',
+        'user:add-app-password',
+        $occUser,
+        '-n',
+        '--no-warnings',
+      ],
+      'containerName' => $container,
+      'user' => 'www-data',
+    ]);
+
+    if (!$result->success) {
+      $this->logNextcloudSsoFailure(
+        'occ app password',
+        (string) ($result->error ?? 'docker exec failed')
+      );
+      return NULL;
+    }
+
+    $output = (string) ($result->data['output'] ?? '');
+    if (preg_match('/app password:\s*(\S+)/i', $output, $matches)) {
+      return $matches[1];
+    }
+
+    $this->logNextcloudSsoFailure('occ app password', 'could not parse occ output');
+    return NULL;
   }
 
   /**
@@ -362,25 +452,11 @@ class SodaScsNextcloudHelpers {
     }
 
     $accessToken = $this->openIdConnectSession->retrieveAccessToken(FALSE);
-    $idToken = $this->openIdConnectSession->retrieveIdToken(FALSE);
-
-    if (empty($accessToken) && empty($idToken)) {
+    if (empty($accessToken)) {
       throw new \Exception('No OIDC access token found. Log in via Keycloak first.');
     }
 
-    $tokensToTry = array_filter([$accessToken, $idToken]);
-    $lastError = NULL;
-
-    foreach ($tokensToTry as $token) {
-      try {
-        return $this->testNextcloudTokenWithToken($token, $timeout);
-      }
-      catch (\Exception $e) {
-        $lastError = $e;
-      }
-    }
-
-    throw $lastError ?? new \Exception('Nextcloud rejected the token.');
+    return $this->testNextcloudTokenWithToken($accessToken, $timeout);
   }
 
   /**
@@ -407,18 +483,22 @@ class SodaScsNextcloudHelpers {
     $getRequest['timeout'] = $timeout;
     $getResponse = $this->nextcloudServiceActions->makeRequest($getRequest);
     if (!$getResponse['success']) {
-      throw new \Exception('Nextcloud rejected the token: ' . $getResponse['error']);
+      $this->logNextcloudSsoFailure(
+        'token validation',
+        (string) ($getResponse['error'] ?? 'unknown error')
+      );
+      throw new \Exception($this->getUserFacingSsoConnectionError());
     }
 
     $userBody = json_decode((string) $getResponse['data']['nextcloudResponse']->getBody()->getContents(), TRUE);
     $data = $userBody['ocs']['data'] ?? [];
     $username = $data['id'] ?? $data['userid'] ?? $data['user_id'] ?? NULL;
     if (empty($username)) {
-      throw new \Exception('Failed to get Nextcloud username from response.');
+      $this->logNextcloudSsoFailure('token validation', 'cloud/user response missing username');
+      throw new \Exception($this->getUserFacingSsoConnectionError());
     }
-    $username = $this->normalizeNextcloudUsername($username);
 
-    return ['username' => $username];
+    return ['username' => $this->resolveOccUsername($username)];
   }
 
   /**
@@ -520,36 +600,46 @@ class SodaScsNextcloudHelpers {
     $getRequest = $this->nextcloudServiceActions->buildGetRequest($requestParams);
     $getResponse = $this->nextcloudServiceActions->makeRequest($getRequest);
     if (!$getResponse['success']) {
-      // Provide a hint if the OIDC token exists but the request failed,
-      // possibly due to user mismatch between Drupal and Keycloak session.
-      if (!empty($token)) {
-        $this->messenger->addWarning($this->t('You may be logged in to Keycloak with a different user than your Drupal account. Please ensure you are logged in with the correct Keycloak user.'));
-      }
-      throw new \Exception('Failed to get Nextcloud user info: ' . $getResponse['error']);
+      $this->logNextcloudSsoFailure(
+        'app password user lookup',
+        (string) ($getResponse['error'] ?? 'unknown error')
+      );
+      throw new \Exception($this->getUserFacingSsoConnectionError());
     }
 
     $userBody = json_decode((string) $getResponse['data']['nextcloudResponse']->getBody()->getContents(), TRUE);
     $username = $userBody['ocs']['data']['id'] ?? NULL;
     if (empty($username)) {
-      throw new \Exception('Failed to get Nextcloud username');
+      $this->logNextcloudSsoFailure('app password user lookup', 'cloud/user response missing username');
+      throw new \Exception($this->getUserFacingSsoConnectionError());
     }
-    $username = $this->normalizeNextcloudUsername($username);
+    $authUsername = $this->resolveOccUsername($username);
 
-    // Create the app password.
+    // Create the app password (OCS getapppassword does not work for SSO bearer).
     $createRequest = $this->nextcloudServiceActions->buildCreateRequest($requestParams);
     $createResponse = $this->nextcloudServiceActions->makeRequest($createRequest);
-    if (!$createResponse['success']) {
-      throw new \Exception('Failed to create Nextcloud app password: ' . $createResponse['error']);
+    $appPassword = NULL;
+    if ($createResponse['success']) {
+      $createBody = json_decode((string) $createResponse['data']['nextcloudResponse']->getBody()->getContents(), TRUE);
+      $appPassword = $createBody['ocs']['data']['apppassword'] ?? NULL;
+    }
+    else {
+      $this->logNextcloudSsoFailure(
+        'app password creation (OCS)',
+        (string) ($createResponse['error'] ?? 'unknown error')
+      );
     }
 
-    $createBody = json_decode((string) $createResponse['data']['nextcloudResponse']->getBody()->getContents(), TRUE);
-    $appPassword = $createBody['ocs']['data']['apppassword'] ?? NULL;
     if (empty($appPassword)) {
-      throw new \Exception('Failed to get Nextcloud app password');
+      $appPassword = $this->createAppPasswordViaOcc($username);
+    }
+
+    if (empty($appPassword)) {
+      throw new \Exception($this->getUserFacingSsoConnectionError());
     }
 
     return [
-      'username' => $username,
+      'username' => $authUsername,
       'appPassword' => $appPassword,
     ];
   }

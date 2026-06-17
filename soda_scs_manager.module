@@ -1411,6 +1411,19 @@ function _soda_scs_manager_coworking_intro_show_on_front_page(): bool {
 }
 
 /**
+ * Attaches Nextcloud Connect drupalSettings (Bearer vs Login Flow v2 mode).
+ *
+ * @param array $attachments
+ *   Render array #attached section (by reference).
+ */
+function _soda_scs_manager_attach_nextcloud_connect_settings(array &$attachments): void {
+  $settings = \Drupal::config('soda_scs_manager.settings')->get('nextcloud')['generalSettings'] ?? [];
+  $attachments['#attached']['drupalSettings']['sodaScsManager']['nextcloudConnect'] = [
+    'useBearerToken' => (bool) ($settings['useBearerToken'] ?? FALSE),
+  ];
+}
+
+/**
  * Absolute URL path (with leading slash) to a module static file if it is readable.
  *
  * Honors Drupal's base path (e.g. /subdir) when the site is not at the domain root.
@@ -1551,6 +1564,7 @@ function soda_scs_manager_page_attachments(array &$attachments) {
     if (!in_array('soda_scs_manager/nextcloudConnect', $attachments['#attached']['library'], TRUE)) {
       $attachments['#attached']['library'][] = 'soda_scs_manager/nextcloudConnect';
     }
+    _soda_scs_manager_attach_nextcloud_connect_settings($attachments);
     $attachments['#attached']['drupalSettings']['sodaScsManager']['throbberPrimaryMessage'] = (string) t('Creating your WissKI environment. Please do not close this window.');
     $attachments['#attached']['drupalSettings']['sodaScsManager']['throbberInfo'] = (string) t('Please note: After creating the WissKI Environment, it can take up to 5 minutes to setup everything.<br><br>Please check the health status to monitor the startup progress.');
     $attachments['#attached']['drupalSettings']['sodaScsManager']['coworkingIntro'] = [
@@ -1609,6 +1623,7 @@ function soda_scs_manager_page_bottom(array &$page_bottom): void {
  */
 function soda_scs_manager_form_openid_connect_accounts_form_alter(&$form, &$form_state, $form_id) {
   $form['#attached']['library'][] = 'soda_scs_manager/nextcloudConnect';
+  _soda_scs_manager_attach_nextcloud_connect_settings($form);
 
   $form['soda_scs_nextcloud'] = [
     '#type' => 'fieldset',
@@ -1634,13 +1649,13 @@ function soda_scs_manager_form_openid_connect_accounts_form_alter(&$form, &$form
 
   $form['soda_scs_nextcloud']['wrapper']['fallback_hint'] = [
     '#type' => 'markup',
-    '#markup' => '<p class="scs-manager--nextcloud-connect-fallback-hint" style="margin-top:0.5em;font-size:0.9em;color:#666;">' . \Drupal::translation()->translate('If SSO does not work, connect via app password:') . '</p>',
+    '#markup' => '<p class="scs-manager--nextcloud-connect-fallback-hint" style="margin-top:0.5em;font-size:0.9em;color:#666;">' . \Drupal::translation()->translate('If SSO connection check fails, log out and sign in again, or contact your administrator.') . '</p>',
     '#weight' => 1,
   ];
 
   $form['soda_scs_nextcloud']['wrapper']['connect'] = [
     '#type' => 'button',
-    '#value' => \Drupal::translation()->translate('Connect via app password'),
+    '#value' => \Drupal::translation()->translate('Check Nextcloud connection'),
     '#attributes' => [
       'class' => ['scs-manager--nextcloud-connect-btn', 'button'],
       'type' => 'button',

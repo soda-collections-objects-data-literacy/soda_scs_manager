@@ -93,15 +93,15 @@
         </div>
       </div>
 
-      {# Slide 3: shared Nextcloud connect UI (library soda_scs_manager/nextcloudConnect). #}
-      <div class="scs-manager--coworking-intro-slide scs-manager--coworking-intro-slide--hidden" data-coworking-intro-slide="3">
+      {# Slide 3: manual Drive connect — only reached when automatic SSO check failed (coworkingIntroWizard.js). #}
+      <div class="scs-manager--coworking-intro-slide scs-manager--coworking-intro-slide--hidden" data-coworking-intro-slide="3" data-coworking-intro-nextcloud-slide>
         <div class="scs-manager--coworking-intro-copy-rise" data-coworking-intro-copy-rise>
           <h3 class="scs-manager--coworking-intro-subtitle">{{ 'Connect Nextcloud'|t }}</h3>
-          <p class="scs-manager--coworking-intro-slide-lede">{{ 'A working Nextcloud connection is necessary so data and files can flow between WissKI and your other applications. Start the connection here, or later from your account settings.'|t }}</p>
+          <p class="scs-manager--coworking-intro-slide-lede">{{ 'Automatic SSO connection to Drive did not work. Connect manually once via the button below — a popup opens where you sign in with Keycloak. Allow popups for this site when prompted.'|t }}</p>
           <div class="scs-manager--nextcloud-connect-wrapper scs-manager--nextcloud-connect-inline">
-            <button type="button" class="scs-manager--nextcloud-connect-btn">{{ 'Connect Nextcloud'|t }}</button>
+            <button type="button" class="scs-manager--nextcloud-connect-btn">{{ 'Connect Drive manually'|t }}</button>
             <p class="scs-manager--nextcloud-connect-status-inline scs-manager--coworking-intro-nextcloud-status" data-status="unknown">{{ 'Checking connection…'|t }}</p>
-            <p class="scs-manager--nextcloud-connect-fallback-hint scs-manager--coworking-intro-nextcloud-hint">{{ 'Allow popups for this site when prompted. If login fails, try again or use Connected Accounts below.'|t }}</p>
+            <p class="scs-manager--nextcloud-connect-fallback-hint scs-manager--coworking-intro-nextcloud-hint">{{ 'If login fails, log out of SCS Manager and sign in again, or continue later via Connected Accounts.'|t }}</p>
           </div>
           <p class="scs-manager--coworking-intro-sso-note">{{ 'For OpenID / SSO account linking:'|t }} <a href="{{ intro_connected_accounts_url }}" class="scs-manager--coworking-intro-text-link">{{ 'Open Connected Accounts'|t }}</a></p>
         </div>

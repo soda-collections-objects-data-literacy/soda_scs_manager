@@ -553,8 +553,8 @@ class SodaScsSettingsForm extends ConfigFormBase {
     $form['nextcloud']['generalSettings']['useBearerToken'] = [
       '#type' => 'checkbox',
       '#title' => $this->t('Use OIDC Bearer token for Nextcloud'),
-      '#default_value' => $this->config('soda_scs_manager.settings')->get('nextcloud')['generalSettings']['useBearerToken'] ?? FALSE,
-      '#description' => $this->t('When enabled, SCS Manager creates app passwords via Bearer token (no browser popup). When disabled (default), users must connect via the browser popup (Login Flow v2) at Connected Accounts. Disable for debugging or when tokens are unstable.'),
+      '#default_value' => $this->config('soda_scs_manager.settings')->get('nextcloud')['generalSettings']['useBearerToken'] ?? TRUE,
+      '#description' => $this->t('When enabled (recommended), SCS Manager verifies Drive using the user’s Keycloak OIDC session — no browser popup. Requires Nextcloud user_oidc Bearer validation and a Keycloak audience mapper. When disabled, users connect via Login Flow v2 popup at Connected Accounts.'),
     ];
 
     $form['nextcloud']['generalSettings']['keycloakUsernameAttr'] = [

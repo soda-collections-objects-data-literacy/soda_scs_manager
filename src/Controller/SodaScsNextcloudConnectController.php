@@ -154,8 +154,6 @@ class SodaScsNextcloudConnectController extends ControllerBase {
       ], 502);
     }
 
-    $loginName = $this->nextcloudHelpers->normalizeNextcloudUsername($loginName);
-
     $user = $this->entityTypeManager()->getStorage('user')->load($this->currentUser()->id());
     if (!$user) {
       return new JsonResponse(['error' => 'User not found'], 500);
@@ -195,9 +193,11 @@ class SodaScsNextcloudConnectController extends ControllerBase {
   /**
    * Checks Nextcloud connection status.
    *
-   * Tries Bearer token (OIDC) first. If that fails, falls back to stored
-   * credentials (Login Flow v2). Returns connection method so the UI can
-   * show "Connected via SSO" (bearer) or "Connected via app password" (stored).
+   * When Bearer mode is enabled, ensures app-password credentials exist in
+   * Keycloak (via ensureCredentials) so WissKI/JupyterHub can use them — a
+   * successful token probe alone is not enough.
+   *
+   * Falls back to stored credentials from Login Flow v2 when Bearer fails.
    *
    * @return \Symfony\Component\HttpFoundation\JsonResponse
    *   JSON with connected, method ('bearer'|'stored'), and optionally username.
@@ -218,25 +218,34 @@ class SodaScsNextcloudConnectController extends ControllerBase {
       ], 200);
     }
 
-    // Primary: try Bearer token (OIDC) when enabled - skip when disabled.
     $bearerError = NULL;
     if ($this->nextcloudServiceActions->getUseBearerToken()) {
-      try {
-        $result = $this->nextcloudHelpers->testNextcloudToken($user);
+      $hadStored = $this->nextcloudHelpers->getValidatedStoredNextcloudCredentials($user) !== NULL;
+      $appName = 'SCS Manager (' . $user->getAccountName() . ')';
+      $credentials = $this->nextcloudHelpers->ensureCredentials($user, $appName);
+      if ($credentials !== NULL) {
         return new JsonResponse([
           'connected' => TRUE,
-          'method' => 'bearer',
-          'username' => $result['username'] ?? NULL,
+          'method' => $hadStored ? 'stored' : 'bearer',
+          'username' => $credentials['username'],
+          'credentials_ready' => TRUE,
         ], 200);
       }
-      catch (\Exception $e) {
-        $bearerError = $e->getMessage();
-        $this->getLogger('soda_scs_manager')->debug(
-          'Nextcloud Bearer check failed: @error',
-          ['@error' => $bearerError]
+
+      try {
+        $this->nextcloudHelpers->testNextcloudToken($user);
+        $this->getLogger('soda_scs_manager')->warning(
+          'Nextcloud SSO token validated but app credentials could not be provisioned for user @uid.',
+          ['@uid' => $user->id()]
         );
-        // Bearer failed; fall back to stored credentials (Login Flow v2).
       }
+      catch (\Exception $e) {
+        $this->getLogger('soda_scs_manager')->warning(
+          'Nextcloud SSO status check failed for user @uid: @error',
+          ['@uid' => $user->id(), '@error' => $e->getMessage()]
+        );
+      }
+      $bearerError = $this->nextcloudHelpers->getUserFacingSsoConnectionError();
     }
 
     $keycloakUserId = $this->projectHelpers->getUserSsoUuid($user);
