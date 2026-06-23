@@ -183,11 +183,18 @@
       const data = await parseJsonResponse(res);
       if (!data.connected) {
         if (useBearerToken()) {
-          setModalState(container, 'error', getSsoFailureMessage());
+          const message = data.bearer_error
+            ? getSsoFailureMessage()
+            : Drupal.t('Drive is not connected yet.');
+          setModalState(container, 'error', message);
+          setConnectButtonsVisible(container, true);
         }
         showModal(container);
       }
-    } catch (_) {}
+    } catch (_) {
+      setConnectButtonsVisible(container, true);
+      showModal(container);
+    }
   }
 
   function getDisconnectedMessage(data) {
@@ -361,19 +368,35 @@
     }
   }
 
+  async function fetchConnectionStatus() {
+    try {
+      return await fetchNextcloudStatus();
+    } catch (_) {
+      return { connected: false };
+    }
+  }
+
+  /**
+   * When Bearer SSO is enabled but fails, fall back to Login Flow v2 popup.
+   */
+  async function runBearerOrManualConnect(container, onSuccess) {
+    setModalState(container, 'loading', Drupal.t('Checking SSO connection…'));
+    const data = await fetchConnectionStatus();
+    if (data.connected) {
+      await updateInlineStatus(container);
+      setModalState(container, 'success', Drupal.t('Nextcloud connected via SSO'), data.method || 'bearer');
+      hideModal(container);
+      if (onSuccess) {
+        onSuccess();
+      }
+      return;
+    }
+    await runManualConnectFlow(container, onSuccess);
+  }
+
   async function runConnectFlow(container, onSuccess) {
     if (useBearerToken()) {
-      setModalState(container, 'loading', Drupal.t('Checking SSO connection…'));
-      await updateInlineStatus(container, true);
-      const statusEl = container.querySelector('.scs-manager--nextcloud-connect-status-inline');
-      if (statusEl?.dataset.status === 'connected') {
-        setModalState(container, 'success', Drupal.t('Nextcloud connected via SSO'), 'bearer');
-        hideModal(container);
-        if (onSuccess) onSuccess();
-      } else {
-        const message = statusEl?.textContent || Drupal.t('Drive is not reachable via SSO.');
-        setModalState(container, 'error', message);
-      }
+      await runBearerOrManualConnect(container, onSuccess);
       return;
     }
 
@@ -385,6 +408,7 @@
     useBearerToken,
     updateInlineStatus,
     runManualConnectFlow,
+    runBearerOrManualConnect,
   };
 
   Drupal.behaviors.nextcloudConnect = {
@@ -396,24 +420,8 @@
         getConnectButtons(container).forEach((connectBtn) => {
           connectBtn.addEventListener('click', () => {
             const onSuccess = isInline ? () => updateInlineStatus(container) : undefined;
-            const inIntroWizard = Boolean(container.closest('#scs-manager--coworking-intro'));
-            const statusEl = container.querySelector('.scs-manager--nextcloud-connect-status-inline');
-            const needsManual =
-              inIntroWizard &&
-              statusEl &&
-              statusEl.dataset.status !== 'connected' &&
-              statusEl.dataset.status !== 'checking';
-
-            if (needsManual) {
-              runManualConnectFlow(container, onSuccess);
-              return;
-            }
             if (useBearerToken()) {
-              updateInlineStatus(container, true).then(() => {
-                if (onSuccess && container.querySelector('.scs-manager--nextcloud-connect-status-inline')?.dataset.status === 'connected') {
-                  onSuccess();
-                }
-              });
+              runBearerOrManualConnect(container, onSuccess);
               return;
             }
             runConnectFlow(container, onSuccess);

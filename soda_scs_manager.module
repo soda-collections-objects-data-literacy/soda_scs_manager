@@ -1649,13 +1649,13 @@ function soda_scs_manager_form_openid_connect_accounts_form_alter(&$form, &$form
 
   $form['soda_scs_nextcloud']['wrapper']['fallback_hint'] = [
     '#type' => 'markup',
-    '#markup' => '<p class="scs-manager--nextcloud-connect-fallback-hint" style="margin-top:0.5em;font-size:0.9em;color:#666;">' . \Drupal::translation()->translate('If SSO connection check fails, log out and sign in again, or contact your administrator.') . '</p>',
+    '#markup' => '<p class="scs-manager--nextcloud-connect-fallback-hint" style="margin-top:0.5em;font-size:0.9em;color:#666;">' . \Drupal::translation()->translate('If automatic SSO fails, use Connect Drive manually and sign in with the same Keycloak account as SCS Manager.') . '</p>',
     '#weight' => 1,
   ];
 
   $form['soda_scs_nextcloud']['wrapper']['connect'] = [
     '#type' => 'button',
-    '#value' => \Drupal::translation()->translate('Check Nextcloud connection'),
+    '#value' => \Drupal::translation()->translate('Connect Drive manually'),
     '#attributes' => [
       'class' => ['scs-manager--nextcloud-connect-btn', 'button'],
       'type' => 'button',

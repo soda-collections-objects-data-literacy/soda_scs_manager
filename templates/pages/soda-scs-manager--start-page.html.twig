@@ -21,12 +21,12 @@
     <div class="scs-manager--nextcloud-connect-modal hidden fixed inset-0 z-50 flex items-center justify-center bg-black/50" aria-hidden="true" role="dialog" aria-labelledby="nextcloud-connect-title">
       <div class="scs-manager--nextcloud-connect-modal-content bg-white rounded-lg shadow-xl p-6 max-w-md mx-4">
         <h2 id="nextcloud-connect-title" class="text-xl font-semibold mb-4">{{ 'Nextcloud connection'|t }}</h2>
-        <p class="text-gray-600 mb-4">{{ 'SCS Manager uses your Keycloak session to reach Drive. If the automatic check below fails, use Retry or sign out and back in. You can also verify later from your <a href=":url">Connected Accounts</a> page.'|t({':url': connected_accounts_url}) }}</p>
+        <p class="text-gray-600 mb-4">{{ 'SCS Manager tries to connect Drive automatically via SSO. If that fails, click <strong>Connect Drive manually</strong> and sign in with the same Keycloak account you use for SCS Manager. You can also verify later from your <a href=":url">Connected Accounts</a> page.'|t({':url': connected_accounts_url}) }}</p>
         <p class="scs-manager--nextcloud-connect-status hidden mb-2 text-sm"></p>
         <p class="scs-manager--nextcloud-connect-error hidden mb-2 text-sm text-red-600"></p>
         <div class="flex gap-2">
           <button type="button" class="scs-manager--nextcloud-connect-btn px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700">
-            {{ 'Retry connection check'|t }}
+            {{ 'Connect Drive manually'|t }}
           </button>
           <button type="button" class="scs-manager--nextcloud-connect-dismiss px-4 py-2 border rounded hover:bg-gray-100">
             {{ 'Later'|t }}

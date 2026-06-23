@@ -129,7 +129,6 @@ class SodaScsNextcloudHelpers {
    *   TRUE if the credentials work.
    */
   public function testStoredCredentials(string $username, string $appPassword): bool {
-    $username = $this->resolveOccUsername($username);
     $requestParams = [
       'appName' => 'test',
       'username' => $username,
@@ -613,7 +612,6 @@ class SodaScsNextcloudHelpers {
       $this->logNextcloudSsoFailure('app password user lookup', 'cloud/user response missing username');
       throw new \Exception($this->getUserFacingSsoConnectionError());
     }
-    $authUsername = $this->resolveOccUsername($username);
 
     // Create the app password (OCS getapppassword does not work for SSO bearer).
     $createRequest = $this->nextcloudServiceActions->buildCreateRequest($requestParams);
@@ -639,7 +637,7 @@ class SodaScsNextcloudHelpers {
     }
 
     return [
-      'username' => $authUsername,
+      'username' => $username,
       'appPassword' => $appPassword,
     ];
   }
