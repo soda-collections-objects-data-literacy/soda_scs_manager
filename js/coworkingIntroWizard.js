@@ -70,6 +70,86 @@
     });
   }
 
+  /** Slide is omitted when automatic SSO already connected Drive. */
+  const COWORKING_INTRO_SKIP_NEXTCLOUD_ATTR = 'data-coworking-intro-skip-nextcloud-slide';
+
+  /**
+   * @param {HTMLElement} root
+   * @return {boolean}
+   */
+  function shouldSkipNextcloudSlide(root) {
+    return root.getAttribute(COWORKING_INTRO_SKIP_NEXTCLOUD_ATTR) === 'true';
+  }
+
+  /**
+   * @param {HTMLElement} root
+   * @param {number} index
+   * @return {number}
+   */
+  function nextSlideIndex(root, index) {
+    if (index === SLIDE_NEXTCLOUD - 1 && shouldSkipNextcloudSlide(root)) {
+      return SLIDE_WISSKI_FORM;
+    }
+    if (index < SLIDE_SUCCESS) {
+      return index + 1;
+    }
+    return index;
+  }
+
+  /**
+   * @param {HTMLElement} root
+   * @param {number} index
+   * @return {number}
+   */
+  function prevSlideIndex(root, index) {
+    if (index === SLIDE_WISSKI_FORM && shouldSkipNextcloudSlide(root)) {
+      return SLIDE_NEXTCLOUD - 1;
+    }
+    if (index > 0) {
+      return index - 1;
+    }
+    return index;
+  }
+
+  /**
+   * @param {HTMLElement} root
+   * @param {number} index
+   * @param {number} total
+   * @return {{current: number, total: number}}
+   */
+  function getStepDisplay(root, index, total) {
+    const skip = shouldSkipNextcloudSlide(root);
+    const effectiveTotal = skip ? total - 1 : total;
+    let current = index + 1;
+    if (skip && index > SLIDE_NEXTCLOUD) {
+      current -= 1;
+    }
+    return { current, total: effectiveTotal };
+  }
+
+  /**
+   * Probes Drive SSO once; sets skip flag on the intro root when already connected.
+   *
+   * @param {HTMLElement} root
+   * @return {Promise<boolean>} True when slide 3 can be skipped.
+   */
+  async function probeNextcloudSsoForIntro(root) {
+    const api = Drupal.sodaScsManagerNextcloudConnect;
+    if (!api?.fetchStatus) {
+      root.setAttribute(COWORKING_INTRO_SKIP_NEXTCLOUD_ATTR, 'false');
+      return false;
+    }
+    try {
+      const data = await api.fetchStatus();
+      const skip = Boolean(data.connected && data.credentials_ready !== false);
+      root.setAttribute(COWORKING_INTRO_SKIP_NEXTCLOUD_ATTR, skip ? 'true' : 'false');
+      return skip;
+    } catch (e) {
+      root.setAttribute(COWORKING_INTRO_SKIP_NEXTCLOUD_ATTR, 'false');
+      return false;
+    }
+  }
+
   /**
    * @param {HTMLElement} root
    * @return {boolean}
@@ -298,9 +378,10 @@
 
     const label = root.querySelector('[data-coworking-intro-step-label]');
     if (label) {
+      const display = getStepDisplay(root, index, total);
       label.textContent = Drupal.t('Step @current of @total', {
-        '@current': String(index + 1),
-        '@total': String(total),
+        '@current': String(display.current),
+        '@total': String(display.total),
       });
     }
 
@@ -452,6 +533,18 @@
 
     updateStepUi(root, index, total, nextBtn);
 
+    probeNextcloudSsoForIntro(root).then((skipped) => {
+      if (skipped) {
+        updateStepUi(root, index, total, nextBtn);
+      } else {
+        const ncContainer = root.querySelector('.scs-manager--nextcloud-connect-wrapper');
+        const api = Drupal.sodaScsManagerNextcloudConnect;
+        if (ncContainer && api?.updateInlineStatus) {
+          api.updateInlineStatus(ncContainer, true);
+        }
+      }
+    });
+
     const statusInline = root.querySelector('.scs-manager--nextcloud-connect-status-inline');
     if (statusInline && nextBtn) {
       const statusObserver = new MutationObserver(() => {
@@ -463,12 +556,15 @@
     }
 
     if (nextBtn) {
-      nextBtn.addEventListener('click', () => {
+      nextBtn.addEventListener('click', async () => {
         if (nextBtn.disabled) {
           return;
         }
+        if (index === SLIDE_NEXTCLOUD - 1) {
+          await probeNextcloudSsoForIntro(root);
+        }
         if (index < total - 1) {
-          index += 1;
+          index = nextSlideIndex(root, index);
           updateStepUi(root, index, total, nextBtn);
         }
       });
@@ -478,7 +574,7 @@
     if (backBtn) {
       backBtn.addEventListener('click', () => {
         if (index > 0 && index !== SLIDE_SUCCESS) {
-          index -= 1;
+          index = prevSlideIndex(root, index);
           updateStepUi(root, index, total, nextBtn);
         }
       });
@@ -493,7 +589,7 @@
     if (skipBtn) {
       skipBtn.addEventListener('click', () => {
         if (index < SLIDE_NEXTCLOUD) {
-          index = SLIDE_NEXTCLOUD;
+          index = shouldSkipNextcloudSlide(root) ? SLIDE_WISSKI_FORM : SLIDE_NEXTCLOUD;
           const scrollBody = root.querySelector('.scs-manager--coworking-intro-scroll-body');
           if (scrollBody) {
             scrollBody.scrollTop = 0;

@@ -2858,6 +2858,30 @@ msgid "Connect Nextcloud"
 msgstr "Nextcloud verbinden"
 
 #: templates/includes/soda-scs-manager--coworking-intro.html.twig
+msgid "Automatic SSO connection to Drive did not work. Connect manually once via the button below — a popup opens where you sign in with Keycloak. Allow popups for this site when prompted."
+msgstr "Die automatische SSO-Verbindung zu Drive hat nicht funktioniert. Verbinden Sie sich einmal manuell über die Schaltfläche unten — es öffnet sich ein Pop-up zur Anmeldung mit Keycloak. Erlauben Sie Popups für diese Seite, wenn Sie dazu aufgefordert werden."
+
+#: templates/includes/soda-scs-manager--coworking-intro.html.twig
+msgid "Connect Drive manually"
+msgstr "Drive manuell verbinden"
+
+#: templates/includes/soda-scs-manager--coworking-intro.html.twig
+msgid "If login fails, log out of SCS Manager and sign in again, or continue later via Connected Accounts."
+msgstr "Falls die Anmeldung fehlschlägt, melden Sie sich bei SCS Manager ab und erneut an, oder schließen Sie die Verbindung später unter „Verknüpfte Konten“ ab."
+
+#: templates/includes/soda-scs-manager--coworking-intro.html.twig
+msgid "SCS Manager links to your Drive using the same Keycloak login. We verify the connection automatically — no separate Drive password or popup login is required."
+msgstr "SCS Manager verbindet sich mit Ihrem Drive über dieselbe Keycloak-Anmeldung. Wir prüfen die Verbindung automatisch — kein separates Drive-Passwort und kein Popup-Login erforderlich."
+
+#: templates/includes/soda-scs-manager--coworking-intro.html.twig
+msgid "Retry connection check"
+msgstr "Verbindungsprüfung wiederholen"
+
+#: templates/includes/soda-scs-manager--coworking-intro.html.twig
+msgid "If the check fails, log out of SCS Manager and sign in again. You can also verify later under Connected Accounts."
+msgstr "Falls die Prüfung fehlschlägt, melden Sie sich bei SCS Manager ab und erneut an. Sie können die Verbindung auch später unter „Verknüpfte Konten“ prüfen."
+
+#: templates/includes/soda-scs-manager--coworking-intro.html.twig
 msgid "A working Nextcloud connection is necessary so data and files can flow between WissKI and your other applications. Start the connection here, or later from your account settings."
 msgstr "Eine funktionierende Nextcloud-Verbindung ist nötig, damit Daten und Dateien zwischen WissKI und Ihren anderen Anwendungen ausgetauscht werden können. Starten Sie die Verbindung hier oder später in Ihren Kontoeinstellungen."
 
@@ -2978,12 +3002,24 @@ msgid "Beginners Tour"
 msgstr "Einführungstour"
 
 #: templates/pages/soda-scs-manager--start-page.html.twig:17
+msgid "Nextcloud connection"
+msgstr "Nextcloud-Verbindung"
+
+#: templates/pages/soda-scs-manager--start-page.html.twig:18
+msgid "SCS Manager uses your Keycloak session to reach Drive. If the automatic check below fails, use Retry or sign out and back in. You can also verify later from your <a href=\":url\">Connected Accounts</a> page."
+msgstr "SCS Manager nutzt Ihre Keycloak-Sitzung für den Zugriff auf Drive. Schlägt die automatische Prüfung fehl, wiederholen Sie sie oder melden Sie sich ab und erneut an. Sie können die Verbindung auch später unter <a href=\":url\">Verknüpfte Konten</a> prüfen."
+
+#: templates/pages/soda-scs-manager--start-page.html.twig:17
 msgid "Connect your Nextcloud account"
 msgstr "Nextcloud-Konto verbinden"
 
 #: templates/pages/soda-scs-manager--start-page.html.twig:18
 msgid "To use Nextcloud with WissKI and other applications, connect your account once. A popup will open where you log in to Nextcloud. You can also connect later from your <a href=\":url\">Connected Accounts</a> page."
 msgstr "Um Nextcloud mit WissKI und anderen Applikationen zu nutzen, verbinden Sie Ihr Konto einmalig. Es öffnet sich ein Pop-up zur Anmeldung bei Nextcloud. Sie können die Verbindung auch später über die Seite <a href=\":url\">Verbundene Konten</a> herstellen."
+
+#: templates/pages/soda-scs-manager--start-page.html.twig:23
+msgid "Retry connection check"
+msgstr "Verbindungsprüfung wiederholen"
 
 #: templates/pages/soda-scs-manager--start-page.html.twig:23
 msgid "Connect Nextcloud"
@@ -3206,6 +3242,14 @@ msgid "Loading..."
 msgstr "Wird geladen…"
 
 #: soda_scs_manager.module:1155
+msgid "If SSO connection check fails, log out and sign in again, or contact your administrator."
+msgstr "Falls die SSO-Verbindungsprüfung fehlschlägt, melden Sie sich ab und erneut an, oder wenden Sie sich an Ihre Administration."
+
+#: soda_scs_manager.module:1161
+msgid "Check Nextcloud connection"
+msgstr "Nextcloud-Verbindung prüfen"
+
+#: soda_scs_manager.module:1155
 msgid "If SSO does not work, connect via app password:"
 msgstr "Wenn SSO nicht funktioniert, verbinden Sie sich mit einem App-Passwort:"
 
@@ -3350,8 +3394,32 @@ msgid "Not connected"
 msgstr "Nicht verbunden"
 
 #: js/nextcloudConnect.js
+msgid "Opening Drive login…"
+msgstr "Drive-Anmeldung wird geöffnet…"
+
+#: js/nextcloudConnect.js
+msgid "Connecting Drive via SSO failed. Please try again. If the problem persists, contact your site administrator."
+msgstr "Die Verbindung zu Drive über SSO ist fehlgeschlagen. Bitte versuchen Sie es erneut. Wenn das Problem weiterhin besteht, wenden Sie sich an den Site-Administrator."
+
+#: js/nextcloudConnect.js
 msgid "Connected via SSO"
 msgstr "Über SSO verbunden"
+
+#: js/nextcloudConnect.js
+msgid "Checking SSO connection…"
+msgstr "SSO-Verbindung wird geprüft…"
+
+#: js/nextcloudConnect.js
+msgid "Drive is not reachable via SSO. Log out and sign in again, then retry."
+msgstr "Drive ist über SSO nicht erreichbar. Melden Sie sich ab und erneut an, und versuchen Sie es dann erneut."
+
+#: js/nextcloudConnect.js
+msgid "Not connected via SSO"
+msgstr "Nicht über SSO verbunden"
+
+#: js/nextcloudConnect.js
+msgid "Nextcloud connected via SSO"
+msgstr "Nextcloud über SSO verbunden"
 
 #: js/nextcloudConnect.js
 msgid "Connected via app password"

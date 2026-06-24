@@ -118,7 +118,10 @@ startPagePie:
     - soda_scs_manager/globalStyling
 
 nextcloudConnect:
-  version: 1.x
+  version: 1.4
+  css:
+    component:
+      css/nextcloudConnect.css: {}
   js:
     js/nextcloudConnect.js: {}
   dependencies:
@@ -128,7 +131,7 @@ nextcloudConnect:
     - soda_scs_manager/globalStyling
 
 coworkingIntroWizard:
-  version: 1.5
+  version: 1.7
   js:
     js/coworkingIntroWizard.js: {}
   dependencies:
@@ -137,3 +140,4 @@ coworkingIntroWizard:
     - core/drupalSettings
     - soda_scs_manager/globalStyling
     - soda_scs_manager/throbberOverlay
+    - soda_scs_manager/nextcloudConnect
