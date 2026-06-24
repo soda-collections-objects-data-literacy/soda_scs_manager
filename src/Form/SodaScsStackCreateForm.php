@@ -198,6 +198,9 @@ class SodaScsStackCreateForm extends ContentEntityForm {
     // Hide the flavours field.
     $form['flavours']['#access'] = FALSE;
 
+    // Hide the defaultLanguage field.
+    $form['defaultLanguage']['#access'] = FALSE;
+
     // Change the label of the submit button.
     $form['actions']['submit']['#value'] = $this->t('CREATE');
     $form['actions']['submit']['#attributes']['class'][] = 'soda-scs-stack--stack--form-submit';
