@@ -54,8 +54,8 @@ class SodaScsUserScsManagerSettingsForm extends FormBase {
 
     $form['coworking_intro_completed'] = [
       '#type' => 'checkbox',
-      '#title' => $this->t('Co-working introduction completed'),
-      '#description' => $this->t('When checked, the introduction wizard is not shown on the SCS Manager dashboard or start page. Uncheck to run the wizard again the next time you open those pages.'),
+      '#title' => $this->t('SCS introduction completed'),
+      '#description' => $this->t('When checked, the welcoming tour is not shown on the SCS Manager dashboard or start page. Uncheck to run the introduction again the next time you open those pages.'),
       '#default_value' => $completed,
     ];
 

@@ -51,6 +51,7 @@
 #  src/Form/SodaScsServiceKeyRenewConfirmForm.php: n/a
 #  src/Form/SodaScsSettingsForm.php: n/a
 #  src/Form/SodaScsSnapshotCreateForm.php: n/a
+#  src/Form/SodaScsUserScsManagerSettingsForm.php: n/a
 #  src/Plugin/EntityReferenceSelection/SodaScsComponentSelection.php: n/a
 #  src/Plugin/EntityReferenceSelection/SodaScsProjectSelection.php: n/a
 #  src/RequestActions/SodaScsDockerRegistryServiceActions.php: n/a
@@ -1336,6 +1337,94 @@ msgstr "Abbrechen"
 msgid "You have no pending project invitations."
 msgstr "Sie haben keine ausstehenden Projekteinladungen."
 
+#: src/Form/SodaScsProjectMembershipForm:92
+msgid "Handled invitations"
+msgstr "Bearbeitete Einladungen"
+
+#: src/Form/SodaScsProjectMembershipForm:121
+msgid "You have no project invitations."
+msgstr "Sie haben keine Projekteinladungen."
+
+#: src/Form/SodaScsProjectMembershipForm:169
+msgid "Accept"
+msgstr "Annehmen"
+
+#: src/Form/SodaScsProjectMembershipForm:205
+msgid "Reject"
+msgstr "Ablehnen"
+
+#: src/Form/SodaScsProjectMembershipForm:253
+msgid "Project"
+msgstr "Projekt"
+
+#: src/Form/SodaScsProjectMembershipForm:254
+msgid "Invited by"
+msgstr "Eingeladen von"
+
+#: src/Form/SodaScsProjectMembershipForm:255
+msgid "Sent"
+msgstr "Gesendet am"
+
+#: src/Form/SodaScsProjectMembershipForm:256
+msgid "Result"
+msgstr "Ergebnis"
+
+#: src/Form/SodaScsProjectMembershipForm:257
+msgid "Decided"
+msgstr "Entschieden am"
+
+#: src/Form/SodaScsProjectMembershipForm:258
+msgid "Actions"
+msgstr "Aktionen"
+
+#: src/Form/SodaScsProjectMembershipForm:288
+msgid "Remove this invitation from your list?"
+msgstr "Diese Einladung aus Ihrer Liste entfernen?"
+
+#: src/Form/SodaScsProjectMembershipForm:295
+msgid "Remove"
+msgstr "Entfernen"
+
+#: src/Form/SodaScsProjectMembershipForm:373
+msgid "The invitation has been removed from your list."
+msgstr "Die Einladung wurde aus Ihrer Liste entfernt."
+
+#: src/Form/SodaScsProjectMembershipForm:376
+msgid "Could not remove the invitation. Please try again."
+msgstr "Die Einladung konnte nicht entfernt werden. Bitte versuchen Sie es erneut."
+
+#: src/Form/SodaScsProjectMembershipForm:439
+msgid "Accepted"
+msgstr "Angenommen"
+
+#: src/Form/SodaScsProjectMembershipForm:440
+msgid "Rejected"
+msgstr "Abgelehnt"
+
+#: src/Form/SodaScsProjectMembershipForm:440
+msgid "Unknown"
+msgstr "Unbekannt"
+
+#: src/Form/SodaScsProjectMembershipForm:461
+msgid "The selected request no longer exists."
+msgstr "Die gewählte Anfrage existiert nicht mehr."
+
+#: src/Form/SodaScsProjectMembershipForm:466
+msgid "You are not allowed to process this request."
+msgstr "Sie dürfen diese Anfrage nicht bearbeiten."
+
+#: src/Form/SodaScsProjectMembershipForm:494 
+msgid "You are not allowed to remove this invitation."
+msgstr "Sie dürfen diese Einladung nicht entfernen."
+
+#: src/Form/SodaScsProjectMembershipForm:503 
+msgid "Only handled invitations can be removed."
+msgstr "Nur bearbeitete Einladungen können entfernt werden."
+
+#: src/Form/SodaScsProjectMembershipForm:520
+msgid "Unable to load your user account. Please try again."
+msgstr "Ihr Benutzerkonto konnte nicht geladen werden. Bitte versuchen Sie es erneut."
+
 #: src/Form/SodaScsServiceKeyCreateForm.php:162
 msgid "Service key created successfully."
 msgstr "Dienstschlüssel erfolgreich erstellt."
@@ -2191,6 +2280,18 @@ msgstr "%message Siehe Protokolle für weitere Informationen."
 #: src/Form/SodaScsStackDeleteForm.php:97
 msgid "%message %error %trace"
 msgstr "%message %error %trace"
+
+#  src/Form/SodaScsUserScsManagerSettingsForm.php:57
+msgid "SCS introduction completed"
+msgstr "SCS-Einführung abgeschlossen"
+
+#  src/Form/SodaScsUserScsManagerSettingsForm.php:58
+msgid "When checked, the welcoming tour is not shown on the SCS Manager dashboard or start page. Uncheck to run the introduction again the next time you open those pages."
+msgstr "Wenn dieses Kontrollkästchen aktiviert ist, wird die Willkommenstour nicht auf dem SCS Manager-Dashboard oder der Startseite angezeigt. Deaktivieren Sie das Kontrollkästchen, um die Willkommenstour beim nächsten Aufrufen dieser Seiten erneut auszuführen."
+
+#  src/Form/SodaScsUserScsManagerSettingsForm.:87
+msgid "Your SCS Manager preferences have been saved."
+msgstr "Ihre SCS Manager Präferenzen wurden gespeichert."
 
 #: src/Helpers/SodaScsComponentHelpers.php:231
 msgid "Filesystem is available."
