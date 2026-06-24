@@ -255,14 +255,14 @@ class KeycloakUserRegistrationForm extends FormBase {
 
     $form['terms_of_service'] = [
       '#type' => 'checkbox',
-      '#title' => Markup::create($this->t('I agree to the <a href="/soda-scs-manager/terms-of-service" target="_blank">terms of service</a>')),
+      '#title' => Markup::create($this->t('I agree to the <a href="/terms-of-service" target="_blank">terms of service</a>')),
       '#required' => TRUE,
       '#after_build' => [[static::class, 'removeLegalCheckboxDescription']],
     ];
 
     $form['privacy_policy'] = [
       '#type' => 'checkbox',
-      '#title' => Markup::create($this->t('I agree to the <a href="/soda-scs-manager/imprint-privacy-policy" target="_blank">privacy policy</a>')),
+      '#title' => Markup::create($this->t('I agree to the <a href="/privacy-policy" target="_blank">privacy policy</a>')),
       '#required' => TRUE,
       '#after_build' => [[static::class, 'removeLegalCheckboxDescription']],
     ];

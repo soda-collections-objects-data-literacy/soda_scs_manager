@@ -124,12 +124,12 @@ msgid "Enter the password you would like to use."
 msgstr "Geben Sie das Passwort ein, das Sie verwenden möchten."
 
 #: src/Form/KeycloakUserRegistrationForm.php:200
-msgid "I agree to the <a href=\"/soda-scs-manager/terms-of-service\" target=\"_blank\">terms of service</a>"
-msgstr "Ich stimme den <a href=\"/soda-scs-manager/terms-of-service\" target=\"_blank\">Nutzungsbedingungen</a> zu."
+msgid "I agree to the <a href=\"/terms-of-service\" target=\"_blank\">terms of service</a>"
+msgstr "Ich stimme den <a href=\"/terms-of-service\" target=\"_blank\">Nutzungsbedingungen</a> zu."
 
 #: src/Form/KeycloakUserRegistrationForm.php:207
-msgid "I agree to the <a href=\"/soda-scs-manager/imprint-privacy-policy\" target=\"_blank\">privacy policy</a>"
-msgstr "Ich stimme der <a href=\"/soda-scs-manager/imprint-privacy-policy\" target=\"_blank\">Datenschutzerklärung</a> zu."
+msgid "I agree to the <a href=\"/privacy-policy\" target=\"_blank\">privacy policy</a>"
+msgstr "Ich stimme der <a href=\"/privacy-policy\" target=\"_blank\">Datenschutzerklärung</a> zu."
 
 #: src/Form/KeycloakUserRegistrationForm.php:218
 msgid "Register"
