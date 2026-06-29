@@ -646,7 +646,7 @@ class SodaScsWisskiStackActions implements SodaScsStackActionsInterface {
    *   The result.
    */
   public function updateStack($component): array {
-    return [];
+    return $this->sodaScsWisskiComponentActions->updateComponent($component);
   }
 
   /**

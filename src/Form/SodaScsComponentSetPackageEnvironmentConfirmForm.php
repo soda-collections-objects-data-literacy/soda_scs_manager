@@ -174,7 +174,7 @@ class SodaScsComponentSetPackageEnvironmentConfirmForm extends ConfirmFormBase {
    * {@inheritdoc}
    */
   public function getDescription() {
-    return $this->t('This action will set the package environment for the component @label. Select a version to download the composer.json and composer.lock from <a href="https://github.com/soda-collections-objects-data-literacy/drupal_packages" target="_blank">SCS Drupal/WissKI package environments</a> or "Nightly" to update all packages to latest possible versions. Be aware that downgrades can cause database schema mismatches. This may take some time and can not be undone.', [
+    return $this->t('This action will update the package environment for the component @label by redeploying its WissKI stack with the selected image version. Packages are baked into the wisski-base-image, so the stack is rebuilt and the latest image for that version is pulled. Select a configured production version or "Nightly" on development instances to redeploy with the development image tags. Be aware that downgrades can cause database schema mismatches. This may take some time and can not be undone.', [
       '@label' => $this->component->label(),
     ]);
   }

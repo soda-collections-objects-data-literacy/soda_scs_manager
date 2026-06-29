@@ -530,6 +530,7 @@ class SodaScsServiceHelpers {
       $wisskiInstanceSettings['wisskiStackProductionVersion'] = $defaultVersion->getWisskiStack();
       $wisskiInstanceSettings['wisskiBaseImageProductionVersion'] = $defaultVersion->getWisskiImage();
       $wisskiInstanceSettings['defaultVersion'] = $defaultVersion->getVersion();
+      $wisskiInstanceSettings['productionVersion'] = $defaultVersion->getVersion();
       // Used by WissKI create when the component has no version field set (same
       // values as the version entity row used for production defaults).
       // checkSettings() rejects empty strings; use {empty} for optional blanks.
@@ -541,6 +542,7 @@ class SodaScsServiceHelpers {
       $wisskiInstanceSettings['wisskiStackProductionVersion'] = '';
       $wisskiInstanceSettings['wisskiBaseImageProductionVersion'] = '';
       $wisskiInstanceSettings['defaultVersion'] = '';
+      $wisskiInstanceSettings['productionVersion'] = '';
       $wisskiInstanceSettings['starterRecipeProductionVersion'] = '{empty}';
       $wisskiInstanceSettings['defaultDataModelRecipeProductionVersion'] = '{empty}';
       $wisskiInstanceSettings['packageEnvironmentProductionVersion'] = '{empty}';

@@ -674,9 +674,107 @@ class SodaScsPortainerServiceActions implements SodaScsServiceRequestInterface {
    *
    * @return array
    *   The request array for the makeRequest function.
+   *
+   * @throws \Drupal\Core\TypedData\Exception\MissingDataException
    */
   public function buildUpdateRequest(array $requestParams): array {
-    return [];
+    $portainerServiceSettings = $this->sodaScsServiceHelpers->initPortainerServiceSettings();
+    $portainerStacksSettings = $this->sodaScsServiceHelpers->initPortainerStacksSettings();
+
+    $requestParams['queryParams']['endpointId'] = $portainerServiceSettings['endpointId'];
+
+    $route = $portainerServiceSettings['host']
+      . $portainerStacksSettings['baseUrl']
+      . $portainerStacksSettings['updateUrl'];
+
+    if (!empty($requestParams['routeParams'])) {
+      foreach ($requestParams['routeParams'] as $key => $value) {
+        $route = str_replace('{' . $key . '}', (string) $value, $route);
+      }
+    }
+
+    if (!empty($requestParams['queryParams'])) {
+      $route .= '?' . http_build_query($requestParams['queryParams']);
+    }
+
+    $body = [
+      'env' => $requestParams['env'] ?? [],
+      'prune' => $requestParams['prune'] ?? FALSE,
+      'repullImageAndRedeploy' => $requestParams['repullImageAndRedeploy'] ?? TRUE,
+    ];
+
+    if (!empty($requestParams['stackFileContent'])) {
+      $body['stackFileContent'] = $requestParams['stackFileContent'];
+    }
+
+    return [
+      'success' => TRUE,
+      'method' => 'PUT',
+      'route' => $route,
+      'headers' => [
+        'Content-Type' => 'application/json',
+        'Accept' => 'application/json',
+        'X-API-Key' => $portainerServiceSettings['authenticationToken'],
+      ],
+      'body' => json_encode($body),
+    ];
+  }
+
+  /**
+   * Builds a git redeploy request for a Portainer stack.
+   *
+   * @param array $requestParams
+   *   Request parameters with routeParams.stackId, env, and optional
+   *   wisskiComposeStackVersion.
+   *
+   * @return array
+   *   The request array for the makeRequest function.
+   *
+   * @throws \Drupal\Core\TypedData\Exception\MissingDataException
+   */
+  public function buildGitRedeployRequest(array $requestParams): array {
+    $portainerServiceSettings = $this->sodaScsServiceHelpers->initPortainerServiceSettings();
+    $portainerStacksSettings = $this->sodaScsServiceHelpers->initPortainerStacksSettings();
+
+    $requestParams['queryParams']['endpointId'] = $portainerServiceSettings['endpointId'];
+
+    $stackRoute = $portainerStacksSettings['readOneUrl'];
+    if (!empty($requestParams['routeParams'])) {
+      foreach ($requestParams['routeParams'] as $key => $value) {
+        $stackRoute = str_replace('{' . $key . '}', (string) $value, $stackRoute);
+      }
+    }
+
+    $route = $portainerServiceSettings['host']
+      . $portainerStacksSettings['baseUrl']
+      . $stackRoute
+      . '/git/redeploy';
+
+    if (!empty($requestParams['queryParams'])) {
+      $route .= '?' . http_build_query($requestParams['queryParams']);
+    }
+
+    $body = [
+      'Env' => $requestParams['env'] ?? [],
+      'RepullImageAndRedeploy' => $requestParams['repullImageAndRedeploy'] ?? TRUE,
+    ];
+
+    $composeStackVersion = (string) ($requestParams['wisskiComposeStackVersion'] ?? '');
+    if ($composeStackVersion !== '') {
+      $body['RepositoryReferenceName'] = $this->buildRepositoryRef($composeStackVersion);
+    }
+
+    return [
+      'success' => TRUE,
+      'method' => 'PUT',
+      'route' => $route,
+      'headers' => [
+        'Content-Type' => 'application/json',
+        'Accept' => 'application/json',
+        'X-API-Key' => $portainerServiceSettings['authenticationToken'],
+      ],
+      'body' => json_encode($body),
+    ];
   }
 
   /**

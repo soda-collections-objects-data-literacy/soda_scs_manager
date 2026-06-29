@@ -9,6 +9,7 @@ use Drupal\Core\Cache\CacheBackendInterface;
 use Drupal\Core\Entity\EntityTypeManagerInterface;
 use Drupal\Core\Logger\LoggerChannelFactoryInterface;
 use Drupal\Core\StringTranslation\StringTranslationTrait;
+use Drupal\soda_scs_manager\ComponentActions\SodaScsWisskiComponentActions;
 use Drupal\soda_scs_manager\Entity\SodaScsComponentInterface;
 use Drupal\soda_scs_manager\ServiceKeyActions\SodaScsServiceKeyActionsInterface;
 use Drupal\soda_scs_manager\ValueObject\SodaScsResult;
@@ -107,6 +108,13 @@ class SodaScsDrupalHelpers {
   protected SodaScsProgressHelper $sodaScsProgressHelper;
 
   /**
+   * WissKI component actions.
+   *
+   * @var \Drupal\soda_scs_manager\ComponentActions\SodaScsWisskiComponentActions
+   */
+  protected SodaScsWisskiComponentActions $sodaScsWisskiComponentActions;
+
+  /**
    * SodaScsDrupalHelpers constructor.
    *
    * @param \Drupal\Core\Cache\CacheBackendInterface $cacheBackend
@@ -131,6 +139,8 @@ class SodaScsDrupalHelpers {
    *   The SCS helpers.
    * @param \Drupal\soda_scs_manager\Helpers\SodaScsProgressHelper $sodaScsProgressHelper
    *   The progress helper.
+   * @param \Drupal\soda_scs_manager\ComponentActions\SodaScsWisskiComponentActions $sodaScsWisskiComponentActions
+   *   WissKI component actions.
    */
   public function __construct(
     #[Autowire(service: 'cache.default')]
@@ -155,6 +165,8 @@ class SodaScsDrupalHelpers {
     SodaScsHelpers $sodaScsHelpers,
     #[Autowire(service: 'soda_scs_manager.progress.helpers')]
     SodaScsProgressHelper $sodaScsProgressHelper,
+    #[Autowire(service: 'soda_scs_manager.wisski_component.actions')]
+    SodaScsWisskiComponentActions $sodaScsWisskiComponentActions,
   ) {
     $this->cacheBackend = $cacheBackend;
     $this->entityTypeManager = $entityTypeManager;
@@ -167,6 +179,7 @@ class SodaScsDrupalHelpers {
     $this->time = $time;
     $this->sodaScsHelpers = $sodaScsHelpers;
     $this->sodaScsProgressHelper = $sodaScsProgressHelper;
+    $this->sodaScsWisskiComponentActions = $sodaScsWisskiComponentActions;
   }
 
   /**
@@ -733,13 +746,9 @@ class SodaScsDrupalHelpers {
    * Update the Drupal packages.
    *
    * 1. Check if Drupal is healthy.
-   * 2. Secure the Drupal packages and database before updating.
-   * 3. Update the Drupal packages.
+   * 2. Secure the database before updating.
+   * 3. Redeploy the WissKI stack with the target image version.
    * 4. Perform post update steps.
-   *
-   * @todo make backup of the composer.json/ composer.lock files.
-   * @todo We may use a script on the server to update the Drupal packages
-   * to be independent of network connection inbetween the process.
    *
    * @param \Drupal\soda_scs_manager\Entity\SodaScsComponentInterface $component
    *   The component.
@@ -758,14 +767,15 @@ class SodaScsDrupalHelpers {
     ?string $targetVersion = 'latest',
   ): SodaScsResult {
     try {
+      $wisskiInstanceSettings = $this->sodaScsServiceHelpers->initWisskiInstanceSettings();
 
-      // Get mode from component.
-      $mode = $component->get('developmentInstance')->value ? 'development' : 'production';
-
-      // Determine the actual version to use.
-      $actualVersion = $targetVersion;
+      // Determine the actual version label to store on the component.
+      $actualVersion = $targetVersion ?? 'latest';
       if ($targetVersion === 'latest') {
-        $actualVersion = $this->sodaScsServiceHelpers->initWisskiInstanceSettings()['productionVersion'] ?? '';
+        $actualVersion = $wisskiInstanceSettings['defaultVersion'] ?? '';
+      }
+      elseif ($targetVersion === 'nightly') {
+        $actualVersion = 'nightly-' . $this->time->getCurrentTime();
       }
 
       if (empty($actualVersion)) {
@@ -777,7 +787,7 @@ class SodaScsDrupalHelpers {
 
       // If version of the component is the same as the target version,
       // we can skip the update.
-      if ($component->get('version')->value === $actualVersion) {
+      if ($targetVersion !== 'nightly' && $component->get('version')->value === $actualVersion) {
         return SodaScsResult::success(
           data: ['skipped' => TRUE],
           message: (string) $this->t('Drupal packages are already at version @version.', [
@@ -802,95 +812,49 @@ class SodaScsDrupalHelpers {
       $this->sodaScsProgressHelper->createStep($updateDrupalPackagesOperationUuid, 'Drupal is healthy');
       $resultData['ensureDrupalHealthy'] = $ensureDrupalHealthyResult->data;
 
-      // 2. Secure the Drupal packages and database before updating.
-      $this->sodaScsProgressHelper->createStep($updateDrupalPackagesOperationUuid, 'Secure Drupal packages and database');
+      // 2. Secure the database before updating.
+      $this->sodaScsProgressHelper->createStep($updateDrupalPackagesOperationUuid, 'Secure Drupal database');
       $secureDrupalPackagesAndDatabaseResult = $this->secureDrupalPackagesAndDatabase($component);
       if (!$secureDrupalPackagesAndDatabaseResult->success) {
-        $this->sodaScsProgressHelper->createStep($updateDrupalPackagesOperationUuid, 'Failed to secure Drupal packages and database');
+        $this->sodaScsProgressHelper->createStep($updateDrupalPackagesOperationUuid, 'Failed to secure Drupal database');
         return SodaScsResult::failure(
-          error: 'Failed to secure Drupal packages and database: ' . ($secureDrupalPackagesAndDatabaseResult->error ?? ''),
-          message: (string) $this->t('Failed to secure Drupal packages and database. Not updating packages.'),
+          error: 'Failed to secure Drupal database: ' . ($secureDrupalPackagesAndDatabaseResult->error ?? ''),
+          message: (string) $this->t('Failed to secure Drupal database. Not updating packages.'),
         );
       }
-      $this->sodaScsProgressHelper->createStep($updateDrupalPackagesOperationUuid, 'Drupal packages and database secured');
+      $this->sodaScsProgressHelper->createStep($updateDrupalPackagesOperationUuid, 'Drupal database secured');
       $resultData['secureDrupalPackagesAndDatabase'] = $secureDrupalPackagesAndDatabaseResult->data;
       $backupPath = $secureDrupalPackagesAndDatabaseResult->data['backupPath'];
 
-      // 3. Update the Drupal packages.
-      if ($targetVersion === 'nightly') {
-        // In development mode, just run simple composer update.
-        $this->sodaScsProgressHelper->createStep($updateDrupalPackagesOperationUuid, 'Perform simple composer update');
-        $simpleComposerUpdateResult = $this->simpleComposerUpdate($component);
-
-        if (!$simpleComposerUpdateResult->success) {
-          // If the simple composer update fails...
-          $this->sodaScsProgressHelper->createStep($updateDrupalPackagesOperationUuid, 'Failed to perform simple composer update. Rolling back...');
-          $rollbackComposerUpdateResult = $this->rollbackComposerUpdate($component, $backupPath);
-
-          if (!$rollbackComposerUpdateResult->success) {
-            // If the rollback fails...
-            $this->sodaScsProgressHelper->createStep($updateDrupalPackagesOperationUuid, 'Failed to roll back composer package informations');
-            return SodaScsResult::failure(
-              error: 'Failed to rollback composer update: ' . ($rollbackComposerUpdateResult->error ?? ''),
-              message: (string) $this->t('Failed to rollback composer update. Not updating packages.'),
-            );
-          }
-          // If the rollback succeeds...
-          $this->sodaScsProgressHelper->createStep($updateDrupalPackagesOperationUuid, 'Rolled back composer package informations');
-          $resultData['rollbackComposerUpdate'] = $rollbackComposerUpdateResult->data;
-          return SodaScsResult::failure(
-            error: 'Failed to perform simple composer update: ' . ($simpleComposerUpdateResult->error ?? ''),
-            message: (string) $this->t('Failed to perform simple composer update. Not updating packages.'),
-          );
-        }
-        // If the simple composer update succeeds...
-        $this->sodaScsProgressHelper->createStep($updateDrupalPackagesOperationUuid, 'Performed simple composer update');
-        $resultData['simpleComposerUpdate'] = $simpleComposerUpdateResult->data;
+      // 3. Redeploy the WissKI stack with the baked-in package image.
+      $this->sodaScsProgressHelper->createStep($updateDrupalPackagesOperationUuid, 'Redeploy WissKI stack with updated image');
+      $stackRedeployResult = $this->sodaScsWisskiComponentActions->redeployStackWithVersion($component, $targetVersion);
+      if (!$stackRedeployResult->success) {
+        $this->sodaScsProgressHelper->createStep($updateDrupalPackagesOperationUuid, 'Failed to redeploy WissKI stack');
+        return SodaScsResult::failure(
+          error: 'Failed to redeploy WissKI stack: ' . ($stackRedeployResult->error ?? ''),
+          message: (string) $this->t('Failed to redeploy WissKI stack. Not updating packages.'),
+        );
       }
-      else {
-        // In production mode, download versioned composer files and install.
-        $this->sodaScsProgressHelper->createStep($updateDrupalPackagesOperationUuid, 'Download versioned composer files and install packages');
-        $versionedComposerUpdateResult = $this->versionedComposerUpdate($component, $mode, $actualVersion);
-        if (!$versionedComposerUpdateResult->success) {
-          // If the versioned composer update fails...
-          $this->sodaScsProgressHelper->createStep($updateDrupalPackagesOperationUuid, 'Failed to download versioned composer files and install. Rolling back...');
-          $rollbackComposerUpdateResult = $this->rollbackComposerUpdate($component, $backupPath);
-          if (!$rollbackComposerUpdateResult->success) {
-            // If the rollback fails...
-            $this->sodaScsProgressHelper->createStep($updateDrupalPackagesOperationUuid, 'Failed to roll back composer package informations');
-            return SodaScsResult::failure(
-              error: 'Failed to rollback composer update: ' . ($rollbackComposerUpdateResult->error ?? ''),
-              message: (string) $this->t('Failed to rollback composer update. Not updating packages.'),
-            );
-          }
-          // If the rollback succeeds...
-          $this->sodaScsProgressHelper->createStep($updateDrupalPackagesOperationUuid, 'Rolled back composer package informations');
-          $resultData['rollbackComposerUpdate'] = $rollbackComposerUpdateResult->data;
-          return SodaScsResult::failure(
-            error: 'Failed to perform versioned composer update: ' . ($versionedComposerUpdateResult->error ?? ''),
-            message: (string) $this->t('Failed to perform versioned composer update. Not updating packages.'),
-          );
-        }
-        // If the versioned composer update succeeds...
-        $this->sodaScsProgressHelper->createStep($updateDrupalPackagesOperationUuid, 'Downloaded versioned composer files and installed packages');
-        $resultData['versionedComposerUpdate'] = $versionedComposerUpdateResult->data;
+      $this->sodaScsProgressHelper->createStep($updateDrupalPackagesOperationUuid, 'Redeployed WissKI stack');
+      $resultData['stackRedeploy'] = $stackRedeployResult->data;
+
+      $this->sodaScsProgressHelper->createStep($updateDrupalPackagesOperationUuid, 'Wait for Drupal to become healthy');
+      $ensureDrupalHealthyAfterRedeployResult = $this->ensureDrupalHealthy($component);
+      if (!$ensureDrupalHealthyAfterRedeployResult->success) {
+        $this->sodaScsProgressHelper->createStep($updateDrupalPackagesOperationUuid, 'Failed to ensure Drupal is healthy after redeploy');
+        return SodaScsResult::failure(
+          error: 'Drupal is not healthy after redeploy: ' . ($ensureDrupalHealthyAfterRedeployResult->error ?? ''),
+          message: (string) $this->t('Drupal is not healthy after redeploy. Not updating packages.'),
+        );
       }
+      $resultData['ensureDrupalHealthyAfterRedeploy'] = $ensureDrupalHealthyAfterRedeployResult->data;
 
       // 4. Update the Drupal database with drush updatedb.
       $this->sodaScsProgressHelper->createStep($updateDrupalPackagesOperationUuid, 'Perform database update');
       $databaseUpdateResult = $this->updateDrupalDatabase($component);
       if (!$databaseUpdateResult->success) {
         $this->sodaScsProgressHelper->createStep($updateDrupalPackagesOperationUuid, 'Failed to perform database update. Rolling back...');
-        $rollbackComposerUpdateResult = $this->rollbackComposerUpdate($component, $backupPath);
-        if (!$rollbackComposerUpdateResult->success) {
-          $this->sodaScsProgressHelper->createStep($updateDrupalPackagesOperationUuid, 'Failed to roll back composer package informations');
-          return SodaScsResult::failure(
-            error: 'Failed to rollback composer update: ' . ($rollbackComposerUpdateResult->error ?? ''),
-            message: (string) $this->t('Failed to rollback composer update. Not updating packages.'),
-          );
-        }
-        $this->sodaScsProgressHelper->createStep($updateDrupalPackagesOperationUuid, 'Rolled back composer package informations');
-        $resultData['rollbackComposerUpdate'] = $rollbackComposerUpdateResult->data;
         $rollbackDatabaseUpdateResult = $this->rollbackDatabaseUpdate($component, $backupPath);
         if (!$rollbackDatabaseUpdateResult->success) {
           $this->sodaScsProgressHelper->createStep($updateDrupalPackagesOperationUuid, 'Failed to roll back database');
@@ -1066,18 +1030,15 @@ class SodaScsDrupalHelpers {
   }
 
   /**
-   * Secure Drupal packages and database before updating.
+   * Secure the Drupal database before updating.
    *
    * 1. Prepare for dumping.
    *  1.1. Ensure the backup directory exists.
    *  1.2. Set Drupal to maintainment mode.
    *  1.3. Clear the Drupal cache.
-   * 2. Backup composer package informations.
+   * 2. Dump the database.
    *  2.1. Ensure the backup directory exists.
-   *  2.2. Pack the composer.json and composer.lock files to a tar file.
-   * 3. Dump the database.
-   *  3.1. Ensure the backup directory exists.
-   *  3.2. Dump the database to a tar file.
+   *  2.2. Dump the database to a tar file.
    *
    * @param \Drupal\soda_scs_manager\Entity\SodaScsComponentInterface $component
    *   The component.
@@ -1095,54 +1056,37 @@ class SodaScsDrupalHelpers {
 
       // Prepare the backup directory, set Drupal to maintenance mode and
       // clear the Drupal cache.
-      // There should be an dir
-      // /opt/drupal/bkp/<timestamp> and drupal should
-      // be in maintenance mode.
       $preDumpStepsResult = $this->preDumpSteps($component, $backupPath);
       if (!$preDumpStepsResult->success) {
         $errorDetail = 'Failed to prepare pre-dump steps: ' . ($preDumpStepsResult->error ?? '');
         return SodaScsResult::failure(
           error: $errorDetail,
-          message: (string) $this->t('Failed to secure Drupal packages and database.'),
-        );
-      }
-
-      // Backup composer package informations.
-      // There should be an dir /opt/drupal/bkp/<timestamp>/composer.tar.gz.
-      $backupComposerPackageInformationsResult = $this->backupComposerPackageInformations($component, $backupPath);
-      if (!$backupComposerPackageInformationsResult->success) {
-        $errorDetail = 'Failed to backup composer package informations: ' . ($backupComposerPackageInformationsResult->error ?? '');
-        return SodaScsResult::failure(
-          error: $errorDetail,
-          message: (string) $this->t('Failed to secure Drupal packages and database.'),
+          message: (string) $this->t('Failed to secure Drupal database.'),
         );
       }
 
       // Dump the database to a tar file.
-      // There should be an dir
-      // /opt/drupal/bkp/<timestamp>/database.dump.sql.gz.
       $dumpDatabaseResult = $this->sodaScsDatabaseHelpers->dumpDatabase($backupPath, $component);
       if (!$dumpDatabaseResult->success) {
         $errorDetail = 'Failed to dump database: ' . ($dumpDatabaseResult->error ?? '');
         return SodaScsResult::failure(
           error: $errorDetail,
-          message: (string) $this->t('Failed to secure Drupal packages and database.'),
+          message: (string) $this->t('Failed to secure Drupal database.'),
         );
       }
 
       return SodaScsResult::success(
-        message: (string) $this->t('Drupal packages and database secured successfully.'),
+        message: (string) $this->t('Drupal database secured successfully.'),
         data: [
           'backupPath' => $backupPath,
-          'backupComposerPackageInformations' => $backupComposerPackageInformationsResult->data,
           'dumpDatabase' => $dumpDatabaseResult->data,
         ],
       );
     }
     catch (\Exception $e) {
       return SodaScsResult::failure(
-        error: 'Failed to secure Drupal packages and database: ' . $e->getMessage(),
-        message: (string) $this->t('Failed to secure Drupal packages and database.'),
+        error: 'Failed to secure Drupal database: ' . $e->getMessage(),
+        message: (string) $this->t('Failed to secure Drupal database.'),
       );
     }
   }
