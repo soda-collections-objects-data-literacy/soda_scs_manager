@@ -61,6 +61,16 @@ final class SodaScsProjectViewBuilder extends EntityViewBuilder {
   ];
 
   /**
+   * Tags omitted from filter UI (aligned with entity card template).
+   *
+   * @var list<string>
+   */
+  private const TAGS_HIDDEN_FROM_UI = [
+    'data-science',
+    'publishing',
+  ];
+
+  /**
    * Constructs a SodaScsProjectViewBuilder.
    */
   public function __construct(
@@ -126,7 +136,9 @@ final class SodaScsProjectViewBuilder extends EntityViewBuilder {
     $build['#owner'] = $project->get('owner')->view('default');
     $build['#members'] = $this->buildMembersDisplay($project);
     $build['#note'] = $project->get('note')->isEmpty() ? NULL : $project->get('note')->view('default');
-    $build['#application_cards'] = $this->buildApplicationCards($project);
+    $applicationCards = $this->buildApplicationCards($project);
+    $build['#application_cards'] = $applicationCards;
+    $build['#filter_tags'] = $this->collectFilterTags($applicationCards);
     $build['#attributes'] = ['class' => ['container', 'scs-manager--project-view']];
     $build['#cache'] = [
       'tags' => $project->getCacheTags(),
@@ -136,6 +148,7 @@ final class SodaScsProjectViewBuilder extends EntityViewBuilder {
     $build['#attached']['library'] = [
       'soda_scs_manager/globalStyling',
       'soda_scs_manager/dashboardHealthStatus',
+      'soda_scs_manager/tagFilter',
     ];
     $build['#attached']['drupalSettings']['sodaScsManager'] = [
       'dashboardAdminMail' => (string) ($this->configFactory->get('system.site')->get('mail') ?? ''),
@@ -265,6 +278,40 @@ final class SodaScsProjectViewBuilder extends EntityViewBuilder {
     }
 
     return $componentIds;
+  }
+
+  /**
+   * Collects unique filterable tags from application card render arrays.
+   *
+   * @param list<array<string, mixed>> $cards
+   *   Entity card render arrays.
+   *
+   * @return list<string>
+   *   Sorted tag machine names.
+   */
+  protected function collectFilterTags(array $cards): array {
+    $tags = [];
+
+    foreach ($cards as $card) {
+      if (empty($card['#tags']) || !is_array($card['#tags'])) {
+        continue;
+      }
+
+      foreach ($card['#tags'] as $tag) {
+        if (!is_string($tag) || $tag === '') {
+          continue;
+        }
+        if (in_array($tag, self::TAGS_HIDDEN_FROM_UI, TRUE)) {
+          continue;
+        }
+        $tags[$tag] = $tag;
+      }
+    }
+
+    $sortedTags = array_values($tags);
+    sort($sortedTags);
+
+    return $sortedTags;
   }
 
   /**

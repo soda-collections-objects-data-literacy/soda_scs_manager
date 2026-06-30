@@ -51,6 +51,9 @@ security:
 
 tagFilter:
   version: 1.x
+  css:
+    component:
+      css/tag-filter-stable.css: {}
   js:
     js/tagFilter.js: {}
   dependencies:

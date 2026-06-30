@@ -10,6 +10,7 @@
  * - note: Rendered note field.
  * - application_cards: Dashboard-style cards for connected applications.
  * - attributes: HTML attributes for the container.
+ * - filter_tags: Tag machine names for the application filter bar.
  *
  * @ingroup themeable
  */
@@ -40,6 +41,12 @@
   <div class="text-center mb-8">
     <h2 class="soda-scs-manager--dashboard-heading-section">{{ 'Applications'|t }}</h2>
   </div>
+
+  {% if application_cards is not empty %}
+    {% include '@soda_scs_manager/includes/soda-scs-manager--tag-filter.html.twig' with {
+      filter_tags: filter_tags,
+    } only %}
+  {% endif %}
 
   {% if application_cards is not empty %}
     {% set application_count = application_cards|length %}

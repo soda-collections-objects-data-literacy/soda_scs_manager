@@ -909,6 +909,7 @@ function soda_scs_manager_theme($existing, $type, $theme, $path) {
       'variables' => [
         'application_cards' => [],
         'attributes' => [],
+        'filter_tags' => [],
         'label' => NULL,
         'members' => NULL,
         'note' => NULL,
