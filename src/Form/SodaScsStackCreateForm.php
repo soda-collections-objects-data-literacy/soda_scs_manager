@@ -235,7 +235,7 @@ class SodaScsStackCreateForm extends ContentEntityForm {
     $pattern = '/^[a-z0-9-]+$/';
 
     if (!preg_match($pattern, $machineName)) {
-      $form_state->setErrorByName('machineName', $this->t('The machineName can only contain small letters, digits, and minus.'));
+      $form_state->setErrorByName('machineName', $this->t('The machinename can only contain small letters, digits, and minus.'));
     }
 
     if (InputDisallowedTerms::isSqlMachineName($machineName)) {

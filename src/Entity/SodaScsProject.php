@@ -28,7 +28,7 @@ use Drupal\user\EntityOwnerTrait;
  *   handlers = {
  *     "views_data" = "Drupal\views\EntityViewsData",
  *     "list_builder" = "Drupal\soda_scs_manager\ListBuilder\SodaScsProjectListBuilder",
- *     "view_builder" = "Drupal\Core\Entity\EntityViewBuilder",
+ *     "view_builder" = "Drupal\soda_scs_manager\ViewBuilder\SodaScsProjectViewBuilder",
  *     "form" = {
  *       "default" = "Drupal\soda_scs_manager\Form\SodaScsProjectForm",
  *       "add" = "Drupal\soda_scs_manager\Form\SodaScsProjectCreateForm",

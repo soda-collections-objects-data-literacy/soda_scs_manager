@@ -905,6 +905,17 @@ function soda_scs_manager_theme($existing, $type, $theme, $path) {
       'render element' => 'elements',
       'template' => 'entity/soda-scs-entity',
     ],
+    'soda_scs_project' => [
+      'variables' => [
+        'application_cards' => [],
+        'attributes' => [],
+        'label' => NULL,
+        'members' => NULL,
+        'note' => NULL,
+        'owner' => NULL,
+      ],
+      'template' => 'entity/soda-scs-project',
+    ],
     'soda_scs_manager__catalogue' => [
       'variables' => [
         'components' => NULL,

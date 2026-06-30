@@ -901,8 +901,8 @@ msgid "Machine Name"
 msgstr "Maschinenname"
 
 #: src/Entity/SodaScsComponent.php:249 src/Entity/SodaScsProject.php:175 src/Entity/SodaScsStack.php:235
-msgid "The machine-readable name."
-msgstr "Der maschinenlesbare Name."
+msgid "The machine-readable name. This will be used for the URL of your application."
+msgstr "Der maschinenlesbare Name. Dieser wird für die URL Ihrer Anwendung genutzt."
 
 #: src/Entity/SodaScsComponent.php:272
 msgid "Notes"
@@ -918,7 +918,7 @@ msgstr "Notizen über die Anwendung."
 
 #: src/Entity/SodaScsComponent.php:288 src/Entity/SodaScsProject.php:210 src/Entity/SodaScsServiceKey.php:186 src/Entity/SodaScsSnapshot.php:124 src/Entity/SodaScsStack.php:215 src/ListBuilder/SodaScsProjectListBuilder.php:24 src/ListBuilder/SodaScsServiceKeyListBuilder.php:25
 msgid "Owner"
-msgstr "Besitzende Person"
+msgstr "Eigentümer"
 
 #: src/Entity/SodaScsComponent.php:289
 msgid "The owner of the SODa SCS Component."
@@ -1017,9 +1017,17 @@ msgstr "Mitglieder"
 msgid "The members associated with the project."
 msgstr "Die mit dem Projekt verbundenen Mitglieder."
 
+#: src/Entity/SodaScsProject.php:230
+msgid "Note"
+msgstr "Notiz"
+
+#: src/Entity/SodaScsProject.php:231
+msgid "The note associated with the project."
+msgstr "Die mit dem Projekt verbundene Notiz."
+
 #: src/Entity/SodaScsProject.php:211
 msgid "The owner of the SODa SCS Project."
-msgstr "Die besitzende Person des SODa SCS-Projekts."
+msgstr "Der Eigentümer des SODa SCS-Projekts."
 
 #: src/Entity/SodaScsProject.php:229 src/ListBuilder/SodaScsProjectListBuilder.php:27
 msgid "Rights"
@@ -1120,6 +1128,10 @@ msgstr "Das Image des SODa SCS Stacks."
 #: src/Entity/SodaScsStack.php:183
 msgid "Included applications"
 msgstr "Enthaltene Applikationen"
+
+#: src/Form/SodaScsStackCreateForm.php:328
+msgid "The label of the bundled application. Max length is 25 characters. Will be used to generate the machine name."
+msgstr "Die Bezeichnung der gebündelten Anwendung. Die maximale Länge beträgt 25 Zeichen. Wird zur Generierung des Maschinennamens verwendet."
 
 #: src/Entity/SodaScsStack.php:386
 msgid "The owner of the bundled application."
@@ -2266,7 +2278,7 @@ msgid "CREATE"
 msgstr "ERSTELLEN"
 
 #: src/Form/SodaScsStackCreateForm.php:178
-msgid "The machineName can only contain small letters, digits, and minus."
+msgid "The machinename can only contain small letters, digits, and minus."
 msgstr "Der Maschinenname darf nur Kleinbuchstaben, Ziffern und Minus enthalten."
 
 #: src/Form/SodaScsStackCreateForm.php:267
@@ -3520,3 +3532,7 @@ msgstr "Status wird geprüft"
 #: js/dashboardHealthStatus.js templates/cards/soda-scs-manager--entity-card.html.twig
 msgid "We have not confirmed whether this application is running yet. The dashboard checks automatically in the background."
 msgstr "Es ist noch nicht bestätigt, ob diese Anwendung läuft. Das Dashboard prüft das automatisch im Hintergrund."
+
+#: templates/entity/soda-scs-project.html.twig
+msgid "No members"
+msgstr "Keine Mitglieder"
