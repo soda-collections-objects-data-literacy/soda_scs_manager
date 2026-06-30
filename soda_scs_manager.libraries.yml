@@ -51,9 +51,6 @@ security:
 
 tagFilter:
   version: 1.x
-  css:
-    component:
-      css/tag-filter-stable.css: {}
   js:
     js/tagFilter.js: {}
   dependencies:
@@ -122,9 +119,6 @@ startPagePie:
 
 nextcloudConnect:
   version: 1.4
-  css:
-    component:
-      css/nextcloudConnect.css: {}
   js:
     js/nextcloudConnect.js: {}
   dependencies:
