@@ -181,6 +181,7 @@ class SodaScsDockerRunServiceActions implements SodaScsRunRequestInterface {
     if (isset($request['query'])) {
       $requestParams['query'] = $request['query'];
     }
+    $requestParams['timeout'] = $request['timeout'] ?? 600;
 
     // Send the request.
     try {
@@ -196,6 +197,13 @@ class SodaScsDockerRunServiceActions implements SodaScsRunRequestInterface {
       ];
     }
     catch (\Exception $e) {
+      $statusCode = 0;
+      if ($e instanceof \GuzzleHttp\Exception\RequestException && $e->hasResponse()) {
+        $statusCode = $e->getResponse()->getStatusCode();
+      }
+      elseif ($e->getCode() > 0) {
+        $statusCode = (int) $e->getCode();
+      }
       return [
         'message' => 'Request failed',
         'data' => [
@@ -203,7 +211,7 @@ class SodaScsDockerRunServiceActions implements SodaScsRunRequestInterface {
         ],
         'success' => FALSE,
         'error' => $e->getMessage(),
-        'statusCode' => $e->getCode(),
+        'statusCode' => $statusCode,
       ];
     }
   }

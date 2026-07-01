@@ -157,7 +157,7 @@ class SodaScsComponentHelpers {
    */
   public function drupalHealthCheck(SodaScsComponentInterface $component) {
     try {
-      $inspectContainerResponse = $this->sodaScsContainerHelpers->inspectContainer($component->get('containerId')->value);
+      $inspectContainerResponse = $this->sodaScsContainerHelpers->inspectComponentContainer($component);
     }
     catch (\Exception $e) {
       return [
@@ -179,8 +179,13 @@ class SodaScsComponentHelpers {
       ];
     }
 
-    $containerId = $component->get('containerId')->value;
-    $containerState = $inspectContainerResponse->data[$containerId]['State'] ?? [];
+    $containerId = (string) ($component->get('containerId')->value ?? '');
+
+    $inspectPayload = $inspectContainerResponse->data ?? [];
+    $resolvedContainerId = is_array($inspectPayload) && $inspectPayload !== []
+      ? (string) array_key_first($inspectPayload)
+      : $containerId;
+    $containerState = $inspectPayload[$resolvedContainerId]['State'] ?? [];
     $containerStatus = (string) ($containerState['Status'] ?? '');
 
     if ($containerStatus === '' || strtolower($containerStatus) !== 'running') {

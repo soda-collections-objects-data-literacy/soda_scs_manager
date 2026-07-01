@@ -27,11 +27,11 @@ final class SodaScsComponentLinksTasksAccessControlHandler {
 
     // Hide the edit task for specific component types.
     $hiddenBundles = ['soda_scs_webprotege_component'];
-    $result = in_array($bundle, $hiddenBundles, TRUE)
-      ? AccessResult::forbidden()
-      : AccessResult::allowed();
+    if (in_array($bundle, $hiddenBundles, TRUE)) {
+      return AccessResult::forbidden()->addCacheableDependency($soda_scs_component);
+    }
 
-    return $result->addCacheableDependency($soda_scs_component);
+    return SodaScsComponentAccessControlHandler::accessEditForm($soda_scs_component);
   }
 
   /**
@@ -48,11 +48,11 @@ final class SodaScsComponentLinksTasksAccessControlHandler {
 
     // Hide the delete task for specific component types.
     $hiddenBundles = ['soda_scs_webprotege_component'];
-    $result = in_array($bundle, $hiddenBundles, TRUE)
-      ? AccessResult::forbidden()
-      : AccessResult::allowed();
+    if (in_array($bundle, $hiddenBundles, TRUE)) {
+      return AccessResult::forbidden()->addCacheableDependency($soda_scs_component);
+    }
 
-    return $result->addCacheableDependency($soda_scs_component);
+    return SodaScsComponentAccessControlHandler::accessDeleteForm($soda_scs_component);
   }
 
   /**
@@ -110,11 +110,11 @@ final class SodaScsComponentLinksTasksAccessControlHandler {
 
     // Hide the snapshot task for specific component types.
     $hiddenBundles = ['soda_scs_webprotege_component'];
-    $result = in_array($bundle, $hiddenBundles, TRUE)
-      ? AccessResult::forbidden()
-      : AccessResult::allowed();
+    if (in_array($bundle, $hiddenBundles, TRUE)) {
+      return AccessResult::forbidden()->addCacheableDependency($soda_scs_component);
+    }
 
-    return $result->addCacheableDependency($soda_scs_component);
+    return SodaScsComponentAccessControlHandler::accessSnapshotForm($soda_scs_component);
   }
 
 }

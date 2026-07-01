@@ -127,6 +127,17 @@ class SodaScsServiceHelpers {
   }
 
   /**
+   * Docker DNS hostname for in-container database clients (mariadb-dump, etc.).
+   *
+   * WissKI stacks use the shared `scs--database` service, not a `database`
+   * service on the instance internal network.
+   */
+  public function getDatabaseDockerHost(): string {
+    $host = (string) ($this->settings->get('dbHost') ?? 'scs--database');
+    return str_replace('https://', '', $host);
+  }
+
+  /**
    * Initialize docker api settings.
    *
    * @return array

@@ -8,6 +8,7 @@ use Drupal\Core\Access\AccessResult;
 use Drupal\Core\Entity\EntityAccessControlHandler;
 use Drupal\Core\Entity\EntityInterface;
 use Drupal\Core\Session\AccountInterface;
+use Drupal\soda_scs_manager\Entity\SodaScsSnapshotInterface;
 
 /**
  * Defines the access control handler for the soda scs snapshot entity type.
@@ -22,23 +23,30 @@ final class SodaScsSnapshotAccessControlHandler extends EntityAccessControlHandl
    * {@inheritdoc}
    */
   protected function checkAccess(EntityInterface $entity, $operation, AccountInterface $account): AccessResult {
-    if ($account->hasPermission($this->entityType->getAdminPermission())) {
+    if (SodaScsManagerAdminAccess::isAdmin($account, $this->entityType->getAdminPermission())) {
       return AccessResult::allowed()->cachePerPermissions();
     }
 
-    return match($operation) {
-      'view' => AccessResult::allowedIfHasPermission($account, 'view soda scs snapshot'),
-      'update' => AccessResult::allowedIfHasPermission($account, 'edit soda scs snapshot'),
-      'delete' => AccessResult::allowedIfHasPermission($account, 'delete soda scs snapshot'),
-      default => AccessResult::neutral(),
-    };
+    /** @var \Drupal\soda_scs_manager\Entity\SodaScsSnapshotInterface $entity */
+    switch ($operation) {
+      case 'view':
+      case 'update':
+      case 'delete':
+        if ((int) $entity->getOwnerId() === (int) $account->id()) {
+          return AccessResult::allowed()->cachePerUser()->addCacheableDependency($entity);
+        }
+        return AccessResult::forbidden()->cachePerUser()->addCacheableDependency($entity);
+
+      default:
+        return AccessResult::neutral();
+    }
   }
 
   /**
    * {@inheritdoc}
    */
   protected function checkCreateAccess(AccountInterface $account, array $context, $entity_bundle = NULL): AccessResult {
-    return AccessResult::allowedIfHasPermissions($account, ['create soda scs stack', 'administer soda scs component types'], 'OR');
+    return AccessResult::allowedIfHasPermission($account, 'create soda scs snapshot');
   }
 
 }

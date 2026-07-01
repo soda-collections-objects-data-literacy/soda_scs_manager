@@ -40,11 +40,11 @@ final class SodaScsStackLinksTasksAccessControlHandler {
 
     // Hide the edit task for specific stack types.
     $hiddenBundles = ['soda_scs_nextcloud_stack', 'soda_scs_jupyter_stack'];
-    $result = in_array($bundle, $hiddenBundles, TRUE)
-      ? AccessResult::forbidden()
-      : AccessResult::allowed();
+    if (in_array($bundle, $hiddenBundles, TRUE)) {
+      return AccessResult::forbidden()->addCacheableDependency($soda_scs_stack);
+    }
 
-    return $result->addCacheableDependency($soda_scs_stack);
+    return SodaScsStackAccessControlHandler::accessEditForm($soda_scs_stack);
   }
 
   /**
@@ -61,11 +61,11 @@ final class SodaScsStackLinksTasksAccessControlHandler {
 
     // Hide the delete task for specific stack types.
     $hiddenBundles = ['soda_scs_nextcloud_stack', 'soda_scs_jupyter_stack'];
-    $result = in_array($bundle, $hiddenBundles, TRUE)
-      ? AccessResult::forbidden()
-      : AccessResult::allowed();
+    if (in_array($bundle, $hiddenBundles, TRUE)) {
+      return AccessResult::forbidden()->addCacheableDependency($soda_scs_stack);
+    }
 
-    return $result->addCacheableDependency($soda_scs_stack);
+    return SodaScsStackAccessControlHandler::accessDeleteForm($soda_scs_stack);
   }
 
   /**
@@ -82,11 +82,11 @@ final class SodaScsStackLinksTasksAccessControlHandler {
 
     // Hide the snapshot task for specific stack types.
     $hiddenBundles = ['soda_scs_nextcloud_stack', 'soda_scs_jupyter_stack'];
-    $result = in_array($bundle, $hiddenBundles, TRUE)
-      ? AccessResult::forbidden()
-      : AccessResult::allowed();
+    if (in_array($bundle, $hiddenBundles, TRUE)) {
+      return AccessResult::forbidden()->addCacheableDependency($soda_scs_stack);
+    }
 
-    return $result->addCacheableDependency($soda_scs_stack);
+    return SodaScsStackAccessControlHandler::accessSnapshotForm($soda_scs_stack);
   }
 
 }
