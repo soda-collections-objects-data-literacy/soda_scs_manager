@@ -327,6 +327,9 @@ class SodaScsPortainerServiceActions implements SodaScsServiceRequestInterface {
     $databaseServiceSettings = $this->sodaScsServiceHelpers->initDatabaseServiceSettings();
     $wisskiInstanceSettings = $this->sodaScsServiceHelpers->initWisskiInstanceSettings();
 
+    $triplestoreHost = $this->getTriplestoreHostForWisski($triplestoreServiceSettings);
+    $triplestoreRepositoryBase = $triplestoreHost . '/repositories/' . $requestParams['tsRepository'];
+
     // Assemble query params.
     $queryParams = [
       'endpointId' => $portainerServiceSettings['endpointId'],
@@ -507,7 +510,7 @@ class SodaScsPortainerServiceActions implements SodaScsServiceRequestInterface {
       ],
       [
         "name" => "TS_READ_URL",
-        "value" => $triplestoreServiceSettings['host'] . '/repositories/' . $requestParams['tsRepository'],
+        "value" => $triplestoreRepositoryBase,
       ],
       [
         "name" => "TS_REPOSITORY",
@@ -519,7 +522,7 @@ class SodaScsPortainerServiceActions implements SodaScsServiceRequestInterface {
       ],
       [
         "name" => "TS_WRITE_URL",
-        "value" => $triplestoreServiceSettings['host'] . '/repositories/' . $requestParams['tsRepository'] . '/statements',
+        "value" => $triplestoreRepositoryBase . '/statements',
       ],
       [
         "name" => "WISSKI_DEFAULT_GRAPH",
@@ -932,6 +935,19 @@ class SodaScsPortainerServiceActions implements SodaScsServiceRequestInterface {
       $url .= '#' . $parts['fragment'];
     }
     return $url;
+  }
+
+  /**
+   * Resolves the triplestore base URL for WissKI container env vars.
+   *
+   * Prefers the internal Docker URL (direct to OpenGDB AuthProxy) when set.
+   */
+  protected function getTriplestoreHostForWisski(array $triplestoreServiceSettings): string {
+    $internalHost = trim((string) ($triplestoreServiceSettings['internalHost'] ?? ''));
+    if ($internalHost !== '') {
+      return rtrim($internalHost, '/');
+    }
+    return rtrim((string) $triplestoreServiceSettings['host'], '/');
   }
 
 }

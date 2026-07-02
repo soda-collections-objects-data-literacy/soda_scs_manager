@@ -602,7 +602,13 @@ class SodaScsSettingsForm extends ConfigFormBase {
       '#type' => 'textfield',
       '#title' => $this->t('Triplestore host'),
       '#default_value' => $this->config('soda_scs_manager.settings')->get('triplestore')['generalSettings']['host'] ?? '',
-      '#description' => $this->t('The triplestore host, like ts.scs.sammlungen.io.'),
+      '#description' => $this->t('The triplestore host, like https://ts.scs.sammlungen.io.'),
+    ];
+    $form['triplestore']['generalSettings']['internalHost'] = [
+      '#type' => 'textfield',
+      '#title' => $this->t('Triplestore internal host (WissKI)'),
+      '#default_value' => $this->config('soda_scs_manager.settings')->get('triplestore')['generalSettings']['internalHost'] ?? 'http://scs--authproxy:8000',
+      '#description' => $this->t('Internal OpenGDB URL injected into WissKI stacks (e.g. http://scs--authproxy:8000). Avoids Traefik hairpin for SPARQL. Leave empty to use the public host.'),
     ];
     $form['triplestore']['generalSettings']['port'] = [
       '#type' => 'textfield',

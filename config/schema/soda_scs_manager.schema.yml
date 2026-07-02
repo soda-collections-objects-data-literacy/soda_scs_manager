@@ -246,6 +246,10 @@ soda_scs_manager.settings:
               type: string
               label: 'Triplestore host'
               description: 'The triplestore host, like https://ts.scs.sammlungen.io.'
+            internalHost:
+              type: string
+              label: 'Triplestore internal host (WissKI)'
+              description: 'Internal URL for WissKI SPARQL (e.g. http://scs--authproxy:8000). Bypasses Traefik when set.'
             port:
               type: string
               label: 'Port'

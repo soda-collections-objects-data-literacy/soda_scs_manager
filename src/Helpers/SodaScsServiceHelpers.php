@@ -454,6 +454,7 @@ class SodaScsServiceHelpers {
   public function initTriplestoreServiceSettings() {
     $triplestoreServiceSettings['name'] = 'Triplestore';
     $triplestoreServiceSettings['host'] = $this->settings->get('triplestore.generalSettings.host');
+    $triplestoreServiceSettings['internalHost'] = $this->settings->get('triplestore.generalSettings.internalHost');
     $triplestoreServiceSettings['port'] = $this->settings->get('triplestore.generalSettings.port');
     $triplestoreServiceSettings['adminUsername'] = $this->settings->get('triplestore.generalSettings.adminUsername');
     $triplestoreServiceSettings['adminPassword'] = $this->settings->get('triplestore.generalSettings.adminPassword');
