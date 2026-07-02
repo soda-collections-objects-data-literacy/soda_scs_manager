@@ -100,6 +100,8 @@ function soda_scs_manager_install() {
     // Clear caches to apply the theme changes.
     \Drupal::service('cache.render')->deleteAll();
   }
+
+  _soda_scs_manager_ensure_pfdp_snapshots_bypass();
 }
 
 /**
@@ -1235,6 +1237,60 @@ function soda_scs_manager_update_11023() {
   $definition_update_manager->uninstallFieldStorageDefinition($field_storage_definition);
 
   return t('Uninstalled sharedWith field from soda_scs_component.');
+}
+
+/**
+ * Ensure PFDP bypasses /snapshots so soda_scs_manager_file_download() controls access.
+ */
+function soda_scs_manager_update_11024() {
+  return _soda_scs_manager_ensure_pfdp_snapshots_bypass();
+}
+
+/**
+ * Creates or updates the PFDP directory rule for snapshot downloads.
+ *
+ * Private Files Download Permission (pfdp) denies all private:// downloads by
+ * default. Snapshot access is enforced in soda_scs_manager_file_download();
+ * PFDP must bypass /snapshots or every owner gets HTTP 403.
+ *
+ * @return \Drupal\Core\StringTranslation\TranslatableMarkup
+ *   Status message.
+ */
+function _soda_scs_manager_ensure_pfdp_snapshots_bypass(): TranslatableMarkup {
+  if (!\Drupal::moduleHandler()->moduleExists('pfdp')) {
+    return t('PFDP module is not enabled; no snapshot bypass rule needed.');
+  }
+
+  $storage = \Drupal::entityTypeManager()->getStorage('pfdp_directory');
+  $directory = $storage->load('scs_manager_snapshots');
+  if (!$directory) {
+    $directory = $storage->create([
+      'id' => 'scs_manager_snapshots',
+      'path' => '/snapshots',
+      'bypass' => TRUE,
+      'grant_file_owners' => FALSE,
+      'users' => [],
+      'roles' => [],
+    ]);
+    $directory->save();
+    return t('Created PFDP bypass rule for private://snapshots (snapshot downloads).');
+  }
+
+  $changed = FALSE;
+  if ($directory->path !== '/snapshots') {
+    $directory->path = '/snapshots';
+    $changed = TRUE;
+  }
+  if (!$directory->bypass) {
+    $directory->bypass = TRUE;
+    $changed = TRUE;
+  }
+  if ($changed) {
+    $directory->save();
+    return t('Updated PFDP bypass rule for private://snapshots (snapshot downloads).');
+  }
+
+  return t('PFDP bypass rule for private://snapshots is already configured.');
 }
 
 /**
