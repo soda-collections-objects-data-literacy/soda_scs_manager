@@ -80,6 +80,9 @@ class SodaScsKeycloakHelpers {
    *   The keycloak user.
    */
   public function getKeycloakUser(string $keycloakToken, string $username) {
+    if (!$keycloakToken) {
+      return NULL;
+    }
     $keycloakUsers = $this->getKeycloakUsers($keycloakToken);
     foreach ($keycloakUsers as $keycloakUser) {
       if ($keycloakUser['username'] == $username) {
