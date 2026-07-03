@@ -124,13 +124,21 @@ msgstr "Geben Sie Ihren Nachnamen ein. Erlaubt sind nur Buchstaben, Leerzeichen,
 msgid "Enter the password you would like to use."
 msgstr "Geben Sie das Passwort ein, das Sie verwenden möchten."
 
-#: src/Form/KeycloakUserRegistrationForm.php:200
+#: src/Form/KeycloakUserRegistrationForm.php:258
 msgid "I agree to the <a href=\"/terms-of-service\" target=\"_blank\">terms of service</a>"
 msgstr "Ich stimme den <a href=\"/terms-of-service\" target=\"_blank\">Nutzungsbedingungen</a> zu."
 
-#: src/Form/KeycloakUserRegistrationForm.php:207
+#: src/Form/KeycloakUserRegistrationForm.php:258
+msgid "I agree to the terms of service"
+msgstr "Ich stimme den Nutzungsbedingungen zu."
+
+#: src/Form/KeycloakUserRegistrationForm.php:265
 msgid "I agree to the <a href=\"/privacy-policy\" target=\"_blank\">privacy policy</a>"
 msgstr "Ich stimme der <a href=\"/privacy-policy\" target=\"_blank\">Datenschutzerklärung</a> zu."
+
+#: src/Form/KeycloakUserRegistrationForm.php:265
+msgid "I agree to the privacy policy"
+msgstr "Ich stimme der Datenschutzerklärung zu."
 
 #: src/Form/KeycloakUserRegistrationForm.php:218
 msgid "Register"
@@ -2831,7 +2839,7 @@ msgstr "Manager für Dienste und Projekte."
 
 #: templates/includes/soda-scs-manager--coworking-intro.html.twig
 msgid "The Semantic Co-Working Space (SCS) provides selected applications for digital collection management. The SCS is the main access point to these applications and you can manage them in a user-friendly webinterface. The SCS is built to work together, so our main services support collaborative work and data integration between applications. You can easily share the access to your applications with other SCS users."
-msgstr "Der Semantic Co-Working Space (SCS) bietet ausgewählte Anwendungen für das digitale Sammlungsmanagement. Der SCS ist Ihr zentraler Zugang zu diesen Anwendungen; Sie verwalten sie in einer benutzerfreundlichen Weboberfläche. Der SCS ist auf Zusammenarbeit ausgelegt: Unsere Hauptdienste unterstützen gemeinsames Arbeiten und die Datenintegration zwischen Anwendungen. Sie können den Zugang zu Ihren Anwendungen einfach mit anderen SCS-Nutzenden teilen. Außerdem finden Sie Informationen zu den Diensten und Hilfe, wenn Sie nicht weiterkommen."
+msgstr "Der Semantic Co-Working Space (SCS) bietet ausgewählte Anwendungen für das digitale Sammlungsmanagement. Der SCS ist Ihr zentraler Zugang zu diesen Anwendungen; Sie verwalten sie in einer benutzerfreundlichen Weboberfläche. Der SCS ist auf Zusammenarbeit ausgelegt: Unsere Hauptdienste unterstützen gemeinsames Arbeiten und die Datenintegration zwischen Anwendungen. Sie können den Zugang zu Ihren Anwendungen einfach mit anderen SCS-Nutzenden teilen."
 
 #: templates/includes/soda-scs-manager--coworking-intro.html.twig
 msgid "Your Dashboard"

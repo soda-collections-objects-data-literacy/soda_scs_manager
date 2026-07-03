@@ -157,7 +157,7 @@ class SodaScsDatabaseHelpers {
       );
       if (!$backupDirectoryResult->success) {
         return SodaScsResult::failure(
-          error: $dumpResult->error ?? 'Failed to run database dump.',
+          error: $backupDirectoryResult->error ?? 'Failed to ensure backup directory.',
           message: (string) $this->t('Failed to run database dump.'),
         );
       }
@@ -327,18 +327,22 @@ class SodaScsDatabaseHelpers {
       }
 
       $sqlComponentServiceKeyPassword = $sqlComponentServiceKey->get('servicePassword')->value;
+      $databaseHost = $this->sodaScsServiceHelpers->getDatabaseDockerHost();
 
       // 2. Run the database dump command.
       $dumpExecCommand = [
         'bash',
         '-c',
-        'set -o pipefail && mariadb-dump -hdatabase -u' . $sqlComponent->getOwner()->getDisplayName() . ' -p' . $sqlComponentServiceKeyPassword . ' "' . $databaseName . '" | gzip > ' . $dumpFilePath,
+        'set -o pipefail && mariadb-dump -h' . $databaseHost . ' -u' . $sqlComponent->getOwner()->getDisplayName() . ' -p' . $sqlComponentServiceKeyPassword . ' "' . $databaseName . '" | gzip > ' . $dumpFilePath,
       ];
 
       $dumpExecResponse = $this->sodaScsContainerHelpers->executeDockerExecCommand([
         'cmd' => $dumpExecCommand,
         'containerName' => $clientContainerName,
         'user' => 'www-data',
+        // mariadb-dump can exceed Guzzle's default 30s HTTP timeout.
+        'detach' => TRUE,
+        'timeout' => 1800,
       ]);
 
       if (!$dumpExecResponse->success) {

@@ -24,9 +24,11 @@ view soda scs component:
 
 edit soda scs component:
   title: 'Edit SODa SCS Component'
+  description: 'Granted to scs_user; entity access is restricted to the component owner.'
 
 delete soda scs component:
   title: 'Delete SODa SCS Component'
+  description: 'Granted to scs_user; entity access is restricted to the component owner.'
 
 # SCS Stack Permissions
 create soda scs stack:
@@ -34,12 +36,14 @@ create soda scs stack:
 
 edit soda scs stack:
   title: 'Edit SODa SCS Stack'
+  description: 'Granted to scs_user; entity access is restricted to the stack owner.'
 
 view soda scs stack:
   title: 'View SODa SCS Stack'
 
 delete soda scs stack:
   title: 'Delete SODa SCS Stack'
+  description: 'Granted to scs_user; entity access is restricted to the stack owner.'
 
 # SCS Service Key Permissions
 create soda scs service key:
@@ -71,7 +75,7 @@ delete soda scs project:
 # SCS Snapshot Permissions
 create soda scs snapshot:
   title: 'Create SCS Snapshots'
-  description: 'Create snapshots of stacks and components.'
+  description: 'Granted to scs_user; snapshot creation routes are restricted to the component or stack owner.'
 
 view soda scs snapshot:
   title: 'View SCS Snapshots'

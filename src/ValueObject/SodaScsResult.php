@@ -60,18 +60,24 @@ final readonly class SodaScsResult {
    *   Error message.
    * @param string $message
    *   Human-readable message.
+   * @param bool $log
+   *   When TRUE (default), log to the soda_scs_manager watchdog channel.
+   *   Set FALSE for expected/transient failures (e.g. container inspect 404
+   *   during health polling).
    *
    * @return self
    *   The SodaScsResult object.
    */
-  public static function failure(string $error, string $message): self {
-    Error::logException(
-      \Drupal::logger('soda_scs_manager'),
-      new \Exception($error),
-      $error,
-      [],
-      LogLevel::ERROR,
-    );
+  public static function failure(string $error, string $message, bool $log = TRUE): self {
+    if ($log) {
+      Error::logException(
+        \Drupal::logger('soda_scs_manager'),
+        new \Exception($error),
+        $error,
+        [],
+        LogLevel::ERROR,
+      );
+    }
     return new self(
       success: FALSE,
       data: NULL,

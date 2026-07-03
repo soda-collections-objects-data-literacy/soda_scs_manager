@@ -387,13 +387,18 @@ class SodaScsContainerHelpers {
    *   The desired state value from Docker inspect's State.Status
    *   (e.g. "exited", "running").
    *
+   * @param int|null $maxAttempts
+   *   Optional poll limit; when NULL, derived from PHP max_execution_time.
+   *
    * @return \Drupal\soda_scs_manager\ValueObject\SodaScsResult
    *   Success when desired state is reached;
    *   failure on timeout or inspect error.
    */
-  public function waitForContainerExecState(string $execId, int $desiredState): SodaScsResult {
+  public function waitForContainerExecState(string $execId, int $desiredState, ?int $maxAttempts = NULL): SodaScsResult {
     $attempts = 0;
-    $maxAttempts = $this->sodaScsHelpers->adjustMaxAttempts();
+    if ($maxAttempts === NULL) {
+      $maxAttempts = $this->sodaScsHelpers->adjustMaxAttempts();
+    }
 
     // If max attempts can not be calculated, return a failure result.
     if ($maxAttempts === FALSE) {
@@ -541,8 +546,12 @@ class SodaScsContainerHelpers {
    *   The Soda SCS result.
    */
   public function executeDockerExecCommand(array $requestParams): SodaScsResult {
+    $timeout = (int) ($requestParams['timeout'] ?? 600);
+    $detach = (bool) ($requestParams['detach'] ?? FALSE);
+
     // Create the exec command.
     $createRequest = $this->sodaScsDockerExecServiceActions->buildCreateRequest($requestParams);
+    $createRequest['timeout'] = $timeout;
     $createResponse = $this->sodaScsDockerExecServiceActions->makeRequest($createRequest);
 
     if (!$createResponse['success']) {
@@ -560,7 +569,13 @@ class SodaScsContainerHelpers {
     $execId = $createResponseData['Id'];
 
     // Start the exec command.
-    $startRequest = $this->sodaScsDockerExecServiceActions->buildStartRequest(['execId' => $execId]);
+    $startRequest = $this->sodaScsDockerExecServiceActions->buildStartRequest([
+      'execId' => $execId,
+      'detach' => $detach,
+    ]);
+    // Detached starts return immediately; the HTTP client only needs to wait for
+    // long-running commands when output is streamed on the start response.
+    $startRequest['timeout'] = $detach ? 60 : $timeout;
     $startResponse = $this->sodaScsDockerExecServiceActions->makeRequest($startRequest);
 
     if (!$startResponse['success']) {
@@ -571,11 +586,17 @@ class SodaScsContainerHelpers {
     }
 
     // Capture and parse the command output from the start response.
-    $rawCommandOutput = $startResponse['data']['portainerResponse']->getBody()->getContents();
-    $commandOutput = $this->sodaScsHelpers->parseDockerExecOutput($rawCommandOutput);
+    if ($detach) {
+      $commandOutput = '';
+    }
+    else {
+      $rawCommandOutput = $startResponse['data']['portainerResponse']->getBody()->getContents();
+      $commandOutput = $this->sodaScsHelpers->parseDockerExecOutput($rawCommandOutput);
+    }
 
     // Wait for the command to complete.
-    $waitForContainerExecStateResponse = $this->waitForContainerExecState($execId, 0);
+    $maxAttempts = $detach ? max(1, (int) floor($timeout / 5)) : NULL;
+    $waitForContainerExecStateResponse = $this->waitForContainerExecState($execId, 0, $maxAttempts);
     if (!$waitForContainerExecStateResponse->success) {
       return SodaScsResult::failure(
         error: $waitForContainerExecStateResponse->error,
@@ -614,11 +635,170 @@ class SodaScsContainerHelpers {
       );
     }
     else {
+      $errorDetail = $commandOutput !== ''
+        ? $commandOutput
+        : "Docker exec exited with code {$exitCode} (no captured output; detached or silent command).";
       return SodaScsResult::failure(
         message: "Command failed with exit code: {$exitCode}",
-        error: "{$commandOutput}",
+        error: $errorDetail,
       );
     }
+  }
+
+  /**
+   * Resolves the Docker container name for a WissKI component.
+   */
+  public function getComponentContainerName(SodaScsComponentInterface $component): string {
+    $containerName = (string) ($component->get('containerName')->value ?? '');
+    if ($containerName === '') {
+      $containerName = (string) $component->get('machineName')->value . '--drupal';
+    }
+    return $containerName;
+  }
+
+  /**
+   * Looks up a live Docker container by exact name.
+   *
+   * @param string $containerName
+   *   Container name without a leading slash.
+   *
+   * @return \Drupal\soda_scs_manager\ValueObject\SodaScsResult
+   *   Success data contains containerId, containerName, and state.
+   */
+  public function findLiveContainerByName(string $containerName): SodaScsResult {
+    $dockerGetAllContainersRequest = $this->sodaScsDockerRunServiceActions->buildGetAllRequest([
+      'queryParams' => [
+        'all' => TRUE,
+        'filters' => json_encode(['name' => [$containerName]]),
+      ],
+    ]);
+    $dockerGetAllContainersResponse = $this->sodaScsDockerRunServiceActions->makeRequest($dockerGetAllContainersRequest);
+    if (!$dockerGetAllContainersResponse['success']) {
+      return SodaScsResult::failure(
+        error: (string) ($dockerGetAllContainersResponse['error'] ?? 'Docker request failed.'),
+        message: (string) $this->t('Failed to resolve container.'),
+        log: FALSE,
+      );
+    }
+
+    $containers = json_decode(
+      $dockerGetAllContainersResponse['data']['portainerResponse']->getBody()->getContents(),
+      TRUE,
+    );
+    $matchedContainer = $this->findContainerByExactName(is_array($containers) ? $containers : [], $containerName);
+    if ($matchedContainer === NULL) {
+      return SodaScsResult::failure(
+        error: 'Container not found for name: ' . $containerName,
+        message: (string) $this->t('Container not found.'),
+        log: FALSE,
+      );
+    }
+
+    return SodaScsResult::success(
+      message: (string) $this->t('Container resolved.'),
+      data: [
+        'containerId' => (string) ($matchedContainer['Id'] ?? ''),
+        'containerName' => $containerName,
+        'state' => (string) ($matchedContainer['State'] ?? ''),
+      ],
+    );
+  }
+
+  /**
+   * Refreshes the stored container ID from the live Docker container name.
+   *
+   * After a stack redeploy, Docker assigns a new container ID. This looks up the
+   * current container by name and persists it on the component entity.
+   */
+  public function syncComponentContainerId(SodaScsComponentInterface $component): SodaScsResult {
+    $containerName = $this->getComponentContainerName($component);
+    $storedId = (string) ($component->get('containerId')->value ?? '');
+
+    $liveLookup = $this->findLiveContainerByName($containerName);
+    if (!$liveLookup->success) {
+      return $liveLookup;
+    }
+    $liveId = (string) ($liveLookup->data['containerId'] ?? '');
+
+    if ($liveId === '') {
+      return SodaScsResult::failure(
+        error: 'Container not found for name: ' . $containerName,
+        message: (string) $this->t('WissKI container not found.'),
+        log: FALSE,
+      );
+    }
+
+    if ($storedId !== $liveId) {
+      $component->set('containerId', $liveId);
+      $component->set('containerName', $containerName);
+      $component->save();
+    }
+
+    return SodaScsResult::success(
+      message: (string) $this->t('WissKI container metadata refreshed.'),
+      data: [
+        'containerId' => $liveId,
+        'containerName' => $containerName,
+        'refreshed' => $storedId !== $liveId,
+      ],
+    );
+  }
+
+  /**
+   * Inspects a component container, refreshing stale IDs when needed.
+   */
+  public function inspectComponentContainer(SodaScsComponentInterface $component): SodaScsResult {
+    $containerId = (string) ($component->get('containerId')->value ?? '');
+    if ($containerId === '') {
+      $syncResult = $this->syncComponentContainerId($component);
+      if (!$syncResult->success) {
+        return $syncResult;
+      }
+      $containerId = (string) ($syncResult->data['containerId'] ?? '');
+    }
+
+    $inspectResult = $this->inspectContainer($containerId);
+    if ($inspectResult->success) {
+      return $inspectResult;
+    }
+
+    $syncResult = $this->syncComponentContainerId($component);
+    if ($syncResult->success) {
+      $newId = (string) ($syncResult->data['containerId'] ?? '');
+      if ($newId !== '' && $newId !== $containerId) {
+        return $this->inspectContainer($newId);
+      }
+    }
+
+    return $inspectResult;
+  }
+
+  /**
+   * Finds a container whose normalized name matches exactly.
+   *
+   * Docker's name filter is substring-based; e.g. "wisski-test--drupal" also
+   * matches "wisski-jc-wisski-test--drupal". Always verify an exact name.
+   *
+   * @param array $containers
+   *   Docker list containers API response items.
+   * @param string $containerName
+   *   Expected container name without a leading slash.
+   *
+   * @return array|null
+   *   Matching container payload or NULL.
+   */
+  private function findContainerByExactName(array $containers, string $containerName): ?array {
+    foreach ($containers as $container) {
+      if (!is_array($container)) {
+        continue;
+      }
+      foreach ($container['Names'] ?? [] as $name) {
+        if (ltrim((string) $name, '/') === $containerName) {
+          return $container;
+        }
+      }
+    }
+    return NULL;
   }
 
   /**
@@ -646,9 +826,12 @@ class SodaScsContainerHelpers {
     $inspectContainerRequest = $this->sodaScsDockerRunServiceActions->buildInspectRequest($requestParams);
     $inspectContainerResponse = $this->sodaScsDockerRunServiceActions->makeRequest($inspectContainerRequest);
     if (!$inspectContainerResponse['success']) {
+      $statusCode = (int) ($inspectContainerResponse['statusCode'] ?? 0);
+      $isMissingContainer = $statusCode === 404;
       return SodaScsResult::failure(
         message: 'Failed to inspect container.',
         error: (string) $inspectContainerResponse['error'],
+        log: !$isMissingContainer,
       );
     }
     return SodaScsResult::success(

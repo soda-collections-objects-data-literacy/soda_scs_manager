@@ -571,47 +571,7 @@ class SodaScsWisskiComponentActions implements SodaScsComponentActionsInterface 
    *   Result with refreshed container metadata.
    */
   private function refreshComponentContainerId(SodaScsComponentInterface $component): SodaScsResult {
-    $containerName = (string) ($component->get('containerName')->value ?? '');
-    if ($containerName === '') {
-      $containerName = (string) $component->get('machineName')->value . '--drupal';
-    }
-
-    $dockerGetAllContainersRequest = $this->sodaScsDockerRunServiceActions->buildGetAllRequest([
-      'queryParams' => [
-        'all' => TRUE,
-        'filters' => json_encode(['name' => [$containerName]]),
-      ],
-    ]);
-    $dockerGetAllContainersResponse = $this->sodaScsDockerRunServiceActions->makeRequest($dockerGetAllContainersRequest);
-    if (!$dockerGetAllContainersResponse['success']) {
-      return SodaScsResult::failure(
-        error: $dockerGetAllContainersResponse['error'] ?? 'Docker request failed.',
-        message: (string) $this->t('Failed to resolve WissKI container after redeploy.'),
-      );
-    }
-
-    $containers = json_decode(
-      $dockerGetAllContainersResponse['data']['portainerResponse']->getBody()->getContents(),
-      TRUE,
-    );
-    if (!is_array($containers) || empty($containers[0]['Id'])) {
-      return SodaScsResult::failure(
-        error: 'Container not found after redeploy.',
-        message: (string) $this->t('Failed to resolve WissKI container after redeploy.'),
-      );
-    }
-
-    $component->set('containerId', (string) $containers[0]['Id']);
-    $component->set('containerName', $containerName);
-    $component->save();
-
-    return SodaScsResult::success(
-      message: (string) $this->t('WissKI container metadata refreshed.'),
-      data: [
-        'containerId' => (string) $containers[0]['Id'],
-        'containerName' => $containerName,
-      ],
-    );
+    return $this->sodaScsContainerHelpers->syncComponentContainerId($component);
   }
 
   /**
@@ -1489,30 +1449,15 @@ class SodaScsWisskiComponentActions implements SodaScsComponentActionsInterface 
     }
 
     for ($attempt = 0; $attempt < $maxAttempts; $attempt++) {
-      $dockerGetAllContainersRequest = $this->sodaScsDockerRunServiceActions->buildGetAllRequest([
-        'queryParams' => [
-          'all' => TRUE,
-          'filters' => json_encode(['name' => [$containerName]]),
-        ],
-      ]);
-      $dockerGetAllContainersResponse = $this->sodaScsDockerRunServiceActions->makeRequest($dockerGetAllContainersRequest);
-      if ($dockerGetAllContainersResponse['success']) {
-        $containers = json_decode(
-          $dockerGetAllContainersResponse['data']['portainerResponse']->getBody()->getContents(),
-          TRUE,
+      $matched = $this->sodaScsContainerHelpers->findLiveContainerByName($containerName);
+      if ($matched->success && (string) ($matched->data['state'] ?? '') === 'running') {
+        return SodaScsResult::success(
+          message: (string) $this->t('WissKI container is running.'),
+          data: [
+            'containerId' => (string) ($matched->data['containerId'] ?? ''),
+            'containerName' => $containerName,
+          ],
         );
-        if (is_array($containers) && !empty($containers[0]['State'])) {
-          $state = (string) ($containers[0]['State'] ?? '');
-          if ($state === 'running') {
-            return SodaScsResult::success(
-              message: (string) $this->t('WissKI container is running.'),
-              data: [
-                'containerId' => (string) ($containers[0]['Id'] ?? ''),
-                'containerName' => $containerName,
-              ],
-            );
-          }
-        }
       }
 
       sleep(5);

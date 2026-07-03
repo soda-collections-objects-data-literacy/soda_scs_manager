@@ -227,38 +227,72 @@ class SodaScsDrupalHelpers {
    *
    * @param \Drupal\soda_scs_manager\Entity\SodaScsComponentInterface $component
    *   The component.
+   * @param bool $wait
+   *   When TRUE, poll until Drupal responds on /health or the wait budget expires.
+   * @param int $maxWaitSeconds
+   *   Maximum wait time when $wait is TRUE (default 10 minutes).
    *
    * @return \Drupal\soda_scs_manager\ValueObject\SodaScsResult|null
    *   A failure result when the Drupal instance is not healthy, or NULL when
    *   it is healthy.
    */
-  private function ensureDrupalHealthy(SodaScsComponentInterface $component): ?SodaScsResult {
+  private function ensureDrupalHealthy(
+    SodaScsComponentInterface $component,
+    bool $wait = FALSE,
+    int $maxWaitSeconds = 600,
+  ): ?SodaScsResult {
+    $sleepInterval = 5;
+    $maxAttempts = $wait
+      ? max(1, (int) floor($maxWaitSeconds / $sleepInterval))
+      : 1;
 
-    // Check if the Drupal instance is healthy.
-    $health = $this->sodaScsComponentHelpers->drupalHealthCheck($component);
+    $lastHealth = [];
+    for ($attempt = 0; $attempt < $maxAttempts; $attempt++) {
+      $health = $this->sodaScsComponentHelpers->drupalHealthCheck($component);
+      $lastHealth = is_array($health) ? $health : [];
 
-    $status = is_array($health) ? (string) ($health['status'] ?? '') : '';
-    $success = is_array($health) ? (bool) ($health['success'] ?? FALSE) : FALSE;
+      $status = (string) ($lastHealth['status'] ?? '');
+      $success = (bool) ($lastHealth['success'] ?? FALSE);
 
-    // We consider the instance healthy only when it is running and available.
-    if (!$success || $status !== 'running') {
-      $message = $status !== ''
-        ? (string) $this->t('Drupal is not healthy (status: @status). Not retrieving packages.', ['@status' => $status])
-        : (string) $this->t('Drupal is not healthy. Not retrieving packages.');
+      if ($success && $status === 'running') {
+        return SodaScsResult::success(
+          data: $lastHealth,
+          message: (string) $this->t('Drupal is healthy.'),
+        );
+      }
 
-      $error = is_array($health) ? json_encode($health, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE) : 'Health check failed.';
-      $error = $error !== '' ? 'Drupal health check failed: ' . $error : 'Drupal health check failed.';
+      if ($wait && $this->isDrupalHealthCheckRetryable($lastHealth) && $attempt < $maxAttempts - 1) {
+        sleep($sleepInterval);
+        continue;
+      }
 
-      return SodaScsResult::failure(
-        error: $error,
-        message: $message,
-      );
+      break;
     }
 
-    return SodaScsResult::success(
-      data: $health,
-      message: (string) $this->t('Drupal is healthy.'),
+    $status = (string) ($lastHealth['status'] ?? '');
+    $message = $status !== ''
+      ? (string) $this->t('Drupal is not healthy (status: @status). Not retrieving packages.', ['@status' => $status])
+      : (string) $this->t('Drupal is not healthy. Not retrieving packages.');
+
+    $error = $lastHealth !== []
+      ? json_encode($lastHealth, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE)
+      : 'Health check failed.';
+    $error = $error !== '' ? 'Drupal health check failed: ' . $error : 'Drupal health check failed.';
+
+    return SodaScsResult::failure(
+      error: $error,
+      message: $message,
     );
+  }
+
+  /**
+   * Whether a Drupal health probe should be retried after stack redeploy.
+   *
+   * Traefik and Drupal can lag behind Docker "running" (HTTP 404/502/503).
+   */
+  private function isDrupalHealthCheckRetryable(array $health): bool {
+    $status = (string) ($health['status'] ?? '');
+    return in_array($status, ['starting', 'unavailable', 'unknown'], TRUE);
   }
 
   /**
@@ -397,6 +431,7 @@ class SodaScsDrupalHelpers {
       }
 
       // Get the latest packages via Composer.
+      // --latest needs a writable COMPOSER_HOME; the image default is root-owned.
       $dockerExecCommandResponse = $this->sodaScsContainerHelpers->executeDockerExecCommand([
         'cmd'           => [
           'composer',
@@ -409,6 +444,9 @@ class SodaScsDrupalHelpers {
         ],
         'containerName' => (string) $component->get('containerId')->value,
         'user'          => 'www-data',
+        'env'           => [
+          'COMPOSER_HOME=/tmp/composer-home-scs-manager',
+        ],
       ]);
       if (!$dockerExecCommandResponse->success) {
         $errorDetail = 'Failed to check latest Drupal packages: ' . ($dockerExecCommandResponse->error ?? '');
@@ -840,7 +878,7 @@ class SodaScsDrupalHelpers {
       $resultData['stackRedeploy'] = $stackRedeployResult->data;
 
       $this->sodaScsProgressHelper->createStep($updateDrupalPackagesOperationUuid, 'Wait for Drupal to become healthy');
-      $ensureDrupalHealthyAfterRedeployResult = $this->ensureDrupalHealthy($component);
+      $ensureDrupalHealthyAfterRedeployResult = $this->ensureDrupalHealthy($component, wait: TRUE);
       if (!$ensureDrupalHealthyAfterRedeployResult->success) {
         $this->sodaScsProgressHelper->createStep($updateDrupalPackagesOperationUuid, 'Failed to ensure Drupal is healthy after redeploy');
         return SodaScsResult::failure(
@@ -1327,12 +1365,13 @@ class SodaScsDrupalHelpers {
       }
 
       $sqlComponentServiceKeyPassword = $sqlComponentServiceKey->get('servicePassword')->value;
+      $databaseHost = $this->sodaScsServiceHelpers->getDatabaseDockerHost();
 
       // Run the database restore command.
       $restoreExecCommand = [
         'bash',
         '-c',
-        'set -o pipefail && gunzip -c ' . $dumpFilePath . ' | mariadb -hdatabase -u' . $sqlComponent->getOwner()->getDisplayName() . ' -p' . $sqlComponentServiceKeyPassword . ' "' . $databaseName . '"',
+        'set -o pipefail && gunzip -c ' . $dumpFilePath . ' | mariadb -h' . $databaseHost . ' -u' . $sqlComponent->getOwner()->getDisplayName() . ' -p' . $sqlComponentServiceKeyPassword . ' "' . $databaseName . '"',
       ];
 
       $restoreExecResponse = $this->sodaScsContainerHelpers->executeDockerExecCommand([

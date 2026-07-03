@@ -328,14 +328,14 @@ class SodaScsSnapshotConfirmForm extends ConfirmFormBase {
 
       // @todo Check if the bag container is still running. Wait for it to be removed.
       $file = File::create([
-        'uri' => 'private://' . $createBagResult->data['metadata']['relativeTarFilePath'],
+        'uri' => 'private://' . ltrim($createBagResult->data['metadata']['relativeTarFilePath'], '/'),
         'uid' => $this->currentUser->id(),
         'status' => 1,
       ]);
       $file->save();
 
       $checksumFile = File::create([
-        'uri' => 'private://' . $createBagResult->data['metadata']['relativeSha256FilePath'],
+        'uri' => 'private://' . ltrim($createBagResult->data['metadata']['relativeSha256FilePath'], '/'),
         'uid' => $this->currentUser->id(),
         'status' => 1,
       ]);

@@ -187,6 +187,7 @@ class SodaScsDockerExecServiceActions implements SodaScsExecRequestInterface {
     if (isset($request['body'])) {
       $requestParams['body'] = $request['body'];
     }
+    $requestParams['timeout'] = $request['timeout'] ?? 600;
     // Send the request.
     try {
 
@@ -300,6 +301,8 @@ class SodaScsDockerExecServiceActions implements SodaScsExecRequestInterface {
       // /containers/{containerId}/exec/{execId}/start.
       str_replace('{execId}', $requestParams['execId'], $dockerExecServiceSettings['startUrl']);
 
+    $detach = (bool) ($requestParams['detach'] ?? FALSE);
+
     return [
       'method' => 'POST',
       'route' => $route,
@@ -309,7 +312,7 @@ class SodaScsDockerExecServiceActions implements SodaScsExecRequestInterface {
         'X-API-Key' => $portainerServiceSettings['authenticationToken'],
       ],
       'body' => json_encode([
-        'Detach' => FALSE,
+        'Detach' => $detach,
         'Tty' => FALSE,
       ]),
     ];
