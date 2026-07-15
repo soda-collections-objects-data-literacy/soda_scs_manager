@@ -414,7 +414,7 @@ msgstr "Snapshots für Sicherung und Wiederherstellung verwalten."
 
 #: soda_scs_manager.links.menu.yml:0
 msgid "Manage application environments like JupyterHub and Nextcloud."
-msgstr "Applikationsumgebungen wie JupyterHub und Nextcloud verwalten"
+msgstr "Anwendungsumgebungen wie JupyterHub und Nextcloud verwalten"
 
 #: soda_scs_manager.links.menu.yml:0
 msgid "SODa SCS Manager settings and configurations"
@@ -778,11 +778,11 @@ msgstr "Portainer-Anfrage fehlgeschlagen: @error"
 
 #: src/Controller/SodaScsAdministrationController.php:26
 msgid "Manage single application components like databases and triplestores."
-msgstr "Verwalten Sie singuläre Applikationskomponenten wie Datenbanken und Triplestores."
+msgstr "Verwalten Sie singuläre Anwendungskomponenten wie Datenbanken und Triplestores."
 
 #: src/Controller/SodaScsAdministrationController.php:36
 msgid "Manage application environments like JupyterHub and Nextcloud."
-msgstr "Verwalten Sie Applikationsumgebungen wie JupyterHub und Nextcloud."
+msgstr "Verwalten Sie Anwendungsumgebungen wie JupyterHub und Nextcloud."
 
 #: src/Controller/SodaScsAdministrationController.php:46
 msgid "Manage projects to collaborate with other users and share resources."
@@ -978,7 +978,7 @@ msgstr "Der Zeitpunkt der letzten Aktualisierung der SODa SCS-Komponente."
 
 #: src/Entity/SodaScsStack.php:368
 msgid "Notes about the SODa SCS application."
-msgstr "Notizen über die SODa SCS Anwendung."
+msgstr "Notizen über die SODa SCS-Anwendung."
 
 
 #: src/Entity/SodaScsComponent.php:12;12 src/Entity/SodaScsServiceKey.php:119
@@ -987,7 +987,7 @@ msgstr "SODa SCS-Komponente"
 
 #: src/Entity/SodaScsProject.php:100
 msgid "The SCS applications associated with this project."
-msgstr "Die mit diesem Projekt verbundenen SCS Applikationen."
+msgstr "Die mit diesem Projekt verbundenen SCS-Anwendungen."
 
 #: src/Entity/SodaScsProject.php:129
 msgid "The time that the SODa SCS Project was created."
@@ -1135,7 +1135,7 @@ msgstr "Das Image des SODa SCS Stacks."
 
 #: src/Entity/SodaScsStack.php:183
 msgid "Included applications"
-msgstr "Enthaltene Applikationen"
+msgstr "Enthaltene Anwendungen"
 
 #: src/Form/SodaScsStackCreateForm.php:328
 msgid "The label of the bundled application. Max length is 25 characters. Will be used to generate the machine name."
@@ -1199,7 +1199,7 @@ msgstr "Geteilt mit"
 
 #: src/Entity/Bundle/SodaScsComponentBundle.php:50
 msgid "The applications that are shared with this component."
-msgstr "Die Applikationen, die mit dieser Komponente geteilt werden."
+msgstr "Die Anwendungen, die mit dieser Komponente geteilt werden."
 
 # src/Entity/Bundle/SodaScsComponentBundle.php:109
 msgid "Automated Updates"
@@ -1283,7 +1283,7 @@ msgstr "Was ist das?"
 
 #: src/Form/SodaScsComponentCreateForm.php:210
 msgid "This field is required for filesystem applications."
-msgstr "Dieses Feld ist für Dateisystem-Applikation erforderlich."
+msgstr "Dieses Feld ist für Dateisystem-Anwendung erforderlich."
 
 #: src/Form/SodaScsComponentCreateForm.php:214
 msgid "CREATE"
@@ -2487,7 +2487,7 @@ msgstr "Maschinenname"
 
 #: src/ListBuilder/SodaScsProjectListBuilder.php:26
 msgid "Applications"
-msgstr "Applikationen"
+msgstr "Anwendungen"
 
 #: src/ListBuilder/SodaScsServiceKeyListBuilder.php:22
 msgid "Id"
@@ -2739,7 +2739,7 @@ msgstr "Keine Stacks verfügbar."
 
 #: templates/pages/soda-scs-manager--catalogue.html.twig:30
 msgid "No applications available."
-msgstr "Keine Applikationen verfügbar."
+msgstr "Keine Anwendungen verfügbar."
 
 #: src/Form/SodaScsSettingsForm.php:101
 msgid "Administrator email"
@@ -3035,7 +3035,7 @@ msgstr "Nextcloud-Konto verbinden"
 
 #: templates/pages/soda-scs-manager--start-page.html.twig:18
 msgid "To use Nextcloud with WissKI and other applications, connect your account once. A popup will open where you log in to Nextcloud. You can also connect later from your <a href=\":url\">Connected Accounts</a> page."
-msgstr "Um Nextcloud mit WissKI und anderen Applikationen zu nutzen, verbinden Sie Ihr Konto einmalig. Es öffnet sich ein Pop-up zur Anmeldung bei Nextcloud. Sie können die Verbindung auch später über die Seite <a href=\":url\">Verbundene Konten</a> herstellen."
+msgstr "Um Nextcloud mit WissKI und anderen Anwendungen zu nutzen, verbinden Sie Ihr Konto einmalig. Es öffnet sich ein Pop-up zur Anmeldung bei Nextcloud. Sie können die Verbindung auch später über die Seite <a href=\":url\">Verbundene Konten</a> herstellen."
 
 #: templates/pages/soda-scs-manager--start-page.html.twig:23
 msgid "Retry connection check"
