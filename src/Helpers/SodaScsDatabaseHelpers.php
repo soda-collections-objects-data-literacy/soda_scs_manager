@@ -9,7 +9,6 @@ use Drupal\Core\StringTranslation\StringTranslationTrait;
 use Drupal\Core\StringTranslation\TranslationInterface;
 use Drupal\soda_scs_manager\Entity\SodaScsComponentInterface;
 use Drupal\soda_scs_manager\Entity\SodaScsStackInterface;
-use Drupal\soda_scs_manager\Exception\SodaScsComponentActionsException;
 use Drupal\soda_scs_manager\ServiceKeyActions\SodaScsServiceKeyActionsInterface;
 use Drupal\soda_scs_manager\ValueObject\SodaScsResult;
 use Symfony\Component\DependencyInjection\Attribute\Autowire;
@@ -214,13 +213,12 @@ class SodaScsDatabaseHelpers {
   private function buildDatabaseContext(SodaScsComponentInterface|SodaScsStackInterface $subject): SodaScsResult {
     // If the subject is a stack, retrieve the SQL and WissKI components.
     if ($subject instanceof SodaScsStackInterface) {
-      try {
-        $sqlComponent = $this->sodaScsStackHelpers->retrieveIncludedComponent($subject, 'soda_scs_sql_component');
-        $drupalComponent = $this->sodaScsStackHelpers->retrieveIncludedComponent($subject, 'soda_scs_wisski_component');
-      }
-      catch (SodaScsComponentActionsException $e) {
+      $sqlComponent = $this->sodaScsStackHelpers->retrieveIncludedComponent($subject, 'soda_scs_sql_component');
+      $drupalComponent = $this->sodaScsStackHelpers->retrieveIncludedComponent($subject, 'soda_scs_wisski_component');
+
+      if (!$sqlComponent || !$drupalComponent) {
         return SodaScsResult::failure(
-          error: $e->getMessage(),
+          error: 'Component not found',
           message: (string) $this->t('SQL or WissKI component not found in stack.'),
         );
       }

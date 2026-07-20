@@ -10,7 +10,6 @@ use Drupal\Core\Messenger\MessengerTrait;
 use Drupal\Core\StringTranslation\StringTranslationTrait;
 use Drupal\soda_scs_manager\Entity\SodaScsComponentInterface;
 use Drupal\soda_scs_manager\Entity\SodaScsStackInterface;
-use Drupal\soda_scs_manager\Exception\SodaScsComponentActionsException;
 use GuzzleHttp\ClientInterface;
 
 /**
@@ -83,25 +82,19 @@ class SodaScsStackHelpers {
    * @param string $bundle
    *   The bundle of the referenced component.
    *
-   * @return \Drupal\soda_scs_manager\Entity\SodaScsComponentInterface
-   *   The referenced component.
-   *
-   * @throws \Drupal\soda_scs_manager\Exceptions\SodaScsComponentException
-   *   When the referenced component is not found.
+   * @return \Drupal\soda_scs_manager\Entity\SodaScsComponentInterface|null
+   *   The referenced component, or NULL if the stack does not include a
+   *   component of the given bundle (e.g. because it was never created).
    */
   public function retrieveIncludedComponent(SodaScsStackInterface $stack, string $bundle): ?SodaScsComponentInterface {
 
     /** @var \Drupal\Core\Field\EntityReferenceFieldItemListInterface $includedComponentsItemList */
     $includedComponents = $stack->getValue($stack, 'includedComponents');
 
-    $includedComponent = array_values(array_filter($includedComponents, function ($includedComponent) use ($bundle) {
+    return array_values(array_filter($includedComponents, function ($includedComponent) use ($bundle) {
       $componentBundle = $includedComponent->bundle->get(0)->get('value')->getValue();
       return $componentBundle === $bundle;
     }))[0] ?? NULL;
-    if (!$includedComponent) {
-      throw new SodaScsComponentActionsException('Component not found', 1);
-    }
-    return $includedComponent;
   }
 
   /**

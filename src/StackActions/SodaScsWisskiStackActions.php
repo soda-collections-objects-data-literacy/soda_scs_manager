@@ -24,7 +24,6 @@ use Drupal\Core\Utility\Error;
 use Drupal\soda_scs_manager\ComponentActions\SodaScsComponentActionsInterface;
 use Drupal\soda_scs_manager\Entity\SodaScsSnapshotInterface;
 use Drupal\soda_scs_manager\Entity\SodaScsStackInterface;
-use Drupal\soda_scs_manager\Exception\SodaScsComponentActionsException;
 use Drupal\soda_scs_manager\Exception\SodaScsRequestException;
 use Drupal\soda_scs_manager\Helpers\SodaScsSnapshotHelpers;
 use Drupal\soda_scs_manager\Helpers\SodaScsStackHelpers;
@@ -699,20 +698,6 @@ class SodaScsWisskiStackActions implements SodaScsStackActionsInterface {
         'error' => $e->getMessage(),
       ];
     }
-    catch (SodaScsComponentActionsException $e) {
-      $this->messenger->addError($this->t("Cannot delete database. See logs for more details."));
-      if ($e->getCode() == 1) {
-        // If component does not exist, we cannot delete the database.
-        Error::logException(
-          $this->loggerFactory->get('soda_scs_manager'),
-          $e,
-          'Could not delete database component: @message',
-          ['@message' => $e->getMessage()],
-          LogLevel::ERROR
-        );
-        $this->sodaScsStackHelpers->cleanIncludedComponents($stack);
-      }
-    }
 
     try {
       // Try to delete Drupal database.
@@ -749,20 +734,6 @@ class SodaScsWisskiStackActions implements SodaScsStackActionsInterface {
         'success' => FALSE,
         'error' => $e->getMessage(),
       ];
-    }
-    catch (SodaScsComponentActionsException $e) {
-      $this->messenger->addError($this->t("Cannot delete triplestore component. See logs for more details."));
-      if ($e->getCode() == 1) {
-        // If component does not exist, we cannot delete the database.
-        Error::logException(
-          $this->loggerFactory->get('soda_scs_manager'),
-          $e,
-          'Could not delete database component: @message',
-          ['@message' => $e->getMessage()],
-          LogLevel::ERROR
-        );
-        $this->sodaScsStackHelpers->cleanIncludedComponents($stack);
-      }
     }
 
     try {
@@ -822,20 +793,6 @@ class SodaScsWisskiStackActions implements SodaScsStackActionsInterface {
         'success' => FALSE,
         'error' => $e->getMessage(),
       ];
-    }
-    catch (SodaScsComponentActionsException $e) {
-      $this->messenger->addError($this->t("Cannot delete WissKI component. See logs for more details."));
-      if ($e->getCode() == 1) {
-        // If component does not exist, we cannot delete the WissKI instance.
-        Error::logException(
-          $this->loggerFactory->get('soda_scs_manager'),
-          $e,
-          'Could not delete database component: @message',
-          ['@message' => $e->getMessage()],
-          LogLevel::ERROR
-        );
-        $this->sodaScsStackHelpers->cleanIncludedComponents($stack);
-      }
     }
     $stack->delete();
     // Everything went fine.
