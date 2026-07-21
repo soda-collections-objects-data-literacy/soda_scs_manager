@@ -1247,6 +1247,58 @@ function soda_scs_manager_update_11024() {
 }
 
 /**
+ * Add wisski8x4xDevelopment field to soda_scs_stack and soda_scs_component.
+ */
+function soda_scs_manager_update_11025() {
+  $definition_update_manager = \Drupal::entityDefinitionUpdateManager();
+  \Drupal::service('entity_field.manager')->clearCachedFieldDefinitions();
+
+  $field_name = 'wisski8x4xDevelopment';
+  $targets = [
+    [
+      'entity_type_id' => 'soda_scs_stack',
+      'bundle' => 'soda_scs_wisski_stack',
+      'class' => \Drupal\soda_scs_manager\Entity\Bundle\SodaScsStackBundle::class,
+    ],
+    [
+      'entity_type_id' => 'soda_scs_component',
+      'bundle' => 'soda_scs_wisski_component',
+      'class' => \Drupal\soda_scs_manager\Entity\Bundle\SodaScsComponentBundle::class,
+    ],
+  ];
+
+  foreach ($targets as $target) {
+    if ($definition_update_manager->getFieldStorageDefinition($field_name, $target['entity_type_id'])) {
+      continue;
+    }
+
+    $bundle_definitions = $target['class']::bundleFieldDefinitions(
+      \Drupal::entityTypeManager()->getDefinition($target['entity_type_id']),
+      $target['bundle'],
+      []
+    );
+
+    if (!isset($bundle_definitions[$field_name])) {
+      throw new \Exception(sprintf(
+        'Field %s not found on %s (%s).',
+        $field_name,
+        $target['entity_type_id'],
+        $target['bundle']
+      ));
+    }
+
+    $definition_update_manager->installFieldStorageDefinition(
+      $field_name,
+      $target['entity_type_id'],
+      'soda_scs_manager',
+      $bundle_definitions[$field_name]
+    );
+  }
+
+  return t('Added wisski8x4xDevelopment field to soda_scs_stack and soda_scs_component.');
+}
+
+/**
  * Creates or updates the PFDP directory rule for snapshot downloads.
  *
  * Private Files Download Permission (pfdp) denies all private:// downloads by

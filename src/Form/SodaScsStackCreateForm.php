@@ -167,6 +167,16 @@ class SodaScsStackCreateForm extends ContentEntityForm {
       $form['owner']['#access'] = FALSE;
       $form['developmentInstance']['#access'] = FALSE;
       $form['automatedUpdates']['#access'] = FALSE;
+      $form['wisski8x4xDevelopment']['#access'] = FALSE;
+    }
+
+    // WissKI 8.x-4.x Development is only usable with Development Instance.
+    if (isset($form['wisski8x4xDevelopment'], $form['developmentInstance'])) {
+      $form['wisski8x4xDevelopment']['#states'] = [
+        'enabled' => [
+          ':input[name="developmentInstance[value]"]' => ['checked' => TRUE],
+        ],
+      ];
     }
 
     // Make the machineName field readonly and
@@ -267,6 +277,12 @@ class SodaScsStackCreateForm extends ContentEntityForm {
       $form_state->setErrorByName('machineName', $this->t('The machine name must not exceed 30 characters.'));
     }
 
+    $developmentInstance = (bool) ($form_state->getValue(['developmentInstance', 'value']) ?? FALSE);
+    $wisski8x4xDevelopment = (bool) ($form_state->getValue(['wisski8x4xDevelopment', 'value']) ?? FALSE);
+    if ($wisski8x4xDevelopment && !$developmentInstance) {
+      $form_state->setErrorByName('wisski8x4xDevelopment', $this->t('WissKI 8.x-4.x Development can only be enabled when Development Instance is enabled.'));
+    }
+
     // For WissKI stacks, ensure Nextcloud credentials are available.
     // Tries stored credentials first; if missing, attempts auto-creation via
     // the current OIDC token (Flow B). If both fail, block submission.
@@ -304,7 +320,11 @@ class SodaScsStackCreateForm extends ContentEntityForm {
     $stack->set('bundle', $this->bundle);
     $stack->set('created', $this->time->getRequestTime());
     $stack->set('defaultLanguage', $form_state->getValue('defaultLanguage'));
-    $stack->set('developmentInstance', $form_state->getValue('developmentInstance'));
+    $developmentInstance = (bool) ($form_state->getValue(['developmentInstance', 'value']) ?? FALSE);
+    $wisski8x4xDevelopment = $developmentInstance
+      && (bool) ($form_state->getValue(['wisski8x4xDevelopment', 'value']) ?? FALSE);
+    $stack->set('developmentInstance', $developmentInstance);
+    $stack->set('wisski8x4xDevelopment', $wisski8x4xDevelopment);
     $stack->set('health', 'Unknown');
     $stack->set('machineName', $form_state->getValue('machineName')[0]['value']);
     $stack->set('owner', $this->currentUser->getAccount()->id());

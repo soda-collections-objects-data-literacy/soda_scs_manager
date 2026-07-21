@@ -210,6 +210,18 @@ class SodaScsComponentCreateForm extends ContentEntityForm {
       $form['owner']['#access'] = FALSE;
       $form['automatedUpdates']['#access'] = FALSE;
       $form['developmentInstance']['#access'] = FALSE;
+      if (isset($form['wisski8x4xDevelopment'])) {
+        $form['wisski8x4xDevelopment']['#access'] = FALSE;
+      }
+    }
+
+    // WissKI 8.x-4.x Development is only usable with Development Instance.
+    if (isset($form['wisski8x4xDevelopment'], $form['developmentInstance'])) {
+      $form['wisski8x4xDevelopment']['#states'] = [
+        'enabled' => [
+          ':input[name="developmentInstance[value]"]' => ['checked' => TRUE],
+        ],
+      ];
     }
 
     // Make the machineName field readonly and
@@ -293,6 +305,12 @@ class SodaScsComponentCreateForm extends ContentEntityForm {
     if (!empty($existing_entities)) {
       $form_state->setErrorByName('machineName', $this->t('The machineName is already in use by another Soda SCS Component entity'));
     }
+
+    $developmentInstance = (bool) ($form_state->getValue(['developmentInstance', 'value']) ?? FALSE);
+    $wisski8x4xDevelopment = (bool) ($form_state->getValue(['wisski8x4xDevelopment', 'value']) ?? FALSE);
+    if ($wisski8x4xDevelopment && !$developmentInstance) {
+      $form_state->setErrorByName('wisski8x4xDevelopment', $this->t('WissKI 8.x-4.x Development can only be enabled when Development Instance is enabled.'));
+    }
   }
 
   /**
@@ -304,6 +322,15 @@ class SodaScsComponentCreateForm extends ContentEntityForm {
 
     // Set the label of the entity.
     $this->entity->set('label', $this->entity->get('label')->value . ' (' . $this->bundleInfo['label'] . ')');
+
+    // WissKI 8.x-4.x Development is only valid with Development Instance.
+    if ($this->entity->hasField('wisski8x4xDevelopment') && $this->entity->hasField('developmentInstance')) {
+      $developmentInstance = (bool) $this->entity->get('developmentInstance')->value;
+      if (!$developmentInstance) {
+        $this->entity->set('wisski8x4xDevelopment', FALSE);
+      }
+    }
+
     // Create external stack.
     $createComponentResult = $this->sodaScsComponentActions->createComponent($this->entity);
 

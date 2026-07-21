@@ -65,6 +65,7 @@ class SodaScsStackEditForm extends ContentEntityForm {
     $form['flavours']['#access'] = FALSE;
     $form['automatedUpdates']['#access'] = FALSE;
     $form['developmentInstance']['#access'] = FALSE;
+    $form['wisski8x4xDevelopment']['#access'] = FALSE;
     $form['defaultLanguage']['#access'] = FALSE;
 
     // Make the machine name field read-only.

@@ -428,6 +428,9 @@ class SodaScsWisskiStackActions implements SodaScsStackActionsInterface {
         'bundle' => 'soda_scs_wisski_component',
         'defaultLanguage' => $stack->get('defaultLanguage')->value,
         'developmentInstance' => $stack->get('developmentInstance')->value,
+        'wisski8x4xDevelopment' => $stack->hasField('wisski8x4xDevelopment')
+          ? (bool) $stack->get('wisski8x4xDevelopment')->value
+          : FALSE,
         'connectedComponents' => [$sqlComponent->id(), $triplestoreComponent->id()],
         'flavours' => $stack->get('flavours')->value,
         'version' => $stack->get('version')->value,

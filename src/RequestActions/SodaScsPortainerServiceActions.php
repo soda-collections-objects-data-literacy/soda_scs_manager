@@ -389,6 +389,11 @@ class SodaScsPortainerServiceActions implements SodaScsServiceRequestInterface {
         "value" => $requestParams['flavours'],
       ],
       [
+        "name" => "WISSKI_8X_4X_DEVELOPMENT",
+        // Non-empty enables WissKI 8.x-4.x development in the base image entrypoint.
+        "value" => !empty($requestParams['wisski8x4xDevelopment']) ? '1' : '',
+      ],
+      [
         "name" => "WISSKI_STARTER_VERSION",
         "value" => $requestParams['wisskiStarterRecipeVersion'],
       ],

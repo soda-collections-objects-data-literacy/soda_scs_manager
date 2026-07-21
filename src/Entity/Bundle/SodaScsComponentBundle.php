@@ -221,6 +221,25 @@ class SodaScsComponentBundle extends SodaScsComponent implements SodaScsComponen
             'type' => 'string',
             'weight' => 50,
           ]);
+
+        $definitions['wisski8x4xDevelopment'] = BundleFieldDefinition::create('boolean')
+          ->setLabel(new TranslatableMarkup('WissKI 8.x-4.x Development'))
+          ->setDescription(new TranslatableMarkup('Whether this is a WissKI 8.x-4.x Development Instance. Nightly builds are used for development and testing. Only available when Development Instance is enabled. Can not be changed after creation.'))
+          ->setCardinality(1)
+          ->setDefaultValue(FALSE)
+          ->setSetting('on_label', new TranslatableMarkup('Yes'))
+          ->setSetting('off_label', new TranslatableMarkup('No'))
+          ->setDisplayConfigurable('form', FALSE)
+          ->setDisplayConfigurable('view', FALSE)
+          ->setDisplayOptions('form', [
+            'type' => 'checkbox',
+            'weight' => 100,
+          ])
+          ->setDisplayOptions('view', [
+            'label' => 'above',
+            'type' => 'boolean',
+            'weight' => 100,
+          ]);
         break;
     }
 

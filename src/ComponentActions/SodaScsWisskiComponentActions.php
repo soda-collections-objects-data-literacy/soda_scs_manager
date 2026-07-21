@@ -1049,6 +1049,9 @@ class SodaScsWisskiComponentActions implements SodaScsComponentActionsInterface 
         'userGroups' => $userGroups ? implode(' ', $userGroups) : '',
         'userId' => $component->getOwnerId(),
         'username' => $component->getOwner()->getDisplayName(),
+        'wisski8x4xDevelopment' => $component->hasField('wisski8x4xDevelopment')
+          && (bool) $component->get('wisski8x4xDevelopment')->value
+          && (bool) $component->get('developmentInstance')->value,
         'wisskiServicePassword' => $wisskiComponentServiceKeyPassword ?? '',
         'wisskiType' => ($sqlComponent && $triplestoreComponent) ? 'bundled' : 'single',
         'proxyAddresses' => $wisskiInstanceSettings['proxyAddresses'] ?? 'auto',
