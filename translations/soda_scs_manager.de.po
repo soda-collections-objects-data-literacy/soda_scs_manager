@@ -2625,6 +2625,10 @@ msgstr "Anfragefehler. Siehe Protokolle für weitere Details."
 msgid "Cannot delete triplestore component. See logs for more details."
 msgstr "Triplestore-Komponente kann nicht gelöscht werden. Siehe Protokolle für weitere Details."
 
+#: src/StackActions/SodaScsWisskiStackActions.php:800
+msgid "WissKI stack deleted"
+msgstr "WissKI-Stack gelöscht"
+
 #: src/Traits/SodaScsProjectMemberInvitationTrait.php:37
 msgid "Invite members"
 msgstr "Mitglieder einladen"

@@ -797,7 +797,7 @@ class SodaScsWisskiStackActions implements SodaScsStackActionsInterface {
     $stack->delete();
     // Everything went fine.
     return [
-      'message' => 'WissKI stack deleted',
+      'message' => (string) $this->t('WissKI stack deleted'),
       'data' => [
         'deleteDatabaseResult' => $deleteDatabaseResult,
         'deleteWisskiResult' => $deleteWisskiResult,
