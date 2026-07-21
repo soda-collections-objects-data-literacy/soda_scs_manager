@@ -16,8 +16,10 @@ use Drupal\Core\Password\PasswordInterface;
 use Drupal\Core\StringTranslation\StringTranslationTrait;
 use Drupal\Core\Url;
 use Symfony\Component\DependencyInjection\ContainerInterface;
+use Drupal\Component\Utility\Crypt;
 use Drupal\Component\Utility\EmailValidatorInterface;
 use Drupal\Component\Utility\Html;
+use Drupal\Core\Site\Settings;
 use Drupal\Core\Datetime\TimeZoneFormHelper;
 use Drupal\Core\Language\LanguageInterface;
 use Drupal\language\ConfigurableLanguageManagerInterface;
@@ -32,6 +34,21 @@ use Drupal\soda_scs_manager\Validation\UsernameValidator;
  */
 class KeycloakUserRegistrationForm extends FormBase {
   use StringTranslationTrait;
+
+  /**
+   * Name of the invisible honeypot field that must stay empty.
+   *
+   * Deliberately named like a real field so bots fill it in.
+   */
+  protected const HONEYPOT_FIELD_NAME = 'homepage';
+
+  /**
+   * Minimum seconds between form build and submission.
+   *
+   * Humans need longer than this to fill in the registration form; bots
+   * usually submit almost instantly.
+   */
+  protected const HONEYPOT_MIN_TIME_SECONDS = 5;
 
   /**
    * The database connection service.
@@ -267,6 +284,32 @@ class KeycloakUserRegistrationForm extends FormBase {
       '#after_build' => [[static::class, 'removeLegalCheckboxDescription']],
     ];
 
+    // Honeypot: invisible field that must remain empty. Hidden with inline
+    // styles (not #type hidden) so bots that skip hidden inputs still fill it,
+    // and hiding does not depend on the theme CSS being loaded.
+    $form[static::HONEYPOT_FIELD_NAME] = [
+      '#type' => 'textfield',
+      '#title' => $this->t('Leave this field blank'),
+      '#default_value' => '',
+      '#required' => FALSE,
+      '#attributes' => [
+        'autocomplete' => 'off',
+        'tabindex' => '-1',
+      ],
+      '#wrapper_attributes' => [
+        'style' => 'position:absolute;left:-9999px;height:0;overflow:hidden;',
+        'aria-hidden' => 'true',
+      ],
+    ];
+
+    // Honeypot time gate: signed timestamp of when the form was built. A
+    // submission faster than HONEYPOT_MIN_TIME_SECONDS is treated as a bot.
+    $buildTime = (string) time();
+    $form['honeypot_time'] = [
+      '#type' => 'hidden',
+      '#default_value' => $buildTime . '|' . Crypt::hmacBase64($buildTime, Settings::getHashSalt()),
+    ];
+
     $form['actions'] = [
       '#type' => 'actions',
     ];
@@ -284,6 +327,8 @@ class KeycloakUserRegistrationForm extends FormBase {
    * {@inheritdoc}
    */
   public function validateForm(array &$form, FormStateInterface $form_state) {
+    $this->validateHoneypot($form_state);
+
     // Validate email.
     $email = $form_state->getValue('email');
     if (!$this->emailValidator->isValid($email)) {
@@ -437,6 +482,40 @@ class KeycloakUserRegistrationForm extends FormBase {
 
     // Redirect to the home page.
     $form_state->setRedirect('<front>');
+  }
+
+  /**
+   * Rejects spam bot submissions via honeypot field and time gate.
+   *
+   * The error message is deliberately generic so bots get no hint about
+   * which check they failed.
+   *
+   * @param \Drupal\Core\Form\FormStateInterface $form_state
+   *   The current form state.
+   */
+  protected function validateHoneypot(FormStateInterface $form_state): void {
+    $genericError = $this->t('There was a problem with your form submission. Please wait a moment and try again.');
+
+    // A real user never sees the honeypot field, so it must be empty.
+    if ((string) $form_state->getValue(static::HONEYPOT_FIELD_NAME) !== '') {
+      $form_state->setErrorByName(static::HONEYPOT_FIELD_NAME, $genericError);
+      $this->logger('soda_scs_manager')->warning('Registration blocked: honeypot field was filled in.');
+      return;
+    }
+
+    // Verify the signed timestamp and enforce the minimum fill-out time.
+    $timeValue = (string) $form_state->getValue('honeypot_time');
+    $parts = explode('|', $timeValue, 2);
+    if (count($parts) !== 2 || !hash_equals(Crypt::hmacBase64($parts[0], Settings::getHashSalt()), $parts[1])) {
+      $form_state->setErrorByName('', $genericError);
+      $this->logger('soda_scs_manager')->warning('Registration blocked: honeypot timestamp missing or tampered.');
+      return;
+    }
+
+    if (time() - (int) $parts[0] < static::HONEYPOT_MIN_TIME_SECONDS) {
+      $form_state->setErrorByName('', $genericError);
+      $this->logger('soda_scs_manager')->warning('Registration blocked: form submitted too quickly.');
+    }
   }
 
 }
