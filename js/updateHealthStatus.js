@@ -190,7 +190,7 @@
             } else {
               stopLoading();
               const variant = getStatusVariant(status && status.status, status && status.message);
-              const displayText = (status && status.message) ? status.message : Drupal.t('Unavailable');
+              const displayText = (status && status.message) ? Drupal.t(status.message) : Drupal.t('Unavailable');
               const errorTitle = (status && status.error) ? status.error : '';
               $healthItem.html(renderBadge(variant, HEALTH_SYMBOLS[variant], displayText, errorTitle, ''));
               if (variant === 'starting') {

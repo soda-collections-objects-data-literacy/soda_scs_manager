@@ -24,12 +24,12 @@
         var healthUrl;
         var serviceUrlJsonEndpoint;
         if (entityType === 'soda_scs_stack') {
-          healthUrl = '/soda-scs-manager/health/stack/' + entityId;
-          serviceUrlJsonEndpoint = '/soda-scs-manager/stack/service-url/' + entityId;
+          healthUrl = Drupal.url('soda-scs-manager/health/stack/' + entityId);
+          serviceUrlJsonEndpoint = Drupal.url('soda-scs-manager/stack/service-url/' + entityId);
         }
         else {
-          healthUrl = '/soda-scs-manager/health/component/' + entityId;
-          serviceUrlJsonEndpoint = '/soda-scs-manager/component/service-url/' + entityId;
+          healthUrl = Drupal.url('soda-scs-manager/health/component/' + entityId);
+          serviceUrlJsonEndpoint = Drupal.url('soda-scs-manager/component/service-url/' + entityId);
         }
 
         // Function to show notification popup.

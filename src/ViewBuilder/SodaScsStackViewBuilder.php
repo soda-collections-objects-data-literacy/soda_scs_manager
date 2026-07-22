@@ -12,6 +12,7 @@ use Drupal\Core\Entity\EntityViewBuilder;
 use Drupal\Core\Language\LanguageManagerInterface;
 use Drupal\Core\Theme\Registry;
 use Drupal\Core\TypedData\Exception\MissingDataException;
+use Drupal\Core\Url;
 use Drupal\soda_scs_manager\Helpers\SodaScsServiceHelpers;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 
@@ -61,13 +62,16 @@ class SodaScsStackViewBuilder extends EntityViewBuilder {
    */
   public function build(array $build) {
     $build = parent::build($build);
+    $stackHealthUrl = Url::fromRoute('soda_scs_manager.stack.health_check', [
+      'stack_id' => $build['#soda_scs_stack']->id(),
+    ])->toString();
 
     // Hide the flavours field if it exists in the build array.
     if (isset($build['flavours'])) {
       $build['flavours']['#access'] = FALSE;
     }
     $build['#attached']['library'][] = 'soda_scs_manager/entityHelpers';
-    $build['#attached']['drupalSettings']['entityInfo']['healthUrl'] = '/soda-scs-manager/health/stack/' . $build['#soda_scs_stack']->id();
+    $build['#attached']['drupalSettings']['entityInfo']['healthUrl'] = $stackHealthUrl;
     $build['#attached']['drupalSettings']['entityInfo']['bundle'] = $build['#soda_scs_stack']->bundle();
     $entity = $build['#soda_scs_stack'];
     try {

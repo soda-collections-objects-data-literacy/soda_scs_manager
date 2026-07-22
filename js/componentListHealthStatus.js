@@ -16,7 +16,7 @@
           return;
         }
 
-        const healthUrl = '/soda-scs-manager/health/component/' + componentId;
+        const healthUrl = Drupal.url('soda-scs-manager/health/component/' + componentId);
 
         // Initial loading state.
         $healthCell.html('<span class="health-loading">Checking<span class="dots"></span></span>');

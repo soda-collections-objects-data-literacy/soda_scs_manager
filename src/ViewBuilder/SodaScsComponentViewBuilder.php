@@ -12,6 +12,7 @@ use Drupal\Core\Entity\EntityTypeInterface;
 use Drupal\Core\Language\LanguageManagerInterface;
 use Drupal\Core\Theme\Registry;
 use Drupal\Core\TypedData\Exception\MissingDataException;
+use Drupal\Core\Url;
 use Drupal\soda_scs_manager\Helpers\SodaScsServiceHelpers;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 
@@ -99,6 +100,9 @@ class SodaScsComponentViewBuilder extends EntityViewBuilder {
    */
   public function build(array $build) {
     $build = parent::build($build);
+    $componentHealthUrl = Url::fromRoute('soda_scs_manager.component.health_check', [
+      'component_id' => $build['#soda_scs_component']->id(),
+    ])->toString();
 
     // Hide the flavours field if it exists in the build array.
     if (isset($build['flavours'])) {
@@ -109,7 +113,7 @@ class SodaScsComponentViewBuilder extends EntityViewBuilder {
     $build['#attached']['library'][] = 'soda_scs_manager/entityHelpers';
     // Triplestore: add dedicated credentials display (public, password, token).
     $entity = $build['#soda_scs_component'];
-    $build['#attached']['drupalSettings']['entityInfo']['healthUrl'] = '/soda-scs-manager/health/component/' . $entity->id();
+    $build['#attached']['drupalSettings']['entityInfo']['healthUrl'] = $componentHealthUrl;
     $build['#attached']['drupalSettings']['entityInfo']['bundle'] = $entity->bundle();
 
     try {
