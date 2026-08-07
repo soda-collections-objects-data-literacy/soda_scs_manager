@@ -145,7 +145,7 @@
             return;
           }
           $.ajax({
-            url: '/soda-scs-manager/component/service-url/' + idMatch[1],
+            url: Drupal.url('soda-scs-manager/component/service-url/' + idMatch[1]),
             method: 'GET',
             timeout: 5000,
             dataType: 'json'
