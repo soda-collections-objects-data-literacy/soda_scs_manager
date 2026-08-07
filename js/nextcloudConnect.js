@@ -419,7 +419,15 @@
 
         getConnectButtons(container).forEach((connectBtn) => {
           connectBtn.addEventListener('click', () => {
-            const onSuccess = isInline ? () => updateInlineStatus(container) : undefined;
+            const onSuccess = isInline
+              ? () => {
+                  if (container.dataset.reloadOnConnect === '1') {
+                    window.location.reload();
+                    return;
+                  }
+                  updateInlineStatus(container);
+                }
+              : undefined;
             if (useBearerToken()) {
               runBearerOrManualConnect(container, onSuccess);
               return;

@@ -186,6 +186,117 @@ class SodaScsNextcloudServiceActions implements SodaScsServiceRequestInterface {
   }
 
   /**
+   * Builds a request for the recent activity feed.
+   *
+   * Nextcloud endpoint: GET /ocs/v2.php/apps/activity/api/v2/activity.
+   *
+   * @param array $requestParams
+   *   Authentication keys as described in buildCreateRequest().
+   *   Optional 'limit' (int, default 8).
+   *
+   * @return array
+   *   Request array ready to pass to makeRequest().
+   */
+  public function buildActivityRequest(array $requestParams): array {
+    $nextcloudSettings = $this->sodaScsServiceHelpers->initNextcloudSettings();
+    $limit = max(1, (int) ($requestParams['limit'] ?? 8));
+    $route = rtrim($nextcloudSettings['baseUrl'], '/')
+      . '/ocs/v2.php/apps/activity/api/v2/activity?format=json&limit=' . $limit;
+
+    return [
+      'success' => TRUE,
+      'method' => 'GET',
+      'route' => $route,
+      'timeout' => $requestParams['timeout'] ?? 5,
+      'headers' => [
+        'OCS-APIRequest' => 'true',
+        'Accept' => 'application/json',
+        'Authorization' => $this->buildAuthHeader($requestParams),
+      ],
+    ];
+  }
+
+  /**
+   * Builds a WebDAV SEARCH request for favorited files.
+   *
+   * @param array $requestParams
+   *   Authentication keys as described in buildCreateRequest().
+   *   Required 'username' for the DAV path scope when using Basic auth.
+   *   Optional 'limit' (int, default 8).
+   *
+   * @return array
+   *   Request array ready to pass to makeRequest().
+   */
+  public function buildFavoritesSearchRequest(array $requestParams): array {
+    $nextcloudSettings = $this->sodaScsServiceHelpers->initNextcloudSettings();
+    $limit = max(1, (int) ($requestParams['limit'] ?? 8));
+    $username = (string) ($requestParams['username'] ?? '');
+    $route = rtrim($nextcloudSettings['baseUrl'], '/') . '/remote.php/dav/';
+
+    $body = '<?xml version="1.0" encoding="UTF-8"?>'
+      . '<d:searchrequest xmlns:d="DAV:" xmlns:oc="http://owncloud.org/ns">'
+      . '<d:basicsearch>'
+      . '<d:select><d:prop>'
+      . '<d:displayname/><oc:fileid/><oc:favorite/><d:getcontenttype/>'
+      . '</d:prop></d:select>'
+      . '<d:from><d:scope>'
+      . '<d:href>/files/' . htmlspecialchars($username, ENT_XML1 | ENT_QUOTES, 'UTF-8') . '/</d:href>'
+      . '<d:depth>infinity</d:depth>'
+      . '</d:scope></d:from>'
+      . '<d:where><d:eq>'
+      . '<d:prop><oc:favorite/></d:prop>'
+      . '<d:literal>1</d:literal>'
+      . '</d:eq></d:where>'
+      . '<d:orderby/>'
+      . '<d:limit><d:nresults>' . $limit . '</d:nresults></d:limit>'
+      . '</d:basicsearch>'
+      . '</d:searchrequest>';
+
+    return [
+      'success' => TRUE,
+      'method' => 'SEARCH',
+      'route' => $route,
+      'timeout' => $requestParams['timeout'] ?? 5,
+      'body' => $body,
+      'headers' => [
+        'Content-Type' => 'text/xml',
+        'Accept' => 'application/xml, text/xml',
+        'Authorization' => $this->buildAuthHeader($requestParams),
+      ],
+    ];
+  }
+
+  /**
+   * Builds a request for recommended files.
+   *
+   * Nextcloud endpoint:
+   * GET /ocs/v2.php/apps/recommendations/api/v1/recommendations.
+   *
+   * @param array $requestParams
+   *   Authentication keys as described in buildCreateRequest().
+   *
+   * @return array
+   *   Request array ready to pass to makeRequest().
+   */
+  public function buildRecommendationsRequest(array $requestParams): array {
+    $nextcloudSettings = $this->sodaScsServiceHelpers->initNextcloudSettings();
+    $route = rtrim($nextcloudSettings['baseUrl'], '/')
+      . '/ocs/v2.php/apps/recommendations/api/v1/recommendations?format=json';
+
+    return [
+      'success' => TRUE,
+      'method' => 'GET',
+      'route' => $route,
+      'timeout' => $requestParams['timeout'] ?? 5,
+      'headers' => [
+        'OCS-APIRequest' => 'true',
+        'Accept' => 'application/json',
+        'Authorization' => $this->buildAuthHeader($requestParams),
+      ],
+    ];
+  }
+
+  /**
    * Builds a request to create (generate) a Nextcloud app password.
    *
    * Nextcloud endpoint: GET /ocs/v2.php/core/getapppassword.

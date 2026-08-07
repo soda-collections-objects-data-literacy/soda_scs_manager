@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- Nextcloud stack entity preview with recommendations, recent activity, and favorites.
+- Details link on Nextcloud dashboard cards to the stack entity page.
+
 ## [2.4.2] - 2026-07-20
 
 ### Fixed

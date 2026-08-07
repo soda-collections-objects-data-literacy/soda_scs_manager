@@ -1,0 +1,118 @@
+{#
+/**
+ * @file
+ * Nextcloud drive preview on the stack entity page.
+ *
+ * Variables:
+ * - status: connected|needs_connect
+ * - open_url: Nextcloud base URL
+ * - recommendations, activities, favorites: { status, items: [{label, subtitle, url}] }
+ */
+#}
+
+{% set sections = [
+  {
+    'key': 'recommendations',
+    'title': 'Recommended'|t,
+    'empty': 'No recommendations yet.'|t,
+    'error': 'Recommendations could not be loaded.'|t,
+    'data': recommendations
+  },
+  {
+    'key': 'activities',
+    'title': 'Recent activity'|t,
+    'empty': 'No recent activity.'|t,
+    'error': 'Activity could not be loaded.'|t,
+    'data': activities
+  },
+  {
+    'key': 'favorites',
+    'title': 'Favorites'|t,
+    'empty': 'No favorites yet.'|t,
+    'error': 'Favorites could not be loaded.'|t,
+    'data': favorites
+  }
+] %}
+
+<section class="scs-manager--nextcloud-preview flex flex-col gap-6" aria-label="{{ 'Nextcloud preview'|t }}">
+  <div class="scs-manager--nextcloud-preview-header flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+    <div>
+      <h2 class="scs-manager--nextcloud-preview-title text-lg font-semibold">{{ 'Drive preview'|t }}</h2>
+      <p class="scs-manager--nextcloud-preview-lead text-sm text-gray-600">
+        {{ 'A quick look at recommended files, recent activity, and favorites. Open Nextcloud for the full experience.'|t }}
+      </p>
+    </div>
+    {% if open_url %}
+      <a
+        href="{{ open_url }}"
+        target="_blank"
+        rel="noopener noreferrer"
+        class="scs-manager--nextcloud-preview-open inline-flex items-center justify-center rounded border border-gray-300 px-4 py-2 text-sm font-medium hover:bg-gray-50"
+      >
+        {{ 'Open Nextcloud'|t }}
+      </a>
+    {% endif %}
+  </div>
+
+  {% if status == 'needs_connect' %}
+    <div class="scs-manager--nextcloud-connect-wrapper scs-manager--nextcloud-connect-inline scs-manager--nextcloud-preview-connect flex flex-col gap-2 rounded border border-dashed border-gray-300 p-4" data-reload-on-connect="1">
+      <p class="text-sm">{{ 'Connect your Drive account to see recommendations, activity, and favorites here.'|t }}</p>
+      <button type="button" class="scs-manager--nextcloud-connect-btn inline-flex w-fit items-center justify-center rounded bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700">
+        {{ 'Connect Drive'|t }}
+      </button>
+      <p class="scs-manager--nextcloud-connect-status-inline text-sm text-gray-600" data-status="unknown">{{ 'Checking connection…'|t }}</p>
+      <p class="scs-manager--nextcloud-connect-fallback-hint text-sm text-gray-500">
+        {{ 'If SSO fails, click Connect Drive manually and sign in with the same Keycloak account as SCS Manager.'|t }}
+      </p>
+      <div class="scs-manager--nextcloud-connect-modal hidden fixed inset-0 z-50 flex items-center justify-center bg-black/50" aria-hidden="true" role="dialog" aria-labelledby="nextcloud-preview-connect-title">
+        <div class="scs-manager--nextcloud-connect-modal-content rounded-lg bg-white p-6 shadow-xl max-w-md mx-4">
+          <h2 id="nextcloud-preview-connect-title" class="mb-4 text-xl font-semibold">{{ 'Nextcloud connection'|t }}</h2>
+          <p class="scs-manager--nextcloud-connect-status mb-2 hidden text-sm"></p>
+          <p class="scs-manager--nextcloud-connect-error mb-2 hidden text-sm text-red-600"></p>
+          <div class="flex gap-2">
+            <button type="button" class="scs-manager--nextcloud-connect-btn rounded bg-blue-600 px-4 py-2 text-white hover:bg-blue-700">
+              {{ 'Connect'|t }}
+            </button>
+            <button type="button" class="scs-manager--nextcloud-connect-dismiss rounded border px-4 py-2 hover:bg-gray-100">
+              {{ 'Close'|t }}
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  {% else %}
+    <div class="scs-manager--nextcloud-preview-grid grid gap-4 md:grid-cols-3">
+      {% for section in sections %}
+        <div class="scs-manager--nextcloud-preview-section flex flex-col gap-2 rounded border border-gray-200 p-4">
+          <h3 class="text-sm font-semibold uppercase tracking-wide text-gray-700">{{ section.title }}</h3>
+          {% if section.data.status == 'error' %}
+            <p class="text-sm text-red-600">{{ section.error }}</p>
+          {% elseif section.data.status == 'empty' or section.data.items is empty %}
+            <p class="text-sm text-gray-500">{{ section.empty }}</p>
+          {% else %}
+            <ul class="scs-manager--nextcloud-preview-list flex flex-col gap-2">
+              {% for item in section.data.items %}
+                <li class="scs-manager--nextcloud-preview-item min-w-0">
+                  {% if item.url %}
+                    <a
+                      href="{{ item.url }}"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      class="block min-w-0 truncate text-sm font-medium text-blue-700 hover:underline"
+                      title="{{ item.label }}"
+                    >{{ item.label }}</a>
+                  {% else %}
+                    <span class="block min-w-0 truncate text-sm font-medium" title="{{ item.label }}">{{ item.label }}</span>
+                  {% endif %}
+                  {% if item.subtitle %}
+                    <span class="block truncate text-xs text-gray-500" title="{{ item.subtitle }}">{{ item.subtitle }}</span>
+                  {% endif %}
+                </li>
+              {% endfor %}
+            </ul>
+          {% endif %}
+        </div>
+      {% endfor %}
+    </div>
+  {% endif %}
+</section>

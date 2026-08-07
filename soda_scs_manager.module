@@ -959,6 +959,25 @@ function soda_scs_manager_theme($existing, $type, $theme, $path) {
       ],
       'template' => 'cards/soda-scs-manager--entity-card',
     ],
+    'soda_scs_manager__nextcloud_preview' => [
+      'variables' => [
+        'activities' => [
+          'status' => 'empty',
+          'items' => [],
+        ],
+        'favorites' => [
+          'status' => 'empty',
+          'items' => [],
+        ],
+        'open_url' => '',
+        'recommendations' => [
+          'status' => 'empty',
+          'items' => [],
+        ],
+        'status' => 'needs_connect',
+      ],
+      'template' => 'entity/soda-scs-manager--nextcloud-preview',
+    ],
     'soda_scs_manager__start_page' => [
       'variables' => [
         'attributes' => NULL,

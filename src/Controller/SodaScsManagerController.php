@@ -156,6 +156,7 @@ class SodaScsManagerController extends ControllerBase {
             'soda_scs_wisski_stack',
             'soda_scs_sql_component',
             'soda_scs_triplestore_component',
+            'soda_scs_nextcloud_stack',
           ])) {
             $detailsLink = Url::fromRoute('entity.' .
               $projectEntity->getEntityTypeId() .
@@ -309,6 +310,7 @@ class SodaScsManagerController extends ControllerBase {
         'soda_scs_wisski_stack',
         'soda_scs_sql_component',
         'soda_scs_triplestore_component',
+        'soda_scs_nextcloud_stack',
       ])) {
         $detailsLink = Url::fromRoute('entity.' .
           $entity->getEntityTypeId() .

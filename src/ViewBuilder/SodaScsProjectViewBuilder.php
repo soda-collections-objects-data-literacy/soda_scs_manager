@@ -35,6 +35,7 @@ final class SodaScsProjectViewBuilder extends EntityViewBuilder {
    * @var list<string>
    */
   private const DETAILS_LINK_BUNDLES = [
+    'soda_scs_nextcloud_stack',
     'soda_scs_sql_component',
     'soda_scs_triplestore_component',
     'soda_scs_wisski_component',

@@ -88,6 +88,11 @@
 	</header>
 
 	<main class="soda-scs-manager--entity--main">
+		{% if elements.nextcloudPreview %}
+			<div class="soda-scs-manager--entity--nextcloud-preview col-span-6 mb-2 w-full">
+				{{ elements.nextcloudPreview }}
+			</div>
+		{% endif %}
 		<div class="soda-scs-manager--entity--left-column">
 			{% if elements.triplestoreCredentials %}
 				<div class="soda-scs-manager--entity--triplestore-credentials">

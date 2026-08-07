@@ -92,6 +92,8 @@ services:
 
   soda_scs_manager.nextcloud_service.actions:
     class: Drupal\soda_scs_manager\RequestActions\SodaScsNextcloudServiceActions
+  soda_scs_manager.nextcloud.preview:
+    class: Drupal\soda_scs_manager\Service\SodaScsNextcloudPreview
 
 # Service actions
   soda_scs_manager.sql_service.actions:
