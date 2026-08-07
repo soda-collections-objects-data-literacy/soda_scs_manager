@@ -965,15 +965,7 @@ function soda_scs_manager_theme($existing, $type, $theme, $path) {
           'status' => 'empty',
           'items' => [],
         ],
-        'favorites' => [
-          'status' => 'empty',
-          'items' => [],
-        ],
         'open_url' => '',
-        'recommendations' => [
-          'status' => 'empty',
-          'items' => [],
-        ],
         'status' => 'needs_connect',
       ],
       'template' => 'entity/soda-scs-manager--nextcloud-preview',

@@ -116,9 +116,7 @@ class SodaScsStackViewBuilder extends EntityViewBuilder {
     $preview = [
       'status' => 'needs_connect',
       'openUrl' => '',
-      'recommendations' => ['status' => 'empty', 'items' => []],
       'activities' => ['status' => 'empty', 'items' => []],
-      'favorites' => ['status' => 'empty', 'items' => []],
     ];
 
     if ($user instanceof UserInterface) {
@@ -140,9 +138,7 @@ class SodaScsStackViewBuilder extends EntityViewBuilder {
       '#theme' => 'soda_scs_manager__nextcloud_preview',
       '#status' => $preview['status'],
       '#open_url' => $openUrl,
-      '#recommendations' => $preview['recommendations'],
       '#activities' => $preview['activities'],
-      '#favorites' => $preview['favorites'],
       '#attached' => [
         'library' => [
           'soda_scs_manager/nextcloudConnect',

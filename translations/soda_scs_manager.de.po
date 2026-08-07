@@ -3550,40 +3550,16 @@ msgid "No members"
 msgstr "Keine Mitglieder"
 
 #: templates/entity/soda-scs-manager--nextcloud-preview.html.twig
-msgid "Recommended"
-msgstr "Empfohlen"
+msgid "Recent file activity"
+msgstr "Letzte Datei-Aktivitäten"
 
 #: templates/entity/soda-scs-manager--nextcloud-preview.html.twig
-msgid "No recommendations yet."
-msgstr "Noch keine Empfehlungen."
+msgid "No recent file activity."
+msgstr "Keine aktuellen Datei-Aktivitäten."
 
 #: templates/entity/soda-scs-manager--nextcloud-preview.html.twig
-msgid "Recommendations could not be loaded."
-msgstr "Empfehlungen konnten nicht geladen werden."
-
-#: templates/entity/soda-scs-manager--nextcloud-preview.html.twig
-msgid "Recent activity"
-msgstr "Neueste Aktivität"
-
-#: templates/entity/soda-scs-manager--nextcloud-preview.html.twig
-msgid "No recent activity."
-msgstr "Keine aktuelle Aktivität."
-
-#: templates/entity/soda-scs-manager--nextcloud-preview.html.twig
-msgid "Activity could not be loaded."
-msgstr "Aktivität konnte nicht geladen werden."
-
-#: templates/entity/soda-scs-manager--nextcloud-preview.html.twig
-msgid "Favorites"
-msgstr "Favoriten"
-
-#: templates/entity/soda-scs-manager--nextcloud-preview.html.twig
-msgid "No favorites yet."
-msgstr "Noch keine Favoriten."
-
-#: templates/entity/soda-scs-manager--nextcloud-preview.html.twig
-msgid "Favorites could not be loaded."
-msgstr "Favoriten konnten nicht geladen werden."
+msgid "File activity could not be loaded."
+msgstr "Datei-Aktivitäten konnten nicht geladen werden."
 
 #: templates/entity/soda-scs-manager--nextcloud-preview.html.twig
 msgid "Nextcloud preview"
@@ -3594,16 +3570,16 @@ msgid "Drive preview"
 msgstr "Drive-Vorschau"
 
 #: templates/entity/soda-scs-manager--nextcloud-preview.html.twig
-msgid "A quick look at recommended files, recent activity, and favorites. Open Nextcloud for the full experience."
-msgstr "Ein kurzer Blick auf empfohlene Dateien, aktuelle Aktivität und Favoriten. Für die volle Nutzung Nextcloud öffnen."
+msgid "Recent file uploads and edits. Open Nextcloud for the full experience."
+msgstr "Aktuelle Datei-Uploads und Bearbeitungen. Für die volle Nutzung Nextcloud öffnen."
 
 #: templates/entity/soda-scs-manager--nextcloud-preview.html.twig
 msgid "Open Nextcloud"
 msgstr "Nextcloud öffnen"
 
 #: templates/entity/soda-scs-manager--nextcloud-preview.html.twig
-msgid "Connect your Drive account to see recommendations, activity, and favorites here."
-msgstr "Verbinden Sie Ihr Drive-Konto, um hier Empfehlungen, Aktivität und Favoriten zu sehen."
+msgid "Connect your Drive account to see recent file activity here."
+msgstr "Verbinden Sie Ihr Drive-Konto, um hier letzte Datei-Aktivitäten zu sehen."
 
 #: templates/entity/soda-scs-manager--nextcloud-preview.html.twig
 msgid "Connect Drive"

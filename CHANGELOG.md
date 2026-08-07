@@ -9,8 +9,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
-- Nextcloud stack entity preview with recommendations, recent activity, and favorites.
+- Nextcloud stack entity preview with recent file activity.
 - Details link on Nextcloud dashboard cards to the stack entity page.
+
+### Changed
+
+- Nextcloud preview shows only recent file activity (uploads/edits); favorites and recommendations removed.
 
 ## [2.4.2] - 2026-07-20
 

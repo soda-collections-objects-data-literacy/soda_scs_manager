@@ -16,17 +16,22 @@ use Symfony\Component\DependencyInjection\Attribute\Autowire;
 /**
  * Loads a lightweight Nextcloud preview for the stack entity page.
  *
- * Aggregates recommendations, recent activity, and favorites via OCS/WebDAV
- * using the current user's stored Nextcloud credentials.
+ * Shows recent file activity (uploads, edits, deletes, public uploads) via
+ * the Activity OCS API using the current user's stored credentials.
  */
 class SodaScsNextcloudPreview {
 
   use StringTranslationTrait;
 
   /**
-   * Max items per preview section.
+   * Max items shown in the preview.
    */
   private const ITEM_LIMIT = 8;
+
+  /**
+   * Fetch more rows than ITEM_LIMIT so non-file events can be skipped.
+   */
+  private const FETCH_LIMIT = 50;
 
   /**
    * HTTP timeout in seconds for preview API calls.
@@ -56,8 +61,8 @@ class SodaScsNextcloudPreview {
    *   The user whose Nextcloud account to preview.
    *
    * @return array
-   *   Keys: status (connected|needs_connect), openUrl, recommendations,
-   *   activities, favorites. Each section has status and items.
+   *   Keys: status (connected|needs_connect), openUrl, activities.
+   *   activities has status and items.
    */
   public function buildPreviewData(UserInterface $user): array {
     $baseUrl = '';
@@ -82,30 +87,30 @@ class SodaScsNextcloudPreview {
       return [
         'status' => 'needs_connect',
         'openUrl' => $baseUrl,
-        'recommendations' => $emptySection(),
         'activities' => $emptySection(),
-        'favorites' => $emptySection(),
       ];
     }
 
     $authParams = [
       'username' => $credentials['username'],
       'password' => $credentials['appPassword'],
-      'limit' => self::ITEM_LIMIT,
+      'limit' => self::FETCH_LIMIT,
       'timeout' => self::REQUEST_TIMEOUT,
     ];
 
     return [
       'status' => 'connected',
       'openUrl' => $baseUrl,
-      'recommendations' => $this->fetchRecommendations($authParams, $baseUrl),
       'activities' => $this->fetchActivities($authParams, $baseUrl),
-      'favorites' => $this->fetchFavorites($authParams, $baseUrl),
     ];
   }
 
   /**
-   * Fetches and normalises the activity feed.
+   * Fetches and normalises recent file activity.
+   *
+   * Uses the unfiltered activity feed and keeps file-related rows. Nextcloud's
+   * `/activity/files` filter omits types such as public_links_upload and
+   * returns HTTP 304 with an empty body when nothing matches.
    *
    * @param array $authParams
    *   Auth + limit/timeout params.
@@ -122,8 +127,17 @@ class SodaScsNextcloudPreview {
       return ['status' => 'error', 'items' => []];
     }
 
+    $statusCode = (int) ($response['statusCode'] ?? 0);
+    // Nextcloud returns 304/204 with an empty body when there is nothing to show.
+    if ($statusCode === 304 || $statusCode === 204) {
+      return ['status' => 'empty', 'items' => []];
+    }
+
     try {
       $body = (string) $response['data']['nextcloudResponse']->getBody();
+      if ($body === '') {
+        return ['status' => 'empty', 'items' => []];
+      }
       $decoded = json_decode($body, TRUE, 512, JSON_THROW_ON_ERROR);
     }
     catch (\Throwable $e) {
@@ -137,21 +151,34 @@ class SodaScsNextcloudPreview {
 
     $items = [];
     foreach ($rows as $row) {
-      if (!is_array($row)) {
+      if (!is_array($row) || !$this->isFileActivity($row)) {
         continue;
       }
+
       $fileId = $row['object_id'] ?? NULL;
       $link = (string) ($row['link'] ?? '');
       if ($link === '' && $baseUrl !== '' && $fileId) {
         $link = $baseUrl . '/f/' . rawurlencode((string) $fileId);
       }
-      $label = (string) ($row['subject'] ?? $row['object_name'] ?? '');
+
+      $objectName = trim((string) ($row['object_name'] ?? ''));
+      if ($objectName !== '') {
+        $objectName = basename(str_replace('\\', '/', $objectName));
+      }
+      $subject = trim(html_entity_decode(strip_tags((string) ($row['subject'] ?? '')), ENT_QUOTES | ENT_HTML5, 'UTF-8'));
+      $label = $objectName !== '' ? $objectName : $subject;
       if ($label === '') {
         continue;
       }
+
+      $subtitle = (string) ($row['datetime'] ?? '');
+      if ($objectName !== '' && $subject !== '' && $subject !== $objectName) {
+        $subtitle = $subtitle !== '' ? $subject . ' · ' . $subtitle : $subject;
+      }
+
       $items[] = [
         'label' => $label,
-        'subtitle' => (string) ($row['datetime'] ?? ''),
+        'subtitle' => $subtitle,
         'url' => $link,
       ];
       if (count($items) >= self::ITEM_LIMIT) {
@@ -166,176 +193,17 @@ class SodaScsNextcloudPreview {
   }
 
   /**
-   * Fetches and normalises favorited files via WebDAV SEARCH.
+   * Whether an activity row is file-related.
    *
-   * @param array $authParams
-   *   Auth + limit/timeout params.
-   * @param string $baseUrl
-   *   Nextcloud base URL.
+   * @param array $row
+   *   Raw OCS activity row.
    *
-   * @return array
-   *   Section with status and items.
+   * @return bool
+   *   TRUE for files app / files object events.
    */
-  protected function fetchFavorites(array $authParams, string $baseUrl): array {
-    $request = $this->nextcloudServiceActions->buildFavoritesSearchRequest($authParams);
-    $response = $this->nextcloudServiceActions->makeRequest($request);
-    if (!$response['success']) {
-      return ['status' => 'error', 'items' => []];
-    }
-
-    try {
-      $xml = (string) $response['data']['nextcloudResponse']->getBody();
-      $items = $this->parseFavoritesXml($xml, $baseUrl);
-    }
-    catch (\Throwable $e) {
-      $this->loggerFactory->get('soda_scs_manager')->warning(
-        'Nextcloud preview: favorites parse failed: @message',
-        ['@message' => $e->getMessage()]
-      );
-      return ['status' => 'error', 'items' => []];
-    }
-
-    return [
-      'status' => $items === [] ? 'empty' : 'ok',
-      'items' => array_slice($items, 0, self::ITEM_LIMIT),
-    ];
-  }
-
-  /**
-   * Fetches and normalises recommended files.
-   *
-   * @param array $authParams
-   *   Auth + limit/timeout params.
-   * @param string $baseUrl
-   *   Nextcloud base URL.
-   *
-   * @return array
-   *   Section with status and items.
-   */
-  protected function fetchRecommendations(array $authParams, string $baseUrl): array {
-    $request = $this->nextcloudServiceActions->buildRecommendationsRequest($authParams);
-    $response = $this->nextcloudServiceActions->makeRequest($request);
-    if (!$response['success']) {
-      return ['status' => 'error', 'items' => []];
-    }
-
-    try {
-      $body = (string) $response['data']['nextcloudResponse']->getBody();
-      $decoded = json_decode($body, TRUE, 512, JSON_THROW_ON_ERROR);
-    }
-    catch (\Throwable $e) {
-      return ['status' => 'error', 'items' => []];
-    }
-
-    $data = $decoded['ocs']['data'] ?? [];
-    $rows = [];
-    if (is_array($data) && isset($data['recommendations']) && is_array($data['recommendations'])) {
-      $rows = $data['recommendations'];
-    }
-    elseif (is_array($data) && array_is_list($data)) {
-      $rows = $data;
-    }
-
-    $items = [];
-    foreach ($rows as $row) {
-      if (!is_array($row)) {
-        continue;
-      }
-      $fileId = $row['id'] ?? $row['fileId'] ?? NULL;
-      $name = (string) ($row['name'] ?? '');
-      if ($name === '') {
-        continue;
-      }
-      $directory = (string) ($row['directory'] ?? '');
-      $url = '';
-      if ($baseUrl !== '' && $fileId) {
-        $url = $baseUrl . '/f/' . rawurlencode((string) $fileId);
-      }
-      $items[] = [
-        'label' => $name,
-        'subtitle' => $directory !== '' ? $directory : (string) ($row['reason'] ?? ''),
-        'url' => $url,
-      ];
-      if (count($items) >= self::ITEM_LIMIT) {
-        break;
-      }
-    }
-
-    return [
-      'status' => $items === [] ? 'empty' : 'ok',
-      'items' => $items,
-    ];
-  }
-
-  /**
-   * Parses a WebDAV multistatus XML response into preview items.
-   *
-   * @param string $xml
-   *   Raw XML body.
-   * @param string $baseUrl
-   *   Nextcloud base URL for deep links.
-   *
-   * @return list<array{label: string, subtitle: string, url: string}>
-   *   Normalised items.
-   */
-  protected function parseFavoritesXml(string $xml, string $baseUrl): array {
-    if ($xml === '') {
-      return [];
-    }
-
-    $previous = libxml_use_internal_errors(TRUE);
-    $document = simplexml_load_string($xml);
-    libxml_clear_errors();
-    libxml_use_internal_errors($previous);
-    if ($document === FALSE) {
-      return [];
-    }
-
-    $document->registerXPathNamespace('d', 'DAV:');
-    $document->registerXPathNamespace('oc', 'http://owncloud.org/ns');
-
-    $responses = $document->xpath('//d:response') ?: [];
-    $items = [];
-    foreach ($responses as $response) {
-      $response->registerXPathNamespace('d', 'DAV:');
-      $response->registerXPathNamespace('oc', 'http://owncloud.org/ns');
-
-      $displayNames = $response->xpath('.//d:displayname');
-      $fileIds = $response->xpath('.//oc:fileid');
-      $hrefs = $response->xpath('./d:href');
-
-      $label = isset($displayNames[0]) ? trim((string) $displayNames[0]) : '';
-      if ($label === '' && isset($hrefs[0])) {
-        $label = basename(rawurldecode((string) $hrefs[0]));
-      }
-      if ($label === '' || $label === '.' || $label === '/') {
-        continue;
-      }
-
-      $fileId = isset($fileIds[0]) ? trim((string) $fileIds[0]) : '';
-      $url = '';
-      if ($baseUrl !== '' && $fileId !== '') {
-        $url = $baseUrl . '/f/' . rawurlencode($fileId);
-      }
-
-      $subtitle = '';
-      if (isset($hrefs[0])) {
-        $path = rawurldecode((string) $hrefs[0]);
-        $path = preg_replace('#^.*/remote\.php/dav/files/[^/]+/#', '', $path) ?? $path;
-        $subtitle = dirname($path);
-        if ($subtitle === '.' || $subtitle === '/') {
-          $subtitle = '';
-        }
-      }
-
-      $items[] = [
-        'label' => $label,
-        'subtitle' => $subtitle,
-        'url' => $url,
-      ];
-    }
-
-    return $items;
+  protected function isFileActivity(array $row): bool {
+    return ($row['app'] ?? '') === 'files'
+      || ($row['object_type'] ?? '') === 'files';
   }
 
 }
