@@ -3550,16 +3550,16 @@ msgid "No members"
 msgstr "Keine Mitglieder"
 
 #: templates/entity/soda-scs-manager--nextcloud-preview.html.twig
-msgid "Recent file activity"
-msgstr "Letzte Datei-Aktivitäten"
+msgid "SCS-Share activity"
+msgstr "SCS-Share-Aktivitäten"
 
 #: templates/entity/soda-scs-manager--nextcloud-preview.html.twig
-msgid "No recent file activity."
-msgstr "Keine aktuellen Datei-Aktivitäten."
+msgid "No recent activity in SCS-Share."
+msgstr "Keine aktuellen Aktivitäten in SCS-Share."
 
 #: templates/entity/soda-scs-manager--nextcloud-preview.html.twig
-msgid "File activity could not be loaded."
-msgstr "Datei-Aktivitäten konnten nicht geladen werden."
+msgid "SCS-Share activity could not be loaded."
+msgstr "SCS-Share-Aktivitäten konnten nicht geladen werden."
 
 #: templates/entity/soda-scs-manager--nextcloud-preview.html.twig
 msgid "Nextcloud preview"
@@ -3570,16 +3570,16 @@ msgid "Drive preview"
 msgstr "Drive-Vorschau"
 
 #: templates/entity/soda-scs-manager--nextcloud-preview.html.twig
-msgid "Recent file uploads and edits. Open Nextcloud for the full experience."
-msgstr "Aktuelle Datei-Uploads und Bearbeitungen. Für die volle Nutzung Nextcloud öffnen."
+msgid "Recent changes in the SCS-Share folder. Open Nextcloud for the full experience."
+msgstr "Aktuelle Änderungen im Ordner SCS-Share. Für die volle Nutzung Nextcloud öffnen."
 
 #: templates/entity/soda-scs-manager--nextcloud-preview.html.twig
 msgid "Open Nextcloud"
 msgstr "Nextcloud öffnen"
 
 #: templates/entity/soda-scs-manager--nextcloud-preview.html.twig
-msgid "Connect your Drive account to see recent file activity here."
-msgstr "Verbinden Sie Ihr Drive-Konto, um hier letzte Datei-Aktivitäten zu sehen."
+msgid "Connect your Drive account to see recent SCS-Share activity here."
+msgstr "Verbinden Sie Ihr Drive-Konto, um hier aktuelle SCS-Share-Aktivitäten zu sehen."
 
 #: templates/entity/soda-scs-manager--nextcloud-preview.html.twig
 msgid "Connect Drive"
@@ -3597,3 +3597,75 @@ msgstr "Verbinden"
 #: templates/entity/soda-scs-manager--nextcloud-preview.html.twig
 msgid "Close"
 msgstr "Schließen"
+
+#: src/Helpers/SodaScsProjectHelpers.php
+msgid "Project 1"
+msgstr "Projekt 1"
+
+#: soda_scs_manager.module
+msgid "Failed to create Nextcloud Team Folder for project @project: @error"
+msgstr "Nextcloud-Teamordner für Projekt @project konnte nicht erstellt werden: @error"
+
+#: src/Form/SodaScsProjectCreateForm.php
+msgid "Failed to create Nextcloud Team Folder for project @project: @error"
+msgstr "Nextcloud-Teamordner für Projekt @project konnte nicht erstellt werden: @error"
+
+#: src/Form/SodaScsProjectEditForm.php
+msgid "Failed to update Keycloak group label for project @project: @error"
+msgstr "Keycloak-Gruppenlabel für Projekt @project konnte nicht aktualisiert werden: @error"
+
+#: src/Form/SodaScsProjectEditForm.php
+msgid "Failed to rename Nextcloud Team Folder for project @project: @error"
+msgstr "Nextcloud-Teamordner für Projekt @project konnte nicht umbenannt werden: @error"
+
+#: src/Form/SodaScsProjectDeleteForm.php
+msgid "Could not delete Nextcloud Team Folder for project @label: @error"
+msgstr "Nextcloud-Teamordner für Projekt @label konnte nicht gelöscht werden: @error"
+
+#: src/Helpers/SodaScsProjectHelpers.php
+msgid "Missing project id, group id or label."
+msgstr "Projekt-ID, Gruppen-ID oder Label fehlt."
+
+#: src/Helpers/SodaScsProjectHelpers.php
+msgid "Could not create Nextcloud Team Folder for project @project."
+msgstr "Nextcloud-Teamordner für Projekt @project konnte nicht erstellt werden."
+
+#: src/Helpers/SodaScsProjectHelpers.php
+msgid "Nextcloud Team Folder already exists for project @project."
+msgstr "Nextcloud-Teamordner für Projekt @project existiert bereits."
+
+#: src/Helpers/SodaScsProjectHelpers.php
+msgid "Created Nextcloud Team Folder for project @project."
+msgstr "Nextcloud-Teamordner für Projekt @project erstellt."
+
+#: src/Helpers/SodaScsProjectHelpers.php
+msgid "No Nextcloud Team Folder found for project @project."
+msgstr "Kein Nextcloud-Teamordner für Projekt @project gefunden."
+
+#: src/Helpers/SodaScsProjectHelpers.php
+msgid "Could not delete Nextcloud Team Folder for project @project."
+msgstr "Nextcloud-Teamordner für Projekt @project konnte nicht gelöscht werden."
+
+#: src/Helpers/SodaScsProjectHelpers.php
+msgid "Deleted Nextcloud Team Folder for project @project."
+msgstr "Nextcloud-Teamordner für Projekt @project gelöscht."
+
+#: src/Helpers/SodaScsProjectHelpers.php
+msgid "Project group UUID is empty."
+msgstr "UUID der Projektgruppe ist leer."
+
+#: src/Helpers/SodaScsProjectHelpers.php
+msgid "Could not update Keycloak attributes for project @project."
+msgstr "Keycloak-Attribute für Projekt @project konnten nicht aktualisiert werden."
+
+#: src/Helpers/SodaScsProjectHelpers.php
+msgid "Updated Keycloak attributes for project @project."
+msgstr "Keycloak-Attribute für Projekt @project aktualisiert."
+
+#: src/Helpers/SodaScsProjectHelpers.php
+msgid "Could not update Nextcloud Team Folder for project @project."
+msgstr "Nextcloud-Teamordner für Projekt @project konnte nicht aktualisiert werden."
+
+#: src/Helpers/SodaScsProjectHelpers.php
+msgid "Updated Nextcloud Team Folder for project @project."
+msgstr "Nextcloud-Teamordner für Projekt @project aktualisiert."

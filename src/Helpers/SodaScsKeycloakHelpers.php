@@ -244,4 +244,202 @@ class SodaScsKeycloakHelpers {
     return NULL;
   }
 
+  /**
+   * Creates {machineName}-admin and {machineName}-user groups and assigns users.
+   *
+   * Owner is added to -admin only; project members are added to -user only.
+   *
+   * @param string $machineName
+   *   Component machine name (e.g. sql-foo, ts-foo, wisski-foo).
+   * @param string|null $ownerSsoUuid
+   *   Keycloak user UUID of the component owner, or NULL to skip.
+   * @param string[] $memberSsoUuids
+   *   Keycloak user UUIDs of project members (non-owner).
+   *
+   * @return array{
+   *   adminGroupName: string,
+   *   userGroupName: string,
+   *   adminGroupId: string,
+   *   userGroupId: string
+   * }
+   *   Created group names and IDs.
+   *
+   * @throws \Exception
+   *   When Keycloak create/lookup/assign requests fail.
+   */
+  public function createAndPopulateComponentAccessGroups(
+    string $machineName,
+    ?string $ownerSsoUuid,
+    array $memberSsoUuids = [],
+  ): array {
+    $token = $this->getKeycloakToken();
+    if (!$token) {
+      throw new \Exception('Keycloak token request failed.');
+    }
+
+    $adminGroupName = $machineName . '-admin';
+    $userGroupName = $machineName . '-user';
+
+    $createAdminResponse = $this->sodaScsKeycloakServiceGroupActions->makeRequest(
+      $this->sodaScsKeycloakServiceGroupActions->buildCreateRequest([
+        'body' => [
+          'name' => $adminGroupName,
+          'path' => '/' . $adminGroupName,
+        ],
+        'token' => $token,
+      ])
+    );
+    if (!$createAdminResponse['success']) {
+      throw new \Exception('Keycloak create admin group request failed: ' . ($createAdminResponse['error'] ?? ''));
+    }
+
+    $createUserResponse = $this->sodaScsKeycloakServiceGroupActions->makeRequest(
+      $this->sodaScsKeycloakServiceGroupActions->buildCreateRequest([
+        'body' => [
+          'name' => $userGroupName,
+          'path' => '/' . $userGroupName,
+        ],
+        'token' => $token,
+      ])
+    );
+    if (!$createUserResponse['success']) {
+      throw new \Exception('Keycloak create user group request failed: ' . ($createUserResponse['error'] ?? ''));
+    }
+
+    $adminGroup = $this->findGroupByName($adminGroupName, $token);
+    $userGroup = $this->findGroupByName($userGroupName, $token);
+    if (!$adminGroup || empty($adminGroup['id'])) {
+      throw new \Exception('Keycloak admin group was created but could not be resolved: ' . $adminGroupName);
+    }
+    if (!$userGroup || empty($userGroup['id'])) {
+      throw new \Exception('Keycloak user group was created but could not be resolved: ' . $userGroupName);
+    }
+
+    if ($ownerSsoUuid) {
+      $addOwnerResponse = $this->addUserToKeycloakGroup($ownerSsoUuid, $adminGroup['id']);
+      if ($addOwnerResponse === NULL) {
+        throw new \Exception('Keycloak add owner to admin group request failed.');
+      }
+    }
+
+    foreach ($memberSsoUuids as $memberSsoUuid) {
+      if (!$memberSsoUuid || $memberSsoUuid === $ownerSsoUuid) {
+        continue;
+      }
+      $addMemberResponse = $this->addUserToKeycloakGroup($memberSsoUuid, $userGroup['id']);
+      if ($addMemberResponse === NULL) {
+        throw new \Exception('Keycloak add member to user group request failed.');
+      }
+    }
+
+    return [
+      'adminGroupName' => $adminGroupName,
+      'userGroupName' => $userGroupName,
+      'adminGroupId' => $adminGroup['id'],
+      'userGroupId' => $userGroup['id'],
+    ];
+  }
+
+  /**
+   * Deletes {machineName}-admin and {machineName}-user Keycloak groups.
+   *
+   * Missing groups are skipped so legacy components without groups can still
+   * be deleted.
+   *
+   * @param string $machineName
+   *   Component machine name.
+   *
+   * @return array{
+   *   adminGroupName: string,
+   *   userGroupName: string,
+   *   adminDeleted: bool,
+   *   userDeleted: bool
+   * }
+   *   Deletion outcome per group.
+   *
+   * @throws \Exception
+   *   When a present group cannot be deleted.
+   */
+  public function deleteComponentAccessGroups(string $machineName): array {
+    $token = $this->getKeycloakToken();
+    if (!$token) {
+      throw new \Exception('Keycloak token request failed.');
+    }
+
+    $adminGroupName = $machineName . '-admin';
+    $userGroupName = $machineName . '-user';
+    $adminDeleted = FALSE;
+    $userDeleted = FALSE;
+
+    $adminGroup = $this->findGroupByName($adminGroupName, $token);
+    if ($adminGroup && !empty($adminGroup['id'])) {
+      $deleteAdminResponse = $this->sodaScsKeycloakServiceGroupActions->makeRequest(
+        $this->sodaScsKeycloakServiceGroupActions->buildDeleteRequest([
+          'routeParams' => ['groupId' => $adminGroup['id']],
+          'token' => $token,
+        ])
+      );
+      if (!$deleteAdminResponse['success']) {
+        throw new \Exception('Cannot delete Keycloak admin group ' . $adminGroupName . ': ' . ($deleteAdminResponse['error'] ?? ''));
+      }
+      $adminDeleted = TRUE;
+    }
+
+    $userGroup = $this->findGroupByName($userGroupName, $token);
+    if ($userGroup && !empty($userGroup['id'])) {
+      $deleteUserResponse = $this->sodaScsKeycloakServiceGroupActions->makeRequest(
+        $this->sodaScsKeycloakServiceGroupActions->buildDeleteRequest([
+          'routeParams' => ['groupId' => $userGroup['id']],
+          'token' => $token,
+        ])
+      );
+      if (!$deleteUserResponse['success']) {
+        throw new \Exception('Cannot delete Keycloak user group ' . $userGroupName . ': ' . ($deleteUserResponse['error'] ?? ''));
+      }
+      $userDeleted = TRUE;
+    }
+
+    return [
+      'adminGroupName' => $adminGroupName,
+      'userGroupName' => $userGroupName,
+      'adminDeleted' => $adminDeleted,
+      'userDeleted' => $userDeleted,
+    ];
+  }
+
+  /**
+   * Finds a Keycloak group by exact name.
+   *
+   * @param string $groupName
+   *   Exact group name.
+   * @param string|null $token
+   *   Optional Keycloak token; fetched when NULL.
+   *
+   * @return array|null
+   *   Group representation, or NULL if not found.
+   */
+  public function findGroupByName(string $groupName, ?string $token = NULL): ?array {
+    $token = $token ?? $this->getKeycloakToken();
+    if (!$token) {
+      return NULL;
+    }
+
+    $response = $this->sodaScsKeycloakServiceGroupActions->makeRequest(
+      $this->sodaScsKeycloakServiceGroupActions->buildGetAllRequest([
+        'token' => $token,
+      ])
+    );
+    if (!$response['success']) {
+      return NULL;
+    }
+
+    $groups = json_decode($response['data']['keycloakResponse']->getBody()->getContents(), TRUE) ?? [];
+    foreach ($groups as $group) {
+      if (($group['name'] ?? NULL) === $groupName) {
+        return $group;
+      }
+    }
+    return NULL;
+  }
+
 }

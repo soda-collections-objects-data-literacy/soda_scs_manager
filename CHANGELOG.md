@@ -11,10 +11,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Nextcloud stack entity preview with recent file activity.
 - Details link on Nextcloud dashboard cards to the stack entity page.
+- Project Team Folders via Nextcloud app `scs_manager_integration` (stable `machineName` = Keycloak group id, editable label as mount point).
+- Default project label **Project 1** / **Projekt 1** on first user provisioning, with Keycloak attributes `gid`, `label`, `nextcloudTeamFolder`, and `containedApps` placeholder.
+- Follow-up plan: `docs/plans/project-centric-services-followup.md` (Vorhaben, WissKI/DB/Jupyter/WebProtégé).
+- Technical backfill guide for existing projects/Team Folders: `docs/technical/project-team-folder-backfill.md`.
+- Drush command `soda_scs_manager:backfill-project-team-folders` to bring legacy projects up to Team Folder parity (Keycloak attrs, members, Nextcloud folder; optional `--grant-nc-access`).
+- Keycloak `{machineName}-admin` and `{machineName}-user` groups for SQL and Triplestore components (create, delete, project member sync), matching WissKI.
 
 ### Changed
 
-- Nextcloud preview shows only recent file activity (uploads/edits); favorites and recommendations removed.
+- Nextcloud preview loads SCS-Share activity via `scs_manager_integration` (platform share `externalProjectId=scs-platform-share`) instead of the global Activity API path filter.
+- Project create/edit/delete sync Nextcloud Team Folders and Keycloak group labels (group name remains the integer id).
 
 ## [2.4.2] - 2026-07-20
 

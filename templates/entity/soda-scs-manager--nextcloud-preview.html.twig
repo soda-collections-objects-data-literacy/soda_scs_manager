@@ -15,7 +15,7 @@
     <div>
       <h2 class="scs-manager--nextcloud-preview-title text-lg font-semibold">{{ 'Drive preview'|t }}</h2>
       <p class="scs-manager--nextcloud-preview-lead text-sm text-gray-600">
-        {{ 'Recent file uploads and edits. Open Nextcloud for the full experience.'|t }}
+        {{ 'Recent changes in the SCS-Share folder. Open Nextcloud for the full experience.'|t }}
       </p>
     </div>
     {% if open_url %}
@@ -32,7 +32,7 @@
 
   {% if status == 'needs_connect' %}
     <div class="scs-manager--nextcloud-connect-wrapper scs-manager--nextcloud-connect-inline scs-manager--nextcloud-preview-connect flex flex-col gap-2 rounded border border-dashed border-gray-300 p-4" data-reload-on-connect="1">
-      <p class="text-sm">{{ 'Connect your Drive account to see recent file activity here.'|t }}</p>
+      <p class="text-sm">{{ 'Connect your Drive account to see recent SCS-Share activity here.'|t }}</p>
       <button type="button" class="scs-manager--nextcloud-connect-btn inline-flex w-fit items-center justify-center rounded bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700">
         {{ 'Connect Drive'|t }}
       </button>
@@ -58,11 +58,11 @@
     </div>
   {% else %}
     <div class="scs-manager--nextcloud-preview-section flex flex-col gap-2 rounded border border-gray-200 p-4">
-      <h3 class="text-sm font-semibold uppercase tracking-wide text-gray-700">{{ 'Recent file activity'|t }}</h3>
+      <h3 class="text-sm font-semibold uppercase tracking-wide text-gray-700">{{ 'SCS-Share activity'|t }}</h3>
       {% if activities.status == 'error' %}
-        <p class="text-sm text-red-600">{{ 'File activity could not be loaded.'|t }}</p>
+        <p class="text-sm text-red-600">{{ 'SCS-Share activity could not be loaded.'|t }}</p>
       {% elseif activities.status == 'empty' or activities.items is empty %}
-        <p class="text-sm text-gray-500">{{ 'No recent file activity.'|t }}</p>
+        <p class="text-sm text-gray-500">{{ 'No recent activity in SCS-Share.'|t }}</p>
       {% else %}
         <ul class="scs-manager--nextcloud-preview-list flex flex-col gap-2">
           {% for item in activities.items %}

@@ -15,6 +15,7 @@ use Drupal\Core\Form\FormStateInterface;
 use Drupal\Core\Logger\LoggerChannelFactoryInterface;
 use Drupal\Core\Logger\LoggerChannelInterface;
 use Drupal\Core\Session\AccountProxyInterface;
+use Drupal\soda_scs_manager\Entity\SodaScsProjectInterface;
 use Drupal\soda_scs_manager\Helpers\SodaScsProjectDbAccessHelpers;
 use Drupal\soda_scs_manager\Helpers\SodaScsProjectHelpers;
 use Drupal\soda_scs_manager\Helpers\SodaScsProjectMembershipHelpers;
@@ -490,12 +491,16 @@ class SodaScsProjectEditForm extends ContentEntityForm {
    * @throws \Drupal\Core\Entity\EntityStorageException
    */
   public function save(array $form, FormStateInterface $form_state): void {
+    /** @var \Drupal\soda_scs_manager\Entity\SodaScsProject $project */
+    $project = $this->entity;
+    $previousLabel = '';
+    if (isset($project->original) && $project->original instanceof SodaScsProjectInterface) {
+      $previousLabel = (string) $project->original->label();
+    }
+
     parent::save($form, $form_state);
 
     // Ensure all members have the project's Keycloak group (by gid).
-    /** @var \Drupal\soda_scs_manager\Entity\SodaScsProject $project */
-    $project = $this->entity;
-
     $requester = $this->loadCurrentUserEntity();
     if ($requester) {
       $this->dispatchMemberInvitations(
@@ -509,6 +514,24 @@ class SodaScsProjectEditForm extends ContentEntityForm {
 
     $this->sodaScsProjectHelpers->syncKeycloakGroupMembers($project);
     $this->projectDbAccessHelpers->syncProjectMembersDbAccess($project);
+
+    $newLabel = (string) $project->label();
+    if ($previousLabel !== '' && $previousLabel !== $newLabel) {
+      $updateAttrs = $this->sodaScsProjectHelpers->updateProjectGroupAttributes($project);
+      if (!$updateAttrs->success) {
+        $this->messenger()->addError($this->t('Failed to update Keycloak group label for project @project: @error', [
+          '@project' => $newLabel,
+          '@error' => $updateAttrs->error,
+        ]));
+      }
+      $updateFolder = $this->sodaScsProjectHelpers->updateProjectTeamFolderLabel($project);
+      if (!$updateFolder->success) {
+        $this->messenger()->addError($this->t('Failed to rename Nextcloud Team Folder for project @project: @error', [
+          '@project' => $newLabel,
+          '@error' => $updateFolder->error,
+        ]));
+      }
+    }
 
     // Redirect to the components page.
     $form_state->setRedirect('soda_scs_manager.projects');

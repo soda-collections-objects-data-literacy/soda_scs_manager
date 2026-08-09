@@ -1891,16 +1891,18 @@ function _soda_scs_manager_create_default_applications_for_user(UserInterface $u
  */
 function _soda_scs_manager_create_default_project_for_user(UserInterface $user) {
 
+  /** @var \Drupal\soda_scs_manager\Helpers\SodaScsProjectHelpers $projectHelpers */
+  $projectHelpers = \Drupal::service('soda_scs_manager.project.helpers');
+
   $project = SodaScsProject::create([
     'bundle' => 'default',
-    'label' => $user->getDisplayName() . ' standard project',
+    // Translate so German sites store/display "Projekt 1" (also Nextcloud mount).
+    'label' => (string) t($projectHelpers::DEFAULT_PROJECT_LABEL),
     'owner' => $user->id(),
   ]);
 
   $project->save();
 
-  /** @var \Drupal\soda_scs_manager\Helpers\SodaScsProjectHelpers $projectHelpers */
-  $projectHelpers = \Drupal::service('soda_scs_manager.project.helpers');
   $kcToken = $projectHelpers->getKeycloakToken();
   if (!$kcToken) {
     return;
@@ -1923,7 +1925,7 @@ function _soda_scs_manager_create_default_project_for_user(UserInterface $user) 
   $user->save();
 
   // Sync user and keycloak groups.
-  $syncKeycloakGroupMembersResult = \Drupal::service('soda_scs_manager.project.helpers')->syncKeycloakGroupMembers($project);
+  $syncKeycloakGroupMembersResult = $projectHelpers->syncKeycloakGroupMembers($project);
   if (!$syncKeycloakGroupMembersResult->success) {
     $messenger = \Drupal::messenger();
     $messenger->addError(\Drupal::translation()->translate('Failed to sync user and keycloak groups for user: @username. @error', [
@@ -1941,6 +1943,19 @@ function _soda_scs_manager_create_default_project_for_user(UserInterface $user) 
     $messenger->addMessage(\Drupal::translation()->translate('Successfully synced user and keycloak groups for user: @username', ['@username' => $user->getDisplayName()]));
     $logger = \Drupal::logger('soda_scs_manager');
     $logger->notice('Successfully synced user and keycloak groups for user: @username', ['@username' => $user->getDisplayName()]);
+  }
+
+  // Create Nextcloud Team Folder (label = Project 1, machine name = groupId).
+  $createTeamFolderResult = $projectHelpers->createProjectTeamFolder($project);
+  if (!$createTeamFolderResult->success) {
+    \Drupal::messenger()->addError(\Drupal::translation()->translate('Failed to create Nextcloud Team Folder for project @project: @error', [
+      '@project' => $project->label(),
+      '@error' => $createTeamFolderResult->error,
+    ]));
+    \Drupal::logger('soda_scs_manager')->error('Failed to create Nextcloud Team Folder for project @project: @error', [
+      '@project' => $project->label(),
+      '@error' => $createTeamFolderResult->error,
+    ]);
   }
 
   // Sync MariaDB access for project members (phpMyAdmin SSO).

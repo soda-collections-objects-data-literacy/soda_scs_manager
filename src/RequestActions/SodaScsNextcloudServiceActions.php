@@ -221,6 +221,122 @@ class SodaScsNextcloudServiceActions implements SodaScsServiceRequestInterface {
   }
 
   /**
+   * Builds an admin request to register a Team Folder via scs_manager_integration.
+   *
+   * Nextcloud endpoint: POST /ocs/v2.php/apps/scs_manager_integration/api/v1/folders.
+   * Requires Nextcloud admin credentials in module settings.
+   *
+   * @param array $requestParams
+   *   Required:
+   *     - 'name' or 'label' (string): folder display name / mount point.
+   *     - 'externalProjectId' (string): Drupal/external project id.
+   *     - 'machineName' (string): stable Keycloak project group id.
+   *   Optional:
+   *     - 'groups' (string[]): Nextcloud group IDs.
+   *     - 'createGroupFolder' (bool, default TRUE).
+   *     - 'groupFolderId' (int|null): register existing Team Folder.
+   *     - 'timeout' (int).
+   *
+   * @return array
+   *   Request array ready to pass to makeRequest().
+   */
+  public function buildCreateProjectFolderRequest(array $requestParams): array {
+    $adminAuth = $this->buildAdminAuthHeader();
+    if ($adminAuth === NULL) {
+      return [
+        'success' => FALSE,
+        'method' => '',
+        'route' => '',
+        'headers' => [],
+        'error' => 'Nextcloud admin credentials are not configured.',
+      ];
+    }
+
+    $label = (string) ($requestParams['label'] ?? $requestParams['name'] ?? '');
+    $body = [
+      'name' => $label,
+      'label' => $label,
+      'machineName' => (string) ($requestParams['machineName'] ?? ''),
+      'externalProjectId' => (string) ($requestParams['externalProjectId'] ?? ''),
+      'groups' => array_values(array_map('strval', $requestParams['groups'] ?? [])),
+      'createGroupFolder' => (bool) ($requestParams['createGroupFolder'] ?? TRUE),
+    ];
+    if (isset($requestParams['groupFolderId']) && $requestParams['groupFolderId'] !== NULL && $requestParams['groupFolderId'] !== '') {
+      $body['groupFolderId'] = (int) $requestParams['groupFolderId'];
+    }
+
+    return [
+      'success' => TRUE,
+      'method' => 'POST',
+      'route' => $this->managerIntegrationApiBase() . '/folders?format=json',
+      'timeout' => $requestParams['timeout'] ?? 30,
+      'body' => json_encode($body, JSON_THROW_ON_ERROR),
+      'headers' => [
+        'OCS-APIRequest' => 'true',
+        'Accept' => 'application/json',
+        'Content-Type' => 'application/json',
+        'Authorization' => $adminAuth,
+      ],
+    ];
+  }
+
+  /**
+   * Builds an admin request to update a managed project Team Folder.
+   *
+   * Nextcloud endpoint: PATCH /ocs/v2.php/apps/scs_manager_integration/api/v1/folders/{id}.
+   *
+   * @param array $requestParams
+   *   Required:
+   *     - 'folderId' (int): managed folder id.
+   *   Optional:
+   *     - 'name' or 'label' (string): new display mount point.
+   *     - 'groups' (string[]): Nextcloud group IDs.
+   *     - 'timeout' (int).
+   *
+   * @return array
+   *   Request array ready to pass to makeRequest().
+   */
+  public function buildUpdateProjectFolderRequest(array $requestParams): array {
+    $adminAuth = $this->buildAdminAuthHeader();
+    if ($adminAuth === NULL) {
+      return [
+        'success' => FALSE,
+        'method' => '',
+        'route' => '',
+        'headers' => [],
+        'error' => 'Nextcloud admin credentials are not configured.',
+      ];
+    }
+
+    $folderId = (int) ($requestParams['folderId'] ?? 0);
+    $body = [];
+    $label = (string) ($requestParams['label'] ?? $requestParams['name'] ?? '');
+    if ($label !== '') {
+      $body['label'] = $label;
+      $body['name'] = $label;
+    }
+    if (array_key_exists('groups', $requestParams)) {
+      $body['groups'] = array_values(array_map('strval', $requestParams['groups'] ?? []));
+    }
+
+    return [
+      'success' => TRUE,
+      'method' => 'PATCH',
+      'route' => $this->managerIntegrationApiBase()
+        . '/folders/' . rawurlencode((string) $folderId)
+        . '?format=json',
+      'timeout' => $requestParams['timeout'] ?? 30,
+      'body' => json_encode($body, JSON_THROW_ON_ERROR),
+      'headers' => [
+        'OCS-APIRequest' => 'true',
+        'Accept' => 'application/json',
+        'Content-Type' => 'application/json',
+        'Authorization' => $adminAuth,
+      ],
+    ];
+  }
+
+  /**
    * Builds a request to create (generate) a Nextcloud app password.
    *
    * Nextcloud endpoint: GET /ocs/v2.php/core/getapppassword.
@@ -347,6 +463,56 @@ class SodaScsNextcloudServiceActions implements SodaScsServiceRequestInterface {
   }
 
   /**
+   * Builds an admin request to deregister a project feed folder.
+   *
+   * Nextcloud endpoint: DELETE /ocs/v2.php/apps/scs_manager_integration/api/v1/folders/{id}.
+   * Requires Nextcloud admin credentials in module settings.
+   *
+   * @param array $requestParams
+   *   Required:
+   *     - 'folderId' (int): managed folder id.
+   *   Optional:
+   *     - 'deleteStorage' (bool): also delete the Team Folder.
+   *     - 'timeout' (int).
+   *
+   * @return array
+   *   Request array ready to pass to makeRequest().
+   */
+  public function buildDeleteProjectFolderRequest(array $requestParams): array {
+    $adminAuth = $this->buildAdminAuthHeader();
+    if ($adminAuth === NULL) {
+      return [
+        'success' => FALSE,
+        'method' => '',
+        'route' => '',
+        'headers' => [],
+        'error' => 'Nextcloud admin credentials are not configured.',
+      ];
+    }
+
+    $folderId = (int) ($requestParams['folderId'] ?? 0);
+    $query = ['format' => 'json'];
+    if (!empty($requestParams['deleteStorage'])) {
+      $query['deleteStorage'] = '1';
+    }
+    $route = $this->managerIntegrationApiBase()
+      . '/folders/' . rawurlencode((string) $folderId)
+      . '?' . http_build_query($query);
+
+    return [
+      'success' => TRUE,
+      'method' => 'DELETE',
+      'route' => $route,
+      'timeout' => $requestParams['timeout'] ?? 30,
+      'headers' => [
+        'OCS-APIRequest' => 'true',
+        'Accept' => 'application/json',
+        'Authorization' => $adminAuth,
+      ],
+    ];
+  }
+
+  /**
    * Builds a request to delete the app password currently in use.
    *
    * Nextcloud endpoint: DELETE /ocs/v2.php/core/apppassword.
@@ -392,10 +558,8 @@ class SodaScsNextcloudServiceActions implements SodaScsServiceRequestInterface {
    *   Request array ready to pass to makeRequest().
    */
   public function buildDeleteUserRequest(array $requestParams): array {
-    $nextcloudSettings = $this->sodaScsServiceHelpers->initNextcloudSettings();
-    $adminUsername = (string) ($nextcloudSettings['adminUsername'] ?? '');
-    $adminPassword = (string) ($nextcloudSettings['adminPassword'] ?? '');
-    if ($adminUsername === '' || $adminPassword === '') {
+    $adminAuth = $this->buildAdminAuthHeader();
+    if ($adminAuth === NULL) {
       return [
         'success' => FALSE,
         'method' => '',
@@ -405,6 +569,7 @@ class SodaScsNextcloudServiceActions implements SodaScsServiceRequestInterface {
       ];
     }
 
+    $nextcloudSettings = $this->sodaScsServiceHelpers->initNextcloudSettings();
     $userId = (string) ($requestParams['userId'] ?? '');
     $route = rtrim($nextcloudSettings['baseUrl'], '/') . '/ocs/v1.php/cloud/users/' . rawurlencode($userId);
 
@@ -415,7 +580,7 @@ class SodaScsNextcloudServiceActions implements SodaScsServiceRequestInterface {
       'headers' => [
         'OCS-APIRequest' => 'true',
         'Accept' => 'application/json',
-        'Authorization' => 'Basic ' . base64_encode($adminUsername . ':' . $adminPassword),
+        'Authorization' => $adminAuth,
       ],
     ];
   }
@@ -519,6 +684,116 @@ class SodaScsNextcloudServiceActions implements SodaScsServiceRequestInterface {
   }
 
   /**
+   * Builds a user request for a project folder activity feed.
+   *
+   * Nextcloud endpoint:
+   * GET /ocs/v2.php/apps/scs_manager_integration/api/v1/folders/{id}/feed.
+   *
+   * @param array $requestParams
+   *   Required:
+   *     - 'folderId' (int): managed folder id.
+   *   Authentication (one set):
+   *     - 'username' + 'password', OR 'token'.
+   *   Optional:
+   *     - 'limit' (int, default 50).
+   *     - 'since' (int): unix timestamp upper bound (exclusive).
+   *     - 'timeout' (int).
+   *
+   * @return array
+   *   Request array ready to pass to makeRequest().
+   */
+  public function buildProjectFeedRequest(array $requestParams): array {
+    $folderId = (int) ($requestParams['folderId'] ?? 0);
+    $limit = max(1, min(200, (int) ($requestParams['limit'] ?? 50)));
+    $query = [
+      'format' => 'json',
+      'limit' => $limit,
+    ];
+    $since = (int) ($requestParams['since'] ?? 0);
+    if ($since > 0) {
+      $query['since'] = $since;
+    }
+    $route = $this->managerIntegrationApiBase()
+      . '/folders/' . rawurlencode((string) $folderId)
+      . '/feed?' . http_build_query($query);
+
+    return [
+      'success' => TRUE,
+      'method' => 'GET',
+      'route' => $route,
+      'timeout' => $requestParams['timeout'] ?? 5,
+      'headers' => [
+        'OCS-APIRequest' => 'true',
+        'Accept' => 'application/json',
+        'Authorization' => $this->buildAuthHeader($requestParams),
+      ],
+    ];
+  }
+
+  /**
+   * Builds a user request to list accessible managed project folders.
+   *
+   * Nextcloud endpoint: GET /ocs/v2.php/apps/scs_manager_integration/api/v1/folders.
+   *
+   * @param array $requestParams
+   *   Authentication (one set):
+   *     - 'username' + 'password', OR 'token'.
+   *   Optional:
+   *     - 'timeout' (int).
+   *
+   * @return array
+   *   Request array ready to pass to makeRequest().
+   */
+  public function buildProjectFoldersRequest(array $requestParams): array {
+    return [
+      'success' => TRUE,
+      'method' => 'GET',
+      'route' => $this->managerIntegrationApiBase() . '/folders?format=json',
+      'timeout' => $requestParams['timeout'] ?? 5,
+      'headers' => [
+        'OCS-APIRequest' => 'true',
+        'Accept' => 'application/json',
+        'Authorization' => $this->buildAuthHeader($requestParams),
+      ],
+    ];
+  }
+
+  /**
+   * Builds an admin request to list all managed project folders.
+   *
+   * @param array $requestParams
+   *   Optional:
+   *     - 'timeout' (int).
+   *
+   * @return array
+   *   Request array ready to pass to makeRequest().
+   */
+  public function buildAdminProjectFoldersRequest(array $requestParams = []): array {
+    $adminAuth = $this->buildAdminAuthHeader();
+    if ($adminAuth === NULL) {
+      return [
+        'success' => FALSE,
+        'method' => '',
+        'route' => '',
+        'headers' => [],
+        'error' => 'Nextcloud admin credentials are not configured.',
+      ];
+    }
+
+    return [
+      'success' => TRUE,
+      'method' => 'GET',
+      'route' => $this->managerIntegrationApiBase() . '/folders?format=json',
+      'timeout' => $requestParams['timeout'] ?? 30,
+      'headers' => [
+        'OCS-APIRequest' => 'true',
+        'Accept' => 'application/json',
+        'Authorization' => $adminAuth,
+      ],
+    ];
+  }
+
+  /**
    * Returns the OIDC username prefix for user_oidc (e.g. keycloak-).
    *
    * @return string
@@ -543,6 +818,22 @@ class SodaScsNextcloudServiceActions implements SodaScsServiceRequestInterface {
   }
 
   /**
+   * Builds Basic Auth header for configured Nextcloud admin credentials.
+   *
+   * @return string|null
+   *   Authorization header value, or NULL if admin credentials are missing.
+   */
+  protected function buildAdminAuthHeader(): ?string {
+    $nextcloudSettings = $this->sodaScsServiceHelpers->initNextcloudSettings();
+    $adminUsername = (string) ($nextcloudSettings['adminUsername'] ?? '');
+    $adminPassword = (string) ($nextcloudSettings['adminPassword'] ?? '');
+    if ($adminUsername === '' || $adminUsername === '{empty}' || $adminPassword === '' || $adminPassword === '{empty}') {
+      return NULL;
+    }
+    return 'Basic ' . base64_encode($adminUsername . ':' . $adminPassword);
+  }
+
+  /**
    * Builds the Authorization header value for a given set of params.
    *
    * @param array $requestParams
@@ -558,6 +849,25 @@ class SodaScsNextcloudServiceActions implements SodaScsServiceRequestInterface {
     $user = $requestParams['username'] ?? '';
     $pass = $requestParams['password'] ?? '';
     return 'Basic ' . base64_encode($user . ':' . $pass);
+  }
+
+  /**
+   * Base URL for the scs_manager_integration OCS API v1.
+   *
+   * @return string
+   *   Absolute API base without trailing slash.
+   */
+  protected function managerIntegrationApiBase(): string {
+    $nextcloudSettings = $this->sodaScsServiceHelpers->initNextcloudSettings();
+    return rtrim((string) $nextcloudSettings['baseUrl'], '/')
+      . '/ocs/v2.php/apps/scs_manager_integration/api/v1';
+  }
+
+  /**
+   * @deprecated Use managerIntegrationApiBase().
+   */
+  protected function projectFeedsApiBase(): string {
+    return $this->managerIntegrationApiBase();
   }
 
 }

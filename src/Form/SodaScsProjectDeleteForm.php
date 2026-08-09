@@ -97,6 +97,15 @@ class SodaScsProjectDeleteForm extends ContentEntityDeleteForm {
     /** @var \Drupal\soda_scs_manager\Entity\SodaScsProject $entity */
     $project = $this->entity;
 
+    // Delete Nextcloud Team Folder first (lookup uses Drupal project id).
+    $deleteFolderResult = $this->sodaScsProjectHelpers->deleteProjectTeamFolder($project);
+    if (!$deleteFolderResult->success) {
+      $this->messenger()->addWarning($this->t('Could not delete Nextcloud Team Folder for project @label: @error', [
+        '@label' => $project->label(),
+        '@error' => $deleteFolderResult->error,
+      ]));
+    }
+
     // Delete the project group from Keycloak.
     $this->sodaScsProjectHelpers->deleteProjectGroup($project);
 

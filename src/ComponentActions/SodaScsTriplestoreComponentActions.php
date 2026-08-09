@@ -19,7 +19,9 @@ use Drupal\Core\Utility\Error;
 use Drupal\soda_scs_manager\Entity\SodaScsComponentInterface;
 use Drupal\soda_scs_manager\Entity\SodaScsSnapshotInterface;
 use Drupal\soda_scs_manager\Exception\SodaScsComponentActionsException;
+use Drupal\soda_scs_manager\Helpers\SodaScsKeycloakHelpers;
 use Drupal\soda_scs_manager\Helpers\SodaScsOpenGdbHelpers;
+use Drupal\soda_scs_manager\Helpers\SodaScsProjectHelpers;
 use Drupal\soda_scs_manager\Helpers\SodaScsSnapshotHelpers;
 use Drupal\soda_scs_manager\Helpers\SodaScsTriplestoreHelpers;
 use Drupal\soda_scs_manager\RequestActions\SodaScsOpenGdbRequestInterface;
@@ -115,6 +117,20 @@ class SodaScsTriplestoreComponentActions implements SodaScsComponentActionsInter
   protected SodaScsTriplestoreHelpers $sodaScsTriplestoreHelpers;
 
   /**
+   * The SCS Keycloak helpers.
+   *
+   * @var \Drupal\soda_scs_manager\Helpers\SodaScsKeycloakHelpers
+   */
+  protected SodaScsKeycloakHelpers $sodaScsKeycloakHelpers;
+
+  /**
+   * The SCS Project helpers.
+   *
+   * @var \Drupal\soda_scs_manager\Helpers\SodaScsProjectHelpers
+   */
+  protected SodaScsProjectHelpers $sodaScsProjectHelpers;
+
+  /**
    * Class constructor.
    */
   public function __construct(
@@ -135,6 +151,10 @@ class SodaScsTriplestoreComponentActions implements SodaScsComponentActionsInter
     SodaScsSnapshotHelpers $sodaScsSnapshotHelpers,
     #[Autowire(service: 'soda_scs_manager.triplestore_helpers')]
     SodaScsTriplestoreHelpers $sodaScsTriplestoreHelpers,
+    #[Autowire(service: 'soda_scs_manager.keycloak_service.helpers')]
+    SodaScsKeycloakHelpers $sodaScsKeycloakHelpers,
+    #[Autowire(service: 'soda_scs_manager.project.helpers')]
+    SodaScsProjectHelpers $sodaScsProjectHelpers,
   ) {
     // Services from container.
     $settings = $configFactory
@@ -150,6 +170,8 @@ class SodaScsTriplestoreComponentActions implements SodaScsComponentActionsInter
     $this->sodaScsServiceKeyActions = $sodaScsServiceKeyActions;
     $this->sodaScsSnapshotHelpers = $sodaScsSnapshotHelpers;
     $this->sodaScsTriplestoreHelpers = $sodaScsTriplestoreHelpers;
+    $this->sodaScsKeycloakHelpers = $sodaScsKeycloakHelpers;
+    $this->sodaScsProjectHelpers = $sodaScsProjectHelpers;
   }
 
   /**
@@ -295,6 +317,46 @@ class SodaScsTriplestoreComponentActions implements SodaScsComponentActionsInter
         'message' => 'Cannot assemble Request.',
         'data' => [
           'createRepoResponse' => NULL,
+        ],
+        'success' => FALSE,
+        'error' => $e->getMessage(),
+      ];
+    }
+
+    try {
+      // Keycloak access groups: {machineName}-admin / {machineName}-user.
+      $ownerSsoUuid = $this->sodaScsProjectHelpers->getUserSsoUuid($triplestoreComponent->getOwner());
+      $memberSsoUuids = [];
+      foreach ($triplestoreComponent->get('partOfProjects')->referencedEntities() as $linkedProject) {
+        foreach ($linkedProject->get('members')->referencedEntities() as $member) {
+          $memberSsoUuid = $this->sodaScsProjectHelpers->getUserSsoUuid($member);
+          if ($memberSsoUuid) {
+            $memberSsoUuids[] = $memberSsoUuid;
+          }
+        }
+      }
+      $this->sodaScsKeycloakHelpers->createAndPopulateComponentAccessGroups(
+        $machineName,
+        $ownerSsoUuid,
+        array_values(array_unique($memberSsoUuids)),
+      );
+    }
+    catch (\Exception $e) {
+      Error::logException(
+        $this->loggerFactory->get('soda_scs_manager'),
+        $e,
+        'Cannot create triplestore Keycloak groups: @message',
+        [
+          '@message' => $e->getMessage(),
+        ],
+        LogLevel::ERROR
+      );
+      $this->messenger->addError($this->t("Cannot create Keycloak groups for triplestore. See logs for more details."));
+      return [
+        'message' => 'Cannot create Keycloak groups for triplestore.',
+        'data' => [
+          'createRepoResponse' => $createRepoResponse ?? NULL,
+          'openGdbUpdateUserResponse' => $openGdbUpdateUserResponse ?? NULL,
         ],
         'success' => FALSE,
         'error' => $e->getMessage(),
@@ -745,6 +807,34 @@ class SodaScsTriplestoreComponentActions implements SodaScsComponentActionsInter
         ];
       }
     }
+    try {
+      $keycloakGroupsDeleteResult = $this->sodaScsKeycloakHelpers->deleteComponentAccessGroups($machineName);
+    }
+    catch (\Exception $e) {
+      Error::logException(
+        $this->loggerFactory->get('soda_scs_manager'),
+        $e,
+        'Could not delete Keycloak groups for triplestore component: @message',
+        [
+          '%component' => $machineName,
+          '@message' => $e->getMessage(),
+        ],
+        LogLevel::ERROR
+      );
+      return [
+        'message' => $this->t('Could not delete Keycloak groups for triplestore component %component', ['%component' => $machineName]),
+        'data' => [
+          'openGdbDeleteRepositoryResponse' => $openGdbDeleteRepositoryResponse,
+          'openGdbGetUserResponse' => $openGdbGetUserResponse,
+          'openGdbUpdateUserResponse' => $openGdbUpdateUserResponse ?? NULL,
+          'openGdbDeleteUserResponse' => $openGdbDeleteUserResponse ?? NULL,
+          'keycloakGroupsDeleteResult' => NULL,
+        ],
+        'success' => FALSE,
+        'error' => $e->getMessage(),
+      ];
+    }
+
     $component->delete();
     return [
       'message' => $this->t('Deleted triplestore component %component', ['%component' => $machineName]),
@@ -753,6 +843,7 @@ class SodaScsTriplestoreComponentActions implements SodaScsComponentActionsInter
         'openGdbGetUserResponse' => $openGdbGetUserResponse,
         'openGdbUpdateUserResponse' => $openGdbUpdateUserResponse,
         'openGdbDeleteUserResponse' => $openGdbDeleteUserResponse,
+        'keycloakGroupsDeleteResult' => $keycloakGroupsDeleteResult,
       ],
       'success' => TRUE,
       'error' => NULL,

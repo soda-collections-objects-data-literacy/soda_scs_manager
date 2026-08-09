@@ -323,6 +323,18 @@ class SodaScsProjectCreateForm extends ContentEntityForm {
       ]);
     }
 
+    $createTeamFolderResult = $this->sodaScsProjectHelpers->createProjectTeamFolder($project);
+    if (!$createTeamFolderResult->success) {
+      $this->messenger()->addError($this->t('Failed to create Nextcloud Team Folder for project @project: @error', [
+        '@project' => $project->label(),
+        '@error' => $createTeamFolderResult->error,
+      ]));
+      $this->logger->error('Failed to create Nextcloud Team Folder for project @project: @error', [
+        '@project' => $project->label(),
+        '@error' => $createTeamFolderResult->error,
+      ]);
+    }
+
     $this->messenger()->addMessage($this->t('Project @project has been created.', [
       '@project' => $this->entity->label(),
     ]));

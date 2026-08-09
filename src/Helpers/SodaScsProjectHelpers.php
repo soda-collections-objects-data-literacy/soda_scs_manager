@@ -8,11 +8,14 @@ use Symfony\Component\DependencyInjection\Attribute\Autowire;
 use Drupal\Core\Config\Config;
 use Drupal\Core\Config\ConfigFactoryInterface;
 use Drupal\Core\Entity\EntityTypeManagerInterface;
+use Drupal\Core\Logger\LoggerChannelFactoryInterface;
+use Drupal\Core\Logger\LoggerChannelInterface;
 use Drupal\externalauth\AuthmapInterface;
 use Drupal\soda_scs_manager\Entity\SodaScsProjectInterface;
 use Drupal\Core\StringTranslation\StringTranslationTrait;
 use Drupal\user\UserInterface;
 use Symfony\Component\DependencyInjection\ContainerInterface;
+use Drupal\soda_scs_manager\RequestActions\SodaScsNextcloudServiceActions;
 use Drupal\soda_scs_manager\RequestActions\SodaScsServiceRequestInterface;
 use Drupal\soda_scs_manager\ValueObject\SodaScsResult;
 use Drupal\soda_scs_manager\ValueObject\SodaScsKeycloakGroupData;
@@ -22,6 +25,18 @@ use Drupal\soda_scs_manager\ValueObject\SodaScsKeycloakGroupData;
  */
 class SodaScsProjectHelpers {
   use StringTranslationTrait;
+
+  /**
+   * Default label for a user's first project.
+   */
+  public const DEFAULT_PROJECT_LABEL = 'Project 1';
+
+  /**
+   * The logger channel.
+   *
+   * @var \Drupal\Core\Logger\LoggerChannelInterface
+   */
+  protected LoggerChannelInterface $logger;
 
   /**
    * {@inheritdoc}
@@ -39,6 +54,9 @@ class SodaScsProjectHelpers {
     protected SodaScsServiceRequestInterface $sodaScsKeycloakServiceGroupActions,
     #[Autowire(service: 'soda_scs_manager.keycloak_service.user.actions')]
     protected SodaScsServiceRequestInterface $sodaScsKeycloakServiceUserActions,
+    #[Autowire(service: 'soda_scs_manager.nextcloud_service.actions')]
+    protected SodaScsNextcloudServiceActions $sodaScsNextcloudServiceActions,
+    LoggerChannelFactoryInterface $loggerFactory,
   ) {
     $this->settings = $this->configFactory->getEditable('soda_scs_manager.settings');
     $this->entityTypeManager = $entityTypeManager;
@@ -46,6 +64,8 @@ class SodaScsProjectHelpers {
     $this->sodaScsKeycloakServiceClientActions = $sodaScsKeycloakServiceClientActions;
     $this->sodaScsKeycloakServiceGroupActions = $sodaScsKeycloakServiceGroupActions;
     $this->sodaScsKeycloakServiceUserActions = $sodaScsKeycloakServiceUserActions;
+    $this->sodaScsNextcloudServiceActions = $sodaScsNextcloudServiceActions;
+    $this->logger = $loggerFactory->get('soda_scs_manager');
   }
 
   /**
@@ -60,6 +80,8 @@ class SodaScsProjectHelpers {
       $container->get('soda_scs_manager.keycloak_service.client.actions'),
       $container->get('soda_scs_manager.keycloak_service.group.actions'),
       $container->get('soda_scs_manager.keycloak_service.user.actions'),
+      $container->get('soda_scs_manager.nextcloud_service.actions'),
+      $container->get('logger.factory'),
     );
   }
 
@@ -242,15 +264,12 @@ class SodaScsProjectHelpers {
       );
     }
 
-    // Create keycloak group.
+    // Create keycloak group (name = stable machine id; label is an attribute).
     $groupsReq = $this->sodaScsKeycloakServiceGroupActions->buildCreateRequest([
       'token' => $this->getKeycloakToken(),
       'body' => [
         'name' => $projectGroupId,
-        'attributes' => [
-          'gid' => [$projectGroupId],
-          'label' => [$project->label()],
-        ],
+        'attributes' => $this->buildProjectGroupAttributes($project),
       ],
     ]);
 
@@ -618,8 +637,8 @@ class SodaScsProjectHelpers {
    *
    * Keycloak group assignment rules:
    *  - Project group: owner + all members
-   *  - WissKI -admin group: owner only
-   *  - WissKI -user group: regular members only (not the owner)
+   *  - Component -admin group (WissKI/SQL/Triplestore): owner only
+   *  - Component -user group (WissKI/SQL/Triplestore): regular members only
    *
    * @param \Drupal\soda_scs_manager\Entity\SodaScsProjectInterface $project
    *   The project entity.
@@ -630,6 +649,15 @@ class SodaScsProjectHelpers {
   public function syncKeycloakGroupMembers(SodaScsProjectInterface $project): SodaScsResult {
     // Resolve the owner's Keycloak UUID.
     $owner = $project->get('owner')->entity;
+    if (!$owner instanceof UserInterface) {
+      return SodaScsResult::failure(
+        error: 'Project has no owner',
+        message: (string) $this->t('Project @project has no owner user; cannot sync Keycloak members.', [
+          '@project' => $project->label(),
+        ]),
+      );
+    }
+
     $ownerSsoUuid = $this->getUserSsoUuid($owner);
 
     if (!$ownerSsoUuid) {
@@ -693,16 +721,21 @@ class SodaScsProjectHelpers {
       return $syncResult;
     }
 
-    // WissKI component groups: owner → -admin, members → -user.
+    // Component access groups: owner → -admin, members → -user.
+    $componentAccessGroupBundles = [
+      'soda_scs_wisski_component',
+      'soda_scs_sql_component',
+      'soda_scs_triplestore_component',
+    ];
     /** @var \Drupal\soda_scs_manager\Entity\SodaScsComponentInterface $connectedComponent */
     foreach ($project->get('connectedComponents')->referencedEntities() as $connectedComponent) {
-      if ($connectedComponent->bundle() !== 'soda_scs_wisski_component') {
+      if (!in_array($connectedComponent->bundle(), $componentAccessGroupBundles, TRUE)) {
         continue;
       }
 
       $machineName = $connectedComponent->get('machineName')->value;
 
-      // Resolve WissKI -admin group UUID and sync the project owner into it.
+      // Resolve -admin group UUID and sync the project owner into it.
       $adminGroupName = $machineName . '-admin';
       $adminGroupUuid = $this->resolveKeycloakGroupUuid($adminGroupName);
       if ($adminGroupUuid) {
@@ -712,7 +745,7 @@ class SodaScsProjectHelpers {
         }
       }
 
-      // Resolve WissKI -user group UUID and sync regular members into it.
+      // Resolve -user group UUID and sync regular members into it.
       $userGroupName = $machineName . '-user';
       $userGroupUuid = $this->resolveKeycloakGroupUuid($userGroupName);
       if ($userGroupUuid) {
@@ -845,6 +878,321 @@ class SodaScsProjectHelpers {
     }
 
     return SodaScsResult::success(data: [], message: '');
+  }
+
+  /**
+   * Create the Nextcloud Team Folder for a project.
+   *
+   * Mount/label is the project label; machine name is the Keycloak group id.
+   */
+  public function createProjectTeamFolder(SodaScsProjectInterface $project): SodaScsResult {
+    $groupId = (string) ($project->get('groupId')->value ?? '');
+    $projectId = (string) $project->id();
+    $label = (string) $project->label();
+    if ($groupId === '' || $projectId === '' || $label === '') {
+      return SodaScsResult::failure(
+        (string) $this->t('Missing project id, group id or label.'),
+        (string) $this->t('Could not create Nextcloud Team Folder for project @project.', [
+          '@project' => $label !== '' ? $label : $projectId,
+        ]),
+      );
+    }
+
+    $existingId = $this->findManagedFolderIdByExternalProjectId($projectId);
+    if ($existingId !== NULL) {
+      return SodaScsResult::success(
+        data: ['folderId' => $existingId],
+        message: (string) $this->t('Nextcloud Team Folder already exists for project @project.', [
+          '@project' => $label,
+        ]),
+      );
+    }
+
+    $request = $this->sodaScsNextcloudServiceActions->buildCreateProjectFolderRequest([
+      'label' => $label,
+      'name' => $label,
+      'machineName' => $groupId,
+      'externalProjectId' => $projectId,
+      'groups' => [$groupId],
+      'createGroupFolder' => TRUE,
+    ]);
+    if (empty($request['success'])) {
+      return SodaScsResult::failure(
+        (string) ($request['error'] ?? 'Nextcloud request could not be built.'),
+        (string) $this->t('Could not create Nextcloud Team Folder for project @project.', [
+          '@project' => $label,
+        ]),
+      );
+    }
+
+    $response = $this->sodaScsNextcloudServiceActions->makeRequest($request);
+    $data = $this->decodeNextcloudOcsData($response);
+    if ($data === NULL) {
+      $error = (string) ($response['error'] ?? 'Invalid Nextcloud response.');
+      $this->logger->error('Failed to create Nextcloud Team Folder for project @project: @error', [
+        '@project' => $label,
+        '@error' => $error,
+      ]);
+      return SodaScsResult::failure(
+        $error,
+        (string) $this->t('Could not create Nextcloud Team Folder for project @project.', [
+          '@project' => $label,
+        ]),
+      );
+    }
+
+    $folderId = (int) ($data['folder']['id'] ?? 0);
+    return SodaScsResult::success(
+      data: ['folderId' => $folderId, 'folder' => $data['folder'] ?? []],
+      message: (string) $this->t('Created Nextcloud Team Folder for project @project.', [
+        '@project' => $label,
+      ]),
+    );
+  }
+
+  /**
+   * Delete the Nextcloud Team Folder registered for a project.
+   */
+  public function deleteProjectTeamFolder(SodaScsProjectInterface $project): SodaScsResult {
+    $projectId = (string) $project->id();
+    $folderId = $this->findManagedFolderIdByExternalProjectId($projectId);
+    if ($folderId === NULL) {
+      return SodaScsResult::success(
+        data: ['removed' => FALSE],
+        message: (string) $this->t('No Nextcloud Team Folder found for project @project.', [
+          '@project' => $project->label(),
+        ]),
+      );
+    }
+
+    $request = $this->sodaScsNextcloudServiceActions->buildDeleteProjectFolderRequest([
+      'folderId' => $folderId,
+      'deleteStorage' => TRUE,
+    ]);
+    if (empty($request['success'])) {
+      return SodaScsResult::failure(
+        (string) ($request['error'] ?? 'Nextcloud request could not be built.'),
+        (string) $this->t('Could not delete Nextcloud Team Folder for project @project.', [
+          '@project' => $project->label(),
+        ]),
+      );
+    }
+
+    $response = $this->sodaScsNextcloudServiceActions->makeRequest($request);
+    if (empty($response['success'])) {
+      $error = (string) ($response['error'] ?? 'Nextcloud delete failed.');
+      $this->logger->error('Failed to delete Nextcloud Team Folder @folder for project @project: @error', [
+        '@folder' => $folderId,
+        '@project' => $project->label(),
+        '@error' => $error,
+      ]);
+      return SodaScsResult::failure(
+        $error,
+        (string) $this->t('Could not delete Nextcloud Team Folder for project @project.', [
+          '@project' => $project->label(),
+        ]),
+      );
+    }
+
+    return SodaScsResult::success(
+      data: ['removed' => TRUE, 'folderId' => $folderId],
+      message: (string) $this->t('Deleted Nextcloud Team Folder for project @project.', [
+        '@project' => $project->label(),
+      ]),
+    );
+  }
+
+  /**
+   * Update Keycloak group attributes for a project (name/gid stay stable).
+   */
+  public function updateProjectGroupAttributes(SodaScsProjectInterface $project): SodaScsResult {
+    $projectGroupUuid = (string) ($project->get('keycloakUuid')->value ?? '');
+    if ($projectGroupUuid === '') {
+      return SodaScsResult::failure(
+        (string) $this->t('Project group UUID is empty.'),
+        (string) $this->t('Could not update Keycloak attributes for project @project.', [
+          '@project' => $project->label(),
+        ]),
+      );
+    }
+
+    $groupId = (string) ($project->get('groupId')->value ?? '');
+    $updateReq = $this->sodaScsKeycloakServiceGroupActions->buildUpdateRequest([
+      'token' => $this->getKeycloakToken(),
+      'routeParams' => ['groupId' => $projectGroupUuid],
+      'body' => [
+        // Keycloak requires name on PUT; keep machine name (= groupId) stable.
+        'name' => $groupId,
+        'attributes' => $this->buildProjectGroupAttributes($project),
+      ],
+    ]);
+    $updateRes = $this->sodaScsKeycloakServiceGroupActions->makeRequest($updateReq);
+    if (!$updateRes['success']) {
+      return SodaScsResult::failure(
+        (string) ($updateRes['error'] ?? 'Keycloak update failed.'),
+        (string) $this->t('Could not update Keycloak attributes for project @project.', [
+          '@project' => $project->label(),
+        ]),
+      );
+    }
+
+    return SodaScsResult::success(
+      data: [],
+      message: (string) $this->t('Updated Keycloak attributes for project @project.', [
+        '@project' => $project->label(),
+      ]),
+    );
+  }
+
+  /**
+   * Sync project label to Nextcloud Team Folder mount and optionally groups ACL.
+   */
+  public function updateProjectTeamFolderLabel(SodaScsProjectInterface $project): SodaScsResult {
+    $projectId = (string) $project->id();
+    $groupId = (string) ($project->get('groupId')->value ?? '');
+    $label = (string) $project->label();
+    $folderId = $this->findManagedFolderIdByExternalProjectId($projectId);
+    if ($folderId === NULL) {
+      // Create if missing (e.g. projects created before Team Folder wiring).
+      return $this->createProjectTeamFolder($project);
+    }
+
+    $request = $this->sodaScsNextcloudServiceActions->buildUpdateProjectFolderRequest([
+      'folderId' => $folderId,
+      'label' => $label,
+      'groups' => $groupId !== '' ? [$groupId] : [],
+    ]);
+    if (empty($request['success'])) {
+      return SodaScsResult::failure(
+        (string) ($request['error'] ?? 'Nextcloud request could not be built.'),
+        (string) $this->t('Could not update Nextcloud Team Folder for project @project.', [
+          '@project' => $label,
+        ]),
+      );
+    }
+
+    $response = $this->sodaScsNextcloudServiceActions->makeRequest($request);
+    $data = $this->decodeNextcloudOcsData($response);
+    if ($data === NULL) {
+      $error = (string) ($response['error'] ?? 'Invalid Nextcloud response.');
+      $this->logger->error('Failed to update Nextcloud Team Folder for project @project: @error', [
+        '@project' => $label,
+        '@error' => $error,
+      ]);
+      return SodaScsResult::failure(
+        $error,
+        (string) $this->t('Could not update Nextcloud Team Folder for project @project.', [
+          '@project' => $label,
+        ]),
+      );
+    }
+
+    return SodaScsResult::success(
+      data: ['folderId' => $folderId, 'folder' => $data['folder'] ?? []],
+      message: (string) $this->t('Updated Nextcloud Team Folder for project @project.', [
+        '@project' => $label,
+      ]),
+    );
+  }
+
+  /**
+   * Build Keycloak group attributes for a project.
+   *
+   * @return array<string, list<string>>
+   *   Attribute map for the Keycloak Admin API.
+   */
+  protected function buildProjectGroupAttributes(SodaScsProjectInterface $project): array {
+    $groupId = (string) ($project->get('groupId')->value ?? '');
+    return [
+      'gid' => [$groupId],
+      'label' => [(string) $project->label()],
+      'nextcloudTeamFolder' => [$groupId],
+      // Placeholder for later service bindings (WissKI, Jupyter, WebProtégé, …).
+      'containedApps' => ['[]'],
+    ];
+  }
+
+  /**
+   * Decode OCS data envelope from a Nextcloud makeRequest() response.
+   *
+   * @return array<string, mixed>|null
+   *   Decoded ocs.data or NULL on failure.
+   */
+  protected function decodeNextcloudOcsData(array $response): ?array {
+    if (empty($response['success'])) {
+      return NULL;
+    }
+    try {
+      $body = '';
+      if (isset($response['data']['nextcloudResponse'])) {
+        $body = (string) $response['data']['nextcloudResponse']->getBody()->getContents();
+      }
+      elseif (isset($response['data']['body'])) {
+        $body = (string) $response['data']['body'];
+      }
+      elseif (is_string($response['data'] ?? NULL)) {
+        $body = $response['data'];
+      }
+      if ($body === '') {
+        return NULL;
+      }
+      $decoded = json_decode($body, TRUE, 512, JSON_THROW_ON_ERROR);
+    }
+    catch (\Throwable) {
+      return NULL;
+    }
+    $data = $decoded['ocs']['data'] ?? NULL;
+    return is_array($data) ? $data : NULL;
+  }
+
+  /**
+   * List managed Nextcloud Team Folders keyed by external project id.
+   *
+   * Skips the platform share (`scs-platform-share`) and folders without an
+   * external project id.
+   *
+   * @return array<string, array<string, mixed>>
+   *   Map of Drupal project id (string) => folder payload from
+   *   scs_manager_integration.
+   */
+  public function listManagedFoldersByExternalProjectId(): array {
+    $request = $this->sodaScsNextcloudServiceActions->buildAdminProjectFoldersRequest([]);
+    if (empty($request['success'])) {
+      return [];
+    }
+
+    $response = $this->sodaScsNextcloudServiceActions->makeRequest($request);
+    $data = $this->decodeNextcloudOcsData($response);
+    if ($data === NULL) {
+      return [];
+    }
+
+    $map = [];
+    foreach ($data['folders'] ?? [] as $folder) {
+      if (!is_array($folder)) {
+        continue;
+      }
+      $externalProjectId = (string) ($folder['externalProjectId'] ?? '');
+      if ($externalProjectId === '' || $externalProjectId === 'scs-platform-share') {
+        continue;
+      }
+      $map[$externalProjectId] = $folder;
+    }
+    return $map;
+  }
+
+  /**
+   * Look up scs_manager_integration folder id by Drupal project id.
+   */
+  protected function findManagedFolderIdByExternalProjectId(string $externalProjectId): ?int {
+    if ($externalProjectId === '') {
+      return NULL;
+    }
+    $folder = $this->listManagedFoldersByExternalProjectId()[$externalProjectId] ?? NULL;
+    if ($folder === NULL) {
+      return NULL;
+    }
+    return (int) ($folder['id'] ?? 0) ?: NULL;
   }
 
   /**

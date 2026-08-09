@@ -16,8 +16,7 @@ use Symfony\Component\DependencyInjection\Attribute\Autowire;
 /**
  * Loads a lightweight Nextcloud preview for the stack entity page.
  *
- * Shows recent file activity (uploads, edits, deletes, public uploads) via
- * the Activity OCS API using the current user's stored credentials.
+ * Uses scs_manager_integration OCS API for the platform SCS-Share Team Folder feed.
  */
 class SodaScsNextcloudPreview {
 
@@ -29,9 +28,14 @@ class SodaScsNextcloudPreview {
   private const ITEM_LIMIT = 8;
 
   /**
-   * Fetch more rows than ITEM_LIMIT so non-file events can be skipped.
+   * externalProjectId of the platform Team Folder feed.
    */
-  private const FETCH_LIMIT = 50;
+  private const PLATFORM_EXTERNAL_PROJECT_ID = 'scs-platform-share';
+
+  /**
+   * Fallback folder name when externalProjectId is not matched.
+   */
+  private const PLATFORM_FOLDER_NAME = 'SCS-Share';
 
   /**
    * HTTP timeout in seconds for preview API calls.
@@ -94,92 +98,116 @@ class SodaScsNextcloudPreview {
     $authParams = [
       'username' => $credentials['username'],
       'password' => $credentials['appPassword'],
-      'limit' => self::FETCH_LIMIT,
       'timeout' => self::REQUEST_TIMEOUT,
     ];
 
     return [
       'status' => 'connected',
       'openUrl' => $baseUrl,
-      'activities' => $this->fetchActivities($authParams, $baseUrl),
+      'activities' => $this->fetchPlatformShareFeed($authParams, $baseUrl),
     ];
   }
 
   /**
-   * Fetches and normalises recent file activity.
+   * Decodes an OCS JSON response body into the data payload.
    *
-   * Uses the unfiltered activity feed and keeps file-related rows. Nextcloud's
-   * `/activity/files` filter omits types such as public_links_upload and
-   * returns HTTP 304 with an empty body when nothing matches.
+   * @param array $response
+   *   Normalised makeRequest() result.
+   *
+   * @return array|null
+   *   ocs.data array, or NULL on failure.
+   */
+  protected function decodeOcsData(array $response): ?array {
+    if (!$response['success']) {
+      return NULL;
+    }
+    $statusCode = (int) ($response['statusCode'] ?? 0);
+    if ($statusCode === 304 || $statusCode === 204) {
+      return [];
+    }
+    try {
+      $body = (string) $response['data']['nextcloudResponse']->getBody();
+      if ($body === '') {
+        return [];
+      }
+      $decoded = json_decode($body, TRUE, 512, JSON_THROW_ON_ERROR);
+    }
+    catch (\Throwable $e) {
+      return NULL;
+    }
+    $data = $decoded['ocs']['data'] ?? NULL;
+    return is_array($data) ? $data : NULL;
+  }
+
+  /**
+   * Loads the platform SCS-Share feed via scs_manager_integration.
    *
    * @param array $authParams
-   *   Auth + limit/timeout params.
+   *   User auth + timeout params.
    * @param string $baseUrl
    *   Nextcloud base URL.
    *
    * @return array
    *   Section with status and items.
    */
-  protected function fetchActivities(array $authParams, string $baseUrl): array {
-    $request = $this->nextcloudServiceActions->buildActivityRequest($authParams);
-    $response = $this->nextcloudServiceActions->makeRequest($request);
-    if (!$response['success']) {
+  protected function fetchPlatformShareFeed(array $authParams, string $baseUrl): array {
+    $folderId = $this->resolvePlatformShareFolderId($authParams);
+    if ($folderId === NULL) {
+      // List request failed.
       return ['status' => 'error', 'items' => []];
     }
-
-    $statusCode = (int) ($response['statusCode'] ?? 0);
-    // Nextcloud returns 304/204 with an empty body when there is nothing to show.
-    if ($statusCode === 304 || $statusCode === 204) {
+    if ($folderId === 0) {
+      // No accessible platform share feed for this user.
       return ['status' => 'empty', 'items' => []];
     }
 
-    try {
-      $body = (string) $response['data']['nextcloudResponse']->getBody();
-      if ($body === '') {
-        return ['status' => 'empty', 'items' => []];
-      }
-      $decoded = json_decode($body, TRUE, 512, JSON_THROW_ON_ERROR);
-    }
-    catch (\Throwable $e) {
+    $request = $this->nextcloudServiceActions->buildProjectFeedRequest($authParams + [
+      'folderId' => $folderId,
+      'limit' => self::ITEM_LIMIT,
+    ]);
+    $response = $this->nextcloudServiceActions->makeRequest($request);
+    $data = $this->decodeOcsData($response);
+    if ($data === NULL) {
       return ['status' => 'error', 'items' => []];
     }
 
-    $rows = $decoded['ocs']['data'] ?? [];
+    $rows = $data['items'] ?? [];
     if (!is_array($rows)) {
       return ['status' => 'error', 'items' => []];
     }
 
     $items = [];
     foreach ($rows as $row) {
-      if (!is_array($row) || !$this->isFileActivity($row)) {
+      if (!is_array($row)) {
         continue;
       }
-
-      $fileId = $row['object_id'] ?? NULL;
-      $link = (string) ($row['link'] ?? '');
-      if ($link === '' && $baseUrl !== '' && $fileId) {
-        $link = $baseUrl . '/f/' . rawurlencode((string) $fileId);
+      $object = is_array($row['object'] ?? NULL) ? $row['object'] : [];
+      $label = trim((string) ($object['name'] ?? ''));
+      $subject = trim((string) ($row['subject'] ?? ''));
+      if ($label === '') {
+        $label = $subject;
       }
-
-      $objectName = trim((string) ($row['object_name'] ?? ''));
-      if ($objectName !== '') {
-        $objectName = basename(str_replace('\\', '/', $objectName));
-      }
-      $subject = trim(html_entity_decode(strip_tags((string) ($row['subject'] ?? '')), ENT_QUOTES | ENT_HTML5, 'UTF-8'));
-      $label = $objectName !== '' ? $objectName : $subject;
       if ($label === '') {
         continue;
       }
 
-      $subtitle = (string) ($row['datetime'] ?? '');
-      if ($objectName !== '' && $subject !== '' && $subject !== $objectName) {
-        $subtitle = $subtitle !== '' ? $subject . ' · ' . $subtitle : $subject;
+      $subtitle = $subject;
+      $timestamp = (int) ($row['timestamp'] ?? 0);
+      if ($timestamp > 0) {
+        $datetime = gmdate('c', $timestamp);
+        $subtitle = $subtitle !== '' ? $subtitle . ' · ' . $datetime : $datetime;
+      }
+
+      $fileId = (int) ($object['fileId'] ?? 0);
+      $url = '';
+      if ($baseUrl !== '' && $fileId > 0) {
+        $url = $baseUrl . '/f/' . rawurlencode((string) $fileId);
       }
 
       $items[] = [
         'label' => $label,
         'subtitle' => $subtitle,
-        'url' => $link,
+        'url' => $url,
       ];
       if (count($items) >= self::ITEM_LIMIT) {
         break;
@@ -193,17 +221,47 @@ class SodaScsNextcloudPreview {
   }
 
   /**
-   * Whether an activity row is file-related.
+   * Resolves the platform share feed folder id for the current user.
    *
-   * @param array $row
-   *   Raw OCS activity row.
+   * @param array $authParams
+   *   User auth + timeout params.
    *
-   * @return bool
-   *   TRUE for files app / files object events.
+   * @return int|null
+   *   Folder id, 0 if not found/accessible, NULL if the list request failed.
    */
-  protected function isFileActivity(array $row): bool {
-    return ($row['app'] ?? '') === 'files'
-      || ($row['object_type'] ?? '') === 'files';
+  protected function resolvePlatformShareFolderId(array $authParams): ?int {
+    $request = $this->nextcloudServiceActions->buildProjectFoldersRequest($authParams);
+    $response = $this->nextcloudServiceActions->makeRequest($request);
+    $data = $this->decodeOcsData($response);
+    if ($data === NULL) {
+      return NULL;
+    }
+
+    $folders = $data['folders'] ?? [];
+    if (!is_array($folders)) {
+      return NULL;
+    }
+
+    $fallbackId = 0;
+    foreach ($folders as $folder) {
+      if (!is_array($folder)) {
+        continue;
+      }
+      $id = (int) ($folder['id'] ?? 0);
+      if ($id <= 0) {
+        continue;
+      }
+      $externalId = (string) ($folder['externalProjectId'] ?? '');
+      if ($externalId === self::PLATFORM_EXTERNAL_PROJECT_ID) {
+        return $id;
+      }
+      $name = (string) ($folder['name'] ?? '');
+      if ($fallbackId === 0 && $name === self::PLATFORM_FOLDER_NAME) {
+        $fallbackId = $id;
+      }
+    }
+
+    return $fallbackId;
   }
 
 }

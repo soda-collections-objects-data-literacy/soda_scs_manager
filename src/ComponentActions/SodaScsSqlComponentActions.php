@@ -378,6 +378,22 @@ class SodaScsSqlComponentActions implements SodaScsComponentActionsInterface {
         );
       }
 
+      // Keycloak access groups: {machineName}-admin / {machineName}-user.
+      $memberSsoUuids = [];
+      foreach ($sqlComponent->get('partOfProjects')->referencedEntities() as $linkedProject) {
+        foreach ($linkedProject->get('members')->referencedEntities() as $member) {
+          $memberSsoUuid = $this->sodaScsProjectHelpers->getUserSsoUuid($member);
+          if ($memberSsoUuid) {
+            $memberSsoUuids[] = $memberSsoUuid;
+          }
+        }
+      }
+      $this->sodaScsKeycloakHelpers->createAndPopulateComponentAccessGroups(
+        $machineName,
+        $keycloakUserId,
+        array_values(array_unique($memberSsoUuids)),
+      );
+
       // Create database component.
       $sqlComponent->save();
 
@@ -684,6 +700,9 @@ class SodaScsSqlComponentActions implements SodaScsComponentActionsInterface {
   public function deleteComponent(SodaScsComponentInterface $component): array {
     try {
       $deleteDbResult = $this->sodaScsMysqlServiceActions->deleteService($component);
+      $keycloakGroupsDeleteResult = $this->sodaScsKeycloakHelpers->deleteComponentAccessGroups(
+        $component->get('machineName')->value,
+      );
       $component->delete();
     }
     catch (\Exception $e) {
@@ -701,6 +720,7 @@ class SodaScsSqlComponentActions implements SodaScsComponentActionsInterface {
         'data' => [
           'deleteDbResult' => NULL,
           'cleanDatabaseUsers' => NULL,
+          'keycloakGroupsDeleteResult' => NULL,
         ],
         'success' => FALSE,
         'error' => $e->getMessage(),
@@ -711,6 +731,7 @@ class SodaScsSqlComponentActions implements SodaScsComponentActionsInterface {
       'message' => 'SQL component deleted, users cleaned',
       'data' => [
         'deleteDbResult' => $deleteDbResult,
+        'keycloakGroupsDeleteResult' => $keycloakGroupsDeleteResult,
       ],
       'success' => TRUE,
       'error' => NULL,
