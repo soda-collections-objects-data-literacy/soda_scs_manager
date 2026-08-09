@@ -3669,3 +3669,15 @@ msgstr "Nextcloud-Teamordner für Projekt @project konnte nicht aktualisiert wer
 #: src/Helpers/SodaScsProjectHelpers.php
 msgid "Updated Nextcloud Team Folder for project @project."
 msgstr "Nextcloud-Teamordner für Projekt @project aktualisiert."
+
+#: soda_scs_manager.module
+msgid "Drive mount status: @status"
+msgstr "Drive-Mount-Status: @status"
+
+#: src/Entity/SodaScsComponent.php
+msgid "The project this application belongs to. An application can belong to only one project."
+msgstr "Das Projekt, zu dem diese Anwendung gehört. Eine Anwendung kann nur einem Projekt zugeordnet sein."
+
+#: src/Entity/SodaScsStack.php
+msgid "The project this bundled application belongs to. An application can belong to only one project."
+msgstr "Das Projekt, zu dem diese gebündelte Anwendung gehört. Eine Anwendung kann nur einem Projekt zugeordnet sein."

@@ -782,6 +782,26 @@ function soda_scs_manager_soda_scs_component_delete(SodaScsComponent $entity) {
  * Updates the connectedComponents field on
  * projects when a component is created.
  */
+/**
+ * Implements hook_entity_presave().
+ *
+ * Ensures components and stacks reference at most one project.
+ */
+function soda_scs_manager_entity_presave(EntityInterface $entity): void {
+  if (!$entity instanceof SodaScsComponent && !$entity instanceof SodaScsStack) {
+    return;
+  }
+  if (!$entity->hasField('partOfProjects')) {
+    return;
+  }
+  $refs = $entity->get('partOfProjects')->getValue();
+  if (count($refs) <= 1) {
+    return;
+  }
+  $keep_id = _soda_scs_manager_resolve_single_project_id($entity, $refs);
+  $entity->set('partOfProjects', $keep_id ? [['target_id' => $keep_id]] : []);
+}
+
 function soda_scs_manager_soda_scs_component_insert(SodaScsComponent $entity) {
   _soda_scs_manager_sync_component_project_relationship($entity);
 }
@@ -1242,10 +1262,11 @@ function soda_scs_manager_user_delete(UserInterface $user) {
       return;
   }
 
-  // Delete the user from Nextcloud.
+  // Unmount sidecar mount and delete the user from Nextcloud.
   if ($keycloakUserId !== NULL && $keycloakUserId !== '') {
+    \Drupal::service('soda_scs_manager.nextcloud_mount.manager')->ensureUnmounted($user);
     \Drupal::service('soda_scs_manager.nextcloud.helpers')
-      ->deleteNextcloudAccountForKeycloakUser($keycloakUserId);
+      ->deleteNextcloudAccountForKeycloakUser($keycloakUserId, $user);
     $messenger->addMessage(\Drupal::translation()->translate('Successfully deleted user from Nextcloud: @username (ID: @id)', [
       '@username' => $user->getAccountName(),
       '@id' => $keycloakUserId,
@@ -1710,6 +1731,23 @@ function soda_scs_manager_form_openid_connect_accounts_form_alter(&$form, &$form
     ],
     '#weight' => 1,
   ];
+
+  // Sidecar mount status (persisted by NextcloudMountManager).
+  $route_user = \Drupal::routeMatch()->getParameter('user');
+  $mount_user = $route_user instanceof UserInterface
+    ? $route_user
+    : \Drupal::entityTypeManager()->getStorage('user')->load(\Drupal::currentUser()->id());
+  if ($mount_user instanceof UserInterface) {
+    $mount_status = \Drupal::service('soda_scs_manager.nextcloud_mount.credentials')
+      ->getMountStatus($mount_user) ?? 'disconnected';
+    $form['soda_scs_nextcloud']['mount_status'] = [
+      '#type' => 'markup',
+      '#markup' => '<p class="scs-manager--nextcloud-mount-status">' . \Drupal::translation()->translate('Drive mount status: @status', [
+        '@status' => $mount_status,
+      ]) . '</p>',
+      '#weight' => 15,
+    ];
+  }
 }
 
 /**
@@ -2168,6 +2206,9 @@ function _soda_scs_manager_remove_component_from_projects(SodaScsComponent $comp
 /**
  * Syncs the relationship from component to projects.
  *
+ * An application belongs to at most one project: that project must list the
+ * component in connectedComponents, and every other project must not.
+ *
  * @param \Drupal\soda_scs_manager\Entity\SodaScsComponent $component
  *   The component entity.
  */
@@ -2177,43 +2218,69 @@ function _soda_scs_manager_sync_component_project_relationship(SodaScsComponent 
     return;
   }
 
-  // Get projects referenced by this component.
-  $projectIds = [];
+  // Enforce single project on the component side (legacy multi-values).
   $partOfProjects = $component->get('partOfProjects')->getValue();
+  if (count($partOfProjects) > 1) {
+    $keepId = _soda_scs_manager_resolve_single_project_id($component, $partOfProjects);
+    $component->set('partOfProjects', $keepId ? [['target_id' => $keepId]] : []);
+    $component->syncing = TRUE;
+    $component->save();
+    $partOfProjects = $component->get('partOfProjects')->getValue();
+  }
+
+  $projectIds = [];
   foreach ($partOfProjects as $projectRef) {
-    $projectIds[] = $projectRef['target_id'];
+    $projectIds[] = (int) $projectRef['target_id'];
   }
 
-  if (empty($projectIds)) {
-    return;
-  }
-
-  // Load all referenced projects.
   $projectStorage = \Drupal::entityTypeManager()->getStorage('soda_scs_project');
-  /** @var \Drupal\soda_scs_manager\Entity\SodaScsProject[] $projects */
-  $projects = $projectStorage->loadMultiple($projectIds);
+  $componentId = (int) $component->id();
 
-  // For each project, ensure it references this component.
-  foreach ($projects as $project) {
-    /** @var \Drupal\soda_scs_manager\Entity\SodaScsProject $project */
-    $componentRefs = $project->get('connectedComponents')->getValue();
-    $componentRefIds = [];
-    foreach ($componentRefs as $ref) {
-      $componentRefIds[] = $ref['target_id'];
-    }
-
-    // If this component is not referenced by the project, add it.
-    if (!in_array($component->id(), $componentRefIds)) {
-      $componentRefs[] = ['target_id' => $component->id()];
-      $project->set('connectedComponents', $componentRefs);
-      // Prevent infinite recursion by setting a flag.
-      $project->syncing = TRUE;
-      $project->save();
-      // Sync MariaDB access when an SQL component is added to a project.
-      if ($component->bundle() === 'soda_scs_sql_component') {
-        \Drupal::service('soda_scs_manager.project_db_access.helpers')->syncProjectMembersDbAccess($project);
+  // Ensure the single owning project lists this component.
+  if ($projectIds !== []) {
+    /** @var \Drupal\soda_scs_manager\Entity\SodaScsProject[] $projects */
+    $projects = $projectStorage->loadMultiple($projectIds);
+    foreach ($projects as $project) {
+      $componentRefs = $project->get('connectedComponents')->getValue();
+      $componentRefIds = array_map(
+        static fn(array $ref): int => (int) $ref['target_id'],
+        $componentRefs,
+      );
+      if (!in_array($componentId, $componentRefIds, TRUE)) {
+        $componentRefs[] = ['target_id' => $componentId];
+        $project->set('connectedComponents', $componentRefs);
+        $project->syncing = TRUE;
+        $project->save();
+        if ($component->bundle() === 'soda_scs_sql_component') {
+          \Drupal::service('soda_scs_manager.project_db_access.helpers')->syncProjectMembersDbAccess($project);
+        }
       }
     }
+  }
+
+  // Remove the component from every other project's connectedComponents.
+  $staleIds = $projectStorage->getQuery()
+    ->accessCheck(FALSE)
+    ->condition('connectedComponents', $componentId)
+    ->execute();
+  if ($staleIds === []) {
+    return;
+  }
+  /** @var \Drupal\soda_scs_manager\Entity\SodaScsProject[] $staleProjects */
+  $staleProjects = $projectStorage->loadMultiple($staleIds);
+  foreach ($staleProjects as $project) {
+    if (in_array((int) $project->id(), $projectIds, TRUE)) {
+      continue;
+    }
+    $filtered = [];
+    foreach ($project->get('connectedComponents')->getValue() as $ref) {
+      if ((int) $ref['target_id'] !== $componentId) {
+        $filtered[] = $ref;
+      }
+    }
+    $project->set('connectedComponents', $filtered);
+    $project->syncing = TRUE;
+    $project->save();
   }
 }
 
@@ -2277,29 +2344,86 @@ function _soda_scs_manager_sync_project_component_relationship(SodaScsProject $p
   /** @var \Drupal\soda_scs_manager\Entity\SodaScsComponent[] $components */
   $components = $componentStorage->loadMultiple($componentIds);
 
-  // For each component, ensure it references this project.
+  // For each component, set this project as its only project (move if needed).
   foreach ($components as $component) {
     $projectRefs = $component->get('partOfProjects')->getValue();
-    $projectRefIds = [];
-    foreach ($projectRefs as $ref) {
-      $projectRefIds[] = $ref['target_id'];
+    $currentId = isset($projectRefs[0]['target_id']) ? (int) $projectRefs[0]['target_id'] : NULL;
+    if ($currentId === (int) $project->id() && count($projectRefs) === 1) {
+      continue;
     }
+    $component->set('partOfProjects', [['target_id' => $project->id()]]);
+    $component->syncing = TRUE;
+    $component->save();
+  }
+}
 
-    // If this project is not referenced by the component, add it.
-    if (!in_array($project->id(), $projectRefIds)) {
-      $projectRefs[] = ['target_id' => $project->id()];
-      $component->set('partOfProjects', $projectRefs);
-      // Prevent infinite recursion by setting a flag.
-      $component->syncing = TRUE;
-      $component->save();
+/**
+ * Picks a single project id when a component still has multiple references.
+ *
+ * Preference: stack project → owner default project (if listed) → first listed.
+ *
+ * @param \Drupal\soda_scs_manager\Entity\SodaScsComponent|\Drupal\soda_scs_manager\Entity\SodaScsStack $entity
+ *   Component or stack.
+ * @param array<int, array{target_id?: int|string}> $projectRefs
+ *   Current partOfProjects values.
+ *
+ * @return int|null
+ *   Project id to keep, or NULL.
+ */
+function _soda_scs_manager_resolve_single_project_id($entity, array $projectRefs): ?int {
+  $listed = [];
+  foreach ($projectRefs as $ref) {
+    if (isset($ref['target_id']) && $ref['target_id'] !== '' && $ref['target_id'] !== NULL) {
+      $listed[] = (int) $ref['target_id'];
     }
   }
+  $listed = array_values(array_unique($listed));
+  if ($listed === []) {
+    return NULL;
+  }
+  if (count($listed) === 1) {
+    return $listed[0];
+  }
+
+  // Prefer the parent stack's project when this is a component in a stack.
+  if ($entity instanceof SodaScsComponent && method_exists($entity, 'getPartOfStackId')) {
+    $stackId = $entity->getPartOfStackId();
+    if ($stackId) {
+      $stack = \Drupal::entityTypeManager()->getStorage('soda_scs_stack')->load($stackId);
+      if ($stack && !$stack->get('partOfProjects')->isEmpty()) {
+        $stackProjectId = (int) $stack->get('partOfProjects')->target_id;
+        if (in_array($stackProjectId, $listed, TRUE)) {
+          return $stackProjectId;
+        }
+      }
+    }
+  }
+  elseif ($entity instanceof SodaScsComponent && $entity->hasField('partOfStack') && !$entity->get('partOfStack')->isEmpty()) {
+    $stack = $entity->get('partOfStack')->entity;
+    if ($stack && !$stack->get('partOfProjects')->isEmpty()) {
+      $stackProjectId = (int) $stack->get('partOfProjects')->target_id;
+      if (in_array($stackProjectId, $listed, TRUE)) {
+        return $stackProjectId;
+      }
+    }
+  }
+
+  $owner = method_exists($entity, 'getOwner') ? $entity->getOwner() : NULL;
+  if ($owner && $owner->hasField('default_project') && !$owner->get('default_project')->isEmpty()) {
+    $defaultId = (int) $owner->get('default_project')->target_id;
+    if (in_array($defaultId, $listed, TRUE)) {
+      return $defaultId;
+    }
+  }
+
+  return $listed[0];
 }
 
 /**
  * Implements hook_cron().
  *
- * Deletes operations and their steps older than one week.
+ * Deletes operations and their steps older than one week, and reconciles
+ * Nextcloud sidecar mounts (desired credentials vs rclone listmounts).
  */
 function soda_scs_manager_cron() {
   /** @var \Drupal\soda_scs_manager\Helpers\SodaScsProgressHelper $progressHelper */
@@ -2313,6 +2437,32 @@ function soda_scs_manager_cron() {
       '@operations' => $result['deleted_operations'],
       '@steps' => $result['deleted_steps'],
     ]);
+  }
+
+  // Throttle mount reconcile to about once per minute.
+  $state = \Drupal::state();
+  $last = (int) $state->get('soda_scs_manager.nextcloud_mount_reconcile_last', 0);
+  if (\Drupal::time()->getRequestTime() - $last >= 60) {
+    $state->set('soda_scs_manager.nextcloud_mount_reconcile_last', \Drupal::time()->getRequestTime());
+    try {
+      $stats = \Drupal::service('soda_scs_manager.nextcloud_mount.manager')->reconcile();
+      if (($stats['mounted'] + $stats['remounted'] + $stats['unmounted'] + $stats['errors']) > 0) {
+        \Drupal::logger('soda_scs_manager')->info(
+          'Nextcloud mount reconcile: mounted=@m remounted=@r unmounted=@u errors=@e',
+          [
+            '@m' => $stats['mounted'],
+            '@r' => $stats['remounted'],
+            '@u' => $stats['unmounted'],
+            '@e' => $stats['errors'],
+          ],
+        );
+      }
+    }
+    catch (\Throwable $e) {
+      \Drupal::logger('soda_scs_manager')->warning('Nextcloud mount reconcile failed: @msg', [
+        '@msg' => $e->getMessage(),
+      ]);
+    }
   }
 }
 

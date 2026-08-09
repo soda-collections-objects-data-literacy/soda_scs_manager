@@ -10,16 +10,18 @@ use Drupal\Core\Session\AccountProxyInterface;
 use Drupal\Core\Messenger\MessengerInterface;
 use Drupal\Core\StringTranslation\StringTranslationTrait;
 use Drupal\openid_connect\OpenIDConnectSessionInterface;
+use Drupal\soda_scs_manager\RequestActions\SodaScsNextcloudServiceActions;
+use Drupal\soda_scs_manager\Service\NextcloudMountCredentialsStore;
 use Drupal\user\UserInterface;
 use Symfony\Component\DependencyInjection\Attribute\Autowire;
-use Drupal\soda_scs_manager\RequestActions\SodaScsNextcloudServiceActions;
 
 /**
  * Helper class for Nextcloud operations.
  *
  * Supports two credential flows:
  * - OIDC Bearer: validate token, then create app password (OCS or occ fallback).
- * - Login Flow v2: credentials stored in Keycloak via Connect flow.
+ * - Login Flow v2: Connect flow stores login name in Keycloak and the app
+ *   password encrypted in Drupal user data.
  */
 class SodaScsNextcloudHelpers {
 
@@ -61,6 +63,8 @@ class SodaScsNextcloudHelpers {
    *   The logger factory.
    * @param \Drupal\soda_scs_manager\Helpers\SodaScsContainerHelpers $containerHelpers
    *   Docker exec helper for occ fallbacks on SSO-only accounts.
+   * @param \Drupal\soda_scs_manager\Service\NextcloudMountCredentialsStore $credentialsStore
+   *   Encrypted Drupal store for Nextcloud app passwords.
    */
   public function __construct(
     #[Autowire(service: 'soda_scs_manager.nextcloud_service.actions')]
@@ -80,6 +84,8 @@ class SodaScsNextcloudHelpers {
     protected LoggerChannelFactoryInterface $loggerFactory,
     #[Autowire(service: 'soda_scs_manager.container.helpers')]
     protected SodaScsContainerHelpers $containerHelpers,
+    #[Autowire(service: 'soda_scs_manager.nextcloud_mount.credentials')]
+    protected NextcloudMountCredentialsStore $credentialsStore,
   ) {}
 
   /**
@@ -151,10 +157,11 @@ class SodaScsNextcloudHelpers {
   }
 
   /**
-   * Gets stored Nextcloud credentials from Keycloak user attributes.
+   * Gets stored Nextcloud credentials (login name + app password).
    *
-   * Credentials are stored when the user completes the Connect Nextcloud
-   * flow (Login Flow v2).
+   * App password is read from the encrypted Drupal store (with one-time
+   * migration from the legacy Keycloak attribute). Login name remains in
+   * Keycloak.
    *
    * @param \Drupal\user\UserInterface $owner
    *   The user (e.g. component owner).
@@ -164,6 +171,16 @@ class SodaScsNextcloudHelpers {
    */
   public function getStoredNextcloudCredentials(UserInterface $owner): ?array {
     return $this->getValidatedStoredNextcloudCredentials($owner);
+  }
+
+  /**
+   * Returns credentials for mount lifecycle without a live Nextcloud probe.
+   *
+   * @return array{username: string, appPassword: string}|null
+   *   Credentials or NULL.
+   */
+  public function getMountCredentials(UserInterface $owner): ?array {
+    return $this->readStoredNextcloudCredentials($owner);
   }
 
   /**
@@ -184,13 +201,13 @@ class SodaScsNextcloudHelpers {
       return NULL;
     }
 
-    $raw = $this->readStoredNextcloudCredentials($keycloakUserId);
+    $raw = $this->readStoredNextcloudCredentials($owner);
     if ($raw === NULL) {
       return NULL;
     }
 
     if (!$this->storedUsernameMatchesKeycloakSub($keycloakUserId, $raw['username'])) {
-      $this->clearStoredNextcloudCredentials($keycloakUserId);
+      $this->clearStoredNextcloudCredentialsForUser($owner);
       $this->loggerFactory->get('soda_scs_manager')->notice(
         'Cleared stale Nextcloud credentials for Keycloak user @id (stored @stored, expected @expected).',
         [
@@ -203,7 +220,7 @@ class SodaScsNextcloudHelpers {
     }
 
     if (!$this->testStoredCredentials($raw['username'], $raw['appPassword'])) {
-      $this->clearStoredNextcloudCredentials($keycloakUserId);
+      $this->clearStoredNextcloudCredentialsForUser($owner);
       $this->loggerFactory->get('soda_scs_manager')->notice(
         'Cleared invalid Nextcloud app password for Keycloak user @id.',
         ['@id' => $keycloakUserId]
@@ -231,7 +248,7 @@ class SodaScsNextcloudHelpers {
       return FALSE;
     }
 
-    $raw = $this->readStoredNextcloudCredentials($keycloakUserId);
+    $raw = $this->readStoredNextcloudCredentials($owner);
     if ($raw === NULL) {
       return FALSE;
     }
@@ -240,7 +257,7 @@ class SodaScsNextcloudHelpers {
       return FALSE;
     }
 
-    $this->clearStoredNextcloudCredentials($keycloakUserId);
+    $this->clearStoredNextcloudCredentialsForUser($owner);
     $this->loggerFactory->get('soda_scs_manager')->notice(
       'Invalidated Nextcloud credentials for Drupal user @name after Keycloak SSO change.',
       ['@name' => $owner->getAccountName()]
@@ -262,10 +279,10 @@ class SodaScsNextcloudHelpers {
    * @return bool
    *   TRUE when cleanup ran without fatal errors.
    */
-  public function deleteNextcloudAccountForKeycloakUser(string $keycloakUserId): bool {
+  public function deleteNextcloudAccountForKeycloakUser(string $keycloakUserId, ?UserInterface $owner = NULL): bool {
     $logger = $this->loggerFactory->get('soda_scs_manager');
     $ok = TRUE;
-    $raw = $this->readStoredNextcloudCredentials($keycloakUserId);
+    $raw = $owner ? $this->readStoredNextcloudCredentials($owner) : $this->readLegacyKeycloakCredentials($keycloakUserId);
 
     if ($raw !== NULL && !empty($raw['appPassword'])) {
       $revoke = $this->nextcloudServiceActions->buildDeleteRequest([
@@ -313,8 +330,41 @@ class SodaScsNextcloudHelpers {
       }
     }
 
-    $this->clearStoredNextcloudCredentials($keycloakUserId);
+    if ($owner) {
+      $this->clearStoredNextcloudCredentialsForUser($owner);
+    }
+    else {
+      $this->clearStoredNextcloudCredentials($keycloakUserId);
+    }
     return $ok;
+  }
+
+  /**
+   * Persists Connect/Bearer credentials (no mount call — avoids DI cycles).
+   *
+   * Login name is kept in Keycloak; app password is encrypted in Drupal.
+   * Legacy Keycloak app-password attributes are cleared after migration.
+   * Callers should invoke NextcloudMountManager::ensureMounted() afterwards.
+   *
+   * @return bool
+   *   TRUE when the Keycloak login-name attribute was stored.
+   */
+  public function persistNextcloudCredentials(UserInterface $owner, string $loginName, string $appPassword): bool {
+    $keycloakUserId = $this->projectHelpers->getUserSsoUuid($owner);
+    if (empty($keycloakUserId)) {
+      return FALSE;
+    }
+
+    $this->credentialsStore->setAppPassword($owner, $appPassword);
+    $stored = $this->keycloakHelpers->setKeycloakUserAttributes($keycloakUserId, [
+      $this->getKeycloakUsernameAttr() => [$loginName],
+    ]);
+    // Remove legacy plaintext app password from Keycloak when present.
+    $this->keycloakHelpers->removeKeycloakUserAttributes($keycloakUserId, [
+      $this->getKeycloakAppPasswordAttr(),
+    ]);
+
+    return $stored;
   }
 
   /**
@@ -348,19 +398,71 @@ class SodaScsNextcloudHelpers {
   }
 
   /**
-   * Reads Nextcloud credentials from Keycloak without validation.
+   * Clears encrypted Drupal secret, Keycloak attrs, and mount status.
+   */
+  public function clearStoredNextcloudCredentialsForUser(UserInterface $owner): bool {
+    $this->credentialsStore->clearAppPassword($owner);
+    $this->credentialsStore->clearMountStatus($owner);
+    $keycloakUserId = $this->projectHelpers->getUserSsoUuid($owner);
+    if (empty($keycloakUserId)) {
+      return TRUE;
+    }
+    return $this->clearStoredNextcloudCredentials($keycloakUserId);
+  }
+
+  /**
+   * Reads credentials from Drupal (preferred) or migrates from Keycloak.
    *
    * @return array{username: string, appPassword: string}|null
    *   Credentials or NULL when not stored.
    */
-  protected function readStoredNextcloudCredentials(string $keycloakUserId): ?array {
+  protected function readStoredNextcloudCredentials(UserInterface $owner): ?array {
+    $keycloakUserId = $this->projectHelpers->getUserSsoUuid($owner);
+    if (empty($keycloakUserId)) {
+      return NULL;
+    }
+
+    $attributes = $this->keycloakHelpers->getKeycloakUserAttributes($keycloakUserId) ?? [];
+    $username = $attributes[$this->getKeycloakUsernameAttr()][0] ?? NULL;
+    $appPassword = $this->credentialsStore->getAppPassword($owner);
+
+    // One-time migration from legacy Keycloak attribute.
+    if (($appPassword === NULL || $appPassword === '') && !empty($attributes[$this->getKeycloakAppPasswordAttr()][0])) {
+      $legacy = (string) $attributes[$this->getKeycloakAppPasswordAttr()][0];
+      $this->credentialsStore->setAppPassword($owner, $legacy);
+      $this->keycloakHelpers->removeKeycloakUserAttributes($keycloakUserId, [
+        $this->getKeycloakAppPasswordAttr(),
+      ]);
+      $appPassword = $legacy;
+      $this->loggerFactory->get('soda_scs_manager')->notice(
+        'Migrated Nextcloud app password for user @name from Keycloak to encrypted Drupal storage.',
+        ['@name' => $owner->getAccountName()]
+      );
+    }
+
+    if (empty($username) || empty($appPassword)) {
+      return NULL;
+    }
+
+    return [
+      'username' => $username,
+      'appPassword' => $appPassword,
+    ];
+  }
+
+  /**
+   * Legacy Keycloak-only read (no Drupal user available).
+   *
+   * @return array{username: string, appPassword: string}|null
+   *   Credentials or NULL.
+   */
+  protected function readLegacyKeycloakCredentials(string $keycloakUserId): ?array {
     $attributes = $this->keycloakHelpers->getKeycloakUserAttributes($keycloakUserId) ?? [];
     $username = $attributes[$this->getKeycloakUsernameAttr()][0] ?? NULL;
     $appPassword = $attributes[$this->getKeycloakAppPasswordAttr()][0] ?? NULL;
     if (empty($username) || empty($appPassword)) {
       return NULL;
     }
-
     return [
       'username' => $username,
       'appPassword' => $appPassword,
@@ -549,13 +651,13 @@ class SodaScsNextcloudHelpers {
       return NULL;
     }
 
-    // Persist to Keycloak so future calls hit the fast path.
-    $keycloakUserId = $this->projectHelpers->getUserSsoUuid($owner);
-    if (!empty($keycloakUserId)) {
-      $this->keycloakHelpers->setKeycloakUserAttributes($keycloakUserId, [
-        $this->getKeycloakUsernameAttr() => [$credentials['username']],
-        $this->getKeycloakAppPasswordAttr() => [$credentials['appPassword']],
-      ]);
+    if ($this->persistNextcloudCredentials(
+      $owner,
+      $credentials['username'],
+      $credentials['appPassword'],
+    )) {
+      // Resolved at call time to avoid a constructor cycle with MountManager.
+      \Drupal::service('soda_scs_manager.nextcloud_mount.manager')->ensureMounted($owner);
     }
 
     return $credentials;

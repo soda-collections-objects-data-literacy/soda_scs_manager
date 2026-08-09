@@ -9,6 +9,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Nextcloud sidecar mount lifecycle: `NextcloudMounterClient`, encrypted Drupal storage for app passwords, `NextcloudMountManager` reconciler (cron ~1 min), and Drush `scs:nextcloud-mount|unmount|reconcile|status`.
+- WissKI stack provisioning sets `NEXTCLOUD_MOUNT_MODE=external` and binds only the **project Team Folder** (`NEXTCLOUD_USER_MOUNT_SOURCE=…/<owner>/<project-label>` → `private://nextcloud`); app passwords are no longer injected into new WissKI stacks.
+- Connected Accounts shows Drive mount status (`mounted` / `error:…` / `disconnected`).
 - Nextcloud stack entity preview with recent file activity.
 - Details link on Nextcloud dashboard cards to the stack entity page.
 - Project Team Folders via Nextcloud app `scs_manager_integration` (stable `machineName` = Keycloak group id, editable label as mount point).
@@ -20,8 +23,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- Applications (components and stacks) may belong to **at most one** project (enforced on save + project sync; update `11026` collapses legacy multi-links: stack project → owner default → first listed).
+- Nextcloud app passwords are stored encrypted in Drupal user data; Keycloak keeps only `nextcloud_login_name` (legacy Keycloak app-password attributes are migrated and cleared on read/connect).
 - Nextcloud preview loads SCS-Share activity via `scs_manager_integration` (platform share `externalProjectId=scs-platform-share`) instead of the global Activity API path filter.
 - Project create/edit/delete sync Nextcloud Team Folders and Keycloak group labels (group name remains the integer id).
+
+### Security
+
+- Nextcloud app passwords no longer remain as plaintext Keycloak user attributes after connect/migration.
+
+### Notes
+
+- Existing WissKI stacks need a re-deploy to pick up the external mount bind after a final bisync push (see nextcloud_webdav_mount migration notes).
 
 ## [2.4.2] - 2026-07-20
 

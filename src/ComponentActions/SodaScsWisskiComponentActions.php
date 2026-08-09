@@ -27,6 +27,7 @@ use Drupal\soda_scs_manager\Helpers\SodaScsHelpers;
 use Drupal\soda_scs_manager\Helpers\SodaScsKeycloakHelpers;
 use Drupal\soda_scs_manager\Helpers\SodaScsNextcloudHelpers;
 use Drupal\soda_scs_manager\Helpers\SodaScsPortainerHelpers;
+use Drupal\soda_scs_manager\Service\NextcloudMountManager;
 use Drupal\soda_scs_manager\Helpers\SodaScsProjectHelpers;
 use Drupal\soda_scs_manager\Helpers\SodaScsServiceHelpers;
 use Drupal\soda_scs_manager\Helpers\SodaScsSnapshotHelpers;
@@ -180,6 +181,13 @@ class SodaScsWisskiComponentActions implements SodaScsComponentActionsInterface 
   protected SodaScsNextcloudHelpers $sodaScsNextcloudHelpers;
 
   /**
+   * Nextcloud sidecar mount lifecycle manager.
+   *
+   * @var \Drupal\soda_scs_manager\Service\NextcloudMountManager
+   */
+  protected NextcloudMountManager $nextcloudMountManager;
+
+  /**
    * The SCS Keycloak actions service.
    *
    * @var \Drupal\soda_scs_manager\RequestActions\SodaScsServiceRequestInterface
@@ -269,6 +277,8 @@ class SodaScsWisskiComponentActions implements SodaScsComponentActionsInterface 
     SodaScsKeycloakHelpers $sodaScsKeycloakHelpers,
     #[Autowire(service: 'soda_scs_manager.nextcloud.helpers')]
     SodaScsNextcloudHelpers $sodaScsNextcloudHelpers,
+    #[Autowire(service: 'soda_scs_manager.nextcloud_mount.manager')]
+    NextcloudMountManager $nextcloudMountManager,
     #[Autowire(service: 'soda_scs_manager.keycloak_service.client.actions')]
     SodaScsServiceRequestInterface $sodaScsKeycloakServiceClientActions,
     #[Autowire(service: 'soda_scs_manager.keycloak_service.group.actions')]
@@ -309,6 +319,7 @@ class SodaScsWisskiComponentActions implements SodaScsComponentActionsInterface 
     $this->sodaScsDockerRunServiceActions = $sodaScsDockerRunServiceActions;
     $this->sodaScsKeycloakHelpers = $sodaScsKeycloakHelpers;
     $this->sodaScsNextcloudHelpers = $sodaScsNextcloudHelpers;
+    $this->nextcloudMountManager = $nextcloudMountManager;
     $this->sodaScsKeycloakServiceClientActions = $sodaScsKeycloakServiceClientActions;
     $this->sodaScsKeycloakServiceGroupActions = $sodaScsKeycloakServiceGroupActions;
     $this->sodaScsKeycloakServiceUserActions = $sodaScsKeycloakServiceUserActions;
@@ -996,15 +1007,23 @@ class SodaScsWisskiComponentActions implements SodaScsComponentActionsInterface 
         }
       }
 
-      // Ensure Nextcloud credentials. Bearer: create app password; else use
-      // stored credentials from Login Flow v2 (browser popup).
+      // Project-centric Nextcloud bind: mount only the project's Team Folder
+      // into WissKI (private://nextcloud), not the owner's whole Drive.
       $owner = $component->getOwner();
       $nextcloudCredentials = NULL;
+      $nextcloudUserMountSource = $this->nextcloudMountManager->disabledMountSource();
       if ($owner) {
         if ($this->sodaScsNextcloudHelpers->isBearerEnabled()) {
           try {
             $nextcloudCredentials = $this->sodaScsNextcloudHelpers
               ->createAppPassword($machineName, $owner);
+            if (!empty($nextcloudCredentials['username']) && !empty($nextcloudCredentials['appPassword'])) {
+              $this->sodaScsNextcloudHelpers->persistNextcloudCredentials(
+                $owner,
+                $nextcloudCredentials['username'],
+                $nextcloudCredentials['appPassword'],
+              );
+            }
           }
           catch (\Exception $e) {
             $nextcloudCredentials = $this->sodaScsNextcloudHelpers
@@ -1024,6 +1043,27 @@ class SodaScsWisskiComponentActions implements SodaScsComponentActionsInterface 
             $connectUrl
           ));
         }
+
+        $project = NULL;
+        $linkedProjects = $component->get('partOfProjects')->referencedEntities();
+        if ($linkedProjects !== []) {
+          $project = reset($linkedProjects);
+        }
+        elseif ($owner->hasField('default_project') && !$owner->get('default_project')->isEmpty()) {
+          $project = $owner->get('default_project')->entity;
+        }
+        if (!$project) {
+          throw new \Exception('WissKI must belong to a project so its Nextcloud Team Folder can be mounted.');
+        }
+
+        $this->nextcloudMountManager->ensureUserMountDirectory($owner);
+        if (!$this->nextcloudMountManager->ensureProjectTeamFolderReady($owner, $project)) {
+          throw new \Exception(sprintf(
+            'Nextcloud Team Folder "%s" is not available under the owner mount yet. Ensure the project Team Folder exists and try again.',
+            $project->label(),
+          ));
+        }
+        $nextcloudUserMountSource = $this->nextcloudMountManager->projectTeamFolderMountSource($owner, $project);
       }
 
       $versionSettings = $this->resolveWisskiVersionSettings($component);
@@ -1039,8 +1079,11 @@ class SodaScsWisskiComponentActions implements SodaScsComponentActionsInterface 
         'keycloakAdminGroup' => $keycloakWisskiInstanceAdminGroupName,
         'keycloakUserGroup' => $keycloakWisskiInstanceUserGroupName,
         'machineName' => $machineName,
-        'nextcloudAppPassword' => $nextcloudCredentials['appPassword'] ?? '',
-        'nextcloudLoginName' => $nextcloudCredentials['username'] ?? '',
+        // External mode: do not inject app passwords into WissKI stacks.
+        'nextcloudAppPassword' => '',
+        'nextcloudLoginName' => '',
+        'nextcloudMountMode' => 'external',
+        'nextcloudUserMountSource' => $nextcloudUserMountSource,
         'openidConnectClientSecret' => $openidConnectClientSecret,
         'sqlServicePassword' => $sqlComponentServiceKeyPassword ?? '',
         'triplestoreServicePassword' => $triplestoreComponentServiceKeyPassword ?? '',

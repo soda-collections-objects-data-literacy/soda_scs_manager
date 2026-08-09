@@ -1471,3 +1471,133 @@ function _soda_scs_manager_schema_steps(): array {
     ],
   ];
 }
+
+/**
+ * Enforce one project per application (migrate multi-links; restore field schema).
+ *
+ * Storage stays on the dedicated partOfProjects tables (unlimited cardinality
+ * at the schema layer). Single-project membership is enforced in
+ * hook_entity_presave() and project/component sync helpers. This update:
+ * - collapses legacy multi-valued SQL rows (stack project → owner default → first)
+ * - restores last-installed field definitions to match code (dedicated tables)
+ * - re-syncs connectedComponents for migrated components
+ */
+function soda_scs_manager_update_11026() {
+  $connection = \Drupal::database();
+  $entity_type_manager = \Drupal::entityTypeManager();
+  $logger = \Drupal::logger('soda_scs_manager');
+  $reduced = 0;
+  $reduced_components = [];
+
+  // Restore last-installed definitions first so entity queries use the
+  // dedicated field tables again (a previous attempt may have set cardinality 1).
+  \Drupal::service('entity_field.manager')->clearCachedFieldDefinitions();
+  /** @var \Drupal\Core\Entity\EntityLastInstalledSchemaRepositoryInterface $last_installed */
+  $last_installed = \Drupal::service('entity.last_installed_schema.repository');
+  foreach (['soda_scs_component', 'soda_scs_stack'] as $entity_type_id) {
+    $definitions = \Drupal::service('entity_field.manager')
+      ->getFieldStorageDefinitions($entity_type_id);
+    if (isset($definitions['partOfProjects'])) {
+      $last_installed->setLastInstalledFieldStorageDefinition($definitions['partOfProjects']);
+    }
+  }
+  \Drupal::service('entity_field.manager')->clearCachedFieldDefinitions();
+  \Drupal::entityTypeManager()->clearCachedDefinitions();
+
+  $tables = [
+    'soda_scs_component' => 'soda_scs_component__partOfProjects',
+    'soda_scs_stack' => 'soda_scs_stack__partOfProjects',
+  ];
+
+  foreach ($tables as $entity_type_id => $table) {
+    if (!$connection->schema()->tableExists($table)) {
+      continue;
+    }
+
+    $entity_ids = $connection->select($table, 'f')
+      ->fields('f', ['entity_id'])
+      ->condition('deleted', 0)
+      ->groupBy('entity_id')
+      ->having('COUNT(*) > 1')
+      ->execute()
+      ->fetchCol();
+
+    if ($entity_ids === []) {
+      continue;
+    }
+
+    $storage = $entity_type_manager->getStorage($entity_type_id);
+    foreach ($entity_ids as $entity_id) {
+      $entity_id = (int) $entity_id;
+      $rows = $connection->select($table, 'f')
+        ->fields('f', ['delta', 'partOfProjects_target_id'])
+        ->condition('entity_id', $entity_id)
+        ->condition('deleted', 0)
+        ->orderBy('delta')
+        ->execute()
+        ->fetchAll();
+
+      $refs = [];
+      foreach ($rows as $row) {
+        $refs[] = ['target_id' => (int) $row->partOfProjects_target_id];
+      }
+
+      $entity = $storage->load($entity_id);
+      $keep_id = $entity
+        ? _soda_scs_manager_resolve_single_project_id($entity, $refs)
+        : (int) ($refs[0]['target_id'] ?? 0);
+      if (!$keep_id) {
+        continue;
+      }
+
+      $connection->delete($table)
+        ->condition('entity_id', $entity_id)
+        ->condition('deleted', 0)
+        ->condition('partOfProjects_target_id', $keep_id, '<>')
+        ->execute();
+
+      $connection->update($table)
+        ->fields(['delta' => 0])
+        ->condition('entity_id', $entity_id)
+        ->condition('deleted', 0)
+        ->condition('partOfProjects_target_id', $keep_id)
+        ->execute();
+
+      $kept_count = (int) $connection->select($table, 'f')
+        ->condition('entity_id', $entity_id)
+        ->condition('deleted', 0)
+        ->countQuery()
+        ->execute()
+        ->fetchField();
+      if ($kept_count > 1) {
+        $connection->delete($table)
+          ->condition('entity_id', $entity_id)
+          ->condition('deleted', 0)
+          ->condition('delta', 0, '>')
+          ->execute();
+      }
+
+      $reduced++;
+      if ($entity_type_id === 'soda_scs_component') {
+        $reduced_components[] = $entity_id;
+      }
+      $logger->notice('Reduced partOfProjects on @type @id to project @project.', [
+        '@type' => $entity_type_id,
+        '@id' => $entity_id,
+        '@project' => $keep_id,
+      ]);
+    }
+  }
+
+  if ($reduced_components !== []) {
+    $component_storage = $entity_type_manager->getStorage('soda_scs_component');
+    foreach ($component_storage->loadMultiple($reduced_components) as $component) {
+      $component->syncing = FALSE;
+      _soda_scs_manager_sync_component_project_relationship($component);
+    }
+  }
+
+  return t('Applications are limited to one project. Reduced @count multi-project link(s); enforcement via entity presave.', [
+    '@count' => $reduced,
+  ]);
+}

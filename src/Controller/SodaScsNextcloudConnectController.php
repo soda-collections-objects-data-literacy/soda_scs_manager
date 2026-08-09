@@ -9,6 +9,7 @@ use Drupal\soda_scs_manager\Helpers\SodaScsKeycloakHelpers;
 use Drupal\soda_scs_manager\Helpers\SodaScsNextcloudHelpers;
 use Drupal\soda_scs_manager\Helpers\SodaScsProjectHelpers;
 use Drupal\soda_scs_manager\RequestActions\SodaScsNextcloudServiceActions;
+use Drupal\soda_scs_manager\Service\NextcloudMountManager;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
@@ -17,8 +18,9 @@ use Symfony\Component\HttpFoundation\Response;
 /**
  * Controller for Nextcloud Connect flow (Login Flow v2).
  *
- * User logs in to Nextcloud once via popup, we receive app password,
- * store in Keycloak user attributes for later use (e.g. WissKI creation).
+ * User logs in to Nextcloud once via popup; we store the login name in
+ * Keycloak and the app password encrypted in Drupal, then mount via the
+ * sidecar.
  *
  * @see https://docs.nextcloud.com/server/stable/developer_manual/client_apis/LoginFlow/
  */
@@ -32,6 +34,7 @@ class SodaScsNextcloudConnectController extends ControllerBase {
     protected SodaScsKeycloakHelpers $keycloakHelpers,
     protected SodaScsNextcloudHelpers $nextcloudHelpers,
     protected SodaScsProjectHelpers $projectHelpers,
+    protected NextcloudMountManager $mountManager,
   ) {}
 
   /**
@@ -43,6 +46,7 @@ class SodaScsNextcloudConnectController extends ControllerBase {
       $container->get('soda_scs_manager.keycloak_service.helpers'),
       $container->get('soda_scs_manager.nextcloud.helpers'),
       $container->get('soda_scs_manager.project.helpers'),
+      $container->get('soda_scs_manager.nextcloud_mount.manager'),
     );
   }
 
@@ -174,15 +178,14 @@ class SodaScsNextcloudConnectController extends ControllerBase {
       ], 400);
     }
 
-    $attributes = [
-      $this->nextcloudHelpers->getKeycloakUsernameAttr() => [$loginName],
-      $this->nextcloudHelpers->getKeycloakAppPasswordAttr() => [$appPassword],
-    ];
-    if (!$this->keycloakHelpers->setKeycloakUserAttributes($keycloakUserId, $attributes)) {
+    if (!$this->nextcloudHelpers->persistNextcloudCredentials($user, $loginName, $appPassword)) {
       return new JsonResponse([
-        'error' => 'Failed to store credentials in Keycloak',
+        'error' => 'Failed to store Nextcloud credentials',
       ], 500);
     }
+
+    // Best-effort mount; reconciler retries if the sidecar is briefly down.
+    $this->mountManager->ensureMounted($user);
 
     return new JsonResponse([
       'success' => TRUE,

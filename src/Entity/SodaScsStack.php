@@ -401,9 +401,11 @@ class SodaScsStack extends ContentEntityBase implements SodaScsStackInterface {
         'weight' => 30,
       ]);
 
+    // Storage stays unlimited (dedicated field table); single-project rule is
+    // enforced in hook_entity_presave() / project sync helpers.
     $fields['partOfProjects'] = BaseFieldDefinition::create('entity_reference')
       ->setLabel(new TranslatableMarkup('Project'))
-      ->setDescription(new TranslatableMarkup('The project this bundled application belongs to.'))
+      ->setDescription(new TranslatableMarkup('The project this bundled application belongs to. An application can belong to only one project.'))
       ->setSetting('target_type', 'soda_scs_project')
       ->setSetting('handler', 'soda_scs_project_access')
       ->setRequired(TRUE)

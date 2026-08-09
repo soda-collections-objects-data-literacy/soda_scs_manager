@@ -473,18 +473,27 @@ class SodaScsPortainerServiceActions implements SodaScsServiceRequestInterface {
         "name" => "KEYCLOAK_URL",
         "value" => $keycloakGeneralSettings['url'],
       ],
-      // Nextcloud settings.
+      // Nextcloud settings (external sidecar mount; no credentials in WissKI).
       [
         "name" => "NEXTCLOUD_BASE_URL",
         "value" => $nextcloudServiceSettings['baseUrl'],
       ],
       [
+        "name" => "NEXTCLOUD_MOUNT_MODE",
+        "value" => $requestParams['nextcloudMountMode'] ?? 'external',
+      ],
+      [
+        "name" => "NEXTCLOUD_USER_MOUNT_SOURCE",
+        "value" => $requestParams['nextcloudUserMountSource'] ?? '/var/lib/scs/nextcloud-mounts/_disabled',
+      ],
+      // Kept empty for external mode (sync fallback only if explicitly set).
+      [
         "name" => "NEXTCLOUD_LOGIN_NAME",
-        "value" => $requestParams['nextcloudLoginName'],
+        "value" => $requestParams['nextcloudLoginName'] ?? '',
       ],
       [
         "name" => "NEXTCLOUD_APP_PASSWORD",
-        "value" => $requestParams['nextcloudAppPassword'],
+        "value" => $requestParams['nextcloudAppPassword'] ?? '',
       ],
       // OpenID Connect settings.
       [
