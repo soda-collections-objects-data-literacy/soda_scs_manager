@@ -23,6 +23,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Nextcloud preview loads SCS-Share activity via `scs_manager_integration` (platform share `externalProjectId=scs-platform-share`) instead of the global Activity API path filter.
 - Project create/edit/delete sync Nextcloud Team Folders and Keycloak group labels (group name remains the integer id).
 
+### Security
+
+- Pin transitive npm packages against Dependabot advisories: `nanoid` 3.3.17, `svgo` 4.0.2, `postcss` 8.5.26, `picomatch` 2.3.2 / 4.0.5.
+- Restored theme `package.json` with npm `overrides` for locked transitive CSS tooling dependencies.
+
+### Notes
+
+- Project-centric dashboard / one-project-per-application / WissKI external Team Folder mounts continue on branch `3.x` (see `[3.0.0]` there).
+
 ## [2.4.2] - 2026-07-20
 
 ### Fixed
