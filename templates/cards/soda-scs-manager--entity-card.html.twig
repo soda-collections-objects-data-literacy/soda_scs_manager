@@ -120,5 +120,15 @@
         <h5 class="soda-scs-manager--card-title">{{ title }}</h5>
         <p class="soda-scs-manager--card-text">{{ description }}</p>
       </div>
+      {% if action_links %}
+        <div class="soda-scs-manager--card-actions">
+          {% for action in action_links %}
+            <a href="{{ action.url }}"
+               class="soda-scs-manager--card-action-button"
+               title="{{ action.title }}"
+               {% if action.external %}target="_blank" rel="noopener noreferrer"{% endif %}>{{ action.label }}</a>
+          {% endfor %}
+        </div>
+      {% endif %}
     </div>
 </div>

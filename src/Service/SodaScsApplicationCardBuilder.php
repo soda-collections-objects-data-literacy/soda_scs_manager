@@ -256,6 +256,15 @@ final class SodaScsApplicationCardBuilder {
       );
     }
 
+    $actionLinks = [];
+    if ($stack->bundle() === 'soda_scs_jupyter_stack') {
+      $actionLinks[] = [
+        'url' => Url::fromRoute('soda_scs_manager.jupyter.restart_notebook')->toString(),
+        'label' => $this->t('Restart Jupyter'),
+        'title' => $this->t('Stop your notebook server so project Team Folders remount on the next Hub start'),
+      ];
+    }
+
     return [
       '#theme' => 'soda_scs_manager__entity_card',
       '#title' => $this->t('@bundle', ['@bundle' => $stack->label()]),
@@ -272,6 +281,7 @@ final class SodaScsApplicationCardBuilder {
       '#url' => Url::fromRoute('soda_scs_manager.stack.service_link', [
         'soda_scs_stack' => $stack->id(),
       ]),
+      '#action_links' => $actionLinks,
       '#tags' => $bundleInfo['tags'],
       '#cache' => [
         'max-age' => 0,

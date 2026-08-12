@@ -167,15 +167,6 @@ soda_scs_manager.menu.notifications:
   requirements:
     _permission: 'soda scs manager user'
 
-soda_scs_manager.menu.jupyter_restart_notebook:
-  title: 'Restart Jupyter'
-  description: 'Stop your notebook server so project Team Folders remount on the next Hub start'
-  menu_name: main
-  route_name: soda_scs_manager.jupyter.restart_notebook
-  weight: 14
-  requirements:
-    _permission: 'soda scs manager user'
-
 # Anonymous visitors: Documentation with public-facing title attribute. Hidden for
 # logged-in users in preprocess so they use soda_scs_manager.menu.documentation.
 soda_scs_manager.anonymous_documentation:
