@@ -1,11 +1,13 @@
 {
     "name": "drupal/soda_scs_manager",
-    "description": "This is a module for the SODA SCS Manager.",
+    "description": "SODa Semantic Co-Working Space Manager for Drupal.",
     "type": "drupal-module",
+    "license": "GPL-2.0-or-later",
     "require": {
+        "php": ">=8.1",
+        "drupal/core": "^10 || ^11",
         "drupal/openid_connect": "^3.0@alpha",
         "drupal/smtp": "^1.4",
-        "drupal/tailwindcss": "^5.0@alpha"
-
+        "drupal/field_group": "^3.4 || ^4.0"
     }
 }

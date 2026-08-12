@@ -124,4 +124,4 @@ For detailed security documentation, see `SECURITY.md`.
 - [ ] Documentation
 
 ## License
-[GNU General Public Licence 3](https://www.gnu.org/licenses/gpl-3.0.html)
+[GNU General Public License 2.0 or later](https://www.gnu.org/licenses/gpl-2.0.html) (see `LICENSE.txt`)
