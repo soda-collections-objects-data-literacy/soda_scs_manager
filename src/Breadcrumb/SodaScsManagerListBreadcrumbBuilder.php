@@ -47,8 +47,8 @@ final class SodaScsManagerListBreadcrumbBuilder implements BreadcrumbBuilderInte
     // Add cache context for the route and permission-dependent segments.
     $breadcrumb->addCacheContexts(['route', 'user.permissions']);
 
-    // Home link.
-    $breadcrumb->addLink(Link::createFromRoute($this->t('Home'), '<front>'));
+    // Dashboard is the SCS Manager home (not the CMS front page / Startseite).
+    $breadcrumb->addLink(Link::createFromRoute($this->t('Dashboard'), 'soda_scs_manager.dashboard'));
 
     // Structure link.
     $breadcrumb->addLink(Link::createFromRoute($this->t('Structure'), 'system.admin_structure'));

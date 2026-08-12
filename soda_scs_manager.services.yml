@@ -139,3 +139,9 @@ services:
     class: Drupal\soda_scs_manager\Breadcrumb\SodaScsManagerListBreadcrumbBuilder
     tags:
       - { name: breadcrumb_builder, priority: 100 }
+
+  # Entity pages: Dashboard → [Project] → current title (nolink).
+  soda_scs_manager.entity_breadcrumb_builder:
+    class: Drupal\soda_scs_manager\Breadcrumb\SodaScsManagerEntityBreadcrumbBuilder
+    tags:
+      - { name: breadcrumb_builder, priority: 100 }

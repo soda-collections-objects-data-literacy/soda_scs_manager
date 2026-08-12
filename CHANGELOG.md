@@ -23,6 +23,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- Breadcrumb root for SCS users is **Dashboard** (route `soda_scs_manager.dashboard`) instead of Home/Startseite (`<front>`).
+- Entity pages append the current title as a non-linked crumb (e.g. Dashboard → *rnsrk default project*); components/stacks include the related project when set.
 - Applications (components and stacks) may belong to **at most one** project (enforced on save + project sync; update `11026` collapses legacy multi-links: stack project → owner default → first listed).
 - Nextcloud app passwords are stored encrypted in Drupal user data; Keycloak keeps only `nextcloud_login_name` (legacy Keycloak app-password attributes are migrated and cleared on read/connect).
 - Nextcloud preview loads SCS-Share activity via `scs_manager_integration` (platform share `externalProjectId=scs-platform-share`) instead of the global Activity API path filter.

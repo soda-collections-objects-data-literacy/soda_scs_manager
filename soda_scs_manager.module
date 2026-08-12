@@ -5,11 +5,13 @@
  * Functions for the soda_scs_manager module.
  */
 
+use Drupal\Core\Breadcrumb\Breadcrumb;
 use Drupal\Core\Language\LanguageInterface;
 use Drupal\Core\Entity\Display\EntityViewDisplayInterface;
 use Drupal\Core\Form\FormStateInterface;
 use Drupal\Core\Entity\ContentEntityInterface;
 use Drupal\Core\Entity\EntityInterface;
+use Drupal\Core\Link;
 use Drupal\Core\Menu\MenuLinkInterface;
 use Drupal\Component\Utility\Html;
 use Drupal\Core\Entity\EntityTypeInterface;
@@ -34,6 +36,36 @@ use Drupal\soda_scs_manager\Validation\PersonalNameValidator;
 use Drupal\user\UserInterface;
 use Drupal\node\NodeInterface;
 use Symfony\Component\HttpFoundation\RedirectResponse;
+
+/**
+ * Implements hook_system_breadcrumb_alter().
+ *
+ * Replace core's Home/Startseite (<front>) root with Dashboard for SCS users.
+ */
+function soda_scs_manager_system_breadcrumb_alter(Breadcrumb &$breadcrumb, RouteMatchInterface $route_match, array $context): void {
+  if (!\Drupal::currentUser()->hasPermission('soda scs manager user')) {
+    return;
+  }
+
+  $links = $breadcrumb->getLinks();
+  if ($links === []) {
+    return;
+  }
+
+  $first_url = $links[0]->getUrl();
+  if (!$first_url->isRouted() || $first_url->getRouteName() !== '<front>') {
+    return;
+  }
+
+  $links[0] = Link::createFromRoute(t('Dashboard'), 'soda_scs_manager.dashboard');
+
+  // Breadcrumb::setLinks() only works on an empty instance; rebuild and swap.
+  $replacement = new Breadcrumb();
+  $replacement->setLinks($links);
+  $replacement->addCacheableDependency($breadcrumb);
+  $replacement->addCacheContexts(['user.permissions']);
+  $breadcrumb = $replacement;
+}
 
 /**
  * Implements hook_options_list_alter().
