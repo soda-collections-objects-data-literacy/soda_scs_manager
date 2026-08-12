@@ -7,28 +7,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-### Added
-
-- Configurable `snapshotHostPath` setting (and `soda_scs_manager.snapshot_host_path` in settings.php) for Portainer host bind mounts.
-- Nextcloud settings field for OCC Docker container name (`occContainerName`).
-- `LICENSE.txt` (GPL-2.0-or-later) for Drupal.org packaging.
-- Drupal.org project page copy in `docs/drupal-org-project-page.md` (license stated as GPL-2.0-or-later).
-
-### Changed
-
-- Snapshot manifests and Keycloak approval emails use the current site URL instead of a hardcoded production domain.
-- SQL snapshot/restore Docker exec uses the configured `dbHost` container name.
-- Interface translation server pattern points at `modules/contrib/`.
-- Composer metadata aligned with module dependencies; README license note matches GPL-2.0-or-later.
-- Settings UI / schema examples use `example.com` placeholders.
-
-### Removed
-
-- Site content export zip, tmp config stubs, xdebug helper scripts, and dummy `assets/options` API drafts from the packaged tree.
-
 ## [3.0.0] - 2026-08-12
 
-Development line: branch `3.x` (breaking change from the 2.x application-centric dashboard).
+Development line: branch `3.x`. Major release relative to `2.4.x` (application-centric dashboard).
 
 ### Breaking
 
@@ -50,12 +31,23 @@ Development line: branch `3.x` (breaking change from the 2.x application-centric
 - Drush command `soda_scs_manager:backfill-project-team-folders` to bring legacy projects up to Team Folder parity (Keycloak attrs, members, Nextcloud folder; optional `--grant-nc-access`).
 - Keycloak `{machineName}-admin` and `{machineName}-user` groups for SQL and Triplestore components (create, delete, project member sync), matching WissKI.
 - Restored theme `package.json` with npm `overrides` for locked transitive CSS tooling dependencies.
+- Configurable `snapshotHostPath` setting (and `soda_scs_manager.snapshot_host_path` in settings.php) for Portainer host bind mounts.
+- Nextcloud settings field for OCC Docker container name (`occContainerName`).
+- `LICENSE.txt` (GPL-2.0-or-later) and Drupal.org project page copy (`docs/drupal-org-project-page.md`).
 
 ### Changed
 
 - Nextcloud app passwords are stored encrypted in Drupal user data; Keycloak keeps only `nextcloud_login_name` (legacy Keycloak app-password attributes are migrated and cleared on read/connect).
 - Nextcloud preview loads SCS-Share activity via `scs_manager_integration` (platform share `externalProjectId=scs-platform-share`) instead of the global Activity API path filter.
 - Project create/edit/delete sync Nextcloud Team Folders and Keycloak group labels (group name remains the integer id).
+- Snapshot manifests and Keycloak approval emails use the current site URL instead of a hardcoded production domain.
+- SQL snapshot/restore Docker exec uses the configured `dbHost` container name.
+- Interface translation server pattern points at `modules/contrib/`; composer metadata aligned with module dependencies.
+- Settings UI / schema examples use `example.com` placeholders.
+
+### Removed
+
+- Site content export zip, tmp config stubs, xdebug helper scripts, and dummy `assets/options` API drafts from the packaged tree.
 
 ### Security
 
@@ -152,6 +144,8 @@ Development line: branch `3.x` (breaking change from the 2.x application-centric
 - Snapshot paths after access-proxy replacement; Drupal container name for snapshots.
 
 ## [2.0.0] - 2026-03-18
+
+Development line: branch `2.x`. Major release relative to `1.3.x` (projects on stacks/components; filesystem component).
 
 ### Added
 
