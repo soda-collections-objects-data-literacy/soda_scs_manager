@@ -237,18 +237,15 @@ class SodaScsComponentCreateForm extends ContentEntityForm {
       $form['#attached']['library'][] = 'soda_scs_manager/machineNameGenerator';
     }
 
-    // Get the default project of the current user.
-    $currentUser = $this->currentUser->getAccount();
-    $defaultProjectOfCurrentUser = $currentUser->default_project;
-
-    // Set the default project of the current user
-    // as the default value of the partOfProjects field.
-    if (isset($form['partOfProjects']) && !empty($defaultProjectOfCurrentUser)) {
-      $form['partOfProjects']['widget']['#default_value'] = [$defaultProjectOfCurrentUser];
+    // Prefer ?project= when the current user owns that project; else default project.
+    if (isset($form['partOfProjects'])) {
+      $projectId = $this->resolvePartOfProjectsDefault();
+      if ($projectId !== NULL) {
+        $form['partOfProjects']['widget']['#default_value'] = [$projectId];
+      }
+      // Hide the partOfProjects field.
+      $form['partOfProjects']['#access'] = FALSE;
     }
-
-    // Hide the partOfProjects field.
-    $form['partOfProjects']['#access'] = FALSE;
 
     // Hide partOfStack field.
     $form['partOfStack']['#access'] = FALSE;
@@ -266,6 +263,33 @@ class SodaScsComponentCreateForm extends ContentEntityForm {
     }
 
     return $form;
+  }
+
+  /**
+   * Resolves the project ID for partOfProjects (query owner override or default).
+   *
+   * @return int|string|null
+   *   Project entity ID, or NULL if none available.
+   */
+  protected function resolvePartOfProjectsDefault(): int|string|null {
+    $requestedProjectId = $this->getRequest()->query->get('project');
+    if ($requestedProjectId !== NULL && $requestedProjectId !== '') {
+      /** @var \Drupal\soda_scs_manager\Entity\SodaScsProjectInterface|null $project */
+      $project = $this->entityTypeManager
+        ->getStorage('soda_scs_project')
+        ->load($requestedProjectId);
+      if ($project && (int) $project->getOwnerId() === (int) $this->currentUser->id()) {
+        return $project->id();
+      }
+    }
+
+    /** @var \Drupal\user\UserInterface|null $user */
+    $user = $this->entityTypeManager->getStorage('user')->load($this->currentUser->id());
+    if ($user && $user->hasField('default_project') && !$user->get('default_project')->isEmpty()) {
+      return $user->get('default_project')->target_id;
+    }
+
+    return NULL;
   }
 
   /**

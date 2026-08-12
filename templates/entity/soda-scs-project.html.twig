@@ -5,10 +5,13 @@
  *
  * Available variables:
  * - label: Project label.
+ * - project_id: Project entity ID.
+ * - is_owner: Whether the current user owns the project.
  * - owner: Rendered owner field.
  * - members: Rendered members field.
  * - note: Rendered note field.
  * - application_cards: Dashboard-style cards for connected applications.
+ * - add_application_popup: Modal for choosing application type (owners only).
  * - attributes: HTML attributes for the container.
  * - filter_tags: Tag machine names for the application filter bar.
  *
@@ -38,8 +41,13 @@
     </div>
   {% endif %}
 
-  <div class="text-center mb-8">
-    <h2 class="soda-scs-manager--dashboard-heading-section">{{ 'Applications'|t }}</h2>
+  <div class="mb-8 {% if is_owner %}soda-scs-manager--dashboard-heading-with-add{% else %}text-center{% endif %}">
+    <h2 class="soda-scs-manager--dashboard-heading-section soda-scs-manager--dashboard-heading-section--inline">{{ 'Applications'|t }}</h2>
+    {% if is_owner %}
+      {% include '@soda_scs_manager/cards/soda-scs-manager--add-application-heading-trigger.html.twig' with {
+        project_id: project_id,
+      } only %}
+    {% endif %}
   </div>
 
   {% if application_cards is not empty %}
@@ -61,4 +69,6 @@
       <p class="text-stone-200 text-xl">{{ 'No applications found.'|t }}</p>
     </div>
   {% endif %}
+
+  {{ add_application_popup }}
 </article>
