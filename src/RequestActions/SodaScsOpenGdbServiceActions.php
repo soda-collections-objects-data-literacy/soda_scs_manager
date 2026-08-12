@@ -495,7 +495,7 @@ class SodaScsOpenGdbServiceActions implements SodaScsOpenGdbRequestInterface {
 
     // @todo Make this more flexible with settings.
     $route =
-    // https://ts.scs.sammlungen.io
+    // https://ts.example.com
     $triplestoreServiceSettings['host'] .
     // /repositories/
     '/repositories' .
@@ -540,7 +540,7 @@ class SodaScsOpenGdbServiceActions implements SodaScsOpenGdbRequestInterface {
     $triplestoreServiceSettings = $this->sodaScsServiceHelpers->initTriplestoreServiceSettings();
 
     $route =
-    // https://ts.scs.sammlungen.io
+    // https://ts.example.com
     $triplestoreServiceSettings['host'] .
     // /repositories
     '/repositories' .

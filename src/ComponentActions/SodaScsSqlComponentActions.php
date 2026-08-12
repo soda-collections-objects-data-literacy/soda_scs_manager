@@ -473,7 +473,7 @@ class SodaScsSqlComponentActions implements SodaScsComponentActionsInterface {
           '-c',
           'mariadb-dump -uroot -p' . $dbRootPassword . ' "' . $dbName . '" > ' . $dumpFilePath,
         ],
-        'containerName' => 'scs--database',
+        'containerName' => $this->getDatabaseContainerName(),
         'user' => SodaScsSnapshotHelpers::snapshotDockerExecUser(),
       ]);
       $createDumpExecResponse = $this->sodaScsDockerExecServiceActions->makeRequest($createDumpExecRequest);
@@ -783,7 +783,7 @@ class SodaScsSqlComponentActions implements SodaScsComponentActionsInterface {
 
       $rollbackDatabaseExecRequestParams = [
         'cmd' => $rollbackDatabaseExecRequestCommand,
-        'containerName' => 'scs--database',
+        'containerName' => $this->getDatabaseContainerName(),
         'user' => 'root',
       ];
 
@@ -831,7 +831,7 @@ class SodaScsSqlComponentActions implements SodaScsComponentActionsInterface {
       // Construct restore request parameters.
       $restoreFromSnapshotExecRequestParams = [
         'cmd' => $restoreFromSnapshotExecRequestCommand,
-        'containerName' => 'scs--database',
+        'containerName' => $this->getDatabaseContainerName(),
         'user' => 'root',
       ];
 
@@ -866,6 +866,14 @@ class SodaScsSqlComponentActions implements SodaScsComponentActionsInterface {
       message: 'Component restored from snapshot successfully.',
       data: [],
     );
+  }
+
+  /**
+   * Docker container name for the shared MariaDB service (dbHost setting).
+   */
+  protected function getDatabaseContainerName(): string {
+    $container = trim((string) ($this->settings->get('dbHost') ?? ''));
+    return $container !== '' ? $container : 'scs--database';
   }
 
 }

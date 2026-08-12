@@ -6,8 +6,9 @@ namespace Drupal\soda_scs_manager\Form;
 
 use Drupal\Core\Entity\EntityTypeManagerInterface;
 use Drupal\Core\Form\ConfigFormBase;
-use Drupal\soda_scs_manager\Helpers\SodaScsSnapshotHelpers;
 use Drupal\Core\Form\FormStateInterface;
+use Drupal\soda_scs_manager\Helpers\SodaScsNextcloudHelpers;
+use Drupal\soda_scs_manager\Helpers\SodaScsSnapshotHelpers;
 use Psr\Log\LogLevel;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 
@@ -114,14 +115,14 @@ class SodaScsSettingsForm extends ConfigFormBase {
       '#type' => 'textfield',
       '#title' => $this->t('SODa SCS host'),
       '#default_value' => $this->config('soda_scs_manager.settings')->get('scsHost'),
-      '#description' => $this->t('The SODa SCS host, like scs.sammlungen.io.'),
+      '#description' => $this->t('The SODa SCS host, like scs.example.com.'),
     ];
 
     $form['general']['fields']['administratorEmail'] = [
       '#type' => 'textfield',
       '#title' => $this->t('Administrator email'),
       '#default_value' => $this->config('soda_scs_manager.settings')->get('administratorEmail'),
-      '#description' => $this->t('The administrator email, like admin@scs.sammlungen.io.'),
+      '#description' => $this->t('The administrator email, like admin@scs.example.com.'),
     ];
 
     $snapshotPathConfig = $this->config('soda_scs_manager.settings')->get('snapshotPath');
@@ -138,6 +139,17 @@ class SodaScsSettingsForm extends ConfigFormBase {
           '@uid' => (string) SodaScsSnapshotHelpers::SNAPSHOT_FILE_OWNER_UID,
           '@gid' => (string) SodaScsSnapshotHelpers::SNAPSHOT_FILE_OWNER_GID,
           '@settings_key' => SodaScsSnapshotHelpers::SNAPSHOT_FILESYSTEM_PATH_SETTINGS_KEY,
+        ]
+      ),
+    ];
+    $form['general']['fields']['snapshotHostPath'] = [
+      '#type' => 'textfield',
+      '#title' => $this->t('Snapshot host path'),
+      '#default_value' => $this->config('soda_scs_manager.settings')->get('snapshotHostPath') ?? '',
+      '#description' => $this->t(
+        'Host-side path of the snapshot bind mount (needed when Portainer/Docker on the host sees a different path than the container). Leave empty when it matches the snapshot path above. Optional settings.php key @settings_key.',
+        [
+          '@settings_key' => SodaScsSnapshotHelpers::SNAPSHOT_HOST_PATH_SETTINGS_KEY,
         ]
       ),
     ];
@@ -158,7 +170,7 @@ class SodaScsSettingsForm extends ConfigFormBase {
       '#type' => 'textfield',
       '#title' => $this->t('Database host'),
       '#default_value' => $this->config('soda_scs_manager.settings')->get('dbHost'),
-      '#description' => $this->t('The database host, like db.scs.sammlungen.io.'),
+      '#description' => $this->t('The database host, like db.scs.example.com.'),
     ];
     $form['database']['fields']['dbPort'] = [
       '#type' => 'textfield',
@@ -184,7 +196,7 @@ class SodaScsSettingsForm extends ConfigFormBase {
       '#type' => 'textfield',
       '#title' => $this->t('Management host'),
       '#default_value' => $this->config('soda_scs_manager.settings')->get('dbManagementHost'),
-      '#description' => $this->t('The phpMyAdmin/DBMS host (SCS_DBMS_DOMAIN), e.g. dbms.scs.sammlungen.io.'),
+      '#description' => $this->t('The phpMyAdmin/DBMS host (SCS_DBMS_DOMAIN), e.g. dbms.scs.example.com.'),
     ];
 
     // Jupyter settings tab.
@@ -205,7 +217,7 @@ class SodaScsSettingsForm extends ConfigFormBase {
       '#type' => 'textfield',
       '#title' => $this->t('Base URL'),
       '#default_value' => $this->config('soda_scs_manager.settings')->get('jupyterhub')['generalSettings']['baseUrl'] ?? '',
-      '#description' => $this->t('The base URL, like https://code.scs.sammlungen.io.'),
+      '#description' => $this->t('The base URL, like https://code.scs.example.com.'),
     ];
 
     $form['jupyterhub']['generalSettings']['containerNamePrefix'] = [
@@ -246,7 +258,7 @@ class SodaScsSettingsForm extends ConfigFormBase {
       '#type' => 'textfield',
       '#title' => $this->t('Keycloak URL'),
       '#default_value' => $this->config('soda_scs_manager.settings')->get('keycloak')['keycloakTabs']['generalSettings']['fields']['keycloakUrl'] ?? '',
-      '#description' => $this->t('The keycloak URL, like https://auth.sammlungen.io.'),
+      '#description' => $this->t('The keycloak URL, like https://auth.example.com.'),
     ];
 
     $form['keycloak']['keycloakTabs']['generalSettings']['fields']['keycloakRealm'] = [
@@ -540,7 +552,16 @@ class SodaScsSettingsForm extends ConfigFormBase {
       '#type' => 'textfield',
       '#title' => $this->t('Base URL'),
       '#default_value' => $this->config('soda_scs_manager.settings')->get('nextcloud')['generalSettings']['baseUrl'] ?? '',
-      '#description' => $this->t('The base URL, like https://nextcloud.scs.sammlungen.io. App passwords are created for the component owner using their OIDC token.'),
+      '#description' => $this->t('The base URL, like https://nextcloud.example.com. App passwords are created for the component owner using their OIDC token.'),
+    ];
+
+    $form['nextcloud']['generalSettings']['occContainerName'] = [
+      '#type' => 'textfield',
+      '#title' => $this->t('OCC container name'),
+      '#default_value' => $this->config('soda_scs_manager.settings')->get('nextcloud')['generalSettings']['occContainerName'] ?? '',
+      '#description' => $this->t('Docker container name used for Nextcloud occ commands (default @default).', [
+        '@default' => SodaScsNextcloudHelpers::DEFAULT_OCC_CONTAINER,
+      ]),
     ];
 
     $form['nextcloud']['generalSettings']['oidcUsernamePrefix'] = [
@@ -602,7 +623,7 @@ class SodaScsSettingsForm extends ConfigFormBase {
       '#type' => 'textfield',
       '#title' => $this->t('Triplestore host'),
       '#default_value' => $this->config('soda_scs_manager.settings')->get('triplestore')['generalSettings']['host'] ?? '',
-      '#description' => $this->t('The triplestore host, like https://ts.scs.sammlungen.io.'),
+      '#description' => $this->t('The triplestore host, like https://ts.scs.example.com.'),
     ];
     $form['triplestore']['generalSettings']['internalHost'] = [
       '#type' => 'textfield',
@@ -808,7 +829,7 @@ class SodaScsSettingsForm extends ConfigFormBase {
       '#type' => 'textfield',
       '#title' => $this->t('Host'),
       '#default_value' => $this->config('soda_scs_manager.settings')->get('portainer')['portainerOptions']['host'] ?? '',
-      '#description' => $this->t('The host, like portainer.scs.sammlungen.io'),
+      '#description' => $this->t('The host, like portainer.scs.example.com'),
     ];
 
     $form['portainer']['portainerOptions']['authenticationToken'] = [
@@ -1127,7 +1148,7 @@ class SodaScsSettingsForm extends ConfigFormBase {
       '#type' => 'textfield',
       '#title' => $this->t('Host'),
       '#default_value' => $this->config('soda_scs_manager.settings')->get('webprotege')['generalSettings']['host'] ?? '',
-      '#description' => $this->t('The host, like "webprotege.scs.sammlungen.io".'),
+      '#description' => $this->t('The host, like "webprotege.scs.example.com".'),
     ];
 
     // WissKI settings tab.
@@ -1149,7 +1170,7 @@ class SodaScsSettingsForm extends ConfigFormBase {
       '#type' => 'textfield',
       '#title' => $this->t('Base route'),
       '#default_value' => $this->config('soda_scs_manager.settings')->get('wisski')['instances']['baseUrl'] ?? '',
-      '#description' => $this->t('The base URL, like "https://{instanceId}.scs.sammlungen.io".'),
+      '#description' => $this->t('The base URL, like "https://{instanceId}.scs.example.com".'),
     ];
 
     $form['wisski']['instances']['proxyAddresses'] = [
@@ -1396,6 +1417,7 @@ class SodaScsSettingsForm extends ConfigFormBase {
     if ($snapshotPath === '') {
       $snapshotPath = SodaScsSnapshotHelpers::DEFAULT_SNAPSHOT_FILESYSTEM_PATH;
     }
+    $snapshotHostPath = rtrim(trim((string) $form_state->getValue('snapshotHostPath')), '/');
     $config
       ->set('accessProxy', $form_state->getValue('accessProxy'))
       ->set('administratorEmail', $form_state->getValue('administratorEmail'))
@@ -1411,6 +1433,7 @@ class SodaScsSettingsForm extends ConfigFormBase {
       ->set('scsHost', $form_state->getValue('scsHost'))
       ->set('security', $form_state->getValue('security'))
       ->set('snapshotPath', $snapshotPath)
+      ->set('snapshotHostPath', $snapshotHostPath)
       ->set('triplestore', $triplestoreValues)
       ->set('webprotege', $form_state->getValue('webprotege'))
       ->set('wisski', $wisskiValues)

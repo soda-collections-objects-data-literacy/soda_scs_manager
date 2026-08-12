@@ -240,7 +240,7 @@ class SodaScsDockerExecServiceActions implements SodaScsExecRequestInterface {
 
     // @todo Container name is not the container id.
     $route =
-      // https://portainer.scs.sammlungen.io
+      // https://portainer.example.com
       $portainerServiceSettings['host'] .
       // /api/endpoints
       $portainerServiceSettings['baseUrl'] .
@@ -292,7 +292,7 @@ class SodaScsDockerExecServiceActions implements SodaScsExecRequestInterface {
     $dockerExecServiceSettings = $this->sodaScsServiceHelpers->initDockerExecServiceSettings();
 
     $route =
-      // https://portainer.scs.sammlungen.io
+      // https://portainer.example.com
       $portainerServiceSettings['host'] .
       // /api/endpoints
       $portainerServiceSettings['baseUrl'] .
@@ -336,7 +336,7 @@ class SodaScsDockerExecServiceActions implements SodaScsExecRequestInterface {
     $dockerExecServiceSettings = $this->sodaScsServiceHelpers->initDockerExecServiceSettings();
 
     $route =
-      // https://portainer.scs.sammlungen.io
+      // https://portainer.example.com
       $portainerServiceSettings['host'] .
       // /api/endpoints
       $portainerServiceSettings['baseUrl'] .
@@ -378,7 +378,7 @@ class SodaScsDockerExecServiceActions implements SodaScsExecRequestInterface {
     $requestParams['routeParams']['endpointId'] = $portainerServiceSettings['endpointId'];
 
     $route =
-      // https://portainer.scs.sammlungen.io
+      // https://portainer.example.com
       $portainerServiceSettings['host'] .
       // /api/endpoints
       $portainerServiceSettings['baseUrl'] .

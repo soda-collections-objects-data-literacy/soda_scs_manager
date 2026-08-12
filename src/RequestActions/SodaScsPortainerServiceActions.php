@@ -652,7 +652,7 @@ class SodaScsPortainerServiceActions implements SodaScsServiceRequestInterface {
     $requestParams['routeParams']['endpointId'] = $portainerServiceSettings['endpointId'];
 
     // Build route.
-    // https://portainer.scs.sammlungen.io/
+    // https://portainer.example.com/
     $route = $portainerServiceSettings['host'] .
     // /stacks
     $portainerStacksSettings['baseUrl'] .
@@ -814,7 +814,7 @@ class SodaScsPortainerServiceActions implements SodaScsServiceRequestInterface {
 
     // Build route.
     $route =
-    // https://portainer.scs.sammlungen.io
+    // https://portainer.example.com
     $portainerServiceSettings['host'] .
     // /stacks
     $portainerStacksSettings['baseUrl'] .

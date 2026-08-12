@@ -1601,3 +1601,30 @@ function soda_scs_manager_update_11026() {
     '@count' => $reduced,
   ]);
 }
+
+/**
+ * Add configurable snapshotHostPath; preserve former host bind-mount mapping.
+ */
+function soda_scs_manager_update_11027() {
+  $config = \Drupal::configFactory()->getEditable('soda_scs_manager.settings');
+  $host_path = $config->get('snapshotHostPath');
+  if ($host_path !== NULL && $host_path !== '') {
+    return t('snapshotHostPath already configured; no change.');
+  }
+
+  // Previous releases remapped /var/scs-manager/snapshots → /srv/backups/...
+  // Keep that behaviour for existing installs that still use the default
+  // in-container path (or have never set snapshotPath).
+  $snapshot_path = rtrim((string) ($config->get('snapshotPath') ?? ''), '/');
+  $default_container = \Drupal\soda_scs_manager\Helpers\SodaScsSnapshotHelpers::DEFAULT_SNAPSHOT_FILESYSTEM_PATH;
+  $legacy_host = \Drupal\soda_scs_manager\Helpers\SodaScsSnapshotHelpers::LEGACY_SNAPSHOT_FILESYSTEM_PATH;
+  if ($snapshot_path === '' || $snapshot_path === $default_container || $snapshot_path === $legacy_host) {
+    $config->set('snapshotHostPath', $legacy_host)->save();
+    return t('Set snapshotHostPath to @path for Portainer bind-mount compatibility.', [
+      '@path' => $legacy_host,
+    ]);
+  }
+
+  $config->set('snapshotHostPath', '')->save();
+  return t('Added empty snapshotHostPath (container and host paths assumed identical).');
+}

@@ -235,7 +235,7 @@ class SodaScsDockerRunServiceActions implements SodaScsRunRequestInterface {
     $requestParams['routeParams']['endpointId'] = $portainerServiceSettings['endpointId'];
 
     $route =
-      // https://portainer.scs.sammlungen.io
+      // https://portainer.example.com
       $portainerServiceSettings['host'] .
       // /api/endpoints
       $portainerServiceSettings['baseUrl'] .
@@ -286,7 +286,7 @@ class SodaScsDockerRunServiceActions implements SodaScsRunRequestInterface {
     $dockerRunServiceSettings = $this->sodaScsServiceHelpers->initDockerRunServiceSettings();
 
     $route =
-      // https://portainer.scs.sammlungen.io
+      // https://portainer.example.com
       $portainerServiceSettings['host'] .
       // /api/endpoints
       $portainerServiceSettings['baseUrl'] .
@@ -361,7 +361,7 @@ class SodaScsDockerRunServiceActions implements SodaScsRunRequestInterface {
     $requestParams['routeParams']['endpointId'] = $portainerServiceSettings['endpointId'];
 
     $route =
-      // https://portainer.scs.sammlungen.io
+      // https://portainer.example.com
       $portainerServiceSettings['host'] .
       // /api/endpoints
       $portainerServiceSettings['baseUrl'] .
@@ -419,7 +419,7 @@ class SodaScsDockerRunServiceActions implements SodaScsRunRequestInterface {
     $requestParams['queryParams']['t'] = $requestParams['timeout'];
 
     $route =
-      // https://portainer.scs.sammlungen.io
+      // https://portainer.example.com
       $portainerServiceSettings['host'] .
       // /api/endpoints
       $portainerServiceSettings['baseUrl'] .
@@ -472,7 +472,7 @@ class SodaScsDockerRunServiceActions implements SodaScsRunRequestInterface {
     $requestParams['routeParams']['endpointId'] = $portainerServiceSettings['endpointId'];
 
     $route =
-      // https://portainer.scs.sammlungen.io
+      // https://portainer.example.com
       $portainerServiceSettings['host'] .
       // /api/endpoints
       $portainerServiceSettings['baseUrl'] .
@@ -531,7 +531,7 @@ class SodaScsDockerRunServiceActions implements SodaScsRunRequestInterface {
     $requestParams['routeParams']['endpointId'] = $portainerServiceSettings['endpointId'];
 
     $route =
-      // https://portainer.scs.sammlungen.io
+      // https://portainer.example.com
       $portainerServiceSettings['host'] .
       // /api/endpoints
       $portainerServiceSettings['baseUrl'] .

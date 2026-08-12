@@ -5,19 +5,23 @@ soda_scs_manager.settings:
     scsHost:
       type: string
       label: 'SODa SCS host'
-      description: 'The SODa SCS host, like scs.sammlungen.io.'
+      description: 'The SODa SCS host, like scs.example.com.'
     administratorEmail:
       type: string
       label: 'Administrator email'
-      description: 'The administrator email, like admin@scs.sammlungen.io.'
+      description: 'The administrator email, like admin@scs.example.com.'
     snapshotPath:
       type: string
       label: 'Snapshot filesystem path'
       description: 'In-container snapshot root (default /var/scs-manager/snapshots). Optional $settings["soda_scs_manager.snapshot_filesystem_path"] override.'
+    snapshotHostPath:
+      type: string
+      label: 'Snapshot host filesystem path'
+      description: 'Host-side path for the snapshot bind mount (for Portainer). Leave empty when the host path matches the container path. Optional $settings["soda_scs_manager.snapshot_host_path"] override.'
     dbHost:
       type: string
       label: 'Database host'
-      description: 'The database host, like db.scs.sammlungen.io.'
+      description: 'The database host, like db.scs.example.com.'
     dbPort:
       type: string
       label: 'Database port'
@@ -29,7 +33,7 @@ soda_scs_manager.settings:
     dbManagementHost:
       type: string
       label: 'Management host'
-      description: 'The phpMyAdmin/DBMS host (SCS_DBMS_DOMAIN), e.g. dbms.scs.sammlungen.io.'
+      description: 'The phpMyAdmin/DBMS host (SCS_DBMS_DOMAIN), e.g. dbms.scs.example.com.'
     jupyterhub:
       type: mapping
       label: 'JupyterHub settings'
@@ -41,7 +45,7 @@ soda_scs_manager.settings:
             baseUrl:
               type: string
               label: 'Base URL'
-              description: 'The base URL, like https://code.scs.sammlungen.io.'
+              description: 'The base URL, like https://code.scs.example.com.'
             containerNamePrefix:
               type: string
               label: 'Notebook container name prefix'
@@ -57,7 +61,7 @@ soda_scs_manager.settings:
             keycloakUrl:
               type: string
               label: 'Keycloak URL'
-              description: 'The keycloak URL, like https://auth.scs.sammlungen.io.'
+              description: 'The keycloak URL, like https://auth.scs.example.com.'
             keycloakRealm:
               type: string
               label: 'Keycloak realm'
@@ -209,7 +213,11 @@ soda_scs_manager.settings:
             baseUrl:
               type: string
               label: 'Base URL'
-              description: 'The base URL, like https://nextcloud.scs.sammlungen.io.'
+              description: 'The base URL, like https://nextcloud.scs.example.com.'
+            occContainerName:
+              type: string
+              label: 'OCC container name'
+              description: 'Docker container name for Nextcloud occ commands (default nextcloud--nextcloud).'
             oidcUsernamePrefix:
               type: string
               label: 'OIDC username prefix'
@@ -245,7 +253,7 @@ soda_scs_manager.settings:
             host:
               type: string
               label: 'Triplestore host'
-              description: 'The triplestore host, like https://ts.scs.sammlungen.io.'
+              description: 'The triplestore host, like https://ts.scs.example.com.'
             internalHost:
               type: string
               label: 'Triplestore internal host (WissKI)'
@@ -369,7 +377,7 @@ soda_scs_manager.settings:
             host:
               type: string
               label: 'Host'
-              description: 'The host, like https://portainer.scs.sammlungen.io'
+              description: 'The host, like https://portainer.scs.example.com'
             authenticationToken:
               type: string
               label: 'Authentication token'
@@ -553,7 +561,7 @@ soda_scs_manager.settings:
             baseUrl:
               type: string
               label: 'Base route'
-              description: 'The base URL, like "https://{instanceId}.scs.sammlungen.io".'
+              description: 'The base URL, like "https://{instanceId}.scs.example.com".'
             proxyAddresses:
               type: string
               label: 'Drupal reverse proxy addresses'

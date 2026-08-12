@@ -309,7 +309,7 @@ class KeycloakUserApprovalForm extends FormBase {
       'username' => $registration->username,
       'email' => $registration->email,
       'site_name' => $site_name,
-      'login_url' => "https://scs.sammlungen.io/user/login",
+      'login_url' => Url::fromRoute('user.login', [], ['absolute' => TRUE])->toString(),
     ];
 
     $this->mailManager->mail(

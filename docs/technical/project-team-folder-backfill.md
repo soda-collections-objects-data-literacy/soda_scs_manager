@@ -33,7 +33,7 @@ For a project with Drupal id `P` and `groupId` `G` (computed: `P + 10000`):
 ## Drush batch (preferred)
 
 ```bash
-cd /var/www/deploy/soda_scs_manager_deployment
+cd <deployment-root>
 
 # Inventory (no writes)
 scs-drush soda_scs_manager:backfill-project-team-folders --dry-run --all

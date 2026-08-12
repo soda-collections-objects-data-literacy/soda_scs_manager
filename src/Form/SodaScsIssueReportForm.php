@@ -117,7 +117,7 @@ class SodaScsIssueReportForm extends FormBase {
     $form['location'] = [
       '#type' => 'url',
       '#title' => $this->t('Where did it happen?'),
-      '#description' => $this->t('Provide route/URL (e.g. https://manager.scs.sammlungen.io/soda-scs-manager/stack/add/soda_scs_wisski_stack)'),
+      '#description' => $this->t('Provide route/URL (e.g. https://example.com/soda-scs-manager/stack/add/soda_scs_wisski_stack)'),
       '#required' => TRUE,
     ];
 

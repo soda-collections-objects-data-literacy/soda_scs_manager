@@ -4,3 +4,5 @@ security:
     log_level: 'info'
 
 snapshotPath: '/var/scs-manager/snapshots'
+# Host path for Portainer bind mounts. Leave empty when it matches snapshotPath.
+snapshotHostPath: ''

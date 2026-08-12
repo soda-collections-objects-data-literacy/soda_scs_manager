@@ -35,7 +35,7 @@ docker exec --user www-data nextcloud--nextcloud \
 
 ## Host runbook (executed)
 
-Deployment root: `/var/www/deploy/soda_scs_manager_deployment`
+Deployment root: `<deployment-root>`
 
 1. Selective backup → `backups/scs-share-private-YYYYMMDD.tar.gz`
 2. `occ scs_manager_integration:ensure-platform-share --admin=admin -g admin -g keycloak-scs_user`
@@ -48,4 +48,4 @@ Deployment root: `/var/www/deploy/soda_scs_manager_deployment`
 - Project Team Folder **registration** backfill (no file moves):
   [project-team-folder-backfill.md](project-team-folder-backfill.md)
 - Deployment plan copy:
-  `/var/www/deploy/soda_scs_manager_deployment/plans/06-scs-share-private-to-teamfolder.md`
+  `<deployment-root>/plans/06-scs-share-private-to-teamfolder.md`

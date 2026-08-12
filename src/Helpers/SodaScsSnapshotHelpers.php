@@ -14,6 +14,7 @@ use Drupal\Core\Language\LanguageInterface;
 use Drupal\Core\Logger\LoggerChannelFactoryInterface;
 use Drupal\Core\Messenger\MessengerTrait;
 use Drupal\Core\StringTranslation\StringTranslationTrait;
+use Drupal\Core\Url;
 use Drupal\Core\Utility\Error;
 use Drupal\soda_scs_manager\Entity\SodaScsComponentInterface;
 use Drupal\soda_scs_manager\Exception\SodaScsHelpersException;
@@ -67,6 +68,11 @@ class SodaScsSnapshotHelpers {
    * Optional override in settings.php (rare); normally unused.
    */
   public const SNAPSHOT_FILESYSTEM_PATH_SETTINGS_KEY = 'soda_scs_manager.snapshot_filesystem_path';
+
+  /**
+   * Optional host-side snapshot root override in settings.php.
+   */
+  public const SNAPSHOT_HOST_PATH_SETTINGS_KEY = 'soda_scs_manager.snapshot_host_path';
 
   /**
    * Subpath under private:// for snapshot-related file entities.
@@ -554,8 +560,9 @@ class SodaScsSnapshotHelpers {
         'algorithm' => 'sha256',
         'created' => (int) $timestamp,
         'snapshotMachineName' => (string) $snapshotMachineName,
-        // @todo make this agnostic to the domain.
-        'snapshot' => 'https://scs.sammlungen.io/soda-scs-manager/snapshot/' . $snapshot->id(),
+        'snapshot' => Url::fromRoute('entity.soda_scs_snapshot.canonical', [
+          'soda_scs_snapshot' => $snapshot->id(),
+        ], ['absolute' => TRUE])->toString(),
         'files' => [
           'contentFiles' => $contentFiles,
           'bagFiles' => $bagFiles,
@@ -710,9 +717,10 @@ class SodaScsSnapshotHelpers {
   /**
    * Convert container path to host path for bind mounts.
    *
-   * Map in-container DEFAULT_SNAPSHOT_FILESYSTEM_PATH to the host path used in
-   * Compose (host side of the bind mount). Portainer bind mounts need the host
-   * path.
+   * Maps the configured in-container snapshot root to the host path used by
+   * Compose/Portainer bind mounts. Configure snapshotHostPath in settings (or
+   * $settings['soda_scs_manager.snapshot_host_path']). When unset, the
+   * container path is returned unchanged.
    *
    * @param string $containerPath
    *   Path as seen inside the Drupal container.
@@ -721,20 +729,27 @@ class SodaScsSnapshotHelpers {
    *   Path on the host filesystem.
    */
   public function convertContainerPathToHostPath(string $containerPath): string {
-    // Map of container paths to host paths.
-    // This should match docker-compose volume bindings.
-    $pathMappings = [
-      self::DEFAULT_SNAPSHOT_FILESYSTEM_PATH => self::LEGACY_SNAPSHOT_FILESYSTEM_PATH,
-      '/var/scs-manager' => '/srv/backups/scs-manager',
-    ];
-
-    foreach ($pathMappings as $containerPrefix => $hostPrefix) {
-      if (str_starts_with($containerPath, $containerPrefix)) {
-        return $hostPrefix . substr($containerPath, strlen($containerPrefix));
-      }
+    $config = $this->configFactory->get('soda_scs_manager.settings');
+    $containerRoot = rtrim(trim((string) ($config->get('snapshotPath') ?: self::DEFAULT_SNAPSHOT_FILESYSTEM_PATH)), '/');
+    $hostRoot = rtrim(trim((string) ($config->get('snapshotHostPath') ?? '')), '/');
+    if ($hostRoot === '') {
+      $hostRoot = rtrim(trim((string) Settings::get(self::SNAPSHOT_HOST_PATH_SETTINGS_KEY, '')), '/');
+    }
+    if ($hostRoot === '' || $hostRoot === $containerRoot) {
+      return $containerPath;
     }
 
-    // If no mapping found, return original path (might already be host path).
+    if (str_starts_with($containerPath, $containerRoot)) {
+      return $hostRoot . substr($containerPath, strlen($containerRoot));
+    }
+
+    // Also remap the parent prefix (e.g. /var/scs-manager → host parent).
+    $containerParent = dirname($containerRoot);
+    $hostParent = dirname($hostRoot);
+    if ($containerParent !== '/' && $containerParent !== '.' && str_starts_with($containerPath, $containerParent)) {
+      return $hostParent . substr($containerPath, strlen($containerParent));
+    }
+
     return $containerPath;
   }
 
