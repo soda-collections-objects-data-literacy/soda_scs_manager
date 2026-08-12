@@ -1,11 +1,5 @@
 # SODa SCS Manager
 
-> **Maintenance moved to Drupal.org.**  
-> This GitHub repository is no longer the primary development location.  
-> **Canonical project:** [drupal.org/project/soda_scs_manager](https://www.drupal.org/project/soda_scs_manager)  
-> **Git remote:** `git@git.drupal.org:project/soda_scs_manager.git`  
-> Issues, releases, and further development happen on Drupal.org. Clone/fork from there.
-
 ## Introduction
 The SODa SCS Manager module is part of the [SODa Semantic Co-Working Space](https://zenodo.org/records/14627710) of the [SODa project](https://sammlungen.io).
 It extends the Drupal framework with an administration panel for the SODa Semantic Co-Working Space.
