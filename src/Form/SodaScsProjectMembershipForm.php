@@ -11,6 +11,7 @@ use Drupal\Core\Entity\EntityTypeManagerInterface;
 use Drupal\Core\Messenger\MessengerInterface;
 use Drupal\Core\Session\AccountProxyInterface;
 use Drupal\soda_scs_manager\Entity\SodaScsProjectMembershipInterface;
+use Drupal\soda_scs_manager\Helpers\SodaScsJupyterHelpers;
 use Drupal\soda_scs_manager\Helpers\SodaScsProjectMembershipHelpers;
 use Drupal\soda_scs_manager\ValueObject\SodaScsResult;
 use Drupal\user\UserInterface;
@@ -45,6 +46,11 @@ final class SodaScsProjectMembershipForm extends FormBase {
   protected SodaScsProjectMembershipHelpers $membershipHelpers;
 
   /**
+   * Jupyter notebook lifecycle helpers.
+   */
+  protected SodaScsJupyterHelpers $jupyterHelpers;
+
+  /**
    * Constructs the form.
    */
   public function __construct(
@@ -52,12 +58,14 @@ final class SodaScsProjectMembershipForm extends FormBase {
     DateFormatterInterface $dateFormatter,
     AccountProxyInterface $currentUser,
     SodaScsProjectMembershipHelpers $membershipHelpers,
+    SodaScsJupyterHelpers $jupyterHelpers,
     MessengerInterface $messenger,
   ) {
     $this->entityTypeManager = $entityTypeManager;
     $this->dateFormatter = $dateFormatter;
     $this->currentUser = $currentUser;
     $this->membershipHelpers = $membershipHelpers;
+    $this->jupyterHelpers = $jupyterHelpers;
     $this->messenger = $messenger;
   }
 
@@ -70,6 +78,7 @@ final class SodaScsProjectMembershipForm extends FormBase {
       $container->get('date.formatter'),
       $container->get('current_user'),
       $container->get('soda_scs_manager.project_membership.helpers'),
+      $container->get('soda_scs_manager.jupyter.helpers'),
       $container->get('messenger'),
     );
   }
@@ -90,6 +99,7 @@ final class SodaScsProjectMembershipForm extends FormBase {
       'dateFormatter' => 'date.formatter',
       'currentUser' => 'current_user',
       'membershipHelpers' => 'soda_scs_manager.project_membership.helpers',
+      'jupyterHelpers' => 'soda_scs_manager.jupyter.helpers',
       'messenger' => 'messenger',
     ];
     $vars = get_object_vars($this);
@@ -337,6 +347,9 @@ final class SodaScsProjectMembershipForm extends FormBase {
 
     $result = $this->membershipHelpers->approveRequest($request, $actor);
     $this->reportResult($result);
+    if ($result->success) {
+      $this->jupyterHelpers->warnRestartNotebookForProjectMounts($this->messenger());
+    }
     $form_state->setRebuild(TRUE);
   }
 

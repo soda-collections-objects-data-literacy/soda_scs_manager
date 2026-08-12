@@ -506,6 +506,16 @@ soda_scs_manager.notifications:
   options:
     no_cache: TRUE
 
+soda_scs_manager.jupyter.restart_notebook:
+  path: '/soda-scs-manager/jupyter/restart-notebook'
+  defaults:
+    _form: '\Drupal\soda_scs_manager\Form\SodaScsJupyterNotebookRestartConfirmForm'
+    _title: 'Restart Jupyter notebook server'
+  requirements:
+    _permission: 'soda scs manager user'
+  options:
+    no_cache: TRUE
+
 soda_scs_manager.administration:
   path: '/soda-scs-manager/administration'
   defaults:

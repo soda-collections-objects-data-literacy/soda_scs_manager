@@ -7,6 +7,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- After project create or invitation accept, warn users that JupyterLab mounts
+  project Team Folders only on notebook start, with a link to
+  **Restart Jupyter** (`/soda-scs-manager/jupyter/restart-notebook`).
+- Confirm form and main-menu item to stop the user’s Jupyter notebook server
+  (unsaved work warning); user must **Start My Server** in JupyterHub afterwards
+  so new Team Folders remount.
+
 ## [3.0.0] - 2026-08-12
 
 Development line: branch `3.x`. Major release relative to `2.4.x` (application-centric dashboard).

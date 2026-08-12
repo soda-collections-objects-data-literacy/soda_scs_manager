@@ -16,6 +16,7 @@ use Drupal\Core\Logger\LoggerChannelFactoryInterface;
 use Drupal\Core\Logger\LoggerChannelInterface;
 use Drupal\Core\Session\AccountProxyInterface;
 use Drupal\soda_scs_manager\ComponentActions\SodaScsComponentActionsInterface;
+use Drupal\soda_scs_manager\Helpers\SodaScsJupyterHelpers;
 use Drupal\soda_scs_manager\Helpers\SodaScsProjectDbAccessHelpers;
 use Drupal\soda_scs_manager\Helpers\SodaScsProjectHelpers;
 use Drupal\soda_scs_manager\Helpers\SodaScsProjectMembershipHelpers;
@@ -144,6 +145,11 @@ class SodaScsProjectCreateForm extends ContentEntityForm {
   protected SodaScsServiceActionsInterface $sodaScsSqlServiceActions;
 
   /**
+   * Jupyter notebook lifecycle helpers.
+   */
+  protected SodaScsJupyterHelpers $jupyterHelpers;
+
+  /**
    * Constructs a new SodaScsComponentCreateForm.
    *
    * @param \Drupal\Core\Session\AccountProxyInterface $currentUser
@@ -191,6 +197,7 @@ class SodaScsProjectCreateForm extends ContentEntityForm {
     SodaScsProjectMembershipHelpers $projectMembershipHelpers,
     SodaScsProjectDbAccessHelpers $projectDbAccessHelpers,
     SodaScsServiceActionsInterface $sodaScsSqlServiceActions,
+    SodaScsJupyterHelpers $jupyterHelpers,
     TimeInterface $time,
   ) {
     parent::__construct($entity_repository, $entity_type_bundle_info, $time);
@@ -207,6 +214,7 @@ class SodaScsProjectCreateForm extends ContentEntityForm {
     $this->projectMembershipHelpers = $projectMembershipHelpers;
     $this->projectDbAccessHelpers = $projectDbAccessHelpers;
     $this->sodaScsSqlServiceActions = $sodaScsSqlServiceActions;
+    $this->jupyterHelpers = $jupyterHelpers;
   }
 
   /**
@@ -229,6 +237,7 @@ class SodaScsProjectCreateForm extends ContentEntityForm {
       $container->get('soda_scs_manager.project_membership.helpers'),
       $container->get('soda_scs_manager.project_db_access.helpers'),
       $container->get('soda_scs_manager.sql_service.actions'),
+      $container->get('soda_scs_manager.jupyter.helpers'),
       $container->get('datetime.time'),
     );
   }
@@ -338,6 +347,7 @@ class SodaScsProjectCreateForm extends ContentEntityForm {
     $this->messenger()->addMessage($this->t('Project @project has been created.', [
       '@project' => $this->entity->label(),
     ]));
+    $this->jupyterHelpers->warnRestartNotebookForProjectMounts($this->messenger());
 
     $requester = $this->loadCurrentUserEntity();
     if ($requester) {

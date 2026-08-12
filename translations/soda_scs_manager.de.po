@@ -3721,3 +3721,55 @@ msgstr "@count Mitglieder"
 #: templates/cards/soda-scs-manager--project-card.html.twig
 msgid "@count more…"
 msgstr "@count mehr…"
+
+#: src/Helpers/SodaScsJupyterHelpers.php
+msgid "JupyterLab mounts project Team Folders only when your notebook server starts. To see this project there, <a href=\":url\">stop your Jupyter notebook server</a>, then start it again from JupyterHub. Unsaved notebook work will be lost when the server stops."
+msgstr "JupyterLab bindet Projekt-Team-Folder erst beim Start des Notebook-Servers ein. Damit dieses Projekt dort sichtbar wird, <a href=\":url\">stoppen Sie Ihren Jupyter-Notebook-Server</a> und starten Sie ihn danach erneut in JupyterHub. Nicht gespeicherte Notebook-Arbeit geht beim Stoppen verloren."
+
+#: src/Form/SodaScsJupyterNotebookRestartConfirmForm.php
+msgid "Stop your Jupyter notebook server so project folders can remount?"
+msgstr "Jupyter-Notebook-Server stoppen, damit Projektordner neu eingebunden werden?"
+
+#: src/Form/SodaScsJupyterNotebookRestartConfirmForm.php
+msgid "<p>JupyterLab only mounts the project Team Folders you belong to when your notebook server <strong>starts</strong>. After you create or join a project, you must stop the running server and start it again from JupyterHub.</p><p><strong>Warnings:</strong></p><ul><li>Any <strong>unsaved notebook work</strong>, open kernels, and terminal sessions will be lost.</li><li>This action <strong>stops</strong> your notebook server; it does not start it again.</li><li>Files already saved in your Jupyter home volume and in Nextcloud Team Folders are kept.</li><li>You must open JupyterHub afterwards and choose <strong>Start My Server</strong> so the new project folders appear under <code>/home/jovyan/nextcloud/</code>.</li></ul>"
+msgstr "<p>JupyterLab bindet die Projekt-Team-Folder, in denen Sie Mitglied sind, erst ein, wenn Ihr Notebook-Server <strong>startet</strong>. Nach dem Anlegen oder Beitreten eines Projekts müssen Sie den laufenden Server stoppen und in JupyterHub erneut starten.</p><p><strong>Hinweise:</strong></p><ul><li>Nicht gespeicherte Notebook-Arbeit, offene Kernel und Terminalsitzungen gehen verloren.</li><li>Diese Aktion <strong>stoppt</strong> Ihren Notebook-Server; sie startet ihn nicht erneut.</li><li>Bereits gespeicherte Dateien in Ihrem Jupyter-Home-Volume und in Nextcloud-Team-Foldern bleiben erhalten.</li><li>Öffnen Sie danach JupyterHub und wählen Sie <strong>Start My Server</strong>, damit die neuen Projektordner unter <code>/home/jovyan/nextcloud/</code> erscheinen.</li></ul>"
+
+#: src/Form/SodaScsJupyterNotebookRestartConfirmForm.php
+msgid "Stop notebook server"
+msgstr "Notebook-Server stoppen"
+
+#: src/Form/SodaScsJupyterNotebookRestartConfirmForm.php
+msgid "Could not stop your Jupyter notebook server: @error"
+msgstr "Ihr Jupyter-Notebook-Server konnte nicht gestoppt werden: @error"
+
+#: src/Form/SodaScsJupyterNotebookRestartConfirmForm.php
+msgid "Your Jupyter notebook server was stopped. Unsaved notebook work is lost."
+msgstr "Ihr Jupyter-Notebook-Server wurde gestoppt. Nicht gespeicherte Notebook-Arbeit ist verloren."
+
+#: src/Form/SodaScsJupyterNotebookRestartConfirmForm.php
+msgid "Open <a href=\":url\">JupyterHub</a> and choose <strong>Start My Server</strong> so your project Team Folders are mounted again."
+msgstr "Öffnen Sie <a href=\":url\">JupyterHub</a> und wählen Sie <strong>Start My Server</strong>, damit Ihre Projekt-Team-Folder erneut eingebunden werden."
+
+#: src/Form/SodaScsJupyterNotebookRestartConfirmForm.php
+msgid "Open JupyterHub and choose <strong>Start My Server</strong> so your project Team Folders are mounted again."
+msgstr "Öffnen Sie JupyterHub und wählen Sie <strong>Start My Server</strong>, damit Ihre Projekt-Team-Folder erneut eingebunden werden."
+
+#: src/Form/SodaScsJupyterNotebookRestartConfirmForm.php
+msgid "No running Jupyter notebook server was found. When you next <a href=\":url\">start JupyterHub</a>, your current project Team Folders will be mounted."
+msgstr "Es wurde kein laufender Jupyter-Notebook-Server gefunden. Beim nächsten <a href=\":url\">Start in JupyterHub</a> werden Ihre aktuellen Projekt-Team-Folder eingebunden."
+
+#: src/Form/SodaScsJupyterNotebookRestartConfirmForm.php
+msgid "No running Jupyter notebook server was found. When you next start JupyterHub, your current project Team Folders will be mounted."
+msgstr "Es wurde kein laufender Jupyter-Notebook-Server gefunden. Beim nächsten Start in JupyterHub werden Ihre aktuellen Projekt-Team-Folder eingebunden."
+
+#: soda_scs_manager.links.menu.yml
+msgid "Restart Jupyter"
+msgstr "Jupyter neu starten"
+
+#: soda_scs_manager.links.menu.yml
+msgid "Stop your notebook server so project Team Folders remount on the next Hub start"
+msgstr "Notebook-Server stoppen, damit Projekt-Team-Folder beim nächsten Hub-Start neu eingebunden werden"
+
+#: soda_scs_manager.routing.yml
+msgid "Restart Jupyter notebook server"
+msgstr "Jupyter-Notebook-Server neu starten"
