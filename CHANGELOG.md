@@ -7,6 +7,25 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- Configurable `snapshotHostPath` setting (and `soda_scs_manager.snapshot_host_path` in settings.php) for Portainer host bind mounts.
+- Nextcloud settings field for OCC Docker container name (`occContainerName`).
+- `LICENSE.txt` (GPL-2.0-or-later) for Drupal.org packaging.
+- Drupal.org project page copy in `docs/drupal-org-project-page.md` (license stated as GPL-2.0-or-later).
+
+### Changed
+
+- Snapshot manifests and Keycloak approval emails use the current site URL instead of a hardcoded production domain.
+- SQL snapshot/restore Docker exec uses the configured `dbHost` container name.
+- Interface translation server pattern points at `modules/contrib/`.
+- Composer metadata aligned with module dependencies; README license note matches GPL-2.0-or-later.
+- Settings UI / schema examples use `example.com` placeholders.
+
+### Removed
+
+- Site content export zip, tmp config stubs, xdebug helper scripts, and dummy `assets/options` API drafts from the packaged tree.
+
 ## [3.0.0] - 2026-08-12
 
 Development line: branch `3.x` (breaking change from the 2.x application-centric dashboard).
