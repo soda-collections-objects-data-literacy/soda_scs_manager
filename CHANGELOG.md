@@ -7,10 +7,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [3.0.0] - 2026-08-12
+
+Development line: branch `3.x` (breaking change from the 2.x application-centric dashboard).
+
+### Breaking
+
+- Dashboard is **project-centric**: **Central services** (Nextcloud, Jupyter, WebProtégé) above **Your projects** as cards (apps with Online/Offline, member count). Application creation moves to the project page for owners via `(+)` (with `?project=` on create forms); the old flat “add application from dashboard” UX is no longer the primary flow.
+- Applications (components and stacks) may belong to **at most one** project (enforced on save + project sync; update `11026` collapses legacy multi-links: stack project → owner default → first listed).
+- Breadcrumb root for SCS users is **Dashboard** (route `soda_scs_manager.dashboard`) instead of Home/Startseite (`<front>`). Entity pages append the current title as a non-linked crumb; components/stacks include the related project when set.
+- New WissKI stacks use `NEXTCLOUD_MOUNT_MODE=external` and bind only the **project Team Folder** (`NEXTCLOUD_USER_MOUNT_SOURCE=…/<owner>/<project-label>` → `private://nextcloud`); app passwords are no longer injected into new WissKI stacks. Existing stacks need a re-deploy after a final bisync push (see nextcloud_webdav_mount migration notes).
+
 ### Added
 
 - Nextcloud sidecar mount lifecycle: `NextcloudMounterClient`, encrypted Drupal storage for app passwords, `NextcloudMountManager` reconciler (cron ~1 min), and Drush `scs:nextcloud-mount|unmount|reconcile|status`.
-- WissKI stack provisioning sets `NEXTCLOUD_MOUNT_MODE=external` and binds only the **project Team Folder** (`NEXTCLOUD_USER_MOUNT_SOURCE=…/<owner>/<project-label>` → `private://nextcloud`); app passwords are no longer injected into new WissKI stacks.
 - Connected Accounts shows Drive mount status (`mounted` / `error:…` / `disconnected`).
 - Nextcloud stack entity preview with recent file activity.
 - Details link on Nextcloud dashboard cards to the stack entity page.
@@ -20,13 +30,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Technical backfill guide for existing projects/Team Folders: `docs/technical/project-team-folder-backfill.md`.
 - Drush command `soda_scs_manager:backfill-project-team-folders` to bring legacy projects up to Team Folder parity (Keycloak attrs, members, Nextcloud folder; optional `--grant-nc-access`).
 - Keycloak `{machineName}-admin` and `{machineName}-user` groups for SQL and Triplestore components (create, delete, project member sync), matching WissKI.
+- Restored theme `package.json` with npm `overrides` for locked transitive CSS tooling dependencies.
 
 ### Changed
 
-- Breadcrumb root for SCS users is **Dashboard** (route `soda_scs_manager.dashboard`) instead of Home/Startseite (`<front>`).
-- Entity pages append the current title as a non-linked crumb (e.g. Dashboard → *rnsrk default project*); components/stacks include the related project when set.
-- Dashboard is project-centric: **Central services** (Nextcloud, Jupyter, WebProtégé) above **Your projects** as cards (apps with Online/Offline, member count). Adding applications is available on the project page for owners via `(+)`.
-- Applications (components and stacks) may belong to **at most one** project (enforced on save + project sync; update `11026` collapses legacy multi-links: stack project → owner default → first listed).
 - Nextcloud app passwords are stored encrypted in Drupal user data; Keycloak keeps only `nextcloud_login_name` (legacy Keycloak app-password attributes are migrated and cleared on read/connect).
 - Nextcloud preview loads SCS-Share activity via `scs_manager_integration` (platform share `externalProjectId=scs-platform-share`) instead of the global Activity API path filter.
 - Project create/edit/delete sync Nextcloud Team Folders and Keycloak group labels (group name remains the integer id).
@@ -34,10 +41,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Security
 
 - Nextcloud app passwords no longer remain as plaintext Keycloak user attributes after connect/migration.
-
-### Notes
-
-- Existing WissKI stacks need a re-deploy to pick up the external mount bind after a final bisync push (see nextcloud_webdav_mount migration notes).
+- Pin transitive npm packages against Dependabot advisories: `nanoid` 3.3.17, `svgo` 4.0.2, `postcss` 8.5.26, `picomatch` 2.3.2 / 4.0.5.
 
 ## [2.4.2] - 2026-07-20
 
@@ -280,7 +284,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Move toward fully Portainer-driven lifecycle for managed services.
 
-[unreleased]: https://github.com/soda-collections-objects-data-literacy/soda_scs_manager/compare/2.4.2...HEAD
+[unreleased]: https://github.com/soda-collections-objects-data-literacy/soda_scs_manager/compare/3.0.0...HEAD
+[3.0.0]: https://github.com/soda-collections-objects-data-literacy/soda_scs_manager/compare/2.4.2...3.0.0
 [2.4.2]: https://github.com/soda-collections-objects-data-literacy/soda_scs_manager/compare/2.4.1...2.4.2
 [2.4.1]: https://github.com/soda-collections-objects-data-literacy/soda_scs_manager/compare/2.4.0...2.4.1
 [2.4.0]: https://github.com/soda-collections-objects-data-literacy/soda_scs_manager/compare/2.3.0...2.4.0
