@@ -365,6 +365,10 @@ msgid "Your applications"
 msgstr "Ihre Anwendungen"
 
 #: soda_scs_manager.links.menu.yml:0
+msgid "Your projects and central services"
+msgstr "Ihre Projekte und zentrale Dienste"
+
+#: soda_scs_manager.links.menu.yml:0
 msgid "Projects"
 msgstr "Projekte"
 
@@ -3681,3 +3685,39 @@ msgstr "Das Projekt, zu dem diese Anwendung gehört. Eine Anwendung kann nur ein
 #: src/Entity/SodaScsStack.php
 msgid "The project this bundled application belongs to. An application can belong to only one project."
 msgstr "Das Projekt, zu dem diese gebündelte Anwendung gehört. Eine Anwendung kann nur einem Projekt zugeordnet sein."
+
+#: templates/pages/soda-scs-manager--dashboard.html.twig
+msgid "Central services"
+msgstr "Zentrale Dienste"
+
+#: templates/pages/soda-scs-manager--dashboard.html.twig
+msgid "No applications in this project yet."
+msgstr "In diesem Projekt sind noch keine Anwendungen vorhanden."
+
+#: templates/pages/soda-scs-manager--dashboard.html.twig
+msgid "No projects found."
+msgstr "Keine Projekte gefunden."
+
+#: templates/cards/soda-scs-manager--project-card.html.twig
+msgid "Online"
+msgstr "Online"
+
+#: templates/cards/soda-scs-manager--project-card.html.twig
+msgid "Offline"
+msgstr "Offline"
+
+#: templates/cards/soda-scs-manager--project-card.html.twig
+msgid "Open project"
+msgstr "Projekt öffnen"
+
+#: templates/cards/soda-scs-manager--project-card.html.twig
+msgid "1 member"
+msgstr "1 Mitglied"
+
+#: templates/cards/soda-scs-manager--project-card.html.twig
+msgid "@count members"
+msgstr "@count Mitglieder"
+
+#: templates/cards/soda-scs-manager--project-card.html.twig
+msgid "@count more…"
+msgstr "@count mehr…"

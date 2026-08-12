@@ -1,0 +1,128 @@
+{#
+/**
+ * @file
+ * Dashboard card for a project with contained application online/offline status.
+ *
+ * Available variables:
+ * - project_id: Project entity ID.
+ * - label: Project label.
+ * - url: Canonical project URL.
+ * - is_owner: Whether the current user owns the project.
+ * - members_count: Number of project participants (owner + members).
+ * - applications: List of application summaries (label, is_online, url, …).
+ * - tags: Aggregated filter tags from contained applications.
+ */
+#}
+{% set tags_hidden_from_ui = ['data-science', 'publishing'] %}
+<div class="soda-scs-manager--type--card soda-scs-manager--project-card text-left">
+  <div class="soda-scs-manager--card-tags mb-3 {% if tags is empty %}min-h-[1.5rem]{% endif %}">
+    {% for tag in tags|sort %}
+      {% if tag not in tags_hidden_from_ui %}
+        <span class="soda-scs-manager--tag-filter-button soda-scs-manager--card-tag rounded-full px-2 py-1 text-xs whitespace-nowrap
+          {% if tag == 'coding' %}
+            bg-purple-100 text-purple-700 hover:bg-purple-200
+          {% elseif tag == 'cms' %}
+            bg-blue-100 text-blue-700 hover:bg-blue-200
+          {% elseif tag == 'database' %}
+            bg-emerald-100 text-emerald-700 hover:bg-emerald-200
+          {% elseif tag == 'data-cleaning' %}
+            bg-green-100 text-green-700 hover:bg-green-200
+          {% elseif tag == 'filesharing' %}
+            bg-cyan-100 text-cyan-700 hover:bg-cyan-200
+          {% elseif tag == 'ontology' %}
+            bg-indigo-100 text-indigo-700 hover:bg-indigo-200
+          {% elseif tag == 'office' %}
+            bg-orange-100 text-orange-700 hover:bg-orange-200
+          {% elseif tag == 'triplestore' %}
+            bg-lime-100 text-lime-700 hover:bg-lime-200
+          {% else %}
+            bg-stone-100 text-stone-700 hover:bg-stone-200
+          {% endif %}" data-tag="{{ tag }}" role="button" tabindex="0" aria-pressed="false" aria-label="{{ 'Filter by tag @tag'|t({'@tag': tag}) }}">{{ tag|t }}</span>
+      {% endif %}
+    {% endfor %}
+  </div>
+
+  <div class="soda-scs-manager--project-card__header mb-2">
+    <h3 class="soda-scs-manager--project-card__title m-0 text-xl font-semibold text-stone-900">
+      <a href="{{ url }}" class="soda-scs-manager--dashboard-project-link hover:underline text-inherit">{{ label }}</a>
+    </h3>
+  </div>
+
+  <p class="soda-scs-manager--project-card__members mb-4 text-sm text-stone-600">
+    {% if members_count == 1 %}
+      {{ '1 member'|t }}
+    {% else %}
+      {{ '@count members'|t({'@count': members_count}) }}
+    {% endif %}
+  </p>
+
+  {% set app_preview_limit = 5 %}
+  {% set app_total = applications|length %}
+  {% set app_more_count = app_total > app_preview_limit ? app_total - app_preview_limit : 0 %}
+  <div class="soda-scs-manager--project-card__applications grow">
+    <h4 class="mb-2 text-sm font-semibold uppercase tracking-wide text-stone-500">{{ 'Applications'|t }}</h4>
+    {% if applications is not empty %}
+      <ul class="m-0 list-none space-y-2 p-0">
+        {% for app in applications|slice(0, app_preview_limit) %}
+          {% set status_key = app.is_online ? 'online' : 'offline' %}
+          {% if app.health_status|default('')|lower == 'starting' %}
+            {% set status_key = 'starting' %}
+          {% endif %}
+          <li class="soda-scs-manager--project-card-app flex items-center justify-between gap-3 rounded-md border border-stone-200 bg-white px-3 py-2"
+              {% if app.entity_id %}data-entity-id="{{ app.entity_id }}"{% endif %}
+              {% if app.entity_type_id %}data-entity-type="{{ app.entity_type_id }}"{% endif %}
+              data-health-status="{{ app.health_status|default('Unknown') }}">
+            <div class="min-w-0 text-left">
+              {% if app.url %}
+                <a href="{{ app.url }}" class="block truncate font-medium text-stone-900 hover:underline">{{ app.label }}</a>
+              {% else %}
+                <span class="block truncate font-medium text-stone-900">{{ app.label }}</span>
+              {% endif %}
+              {% if app.bundle_label %}
+                <span class="block truncate text-xs text-stone-500">{{ app.bundle_label }}</span>
+              {% endif %}
+            </div>
+            <span class="soda-scs-manager--project-card-app__status inline-flex shrink-0 items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-medium
+              {% if status_key == 'online' %}
+                bg-emerald-100 text-emerald-800
+              {% elseif status_key == 'starting' %}
+                bg-amber-100 text-amber-800
+              {% else %}
+                bg-rose-100 text-rose-800
+              {% endif %}"
+              data-status="{{ status_key }}">
+              <span class="soda-scs-manager--project-card-app__dot h-2 w-2 rounded-full
+                {% if status_key == 'online' %}
+                  bg-emerald-500
+                {% elseif status_key == 'starting' %}
+                  bg-amber-500
+                {% else %}
+                  bg-rose-500
+                {% endif %}" aria-hidden="true"></span>
+              <span class="soda-scs-manager--project-card-app__label">
+                {% if status_key == 'online' %}
+                  {{ 'Online'|t }}
+                {% elseif status_key == 'starting' %}
+                  {{ 'Starting'|t }}
+                {% else %}
+                  {{ 'Offline'|t }}
+                {% endif %}
+              </span>
+            </span>
+          </li>
+        {% endfor %}
+      </ul>
+      {% if app_more_count > 0 %}
+        <p class="soda-scs-manager--project-card__more mt-2 mb-0">
+          <a href="{{ url }}" class="text-sm font-medium text-stone-600 hover:text-orange-600 hover:underline">{{ '@count more…'|t({'@count': app_more_count}) }}</a>
+        </p>
+      {% endif %}
+    {% else %}
+      <p class="m-0 text-sm text-stone-500">{{ 'No applications in this project yet.'|t }}</p>
+    {% endif %}
+  </div>
+
+  <div class="soda-scs-manager--project-card__footer mt-4">
+    <a href="{{ url }}" class="text-sm font-medium text-orange-600 hover:underline">{{ 'Open project'|t }}</a>
+  </div>
+</div>

@@ -5,7 +5,8 @@
  *
  * Available variables:
  * - attributes: HTML attributes for the container.
- * - add_application_trigger: Render array for (+) next to "Your applications" (current user).
+ * - central_service_cards: Cards for Nextcloud, Jupyter, WebProtégé.
+ * - project_cards: Project cards with application online/offline summaries.
  * - intro_coworking_wizard: First-login intro carousel (boolean).
  * - intro_asset_base: Base URL for module SVGs (e.g. /modules/custom/soda_scs_manager/assets/images/).
  * - intro_connected_accounts_url: URL for Connected Accounts (Nextcloud hint).
@@ -60,46 +61,35 @@
   </button>
 </div>
 
-{% if entitiesByUser is not empty %}
-  {% for username, entities in entitiesByUser %}
-    <div class="mb-8 {% if currentUsername is defined and username == currentUsername %}soda-scs-manager--dashboard-heading-with-add{% else %}text-center{% endif %}">
-      {% if currentUsername is defined and username == currentUsername %}
-        <h2 class="soda-scs-manager--dashboard-heading-section soda-scs-manager--dashboard-heading-section--inline">{{ 'Your applications'|t }}</h2>
-        {{ add_application_trigger }}
-      {% else %}
-        <h2 class="soda-scs-manager--dashboard-heading-section">{{ 'Applications of User @username'|t({'@username': username}) }}</h2>
-      {% endif %}
-    </div>
-
-    {% set entityCount = entities|length %}
-    {% set gridClass = 'grid-count-' ~ entityCount %}
-
-    <div {{ attributes.addClass(gridClass) }} class="soda-scs-manager--view--grid mb-12">
-      {% for entity in entities %}
-        {{ entity }}
-      {% endfor %}
-    </div>
-  {% endfor %}
+{% if central_service_cards is not empty %}
+  <div class="text-center mb-8">
+    <h2 class="soda-scs-manager--dashboard-heading-section">{{ 'Central services'|t }}</h2>
+  </div>
+  {% set centralCount = central_service_cards|length %}
+  {% set centralGridClass = 'grid-count-' ~ centralCount %}
+  <div {{ attributes.addClass(centralGridClass) }} class="soda-scs-manager--view--grid mb-12">
+    {% for card in central_service_cards %}
+      {{ card }}
+    {% endfor %}
+  </div>
 {% endif %}
 
-{% if entitiesByProject is not empty %}
-  {% for project, entities in entitiesByProject %}
-    <div class="text-center mb-8">
-      <h2 class="soda-scs-manager--dashboard-heading-section">{{ 'Project "@project" membership applications'|t({'@project': project}) }}</h2>
-    </div>
+<div class="text-center mb-8">
+  <h2 class="soda-scs-manager--dashboard-heading-section">{{ 'Your projects'|t }}</h2>
+</div>
 
-    {% set projectEntityCount = entities|length %}
-    {% set projectGridClass = 'grid-count-' ~ projectEntityCount %}
-    <div {{ attributes.addClass(projectGridClass) }} class="soda-scs-manager--view--grid mb-12">
-      {% for entity in entities %}
-        {{ entity }}
-      {% endfor %}
-    </div>
-  {% endfor %}
+{% if project_cards is not empty %}
+  {% set projectCount = project_cards|length %}
+  {% set projectGridClass = 'grid-count-' ~ projectCount %}
+  <div class="soda-scs-manager--view--grid mb-12 {{ projectGridClass }}">
+    {% for card in project_cards %}
+      {{ card }}
+    {% endfor %}
+  </div>
 {% endif %}
 
-{% if entitiesByUser is empty and entitiesByProject is empty %}
+{% if central_service_cards is empty and project_cards is empty %}
   <div class="alert alert-info opacity-90 bg-slate-950 border-2 border-stone-200 shadow-lg shadow-cyan-500/50 p-4 rounded-lg text-center">
-    <p class="text-stone-200 text-xl">{{ 'No applications found.'|t }}</p>
+    <p class="text-stone-200 text-xl">{{ 'No projects found.'|t }}</p>
   </div>
 {% endif %}

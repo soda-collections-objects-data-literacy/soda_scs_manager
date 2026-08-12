@@ -272,6 +272,79 @@
         // Poll every 15 seconds.
         setInterval(checkHealth, 15000);
       });
+
+      // Compact online/offline badges on project dashboard cards.
+      once('dashboardProjectAppHealth', '.soda-scs-manager--project-card-app[data-entity-id]', context).forEach(function (row) {
+        var $row = $(row);
+        var entityId = $row.data('entity-id');
+        var entityType = $row.data('entity-type');
+        var $status = $row.find('.soda-scs-manager--project-card-app__status');
+        var $dot = $row.find('.soda-scs-manager--project-card-app__dot');
+        var $label = $row.find('.soda-scs-manager--project-card-app__label');
+
+        if (!entityId || !entityType || !$status.length) {
+          return;
+        }
+
+        var healthUrl = entityType === 'soda_scs_stack'
+          ? Drupal.url('soda-scs-manager/health/stack/' + entityId)
+          : Drupal.url('soda-scs-manager/health/component/' + entityId);
+
+        function setProjectAppStatus(statusKey, labelText) {
+          $status
+            .attr('data-status', statusKey)
+            .removeClass('bg-emerald-100 text-emerald-800 bg-amber-100 text-amber-800 bg-rose-100 text-rose-800');
+          $dot.removeClass('bg-emerald-500 bg-amber-500 bg-rose-500');
+
+          if (statusKey === 'online') {
+            $status.addClass('bg-emerald-100 text-emerald-800');
+            $dot.addClass('bg-emerald-500');
+          }
+          else if (statusKey === 'starting') {
+            $status.addClass('bg-amber-100 text-amber-800');
+            $dot.addClass('bg-amber-500');
+          }
+          else {
+            $status.addClass('bg-rose-100 text-rose-800');
+            $dot.addClass('bg-rose-500');
+          }
+
+          $label.text(labelText);
+          $row.attr('data-health-status', statusKey);
+        }
+
+        function checkProjectAppHealth() {
+          $.ajax({
+            url: healthUrl,
+            method: 'GET',
+            timeout: 8000,
+            dataType: 'json',
+          }).done(function (data) {
+            var status = '';
+            if (data && data.status) {
+              status = (data.status.status || '').toLowerCase();
+              if (data.status.success === true && (!status || status === 'running' || status === 'healthy')) {
+                setProjectAppStatus('online', Drupal.t('Online'));
+                return;
+              }
+            }
+            if (status === 'running' || status === 'healthy') {
+              setProjectAppStatus('online', Drupal.t('Online'));
+            }
+            else if (status === 'starting') {
+              setProjectAppStatus('starting', Drupal.t('Starting'));
+            }
+            else {
+              setProjectAppStatus('offline', Drupal.t('Offline'));
+            }
+          }).fail(function () {
+            setProjectAppStatus('offline', Drupal.t('Offline'));
+          });
+        }
+
+        checkProjectAppHealth();
+        setInterval(checkProjectAppHealth, 15000);
+      });
     }
   };
 })(jQuery, Drupal, once, drupalSettings);

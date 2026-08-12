@@ -113,7 +113,7 @@ soda_scs_manager.snapshot_debug:
 # soda_scs_manager.menu.documentation — see soda_scs_manager_preprocess_menu().
 soda_scs_manager.menu.dashboard:
   title: 'Dashboard'
-  description: 'Your applications'
+  description: 'Your projects and central services'
   menu_name: main
   route_name: soda_scs_manager.dashboard
   weight: 10

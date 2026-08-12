@@ -960,12 +960,15 @@ function soda_scs_manager_theme($existing, $type, $theme, $path) {
     'soda_scs_project' => [
       'variables' => [
         'application_cards' => [],
+        'add_application_popup' => NULL,
         'attributes' => [],
         'filter_tags' => [],
+        'is_owner' => FALSE,
         'label' => NULL,
         'members' => NULL,
         'note' => NULL,
         'owner' => NULL,
+        'project_id' => NULL,
       ],
       'template' => 'entity/soda-scs-project',
     ],
@@ -979,12 +982,9 @@ function soda_scs_manager_theme($existing, $type, $theme, $path) {
     ],
     'soda_scs_manager__dashboard' => [
       'variables' => [
-        'entitiesByUser' => NULL,
-        'entitiesByProject' => NULL,
-        'entity_type' => NULL,
         'attributes' => NULL,
-        'currentUsername' => NULL,
-        'add_application_trigger' => NULL,
+        'central_service_cards' => NULL,
+        'project_cards' => NULL,
         'intro_coworking_wizard' => FALSE,
         'intro_asset_base' => '',
         'intro_connected_accounts_url' => '',
@@ -994,6 +994,18 @@ function soda_scs_manager_theme($existing, $type, $theme, $path) {
         'intro_mp4_src_3' => '',
       ],
       'template' => 'pages/soda-scs-manager--dashboard',
+    ],
+    'soda_scs_manager__project_card' => [
+      'variables' => [
+        'project_id' => NULL,
+        'label' => NULL,
+        'url' => '',
+        'is_owner' => FALSE,
+        'members_count' => 0,
+        'applications' => [],
+        'tags' => [],
+      ],
+      'template' => 'cards/soda-scs-manager--project-card',
     ],
     'soda_scs_manager__entity_card' => [
       'variables' => [
@@ -1069,11 +1081,21 @@ function soda_scs_manager_theme($existing, $type, $theme, $path) {
     'soda_scs_manager__add_application_heading_trigger' => [
       'variables' => [
         'asset_base' => '',
+        'project_id' => NULL,
         'popup_url_mariadb' => '',
         'popup_url_wisski' => '',
         'popup_url_open_gdb' => '',
       ],
       'template' => 'cards/soda-scs-manager--add-application-heading-trigger',
+    ],
+    'soda_scs_manager__add_application_popup' => [
+      'variables' => [
+        'asset_base' => '',
+        'popup_url_mariadb' => '',
+        'popup_url_wisski' => '',
+        'popup_url_open_gdb' => '',
+      ],
+      'template' => 'cards/soda-scs-manager--add-application-popup',
     ],
     'soda_scs_manager__coworking_intro' => [
       'variables' => [

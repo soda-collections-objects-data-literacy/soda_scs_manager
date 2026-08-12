@@ -94,6 +94,8 @@ services:
     class: Drupal\soda_scs_manager\RequestActions\SodaScsNextcloudServiceActions
   soda_scs_manager.nextcloud.preview:
     class: Drupal\soda_scs_manager\Service\SodaScsNextcloudPreview
+  soda_scs_manager.application_card_builder:
+    class: Drupal\soda_scs_manager\Service\SodaScsApplicationCardBuilder
   soda_scs_manager.nextcloud_mounter.client:
     class: Drupal\soda_scs_manager\Service\NextcloudMounterClient
   soda_scs_manager.nextcloud_mount.credentials:

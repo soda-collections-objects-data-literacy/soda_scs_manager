@@ -295,7 +295,7 @@ class SodaScsProjectListBuilder extends EntityListBuilder {
   /**
    * Heading row for the user-facing projects page.
    *
-   * Matches the dashboard "Your applications" + control layout.
+   * Matches the dashboard project-section heading + control layout.
    */
   private function buildProjectsListHeading(): array {
     $build = [

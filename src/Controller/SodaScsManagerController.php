@@ -4,18 +4,17 @@ declare(strict_types=1);
 
 namespace Drupal\soda_scs_manager\Controller;
 
-use Drupal\Component\Plugin\Exception\InvalidPluginDefinitionException;
-use Drupal\Component\Plugin\Exception\PluginNotFoundException;
 use Drupal\Core\Controller\ControllerBase;
+use Drupal\Core\Entity\EntityStorageException;
 use Drupal\Core\Entity\EntityTypeManagerInterface;
 use Drupal\Core\Language\LanguageInterface;
 use Drupal\Core\Session\AccountInterface;
 use Drupal\Core\Url;
-use Symfony\Component\DependencyInjection\ContainerInterface;
-use Drupal\Core\Entity\EntityTypeBundleInfoInterface;
+use Drupal\soda_scs_manager\Entity\SodaScsProjectInterface;
 use Drupal\soda_scs_manager\Helpers\SodaScsHelpers;
-use Drupal\Core\Entity\EntityStorageException;
+use Drupal\soda_scs_manager\Service\SodaScsApplicationCardBuilder;
 use Drupal\user\UserDataInterface;
+use Symfony\Component\DependencyInjection\ContainerInterface;
 
 /**
  * The SODa SCS Manager info controller.
@@ -37,13 +36,6 @@ class SodaScsManagerController extends ControllerBase {
   protected $currentUser;
 
   /**
-   * The bundle info service.
-   *
-   * @var \Drupal\Core\Entity\EntityTypeBundleInfoInterface
-   */
-  protected $bundleInfo;
-
-  /**
    * The Soda SCS helpers.
    *
    * @var \Drupal\soda_scs_manager\Helpers\SodaScsHelpers
@@ -58,10 +50,17 @@ class SodaScsManagerController extends ControllerBase {
   protected UserDataInterface $userData;
 
   /**
+   * Builds dashboard entity cards.
+   *
+   * @var \Drupal\soda_scs_manager\Service\SodaScsApplicationCardBuilder
+   */
+  protected SodaScsApplicationCardBuilder $applicationCardBuilder;
+
+  /**
    * Class constructor.
    *
-   * @param \Drupal\Core\Entity\EntityTypeBundleInfoInterface $bundleInfo
-   *   The bundle info service.
+   * @param \Drupal\soda_scs_manager\Service\SodaScsApplicationCardBuilder $applicationCardBuilder
+   *   Application card builder.
    * @param \Drupal\Core\Session\AccountInterface $currentUser
    *   The current user.
    * @param \Drupal\Core\Entity\EntityTypeManagerInterface $entityTypeManager
@@ -72,13 +71,13 @@ class SodaScsManagerController extends ControllerBase {
    *   User data for intro / onboarding flags.
    */
   public function __construct(
-    EntityTypeBundleInfoInterface $bundleInfo,
+    SodaScsApplicationCardBuilder $applicationCardBuilder,
     AccountInterface $currentUser,
     EntityTypeManagerInterface $entityTypeManager,
     SodaScsHelpers $sodaScsHelpers,
     UserDataInterface $userData,
   ) {
-    $this->bundleInfo = $bundleInfo;
+    $this->applicationCardBuilder = $applicationCardBuilder;
     $this->currentUser = $currentUser;
     $this->entityTypeManager = $entityTypeManager;
     $this->sodaScsHelpers = $sodaScsHelpers;
@@ -93,7 +92,7 @@ class SodaScsManagerController extends ControllerBase {
    */
   public static function create(ContainerInterface $container) {
     return new static(
-      $container->get('entity_type.bundle.info'),
+      $container->get('soda_scs_manager.application_card_builder'),
       $container->get('current_user'),
       $container->get('entity_type.manager'),
       $container->get('soda_scs_manager.helpers'),
@@ -102,295 +101,93 @@ class SodaScsManagerController extends ControllerBase {
   }
 
   /**
-   * Page for component management.
+   * Page for project-centric application management.
    *
    * @return array
    *   The page build array.
-   *
-   * @todo Join ComponentDesk and Stack dashboard to generic Dashboard.
-   * @todo Make admin permission more generic.
    */
   public function dashboardPage(): array {
     $current_user = $this->currentUser();
+    $uid = (int) $current_user->id();
 
-    // Load components of the projects.
     try {
-      $projectStorage = $this->entityTypeManager->getStorage('soda_scs_project');
-
-      if ($current_user->hasPermission('soda scs manager admin')) {
-        // If the user has the 'manage soda scs manager' permission,
-        // load all projects.
-        /** @var \Drupal\soda_scs_manager\Entity\SodaScsProject $projects */
-        $projects = $projectStorage->loadMultiple();
-      }
-
-      else {
-        // If the user does not have the 'manage soda scs manager'
-        // permission, only load their own projects.
-        $projects = $projectStorage->loadByProperties(['members' => $current_user->id()]);
-      }
-
-      // Sort Projects by label.
-      /*uasort($projects, function ($a, $b) {
-      return strnatcasecmp($a->label(), $b->label());
-      });*/
-
-      // Project components of the projects.
-      $entitiesByProject = [];
-      /** @var \Drupal\soda_scs_manager\Entity\SodaScsProjectInterface $project */
-      foreach ($projects as $project) {
-        /** @var \Drupal\Core\Field\EntityReferenceFieldItemListInterface $connectedComponents */
-        $connectedComponents = $project->get('connectedComponents');
-        $projectEntities = $connectedComponents->referencedEntities();
-        /** @var \Drupal\soda_scs_manager\Entity\SodaScsComponentInterface $projectEntity */
-        foreach ($projectEntities as $projectEntity) {
-          $projectBundleInfo = $this->bundleInfo->getBundleInfo($projectEntity->getEntityTypeId())[$projectEntity->bundle()];
-          $projectLabel = $project->label();
-
-          $url = Url::fromRoute('soda_scs_manager.component.service_link', [
-            'soda_scs_component' => $projectEntity->id(),
-          ]);
-
-          if (in_array($projectEntity->bundle(), [
-            'soda_scs_wisski_component',
-            'soda_scs_wisski_stack',
-            'soda_scs_sql_component',
-            'soda_scs_triplestore_component',
-            'soda_scs_nextcloud_stack',
-          ])) {
-            $detailsLink = Url::fromRoute('entity.' .
-              $projectEntity->getEntityTypeId() .
-              '.canonical',
-              [
-                'bundle' => $projectEntity->bundle(),
-                $projectEntity->getEntityTypeId() => $projectEntity->id(),
-              ]);
-          }
-          else {
-            $detailsLink = NULL;
-          }
-
-          $entitiesByProject[$projectLabel][] = [
-            '#theme' => 'soda_scs_manager__entity_card',
-            '#title' => $this->t('@bundle', ['@bundle' => $projectEntity->label()]),
-            // Not #type — that key is reserved for render elements. Late translate via Twig.
-            '#bundle_label' => $projectBundleInfo['label'],
-            '#description' => $projectBundleInfo['description'],
-            '#details_link' => $detailsLink,
-            '#entity_id' => $projectEntity->id(),
-            '#entity_type_id' => $projectEntity->getEntityTypeId(),
-            '#health_status' => $projectEntity->get('health')->value ?? 'Unknown',
-            '#imageUrl' => $projectBundleInfo['imageUrl'],
-            '#learn_more_link' => $this->sodaScsHelpers->internalPathUrl('soda-scs-manager/app/' . $this->sodaScsHelpers->getEntityType($projectEntity->bundle())),
-            '#url' => $url,
-            '#tags' => $projectBundleInfo['tags'],
-            '#cache' => [
-              'max-age' => 0,
-              'contexts' => ['languages:language_interface'],
-            ],
-          ];
-        }
-      }
+      $projects = $this->loadDashboardProjects($current_user);
     }
     catch (EntityStorageException $e) {
       $this->messenger()->addError($this->t('Error loading projects: @error', ['@error' => $e->getMessage()]));
       return [];
     }
 
-    // Sort projects by keys (= project title).
-    ksort($entitiesByProject);
+    $centralServiceCards = $this->applicationCardBuilder->buildCentralServiceCardsForUser($uid);
 
-    // Load owned components.
-    try {
-      $componentStorage = $this->entityTypeManager->getStorage('soda_scs_component');
-    }
-    catch (InvalidPluginDefinitionException | PluginNotFoundException $e) {
-      // @todo Handle exception properly. */
-      return [];
-    }
-    if ($current_user->hasPermission('soda scs manager admin')) {
-      // If the user has the 'manage soda scs manager' permission,
-      // load all components.
-      /** @var \Drupal\soda_scs_manager\Entity\SodaScsComponent $components */
-      $components = $componentStorage->loadMultiple();
-    }
-    else {
-      // If the user does not have the 'manage soda scs manager'
-      // permission, only load their own components.
-      $components = $componentStorage->loadByProperties(['owner' => $current_user->id()]);
-    }
-
-    // Load stacks.
-    try {
-      $stackStorage = $this->entityTypeManager->getStorage('soda_scs_stack');
-    }
-    catch (InvalidPluginDefinitionException | PluginNotFoundException $e) {
-      // @todo Handle exception properly. */
-      return [];
-    }
-    if ($current_user->hasPermission('soda scs manager admin')) {
-      // If the user has the 'manage soda scs manager' permission,
-      // load all components.
-      /** @var \Drupal\soda_scs_manager\Entity\SodaScsComponent $components */
-      $stacks = $stackStorage->loadMultiple();
-    }
-    else {
-      // If the user does not have the 'manage soda scs manager'
-      // permission, only load their own components.
-      $stacks = $stackStorage->loadByProperties(['owner' => $current_user->id()]);
-
-      // Additionally, include WissKI stacks from projects where the user is a
-      // member.
-      if (!empty($projects)) {
-        $projectIds = array_keys($projects);
-        $query = $stackStorage->getQuery()
-          ->condition('bundle', 'soda_scs_wisski_stack')
-          ->condition('partOfProjects', $projectIds, 'IN')
-          ->accessCheck(TRUE);
-
-        $additionalStackIds = $query->execute();
-        if (!empty($additionalStackIds)) {
-          $additionalStacks = $stackStorage->loadMultiple($additionalStackIds);
-          // Merge while preserving existing stacks keyed by ID.
-          $stacks = $stacks + $additionalStacks;
+    $projectCards = [];
+    /** @var \Drupal\soda_scs_manager\Entity\SodaScsProjectInterface $project */
+    foreach ($projects as $project) {
+      $ownerId = (int) ($project->getOwnerId() ?? 0);
+      $applications = $this->applicationCardBuilder->buildApplicationSummariesForProject($project);
+      $tags = [];
+      foreach ($applications as $application) {
+        foreach ($application['tags'] as $tag) {
+          if (is_string($tag) && $tag !== '') {
+            $tags[$tag] = $tag;
+          }
         }
       }
-    }
+      $sortedTags = array_values($tags);
+      sort($sortedTags);
 
-    $stackIncludedComponentIds = [];
-    /** @var \Drupal\soda_scs_manager\Entity\SodaScsStackInterface $stack */
-    foreach ($stacks as $stack) {
-      // Check if the stack has an includedComponents field.
-      if ($stack->hasField('includedComponents') && !$stack->get('includedComponents')->isEmpty()) {
-        // Get the referenced component IDs.
-        /** @var \Drupal\Core\Field\EntityReferenceFieldItemListInterface $stackIncludedComponents */
-        $stackIncludedComponents = $stack->get('includedComponents');
-        foreach ($stackIncludedComponents->referencedEntities() as $component) {
-          $stackIncludedComponentIds[$component->id()] = $component->id();
+      $memberIds = [];
+      if ($ownerId > 0) {
+        $memberIds[$ownerId] = $ownerId;
+      }
+      if ($project->hasField('members') && !$project->get('members')->isEmpty()) {
+        foreach ($project->get('members')->getValue() as $memberItem) {
+          $memberId = (int) ($memberItem['target_id'] ?? 0);
+          if ($memberId > 0) {
+            $memberIds[$memberId] = $memberId;
+          }
         }
       }
-    }
+      $membersCount = count($memberIds);
 
-    // Remove components that are already included in stacks.
-    if (!empty($stackIncludedComponentIds)) {
-      foreach ($stackIncludedComponentIds as $componentId) {
-        if (isset($components[$componentId])) {
-          unset($components[$componentId]);
-        }
-      }
-    }
-
-    $entities = array_merge($components, $stacks);
-
-    $entitiesByUser = [];
-    /** @var \Drupal\soda_scs_manager\Entity\SodaScsStackInterface|\Drupal\soda_scs_manager\Entity\SodaScsComponentInterface $entity */
-    foreach ($entities as $entity) {
-      $bundleInfo = $this->bundleInfo->getBundleInfo($entity->getEntityTypeId())[$entity->bundle()];
-      if ($entity->getOwner() !== NULL && $entity->getOwner()->getDisplayName() !== NULL) {
-        $username = $entity->getOwner()->getDisplayName();
-      }
-      else {
-        $username = 'deleted user';
-      }
-
-      // Use service link for the card URL when available.
-      if ($entity->getEntityTypeId() === 'soda_scs_stack') {
-        $url = Url::fromRoute('soda_scs_manager.stack.service_link', [
-          'soda_scs_stack' => $entity->id(),
-        ]);
-      }
-      else {
-        $url = Url::fromRoute('soda_scs_manager.component.service_link', [
-          'soda_scs_component' => $entity->id(),
-        ]);
-      }
-
-      if (in_array($entity->bundle(), [
-        'soda_scs_wisski_component',
-        'soda_scs_wisski_stack',
-        'soda_scs_sql_component',
-        'soda_scs_triplestore_component',
-        'soda_scs_nextcloud_stack',
-      ])) {
-        $detailsLink = Url::fromRoute('entity.' .
-          $entity->getEntityTypeId() .
-          '.canonical',
-          [
-            'bundle' => $entity->bundle(),
-            $entity->getEntityTypeId() => $entity->id(),
-          ]);
-      }
-      else {
-        $detailsLink = NULL;
-      }
-
-      $entitiesByUser[$username][] = [
-        '#theme' => 'soda_scs_manager__entity_card',
-        '#title' => $this->t('@bundle', ['@bundle' => $entity->label()]),
-        '#bundle_label' => $bundleInfo['label'],
-        '#description' => $bundleInfo['description'],
-        '#details_link' => $detailsLink,
-        '#entity_id' => $entity->id(),
-        '#entity_type_id' => $entity->getEntityTypeId(),
-        '#health_status' => $entity->get('health')->value ?? 'Unknown',
-        '#imageUrl' => $bundleInfo['imageUrl'],
-        '#learn_more_link' => $this->sodaScsHelpers->internalPathUrl('soda-scs-manager/app/' . $this->sodaScsHelpers->getEntityType($entity->bundle())),
-        '#url' => $url,
-        '#tags' => $bundleInfo['tags'],
+      $projectCards[] = [
+        '#theme' => 'soda_scs_manager__project_card',
+        '#project_id' => (int) $project->id(),
+        '#label' => $project->label(),
+        '#url' => Url::fromRoute('entity.soda_scs_project.canonical', [
+          'soda_scs_project' => $project->id(),
+        ])->toString(),
+        '#is_owner' => $ownerId === $uid,
+        '#members_count' => $membersCount,
+        '#applications' => $applications,
+        '#tags' => $sortedTags,
         '#cache' => [
           'max-age' => 0,
-          'contexts' => ['languages:language_interface'],
+          'contexts' => ['user', 'languages:language_interface'],
+          'tags' => $project->getCacheTags(),
         ],
       ];
     }
 
-    // Ensure the current user has a section so "Your applications" and the (+)
-    // control show even with zero apps.
-    $currentUsername = $current_user->getDisplayName();
-    if (!isset($entitiesByUser[$currentUsername])) {
-      $entitiesByUser[$currentUsername] = [];
-    }
-
-    $modulePath = $this->moduleHandler()->getModule('soda_scs_manager')->getPath();
-    $assetBase = '/' . $modulePath . '/assets/images/';
-
-    // Sort entitiesByUser alphabetically by using the keys (= usernames).
-    ksort($entitiesByUser);
-
-    // Move current user to the top.
-    $entitiesByUser = $this->moveKeyToFirstPosition($entitiesByUser, $currentUsername);
-
-    $uid = (int) $current_user->id();
-
-    $dashboardLibraries = [
-      'soda_scs_manager/globalStyling',
-      'soda_scs_manager/tagFilter',
-      'soda_scs_manager/dashboardHealthStatus',
-      'soda_scs_manager/addApplicationPopup',
-    ];
+    usort($projectCards, static function (array $a, array $b): int {
+      return strnatcasecmp((string) $a['#label'], (string) $b['#label']);
+    });
 
     $build = [
       '#theme' => 'soda_scs_manager__dashboard',
       '#attributes' => ['class' => 'container soda-scs-manager--view--grid'],
-      '#entitiesByUser' => $entitiesByUser,
-      '#entitiesByProject' => $entitiesByProject,
-      '#currentUsername' => $current_user->getDisplayName(),
-      '#add_application_trigger' => [
-        '#theme' => 'soda_scs_manager__add_application_heading_trigger',
-        '#asset_base' => $assetBase,
-        '#popup_url_mariadb' => $this->sodaScsHelpers->internalPathUrl('soda-scs-manager/app/mariadb'),
-        '#popup_url_wisski' => $this->sodaScsHelpers->internalPathUrl('soda-scs-manager/app/wisski'),
-        '#popup_url_open_gdb' => $this->sodaScsHelpers->internalPathUrl('soda-scs-manager/app/open-gdb'),
-        '#cache' => [
-          'max-age' => 0,
-        ],
-      ],
+      '#central_service_cards' => $centralServiceCards,
+      '#project_cards' => $projectCards,
       '#cache' => [
         'max-age' => 0,
         'contexts' => ['user', 'languages:language_interface'],
       ],
       '#attached' => [
-        'library' => $dashboardLibraries,
+        'library' => [
+          'soda_scs_manager/globalStyling',
+          'soda_scs_manager/tagFilter',
+          'soda_scs_manager/dashboardHealthStatus',
+        ],
         'drupalSettings' => [
           'sodaScsManager' => [
             'dashboardAdminMail' => (string) ($this->config('system.site')->get('mail') ?? ''),
@@ -402,6 +199,38 @@ class SodaScsManagerController extends ControllerBase {
     $this->attachCoworkingIntroForUser($build, $uid);
 
     return $build;
+  }
+
+  /**
+   * Loads projects visible on the dashboard for the given account.
+   *
+   * Admins see all projects; others see projects they own or are members of.
+   *
+   * @return \Drupal\soda_scs_manager\Entity\SodaScsProjectInterface[]
+   *   Projects keyed by entity ID.
+   */
+  protected function loadDashboardProjects(AccountInterface $account): array {
+    $projectStorage = $this->entityTypeManager->getStorage('soda_scs_project');
+
+    if ($account->hasPermission('soda scs manager admin')) {
+      /** @var \Drupal\soda_scs_manager\Entity\SodaScsProjectInterface[] $projects */
+      $projects = $projectStorage->loadMultiple();
+      return $projects;
+    }
+
+    $query = $projectStorage->getQuery()->accessCheck(TRUE);
+    $orGroup = $query->orConditionGroup()
+      ->condition('owner', $account->id())
+      ->condition('members', $account->id());
+    $projectIds = $query->condition($orGroup)->execute();
+
+    if (empty($projectIds)) {
+      return [];
+    }
+
+    /** @var \Drupal\soda_scs_manager\Entity\SodaScsProjectInterface[] $projects */
+    $projects = $projectStorage->loadMultiple($projectIds);
+    return $projects;
   }
 
   /**
