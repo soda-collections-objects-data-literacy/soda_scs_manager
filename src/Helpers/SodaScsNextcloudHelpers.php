@@ -98,6 +98,21 @@ class SodaScsNextcloudHelpers {
   }
 
   /**
+   * Builds a Nextcloud Files URL that opens a project's Team Folder.
+   *
+   * Team Folder mount name equals the project label.
+   *
+   * @param string $baseUrl
+   *   Nextcloud public base URL, with or without a trailing slash.
+   * @param string $projectLabel
+   *   Project display name (Team Folder name in Files).
+   */
+  public static function buildProjectFilesUrl(string $baseUrl, string $projectLabel): string {
+    $base = rtrim($baseUrl, '/');
+    return $base . '/apps/files/files?dir=/' . rawurlencode($projectLabel);
+  }
+
+  /**
    * Logs technical Nextcloud SSO failure details for administrators.
    */
   protected function logNextcloudSsoFailure(string $operation, string $detail): void {

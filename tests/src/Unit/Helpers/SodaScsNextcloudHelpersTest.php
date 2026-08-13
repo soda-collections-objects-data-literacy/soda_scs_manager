@@ -86,4 +86,17 @@ class SodaScsNextcloudHelpersTest extends UnitTestCase {
     ));
   }
 
+  /**
+   * @covers ::buildProjectFilesUrl
+   */
+  public function testBuildProjectFilesUrl(): void {
+    $this->assertSame(
+      'https://drive.dev-scs.sammlungen.io/apps/files/files?dir=/rnsrk%20default%20project',
+      SodaScsNextcloudHelpers::buildProjectFilesUrl(
+        'https://drive.dev-scs.sammlungen.io/',
+        'rnsrk default project',
+      ),
+    );
+  }
+
 }

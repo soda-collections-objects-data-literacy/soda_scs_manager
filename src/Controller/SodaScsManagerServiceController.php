@@ -7,10 +7,12 @@ namespace Drupal\soda_scs_manager\Controller;
 use Drupal\Core\Controller\ControllerBase;
 use Drupal\Core\Routing\TrustedRedirectResponse;
 use Drupal\soda_scs_manager\Entity\SodaScsComponent;
+use Drupal\soda_scs_manager\Entity\SodaScsProjectInterface;
 use Drupal\soda_scs_manager\Entity\SodaScsStack;
 use Drupal\soda_scs_manager\Helpers\SodaScsServiceHelpers;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 use Symfony\Component\HttpFoundation\JsonResponse;
+use Symfony\Component\HttpFoundation\Request;
 
 /**
  * The SODa SCS Manager service controller.
@@ -67,12 +69,17 @@ class SodaScsManagerServiceController extends ControllerBase {
    *
    * @param \Drupal\soda_scs_manager\Entity\SodaScsStack $soda_scs_stack
    *   The SODa SCS Stack entity.
+   * @param \Symfony\Component\HttpFoundation\Request $request
+   *   The current request (optional {@code project} query for deep links).
    *
    * @return \Drupal\Core\Routing\TrustedRedirectResponse
    *   The redirect response.
    */
-  public function generateStackUrl(SodaScsStack $soda_scs_stack): TrustedRedirectResponse {
-    $urls = $this->sodaScsServiceHelpers->getStackServiceAndLoginUrls($soda_scs_stack);
+  public function generateStackUrl(SodaScsStack $soda_scs_stack, Request $request): TrustedRedirectResponse {
+    $urls = $this->sodaScsServiceHelpers->getStackServiceAndLoginUrls(
+      $soda_scs_stack,
+      $this->loadProjectFromRequest($request),
+    );
     if ($urls === NULL) {
       throw new \Exception('Unknown stack type: ' . $soda_scs_stack->bundle());
     }
@@ -103,18 +110,38 @@ class SodaScsManagerServiceController extends ControllerBase {
    *
    * @param \Drupal\soda_scs_manager\Entity\SodaScsStack $soda_scs_stack
    *   The SODa SCS Stack entity.
+   * @param \Symfony\Component\HttpFoundation\Request $request
+   *   The current request (optional {@code project} query for deep links).
    *
    * @return \Symfony\Component\HttpFoundation\JsonResponse
    *   JSON response with the service URL.
    */
-  public function getStackServiceUrl(SodaScsStack $soda_scs_stack): JsonResponse {
-    $urls = $this->sodaScsServiceHelpers->getStackServiceAndLoginUrls($soda_scs_stack);
+  public function getStackServiceUrl(SodaScsStack $soda_scs_stack, Request $request): JsonResponse {
+    $urls = $this->sodaScsServiceHelpers->getStackServiceAndLoginUrls(
+      $soda_scs_stack,
+      $this->loadProjectFromRequest($request),
+    );
     if ($urls === NULL) {
       return new JsonResponse([
         'error' => 'Unknown stack type: ' . $soda_scs_stack->bundle(),
       ], 400);
     }
     return new JsonResponse(['url' => $urls['url'], 'loginUrl' => $urls['loginUrl']]);
+  }
+
+  /**
+   * Loads a viewable project from the {@code project} query parameter.
+   */
+  private function loadProjectFromRequest(Request $request): ?SodaScsProjectInterface {
+    $projectId = $request->query->get('project');
+    if (!is_numeric($projectId)) {
+      return NULL;
+    }
+    $project = $this->entityTypeManager()->getStorage('soda_scs_project')->load((int) $projectId);
+    if (!$project instanceof SodaScsProjectInterface) {
+      return NULL;
+    }
+    return $project->access('view') ? $project : NULL;
   }
 
 }

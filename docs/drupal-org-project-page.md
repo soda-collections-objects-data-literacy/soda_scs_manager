@@ -21,7 +21,7 @@ Self-service portal for the SODa Semantic Co-Working Space: provision WissKI, Ne
 
 <p><strong>Basic functionality</strong></p>
 <ul>
-  <li><strong>Project-centric dashboard</strong> — central services (e.g. Nextcloud, Jupyter, WebProtégé) plus “Your projects” as cards (status, members); create apps from the project page.</li>
+  <li><strong>Project-centric dashboard</strong> — “Your projects” as cards (status, members); JupyterHub, Nextcloud, and WebProtégé live on the project page (Team Folder deep links); create apps from the project page.</li>
   <li><strong>Stacks (environments)</strong> — e.g. WissKI Environment (Drupal/WissKI + DB + triplestore), JupyterHub Environment, Nextcloud Environment (files, OnlyOffice, SCS-Share).</li>
   <li><strong>Components (resources/accounts/instances)</strong> — SQL databases (phpMyAdmin), OpenGDB triplestores, WebProtégé accounts, plain WissKI instances, etc.</li>
   <li><strong>Identity &amp; access</strong> — OpenID Connect / Keycloak SSO; project membership sync to groups; service keys and connected accounts.</li>

@@ -118,8 +118,6 @@ class SodaScsManagerController extends ControllerBase {
       return [];
     }
 
-    $centralServiceCards = $this->applicationCardBuilder->buildCentralServiceCardsForUser($uid);
-
     $projectCards = [];
     /** @var \Drupal\soda_scs_manager\Entity\SodaScsProjectInterface $project */
     foreach ($projects as $project) {
@@ -176,7 +174,6 @@ class SodaScsManagerController extends ControllerBase {
     $build = [
       '#theme' => 'soda_scs_manager__dashboard',
       '#attributes' => ['class' => 'container soda-scs-manager--view--grid'],
-      '#central_service_cards' => $centralServiceCards,
       '#project_cards' => $projectCards,
       '#cache' => [
         'max-age' => 0,

@@ -6,6 +6,7 @@ namespace Drupal\soda_scs_manager\Service;
 
 use Drupal\Core\Entity\EntityTypeBundleInfoInterface;
 use Drupal\Core\Entity\EntityTypeManagerInterface;
+use Drupal\Core\Session\AccountProxyInterface;
 use Drupal\Core\StringTranslation\StringTranslationTrait;
 use Drupal\Core\StringTranslation\TranslationInterface;
 use Drupal\Core\Url;
@@ -36,7 +37,7 @@ final class SodaScsApplicationCardBuilder {
   ];
 
   /**
-   * Component bundles provisioned centrally (not shown on project pages).
+   * Component bundles provisioned per user (dashboard + project pages).
    *
    * @var list<string>
    */
@@ -45,7 +46,10 @@ final class SodaScsApplicationCardBuilder {
   ];
 
   /**
-   * Stack bundles provisioned centrally (not shown on project pages).
+   * Stack bundles provisioned per user (dashboard + project pages).
+   *
+   * On project pages the service link opens the project's Team Folder
+   * (JupyterLab / Nextcloud Files).
    *
    * @var list<string>
    */
@@ -70,6 +74,7 @@ final class SodaScsApplicationCardBuilder {
   public function __construct(
     protected EntityTypeBundleInfoInterface $bundleInfo,
     protected EntityTypeManagerInterface $entityTypeManager,
+    protected AccountProxyInterface $currentUser,
     #[Autowire(service: 'soda_scs_manager.helpers')]
     protected SodaScsHelpers $sodaScsHelpers,
     TranslationInterface $stringTranslation,
@@ -80,13 +85,62 @@ final class SodaScsApplicationCardBuilder {
   /**
    * Builds dashboard-style cards for applications linked to the project.
    *
-   * Stacks linked to the project are shown as cards; their included components
-   * are omitted so bundled apps (e.g. WissKI + SQL + triplestore) appear once.
+   * The current user's central services (JupyterHub, Nextcloud, WebProtégé)
+   * are shown first, with project-scoped deep links. Stacks linked to the
+   * project follow; their included components are omitted so bundled apps
+   * (e.g. WissKI + SQL + triplestore) appear once.
    *
    * @return list<array<string, mixed>>
    *   Render arrays for entity cards.
    */
   public function buildForProject(SodaScsProjectInterface $project): array {
+    return array_merge(
+      $this->buildCentralServiceCardsForUser($this->currentUser->id(), $project),
+      $this->buildProjectOwnedApplicationCards($project),
+    );
+  }
+
+  /**
+   * Builds compact application summaries for a project dashboard card.
+   *
+   * Central services are omitted here; they belong on the project page.
+   *
+   * @return list<array<string, mixed>>
+   *   Each item has label, bundle_label, health_status, is_online, url,
+   *   entity_id, entity_type_id, and tags.
+   */
+  public function buildApplicationSummariesForProject(SodaScsProjectInterface $project): array {
+    $summaries = [];
+
+    foreach ($this->buildProjectOwnedApplicationCards($project) as $card) {
+      $healthStatus = (string) ($card['#health_status'] ?? 'Unknown');
+      $url = $card['#url'] ?? NULL;
+      if ($url instanceof Url) {
+        $url = $url->toString();
+      }
+
+      $summaries[] = [
+        'label' => $card['#title'] ?? '',
+        'bundle_label' => $card['#bundle_label'] ?? '',
+        'health_status' => $healthStatus,
+        'is_online' => $this->isHealthOnline($healthStatus),
+        'url' => $url,
+        'entity_id' => $card['#entity_id'] ?? NULL,
+        'entity_type_id' => $card['#entity_type_id'] ?? NULL,
+        'tags' => is_array($card['#tags'] ?? NULL) ? $card['#tags'] : [],
+      ];
+    }
+
+    return $summaries;
+  }
+
+  /**
+   * Builds cards for applications that belong to the project (not per-user apps).
+   *
+   * @return list<array<string, mixed>>
+   *   Render arrays for entity cards.
+   */
+  private function buildProjectOwnedApplicationCards(SodaScsProjectInterface $project): array {
     $cards = [];
     $stacks = $this->loadProjectStacks($project);
     $stackIncludedComponentIds = $this->collectStackIncludedComponentIds($stacks);
@@ -118,47 +172,17 @@ final class SodaScsApplicationCardBuilder {
   }
 
   /**
-   * Builds compact application summaries for a project dashboard card.
-   *
-   * @return list<array<string, mixed>>
-   *   Each item has label, bundle_label, health_status, is_online, url,
-   *   entity_id, entity_type_id, and tags.
-   */
-  public function buildApplicationSummariesForProject(SodaScsProjectInterface $project): array {
-    $summaries = [];
-
-    foreach ($this->buildForProject($project) as $card) {
-      $healthStatus = (string) ($card['#health_status'] ?? 'Unknown');
-      $url = $card['#url'] ?? NULL;
-      if ($url instanceof Url) {
-        $url = $url->toString();
-      }
-
-      $summaries[] = [
-        'label' => $card['#title'] ?? '',
-        'bundle_label' => $card['#bundle_label'] ?? '',
-        'health_status' => $healthStatus,
-        'is_online' => $this->isHealthOnline($healthStatus),
-        'url' => $url,
-        'entity_id' => $card['#entity_id'] ?? NULL,
-        'entity_type_id' => $card['#entity_type_id'] ?? NULL,
-        'tags' => is_array($card['#tags'] ?? NULL) ? $card['#tags'] : [],
-      ];
-    }
-
-    return $summaries;
-  }
-
-  /**
    * Builds cards for centrally provisioned apps owned by the given user.
    *
    * @param int|string $uid
    *   User ID.
+   * @param \Drupal\soda_scs_manager\Entity\SodaScsProjectInterface|null $project
+   *   When set, JupyterHub and Nextcloud cards deep-link into this project.
    *
    * @return list<array<string, mixed>>
    *   Render arrays for entity cards.
    */
-  public function buildCentralServiceCardsForUser(int|string $uid): array {
+  public function buildCentralServiceCardsForUser(int|string $uid, ?SodaScsProjectInterface $project = NULL): array {
     $cards = [];
 
     $stackIds = $this->entityTypeManager
@@ -176,7 +200,7 @@ final class SodaScsApplicationCardBuilder {
         ->getStorage('soda_scs_stack')
         ->loadMultiple($stackIds);
       foreach ($stacks as $stack) {
-        $cards[] = $this->buildStackCard($stack);
+        $cards[] = $this->buildStackCard($stack, $project);
       }
     }
 
@@ -239,10 +263,15 @@ final class SodaScsApplicationCardBuilder {
   /**
    * Builds a single dashboard card render array for a stack.
    *
+   * @param \Drupal\soda_scs_manager\Entity\SodaScsStackInterface $stack
+   *   The stack entity.
+   * @param \Drupal\soda_scs_manager\Entity\SodaScsProjectInterface|null $project
+   *   Optional project context for JupyterHub / Nextcloud deep links.
+   *
    * @return array<string, mixed>
    *   Entity card render array.
    */
-  public function buildStackCard(SodaScsStackInterface $stack): array {
+  public function buildStackCard(SodaScsStackInterface $stack, ?SodaScsProjectInterface $project = NULL): array {
     $bundleInfo = $this->bundleInfo->getBundleInfo($stack->getEntityTypeId())[$stack->bundle()];
 
     $detailsLink = NULL;
@@ -265,6 +294,16 @@ final class SodaScsApplicationCardBuilder {
       ];
     }
 
+    $urlOptions = [];
+    if ($project !== NULL) {
+      $urlOptions['query']['project'] = $project->id();
+    }
+
+    $cacheTags = $stack->getCacheTags();
+    if ($project !== NULL) {
+      $cacheTags = array_merge($cacheTags, $project->getCacheTags());
+    }
+
     return [
       '#theme' => 'soda_scs_manager__entity_card',
       '#title' => $this->t('@bundle', ['@bundle' => $stack->label()]),
@@ -280,13 +319,13 @@ final class SodaScsApplicationCardBuilder {
       ),
       '#url' => Url::fromRoute('soda_scs_manager.stack.service_link', [
         'soda_scs_stack' => $stack->id(),
-      ]),
+      ], $urlOptions),
       '#action_links' => $actionLinks,
       '#tags' => $bundleInfo['tags'],
       '#cache' => [
         'max-age' => 0,
-        'contexts' => ['languages:language_interface'],
-        'tags' => $stack->getCacheTags(),
+        'contexts' => ['languages:language_interface', 'user'],
+        'tags' => $cacheTags,
       ],
     ];
   }

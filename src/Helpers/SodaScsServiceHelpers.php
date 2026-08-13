@@ -14,8 +14,10 @@ use Drupal\Core\StringTranslation\TranslationInterface;
 use Drupal\Core\StringTranslation\StringTranslationTrait;
 use Drupal\Core\TypedData\Exception\MissingDataException;
 use Drupal\soda_scs_manager\Entity\SodaScsComponent;
+use Drupal\soda_scs_manager\Entity\SodaScsProjectInterface;
 use Drupal\soda_scs_manager\Entity\SodaScsStack;
 use Drupal\soda_scs_manager\Helpers\SodaScsJupyterHelpers;
+use Drupal\user\UserInterface;
 use Drupal\soda_scs_manager\RequestActions\SodaScsServiceRequestInterface;
 use Drupal\soda_scs_manager\ServiceActions\SodaScsServiceActionsInterface;
 
@@ -661,14 +663,18 @@ class SodaScsServiceHelpers {
   /**
    * Resolves the public service base URL and a login (or entry) URL for a stack.
    *
+   * When $project is set, JupyterHub and Nextcloud open the project's Team
+   * Folder instead of the service home.
+   *
    * @return array{url: string, loginUrl: string}|null
    *   URLs for known stack bundles, or NULL for unknown types.
    */
-  public function getStackServiceAndLoginUrls(SodaScsStack $stack): ?array {
+  public function getStackServiceAndLoginUrls(SodaScsStack $stack, ?SodaScsProjectInterface $project = NULL): ?array {
     $jupyterSettings = $this->initJupyterHubSettings();
     $nextcloudSettings = $this->initNextcloudSettings();
     $wisskiInstanceSettings = $this->initWisskiInstanceSettings();
     $bundle = $stack->bundle();
+    $projectLabel = $project !== NULL ? (string) $project->label() : '';
 
     switch ($bundle) {
       case 'soda_scs_wisski_stack':
@@ -681,14 +687,22 @@ class SodaScsServiceHelpers {
 
       case 'soda_scs_jupyter_stack':
         $url = $jupyterSettings['baseUrl'];
-        $base = rtrim($url, '/');
+        $base = rtrim((string) $url, '/');
         $loginUrl = $base . '/hub/login';
+        $owner = $stack->getOwner();
+        $accountName = $owner instanceof UserInterface ? $owner->getAccountName() : '';
+        if ($projectLabel !== '' && $accountName !== '') {
+          $url = SodaScsJupyterHelpers::buildProjectLabUrl((string) $url, $accountName, $projectLabel);
+        }
         return ['url' => $url, 'loginUrl' => $loginUrl];
 
       case 'soda_scs_nextcloud_stack':
         $url = $nextcloudSettings['baseUrl'];
-        $base = rtrim($url, '/');
+        $base = rtrim((string) $url, '/');
         $loginUrl = $base . '/login';
+        if ($projectLabel !== '') {
+          $url = SodaScsNextcloudHelpers::buildProjectFilesUrl((string) $url, $projectLabel);
+        }
         return ['url' => $url, 'loginUrl' => $loginUrl];
 
       default:

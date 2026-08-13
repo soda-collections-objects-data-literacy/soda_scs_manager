@@ -65,6 +65,25 @@ class SodaScsJupyterHelpers {
   }
 
   /**
+   * Builds a JupyterLab URL that opens a project's Team Folder.
+   *
+   * Spawner bind-mounts Team Folders at
+   * {@code /home/jovyan/nextcloud/<project label>}.
+   *
+   * @param string $baseUrl
+   *   JupyterHub public base URL, with or without a trailing slash.
+   * @param string $accountName
+   *   Hub username (Keycloak preferred_username / Drupal account name).
+   * @param string $projectLabel
+   *   Project display name (Team Folder mount name).
+   */
+  public static function buildProjectLabUrl(string $baseUrl, string $accountName, string $projectLabel): string {
+    $base = rtrim($baseUrl, '/');
+    return $base . '/user/' . rawurlencode($accountName)
+      . '/lab/tree/nextcloud/' . rawurlencode($projectLabel);
+  }
+
+  /**
    * Stops a running Jupyter notebook container for the given user.
    *
    * Does not remove the container or its {@code jupyterhub-user-{username}}

@@ -66,4 +66,18 @@ class SodaScsJupyterHelpersTest extends UnitTestCase {
     $this->assertSame('jupyter-', $helper->getContainerNamePrefix());
   }
 
+  /**
+   * @covers ::buildProjectLabUrl
+   */
+  public function testBuildProjectLabUrl(): void {
+    $this->assertSame(
+      'https://code.dev-scs.sammlungen.io/user/rnsrk/lab/tree/nextcloud/rnsrk%20default%20project',
+      SodaScsJupyterHelpers::buildProjectLabUrl(
+        'https://code.dev-scs.sammlungen.io/',
+        'rnsrk',
+        'rnsrk default project',
+      ),
+    );
+  }
+
 }

@@ -12,9 +12,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - After project create or invitation accept, warn users that JupyterLab mounts
   project Team Folders only on notebook start, with a link to
   **Restart Jupyter** (`/soda-scs-manager/jupyter/restart-notebook`).
-- Confirm form and **Restart Jupyter** button on the JupyterHub dashboard card
+- Confirm form and **Restart Jupyter** button on the JupyterHub card
   to stop the user’s notebook server (unsaved work warning); user must
   **Start My Server** in JupyterHub afterwards so new Team Folders remount.
+- Project pages show the user’s central services (JupyterHub, Nextcloud,
+  WebProtégé). JupyterHub and Nextcloud open the project Team Folder.
+
+### Changed
+
+- Dashboard lists only **Your projects**. JupyterHub, Nextcloud, and WebProtégé
+  are opened from the project page, not from a separate **Central services**
+  block.
 
 ## [3.0.0] - 2026-08-12
 

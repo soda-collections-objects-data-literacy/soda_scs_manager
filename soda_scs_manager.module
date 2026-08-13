@@ -983,7 +983,6 @@ function soda_scs_manager_theme($existing, $type, $theme, $path) {
     'soda_scs_manager__dashboard' => [
       'variables' => [
         'attributes' => NULL,
-        'central_service_cards' => NULL,
         'project_cards' => NULL,
         'intro_coworking_wizard' => FALSE,
         'intro_asset_base' => '',
