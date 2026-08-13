@@ -530,11 +530,35 @@ soda_scs_manager.start_page:
   options:
     no_cache: TRUE
 
+soda_scs_manager.messages:
+  path: '/soda-scs-manager/messages'
+  defaults:
+    _controller: '\Drupal\soda_scs_manager\Controller\SodaScsMessageController::inbox'
+    _title: 'Messages'
+  requirements:
+    _permission: 'soda scs manager user'
+  options:
+    no_cache: TRUE
+
+entity.soda_scs_message.canonical:
+  path: '/soda-scs-manager/messages/{soda_scs_message}'
+  defaults:
+    _controller: '\Drupal\soda_scs_manager\Controller\SodaScsMessageController::view'
+    _title_callback: '\Drupal\soda_scs_manager\Controller\SodaScsMessageController::viewTitle'
+  requirements:
+    _permission: 'soda scs manager user'
+    _entity_access: 'soda_scs_message.view'
+  options:
+    parameters:
+      soda_scs_message:
+        type: entity:soda_scs_message
+    no_cache: TRUE
+
 soda_scs_manager.notifications:
   path: '/soda-scs-manager/notifications'
   defaults:
-    _form: '\Drupal\soda_scs_manager\Form\SodaScsProjectMembershipForm'
-    _title: 'Notifications'
+    _controller: '\Drupal\soda_scs_manager\Controller\SodaScsMessageController::redirectLegacyInbox'
+    _title: 'Messages'
   requirements:
     _permission: 'soda scs manager user'
   options:

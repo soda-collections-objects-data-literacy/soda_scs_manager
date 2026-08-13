@@ -32,6 +32,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- The former **Notifications** page is a general **Messages** inbox
+  (sender, subject, date). Opening a message shows its body and
+  type-specific actions. Project invitations are one message type
+  (accept / decline); other types (private or group) can be added later
+  without changing the inbox. Existing invitations are migrated on
+  `update 11029`. The old `/soda-scs-manager/notifications` URL redirects
+  to `/soda-scs-manager/messages`.
 - Central application cards are titled **JupyterHub**, **Nextcloud**, and
   **WebProtégé** (not the per-user instance name). WissKI, database, and
   triplestore cards keep the instance title.

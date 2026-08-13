@@ -384,9 +384,9 @@ msgstr "Kollaborative Projekte und Mitgliedschaften"
 msgid "Documentation"
 msgstr "Dokumentation"
 
-#: soda_scs_manager.links.menu.yml:138
-msgid "Notifications"
-msgstr "Benachrichtigungen"
+#: soda_scs_manager.links.menu.yml
+msgid "Messages"
+msgstr "Nachrichten"
 
 #: soda_scs_manager.links.menu.yml:156
 msgid "Administration"
@@ -3845,3 +3845,123 @@ msgstr "Umbenannt"
 #: templates/cards/soda-scs-manager--entity-card.html.twig
 msgid "Moved"
 msgstr "Verschoben"
+
+#: soda_scs_manager.module
+msgid "Messages (@count unread)"
+msgstr "Nachrichten (@count ungelesen)"
+
+#: templates/pages/soda-scs-manager--messages.html.twig
+msgid "You have no messages."
+msgstr "Sie haben keine Nachrichten."
+
+#: templates/pages/soda-scs-manager--message.html.twig
+msgid "Back to messages"
+msgstr "Zurück zu den Nachrichten"
+
+#: templates/pages/soda-scs-manager--message.html.twig
+msgid "From"
+msgstr "Von"
+
+#: templates/pages/soda-scs-manager--message.html.twig
+msgid "Date"
+msgstr "Datum"
+
+#: src/Entity/SodaScsMessage.php
+msgid "Subject"
+msgstr "Betreff"
+
+#: src/Entity/SodaScsMessage.php
+msgid "Sender"
+msgstr "Absender"
+
+#: src/Entity/SodaScsMessage.php
+msgid "Recipient"
+msgstr "Empfänger"
+
+#: src/Entity/SodaScsMessage.php
+msgid "Message"
+msgstr "Nachricht"
+
+#: src/MessageType/SodaScsGenericMessageType.php
+msgid "This message has no body."
+msgstr "Diese Nachricht hat keinen Text."
+
+#: src/MessageType/SodaScsGenericMessageType.php
+#: src/MessageType/SodaScsProjectInvitationMessageType.php
+msgid "The message has been deleted."
+msgstr "Die Nachricht wurde gelöscht."
+
+#: src/MessageType/SodaScsGenericMessageType.php
+#: src/MessageType/SodaScsProjectInvitationMessageType.php
+msgid "Could not delete the message. Please try again."
+msgstr "Die Nachricht konnte nicht gelöscht werden. Bitte versuchen Sie es erneut."
+
+#: src/MessageType/SodaScsGenericMessageType.php
+#: src/MessageType/SodaScsProjectInvitationMessageType.php
+msgid "This action is not available for this message."
+msgstr "Diese Aktion ist für diese Nachricht nicht verfügbar."
+
+#: src/MessageType/SodaScsProjectInvitationMessageType.php
+msgid "Decline"
+msgstr "Ablehnen"
+
+#: src/MessageType/SodaScsProjectInvitationMessageType.php
+msgid "Unknown sender"
+msgstr "Unbekannter Absender"
+
+#: src/MessageType/SodaScsProjectInvitationMessageType.php
+msgid "You have been invited to the project @project"
+msgstr "Sie wurden in das Projekt @project eingeladen"
+
+#: src/MessageType/SodaScsProjectInvitationMessageType.php
+msgid "You have been invited to a project"
+msgstr "Sie wurden in ein Projekt eingeladen"
+
+#: src/MessageType/SodaScsProjectInvitationMessageType.php
+msgid "@sender has invited you to join the project \"@project\"."
+msgstr "@sender hat Sie eingeladen, dem Projekt „@project“ beizutreten."
+
+#: src/MessageType/SodaScsProjectInvitationMessageType.php
+msgid "You can accept or decline this invitation."
+msgstr "Sie können diese Einladung annehmen oder ablehnen."
+
+#: src/MessageType/SodaScsProjectInvitationMessageType.php
+msgid "You accepted this invitation."
+msgstr "Sie haben diese Einladung angenommen."
+
+#: src/MessageType/SodaScsProjectInvitationMessageType.php
+msgid "You declined this invitation."
+msgstr "Sie haben diese Einladung abgelehnt."
+
+#: src/MessageType/SodaScsProjectInvitationMessageType.php
+msgid "This invitation is no longer valid."
+msgstr "Diese Einladung ist nicht mehr gültig."
+
+#: src/MessageType/SodaScsProjectInvitationMessageType.php
+msgid "Open project @project"
+msgstr "Projekt @project öffnen"
+
+#: src/MessageType/SodaScsProjectInvitationMessageType.php
+msgid "Accept or decline this invitation before deleting it."
+msgstr "Nehmen Sie diese Einladung an oder lehnen Sie sie ab, bevor Sie sie löschen."
+
+#: src/Form/SodaScsMessageActionForm.php
+msgid "Delete this message from your inbox?"
+msgstr "Diese Nachricht aus Ihrem Posteingang löschen?"
+
+#: src/Form/SodaScsMessageActionForm.php
+msgid "The selected message no longer exists."
+msgstr "Die gewählte Nachricht existiert nicht mehr."
+
+#: src/Form/SodaScsMessageActionForm.php
+msgid "You are not allowed to act on this message."
+msgstr "Sie dürfen diese Nachricht nicht bearbeiten."
+
+#: soda_scs_manager.module
+msgid "You can accept or decline the invitation in your messages: @url"
+msgstr "Sie können die Einladung in Ihren Nachrichten annehmen oder ablehnen: @url"
+
+#: src/Helpers/SodaScsProjectMembershipHelpers.php
+msgid "a project"
+msgstr "ein Projekt"
+

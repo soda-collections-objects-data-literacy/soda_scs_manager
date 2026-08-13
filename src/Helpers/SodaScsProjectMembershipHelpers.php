@@ -14,7 +14,9 @@ use Drupal\Core\StringTranslation\StringTranslationTrait;
 use Drupal\Core\Url;
 use Drupal\soda_scs_manager\Entity\SodaScsProjectInterface;
 use Drupal\soda_scs_manager\Entity\SodaScsProjectMembershipInterface;
+use Drupal\soda_scs_manager\Helpers\SodaScsProjectDbAccessHelpers;
 use Drupal\soda_scs_manager\Helpers\SodaScsProjectHelpers;
+use Drupal\soda_scs_manager\Helpers\SodaScsMessageHelpers;
 use Drupal\soda_scs_manager\Helpers\SodaScsWebprotegeHelpers;
 use Drupal\soda_scs_manager\ValueObject\SodaScsResult;
 use Drupal\user\UserInterface;
@@ -73,6 +75,11 @@ final class SodaScsProjectMembershipHelpers {
   private TimeInterface $time;
 
   /**
+   * In-app message helpers.
+   */
+  private SodaScsMessageHelpers $messageHelpers;
+
+  /**
    * Constructs the manager.
    */
   public function __construct(
@@ -84,6 +91,8 @@ final class SodaScsProjectMembershipHelpers {
     LoggerChannelFactoryInterface $loggerFactory,
     #[Autowire(service: 'plugin.manager.mail')]
     MailManagerInterface $mailManager,
+    #[Autowire(service: 'soda_scs_manager.message.helpers')]
+    SodaScsMessageHelpers $messageHelpers,
     #[Autowire(service: 'soda_scs_manager.project.helpers')]
     SodaScsProjectHelpers $projectHelpers,
     #[Autowire(service: 'soda_scs_manager.project_db_access.helpers')]
@@ -97,6 +106,7 @@ final class SodaScsProjectMembershipHelpers {
     $this->languageManager = $languageManager;
     $this->logger = $loggerFactory->get('soda_scs_manager');
     $this->mailManager = $mailManager;
+    $this->messageHelpers = $messageHelpers;
     $this->projectHelpers = $projectHelpers;
     $this->projectDbAccessHelpers = $projectDbAccessHelpers;
     $this->webprotegeHelpers = $webprotegeHelpers;
@@ -153,6 +163,7 @@ final class SodaScsProjectMembershipHelpers {
         'status' => SodaScsProjectMembershipInterface::STATUS_PENDING,
       ]);
       $request->save();
+      $this->messageHelpers->createFromProjectInvitation($request);
       $created[] = $recipient->getDisplayName();
 
       $this->sendInvitationEmail($project, $requester, $recipient);
@@ -383,15 +394,15 @@ final class SodaScsProjectMembershipHelpers {
     }
 
     $langcode = $recipient->getPreferredLangcode() ?: $this->languageManager->getDefaultLanguage()->getId();
-    $notificationsUrl = Url::fromRoute('soda_scs_manager.notifications')
+    $messagesUrl = Url::fromRoute('soda_scs_manager.messages')
       ->setAbsolute()
       ->toString();
 
     $params = [
-      'notifications_url' => $notificationsUrl,
-      'project_label'     => $project->label(),
-      'recipient_name'    => $recipient->getDisplayName(),
-      'requester_name'    => $requester->getDisplayName(),
+      'messages_url'    => $messagesUrl,
+      'project_label'   => $project->label(),
+      'recipient_name'  => $recipient->getDisplayName(),
+      'requester_name'  => $requester->getDisplayName(),
     ];
 
     $result = $this->mailManager->mail(

@@ -40,6 +40,19 @@ services:
     class: Drupal\soda_scs_manager\Helpers\SodaScsProjectHelpers
   soda_scs_manager.project_membership.helpers:
     class: Drupal\soda_scs_manager\Helpers\SodaScsProjectMembershipHelpers
+  soda_scs_manager.message.helpers:
+    class: Drupal\soda_scs_manager\Helpers\SodaScsMessageHelpers
+  soda_scs_manager.message_type.generic:
+    class: Drupal\soda_scs_manager\MessageType\SodaScsGenericMessageType
+  soda_scs_manager.message_type.project_invitation:
+    class: Drupal\soda_scs_manager\MessageType\SodaScsProjectInvitationMessageType
+    tags:
+      - { name: soda_scs_manager.message_type }
+  soda_scs_manager.message_type.manager:
+    class: Drupal\soda_scs_manager\MessageType\SodaScsMessageTypeManager
+    arguments:
+      - '@soda_scs_manager.message_type.generic'
+      - !tagged_iterator { tag: soda_scs_manager.message_type }
   soda_scs_manager.project_db_access.helpers:
     class: Drupal\soda_scs_manager\Helpers\SodaScsProjectDbAccessHelpers
   soda_scs_manager.keycloak_service.helpers:

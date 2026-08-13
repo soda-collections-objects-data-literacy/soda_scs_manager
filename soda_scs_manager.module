@@ -28,6 +28,7 @@ use Drupal\soda_scs_manager\Entity\Bundle\SodaScsStackBundle;
 use Drupal\soda_scs_manager\Entity\SodaScsComponent;
 use Drupal\soda_scs_manager\Entity\SodaScsProject;
 use Drupal\soda_scs_manager\Entity\SodaScsProjectInterface;
+use Drupal\soda_scs_manager\Entity\SodaScsProjectMembershipInterface;
 use Drupal\soda_scs_manager\Entity\SodaScsServiceKey;
 use Drupal\soda_scs_manager\Entity\SodaScsSnapshot;
 use Drupal\soda_scs_manager\Entity\SodaScsStack;
@@ -497,6 +498,11 @@ function soda_scs_manager_entity_delete(EntityInterface $entity): void {
     \Drupal::service('soda_scs_manager.project_membership.helpers')
       ->deleteRequestsForProject($entity);
   }
+
+  if ($entity instanceof SodaScsProjectMembershipInterface) {
+    \Drupal::service('soda_scs_manager.message.helpers')
+      ->deleteByRelated('soda_scs_project_membership', (int) $entity->id());
+  }
 }
 
 /**
@@ -738,8 +744,8 @@ function soda_scs_manager_mail($key, &$message, $params) {
         '@project'   => $params['project_label'],
         '@site_name' => $site_name,
       ], $options);
-      $message['body'][] = \Drupal::translation()->translate('You can accept or decline the invitation on your notifications page: @url', [
-        '@url' => $params['notifications_url'],
+      $message['body'][] = \Drupal::translation()->translate('You can accept or decline the invitation in your messages: @url', [
+        '@url' => $params['messages_url'],
       ], $options);
       break;
 
@@ -1110,6 +1116,23 @@ function soda_scs_manager_theme($existing, $type, $theme, $path) {
         'intro_mp4_src_3' => '',
       ],
       'template' => 'includes/soda-scs-manager--coworking-intro',
+    ],
+    'soda_scs_manager__messages' => [
+      'variables' => [
+        'messages' => [],
+      ],
+      'template' => 'pages/soda-scs-manager--messages',
+    ],
+    'soda_scs_manager__message' => [
+      'variables' => [
+        'actions' => NULL,
+        'body' => NULL,
+        'date' => '',
+        'inbox_url' => '',
+        'sender' => '',
+        'subject' => '',
+      ],
+      'template' => 'pages/soda-scs-manager--message',
     ],
   ];
 }
@@ -2584,8 +2607,8 @@ function soda_scs_manager_preprocess_menu(&$variables): void {
     return;
   }
 
-  // Ensure the main menu is cached per user so the notification badge
-  // reflects the current account's pending invitations.
+  // Ensure the main menu is cached per user so the message badge
+  // reflects the current account's unread and pending items.
   if (!isset($variables['#cache'])) {
     $variables['#cache'] = [];
   }
@@ -2593,6 +2616,10 @@ function soda_scs_manager_preprocess_menu(&$variables): void {
     $variables['#cache']['contexts'] = [];
   }
   $variables['#cache']['contexts'][] = 'user';
+  if (!isset($variables['#cache']['tags'])) {
+    $variables['#cache']['tags'] = [];
+  }
+  $variables['#cache']['tags'][] = 'soda_scs_message_list:' . \Drupal::currentUser()->id();
 
   // Two YAML links target the same documentation node route; both would pass
   // access for anonymous users. Show one Documentation item per session state.
@@ -2910,9 +2937,9 @@ function _soda_scs_manager_menu_remove_link_from_tree(array &$items, string $plu
 }
 
 /**
- * TRUE if this menu tree entry is the SCS Manager notifications page link.
+ * TRUE if this menu tree entry is the SCS Manager messages inbox link.
  *
- * Matches the default YAML plugin id, the notifications route, internal path, and aliases.
+ * Matches the YAML plugin id, messages/legacy notifications routes, and paths.
  *
  * @param array $item
  *   A single menu item from template_preprocess_menu().
@@ -2927,7 +2954,11 @@ function _soda_scs_manager_menu_item_is_notifications_link(array $item, string $
     return FALSE;
   }
   $url = $item['url'];
-  if ($url->getRouteName() === 'soda_scs_manager.notifications') {
+  if ($url->isRouted() && in_array($url->getRouteName(), [
+    'soda_scs_manager.messages',
+    'soda_scs_manager.notifications',
+    'entity.soda_scs_message.canonical',
+  ], TRUE)) {
     return TRUE;
   }
   if ($url->isExternal()) {
@@ -2940,18 +2971,20 @@ function _soda_scs_manager_menu_item_is_notifications_link(array $item, string $
     return FALSE;
   }
   $normalized = trim($internalPath, '/');
-  if ($normalized === 'soda-scs-manager/notifications') {
+  if (str_starts_with($normalized, 'soda-scs-manager/messages')
+    || $normalized === 'soda-scs-manager/notifications') {
     return TRUE;
   }
   if (\Drupal::hasService('path_alias.manager')) {
     $systemPath = trim((string) \Drupal::service('path_alias.manager')->getPathByAlias('/' . ltrim($internalPath, '/')), '/');
-    return $systemPath === 'soda-scs-manager/notifications';
+    return str_starts_with($systemPath, 'soda-scs-manager/messages')
+      || $systemPath === 'soda-scs-manager/notifications';
   }
   return FALSE;
 }
 
 /**
- * Adds visible notification label markup to the notifications link (including when nested).
+ * Adds the Messages label and unread/pending badge (including when nested).
  *
  * @param array $items
  *   Menu items from template_preprocess_menu() (by reference).
@@ -2962,32 +2995,35 @@ function _soda_scs_manager_preprocess_menu_notifications_recursive(array &$items
       $currentUser = \Drupal::currentUser();
       $count = 0;
 
-      if ($currentUser->isAuthenticated()) {
-        $storage = \Drupal::entityTypeManager()->getStorage('soda_scs_project_membership');
-        $query = $storage->getQuery()
-          ->condition('recipient', $currentUser->id())
-          ->condition('status', 'pending')
-          ->accessCheck(FALSE);
-        $count = $query->count()->execute();
+      if ($currentUser->isAuthenticated()
+        && \Drupal::hasService('soda_scs_manager.message.helpers')
+        && \Drupal::database()->schema()->tableExists('soda_scs_message')) {
+        $count = (int) \Drupal::service('soda_scs_manager.message.helpers')
+          ->countAttentionItems($currentUser);
       }
 
+      $label = (string) t('Messages');
+      $dot = $count > 0 ? '<span class="notification-dot" aria-hidden="true"></span>' : '';
+      $item['title'] = Markup::create(
+        '<span class="notification-icon-wrapper"><span class="notification-icon">'
+        . Html::escape($label)
+        . '</span>'
+        . $dot
+        . '</span>'
+      );
+      $item['attributes']->addClass('menu-item--notifications');
+      $item['attributes']->addClass('scs-manager--notifications-menu-item');
       if ($count > 0) {
-        $item['title'] = new TranslatableMarkup('<span class="notification-icon-wrapper"><span class="notification-icon">@label</span><span class="notification-dot"></span></span><span class="visually-hidden">@title (@count)</span>', [
-          '@label' => t('Notifications'),
-          '@title' => $item['title'],
-          '@count' => $count,
-        ]);
-        $item['attributes']->addClass('menu-item--notifications');
-        $item['attributes']->addClass('scs-manager--notifications-menu-item');
         $item['attributes']->addClass('has-notifications');
       }
-      else {
-        $item['title'] = new TranslatableMarkup('<span class="notification-icon-wrapper"><span class="notification-icon">@label</span></span><span class="visually-hidden">@title</span>', [
-          '@label' => t('Notifications'),
-          '@title' => $item['title'],
+      if (!empty($item['url']) && $item['url'] instanceof Url) {
+        $item['url']->mergeOptions([
+          'attributes' => [
+            'title' => $count > 0
+              ? (string) t('Messages (@count unread)', ['@count' => $count])
+              : $label,
+          ],
         ]);
-        $item['attributes']->addClass('menu-item--notifications');
-        $item['attributes']->addClass('scs-manager--notifications-menu-item');
       }
     }
     if (!empty($item['below'])) {

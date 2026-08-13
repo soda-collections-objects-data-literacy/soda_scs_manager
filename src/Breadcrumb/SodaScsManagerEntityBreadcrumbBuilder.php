@@ -13,6 +13,7 @@ use Drupal\Core\Routing\RouteMatchInterface;
 use Drupal\Core\StringTranslation\StringTranslationTrait;
 use Drupal\Core\Url;
 use Drupal\soda_scs_manager\Entity\SodaScsComponent;
+use Drupal\soda_scs_manager\Entity\SodaScsMessage;
 use Drupal\soda_scs_manager\Entity\SodaScsProject;
 use Drupal\soda_scs_manager\Entity\SodaScsStack;
 
@@ -36,6 +37,7 @@ final class SodaScsManagerEntityBreadcrumbBuilder implements BreadcrumbBuilderIn
     'soda_scs_stack',
     'soda_scs_service_key',
     'soda_scs_snapshot',
+    'soda_scs_message',
   ];
 
   public function __construct(
@@ -60,6 +62,14 @@ final class SodaScsManagerEntityBreadcrumbBuilder implements BreadcrumbBuilderIn
 
     $entity = $this->getRouteEntity($routeMatch);
     assert($entity instanceof EntityInterface);
+
+    if ($entity instanceof SodaScsMessage) {
+      $breadcrumb->addCacheableDependency($entity);
+      $breadcrumb->addLink(Link::createFromRoute($this->t('Messages'), 'soda_scs_manager.messages'));
+      $breadcrumb->addLink(Link::fromTextAndUrl($entity->label(), Url::fromRoute('<nolink>')));
+      return $breadcrumb;
+    }
+
     $breadcrumb->addCacheableDependency($entity);
 
     $routeName = (string) $routeMatch->getRouteName();

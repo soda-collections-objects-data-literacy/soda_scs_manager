@@ -1667,3 +1667,37 @@ function soda_scs_manager_update_11028() {
     '@type' => $entity_type_id,
   ]);
 }
+
+/**
+ * Install in-app messages and migrate existing project invitations.
+ */
+function soda_scs_manager_update_11029() {
+  $entity_type_manager = \Drupal::entityTypeManager();
+  $update_manager = \Drupal::entityDefinitionUpdateManager();
+  $entity_type_manager->clearCachedDefinitions();
+
+  $definition = $entity_type_manager->getDefinition('soda_scs_message');
+  if (!$update_manager->getEntityType('soda_scs_message')) {
+    $update_manager->installEntityType($definition);
+  }
+
+  $created = 0;
+  $membership_storage = $entity_type_manager->getStorage('soda_scs_project_membership');
+  $ids = $membership_storage->getQuery()->accessCheck(FALSE)->execute();
+  if ($ids !== []) {
+    /** @var \Drupal\soda_scs_manager\Helpers\SodaScsMessageHelpers $message_helpers */
+    $message_helpers = \Drupal::service('soda_scs_manager.message.helpers');
+    foreach ($membership_storage->loadMultiple($ids) as $membership) {
+      if (!$membership instanceof \Drupal\soda_scs_manager\Entity\SodaScsProjectMembershipInterface) {
+        continue;
+      }
+      if ($message_helpers->createFromProjectInvitation($membership) !== NULL) {
+        $created++;
+      }
+    }
+  }
+
+  return t('Installed messages and migrated @count project invitation(s) into the inbox.', [
+    '@count' => $created,
+  ]);
+}
