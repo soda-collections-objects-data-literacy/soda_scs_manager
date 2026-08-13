@@ -14,6 +14,8 @@ use Drupal\soda_scs_manager\Entity\SodaScsComponentInterface;
 use Drupal\soda_scs_manager\Entity\SodaScsProjectInterface;
 use Drupal\soda_scs_manager\Entity\SodaScsStackInterface;
 use Drupal\soda_scs_manager\Helpers\SodaScsHelpers;
+use Drupal\soda_scs_manager\Helpers\SodaScsLifecycleHelpers;
+use Drupal\user\UserInterface;
 use Symfony\Component\DependencyInjection\Attribute\Autowire;
 
 /**
@@ -49,7 +51,8 @@ final class SodaScsApplicationCardBuilder {
    * Stack bundles provisioned per user (dashboard + project pages).
    *
    * On project pages the service link opens the project's Team Folder
-   * (JupyterLab / Nextcloud Files).
+   * (JupyterLab / Nextcloud Files). The Nextcloud card also shows the
+   * Team Folder activity feed from scs_manager_integration.
    *
    * @var list<string>
    */
@@ -77,6 +80,10 @@ final class SodaScsApplicationCardBuilder {
     protected AccountProxyInterface $currentUser,
     #[Autowire(service: 'soda_scs_manager.helpers')]
     protected SodaScsHelpers $sodaScsHelpers,
+    #[Autowire(service: 'soda_scs_manager.lifecycle.helpers')]
+    protected SodaScsLifecycleHelpers $lifecycleHelpers,
+    #[Autowire(service: 'soda_scs_manager.nextcloud.preview')]
+    protected SodaScsNextcloudPreview $nextcloudPreview,
     TranslationInterface $stringTranslation,
   ) {
     $this->stringTranslation = $stringTranslation;
@@ -285,15 +292,6 @@ final class SodaScsApplicationCardBuilder {
       );
     }
 
-    $actionLinks = [];
-    if ($stack->bundle() === 'soda_scs_jupyter_stack') {
-      $actionLinks[] = [
-        'url' => Url::fromRoute('soda_scs_manager.jupyter.restart_notebook')->toString(),
-        'label' => $this->t('Restart Jupyter'),
-        'title' => $this->t('Stop your notebook server so project Team Folders remount on the next Hub start'),
-      ];
-    }
-
     $urlOptions = [];
     if ($project !== NULL) {
       $urlOptions['query']['project'] = $project->id();
@@ -304,7 +302,15 @@ final class SodaScsApplicationCardBuilder {
       $cacheTags = array_merge($cacheTags, $project->getCacheTags());
     }
 
-    return [
+    $feedStatus = NULL;
+    $activities = NULL;
+    if ($stack->bundle() === 'soda_scs_nextcloud_stack' && $project !== NULL) {
+      $feed = $this->buildNextcloudProjectFeed($project);
+      $feedStatus = $feed['status'];
+      $activities = $feed['activities'];
+    }
+
+    $card = [
       '#theme' => 'soda_scs_manager__entity_card',
       '#title' => $this->t('@bundle', ['@bundle' => $stack->label()]),
       '#bundle_label' => $bundleInfo['label'],
@@ -320,13 +326,54 @@ final class SodaScsApplicationCardBuilder {
       '#url' => Url::fromRoute('soda_scs_manager.stack.service_link', [
         'soda_scs_stack' => $stack->id(),
       ], $urlOptions),
-      '#action_links' => $actionLinks,
       '#tags' => $bundleInfo['tags'],
+      '#feed_status' => $feedStatus,
+      '#activities' => $activities,
+      '#can_manage_lifecycle' => $this->lifecycleHelpers->currentUserCanManage($stack),
       '#cache' => [
         'max-age' => 0,
         'contexts' => ['languages:language_interface', 'user'],
         'tags' => $cacheTags,
       ],
+    ];
+
+    if ($feedStatus === 'needs_connect') {
+      $card['#attached']['library'][] = 'soda_scs_manager/nextcloudConnect';
+      _soda_scs_manager_attach_nextcloud_connect_settings($card);
+    }
+
+    return $card;
+  }
+
+  /**
+   * Loads the project Team Folder activity feed for the current user.
+   *
+   * @return array{status: string, activities: array{status: string, items: list<array<string, mixed>>}}
+   *   Preview-shaped feed payload.
+   */
+  private function buildNextcloudProjectFeed(SodaScsProjectInterface $project): array {
+    $empty = [
+      'status' => 'needs_connect',
+      'activities' => [
+        'status' => 'empty',
+        'items' => [],
+      ],
+    ];
+
+    $user = $this->entityTypeManager->getStorage('user')->load($this->currentUser->id());
+    if (!$user instanceof UserInterface) {
+      return $empty;
+    }
+
+    $preview = $this->nextcloudPreview->buildProjectFeedData(
+      $user,
+      (string) $project->id(),
+      (string) $project->label(),
+    );
+
+    return [
+      'status' => (string) ($preview['status'] ?? 'needs_connect'),
+      'activities' => is_array($preview['activities'] ?? NULL) ? $preview['activities'] : $empty['activities'],
     ];
   }
 
@@ -367,6 +414,7 @@ final class SodaScsApplicationCardBuilder {
         'soda_scs_component' => $component->id(),
       ]),
       '#tags' => $bundleInfo['tags'],
+      '#can_manage_lifecycle' => $this->lifecycleHelpers->currentUserCanManage($component),
       '#cache' => [
         'max-age' => 0,
         'contexts' => ['languages:language_interface'],

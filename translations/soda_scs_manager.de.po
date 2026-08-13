@@ -3773,3 +3773,51 @@ msgstr "Notebook-Server stoppen, damit Projekt-Team-Folder beim nächsten Hub-St
 #: soda_scs_manager.routing.yml
 msgid "Restart Jupyter notebook server"
 msgstr "Jupyter-Notebook-Server neu starten"
+
+#: templates/cards/soda-scs-manager--entity-card.html.twig
+msgid "Recent activity"
+msgstr "Letzte Aktivitäten"
+
+#: templates/cards/soda-scs-manager--entity-card.html.twig
+msgid "Connect your Drive account to see recent activity in this project folder."
+msgstr "Verbinden Sie Ihr Drive-Konto, um aktuelle Aktivitäten in diesem Projektordner zu sehen."
+
+#: templates/cards/soda-scs-manager--entity-card.html.twig
+msgid "Project folder activity could not be loaded."
+msgstr "Aktivitäten im Projektordner konnten nicht geladen werden."
+
+#: templates/cards/soda-scs-manager--entity-card.html.twig
+msgid "No recent activity in this project folder."
+msgstr "Keine aktuellen Aktivitäten in diesem Projektordner."
+
+#: templates/cards/soda-scs-manager--entity-card.html.twig
+msgid "Application power controls"
+msgstr "Steuerung des Betriebszustands"
+
+#: templates/cards/soda-scs-manager--entity-card.html.twig
+msgid "Start"
+msgstr "Starten"
+
+#: templates/cards/soda-scs-manager--entity-card.html.twig
+msgid "Stop"
+msgstr "Stoppen"
+
+#: templates/cards/soda-scs-manager--entity-card.html.twig
+msgid "Restart"
+msgstr "Neu starten"
+
+#: js/dashboardHealthStatus.js
+msgid "Stop this application? It will be unavailable until you start it again. Unsaved work may be lost."
+msgstr "Diese Anwendung stoppen? Sie ist dann nicht verfügbar, bis Sie sie wieder starten. Ungespeicherte Arbeit kann verloren gehen."
+
+#: js/dashboardHealthStatus.js
+msgid "Restart this application? It will be briefly unavailable. Unsaved work may be lost."
+msgstr "Diese Anwendung neu starten? Sie ist dann kurz nicht verfügbar. Ungespeicherte Arbeit kann verloren gehen."
+
+#: js/dashboardHealthStatus.js
+msgid "The application status was updated."
+msgstr "Der Betriebszustand der Anwendung wurde aktualisiert."
+
+#: js/dashboardHealthStatus.js
+msgid "The application could not be updated."
+msgstr "Die Anwendung konnte nicht aktualisiert werden."

@@ -182,6 +182,196 @@ class SodaScsJupyterHelpers {
   }
 
   /**
+   * Starts a stopped Jupyter notebook container for the given user.
+   *
+   * Does not spawn a new server. If the container does not exist yet, the user
+   * must start it from JupyterHub so bind mounts are applied.
+   *
+   * @return array{success: bool, started: bool, containerName: string, message: string}
+   *   Operation result.
+   */
+  public function startNotebookContainerForUser(UserInterface $user): array {
+    $accountName = $user->getAccountName();
+    $containerName = $this->getNotebookContainerName($accountName);
+    $logger = $this->loggerFactory->get('soda_scs_manager');
+
+    $inspect = $this->inspectNotebookContainer($containerName);
+    if ($inspect['statusCode'] === 404) {
+      $message = 'No Jupyter notebook container found. Start it from JupyterHub.';
+      $logger->notice('Jupyter notebook start skipped for @user: no container @container.', [
+        '@user' => $accountName,
+        '@container' => $containerName,
+      ]);
+      return [
+        'success' => FALSE,
+        'started' => FALSE,
+        'containerName' => $containerName,
+        'message' => $message,
+      ];
+    }
+    if (!$inspect['success']) {
+      $message = $inspect['error'];
+      $logger->error('Jupyter notebook start failed for @user (@container): @error', [
+        '@user' => $accountName,
+        '@container' => $containerName,
+        '@error' => $message,
+      ]);
+      return [
+        'success' => FALSE,
+        'started' => FALSE,
+        'containerName' => $containerName,
+        'message' => $message,
+      ];
+    }
+
+    if ($inspect['status'] === 'running') {
+      $message = 'Jupyter notebook container is already running.';
+      $logger->notice('Jupyter notebook start skipped for @user: container @container is already running.', [
+        '@user' => $accountName,
+        '@container' => $containerName,
+      ]);
+      return [
+        'success' => TRUE,
+        'started' => FALSE,
+        'containerName' => $containerName,
+        'message' => $message,
+      ];
+    }
+
+    $startResult = $this->containerHelpers->startContainer($containerName);
+    if (!$startResult->success) {
+      $message = (string) ($startResult->error ?? $startResult->message);
+      $logger->error('Jupyter notebook start failed for @user (@container): @error', [
+        '@user' => $accountName,
+        '@container' => $containerName,
+        '@error' => $message,
+      ]);
+      return [
+        'success' => FALSE,
+        'started' => FALSE,
+        'containerName' => $containerName,
+        'message' => $message,
+      ];
+    }
+
+    $message = 'Jupyter notebook container started.';
+    $logger->notice('Started Jupyter notebook container @container for user @user.', [
+      '@container' => $containerName,
+      '@user' => $accountName,
+    ]);
+    return [
+      'success' => TRUE,
+      'started' => TRUE,
+      'containerName' => $containerName,
+      'message' => $message,
+    ];
+  }
+
+  /**
+   * Restarts a Jupyter notebook container for the given user.
+   *
+   * @return array{success: bool, restarted: bool, containerName: string, message: string}
+   *   Operation result.
+   */
+  public function restartNotebookContainerForUser(UserInterface $user): array {
+    $accountName = $user->getAccountName();
+    $containerName = $this->getNotebookContainerName($accountName);
+    $logger = $this->loggerFactory->get('soda_scs_manager');
+
+    $inspect = $this->inspectNotebookContainer($containerName);
+    if ($inspect['statusCode'] === 404) {
+      $message = 'No Jupyter notebook container found. Start it from JupyterHub.';
+      $logger->notice('Jupyter notebook restart skipped for @user: no container @container.', [
+        '@user' => $accountName,
+        '@container' => $containerName,
+      ]);
+      return [
+        'success' => FALSE,
+        'restarted' => FALSE,
+        'containerName' => $containerName,
+        'message' => $message,
+      ];
+    }
+    if (!$inspect['success']) {
+      $message = $inspect['error'];
+      $logger->error('Jupyter notebook restart failed for @user (@container): @error', [
+        '@user' => $accountName,
+        '@container' => $containerName,
+        '@error' => $message,
+      ]);
+      return [
+        'success' => FALSE,
+        'restarted' => FALSE,
+        'containerName' => $containerName,
+        'message' => $message,
+      ];
+    }
+
+    $restartResult = $this->containerHelpers->restartContainer($containerName);
+    if (!$restartResult->success) {
+      $message = (string) ($restartResult->error ?? $restartResult->message);
+      $logger->error('Jupyter notebook restart failed for @user (@container): @error', [
+        '@user' => $accountName,
+        '@container' => $containerName,
+        '@error' => $message,
+      ]);
+      return [
+        'success' => FALSE,
+        'restarted' => FALSE,
+        'containerName' => $containerName,
+        'message' => $message,
+      ];
+    }
+
+    $message = 'Jupyter notebook container restarted.';
+    $logger->notice('Restarted Jupyter notebook container @container for user @user.', [
+      '@container' => $containerName,
+      '@user' => $accountName,
+    ]);
+    return [
+      'success' => TRUE,
+      'restarted' => TRUE,
+      'containerName' => $containerName,
+      'message' => $message,
+    ];
+  }
+
+  /**
+   * Inspects a notebook container by Docker name.
+   *
+   * @return array{success: bool, statusCode: int, status: string, error: string}
+   *   Inspect outcome. status is Docker State.Status when inspect succeeds.
+   */
+  private function inspectNotebookContainer(string $containerName): array {
+    $inspectRequest = $this->dockerRunServiceActions->buildInspectRequest([
+      'routeParams' => ['containerId' => $containerName],
+    ]);
+    $inspectResponse = $this->dockerRunServiceActions->makeRequest($inspectRequest);
+    $statusCode = (int) ($inspectResponse['statusCode'] ?? 0);
+
+    if (!$inspectResponse['success']) {
+      return [
+        'success' => FALSE,
+        'statusCode' => $statusCode,
+        'status' => '',
+        'error' => (string) ($inspectResponse['error'] ?? 'Failed to inspect notebook container.'),
+      ];
+    }
+
+    $inspectData = json_decode(
+      (string) $inspectResponse['data']['portainerResponse']->getBody()->getContents(),
+      TRUE
+    );
+
+    return [
+      'success' => TRUE,
+      'statusCode' => $statusCode,
+      'status' => (string) ($inspectData['State']['Status'] ?? ''),
+      'error' => '',
+    ];
+  }
+
+  /**
    * Warns that Jupyter must be respawned to pick up new project Team Folders.
    *
    * Mounts are applied only when the notebook container starts. Link goes to

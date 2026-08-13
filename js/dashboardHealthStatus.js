@@ -6,6 +6,7 @@
         var entityId = $wrapper.data('entity-id');
         var entityType = $wrapper.data('entity-type');
         var $healthIcon = $wrapper.find('.soda-scs-manager--health-icon');
+        var $healthControl = $wrapper.find('.soda-scs-manager--health-control');
         var $banner = $wrapper.find('.soda-scs-manager--card-status-banner');
 
         if (!entityId || !entityType || !$healthIcon.length) {
@@ -127,6 +128,43 @@
           $banner.append($p1, $p2);
         }
 
+        function healthStateFromClass(healthClass) {
+          if (healthClass === 'running') {
+            return 'running';
+          }
+          if (healthClass === 'stopped') {
+            return 'stopped';
+          }
+          if (healthClass === 'starting') {
+            return 'starting';
+          }
+          return 'other';
+        }
+
+        function closeHealthActions() {
+          if (!$healthControl.length) {
+            return;
+          }
+          $healthControl.removeClass('is-open');
+          $healthIcon.attr('aria-expanded', 'false');
+        }
+
+        function openHealthActions() {
+          if (!$healthControl.length) {
+            return;
+          }
+          var state = $healthControl.attr('data-health-state');
+          if (state !== 'running' && state !== 'stopped') {
+            return;
+          }
+          $healthControl.addClass('is-open');
+          $healthIcon.attr('aria-expanded', 'true');
+        }
+
+        function isCoarsePointer() {
+          return window.matchMedia && window.matchMedia('(hover: none)').matches;
+        }
+
         // Map API response to health class, overlay, and banner.
         function updateHealthIcon(healthClass, title, bannerKind, bannerDetail) {
           $healthIcon
@@ -134,6 +172,13 @@
             .addClass('soda-scs-manager--health-' + healthClass)
             .attr('title', title)
             .attr('aria-label', Drupal.t('Health status: @status', {'@status': title}));
+
+          if ($healthControl.length) {
+            $healthControl.attr('data-health-state', healthStateFromClass(healthClass));
+            if (healthClass !== 'running' && healthClass !== 'stopped') {
+              closeHealthActions();
+            }
+          }
 
           if (healthClass === 'running') {
             $wrapper.removeClass('soda-scs-manager--card--not-running');
@@ -266,11 +311,125 @@
           });
         }
 
+        function confirmLifecycleAction(action) {
+          if (action === 'stop') {
+            return window.confirm(Drupal.t('Stop this application? It will be unavailable until you start it again. Unsaved work may be lost.'));
+          }
+          if (action === 'restart') {
+            return window.confirm(Drupal.t('Restart this application? It will be briefly unavailable. Unsaved work may be lost.'));
+          }
+          return true;
+        }
+
+        function announceLifecycle(message) {
+          if (Drupal.announce) {
+            Drupal.announce(message);
+          }
+        }
+
+        function runLifecycleAction(actionButton) {
+          var action = actionButton.getAttribute('data-lifecycle-action');
+          var url = actionButton.getAttribute('data-lifecycle-url');
+          if (!action || !url || $healthControl.hasClass('is-busy')) {
+            return;
+          }
+          if (!confirmLifecycleAction(action)) {
+            return;
+          }
+
+          $healthControl.addClass('is-busy');
+          $healthControl.find('.soda-scs-manager--health-action').prop('disabled', true);
+          if (action === 'start' || action === 'restart') {
+            updateHealthIcon('starting', Drupal.t('Starting'), 'starting');
+          }
+          else {
+            updateHealthIcon('stopped', Drupal.t('Stopped'), 'stopped');
+          }
+
+          var csrfRequest = fetch(Drupal.url('session/token'), { credentials: 'same-origin' })
+            .then(function (tokenResponse) {
+              return tokenResponse.ok ? tokenResponse.text() : '';
+            });
+
+          csrfRequest.then(function (csrfToken) {
+            return $.ajax({
+              url: url,
+              method: 'POST',
+              timeout: 60000,
+              dataType: 'json',
+              headers: csrfToken ? { 'X-CSRF-Token': csrfToken } : {},
+            });
+          }).then(function (data) {
+            $healthControl.removeClass('is-busy');
+            $healthControl.find('.soda-scs-manager--health-action').prop('disabled', false);
+            closeHealthActions();
+            if (data && data.success) {
+              announceLifecycle(data.message || Drupal.t('The application status was updated.'));
+            }
+            else {
+              var failMessage = (data && (data.message || data.error))
+                ? (data.message || data.error)
+                : Drupal.t('The application could not be updated.');
+              announceLifecycle(failMessage);
+            }
+            checkHealth();
+          }).catch(function () {
+            $healthControl.removeClass('is-busy');
+            $healthControl.find('.soda-scs-manager--health-action').prop('disabled', false);
+            announceLifecycle(Drupal.t('The application could not be updated.'));
+            checkHealth();
+          });
+        }
+
+        if ($healthControl.length) {
+          $healthIcon.on('click', function (event) {
+            event.preventDefault();
+            event.stopPropagation();
+            var state = $healthControl.attr('data-health-state');
+            if (state !== 'running' && state !== 'stopped') {
+              return;
+            }
+            if (isCoarsePointer() || $healthControl.hasClass('is-open')) {
+              if ($healthControl.hasClass('is-open')) {
+                closeHealthActions();
+              }
+              else {
+                openHealthActions();
+              }
+            }
+          });
+
+          $healthControl.on('click', '.soda-scs-manager--health-action', function (event) {
+            event.preventDefault();
+            event.stopPropagation();
+            runLifecycleAction(this);
+          });
+
+          $healthControl.on('keydown', function (event) {
+            if (event.key === 'Escape') {
+              closeHealthActions();
+              $healthIcon.trigger('focus');
+            }
+          });
+        }
+
         // Initial check.
         checkHealth();
 
         // Poll every 15 seconds.
         setInterval(checkHealth, 15000);
+      });
+
+      once('dashboardHealthLifecycleDismiss', 'html', context).forEach(function () {
+        $(document).on('click.sodaScsHealthLifecycle', function (event) {
+          if ($(event.target).closest('.soda-scs-manager--health-control').length) {
+            return;
+          }
+          $('.soda-scs-manager--health-control.is-open').each(function () {
+            $(this).removeClass('is-open');
+            $(this).find('.soda-scs-manager--health-icon').attr('aria-expanded', 'false');
+          });
+        });
       });
 
       // Compact online/offline badges on project dashboard cards.

@@ -14,18 +14,24 @@ use Drupal\user\UserInterface;
 use Symfony\Component\DependencyInjection\Attribute\Autowire;
 
 /**
- * Loads a lightweight Nextcloud preview for the stack entity page.
+ * Loads Nextcloud activity feeds via scs_manager_integration.
  *
- * Uses scs_manager_integration OCS API for the platform SCS-Share Team Folder feed.
+ * Stack entity page: platform SCS-Share Team Folder.
+ * Project page Nextcloud card: that project's Team Folder.
  */
 class SodaScsNextcloudPreview {
 
   use StringTranslationTrait;
 
   /**
-   * Max items shown in the preview.
+   * Max items shown in the stack entity preview.
    */
   private const ITEM_LIMIT = 8;
+
+  /**
+   * Max items shown on the project-page Nextcloud card.
+   */
+  private const CARD_ITEM_LIMIT = 6;
 
   /**
    * externalProjectId of the platform Team Folder feed.
@@ -104,7 +110,75 @@ class SodaScsNextcloudPreview {
     return [
       'status' => 'connected',
       'openUrl' => $baseUrl,
-      'activities' => $this->fetchPlatformShareFeed($authParams, $baseUrl),
+      'activities' => $this->fetchFeedByExternalProjectId(
+        $authParams,
+        $baseUrl,
+        self::PLATFORM_EXTERNAL_PROJECT_ID,
+        self::PLATFORM_FOLDER_NAME,
+        self::ITEM_LIMIT,
+      ),
+    ];
+  }
+
+  /**
+   * Builds activity data for a project's Team Folder feed.
+   *
+   * Uses scs_manager_integration GET /folders/{id}/feed, matched by
+   * Drupal project id (externalProjectId).
+   *
+   * @param \Drupal\user\UserInterface $user
+   *   The user whose Nextcloud account to query.
+   * @param string $externalProjectId
+   *   Drupal project entity id stored as Nextcloud externalProjectId.
+   * @param string|null $fallbackFolderName
+   *   Project label / Team Folder mount name if id lookup misses.
+   *
+   * @return array
+   *   Keys: status (connected|needs_connect), openUrl, activities.
+   */
+  public function buildProjectFeedData(UserInterface $user, string $externalProjectId, ?string $fallbackFolderName = NULL): array {
+    $baseUrl = '';
+    try {
+      $settings = $this->serviceHelpers->initNextcloudSettings();
+      $baseUrl = rtrim((string) ($settings['baseUrl'] ?? ''), '/');
+    }
+    catch (\Throwable $e) {
+      $this->loggerFactory->get('soda_scs_manager')->warning(
+        'Nextcloud project feed: settings unavailable: @message',
+        ['@message' => $e->getMessage()]
+      );
+    }
+
+    $emptySection = static fn (): array => [
+      'status' => 'empty',
+      'items' => [],
+    ];
+
+    $credentials = $this->nextcloudHelpers->ensureCredentials($user, 'SCS Manager Preview');
+    if ($credentials === NULL) {
+      return [
+        'status' => 'needs_connect',
+        'openUrl' => $baseUrl,
+        'activities' => $emptySection(),
+      ];
+    }
+
+    $authParams = [
+      'username' => $credentials['username'],
+      'password' => $credentials['appPassword'],
+      'timeout' => self::REQUEST_TIMEOUT,
+    ];
+
+    return [
+      'status' => 'connected',
+      'openUrl' => $baseUrl,
+      'activities' => $this->fetchFeedByExternalProjectId(
+        $authParams,
+        $baseUrl,
+        $externalProjectId,
+        $fallbackFolderName,
+        self::CARD_ITEM_LIMIT,
+      ),
     ];
   }
 
@@ -140,30 +214,35 @@ class SodaScsNextcloudPreview {
   }
 
   /**
-   * Loads the platform SCS-Share feed via scs_manager_integration.
+   * Loads a managed-folder activity feed via scs_manager_integration.
    *
    * @param array $authParams
    *   User auth + timeout params.
    * @param string $baseUrl
    *   Nextcloud base URL.
+   * @param string $externalProjectId
+   *   Folder externalProjectId (Drupal project id or platform share id).
+   * @param string|null $fallbackFolderName
+   *   Optional mount-point name if id lookup misses.
+   * @param int $limit
+   *   Max items to return.
    *
    * @return array
    *   Section with status and items.
    */
-  protected function fetchPlatformShareFeed(array $authParams, string $baseUrl): array {
-    $folderId = $this->resolvePlatformShareFolderId($authParams);
+  protected function fetchFeedByExternalProjectId(array $authParams, string $baseUrl, string $externalProjectId, ?string $fallbackFolderName = NULL, int $limit = self::ITEM_LIMIT): array {
+    $limit = max(1, min(self::ITEM_LIMIT, $limit));
+    $folderId = $this->resolveFolderId($authParams, $externalProjectId, $fallbackFolderName);
     if ($folderId === NULL) {
-      // List request failed.
       return ['status' => 'error', 'items' => []];
     }
     if ($folderId === 0) {
-      // No accessible platform share feed for this user.
       return ['status' => 'empty', 'items' => []];
     }
 
     $request = $this->nextcloudServiceActions->buildProjectFeedRequest($authParams + [
       'folderId' => $folderId,
-      'limit' => self::ITEM_LIMIT,
+      'limit' => $limit,
     ]);
     $response = $this->nextcloudServiceActions->makeRequest($request);
     $data = $this->decodeOcsData($response);
@@ -181,35 +260,12 @@ class SodaScsNextcloudPreview {
       if (!is_array($row)) {
         continue;
       }
-      $object = is_array($row['object'] ?? NULL) ? $row['object'] : [];
-      $label = trim((string) ($object['name'] ?? ''));
-      $subject = trim((string) ($row['subject'] ?? ''));
-      if ($label === '') {
-        $label = $subject;
-      }
-      if ($label === '') {
+      $mapped = $this->mapFeedItem($row, $baseUrl);
+      if ($mapped === NULL) {
         continue;
       }
-
-      $subtitle = $subject;
-      $timestamp = (int) ($row['timestamp'] ?? 0);
-      if ($timestamp > 0) {
-        $datetime = gmdate('c', $timestamp);
-        $subtitle = $subtitle !== '' ? $subtitle . ' · ' . $datetime : $datetime;
-      }
-
-      $fileId = (int) ($object['fileId'] ?? 0);
-      $url = '';
-      if ($baseUrl !== '' && $fileId > 0) {
-        $url = $baseUrl . '/f/' . rawurlencode((string) $fileId);
-      }
-
-      $items[] = [
-        'label' => $label,
-        'subtitle' => $subtitle,
-        'url' => $url,
-      ];
-      if (count($items) >= self::ITEM_LIMIT) {
+      $items[] = $mapped;
+      if (count($items) >= $limit) {
         break;
       }
     }
@@ -221,15 +277,61 @@ class SodaScsNextcloudPreview {
   }
 
   /**
-   * Resolves the platform share feed folder id for the current user.
+   * Maps one scs_manager_integration feed row to preview item fields.
+   *
+   * @param array<string, mixed> $row
+   *   Raw feed item.
+   * @param string $baseUrl
+   *   Nextcloud base URL.
+   *
+   * @return array{label: string, subtitle: string, url: string}|null
+   *   Normalised item, or NULL if the row has no displayable label.
+   */
+  protected function mapFeedItem(array $row, string $baseUrl): ?array {
+    $object = is_array($row['object'] ?? NULL) ? $row['object'] : [];
+    $label = trim((string) ($object['name'] ?? ''));
+    $subject = trim((string) ($row['subject'] ?? ''));
+    if ($label === '') {
+      $label = $subject;
+    }
+    if ($label === '') {
+      return NULL;
+    }
+
+    $subtitle = $subject;
+    $timestamp = (int) ($row['timestamp'] ?? 0);
+    if ($timestamp > 0) {
+      $datetime = gmdate('c', $timestamp);
+      $subtitle = $subtitle !== '' ? $subtitle . ' · ' . $datetime : $datetime;
+    }
+
+    $fileId = (int) ($object['fileId'] ?? 0);
+    $url = '';
+    if ($baseUrl !== '' && $fileId > 0) {
+      $url = $baseUrl . '/f/' . rawurlencode((string) $fileId);
+    }
+
+    return [
+      'label' => $label,
+      'subtitle' => $subtitle,
+      'url' => $url,
+    ];
+  }
+
+  /**
+   * Resolves a managed folder id for the current user.
    *
    * @param array $authParams
    *   User auth + timeout params.
+   * @param string $externalProjectId
+   *   Folder externalProjectId to match.
+   * @param string|null $fallbackFolderName
+   *   Optional name/label fallback.
    *
    * @return int|null
    *   Folder id, 0 if not found/accessible, NULL if the list request failed.
    */
-  protected function resolvePlatformShareFolderId(array $authParams): ?int {
+  protected function resolveFolderId(array $authParams, string $externalProjectId, ?string $fallbackFolderName = NULL): ?int {
     $request = $this->nextcloudServiceActions->buildProjectFoldersRequest($authParams);
     $response = $this->nextcloudServiceActions->makeRequest($request);
     $data = $this->decodeOcsData($response);
@@ -252,11 +354,15 @@ class SodaScsNextcloudPreview {
         continue;
       }
       $externalId = (string) ($folder['externalProjectId'] ?? '');
-      if ($externalId === self::PLATFORM_EXTERNAL_PROJECT_ID) {
+      if ($externalId === $externalProjectId) {
         return $id;
       }
+      if ($fallbackFolderName === NULL || $fallbackFolderName === '' || $fallbackId !== 0) {
+        continue;
+      }
       $name = (string) ($folder['name'] ?? '');
-      if ($fallbackId === 0 && $name === self::PLATFORM_FOLDER_NAME) {
+      $label = (string) ($folder['label'] ?? '');
+      if ($name === $fallbackFolderName || $label === $fallbackFolderName) {
         $fallbackId = $id;
       }
     }

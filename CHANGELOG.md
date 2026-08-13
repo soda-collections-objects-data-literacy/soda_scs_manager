@@ -9,17 +9,26 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Hover (or tap on a phone) the application card health icon to start, stop,
+  or restart dedicated containers (WissKI, MariaDB, triplestore, Jupyter
+  notebook). Shared services (Nextcloud, WebProtégé, JupyterHub) are
+  unchanged.
 - After project create or invitation accept, warn users that JupyterLab mounts
   project Team Folders only on notebook start, with a link to
   **Restart Jupyter** (`/soda-scs-manager/jupyter/restart-notebook`).
-- Confirm form and **Restart Jupyter** button on the JupyterHub card
-  to stop the user’s notebook server (unsaved work warning); user must
-  **Start My Server** in JupyterHub afterwards so new Team Folders remount.
+- Confirm form at `/soda-scs-manager/jupyter/restart-notebook` to stop the
+  user’s notebook server (unsaved work warning); user must **Start My Server**
+  in JupyterHub afterwards so new Team Folders remount. The same stop is
+  available from the Jupyter card health icon.
 - Project pages show the user’s central services (JupyterHub, Nextcloud,
   WebProtégé). JupyterHub and Nextcloud open the project Team Folder.
+  The Nextcloud card lists recent activity in that folder (via
+  `scs_manager_integration` `/folders/{id}/feed`).
 
 ### Changed
 
+- Removed the **Restart Jupyter** button from the JupyterHub card; notebook
+  stop and restart are on the health icon.
 - Dashboard lists only **Your projects**. JupyterHub, Nextcloud, and WebProtégé
   are opened from the project page, not from a separate **Central services**
   block.

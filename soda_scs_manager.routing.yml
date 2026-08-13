@@ -55,6 +55,40 @@ soda_scs_manager.stack.health_check:
   options:
     no_cache: TRUE
 
+soda_scs_manager.component.lifecycle:
+  path: '/soda-scs-manager/component/{soda_scs_component}/lifecycle/{action}'
+  defaults:
+    _controller: '\Drupal\soda_scs_manager\Controller\SodaScsLifecycleController::componentLifecycle'
+    _title: 'Component lifecycle'
+  requirements:
+    _permission: 'soda scs manager user'
+    _entity_access: 'soda_scs_component.update'
+    _csrf_request_header_token: 'TRUE'
+    action: 'start|stop|restart'
+  methods: [POST]
+  options:
+    parameters:
+      soda_scs_component:
+        type: entity:soda_scs_component
+    no_cache: TRUE
+
+soda_scs_manager.stack.lifecycle:
+  path: '/soda-scs-manager/stack/{soda_scs_stack}/lifecycle/{action}'
+  defaults:
+    _controller: '\Drupal\soda_scs_manager\Controller\SodaScsLifecycleController::stackLifecycle'
+    _title: 'Stack lifecycle'
+  requirements:
+    _permission: 'soda scs manager user'
+    _entity_access: 'soda_scs_stack.update'
+    _csrf_request_header_token: 'TRUE'
+    action: 'start|stop|restart'
+  methods: [POST]
+  options:
+    parameters:
+      soda_scs_stack:
+        type: entity:soda_scs_stack
+    no_cache: TRUE
+
 soda_scs_manager.progress.latest_steps:
   path: '/soda-scs-manager/progress/{operation_uuid}/latest-steps'
   defaults:

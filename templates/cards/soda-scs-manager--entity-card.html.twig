@@ -1,5 +1,5 @@
 {{ entity_type|replace({'soda_scs_': ''}) }}
-<div class="soda-scs-manager--type--card">
+<div class="soda-scs-manager--type--card{% if feed_status %} soda-scs-manager--type--card--feed{% endif %}">
   <div class="soda-scs-manager--card-type">
     {{ bundle_label }}
   </div>
@@ -73,32 +73,84 @@
       {% if health_status %}
         {% set healthClass = 'unknown' %}
         {% set healthTitle = 'Unknown'|t %}
+        {% set healthState = 'other' %}
         {% if health_status == 'running' or health_status == 'healthy' %}
           {% set healthClass = 'running' %}
           {% set healthTitle = 'Running'|t %}
+          {% set healthState = 'running' %}
         {% elseif health_status == 'unavailable' %}
           {% set healthClass = 'failure' %}
           {% set healthTitle = 'Unavailable'|t %}
         {% elseif health_lower == 'starting' %}
           {% set healthClass = 'starting' %}
           {% set healthTitle = 'Starting'|t %}
+          {% set healthState = 'starting' %}
         {% elseif health_status == 'Unknown' or health_status == 'unknown' %}
           {% set healthClass = 'unknown' %}
           {% set healthTitle = 'Unknown'|t %}
         {% elseif health_status == 'paused' %}
           {% set healthClass = 'stopped' %}
           {% set healthTitle = 'Paused'|t %}
+          {% set healthState = 'stopped' %}
         {% elseif health_status == 'stopped' %}
           {% set healthClass = 'stopped' %}
           {% set healthTitle = 'Stopped'|t %}
+          {% set healthState = 'stopped' %}
         {% elseif health_status == 'unhealthy' %}
           {% set healthClass = 'failure' %}
           {% set healthTitle = 'Failure'|t %}
         {% endif %}
-      <span class="soda-scs-manager--health-icon soda-scs-manager--health-{{ healthClass }}"
-            aria-label="{{ 'Health status: @status'|t({'@status': healthTitle}) }}"
-            title="{{ healthTitle }}">
-      </span>
+        {% set health_label = 'Health status: @status'|t({'@status': healthTitle}) %}
+        {% if can_manage_lifecycle and entity_id and entity_type_id %}
+          {% set actions_id = 'soda-scs-health-actions-' ~ entity_type_id ~ '-' ~ entity_id %}
+          {% if entity_type_id == 'soda_scs_stack' %}
+            {% set lifecycle_route = 'soda_scs_manager.stack.lifecycle' %}
+            {% set lifecycle_param = {'soda_scs_stack': entity_id} %}
+          {% else %}
+            {% set lifecycle_route = 'soda_scs_manager.component.lifecycle' %}
+            {% set lifecycle_param = {'soda_scs_component': entity_id} %}
+          {% endif %}
+          <div class="soda-scs-manager--health-control"
+               data-health-state="{{ healthState }}"
+               data-can-manage-lifecycle="1">
+            <button type="button"
+                    class="soda-scs-manager--health-icon soda-scs-manager--health-{{ healthClass }}"
+                    aria-label="{{ health_label }}"
+                    aria-expanded="false"
+                    aria-haspopup="true"
+                    aria-controls="{{ actions_id }}"
+                    title="{{ healthTitle }}">
+            </button>
+            <div id="{{ actions_id }}"
+                 class="soda-scs-manager--health-actions"
+                 role="group"
+                 aria-label="{{ 'Application power controls'|t }}">
+              <button type="button"
+                      class="soda-scs-manager--health-action soda-scs-manager--health-action--start"
+                      data-lifecycle-action="start"
+                      data-lifecycle-url="{{ path(lifecycle_route, lifecycle_param|merge({'action': 'start'})) }}"
+                      aria-label="{{ 'Start'|t }}"
+                      title="{{ 'Start'|t }}"></button>
+              <button type="button"
+                      class="soda-scs-manager--health-action soda-scs-manager--health-action--stop"
+                      data-lifecycle-action="stop"
+                      data-lifecycle-url="{{ path(lifecycle_route, lifecycle_param|merge({'action': 'stop'})) }}"
+                      aria-label="{{ 'Stop'|t }}"
+                      title="{{ 'Stop'|t }}"></button>
+              <button type="button"
+                      class="soda-scs-manager--health-action soda-scs-manager--health-action--restart"
+                      data-lifecycle-action="restart"
+                      data-lifecycle-url="{{ path(lifecycle_route, lifecycle_param|merge({'action': 'restart'})) }}"
+                      aria-label="{{ 'Restart'|t }}"
+                      title="{{ 'Restart'|t }}"></button>
+            </div>
+          </div>
+        {% else %}
+          <span class="soda-scs-manager--health-icon soda-scs-manager--health-{{ healthClass }}"
+                aria-label="{{ health_label }}"
+                title="{{ healthTitle }}">
+          </span>
+        {% endif %}
       {% endif %}
       {% if details_link %}
       <a href="{{ details_link }}"
@@ -113,12 +165,69 @@
       {% if url %}
       <a href="{{ url }}" class="soda-scs-manager--card-link" target="_blank"></a>
       {% endif %}
+      {% if not feed_status %}
       <div class="soda-scs-manager--image-wrapper">
         <img class="soda-scs-manager--card-img-top " src="{{ file_url(imageUrl) }}" alt="{{ label }}">
       </div>
+      {% endif %}
       <div class="soda-scs-manager--card-body ">
         <h5 class="soda-scs-manager--card-title">{{ title }}</h5>
-        <p class="soda-scs-manager--card-text">{{ description }}</p>
+        {% if feed_status %}
+          <div class="soda-scs-manager--card-feed">
+            <p class="soda-scs-manager--card-feed-heading">{{ 'Recent activity'|t }}</p>
+            {% if feed_status == 'needs_connect' %}
+              <div class="scs-manager--nextcloud-connect-wrapper scs-manager--nextcloud-connect-inline soda-scs-manager--card-feed-connect" data-reload-on-connect="1">
+                <p class="soda-scs-manager--card-feed-message">{{ 'Connect your Drive account to see recent activity in this project folder.'|t }}</p>
+                <button type="button" class="scs-manager--nextcloud-connect-btn soda-scs-manager--card-action-button">
+                  {{ 'Connect Drive'|t }}
+                </button>
+                <p class="scs-manager--nextcloud-connect-status-inline text-xs text-gray-600" data-status="unknown">{{ 'Checking connection…'|t }}</p>
+                <div class="scs-manager--nextcloud-connect-modal hidden fixed inset-0 z-50 flex items-center justify-center bg-black/50" aria-hidden="true" role="dialog" aria-labelledby="nextcloud-card-connect-title">
+                  <div class="scs-manager--nextcloud-connect-modal-content rounded-lg bg-white p-6 shadow-xl max-w-md mx-4">
+                    <h2 id="nextcloud-card-connect-title" class="mb-4 text-xl font-semibold">{{ 'Nextcloud connection'|t }}</h2>
+                    <p class="scs-manager--nextcloud-connect-status mb-2 hidden text-sm"></p>
+                    <p class="scs-manager--nextcloud-connect-error mb-2 hidden text-sm text-red-600"></p>
+                    <div class="flex gap-2">
+                      <button type="button" class="scs-manager--nextcloud-connect-btn rounded bg-blue-600 px-4 py-2 text-white hover:bg-blue-700">
+                        {{ 'Connect'|t }}
+                      </button>
+                      <button type="button" class="scs-manager--nextcloud-connect-dismiss rounded border px-4 py-2 hover:bg-gray-100">
+                        {{ 'Close'|t }}
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            {% elseif activities.status|default('') == 'error' %}
+              <p class="soda-scs-manager--card-feed-message soda-scs-manager--card-feed-message--error">{{ 'Project folder activity could not be loaded.'|t }}</p>
+            {% elseif activities.status|default('') == 'empty' or activities.items|default([]) is empty %}
+              <p class="soda-scs-manager--card-feed-message">{{ 'No recent activity in this project folder.'|t }}</p>
+            {% else %}
+              <ul class="soda-scs-manager--card-feed-list">
+                {% for item in activities.items %}
+                  <li class="soda-scs-manager--card-feed-item">
+                    {% if item.url %}
+                      <a
+                        href="{{ item.url }}"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        class="soda-scs-manager--card-feed-link"
+                        title="{{ item.label }}"
+                      >{{ item.label }}</a>
+                    {% else %}
+                      <span class="soda-scs-manager--card-feed-label" title="{{ item.label }}">{{ item.label }}</span>
+                    {% endif %}
+                    {% if item.subtitle %}
+                      <span class="soda-scs-manager--card-feed-subtitle" title="{{ item.subtitle }}">{{ item.subtitle }}</span>
+                    {% endif %}
+                  </li>
+                {% endfor %}
+              </ul>
+            {% endif %}
+          </div>
+        {% else %}
+          <p class="soda-scs-manager--card-text">{{ description }}</p>
+        {% endif %}
       </div>
       {% if action_links %}
         <div class="soda-scs-manager--card-actions">

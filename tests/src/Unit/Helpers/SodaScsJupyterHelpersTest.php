@@ -11,6 +11,8 @@ use Drupal\soda_scs_manager\Helpers\SodaScsContainerHelpers;
 use Drupal\soda_scs_manager\Helpers\SodaScsJupyterHelpers;
 use Drupal\soda_scs_manager\RequestActions\SodaScsDockerRunServiceActions;
 use Drupal\Tests\UnitTestCase;
+use Drupal\user\UserInterface;
+use Psr\Log\LoggerInterface;
 
 /**
  * @coversDefaultClass \Drupal\soda_scs_manager\Helpers\SodaScsJupyterHelpers
@@ -64,6 +66,44 @@ class SodaScsJupyterHelpersTest extends UnitTestCase {
     );
 
     $this->assertSame('jupyter-', $helper->getContainerNamePrefix());
+  }
+
+  /**
+   * @covers ::startNotebookContainerForUser
+   */
+  public function testStartNotebookContainerWithoutExistingContainer(): void {
+    $docker = $this->createMock(SodaScsDockerRunServiceActions::class);
+    $docker->method('buildInspectRequest')->willReturn(['routeParams' => ['containerId' => 'jupyter-peter']]);
+    $docker->method('makeRequest')->willReturn([
+      'success' => FALSE,
+      'statusCode' => 404,
+      'error' => 'Not found',
+    ]);
+
+    $logger = $this->createMock(LoggerInterface::class);
+    $loggerFactory = $this->createMock(LoggerChannelFactoryInterface::class);
+    $loggerFactory->method('get')->willReturn($logger);
+
+    $config = $this->createMock(ImmutableConfig::class);
+    $config->method('get')->with('jupyterhub.generalSettings.containerNamePrefix')
+      ->willReturn('jupyter-');
+    $configFactory = $this->createMock(ConfigFactoryInterface::class);
+    $configFactory->method('get')->with('soda_scs_manager.settings')->willReturn($config);
+
+    $helper = new SodaScsJupyterHelpers(
+      $docker,
+      $this->createMock(SodaScsContainerHelpers::class),
+      $configFactory,
+      $loggerFactory,
+    );
+
+    $user = $this->createMock(UserInterface::class);
+    $user->method('getAccountName')->willReturn('peter');
+
+    $result = $helper->startNotebookContainerForUser($user);
+    $this->assertFalse($result['success']);
+    $this->assertFalse($result['started']);
+    $this->assertSame('jupyter-peter', $result['containerName']);
   }
 
   /**
