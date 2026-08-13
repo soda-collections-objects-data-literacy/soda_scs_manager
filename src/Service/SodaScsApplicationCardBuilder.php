@@ -184,7 +184,7 @@ final class SodaScsApplicationCardBuilder {
    * @param int|string $uid
    *   User ID.
    * @param \Drupal\soda_scs_manager\Entity\SodaScsProjectInterface|null $project
-   *   When set, JupyterHub and Nextcloud cards deep-link into this project.
+   *   When set, JupyterHub, Nextcloud, and WebProtégé cards deep-link into this project.
    *
    * @return list<array<string, mixed>>
    *   Render arrays for entity cards.
@@ -226,7 +226,7 @@ final class SodaScsApplicationCardBuilder {
         ->getStorage('soda_scs_component')
         ->loadMultiple($componentIds);
       foreach ($components as $component) {
-        $cards[] = $this->buildComponentCard($component);
+        $cards[] = $this->buildComponentCard($component, $project);
       }
     }
 
@@ -380,10 +380,15 @@ final class SodaScsApplicationCardBuilder {
   /**
    * Builds a single dashboard card render array for a component.
    *
+   * @param \Drupal\soda_scs_manager\Entity\SodaScsComponentInterface $component
+   *   The component entity.
+   * @param \Drupal\soda_scs_manager\Entity\SodaScsProjectInterface|null $project
+   *   Optional project context for WebProtégé deep links.
+   *
    * @return array<string, mixed>
    *   Entity card render array.
    */
-  public function buildComponentCard(SodaScsComponentInterface $component): array {
+  public function buildComponentCard(SodaScsComponentInterface $component, ?SodaScsProjectInterface $project = NULL): array {
     $bundleInfo = $this->bundleInfo->getBundleInfo($component->getEntityTypeId())[$component->bundle()];
 
     $detailsLink = NULL;
@@ -395,6 +400,16 @@ final class SodaScsApplicationCardBuilder {
           $component->getEntityTypeId() => $component->id(),
         ],
       );
+    }
+
+    $urlOptions = [];
+    if ($project !== NULL && $component->bundle() === 'soda_scs_webprotege_component') {
+      $urlOptions['query']['project'] = $project->id();
+    }
+
+    $cacheTags = $component->getCacheTags();
+    if ($project !== NULL) {
+      $cacheTags = array_merge($cacheTags, $project->getCacheTags());
     }
 
     return [
@@ -412,13 +427,13 @@ final class SodaScsApplicationCardBuilder {
       ),
       '#url' => Url::fromRoute('soda_scs_manager.component.service_link', [
         'soda_scs_component' => $component->id(),
-      ]),
+      ], $urlOptions),
       '#tags' => $bundleInfo['tags'],
       '#can_manage_lifecycle' => $this->lifecycleHelpers->currentUserCanManage($component),
       '#cache' => [
         'max-age' => 0,
-        'contexts' => ['languages:language_interface'],
-        'tags' => $component->getCacheTags(),
+        'contexts' => ['languages:language_interface', 'user'],
+        'tags' => $cacheTags,
       ],
     ];
   }

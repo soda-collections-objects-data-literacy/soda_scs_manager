@@ -17,6 +17,8 @@ use Drupal\soda_scs_manager\Entity\SodaScsComponent;
 use Drupal\soda_scs_manager\Entity\SodaScsProjectInterface;
 use Drupal\soda_scs_manager\Entity\SodaScsStack;
 use Drupal\soda_scs_manager\Helpers\SodaScsJupyterHelpers;
+use Drupal\soda_scs_manager\Helpers\SodaScsNextcloudHelpers;
+use Drupal\soda_scs_manager\Helpers\SodaScsWebprotegeHelpers;
 use Drupal\user\UserInterface;
 use Drupal\soda_scs_manager\RequestActions\SodaScsServiceRequestInterface;
 use Drupal\soda_scs_manager\ServiceActions\SodaScsServiceActionsInterface;
@@ -499,6 +501,13 @@ class SodaScsServiceHelpers {
 
     $this->checkSettings($webprotegeInstanceSettings);
 
+    $apiBaseUrl = trim((string) ($this->settings->get('webprotege.generalSettings.apiBaseUrl') ?? ''));
+    $apiKey = (string) ($this->settings->get('webprotege.generalSettings.apiKey') ?? '');
+    $webprotegeInstanceSettings['apiBaseUrl'] = $apiBaseUrl !== '' && $apiBaseUrl !== '{empty}'
+      ? $apiBaseUrl
+      : $webprotegeInstanceSettings['host'];
+    $webprotegeInstanceSettings['apiKey'] = $apiKey === '{empty}' ? '' : $apiKey;
+
     return $webprotegeInstanceSettings;
   }
 
@@ -622,10 +631,12 @@ class SodaScsServiceHelpers {
   /**
    * Resolves the public service base URL and a login (or entry) URL for a component.
    *
+   * When $project is set, WebProtégé opens the project's ontology project.
+   *
    * @return array{url: string, loginUrl: string}|null
    *   URLs for known component bundles, or NULL for unknown types.
    */
-  public function getComponentServiceAndLoginUrls(SodaScsComponent $component): ?array {
+  public function getComponentServiceAndLoginUrls(SodaScsComponent $component, ?SodaScsProjectInterface $project = NULL): ?array {
     $databaseSettings = $this->initDatabaseServiceSettings();
     $triplestoreSettings = $this->initTriplestoreServiceSettings();
     $webprotegeSettings = $this->initWebprotegeInstanceSettings();
@@ -644,8 +655,13 @@ class SodaScsServiceHelpers {
         return ['url' => $url, 'loginUrl' => $loginUrl];
 
       case 'soda_scs_webprotege_component':
-        $url = $webprotegeSettings['host'];
-        $loginUrl = rtrim($url, '/') . '/';
+        $host = (string) $webprotegeSettings['host'];
+        $projectUuid = NULL;
+        if ($project !== NULL && $project->hasField('webprotegeProjectId')) {
+          $projectUuid = (string) ($project->get('webprotegeProjectId')->value ?? '');
+        }
+        $url = SodaScsWebprotegeHelpers::buildProjectHashUrl($host, $projectUuid !== '' ? $projectUuid : NULL);
+        $loginUrl = rtrim($host, '/') . '/';
         return ['url' => $url, 'loginUrl' => $loginUrl];
 
       case 'soda_scs_wisski_component':

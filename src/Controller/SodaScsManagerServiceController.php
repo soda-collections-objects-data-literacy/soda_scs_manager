@@ -51,13 +51,19 @@ class SodaScsManagerServiceController extends ControllerBase {
    * @param \Drupal\soda_scs_manager\Entity\SodaScsComponent $soda_scs_component
    *   The SODa SCS Component or Stack entity.
    *
+   * @param \Symfony\Component\HttpFoundation\Request $request
+   *   The current request (optional {@code project} query for deep links).
+   *
    * @return \Drupal\Core\Routing\TrustedRedirectResponse
    *   The redirect response.
    *
    * @todo Make this more flexible with a single parameter.
    */
-  public function generateComponentUrl(SodaScsComponent $soda_scs_component): TrustedRedirectResponse {
-    $urls = $this->sodaScsServiceHelpers->getComponentServiceAndLoginUrls($soda_scs_component);
+  public function generateComponentUrl(SodaScsComponent $soda_scs_component, Request $request): TrustedRedirectResponse {
+    $urls = $this->sodaScsServiceHelpers->getComponentServiceAndLoginUrls(
+      $soda_scs_component,
+      $this->loadProjectFromRequest($request),
+    );
     if ($urls === NULL) {
       throw new \Exception('Unknown component type: ' . $soda_scs_component->bundle());
     }
@@ -91,12 +97,17 @@ class SodaScsManagerServiceController extends ControllerBase {
    *
    * @param \Drupal\soda_scs_manager\Entity\SodaScsComponent $soda_scs_component
    *   The SODa SCS Component entity.
+   * @param \Symfony\Component\HttpFoundation\Request $request
+   *   The current request (optional {@code project} query for deep links).
    *
    * @return \Symfony\Component\HttpFoundation\JsonResponse
    *   JSON response with the service URL.
    */
-  public function getComponentServiceUrl(SodaScsComponent $soda_scs_component): JsonResponse {
-    $urls = $this->sodaScsServiceHelpers->getComponentServiceAndLoginUrls($soda_scs_component);
+  public function getComponentServiceUrl(SodaScsComponent $soda_scs_component, Request $request): JsonResponse {
+    $urls = $this->sodaScsServiceHelpers->getComponentServiceAndLoginUrls(
+      $soda_scs_component,
+      $this->loadProjectFromRequest($request),
+    );
     if ($urls === NULL) {
       return new JsonResponse([
         'error' => 'Unknown component type: ' . $soda_scs_component->bundle(),

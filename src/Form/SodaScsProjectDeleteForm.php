@@ -11,6 +11,7 @@ use Drupal\Core\Entity\EntityTypeBundleInfoInterface;
 use Drupal\Core\Form\FormStateInterface;
 use Drupal\Core\Url;
 use Drupal\soda_scs_manager\Helpers\SodaScsProjectHelpers;
+use Drupal\soda_scs_manager\Helpers\SodaScsWebprotegeHelpers;
 use Drupal\soda_scs_manager\StackActions\SodaScsStackActionsInterface;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 
@@ -25,6 +26,13 @@ class SodaScsProjectDeleteForm extends ContentEntityDeleteForm {
    * @var \Drupal\soda_scs_manager\Helpers\SodaScsProjectHelpers
    */
   protected SodaScsProjectHelpers $sodaScsProjectHelpers;
+
+  /**
+   * WebProtégé ontology project helper.
+   *
+   * @var \Drupal\soda_scs_manager\Helpers\SodaScsWebprotegeHelpers
+   */
+  protected SodaScsWebprotegeHelpers $webprotegeHelpers;
 
   /**
    * The Soda SCS API Actions service.
@@ -45,11 +53,12 @@ class SodaScsProjectDeleteForm extends ContentEntityDeleteForm {
    * @param Drupal\Component\Datetime\TimeInterface $time
    *   The time service.
    */
-  public function __construct(EntityRepositoryInterface $entity_repository, EntityTypeBundleInfoInterface $entity_type_bundle_info, SodaScsProjectHelpers $sodaScsProjectHelpers, TimeInterface $time) {
+  public function __construct(EntityRepositoryInterface $entity_repository, EntityTypeBundleInfoInterface $entity_type_bundle_info, SodaScsProjectHelpers $sodaScsProjectHelpers, SodaScsWebprotegeHelpers $webprotegeHelpers, TimeInterface $time) {
     parent::__construct($entity_repository, $entity_type_bundle_info, $time);
     $this->entityRepository = $entity_repository;
     $this->entityTypeBundleInfo = $entity_type_bundle_info;
     $this->sodaScsProjectHelpers = $sodaScsProjectHelpers;
+    $this->webprotegeHelpers = $webprotegeHelpers;
     $this->time = $time;
   }
 
@@ -61,6 +70,7 @@ class SodaScsProjectDeleteForm extends ContentEntityDeleteForm {
       $container->get('entity.repository'),
       $container->get('entity_type.bundle.info'),
       $container->get('soda_scs_manager.project.helpers'),
+      $container->get('soda_scs_manager.webprotege.helpers'),
       $container->get('datetime.time'),
     );
   }
@@ -103,6 +113,14 @@ class SodaScsProjectDeleteForm extends ContentEntityDeleteForm {
       $this->messenger()->addWarning($this->t('Could not delete Nextcloud Team Folder for project @label: @error', [
         '@label' => $project->label(),
         '@error' => $deleteFolderResult->error,
+      ]));
+    }
+
+    $trashWebprotegeResult = $this->webprotegeHelpers->trashOntologyProject($project);
+    if (!$trashWebprotegeResult->success) {
+      $this->messenger()->addWarning($this->t('Could not delete the WebProtégé project for @label: @error', [
+        '@label' => $project->label(),
+        '@error' => $trashWebprotegeResult->error,
       ]));
     }
 

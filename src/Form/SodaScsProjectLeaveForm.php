@@ -13,6 +13,7 @@ use Drupal\Core\Session\AccountProxyInterface;
 use Drupal\Core\Url;
 use Drupal\soda_scs_manager\Helpers\SodaScsProjectDbAccessHelpers;
 use Drupal\soda_scs_manager\Helpers\SodaScsProjectHelpers;
+use Drupal\soda_scs_manager\Helpers\SodaScsWebprotegeHelpers;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 
 /**
@@ -33,6 +34,13 @@ final class SodaScsProjectLeaveForm extends ContentEntityConfirmFormBase {
    * @var \Drupal\soda_scs_manager\Helpers\SodaScsProjectDbAccessHelpers
    */
   protected SodaScsProjectDbAccessHelpers $projectDbAccessHelpers;
+
+  /**
+   * WebProtégé ontology project helper.
+   *
+   * @var \Drupal\soda_scs_manager\Helpers\SodaScsWebprotegeHelpers
+   */
+  protected SodaScsWebprotegeHelpers $webprotegeHelpers;
 
   /**
    * The current user service.
@@ -61,11 +69,13 @@ final class SodaScsProjectLeaveForm extends ContentEntityConfirmFormBase {
     TimeInterface $time,
     SodaScsProjectHelpers $sodaScsProjectHelpers,
     SodaScsProjectDbAccessHelpers $projectDbAccessHelpers,
+    SodaScsWebprotegeHelpers $webprotegeHelpers,
     AccountProxyInterface $currentUser,
   ) {
     parent::__construct($entityRepository, $entityTypeBundleInfo, $time);
     $this->sodaScsProjectHelpers = $sodaScsProjectHelpers;
     $this->projectDbAccessHelpers = $projectDbAccessHelpers;
+    $this->webprotegeHelpers = $webprotegeHelpers;
     $this->currentUser = $currentUser;
   }
 
@@ -79,6 +89,7 @@ final class SodaScsProjectLeaveForm extends ContentEntityConfirmFormBase {
       $container->get('datetime.time'),
       $container->get('soda_scs_manager.project.helpers'),
       $container->get('soda_scs_manager.project_db_access.helpers'),
+      $container->get('soda_scs_manager.webprotege.helpers'),
       $container->get('current_user'),
     );
   }
@@ -154,6 +165,7 @@ final class SodaScsProjectLeaveForm extends ContentEntityConfirmFormBase {
     $currentUserEntity = \Drupal::entityTypeManager()->getStorage('user')->load($currentUserId);
     if ($currentUserEntity) {
       $this->projectDbAccessHelpers->revokeProjectMemberDbAccess($currentUserEntity, $project);
+      $this->webprotegeHelpers->revokeAccess($project, $currentUserEntity);
     }
 
     // Remove the current user from the members field.

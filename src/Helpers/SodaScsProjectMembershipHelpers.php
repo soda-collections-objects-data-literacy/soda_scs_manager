@@ -15,6 +15,7 @@ use Drupal\Core\Url;
 use Drupal\soda_scs_manager\Entity\SodaScsProjectInterface;
 use Drupal\soda_scs_manager\Entity\SodaScsProjectMembershipInterface;
 use Drupal\soda_scs_manager\Helpers\SodaScsProjectHelpers;
+use Drupal\soda_scs_manager\Helpers\SodaScsWebprotegeHelpers;
 use Drupal\soda_scs_manager\ValueObject\SodaScsResult;
 use Drupal\user\UserInterface;
 use Symfony\Component\DependencyInjection\Attribute\Autowire;
@@ -45,6 +46,11 @@ final class SodaScsProjectMembershipHelpers {
    * Project DB access helpers (MariaDB/phpMyAdmin SSO for project members).
    */
   private SodaScsProjectDbAccessHelpers $projectDbAccessHelpers;
+
+  /**
+   * WebProtégé ontology project helper.
+   */
+  private SodaScsWebprotegeHelpers $webprotegeHelpers;
 
   /**
    * The logger service.
@@ -82,6 +88,8 @@ final class SodaScsProjectMembershipHelpers {
     SodaScsProjectHelpers $projectHelpers,
     #[Autowire(service: 'soda_scs_manager.project_db_access.helpers')]
     SodaScsProjectDbAccessHelpers $projectDbAccessHelpers,
+    #[Autowire(service: 'soda_scs_manager.webprotege.helpers')]
+    SodaScsWebprotegeHelpers $webprotegeHelpers,
     #[Autowire(service: 'datetime.time')]
     TimeInterface $time,
   ) {
@@ -91,6 +99,7 @@ final class SodaScsProjectMembershipHelpers {
     $this->mailManager = $mailManager;
     $this->projectHelpers = $projectHelpers;
     $this->projectDbAccessHelpers = $projectDbAccessHelpers;
+    $this->webprotegeHelpers = $webprotegeHelpers;
     $this->time = $time;
   }
 
@@ -224,6 +233,7 @@ final class SodaScsProjectMembershipHelpers {
         $project->save();
         $this->projectHelpers->syncKeycloakGroupMembers($project);
         $this->projectDbAccessHelpers->syncProjectMembersDbAccess($project);
+        $this->webprotegeHelpers->grantEdit($project, $recipient);
       }
 
       $request->setStatus(SodaScsProjectMembershipInterface::STATUS_ACCEPTED);

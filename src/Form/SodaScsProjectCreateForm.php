@@ -20,6 +20,7 @@ use Drupal\soda_scs_manager\Helpers\SodaScsJupyterHelpers;
 use Drupal\soda_scs_manager\Helpers\SodaScsProjectDbAccessHelpers;
 use Drupal\soda_scs_manager\Helpers\SodaScsProjectHelpers;
 use Drupal\soda_scs_manager\Helpers\SodaScsProjectMembershipHelpers;
+use Drupal\soda_scs_manager\Helpers\SodaScsWebprotegeHelpers;
 use Drupal\soda_scs_manager\RequestActions\SodaScsServiceRequestInterface;
 use Drupal\soda_scs_manager\ServiceActions\SodaScsServiceActionsInterface;
 use Drupal\soda_scs_manager\Traits\SodaScsProjectMemberInvitationTrait;
@@ -150,6 +151,11 @@ class SodaScsProjectCreateForm extends ContentEntityForm {
   protected SodaScsJupyterHelpers $jupyterHelpers;
 
   /**
+   * WebProtégé ontology project helper.
+   */
+  protected SodaScsWebprotegeHelpers $webprotegeHelpers;
+
+  /**
    * Constructs a new SodaScsComponentCreateForm.
    *
    * @param \Drupal\Core\Session\AccountProxyInterface $currentUser
@@ -198,6 +204,7 @@ class SodaScsProjectCreateForm extends ContentEntityForm {
     SodaScsProjectDbAccessHelpers $projectDbAccessHelpers,
     SodaScsServiceActionsInterface $sodaScsSqlServiceActions,
     SodaScsJupyterHelpers $jupyterHelpers,
+    SodaScsWebprotegeHelpers $webprotegeHelpers,
     TimeInterface $time,
   ) {
     parent::__construct($entity_repository, $entity_type_bundle_info, $time);
@@ -215,6 +222,7 @@ class SodaScsProjectCreateForm extends ContentEntityForm {
     $this->projectDbAccessHelpers = $projectDbAccessHelpers;
     $this->sodaScsSqlServiceActions = $sodaScsSqlServiceActions;
     $this->jupyterHelpers = $jupyterHelpers;
+    $this->webprotegeHelpers = $webprotegeHelpers;
   }
 
   /**
@@ -238,6 +246,7 @@ class SodaScsProjectCreateForm extends ContentEntityForm {
       $container->get('soda_scs_manager.project_db_access.helpers'),
       $container->get('soda_scs_manager.sql_service.actions'),
       $container->get('soda_scs_manager.jupyter.helpers'),
+      $container->get('soda_scs_manager.webprotege.helpers'),
       $container->get('datetime.time'),
     );
   }
@@ -342,6 +351,14 @@ class SodaScsProjectCreateForm extends ContentEntityForm {
         '@project' => $project->label(),
         '@error' => $createTeamFolderResult->error,
       ]);
+    }
+
+    $createWebprotegeResult = $this->webprotegeHelpers->createOntologyProject($project);
+    if (!$createWebprotegeResult->success) {
+      $this->messenger()->addError($this->t('Failed to create WebProtégé project for @project: @error', [
+        '@project' => $project->label(),
+        '@error' => $createWebprotegeResult->error,
+      ]));
     }
 
     $this->messenger()->addMessage($this->t('Project @project has been created.', [

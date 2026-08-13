@@ -9,6 +9,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Creating an SCS project also creates a WebProtégé ontology project. The
+  project-page WebProtégé card deep-links into it; members receive EDIT.
+  Configure the API key in settings (not stored in git). Backfill existing
+  projects with `drush soda_scs_manager:backfill-webprotege-projects --all`.
 - Hover (or tap on a phone) the application card health icon to start, stop,
   or restart dedicated containers (WissKI, MariaDB, triplestore, Jupyter
   notebook). Shared services (Nextcloud, WebProtégé, JupyterHub) are

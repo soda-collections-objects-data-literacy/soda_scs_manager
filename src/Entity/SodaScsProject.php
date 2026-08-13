@@ -79,6 +79,7 @@ use Drupal\user\EntityOwnerTrait;
  *     "updated",
  *     "owner",
  *     "rights",
+ *     "webprotegeProjectId",
  *   }
  * )
  */
@@ -272,6 +273,13 @@ class SodaScsProject extends ContentEntityBase implements SodaScsProjectInterfac
       ->setRequired(TRUE)
       ->setReadOnly(TRUE)
       ->setTranslatable(FALSE)
+      ->setDisplayConfigurable('view', FALSE);
+
+    $fields['webprotegeProjectId'] = BaseFieldDefinition::create('string')
+      ->setLabel(new TranslatableMarkup('WebProtégé project ID'))
+      ->setDescription(new TranslatableMarkup('UUID of the ontology project in the shared WebProtégé instance.'))
+      ->setReadOnly(TRUE)
+      ->setDisplayConfigurable('form', FALSE)
       ->setDisplayConfigurable('view', FALSE);
 
     return $fields;

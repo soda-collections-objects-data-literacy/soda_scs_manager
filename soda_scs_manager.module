@@ -2053,6 +2053,14 @@ function _soda_scs_manager_create_default_project_for_user(UserInterface $user) 
     ]);
   }
 
+  $createWebprotegeResult = \Drupal::service('soda_scs_manager.webprotege.helpers')->createOntologyProject($project);
+  if (!$createWebprotegeResult->success) {
+    \Drupal::messenger()->addError(\Drupal::translation()->translate('Failed to create WebProtégé project for @project: @error', [
+      '@project' => $project->label(),
+      '@error' => $createWebprotegeResult->error,
+    ]));
+  }
+
   // Sync MariaDB access for project members (phpMyAdmin SSO).
   \Drupal::service('soda_scs_manager.project_db_access.helpers')->syncProjectMembersDbAccess($project);
 }

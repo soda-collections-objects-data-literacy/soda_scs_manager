@@ -19,6 +19,7 @@ use Drupal\soda_scs_manager\Entity\SodaScsProjectInterface;
 use Drupal\soda_scs_manager\Helpers\SodaScsProjectDbAccessHelpers;
 use Drupal\soda_scs_manager\Helpers\SodaScsProjectHelpers;
 use Drupal\soda_scs_manager\Helpers\SodaScsProjectMembershipHelpers;
+use Drupal\soda_scs_manager\Helpers\SodaScsWebprotegeHelpers;
 use Drupal\soda_scs_manager\RequestActions\SodaScsServiceRequestInterface;
 use Drupal\soda_scs_manager\Traits\SodaScsProjectMemberInvitationTrait;
 use Drupal\user\UserInterface;
@@ -123,6 +124,13 @@ class SodaScsProjectEditForm extends ContentEntityForm {
   protected SodaScsProjectDbAccessHelpers $projectDbAccessHelpers;
 
   /**
+   * WebProtégé ontology project helper.
+   *
+   * @var \Drupal\soda_scs_manager\Helpers\SodaScsWebprotegeHelpers
+   */
+  protected SodaScsWebprotegeHelpers $webprotegeHelpers;
+
+  /**
    * {@inheritdoc}
    */
   public static function create(ContainerInterface $container) {
@@ -140,6 +148,7 @@ class SodaScsProjectEditForm extends ContentEntityForm {
       $container->get('soda_scs_manager.project.helpers'),
       $container->get('soda_scs_manager.project_membership.helpers'),
       $container->get('soda_scs_manager.project_db_access.helpers'),
+      $container->get('soda_scs_manager.webprotege.helpers'),
     );
   }
 
@@ -160,6 +169,7 @@ class SodaScsProjectEditForm extends ContentEntityForm {
     SodaScsProjectHelpers $sodaScsProjectHelpers,
     SodaScsProjectMembershipHelpers $projectMembershipHelpers,
     SodaScsProjectDbAccessHelpers $projectDbAccessHelpers,
+    SodaScsWebprotegeHelpers $webprotegeHelpers,
   ) {
     parent::__construct($entity_repository, $entity_type_bundle_info, $time);
     $this->currentUser = $currentUser;
@@ -172,6 +182,7 @@ class SodaScsProjectEditForm extends ContentEntityForm {
     $this->sodaScsProjectHelpers = $sodaScsProjectHelpers;
     $this->projectMembershipHelpers = $projectMembershipHelpers;
     $this->projectDbAccessHelpers = $projectDbAccessHelpers;
+    $this->webprotegeHelpers = $webprotegeHelpers;
   }
 
   /**
@@ -448,6 +459,7 @@ class SodaScsProjectEditForm extends ContentEntityForm {
 
     // Revoke MariaDB access to project's SQL databases before removing.
     $this->projectDbAccessHelpers->revokeProjectMemberDbAccess($member, $project);
+    $this->webprotegeHelpers->revokeAccess($project, $member);
 
     // Remove the member from the project.
     $members = $project->get('members')->getValue();

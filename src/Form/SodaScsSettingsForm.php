@@ -1148,7 +1148,21 @@ class SodaScsSettingsForm extends ConfigFormBase {
       '#type' => 'textfield',
       '#title' => $this->t('Host'),
       '#default_value' => $this->config('soda_scs_manager.settings')->get('webprotege')['generalSettings']['host'] ?? '',
-      '#description' => $this->t('The host, like "webprotege.scs.example.com".'),
+      '#description' => $this->t('The public URL, like "https://webprotege.scs.example.com".'),
+    ];
+
+    $form['webprotege']['generalSettings']['apiBaseUrl'] = [
+      '#type' => 'textfield',
+      '#title' => $this->t('API base URL'),
+      '#default_value' => $this->config('soda_scs_manager.settings')->get('webprotege')['generalSettings']['apiBaseUrl'] ?? '',
+      '#description' => $this->t('Optional Docker-internal origin for REST calls, like "http://webprotege:8080". Leave empty to use the public host.'),
+    ];
+
+    $form['webprotege']['generalSettings']['apiKey'] = [
+      '#type' => 'password',
+      '#title' => $this->t('API key'),
+      '#description' => $this->t('WebProtégé API key for creating ontology projects. Generate with <code>docker exec -it webprotege java -jar /webprotege-cli.jar generate-api-key</code>. Leave blank to keep the current value.'),
+      '#attributes' => ['autocomplete' => 'new-password'],
     ];
 
     // WissKI settings tab.
@@ -1412,6 +1426,14 @@ class SodaScsSettingsForm extends ConfigFormBase {
         = $existingPortainer['portainerOptions']['authenticationToken'] ?? '';
     }
 
+    $webprotegeValues = $form_state->getValue('webprotege') ?? [];
+    $webprotegeApiKey = $webprotegeValues['generalSettings']['apiKey'] ?? NULL;
+    if ($webprotegeApiKey === '' || $webprotegeApiKey === NULL) {
+      $existingWebprotege = $config->get('webprotege') ?? [];
+      $webprotegeValues['generalSettings']['apiKey']
+        = $existingWebprotege['generalSettings']['apiKey'] ?? '';
+    }
+
     // Save the configuration.
     $snapshotPath = rtrim(trim((string) $form_state->getValue('snapshotPath')), '/');
     if ($snapshotPath === '') {
@@ -1435,7 +1457,7 @@ class SodaScsSettingsForm extends ConfigFormBase {
       ->set('snapshotPath', $snapshotPath)
       ->set('snapshotHostPath', $snapshotHostPath)
       ->set('triplestore', $triplestoreValues)
-      ->set('webprotege', $form_state->getValue('webprotege'))
+      ->set('webprotege', $webprotegeValues)
       ->set('wisski', $wisskiValues)
       ->save();
 

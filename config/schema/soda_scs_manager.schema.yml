@@ -550,6 +550,26 @@ soda_scs_manager.settings:
                       type: string
                       label: 'Delete route'
                       description: 'The delete route, like "/{stackId}".'
+    webprotege:
+      type: mapping
+      label: 'WebProtégé settings'
+      mapping:
+        generalSettings:
+          type: mapping
+          label: 'General settings'
+          mapping:
+            host:
+              type: string
+              label: 'Host'
+              description: 'Public WebProtégé URL, like https://webprotege.scs.example.com.'
+            apiBaseUrl:
+              type: string
+              label: 'API base URL'
+              description: 'Optional Docker-internal API origin, like http://webprotege:8080. Falls back to host.'
+            apiKey:
+              type: string
+              label: 'API key'
+              description: 'WebProtégé API key used to create and share ontology projects. Leave blank to keep the current value.'
     wisski:
       type: mapping
       label: 'WissKI settings'
