@@ -3821,3 +3821,27 @@ msgstr "Der Betriebszustand der Anwendung wurde aktualisiert."
 #: js/dashboardHealthStatus.js
 msgid "The application could not be updated."
 msgstr "Die Anwendung konnte nicht aktualisiert werden."
+
+#: templates/cards/soda-scs-manager--entity-card.html.twig
+msgid "Created"
+msgstr "Erstellt"
+
+#: templates/cards/soda-scs-manager--entity-card.html.twig
+msgid "Edited"
+msgstr "Bearbeitet"
+
+#: templates/cards/soda-scs-manager--entity-card.html.twig
+msgid "Deleted"
+msgstr "Gelöscht"
+
+#: templates/cards/soda-scs-manager--entity-card.html.twig
+msgid "Restored"
+msgstr "Wiederhergestellt"
+
+#: templates/cards/soda-scs-manager--entity-card.html.twig
+msgid "Renamed"
+msgstr "Umbenannt"
+
+#: templates/cards/soda-scs-manager--entity-card.html.twig
+msgid "Moved"
+msgstr "Verschoben"

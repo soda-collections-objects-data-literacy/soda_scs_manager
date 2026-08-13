@@ -205,21 +205,39 @@
             {% else %}
               <ul class="soda-scs-manager--card-feed-list">
                 {% for item in activities.items %}
+                  {% set action_labels = {
+                    'created': 'Created'|t,
+                    'changed': 'Edited'|t,
+                    'deleted': 'Deleted'|t,
+                    'restored': 'Restored'|t,
+                    'renamed': 'Renamed'|t,
+                    'moved': 'Moved'|t
+                  } %}
+                  {% set action = item.action|default('changed') %}
+                  {% if action not in action_labels|keys %}
+                    {% set action = 'changed' %}
+                  {% endif %}
+                  {% set action_label = action_labels[action] %}
                   <li class="soda-scs-manager--card-feed-item">
-                    {% if item.url %}
-                      <a
-                        href="{{ item.url }}"
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        class="soda-scs-manager--card-feed-link"
-                        title="{{ item.label }}"
-                      >{{ item.label }}</a>
-                    {% else %}
-                      <span class="soda-scs-manager--card-feed-label" title="{{ item.label }}">{{ item.label }}</span>
-                    {% endif %}
-                    {% if item.subtitle %}
-                      <span class="soda-scs-manager--card-feed-subtitle" title="{{ item.subtitle }}">{{ item.subtitle }}</span>
-                    {% endif %}
+                    <span class="soda-scs-manager--card-feed-action soda-scs-manager--card-feed-action--{{ action }}"
+                          aria-label="{{ action_label }}"
+                          title="{{ action_label }}"></span>
+                    <span class="soda-scs-manager--card-feed-item-text">
+                      {% if item.url %}
+                        <a
+                          href="{{ item.url }}"
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          class="soda-scs-manager--card-feed-link"
+                          title="{{ item.label }}"
+                        >{{ item.label }}</a>
+                      {% else %}
+                        <span class="soda-scs-manager--card-feed-label" title="{{ item.label }}">{{ item.label }}</span>
+                      {% endif %}
+                      {% if item.subtitle %}
+                        <span class="soda-scs-manager--card-feed-subtitle" title="{{ item.subtitle }}">{{ item.subtitle }}</span>
+                      {% endif %}
+                    </span>
                   </li>
                 {% endfor %}
               </ul>

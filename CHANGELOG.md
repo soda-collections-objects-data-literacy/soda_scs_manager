@@ -23,7 +23,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Project pages show the user’s central services (JupyterHub, Nextcloud,
   WebProtégé). JupyterHub and Nextcloud open the project Team Folder.
   The Nextcloud card lists recent activity in that folder (via
-  `scs_manager_integration` `/folders/{id}/feed`).
+  `scs_manager_integration` `/folders/{id}/feed`), with icons for
+  created / edited / deleted (and renamed, moved, restored).
 
 ### Changed
 
@@ -32,6 +33,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Dashboard lists only **Your projects**. JupyterHub, Nextcloud, and WebProtégé
   are opened from the project page, not from a separate **Central services**
   block.
+
+### Fixed
+
+- Project Nextcloud card activity feed failed with HTTP 500 when the
+  `scs_manager_integration` bind mount pointed at a deleted directory.
+  Recreate `nextcloud--nextcloud` after replacing that app tree so the
+  OCS `/folders` API can load.
 
 ## [3.0.0] - 2026-08-12
 

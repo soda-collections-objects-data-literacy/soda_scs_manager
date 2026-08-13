@@ -106,6 +106,8 @@ class SodaScsNextcloudPreviewTest extends UnitTestCase {
         'items' => [
           [
             'subject' => 'Created notes.md',
+            'subjectKey' => 'created_self',
+            'type' => 'file_created',
             'timestamp' => 1700000000,
             'object' => [
               'name' => 'notes.md',
@@ -124,7 +126,8 @@ class SodaScsNextcloudPreviewTest extends UnitTestCase {
     $this->assertCount(1, $result['activities']['items']);
     $this->assertSame('notes.md', $result['activities']['items'][0]['label']);
     $this->assertSame('https://drive.example.com/f/99', $result['activities']['items'][0]['url']);
-    $this->assertStringContainsString('Created notes.md', $result['activities']['items'][0]['subtitle']);
+    $this->assertSame('created', $result['activities']['items'][0]['action']);
+    $this->assertSame('2023-11-14 22:13', $result['activities']['items'][0]['subtitle']);
   }
 
   /**

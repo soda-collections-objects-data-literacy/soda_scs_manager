@@ -64,23 +64,41 @@
       {% elseif activities.status == 'empty' or activities.items is empty %}
         <p class="text-sm text-gray-500">{{ 'No recent activity in SCS-Share.'|t }}</p>
       {% else %}
-        <ul class="scs-manager--nextcloud-preview-list flex flex-col gap-2">
+        <ul class="scs-manager--nextcloud-preview-list soda-scs-manager--card-feed-list flex flex-col gap-2">
           {% for item in activities.items %}
-            <li class="scs-manager--nextcloud-preview-item min-w-0">
-              {% if item.url %}
-                <a
-                  href="{{ item.url }}"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  class="block min-w-0 truncate text-sm font-medium text-blue-700 hover:underline"
-                  title="{{ item.label }}"
-                >{{ item.label }}</a>
-              {% else %}
-                <span class="block min-w-0 truncate text-sm font-medium" title="{{ item.label }}">{{ item.label }}</span>
-              {% endif %}
-              {% if item.subtitle %}
-                <span class="block truncate text-xs text-gray-500" title="{{ item.subtitle }}">{{ item.subtitle }}</span>
-              {% endif %}
+            {% set action_labels = {
+              'created': 'Created'|t,
+              'changed': 'Edited'|t,
+              'deleted': 'Deleted'|t,
+              'restored': 'Restored'|t,
+              'renamed': 'Renamed'|t,
+              'moved': 'Moved'|t
+            } %}
+            {% set action = item.action|default('changed') %}
+            {% if action not in action_labels|keys %}
+              {% set action = 'changed' %}
+            {% endif %}
+            {% set action_label = action_labels[action] %}
+            <li class="soda-scs-manager--card-feed-item scs-manager--nextcloud-preview-item min-w-0">
+              <span class="soda-scs-manager--card-feed-action soda-scs-manager--card-feed-action--{{ action }}"
+                    aria-label="{{ action_label }}"
+                    title="{{ action_label }}"></span>
+              <span class="soda-scs-manager--card-feed-item-text">
+                {% if item.url %}
+                  <a
+                    href="{{ item.url }}"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    class="soda-scs-manager--card-feed-link"
+                    title="{{ item.label }}"
+                  >{{ item.label }}</a>
+                {% else %}
+                  <span class="soda-scs-manager--card-feed-label" title="{{ item.label }}">{{ item.label }}</span>
+                {% endif %}
+                {% if item.subtitle %}
+                  <span class="soda-scs-manager--card-feed-subtitle" title="{{ item.subtitle }}">{{ item.subtitle }}</span>
+                {% endif %}
+              </span>
             </li>
           {% endfor %}
         </ul>

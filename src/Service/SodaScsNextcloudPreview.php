@@ -234,6 +234,10 @@ class SodaScsNextcloudPreview {
     $limit = max(1, min(self::ITEM_LIMIT, $limit));
     $folderId = $this->resolveFolderId($authParams, $externalProjectId, $fallbackFolderName);
     if ($folderId === NULL) {
+      $this->loggerFactory->get('soda_scs_manager')->warning(
+        'Nextcloud project feed: folder list failed for externalProjectId @id.',
+        ['@id' => $externalProjectId],
+      );
       return ['status' => 'error', 'items' => []];
     }
     if ($folderId === 0) {
@@ -247,6 +251,14 @@ class SodaScsNextcloudPreview {
     $response = $this->nextcloudServiceActions->makeRequest($request);
     $data = $this->decodeOcsData($response);
     if ($data === NULL) {
+      $this->loggerFactory->get('soda_scs_manager')->warning(
+        'Nextcloud project feed: feed request failed for folder @folder (externalProjectId @id): @error',
+        [
+          '@folder' => (string) $folderId,
+          '@id' => $externalProjectId,
+          '@error' => (string) ($response['error'] ?? 'invalid OCS payload'),
+        ],
+      );
       return ['status' => 'error', 'items' => []];
     }
 
@@ -284,7 +296,7 @@ class SodaScsNextcloudPreview {
    * @param string $baseUrl
    *   Nextcloud base URL.
    *
-   * @return array{label: string, subtitle: string, url: string}|null
+   * @return array{label: string, subtitle: string, url: string, action: string}|null
    *   Normalised item, or NULL if the row has no displayable label.
    */
   protected function mapFeedItem(array $row, string $baseUrl): ?array {
@@ -292,18 +304,15 @@ class SodaScsNextcloudPreview {
     $label = trim((string) ($object['name'] ?? ''));
     $subject = trim((string) ($row['subject'] ?? ''));
     if ($label === '') {
-      $label = $subject;
+      $label = $this->fileNameFromSubject($subject);
     }
     if ($label === '') {
       return NULL;
     }
 
-    $subtitle = $subject;
+    $action = $this->resolveFeedAction($row);
     $timestamp = (int) ($row['timestamp'] ?? 0);
-    if ($timestamp > 0) {
-      $datetime = gmdate('c', $timestamp);
-      $subtitle = $subtitle !== '' ? $subtitle . ' · ' . $datetime : $datetime;
-    }
+    $subtitle = $timestamp > 0 ? gmdate('Y-m-d H:i', $timestamp) : '';
 
     $fileId = (int) ($object['fileId'] ?? 0);
     $url = '';
@@ -315,7 +324,40 @@ class SodaScsNextcloudPreview {
       'label' => $label,
       'subtitle' => $subtitle,
       'url' => $url,
+      'action' => $action,
     ];
+  }
+
+  /**
+   * Maps a feed row to a UI action key (created, changed, deleted, …).
+   *
+   * @param array<string, mixed> $row
+   *   Raw feed item.
+   */
+  protected function resolveFeedAction(array $row): string {
+    $haystack = strtolower(implode(' ', [
+      (string) ($row['type'] ?? ''),
+      (string) ($row['subjectKey'] ?? ''),
+      (string) ($row['subject'] ?? ''),
+    ]));
+
+    return match (TRUE) {
+      str_contains($haystack, 'created') => 'created',
+      str_contains($haystack, 'deleted') => 'deleted',
+      str_contains($haystack, 'restored') => 'restored',
+      str_contains($haystack, 'renamed') => 'renamed',
+      str_contains($haystack, 'moved') => 'moved',
+      str_contains($haystack, 'changed') => 'changed',
+      default => 'changed',
+    };
+  }
+
+  /**
+   * Strips a leading activity verb from a formatted subject when no file name.
+   */
+  protected function fileNameFromSubject(string $subject): string {
+    $stripped = preg_replace('/^(Created|Changed|Deleted|Restored|Renamed|Moved)\s+/i', '', $subject);
+    return trim((string) $stripped);
   }
 
   /**
