@@ -8,6 +8,7 @@ use Drupal\Core\Entity\EntityTypeBundleInfoInterface;
 use Drupal\Core\Entity\EntityTypeManagerInterface;
 use Drupal\Core\Session\AccountProxyInterface;
 use Drupal\Core\StringTranslation\StringTranslationTrait;
+use Drupal\Core\StringTranslation\TranslatableMarkup;
 use Drupal\Core\StringTranslation\TranslationInterface;
 use Drupal\Core\Url;
 use Drupal\soda_scs_manager\Entity\SodaScsComponentInterface;
@@ -312,7 +313,7 @@ final class SodaScsApplicationCardBuilder {
 
     $card = [
       '#theme' => 'soda_scs_manager__entity_card',
-      '#title' => $this->t('@bundle', ['@bundle' => $stack->label()]),
+      '#title' => $this->cardTitle($stack->bundle(), (string) $stack->label()),
       '#bundle_label' => $bundleInfo['label'],
       '#description' => $bundleInfo['description'],
       '#details_link' => $detailsLink,
@@ -414,7 +415,7 @@ final class SodaScsApplicationCardBuilder {
 
     return [
       '#theme' => 'soda_scs_manager__entity_card',
-      '#title' => $this->t('@bundle', ['@bundle' => $component->label()]),
+      '#title' => $this->cardTitle($component->bundle(), (string) $component->label()),
       '#bundle_label' => $bundleInfo['label'],
       '#description' => $bundleInfo['description'],
       '#details_link' => $detailsLink,
@@ -436,6 +437,18 @@ final class SodaScsApplicationCardBuilder {
         'tags' => $cacheTags,
       ],
     ];
+  }
+
+  /**
+   * Card heading: product name for shared apps, instance label otherwise.
+   */
+  private function cardTitle(string $bundle, string $entityLabel): string|TranslatableMarkup {
+    return match ($bundle) {
+      'soda_scs_jupyter_stack' => $this->t('JupyterHub'),
+      'soda_scs_nextcloud_stack' => $this->t('Nextcloud'),
+      'soda_scs_webprotege_component' => $this->t('WebProtégé'),
+      default => $entityLabel,
+    };
   }
 
   /**

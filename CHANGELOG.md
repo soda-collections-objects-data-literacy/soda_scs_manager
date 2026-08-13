@@ -32,6 +32,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- Central application cards are titled **JupyterHub**, **Nextcloud**, and
+  **WebProtégé** (not the per-user instance name). WissKI, database, and
+  triplestore cards keep the instance title.
 - Removed the **Restart Jupyter** button from the JupyterHub card; notebook
   stop and restart are on the health icon.
 - Dashboard lists only **Your projects**. JupyterHub, Nextcloud, and WebProtégé
