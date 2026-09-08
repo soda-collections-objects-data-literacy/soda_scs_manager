@@ -76,7 +76,7 @@ class SodaScsStack extends ContentEntityBase implements SodaScsStackInterface {
 
   use EntityOwnerTrait;
   /**
-   * The entity relation to the Soda SCS Component.
+   * The entity relation to the SODa SCS Component.
    *
    * @var \Drupal\Core\Entity\ContentEntityInterface
    */
@@ -100,7 +100,7 @@ class SodaScsStack extends ContentEntityBase implements SodaScsStackInterface {
   }
 
   /**
-   * Get the included Soda SCS Components.
+   * Get the included SODa SCS Components.
    *
    * @param \Drupal\soda_scs_manager\Entity\SodaScsStackInterface $stack
    *   Stack.

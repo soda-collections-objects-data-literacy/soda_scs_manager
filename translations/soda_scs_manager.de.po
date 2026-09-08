@@ -569,8 +569,8 @@ msgid "Delete SODa SCS Service Key"
 msgstr "SODa SCS-Serviceschlüssel löschen"
 
 #: soda_scs_manager.permissions.yml:0
-msgid "Create SCS Snapshots"
-msgstr "SCS-Snapshots erstellen"
+msgid "Create SODa SCS Snapshots"
+msgstr "SODa SCS-Snapshots erstellen"
 
 #: soda_scs_manager.permissions.yml:0
 msgid "Create snapshots of applications."
@@ -597,20 +597,20 @@ msgid "Stacks"
 msgstr "Stacks"
 
 #: soda_scs_manager.routing.yml:0;0
-msgid "Create Snapshot"
-msgstr "Snapshot erstellen"
+msgid "Create SODa SCS Snapshot"
+msgstr "SODa SCS-Snapshot erstellen"
 
 #: soda_scs_manager.routing.yml:0
-msgid "SCS Component"
-msgstr "SCS Component"
+msgid "SODa SCS Component"
+msgstr "SODa SCS-Komponente"
 
 #: soda_scs_manager.routing.yml:0
-msgid "Add SCS Component"
-msgstr "SCS Component hinzufügen"
+msgid "Add SODa SCS Component"
+msgstr "SODa SCS-Komponente hinzufügen"
 
 #: soda_scs_manager.routing.yml:0
-msgid "Delete SCS Component"
-msgstr "SCS Component löschen"
+msgid "Delete SODa SCS Component"
+msgstr "SODa SCS-Komponente löschen"
 
 #: soda_scs_manager.routing.yml:0
 msgid "SODa SCS Service Key"
@@ -1195,7 +1195,7 @@ msgstr "Flavour"
 
 #: src/Entity/Bundle/SodaScsComponentBundle.php:26 src/Entity/Bundle/SodaScsStackBundle.php:26
 msgid "The flavour of the SODa SCS Component."
-msgstr "Der Flavour der SODa SCS Komponente."
+msgstr "Der Flavour der SODa SCS-Komponente."
 
 #: src/Entity/Bundle/SodaScsComponentBundle.php:49
 msgid "Shared With"
@@ -1302,8 +1302,8 @@ msgid "The machineName cannot contain the word \"@word\""
 msgstr "Der Maschinenname darf das Wort \"@word\" nicht enthalten"
 
 #: src/Form/SodaScsComponentCreateForm.php:294 src/Form/SodaScsStackCreateForm.php:239
-msgid "The machineName is already in use by another Soda SCS Component entity"
-msgstr "Der Maschinenname wird bereits von einer anderen Soda SCS Komponente verwendet"
+msgid "The machineName is already in use by another SODa SCS Component entity"
+msgstr "Der Maschinenname wird bereits von einer anderen SODa SCS-Komponente verwendet"
 
 #: src/Form/SodaScsComponentCreateForm.php:311
 msgid "Cannot create component \"@label\". See logs for more details."
@@ -2519,7 +2519,7 @@ msgstr "SODa SCS Manager Seitenleisten-Navigation"
 
 #: src/Plugin/EntityReferenceSelection/SodaScsComponentSelection.php:8
 msgid "SCS Component Selection"
-msgstr "SCS Komponentenauswahl"
+msgstr "SCS-Komponentenauswahl"
 
 #: src/Plugin/EntityReferenceSelection/SodaScsProjectSelection.php:10
 msgid "SCS Project Selection"
@@ -3964,4 +3964,52 @@ msgstr "Sie können die Einladung in Ihren Nachrichten annehmen oder ablehnen: @
 #: src/Helpers/SodaScsProjectMembershipHelpers.php
 msgid "a project"
 msgstr "ein Projekt"
+
+#: src/Helpers/SodaScsProjectMembershipHelpers.php
+msgid "You are not allowed to remove this member."
+msgstr "Sie dürfen dieses Mitglied nicht entfernen."
+
+#: src/Helpers/SodaScsProjectMembershipHelpers.php
+msgid "Failed to remove the member. Please try again."
+msgstr "Das Mitglied konnte nicht entfernt werden. Bitte versuchen Sie es erneut."
+
+#: src/Form/SodaScsProjectAddMemberForm.php
+msgid "Email or username"
+msgstr "E-Mail oder Benutzername"
+
+#: src/Form/SodaScsProjectAddMemberForm.php
+msgid "Add"
+msgstr "Hinzufügen"
+
+#: src/Form/SodaScsProjectAddMemberForm.php
+msgid "You are not allowed to add members to this project."
+msgstr "Sie dürfen diesem Projekt keine Mitglieder hinzufügen."
+
+#: src/Form/SodaScsProjectAddMemberForm.php
+msgid "Project is missing."
+msgstr "Das Projekt fehlt."
+
+#: src/ViewBuilder/SodaScsProjectViewBuilder.php
+msgid "Add member"
+msgstr "Mitglied hinzufügen"
+
+#: src/ViewBuilder/SodaScsProjectViewBuilder.php
+msgid "Leave project"
+msgstr "Projekt verlassen"
+
+#: src/ViewBuilder/SodaScsProjectViewBuilder.php
+msgid "Remove @member"
+msgstr "@member entfernen"
+
+#: src/Form/SodaScsProjectRemoveMemberForm.php
+msgid "Remove @member from project @project?"
+msgstr "@member aus dem Projekt @project entfernen?"
+
+#: src/Form/SodaScsProjectRemoveMemberForm.php
+msgid "They will lose access to this project. This action cannot be undone."
+msgstr "Die Person verliert den Zugang zu diesem Projekt. Diese Aktion kann nicht rückgängig gemacht werden."
+
+#: src/Form/SodaScsProjectRemoveMemberForm.php
+msgid "The member could not be removed."
+msgstr "Das Mitglied konnte nicht entfernt werden."
 

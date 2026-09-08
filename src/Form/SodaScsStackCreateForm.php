@@ -289,7 +289,7 @@ class SodaScsStackCreateForm extends ContentEntityForm {
     $existing_entities = $entity_query->execute();
 
     if (!empty($existing_entities)) {
-      $form_state->setErrorByName('machineName', $this->t('The machineName is already in use by another Soda SCS Component entity'));
+      $form_state->setErrorByName('machineName', $this->t('The machineName is already in use by another SODa SCS Component entity'));
     }
 
     if (strlen($form_state->getValue('label')[0]['value']) > 25) {

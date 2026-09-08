@@ -74,11 +74,11 @@ delete soda scs project:
 
 # SCS Snapshot Permissions
 create soda scs snapshot:
-  title: 'Create SCS Snapshots'
+  title: 'Create SODa SCS Snapshots'
   description: 'Granted to scs_user; snapshot creation routes are restricted to the component or stack owner.'
 
 view soda scs snapshot:
-  title: 'View SCS Snapshots'
+  title: 'View SODa SCS Snapshots'
   description: 'View snapshots of stacks and components.'
 
 edit soda scs snapshot:
@@ -86,5 +86,5 @@ edit soda scs snapshot:
   description: 'Edit snapshots of stacks and components.'
 
 delete soda scs snapshot:
-  title: 'Delete SCS Snapshots'
+  title: 'Delete SODa SCS Snapshots'
   description: 'Delete snapshots of stacks and components.'
