@@ -9,6 +9,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Project page **Files** section shows recent Nextcloud Team Folder activity
+  for the viewing owner/member (same `scs_manager_integration` feed as the
+  Nextcloud card). Placeable block **Project files (Nextcloud activity)**
+  (`soda_scs_manager_project_files`) with project context for Layout Builder
+  or block layout.
 - `SodaScsDockerDns` resolves shared container DNS from `SCS_CONTAINER_*` /
   `INTERNAL_TS_BASE` / `NEXTCLOUD_MOUNTER_RC_URL` (settings still override),
   so naming migration does not require PHP hardcodes.

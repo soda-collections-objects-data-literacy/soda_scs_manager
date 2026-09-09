@@ -968,6 +968,7 @@ function soda_scs_manager_theme($existing, $type, $theme, $path) {
         'application_cards' => [],
         'add_application_popup' => NULL,
         'attributes' => [],
+        'files' => NULL,
         'filter_tags' => [],
         'is_owner' => FALSE,
         'label' => NULL,
@@ -1014,6 +1015,9 @@ function soda_scs_manager_theme($existing, $type, $theme, $path) {
         'label' => NULL,
         'url' => '',
         'is_owner' => FALSE,
+        'owner_id' => 0,
+        'members_ids' => [],
+        'member_profiles' => [],
         'members_count' => 0,
         'applications' => [],
         'tags' => [],
@@ -1050,6 +1054,18 @@ function soda_scs_manager_theme($existing, $type, $theme, $path) {
         'status' => 'needs_connect',
       ],
       'template' => 'entity/soda-scs-manager--nextcloud-preview',
+    ],
+    'soda_scs_manager__project_files' => [
+      'variables' => [
+        'activities' => [
+          'status' => 'empty',
+          'items' => [],
+        ],
+        'open_url' => '',
+        'project_label' => '',
+        'status' => 'needs_connect',
+      ],
+      'template' => 'entity/soda-scs-manager--project-files',
     ],
     'soda_scs_manager__start_page' => [
       'variables' => [

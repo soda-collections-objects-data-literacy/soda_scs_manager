@@ -4013,3 +4013,15 @@ msgstr "Die Person verliert den Zugang zu diesem Projekt. Diese Aktion kann nich
 msgid "The member could not be removed."
 msgstr "Das Mitglied konnte nicht entfernt werden."
 
+
+#: src/Plugin/Block/SodaScsProjectFilesBlock.php
+msgid "Project files (Nextcloud activity)"
+msgstr "Projektdateien (Nextcloud-Aktivitäten)"
+
+#: templates/entity/soda-scs-manager--project-files.html.twig
+msgid "Project folder activity"
+msgstr "Aktivitäten im Projektordner"
+
+#: templates/entity/soda-scs-manager--project-files.html.twig
+msgid "Open project folder"
+msgstr "Projektordner öffnen"

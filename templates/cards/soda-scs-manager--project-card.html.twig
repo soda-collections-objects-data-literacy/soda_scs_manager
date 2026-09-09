@@ -9,20 +9,23 @@
  * - url: Canonical project URL.
  * - is_owner: Whether the current user owns the project.
  * - members_count: Number of project participants (owner + members).
+ * - members_ids: Array of project member user IDs.
  * - applications: List of application summaries (label, is_online, url, …).
  * - tags: Aggregated filter tags from contained applications.
  */
 #}
 {% set tags_hidden_from_ui = ['data-science', 'publishing'] %}
-<a class="project--card project-card" href="{{ url }}">
+<article class="project--card project-card">
 
 	<div class="project-card__header">
-    <div class="project-card__acronym">
-      {{ label|slice(0, 1)|upper }}
-    </div>
-		<h2 class="project-card__title h6">
-			{{ label }}
-		</h2>
+		<a class="project-card__link" href="{{ url }}" aria-label="{{ 'Open project @name'|t({'@name': label}) }}">
+			<div class="project-card__acronym">
+				{{ label|slice(0, 1)|upper }}
+			</div>
+			<h2 class="project-card__title h6">
+				{{ label }}
+			</h2>
+		</a>
 	</div>
 
 	<div class="project-card__tags">
@@ -33,20 +36,34 @@
 		{% endfor %}
 	</div>
 
-  <div class="project-card__date">
-
-  </div>
+	<div class="project-card__date">
+		<p>{{ project_updated|date('d.m.Y') }}</p>
+	</div>
 
 	<p class="project-card__members">
-		{% if members_count == 1 %}
-			{{ '1 member'|t }}
-		{% else %}
-			{{ '@count members'|t({'@count': members_count}) }}
+		{% if member_profiles %}
+			<span class="project-card__member-list" aria-label="{{ 'Project members'|t }}">
+				{% for member in member_profiles %}
+					<span class="project-card__member{% if member.is_owner %} project-card__member--owner{% endif %}" title="{{ member.name }}" aria-label="{{ member.name }}" role="img" tabindex="0">
+						{% if member.picture %}
+							{{ member.picture }}
+						{% else %}
+							<span class="project-card__member-initials" aria-hidden="true">{{ member.initials }}</span>
+						{% endif %}
+					</span>
+				{% endfor %}
+			</span>
 		{% endif %}
 	</p>
 
-  <div class="project-card__edit">
+	<div class="project-card__edit">
+		<button type="button" class="project-card__actions-toggle" aria-expanded="false" aria-haspopup="menu" aria-controls="project-actions-{{ project_id }}" aria-label="{{ 'Project actions for @name'|t({'@name': label}) }}">
+			<span aria-hidden="true">&#8942;</span>
+		</button>
+		<div id="project-actions-{{ project_id }}" class="project-card__actions" role="menu" hidden>
+			<a role="menuitem" href="{{ path('entity.soda_scs_project.edit_form', {'soda_scs_project': project_id}) }}">{{ 'Edit'|t }}</a>
+			<a role="menuitem" href="{{ path('entity.soda_scs_project.delete_form', {'soda_scs_project': project_id}) }}">{{ 'Delete'|t }}</a>
+		</div>
+	</div>
 
-  </div>
-
-</a>
+</article>

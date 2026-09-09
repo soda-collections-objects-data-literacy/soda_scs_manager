@@ -22,6 +22,7 @@ use Drupal\soda_scs_manager\Entity\SodaScsProjectInterface;
 use Drupal\soda_scs_manager\Form\SodaScsProjectAddMemberForm;
 use Drupal\soda_scs_manager\Helpers\SodaScsProjectMembershipHelpers;
 use Drupal\soda_scs_manager\Service\SodaScsApplicationCardBuilder;
+use Drupal\soda_scs_manager\Service\SodaScsNextcloudPreview;
 use Drupal\user\UserInterface;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 
@@ -47,6 +48,7 @@ final class SodaScsProjectViewBuilder extends EntityViewBuilder {
     ModuleHandlerInterface $module_handler,
     protected SodaScsApplicationCardBuilder $applicationCardBuilder,
     protected FormBuilderInterface $formBuilder,
+    protected SodaScsNextcloudPreview $nextcloudPreview,
     protected SodaScsProjectMembershipHelpers $projectMembershipHelpers,
   ) {
     parent::__construct($entity_type, $entity_repository, $language_manager, $theme_registry, $entity_display_repository);
@@ -69,6 +71,7 @@ final class SodaScsProjectViewBuilder extends EntityViewBuilder {
       $container->get('module_handler'),
       $container->get('soda_scs_manager.application_card_builder'),
       $container->get('form_builder'),
+      $container->get('soda_scs_manager.nextcloud.preview'),
       $container->get('soda_scs_manager.project_membership.helpers'),
     );
   }
@@ -128,6 +131,7 @@ final class SodaScsProjectViewBuilder extends EntityViewBuilder {
     $applicationCards = $this->applicationCardBuilder->buildForProject($project);
     $build['#application_cards'] = $applicationCards;
     $build['#filter_tags'] = $this->applicationCardBuilder->collectFilterTags($applicationCards);
+    $build['#files'] = $this->buildFilesDisplay($project);
     $build['#add_application_popup'] = $isOwner ? [
       '#theme' => 'soda_scs_manager__add_application_popup',
       '#asset_base' => $assetBase,
@@ -168,13 +172,18 @@ final class SodaScsProjectViewBuilder extends EntityViewBuilder {
   }
 
   /**
-   * {@inheritdoc}
+   * Builds the Files section (project Team Folder activity for the viewer).
+   *
+   * @return array<string, mixed>|null
+   *   Render array, or NULL when the current account cannot be loaded.
    */
-  protected function getBuildDefaults(EntityInterface $entity, $view_mode): array {
-    $build = parent::getBuildDefaults($entity, $view_mode);
-    $build['#theme'] = 'soda_scs_project';
+  protected function buildFilesDisplay(SodaScsProjectInterface $project): ?array {
+    $user = $this->entityTypeManager->getStorage('user')->load($this->currentUser->id());
+    if (!$user instanceof UserInterface) {
+      return NULL;
+    }
 
-    return $build;
+    return $this->nextcloudPreview->buildProjectFilesSection($user, $project);
   }
 
   /**
@@ -238,6 +247,16 @@ final class SodaScsProjectViewBuilder extends EntityViewBuilder {
         'max-age' => 0,
       ],
     ];
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  protected function getBuildDefaults(EntityInterface $entity, $view_mode): array {
+    $build = parent::getBuildDefaults($entity, $view_mode);
+    $build['#theme'] = 'soda_scs_project';
+
+    return $build;
   }
 
 }

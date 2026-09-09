@@ -7,6 +7,7 @@ namespace Drupal\soda_scs_manager\Service;
 use Drupal\Core\Logger\LoggerChannelFactoryInterface;
 use Drupal\Core\StringTranslation\StringTranslationTrait;
 use Drupal\Core\StringTranslation\TranslationInterface;
+use Drupal\soda_scs_manager\Entity\SodaScsProjectInterface;
 use Drupal\soda_scs_manager\Helpers\SodaScsNextcloudHelpers;
 use Drupal\soda_scs_manager\Helpers\SodaScsServiceHelpers;
 use Drupal\soda_scs_manager\RequestActions\SodaScsNextcloudServiceActions;
@@ -180,6 +181,55 @@ class SodaScsNextcloudPreview {
         self::CARD_ITEM_LIMIT,
       ),
     ];
+  }
+
+  /**
+   * Builds a render array for the project Files / Team Folder activity section.
+   *
+   * Uses the current user's Nextcloud credentials so owners and members each
+   * see activity they can access in that project's Team Folder.
+   *
+   * @param \Drupal\user\UserInterface $user
+   *   The user whose Nextcloud account to query.
+   * @param \Drupal\soda_scs_manager\Entity\SodaScsProjectInterface $project
+   *   The project whose Team Folder to preview.
+   *
+   * @return array
+   *   Theme render array for soda_scs_manager__project_files.
+   */
+  public function buildProjectFilesSection(UserInterface $user, SodaScsProjectInterface $project): array {
+    $preview = $this->buildProjectFeedData(
+      $user,
+      (string) $project->id(),
+      (string) $project->label(),
+    );
+
+    $baseUrl = (string) ($preview['openUrl'] ?? '');
+    $openUrl = $baseUrl !== ''
+      ? SodaScsNextcloudHelpers::buildProjectFilesUrl($baseUrl, (string) $project->label())
+      : '';
+
+    $build = [
+      '#theme' => 'soda_scs_manager__project_files',
+      '#status' => (string) ($preview['status'] ?? 'needs_connect'),
+      '#open_url' => $openUrl,
+      '#activities' => is_array($preview['activities'] ?? NULL)
+        ? $preview['activities']
+        : ['status' => 'empty', 'items' => []],
+      '#project_label' => (string) $project->label(),
+      '#cache' => [
+        'contexts' => ['user', 'languages:language_interface'],
+        'max-age' => 0,
+        'tags' => $project->getCacheTags(),
+      ],
+    ];
+
+    if (($preview['status'] ?? '') === 'needs_connect') {
+      $build['#attached']['library'][] = 'soda_scs_manager/nextcloudConnect';
+      _soda_scs_manager_attach_nextcloud_connect_settings($build);
+    }
+
+    return $build;
   }
 
   /**

@@ -12,63 +12,55 @@
  * - note: Rendered note field.
  * - application_cards: Dashboard-style cards for connected applications.
  * - add_application_popup: Modal for choosing application type (owners only).
+ * - files: Nextcloud Team Folder recent activity for the current user.
  * - attributes: HTML attributes for the container.
  * - filter_tags: Tag machine names for the application filter bar.
  *
  * @ingroup themeable
  */
 #}
+<div class="project--left">
+	<header class="project__header">
+		<h1 class="project__title">{{ label }}</h1>
+	</header>
 
-<article{{ attributes }}>
-  <header class="scs-manager--project-view--header mb-8">
-    <h1 class="soda-scs-manager--dashboard-heading-section text-center">{{ label }}</h1>
-  </header>
+	{% if application_cards is not empty %}
+		<div class="project__applications">
+			{% for card in application_cards %}
+				{{ card }}
+			{% endfor %}
+			{{ add_application_popup }}
+		</div>
+	{% else %}
+		<div class="project__applications project__applications--empty">
+			<p class="">{{ 'No applications found.'|t }}</p>
+			{{ add_application_popup }}
+		</div>
+	{% endif %}
+</div>
+<div class="project--right">
+	<div class="project__note project__section">
+		<h2 class="project__section-title h5">{{ 'Notes'|t }}</h2>
+		{{ note }}
+	</div>
 
-  <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
-    {% if owner %}
-      <div class="rounded-lg border border-stone-200 bg-white p-4 shadow-sm">
-        {{ owner }}
-      </div>
-    {% endif %}
-    <div class="rounded-lg border border-stone-200 bg-white p-4 shadow-sm">
-      {{ members }}
-    </div>
-  </div>
+	<div class="project__members project__section">
+		<h2 class="project__section-title h5">{{ 'Team'|t }}</h2>
+		{% if owner %}
+			<div class="project__members--owner">
+				{{ owner }}
+			</div>
+		{% endif %}
+		<div class="project__members--members">
+			{{ members }}
+		</div>
+	</div>
 
-  {% if note %}
-    <div class="rounded-lg border border-stone-200 bg-white p-4 shadow-sm mb-10">
-      {{ note }}
-    </div>
-  {% endif %}
-
-  <div class="mb-8 {% if is_owner %}soda-scs-manager--dashboard-heading-with-add{% else %}text-center{% endif %}">
-    <h2 class="soda-scs-manager--dashboard-heading-section soda-scs-manager--dashboard-heading-section--inline">{{ 'Applications'|t }}</h2>
-    {% if is_owner %}
-      {% include '@soda_scs_manager/cards/soda-scs-manager--add-application-heading-trigger.html.twig' with {
-        project_id: project_id,
-      } only %}
-    {% endif %}
-  </div>
-
-  {% if application_cards is not empty %}
-    {% include '@soda_scs_manager/includes/soda-scs-manager--tag-filter.html.twig' with {
-      filter_tags: filter_tags,
-    } only %}
-  {% endif %}
-
-  {% if application_cards is not empty %}
-    {% set application_count = application_cards|length %}
-    {% set grid_class = 'grid-count-' ~ application_count %}
-    <div class="soda-scs-manager--view--grid mb-12 {{ grid_class }}">
-      {% for card in application_cards %}
-        {{ card }}
-      {% endfor %}
-    </div>
-  {% else %}
-    <div class="alert alert-info opacity-90 bg-slate-950 border-2 border-stone-200 shadow-lg shadow-cyan-500/50 p-4 rounded-lg text-center">
-      <p class="text-stone-200 text-xl">{{ 'No applications found.'|t }}</p>
-    </div>
-  {% endif %}
-
-  {{ add_application_popup }}
-</article>
+	<div class="project__files project__section">
+		<h2 class="project__section-title h5">{{ 'Files'|t }}</h2>
+		{% if files %}
+			{{ files }}
+		{% endif %}
+	</div>
+	<div class="project__delete project__section"></div>
+</div>

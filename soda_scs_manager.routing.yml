@@ -101,13 +101,13 @@ soda_scs_manager.progress.latest_steps:
     no_cache: TRUE
 
 
-# Soda SCS Component Entities
+# SODa SCS Component Entities
 
 entity.soda_scs_component.canonical:
   path: '/soda-scs-manager/component/{soda_scs_component}'
   defaults:
     _entity_view: 'soda_scs_component.default'
-    _title: 'SCS Component'
+    _title: 'SODa SCS Component'
   options:
     parameters:
       soda_scs_component:
@@ -120,7 +120,7 @@ entity.soda_scs_component.add_form:
   path: '/soda-scs-manager/component/add/{bundle}'
   defaults:
     _entity_form: 'soda_scs_component.add'
-    _title: 'Add SCS Component'
+    _title: 'Add SODa SCS Component'
   requirements:
     _permission: 'soda scs manager user'
 
@@ -141,7 +141,7 @@ entity.soda_scs_component.delete_form:
   path: '/soda-scs-manager/component/{soda_scs_component}/delete'
   defaults:
     _entity_form: 'soda_scs_component.delete'
-    _title: 'Delete SCS Component'
+    _title: 'Delete SODa SCS Component'
   options:
     parameters:
       soda_scs_component:
@@ -174,7 +174,7 @@ entity.soda_scs_component.snapshot:
   path: '/soda-scs-manager/component/{soda_scs_component}/snapshot'
   defaults:
     _form: '\Drupal\soda_scs_manager\Form\SodaScsSnapshotConfirmForm'
-    _title: 'Create Snapshot'
+    _title: 'Create SODa SCS Snapshot'
   requirements:
     _permission: 'soda scs manager user'
     _custom_access: '\Drupal\soda_scs_manager\Access\SodaScsComponentLinksTasksAccessControlHandler::accessSnapshotForm'
@@ -323,7 +323,7 @@ entity.soda_scs_service_key.renew_confirm_form:
   path: '/admin/structure/soda_scs_service_key/{soda_scs_service_key}/renew'
   defaults:
     _form: '\Drupal\soda_scs_manager\Form\SodaScsServiceKeyRenewConfirmForm'
-    _title: 'Renew service key'
+    _title: 'Renew SODa SCS Service Key'
   requirements:
     _permission: 'soda scs manager admin'
   options:
@@ -396,7 +396,7 @@ entity.soda_scs_stack.canonical:
   path: '/soda-scs-manager/stack/{soda_scs_stack}'
   defaults:
     _entity_view: 'soda_scs_stack.default'
-    _title: 'Stack'
+    _title: 'SODa SCS Stack'
   options:
     parameters:
       soda_scs_stack:
@@ -410,7 +410,7 @@ entity.soda_scs_stack.add_form:
   path: '/soda-scs-manager/stack/add/{bundle}'
   defaults:
     _entity_form: 'soda_scs_stack.add'
-    _title: 'Add Stack'
+    _title: 'Add SODa SCS Stack'
   requirements:
     _permission: 'soda scs manager user'
 
@@ -418,7 +418,7 @@ entity.soda_scs_stack.edit_form:
   path: '/soda-scs-manager/stack/{soda_scs_stack}/edit'
   defaults:
     _entity_form: 'soda_scs_stack.edit'
-    _title: 'Edit SODa SCSStack'
+    _title: 'Edit SODa SCS Stack'
   requirements:
     _permission: 'soda scs manager user'
     _custom_access: '\Drupal\soda_scs_manager\Access\SodaScsStackLinksTasksAccessControlHandler::accessEditForm'
@@ -431,7 +431,7 @@ entity.soda_scs_stack.delete_form:
   path: '/soda-scs-manager/stack/{soda_scs_stack}/delete'
   defaults:
     _entity_form: 'soda_scs_stack.delete'
-    _title: 'Delete Stack'
+    _title: 'Delete SODa SCS Stack'
   options:
     parameters:
       soda_scs_stack:
@@ -453,7 +453,7 @@ entity.soda_scs_stack.snapshot:
   path: '/soda-scs-manager/stack/{soda_scs_stack}/snapshot'
   defaults:
     _form: '\Drupal\soda_scs_manager\Form\SodaScsSnapshotConfirmForm'
-    _title: 'Create Snapshot'
+    _title: 'Create SODa SCS Snapshot'
   requirements:
     _permission: 'soda scs manager user'
     _custom_access: '\Drupal\soda_scs_manager\Access\SodaScsStackLinksTasksAccessControlHandler::accessSnapshotForm'

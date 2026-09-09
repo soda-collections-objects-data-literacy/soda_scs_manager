@@ -147,15 +147,68 @@ class SodaScsManagerController extends ControllerBase {
         }
       }
       $membersCount = count($memberIds);
+      $memberProfiles = [];
+      $userStorage = $this->entityTypeManager->getStorage('user');
+      foreach (array_values($memberIds) as $memberId) {
+        /** @var \Drupal\user\UserInterface|null $member */
+        $member = $userStorage->load($memberId);
+        if (!$member) {
+          continue;
+        }
+
+        $firstName = $member->hasField('first_name') ? trim((string) $member->get('first_name')->value) : '';
+        $lastName = $member->hasField('last_name') ? trim((string) $member->get('last_name')->value) : '';
+        $memberName = trim($firstName . ' ' . $lastName);
+        if ($memberName === '') {
+          $memberName = (string) $member->getDisplayName();
+        }
+        $nameParts = [];
+
+        if ($firstName === '' || $lastName === '') {
+          $nameSource = $memberName;
+          if ($member->hasField('name') && trim((string) $member->get('name')->value) !== '') {
+            $nameSource = (string) $member->get('name')->value;
+          }
+          elseif ($member->getAccountName() !== '') {
+            $nameSource = $member->getAccountName();
+          }
+          $nameParts = preg_split('/[\s._-]+/', $nameSource, -1, PREG_SPLIT_NO_EMPTY) ?: [];
+          $firstName = $firstName !== '' ? $firstName : (string) ($nameParts[0] ?? '');
+          $lastName = $lastName !== '' ? $lastName : (count($nameParts) > 1 ? (string) end($nameParts) : '');
+        }
+
+        $initials = '';
+        if ($firstName !== '') {
+          $initials .= mb_substr($firstName, 0, 1);
+        }
+        if ($lastName !== '') {
+          $initials .= mb_substr($lastName, 0, 1);
+        }
+        if ($initials === '') {
+          $initials = mb_substr($memberName, 0, 1);
+        }
+
+        $memberProfiles[] = [
+          'name' => $memberName,
+          'initials' => mb_strtoupper($initials),
+          'is_owner' => $memberId === $ownerId,
+          'picture' => $member->hasField('user_picture') && !$member->get('user_picture')->isEmpty()
+            ? $member->get('user_picture')->view(['label' => 'hidden'])
+            : [],
+        ];
+      }
 
       $projectCards[] = [
         '#theme' => 'soda_scs_manager__project_card',
         '#project_id' => (int) $project->id(),
         '#label' => $project->label(),
+        '#owner_id' => $ownerId,
         '#url' => Url::fromRoute('entity.soda_scs_project.canonical', [
           'soda_scs_project' => $project->id(),
         ])->toString(),
         '#is_owner' => $ownerId === $uid,
+        '#members_ids' => $memberIds,
+        '#member_profiles' => $memberProfiles,
         '#members_count' => $membersCount,
         '#applications' => $applications,
         '#tags' => $sortedTags,
