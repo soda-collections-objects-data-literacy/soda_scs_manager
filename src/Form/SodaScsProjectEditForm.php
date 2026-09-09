@@ -201,14 +201,20 @@ class SodaScsProjectEditForm extends ContentEntityForm {
    *   The form state.
    */
   public function cancelForm(array &$form, FormStateInterface $form_state) {
-    $form_state->setRedirect('soda_scs_manager.projects');
+    $form_state->setRedirect('entity.soda_scs_project.canonical', [
+      'soda_scs_project' => $this->entity->id(),
+    ]);
   }
 
   /**
    * {@inheritdoc}
    */
   public function buildForm(array $form, FormStateInterface $form_state) {
+
     $form = parent::buildForm($form, $form_state);
+    // Debug WSOD error handling. Remove this line in production.
+    // quatsch("lol");
+    $form[] = ['#markup' => "hello"];
     $current_user = $this->currentUser;
 
     $form['owner']['widget']['#default_value'] = $current_user->id();
@@ -447,7 +453,6 @@ class SodaScsProjectEditForm extends ContentEntityForm {
     /** @var \Drupal\soda_scs_manager\Entity\SodaScsProjectInterface $project */
     $project = $this->entity;
 
-    // Load the member to get their name for the message.
     $memberStorage = $this->entityTypeManager->getStorage('user');
     /** @var \Drupal\user\UserInterface|null $member */
     $member = $memberStorage->load($memberId);
@@ -457,30 +462,12 @@ class SodaScsProjectEditForm extends ContentEntityForm {
       return;
     }
 
-    // Revoke MariaDB access to project's SQL databases before removing.
-    $this->projectDbAccessHelpers->revokeProjectMemberDbAccess($member, $project);
-    $this->webprotegeHelpers->revokeAccess($project, $member);
-
-    // Remove the member from the project.
-    $members = $project->get('members')->getValue();
-    $updatedMembers = array_filter($members, function ($item) use ($memberId) {
-      return (int) ($item['target_id'] ?? 0) !== $memberId;
-    });
-
-    $project->set('members', array_values($updatedMembers));
-
-    try {
-      $project->save();
-      $this->sodaScsProjectHelpers->syncKeycloakGroupMembers($project);
-      $this->messenger()->addStatus($this->t('@member has been removed from the project.', [
-        '@member' => $member->getDisplayName(),
-      ]));
+    $result = $this->projectMembershipHelpers->removeMember($project, $member, $this->currentUser);
+    if ($result->success) {
+      $this->messenger()->addStatus($result->message);
     }
-    catch (\Exception $e) {
-      $this->logger->error('Failed to remove member from project: @message', [
-        '@message' => $e->getMessage(),
-      ]);
-      $this->messenger()->addError($this->t('Failed to remove member. Please try again.'));
+    else {
+      $this->messenger()->addError($result->message);
     }
 
     $form_state->setRebuild(TRUE);
@@ -545,8 +532,9 @@ class SodaScsProjectEditForm extends ContentEntityForm {
       }
     }
 
-    // Redirect to the components page.
-    $form_state->setRedirect('soda_scs_manager.projects');
+    $form_state->setRedirect('entity.soda_scs_project.canonical', [
+      'soda_scs_project' => $project->id(),
+    ]);
   }
 
   /**

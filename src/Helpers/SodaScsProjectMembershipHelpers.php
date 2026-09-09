@@ -10,6 +10,7 @@ use Drupal\Core\Language\LanguageManagerInterface;
 use Drupal\Core\Logger\LoggerChannelFactoryInterface;
 use Drupal\Core\Logger\LoggerChannelInterface;
 use Drupal\Core\Mail\MailManagerInterface;
+use Drupal\Core\Session\AccountInterface;
 use Drupal\Core\StringTranslation\StringTranslationTrait;
 use Drupal\Core\Url;
 use Drupal\soda_scs_manager\Entity\SodaScsProjectInterface;
@@ -422,14 +423,135 @@ final class SodaScsProjectMembershipHelpers {
   }
 
   /**
-   * Check whether the user is already a member of the project.
+   * Whether the account may invite members to the project.
+   *
+   * Owners and SCS admins can add members. Regular members cannot.
    */
-  private function isMemberOfProject(SodaScsProjectInterface $project, UserInterface $user): bool {
-    $members = $project->get('members')->getValue() ?? [];
-    foreach ($members as $item) {
-      if ((int) ($item['target_id'] ?? 0) === (int) $user->id()) {
+  public function canAddMembers(SodaScsProjectInterface $project, AccountInterface $actor): bool {
+    if ($actor->isAnonymous()) {
+      return FALSE;
+    }
+    if ($actor->hasPermission('soda scs manager admin')) {
+      return TRUE;
+    }
+
+    return (int) $project->getOwnerId() === (int) $actor->id();
+  }
+
+  /**
+   * Whether the account may remove this listed member from the project.
+   *
+   * Admins and the project owner may remove any listed member. A member may
+   * only remove themselves. The owner cannot be removed from the members
+   * field this way.
+   */
+  public function canRemoveMember(SodaScsProjectInterface $project, AccountInterface $actor, UserInterface $member): bool {
+    if ($actor->isAnonymous()) {
+      return FALSE;
+    }
+
+    $memberId = (int) $member->id();
+    if ($memberId <= 0 || !$this->isListedMember($project, $memberId)) {
+      return FALSE;
+    }
+    if ((int) $project->getOwnerId() === $memberId) {
+      return FALSE;
+    }
+    if ($actor->hasPermission('soda scs manager admin')) {
+      return TRUE;
+    }
+    if ((int) $actor->id() === $memberId) {
+      return TRUE;
+    }
+
+    return (int) $project->getOwnerId() === (int) $actor->id();
+  }
+
+  /**
+   * Whether the user id is in the project's members field (not the owner).
+   */
+  public function isListedMember(SodaScsProjectInterface $project, int $userId): bool {
+    if ($userId <= 0 || !$project->hasField('members')) {
+      return FALSE;
+    }
+    foreach ($project->get('members')->getValue() ?? [] as $item) {
+      if ((int) ($item['target_id'] ?? 0) === $userId) {
         return TRUE;
       }
+    }
+
+    return FALSE;
+  }
+
+  /**
+   * Remove a listed member from the project and sync related services.
+   *
+   * @param \Drupal\soda_scs_manager\Entity\SodaScsProjectInterface $project
+   *   The project.
+   * @param \Drupal\user\UserInterface $member
+   *   The member to remove.
+   * @param \Drupal\Core\Session\AccountInterface $actor
+   *   The user performing the removal.
+   *
+   * @return \Drupal\soda_scs_manager\ValueObject\SodaScsResult
+   *   The operation result.
+   */
+  public function removeMember(SodaScsProjectInterface $project, UserInterface $member, AccountInterface $actor): SodaScsResult {
+    if (!$this->canRemoveMember($project, $actor, $member)) {
+      return SodaScsResult::failure(
+        error: 'not_allowed',
+        message: (string) $this->t('You are not allowed to remove this member.'),
+        log: FALSE,
+      );
+    }
+
+    $memberId = (int) $member->id();
+    $this->projectDbAccessHelpers->revokeProjectMemberDbAccess($member, $project);
+    $this->webprotegeHelpers->revokeAccess($project, $member);
+
+    $updatedMembers = array_values(array_filter(
+      $project->get('members')->getValue(),
+      static fn(array $item): bool => (int) ($item['target_id'] ?? 0) !== $memberId,
+    ));
+    $project->set('members', $updatedMembers);
+
+    try {
+      $project->save();
+      $this->projectHelpers->syncKeycloakGroupMembers($project);
+    }
+    catch (\Throwable $throwable) {
+      $this->logger->error('Failed to remove member from project: @message', [
+        '@message' => $throwable->getMessage(),
+      ]);
+
+      return SodaScsResult::failure(
+        error: 'storage_error',
+        message: (string) $this->t('Failed to remove the member. Please try again.'),
+        log: FALSE,
+      );
+    }
+
+    $isSelf = (int) $actor->id() === $memberId;
+    $message = $isSelf
+      ? (string) $this->t('You have left the project @project.', [
+        '@project' => $project->label(),
+      ])
+      : (string) $this->t('@member has been removed from the project.', [
+        '@member' => $member->getDisplayName(),
+      ]);
+
+    return SodaScsResult::success(
+      data: ['member' => $memberId],
+      message: $message,
+    );
+  }
+
+  /**
+   * Check whether the user is already a member of the project.
+   */
+  public function isMemberOfProject(SodaScsProjectInterface $project, UserInterface $user): bool {
+    if ($this->isListedMember($project, (int) $user->id())) {
+      return TRUE;
     }
 
     return (int) $project->getOwnerId() === (int) $user->id();
@@ -459,5 +581,3 @@ final class SodaScsProjectMembershipHelpers {
   }
 
 }
-
-

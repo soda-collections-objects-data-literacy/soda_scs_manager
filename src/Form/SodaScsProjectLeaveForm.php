@@ -8,12 +8,12 @@ use Drupal\Component\Datetime\TimeInterface;
 use Drupal\Core\Entity\ContentEntityConfirmFormBase;
 use Drupal\Core\Entity\EntityRepositoryInterface;
 use Drupal\Core\Entity\EntityTypeBundleInfoInterface;
+use Drupal\Core\Entity\EntityTypeManagerInterface;
 use Drupal\Core\Form\FormStateInterface;
 use Drupal\Core\Session\AccountProxyInterface;
 use Drupal\Core\Url;
-use Drupal\soda_scs_manager\Helpers\SodaScsProjectDbAccessHelpers;
-use Drupal\soda_scs_manager\Helpers\SodaScsProjectHelpers;
-use Drupal\soda_scs_manager\Helpers\SodaScsWebprotegeHelpers;
+use Drupal\soda_scs_manager\Helpers\SodaScsProjectMembershipHelpers;
+use Drupal\user\UserInterface;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 
 /**
@@ -22,61 +22,18 @@ use Symfony\Component\DependencyInjection\ContainerInterface;
 final class SodaScsProjectLeaveForm extends ContentEntityConfirmFormBase {
 
   /**
-   * The Soda SCS Project Helpers service.
-   *
-   * @var \Drupal\soda_scs_manager\Helpers\SodaScsProjectHelpers
-   */
-  protected SodaScsProjectHelpers $sodaScsProjectHelpers;
-
-  /**
-   * Project DB access helpers (MariaDB/phpMyAdmin SSO for project members).
-   *
-   * @var \Drupal\soda_scs_manager\Helpers\SodaScsProjectDbAccessHelpers
-   */
-  protected SodaScsProjectDbAccessHelpers $projectDbAccessHelpers;
-
-  /**
-   * WebProtégé ontology project helper.
-   *
-   * @var \Drupal\soda_scs_manager\Helpers\SodaScsWebprotegeHelpers
-   */
-  protected SodaScsWebprotegeHelpers $webprotegeHelpers;
-
-  /**
-   * The current user service.
-   *
-   * @var \Drupal\Core\Session\AccountProxyInterface
-   */
-  protected AccountProxyInterface $currentUser;
-
-  /**
    * Constructs a new SodaScsProjectLeaveForm.
-   *
-   * @param \Drupal\Core\Entity\EntityRepositoryInterface $entityRepository
-   *   The entity repository.
-   * @param \Drupal\Core\Entity\EntityTypeBundleInfoInterface $entityTypeBundleInfo
-   *   The entity type bundle info.
-   * @param \Drupal\Component\Datetime\TimeInterface $time
-   *   The time service.
-   * @param \Drupal\soda_scs_manager\Helpers\SodaScsProjectHelpers $sodaScsProjectHelpers
-   *   The Soda SCS Project Helpers service.
-   * @param \Drupal\Core\Session\AccountProxyInterface $currentUser
-   *   The current user service.
    */
   public function __construct(
     EntityRepositoryInterface $entityRepository,
     EntityTypeBundleInfoInterface $entityTypeBundleInfo,
     TimeInterface $time,
-    SodaScsProjectHelpers $sodaScsProjectHelpers,
-    SodaScsProjectDbAccessHelpers $projectDbAccessHelpers,
-    SodaScsWebprotegeHelpers $webprotegeHelpers,
-    AccountProxyInterface $currentUser,
+    EntityTypeManagerInterface $entityTypeManager,
+    protected SodaScsProjectMembershipHelpers $projectMembershipHelpers,
+    protected AccountProxyInterface $currentUser,
   ) {
     parent::__construct($entityRepository, $entityTypeBundleInfo, $time);
-    $this->sodaScsProjectHelpers = $sodaScsProjectHelpers;
-    $this->projectDbAccessHelpers = $projectDbAccessHelpers;
-    $this->webprotegeHelpers = $webprotegeHelpers;
-    $this->currentUser = $currentUser;
+    $this->entityTypeManager = $entityTypeManager;
   }
 
   /**
@@ -87,9 +44,8 @@ final class SodaScsProjectLeaveForm extends ContentEntityConfirmFormBase {
       $container->get('entity.repository'),
       $container->get('entity_type.bundle.info'),
       $container->get('datetime.time'),
-      $container->get('soda_scs_manager.project.helpers'),
-      $container->get('soda_scs_manager.project_db_access.helpers'),
-      $container->get('soda_scs_manager.webprotege.helpers'),
+      $container->get('entity_type.manager'),
+      $container->get('soda_scs_manager.project_membership.helpers'),
       $container->get('current_user'),
     );
   }
@@ -138,62 +94,26 @@ final class SodaScsProjectLeaveForm extends ContentEntityConfirmFormBase {
     $project = $this->entity;
     $currentUserId = (int) $this->currentUser->id();
 
-    // Verify the user is a member (not owner).
-    $isOwner = (int) $project->getOwnerId() === $currentUserId;
-    if ($isOwner) {
+    if ((int) $project->getOwnerId() === $currentUserId) {
       $this->messenger()->addError($this->t('Project owners cannot leave their own project. Please transfer ownership or delete the project instead.'));
       return;
     }
 
-    // Check if user is actually a member.
-    $isMember = FALSE;
-    if ($project->hasField('members') && !$project->get('members')->isEmpty()) {
-      foreach ($project->get('members')->getValue() as $memberItem) {
-        if ((int) ($memberItem['target_id'] ?? 0) === $currentUserId) {
-          $isMember = TRUE;
-          break;
-        }
-      }
-    }
-
-    if (!$isMember) {
-      $this->messenger()->addError($this->t('You are not a member of this project.'));
-      return;
-    }
-
     /** @var \Drupal\user\UserInterface|null $currentUserEntity */
-    $currentUserEntity = \Drupal::entityTypeManager()->getStorage('user')->load($currentUserId);
-    if ($currentUserEntity) {
-      $this->projectDbAccessHelpers->revokeProjectMemberDbAccess($currentUserEntity, $project);
-      $this->webprotegeHelpers->revokeAccess($project, $currentUserEntity);
-    }
-
-    // Remove the current user from the members field.
-    $members = $project->get('members')->getValue();
-    $updatedMembers = array_filter($members, function ($item) use ($currentUserId) {
-      return (int) ($item['target_id'] ?? 0) !== $currentUserId;
-    });
-
-    $project->set('members', array_values($updatedMembers));
-
-    try {
-      $project->save();
-      $this->sodaScsProjectHelpers->syncKeycloakGroupMembers($project);
-      $this->messenger()->addStatus($this->t('You have left the project @project.', [
-        '@project' => $project->label(),
-      ]));
-    }
-    catch (\Exception $e) {
-      \Drupal::logger('soda_scs_manager')->error('Failed to leave project: @message', [
-        '@message' => $e->getMessage(),
-      ]);
-      $this->messenger()->addError($this->t('Failed to leave the project. Please try again.'));
+    $currentUserEntity = $this->entityTypeManager->getStorage('user')->load($currentUserId);
+    if (!$currentUserEntity instanceof UserInterface) {
+      $this->messenger()->addError($this->t('Unable to load the current user account.'));
       return;
     }
 
-    // Redirect to the project list.
-    $form_state->setRedirect('soda_scs_manager.projects');
+    $result = $this->projectMembershipHelpers->removeMember($project, $currentUserEntity, $this->currentUser);
+    if ($result->success) {
+      $this->messenger()->addStatus($result->message);
+      $form_state->setRedirect('soda_scs_manager.dashboard');
+      return;
+    }
+
+    $this->messenger()->addError($result->message);
   }
 
 }
-

@@ -978,6 +978,14 @@ function soda_scs_manager_theme($existing, $type, $theme, $path) {
       ],
       'template' => 'entity/soda-scs-project',
     ],
+    'soda_scs_manager__project_members' => [
+      'variables' => [
+        'add_form' => NULL,
+        'can_add_members' => FALSE,
+        'members' => [],
+      ],
+      'template' => 'entity/soda-scs-manager--project-members',
+    ],
     'soda_scs_manager__catalogue' => [
       'variables' => [
         'components' => NULL,

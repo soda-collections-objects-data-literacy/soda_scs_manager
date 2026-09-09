@@ -106,26 +106,18 @@ soda_scs_manager.snapshot_debug:
   weight: 0
 
 # Structure pages
-# Main menu order (by weight): Home (standard.front_page, 0), Dashboard, Projects,
+# Main menu order (by weight): Home (standard.front_page, 0), Dashboard,
 # Documentation, Messages, then Administration. Issue Report is in the Footer
 # menu (see soda_scs_manager_install()). Anonymous users only see
 # soda_scs_manager.anonymous_documentation; authenticated users only see
 # soda_scs_manager.menu.documentation — see soda_scs_manager_preprocess_menu().
+# Projects are opened from the dashboard, not from a main-menu tab.
 soda_scs_manager.menu.dashboard:
   title: 'Dashboard'
   description: 'Your projects'
   menu_name: main
   route_name: soda_scs_manager.dashboard
   weight: 10
-  requirements:
-    _permission: 'soda scs manager user'
-
-soda_scs_manager.menu.projects:
-  title: 'Projects'
-  description: 'Collaboration projects and memberships'
-  menu_name: main
-  route_name: soda_scs_manager.projects
-  weight: 11
   requirements:
     _permission: 'soda scs manager user'
 

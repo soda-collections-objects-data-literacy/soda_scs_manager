@@ -12,13 +12,17 @@ use Drupal\Core\Entity\EntityTypeInterface;
 use Drupal\Core\Entity\EntityTypeManagerInterface;
 use Drupal\Core\Entity\EntityViewBuilder;
 use Drupal\Core\Extension\ModuleHandlerInterface;
+use Drupal\Core\Form\FormBuilderInterface;
 use Drupal\Core\Language\LanguageManagerInterface;
 use Drupal\Core\Session\AccountProxyInterface;
 use Drupal\Core\StringTranslation\StringTranslationTrait;
 use Drupal\Core\Theme\Registry;
 use Drupal\Core\Url;
 use Drupal\soda_scs_manager\Entity\SodaScsProjectInterface;
+use Drupal\soda_scs_manager\Form\SodaScsProjectAddMemberForm;
+use Drupal\soda_scs_manager\Helpers\SodaScsProjectMembershipHelpers;
 use Drupal\soda_scs_manager\Service\SodaScsApplicationCardBuilder;
+use Drupal\user\UserInterface;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 
 /**
@@ -42,6 +46,8 @@ final class SodaScsProjectViewBuilder extends EntityViewBuilder {
     protected EntityTypeManagerInterface $entityTypeManager,
     ModuleHandlerInterface $module_handler,
     protected SodaScsApplicationCardBuilder $applicationCardBuilder,
+    protected FormBuilderInterface $formBuilder,
+    protected SodaScsProjectMembershipHelpers $projectMembershipHelpers,
   ) {
     parent::__construct($entity_type, $entity_repository, $language_manager, $theme_registry, $entity_display_repository);
     $this->moduleHandler = $module_handler;
@@ -62,6 +68,8 @@ final class SodaScsProjectViewBuilder extends EntityViewBuilder {
       $container->get('entity_type.manager'),
       $container->get('module_handler'),
       $container->get('soda_scs_manager.application_card_builder'),
+      $container->get('form_builder'),
+      $container->get('soda_scs_manager.project_membership.helpers'),
     );
   }
 
@@ -149,6 +157,9 @@ final class SodaScsProjectViewBuilder extends EntityViewBuilder {
       $libraries[] = 'soda_scs_manager/addApplicationPopup';
       $drupalSettings['addApplicationCreateUrls'] = $createUrls;
     }
+    if ($this->projectMembershipHelpers->canAddMembers($project, $this->currentUser)) {
+      $libraries[] = 'soda_scs_manager/projectMembers';
+    }
 
     $build['#attached']['library'] = $libraries;
     $build['#attached']['drupalSettings']['sodaScsManager'] = $drupalSettings;
@@ -173,36 +184,58 @@ final class SodaScsProjectViewBuilder extends EntityViewBuilder {
    *   Members field render array.
    */
   protected function buildMembersDisplay(SodaScsProjectInterface $project): array {
-    $membersField = $project->get('members');
-    if (!$membersField->isEmpty() && $membersField->referencedEntities() !== []) {
-      return $membersField->view('default');
+    $ownerId = (int) ($project->getOwnerId() ?? 0);
+    $items = [];
+
+    if (!$project->get('members')->isEmpty()) {
+      foreach ($project->get('members')->referencedEntities() as $member) {
+        if (!$member instanceof UserInterface) {
+          continue;
+        }
+        $memberId = (int) $member->id();
+        if ($memberId <= 0 || $memberId === $ownerId) {
+          continue;
+        }
+
+        $removeUrl = NULL;
+        if ($this->projectMembershipHelpers->canRemoveMember($project, $this->currentUser, $member)) {
+          $isSelf = $memberId === (int) $this->currentUser->id();
+          $routeName = $isSelf
+            ? 'entity.soda_scs_project.leave_form'
+            : 'entity.soda_scs_project.remove_member_form';
+          $routeParameters = ['soda_scs_project' => $project->id()];
+          if (!$isSelf) {
+            $routeParameters['user'] = $memberId;
+          }
+          $removeUrl = Url::fromRoute($routeName, $routeParameters)->toString();
+        }
+
+        $items[] = [
+          'id' => $memberId,
+          'name' => $member->getDisplayName(),
+          'remove_url' => $removeUrl,
+          'remove_label' => $memberId === (int) $this->currentUser->id()
+            ? $this->t('Leave project')
+            : $this->t('Remove @member', ['@member' => $member->getDisplayName()]),
+        ];
+      }
+    }
+
+    $canAddMembers = $this->projectMembershipHelpers->canAddMembers($project, $this->currentUser);
+    $addForm = NULL;
+    if ($canAddMembers) {
+      $addForm = $this->formBuilder->getForm(SodaScsProjectAddMemberForm::class, $project);
     }
 
     return [
-      '#type' => 'container',
-      '#attributes' => [
-        'class' => [
-          'field',
-          'field--name-members',
-          'field--type-entity-reference',
-          'field--label-above',
-        ],
-      ],
-      'label' => [
-        '#type' => 'html_tag',
-        '#tag' => 'div',
-        '#attributes' => ['class' => ['field__label']],
-        '#value' => $this->t('Members'),
-      ],
-      'items' => [
-        '#type' => 'container',
-        '#attributes' => ['class' => ['field__items']],
-        'item' => [
-          '#type' => 'html_tag',
-          '#tag' => 'div',
-          '#attributes' => ['class' => ['field__item']],
-          '#value' => $this->t('No members'),
-        ],
+      '#theme' => 'soda_scs_manager__project_members',
+      '#members' => $items,
+      '#can_add_members' => $canAddMembers,
+      '#add_form' => $addForm,
+      '#cache' => [
+        'contexts' => ['user', 'languages:language_interface'],
+        'tags' => $project->getCacheTags(),
+        'max-age' => 0,
       ],
     ];
   }

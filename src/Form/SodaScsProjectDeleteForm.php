@@ -93,7 +93,7 @@ class SodaScsProjectDeleteForm extends ContentEntityDeleteForm {
    * {@inheritdoc}
    */
   public function getCancelUrl() {
-    return new Url('soda_scs_manager.projects');
+    return new Url('soda_scs_manager.dashboard');
   }
 
   /**
@@ -131,7 +131,7 @@ class SodaScsProjectDeleteForm extends ContentEntityDeleteForm {
     $project->delete();
 
     $this->messenger()->addStatus($this->t('Project @label has been deleted.', ['@label' => $project->label()]));
-    $form_state->setRedirect('soda_scs_manager.projects');
+    $form_state->setRedirect('soda_scs_manager.dashboard');
   }
 
 }

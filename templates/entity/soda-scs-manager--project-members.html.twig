@@ -1,0 +1,50 @@
+{#
+/**
+ * @file
+ * Members list on the SODa SCS Project entity view.
+ *
+ * Available variables:
+ * - members: List of { id, name, remove_url, remove_label }.
+ * - can_add_members: Whether the current user may invite members.
+ * - add_form: Invite form (owners and admins).
+ *
+ * @ingroup themeable
+ */
+#}
+<div class="field field--name-members field--type-entity-reference field--label-above soda-scs-manager--project-members">
+  <div class="field__label flex items-center gap-2">
+    <span>{{ 'Members'|t }}</span>
+    {% if can_add_members %}
+      <button type="button"
+              class="soda-scs-manager--add-member-button inline-flex h-5 w-5 shrink-0 items-center justify-center rounded-full border border-stone-400 text-sm font-light leading-none text-stone-600 hover:border-[#e68500] hover:text-[#e68500]"
+              aria-expanded="false"
+              aria-controls="soda-scs-manager-add-member-form"
+              aria-label="{{ 'Add member'|t }}"
+              title="{{ 'Add member'|t }}">
+        <span aria-hidden="true">+</span>
+      </button>
+    {% endif %}
+  </div>
+  <div class="field__items">
+    {% if members is not empty %}
+      {% for member in members %}
+        <div class="field__item flex items-center gap-1">
+          <span>{{ member.name }}</span>
+          {% if member.remove_url %}
+            <a href="{{ member.remove_url }}"
+               class="soda-scs-manager--member-remove inline-flex h-4 w-4 shrink-0 items-center justify-center text-sm leading-none text-stone-400 no-underline hover:text-red-600"
+               title="{{ member.remove_label }}"
+               aria-label="{{ member.remove_label }}">×</a>
+          {% endif %}
+        </div>
+      {% endfor %}
+    {% else %}
+      <div class="field__item">{{ 'No members'|t }}</div>
+    {% endif %}
+  </div>
+  {% if can_add_members and add_form %}
+    <div id="soda-scs-manager-add-member-form" class="soda-scs-manager--add-member-form mt-3 hidden">
+      {{ add_form }}
+    </div>
+  {% endif %}
+</div>

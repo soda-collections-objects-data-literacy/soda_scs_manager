@@ -249,7 +249,8 @@ entity.soda_scs_project.collection:
   requirements:
     _permission: 'soda scs manager user'
 
-# User-facing project list (same list builder as admin collection; used by main menu).
+# User-facing project list (same list builder as admin collection).
+# Not linked from the main menu; projects are opened from the dashboard.
 soda_scs_manager.projects:
   path: '/soda-scs-manager/projects'
   defaults:
@@ -260,6 +261,22 @@ soda_scs_manager.projects:
 
 
 # SODa SCS Service Key Entities
+
+
+entity.soda_scs_project.remove_member_form:
+  path: '/soda-scs-manager/project/{soda_scs_project}/members/{user}/remove'
+  defaults:
+    _form: '\Drupal\soda_scs_manager\Form\SodaScsProjectRemoveMemberForm'
+    _title: 'Remove project member'
+  options:
+    parameters:
+      soda_scs_project:
+        type: entity:soda_scs_project
+      user:
+        type: entity:user
+  requirements:
+    _permission: 'soda scs manager user'
+    _custom_access: '\Drupal\soda_scs_manager\Access\SodaScsProjectAccessControlHandler::accessRemoveMemberForm'
 
 entity.soda_scs_service_key.canonical:
   path: '/soda-scs-manager/service-key/{soda_scs_service_key}'
@@ -458,7 +475,7 @@ soda_scs_manager.dashboard:
   path: '/soda-scs-manager/dashboard'
   defaults:
     _controller: '\Drupal\soda_scs_manager\Controller\SodaScsManagerController::dashboardPage'
-    _title:  'Dashboard'
+    _title:  'Projects'
   requirements:
     _permission: 'soda scs manager user'
   options:

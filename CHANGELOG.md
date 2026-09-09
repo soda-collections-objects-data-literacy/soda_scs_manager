@@ -47,6 +47,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Dashboard lists only **Your projects**. JupyterHub, Nextcloud, and WebProtégé
   are opened from the project page, not from a separate **Central services**
   block.
+- The main-menu **Projects** tab is removed. Projects are opened from the
+  dashboard. On the project page, owners (and admins) add members with **+**
+  (email or username, no autocomplete). Members can remove themselves with
+  **×**; admins and owners can remove other members. Members cannot remove
+  other members.
 
 ### Fixed
 

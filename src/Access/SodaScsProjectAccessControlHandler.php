@@ -10,6 +10,7 @@ use Drupal\Core\Entity\EntityAccessControlHandler;
 use Drupal\Core\Entity\EntityInterface;
 use Drupal\Core\Session\AccountInterface;
 use Drupal\soda_scs_manager\Entity\SodaScsProjectInterface;
+use Drupal\user\UserInterface;
 
 /**
  * Defines the access control handler for the soda scs project entity type.
@@ -142,6 +143,31 @@ final class SodaScsProjectAccessControlHandler extends EntityAccessControlHandle
     return $isMember
       ? AccessResult::allowed()->addCacheableDependency($soda_scs_project)
       : AccessResult::forbidden()->addCacheableDependency($soda_scs_project);
+  }
+
+  /**
+   * Determines access for removing a listed project member.
+   *
+   * Admins and the owner may remove any listed member. A member may only
+   * remove themselves.
+   *
+   * @param \Drupal\soda_scs_manager\Entity\SodaScsProjectInterface $soda_scs_project
+   *   The project.
+   * @param \Drupal\user\UserInterface $user
+   *   The member to remove.
+   *
+   * @return \Drupal\Core\Access\AccessResultInterface
+   *   The access result.
+   */
+  public static function accessRemoveMemberForm(SodaScsProjectInterface $soda_scs_project, UserInterface $user): AccessResultInterface {
+    $account = \Drupal::currentUser();
+    /** @var \Drupal\soda_scs_manager\Helpers\SodaScsProjectMembershipHelpers $helpers */
+    $helpers = \Drupal::service('soda_scs_manager.project_membership.helpers');
+    $allowed = $helpers->canRemoveMember($soda_scs_project, $account, $user);
+
+    return $allowed
+      ? AccessResult::allowed()->cachePerUser()->addCacheableDependency($soda_scs_project)
+      : AccessResult::forbidden()->cachePerUser()->addCacheableDependency($soda_scs_project);
   }
 
 }

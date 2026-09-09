@@ -108,6 +108,15 @@ addApplicationPopup:
     - core/once
     - soda_scs_manager/globalStyling
 
+projectMembers:
+  version: 1.x
+  js:
+    js/projectMembers.js: {}
+  dependencies:
+    - core/drupal
+    - core/once
+    - soda_scs_manager/globalStyling
+
 startPagePie:
   version: 1.x
   js:
