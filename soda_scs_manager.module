@@ -601,7 +601,7 @@ function soda_scs_manager_validate_personal_name_fields(array &$form, FormStateI
       continue;
     }
 
-    $value = (string) $form_state->getValue($fieldName);
+    $value = (string) reset($form_state->getValue($fieldName))["value"];
     $violation = PersonalNameValidator::validate($value);
     if ($violation === NULL) {
       continue;

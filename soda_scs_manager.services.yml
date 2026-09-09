@@ -5,6 +5,11 @@ services:
     autoconfigure: true
     public: true
 
+  soda_scs_manager.wsod_catcher:
+    class: Drupal\soda_scs_manager\EventSubscriber\WsodCatcherSubscriber
+    tags:
+      - { name: event_subscriber }
+
 # Component actions
   soda_scs_manager.component.actions:
     class: Drupal\soda_scs_manager\ComponentActions\SodaScsComponentActions

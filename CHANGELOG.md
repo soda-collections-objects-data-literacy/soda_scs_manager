@@ -58,6 +58,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- AJAX file uploads on the user edit form (and other managed-file widgets)
+  failed with HTTP 500 because `WsodCatcherSubscriber` treated Drupal’s
+  intentional `FormAjaxException` as an unhandled error before
+  `FormAjaxSubscriber` could build the AJAX response.
 - Project Nextcloud card activity feed failed with HTTP 500 when the
   `scs_manager_integration` bind mount pointed at a deleted directory.
   Recreate `nextcloud--nextcloud` after replacing that app tree so the
