@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Drupal\soda_scs_manager\Service;
 
 use Drupal\Core\Site\Settings;
+use Drupal\soda_scs_manager\Helpers\SodaScsDockerDns;
 use Drupal\soda_scs_manager\Traits\SecureLoggingTrait;
 use GuzzleHttp\ClientInterface;
 use GuzzleHttp\Exception\GuzzleException;
@@ -229,8 +230,11 @@ class NextcloudMounterClient {
   }
 
   protected function rcUrl(): string {
-    $url = getenv('NEXTCLOUD_MOUNTER_RC_URL') ?: Settings::get('nextcloud_mounter_rc_url', 'http://nextcloud-mounter:5572');
-    return is_string($url) && $url !== '' ? $url : 'http://nextcloud-mounter:5572';
+    $url = getenv('NEXTCLOUD_MOUNTER_RC_URL') ?: Settings::get('nextcloud_mounter_rc_url', '');
+    if (is_string($url) && $url !== '') {
+      return $url;
+    }
+    return SodaScsDockerDns::nextcloudMounterRcUrl();
   }
 
   protected function rcUser(): string {

@@ -23,6 +23,7 @@ use Drupal\soda_scs_manager\Entity\SodaScsSnapshotInterface;
 use Drupal\soda_scs_manager\Exception\SodaScsSqlServiceException;
 use Drupal\soda_scs_manager\Helpers\SodaScsComponentHelpers;
 use Drupal\soda_scs_manager\Helpers\SodaScsContainerHelpers;
+use Drupal\soda_scs_manager\Helpers\SodaScsDockerDns;
 use Drupal\soda_scs_manager\Helpers\SodaScsHelpers;
 use Drupal\soda_scs_manager\Helpers\SodaScsKeycloakHelpers;
 use Drupal\soda_scs_manager\Helpers\SodaScsProjectHelpers;
@@ -872,8 +873,11 @@ class SodaScsSqlComponentActions implements SodaScsComponentActionsInterface {
    * Docker container name for the shared MariaDB service (dbHost setting).
    */
   protected function getDatabaseContainerName(): string {
-    $container = trim((string) ($this->settings->get('dbHost') ?? ''));
-    return $container !== '' ? $container : 'scs--database';
+    return SodaScsDockerDns::configOrEnv(
+      $this->settings->get('dbHost'),
+      'SCS_CONTAINER_DATABASE',
+      'scs--database',
+    );
   }
 
 }

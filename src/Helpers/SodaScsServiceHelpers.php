@@ -19,6 +19,7 @@ use Drupal\soda_scs_manager\Entity\SodaScsStack;
 use Drupal\soda_scs_manager\Helpers\SodaScsJupyterHelpers;
 use Drupal\soda_scs_manager\Helpers\SodaScsNextcloudHelpers;
 use Drupal\soda_scs_manager\Helpers\SodaScsWebprotegeHelpers;
+use Drupal\soda_scs_manager\Helpers\SodaScsDockerDns;
 use Drupal\user\UserInterface;
 use Drupal\soda_scs_manager\RequestActions\SodaScsServiceRequestInterface;
 use Drupal\soda_scs_manager\ServiceActions\SodaScsServiceActionsInterface;
@@ -137,8 +138,12 @@ class SodaScsServiceHelpers {
    * service on the instance internal network.
    */
   public function getDatabaseDockerHost(): string {
-    $host = (string) ($this->settings->get('dbHost') ?? 'scs--database');
-    return str_replace('https://', '', $host);
+    $host = SodaScsDockerDns::configOrEnv(
+      $this->settings->get('dbHost'),
+      'SCS_CONTAINER_DATABASE',
+      'scs--database',
+    );
+    return str_replace(['https://', 'http://'], '', $host);
   }
 
   /**
@@ -241,7 +246,11 @@ class SodaScsServiceHelpers {
    */
   public function initAccessProxySettings() {
     $accessProxySettings['name'] = 'Access-Proxy';
-    $accessProxySettings['containerName'] = $this->settings->get('accessProxy.generalSettings.containerName') ?? 'scs--access-proxy';
+    $accessProxySettings['containerName'] = SodaScsDockerDns::configOrEnv(
+      $this->settings->get('accessProxy.generalSettings.containerName'),
+      'SCS_CONTAINER_ACCESS_PROXY',
+      SodaScsDockerDns::accessProxy(),
+    );
 
     $this->checkSettings($accessProxySettings);
 
@@ -458,7 +467,10 @@ class SodaScsServiceHelpers {
   public function initTriplestoreServiceSettings() {
     $triplestoreServiceSettings['name'] = 'Triplestore';
     $triplestoreServiceSettings['host'] = $this->settings->get('triplestore.generalSettings.host');
-    $triplestoreServiceSettings['internalHost'] = $this->settings->get('triplestore.generalSettings.internalHost');
+    $internalHost = trim((string) ($this->settings->get('triplestore.generalSettings.internalHost') ?? ''));
+    $triplestoreServiceSettings['internalHost'] = ($internalHost !== '' && $internalHost !== '{empty}')
+      ? $internalHost
+      : SodaScsDockerDns::authproxyInternalBase();
     $triplestoreServiceSettings['port'] = $this->settings->get('triplestore.generalSettings.port');
     $triplestoreServiceSettings['adminUsername'] = $this->settings->get('triplestore.generalSettings.adminUsername');
     $triplestoreServiceSettings['adminPassword'] = $this->settings->get('triplestore.generalSettings.adminPassword');

@@ -9,6 +9,7 @@ use Drupal\Core\Form\ConfigFormBase;
 use Drupal\Core\Form\FormStateInterface;
 use Drupal\soda_scs_manager\Helpers\SodaScsNextcloudHelpers;
 use Drupal\soda_scs_manager\Helpers\SodaScsSnapshotHelpers;
+use Drupal\soda_scs_manager\Helpers\SodaScsDockerDns;
 use Psr\Log\LogLevel;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 
@@ -168,9 +169,11 @@ class SodaScsSettingsForm extends ConfigFormBase {
     // @todo Replace fields with generalSettings.
     $form['database']['fields']['dbHost'] = [
       '#type' => 'textfield',
-      '#title' => $this->t('Database host'),
-      '#default_value' => $this->config('soda_scs_manager.settings')->get('dbHost'),
-      '#description' => $this->t('The database host, like db.scs.example.com.'),
+      '#title' => $this->t('Database host (Docker DNS)'),
+      '#default_value' => $this->config('soda_scs_manager.settings')->get('dbHost') ?: SodaScsDockerDns::database(),
+      '#description' => $this->t('Shared MariaDB container DNS for dumps and project DBs. Default from SCS_CONTAINER_DATABASE (@name).', [
+        '@name' => SodaScsDockerDns::database(),
+      ]),
     ];
     $form['database']['fields']['dbPort'] = [
       '#type' => 'textfield',
@@ -628,8 +631,10 @@ class SodaScsSettingsForm extends ConfigFormBase {
     $form['triplestore']['generalSettings']['internalHost'] = [
       '#type' => 'textfield',
       '#title' => $this->t('Triplestore internal host (WissKI)'),
-      '#default_value' => $this->config('soda_scs_manager.settings')->get('triplestore')['generalSettings']['internalHost'] ?? 'http://scs--authproxy:8000',
-      '#description' => $this->t('Internal OpenGDB URL injected into WissKI stacks (e.g. http://scs--authproxy:8000). Avoids Traefik hairpin for SPARQL. Leave empty to use the public host.'),
+      '#default_value' => $this->config('soda_scs_manager.settings')->get('triplestore')['generalSettings']['internalHost'] ?? SodaScsDockerDns::authproxyInternalBase(),
+      '#description' => $this->t('Internal OpenGDB URL injected into WissKI stacks (e.g. @url). Override via settings or INTERNAL_TS_BASE / SCS_CONTAINER_AUTHPROXY env. Avoids Traefik hairpin for SPARQL. Leave empty to use the public host.', [
+        '@url' => SodaScsDockerDns::authproxyInternalBase(),
+      ]),
     ];
     $form['triplestore']['generalSettings']['port'] = [
       '#type' => 'textfield',
@@ -1306,8 +1311,10 @@ class SodaScsSettingsForm extends ConfigFormBase {
     $form['accessProxy']['generalSettings']['containerName'] = [
       '#type' => 'textfield',
       '#title' => $this->t('Container name'),
-      '#default_value' => $this->config('soda_scs_manager.settings')->get('accessProxy')['generalSettings']['containerName'] ?? 'scs--access-proxy',
-      '#description' => $this->t('The Access-Proxy container name, like scs--access-proxy.'),
+      '#default_value' => $this->config('soda_scs_manager.settings')->get('accessProxy')['generalSettings']['containerName'] ?? SodaScsDockerDns::accessProxy(),
+      '#description' => $this->t('The Access-Proxy container name (default from SCS_CONTAINER_ACCESS_PROXY / @name).', [
+        '@name' => SodaScsDockerDns::accessProxy(),
+      ]),
       '#required' => TRUE,
     ];
 

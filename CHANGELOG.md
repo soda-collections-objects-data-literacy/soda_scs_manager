@@ -9,6 +9,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- `SodaScsDockerDns` resolves shared container DNS from `SCS_CONTAINER_*` /
+  `INTERNAL_TS_BASE` / `NEXTCLOUD_MOUNTER_RC_URL` (settings still override),
+  so naming migration does not require PHP hardcodes.
 - Creating an SCS project also creates a WebProtégé ontology project. The
   project-page WebProtégé card deep-links into it; members receive EDIT.
   Configure the API key in settings (not stored in git). Backfill existing
