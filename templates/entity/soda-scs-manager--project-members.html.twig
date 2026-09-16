@@ -4,47 +4,108 @@
  * Members list on the SODa SCS Project entity view.
  *
  * Available variables:
- * - members: List of { id, name, remove_url, remove_label }.
+ * - members: List of { id, first_name, last_name, name, initials, username, mail, picture, is_current_user, remove_url, remove_form, remove_label }.
+ * - owner: Owner profile with the same keys (no remove_url/remove_label).
  * - can_add_members: Whether the current user may invite members.
  * - add_form: Invite form (owners and admins).
  *
  * @ingroup themeable
  */
 #}
-<div class="field field--name-members field--type-entity-reference field--label-above soda-scs-manager--project-members">
-  <div class="field__label flex items-center gap-2">
-    <span>{{ 'Members'|t }}</span>
-    {% if can_add_members %}
-      <button type="button"
-              class="soda-scs-manager--add-member-button inline-flex h-5 w-5 shrink-0 items-center justify-center rounded-full border border-stone-400 text-sm font-light leading-none text-stone-600 hover:border-[#e68500] hover:text-[#e68500]"
-              aria-expanded="false"
-              aria-controls="soda-scs-manager-add-member-form"
-              aria-label="{{ 'Add member'|t }}"
-              title="{{ 'Add member'|t }}">
-        <span aria-hidden="true">+</span>
-      </button>
-    {% endif %}
-  </div>
-  <div class="field__items">
-    {% if members is not empty %}
-      {% for member in members %}
-        <div class="field__item flex items-center gap-1">
-          <span>{{ member.name }}</span>
-          {% if member.remove_url %}
-            <a href="{{ member.remove_url }}"
-               class="soda-scs-manager--member-remove inline-flex h-4 w-4 shrink-0 items-center justify-center text-sm leading-none text-stone-400 no-underline hover:text-red-600"
-               title="{{ member.remove_label }}"
-               aria-label="{{ member.remove_label }}">×</a>
-          {% endif %}
-        </div>
-      {% endfor %}
-    {% else %}
-      <div class="field__item">{{ 'No members'|t }}</div>
-    {% endif %}
-  </div>
-  {% if can_add_members and add_form %}
-    <div id="soda-scs-manager-add-member-form" class="soda-scs-manager--add-member-form mt-3 hidden">
-      {{ add_form }}
-    </div>
-  {% endif %}
+<div class="project__section__header">
+	<h2 class="project__section-title h5">{{ 'Team'|t }}</h2>
+	<button type="button" class="project__section__edit-button btn--secondary btn--icon project-members-edit-trigger" aria-controls="project-members-edit-overlay" aria-expanded="false" aria-label="{{ 'Edit team members'|t }}">
+		<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16">
+			<g><path fill="#4D5866" d="M14.545 3.042l-1.586-1.585c-.389-.389-1.025-.389-1.414 0l-1.293 1.293 3 3 1.293-1.293c.389-.389.389-1.026 0-1.415z"/><rect fill="#4D5866" x="5.129" y="3.8" transform="matrix(-.707 -.707 .707 -.707 6.189 20.064)" width="4.243" height="9.899"/><path fill="#4D5866" d="M.908 14.775c-.087.262.055.397.316.312l2.001-.667-1.65-1.646-.667 2.001z"/></g>
+		</svg>
+	</button>
+</div>
+<ul class="project__members__list">
+	{% if owner is not empty %}
+		<li class="project-member project-member--owner" title="{{ owner.username }}">
+			{% if owner.picture %}
+				{{ owner.picture }}
+			{% else %}
+				<span class="project-member__initials" aria-hidden="true">{{ owner.initials }}</span>
+			{% endif %}
+			<div class="project-member__info">
+				<p class="project-member__name">{{ owner.name }}
+					({{ 'Owner'|t }})</p>
+				<p class="project-member__mail">{{ owner.mail }}</p>
+			</div>
+		</li>
+	{% endif %}
+	{% if members is not empty %}
+		{% for member in members %}
+			<li class="project-member{% if member.is_current_user %} project-member--current{% endif %}" title="{{ member.username }}">
+				{% if member.picture %}
+					{{ member.picture }}
+				{% else %}
+					<span class="project-member__initials" aria-hidden="true">{{ member.initials }}</span>
+				{% endif %}
+				<div class="project-member__info">
+					<p class="project-member__name">{{ member.name }}</p>
+					<p class="project-member__mail">{{ member.mail }}</p>
+				</div>
+			</li>
+		{% endfor %}
+	{% else %}
+		<li class="field__item">{{ 'No members'|t }}</li>
+	{% endif %}
+</ul>
+
+<div id="project-members-edit-overlay" class="overlay overlay--small project-members-edit-overlay" role="dialog" aria-modal="true" aria-labelledby="project-members-edit-title" hidden>
+	<div class="overlay__backdrop" aria-hidden="true"></div>
+	<div class="overlay__dialog" role="document">
+		<h2 id="project-members-edit-title">{{ 'Edit team members'|t }}</h2>
+		<ul class="project__members__list project__members__list--edit">
+			{% if owner is not empty %}
+				<li class="project-member project-member--owner" title="{{ owner.username }}">
+					{% if owner.picture %}
+						{{ owner.picture }}
+					{% else %}
+						<span class="project-member__initials" aria-hidden="true">{{ owner.initials }}</span>
+					{% endif %}
+					<div class="project-member__info">
+						<p class="project-member__name">{{ owner.name }} ({{ 'Owner'|t }})</p>
+						<p class="project-member__mail">{{ owner.mail }}</p>
+					</div>
+				</li>
+			{% endif %}
+			{% for member in members %}
+				<li class="project-member{% if member.is_current_user %} project-member--current{% endif %}" title="{{ member.username }}">
+					{% if member.picture %}
+						{{ member.picture }}
+					{% else %}
+						<span class="project-member__initials" aria-hidden="true">{{ member.initials }}</span>
+					{% endif %}
+					<div class="project-member__info">
+						<p class="project-member__name">{{ member.name }}</p>
+						<p class="project-member__mail">{{ member.mail }}</p>
+					</div>
+					{% if member.remove_form %}
+						<div class="project-member__remove-menu">
+							<button type="button" class="project-member__remove-trigger btn btn--secondary btn--icon" aria-label="{{ member.remove_label }}" title="{{ member.remove_label }}" aria-expanded="false">
+								<svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+									<line x1="14.8493" y1="14.8493" x2="4.94983" y2="4.94978" stroke="#17212B" stroke-width="2"/>
+									<line x1="4.94979" y1="14.8492" x2="14.8493" y2="4.94975" stroke="#17212B" stroke-width="2"/>
+								</svg>
+							</button>
+							<div class="project-member__remove-confirm" hidden>
+								{{ member.remove_form }}
+							</div>
+						</div>
+					{% endif %}
+				</li>
+			{% endfor %}
+		</ul>
+		<div class="project__members__edit">
+			{% if can_add_members %}
+				<div id="soda-scs-manager-add-member-form" class="project-members-edit-overlay__add-member-form">
+					{{ add_form }}
+				</div>
+			{% endif %}
+		</div>
+		<button type="button" class="project-members-edit-overlay__cancel btn btn--secondary">{{ 'Close'|t }}</button>
+	</div>
 </div>

@@ -27,19 +27,6 @@ final class SodaScsApplicationCardBuilder {
   use StringTranslationTrait;
 
   /**
-   * Bundles that receive a canonical details link on dashboard cards.
-   *
-   * @var list<string>
-   */
-  private const DETAILS_LINK_BUNDLES = [
-    'soda_scs_nextcloud_stack',
-    'soda_scs_sql_component',
-    'soda_scs_triplestore_component',
-    'soda_scs_wisski_component',
-    'soda_scs_wisski_stack',
-  ];
-
-  /**
    * Component bundles provisioned per user (dashboard + project pages).
    *
    * @var list<string>
@@ -282,16 +269,13 @@ final class SodaScsApplicationCardBuilder {
   public function buildStackCard(SodaScsStackInterface $stack, ?SodaScsProjectInterface $project = NULL): array {
     $bundleInfo = $this->bundleInfo->getBundleInfo($stack->getEntityTypeId())[$stack->bundle()];
 
-    $detailsLink = NULL;
-    if (in_array($stack->bundle(), self::DETAILS_LINK_BUNDLES, TRUE)) {
-      $detailsLink = Url::fromRoute(
-        'entity.' . $stack->getEntityTypeId() . '.canonical',
-        [
-          'bundle' => $stack->bundle(),
-          $stack->getEntityTypeId() => $stack->id(),
-        ],
-      );
-    }
+    $detailsLink = Url::fromRoute(
+      'entity.' . $stack->getEntityTypeId() . '.canonical',
+      [
+        'bundle' => $stack->bundle(),
+        $stack->getEntityTypeId() => $stack->id(),
+      ],
+    );
 
     $urlOptions = [];
     if ($project !== NULL) {
@@ -392,16 +376,13 @@ final class SodaScsApplicationCardBuilder {
   public function buildComponentCard(SodaScsComponentInterface $component, ?SodaScsProjectInterface $project = NULL): array {
     $bundleInfo = $this->bundleInfo->getBundleInfo($component->getEntityTypeId())[$component->bundle()];
 
-    $detailsLink = NULL;
-    if (in_array($component->bundle(), self::DETAILS_LINK_BUNDLES, TRUE)) {
-      $detailsLink = Url::fromRoute(
-        'entity.' . $component->getEntityTypeId() . '.canonical',
-        [
-          'bundle' => $component->bundle(),
-          $component->getEntityTypeId() => $component->id(),
-        ],
-      );
-    }
+    $detailsLink = Url::fromRoute(
+      'entity.' . $component->getEntityTypeId() . '.canonical',
+      [
+        'bundle' => $component->bundle(),
+        $component->getEntityTypeId() => $component->id(),
+      ],
+    );
 
     $urlOptions = [];
     if ($project !== NULL && $component->bundle() === 'soda_scs_webprotege_component') {

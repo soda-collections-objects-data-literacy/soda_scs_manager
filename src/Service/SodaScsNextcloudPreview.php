@@ -362,7 +362,7 @@ class SodaScsNextcloudPreview {
 
     $action = $this->resolveFeedAction($row);
     $timestamp = (int) ($row['timestamp'] ?? 0);
-    $subtitle = $timestamp > 0 ? gmdate('Y-m-d H:i', $timestamp) : '';
+    $subtitle = $timestamp > 0 ? gmdate('d.m.Y - H:i', $timestamp) : '';
 
     $fileId = (int) ($object['fileId'] ?? 0);
     $url = '';

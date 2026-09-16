@@ -118,7 +118,18 @@ final class SodaScsProjectRemoveMemberForm extends ConfirmFormBase {
     $this->project = $soda_scs_project;
     $this->member = $user;
 
-    return parent::buildForm($form, $form_state);
+    $form = parent::buildForm($form, $form_state);
+
+    if (isset($form['actions']['submit'])) {
+      $form['actions']['submit']['#attributes']['class'][] = 'btn';
+    }
+
+    if (isset($form['actions']['cancel'])) {
+      $form['actions']['cancel']['#attributes']['class'][] = 'btn';
+      $form['actions']['cancel']['#attributes']['class'][] = 'btn--secondary';
+    }
+
+    return $form;
   }
 
   /**

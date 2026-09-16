@@ -1,261 +1,93 @@
 {{ entity_type|replace({'soda_scs_': ''}) }}
-<div class="soda-scs-manager--type--card{% if feed_status %} soda-scs-manager--type--card--feed{% endif %}">
-  <div class="soda-scs-manager--card-type">
-    {{ bundle_label }}
-  </div>
-    {% set tags_hidden_from_ui = ['data-science', 'publishing'] %}
-    <div class="soda-scs-manager--card-tags mb-4">
-      {% for tag in tags|sort %}
-        {% if tag not in tags_hidden_from_ui %}
-        <span class="soda-scs-manager--tag-filter-button soda-scs-manager--card-tag rounded-full px-2 py-1 text-xs whitespace-nowrap
-        {% if tag == 'coding' %}
-          bg-purple-100 text-purple-700 hover:bg-purple-200
-        {% elseif tag == 'cms' %}
-          bg-blue-100 text-blue-700 hover:bg-blue-200
-        {% elseif tag == 'database' %}
-          bg-emerald-100 text-emerald-700 hover:bg-emerald-200
-        {% elseif tag == 'data-cleaning' %}
-          bg-green-100 text-green-700 hover:bg-green-200
-        {% elseif tag == 'filesharing' %}
-          bg-cyan-100 text-cyan-700 hover:bg-cyan-200
-        {% elseif tag == 'ontology' %}
-          bg-indigo-100 text-indigo-700 hover:bg-indigo-200
-        {% elseif tag == 'office' %}
-          bg-orange-100 text-orange-700 hover:bg-orange-200
-        {% elseif tag == 'triplestore' %}
-          bg-lime-100 text-lime-700 hover:bg-lime-200
-        {% else %}
-          bg-stone-100 text-stone-700 hover:bg-stone-200
-        {% endif %}" data-tag="{{ tag }}" role="button" tabindex="0" aria-pressed="false" aria-label="{{ 'Filter by tag @tag'|t({'@tag': tag}) }}">{{ tag|t }}</span>
-        {% endif %}
-      {% endfor %}
-    </div>
-    {% set isRunning = health_status == 'running' or health_status == 'healthy' %}
-    {% set health_lower = health_status|default('')|lower %}
-    {% set overlayTone = '' %}
-    {% if not isRunning %}
-      {% if health_lower == 'starting' %}
-        {% set overlayTone = ' soda-scs-manager--card--status-starting' %}
-      {% elseif health_status == 'stopped' or health_status == 'paused' %}
-        {% set overlayTone = ' soda-scs-manager--card--status-stopped' %}
-      {% elseif health_status == 'Unknown' or health_status == 'unknown' %}
-        {% set overlayTone = '' %}
-      {% elseif health_status == 'unhealthy' or health_status == 'unavailable' %}
-        {% set overlayTone = ' soda-scs-manager--card--status-offline' %}
-      {% else %}
-        {% set overlayTone = ' soda-scs-manager--card--status-offline' %}
-      {% endif %}
-    {% endif %}
-    <div class="soda-scs-manager--card-content-wrapper{% if not isRunning %} soda-scs-manager--card--not-running{{ overlayTone }}{% endif %}"
-      {% if entity_id %}data-entity-id="{{ entity_id }}"{% endif %}
-      {% if entity_type_id %}data-entity-type="{{ entity_type_id }}"{% endif %}>
-      <div class="soda-scs-manager--card-status-banner" aria-live="polite">
-        {% if not isRunning %}
-          {% if health_lower == 'starting' %}
-            <div class="soda-scs-manager--card-status-banner__throbber" role="presentation" aria-hidden="true"></div>
-            <p class="soda-scs-manager--card-status-banner__primary">{{ 'Startup in progress'|t }}</p>
-            <p class="soda-scs-manager--card-status-banner__secondary">{{ 'Containers and services are being provisioned. This may take several minutes; status updates automatically.'|t }}</p>
-          {% elseif health_status == 'Unknown' or health_status == 'unknown' %}
-            <p class="soda-scs-manager--card-status-banner__primary">{{ 'Checking status'|t }}</p>
-            <p class="soda-scs-manager--card-status-banner__secondary">{{ 'We have not confirmed whether this application is running yet. The dashboard checks automatically in the background.'|t }}</p>
-          {% elseif health_status == 'stopped' or health_status == 'paused' %}
-            <p class="soda-scs-manager--card-status-banner__primary">{{ 'Stopped'|t }}</p>
-            <p class="soda-scs-manager--card-status-banner__secondary">{{ 'This application is not running.'|t }}</p>
-          {% elseif health_status == 'unhealthy' or health_status == 'unavailable' %}
-            <p class="soda-scs-manager--card-status-banner__primary">{{ 'Application offline'|t }}</p>
-            <p class="soda-scs-manager--card-status-banner__secondary">{{ 'If you need help, contact your site administrator.'|t }}</p>
-          {% else %}
-            <p class="soda-scs-manager--card-status-banner__primary">{{ 'Application offline'|t }}</p>
-            <p class="soda-scs-manager--card-status-banner__secondary">{{ 'If you need help, contact your site administrator.'|t }}</p>
-          {% endif %}
-        {% endif %}
-      </div>
-      {% if health_status %}
-        {% set healthClass = 'unknown' %}
-        {% set healthTitle = 'Unknown'|t %}
-        {% set healthState = 'other' %}
-        {% if health_status == 'running' or health_status == 'healthy' %}
-          {% set healthClass = 'running' %}
-          {% set healthTitle = 'Running'|t %}
-          {% set healthState = 'running' %}
-        {% elseif health_status == 'unavailable' %}
-          {% set healthClass = 'failure' %}
-          {% set healthTitle = 'Unavailable'|t %}
-        {% elseif health_lower == 'starting' %}
-          {% set healthClass = 'starting' %}
-          {% set healthTitle = 'Starting'|t %}
-          {% set healthState = 'starting' %}
-        {% elseif health_status == 'Unknown' or health_status == 'unknown' %}
-          {% set healthClass = 'unknown' %}
-          {% set healthTitle = 'Unknown'|t %}
-        {% elseif health_status == 'paused' %}
-          {% set healthClass = 'stopped' %}
-          {% set healthTitle = 'Paused'|t %}
-          {% set healthState = 'stopped' %}
-        {% elseif health_status == 'stopped' %}
-          {% set healthClass = 'stopped' %}
-          {% set healthTitle = 'Stopped'|t %}
-          {% set healthState = 'stopped' %}
-        {% elseif health_status == 'unhealthy' %}
-          {% set healthClass = 'failure' %}
-          {% set healthTitle = 'Failure'|t %}
-        {% endif %}
-        {% set health_label = 'Health status: @status'|t({'@status': healthTitle}) %}
-        {% if can_manage_lifecycle and entity_id and entity_type_id %}
-          {% set actions_id = 'soda-scs-health-actions-' ~ entity_type_id ~ '-' ~ entity_id %}
-          {% if entity_type_id == 'soda_scs_stack' %}
-            {% set lifecycle_route = 'soda_scs_manager.stack.lifecycle' %}
-            {% set lifecycle_param = {'soda_scs_stack': entity_id} %}
-          {% else %}
-            {% set lifecycle_route = 'soda_scs_manager.component.lifecycle' %}
-            {% set lifecycle_param = {'soda_scs_component': entity_id} %}
-          {% endif %}
-          <div class="soda-scs-manager--health-control"
-               data-health-state="{{ healthState }}"
-               data-can-manage-lifecycle="1">
-            <button type="button"
-                    class="soda-scs-manager--health-icon soda-scs-manager--health-{{ healthClass }}"
-                    aria-label="{{ health_label }}"
-                    aria-expanded="false"
-                    aria-haspopup="true"
-                    aria-controls="{{ actions_id }}"
-                    title="{{ healthTitle }}">
-            </button>
-            <div id="{{ actions_id }}"
-                 class="soda-scs-manager--health-actions"
-                 role="group"
-                 aria-label="{{ 'Application power controls'|t }}">
-              <button type="button"
-                      class="soda-scs-manager--health-action soda-scs-manager--health-action--start"
-                      data-lifecycle-action="start"
-                      data-lifecycle-url="{{ path(lifecycle_route, lifecycle_param|merge({'action': 'start'})) }}"
-                      aria-label="{{ 'Start'|t }}"
-                      title="{{ 'Start'|t }}"></button>
-              <button type="button"
-                      class="soda-scs-manager--health-action soda-scs-manager--health-action--stop"
-                      data-lifecycle-action="stop"
-                      data-lifecycle-url="{{ path(lifecycle_route, lifecycle_param|merge({'action': 'stop'})) }}"
-                      aria-label="{{ 'Stop'|t }}"
-                      title="{{ 'Stop'|t }}"></button>
-              <button type="button"
-                      class="soda-scs-manager--health-action soda-scs-manager--health-action--restart"
-                      data-lifecycle-action="restart"
-                      data-lifecycle-url="{{ path(lifecycle_route, lifecycle_param|merge({'action': 'restart'})) }}"
-                      aria-label="{{ 'Restart'|t }}"
-                      title="{{ 'Restart'|t }}"></button>
-            </div>
-          </div>
-        {% else %}
-          <span class="soda-scs-manager--health-icon soda-scs-manager--health-{{ healthClass }}"
-                aria-label="{{ health_label }}"
-                title="{{ healthTitle }}">
-          </span>
-        {% endif %}
-      {% endif %}
-      {% if details_link %}
-      <a href="{{ details_link }}"
-         class="soda-scs-manager--card-icon soda-scs-manager--details-icon"
-         aria-label="{{ 'View details of @title'|t({'@title': title}) }}"
-         title="{{ 'View details'|t }}"></a>
-      {% endif %}
-      <a href="{{ learn_more_link }}"
-         class="soda-scs-manager--card-icon soda-scs-manager--book-icon"
-         aria-label="{{ 'View documentation for @title'|t({'@title': title}) }}"
-         title="{{ 'Documentation'|t }}"></a>
-      {% if url %}
-      <a href="{{ url }}" class="soda-scs-manager--card-link" target="_blank"></a>
-      {% endif %}
-      {% if not feed_status %}
-      <div class="soda-scs-manager--image-wrapper">
-        <img class="soda-scs-manager--card-img-top " src="{{ file_url(imageUrl) }}" alt="{{ label }}">
-      </div>
-      {% endif %}
-      <div class="soda-scs-manager--card-body ">
-        <h5 class="soda-scs-manager--card-title">{{ title }}</h5>
-        {% if feed_status %}
-          <div class="soda-scs-manager--card-feed">
-            <p class="soda-scs-manager--card-feed-heading">{{ 'Recent activity'|t }}</p>
-            {% if feed_status == 'needs_connect' %}
-              <div class="scs-manager--nextcloud-connect-wrapper scs-manager--nextcloud-connect-inline soda-scs-manager--card-feed-connect" data-reload-on-connect="1">
-                <p class="soda-scs-manager--card-feed-message">{{ 'Connect your Drive account to see recent activity in this project folder.'|t }}</p>
-                <button type="button" class="scs-manager--nextcloud-connect-btn soda-scs-manager--card-action-button">
-                  {{ 'Connect Drive'|t }}
-                </button>
-                <p class="scs-manager--nextcloud-connect-status-inline text-xs text-gray-600" data-status="unknown">{{ 'Checking connection…'|t }}</p>
-                <div class="scs-manager--nextcloud-connect-modal hidden fixed inset-0 z-50 flex items-center justify-center bg-black/50" aria-hidden="true" role="dialog" aria-labelledby="nextcloud-card-connect-title">
-                  <div class="scs-manager--nextcloud-connect-modal-content rounded-lg bg-white p-6 shadow-xl max-w-md mx-4">
-                    <h2 id="nextcloud-card-connect-title" class="mb-4 text-xl font-semibold">{{ 'Nextcloud connection'|t }}</h2>
-                    <p class="scs-manager--nextcloud-connect-status mb-2 hidden text-sm"></p>
-                    <p class="scs-manager--nextcloud-connect-error mb-2 hidden text-sm text-red-600"></p>
-                    <div class="flex gap-2">
-                      <button type="button" class="scs-manager--nextcloud-connect-btn rounded bg-blue-600 px-4 py-2 text-white hover:bg-blue-700">
-                        {{ 'Connect'|t }}
-                      </button>
-                      <button type="button" class="scs-manager--nextcloud-connect-dismiss rounded border px-4 py-2 hover:bg-gray-100">
-                        {{ 'Close'|t }}
-                      </button>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            {% elseif activities.status|default('') == 'error' %}
-              <p class="soda-scs-manager--card-feed-message soda-scs-manager--card-feed-message--error">{{ 'Project folder activity could not be loaded.'|t }}</p>
-            {% elseif activities.status|default('') == 'empty' or activities.items|default([]) is empty %}
-              <p class="soda-scs-manager--card-feed-message">{{ 'No recent activity in this project folder.'|t }}</p>
-            {% else %}
-              <ul class="soda-scs-manager--card-feed-list">
-                {% for item in activities.items %}
-                  {% set action_labels = {
-                    'created': 'Created'|t,
-                    'changed': 'Edited'|t,
-                    'deleted': 'Deleted'|t,
-                    'restored': 'Restored'|t,
-                    'renamed': 'Renamed'|t,
-                    'moved': 'Moved'|t
-                  } %}
-                  {% set action = item.action|default('changed') %}
-                  {% if action not in action_labels|keys %}
-                    {% set action = 'changed' %}
-                  {% endif %}
-                  {% set action_label = action_labels[action] %}
-                  <li class="soda-scs-manager--card-feed-item">
-                    <span class="soda-scs-manager--card-feed-action soda-scs-manager--card-feed-action--{{ action }}"
-                          aria-label="{{ action_label }}"
-                          title="{{ action_label }}"></span>
-                    <span class="soda-scs-manager--card-feed-item-text">
-                      {% if item.url %}
-                        <a
-                          href="{{ item.url }}"
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          class="soda-scs-manager--card-feed-link"
-                          title="{{ item.label }}"
-                        >{{ item.label }}</a>
-                      {% else %}
-                        <span class="soda-scs-manager--card-feed-label" title="{{ item.label }}">{{ item.label }}</span>
-                      {% endif %}
-                      {% if item.subtitle %}
-                        <span class="soda-scs-manager--card-feed-subtitle" title="{{ item.subtitle }}">{{ item.subtitle }}</span>
-                      {% endif %}
-                    </span>
-                  </li>
-                {% endfor %}
-              </ul>
-            {% endif %}
-          </div>
-        {% else %}
-          <p class="soda-scs-manager--card-text">{{ description }}</p>
-        {% endif %}
-      </div>
-      {% if action_links %}
-        <div class="soda-scs-manager--card-actions">
-          {% for action in action_links %}
-            <a href="{{ action.url }}"
-               class="soda-scs-manager--card-action-button"
-               title="{{ action.title }}"
-               {% if action.external %}target="_blank" rel="noopener noreferrer"{% endif %}>{{ action.label }}</a>
-          {% endfor %}
-        </div>
-      {% endif %}
-    </div>
+
+{% if health_status is not defined %}
+    {% set health_status = "unknown" %}
+{% endif %}
+
+{% if bundle_label == "JupyterHub Environment" %}
+    {% set application_type = "jupyterhub" %}
+	{% set application_icons = [] %}
+    {% set card_type = "single" %}
+    {% set application_description = "Data Enrichment" %}
+
+{% elseif bundle_label == "Nextcloud Environment" %}
+    {% set application_type = "nextcloud" %}
+
+{% elseif bundle_label == "WebProtégé" %}
+    {% set application_type = "webprotege" %}
+	{% set application_icons = [directory ~ "/assets/img/protege.svg"] %}
+    {% set card_type = "single" %}
+    {% set application_description = "Ontology Management" %}
+
+{% elseif bundle_label == "WissKI Environment" %}
+    {% set application_type = "wisski" %}
+	{% set application_icons = [directory ~ "/assets/img/onlyoffice.svg", directory ~ "/assets/img/openrefine.svg", directory ~ "/assets/img/diagramsnet.svg"] %}
+    {% set card_type = "multiple" %}
+    {% set application_description = "Data Management" %}
+
+{% elseif bundle_label == "Database" %}
+    {% set application_type = "db" %}
+	{% set application_icons = [] %}
+    {% set card_type = "single" %}
+    {% set application_description = "Database" %}
+
+{% else %}
+    {% set application_type = "" %}
+    {% set application_icons = [] %}
+    {% set card_type = "single" %}
+    {% set application_description = "" %}
+
+{% endif %}
+
+{% if health_status %}
+	{% set health = health_status %}
+{% endif %}
+
+{% if application_type != "nextcloud" %}
+<div class="application--card application--card--{{ card_type }}">
+	<div class="application__meta">
+		<div class="application__health-status application__health-status--{{ health_status|lower|e('html_attr') }}">
+			<div class="application__health__icon"></div>
+			<p aria-label="{{ 'Health status: @status'|t({'@status': health_status}) }}" title="{{ health_status }}">
+				{{ health_status }}
+			</p>
+		</div>
+		<div class="application__documentation">
+			<a href="{{ learn_more_link }}" class="application__documentation-link" aria-label="{{ 'View documentation for @title'|t({'@title': title}) }}" title="{{ 'Documentation'|t }}"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 640"><!--!Font Awesome Pro v7.3.1 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license (Commercial License) Copyright 2026 Fonticons, Inc.--><path fill="#17212B" d="M320 205.3L320 514.6L320.5 514.4C375.1 491.7 433.7 480 492.8 480L512 480L512 160L492.8 160C450.6 160 408.7 168.4 369.7 184.6C352.9 191.6 336.3 198.5 320 205.3zM294.9 125.5L320 136L345.1 125.5C391.9 106 442.1 96 492.8 96L528 96C554.5 96 576 117.5 576 144L576 496C576 522.5 554.5 544 528 544L492.8 544C442.1 544 391.9 554 345.1 573.5L332.3 578.8C324.4 582.1 315.6 582.1 307.7 578.8L294.9 573.5C248.1 554 197.9 544 147.2 544L112 544C85.5 544 64 522.5 64 496L64 144C64 117.5 85.5 96 112 96L147.2 96C197.9 96 248.1 106 294.9 125.5z"/></svg></a>
+		</div>
+		<div class="application__details">
+			{% if details_link %}
+				<a href="{{ details_link }}" class="application__details-link btn btn--secondary" aria-label="{{ 'View details of @title'|t({'@title': title}) }}">{{ 'Details'|t }}</a>
+			{% endif %}
+		</div>
+	</div>
+
+	<a href="{{ url }}" class="application__core" aria-label="{{ 'Open @title'|t({'@title': title}) }}">
+		<h2 class="application__title h1">{{ application_description }}</h2>
+		<div class="application__icons-and-arrow">
+			<div class="application__icons">
+				{% if application_icons is defined %}
+					{% for icon in application_icons %}
+						<img src="{{ icon }}" alt="" class="application__icon">
+					{% endfor %}
+				{% endif %}
+			</div>
+			<div class="application__arrow">
+				<svg width="34" height="34" viewbox="0 0 34 34" fill="none" xmlns="http://www.w3.org/2000/svg">
+					<circle cx="17" cy="17" r="16.5" stroke="#17212B"/>
+					<path d="M24 11C24 10.4477 23.5523 10 23 10L14 10C13.4477 10 13 10.4477 13 11C13 11.5523 13.4477 12 14 12L22 12L22 20C22 20.5523 22.4477 21 23 21C23.5523 21 24 20.5523 24 20L24 11ZM11 23L11.7071 23.7071L23.7071 11.7071L23 11L22.2929 10.2929L10.2929 22.2929L11 23Z" fill="#17212B"/>
+				</svg>
+			</div>
+		</div>
+	</a>
+
+	<div class="application__name">
+		<h3 class="h4">{{ title }}</h3>
+		<div class="application__type">
+			{{ bundle_label }}
+		</div>
+	</div>
+
+
 </div>
+{% endif %}

@@ -10,6 +10,7 @@
  * - owner: Rendered owner field.
  * - members: Rendered members field.
  * - note: Rendered note field.
+ * - note_edit_form: Form for editing the project notes.
  * - application_cards: Dashboard-style cards for connected applications.
  * - add_application_popup: Modal for choosing application type (owners only).
  * - files: Nextcloud Team Folder recent activity for the current user.
@@ -40,27 +41,40 @@
 </div>
 <div class="project--right">
 	<div class="project__note project__section">
+		  <div class="project__section__header">
 		<h2 class="project__section-title h5">{{ 'Notes'|t }}</h2>
+			<button type="button" class="project__section__edit-button btn--secondary btn--icon project-note-edit-trigger" aria-controls="project-note-edit-{{ project_id }}" aria-expanded="false" aria-label="{{ 'Edit project notes'|t }}"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16"><g><path fill="#4D5866" d="M14.545 3.042l-1.586-1.585c-.389-.389-1.025-.389-1.414 0l-1.293 1.293 3 3 1.293-1.293c.389-.389 1.026-1.415z"/><rect fill="#4D5866" x="5.129" y="3.8" transform="matrix(-.707 -.707 .707 -.707 6.189 20.064)" width="4.243" height="9.899"/><path fill="#4D5866" d="M.908 14.775c-.087.262.055.397.316.312l2.001-.667-1.65-1.646-.667 2.001z"/></g></svg></button>
+    </div>
 		{{ note }}
-	</div>
-
-	<div class="project__members project__section">
-		<h2 class="project__section-title h5">{{ 'Team'|t }}</h2>
-		{% if owner %}
-			<div class="project__members--owner">
-				{{ owner }}
+		<div id="project-note-edit-{{ project_id }}" class="overlay overlay--small project-note-edit-overlay" role="dialog" aria-modal="true" aria-labelledby="project-note-edit-title-{{ project_id }}" hidden>
+			<div class="overlay__backdrop" aria-hidden="true"></div>
+			<div class="overlay__dialog" role="document">
+				<h2 id="project-note-edit-title-{{ project_id }}">{{ 'Edit notes'|t }}</h2>
+				{{ note_edit_form }}
 			</div>
-		{% endif %}
-		<div class="project__members--members">
-			{{ members }}
 		</div>
 	</div>
 
-	<div class="project__files project__section">
-		<h2 class="project__section-title h5">{{ 'Files'|t }}</h2>
-		{% if files %}
-			{{ files }}
-		{% endif %}
+	<div class="project__members project__section">
+			{{ members }}
 	</div>
-	<div class="project__delete project__section"></div>
+	{% if files %}
+		{{ files }}
+	{% endif %}
+	{% if is_owner %}
+		<button type="button" class="project-card__delete-trigger" data-delete-url="{{ path('entity.soda_scs_project.delete_form', {'soda_scs_project': project_id}) }}" aria-label="{{ 'Delete project @name'|t({'@name': label}) }}">
+			{{ 'Delete'|t }} {{ label }}
+		</button>
+		<div class="project-card__delete-confirmation" role="dialog" aria-modal="true" aria-labelledby="project-delete-title-{{ project_id }}" hidden>
+			<div class="project-card__delete-confirmation__backdrop" aria-hidden="true"></div>
+			<div class="project-card__delete-confirmation__dialog" role="document">
+				<h3 id="project-delete-title-{{ project_id }}">{{ 'Delete project?'|t }}</h3>
+				<p>{{ 'Do you really want to delete “@name”? This action cannot be undone.'|t({'@name': label}) }}</p>
+				<div class="project-card__delete-confirmation__actions">
+					<button type="button" class="project-card__delete-confirmation__cancel">{{ 'Cancel'|t }}</button>
+					<a class="project-card__delete-confirmation__confirm" href="{{ path('entity.soda_scs_project.delete_form', {'soda_scs_project': project_id}) }}">{{ 'Delete project'|t }}</a>
+				</div>
+			</div>
+		</div>
+	{% endif %}
 </div>

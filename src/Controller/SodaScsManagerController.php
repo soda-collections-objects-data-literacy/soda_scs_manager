@@ -162,20 +162,6 @@ class SodaScsManagerController extends ControllerBase {
         if ($memberName === '') {
           $memberName = (string) $member->getDisplayName();
         }
-        $nameParts = [];
-
-        if ($firstName === '' || $lastName === '') {
-          $nameSource = $memberName;
-          if ($member->hasField('name') && trim((string) $member->get('name')->value) !== '') {
-            $nameSource = (string) $member->get('name')->value;
-          }
-          elseif ($member->getAccountName() !== '') {
-            $nameSource = $member->getAccountName();
-          }
-          $nameParts = preg_split('/[\s._-]+/', $nameSource, -1, PREG_SPLIT_NO_EMPTY) ?: [];
-          $firstName = $firstName !== '' ? $firstName : (string) ($nameParts[0] ?? '');
-          $lastName = $lastName !== '' ? $lastName : (count($nameParts) > 1 ? (string) end($nameParts) : '');
-        }
 
         $initials = '';
         if ($firstName !== '') {

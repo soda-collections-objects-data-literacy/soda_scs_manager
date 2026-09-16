@@ -1,0 +1,51 @@
+{{ entity_type|replace({'soda_scs_': ''}) }}
+
+{% if health_status %}
+	{% set health = health_status %}
+	{% endif %}
+
+	<div class="application--card">
+		<div class="application__meta">
+			<div class="application__health-status application__health-status--{{ health_status }}">
+        <div class="application__health__icon"></div>
+				<p aria-label="{{ 'Health status: @status'|t({'@status': health_status}) }}" title="{{ health_status }}">
+					{{ health_status }}
+				</p>
+			{% endif %}
+		</div>
+		<div class="application__documentation">
+			<a href="{{ learn_more_link }}" class="application__documentation-link" aria-label="{{ 'View documentation for @title'|t({'@title': title}) }}" title="{{ 'Documentation'|t }}">i</a>
+		</div>
+		<div class="application__details">
+			{% if details_link %}
+				<a href="{{ details_link }}" class="application__details-link" aria-label="{{ 'View details of @title'|t({'@title': title}) }}" title="{{ 'View details'|t }}"></a>
+			{% endif %}
+		</div>
+	</div>
+
+	<a href="{{ url }}" class="application__core" aria-label="{{ 'Open @title'|t({'@title': title}) }}">
+		<h2 class="application__title h1">Ontology Management</h2>
+		<div class="application__icons-and-arrow">
+			<div class="application__icons">
+				{% if icon %}
+					<img src="{{ icon }}" alt="" class="application__icon">
+				{% endif %}
+			</div>
+			<div class="application__arrow">
+				<svg width="34" height="34" viewbox="0 0 34 34" fill="none" xmlns="http://www.w3.org/2000/svg">
+					<circle cx="17" cy="17" r="16.5" stroke="#17212B"/>
+					<path d="M24 11C24 10.4477 23.5523 10 23 10L14 10C13.4477 10 13 10.4477 13 11C13 11.5523 13.4477 12 14 12L22 12L22 20C22 20.5523 22.4477 21 23 21C23.5523 21 24 20.5523 24 20L24 11ZM11 23L11.7071 23.7071L23.7071 11.7071L23 11L22.2929 10.2929L10.2929 22.2929L11 23Z" fill="#17212B"/>
+				</svg>
+			</div>
+		</div>
+	</a>
+
+	<div class="application__title">
+		<h3 class="h4">{{ title }}</h3>
+		<div class="application__type">
+			{{ bundle_label }}
+		</div>
+	</div>
+
+
+</div>

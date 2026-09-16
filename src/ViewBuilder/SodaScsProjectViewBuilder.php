@@ -20,6 +20,7 @@ use Drupal\Core\Theme\Registry;
 use Drupal\Core\Url;
 use Drupal\soda_scs_manager\Entity\SodaScsProjectInterface;
 use Drupal\soda_scs_manager\Form\SodaScsProjectAddMemberForm;
+use Drupal\soda_scs_manager\Form\SodaScsProjectNoteForm;
 use Drupal\soda_scs_manager\Helpers\SodaScsProjectMembershipHelpers;
 use Drupal\soda_scs_manager\Service\SodaScsApplicationCardBuilder;
 use Drupal\soda_scs_manager\Service\SodaScsNextcloudPreview;
@@ -29,7 +30,8 @@ use Symfony\Component\DependencyInjection\ContainerInterface;
 /**
  * View builder for SODa SCS Project entities.
  */
-final class SodaScsProjectViewBuilder extends EntityViewBuilder {
+final class SodaScsProjectViewBuilder extends EntityViewBuilder
+{
 
   use StringTranslationTrait;
 
@@ -58,7 +60,8 @@ final class SodaScsProjectViewBuilder extends EntityViewBuilder {
   /**
    * {@inheritdoc}
    */
-  public static function createInstance(ContainerInterface $container, EntityTypeInterface $entity_type): static {
+  public static function createInstance(ContainerInterface $container, EntityTypeInterface $entity_type): static
+  {
     return new static(
       $entity_type,
       $container->get('entity.repository'),
@@ -79,25 +82,28 @@ final class SodaScsProjectViewBuilder extends EntityViewBuilder {
   /**
    * {@inheritdoc}
    */
-  public function build(array $build): array {
+  public function build(array $build): array
+  {
     $build = parent::build($build);
 
     /** @var \Drupal\soda_scs_manager\Entity\SodaScsProjectInterface $project */
     $project = $build['#soda_scs_project'];
 
-    foreach ([
-      'connectedComponents',
-      'created',
-      'description',
-      'groupId',
-      'keycloakUuid',
-      'label',
-      'members',
-      'note',
-      'owner',
-      'rights',
-      'updated',
-    ] as $fieldName) {
+    foreach (
+      [
+        'connectedComponents',
+        'created',
+        'description',
+        'groupId',
+        'keycloakUuid',
+        'label',
+        'members',
+        'note',
+        'owner',
+        'rights',
+        'updated',
+      ] as $fieldName
+    ) {
       if (isset($build[$fieldName])) {
         $build[$fieldName]['#access'] = FALSE;
       }
@@ -128,6 +134,7 @@ final class SodaScsProjectViewBuilder extends EntityViewBuilder {
     $build['#owner'] = $project->get('owner')->view('default');
     $build['#members'] = $this->buildMembersDisplay($project);
     $build['#note'] = $project->get('note')->isEmpty() ? NULL : $project->get('note')->view('default');
+    $build['#note_edit_form'] = $this->formBuilder->getForm(SodaScsProjectNoteForm::class, $project);
     $applicationCards = $this->applicationCardBuilder->buildForProject($project);
     $build['#application_cards'] = $applicationCards;
     $build['#filter_tags'] = $this->applicationCardBuilder->collectFilterTags($applicationCards);
@@ -153,6 +160,7 @@ final class SodaScsProjectViewBuilder extends EntityViewBuilder {
       'soda_scs_manager/globalStyling',
       'soda_scs_manager/dashboardHealthStatus',
       'soda_scs_manager/tagFilter',
+      'scs_custom_theme/global-scripts',
     ];
     $drupalSettings = [
       'dashboardAdminMail' => (string) ($this->configFactory->get('system.site')->get('mail') ?? ''),
@@ -177,7 +185,8 @@ final class SodaScsProjectViewBuilder extends EntityViewBuilder {
    * @return array<string, mixed>|null
    *   Render array, or NULL when the current account cannot be loaded.
    */
-  protected function buildFilesDisplay(SodaScsProjectInterface $project): ?array {
+  protected function buildFilesDisplay(SodaScsProjectInterface $project): ?array
+  {
     $user = $this->entityTypeManager->getStorage('user')->load($this->currentUser->id());
     if (!$user instanceof UserInterface) {
       return NULL;
@@ -192,9 +201,17 @@ final class SodaScsProjectViewBuilder extends EntityViewBuilder {
    * @return array<string, mixed>
    *   Members field render array.
    */
-  protected function buildMembersDisplay(SodaScsProjectInterface $project): array {
+  protected function buildMembersDisplay(SodaScsProjectInterface $project): array
+  {
     $ownerId = (int) ($project->getOwnerId() ?? 0);
     $items = [];
+    $owner = [];
+
+    // The owner is not part of the 'members' field, so it is loaded separately.
+    $ownerAccount = $project->getOwner();
+    if ($ownerAccount instanceof UserInterface) {
+      $owner = $this->buildMemberProfile($ownerAccount);
+    }
 
     if (!$project->get('members')->isEmpty()) {
       foreach ($project->get('members')->referencedEntities() as $member) {
@@ -202,11 +219,17 @@ final class SodaScsProjectViewBuilder extends EntityViewBuilder {
           continue;
         }
         $memberId = (int) $member->id();
-        if ($memberId <= 0 || $memberId === $ownerId) {
+
+        if ($memberId === $ownerId) {
+          continue;
+        }
+
+        if ($memberId <= 0) {
           continue;
         }
 
         $removeUrl = NULL;
+        $removeForm = NULL;
         if ($this->projectMembershipHelpers->canRemoveMember($project, $this->currentUser, $member)) {
           $isSelf = $memberId === (int) $this->currentUser->id();
           $routeName = $isSelf
@@ -217,12 +240,12 @@ final class SodaScsProjectViewBuilder extends EntityViewBuilder {
             $routeParameters['user'] = $memberId;
           }
           $removeUrl = Url::fromRoute($routeName, $routeParameters)->toString();
+          $removeForm = $this->formBuilder->getForm(\Drupal\soda_scs_manager\Form\SodaScsProjectRemoveMemberForm::class, $project, $member);
         }
 
-        $items[] = [
-          'id' => $memberId,
-          'name' => $member->getDisplayName(),
+        $items[] = $this->buildMemberProfile($member) + [
           'remove_url' => $removeUrl,
+          'remove_form' => $removeForm,
           'remove_label' => $memberId === (int) $this->currentUser->id()
             ? $this->t('Leave project')
             : $this->t('Remove @member', ['@member' => $member->getDisplayName()]),
@@ -239,6 +262,7 @@ final class SodaScsProjectViewBuilder extends EntityViewBuilder {
     return [
       '#theme' => 'soda_scs_manager__project_members',
       '#members' => $items,
+      '#owner' => $owner,
       '#can_add_members' => $canAddMembers,
       '#add_form' => $addForm,
       '#cache' => [
@@ -250,13 +274,54 @@ final class SodaScsProjectViewBuilder extends EntityViewBuilder {
   }
 
   /**
+   * Builds a profile array (name, username, mail, picture, …) for a member.
+   *
+   * @return array<string, mixed>
+   *   Member profile data.
+   */
+  protected function buildMemberProfile(UserInterface $member): array
+  {
+    $memberId = (int) $member->id();
+    $firstName = $member->hasField('first_name') ? trim((string) $member->get('first_name')->value) : '';
+    $lastName = $member->hasField('last_name') ? trim((string) $member->get('last_name')->value) : '';
+    $fullName = trim($firstName . ' ' . $lastName);
+    $isCurrentUser = $memberId === (int) $this->currentUser->id();
+    $displayName = $fullName !== '' ? $fullName : $member->getDisplayName();
+
+    $initials = '';
+    if ($firstName !== '') {
+      $initials .= mb_substr($firstName, 0, 1);
+    }
+    if ($lastName !== '') {
+      $initials .= mb_substr($lastName, 0, 1);
+    }
+    if ($initials === '') {
+      $initials = mb_substr($displayName, 0, 1);
+    }
+
+    return [
+      'id' => $memberId,
+      'first_name' => $firstName,
+      'last_name' => $lastName,
+      'name' => $isCurrentUser ? (string) $this->t('You') : $displayName,
+      'initials' => mb_strtoupper($initials),
+      'username' => $member->getAccountName(),
+      'mail' => $member->getEmail(),
+      'picture' => $member->hasField('user_picture') && !$member->get('user_picture')->isEmpty()
+        ? $member->get('user_picture')->view(['label' => 'hidden'])
+        : [],
+      'is_current_user' => $isCurrentUser,
+    ];
+  }
+
+  /**
    * {@inheritdoc}
    */
-  protected function getBuildDefaults(EntityInterface $entity, $view_mode): array {
+  protected function getBuildDefaults(EntityInterface $entity, $view_mode): array
+  {
     $build = parent::getBuildDefaults($entity, $view_mode);
     $build['#theme'] = 'soda_scs_project';
 
     return $build;
   }
-
 }
