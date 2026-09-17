@@ -1,39 +1,29 @@
 {#
 /**
  * @file
- * Template for the add application card with plus icon.
+ * Add-application tile, styled like the entity application cards.
  *
  * Available variables:
- * - attributes: HTML attributes for the card container.
+ * - project_id: Optional project entity ID to scope new applications to.
  * - popup_url_mariadb, popup_url_wisski, popup_url_open_gdb: localized app URLs.
  */
 #}
 
-<div class="soda-scs-manager--type--card">
-  <div class="soda-scs-manager--card-type">
-    &nbsp;
-  </div>
-    <div class="soda-scs-manager--card-tags mb-4">
-      &nbsp;
-    </div>
-    <div class="soda-scs-manager--card-content-wrapper soda-scs-manager--add-app-content">
-      <button type="button"
-              class="soda-scs-manager--add-app-button"
-              aria-label="{{ 'Add new application'|t }}"
-              title="{{ 'Add new application'|t }}">
-      </button>
-      <div class="soda-scs-manager--image-wrapper">
-        <div class="soda-scs-manager--plus-icon-container flex items-center justify-center w-full h-full">
-          <svg xmlns="http://www.w3.org/2000/svg" class="soda-scs-manager--plus-icon w-32 h-32 text-stone-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
-          </svg>
-        </div>
-      </div>
-      <div class="soda-scs-manager--card-body">
-        <h5 class="soda-scs-manager--card-title">{{ 'Add Application'|t }}</h5>
-        <p class="soda-scs-manager--card-text">{{ 'Click to add a new service'|t }}</p>
-      </div>
-    </div>
+<div class="application--card application--card--add">
+	<button type="button"
+			class="application__core soda-scs-manager--add-app-button"
+			{% if project_id %}data-project-id="{{ project_id }}"{% endif %}
+			aria-controls="add-app-popup"
+			aria-expanded="false"
+			aria-label="{{ 'Add new application'|t }}"
+			title="{{ 'Add new application'|t }}">
+		<svg xmlns="http://www.w3.org/2000/svg" class="application__add-icon" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+			<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+		</svg>
+	</button>
+	<div class="application__name">
+		<h3 class="h4">{{ 'Add Application'|t }}</h3>
+	</div>
 </div>
 
 {% include '@soda_scs_manager/cards/soda-scs-manager--add-application-popup.html.twig' %}

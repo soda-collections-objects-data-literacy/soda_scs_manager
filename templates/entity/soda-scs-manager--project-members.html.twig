@@ -57,6 +57,12 @@
 <div id="project-members-edit-overlay" class="overlay overlay--small project-members-edit-overlay" role="dialog" aria-modal="true" aria-labelledby="project-members-edit-title" hidden>
 	<div class="overlay__backdrop" aria-hidden="true"></div>
 	<div class="overlay__dialog" role="document">
+		<button type="button" class="btn btn--secondary btn--icon overlay__close project-members-edit-overlay__close" aria-label="{{ 'Close'|t }}">
+			<svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+				<line x1="14.8493" y1="14.8493" x2="4.94983" y2="4.94978" stroke="#17212B" stroke-width="2"/>
+				<line x1="4.94979" y1="14.8492" x2="14.8493" y2="4.94975" stroke="#17212B" stroke-width="2"/>
+			</svg>
+		</button>
 		<h2 id="project-members-edit-title">{{ 'Edit team members'|t }}</h2>
 		<ul class="project__members__list project__members__list--edit">
 			{% if owner is not empty %}

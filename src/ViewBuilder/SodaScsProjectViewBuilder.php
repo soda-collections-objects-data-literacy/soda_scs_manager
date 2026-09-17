@@ -139,9 +139,10 @@ final class SodaScsProjectViewBuilder extends EntityViewBuilder
     $build['#application_cards'] = $applicationCards;
     $build['#filter_tags'] = $this->applicationCardBuilder->collectFilterTags($applicationCards);
     $build['#files'] = $this->buildFilesDisplay($project);
-    $build['#add_application_popup'] = $isOwner ? [
-      '#theme' => 'soda_scs_manager__add_application_popup',
+    $build['#add_application_card'] = $isOwner ? [
+      '#theme' => 'soda_scs_manager__add_application_card',
       '#asset_base' => $assetBase,
+      '#project_id' => (int) $project->id(),
       '#popup_url_mariadb' => $createUrls['mariadb'],
       '#popup_url_wisski' => $createUrls['wisski'],
       '#popup_url_open_gdb' => $createUrls['openGdb'],

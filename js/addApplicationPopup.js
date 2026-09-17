@@ -1,31 +1,36 @@
 (function ($, Drupal, once, drupalSettings) {
   Drupal.behaviors.addApplicationPopup = {
     attach: function (context, settings) {
-      var $popup = $('#add-app-popup', context).addBack('#add-app-popup');
-      if (!$popup.length) {
-        $popup = $('#add-app-popup');
-      }
+      var activeTrigger = null;
+
+      var closeOverlay = function (popupEl) {
+        popupEl.hidden = true;
+        if (activeTrigger) {
+          activeTrigger.setAttribute('aria-expanded', 'false');
+          activeTrigger.focus();
+          activeTrigger = null;
+        }
+      };
 
       once('addApplicationPopupClose', '#add-app-popup', document).forEach(function (popupEl) {
-        var $modal = $(popupEl);
+        var closeButton = popupEl.querySelector('#close-popup');
+        if (closeButton) {
+          closeButton.addEventListener('click', function (e) {
+            e.preventDefault();
+            closeOverlay(popupEl);
+          });
+        }
 
-        $modal.find('#close-popup').on('click', function (e) {
-          e.preventDefault();
-          $modal.addClass('hidden').removeClass('flex');
-          $modal.attr('aria-hidden', 'true');
-        });
-
-        $modal.on('click', function (e) {
-          if ($(e.target).is('#add-app-popup')) {
-            $modal.addClass('hidden').removeClass('flex');
-            $modal.attr('aria-hidden', 'true');
+        popupEl.addEventListener('click', function (e) {
+          if (e.target === popupEl || e.target.classList.contains('overlay__backdrop')) {
+            closeOverlay(popupEl);
           }
         });
 
-        $(document).on('keydown.addApplicationPopup', function (e) {
-          if (e.key === 'Escape' && $modal.hasClass('flex')) {
-            $modal.addClass('hidden').removeClass('flex');
-            $modal.attr('aria-hidden', 'true');
+        popupEl.addEventListener('keydown', function (e) {
+          if (e.key === 'Escape') {
+            e.preventDefault();
+            closeOverlay(popupEl);
           }
         });
       });
@@ -38,18 +43,27 @@
           e.preventDefault();
           e.stopPropagation();
 
+          var popup = document.getElementById('add-app-popup');
+          if (!popup) {
+            return;
+          }
+
           var projectId = $button.attr('data-project-id');
           var createUrls = (drupalSettings.sodaScsManager && drupalSettings.sodaScsManager.addApplicationCreateUrls) || {};
           if (projectId && createUrls.mariadb && createUrls.wisski && createUrls.openGdb) {
             var query = '?project=' + encodeURIComponent(projectId);
-            $popup.find('a[data-app-type="mariadb"]').attr('href', createUrls.mariadb + query);
-            $popup.find('a[data-app-type="wisski"]').attr('href', createUrls.wisski + query);
-            $popup.find('a[data-app-type="openGdb"]').attr('href', createUrls.openGdb + query);
+            popup.querySelector('a[data-app-type="mariadb"]').setAttribute('href', createUrls.mariadb + query);
+            popup.querySelector('a[data-app-type="wisski"]').setAttribute('href', createUrls.wisski + query);
+            popup.querySelector('a[data-app-type="openGdb"]').setAttribute('href', createUrls.openGdb + query);
           }
 
-          $popup.removeClass('hidden').addClass('flex');
-          $popup.attr('aria-hidden', 'false');
-          $popup.find('a').first().focus();
+          activeTrigger = button;
+          popup.hidden = false;
+          button.setAttribute('aria-expanded', 'true');
+          var firstLink = popup.querySelector('a');
+          if (firstLink) {
+            firstLink.focus();
+          }
         });
       });
     }

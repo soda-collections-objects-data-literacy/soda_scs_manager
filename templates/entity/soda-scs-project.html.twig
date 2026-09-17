@@ -12,7 +12,7 @@
  * - note: Rendered note field.
  * - note_edit_form: Form for editing the project notes.
  * - application_cards: Dashboard-style cards for connected applications.
- * - add_application_popup: Modal for choosing application type (owners only).
+ * - add_application_card: Card that opens the add-application popup (owners only).
  * - files: Nextcloud Team Folder recent activity for the current user.
  * - attributes: HTML attributes for the container.
  * - filter_tags: Tag machine names for the application filter bar.
@@ -30,12 +30,12 @@
 			{% for card in application_cards %}
 				{{ card }}
 			{% endfor %}
-			{{ add_application_popup }}
+			{{ add_application_card }}
 		</div>
 	{% else %}
 		<div class="project__applications project__applications--empty">
 			<p class="">{{ 'No applications found.'|t }}</p>
-			{{ add_application_popup }}
+			{{ add_application_card }}
 		</div>
 	{% endif %}
 </div>
@@ -49,6 +49,12 @@
 		<div id="project-note-edit-{{ project_id }}" class="overlay overlay--small project-note-edit-overlay" role="dialog" aria-modal="true" aria-labelledby="project-note-edit-title-{{ project_id }}" hidden>
 			<div class="overlay__backdrop" aria-hidden="true"></div>
 			<div class="overlay__dialog" role="document">
+				<button type="button" class="btn btn--secondary btn--icon overlay__close project-note-edit-overlay__close" aria-label="{{ 'Close'|t }}">
+					<svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+						<line x1="14.8493" y1="14.8493" x2="4.94983" y2="4.94978" stroke="#17212B" stroke-width="2"/>
+						<line x1="4.94979" y1="14.8492" x2="14.8493" y2="4.94975" stroke="#17212B" stroke-width="2"/>
+					</svg>
+				</button>
 				<h2 id="project-note-edit-title-{{ project_id }}">{{ 'Edit notes'|t }}</h2>
 				{{ note_edit_form }}
 			</div>

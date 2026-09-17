@@ -9,57 +9,53 @@
  */
 #}
 {% set assetBase = asset_base|default('/modules/custom/soda_scs_manager/assets/images/') %}
-<div id="add-app-popup" class="soda-scs-manager--add-app-popup fixed inset-0 bg-black/30 hidden items-center justify-center p-4" aria-hidden="true">
-  <div class="soda-scs-manager--add-app-popup-inner bg-white rounded-lg shadow-2xl p-8 w-full max-w-4xl relative border-2 border-orange-400">
+<div id="add-app-popup" class="overlay overlay--large add-app-popup" role="dialog" aria-modal="true" aria-labelledby="add-app-popup-title" hidden>
+  <div class="overlay__backdrop" aria-hidden="true"></div>
+  <div class="overlay__dialog" role="document">
     <button type="button"
-            class="absolute top-4 right-4 w-10 h-10 flex items-center justify-center text-stone-400 hover:text-stone-600 hover:bg-stone-100 rounded transition-colors"
+            class="btn btn--secondary btn--icon overlay__close"
             id="close-popup"
             aria-label="{{ 'Close popup'|t }}">
-      <svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+      <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <line x1="14.8493" y1="14.8493" x2="4.94983" y2="4.94978" stroke="#17212B" stroke-width="2"/>
+        <line x1="4.94979" y1="14.8492" x2="14.8493" y2="4.94975" stroke="#17212B" stroke-width="2"/>
       </svg>
     </button>
 
-    <h2 class="text-3xl font-bold text-stone-800 mb-8 text-center">{{ 'Select Application Type'|t }}</h2>
+    <h2 id="add-app-popup-title" class="add-app-popup__title">{{ 'Select Application Type'|t }}</h2>
 
-    <div class="grid grid-cols-1 md:grid-cols-3 gap-6 md:gap-8">
+    <div class="add-app-popup__grid">
       {# Database Card #}
       <a href="{{ popup_url_mariadb }}"
          data-app-type="mariadb"
-         class="soda-scs-manager--add-app-popup-card rounded-xl p-6 md:p-8 transition-all border-2 border-stone-200 hover:border-orange-400 hover:shadow-lg bg-white hover:bg-stone-50">
-        <div class="flex flex-col items-center text-center">
-          <div class="rounded-xl p-4 mb-4 flex items-center justify-center w-20 h-20 md:w-24 md:h-24">
-            <img src="{{ assetBase }}sql.svg" alt="" class="w-14 h-14 md:w-16 md:h-16 object-contain" />
-          </div>
-          <h3 class="text-lg md:text-xl font-semibold text-stone-800 mb-2">{{ 'MariaDB Database'|t }}</h3>
-          <p class="text-stone-600 text-sm">{{ '+ more info'|t }}</p>
+         class="add-app-popup-card">
+        <div class="add-app-popup-card__icon-wrapper">
+          <img src="{{ assetBase }}sql.svg" alt="" class="add-app-popup-card__icon" />
         </div>
+        <h3 class="add-app-popup-card__title">{{ 'MariaDB Database'|t }}</h3>
+        <p class="add-app-popup-card__text">{{ '+ more info'|t }}</p>
       </a>
 
       {# WissKI Card #}
       <a href="{{ popup_url_wisski }}"
          data-app-type="wisski"
-         class="soda-scs-manager--add-app-popup-card rounded-xl p-6 md:p-8 transition-all border-2 border-stone-200 hover:border-orange-400 hover:shadow-lg bg-white hover:bg-stone-50">
-        <div class="flex flex-col items-center text-center">
-          <div class="rounded-xl p-4 mb-4 flex items-center justify-center w-20 h-20 md:w-24 md:h-24">
-            <img src="{{ assetBase }}wisski-stack.svg" alt="" class="w-14 h-14 md:w-16 md:h-16 object-contain" />
-          </div>
-          <h3 class="text-lg md:text-xl font-semibold text-stone-800 mb-2">{{ 'WissKI Environment'|t }}</h3>
-          <p class="text-stone-600 text-sm">{{ '+ more info'|t }}</p>
+         class="add-app-popup-card">
+        <div class="add-app-popup-card__icon-wrapper">
+          <img src="{{ assetBase }}wisski-stack.svg" alt="" class="add-app-popup-card__icon" />
         </div>
+        <h3 class="add-app-popup-card__title">{{ 'WissKI Environment'|t }}</h3>
+        <p class="add-app-popup-card__text">{{ '+ more info'|t }}</p>
       </a>
 
       {# Triplestore Card #}
       <a href="{{ popup_url_open_gdb }}"
          data-app-type="openGdb"
-         class="soda-scs-manager--add-app-popup-card rounded-xl p-6 md:p-8 transition-all border-2 border-stone-200 hover:border-orange-400 hover:shadow-lg bg-white hover:bg-stone-50">
-        <div class="flex flex-col items-center text-center">
-          <div class="rounded-xl p-4 mb-4 flex items-center justify-center w-20 h-20 md:w-24 md:h-24">
-            <img src="{{ assetBase }}triplestore.svg" alt="" class="w-14 h-14 md:w-16 md:h-16 object-contain" />
-          </div>
-          <h3 class="text-lg md:text-xl font-semibold text-stone-800 mb-2">{{ 'Triplestore (OpenGDB)'|t }}</h3>
-          <p class="text-stone-600 text-sm">{{ '+ more info'|t }}</p>
+         class="add-app-popup-card">
+        <div class="add-app-popup-card__icon-wrapper">
+          <img src="{{ assetBase }}triplestore.svg" alt="" class="add-app-popup-card__icon" />
         </div>
+        <h3 class="add-app-popup-card__title">{{ 'Triplestore (OpenGDB)'|t }}</h3>
+        <p class="add-app-popup-card__text">{{ '+ more info'|t }}</p>
       </a>
     </div>
   </div>
