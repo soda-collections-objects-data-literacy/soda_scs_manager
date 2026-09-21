@@ -291,8 +291,7 @@ class SodaScsDrupalHelpers {
    * Traefik and Drupal can lag behind Docker "running" (HTTP 404/502/503).
    */
   private function isDrupalHealthCheckRetryable(array $health): bool {
-    $status = (string) ($health['status'] ?? '');
-    return in_array($status, ['starting', 'unavailable', 'unknown'], TRUE);
+    return SodaScsHealthStatus::fromStatus((string) ($health['status'] ?? '')) === SodaScsHealthStatus::UNKNOWN;
   }
 
   /**

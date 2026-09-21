@@ -1,18 +1,25 @@
 {{ entity_type|replace({'soda_scs_': ''}) }}
 
-{% if health_status %}
-	{% set health = health_status %}
-	{% endif %}
+{% set health_status = health_status|default('unknown')|lower %}
+{% if health_status not in ['running', 'stopped', 'problem', 'unknown'] %}
+	{% set health_status = 'unknown' %}
+{% endif %}
+{% set health_labels = {
+	'running': 'Running'|t,
+	'stopped': 'Stopped'|t,
+	'problem': 'Problem'|t,
+	'unknown': 'Unknown'|t,
+} %}
+{% set health_label = health_labels[health_status] %}
 
-	<div class="application--card">
+	<div class="application--card"{% if entity_id %} data-entity-id="{{ entity_id }}"{% endif %}{% if entity_type_id %} data-entity-type="{{ entity_type_id }}"{% endif %} data-health-status="{{ health_status }}">
 		<div class="application__meta">
-			<div class="application__health-status application__health-status--{{ health_status }}">
-        <div class="application__health__icon"></div>
-				<p aria-label="{{ 'Health status: @status'|t({'@status': health_status}) }}" title="{{ health_status }}">
-					{{ health_status }}
+			<div class="application__health-status application__health-status--{{ health_status }}" data-health-status="{{ health_status }}" title="{{ health_label }}">
+        <div class="application__health__icon" aria-hidden="true"></div>
+				<p aria-label="{{ 'Health status: @status'|t({'@status': health_label}) }}">
+					{{ health_label }}
 				</p>
-			{% endif %}
-		</div>
+			</div>
 		<div class="application__documentation">
 			<a href="{{ learn_more_link }}" class="application__documentation-link" aria-label="{{ 'View documentation for @title'|t({'@title': title}) }}" title="{{ 'Documentation'|t }}">i</a>
 		</div>

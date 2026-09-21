@@ -802,7 +802,7 @@ function soda_scs_manager_mail($key, &$message, $params) {
  * Implements hook_preprocess_HOOK().
  */
 function soda_scs_manager_preprocess_soda_scs_component(array &$variables) {
-  $variables['#attached']['library'][] = 'soda_scs_manager/health_status';
+  $variables['#attached']['library'][] = 'soda_scs_manager/entityHelpers';
 }
 
 /**

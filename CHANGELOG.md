@@ -40,6 +40,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- Application health is always one of **running**, **stopped**, **problem**,
+  or **unknown**. Container states, HTTP probes, and legacy labels (healthy,
+  starting, unavailable, …) are mapped onto that set in PHP; Twig and JS
+  only render those four.
 - The former **Notifications** page is a general **Messages** inbox
   (sender, subject, date). Opening a message shows its body and
   type-specific actions. Project invitations are one message type

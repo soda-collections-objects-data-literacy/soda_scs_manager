@@ -11,24 +11,31 @@
           return;
         }
 
-        // Only update health for components that support health checks.
         if (bundle === 'soda_scs_triplestore_component') {
           return;
         }
 
         const healthUrl = Drupal.url('soda-scs-manager/health/component/' + componentId);
+        const healthClasses = 'health-running health-stopped health-problem health-unknown health-loading health-success health-error health-pending';
 
-        // Initial loading state.
-        $healthCell.html('<span class="health-loading">Checking<span class="dots"></span></span>');
+        function applyStatus(status, title) {
+          const label = Drupal.sodaScsHealth.label(status);
+          $healthCell
+            .removeClass(healthClasses)
+            .addClass('health-' + status)
+            .attr('title', title || '')
+            .html('<span class="health-' + status + '">● ' + label + '</span>');
+        }
 
-        // Add animated dots.
+        $healthCell.html('<span class="health-loading">' + Drupal.t('Unknown') + '<span class="dots"></span></span>');
+        $healthCell.removeClass(healthClasses).addClass('health-unknown');
+
         let dotCount = 0;
         const dotsInterval = setInterval(function () {
           dotCount = (dotCount + 1) % 4;
           $healthCell.find('.dots').text('.'.repeat(dotCount));
         }, 500);
 
-        // Function to update health status.
         function updateHealth() {
           $.ajax({
             url: healthUrl,
@@ -36,61 +43,16 @@
             timeout: 5000,
           }).done(function (data) {
             clearInterval(dotsInterval);
-
-            if (data && data.status && data.status.success === true) {
-              $healthCell.html('<span class="health-running">● Running</span>');
-              $healthCell.removeClass('health-error health-loading').addClass('health-success');
-            }
-            else {
-              const status = (data && data.status && data.status.status) ? data.status.status : '';
-              const message = (data && data.status && data.status.message) ? data.status.message : 'Error';
-              const error = (data && data.status && data.status.error) ? data.status.error : '';
-              const statusLower = (status || '').toLowerCase();
-              const messageLower = (message || '').toLowerCase();
-              const isProvisioning =
-                statusLower === 'starting' ||
-                messageLower === 'starting';
-              const isUnavailable =
-                statusLower === 'unavailable' ||
-                messageLower === 'unavailable' ||
-                messageLower === 'not available' ||
-                messageLower.indexOf('component is not available') !== -1 ||
-                messageLower.indexOf('service temporarily unavailable') !== -1;
-              if (statusLower === 'unhealthy') {
-                $healthCell.html('<span class="health-error" title="' + error + '">● ' + message + '</span>');
-                $healthCell.removeClass('health-success health-loading').addClass('health-error');
-              }
-              else if (isUnavailable || statusLower === 'unknown') {
-                $healthCell.html('<span class="health-error" title="' + error + '">● ' + message + '</span>');
-                $healthCell.removeClass('health-success health-loading health-pending').addClass('health-error');
-              }
-              else if (isProvisioning) {
-                $healthCell.html('<span class="health-pending" title="' + error + '">● ' + Drupal.t('Starting') + '</span>');
-                $healthCell.removeClass('health-success health-loading health-error').addClass('health-pending');
-              }
-              else if (statusLower === 'stopped' || messageLower === 'stopped' || statusLower === 'paused') {
-                $healthCell.html('<span class="health-error" title="' + error + '">● ' + message + '</span>');
-                $healthCell.removeClass('health-success health-loading').addClass('health-error');
-              }
-              else {
-                $healthCell.html('<span class="health-error" title="' + error + '">● ' + message + '</span>');
-                $healthCell.removeClass('health-success health-loading').addClass('health-error');
-              }
-            }
-          }).fail(function (jqXHR, textStatus, errorThrown) {
+            applyStatus(Drupal.sodaScsHealth.fromPayload(data), Drupal.sodaScsHealth.detail(data));
+          }).fail(function () {
             clearInterval(dotsInterval);
-            $healthCell.html('<span class="health-pending" title="">● ' + Drupal.t('Could not refresh status') + '</span>');
-            $healthCell.removeClass('health-success health-loading health-error').addClass('health-pending');
+            applyStatus('unknown', Drupal.t('Could not refresh status'));
           });
         }
 
-        // Initial check.
         updateHealth();
-
-        // Update every 10 seconds.
         setInterval(updateHealth, 10000);
       });
     }
   };
 })(jQuery, Drupal, drupalSettings, once);
-

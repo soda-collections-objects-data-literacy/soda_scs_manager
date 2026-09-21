@@ -10,6 +10,7 @@ use Drupal\Core\Form\FormStateInterface;
 use Drupal\Core\Url;
 use Drupal\soda_scs_manager\Helpers\SodaScsComponentHelpers;
 use Drupal\soda_scs_manager\Helpers\SodaScsDrupalHelpers;
+use Drupal\soda_scs_manager\Helpers\SodaScsHealthStatus;
 use Drupal\soda_scs_manager\Helpers\SodaScsProgressHelper;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 use Symfony\Component\HttpFoundation\RedirectResponse;
@@ -141,7 +142,7 @@ class SodaScsComponentAutomatedUpdatesConfirmForm extends ConfirmFormBase {
       $healthResult = $this->sodaScsComponentHelpers->drupalHealthCheck($component);
       $isHealthy = is_array($healthResult)
         && ($healthResult['success'] ?? FALSE)
-        && ($healthResult['status'] ?? '') === 'running';
+        && SodaScsHealthStatus::isRunning((string) ($healthResult['status'] ?? ''));
 
       if ($isHealthy) {
         $healthyComponents[] = $component;

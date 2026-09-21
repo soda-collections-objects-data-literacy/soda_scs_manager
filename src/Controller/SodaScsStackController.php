@@ -6,6 +6,7 @@ namespace Drupal\soda_scs_manager\Controller;
 
 use Drupal\Core\Controller\ControllerBase;
 use Drupal\Core\Entity\EntityTypeManagerInterface;
+use Drupal\soda_scs_manager\Helpers\SodaScsHealthStatus;
 use Drupal\soda_scs_manager\Helpers\SodaScsStackHelpers;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\DependencyInjection\ContainerInterface;
@@ -57,85 +58,43 @@ class SodaScsStackController extends ControllerBase {
       ->load($stack_id);
 
     if (!$stack) {
-      return new JsonResponse(['status' => 'not_found'], 404);
+      return $this->healthJson(SodaScsHealthStatus::payload(
+        SodaScsHealthStatus::UNKNOWN,
+        (string) $this->t('Stack not found.'),
+      ));
     }
 
     try {
       $bundle = $stack->get('bundle')->value;
-      switch ($bundle) {
-        case 'soda_scs_wisski_stack':
-          $wisskiHealth = $this->sodaScsStackHelpers
-            ->checkWisskiHealth($stack);
-          if (!$wisskiHealth) {
-            return new JsonResponse([
-              'status' => [
-                'message' => $this->t("WissKI health check failed for stack @stack. Message: @message", [
-                  '@stack' => $stack->id(),
-                  '@message' => $wisskiHealth['message'],
-                ]),
-                'success' => FALSE,
-              ],
-              'code' => $wisskiHealth['code'],
-            ]);
-          }
-          return new JsonResponse(['status' => $wisskiHealth]);
+      $health = match ($bundle) {
+        'soda_scs_wisski_stack' => $this->sodaScsStackHelpers->checkWisskiHealth($stack),
+        'soda_scs_jupyter_stack' => $this->sodaScsStackHelpers->checkJupyterHealth($stack),
+        'soda_scs_nextcloud_stack' => $this->sodaScsStackHelpers->checkNextcloudHealth($stack),
+        default => SodaScsHealthStatus::payload(
+          SodaScsHealthStatus::UNKNOWN,
+          (string) $this->t('Unknown stack type.'),
+        ),
+      };
 
-        case 'soda_scs_jupyter_stack':
-          $jupyterHealth = $this->sodaScsStackHelpers->checkJupyterHealth($stack);
-          if (!$jupyterHealth) {
-            return new JsonResponse(
-              [
-                'status' => [
-                  'message' => $this->t("Jupyter health check failed for stack @stack.", ['@stack' => $stack->id()]),
-                  'success' => FALSE,
-                ],
-                'code' => $jupyterHealth['code'] ?? 500,
-              ],
-            );
-          }
-          return new JsonResponse(['status' => $jupyterHealth]);
-
-        case 'soda_scs_nextcloud_stack':
-          $nextcloudHealth = $this->sodaScsStackHelpers
-            ->checkNextcloudHealth($stack);
-          if (!$nextcloudHealth) {
-            return new JsonResponse([
-              'status' => [
-                'message' => $this->t("Nextcloud health check failed for stack @stack.", ['@stack' => $stack->id()]),
-                'success' => FALSE,
-              ],
-              'code' => $nextcloudHealth['code'] ?? 500,
-            ]);
-          }
-          return new JsonResponse(['status' => $nextcloudHealth]);
-
-        default:
-          return new JsonResponse(
-            [
-              'status' => [
-                'message' => $this->t("Health check failed for stack @stack with message: @message", [
-                  '@stack' => $stack->id(),
-                  '@message' => 'Unknown stack type.',
-                ]),
-                'success' => FALSE,
-              ],
-              'code' => 500,
-            ],
-            500,
-          );
-      }
+      return $this->healthJson($health);
     }
     catch (\Exception $e) {
-      return new JsonResponse([
-        'status' => [
-          'message' => $this->t("Health check failed for stack @stack with message: @message", [
-            '@stack' => $stack->id(),
-            '@message' => $e->getMessage(),
-          ]),
-        ],
-        'code' => $e->getCode(),
-      ], 500);
+      return $this->healthJson(SodaScsHealthStatus::payload(
+        SodaScsHealthStatus::UNKNOWN,
+        (string) SodaScsHealthStatus::translatableLabel(SodaScsHealthStatus::UNKNOWN),
+        $e->getMessage(),
+      ));
     }
+  }
+
+  /**
+   * Returns a 200 JSON health payload for the polling UI.
+   *
+   * @param mixed $health
+   *   Raw health-check array.
+   */
+  private function healthJson(mixed $health): JsonResponse {
+    return new JsonResponse(['status' => SodaScsHealthStatus::normalizePayload($health)]);
   }
 
 }

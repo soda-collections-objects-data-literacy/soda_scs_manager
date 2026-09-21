@@ -144,7 +144,7 @@ class SodaScsComponentHelpers {
   /**
    * Drupal instance health check.
    *
-   * 1. Inspect Docker container state (starting, stopped, paused, …).
+   * 1. Inspect Docker container state (stopped, problem, unknown, …).
    * 2. Only when the container is running, probe Drupal HTTP reachability.
    *
    * @param \Drupal\soda_scs_manager\Entity\SodaScsComponentInterface $component
@@ -160,23 +160,21 @@ class SodaScsComponentHelpers {
       $inspectContainerResponse = $this->sodaScsContainerHelpers->inspectComponentContainer($component);
     }
     catch (\Exception $e) {
-      return [
-        'message' => (string) $this->t('Unavailable'),
-        'status' => 'unavailable',
-        'code' => $e->getCode(),
-        'success' => FALSE,
-        'error' => $e->getMessage(),
-      ];
+      return SodaScsHealthStatus::payload(
+        SodaScsHealthStatus::UNKNOWN,
+        (string) SodaScsHealthStatus::translatableLabel(SodaScsHealthStatus::UNKNOWN),
+        $e->getMessage(),
+        (int) $e->getCode(),
+      );
     }
 
     if (!$inspectContainerResponse->success) {
-      return [
-        'message' => (string) $this->t('Unavailable'),
-        'status' => 'unavailable',
-        'code' => 404,
-        'success' => FALSE,
-        'error' => $inspectContainerResponse->error,
-      ];
+      return SodaScsHealthStatus::payload(
+        SodaScsHealthStatus::UNKNOWN,
+        (string) SodaScsHealthStatus::translatableLabel(SodaScsHealthStatus::UNKNOWN),
+        (string) $inspectContainerResponse->error,
+        404,
+      );
     }
 
     $containerId = (string) ($component->get('containerId')->value ?? '');
@@ -185,11 +183,12 @@ class SodaScsComponentHelpers {
     $resolvedContainerId = is_array($inspectPayload) && $inspectPayload !== []
       ? (string) array_key_first($inspectPayload)
       : $containerId;
-    $containerState = $inspectPayload[$resolvedContainerId]['State'] ?? [];
-    $containerStatus = (string) ($containerState['Status'] ?? '');
-
-    if ($containerStatus === '' || strtolower($containerStatus) !== 'running') {
-      return $this->mapDockerContainerStatusToHealth($containerStatus);
+    $containerState = is_array($inspectPayload[$resolvedContainerId]['State'] ?? NULL)
+      ? $inspectPayload[$resolvedContainerId]['State']
+      : [];
+    $containerHealth = SodaScsHealthStatus::fromDockerInspect($containerState);
+    if ($containerHealth !== SodaScsHealthStatus::RUNNING) {
+      return SodaScsHealthStatus::payload($containerHealth);
     }
 
     try {
@@ -200,59 +199,31 @@ class SodaScsComponentHelpers {
       $healthRequest = $this->sodaScsPortainerServiceActions->buildHealthCheckRequest($requestParams);
       $healthRequestResult = $this->sodaScsPortainerServiceActions->makeRequest($healthRequest);
 
-      switch ($healthRequestResult['statusCode']) {
-        case 200:
-          return [
-            'message' => (string) $this->t('Available'),
-            'status' => 'running',
-            'code' => $healthRequestResult['statusCode'],
-            'success' => TRUE,
-            'error' => '',
-          ];
-
-        case 404:
-          // Health route missing or Traefik/Drupal not wired yet while the container runs.
-          return [
-            'code' => 404,
-            'error' => (string) ($healthRequestResult['error'] ?? ''),
-            'message' => (string) $this->t('Starting'),
-            'status' => 'starting',
-            'success' => FALSE,
-          ];
-
-        case 502:
-        case 503:
-          return $this->drupalUnreachableWhileContainerRunningResult(
-            (string) ($healthRequestResult['error'] ?? ''),
-          );
-
-        case 0:
-          $err = (string) ($healthRequestResult['error'] ?? '');
-          if ($this->httpFailureLooksLikeTlsPeerIssue($err)) {
-            return [
-              'message' => (string) $this->t('TLS certificate error'),
-              'status' => 'unhealthy',
-              'code' => $healthRequestResult['statusCode'],
-              'success' => FALSE,
-              'error' => $err,
-            ];
-          }
-          return $this->drupalUnreachableWhileContainerRunningResult($err);
-
-        default:
-          return $this->drupalUnreachableWhileContainerRunningResult(
-            (string) ($healthRequestResult['error'] ?? ''),
-          );
+      $statusCode = (int) ($healthRequestResult['statusCode'] ?? 0);
+      $err = (string) ($healthRequestResult['error'] ?? '');
+      if ($statusCode === 0 && $this->httpFailureLooksLikeTlsPeerIssue($err)) {
+        return SodaScsHealthStatus::payload(
+          SodaScsHealthStatus::PROBLEM,
+          (string) SodaScsHealthStatus::translatableLabel(SodaScsHealthStatus::PROBLEM),
+          (string) $this->t('TLS certificate error'),
+          $statusCode,
+        );
       }
+
+      return SodaScsHealthStatus::payload(
+        SodaScsHealthStatus::fromHttpCode($statusCode, TRUE),
+        NULL,
+        $err,
+        $statusCode,
+      );
     }
     catch (\Exception $e) {
-      return [
-        'message' => (string) $this->t('Unavailable'),
-        'status' => 'unavailable',
-        'code' => $e->getCode(),
-        'success' => FALSE,
-        'error' => $e->getMessage(),
-      ];
+      return SodaScsHealthStatus::payload(
+        SodaScsHealthStatus::PROBLEM,
+        (string) SodaScsHealthStatus::translatableLabel(SodaScsHealthStatus::PROBLEM),
+        $e->getMessage(),
+        (int) $e->getCode(),
+      );
     }
   }
 
@@ -268,19 +239,28 @@ class SodaScsComponentHelpers {
     /** @var \Drupal\soda_scs_manager\Entity\SodaScsServiceKeyInterface $sqlServiceKey */
     $sqlServiceKey = $this->entityTypeManager->getStorage('soda_scs_service_key')->load($sqlServiceKeyId);
     $dbUserPassword = $sqlServiceKey->get('servicePassword')->value;
+    if ($component->hasField('containerId')) {
+      $inspectContainerResponse = $this->sodaScsContainerHelpers->inspectComponentContainer($component);
+      if ($inspectContainerResponse->success) {
+        $inspectPayload = $inspectContainerResponse->data ?? [];
+        $resolvedContainerId = is_array($inspectPayload) && $inspectPayload !== []
+          ? (string) array_key_first($inspectPayload)
+          : (string) ($component->get('containerId')->value ?? '');
+        $containerState = is_array($inspectPayload[$resolvedContainerId]['State'] ?? NULL)
+          ? $inspectPayload[$resolvedContainerId]['State']
+          : [];
+        $containerHealth = SodaScsHealthStatus::fromDockerInspect($containerState);
+        if ($containerHealth !== SodaScsHealthStatus::RUNNING) {
+          return SodaScsHealthStatus::payload($containerHealth);
+        }
+      }
+    }
+
     $fullAccess = $this->sodaScsSqlServiceActions->userHasReadWriteAccessToDatabase($dbUser, $dbName, $dbUserPassword);
     if (!$fullAccess) {
-      return [
-        'message' => $this->t("Unhealthy"),
-        'status' => 'unhealthy',
-        'success' => FALSE,
-      ];
+      return SodaScsHealthStatus::payload(SodaScsHealthStatus::PROBLEM);
     }
-    return [
-      'message' => $this->t("Healthy"),
-      'status' => 'healthy',
-      'success' => TRUE,
-    ];
+    return SodaScsHealthStatus::payload(SodaScsHealthStatus::RUNNING);
   }
 
   /**
@@ -311,29 +291,24 @@ class SodaScsComponentHelpers {
       ];
       $healthCheckRequest = $this->sodaScsOpenGdbServiceActions->buildHealthCheckRequest($requestParams);
       $healthCheckResult = $this->sodaScsOpenGdbServiceActions->makeRequest($healthCheckRequest);
-      if ($healthCheckResult['statusCode'] != 200) {
-        return [
-          'message' => $this->t("Unhealthy"),
-          'status' => 'unknown',
-          'success' => FALSE,
-          'error' => $healthCheckResult['error'],
-          'data' => $healthCheckResult['data'],
-        ];
+      $statusCode = (int) ($healthCheckResult['statusCode'] ?? 0);
+      if ($statusCode !== 200) {
+        return SodaScsHealthStatus::payload(
+          SodaScsHealthStatus::fromHttpCode($statusCode),
+          NULL,
+          (string) ($healthCheckResult['error'] ?? ''),
+          $statusCode,
+        );
       }
-      return [
-        'message' => $this->t("Healthy"),
-        'status' => 'healthy',
-        'success' => TRUE,
-      ];
+      return SodaScsHealthStatus::payload(SodaScsHealthStatus::RUNNING, NULL, '', $statusCode);
     }
     catch (\Exception $e) {
-      return [
-        'message' => $this->t("Unhealthy"),
-        'status' => 'unknown',
-        'success' => FALSE,
-        'error' => $e->getMessage(),
-        'data' => $e,
-      ];
+      return SodaScsHealthStatus::payload(
+        SodaScsHealthStatus::UNKNOWN,
+        (string) SodaScsHealthStatus::translatableLabel(SodaScsHealthStatus::UNKNOWN),
+        $e->getMessage(),
+        (int) $e->getCode(),
+      );
     }
   }
 
@@ -355,13 +330,12 @@ class SodaScsComponentHelpers {
       $url = $webprotegeSettings['host'];
 
       if (empty($url)) {
-        return [
-          'message' => (string) $this->t('Unhealthy'),
-          'status' => 'unknown',
-          'code' => 500,
-          'success' => FALSE,
-          'error' => (string) $this->t('WebProtege host is not configured in settings.'),
-        ];
+        return SodaScsHealthStatus::payload(
+          SodaScsHealthStatus::UNKNOWN,
+          (string) SodaScsHealthStatus::translatableLabel(SodaScsHealthStatus::UNKNOWN),
+          (string) $this->t('WebProtege host is not configured in settings.'),
+          500,
+        );
       }
 
       // Ensure the URL has a scheme.
@@ -376,43 +350,22 @@ class SodaScsComponentHelpers {
       ]);
 
       $statusCode = $response->getStatusCode();
-
-      if ($statusCode >= 200 && $statusCode < 400) {
-        return [
-          'message' => (string) $this->t('Available'),
-          'status' => 'running',
-          'code' => $statusCode,
-          'success' => TRUE,
-          'error' => '',
-        ];
-      }
-
-      if ($statusCode === 502 || $statusCode === 503) {
-        return [
-          'message' => (string) $this->t('Starting'),
-          'status' => 'starting',
-          'code' => $statusCode,
-          'success' => FALSE,
-          'error' => (string) $this->t('Service returned HTTP @code.', ['@code' => (string) $statusCode]),
-        ];
-      }
-
-      return [
-        'message' => (string) $this->t('Not available'),
-        'status' => 'stopped',
-        'code' => $statusCode,
-        'success' => FALSE,
-        'error' => (string) $this->t('Service returned HTTP @code.', ['@code' => (string) $statusCode]),
-      ];
+      return SodaScsHealthStatus::payload(
+        SodaScsHealthStatus::fromHttpCode($statusCode),
+        NULL,
+        $statusCode >= 200 && $statusCode < 400
+          ? ''
+          : (string) $this->t('Service returned HTTP @code.', ['@code' => (string) $statusCode]),
+        $statusCode,
+      );
     }
     catch (\Exception $e) {
-      return [
-        'message' => (string) $this->t('Not available'),
-        'status' => 'unknown',
-        'code' => $e->getCode(),
-        'success' => FALSE,
-        'error' => $e->getMessage(),
-      ];
+      return SodaScsHealthStatus::payload(
+        SodaScsHealthStatus::UNKNOWN,
+        (string) SodaScsHealthStatus::translatableLabel(SodaScsHealthStatus::UNKNOWN),
+        $e->getMessage(),
+        (int) $e->getCode(),
+      );
     }
   }
 
@@ -471,19 +424,6 @@ class SodaScsComponentHelpers {
   }
 
   /**
-   * Health when the container is running but Drupal HTTP is not reachable.
-   */
-  private function drupalUnreachableWhileContainerRunningResult(string $error): array {
-    return [
-      'message' => (string) $this->t('Unavailable'),
-      'status' => 'unavailable',
-      'code' => 200,
-      'success' => FALSE,
-      'error' => $error,
-    ];
-  }
-
-  /**
    * Detects TLS/certificate verification failures.
    *
    * Mirrors criteria used for Portainer health-check TLS retry.
@@ -520,54 +460,6 @@ class SodaScsComponentHelpers {
       }
     }
     return FALSE;
-  }
-
-  /**
-   * Maps Docker inspect State.Status to API health before HTTP checks.
-   *
-   * @param string $containerStatus
-   *   Value from Docker inspect State.Status (e.g. running, exited).
-   *
-   * @return array
-   *   Health array with keys: message, status, code, success, error.
-   */
-  private function mapDockerContainerStatusToHealth(string $containerStatus): array {
-    $normalized = strtolower($containerStatus);
-    $base = [
-      'code' => 200,
-      'error' => '',
-      'success' => FALSE,
-    ];
-
-    if ($normalized === '') {
-      return $base + [
-        'message' => (string) $this->t('Unknown'),
-        'status' => 'unknown',
-      ];
-    }
-
-    return match ($normalized) {
-      'created', 'restarting' => $base + [
-        'message' => (string) $this->t('Starting'),
-        'status' => 'starting',
-      ],
-      'paused' => $base + [
-        'message' => (string) $this->t('Paused'),
-        'status' => 'paused',
-      ],
-      'exited', 'dead' => $base + [
-        'message' => (string) $this->t('Stopped'),
-        'status' => 'stopped',
-      ],
-      'removing' => $base + [
-        'message' => (string) $this->t('Removing'),
-        'status' => 'stopped',
-      ],
-      default => $base + [
-        'message' => (string) $this->t('Application status: @status', ['@status' => $containerStatus]),
-        'status' => $normalized,
-      ],
-    };
   }
 
 }

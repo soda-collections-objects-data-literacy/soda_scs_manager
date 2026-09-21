@@ -1,9 +1,9 @@
 (function ($, Drupal, drupalSettings) {
   const HEALTH_SYMBOLS = {
     running: '●',
-    starting: '⏳',
     stopped: '⏹',
-    error: '⚠'
+    problem: '⚠',
+    unknown: '○'
   };
 
   function escapeAttr(value) {
@@ -19,7 +19,7 @@
     const inner =
       '<span class="health-badge__symbol" aria-hidden="true">' + symbol + '</span>' +
       '<span class="health-badge__text">' + escapedText + '</span>';
-    const isRunningLink = Boolean(serviceLoginUrl) && variant === 'running';
+    const isRunningLink = Boolean(serviceLoginUrl) && variant === Drupal.sodaScsHealth.RUNNING;
     if (isRunningLink) {
       const linkTitle = escapeAttr(Drupal.t('Open the service login page in a new tab.'));
       return (
@@ -37,56 +37,8 @@
       '</span>';
   }
 
-  function getStatusVariant(status, message) {
-    const s = (status || '').toLowerCase();
-    const m = (message || '').toLowerCase();
-    if (s === 'running' || s === 'healthy') return 'running';
-    if (s === 'starting' || m === 'starting') return 'starting';
-    if (s === 'stopped' || m === 'stopped') return 'stopped';
-    if (s === 'paused' || m === 'paused') return 'stopped';
-    if (s === 'unhealthy') return 'error';
-    if (
-      s === 'unavailable' ||
-      m === 'unavailable' ||
-      m === 'not available' ||
-      m.indexOf('component is not available') !== -1 ||
-      m.indexOf('service temporarily unavailable') !== -1
-    ) {
-      return 'error';
-    }
-    if (s === 'unknown') return 'error';
-    return 'error';
-  }
-
-  /**
-   * Normalize API health payload to a status string (matches dashboardHealthStatus.js).
-   */
   function extractCurrentStatus(data) {
-    var currentStatus = null;
-    if (data && data.status && data.status.success === true) {
-      currentStatus = data.status.status || 'running';
-      return currentStatus;
-    }
-    if (data && data.status) {
-      var status = data.status.status ? data.status.status : '';
-      var message = data.status.message ? data.status.message : 'Error';
-      currentStatus = status;
-      var statusLower = (status || '').toLowerCase();
-      var messageLower = (message || '').toLowerCase();
-      if (status === 'starting' || message === 'Starting' || message === 'starting') {
-        // keep currentStatus as status
-      }
-      else if (
-        statusLower === 'unavailable' ||
-        messageLower === 'unavailable' ||
-        messageLower === 'not available' ||
-        messageLower.indexOf('component is not available') !== -1 ||
-        messageLower.indexOf('service temporarily unavailable') !== -1
-      ) {
-        currentStatus = 'unavailable';
-      }
-    }
-    return currentStatus;
+    return Drupal.sodaScsHealth.fromPayload(data);
   }
 
   function showWisskiReadyNotification(serviceLink) {
@@ -180,37 +132,36 @@
             method: "GET",
           }).then(function (data) {
             const currentStatus = extractCurrentStatus(data);
-            const status = data && data.status ? data.status : data;
-            if (status && status.success === true) {
-              stopLoading();
-              const variant = getStatusVariant(status.status, status.message);
-              const displayText = status.message || status.status || Drupal.t('Running');
-              $healthItem.html(renderBadge(variant, HEALTH_SYMBOLS[variant], displayText, undefined, serviceLoginUrl));
+            const variant = currentStatus;
+            const displayText = Drupal.sodaScsHealth.label(variant);
+            const errorTitle = Drupal.sodaScsHealth.detail(data);
+            stopLoading();
+            $healthItem.html(renderBadge(
+              variant,
+              HEALTH_SYMBOLS[variant] || HEALTH_SYMBOLS.unknown,
+              displayText,
+              variant === Drupal.sodaScsHealth.RUNNING ? undefined : errorTitle,
+              variant === Drupal.sodaScsHealth.RUNNING ? serviceLoginUrl : ''
+            ));
+            if (variant === Drupal.sodaScsHealth.PROBLEM && errorTitle) {
+              $healthLabel.addClass('soda-scs-manager--entity-status--api-error').attr('title', errorTitle);
+            }
+            else {
               $healthLabel.removeClass('soda-scs-manager--entity-status--api-error').removeAttr('title');
-            } else {
-              stopLoading();
-              const variant = getStatusVariant(status && status.status, status && status.message);
-              const displayText = (status && status.message) ? status.message : Drupal.t('Unavailable');
-              const errorTitle = (status && status.error) ? status.error : '';
-              $healthItem.html(renderBadge(variant, HEALTH_SYMBOLS[variant], displayText, errorTitle, ''));
-              if (variant === 'starting') {
-                $healthLabel.removeClass('soda-scs-manager--entity-status--api-error').removeAttr('title');
-              } else {
-                $healthLabel.addClass('soda-scs-manager--entity-status--api-error').attr('title', errorTitle);
-              }
             }
 
             var entityBundle = drupalSettings.entityInfo && drupalSettings.entityInfo.bundle;
             if ((entityBundle === 'soda_scs_wisski_component' || entityBundle === 'soda_scs_wisski_stack') &&
-                (previousStatus === 'starting' ) &&
-                (currentStatus === 'running' || currentStatus === 'healthy')) {
+                previousStatus &&
+                previousStatus !== Drupal.sodaScsHealth.RUNNING &&
+                currentStatus === Drupal.sodaScsHealth.RUNNING) {
               notifyWisskiReadyIfApplicable();
             }
             previousStatus = currentStatus;
           }).fail(function () {
             stopLoading();
             const transportTitle = Drupal.t('Could not refresh status');
-            $healthItem.html(renderBadge('starting', HEALTH_SYMBOLS.starting, Drupal.t('Checking…'), transportTitle, ''));
+            $healthItem.html(renderBadge('unknown', HEALTH_SYMBOLS.unknown, Drupal.t('Unknown'), transportTitle, ''));
             $healthLabel.removeClass('soda-scs-manager--entity-status--api-error').removeAttr('title');
           });
         }

@@ -6,8 +6,15 @@ book-styling:
     - core/drupal
     - core/jquery.once
 
+healthStatus:
+  version: 1.0
+  js:
+    js/healthStatus.js: {}
+  dependencies:
+    - core/drupal
+
 entityHelpers:
-  version: 1.x
+  version: 1.2
   js:
     js/updateHealthStatus.js: {}
   dependencies:
@@ -15,6 +22,7 @@ entityHelpers:
     - core/drupal
     - core/once
     - soda_scs_manager/globalStyling
+    - soda_scs_manager/healthStatus
 
 globalStyling:
   version: 1.x
@@ -79,16 +87,17 @@ table-list:
     - soda_scs_manager/globalStyling
 
 componentListHealthStatus:
-  version: 1.x
+  version: 1.2
   js:
     js/componentListHealthStatus.js: {}
   dependencies:
     - core/jquery
     - core/drupal
     - core/once
+    - soda_scs_manager/healthStatus
 
 dashboardHealthStatus:
-  version: 1.1
+  version: 1.2
   js:
     js/dashboardHealthStatus.js: {}
   dependencies:
@@ -97,6 +106,7 @@ dashboardHealthStatus:
     - core/drupalSettings
     - core/once
     - soda_scs_manager/globalStyling
+    - soda_scs_manager/healthStatus
 
 addApplicationPopup:
   version: 1.x

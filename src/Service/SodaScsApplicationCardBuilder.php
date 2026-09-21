@@ -14,6 +14,7 @@ use Drupal\Core\Url;
 use Drupal\soda_scs_manager\Entity\SodaScsComponentInterface;
 use Drupal\soda_scs_manager\Entity\SodaScsProjectInterface;
 use Drupal\soda_scs_manager\Entity\SodaScsStackInterface;
+use Drupal\soda_scs_manager\Helpers\SodaScsHealthStatus;
 use Drupal\soda_scs_manager\Helpers\SodaScsHelpers;
 use Drupal\soda_scs_manager\Helpers\SodaScsLifecycleHelpers;
 use Drupal\user\UserInterface;
@@ -108,7 +109,7 @@ final class SodaScsApplicationCardBuilder {
     $summaries = [];
 
     foreach ($this->buildProjectOwnedApplicationCards($project) as $card) {
-      $healthStatus = (string) ($card['#health_status'] ?? 'Unknown');
+      $healthStatus = SodaScsHealthStatus::fromStatus((string) ($card['#health_status'] ?? ''));
       $url = $card['#url'] ?? NULL;
       if ($url instanceof Url) {
         $url = $url->toString();
@@ -303,7 +304,7 @@ final class SodaScsApplicationCardBuilder {
       '#details_link' => $detailsLink,
       '#entity_id' => $stack->id(),
       '#entity_type_id' => $stack->getEntityTypeId(),
-      '#health_status' => $stack->get('health')->value ?? 'Unknown',
+      '#health_status' => SodaScsHealthStatus::fromStatus((string) ($stack->get('health')->value ?? '')),
       '#imageUrl' => $bundleInfo['imageUrl'],
       '#learn_more_link' => $this->sodaScsHelpers->internalPathUrl(
         'soda-scs-manager/app/' . $this->sodaScsHelpers->getEntityType($stack->bundle()),
@@ -402,7 +403,7 @@ final class SodaScsApplicationCardBuilder {
       '#details_link' => $detailsLink,
       '#entity_id' => $component->id(),
       '#entity_type_id' => $component->getEntityTypeId(),
-      '#health_status' => $component->get('health')->value ?? 'Unknown',
+      '#health_status' => SodaScsHealthStatus::fromStatus((string) ($component->get('health')->value ?? '')),
       '#imageUrl' => $bundleInfo['imageUrl'],
       '#learn_more_link' => $this->sodaScsHelpers->internalPathUrl(
         'soda-scs-manager/app/' . $this->sodaScsHelpers->getEntityType($component->bundle()),
@@ -436,8 +437,7 @@ final class SodaScsApplicationCardBuilder {
    * Whether a health status value means the application is online.
    */
   public function isHealthOnline(string $healthStatus): bool {
-    $normalized = strtolower($healthStatus);
-    return in_array($normalized, ['running', 'healthy'], TRUE);
+    return SodaScsHealthStatus::isRunning($healthStatus);
   }
 
   /**

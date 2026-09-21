@@ -15,6 +15,7 @@ use Drupal\Core\Session\AccountProxyInterface;
 use Drupal\Core\StringTranslation\TranslatableMarkup;
 use Drupal\Core\Url;
 use Drupal\soda_scs_manager\Helpers\SodaScsComponentHelpers;
+use Drupal\soda_scs_manager\Helpers\SodaScsHealthStatus;
 use Drupal\soda_scs_manager\Helpers\SodaScsProgressHelper;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 use Symfony\Component\HttpFoundation\RequestStack;
@@ -460,74 +461,40 @@ class SodaScsComponentListBuilder extends EntityListBuilder {
         default:
           // Unknown bundle type.
           $naTitle = (string) $this->t('Health check not available for this component type');
-          $naLabel = (string) $this->t('N/A');
+          $naLabel = (string) $this->t('Unknown');
           return [
-            'markup' => '<span class="component-health-status health-pending" title="' . htmlspecialchars($naTitle, ENT_QUOTES) . '">' . htmlspecialchars($naLabel, ENT_QUOTES) . '</span>',
+            'markup' => '<span class="component-health-status health-unknown" title="' . htmlspecialchars($naTitle, ENT_QUOTES) . '">' . htmlspecialchars($naLabel, ENT_QUOTES) . '</span>',
           ];
       }
     }
     catch (\Exception $e) {
-      $errorLabel = (string) $this->t('● Error');
+      $errorLabel = (string) SodaScsHealthStatus::translatableLabel(SodaScsHealthStatus::PROBLEM);
       return [
-        'markup' => '<span class="component-health-status health-error" title="' . htmlspecialchars($e->getMessage(), ENT_QUOTES) . '">' . htmlspecialchars($errorLabel, ENT_QUOTES) . '</span>',
+        'markup' => '<span class="component-health-status health-problem" title="' . htmlspecialchars($e->getMessage(), ENT_QUOTES) . '">' . htmlspecialchars($errorLabel, ENT_QUOTES) . '</span>',
       ];
     }
 
     // Format the health status based on the result.
     if (!$healthResult || !is_array($healthResult)) {
-      $unavailableLabel = (string) $this->t('● Unavailable');
+      $unknownLabel = (string) SodaScsHealthStatus::translatableLabel(SodaScsHealthStatus::UNKNOWN);
       return [
-        'markup' => '<span class="component-health-status health-error">' . htmlspecialchars($unavailableLabel, ENT_QUOTES) . '</span>',
+        'markup' => '<span class="component-health-status health-unknown">' . htmlspecialchars($unknownLabel, ENT_QUOTES) . '</span>',
       ];
     }
 
-    $success = (bool) ($healthResult['success'] ?? FALSE);
-    $status = (string) ($healthResult['status'] ?? 'unknown');
-    $message = (string) ($healthResult['message'] ?? '');
-    if ($message === '') {
-      $message = (string) $this->t('Unknown status');
-    }
-    $error = (string) ($healthResult['error'] ?? '');
-
-    // Determine CSS class and display text based on status.
-    // Check status first to ensure 'running' is always green.
-    if ($status === 'running') {
-      $cssClass = 'health-success';
-      $displayText = (string) $this->t('Running');
-    }
-    elseif ($status === 'healthy') {
-      $cssClass = 'health-success';
-      $displayText = (string) $this->t('Healthy');
-    }
-    elseif ($status === 'starting') {
-      $cssClass = 'health-loading';
-      $displayText = (string) $this->t('Starting');
-    }
-    elseif ($status === 'paused') {
-      $cssClass = 'health-error';
-      $displayText = (string) $this->t('Paused');
-    }
-    elseif ($status === 'stopped') {
-      $cssClass = 'health-error';
-      $displayText = (string) $this->t('Stopped');
-    }
-    elseif ($status === 'unavailable' || $status === 'unhealthy') {
-      $cssClass = 'health-error';
-      $displayText = $message;
-    }
-    elseif ($success) {
-      $cssClass = 'health-success';
-      $displayText = $message;
-    }
-    else {
-      $cssClass = 'health-error';
-      $displayText = $message;
-    }
-
-    $title = $error ? htmlspecialchars($error, ENT_QUOTES) : htmlspecialchars($message, ENT_QUOTES);
+    $payload = SodaScsHealthStatus::normalizePayload($healthResult);
+    $status = $payload['status'];
+    $cssClass = match ($status) {
+      SodaScsHealthStatus::RUNNING => 'health-running',
+      SodaScsHealthStatus::STOPPED => 'health-stopped',
+      SodaScsHealthStatus::PROBLEM => 'health-problem',
+      default => 'health-unknown',
+    };
+    $displayText = (string) SodaScsHealthStatus::translatableLabel($status);
+    $title = $payload['error'] !== '' ? $payload['error'] : $payload['message'];
 
     return [
-      'markup' => '<span class="component-health-status ' . $cssClass . '" title="' . $title . '">' . htmlspecialchars($displayText, ENT_QUOTES) . '</span>',
+      'markup' => '<span class="component-health-status ' . $cssClass . '" title="' . htmlspecialchars($title, ENT_QUOTES) . '">' . htmlspecialchars($displayText, ENT_QUOTES) . '</span>',
     ];
   }
 
@@ -612,10 +579,10 @@ class SodaScsComponentListBuilder extends EntityListBuilder {
     // Health Status filter (dropdown).
     $healthOptions = [
       '' => $this->t('- Any -'),
-      'healthy' => $this->t('Healthy'),
-      'warning' => $this->t('Warning'),
-      'error' => $this->t('Error'),
-      'unknown' => $this->t('Unknown'),
+      SodaScsHealthStatus::RUNNING => $this->t('Running'),
+      SodaScsHealthStatus::STOPPED => $this->t('Stopped'),
+      SodaScsHealthStatus::PROBLEM => $this->t('Problem'),
+      SodaScsHealthStatus::UNKNOWN => $this->t('Unknown'),
     ];
 
     $form['filters']['filter_wrapper']['health_status'] = [

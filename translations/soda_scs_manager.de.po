@@ -4025,3 +4025,10 @@ msgstr "Aktivitäten im Projektordner"
 #: templates/entity/soda-scs-manager--project-files.html.twig
 msgid "Open project folder"
 msgstr "Projektordner öffnen"
+
+#: src/Helpers/SodaScsHealthStatus.php
+#: js/healthStatus.js
+#: templates/cards/soda-scs-manager--entity-card.html.twig
+msgid "Problem"
+msgstr "Problem"
+

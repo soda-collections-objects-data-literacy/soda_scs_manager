@@ -148,12 +148,12 @@ class SodaScsStackHelpers {
     $stackEntities = $stackStorage->loadByProperties(['machineName' => $stack->get('machineName')->value]);
 
     if (empty($stackEntities)) {
-      return [
-        'message' => 'Stack not found.',
-        'code' => 404,
-        'success' => FALSE,
-        'error' => 'No stack found with machine name: ' . $stack->get('machineName')->value,
-      ];
+      return SodaScsHealthStatus::payload(
+        SodaScsHealthStatus::UNKNOWN,
+        (string) SodaScsHealthStatus::translatableLabel(SodaScsHealthStatus::UNKNOWN),
+        'No stack found with machine name: ' . $stack->get('machineName')->value,
+        404,
+      );
     }
 
     /** @var \Drupal\soda_scs_manager\Entity\SodaScsStackInterface $stack */
@@ -175,12 +175,12 @@ class SodaScsStackHelpers {
     }
 
     if (!$wisskiComponent) {
-      return [
-        'message' => t('WissKI component not found in stack.'),
-        'code' => 404,
-        'success' => FALSE,
-        'error' => 'No WissKI component found in stack: ' . $stack->get('machineName')->value,
-      ];
+      return SodaScsHealthStatus::payload(
+        SodaScsHealthStatus::UNKNOWN,
+        (string) SodaScsHealthStatus::translatableLabel(SodaScsHealthStatus::UNKNOWN),
+        'No WissKI component found in stack: ' . $stack->get('machineName')->value,
+        404,
+      );
     }
 
     // Check the health of the WissKI component.
@@ -205,13 +205,12 @@ class SodaScsStackHelpers {
       $url = $jupyterSettings['baseUrl'];
 
       if (empty($url)) {
-        return [
-          'message' => 'JupyterHub URL not configured.',
-          'status' => 'unknown',
-          'code' => 500,
-          'success' => FALSE,
-          'error' => 'JupyterHub base URL is not configured in settings.',
-        ];
+        return SodaScsHealthStatus::payload(
+          SodaScsHealthStatus::UNKNOWN,
+          (string) SodaScsHealthStatus::translatableLabel(SodaScsHealthStatus::UNKNOWN),
+          'JupyterHub base URL is not configured in settings.',
+          500,
+        );
       }
 
       $response = $this->httpClient->request('GET', $url, [
@@ -221,43 +220,20 @@ class SodaScsStackHelpers {
       ]);
 
       $statusCode = $response->getStatusCode();
-
-      if ($statusCode >= 200 && $statusCode < 400) {
-        return [
-          'message' => t('Available'),
-          'status' => 'running',
-          'code' => $statusCode,
-          'success' => TRUE,
-          'error' => '',
-        ];
-      }
-
-      if ($statusCode === 502 || $statusCode === 503) {
-        return [
-          'message' => 'Starting',
-          'status' => 'starting',
-          'code' => $statusCode,
-          'success' => FALSE,
-          'error' => 'Service returned HTTP ' . $statusCode,
-        ];
-      }
-
-      return [
-        'message' => 'Not available',
-        'status' => 'stopped',
-        'code' => $statusCode,
-        'success' => FALSE,
-        'error' => 'Service returned HTTP ' . $statusCode,
-      ];
+      return SodaScsHealthStatus::payload(
+        SodaScsHealthStatus::fromHttpCode($statusCode),
+        NULL,
+        $statusCode >= 200 && $statusCode < 400 ? '' : 'Service returned HTTP ' . $statusCode,
+        $statusCode,
+      );
     }
     catch (\Exception $e) {
-      return [
-        'message' => 'Not available',
-        'status' => 'unknown',
-        'code' => $e->getCode(),
-        'success' => FALSE,
-        'error' => $e->getMessage(),
-      ];
+      return SodaScsHealthStatus::payload(
+        SodaScsHealthStatus::UNKNOWN,
+        (string) SodaScsHealthStatus::translatableLabel(SodaScsHealthStatus::UNKNOWN),
+        $e->getMessage(),
+        (int) $e->getCode(),
+      );
     }
   }
 
@@ -279,13 +255,12 @@ class SodaScsStackHelpers {
       $url = rtrim($nextcloudSettings['baseUrl'], '/') . '/status.php';
 
       if (empty($nextcloudSettings['baseUrl'])) {
-        return [
-          'message' => 'Nextcloud URL not configured.',
-          'status' => 'unknown',
-          'code' => 500,
-          'success' => FALSE,
-          'error' => 'Nextcloud base URL is not configured in settings.',
-        ];
+        return SodaScsHealthStatus::payload(
+          SodaScsHealthStatus::UNKNOWN,
+          (string) SodaScsHealthStatus::translatableLabel(SodaScsHealthStatus::UNKNOWN),
+          'Nextcloud base URL is not configured in settings.',
+          500,
+        );
       }
 
       $response = $this->httpClient->request('GET', $url, [
@@ -295,54 +270,20 @@ class SodaScsStackHelpers {
       ]);
 
       $statusCode = $response->getStatusCode();
-
-      if ($statusCode === 200) {
-        $body = json_decode($response->getBody()->getContents(), TRUE);
-        if (is_array($body) && isset($body['installed']) && $body['installed'] === TRUE) {
-          return [
-            'message' => t('Available'),
-            'status' => 'running',
-            'code' => $statusCode,
-            'success' => TRUE,
-            'error' => '',
-          ];
-        }
-
-        return [
-          'message' => t('Available'),
-          'status' => 'running',
-          'code' => $statusCode,
-          'success' => TRUE,
-          'error' => '',
-        ];
-      }
-
-      if ($statusCode === 502 || $statusCode === 503) {
-        return [
-          'message' => 'Starting',
-          'status' => 'starting',
-          'code' => $statusCode,
-          'success' => FALSE,
-          'error' => 'Service returned HTTP ' . $statusCode,
-        ];
-      }
-
-      return [
-        'message' => 'Not available',
-        'status' => 'stopped',
-        'code' => $statusCode,
-        'success' => FALSE,
-        'error' => 'Service returned HTTP ' . $statusCode,
-      ];
+      return SodaScsHealthStatus::payload(
+        SodaScsHealthStatus::fromHttpCode($statusCode),
+        NULL,
+        $statusCode === 200 ? '' : 'Service returned HTTP ' . $statusCode,
+        $statusCode,
+      );
     }
     catch (\Exception $e) {
-      return [
-        'message' => 'Not available',
-        'status' => 'unknown',
-        'code' => $e->getCode(),
-        'success' => FALSE,
-        'error' => $e->getMessage(),
-      ];
+      return SodaScsHealthStatus::payload(
+        SodaScsHealthStatus::UNKNOWN,
+        (string) SodaScsHealthStatus::translatableLabel(SodaScsHealthStatus::UNKNOWN),
+        $e->getMessage(),
+        (int) $e->getCode(),
+      );
     }
   }
 
