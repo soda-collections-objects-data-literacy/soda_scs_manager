@@ -122,6 +122,12 @@ final class SodaScsProjectViewBuilder extends EntityViewBuilder
       'openGdb' => Url::fromRoute('entity.soda_scs_component.add_form', [
         'bundle' => 'soda_scs_triplestore_component',
       ])->toString(),
+      'jupyter' => Url::fromRoute('entity.soda_scs_stack.add_form', [
+        'bundle' => 'soda_scs_jupyter_stack',
+      ])->toString(),
+      'webprotege' => Url::fromRoute('entity.soda_scs_component.add_form', [
+        'bundle' => 'soda_scs_webprotege_component',
+      ])->toString(),
     ];
 
     $modulePath = $this->moduleHandler->getModule('soda_scs_manager')->getPath();
@@ -146,6 +152,8 @@ final class SodaScsProjectViewBuilder extends EntityViewBuilder
       '#popup_url_mariadb' => $createUrls['mariadb'],
       '#popup_url_wisski' => $createUrls['wisski'],
       '#popup_url_open_gdb' => $createUrls['openGdb'],
+      '#popup_url_jupyter' => $createUrls['jupyter'],
+      '#popup_url_webprotege' => $createUrls['webprotege'],
       '#cache' => [
         'max-age' => 0,
       ],

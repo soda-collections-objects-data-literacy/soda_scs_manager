@@ -4032,3 +4032,43 @@ msgstr "Projektordner öffnen"
 msgid "Problem"
 msgstr "Problem"
 
+#: js/addApplicationPopup.js
+msgid "Loading…"
+msgstr "Wird geladen…"
+
+#: templates/cards/soda-scs-manager--add-application-popup.html.twig
+msgid "Add @title"
+msgstr "@title hinzufügen"
+
+#: templates/cards/soda-scs-manager--add-application-popup.html.twig
+msgid "View documentation for @title"
+msgstr "Dokumentation zu @title anzeigen"
+
+#: templates/cards/soda-scs-manager--add-application-popup.html.twig
+msgid "Data Enrichment"
+msgstr "Datenanreicherung"
+
+#: templates/cards/soda-scs-manager--add-application-popup.html.twig
+msgid "Ontology Management"
+msgstr "Ontologiemanagement"
+
+#: templates/cards/soda-scs-manager--add-application-popup.html.twig
+msgid "Data Management"
+msgstr "Datenmanagement"
+
+#: templates/cards/soda-scs-manager--add-application-popup.html.twig
+msgid "JupyterHub"
+msgstr "JupyterHub"
+
+#: templates/cards/soda-scs-manager--add-application-popup.html.twig
+msgid "WissKI Environment with Drupal. Database and Triplestore "
+msgstr "WissKI-Umgebung mit Drupal, Datenbank und Triplestore "
+
+#: templates/cards/soda-scs-manager--add-application-popup.html.twig
+msgid "Database"
+msgstr "Datenbank"
+
+#: templates/cards/soda-scs-manager--add-application-popup.html.twig
+msgid "← Back"
+msgstr "← Zurück"
+
