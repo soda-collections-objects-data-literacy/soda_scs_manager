@@ -16,7 +16,9 @@ use Drupal\Core\Theme\Registry;
 use Drupal\Core\TypedData\Exception\MissingDataException;
 use Drupal\Core\Url;
 use Drupal\soda_scs_manager\Helpers\SodaScsServiceHelpers;
+use Drupal\soda_scs_manager\Service\SodaScsApplicationCardBuilder;
 use Drupal\soda_scs_manager\Service\SodaScsNextcloudPreview;
+use Drupal\soda_scs_manager\Entity\SodaScsComponentInterface;
 use Drupal\user\UserInterface;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 
@@ -38,6 +40,7 @@ class SodaScsStackViewBuilder extends EntityViewBuilder {
     protected SodaScsNextcloudPreview $nextcloudPreview,
     protected AccountProxyInterface $currentUser,
     protected EntityTypeManagerInterface $entityTypeManager,
+    protected SodaScsApplicationCardBuilder $applicationCardBuilder,
   ) {
     parent::__construct($entity_type, $entity_repository, $language_manager, $theme_registry, $entity_display_repository);
   }
@@ -56,6 +59,7 @@ class SodaScsStackViewBuilder extends EntityViewBuilder {
       $container->get('soda_scs_manager.nextcloud.preview'),
       $container->get('current_user'),
       $container->get('entity_type.manager'),
+      $container->get('soda_scs_manager.application_card_builder'),
     );
   }
 
@@ -76,6 +80,8 @@ class SodaScsStackViewBuilder extends EntityViewBuilder {
     $build['#attached']['drupalSettings']['entityInfo']['healthUrl'] = $stackHealthUrl;
     $build['#attached']['drupalSettings']['entityInfo']['bundle'] = $build['#soda_scs_stack']->bundle();
     $entity = $build['#soda_scs_stack'];
+    $build['#delete_access'] = $entity->access('delete');
+    $build['#delete_url'] = $entity->toUrl('delete-form')->toString();
     try {
       $serviceUrls = $this->sodaScsServiceHelpers->getStackServiceAndLoginUrls($entity);
       if ($serviceUrls !== NULL && !empty($serviceUrls['loginUrl'])) {
@@ -92,6 +98,15 @@ class SodaScsStackViewBuilder extends EntityViewBuilder {
     if ($entity->bundle() === 'soda_scs_nextcloud_stack') {
       $build['nextcloudPreview'] = $this->buildNextcloudPreview($entity);
       $build['nextcloudPreview']['#weight'] = 40;
+    }
+
+    if ($entity->hasField('includedComponents') && !$entity->get('includedComponents')->isEmpty()) {
+      $build['includedComponentCards'] = [];
+      foreach ($entity->get('includedComponents')->referencedEntities() as $component) {
+        if ($component instanceof SodaScsComponentInterface) {
+          $build['includedComponentCards'][] = $this->applicationCardBuilder->buildComponentCard($component);
+        }
+      }
     }
 
     // Disable caching.

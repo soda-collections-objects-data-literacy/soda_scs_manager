@@ -115,6 +115,8 @@ class SodaScsComponentViewBuilder extends EntityViewBuilder {
     $entity = $build['#soda_scs_component'];
     $build['#attached']['drupalSettings']['entityInfo']['healthUrl'] = $componentHealthUrl;
     $build['#attached']['drupalSettings']['entityInfo']['bundle'] = $entity->bundle();
+    $build['#delete_access'] = $entity->access('delete');
+    $build['#delete_url'] = $entity->toUrl('delete-form')->toString();
 
     try {
       $serviceUrls = $this->sodaScsServiceHelpers->getComponentServiceAndLoginUrls($entity);

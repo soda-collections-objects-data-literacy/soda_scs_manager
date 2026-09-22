@@ -60,6 +60,11 @@ class SodaScsSettingsForm extends ConfigFormBase {
     $form = parent::buildForm($form, $form_state);
     $form_state->setCached(FALSE);
 
+    // Required fields live in inactive horizontal tabs (display:none). Browser
+    // HTML5 validation cannot focus them and blocks submit with a cryptic error.
+    // Drupal #required still validates server-side.
+    $form['#attributes']['novalidate'] = 'novalidate';
+
     // Add vertical tabs container.
     $form['tabs'] = [
       '#type' => 'horizontal_tabs',
@@ -1311,7 +1316,10 @@ class SodaScsSettingsForm extends ConfigFormBase {
     $form['accessProxy']['generalSettings']['containerName'] = [
       '#type' => 'textfield',
       '#title' => $this->t('Container name'),
-      '#default_value' => $this->config('soda_scs_manager.settings')->get('accessProxy')['generalSettings']['containerName'] ?? SodaScsDockerDns::accessProxy(),
+      // Empty string in config must not win over ?? — that left the field blank
+      // and triggered HTML5 "not focusable" on save from another tab.
+      '#default_value' => $this->config('soda_scs_manager.settings')->get('accessProxy')['generalSettings']['containerName']
+        ?: SodaScsDockerDns::accessProxy(),
       '#description' => $this->t('The Access-Proxy container name (default from SCS_CONTAINER_ACCESS_PROXY / @name).', [
         '@name' => SodaScsDockerDns::accessProxy(),
       ]),

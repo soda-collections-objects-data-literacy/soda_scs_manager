@@ -40,6 +40,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- After deleting a stack (including force delete), redirect back to the
+  related project page instead of the dashboard.
 - Application health is always one of **running**, **stopped**, **problem**,
   or **unknown**. Container states, HTTP probes, and legacy labels (healthy,
   starting, unavailable, …) are mapped onto that set in PHP; Twig and JS
@@ -70,6 +72,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- Settings form save failed with browser error “invalid form control … is not
+  focusable” when `accessProxy[generalSettings][containerName]` was empty and
+  required inside an inactive horizontal tab. Empty config now falls back to
+  `SodaScsDockerDns::accessProxy()`, and the form uses `novalidate` so Drupal
+  (not HTML5) validates required fields across tabs.
 - AJAX file uploads on the user edit form (and other managed-file widgets)
   failed with HTTP 500 because `WsodCatcherSubscriber` treated Drupal’s
   intentional `FormAjaxException` as an unhandled error before

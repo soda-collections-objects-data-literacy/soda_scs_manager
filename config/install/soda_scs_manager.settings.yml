@@ -3,6 +3,10 @@ security:
     sanitize_logs: true
     log_level: 'info'
 
+accessProxy:
+  generalSettings:
+    containerName: 'scs--access-proxy'
+
 snapshotPath: '/var/scs-manager/snapshots'
 # Host path for Portainer bind mounts. Leave empty when it matches snapshotPath.
 snapshotHostPath: ''

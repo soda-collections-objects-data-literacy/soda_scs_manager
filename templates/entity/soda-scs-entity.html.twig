@@ -13,19 +13,69 @@
 
 {% set entity_type = entity_type|default('component') %}
 
-<article{{attributes.addClass('soda-scs-manager--entity','soda-scs-manager--entity--default', 'soda-scs-manager--entity--' ~ entity_type)}}>
-	<header class="soda-scs-manager--entity--header">
+<article{{ attributes.addClass('application--details', 'application--details--' ~ entity_type) }}>
+	<header class="application__details-header">
 		{% if elements.label %}
-			<div class="soda-scs-manager--entity--title">
+			<div class="application__details-title">
 				{{ elements.label }}
 			</div>
 		{% endif %}
 	</header>
 
-	<main class="soda-scs-manager--entity--main">
-		<div class="soda-scs-manager--entity--notes">
-			{% if elements.notes %}
-				{{ elements.notes }}
+	<main class="application__details-content">
+		<div class="application__details-left">
+			<section class="application__details-card application__details-card--general-information">
+				<h2 class="application__details-card-title h4">{{ 'General information'|t }}</h2>
+				{% if elements.developmentInstance %}
+					{{ elements.developmentInstance }}
+				{% endif %}
+				{% if elements.defaultLanguage %}
+					{{ elements.defaultLanguage }}
+				{% endif %}
+				{% if elements.machineName %}
+					{{ elements.machineName }}
+				{% endif %}
+			</section>
+
+			<section class="application__details-card application__details-card--notes">
+				<h2 class="application__details-card-title h4">{{ 'Notes'|t }}</h2>
+				{% if elements.notes %}
+					{{ elements.notes }}
+				{% endif %}
+			</section>
+
+			{% if elements.includedComponentCards %}
+				<section class="application__details-card application__details-card--applications">
+					<h2 class="application__details-card-title h4">{{ 'Applications'|t }}</h2>
+					<div class="application__details-component-cards">
+						{% for card in elements.includedComponentCards %}
+							{{ card }}
+						{% endfor %}
+					</div>
+				</section>
+			{% endif %}
+		</div>
+
+		<div class="application__details-right">
+			<section class="application__details-card application__details-card--health-status">
+				<h2 class="application__details-card-title h4">{{ 'Health status'|t }}</h2>
+				{% if elements.health %}
+					{{ elements.health }}
+				{% endif %}
+			</section>
+
+			<section class="application__details-card application__details-card--version">
+				<h2 class="application__details-card-title h4">{{ 'Version'|t }}</h2>
+				{% if elements.version %}
+					{{ elements.version }}
+				{% endif %}
+				{% if elements.automatedUpdates %}
+					{{ elements.automatedUpdates }}
+				{% endif %}
+			</section>
+
+			{% if elements['#delete_access'] and elements['#delete_url'] %}
+				<a class="application__details-delete btn" href="{{ elements['#delete_url'] }}">{{ 'Delete application'|t }}</a>
 			{% endif %}
 		</div>
 	</main>

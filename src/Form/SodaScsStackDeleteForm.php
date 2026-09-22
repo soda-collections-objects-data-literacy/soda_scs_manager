@@ -10,6 +10,7 @@ use Drupal\Core\Entity\EntityRepositoryInterface;
 use Drupal\Core\Entity\EntityTypeBundleInfoInterface;
 use Drupal\Core\Form\FormStateInterface;
 use Drupal\Core\Url;
+use Drupal\soda_scs_manager\Entity\SodaScsStackInterface;
 use Drupal\soda_scs_manager\StackActions\SodaScsStackActionsInterface;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 use Symfony\Component\DependencyInjection\Attribute\Autowire;
@@ -122,10 +123,12 @@ class SodaScsStackDeleteForm extends ContentEntityDeleteForm {
   public function forceDeleteSubmit(array &$form, FormStateInterface $form_state) {
     \Drupal::logger('soda_scs_manager')->warning('Force deleting stack: @label', ['@label' => $this->entity->label()]);
 
+    /** @var \Drupal\soda_scs_manager\Entity\SodaScsStackInterface $stack */
     $stack = $this->entity;
+    $projectId = $this->getRelatedProjectId($stack);
     $stack->delete();
     $this->messenger()->addWarning($this->t('Stack force deleted.'));
-    $form_state->setRedirect('soda_scs_manager.dashboardboard');
+    $this->setRedirectToProjectOrDashboard($form_state, $projectId);
   }
 
   /**
@@ -136,8 +139,9 @@ class SodaScsStackDeleteForm extends ContentEntityDeleteForm {
     \Drupal::logger('soda_scs_manager')->notice('Deleting stack: @label', ['@label' => $this->entity->label()]);
 
     // Construct properties.
-    /** @var \Drupal\soda_scs_manager\Entity\SodaScsStack $stack */
+    /** @var \Drupal\soda_scs_manager\Entity\SodaScsStackInterface $stack */
     $stack = $this->entity;
+    $projectId = $this->getRelatedProjectId($stack);
 
     // Delete the whole stack.
     $deleteStackResult = $this->sodaScsStackActions->deleteStack($stack);
@@ -157,6 +161,30 @@ class SodaScsStackDeleteForm extends ContentEntityDeleteForm {
     }
 
     $this->messenger()->addStatus($deleteStackResult['message']);
+    $this->setRedirectToProjectOrDashboard($form_state, $projectId);
+  }
+
+  /**
+   * Returns the single related project ID, if any.
+   */
+  private function getRelatedProjectId(SodaScsStackInterface $stack): ?int {
+    if (!$stack->hasField('partOfProjects') || $stack->get('partOfProjects')->isEmpty()) {
+      return NULL;
+    }
+    $projectId = $stack->get('partOfProjects')->target_id;
+    return $projectId !== NULL && $projectId !== '' ? (int) $projectId : NULL;
+  }
+
+  /**
+   * Redirects to the project page, or the dashboard as fallback.
+   */
+  private function setRedirectToProjectOrDashboard(FormStateInterface $form_state, ?int $projectId): void {
+    if ($projectId !== NULL) {
+      $form_state->setRedirect('entity.soda_scs_project.canonical', [
+        'soda_scs_project' => $projectId,
+      ]);
+      return;
+    }
     $form_state->setRedirect('soda_scs_manager.dashboard');
   }
 

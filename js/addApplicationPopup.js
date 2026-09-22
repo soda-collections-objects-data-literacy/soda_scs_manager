@@ -134,6 +134,22 @@
 
               loadMissingAssets(doc, function () {
                 formContainer.innerHTML = content.innerHTML;
+
+                // Owner is always the current user when creating from this wizard.
+                // The owner widget renders as a fieldset of radio buttons
+                // (options_buttons), so hide the whole fieldset, not just
+                // the first radio's item wrapper.
+                var ownerInput = formContainer.querySelector('[name^="owner"]');
+                if (ownerInput) {
+                  var ownerFieldset = ownerInput.closest('fieldset');
+                  var ownerWrapper = ownerFieldset
+                    ? (ownerFieldset.closest('.js-form-item, .form-item') || ownerFieldset)
+                    : (ownerInput.closest('.js-form-item, .form-item') || ownerInput.parentElement);
+                  if (ownerWrapper) {
+                    ownerWrapper.hidden = true;
+                  }
+                }
+
                 Drupal.attachBehaviors(formContainer, drupalSettings);
 
                 var firstField = formContainer.querySelector('input:not([type="hidden"]), select, textarea');
