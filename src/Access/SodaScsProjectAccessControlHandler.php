@@ -146,6 +146,26 @@ final class SodaScsProjectAccessControlHandler extends EntityAccessControlHandle
   }
 
   /**
+   * Determines access for adding a member to the project.
+   *
+   * @param \Drupal\soda_scs_manager\Entity\SodaScsProjectInterface $soda_scs_project
+   *   The project.
+   *
+   * @return \Drupal\Core\Access\AccessResultInterface
+   *   The access result.
+   */
+  public static function accessAddMemberForm(SodaScsProjectInterface $soda_scs_project): AccessResultInterface {
+    $account = \Drupal::currentUser();
+    /** @var \Drupal\soda_scs_manager\Helpers\SodaScsProjectMembershipHelpers $helpers */
+    $helpers = \Drupal::service('soda_scs_manager.project_membership.helpers');
+    $allowed = $helpers->canAddMembers($soda_scs_project, $account);
+
+    return $allowed
+      ? AccessResult::allowed()->cachePerUser()->addCacheableDependency($soda_scs_project)
+      : AccessResult::forbidden()->cachePerUser()->addCacheableDependency($soda_scs_project);
+  }
+
+  /**
    * Determines access for removing a listed project member.
    *
    * Admins and the owner may remove any listed member. A member may only

@@ -263,6 +263,19 @@ soda_scs_manager.projects:
 # SODa SCS Service Key Entities
 
 
+entity.soda_scs_project.add_member_form:
+  path: '/soda-scs-manager/project/{soda_scs_project}/members/add'
+  defaults:
+    _form: '\Drupal\soda_scs_manager\Form\SodaScsProjectAddMemberForm'
+    _title: 'Add project member'
+  options:
+    parameters:
+      soda_scs_project:
+        type: entity:soda_scs_project
+  requirements:
+    _permission: 'soda scs manager user'
+    _custom_access: '\Drupal\soda_scs_manager\Access\SodaScsProjectAccessControlHandler::accessAddMemberForm'
+
 entity.soda_scs_project.remove_member_form:
   path: '/soda-scs-manager/project/{soda_scs_project}/members/{user}/remove'
   defaults:

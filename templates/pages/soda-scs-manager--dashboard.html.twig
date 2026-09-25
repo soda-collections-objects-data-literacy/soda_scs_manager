@@ -22,7 +22,7 @@
 	<div class="dashboard__actions--search">
 		<input type="text" class="dashboard__search" placeholder="{{ 'Search projects'|t }}" aria-label="{{ 'Search projects'|t }}">
 	</div>
-	<a href="" class="btn button--primary">
+	<button type="button" class="btn button--primary soda-scs-manager--create-project-trigger" aria-controls="create-project-wizard" aria-expanded="false">
 		<div class="btn__icon">
 			<svg width="12" height="12" viewbox="0 0 12 12" fill="none" xmlns="http://www.w3.org/2000/svg">
 				<line x1="6" y1="-4.37114e-08" x2="6" y2="12" stroke="#FFA933" stroke-width="2"/>
@@ -30,7 +30,7 @@
 			</svg>
 		</div>
 		<p>{{ 'Create project'|t }}</p>
-	</a>
+	</button>
 </div>
 
 {% if project_cards is not empty %}

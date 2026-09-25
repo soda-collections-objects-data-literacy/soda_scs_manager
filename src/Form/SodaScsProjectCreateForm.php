@@ -284,6 +284,11 @@ class SodaScsProjectCreateForm extends ContentEntityForm {
       $form['members']['#access'] = FALSE;
     }
 
+    // A new project has no components yet.
+    if (isset($form['connectedComponents'])) {
+      $form['connectedComponents']['#access'] = FALSE;
+    }
+
     $this->buildMemberInvitationElement($form, $form_state);
 
     return $form;

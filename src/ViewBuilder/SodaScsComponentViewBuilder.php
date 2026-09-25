@@ -13,6 +13,7 @@ use Drupal\Core\Language\LanguageManagerInterface;
 use Drupal\Core\Theme\Registry;
 use Drupal\Core\TypedData\Exception\MissingDataException;
 use Drupal\Core\Url;
+use Drupal\soda_scs_manager\Access\SodaScsComponentLinksTasksAccessControlHandler;
 use Drupal\soda_scs_manager\Helpers\SodaScsServiceHelpers;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 
@@ -115,8 +116,13 @@ class SodaScsComponentViewBuilder extends EntityViewBuilder {
     $entity = $build['#soda_scs_component'];
     $build['#attached']['drupalSettings']['entityInfo']['healthUrl'] = $componentHealthUrl;
     $build['#attached']['drupalSettings']['entityInfo']['bundle'] = $entity->bundle();
-    $build['#delete_access'] = $entity->access('delete');
+    $build['#health_status'] = (string) ($entity->get('health')->value ?? 'unknown');
+    // Match the delete-form route's own access check (some bundles, e.g.
+    // WebProtégé, are excluded there even though generic entity delete
+    // access would otherwise allow it).
+    $build['#delete_access'] = SodaScsComponentLinksTasksAccessControlHandler::accessDeleteForm($entity)->isAllowed();
     $build['#delete_url'] = $entity->toUrl('delete-form')->toString();
+    $build['#delete_destination'] = $this->resolveDeleteDestination($entity);
 
     try {
       $serviceUrls = $this->sodaScsServiceHelpers->getComponentServiceAndLoginUrls($entity);
@@ -143,6 +149,19 @@ class SodaScsComponentViewBuilder extends EntityViewBuilder {
     ];
 
     return $build;
+  }
+
+  /**
+   * URL to return to after deleting this component (its project, if any).
+   */
+  protected function resolveDeleteDestination(EntityInterface $entity): string {
+    if ($entity->hasField('partOfProjects') && !$entity->get('partOfProjects')->isEmpty()) {
+      $project = $entity->get('partOfProjects')->entity;
+      if ($project) {
+        return $project->toUrl()->toString();
+      }
+    }
+    return Url::fromRoute('soda_scs_manager.dashboard')->toString();
   }
 
   /**

@@ -43,26 +43,25 @@
 
           $notification.html(
             '<div class="notification-content">' +
-              '<button class="notification-close" aria-label="' + Drupal.t('Close notification') + '">&times;</button>' +
-              '<div class="notification-icon">&#10003;</div>' +
-              '<h3>' + Drupal.t('Your WissKI is ready!') + '</h3>' +
-              '<p>' + Drupal.t('If you visit for the first time, you need to login with SODa SCS Client.') + '</p>' +
-              '<p>' + Drupal.t('Go to') + ' <a href="' + loginUrl + '" target="_blank">' + loginUrl + '</a></p>' +
-              '<p>' + Drupal.t('Click on') + ' <strong>' + Drupal.t('Login with SODa SCS Client') + '</strong></p>' +
+            '<button class="notification-close" aria-label="' + Drupal.t('Close notification') + '">&times;</button>' +
+            '<p class="text--label">' + Drupal.t('Your WissKI is ready!') + '</p>' +
+            '<p>' + Drupal.t('If you visit for the first time, you need to login with SODa SCS Client.') + '</br>' +
+            Drupal.t('Go to') + ' <a href="' + loginUrl + '" target="_blank">' + loginUrl + '</a></br>' +
+            Drupal.t('Click on') + ' <strong>' + Drupal.t('Login with SODa SCS Client') + '</strong></p>' +
             '</div>'
           );
 
           $('body').append($notification);
 
           // Fade in the notification.
-          setTimeout(function() {
+          setTimeout(function () {
             $notification.addClass('show');
           }, 100);
 
           // Dismiss notification function.
           function dismissNotification() {
             $notification.removeClass('show');
-            setTimeout(function() {
+            setTimeout(function () {
               $notification.remove();
             }, 300);
           }
@@ -159,7 +158,7 @@
             .addClass('application__health-status--' + healthClass)
             .attr('data-health-status', healthClass)
             .attr('title', title);
-          $healthChip.find('p').text(title).attr('aria-label', Drupal.t('Health status: @status', {'@status': title}));
+          $healthChip.find('p').text(title).attr('aria-label', Drupal.t('Health status: @status', { '@status': title }));
           $wrapper.attr('data-health-status', healthClass);
         }
 
@@ -169,7 +168,7 @@
               .removeClass('soda-scs-manager--health-running soda-scs-manager--health-starting soda-scs-manager--health-stopped soda-scs-manager--health-failure soda-scs-manager--health-problem soda-scs-manager--health-unknown')
               .addClass('soda-scs-manager--health-' + healthClass)
               .attr('title', title)
-              .attr('aria-label', Drupal.t('Health status: @status', {'@status': title}));
+              .attr('aria-label', Drupal.t('Health status: @status', { '@status': title }));
           }
 
           updateApplicationChip(healthClass, title);
@@ -222,9 +221,9 @@
             var currentStatus = applyMappedHealth(data);
 
             if (entityType === 'soda_scs_stack' &&
-                previousStatus &&
-                previousStatus !== Drupal.sodaScsHealth.RUNNING &&
-                currentStatus === Drupal.sodaScsHealth.RUNNING) {
+              previousStatus &&
+              previousStatus !== Drupal.sodaScsHealth.RUNNING &&
+              currentStatus === Drupal.sodaScsHealth.RUNNING) {
 
               // Check if this is a WissKI stack by looking at the card type.
               var cardType = $wrapper.closest('.soda-scs-manager--type--card').find('.soda-scs-manager--card-type').text().trim();

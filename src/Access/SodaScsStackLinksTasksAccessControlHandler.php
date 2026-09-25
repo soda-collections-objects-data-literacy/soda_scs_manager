@@ -57,14 +57,7 @@ final class SodaScsStackLinksTasksAccessControlHandler {
    *   TRUE if access is allowed, FALSE otherwise.
    */
   public static function accessDeleteForm(SodaScsStackInterface $soda_scs_stack): AccessResultInterface {
-    $bundle = $soda_scs_stack->bundle();
-
-    // Hide the delete task for specific stack types.
-    $hiddenBundles = ['soda_scs_nextcloud_stack', 'soda_scs_jupyter_stack'];
-    if (in_array($bundle, $hiddenBundles, TRUE)) {
-      return AccessResult::forbidden()->addCacheableDependency($soda_scs_stack);
-    }
-
+    // Owners (and admins) may delete any stack type.
     return SodaScsStackAccessControlHandler::accessDeleteForm($soda_scs_stack);
   }
 

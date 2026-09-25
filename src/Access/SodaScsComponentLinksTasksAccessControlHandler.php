@@ -44,14 +44,7 @@ final class SodaScsComponentLinksTasksAccessControlHandler {
    *   TRUE if access is allowed, FALSE otherwise.
    */
   public static function accessDeleteForm(SodaScsComponentInterface $soda_scs_component): AccessResultInterface {
-    $bundle = $soda_scs_component->bundle();
-
-    // Hide the delete task for specific component types.
-    $hiddenBundles = ['soda_scs_webprotege_component'];
-    if (in_array($bundle, $hiddenBundles, TRUE)) {
-      return AccessResult::forbidden()->addCacheableDependency($soda_scs_component);
-    }
-
+    // Owners (and admins) may delete any component type.
     return SodaScsComponentAccessControlHandler::accessDeleteForm($soda_scs_component);
   }
 

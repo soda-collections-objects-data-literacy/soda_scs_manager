@@ -47,12 +47,11 @@
 
     $notification.html(
       '<div class="notification-content">' +
-        '<button class="notification-close" aria-label="' + Drupal.t('Close notification') + '">&times;</button>' +
-        '<div class="notification-icon">&#10003;</div>' +
-        '<h3>' + Drupal.t('Your WissKI is ready!') + '</h3>' +
-        '<p>' + Drupal.t('If you visit for the first time, you need to login with SODa SCS Client.') + '</p>' +
-        '<p>' + Drupal.t('Go to') + ' <a href="' + loginUrl + '" target="_blank">' + loginUrl + '</a></p>' +
-        '<p>' + Drupal.t('Click on') + ' <strong>' + Drupal.t('Login with SODa SCS Client') + '</strong></p>' +
+      '<button class="notification-close" aria-label="' + Drupal.t('Close notification') + '">&times;</button>' +
+      '<p class="text--label">' + Drupal.t('Your WissKI is ready!') + '</p>' +
+      '<p>' + Drupal.t('If you visit for the first time, you need to login with SODa SCS Client.') + '</br>' +
+      Drupal.t('Go to') + ' <a href="' + loginUrl + '" target="_blank">' + loginUrl + '</a></br>' +
+      Drupal.t('Click on') + ' <strong>' + Drupal.t('Login with SODa SCS Client') + '</strong></p>' +
       '</div>'
     );
 
@@ -152,9 +151,9 @@
 
             var entityBundle = drupalSettings.entityInfo && drupalSettings.entityInfo.bundle;
             if ((entityBundle === 'soda_scs_wisski_component' || entityBundle === 'soda_scs_wisski_stack') &&
-                previousStatus &&
-                previousStatus !== Drupal.sodaScsHealth.RUNNING &&
-                currentStatus === Drupal.sodaScsHealth.RUNNING) {
+              previousStatus &&
+              previousStatus !== Drupal.sodaScsHealth.RUNNING &&
+              currentStatus === Drupal.sodaScsHealth.RUNNING) {
               notifyWisskiReadyIfApplicable();
             }
             previousStatus = currentStatus;

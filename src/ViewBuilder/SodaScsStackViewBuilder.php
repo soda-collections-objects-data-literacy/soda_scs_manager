@@ -15,6 +15,7 @@ use Drupal\Core\Session\AccountProxyInterface;
 use Drupal\Core\Theme\Registry;
 use Drupal\Core\TypedData\Exception\MissingDataException;
 use Drupal\Core\Url;
+use Drupal\soda_scs_manager\Access\SodaScsStackLinksTasksAccessControlHandler;
 use Drupal\soda_scs_manager\Helpers\SodaScsServiceHelpers;
 use Drupal\soda_scs_manager\Service\SodaScsApplicationCardBuilder;
 use Drupal\soda_scs_manager\Service\SodaScsNextcloudPreview;
@@ -80,8 +81,12 @@ class SodaScsStackViewBuilder extends EntityViewBuilder {
     $build['#attached']['drupalSettings']['entityInfo']['healthUrl'] = $stackHealthUrl;
     $build['#attached']['drupalSettings']['entityInfo']['bundle'] = $build['#soda_scs_stack']->bundle();
     $entity = $build['#soda_scs_stack'];
-    $build['#delete_access'] = $entity->access('delete');
+    $build['#health_status'] = (string) ($entity->get('health')->value ?? 'unknown');
+    // Match the delete-form route's own access check (some bundles are
+    // excluded there even though generic entity delete access would allow it).
+    $build['#delete_access'] = SodaScsStackLinksTasksAccessControlHandler::accessDeleteForm($entity)->isAllowed();
     $build['#delete_url'] = $entity->toUrl('delete-form')->toString();
+    $build['#delete_destination'] = $this->resolveDeleteDestination($entity);
     try {
       $serviceUrls = $this->sodaScsServiceHelpers->getStackServiceAndLoginUrls($entity);
       if ($serviceUrls !== NULL && !empty($serviceUrls['loginUrl'])) {

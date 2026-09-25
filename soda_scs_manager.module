@@ -1708,6 +1708,23 @@ function soda_scs_manager_page_attachments(array &$attachments) {
 
   $attachments['#attached']['library'][] = 'soda_scs_manager/globalStyling';
 
+  $account = \Drupal::currentUser();
+  if ($account->hasPermission('create soda scs project') || $account->hasPermission('administer soda scs project entities')) {
+    $attachments['#attached']['library'][] = 'soda_scs_manager/createProjectWizard';
+    $attachments['#attached']['drupalSettings']['sodaScsManager']['createProjectWizard'] = [
+      'addProjectFormUrl' => Url::fromRoute('entity.soda_scs_project.add_form', ['bundle' => 'soda_scs_project'])->toString(),
+      'addMemberFormUrlTemplate' => Url::fromRoute('entity.soda_scs_project.add_member_form', ['soda_scs_project' => '__PROJECT_ID__'])->toString(),
+      'projectCanonicalUrlTemplate' => Url::fromRoute('entity.soda_scs_project.canonical', ['soda_scs_project' => '__PROJECT_ID__'])->toString(),
+      'componentCreateUrls' => [
+        'mariadb' => Url::fromRoute('entity.soda_scs_component.add_form', ['bundle' => 'soda_scs_sql_component'])->toString(),
+        'openGdb' => Url::fromRoute('entity.soda_scs_component.add_form', ['bundle' => 'soda_scs_triplestore_component'])->toString(),
+        'webprotege' => Url::fromRoute('entity.soda_scs_component.add_form', ['bundle' => 'soda_scs_webprotege_component'])->toString(),
+        'wisski' => Url::fromRoute('entity.soda_scs_stack.add_form', ['bundle' => 'soda_scs_wisski_stack'])->toString(),
+        'jupyter' => Url::fromRoute('entity.soda_scs_stack.add_form', ['bundle' => 'soda_scs_jupyter_stack'])->toString(),
+      ],
+    ];
+  }
+
   if (_soda_scs_manager_coworking_intro_show_on_front_page()) {
     $lang = \Drupal::languageManager()->getCurrentLanguage();
     $introCompleteUrl = Url::fromRoute('soda_scs_manager.coworking_intro_complete', [], [
@@ -2028,7 +2045,6 @@ function _soda_scs_manager_create_default_applications_for_user(UserInterface $u
   /** @var \Drupal\soda_scs_manager\Entity\SodaScsProject $project */
   $project = reset($projects);
 
-  _soda_scs_manager_create_default_nextcloud_for_user($user);
   _soda_scs_manager_create_default_jupyter_for_user($user);
   _soda_scs_manager_create_default_webprotege_for_user($user);
 }
@@ -2119,28 +2135,6 @@ function _soda_scs_manager_create_default_project_for_user(UserInterface $user) 
   \Drupal::service('soda_scs_manager.project_db_access.helpers')->syncProjectMembersDbAccess($project);
 }
 
-/**
- * Create default nextcloud for new user.
- */
-function _soda_scs_manager_create_default_nextcloud_for_user(UserInterface $user) {
-  // Load the bundle info for the nextcloud stack.
-  $bundleinfo = \Drupal::service('entity_type.bundle.info')->getBundleInfo('soda_scs_stack')['soda_scs_nextcloud_stack'];
-
-  if (!$bundleinfo) {
-    throw new \Exception('Nextcloud stack bundle info not found');
-  }
-
-  $nextcloud = SodaScsStack::create([
-    'bundle' => 'soda_scs_nextcloud_stack',
-    'description' => $bundleinfo['description'],
-    'imageUrl' => $bundleinfo['imageUrl'],
-    'label' => $user->getDisplayName() . '\'s nextcloud',
-    'machineName' => 'nextcloud-' . $user->getDisplayName() . '-default',
-    'owner' => $user->id(),
-  ]);
-
-  \Drupal::service('soda_scs_manager.stack.actions')->createStack($nextcloud);
-}
 
 /**
  * Create default jupyter for new user.

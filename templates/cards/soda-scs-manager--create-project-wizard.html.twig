@@ -1,0 +1,165 @@
+{#
+/**
+ * @file
+ * Multi-step "Create Project" overlay wizard.
+ *
+ * Steps: 1) project details, 2) select applications, 2b) one form per
+ * selected application, 3) invite members. All content is loaded and
+ * submitted via AJAX by js/createProjectWizard.js; drupalSettings.sodaScsManager
+ * .createProjectWizard (URLs) is attached in hook_page_attachments().
+ */
+#}
+<div id="create-project-wizard" class="overlay overlay--large create-project-wizard" role="dialog" aria-modal="true" aria-labelledby="create-project-wizard-title" hidden>
+  <div class="overlay__backdrop" aria-hidden="true"></div>
+  <div class="overlay__dialog" role="document">
+    <button type="button"
+            class="btn btn--secondary btn--icon overlay__close"
+            id="create-project-wizard-close"
+            aria-label="{{ 'Close popup'|t }}">
+      <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <line x1="14.8493" y1="14.8493" x2="4.94983" y2="4.94978" stroke="#17212B" stroke-width="2"/>
+        <line x1="4.94979" y1="14.8492" x2="14.8493" y2="4.94975" stroke="#17212B" stroke-width="2"/>
+      </svg>
+    </button>
+
+    <h2 id="create-project-wizard-title">{{ 'Create Project'|t }}</h2>
+
+    <div class="create-project-wizard__body">
+      {# Step 1: project details (label + description); loaded from entity.soda_scs_project.add_form. #}
+      <div class="create-project-wizard__step add-app-popup__step" data-cpw-step="details">
+        <div class="create-project-wizard__form-container add-app-popup__form-container" aria-live="polite">
+          <p>{{ 'Loading…'|t }}</p>
+        </div>
+      </div>
+
+      {# Step 2: choose one or more applications to add to the new project. #}
+      <div class="create-project-wizard__step add-app-popup__step" data-cpw-step="apps-select" hidden>
+        <p class="create-project-wizard__hint">{{ 'Select one or more applications to add to your project. You can also skip this step.'|t }}</p>
+        <div class="create-project-wizard__grid add-app-popup__grid">
+
+          <div class="create-project-wizard__app-card add-app-popup-card" data-app-type="jupyter" role="button" tabindex="0" aria-pressed="false" aria-label="{{ 'Add @title'|t({'@title': 'JupyterHub'}) }}">
+            <div class="add-app-popup-card__upper">
+              <h2 class="add-app-popup-card__description h3">{{ 'Data Enrichment'|t }}</h2>
+              <button type="button" class="add-app-popup-card__doc-link" data-doc-url="/soda-scs-manager/app/jupyter" aria-label="{{ 'View documentation for @title'|t({'@title': 'JupyterHub'}) }}" title="{{ 'Documentation'|t }}">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 640"><path fill="#17212B" d="M320 205.3L320 514.6L320.5 514.4C375.1 491.7 433.7 480 492.8 480L512 480L512 160L492.8 160C450.6 160 408.7 168.4 369.7 184.6C352.9 191.6 336.3 198.5 320 205.3zM294.9 125.5L320 136L345.1 125.5C391.9 106 442.1 96 492.8 96L528 96C554.5 96 576 117.5 576 144L576 496C576 522.5 554.5 544 528 544L492.8 544C442.1 544 391.9 554 345.1 573.5L332.3 578.8C324.4 582.1 315.6 582.1 307.7 578.8L294.9 573.5C248.1 554 197.9 544 147.2 544L112 544C85.5 544 64 522.5 64 496L64 144C64 117.5 85.5 96 112 96L147.2 96C197.9 96 248.1 106 294.9 125.5z"/></svg>
+              </button>
+            </div>
+            <div class="add-app-popup-card__lower">
+              <p class="add-app-popup-card__bundle">{{ 'JupyterHub'|t }}</p>
+              <span class="create-project-wizard__app-card-check add-app-popup-card__plus" aria-hidden="true">
+                <svg width="34" height="34" viewBox="0 0 34 34" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <circle cx="17" cy="17" r="16.5" stroke="#17212B"/>
+                  <path d="M17 9v16M9 17h16" stroke="#17212B" stroke-width="2" stroke-linecap="round"/>
+                </svg>
+              </span>
+            </div>
+          </div>
+
+          <div class="create-project-wizard__app-card add-app-popup-card" data-app-type="webprotege" role="button" tabindex="0" aria-pressed="false" aria-label="{{ 'Add @title'|t({'@title': 'WebProtégé'}) }}">
+            <div class="add-app-popup-card__upper">
+              <h2 class="add-app-popup-card__description h3">{{ 'Ontology Management'|t }}</h2>
+              <button type="button" class="add-app-popup-card__doc-link" data-doc-url="/soda-scs-manager/app/webprotege" aria-label="{{ 'View documentation for @title'|t({'@title': 'WebProtégé'}) }}" title="{{ 'Documentation'|t }}">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 640"><path fill="#17212B" d="M320 205.3L320 514.6L320.5 514.4C375.1 491.7 433.7 480 492.8 480L512 480L512 160L492.8 160C450.6 160 408.7 168.4 369.7 184.6C352.9 191.6 336.3 198.5 320 205.3zM294.9 125.5L320 136L345.1 125.5C391.9 106 442.1 96 492.8 96L528 96C554.5 96 576 117.5 576 144L576 496C576 522.5 554.5 544 528 544L492.8 544C442.1 544 391.9 554 345.1 573.5L332.3 578.8C324.4 582.1 315.6 582.1 307.7 578.8L294.9 573.5C248.1 554 197.9 544 147.2 544L112 544C85.5 544 64 522.5 64 496L64 144C64 117.5 85.5 96 112 96L147.2 96C197.9 96 248.1 106 294.9 125.5z"/></svg>
+              </button>
+            </div>
+            <div class="add-app-popup-card__lower">
+              <p class="add-app-popup-card__bundle">{{ 'WebProtégé'|t }}</p>
+              <span class="create-project-wizard__app-card-check add-app-popup-card__plus" aria-hidden="true">
+                <svg width="34" height="34" viewBox="0 0 34 34" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <circle cx="17" cy="17" r="16.5" stroke="#17212B"/>
+                  <path d="M17 9v16M9 17h16" stroke="#17212B" stroke-width="2" stroke-linecap="round"/>
+                </svg>
+              </span>
+            </div>
+          </div>
+
+          <div class="create-project-wizard__app-card add-app-popup-card" data-app-type="wisski" role="button" tabindex="0" aria-pressed="false" aria-label="{{ 'Add @title'|t({'@title': 'WissKI Environment'}) }}">
+            <div class="add-app-popup-card__upper">
+              <h2 class="add-app-popup-card__description h3">{{ 'Data Management'|t }}</h2>
+              <button type="button" class="add-app-popup-card__doc-link" data-doc-url="/soda-scs-manager/app/wisski" aria-label="{{ 'View documentation for @title'|t({'@title': 'WissKI Environment'}) }}" title="{{ 'Documentation'|t }}">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 640"><path fill="#17212B" d="M320 205.3L320 514.6L320.5 514.4C375.1 491.7 433.7 480 492.8 480L512 480L512 160L492.8 160C450.6 160 408.7 168.4 369.7 184.6C352.9 191.6 336.3 198.5 320 205.3zM294.9 125.5L320 136L345.1 125.5C391.9 106 442.1 96 492.8 96L528 96C554.5 96 576 117.5 576 144L576 496C576 522.5 554.5 544 528 544L492.8 544C442.1 544 391.9 554 345.1 573.5L332.3 578.8C324.4 582.1 315.6 582.1 307.7 578.8L294.9 573.5C248.1 554 197.9 544 147.2 544L112 544C85.5 544 64 522.5 64 496L64 144C64 117.5 85.5 96 112 96L147.2 96C197.9 96 248.1 106 294.9 125.5z"/></svg>
+              </button>
+            </div>
+            <div class="add-app-popup-card__lower">
+              <p class="add-app-popup-card__bundle">{{ 'WissKI Environment with Drupal, Database and Triplestore'|t }}</p>
+              <span class="create-project-wizard__app-card-check add-app-popup-card__plus" aria-hidden="true">
+                <svg width="34" height="34" viewBox="0 0 34 34" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <circle cx="17" cy="17" r="16.5" stroke="#17212B"/>
+                  <path d="M17 9v16M9 17h16" stroke="#17212B" stroke-width="2" stroke-linecap="round"/>
+                </svg>
+              </span>
+            </div>
+          </div>
+
+          <div class="add-app-popup-cards__divider"></div>
+
+          <div class="create-project-wizard__app-card add-app-popup-card" data-app-type="mariadb" role="button" tabindex="0" aria-pressed="false" aria-label="{{ 'Add @title'|t({'@title': 'Database'}) }}">
+            <div class="add-app-popup-card__upper">
+              <h2 class="add-app-popup-card__description h3">{{ 'Database'|t }}</h2>
+              <button type="button" class="add-app-popup-card__doc-link" data-doc-url="/soda-scs-manager/app/mariadb" aria-label="{{ 'View documentation for @title'|t({'@title': 'Database'}) }}" title="{{ 'Documentation'|t }}">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 640"><path fill="#17212B" d="M320 205.3L320 514.6L320.5 514.4C375.1 491.7 433.7 480 492.8 480L512 480L512 160L492.8 160C450.6 160 408.7 168.4 369.7 184.6C352.9 191.6 336.3 198.5 320 205.3zM294.9 125.5L320 136L345.1 125.5C391.9 106 442.1 96 492.8 96L528 96C554.5 96 576 117.5 576 144L576 496C576 522.5 554.5 544 528 544L492.8 544C442.1 544 391.9 554 345.1 573.5L332.3 578.8C324.4 582.1 315.6 582.1 307.7 578.8L294.9 573.5C248.1 554 197.9 544 147.2 544L112 544C85.5 544 64 522.5 64 496L64 144C64 117.5 85.5 96 112 96L147.2 96C197.9 96 248.1 106 294.9 125.5z"/></svg>
+              </button>
+            </div>
+            <div class="add-app-popup-card__lower">
+              <p class="add-app-popup-card__bundle">{{ 'MariaDB Database'|t }}</p>
+              <span class="create-project-wizard__app-card-check add-app-popup-card__plus" aria-hidden="true">
+                <svg width="34" height="34" viewBox="0 0 34 34" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <circle cx="17" cy="17" r="16.5" stroke="#17212B"/>
+                  <path d="M17 9v16M9 17h16" stroke="#17212B" stroke-width="2" stroke-linecap="round"/>
+                </svg>
+              </span>
+            </div>
+          </div>
+
+          <div class="create-project-wizard__app-card add-app-popup-card" data-app-type="openGdb" role="button" tabindex="0" aria-pressed="false" aria-label="{{ 'Add @title'|t({'@title': 'Triplestore (OpenGDB)'}) }}">
+            <div class="add-app-popup-card__upper">
+              <h2 class="add-app-popup-card__description h3">{{ 'Triplestore'|t }}</h2>
+              <button type="button" class="add-app-popup-card__doc-link" data-doc-url="/soda-scs-manager/app/open-gdb" aria-label="{{ 'View documentation for @title'|t({'@title': 'Triplestore (OpenGDB)'}) }}" title="{{ 'Documentation'|t }}">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 640"><path fill="#17212B" d="M320 205.3L320 514.6L320.5 514.4C375.1 491.7 433.7 480 492.8 480L512 480L512 160L492.8 160C450.6 160 408.7 168.4 369.7 184.6C352.9 191.6 336.3 198.5 320 205.3zM294.9 125.5L320 136L345.1 125.5C391.9 106 442.1 96 492.8 96L528 96C554.5 96 576 117.5 576 144L576 496C576 522.5 554.5 544 528 544L492.8 544C442.1 544 391.9 554 345.1 573.5L332.3 578.8C324.4 582.1 315.6 582.1 307.7 578.8L294.9 573.5C248.1 554 197.9 544 147.2 544L112 544C85.5 544 64 522.5 64 496L64 144C64 117.5 85.5 96 112 96L147.2 96C197.9 96 248.1 106 294.9 125.5z"/></svg>
+              </button>
+            </div>
+            <div class="add-app-popup-card__lower">
+              <p class="add-app-popup-card__bundle">{{ 'Triplestore (OpenGDB)'|t }}</p>
+              <span class="create-project-wizard__app-card-check add-app-popup-card__plus" aria-hidden="true">
+                <svg width="34" height="34" viewBox="0 0 34 34" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <circle cx="17" cy="17" r="16.5" stroke="#17212B"/>
+                  <path d="M17 9v16M9 17h16" stroke="#17212B" stroke-width="2" stroke-linecap="round"/>
+                </svg>
+              </span>
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+
+      {# Step 2b: one form per selected application; loaded/submitted one at a time. #}
+      <div class="create-project-wizard__step add-app-popup__step" data-cpw-step="apps-form" hidden>
+        <p class="create-project-wizard__hint" data-cpw-apps-form-title></p>
+        <div class="create-project-wizard__form-container add-app-popup__form-container" aria-live="polite"></div>
+      </div>
+
+      {# Step 3: invite members; loaded from entity.soda_scs_project.add_member_form. #}
+      <div class="create-project-wizard__step add-app-popup__step" data-cpw-step="members" hidden>
+        <p class="create-project-wizard__hint">{{ 'Invite people to collaborate on this project. You can also skip this step and invite people later.'|t }}</p>
+        <ul class="create-project-wizard__invited-list" data-cpw-invited-list></ul>
+        <div class="create-project-wizard__form-container add-app-popup__form-container" aria-live="polite"></div>
+      </div>
+
+      {# Step 4: done. #}
+      <div class="create-project-wizard__step add-app-popup__step" data-cpw-step="done" hidden>
+        <p class="create-project-wizard__success" data-cpw-success-message></p>
+      </div>
+    </div>
+
+    <div class="create-project-wizard__footer">
+      <p class="create-project-wizard__step-label" data-cpw-step-label aria-live="polite"></p>
+      <div class="create-project-wizard__footer-actions">
+        <button type="button" class="btn btn--secondary" data-cpw-prev disabled>{{ '← Back'|t }}</button>
+        <button type="button" class="btn btn--secondary" data-cpw-skip hidden>{{ 'Skip'|t }}</button>
+        <button type="button" class="btn button--primary" data-cpw-next>{{ 'Next'|t }}</button>
+        <button type="button" class="btn button--primary" data-cpw-finish hidden>{{ 'Go to project'|t }}</button>
+      </div>
+    </div>
+  </div>
+</div>

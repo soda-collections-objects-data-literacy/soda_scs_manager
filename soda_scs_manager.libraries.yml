@@ -118,6 +118,18 @@ addApplicationPopup:
     - core/once
     - soda_scs_manager/globalStyling
 
+createProjectWizard:
+  version: 1.x
+  js:
+    js/createProjectWizard.js: {}
+  dependencies:
+    - core/jquery
+    - core/drupal
+    - core/once
+    - core/drupalSettings
+    - soda_scs_manager/globalStyling
+    - soda_scs_manager/throbberOverlay
+
 projectMembers:
   version: 1.x
   js:
