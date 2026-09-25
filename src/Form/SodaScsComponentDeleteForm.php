@@ -6,6 +6,7 @@ namespace Drupal\soda_scs_manager\Form;
 
 use Drupal\Component\Datetime\TimeInterface;
 use Drupal\Core\Entity\ContentEntityDeleteForm;
+use Drupal\Core\Entity\EntityInterface;
 use Drupal\Core\Entity\EntityRepositoryInterface;
 use Drupal\Core\Entity\EntityTypeBundleInfoInterface;
 use Drupal\Core\Form\FormStateInterface;
@@ -17,7 +18,8 @@ use Symfony\Component\DependencyInjection\ContainerInterface;
 /**
  * Provides a form for deleting Soda SCS Component entities.
  */
-class SodaScsComponentDeleteForm extends ContentEntityDeleteForm {
+class SodaScsComponentDeleteForm extends ContentEntityDeleteForm
+{
 
   /**
    * The Soda SCS API Actions service.
@@ -45,7 +47,8 @@ class SodaScsComponentDeleteForm extends ContentEntityDeleteForm {
    * @param \Drupal\soda_scs_manager\ComponentActions\SodaScsComponentActionsInterface $sodaScsComponentActions
    *   The Soda SCS API Actions service.
    */
-  public function __construct(EntityRepositoryInterface $entity_repository, EntityTypeBundleInfoInterface $entity_type_bundle_info, TimeInterface $time, SodaScsComponentActionsInterface $sodaScsComponentActions) {
+  public function __construct(EntityRepositoryInterface $entity_repository, EntityTypeBundleInfoInterface $entity_type_bundle_info, TimeInterface $time, SodaScsComponentActionsInterface $sodaScsComponentActions)
+  {
     parent::__construct($entity_repository, $entity_type_bundle_info, $time);
     $this->entityRepository = $entity_repository;
     $this->entityTypeBundleInfo = $entity_type_bundle_info;
@@ -56,7 +59,8 @@ class SodaScsComponentDeleteForm extends ContentEntityDeleteForm {
   /**
    * {@inheritdoc}
    */
-  public static function create(ContainerInterface $container) {
+  public static function create(ContainerInterface $container)
+  {
     return new static(
       $container->get('entity.repository'),
       $container->get('entity_type.bundle.info'),
@@ -68,14 +72,16 @@ class SodaScsComponentDeleteForm extends ContentEntityDeleteForm {
   /**
    * {@inheritdoc}
    */
-  public function getFormId() {
+  public function getFormId()
+  {
     return 'soda_scs_manager_component_delete_form';
   }
 
   /**
    * {@inheritdoc}
    */
-  public function getQuestion() {
+  public function getQuestion()
+  {
 
     return $this->t('Are you sure you want to delete component: @label?', ['@label' => $this->entity->label()]);
   }
@@ -83,14 +89,16 @@ class SodaScsComponentDeleteForm extends ContentEntityDeleteForm {
   /**
    * {@inheritdoc}
    */
-  public function getCancelUrl() {
-    return new Url('soda_scs_manager.dashboard');
+  public function getCancelUrl()
+  {
+    return $this->getRedirectUrl();
   }
 
   /**
    * {@inheritdoc}
    */
-  public function buildForm(array $form, FormStateInterface $form_state) {
+  public function buildForm(array $form, FormStateInterface $form_state)
+  {
     $form = parent::buildForm($form, $form_state);
     // If a previous delete attempt failed, show the force delete button.
     if ($form_state->get('delete_failed')) {
@@ -118,23 +126,31 @@ class SodaScsComponentDeleteForm extends ContentEntityDeleteForm {
   /**
    * Custom submit handler for force delete.
    */
-  public function forceDeleteSubmit(array &$form, FormStateInterface $form_state) {
+  public function forceDeleteSubmit(array &$form, FormStateInterface $form_state)
+  {
     \Drupal::logger('soda_scs_manager')->warning('Force deleting component: @label', ['@label' => $this->entity->label()]);
     /** @var \Drupal\soda_scs_manager\Entity\SodaScsComponent $component */
     $component = $this->entity;
+    // Resolve the redirect target BEFORE deleting, since the entity
+    // reference may no longer be readable afterwards.
+    $redirectUrl = $this->getRedirectUrl();
     // Directly delete the entity, bypassing the component actions.
     $component->delete();
     $this->messenger()->addWarning($this->t('Component force deleted.'));
-    $form_state->setRedirect('soda_scs_manager.dashboard');
+    $form_state->setRedirectUrl($redirectUrl);
   }
 
   /**
    * {@inheritdoc}
    */
-  public function submitForm(array &$form, FormStateInterface $form_state) {
+  public function submitForm(array &$form, FormStateInterface $form_state)
+  {
     \Drupal::logger('soda_scs_manager')->notice('Deleting component: @label', ['@label' => $this->entity->label()]);
     /** @var \Drupal\soda_scs_manager\Entity\SodaScsComponent $component */
     $component = $this->entity;
+    // Resolve the redirect target BEFORE deleting, since the entity
+    // reference may no longer be readable afterwards.
+    $redirectUrl = $this->getRedirectUrl();
     $deleteComponentResult = $this->sodaScsComponentActions->deleteComponent($component);
     if (!$deleteComponentResult['success']) {
       $this->messenger()->addError($deleteComponentResult['message']);
@@ -144,7 +160,41 @@ class SodaScsComponentDeleteForm extends ContentEntityDeleteForm {
       return;
     }
     $this->messenger()->addStatus($deleteComponentResult['message']);
-    $form_state->setRedirect('soda_scs_manager.dashboard');
+    $form_state->setRedirectUrl($redirectUrl);
   }
 
+  /**
+   * Gets the parent project of the component being deleted, if any.
+   *
+   * @return \Drupal\Core\Entity\EntityInterface|null
+   *   The project entity, or NULL if the component has no project
+   *   or the field is unavailable.
+   */
+  protected function getProject(): ?EntityInterface
+  {
+    /** @var \Drupal\soda_scs_manager\Entity\SodaScsComponent $component */
+    $component = $this->entity;
+    if (!$component->hasField('partOfProjects') || $component->get('partOfProjects')->isEmpty()) {
+      return NULL;
+    }
+    return $component->get('partOfProjects')->first()->entity;
+  }
+
+  /**
+   * Gets the URL to redirect to after deletion.
+   *
+   * Returns the parent project's canonical URL if the component belongs
+   * to one, falling back to the dashboard otherwise.
+   *
+   * @return \Drupal\Core\Url
+   *   The redirect URL.
+   */
+  protected function getRedirectUrl(): Url
+  {
+    $project = $this->getProject();
+    if ($project) {
+      return $project->toUrl();
+    }
+    return new Url('soda_scs_manager.dashboard');
+  }
 }

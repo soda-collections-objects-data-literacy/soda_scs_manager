@@ -154,6 +154,19 @@ class SodaScsComponent extends ContentEntityBase implements SodaScsComponentInte
   }
 
   /**
+ * Gets the parent project from a component if present.
+ *
+ * @return \Drupal\soda_scs_manager\Entity\SodaScsProjectInterface|null
+ *   The parent project or NULL when not available.
+ */
+public function getPartOfProject(): ?SodaScsProjectInterface {
+  if ($this->get('partOfProjects')->isEmpty()) {
+    return NULL;
+  }
+  return $this->get('partOfProjects')->first()->entity;
+}
+
+  /**
    * Gets the parent stack from a component if present.
    *
    * @return int|null
