@@ -184,4 +184,17 @@ class SodaScsStackViewBuilder extends EntityViewBuilder {
     return $build;
   }
 
+  /**
+   * URL to return to after deleting this stack (its project, if any).
+   */
+  protected function resolveDeleteDestination(EntityInterface $entity): string {
+    if ($entity->hasField('partOfProjects') && !$entity->get('partOfProjects')->isEmpty()) {
+      $project = $entity->get('partOfProjects')->entity;
+      if ($project) {
+        return $project->toUrl()->toString();
+      }
+    }
+    return Url::fromRoute('soda_scs_manager.dashboard')->toString();
+  }
+
 }

@@ -72,6 +72,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- Stack detail pages crashed with “Call to undefined method
+  SodaScsStackViewBuilder::resolveDeleteDestination()”. The delete-destination
+  helper that already existed on the component view builder is now also on
+  the stack view builder.
 - Settings form save failed with browser error “invalid form control … is not
   focusable” when `accessProxy[generalSettings][containerName]` was empty and
   required inside an inactive horizontal tab. Empty config now falls back to
