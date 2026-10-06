@@ -29,14 +29,14 @@ class SodaScsHealthStatusTest extends UnitTestCase {
       'running' => ['running', 0, NULL, SodaScsHealthStatus::RUNNING],
       'running healthy' => ['running', 0, 'healthy', SodaScsHealthStatus::RUNNING],
       'running unhealthy' => ['running', 0, 'unhealthy', SodaScsHealthStatus::PROBLEM],
-      'running health starting' => ['running', 0, 'starting', SodaScsHealthStatus::UNKNOWN],
+      'running health starting' => ['running', 0, 'starting', SodaScsHealthStatus::STARTING],
       'created' => ['created', 0, NULL, SodaScsHealthStatus::STOPPED],
       'paused' => ['paused', 0, NULL, SodaScsHealthStatus::STOPPED],
       'exited zero' => ['exited', 0, NULL, SodaScsHealthStatus::STOPPED],
       'exited sigkill' => ['exited', 137, NULL, SodaScsHealthStatus::STOPPED],
       'removing' => ['removing', 0, NULL, SodaScsHealthStatus::STOPPED],
       'dead' => ['dead', 1, NULL, SodaScsHealthStatus::PROBLEM],
-      'restarting' => ['restarting', 0, NULL, SodaScsHealthStatus::UNKNOWN],
+      'restarting' => ['restarting', 0, NULL, SodaScsHealthStatus::STARTING],
       'empty' => ['', NULL, NULL, SodaScsHealthStatus::UNKNOWN],
       'garbage' => ['foo', NULL, NULL, SodaScsHealthStatus::UNKNOWN],
     ];
@@ -60,8 +60,10 @@ class SodaScsHealthStatusTest extends UnitTestCase {
       '401' => [401, TRUE, SodaScsHealthStatus::RUNNING],
       '403' => [403, FALSE, SodaScsHealthStatus::RUNNING],
       '404' => [404, TRUE, SodaScsHealthStatus::UNKNOWN],
-      '502' => [502, TRUE, SodaScsHealthStatus::UNKNOWN],
-      '503' => [503, FALSE, SodaScsHealthStatus::UNKNOWN],
+      '502 container up' => [502, TRUE, SodaScsHealthStatus::STARTING],
+      '503 container up' => [503, TRUE, SodaScsHealthStatus::STARTING],
+      '502 no container' => [502, FALSE, SodaScsHealthStatus::UNKNOWN],
+      '503 no container' => [503, FALSE, SodaScsHealthStatus::UNKNOWN],
       '500' => [500, TRUE, SodaScsHealthStatus::PROBLEM],
       '504' => [504, FALSE, SodaScsHealthStatus::PROBLEM],
       'no response container up' => [0, TRUE, SodaScsHealthStatus::PROBLEM],
@@ -88,7 +90,8 @@ class SodaScsHealthStatusTest extends UnitTestCase {
       'paused' => ['paused', SodaScsHealthStatus::STOPPED],
       'unhealthy' => ['unhealthy', SodaScsHealthStatus::PROBLEM],
       'unavailable' => ['unavailable', SodaScsHealthStatus::PROBLEM],
-      'starting' => ['starting', SodaScsHealthStatus::UNKNOWN],
+      'starting' => ['starting', SodaScsHealthStatus::STARTING],
+      'restarting' => ['restarting', SodaScsHealthStatus::STARTING],
       'not found' => ['not_found', SodaScsHealthStatus::UNKNOWN],
       'empty' => ['', SodaScsHealthStatus::UNKNOWN],
       'null' => [NULL, SodaScsHealthStatus::UNKNOWN],
@@ -114,8 +117,12 @@ class SodaScsHealthStatusTest extends UnitTestCase {
       SodaScsHealthStatus::combine('running', 0, 'healthy', 200, TRUE),
     );
     $this->assertSame(
-      SodaScsHealthStatus::UNKNOWN,
+      SodaScsHealthStatus::STARTING,
       SodaScsHealthStatus::combine('running', 0, NULL, 502, TRUE),
+    );
+    $this->assertSame(
+      SodaScsHealthStatus::UNKNOWN,
+      SodaScsHealthStatus::combine('running', 0, NULL, 404, TRUE),
     );
   }
 

@@ -486,6 +486,7 @@ class SodaScsComponentListBuilder extends EntityListBuilder {
     $status = $payload['status'];
     $cssClass = match ($status) {
       SodaScsHealthStatus::RUNNING => 'health-running',
+      SodaScsHealthStatus::STARTING => 'health-starting',
       SodaScsHealthStatus::STOPPED => 'health-stopped',
       SodaScsHealthStatus::PROBLEM => 'health-problem',
       default => 'health-unknown',

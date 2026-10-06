@@ -1,6 +1,7 @@
 (function ($, Drupal, drupalSettings) {
   const HEALTH_SYMBOLS = {
     running: '●',
+    starting: '◔',
     stopped: '⏹',
     problem: '⚠',
     unknown: '○'
@@ -83,7 +84,7 @@
 
         function updateDetailsHealth(variant, text) {
           $detailsHealth
-            .removeClass('application__health-status--running application__health-status--stopped application__health-status--problem application__health-status--unknown')
+            .removeClass('application__health-status--running application__health-status--starting application__health-status--stopped application__health-status--problem application__health-status--unknown')
             .addClass('application__health-status--' + variant)
             .attr('data-entity-health', variant)
             .text(text);

@@ -42,10 +42,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - After deleting a stack (including force delete), redirect back to the
   related project page instead of the dashboard.
-- Application health is always one of **running**, **stopped**, **problem**,
-  or **unknown**. Container states, HTTP probes, and legacy labels (healthy,
-  starting, unavailable, …) are mapped onto that set in PHP; Twig and JS
-  only render those four.
+- Application health is always one of **running**, **starting**, **stopped**,
+  **problem**, or **unknown**. Container states, HTTP probes, and legacy
+  labels (healthy, unavailable, …) are mapped onto that set in PHP; Twig and
+  JS only render those five. **Starting** replaces **unknown** while a
+  container is booting (Docker health `starting`, restarting, or HTTP
+  502/503 from a running container); starting or restarting from the health
+  icon shows it immediately.
 - The **Add Application** popup lists JupyterHub and WebProtégé as well as
   WissKI, MariaDB, and triplestore, and loads the create form in the dialog
   instead of navigating away.

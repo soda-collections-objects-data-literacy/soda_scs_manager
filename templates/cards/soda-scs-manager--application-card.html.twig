@@ -1,11 +1,12 @@
 {{ entity_type|replace({'soda_scs_': ''}) }}
 
 {% set health_status = health_status|default('unknown')|lower %}
-{% if health_status not in ['running', 'stopped', 'problem', 'unknown'] %}
+{% if health_status not in ['running', 'starting', 'stopped', 'problem', 'unknown'] %}
 	{% set health_status = 'unknown' %}
 {% endif %}
 {% set health_labels = {
 	'running': 'Running'|t,
+	'starting': 'Starting'|t,
 	'stopped': 'Stopped'|t,
 	'problem': 'Problem'|t,
 	'unknown': 'Unknown'|t,

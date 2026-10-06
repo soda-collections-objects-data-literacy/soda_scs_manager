@@ -70,7 +70,7 @@
 <div class="application__details-right">
 	<section class="application__details-card application__details-card--health-status">
 		<h2 class="application__details-card-title h4">{{ 'Health status'|t }}</h2>
-		<p class="h2 application__health-status--{{ health_status }}" data-entity-health="{{ health_status }}">{{ {'running': 'Running'|t, 'stopped': 'Stopped'|t, 'problem': 'Problem'|t, 'unknown': 'Unknown'|t}[health_status] ?? 'Unknown'|t }}</p>
+		<p class="h2 application__health-status--{{ health_status }}" data-entity-health="{{ health_status }}">{{ {'running': 'Running'|t, 'starting': 'Starting'|t, 'stopped': 'Stopped'|t, 'problem': 'Problem'|t, 'unknown': 'Unknown'|t}[health_status] ?? 'Unknown'|t }}</p>
 	</section>
 
 	{% if elements.version or elements.automatedUpdates %}

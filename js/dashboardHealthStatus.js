@@ -91,6 +91,13 @@
           $banner.append($p1, $p2);
         }
 
+        function setBannerStarting() {
+          clearBanner();
+          var $p1 = $('<p class="soda-scs-manager--card-status-banner__primary"></p>').text(Drupal.t('Starting'));
+          var $p2 = $('<p class="soda-scs-manager--card-status-banner__secondary"></p>').text(Drupal.t('This application is starting. It will be available shortly.'));
+          $banner.append($p1, $p2);
+        }
+
         function setBannerStopped() {
           clearBanner();
           var $p1 = $('<p class="soda-scs-manager--card-status-banner__primary"></p>').text(Drupal.t('Stopped'));
@@ -122,7 +129,7 @@
           if (healthClass === 'running' || healthClass === 'stopped') {
             return healthClass;
           }
-          return healthClass === 'problem' || healthClass === 'unknown' ? healthClass : 'unknown';
+          return Drupal.sodaScsHealth.ALL.indexOf(healthClass) !== -1 ? healthClass : 'unknown';
         }
 
         function closeHealthActions() {
@@ -154,7 +161,7 @@
             return;
           }
           $healthChip
-            .removeClass('application__health-status--running application__health-status--stopped application__health-status--problem application__health-status--unknown')
+            .removeClass('application__health-status--running application__health-status--starting application__health-status--stopped application__health-status--problem application__health-status--unknown')
             .addClass('application__health-status--' + healthClass)
             .attr('data-health-status', healthClass)
             .attr('title', title);
@@ -191,6 +198,10 @@
           if (healthClass === 'stopped' || bannerKind === 'stopped') {
             setOverlayTone('soda-scs-manager--card--status-stopped');
             setBannerStopped();
+          }
+          else if (healthClass === 'starting' || bannerKind === 'starting') {
+            setOverlayTone('soda-scs-manager--card--status-starting');
+            setBannerStarting();
           }
           else if (healthClass === 'unknown' || bannerKind === 'unknown' || bannerKind === 'checking') {
             setOverlayTone('soda-scs-manager--card--status-unknown');
@@ -285,7 +296,7 @@
           $healthControl.addClass('is-busy');
           $healthControl.find('.soda-scs-manager--health-action').prop('disabled', true);
           if (action === 'start' || action === 'restart') {
-            updateHealthIcon('unknown', Drupal.t('Unknown'), 'unknown');
+            updateHealthIcon('starting', Drupal.t('Starting'), 'starting');
           }
           else {
             updateHealthIcon('stopped', Drupal.t('Stopped'), 'stopped');

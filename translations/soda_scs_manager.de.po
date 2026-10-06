@@ -3525,6 +3525,10 @@ msgstr "Container und Dienste werden eingerichtet. Das kann einige Minuten dauer
 msgid "This application is not running."
 msgstr "Diese Anwendung läuft derzeit nicht."
 
+#: js/dashboardHealthStatus.js
+msgid "This application is starting. It will be available shortly."
+msgstr "Diese Anwendung startet gerade und ist in Kürze verfügbar."
+
 #: js/dashboardHealthStatus.js templates/cards/soda-scs-manager--entity-card.html.twig
 msgid "Application offline"
 msgstr "Anwendung offline"

@@ -7,16 +7,18 @@ namespace Drupal\soda_scs_manager\Helpers;
 use Drupal\Core\StringTranslation\TranslatableMarkup;
 
 /**
- * Canonical application health: running, stopped, problem, unknown.
+ * Canonical application health: running, starting, stopped, problem, unknown.
  *
  * Maps Docker container states, HTTP probes, and legacy status strings onto
- * those four values so PHP, Twig, and JavaScript share one vocabulary.
+ * those five values so PHP, Twig, and JavaScript share one vocabulary.
  */
 final class SodaScsHealthStatus {
 
   public const PROBLEM = 'problem';
 
   public const RUNNING = 'running';
+
+  public const STARTING = 'starting';
 
   public const STOPPED = 'stopped';
 
@@ -29,6 +31,7 @@ final class SodaScsHealthStatus {
    */
   public const ALL = [
     self::RUNNING,
+    self::STARTING,
     self::STOPPED,
     self::PROBLEM,
     self::UNKNOWN,
@@ -109,12 +112,12 @@ final class SodaScsHealthStatus {
     return match ($normalized) {
       'running' => match ($dockerHealth) {
         'unhealthy' => self::PROBLEM,
-        'starting' => self::UNKNOWN,
+        'starting' => self::STARTING,
         default => self::RUNNING,
       },
       'created', 'paused', 'exited', 'removing' => self::STOPPED,
       'dead' => self::PROBLEM,
-      'restarting' => self::UNKNOWN,
+      'restarting' => self::STARTING,
       '' => self::UNKNOWN,
       default => self::UNKNOWN,
     };
@@ -134,6 +137,10 @@ final class SodaScsHealthStatus {
     }
     if ($code === 401 || $code === 403 || $code === 429) {
       return self::RUNNING;
+    }
+    // A running container whose reverse proxy has no upstream yet is booting.
+    if ($containerIsRunning && ($code === 502 || $code === 503)) {
+      return self::STARTING;
     }
     if ($code === 404 || $code === 502 || $code === 503) {
       return self::UNKNOWN;
@@ -157,13 +164,14 @@ final class SodaScsHealthStatus {
       'healthy', 'available', 'online', 'success', 'ok' => self::RUNNING,
       'paused', 'exited', 'created', 'removing' => self::STOPPED,
       'unhealthy', 'unavailable', 'error', 'failure', 'dead', 'offline', 'tls' => self::PROBLEM,
-      'starting', 'checking', 'not_found', 'not found', 'pending' => self::UNKNOWN,
+      'restarting' => self::STARTING,
+      'checking', 'not_found', 'not found', 'pending' => self::UNKNOWN,
       default => self::UNKNOWN,
     };
   }
 
   /**
-   * Whether the value is one of the four canonical statuses.
+   * Whether the value is one of the five canonical statuses.
    */
   public static function isCanonical(string $status): bool {
     return in_array($status, self::ALL, TRUE);
@@ -233,6 +241,7 @@ final class SodaScsHealthStatus {
   public static function translatableLabel(string $status): TranslatableMarkup {
     return match (self::fromStatus($status)) {
       self::RUNNING => new TranslatableMarkup('Running'),
+      self::STARTING => new TranslatableMarkup('Starting'),
       self::STOPPED => new TranslatableMarkup('Stopped'),
       self::PROBLEM => new TranslatableMarkup('Problem'),
       default => new TranslatableMarkup('Unknown'),

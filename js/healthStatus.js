@@ -1,9 +1,9 @@
 /**
  * @file
- * Canonical health statuses: running, stopped, problem, unknown.
+ * Canonical health statuses: running, starting, stopped, problem, unknown.
  */
 (function (Drupal) {
-  const ALL = ['running', 'stopped', 'problem', 'unknown'];
+  const ALL = ['running', 'starting', 'stopped', 'problem', 'unknown'];
 
   const ALIASES = {
     healthy: 'running',
@@ -22,7 +22,7 @@
     dead: 'problem',
     offline: 'problem',
     tls: 'problem',
-    starting: 'unknown',
+    restarting: 'starting',
     checking: 'unknown',
     not_found: 'unknown',
     pending: 'unknown',
@@ -47,6 +47,8 @@
     switch (fromStatus(status)) {
       case 'running':
         return Drupal.t('Running');
+      case 'starting':
+        return Drupal.t('Starting');
       case 'stopped':
         return Drupal.t('Stopped');
       case 'problem':
@@ -67,6 +69,7 @@
     ALL: ALL,
     PROBLEM: 'problem',
     RUNNING: 'running',
+    STARTING: 'starting',
     STOPPED: 'stopped',
     UNKNOWN: 'unknown',
     detail: detail,
