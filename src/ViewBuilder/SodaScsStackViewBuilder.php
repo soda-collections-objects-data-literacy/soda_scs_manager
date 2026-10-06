@@ -119,6 +119,9 @@ class SodaScsStackViewBuilder extends EntityViewBuilder {
           $build['includedComponentCards'][] = $this->applicationCardBuilder->buildComponentCard($component);
         }
       }
+      // The cards are rendered from the stored health field, which is only
+      // refreshed by polling; without this they stay on "Unknown".
+      $build['#attached']['library'][] = 'soda_scs_manager/dashboardHealthStatus';
     }
 
     // Disable caching.

@@ -72,6 +72,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- Application cards on a stack detail page (e.g. WissKI with database and
+  triplestore) stayed on **Unknown** because the health polling script was not
+  loaded there; they now show the live status.
 - Stack detail pages crashed with “Call to undefined method
   SodaScsStackViewBuilder::resolveDeleteDestination()”. The delete-destination
   helper that already existed on the component view builder is now also on
