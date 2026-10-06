@@ -560,6 +560,26 @@ soda_scs_manager.start_page:
   options:
     no_cache: TRUE
 
+soda_scs_manager.profile:
+  path: '/soda-scs-manager/profile'
+  defaults:
+    _controller: '\Drupal\soda_scs_manager\Controller\SodaScsProfileController::page'
+    _title: 'Profile'
+  requirements:
+    _permission: 'soda scs manager user'
+  options:
+    no_cache: TRUE
+
+soda_scs_manager.profile.delete:
+  path: '/soda-scs-manager/profile/delete'
+  defaults:
+    _form: '\Drupal\soda_scs_manager\Form\SodaScsProfileDeleteForm'
+    _title: 'Delete profile'
+  requirements:
+    _permission: 'soda scs manager user'
+  options:
+    no_cache: TRUE
+
 soda_scs_manager.messages:
   path: '/soda-scs-manager/messages'
   defaults:

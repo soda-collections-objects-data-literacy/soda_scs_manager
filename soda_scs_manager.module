@@ -1149,6 +1149,21 @@ function soda_scs_manager_theme($existing, $type, $theme, $path) {
       ],
       'template' => 'includes/soda-scs-manager--coworking-intro',
     ],
+    'soda_scs_manager__profile' => [
+      'variables' => [
+        'can_delete' => FALSE,
+        'delete_destination' => '',
+        'delete_url' => '',
+        'info_form' => NULL,
+        'initials' => '',
+        'language_form' => NULL,
+        'name' => '',
+        'picture' => NULL,
+        'picture_form' => NULL,
+        'security_form' => NULL,
+      ],
+      'template' => 'pages/soda-scs-manager--profile',
+    ],
     'soda_scs_manager__messages' => [
       'variables' => [
         'messages' => [],

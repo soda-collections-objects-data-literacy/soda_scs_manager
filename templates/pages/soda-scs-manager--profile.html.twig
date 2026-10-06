@@ -1,0 +1,78 @@
+{#
+/**
+ * @file
+ * Profile page of the current user.
+ *
+ * Available variables:
+ * - name: Display name.
+ * - initials: Initials shown when there is no picture.
+ * - picture: Rendered profile picture or NULL.
+ * - picture_form, info_form, security_form, language_form: Forms.
+ * - can_delete: Whether the profile may be deleted.
+ * - delete_url: Confirmation form URL for deleting the profile.
+ * - delete_destination: Where to go after the profile is deleted.
+ */
+#}
+
+<div class="profile--header">
+  <div class="profile__picture">
+    {% if picture %}
+      <div class="profile__picture-image">{{ picture }}</div>
+    {% else %}
+      <span class="profile__picture-initials" aria-hidden="true">{{ initials }}</span>
+    {% endif %}
+    <button type="button" class="profile__picture-edit-button btn--secondary btn--icon project-note-edit-trigger" aria-controls="profile-picture-edit" aria-expanded="false" aria-label="{{ 'Edit profile picture'|t }}"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16"><g><path fill="#4D5866" d="M14.545 3.042l-1.586-1.585c-.389-.389-1.025-.389-1.414 0l-1.293 1.293 3 3 1.293-1.293c.389-.389 1.026-1.415z"/><rect fill="#4D5866" x="5.129" y="3.8" transform="matrix(-.707 -.707 .707 -.707 6.189 20.064)" width="4.243" height="9.899"/><path fill="#4D5866" d="M.908 14.775c-.087.262.055.397.316.312l2.001-.667-1.65-1.646-.667 2.001z"/></g></svg></button>
+    <div id="profile-picture-edit" class="overlay overlay--small project-note-edit-overlay" role="dialog" aria-modal="true" aria-labelledby="profile-picture-edit-title" hidden>
+      <div class="overlay__backdrop" aria-hidden="true"></div>
+      <div class="overlay__dialog" role="document">
+        <button type="button" class="btn btn--secondary btn--icon overlay__close project-note-edit-overlay__close" aria-label="{{ 'Close'|t }}">
+          <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <line x1="14.8493" y1="14.8493" x2="4.94983" y2="4.94978" stroke="#17212B" stroke-width="2"/>
+            <line x1="4.94979" y1="14.8492" x2="14.8493" y2="4.94975" stroke="#17212B" stroke-width="2"/>
+          </svg>
+        </button>
+        <h2 id="profile-picture-edit-title">{{ 'Edit profile picture'|t }}</h2>
+        {{ picture_form }}
+      </div>
+    </div>
+  </div>
+  <h2 class="profile__name">{{ name }}</h2>
+</div>
+
+<div class="profile--left">
+  <section class="application__details-card profile__card profile__card--infos">
+    <h2 class="application__details-card-title h4">{{ 'Infos'|t }}</h2>
+    {{ info_form }}
+  </section>
+</div>
+
+<div class="profile--right">
+  <section class="application__details-card profile__card profile__card--security">
+    <h2 class="application__details-card-title h4">{{ 'Security'|t }}</h2>
+    {{ security_form }}
+  </section>
+
+  <section class="application__details-card profile__card profile__card--language">
+    <h2 class="application__details-card-title h4">{{ 'Language'|t }}</h2>
+    {{ language_form }}
+  </section>
+
+  {% if can_delete %}
+    <div class="application__details-delete">
+      <button type="button" class="application__details-delete-trigger btn" data-delete-destination="{{ delete_destination }}" aria-controls="profile-delete-confirmation" aria-expanded="false">
+        {{ 'Delete profile'|t }}
+      </button>
+      <div id="profile-delete-confirmation" class="application__details-delete-confirmation" role="dialog" aria-modal="true" aria-labelledby="profile-delete-title" hidden>
+        <div class="application__details-delete-confirmation__backdrop" aria-hidden="true"></div>
+        <div class="application__details-delete-confirmation__dialog" role="document">
+          <h3 id="profile-delete-title">{{ 'Delete profile?'|t }}</h3>
+          <p>{{ 'Do you really want to delete your profile? This action cannot be undone.'|t }}</p>
+          <div class="application__details-delete-confirmation__actions">
+            <button type="button" class="btn btn--secondary application__details-delete-confirmation__cancel">{{ 'Cancel'|t }}</button>
+            <a class="btn application__details-delete-confirmation__confirm" data-delete-destination="{{ delete_destination }}" href="{{ delete_url }}">{{ 'Delete profile'|t }}</a>
+          </div>
+        </div>
+      </div>
+    </div>
+  {% endif %}
+</div>

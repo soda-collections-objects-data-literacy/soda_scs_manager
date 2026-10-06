@@ -186,6 +186,62 @@ class SodaScsKeycloakHelpers {
   }
 
   /**
+   * Updates firstName, lastName and/or email of a Keycloak user.
+   *
+   * Fetches the full representation first because PUT replaces the user.
+   *
+   * @param string $keycloakUserId
+   *   The Keycloak user ID (OIDC sub claim).
+   * @param array $fields
+   *   Any of firstName, lastName, email.
+   *
+   * @return bool
+   *   TRUE on success, FALSE on failure.
+   */
+  public function updateKeycloakUserProfile(string $keycloakUserId, array $fields): bool {
+    $user = $this->getKeycloakUserById($keycloakUserId);
+    if ($user === NULL) {
+      return FALSE;
+    }
+    $allowed = array_intersect_key($fields, array_flip(['firstName', 'lastName', 'email']));
+
+    $request = $this->sodaScsKeycloakServiceUserActions->buildUpdateRequest([
+      'type' => 'updateUser',
+      'routeParams' => ['userId' => $keycloakUserId],
+      'body' => array_merge($user, $allowed),
+      'token' => $this->getKeycloakToken(),
+    ]);
+    $response = $this->sodaScsKeycloakServiceUserActions->makeRequest($request);
+    return $response['success'];
+  }
+
+  /**
+   * Sets a new, non-temporary password for a Keycloak user.
+   *
+   * @param string $keycloakUserId
+   *   The Keycloak user ID (OIDC sub claim).
+   * @param string $password
+   *   The new password.
+   *
+   * @return bool
+   *   TRUE on success, FALSE on failure (e.g. password policy violation).
+   */
+  public function resetKeycloakUserPassword(string $keycloakUserId, string $password): bool {
+    $request = $this->sodaScsKeycloakServiceUserActions->buildUpdateRequest([
+      'type' => 'resetPassword',
+      'routeParams' => ['userId' => $keycloakUserId],
+      'body' => [
+        'type' => 'password',
+        'value' => $password,
+        'temporary' => FALSE,
+      ],
+      'token' => $this->getKeycloakToken(),
+    ]);
+    $response = $this->sodaScsKeycloakServiceUserActions->makeRequest($request);
+    return $response['success'];
+  }
+
+  /**
    * Removes Keycloak user attributes (merges with existing user representation).
    *
    * @param string $keycloakUserId

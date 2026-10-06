@@ -4092,3 +4092,115 @@ msgstr "Die Notizen wurden gespeichert."
 msgid "You are not allowed to edit this application."
 msgstr "Sie dürfen diese Anwendung nicht bearbeiten."
 
+
+#: templates/pages/soda-scs-manager--profile.html.twig
+msgid "Profile"
+msgstr "Profil"
+
+#: templates/pages/soda-scs-manager--profile.html.twig
+msgid "Infos"
+msgstr "Informationen"
+
+#: templates/pages/soda-scs-manager--profile.html.twig
+msgid "Security"
+msgstr "Sicherheit"
+
+#: src/Form/SodaScsProfileLanguageForm.php
+msgid "Language"
+msgstr "Sprache"
+
+#: templates/pages/soda-scs-manager--profile.html.twig
+msgid "Edit profile picture"
+msgstr "Profilbild bearbeiten"
+
+#: templates/pages/soda-scs-manager--profile.html.twig
+msgid "Delete profile"
+msgstr "Profil löschen"
+
+#: templates/pages/soda-scs-manager--profile.html.twig
+msgid "Delete profile?"
+msgstr "Profil löschen?"
+
+#: templates/pages/soda-scs-manager--profile.html.twig
+msgid "Do you really want to delete your profile? This action cannot be undone."
+msgstr "Möchten Sie Ihr Profil wirklich löschen? Diese Aktion kann nicht rückgängig gemacht werden."
+
+#: src/Form/SodaScsProfilePictureForm.php
+msgid "Profile picture"
+msgstr "Profilbild"
+
+#: src/Form/SodaScsProfilePictureForm.php
+msgid "Save picture"
+msgstr "Bild speichern"
+
+#: src/Form/SodaScsProfilePictureForm.php
+msgid "Remove picture"
+msgstr "Bild entfernen"
+
+#: src/Form/SodaScsProfilePictureForm.php
+msgid "Please choose a picture to upload."
+msgstr "Bitte wählen Sie ein Bild zum Hochladen aus."
+
+#: src/Form/SodaScsProfilePictureForm.php
+msgid "Your profile picture has been saved."
+msgstr "Ihr Profilbild wurde gespeichert."
+
+#: src/Form/SodaScsProfilePictureForm.php
+msgid "Your profile picture has been removed."
+msgstr "Ihr Profilbild wurde entfernt."
+
+#: src/Form/SodaScsProfileInfoForm.php
+msgid "Email"
+msgstr "E-Mail"
+
+#: src/Form/SodaScsProfileInfoForm.php
+msgid "This email address is already in use."
+msgstr "Diese E-Mail-Adresse wird bereits verwendet."
+
+#: src/Form/SodaScsProfileInfoForm.php
+msgid "Your changes were saved here, but could not be synchronised with the login service."
+msgstr "Ihre Änderungen wurden hier gespeichert, konnten aber nicht mit dem Login-Dienst synchronisiert werden."
+
+#: src/Form/SodaScsProfileInfoForm.php
+msgid "Your profile has been saved."
+msgstr "Ihr Profil wurde gespeichert."
+
+#: src/Form/SodaScsProfileSecurityForm.php
+msgid "New password"
+msgstr "Neues Passwort"
+
+#: src/Form/SodaScsProfileSecurityForm.php
+msgid "Change password"
+msgstr "Passwort ändern"
+
+#: src/Form/SodaScsProfileSecurityForm.php
+msgid "The password must be at least @count characters long."
+msgstr "Das Passwort muss mindestens @count Zeichen lang sein."
+
+#: src/Form/SodaScsProfileSecurityForm.php
+msgid "The password could not be changed. It may not meet the password policy."
+msgstr "Das Passwort konnte nicht geändert werden. Möglicherweise erfüllt es die Passwortrichtlinie nicht."
+
+#: src/Form/SodaScsProfileSecurityForm.php
+msgid "Your password has been changed."
+msgstr "Ihr Passwort wurde geändert."
+
+#: src/Form/SodaScsProfileLanguageForm.php
+msgid "Your language has been saved."
+msgstr "Ihre Sprache wurde gespeichert."
+
+#: src/Form/SodaScsProfileDeleteForm.php
+msgid "Do you really want to delete your profile?"
+msgstr "Möchten Sie Ihr Profil wirklich löschen?"
+
+#: src/Form/SodaScsProfileDeleteForm.php
+msgid "This deletes your account, including your login. This action cannot be undone."
+msgstr "Dadurch wird Ihr Konto einschließlich Ihres Logins gelöscht. Diese Aktion kann nicht rückgängig gemacht werden."
+
+#: src/Form/SodaScsProfileDeleteForm.php
+msgid "This profile cannot be deleted."
+msgstr "Dieses Profil kann nicht gelöscht werden."
+
+#: src/Form/SodaScsProfileDeleteForm.php
+msgid "Your profile has been deleted."
+msgstr "Ihr Profil wurde gelöscht."

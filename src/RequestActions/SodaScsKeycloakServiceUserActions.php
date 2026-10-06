@@ -418,6 +418,11 @@ class SodaScsKeycloakServiceUserActions implements SodaScsServiceRequestInterfac
         $success = TRUE;
         break;
 
+      case 'resetPassword':
+        $route .= $keycloakUsersSettings['updateUrl'] . '/reset-password';
+        $success = TRUE;
+        break;
+
       default:
         $success = FALSE;
         break;
