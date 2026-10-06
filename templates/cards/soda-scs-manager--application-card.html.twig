@@ -11,6 +11,13 @@
 	'unknown': 'Unknown'|t,
 } %}
 {% set health_label = health_labels[health_status] %}
+{% set type_titles = {
+	'JupyterHub Environment': 'Data Enrichment'|t,
+	'WebProtégé': 'Ontology Management'|t,
+	'WissKI Environment': 'Data Management'|t,
+	'Database': 'Database'|t,
+} %}
+{% set type_title = type_titles[bundle_label|default('')|trim] ?? bundle_label ?? title %}
 
 	<div class="application--card"{% if entity_id %} data-entity-id="{{ entity_id }}"{% endif %}{% if entity_type_id %} data-entity-type="{{ entity_type_id }}"{% endif %} data-health-status="{{ health_status }}">
 		<div class="application__meta">
@@ -31,7 +38,7 @@
 	</div>
 
 	<a href="{{ url }}" class="application__core" aria-label="{{ 'Open @title'|t({'@title': title}) }}">
-		<h2 class="application__title h1">Ontology Management</h2>
+		<h2 class="application__title h1">{{ type_title }}</h2>
 		<div class="application__icons-and-arrow">
 			<div class="application__icons">
 				{% if icon %}
