@@ -12,12 +12,13 @@
 } %}
 {% set health_label = health_labels[health_status] %}
 {% set type_titles = {
-	'JupyterHub Environment': 'Data Enrichment'|t,
-	'WebProtégé': 'Ontology Management'|t,
-	'WissKI Environment': 'Data Management'|t,
-	'Database': 'Database'|t,
+	'soda_scs_jupyter_stack': 'Data Enrichment'|t,
+	'soda_scs_webprotege_component': 'Ontology Management'|t,
+	'soda_scs_wisski_stack': 'Data Management'|t,
+	'soda_scs_wisski_component': 'Data Management'|t,
+	'soda_scs_sql_component': 'Database'|t,
 } %}
-{% set type_title = type_titles[bundle_label|default('')|trim] ?? bundle_label ?? title %}
+{% set type_title = type_titles[bundle_id|default('')] ?? bundle_label ?? title %}
 
 	<div class="application--card"{% if entity_id %} data-entity-id="{{ entity_id }}"{% endif %}{% if entity_type_id %} data-entity-type="{{ entity_type_id }}"{% endif %} data-health-status="{{ health_status }}">
 		<div class="application__meta">

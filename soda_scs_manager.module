@@ -1039,6 +1039,7 @@ function soda_scs_manager_theme($existing, $type, $theme, $path) {
         'tags' => NULL,
         'title' => NULL,
         'bundle_label' => NULL,
+        'bundle_id' => NULL,
         'url' => NULL,
         'activities' => NULL,
         'feed_status' => NULL,

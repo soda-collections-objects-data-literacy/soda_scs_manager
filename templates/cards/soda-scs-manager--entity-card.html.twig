@@ -12,28 +12,28 @@
 } %}
 {% set health_label = health_labels[health_status] %}
 
-{% if bundle_label == "JupyterHub Environment" %}
+{% if bundle_id == "soda_scs_jupyter_stack" %}
     {% set application_type = "jupyterhub" %}
 	{% set application_icons = [] %}
     {% set card_type = "single" %}
     {% set application_description = "Data Enrichment" %}
 
-{% elseif bundle_label == "Nextcloud Environment" %}
+{% elseif bundle_id == "soda_scs_nextcloud_stack" %}
     {% set application_type = "nextcloud" %}
 
-{% elseif bundle_label == "WebProtégé" %}
+{% elseif bundle_id == "soda_scs_webprotege_component" %}
     {% set application_type = "webprotege" %}
 	{% set application_icons = [directory ~ "/assets/img/protege.svg"] %}
     {% set card_type = "single" %}
     {% set application_description = "Ontology Management" %}
 
-{% elseif bundle_label == "WissKI Environment" %}
+{% elseif bundle_id in ["soda_scs_wisski_stack", "soda_scs_wisski_component"] %}
     {% set application_type = "wisski" %}
 	{% set application_icons = [directory ~ "/assets/img/onlyoffice.svg", directory ~ "/assets/img/openrefine.svg", directory ~ "/assets/img/diagramsnet.svg"] %}
     {% set card_type = "multiple" %}
     {% set application_description = "Data Management" %}
 
-{% elseif bundle_label == "Database" %}
+{% elseif bundle_id == "soda_scs_sql_component" %}
     {% set application_type = "db" %}
 	{% set application_icons = [] %}
     {% set card_type = "single" %}
@@ -43,7 +43,7 @@
     {% set application_type = "" %}
     {% set application_icons = [] %}
     {% set card_type = "single" %}
-    {% set application_description = "" %}
+    {% set application_description = bundle_label %}
 
 {% endif %}
 
