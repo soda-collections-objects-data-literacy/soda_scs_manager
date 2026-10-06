@@ -4208,3 +4208,7 @@ msgstr "Dieses Profil kann nicht gelöscht werden."
 #: src/Form/SodaScsProfileDeleteForm.php
 msgid "Your profile has been deleted."
 msgstr "Ihr Profil wurde gelöscht."
+
+#: templates/pages/soda-scs-manager--profile.html.twig
+msgid "Upload picture"
+msgstr "Bild hochladen"

@@ -4,7 +4,9 @@ declare(strict_types=1);
 
 namespace Drupal\soda_scs_manager\Form;
 
+use Drupal\Component\Utility\Html;
 use Drupal\Core\Form\FormStateInterface;
+use Drupal\Core\Render\Markup;
 use Drupal\soda_scs_manager\Validation\PersonalNameValidator;
 
 /**
@@ -26,10 +28,9 @@ final class SodaScsProfileInfoForm extends SodaScsProfileFormBase {
     $user = $this->loadUser();
 
     $form['username'] = [
-      '#type' => 'textfield',
+      '#type' => 'item',
       '#title' => $this->t('Username'),
-      '#default_value' => $user->getAccountName(),
-      '#disabled' => TRUE,
+      '#markup' => Markup::create('<p class="profile__username">' . Html::escape($user->getAccountName()) . '</p>'),
     ];
     $form['mail'] = [
       '#type' => 'email',

@@ -40,6 +40,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- Profile page: the username is shown as plain text instead of a disabled
+  field, the picture dialog opens from an **Upload picture** button, and the
+  duplicate name heading under the picture is gone.
 - After deleting a stack (including force delete), redirect back to the
   related project page instead of the dashboard.
 - Application health is always one of **running**, **starting**, **stopped**,

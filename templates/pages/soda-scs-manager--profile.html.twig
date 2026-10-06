@@ -21,7 +21,7 @@
     {% else %}
       <span class="profile__picture-initials" aria-hidden="true">{{ initials }}</span>
     {% endif %}
-    <button type="button" class="profile__picture-edit-button btn--secondary btn--icon project-note-edit-trigger" aria-controls="profile-picture-edit" aria-expanded="false" aria-label="{{ 'Edit profile picture'|t }}"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16"><g><path fill="#4D5866" d="M14.545 3.042l-1.586-1.585c-.389-.389-1.025-.389-1.414 0l-1.293 1.293 3 3 1.293-1.293c.389-.389 1.026-1.415z"/><rect fill="#4D5866" x="5.129" y="3.8" transform="matrix(-.707 -.707 .707 -.707 6.189 20.064)" width="4.243" height="9.899"/><path fill="#4D5866" d="M.908 14.775c-.087.262.055.397.316.312l2.001-.667-1.65-1.646-.667 2.001z"/></g></svg></button>
+    <button type="button" class="profile__picture-edit-button btn btn--secondary project-note-edit-trigger" aria-controls="profile-picture-edit" aria-expanded="false"><svg width="14" height="13" viewBox="0 0 14 13" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M1 11.5H13V9.5H14V12.5H0V9.5H1V11.5Z" fill="#17212B"/><path d="M7.35355 0.146446C7.15829 -0.0488157 6.84171 -0.0488157 6.64645 0.146446L3.46447 3.32843C3.2692 3.52369 3.2692 3.84027 3.46447 4.03553C3.65973 4.2308 3.97631 4.2308 4.17157 4.03553L7 1.20711L9.82843 4.03553C10.0237 4.2308 10.3403 4.2308 10.5355 4.03553C10.7308 3.84027 10.7308 3.52369 10.5355 3.32843L7.35355 0.146446ZM7 8.5H7.5V0.5H7H6.5L6.5 8.5H7Z" fill="#17212B"/></svg>{{ 'Upload picture'|t }}</button>
     <div id="profile-picture-edit" class="overlay overlay--small project-note-edit-overlay" role="dialog" aria-modal="true" aria-labelledby="profile-picture-edit-title" hidden>
       <div class="overlay__backdrop" aria-hidden="true"></div>
       <div class="overlay__dialog" role="document">
@@ -31,12 +31,11 @@
             <line x1="4.94979" y1="14.8492" x2="14.8493" y2="4.94975" stroke="#17212B" stroke-width="2"/>
           </svg>
         </button>
-        <h2 id="profile-picture-edit-title">{{ 'Edit profile picture'|t }}</h2>
+        <h2 id="profile-picture-edit-title">{{ 'Upload picture'|t }}</h2>
         {{ picture_form }}
       </div>
     </div>
   </div>
-  <h2 class="profile__name">{{ name }}</h2>
 </div>
 
 <div class="profile--left">
