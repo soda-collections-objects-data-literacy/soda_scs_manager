@@ -3914,6 +3914,10 @@ msgid "You have been invited to the project @project"
 msgstr "Sie wurden in das Projekt @project eingeladen"
 
 #: src/MessageType/SodaScsProjectInvitationMessageType.php
+msgid "@sender invited you to join the Project <strong>@project</strong>"
+msgstr "@sender hat Sie eingeladen, dem Projekt <strong>@project</strong> beizutreten"
+
+#: src/MessageType/SodaScsProjectInvitationMessageType.php
 msgid "You have been invited to a project"
 msgstr "Sie wurden in ein Projekt eingeladen"
 
@@ -4071,4 +4075,20 @@ msgstr "Datenbank"
 #: templates/cards/soda-scs-manager--add-application-popup.html.twig
 msgid "← Back"
 msgstr "← Zurück"
+
+#: templates/entity/soda-scs-entity.html.twig
+msgid "Edit notes"
+msgstr "Notizen bearbeiten"
+
+#: src/Form/SodaScsEntityNoteForm.php
+msgid "Save notes"
+msgstr "Notizen speichern"
+
+#: src/Form/SodaScsEntityNoteForm.php
+msgid "Notes have been saved."
+msgstr "Die Notizen wurden gespeichert."
+
+#: src/Form/SodaScsEntityNoteForm.php
+msgid "You are not allowed to edit this application."
+msgstr "Sie dürfen diese Anwendung nicht bearbeiten."
 

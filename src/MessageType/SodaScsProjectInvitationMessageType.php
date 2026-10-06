@@ -42,7 +42,7 @@ final class SodaScsProjectInvitationMessageType implements SodaScsMessageTypeInt
       return [
         'delete' => [
           'title' => $this->t('Delete'),
-          'classes' => ['button', 'button--danger'],
+          'classes' => ['btn', 'btn--secondary'],
         ],
       ];
     }
@@ -51,11 +51,11 @@ final class SodaScsProjectInvitationMessageType implements SodaScsMessageTypeInt
       return [
         'accept' => [
           'title' => $this->t('Accept'),
-          'classes' => ['button', 'button--primary'],
+          'classes' => ['btn', 'btn--primary'],
         ],
         'decline' => [
           'title' => $this->t('Decline'),
-          'classes' => ['button'],
+          'classes' => ['btn', 'btn--secondary'],
         ],
       ];
     }
@@ -63,7 +63,7 @@ final class SodaScsProjectInvitationMessageType implements SodaScsMessageTypeInt
     return [
       'delete' => [
         'title' => $this->t('Delete'),
-        'classes' => ['button', 'button--danger'],
+        'classes' => ['btn', 'btn--secondary'],
       ],
     ];
   }
@@ -137,7 +137,8 @@ final class SodaScsProjectInvitationMessageType implements SodaScsMessageTypeInt
     $membership = $this->loadMembership($message);
     $project = $membership?->getProject();
     if ($project !== NULL) {
-      return (string) $this->t('You have been invited to the project @project', [
+      return (string) $this->t('@sender invited you to join the Project <strong>@project</strong>', [
+        '@sender' => $message->getSender()?->getDisplayName() ?? (string) $this->t('Unknown sender'),
         '@project' => $project->label(),
       ]);
     }
@@ -183,12 +184,19 @@ final class SodaScsProjectInvitationMessageType implements SodaScsMessageTypeInt
     }
 
     $result = $this->membershipHelpers->approveRequest($membership, $actor);
-    if ($result->success) {
-      $message->setRead(TRUE);
-      $message->save();
-      $this->jupyterHelpers->warnRestartNotebookForProjectMounts($this->messenger);
+    if (!$result->success) {
+      return $result;
     }
-    return $result;
+
+    $project = $membership->getProject();
+    $redirect = $project !== NULL ? ['redirect_url' => $project->toUrl()] : [];
+    $message->delete();
+    $this->jupyterHelpers->warnRestartNotebookForProjectMounts($this->messenger);
+
+    return SodaScsResult::success(
+      data: array_merge($result->data ?? [], $redirect),
+      message: $result->message,
+    );
   }
 
   /**
@@ -206,8 +214,7 @@ final class SodaScsProjectInvitationMessageType implements SodaScsMessageTypeInt
 
     $result = $this->membershipHelpers->rejectRequest($membership, $actor);
     if ($result->success) {
-      $message->setRead(TRUE);
-      $message->save();
+      $message->delete();
     }
     return $result;
   }

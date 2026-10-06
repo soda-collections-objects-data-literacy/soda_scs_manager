@@ -9,6 +9,7 @@ use Drupal\Core\Form\FormBase;
 use Drupal\Core\Form\FormStateInterface;
 use Drupal\Core\Messenger\MessengerInterface;
 use Drupal\Core\Session\AccountProxyInterface;
+use Drupal\Core\Url;
 use Drupal\soda_scs_manager\Entity\SodaScsMessageInterface;
 use Drupal\soda_scs_manager\MessageType\SodaScsMessageTypeManager;
 use Drupal\user\UserInterface;
@@ -65,13 +66,14 @@ final class SodaScsMessageActionForm extends FormBase {
   /**
    * {@inheritdoc}
    */
-  public function buildForm(array $form, FormStateInterface $form_state, SodaScsMessageInterface|null $soda_scs_message = NULL): array {
+  public function buildForm(array $form, FormStateInterface $form_state, SodaScsMessageInterface|null $soda_scs_message = NULL, bool $redirect_to_inbox = FALSE): array {
     $this->message = $soda_scs_message;
     if ($this->message === NULL) {
       return $form;
     }
 
     $form_state->set('soda_scs_message_id', $this->message->id());
+    $form_state->set('redirect_to_inbox', $redirect_to_inbox);
     $form['#attributes']['class'][] = 'scs-manager--message-actions';
 
     $actions = $this->messageTypeManager->resolve($this->message)->buildActions($this->message);
@@ -82,12 +84,7 @@ final class SodaScsMessageActionForm extends FormBase {
     $form['actions'] = [
       '#type' => 'container',
       '#attributes' => [
-        'class' => [
-          'scs-manager--message-actions-row',
-          'flex',
-          'flex-wrap',
-          'gap-3',
-        ],
+        'class' => ['scs-manager--message-actions-row'],
       ],
     ];
 
@@ -156,7 +153,14 @@ final class SodaScsMessageActionForm extends FormBase {
       $this->messenger->addError($result->message);
     }
 
-    if ($action === 'delete' && $result->success) {
+    $redirectUrl = $result->success ? ($result->data['redirect_url'] ?? NULL) : NULL;
+    if ($redirectUrl instanceof Url) {
+      $form_state->setRedirectUrl($redirectUrl);
+      return;
+    }
+
+    $messageStillExists = $this->entityTypeManager->getStorage('soda_scs_message')->load($message->id()) !== NULL;
+    if (!$messageStillExists || $form_state->get('redirect_to_inbox')) {
       $form_state->setRedirect('soda_scs_manager.messages');
       return;
     }

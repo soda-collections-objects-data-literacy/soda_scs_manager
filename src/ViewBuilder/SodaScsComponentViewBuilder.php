@@ -9,11 +9,14 @@ use Drupal\Core\Entity\EntityInterface;
 use Drupal\Core\Entity\EntityRepositoryInterface;
 use Drupal\Core\Entity\EntityDisplayRepositoryInterface;
 use Drupal\Core\Entity\EntityTypeInterface;
+use Drupal\Core\Form\FormBuilderInterface;
 use Drupal\Core\Language\LanguageManagerInterface;
 use Drupal\Core\Theme\Registry;
 use Drupal\Core\TypedData\Exception\MissingDataException;
 use Drupal\Core\Url;
 use Drupal\soda_scs_manager\Access\SodaScsComponentLinksTasksAccessControlHandler;
+use Drupal\soda_scs_manager\Form\SodaScsEntityNoteForm;
+use Drupal\soda_scs_manager\Helpers\SodaScsHealthStatus;
 use Drupal\soda_scs_manager\Helpers\SodaScsServiceHelpers;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 
@@ -67,6 +70,7 @@ class SodaScsComponentViewBuilder extends EntityViewBuilder {
     Registry $theme_registry,
     EntityTypeInterface $entity_type,
     SodaScsServiceHelpers $soda_scs_service_helpers,
+    protected FormBuilderInterface $formBuilder,
   ) {
     $this->entityTypeId = $entity_type->id();
     $this->entityType = $entity_type;
@@ -93,6 +97,7 @@ class SodaScsComponentViewBuilder extends EntityViewBuilder {
       $container->get('theme.registry'),
       $entity_type,
       $container->get('soda_scs_manager.service.helpers'),
+      $container->get('form_builder'),
     );
   }
 
@@ -116,7 +121,9 @@ class SodaScsComponentViewBuilder extends EntityViewBuilder {
     $entity = $build['#soda_scs_component'];
     $build['#attached']['drupalSettings']['entityInfo']['healthUrl'] = $componentHealthUrl;
     $build['#attached']['drupalSettings']['entityInfo']['bundle'] = $entity->bundle();
-    $build['#health_status'] = (string) ($entity->get('health')->value ?? 'unknown');
+    $build['#health_status'] = SodaScsHealthStatus::fromStatus((string) ($entity->get('health')->value ?? ''));
+    $build['#note_edit_form'] = $entity->access('update') ? $this->formBuilder->getForm(SodaScsEntityNoteForm::class, $entity) : NULL;
+    $build['#attached']['library'][] = 'scs_custom_theme/global-scripts';
     // Match the delete-form route's own access check (some bundles, e.g.
     // WebProtégé, are excluded there even though generic entity delete
     // access would otherwise allow it).

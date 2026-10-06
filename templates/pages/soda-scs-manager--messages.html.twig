@@ -4,22 +4,29 @@
  * Inbox list of in-app messages.
  *
  * Available variables:
- * - messages: list of {id, is_unread, sender, subject, date, url}.
+ * - messages: list of {id, is_unread, sender, subject, date, url, actions}.
  */
 #}
 
-<div class="scs-manager--messages mx-auto max-w-4xl">
+<div class="scs-manager--messages">
   {% if messages is empty %}
-    <p class="text-stone-400 text-center py-8">{{ 'You have no messages.'|t }}</p>
+    <p class="scs-manager--messages-empty">{{ 'You have no messages.'|t }}</p>
   {% else %}
-    <ul class="scs-manager--messages-list divide-y divide-stone-200 border border-stone-200 rounded-lg bg-white overflow-hidden p-0 m-0 list-none">
+    <ul class="scs-manager--messages-list">
       {% for item in messages %}
-        <li class="scs-manager--messages-row {{ item.is_unread ? 'scs-manager--messages-row--unread bg-orange-50' : 'bg-white' }}">
-          <a href="{{ item.url }}" class="flex flex-col gap-1 px-4 py-3 no-underline text-stone-800 hover:bg-orange-50/80 sm:flex-row sm:items-baseline sm:gap-6 {{ item.is_unread ? 'font-semibold' : '' }}">
-            <span class="scs-manager--messages-sender sm:w-48 shrink-0 truncate">{{ item.sender }}</span>
-            <span class="scs-manager--messages-subject grow">{{ item.subject }}</span>
-            <time class="scs-manager--messages-date sm:w-40 shrink-0 text-sm text-stone-500 sm:text-right">{{ item.date }}</time>
-          </a>
+        <li class="scs-manager--messages-row{{ item.is_unread ? ' scs-manager--messages-row--unread' : '' }}">
+          <div class="scs-manager--messages-item">
+            <span class="scs-manager--messages-sender" title="{{ item.sender }}" aria-label="{{ item.sender }}">
+              {% if item.sender_picture %}
+                {{ item.sender_picture }}
+              {% else %}
+                <span class="scs-manager--messages-initials" aria-hidden="true">{{ item.sender_initials }}</span>
+              {% endif %}
+            </span>
+            <span class="scs-manager--messages-subject">{{ item.subject }}</span>
+            <time class="scs-manager--messages-date">{{ item.date }}</time>
+            <div class="scs-manager--messages-actions">{{ item.actions }}</div>
+          </div>
         </li>
       {% endfor %}
     </ul>

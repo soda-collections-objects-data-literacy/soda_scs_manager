@@ -27,7 +27,7 @@ final class SodaScsGenericMessageType implements SodaScsMessageTypeInterface {
     return [
       'delete' => [
         'title' => $this->t('Delete'),
-        'classes' => ['button', 'button--danger'],
+        'classes' => ['btn', 'btn--secondary'],
       ],
     ];
   }

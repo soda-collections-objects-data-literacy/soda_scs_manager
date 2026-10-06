@@ -10,12 +10,15 @@ use Drupal\Core\Entity\EntityRepositoryInterface;
 use Drupal\Core\Entity\EntityTypeInterface;
 use Drupal\Core\Entity\EntityTypeManagerInterface;
 use Drupal\Core\Entity\EntityViewBuilder;
+use Drupal\Core\Form\FormBuilderInterface;
 use Drupal\Core\Language\LanguageManagerInterface;
 use Drupal\Core\Session\AccountProxyInterface;
 use Drupal\Core\Theme\Registry;
 use Drupal\Core\TypedData\Exception\MissingDataException;
 use Drupal\Core\Url;
 use Drupal\soda_scs_manager\Access\SodaScsStackLinksTasksAccessControlHandler;
+use Drupal\soda_scs_manager\Form\SodaScsEntityNoteForm;
+use Drupal\soda_scs_manager\Helpers\SodaScsHealthStatus;
 use Drupal\soda_scs_manager\Helpers\SodaScsServiceHelpers;
 use Drupal\soda_scs_manager\Service\SodaScsApplicationCardBuilder;
 use Drupal\soda_scs_manager\Service\SodaScsNextcloudPreview;
@@ -42,6 +45,7 @@ class SodaScsStackViewBuilder extends EntityViewBuilder {
     protected AccountProxyInterface $currentUser,
     protected EntityTypeManagerInterface $entityTypeManager,
     protected SodaScsApplicationCardBuilder $applicationCardBuilder,
+    protected FormBuilderInterface $formBuilder,
   ) {
     parent::__construct($entity_type, $entity_repository, $language_manager, $theme_registry, $entity_display_repository);
   }
@@ -61,6 +65,7 @@ class SodaScsStackViewBuilder extends EntityViewBuilder {
       $container->get('current_user'),
       $container->get('entity_type.manager'),
       $container->get('soda_scs_manager.application_card_builder'),
+      $container->get('form_builder'),
     );
   }
 
@@ -81,7 +86,9 @@ class SodaScsStackViewBuilder extends EntityViewBuilder {
     $build['#attached']['drupalSettings']['entityInfo']['healthUrl'] = $stackHealthUrl;
     $build['#attached']['drupalSettings']['entityInfo']['bundle'] = $build['#soda_scs_stack']->bundle();
     $entity = $build['#soda_scs_stack'];
-    $build['#health_status'] = (string) ($entity->get('health')->value ?? 'unknown');
+    $build['#health_status'] = SodaScsHealthStatus::fromStatus((string) ($entity->get('health')->value ?? ''));
+    $build['#note_edit_form'] = $entity->access('update') ? $this->formBuilder->getForm(SodaScsEntityNoteForm::class, $entity) : NULL;
+    $build['#attached']['library'][] = 'scs_custom_theme/global-scripts';
     // Match the delete-form route's own access check (some bundles are
     // excluded there even though generic entity delete access would allow it).
     $build['#delete_access'] = SodaScsStackLinksTasksAccessControlHandler::accessDeleteForm($entity)->isAllowed();

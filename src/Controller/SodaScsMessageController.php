@@ -7,6 +7,8 @@ namespace Drupal\soda_scs_manager\Controller;
 use Drupal\Core\Controller\ControllerBase;
 use Drupal\Core\Datetime\DateFormatterInterface;
 use Drupal\Core\Form\FormBuilderInterface;
+use Drupal\Core\Render\Markup;
+use Drupal\Component\Utility\Xss;
 use Drupal\Core\Url;
 use Drupal\soda_scs_manager\Entity\SodaScsMessageInterface;
 use Drupal\soda_scs_manager\Form\SodaScsMessageActionForm;
@@ -50,13 +52,20 @@ final class SodaScsMessageController extends ControllerBase {
 
     foreach ($messages as $message) {
       $type = $this->messageTypeManager->resolve($message);
+      $sender = $message->getSender();
+      $senderName = $this->messageHelpers->resolveSenderName($message);
       $rows[] = [
         'id' => $message->id(),
         'is_unread' => !$message->isRead(),
-        'sender' => $this->messageHelpers->resolveSenderName($message),
-        'subject' => $type->buildSubject($message),
+        'sender' => $senderName,
+        'sender_initials' => mb_strtoupper(mb_substr($senderName, 0, 1)),
+        'sender_picture' => $sender !== NULL && $sender->hasField('user_picture') && !$sender->get('user_picture')->isEmpty()
+          ? $sender->get('user_picture')->view(['label' => 'hidden'])
+          : NULL,
+        'subject' => $this->subjectMarkup($type->buildSubject($message)),
         'date' => $this->dateFormatter->format($message->getCreatedTime(), 'short'),
         'url' => $message->toUrl()->toString(),
+        'actions' => $this->formBuilder->getForm(SodaScsMessageActionForm::class, $message, TRUE),
       ];
     }
 
@@ -92,7 +101,7 @@ final class SodaScsMessageController extends ControllerBase {
 
     return [
       '#theme' => 'soda_scs_manager__message',
-      '#subject' => $type->buildSubject($soda_scs_message),
+      '#subject' => $this->subjectMarkup($type->buildSubject($soda_scs_message)),
       '#sender' => $this->messageHelpers->resolveSenderName($soda_scs_message),
       '#date' => $this->dateFormatter->format($soda_scs_message->getCreatedTime(), 'short'),
       '#body' => $type->buildBody($soda_scs_message),
@@ -111,7 +120,14 @@ final class SodaScsMessageController extends ControllerBase {
    * Page title for a single message.
    */
   public function viewTitle(SodaScsMessageInterface $soda_scs_message): string {
-    return $this->messageTypeManager->resolve($soda_scs_message)->buildSubject($soda_scs_message);
+    return strip_tags($this->messageTypeManager->resolve($soda_scs_message)->buildSubject($soda_scs_message));
+  }
+
+  /**
+   * Allows only <strong> in a subject; placeholder values are already escaped.
+   */
+  private function subjectMarkup(string $subject): Markup {
+    return Markup::create(Xss::filter($subject, ['strong']));
   }
 
 }

@@ -78,7 +78,16 @@
         const serviceLoginUrl = (drupalSettings.entityInfo && drupalSettings.entityInfo.serviceLoginUrl) ? String(drupalSettings.entityInfo.serviceLoginUrl) : '';
         const $healthItem = $("div.field--name-health div.field__item");
         const $healthLabel = $("div.field--name-health div.field__label");
+        const $detailsHealth = $('[data-entity-health]');
         const dotSpan = $("<span class='dot'>.</span>");
+
+        function updateDetailsHealth(variant, text) {
+          $detailsHealth
+            .removeClass('application__health-status--running application__health-status--stopped application__health-status--problem application__health-status--unknown')
+            .addClass('application__health-status--' + variant)
+            .attr('data-entity-health', variant)
+            .text(text);
+        }
 
         let dotsInterval = null;
         let resolved = false;
@@ -135,6 +144,7 @@
             const displayText = Drupal.sodaScsHealth.label(variant);
             const errorTitle = Drupal.sodaScsHealth.detail(data);
             stopLoading();
+            updateDetailsHealth(variant, displayText);
             $healthItem.html(renderBadge(
               variant,
               HEALTH_SYMBOLS[variant] || HEALTH_SYMBOLS.unknown,
@@ -160,6 +170,7 @@
           }).fail(function () {
             stopLoading();
             const transportTitle = Drupal.t('Could not refresh status');
+            updateDetailsHealth('unknown', Drupal.t('Unknown'));
             $healthItem.html(renderBadge('unknown', HEALTH_SYMBOLS.unknown, Drupal.t('Unknown'), transportTitle, ''));
             $healthLabel.removeClass('soda-scs-manager--entity-status--api-error').removeAttr('title');
           });

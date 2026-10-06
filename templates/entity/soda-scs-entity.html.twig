@@ -28,10 +28,30 @@
 		{% endif %}
 	</section>
 
-	{% if elements.notes %}
-		<section class="application__details-card application__details-card--notes">
-			<h2 class="application__details-card-title h4">{{ 'Notes'|t }}</h2>
+	{% if elements.notes or elements['#note_edit_form'] %}
+		<section class="application__details-card application__details-card--notes project__note">
+			<div class="project__section__header">
+				<h2 class="application__details-card-title h4">{{ 'Notes'|t }}</h2>
+				{% if elements['#note_edit_form'] %}
+					<button type="button" class="project__section__edit-button btn--secondary btn--icon project-note-edit-trigger" aria-controls="entity-note-edit" aria-expanded="false" aria-label="{{ 'Edit notes'|t }}"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16"><g><path fill="#4D5866" d="M14.545 3.042l-1.586-1.585c-.389-.389-1.025-.389-1.414 0l-1.293 1.293 3 3 1.293-1.293c.389-.389 1.026-1.415z"/><rect fill="#4D5866" x="5.129" y="3.8" transform="matrix(-.707 -.707 .707 -.707 6.189 20.064)" width="4.243" height="9.899"/><path fill="#4D5866" d="M.908 14.775c-.087.262.055.397.316.312l2.001-.667-1.65-1.646-.667 2.001z"/></g></svg></button>
+				{% endif %}
+			</div>
 			{{ elements.notes }}
+			{% if elements['#note_edit_form'] %}
+				<div id="entity-note-edit" class="overlay overlay--small project-note-edit-overlay" role="dialog" aria-modal="true" aria-labelledby="entity-note-edit-title" hidden>
+					<div class="overlay__backdrop" aria-hidden="true"></div>
+					<div class="overlay__dialog" role="document">
+						<button type="button" class="btn btn--secondary btn--icon overlay__close project-note-edit-overlay__close" aria-label="{{ 'Close'|t }}">
+							<svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+								<line x1="14.8493" y1="14.8493" x2="4.94983" y2="4.94978" stroke="#17212B" stroke-width="2"/>
+								<line x1="4.94979" y1="14.8492" x2="14.8493" y2="4.94975" stroke="#17212B" stroke-width="2"/>
+							</svg>
+						</button>
+						<h2 id="entity-note-edit-title">{{ 'Edit notes'|t }}</h2>
+						{{ elements['#note_edit_form'] }}
+					</div>
+				</div>
+			{% endif %}
 		</section>
 	{% endif %}
 
@@ -50,20 +70,20 @@
 <div class="application__details-right">
 	<section class="application__details-card application__details-card--health-status">
 		<h2 class="application__details-card-title h4">{{ 'Health status'|t }}</h2>
-		{% if elements.health %}
-			<p class="h2 application__health-status--{{ health_status }}">{{ elements.health }}</p>
-		{% endif %}
+		<p class="h2 application__health-status--{{ health_status }}" data-entity-health="{{ health_status }}">{{ {'running': 'Running'|t, 'stopped': 'Stopped'|t, 'problem': 'Problem'|t, 'unknown': 'Unknown'|t}[health_status] ?? 'Unknown'|t }}</p>
 	</section>
 
-	<section class="application__details-card application__details-card--version">
-		<h2 class="application__details-card-title h4">{{ 'Version'|t }}</h2>
-		{% if elements.version %}
-			<p class="h2">{{ elements.version }}</p>
-		{% endif %}
-		{% if elements.automatedUpdates %}
-			<p><span class="text--label">{{ 'Automated updates'|t }}: </span>{{ elements.automatedUpdates }}</p>
-		{% endif %}
-	</section>
+	{% if elements.version or elements.automatedUpdates %}
+		<section class="application__details-card application__details-card--version">
+			{% if elements.version %}
+				<h2 class="application__details-card-title h4">{{ 'Version'|t }}</h2>
+				<p class="h2">{{ elements.version }}</p>
+			{% endif %}
+			{% if elements.automatedUpdates %}
+				<p><span class="text--label">{{ 'Automated updates'|t }}: </span>{{ elements.automatedUpdates }}</p>
+			{% endif %}
+		</section>
+	{% endif %}
 
 	{% if elements['#delete_access'] and elements['#delete_url'] %}
 		<div class="application__details-delete">
