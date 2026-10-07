@@ -1705,17 +1705,20 @@ class SodaScsWisskiComponentActions implements SodaScsComponentActionsInterface 
         ];
       }
       $keycloakGetAllClientResponseContents = json_decode($keycloakMakeGetAllClientResponse['data']['keycloakResponse']->getBody()->getContents(), TRUE);
-      $clientUuid = $keycloakGetAllClientResponseContents[0]['id'];
+      $clientUuid = $keycloakGetAllClientResponseContents[0]['id'] ?? NULL;
 
-      // Delete the client in keycloak.
-      $deleteRequestParams = [
-        'routeParams' => [
-          'clientUuid' => $clientUuid,
-        ],
-        'token' => $keycloakToken,
-      ];
-      $keycloakBuildDeleteClientRequest = $this->sodaScsKeycloakServiceClientActions->buildDeleteRequest($deleteRequestParams);
-      $keycloakMakeDeleteClientResponse = $this->sodaScsKeycloakServiceClientActions->makeRequest($keycloakBuildDeleteClientRequest);
+      // Delete the client in keycloak (it may already be gone).
+      $keycloakMakeDeleteClientResponse = ['success' => TRUE];
+      if ($clientUuid !== NULL) {
+        $deleteRequestParams = [
+          'routeParams' => [
+            'clientUuid' => $clientUuid,
+          ],
+          'token' => $keycloakToken,
+        ];
+        $keycloakBuildDeleteClientRequest = $this->sodaScsKeycloakServiceClientActions->buildDeleteRequest($deleteRequestParams);
+        $keycloakMakeDeleteClientResponse = $this->sodaScsKeycloakServiceClientActions->makeRequest($keycloakBuildDeleteClientRequest);
+      }
 
       if (!$keycloakMakeDeleteClientResponse['success']) {
         return [
