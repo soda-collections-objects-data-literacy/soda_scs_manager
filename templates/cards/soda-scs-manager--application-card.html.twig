@@ -32,11 +32,11 @@
 		<div class="application__documentation">
 			<a href="{{ learn_more_link }}" class="application__documentation-link" aria-label="{{ 'View documentation for @title'|t({'@title': title}) }}" title="{{ 'Documentation'|t }}">i</a>
 		</div>
-		<div class="application__details">
-			{% if details_link %}
+		{% if details_link %}
+			<div class="application__details">
 				<a href="{{ details_link }}" class="application__details-link" aria-label="{{ 'View details of @title'|t({'@title': title}) }}" title="{{ 'View details'|t }}"></a>
-			{% endif %}
-		</div>
+			</div>
+		{% endif %}
 	</div>
 
 	<a href="{{ url }}" class="application__core" aria-label="{{ 'Open @title'|t({'@title': title}) }}">
