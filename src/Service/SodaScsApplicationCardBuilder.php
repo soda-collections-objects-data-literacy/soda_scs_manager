@@ -375,7 +375,7 @@ final class SodaScsApplicationCardBuilder {
    * @return array<string, mixed>
    *   Entity card render array.
    */
-  public function buildComponentCard(SodaScsComponentInterface $component, ?SodaScsProjectInterface $project = NULL): array {
+  public function buildComponentCard(SodaScsComponentInterface $component, ?SodaScsProjectInterface $project = NULL, bool $showDetailsLink = TRUE): array {
     $bundleInfo = $this->bundleInfo->getBundleInfo($component->getEntityTypeId())[$component->bundle()];
 
     $detailsLink = Url::fromRoute(
@@ -402,7 +402,7 @@ final class SodaScsApplicationCardBuilder {
       '#bundle_label' => $bundleInfo['label'],
       '#bundle_id' => $component->bundle(),
       '#description' => $bundleInfo['description'],
-      '#details_link' => $detailsLink,
+      '#details_link' => $showDetailsLink ? $detailsLink : NULL,
       '#entity_id' => $component->id(),
       '#entity_type_id' => $component->getEntityTypeId(),
       '#health_status' => SodaScsHealthStatus::fromStatus((string) ($component->get('health')->value ?? '')),

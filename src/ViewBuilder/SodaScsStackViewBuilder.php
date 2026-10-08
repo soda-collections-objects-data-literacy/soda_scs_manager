@@ -116,7 +116,7 @@ class SodaScsStackViewBuilder extends EntityViewBuilder {
       $build['includedComponentCards'] = [];
       foreach ($entity->get('includedComponents')->referencedEntities() as $component) {
         if ($component instanceof SodaScsComponentInterface) {
-          $build['includedComponentCards'][] = $this->applicationCardBuilder->buildComponentCard($component);
+          $build['includedComponentCards'][] = $this->applicationCardBuilder->buildComponentCard($component, showDetailsLink: FALSE);
         }
       }
       // The cards are rendered from the stored health field, which is only
