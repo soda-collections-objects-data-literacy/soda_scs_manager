@@ -10,6 +10,7 @@ use Drupal\Core\Entity\EntityRepositoryInterface;
 use Drupal\Core\Entity\EntityTypeBundleInfoInterface;
 use Drupal\Core\Form\FormStateInterface;
 use Drupal\Core\Url;
+use Drupal\soda_scs_manager\Helpers\SodaScsProjectApplicationHelpers;
 use Drupal\soda_scs_manager\Helpers\SodaScsProjectHelpers;
 use Drupal\soda_scs_manager\Helpers\SodaScsWebprotegeHelpers;
 use Drupal\soda_scs_manager\StackActions\SodaScsStackActionsInterface;
@@ -35,6 +36,13 @@ class SodaScsProjectDeleteForm extends ContentEntityDeleteForm {
   protected SodaScsWebprotegeHelpers $webprotegeHelpers;
 
   /**
+   * Looks up applications that exist once per project.
+   *
+   * @var \Drupal\soda_scs_manager\Helpers\SodaScsProjectApplicationHelpers
+   */
+  protected SodaScsProjectApplicationHelpers $projectApplicationHelpers;
+
+  /**
    * The Soda SCS API Actions service.
    *
    * @var \Drupal\soda_scs_manager\SodaScsStackActionsInterface
@@ -52,14 +60,17 @@ class SodaScsProjectDeleteForm extends ContentEntityDeleteForm {
    *   The Soda SCS Project Helpers service.
    * @param Drupal\Component\Datetime\TimeInterface $time
    *   The time service.
+   * @param \Drupal\soda_scs_manager\Helpers\SodaScsProjectApplicationHelpers $projectApplicationHelpers
+   *   Looks up applications that exist once per project.
    */
-  public function __construct(EntityRepositoryInterface $entity_repository, EntityTypeBundleInfoInterface $entity_type_bundle_info, SodaScsProjectHelpers $sodaScsProjectHelpers, SodaScsWebprotegeHelpers $webprotegeHelpers, TimeInterface $time) {
+  public function __construct(EntityRepositoryInterface $entity_repository, EntityTypeBundleInfoInterface $entity_type_bundle_info, SodaScsProjectHelpers $sodaScsProjectHelpers, SodaScsWebprotegeHelpers $webprotegeHelpers, TimeInterface $time, SodaScsProjectApplicationHelpers $projectApplicationHelpers) {
     parent::__construct($entity_repository, $entity_type_bundle_info, $time);
     $this->entityRepository = $entity_repository;
     $this->entityTypeBundleInfo = $entity_type_bundle_info;
     $this->sodaScsProjectHelpers = $sodaScsProjectHelpers;
     $this->webprotegeHelpers = $webprotegeHelpers;
     $this->time = $time;
+    $this->projectApplicationHelpers = $projectApplicationHelpers;
   }
 
   /**
@@ -72,6 +83,7 @@ class SodaScsProjectDeleteForm extends ContentEntityDeleteForm {
       $container->get('soda_scs_manager.project.helpers'),
       $container->get('soda_scs_manager.webprotege.helpers'),
       $container->get('datetime.time'),
+      $container->get('soda_scs_manager.project_application.helpers'),
     );
   }
 
@@ -122,6 +134,12 @@ class SodaScsProjectDeleteForm extends ContentEntityDeleteForm {
         '@label' => $project->label(),
         '@error' => $trashWebprotegeResult->error,
       ]));
+    }
+
+    // WebProtégé and Jupyter entities only exist for this project; their
+    // remote parts (ontology project, Team Folder) are removed above.
+    foreach ($this->projectApplicationHelpers->loadProjectApplications($project->id()) as $application) {
+      $application->delete();
     }
 
     // Delete the project group from Keycloak.

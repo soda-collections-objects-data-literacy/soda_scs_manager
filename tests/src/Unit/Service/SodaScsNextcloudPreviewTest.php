@@ -131,49 +131,6 @@ class SodaScsNextcloudPreviewTest extends UnitTestCase {
   }
 
   /**
-   * @covers ::buildPreviewData
-   */
-  public function testBuildPreviewDataUsesPlatformShareFolder(): void {
-    $helpers = $this->createMock(SodaScsNextcloudHelpers::class);
-    $helpers->method('ensureCredentials')->willReturn([
-      'username' => 'alice',
-      'appPassword' => 'secret',
-    ]);
-
-    $serviceHelpers = $this->createMock(SodaScsServiceHelpers::class);
-    $serviceHelpers->method('initNextcloudSettings')->willReturn([
-      'baseUrl' => 'https://drive.example.com',
-    ]);
-
-    $actions = $this->createMock(SodaScsNextcloudServiceActions::class);
-    $actions->method('buildProjectFoldersRequest')->willReturn(['route' => 'folders']);
-    $actions->method('buildProjectFeedRequest')->willReturnCallback(function (array $params): array {
-      $this->assertSame(7, $params['folderId']);
-      return ['route' => 'feed'];
-    });
-    $actions->method('makeRequest')->willReturnCallback(function (array $request): array {
-      if (($request['route'] ?? '') === 'folders') {
-        return $this->ocsResponse([
-          'folders' => [
-            [
-              'id' => 7,
-              'externalProjectId' => 'scs-platform-share',
-              'name' => 'SCS-Share',
-            ],
-          ],
-        ]);
-      }
-      return $this->ocsResponse(['items' => []]);
-    });
-
-    $preview = $this->createPreview($helpers, $actions, $serviceHelpers);
-    $result = $preview->buildPreviewData($this->createMock(UserInterface::class));
-
-    $this->assertSame('connected', $result['status']);
-    $this->assertSame('empty', $result['activities']['status']);
-  }
-
-  /**
    * @covers ::buildProjectFeedData
    */
   public function testBuildProjectFeedDataFallsBackToFolderName(): void {

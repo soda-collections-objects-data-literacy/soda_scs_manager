@@ -14,6 +14,7 @@ use Drupal\soda_scs_manager\ComponentActions\SodaScsComponentActionsInterface;
 use Drupal\soda_scs_manager\Entity\SodaScsStackInterface;
 use Drupal\soda_scs_manager\Entity\SodaScsSnapshotInterface;
 use Drupal\soda_scs_manager\ValueObject\SodaScsResult;
+use Drupal\soda_scs_manager\Helpers\SodaScsProjectApplicationHelpers;
 use Drupal\soda_scs_manager\Helpers\SodaScsStackHelpers;
 use Drupal\Core\Utility\Error;
 use Psr\Log\LogLevel;
@@ -63,6 +64,8 @@ class SodaScsJupyterStackActions implements SodaScsStackActionsInterface {
     #[Autowire(service: 'soda_scs_manager.stack.helpers')]
     SodaScsStackHelpers $sodaScsStackHelpers,
     TranslationInterface $stringTranslation,
+    #[Autowire(service: 'soda_scs_manager.project_application.helpers')]
+    protected SodaScsProjectApplicationHelpers $projectApplicationHelpers,
   ) {
     // Services from container.
     $this->loggerFactory = $loggerFactory;
@@ -74,6 +77,12 @@ class SodaScsJupyterStackActions implements SodaScsStackActionsInterface {
   /**
    * Create a jupyter stack.
    *
+   * The stack marks that a project uses JupyterHub: one per project, owned by
+   * the project owner. Each member opens the project's Team Folder in their
+   * own notebook container.
+   *
+   * @todo Provision the project's JupyterHub spawner here once it exists.
+   *
    * @param \Drupal\soda_scs_manager\Entity\SodaScsStackInterface $stack
    *   The component.
    *
@@ -83,7 +92,22 @@ class SodaScsJupyterStackActions implements SodaScsStackActionsInterface {
    * @throws \Exception
    */
   public function createStack(SodaScsStackInterface $stack): array {
+    $project = $this->projectApplicationHelpers->loadPartOfProject($stack);
+    if ($project !== NULL && $this->projectApplicationHelpers->loadProjectApplication($project->id(), 'soda_scs_stack', 'soda_scs_jupyter_stack', $stack->id()) !== NULL) {
+      return [
+        'message' => $this->t('This project already has JupyterHub.'),
+        'data' => [
+          'stack' => NULL,
+        ],
+        'success' => FALSE,
+        'error' => 'Project already has a Jupyter stack.',
+      ];
+    }
+
     try {
+      if ($project !== NULL) {
+        $stack->set('owner', $project->getOwnerId());
+      }
       $stack->save();
       return [
         'message' => $this->t('Created jupyter stack: %message', ['%message' => $stack->label()]),
@@ -181,6 +205,8 @@ class SodaScsJupyterStackActions implements SodaScsStackActionsInterface {
 
   /**
    * Delete a jupyter stack.
+   *
+   * @todo Remove the project's JupyterHub spawner here once it exists.
    *
    * @param \Drupal\soda_scs_manager\Entity\SodaScsStackInterface $stack
    *   The SODa SCS Stack entity.

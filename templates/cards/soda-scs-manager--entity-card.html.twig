@@ -19,9 +19,6 @@
     {% set card_type = "single" %}
     {% set application_description = "Data Enrichment" %}
 
-{% elseif bundle_id == "soda_scs_nextcloud_stack" %}
-    {% set application_type = "nextcloud" %}
-
 {% elseif bundle_id == "soda_scs_webprotege_component" %}
     {% set application_type = "webprotege" %}
 	{% set application_icons = [directory ~ "/assets/img/protege.svg"] %}
@@ -48,7 +45,6 @@
 
 {% endif %}
 
-{% if application_type != "nextcloud" %}
 <div class="application--card application--card--{{ card_type }}"{% if entity_id %} data-entity-id="{{ entity_id }}"{% endif %}{% if entity_type_id %} data-entity-type="{{ entity_type_id }}"{% endif %} data-health-status="{{ health_status }}">
 	<div class="application__meta">
 		<div class="application__health-status application__health-status--{{ health_status }}" data-health-status="{{ health_status }}" title="{{ health_label }}">
@@ -95,4 +91,3 @@
 
 
 </div>
-{% endif %}

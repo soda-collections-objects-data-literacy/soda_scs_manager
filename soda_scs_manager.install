@@ -1701,3 +1701,84 @@ function soda_scs_manager_update_11029() {
     '@count' => $created,
   ]);
 }
+
+/**
+ * Make WebProtégé and Jupyter project applications; drop Nextcloud stacks.
+ *
+ * - Deletes Nextcloud stack entities. Project files are reached through the
+ *   project files block; no remote resources belong to these entities.
+ * - Deletes the per-user default WebProtégé components (machine name
+ *   "webprotege-<user>-default") and components of deleted projects.
+ * - Keeps one WebProtégé component per project, owned by the project owner.
+ * - Unlinks the per-user default Jupyter stacks ("jupyter-<user>-default")
+ *   from projects; the stacks stay until the per-project spawner exists.
+ *
+ * Ontology projects created automatically for every project are reconciled
+ * separately: drush soda_scs_manager:reconcile-webprotege-projects.
+ */
+function soda_scs_manager_update_11032() {
+  $entity_type_manager = \Drupal::entityTypeManager();
+  $is_default = static fn (string $prefix, string $machine_name): bool => (bool) preg_match('/^' . $prefix . '-.+-default$/', $machine_name);
+
+  $stack_storage = $entity_type_manager->getStorage('soda_scs_stack');
+  $nextcloud_ids = $stack_storage->getQuery()
+    ->accessCheck(FALSE)
+    ->condition('bundle', 'soda_scs_nextcloud_stack')
+    ->execute();
+  if ($nextcloud_ids !== []) {
+    $stack_storage->delete($stack_storage->loadMultiple($nextcloud_ids));
+  }
+
+  $jupyter_ids = $stack_storage->getQuery()
+    ->accessCheck(FALSE)
+    ->condition('bundle', 'soda_scs_jupyter_stack')
+    ->exists('partOfProjects')
+    ->execute();
+  $unlinked = 0;
+  foreach ($stack_storage->loadMultiple($jupyter_ids) as $stack) {
+    if ($is_default('jupyter', (string) $stack->get('machineName')->value)) {
+      $stack->set('partOfProjects', []);
+      $stack->save();
+      $unlinked++;
+    }
+  }
+
+  $component_storage = $entity_type_manager->getStorage('soda_scs_component');
+  $webprotege_ids = $component_storage->getQuery()
+    ->accessCheck(FALSE)
+    ->condition('bundle', 'soda_scs_webprotege_component')
+    ->sort('id')
+    ->execute();
+
+  $to_delete = [];
+  $kept_per_project = [];
+  $reassigned = 0;
+  foreach ($component_storage->loadMultiple($webprotege_ids) as $component) {
+    $project = $component->get('partOfProjects')->entity;
+    if (
+      $is_default('webprotege', (string) $component->get('machineName')->value)
+      || !$project instanceof \Drupal\soda_scs_manager\Entity\SodaScsProjectInterface
+      || isset($kept_per_project[$project->id()])
+    ) {
+      $to_delete[] = $component;
+      continue;
+    }
+    $kept_per_project[$project->id()] = TRUE;
+    if ((int) $component->getOwnerId() !== (int) $project->getOwnerId()) {
+      $component->set('owner', $project->getOwnerId());
+      $component->save();
+      $reassigned++;
+    }
+  }
+  if ($to_delete !== []) {
+    $component_storage->delete($to_delete);
+  }
+
+  return t('Deleted @nextcloud Nextcloud stack(s) and @webprotege WebProtégé component(s); kept @kept project WebProtégé component(s) (@reassigned reassigned to the project owner); unlinked @jupyter default Jupyter stack(s) from projects. Next: drush soda_scs_manager:reconcile-webprotege-projects --dry-run --all', [
+    '@nextcloud' => count($nextcloud_ids),
+    '@webprotege' => count($to_delete),
+    '@kept' => count($kept_per_project),
+    '@reassigned' => $reassigned,
+    '@jupyter' => $unlinked,
+  ]);
+}

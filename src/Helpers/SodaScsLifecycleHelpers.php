@@ -17,8 +17,9 @@ use Symfony\Component\DependencyInjection\Attribute\Autowire;
 /**
  * Start, stop, and restart application containers from dashboard cards.
  *
- * Shared services (Nextcloud, WebProtégé, JupyterHub itself) are excluded.
- * Jupyter cards control the current user's notebook container, not the Hub.
+ * Shared services (WebProtégé, JupyterHub itself) are excluded. Jupyter
+ * cards control the current user's notebook container, not the Hub, so any
+ * user who can view a project Jupyter stack may manage it.
  */
 class SodaScsLifecycleHelpers {
 
@@ -79,7 +80,23 @@ class SodaScsLifecycleHelpers {
    * Whether the current user may manage this entity's container lifecycle.
    */
   public function currentUserCanManage(EntityInterface $entity): bool {
-    return $this->supportsEntity($entity) && $entity->access('update', $this->currentUser);
+    if (!$this->supportsEntity($entity)) {
+      return FALSE;
+    }
+    return $entity->access($this->requiredOperation($entity), $this->currentUser);
+  }
+
+  /**
+   * Entity operation a user needs to run lifecycle actions on the entity.
+   *
+   * Jupyter stacks only control the current user's own notebook container,
+   * so project members need view access, not update access.
+   */
+  public function requiredOperation(EntityInterface $entity): string {
+    if ($entity instanceof SodaScsStackInterface && $entity->bundle() === 'soda_scs_jupyter_stack') {
+      return 'view';
+    }
+    return 'update';
   }
 
   /**

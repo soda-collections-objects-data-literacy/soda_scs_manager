@@ -76,7 +76,7 @@ class SodaScsLifecycleHelpersTest extends UnitTestCase {
     return [
       'wisski' => ['soda_scs_wisski_stack', TRUE],
       'jupyter notebook' => ['soda_scs_jupyter_stack', TRUE],
-      'nextcloud shared' => ['soda_scs_nextcloud_stack', FALSE],
+      'unknown' => ['soda_scs_unknown_stack', FALSE],
     ];
   }
 
@@ -97,7 +97,7 @@ class SodaScsLifecycleHelpersTest extends UnitTestCase {
    */
   public function testPerformActionRejectsSharedService(): void {
     $stack = $this->createMock(SodaScsStackInterface::class);
-    $stack->method('bundle')->willReturn('soda_scs_nextcloud_stack');
+    $stack->method('bundle')->willReturn('soda_scs_unknown_stack');
 
     $result = $this->createHelper()->performAction($stack, 'stop');
     $this->assertFalse($result->success);

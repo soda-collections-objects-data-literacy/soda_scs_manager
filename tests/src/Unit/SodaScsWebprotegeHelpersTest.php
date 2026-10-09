@@ -51,6 +51,28 @@ class SodaScsWebprotegeHelpersTest extends UnitTestCase {
   }
 
   /**
+   * @covers ::buildProjectLoginUrl
+   */
+  public function testBuildProjectLoginUrlPassesProjectPlaceAsReturnTo(): void {
+    $uuid = 'AAAAAAAA-bbbb-cccc-dddd-eeeeeeeeeeee';
+    $url = SodaScsWebprotegeHelpers::buildProjectLoginUrl('webprotege.example.com/', $uuid);
+    $this->assertSame(
+      'https://webprotege.example.com/webprotege/oidc/login?return_to=' . rawurlencode('projects/' . strtolower($uuid) . '/perspectives/' . SodaScsWebprotegeHelpers::CLASSES_PERSPECTIVE_ID),
+      $url,
+    );
+  }
+
+  /**
+   * @covers ::buildProjectLoginUrl
+   */
+  public function testBuildProjectLoginUrlFallsBackToProjectList(): void {
+    $this->assertSame(
+      'https://webprotege.example.com/webprotege/oidc/login?return_to=' . rawurlencode('projects/list'),
+      SodaScsWebprotegeHelpers::buildProjectLoginUrl('https://webprotege.example.com', 'not-a-uuid'),
+    );
+  }
+
+  /**
    * @covers ::extractProjectId
    */
   public function testExtractProjectIdFromCreatePayloadAndLocation(): void {

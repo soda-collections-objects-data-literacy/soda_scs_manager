@@ -21,9 +21,7 @@ use Drupal\soda_scs_manager\Form\SodaScsEntityNoteForm;
 use Drupal\soda_scs_manager\Helpers\SodaScsHealthStatus;
 use Drupal\soda_scs_manager\Helpers\SodaScsServiceHelpers;
 use Drupal\soda_scs_manager\Service\SodaScsApplicationCardBuilder;
-use Drupal\soda_scs_manager\Service\SodaScsNextcloudPreview;
 use Drupal\soda_scs_manager\Entity\SodaScsComponentInterface;
-use Drupal\user\UserInterface;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 
 /**
@@ -41,7 +39,6 @@ class SodaScsStackViewBuilder extends EntityViewBuilder {
     Registry $theme_registry,
     EntityDisplayRepositoryInterface $entity_display_repository,
     protected SodaScsServiceHelpers $sodaScsServiceHelpers,
-    protected SodaScsNextcloudPreview $nextcloudPreview,
     protected AccountProxyInterface $currentUser,
     protected EntityTypeManagerInterface $entityTypeManager,
     protected SodaScsApplicationCardBuilder $applicationCardBuilder,
@@ -61,7 +58,6 @@ class SodaScsStackViewBuilder extends EntityViewBuilder {
       $container->get('theme.registry'),
       $container->get('entity_display.repository'),
       $container->get('soda_scs_manager.service.helpers'),
-      $container->get('soda_scs_manager.nextcloud.preview'),
       $container->get('current_user'),
       $container->get('entity_type.manager'),
       $container->get('soda_scs_manager.application_card_builder'),
@@ -95,7 +91,7 @@ class SodaScsStackViewBuilder extends EntityViewBuilder {
     $build['#delete_url'] = $entity->toUrl('delete-form')->toString();
     $build['#delete_destination'] = $this->resolveDeleteDestination($entity);
     try {
-      $serviceUrls = $this->sodaScsServiceHelpers->getStackServiceAndLoginUrls($entity);
+      $serviceUrls = $this->sodaScsServiceHelpers->getStackServiceAndLoginUrls($entity, NULL, $this->currentUser);
       if ($serviceUrls !== NULL && !empty($serviceUrls['loginUrl'])) {
         $build['#attached']['drupalSettings']['entityInfo']['serviceLoginUrl'] = $serviceUrls['loginUrl'];
       }
@@ -105,11 +101,6 @@ class SodaScsStackViewBuilder extends EntityViewBuilder {
     }
     catch (MissingDataException $e) {
       // Settings incomplete; health badge will not be linked.
-    }
-
-    if ($entity->bundle() === 'soda_scs_nextcloud_stack') {
-      $build['nextcloudPreview'] = $this->buildNextcloudPreview($entity);
-      $build['nextcloudPreview']['#weight'] = 40;
     }
 
     if ($entity->hasField('includedComponents') && !$entity->get('includedComponents')->isEmpty()) {
@@ -128,54 +119,6 @@ class SodaScsStackViewBuilder extends EntityViewBuilder {
     $build['#cache'] = [
       'max-age' => 0,
     ];
-
-    return $build;
-  }
-
-  /**
-   * Builds the Nextcloud drive preview render array.
-   *
-   * @param \Drupal\Core\Entity\EntityInterface $entity
-   *   The Nextcloud stack entity.
-   *
-   * @return array
-   *   Render array for the preview section.
-   */
-  protected function buildNextcloudPreview(EntityInterface $entity): array {
-    $user = $this->entityTypeManager->getStorage('user')->load($this->currentUser->id());
-    $preview = [
-      'status' => 'needs_connect',
-      'openUrl' => '',
-      'activities' => ['status' => 'empty', 'items' => []],
-    ];
-
-    if ($user instanceof UserInterface) {
-      $preview = $this->nextcloudPreview->buildPreviewData($user);
-    }
-
-    $openUrl = $preview['openUrl'] ?? '';
-    try {
-      $serviceUrls = $this->sodaScsServiceHelpers->getStackServiceAndLoginUrls($entity);
-      if ($serviceUrls !== NULL && !empty($serviceUrls['url'])) {
-        $openUrl = $serviceUrls['url'];
-      }
-    }
-    catch (MissingDataException $e) {
-      // Keep preview openUrl from settings if stack URL lookup fails.
-    }
-
-    $build = [
-      '#theme' => 'soda_scs_manager__nextcloud_preview',
-      '#status' => $preview['status'],
-      '#open_url' => $openUrl,
-      '#activities' => $preview['activities'],
-      '#attached' => [
-        'library' => [
-          'soda_scs_manager/nextcloudConnect',
-        ],
-      ],
-    ];
-    _soda_scs_manager_attach_nextcloud_connect_settings($build);
 
     return $build;
   }

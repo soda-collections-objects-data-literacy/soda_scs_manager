@@ -21,6 +21,7 @@ use Drupal\Core\Url;
 use Drupal\soda_scs_manager\Entity\SodaScsProjectInterface;
 use Drupal\soda_scs_manager\Form\SodaScsProjectAddMemberForm;
 use Drupal\soda_scs_manager\Form\SodaScsProjectNoteForm;
+use Drupal\soda_scs_manager\Helpers\SodaScsProjectApplicationHelpers;
 use Drupal\soda_scs_manager\Helpers\SodaScsProjectMembershipHelpers;
 use Drupal\soda_scs_manager\Service\SodaScsApplicationCardBuilder;
 use Drupal\soda_scs_manager\Service\SodaScsNextcloudPreview;
@@ -52,6 +53,7 @@ final class SodaScsProjectViewBuilder extends EntityViewBuilder
     protected FormBuilderInterface $formBuilder,
     protected SodaScsNextcloudPreview $nextcloudPreview,
     protected SodaScsProjectMembershipHelpers $projectMembershipHelpers,
+    protected SodaScsProjectApplicationHelpers $projectApplicationHelpers,
   ) {
     parent::__construct($entity_type, $entity_repository, $language_manager, $theme_registry, $entity_display_repository);
     $this->moduleHandler = $module_handler;
@@ -76,6 +78,7 @@ final class SodaScsProjectViewBuilder extends EntityViewBuilder
       $container->get('form_builder'),
       $container->get('soda_scs_manager.nextcloud.preview'),
       $container->get('soda_scs_manager.project_membership.helpers'),
+      $container->get('soda_scs_manager.project_application.helpers'),
     );
   }
 
@@ -154,6 +157,8 @@ final class SodaScsProjectViewBuilder extends EntityViewBuilder
       '#popup_url_open_gdb' => $createUrls['openGdb'],
       '#popup_url_jupyter' => $createUrls['jupyter'],
       '#popup_url_webprotege' => $createUrls['webprotege'],
+      '#has_jupyter' => $this->projectApplicationHelpers->projectHasApplication($project->id(), 'soda_scs_stack', 'soda_scs_jupyter_stack'),
+      '#has_webprotege' => $this->projectApplicationHelpers->projectHasApplication($project->id(), 'soda_scs_component', 'soda_scs_webprotege_component'),
       '#cache' => [
         'max-age' => 0,
       ],

@@ -17,32 +17,21 @@ use Symfony\Component\DependencyInjection\Attribute\Autowire;
 /**
  * Loads Nextcloud activity feeds via scs_manager_integration.
  *
- * Stack entity page: platform SCS-Share Team Folder.
- * Project page Nextcloud card: that project's Team Folder.
+ * Project page files block: that project's Team Folder.
  */
 class SodaScsNextcloudPreview {
 
   use StringTranslationTrait;
 
   /**
-   * Max items shown in the stack entity preview.
+   * Upper bound for items fetched from a feed.
    */
   private const ITEM_LIMIT = 8;
 
   /**
-   * Max items shown on the project-page Nextcloud card.
+   * Max items shown in the project files block.
    */
   private const CARD_ITEM_LIMIT = 6;
-
-  /**
-   * externalProjectId of the platform Team Folder feed.
-   */
-  private const PLATFORM_EXTERNAL_PROJECT_ID = 'scs-platform-share';
-
-  /**
-   * Fallback folder name when externalProjectId is not matched.
-   */
-  private const PLATFORM_FOLDER_NAME = 'SCS-Share';
 
   /**
    * HTTP timeout in seconds for preview API calls.
@@ -63,62 +52,6 @@ class SodaScsNextcloudPreview {
     TranslationInterface $stringTranslation,
   ) {
     $this->stringTranslation = $stringTranslation;
-  }
-
-  /**
-   * Builds normalised preview data for a Drupal user.
-   *
-   * @param \Drupal\user\UserInterface $user
-   *   The user whose Nextcloud account to preview.
-   *
-   * @return array
-   *   Keys: status (connected|needs_connect), openUrl, activities.
-   *   activities has status and items.
-   */
-  public function buildPreviewData(UserInterface $user): array {
-    $baseUrl = '';
-    try {
-      $settings = $this->serviceHelpers->initNextcloudSettings();
-      $baseUrl = rtrim((string) ($settings['baseUrl'] ?? ''), '/');
-    }
-    catch (\Throwable $e) {
-      $this->loggerFactory->get('soda_scs_manager')->warning(
-        'Nextcloud preview: settings unavailable: @message',
-        ['@message' => $e->getMessage()]
-      );
-    }
-
-    $emptySection = static fn (): array => [
-      'status' => 'empty',
-      'items' => [],
-    ];
-
-    $credentials = $this->nextcloudHelpers->ensureCredentials($user, 'SCS Manager Preview');
-    if ($credentials === NULL) {
-      return [
-        'status' => 'needs_connect',
-        'openUrl' => $baseUrl,
-        'activities' => $emptySection(),
-      ];
-    }
-
-    $authParams = [
-      'username' => $credentials['username'],
-      'password' => $credentials['appPassword'],
-      'timeout' => self::REQUEST_TIMEOUT,
-    ];
-
-    return [
-      'status' => 'connected',
-      'openUrl' => $baseUrl,
-      'activities' => $this->fetchFeedByExternalProjectId(
-        $authParams,
-        $baseUrl,
-        self::PLATFORM_EXTERNAL_PROJECT_ID,
-        self::PLATFORM_FOLDER_NAME,
-        self::ITEM_LIMIT,
-      ),
-    ];
   }
 
   /**

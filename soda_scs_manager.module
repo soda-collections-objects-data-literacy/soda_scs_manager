@@ -279,7 +279,6 @@ function _soda_scs_manager_cms_driven_app_path_aliases(): array {
   return [
     '/soda-scs-manager/app/jupyter',
     '/soda-scs-manager/app/wisski',
-    '/soda-scs-manager/app/nextcloud',
     '/soda-scs-manager/app/webprotege',
     '/soda-scs-manager/app/open-gdb',
     '/soda-scs-manager/app/mariadb',
@@ -458,17 +457,6 @@ function soda_scs_manager_entity_bundle_info() {
     ),
     'imageUrl' => 'public://soda_scs_manager/images/wisski-stack.svg',
     'tags' => ['cms', 'database', 'publishing'],
-  ];
-
-  $bundles['soda_scs_stack']['soda_scs_nextcloud_stack'] = [
-    'label' => new TranslatableMarkup('Nextcloud Environment'),
-    'class' => SodaScsStackBundle::class,
-    'description' => _soda_scs_manager_cms_app_page_description(
-      '/soda-scs-manager/app/nextcloud',
-      new TranslatableMarkup('Nextcloud is a file storage and collaboration platform that functions as your personal cloud workspace, which includes a OnlyOffice suite, Draw.io and SCS-Share Directory to share files across your JupyterHub and WissKI environments. ')
-    ),
-    'imageUrl' => 'public://soda_scs_manager/images/nextcloud-stack.svg',
-    'tags' => ['filesharing', 'office', 'publishing'],
   ];
 
   return $bundles;
@@ -1041,22 +1029,9 @@ function soda_scs_manager_theme($existing, $type, $theme, $path) {
         'bundle_label' => NULL,
         'bundle_id' => NULL,
         'url' => NULL,
-        'activities' => NULL,
-        'feed_status' => NULL,
         'can_manage_lifecycle' => FALSE,
       ],
       'template' => 'cards/soda-scs-manager--entity-card',
-    ],
-    'soda_scs_manager__nextcloud_preview' => [
-      'variables' => [
-        'activities' => [
-          'status' => 'empty',
-          'items' => [],
-        ],
-        'open_url' => '',
-        'status' => 'needs_connect',
-      ],
-      'template' => 'entity/soda-scs-manager--nextcloud-preview',
     ],
     'soda_scs_manager__project_files' => [
       'variables' => [
@@ -1114,6 +1089,8 @@ function soda_scs_manager_theme($existing, $type, $theme, $path) {
         'popup_url_open_gdb' => '',
         'popup_url_jupyter' => '',
         'popup_url_webprotege' => '',
+        'has_jupyter' => FALSE,
+        'has_webprotege' => FALSE,
       ],
       'template' => 'cards/soda-scs-manager--add-application-card',
     ],
@@ -1135,6 +1112,8 @@ function soda_scs_manager_theme($existing, $type, $theme, $path) {
         'popup_url_open_gdb' => '',
         'popup_url_jupyter' => '',
         'popup_url_webprotege' => '',
+        'has_jupyter' => FALSE,
+        'has_webprotege' => FALSE,
       ],
       'template' => 'cards/soda-scs-manager--add-application-popup',
     ],
@@ -1559,7 +1538,6 @@ function soda_scs_manager_user_insert(UserInterface $user) {
   // Ensure the role exists and has the required permissions.
   _soda_scs_manager_ensure_scs_user_role();
   _soda_scs_manager_create_default_project_for_user($user);
-  _soda_scs_manager_create_default_applications_for_user($user);
   _soda_scs_manager_propagate_keycloak_user_data_to_fields($user);
 }
 
@@ -2043,29 +2021,6 @@ function soda_scs_manager_file_download($uri) {
 }
 
 /**
- * Create default applications for new user.
- */
-function _soda_scs_manager_create_default_applications_for_user(UserInterface $user) {
-  // Get the default project for the user.
-  $projects = (array) SodaScsProject::loadByOwner($user->id());
-
-  if (empty($projects) || count($projects) > 1) {
-    $messenger = \Drupal::messenger();
-    $messenger->addError(\Drupal::translation()->translate('Failed to create default applications for user: @username. No default project found.', ['@username' => $user->getDisplayName()]));
-    $logger = \Drupal::logger('soda_scs_manager');
-    $logger->error('Failed to create default applications for user: @username. No default project found.', ['@username' => $user->getDisplayName()]);
-    return;
-  }
-
-  // Get the default project. Should only be one.
-  /** @var \Drupal\soda_scs_manager\Entity\SodaScsProject $project */
-  $project = reset($projects);
-
-  _soda_scs_manager_create_default_jupyter_for_user($user);
-  _soda_scs_manager_create_default_webprotege_for_user($user);
-}
-
-/**
  * Create default project for new user.
  *
  * The groupId is now automatically set in the insert hook to avoid double save.
@@ -2139,65 +2094,8 @@ function _soda_scs_manager_create_default_project_for_user(UserInterface $user) 
     ]);
   }
 
-  $createWebprotegeResult = \Drupal::service('soda_scs_manager.webprotege.helpers')->createOntologyProject($project);
-  if (!$createWebprotegeResult->success) {
-    \Drupal::messenger()->addError(\Drupal::translation()->translate('Failed to create WebProtégé project for @project: @error', [
-      '@project' => $project->label(),
-      '@error' => $createWebprotegeResult->error,
-    ]));
-  }
-
   // Sync MariaDB access for project members (phpMyAdmin SSO).
   \Drupal::service('soda_scs_manager.project_db_access.helpers')->syncProjectMembersDbAccess($project);
-}
-
-
-/**
- * Create default jupyter for new user.
- */
-function _soda_scs_manager_create_default_jupyter_for_user(UserInterface $user) {
-  // Load the bundle info for the jupyter stack.
-  $bundleinfo = \Drupal::service('entity_type.bundle.info')->getBundleInfo('soda_scs_stack')['soda_scs_jupyter_stack'];
-
-  if (!$bundleinfo) {
-    throw new \Exception('Jupyter stack bundle info not found');
-  }
-
-  $jupyter = SodaScsStack::create([
-    'bundle' => 'soda_scs_jupyter_stack',
-    'description' => $bundleinfo['description'],
-    'imageUrl' => $bundleinfo['imageUrl'],
-    'label' => $user->getDisplayName() . '\'s jupyter',
-    'machineName' => 'jupyter-' . $user->getDisplayName() . '-default',
-    'owner' => $user->id(),
-  ]);
-
-  \Drupal::service('soda_scs_manager.stack.actions')->createStack($jupyter);
-}
-
-/**
- * Create default webprotege for new user.
- *
- * Webprotege is created but not added to any project (not part of default project).
- */
-function _soda_scs_manager_create_default_webprotege_for_user(UserInterface $user) {
-  // Load the bundle info for the webprotege stack.
-  $bundleinfo = \Drupal::service('entity_type.bundle.info')->getBundleInfo('soda_scs_component')['soda_scs_webprotege_component'];
-
-  if (!$bundleinfo) {
-    throw new \Exception('Webprotege stack bundle info not found');
-  }
-
-  $webprotege = SodaScsComponent::create([
-    'bundle' => 'soda_scs_webprotege_component',
-    'description' => $bundleinfo['description'],
-    'imageUrl' => $bundleinfo['imageUrl'],
-    'label' => $user->getDisplayName() . '\'s webprotege',
-    'machineName' => 'webprotege-' . $user->getDisplayName() . '-default',
-    'owner' => $user->id(),
-  ]);
-
-  \Drupal::service('soda_scs_manager.component.actions')->createComponent($webprotege);
 }
 
 /**

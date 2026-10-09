@@ -69,7 +69,6 @@ class SodaScsStackController extends ControllerBase {
       $health = match ($bundle) {
         'soda_scs_wisski_stack' => $this->sodaScsStackHelpers->checkWisskiHealth($stack),
         'soda_scs_jupyter_stack' => $this->sodaScsStackHelpers->checkJupyterHealth($stack),
-        'soda_scs_nextcloud_stack' => $this->sodaScsStackHelpers->checkNextcloudHealth($stack),
         default => SodaScsHealthStatus::payload(
           SodaScsHealthStatus::UNKNOWN,
           (string) $this->t('Unknown stack type.'),

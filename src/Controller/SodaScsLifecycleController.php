@@ -4,7 +4,9 @@ declare(strict_types=1);
 
 namespace Drupal\soda_scs_manager\Controller;
 
+use Drupal\Core\Access\AccessResultInterface;
 use Drupal\Core\Controller\ControllerBase;
+use Drupal\Core\Session\AccountInterface;
 use Drupal\soda_scs_manager\Entity\SodaScsComponentInterface;
 use Drupal\soda_scs_manager\Entity\SodaScsStackInterface;
 use Drupal\soda_scs_manager\Helpers\SodaScsLifecycleHelpers;
@@ -30,6 +32,16 @@ class SodaScsLifecycleController extends ControllerBase {
     return new static(
       $container->get('soda_scs_manager.lifecycle.helpers'),
     );
+  }
+
+  /**
+   * Access check for the stack lifecycle route.
+   *
+   * Jupyter stacks need view access (the action runs on the current user's
+   * own notebook); all other stacks need update access.
+   */
+  public function accessStackLifecycle(SodaScsStackInterface $soda_scs_stack, AccountInterface $account): AccessResultInterface {
+    return $soda_scs_stack->access($this->lifecycleHelpers->requiredOperation($soda_scs_stack), $account, TRUE);
   }
 
   /**

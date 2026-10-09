@@ -133,7 +133,7 @@ class SodaScsStackCrudTest extends SodaScsKernelTestBase {
     $this->entityTypeManager
       ->getStorage('soda_scs_stack')
       ->create([
-        'bundle' => 'soda_scs_nextcloud_stack',
+        'bundle' => 'soda_scs_jupyter_stack',
         'label' => 'Other User Stack',
         'machineName' => 'other-user-stack',
         'owner' => $otherUser->id(),
@@ -326,7 +326,6 @@ class SodaScsStackCrudTest extends SodaScsKernelTestBase {
     return [
       'wisski stack' => ['soda_scs_wisski_stack'],
       'jupyter stack' => ['soda_scs_jupyter_stack'],
-      'nextcloud stack' => ['soda_scs_nextcloud_stack'],
     ];
   }
 

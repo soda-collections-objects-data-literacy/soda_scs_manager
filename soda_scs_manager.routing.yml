@@ -79,7 +79,7 @@ soda_scs_manager.stack.lifecycle:
     _title: 'Stack lifecycle'
   requirements:
     _permission: 'soda scs manager user'
-    _entity_access: 'soda_scs_stack.update'
+    _custom_access: '\Drupal\soda_scs_manager\Controller\SodaScsLifecycleController::accessStackLifecycle'
     _csrf_request_header_token: 'TRUE'
     action: 'start|stop|restart'
   methods: [POST]

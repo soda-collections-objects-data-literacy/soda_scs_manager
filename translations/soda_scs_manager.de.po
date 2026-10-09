@@ -4212,3 +4212,51 @@ msgstr "Ihr Profil wurde gelöscht."
 #: templates/pages/soda-scs-manager--profile.html.twig
 msgid "Upload picture"
 msgstr "Bild hochladen"
+
+#: src/Form/SodaScsComponentCreateForm.php src/Form/SodaScsStackCreateForm.php
+msgid "@application can only be added to a project."
+msgstr "@application kann nur einem Projekt hinzugefügt werden."
+
+#: src/Form/SodaScsComponentCreateForm.php src/Form/SodaScsStackCreateForm.php
+msgid "This project already has @application."
+msgstr "Dieses Projekt hat bereits @application."
+
+#: src/ComponentActions/SodaScsWebprotegeComponentActions.php
+msgid "WebProtégé can only be added to a project."
+msgstr "WebProtégé kann nur einem Projekt hinzugefügt werden."
+
+#: src/ComponentActions/SodaScsWebprotegeComponentActions.php
+msgid "This project already has WebProtégé."
+msgstr "Dieses Projekt hat bereits WebProtégé."
+
+#: src/StackActions/SodaScsJupyterStackActions.php
+msgid "This project already has JupyterHub."
+msgstr "Dieses Projekt hat bereits JupyterHub."
+
+#: templates/cards/soda-scs-manager--add-application-popup.html.twig
+msgid "Already in this project"
+msgstr "Bereits im Projekt"
+
+#: templates/cards/soda-scs-manager--add-application-popup.html.twig
+msgid "JupyterHub is already in this project"
+msgstr "JupyterHub ist bereits im Projekt"
+
+#: templates/cards/soda-scs-manager--add-application-popup.html.twig
+msgid "WebProtégé is already in this project"
+msgstr "WebProtégé ist bereits im Projekt"
+
+#: src/Helpers/SodaScsWebprotegeHelpers.php
+msgid "No WebProtégé project is linked for @project."
+msgstr "Für @project ist kein WebProtégé-Projekt verknüpft."
+
+#: src/Helpers/SodaScsWebprotegeHelpers.php
+msgid "Could not read the WebProtégé project for @project."
+msgstr "Das WebProtégé-Projekt für @project konnte nicht gelesen werden."
+
+#: src/Helpers/SodaScsWebprotegeHelpers.php
+msgid "Read WebProtégé revisions for @project."
+msgstr "WebProtégé-Revisionen für @project gelesen."
+
+#: src/Helpers/SodaScsWebprotegeHelpers.php
+msgid "Read WebProtégé project details for @project."
+msgstr "WebProtégé-Projektdetails für @project gelesen."

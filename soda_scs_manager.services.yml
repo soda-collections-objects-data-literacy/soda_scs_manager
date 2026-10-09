@@ -43,6 +43,8 @@ services:
     class: Drupal\soda_scs_manager\Helpers\SodaScsPortainerHelpers
   soda_scs_manager.project.helpers:
     class: Drupal\soda_scs_manager\Helpers\SodaScsProjectHelpers
+  soda_scs_manager.project_application.helpers:
+    class: Drupal\soda_scs_manager\Helpers\SodaScsProjectApplicationHelpers
   soda_scs_manager.project_membership.helpers:
     class: Drupal\soda_scs_manager\Helpers\SodaScsProjectMembershipHelpers
   soda_scs_manager.message.helpers:
@@ -145,8 +147,6 @@ services:
     class: Drupal\soda_scs_manager\StackActions\SodaScsStackActions
   soda_scs_manager.jupyter_stack.actions:
     class: Drupal\soda_scs_manager\StackActions\SodaScsJupyterStackActions
-  soda_scs_manager.nextcloud_stack.actions:
-    class: Drupal\soda_scs_manager\StackActions\SodaScsNextcloudStackActions
   soda_scs_manager.wisski_stack.actions:
     class: Drupal\soda_scs_manager\StackActions\SodaScsWisskiStackActions
 

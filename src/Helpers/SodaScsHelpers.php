@@ -203,9 +203,6 @@ class SodaScsHelpers {
       case 'soda_scs_jupyter_stack':
         return 'jupyter';
 
-      case 'soda_scs_nextcloud_stack':
-        return 'nextcloud';
-
       case 'soda_scs_sql_component':
         return 'mariadb';
 

@@ -85,6 +85,7 @@ class SodaScsManagerServiceController extends ControllerBase {
     $urls = $this->sodaScsServiceHelpers->getStackServiceAndLoginUrls(
       $soda_scs_stack,
       $this->loadProjectFromRequest($request),
+      $this->currentUser(),
     );
     if ($urls === NULL) {
       throw new \Exception('Unknown stack type: ' . $soda_scs_stack->bundle());
@@ -131,6 +132,7 @@ class SodaScsManagerServiceController extends ControllerBase {
     $urls = $this->sodaScsServiceHelpers->getStackServiceAndLoginUrls(
       $soda_scs_stack,
       $this->loadProjectFromRequest($request),
+      $this->currentUser(),
     );
     if ($urls === NULL) {
       return new JsonResponse([

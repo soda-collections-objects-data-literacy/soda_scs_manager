@@ -88,6 +88,9 @@ class SodaScsWebprotegeServiceActions implements SodaScsServiceRequestInterface 
 
   /**
    * {@inheritdoc}
+   *
+   * Set $requestParams['type'] to 'revisions' to list the project's revisions
+   * instead of its details.
    */
   public function buildGetRequest(array $requestParams): array {
     $settings = $this->requireApiSettings();
@@ -95,12 +98,17 @@ class SodaScsWebprotegeServiceActions implements SodaScsServiceRequestInterface 
       return $this->missingApiKeyRequest('get');
     }
 
+    $type = (string) ($requestParams['type'] ?? 'project');
     $projectId = (string) ($requestParams['routeParams']['projectId'] ?? '');
+    $route = $settings['apiBaseUrl'] . '/data/projects/' . rawurlencode($projectId);
+    if ($type === 'revisions') {
+      $route .= '/revisions';
+    }
     return [
-      'type' => 'project',
+      'type' => $type,
       'success' => TRUE,
       'method' => 'GET',
-      'route' => $settings['apiBaseUrl'] . '/data/projects/' . rawurlencode($projectId),
+      'route' => $route,
       'headers' => $this->apiHeaders($settings['apiKey']),
     ];
   }

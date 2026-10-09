@@ -10,6 +10,7 @@ use Drupal\Core\Entity\EntityTypeManagerInterface;
 use GuzzleHttp\ClientInterface;
 use Drupal\Core\Logger\LoggerChannelFactoryInterface;
 use Drupal\Core\Messenger\MessengerInterface;
+use Drupal\Core\Session\AccountInterface;
 use Drupal\Core\StringTranslation\TranslationInterface;
 use Drupal\Core\StringTranslation\StringTranslationTrait;
 use Drupal\Core\TypedData\Exception\MissingDataException;
@@ -17,7 +18,6 @@ use Drupal\soda_scs_manager\Entity\SodaScsComponent;
 use Drupal\soda_scs_manager\Entity\SodaScsProjectInterface;
 use Drupal\soda_scs_manager\Entity\SodaScsStack;
 use Drupal\soda_scs_manager\Helpers\SodaScsJupyterHelpers;
-use Drupal\soda_scs_manager\Helpers\SodaScsNextcloudHelpers;
 use Drupal\soda_scs_manager\Helpers\SodaScsWebprotegeHelpers;
 use Drupal\soda_scs_manager\Helpers\SodaScsDockerDns;
 use Drupal\user\UserInterface;
@@ -643,7 +643,8 @@ class SodaScsServiceHelpers {
   /**
    * Resolves the public service base URL and a login (or entry) URL for a component.
    *
-   * When $project is set, WebProtégé opens the project's ontology project.
+   * WebProtégé opens the ontology project of $project, or of the project the
+   * component belongs to when $project is not set.
    *
    * @return array{url: string, loginUrl: string}|null
    *   URLs for known component bundles, or NULL for unknown types.
@@ -668,11 +669,12 @@ class SodaScsServiceHelpers {
 
       case 'soda_scs_webprotege_component':
         $host = (string) $webprotegeSettings['host'];
+        $project ??= $this->loadPartOfProject($component);
         $projectUuid = NULL;
         if ($project !== NULL && $project->hasField('webprotegeProjectId')) {
           $projectUuid = (string) ($project->get('webprotegeProjectId')->value ?? '');
         }
-        $url = SodaScsWebprotegeHelpers::buildProjectHashUrl($host, $projectUuid !== '' ? $projectUuid : NULL);
+        $url = SodaScsWebprotegeHelpers::buildProjectLoginUrl($host, $projectUuid !== '' ? $projectUuid : NULL);
         $loginUrl = rtrim($host, '/') . '/';
         return ['url' => $url, 'loginUrl' => $loginUrl];
 
@@ -691,18 +693,17 @@ class SodaScsServiceHelpers {
   /**
    * Resolves the public service base URL and a login (or entry) URL for a stack.
    *
-   * When $project is set, JupyterHub and Nextcloud open the project's Team
-   * Folder instead of the service home.
+   * JupyterHub opens the project's Team Folder in the viewer's notebook. The
+   * project is $project, or the project the stack belongs to when $project is
+   * not set. Without a viewer, the stack owner's notebook is used.
    *
    * @return array{url: string, loginUrl: string}|null
    *   URLs for known stack bundles, or NULL for unknown types.
    */
-  public function getStackServiceAndLoginUrls(SodaScsStack $stack, ?SodaScsProjectInterface $project = NULL): ?array {
+  public function getStackServiceAndLoginUrls(SodaScsStack $stack, ?SodaScsProjectInterface $project = NULL, ?AccountInterface $viewer = NULL): ?array {
     $jupyterSettings = $this->initJupyterHubSettings();
-    $nextcloudSettings = $this->initNextcloudSettings();
     $wisskiInstanceSettings = $this->initWisskiInstanceSettings();
     $bundle = $stack->bundle();
-    $projectLabel = $project !== NULL ? (string) $project->label() : '';
 
     switch ($bundle) {
       case 'soda_scs_wisski_stack':
@@ -717,25 +718,33 @@ class SodaScsServiceHelpers {
         $url = $jupyterSettings['baseUrl'];
         $base = rtrim((string) $url, '/');
         $loginUrl = $base . '/hub/login';
+        $project ??= $this->loadPartOfProject($stack);
+        $projectLabel = $project !== NULL ? (string) $project->label() : '';
         $owner = $stack->getOwner();
-        $accountName = $owner instanceof UserInterface ? $owner->getAccountName() : '';
+        $accountName = match (TRUE) {
+          $viewer !== NULL && $viewer->isAuthenticated() => $viewer->getAccountName(),
+          $owner instanceof UserInterface => $owner->getAccountName(),
+          default => '',
+        };
         if ($projectLabel !== '' && $accountName !== '') {
           $url = SodaScsJupyterHelpers::buildProjectLabUrl((string) $url, $accountName, $projectLabel);
-        }
-        return ['url' => $url, 'loginUrl' => $loginUrl];
-
-      case 'soda_scs_nextcloud_stack':
-        $url = $nextcloudSettings['baseUrl'];
-        $base = rtrim((string) $url, '/');
-        $loginUrl = $base . '/login';
-        if ($projectLabel !== '') {
-          $url = SodaScsNextcloudHelpers::buildProjectFilesUrl((string) $url, $projectLabel);
         }
         return ['url' => $url, 'loginUrl' => $loginUrl];
 
       default:
         return NULL;
     }
+  }
+
+  /**
+   * Loads the project a component or stack belongs to.
+   */
+  private function loadPartOfProject(SodaScsComponent|SodaScsStack $entity): ?SodaScsProjectInterface {
+    if (!$entity->hasField('partOfProjects') || $entity->get('partOfProjects')->isEmpty()) {
+      return NULL;
+    }
+    $project = $entity->get('partOfProjects')->entity;
+    return $project instanceof SodaScsProjectInterface ? $project : NULL;
   }
 
   /**

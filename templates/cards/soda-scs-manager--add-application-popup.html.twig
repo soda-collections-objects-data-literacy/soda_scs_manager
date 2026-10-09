@@ -7,6 +7,8 @@
  * Available variables:
  * - popup_url_mariadb, popup_url_wisski, popup_url_open_gdb,
  *   popup_url_jupyter, popup_url_webprotege: localized app URLs.
+ * - has_jupyter, has_webprotege: TRUE when the project already has the
+ *   single-instance application, which is then omitted from the choices.
  */
 #}
 <div id="add-app-popup" class="overlay overlay--large add-app-popup" role="dialog" aria-modal="true" aria-labelledby="add-app-popup-title" hidden>
@@ -28,7 +30,8 @@
     <div class="add-app-popup__grid">
 
             {# JupyterHub Card #}
-      <a href="{{ popup_url_jupyter }}" data-app-type="jupyter" class="add-app-popup-card" aria-label="{{ 'Add @title'|t({'@title': 'JupyterHub'}) }}">
+          {% if not has_jupyter %}
+          <a href="{{ popup_url_jupyter }}" data-app-type="jupyter" class="add-app-popup-card" aria-label="{{ 'Add @title'|t({'@title': 'JupyterHub'}) }}">
         <div class="add-app-popup-card__upper">
           <h2 class="add-app-popup-card__description h3">{{ 'Data Enrichment'|t }}</h2>
           <button type="button" class="add-app-popup-card__doc-link" data-doc-url="/soda-scs-manager/app/jupyter" aria-label="{{ 'View documentation for @title'|t({'@title': 'JupyterHub'}) }}" title="{{ 'Documentation'|t }}">
@@ -44,10 +47,12 @@
             </svg>
           </span>
         </div>
-      </a>
+          </a>
+          {% endif %}
 
             {# WebProtégé Card #}
-      <a href="{{ popup_url_webprotege }}" data-app-type="webprotege" class="add-app-popup-card" aria-label="{{ 'Add @title'|t({'@title': 'WebProtégé'}) }}">
+          {% if not has_webprotege %}
+          <a href="{{ popup_url_webprotege }}" data-app-type="webprotege" class="add-app-popup-card" aria-label="{{ 'Add @title'|t({'@title': 'WebProtégé'}) }}">
         <div class="add-app-popup-card__upper">
           <h2 class="add-app-popup-card__description h3">{{ 'Ontology Management'|t }}</h2>
           <button type="button" class="add-app-popup-card__doc-link" data-doc-url="/soda-scs-manager/app/webprotege" aria-label="{{ 'View documentation for @title'|t({'@title': 'WebProtégé'}) }}" title="{{ 'Documentation'|t }}">
@@ -64,6 +69,7 @@
           </span>
         </div>
       </a>
+      {% endif %}
 
             {# WissKI Card #}
       <a href="{{ popup_url_wisski }}" data-app-type="wisski" class="add-app-popup-card" aria-label="{{ 'Add @title'|t({'@title': 'WissKI Environment'}) }}">

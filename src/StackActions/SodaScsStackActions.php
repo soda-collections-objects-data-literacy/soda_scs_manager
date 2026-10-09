@@ -29,13 +29,6 @@ class SodaScsStackActions implements SodaScsStackActionsInterface {
   protected SodaScsStackActionsInterface $sodaScsJupyterStackActions;
 
   /**
-   * The SCS triplestore actions service.
-   *
-   * @var \Drupal\soda_scs_manager\SodaScsStackActionsInterface
-   */
-  protected SodaScsStackActionsInterface $sodaScsNextcloudStackActions;
-
-  /**
    * The SCS wisski actions service.
    *
    * @var \Drupal\soda_scs_manager\SodaScsStackActionsInterface
@@ -48,14 +41,11 @@ class SodaScsStackActions implements SodaScsStackActionsInterface {
   public function __construct(
     #[Autowire(service: 'soda_scs_manager.jupyter_stack.actions')]
     SodaScsStackActionsInterface $sodaScsJupyterStackActions,
-    #[Autowire(service: 'soda_scs_manager.nextcloud_stack.actions')]
-    SodaScsStackActionsInterface $sodaScsNextcloudStackActions,
     #[Autowire(service: 'soda_scs_manager.wisski_stack.actions')]
     SodaScsStackActionsInterface $sodaScsWisskiStackActions,
     TranslationInterface $stringTranslation,
   ) {
     $this->sodaScsJupyterStackActions = $sodaScsJupyterStackActions;
-    $this->sodaScsNextcloudStackActions = $sodaScsNextcloudStackActions;
     $this->sodaScsWisskiStackActions = $sodaScsWisskiStackActions;
     $this->stringTranslation = $stringTranslation;
   }
@@ -79,9 +69,6 @@ class SodaScsStackActions implements SodaScsStackActionsInterface {
 
       case 'soda_scs_jupyter_stack':
         return $this->sodaScsJupyterStackActions->createStack($stack);
-
-      case 'soda_scs_nextcloud_stack':
-        return $this->sodaScsNextcloudStackActions->createStack($stack);
 
       default:
         throw new \Exception('Stack type not supported for creation.');
@@ -108,9 +95,6 @@ class SodaScsStackActions implements SodaScsStackActionsInterface {
 
       case 'soda_scs_jupyter_stack':
         return $this->sodaScsJupyterStackActions->createSnapshot($stack, $snapshotMachineName, $timestamp);
-
-      case 'soda_scs_nextcloud_stack':
-        return $this->sodaScsNextcloudStackActions->createSnapshot($stack, $snapshotMachineName, $timestamp);
 
       default:
         throw new \Exception('Component type not supported for snapshot creation.');
@@ -194,10 +178,6 @@ class SodaScsStackActions implements SodaScsStackActionsInterface {
       // @todo Jupyter is not a stack, but an Account.
       case 'soda_scs_jupyter_stack':
         return $this->sodaScsJupyterStackActions->deleteStack($stack);
-
-      // @todo Jupyter is not a stack, but an Account.
-      case 'soda_scs_nextcloud_stack':
-        return $this->sodaScsNextcloudStackActions->deleteStack($stack);
 
       /* @todo Better error handling with trace info. */
       default:

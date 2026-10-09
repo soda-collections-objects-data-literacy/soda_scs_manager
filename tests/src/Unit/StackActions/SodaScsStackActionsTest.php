@@ -37,13 +37,6 @@ class SodaScsStackActionsTest extends UnitTestCase {
   protected $jupyterStackActions;
 
   /**
-   * The mocked Nextcloud stack actions.
-   *
-   * @var \Drupal\soda_scs_manager\StackActions\SodaScsStackActionsInterface|\Prophecy\Prophecy\ObjectProphecy
-   */
-  protected $nextcloudStackActions;
-
-  /**
    * The mocked WissKI stack actions.
    *
    * @var \Drupal\soda_scs_manager\StackActions\SodaScsStackActionsInterface|\Prophecy\Prophecy\ObjectProphecy
@@ -65,14 +58,12 @@ class SodaScsStackActionsTest extends UnitTestCase {
 
     // Create mock objects.
     $this->jupyterStackActions = $this->prophesize(SodaScsStackActionsInterface::class);
-    $this->nextcloudStackActions = $this->prophesize(SodaScsStackActionsInterface::class);
     $this->wisskiStackActions = $this->prophesize(SodaScsStackActionsInterface::class);
     $this->stringTranslation = $this->prophesize(TranslationInterface::class);
 
     // Create the service instance.
     $this->stackActions = new SodaScsStackActions(
       $this->jupyterStackActions->reveal(),
-      $this->nextcloudStackActions->reveal(),
       $this->wisskiStackActions->reveal(),
       $this->stringTranslation->reveal()
     );
@@ -118,30 +109,6 @@ class SodaScsStackActionsTest extends UnitTestCase {
     ];
 
     $this->jupyterStackActions
-      ->createStack($stack->reveal())
-      ->willReturn($expectedResult);
-
-    $result = $this->stackActions->createStack($stack->reveal());
-
-    $this->assertEquals($expectedResult, $result);
-  }
-
-  /**
-   * Tests createStack delegates to Nextcloud stack actions.
-   *
-   * @covers ::createStack
-   */
-  public function testCreateStackNextcloud(): void {
-    $stack = $this->prophesize(SodaScsStackInterface::class);
-    $stack->bundle()->willReturn('soda_scs_nextcloud_stack');
-
-    $expectedResult = [
-      'success' => TRUE,
-      'message' => 'Nextcloud stack created',
-      'data' => [],
-    ];
-
-    $this->nextcloudStackActions
       ->createStack($stack->reveal())
       ->willReturn($expectedResult);
 
@@ -207,31 +174,6 @@ class SodaScsStackActionsTest extends UnitTestCase {
     ];
 
     $this->jupyterStackActions
-      ->deleteStack($stack->reveal())
-      ->willReturn($expectedResult);
-
-    $result = $this->stackActions->deleteStack($stack->reveal());
-
-    $this->assertEquals($expectedResult, $result);
-  }
-
-  /**
-   * Tests deleteStack delegates to Nextcloud stack actions.
-   *
-   * @covers ::deleteStack
-   */
-  public function testDeleteStackNextcloud(): void {
-    $stack = $this->prophesize(SodaScsStackInterface::class);
-    $stack->bundle()->willReturn('soda_scs_nextcloud_stack');
-
-    $expectedResult = [
-      'success' => TRUE,
-      'message' => 'Nextcloud stack deleted',
-      'data' => [],
-      'error' => NULL,
-    ];
-
-    $this->nextcloudStackActions
       ->deleteStack($stack->reveal())
       ->willReturn($expectedResult);
 

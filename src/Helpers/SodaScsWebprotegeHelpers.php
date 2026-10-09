@@ -26,6 +26,11 @@ class SodaScsWebprotegeHelpers {
   public const CLASSES_PERSPECTIVE_ID = '69df8fa8-4f84-499e-9341-28eb5085c40b';
 
   /**
+   * WebProtégé OIDC login endpoint (see OidcAuthServlet in the webprotege repo).
+   */
+  private const OIDC_LOGIN_PATH = '/webprotege/oidc/login';
+
+  /**
    * UUID pattern used by WebProtégé project ids.
    */
   private const UUID_PATTERN = '/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i';
@@ -88,15 +93,42 @@ class SodaScsWebprotegeHelpers {
    * Builds the public WebProtégé hash URL for a project or the project list.
    */
   public static function buildProjectHashUrl(string $publicHost, ?string $projectUuid): string {
+    return self::normalizeHost($publicHost) . '/WebProtege.jsp#' . self::placeToken($projectUuid);
+  }
+
+  /**
+   * Builds a WebProtégé URL that opens the project after Keycloak sign-in.
+   *
+   * The hash fragment of a plain project URL is lost during the OIDC
+   * redirect, so signed-out users would land on the project list. The OIDC
+   * login endpoint keeps the place in {@code return_to} and skips the IdP
+   * round trip for users who are already signed in.
+   */
+  public static function buildProjectLoginUrl(string $publicHost, ?string $projectUuid): string {
+    return self::normalizeHost($publicHost) . self::OIDC_LOGIN_PATH . '?' . http_build_query([
+      'return_to' => self::placeToken($projectUuid),
+    ]);
+  }
+
+  /**
+   * WebProtégé place token of a project's Classes perspective or the list.
+   */
+  private static function placeToken(?string $projectUuid): string {
+    if (is_string($projectUuid) && preg_match(self::UUID_PATTERN, $projectUuid)) {
+      return 'projects/' . strtolower($projectUuid) . '/perspectives/' . self::CLASSES_PERSPECTIVE_ID;
+    }
+    return 'projects/list';
+  }
+
+  /**
+   * Trims the host and adds https:// when no scheme is given.
+   */
+  private static function normalizeHost(string $publicHost): string {
     $host = rtrim($publicHost, '/');
     if ($host !== '' && !preg_match('#^https?://#i', $host)) {
       $host = 'https://' . $host;
     }
-    $base = $host . '/WebProtege.jsp';
-    if (is_string($projectUuid) && preg_match(self::UUID_PATTERN, $projectUuid)) {
-      return $base . '#projects/' . strtolower($projectUuid) . '/perspectives/' . self::CLASSES_PERSPECTIVE_ID;
-    }
-    return $base . '#projects/list';
+    return $host;
   }
 
   /**
@@ -422,6 +454,108 @@ class SodaScsWebprotegeHelpers {
     return SodaScsResult::success(
       data: ['removed' => TRUE, 'webprotegeProjectId' => $projectId],
       message: (string) $this->t('Moved the WebProtégé project for @project to trash.', [
+        '@project' => $project->label(),
+      ]),
+    );
+  }
+
+  /**
+   * Loads the details (createdAt, modifiedAt, …) of the linked WebProtégé project.
+   *
+   * @return \Drupal\soda_scs_manager\ValueObject\SodaScsResult
+   *   On success, data has webprotegeProjectId and details (decoded JSON).
+   */
+  public function getProjectDetails(SodaScsProjectInterface $project): SodaScsResult {
+    $projectId = $this->linkedProjectId($project);
+    if ($projectId === NULL) {
+      return SodaScsResult::failure(
+        'No WebProtégé project is linked.',
+        (string) $this->t('No WebProtégé project is linked for @project.', [
+          '@project' => $project->label(),
+        ]),
+        FALSE,
+      );
+    }
+
+    $request = $this->webprotegeServiceActions->buildGetRequest([
+      'routeParams' => ['projectId' => $projectId],
+    ]);
+    $response = $this->webprotegeServiceActions->makeRequest($request);
+    $details = empty($response['success']) ? NULL : $this->decodeResponseBody($response);
+    if ($details === NULL) {
+      return SodaScsResult::failure(
+        (string) ($response['error'] ?? '') ?: 'WebProtégé project details could not be read.',
+        (string) $this->t('Could not read the WebProtégé project for @project.', [
+          '@project' => $project->label(),
+        ]),
+        FALSE,
+      );
+    }
+
+    return SodaScsResult::success(
+      data: [
+        'webprotegeProjectId' => $projectId,
+        'details' => $details,
+      ],
+      message: (string) $this->t('Read WebProtégé project details for @project.', [
+        '@project' => $project->label(),
+      ]),
+    );
+  }
+
+  /**
+   * Lists the revisions of the linked WebProtégé project.
+   *
+   * A project nobody has edited has no revisions.
+   *
+   * @return \Drupal\soda_scs_manager\ValueObject\SodaScsResult
+   *   On success, data has webprotegeProjectId, count, and latest (the last
+   *   revision as returned by WebProtégé, or NULL).
+   */
+  public function listRevisions(SodaScsProjectInterface $project): SodaScsResult {
+    $projectId = $this->linkedProjectId($project);
+    if ($projectId === NULL) {
+      return SodaScsResult::failure(
+        'No WebProtégé project is linked.',
+        (string) $this->t('No WebProtégé project is linked for @project.', [
+          '@project' => $project->label(),
+        ]),
+        FALSE,
+      );
+    }
+
+    $request = $this->webprotegeServiceActions->buildGetRequest([
+      'type' => 'revisions',
+      'routeParams' => ['projectId' => $projectId],
+    ]);
+    $response = $this->webprotegeServiceActions->makeRequest($request);
+    if (empty($response['success'])) {
+      return SodaScsResult::failure(
+        (string) ($response['error'] ?? 'WebProtégé revisions request failed.'),
+        (string) $this->t('Could not read the WebProtégé project for @project.', [
+          '@project' => $project->label(),
+        ]),
+        FALSE,
+      );
+    }
+
+    $revisions = $this->decodeResponseBody($response);
+    if ($revisions === NULL || !array_is_list($revisions)) {
+      return SodaScsResult::failure(
+        'WebProtégé revisions response is not a list.',
+        (string) $this->t('Could not read the WebProtégé project for @project.', [
+          '@project' => $project->label(),
+        ]),
+      );
+    }
+
+    return SodaScsResult::success(
+      data: [
+        'webprotegeProjectId' => $projectId,
+        'count' => count($revisions),
+        'latest' => $revisions === [] ? NULL : end($revisions),
+      ],
+      message: (string) $this->t('Read WebProtégé revisions for @project.', [
         '@project' => $project->label(),
       ]),
     );

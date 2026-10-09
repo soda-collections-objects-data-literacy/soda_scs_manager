@@ -40,6 +40,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- JupyterHub and WebProtégé are project applications: a project page shows
+  them only when they were added to that project, at most once per project,
+  owned by the project owner. Members open their own notebook at the project
+  Team Folder and may start/stop it from the card. Adding WebProtégé creates
+  (or reuses) the project's ontology project; deleting it moves the ontology
+  project to trash. The add-application popup shows these tiles as
+  "Already in this project" when present.
+- New users and new projects no longer get JupyterHub, WebProtégé or a
+  WebProtégé ontology project automatically. `backfill-webprotege-projects`
+  only handles projects with a WebProtégé component. Run
+  `drush soda_scs_manager:reconcile-webprotege-projects --dry-run --all` after
+  `updb` to link used ontology projects and trash unused ones.
 - Profile page: the username is shown as plain text instead of a disabled
   field, the picture dialog opens from an **Upload picture** button, and the
   duplicate name heading under the picture is gone.
@@ -76,8 +88,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   **×**; admins and owners can remove other members. Members cannot remove
   other members.
 
+### Removed
+
+- Nextcloud stack entities (`soda_scs_nextcloud_stack`) and the project-page
+  Nextcloud card. Project files are reached through the files block; update
+  11032 deletes the entities (no remote resources belong to them).
+
 ### Fixed
 
+- WebProtégé card links open the project's ontology even for signed-out
+  users: they go through `/webprotege/oidc/login?return_to=…`, which keeps
+  the target across the Keycloak sign-in (needs the matching WebProtégé
+  build).
+- Project pages no longer show the viewer's personal JupyterHub, Nextcloud and
+  WebProtégé on every project.
 - Application cards on a stack detail page (e.g. WissKI with database and
   triplestore) stayed on **Unknown** because the health polling script was not
   loaded there; they now show the live status.

@@ -39,7 +39,7 @@ final class SodaScsStackLinksTasksAccessControlHandler {
     $bundle = $soda_scs_stack->bundle();
 
     // Hide the edit task for specific stack types.
-    $hiddenBundles = ['soda_scs_nextcloud_stack', 'soda_scs_jupyter_stack'];
+    $hiddenBundles = ['soda_scs_jupyter_stack'];
     if (in_array($bundle, $hiddenBundles, TRUE)) {
       return AccessResult::forbidden()->addCacheableDependency($soda_scs_stack);
     }
@@ -74,7 +74,7 @@ final class SodaScsStackLinksTasksAccessControlHandler {
     $bundle = $soda_scs_stack->bundle();
 
     // Hide the snapshot task for specific stack types.
-    $hiddenBundles = ['soda_scs_nextcloud_stack', 'soda_scs_jupyter_stack'];
+    $hiddenBundles = ['soda_scs_jupyter_stack'];
     if (in_array($bundle, $hiddenBundles, TRUE)) {
       return AccessResult::forbidden()->addCacheableDependency($soda_scs_stack);
     }

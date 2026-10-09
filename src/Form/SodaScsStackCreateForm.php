@@ -17,6 +17,7 @@ use Drupal\Core\Logger\LoggerChannelFactoryInterface;
 use Drupal\Core\Session\AccountProxyInterface;
 use Drupal\Core\Url;
 use Drupal\soda_scs_manager\Helpers\SodaScsNextcloudHelpers;
+use Drupal\soda_scs_manager\Helpers\SodaScsProjectApplicationHelpers;
 use Drupal\soda_scs_manager\StackActions\SodaScsStackActionsInterface;
 use Drupal\soda_scs_manager\Validation\InputDisallowedTerms;
 use Symfony\Component\DependencyInjection\ContainerInterface;
@@ -82,6 +83,13 @@ class SodaScsStackCreateForm extends ContentEntityForm {
   protected SodaScsNextcloudHelpers $nextcloudHelpers;
 
   /**
+   * Looks up applications that exist once per project.
+   *
+   * @var \Drupal\soda_scs_manager\Helpers\SodaScsProjectApplicationHelpers
+   */
+  protected SodaScsProjectApplicationHelpers $projectApplicationHelpers;
+
+  /**
    * Constructs a new SodaScsComponentCreateForm.
    *
    * @param \Drupal\Core\Session\AccountProxyInterface $currentUser
@@ -102,6 +110,8 @@ class SodaScsStackCreateForm extends ContentEntityForm {
    *   The entity type manager.
    * @param \Drupal\soda_scs_manager\Helpers\SodaScsNextcloudHelpers $nextcloudHelpers
    *   The Nextcloud helpers.
+   * @param \Drupal\soda_scs_manager\Helpers\SodaScsProjectApplicationHelpers $projectApplicationHelpers
+   *   Looks up applications that exist once per project.
    */
   public function __construct(
     AccountProxyInterface $currentUser,
@@ -115,6 +125,8 @@ class SodaScsStackCreateForm extends ContentEntityForm {
     EntityTypeManagerInterface $entityTypeManager,
     #[Autowire(service: 'soda_scs_manager.nextcloud.helpers')]
     SodaScsNextcloudHelpers $nextcloudHelpers,
+    #[Autowire(service: 'soda_scs_manager.project_application.helpers')]
+    SodaScsProjectApplicationHelpers $projectApplicationHelpers,
   ) {
     parent::__construct($entity_repository, $entity_type_bundle_info, $time);
     $this->currentUser = $currentUser;
@@ -123,6 +135,7 @@ class SodaScsStackCreateForm extends ContentEntityForm {
     $this->sodaScsStackActions = $sodaScsStackActions;
     $this->entityTypeManager = $entityTypeManager;
     $this->nextcloudHelpers = $nextcloudHelpers;
+    $this->projectApplicationHelpers = $projectApplicationHelpers;
   }
 
   /**
@@ -139,6 +152,7 @@ class SodaScsStackCreateForm extends ContentEntityForm {
       $container->get('soda_scs_manager.stack.actions'),
       $container->get('entity_type.manager'),
       $container->get('soda_scs_manager.nextcloud.helpers'),
+      $container->get('soda_scs_manager.project_application.helpers'),
     );
   }
 
@@ -305,6 +319,22 @@ class SodaScsStackCreateForm extends ContentEntityForm {
     $wisski8x4xDevelopment = (bool) ($form_state->getValue(['wisski8x4xDevelopment', 'value']) ?? FALSE);
     if ($wisski8x4xDevelopment && !$developmentInstance) {
       $form_state->setErrorByName('wisski8x4xDevelopment', $this->t('WissKI 8.x-4.x Development can only be enabled when Development Instance is enabled.'));
+    }
+
+    // WebProtégé and JupyterHub exist once per project.
+    if ($this->projectApplicationHelpers->isSingleInstanceBundle('soda_scs_stack', $this->bundle)) {
+      $projectId = $this->resolvePartOfProjectsDefault();
+      $applicationLabel = $this->entityTypeBundleInfo->getBundleInfo('soda_scs_stack')[$this->bundle]['label'] ?? $this->bundle;
+      if ($projectId === NULL) {
+        $form_state->setErrorByName('label', $this->t('@application can only be added to a project.', [
+          '@application' => $applicationLabel,
+        ]));
+      }
+      elseif ($this->projectApplicationHelpers->projectHasApplication($projectId, 'soda_scs_stack', $this->bundle)) {
+        $form_state->setErrorByName('label', $this->t('This project already has @application.', [
+          '@application' => $applicationLabel,
+        ]));
+      }
     }
 
     // For WissKI stacks, ensure Nextcloud credentials are available.

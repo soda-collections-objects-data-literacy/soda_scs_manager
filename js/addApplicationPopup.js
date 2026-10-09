@@ -238,13 +238,17 @@
             popup.querySelector('a[data-app-type="wisski"]').setAttribute('href', createUrls.wisski + query);
             popup.querySelector('a[data-app-type="openGdb"]').setAttribute('href', createUrls.openGdb + query);
           }
-          if (projectId && createUrls.jupyter) {
+          // Jupyter and WebProtégé tiles are not links when the project
+          // already has them.
+          var jupyterLink = popup.querySelector('a[data-app-type="jupyter"]');
+          if (projectId && createUrls.jupyter && jupyterLink) {
             var jupyterQuery = '?project=' + encodeURIComponent(projectId);
-            popup.querySelector('a[data-app-type="jupyter"]').setAttribute('href', createUrls.jupyter + jupyterQuery);
+            jupyterLink.setAttribute('href', createUrls.jupyter + jupyterQuery);
           }
-          if (projectId && createUrls.webprotege) {
+          var webprotegeLink = popup.querySelector('a[data-app-type="webprotege"]');
+          if (projectId && createUrls.webprotege && webprotegeLink) {
             var webprotegeQuery = '?project=' + encodeURIComponent(projectId);
-            popup.querySelector('a[data-app-type="webprotege"]').setAttribute('href', createUrls.webprotege + webprotegeQuery);
+            webprotegeLink.setAttribute('href', createUrls.webprotege + webprotegeQuery);
           }
 
           activeTrigger = button;
