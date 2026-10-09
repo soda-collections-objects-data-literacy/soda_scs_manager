@@ -19,7 +19,9 @@ use Drupal\Core\StringTranslation\StringTranslationTrait;
 use Drupal\Core\Theme\Registry;
 use Drupal\Core\Url;
 use Drupal\soda_scs_manager\Entity\SodaScsProjectInterface;
+use Drupal\soda_scs_manager\Entity\SodaScsProjectMembershipInterface;
 use Drupal\soda_scs_manager\Form\SodaScsProjectAddMemberForm;
+use Drupal\soda_scs_manager\Form\SodaScsProjectInvitationActionForm;
 use Drupal\soda_scs_manager\Form\SodaScsProjectNoteForm;
 use Drupal\soda_scs_manager\Helpers\SodaScsProjectApplicationHelpers;
 use Drupal\soda_scs_manager\Helpers\SodaScsProjectMembershipHelpers;
@@ -269,8 +271,10 @@ final class SodaScsProjectViewBuilder extends EntityViewBuilder
 
     $canAddMembers = $this->projectMembershipHelpers->canAddMembers($project, $this->currentUser);
     $addForm = NULL;
+    $invitations = [];
     if ($canAddMembers) {
       $addForm = $this->formBuilder->getForm(SodaScsProjectAddMemberForm::class, $project);
+      $invitations = $this->buildOpenInvitations($project);
     }
 
     return [
@@ -279,12 +283,58 @@ final class SodaScsProjectViewBuilder extends EntityViewBuilder
       '#owner' => $owner,
       '#can_add_members' => $canAddMembers,
       '#add_form' => $addForm,
+      '#invitations' => $invitations,
       '#cache' => [
         'contexts' => ['user', 'languages:language_interface'],
         'tags' => $project->getCacheTags(),
         'max-age' => 0,
       ],
     ];
+  }
+
+  /**
+   * Pending and declined invitations for the team editor.
+   *
+   * @return list<array<string, mixed>>
+   *   Invitation rows for the edit overlay.
+   */
+  protected function buildOpenInvitations(SodaScsProjectInterface $project): array {
+    $rows = [];
+    foreach ($this->projectMembershipHelpers->loadOpenInvitations($project) as $invitation) {
+      $recipient = $invitation->get('recipient')->entity;
+      if (!$recipient instanceof UserInterface) {
+        continue;
+      }
+
+      $isDeclined = $invitation->hasStatus(SodaScsProjectMembershipInterface::STATUS_REJECTED);
+      $row = $this->buildMemberProfile($recipient);
+      $row['status'] = $invitation->getStatus();
+      $row['status_label'] = $isDeclined ? $this->t('Declined') : $this->t('Pending');
+      $row['withdraw_form'] = NULL;
+      $row['delete_form'] = NULL;
+      $row['resend_form'] = NULL;
+
+      if ($isDeclined) {
+        SodaScsProjectInvitationActionForm::queueFormId($invitation->id(), 'resend');
+        $row['resend_form'] = $this->formBuilder->getForm(SodaScsProjectInvitationActionForm::class, $project, $invitation, 'resend');
+        SodaScsProjectInvitationActionForm::queueFormId($invitation->id(), 'delete');
+        $row['delete_form'] = $this->formBuilder->getForm(SodaScsProjectInvitationActionForm::class, $project, $invitation, 'delete');
+        $row['delete_label'] = $this->t('Delete declined invitation for @user', [
+          '@user' => $recipient->getDisplayName(),
+        ]);
+      }
+      else {
+        SodaScsProjectInvitationActionForm::queueFormId($invitation->id(), 'withdraw');
+        $row['withdraw_form'] = $this->formBuilder->getForm(SodaScsProjectInvitationActionForm::class, $project, $invitation, 'withdraw');
+        $row['withdraw_label'] = $this->t('Withdraw invitation for @user', [
+          '@user' => $recipient->getDisplayName(),
+        ]);
+      }
+
+      $rows[] = $row;
+    }
+
+    return $rows;
   }
 
   /**

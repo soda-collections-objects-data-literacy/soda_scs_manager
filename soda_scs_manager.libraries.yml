@@ -132,6 +132,9 @@ createProjectWizard:
 
 projectMembers:
   version: 1.x
+  css:
+    theme:
+      css/project-members.css: {}
   js:
     js/projectMembers.js: {}
   dependencies:

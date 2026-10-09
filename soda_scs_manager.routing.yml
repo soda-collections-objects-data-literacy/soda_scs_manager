@@ -291,6 +291,22 @@ entity.soda_scs_project.remove_member_form:
     _permission: 'soda scs manager user'
     _custom_access: '\Drupal\soda_scs_manager\Access\SodaScsProjectAccessControlHandler::accessRemoveMemberForm'
 
+entity.soda_scs_project.invitation_action:
+  path: '/soda-scs-manager/project/{soda_scs_project}/invitations/{soda_scs_project_membership}/{operation}'
+  defaults:
+    _form: '\Drupal\soda_scs_manager\Form\SodaScsProjectInvitationActionForm'
+    _title: 'Project invitation'
+  options:
+    parameters:
+      soda_scs_project:
+        type: entity:soda_scs_project
+      soda_scs_project_membership:
+        type: entity:soda_scs_project_membership
+  requirements:
+    _permission: 'soda scs manager user'
+    operation: withdraw|delete|resend
+    _custom_access: '\Drupal\soda_scs_manager\Access\SodaScsProjectAccessControlHandler::accessInvitationAction'
+
 entity.soda_scs_service_key.canonical:
   path: '/soda-scs-manager/service-key/{soda_scs_service_key}'
   defaults:

@@ -53,8 +53,11 @@ trait SodaScsProjectMemberInvitationTrait {
    *   User IDs that are not allowed to be invited.
    * @param array $existingMemberIds
    *   User IDs already part of the project.
+   * @param array $alreadyInvitedUserIds
+   *   User IDs with a pending or declined invitation. A person can only be
+   *   invited once until that invitation is withdrawn or deleted.
    */
-  protected function validateMemberInvitations(FormStateInterface $form_state, array $disallowedUserIds = [], array $existingMemberIds = []): void {
+  protected function validateMemberInvitations(FormStateInterface $form_state, array $disallowedUserIds = [], array $existingMemberIds = [], array $alreadyInvitedUserIds = []): void {
     $rawInput = (string) $form_state->getValue(self::INVITATION_FIELD_NAME, '');
     $identifiers = $this->extractInvitationIdentifiers($rawInput);
 
@@ -85,6 +88,13 @@ trait SodaScsProjectMemberInvitationTrait {
 
       if (in_array((int) $user->id(), $existingMemberIds, TRUE)) {
         $form_state->setErrorByName(self::INVITATION_FIELD_NAME, $this->t('@user is already part of this project.', [
+          '@user' => $user->getDisplayName(),
+        ]));
+        continue;
+      }
+
+      if (in_array((int) $user->id(), $alreadyInvitedUserIds, TRUE)) {
+        $form_state->setErrorByName(self::INVITATION_FIELD_NAME, $this->t('@user has already been invited to this project.', [
           '@user' => $user->getDisplayName(),
         ]));
         continue;

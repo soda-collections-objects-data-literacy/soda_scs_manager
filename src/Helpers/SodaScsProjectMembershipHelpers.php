@@ -152,7 +152,7 @@ final class SodaScsProjectMembershipHelpers {
         continue;
       }
 
-      if ($this->hasPendingRequest($project, $recipient)) {
+      if ($this->hasOpenInvitation($project, $recipient)) {
         $skipped[] = $recipient->getDisplayName();
         continue;
       }
@@ -173,7 +173,7 @@ final class SodaScsProjectMembershipHelpers {
     if (empty($created)) {
       return SodaScsResult::failure(
         error: 'No invitations created',
-        message: (string) $this->t('No invitations were created. Existing members or pending requests were skipped.'),
+        message: (string) $this->t('No invitations were created. Existing members or existing invitations were skipped.'),
       );
     }
 
@@ -320,6 +320,181 @@ final class SodaScsProjectMembershipHelpers {
       data: ['request' => $request->id()],
       message: (string) $this->t('Invitation for project @project has been rejected.', [
         '@project' => $projectLabel,
+      ]),
+    );
+  }
+
+  /**
+   * Pending and declined invitations for a project, pending first.
+   *
+   * @return \Drupal\soda_scs_manager\Entity\SodaScsProjectMembershipInterface[]
+   *   Open invitations whose recipient account still exists.
+   */
+  public function loadOpenInvitations(SodaScsProjectInterface $project): array {
+    if ($project->id() === NULL) {
+      return [];
+    }
+
+    $storage = $this->entityTypeManager->getStorage(self::REQUEST_ENTITY_TYPE);
+    $ids = $storage->getQuery()
+      ->condition('project', $project->id())
+      ->condition('status', [
+        SodaScsProjectMembershipInterface::STATUS_PENDING,
+        SodaScsProjectMembershipInterface::STATUS_REJECTED,
+      ], 'IN')
+      ->accessCheck(FALSE)
+      ->execute();
+
+    if ($ids === []) {
+      return [];
+    }
+
+    /** @var \Drupal\soda_scs_manager\Entity\SodaScsProjectMembershipInterface[] $requests */
+    $requests = $storage->loadMultiple($ids);
+    $open = [];
+    foreach ($requests as $request) {
+      $recipient = $request->get('recipient')->entity;
+      if (!$recipient instanceof UserInterface) {
+        continue;
+      }
+      $open[] = $request;
+    }
+
+    usort($open, static function (SodaScsProjectMembershipInterface $left, SodaScsProjectMembershipInterface $right): int {
+      $rank = [
+        SodaScsProjectMembershipInterface::STATUS_PENDING => 0,
+        SodaScsProjectMembershipInterface::STATUS_REJECTED => 1,
+      ];
+      $statusCompare = ($rank[$left->getStatus()] ?? 2) <=> ($rank[$right->getStatus()] ?? 2);
+      if ($statusCompare !== 0) {
+        return $statusCompare;
+      }
+      return $right->getCreatedTime() <=> $left->getCreatedTime();
+    });
+
+    return $open;
+  }
+
+  /**
+   * User IDs that already have a pending or declined invitation.
+   *
+   * @return list<int>
+   *   Recipient user IDs.
+   */
+  public function openInvitationRecipientIds(SodaScsProjectInterface $project): array {
+    $ids = [];
+    foreach ($this->loadOpenInvitations($project) as $invitation) {
+      $ids[] = (int) $invitation->get('recipient')->target_id;
+    }
+    return array_values(array_unique(array_filter($ids)));
+  }
+
+  /**
+   * Whether this actor may run withdraw, delete, or resend on the invitation.
+   */
+  public function canRunInvitationOperation(
+    SodaScsProjectInterface $project,
+    SodaScsProjectMembershipInterface $invitation,
+    AccountInterface $actor,
+    string $operation,
+  ): bool {
+    if (!$this->canAddMembers($project, $actor)) {
+      return FALSE;
+    }
+    if ((int) $invitation->get('project')->target_id !== (int) $project->id()) {
+      return FALSE;
+    }
+
+    return match ($operation) {
+      'withdraw' => $invitation->hasStatus(SodaScsProjectMembershipInterface::STATUS_PENDING),
+      'delete', 'resend' => $invitation->hasStatus(SodaScsProjectMembershipInterface::STATUS_REJECTED),
+      default => FALSE,
+    };
+  }
+
+  /**
+   * Cancel a pending invitation and remove its inbox message.
+   */
+  public function withdrawInvitation(
+    SodaScsProjectInterface $project,
+    SodaScsProjectMembershipInterface $invitation,
+    AccountInterface $actor,
+  ): SodaScsResult {
+    return $this->removeOpenInvitation($project, $invitation, $actor, 'withdraw');
+  }
+
+  /**
+   * Remove a declined invitation so the person can be invited again.
+   */
+  public function deleteDeclinedInvitation(
+    SodaScsProjectInterface $project,
+    SodaScsProjectMembershipInterface $invitation,
+    AccountInterface $actor,
+  ): SodaScsResult {
+    return $this->removeOpenInvitation($project, $invitation, $actor, 'delete');
+  }
+
+  /**
+   * Send a declined invitation again on the same membership record.
+   */
+  public function resendInvitation(
+    SodaScsProjectInterface $project,
+    SodaScsProjectMembershipInterface $invitation,
+    UserInterface $actor,
+  ): SodaScsResult {
+    if (!$this->canRunInvitationOperation($project, $invitation, $actor, 'resend')) {
+      return SodaScsResult::failure(
+        error: 'not_allowed',
+        message: (string) $this->t('This invitation cannot be changed.'),
+        log: FALSE,
+      );
+    }
+
+    $recipient = $invitation->get('recipient')->entity;
+    if (!$recipient instanceof UserInterface) {
+      return SodaScsResult::failure(
+        error: 'missing_recipient',
+        message: (string) $this->t('This invitation cannot be changed.'),
+        log: FALSE,
+      );
+    }
+
+    if ($this->isMemberOfProject($project, $recipient)) {
+      return SodaScsResult::failure(
+        error: 'already_member',
+        message: (string) $this->t('@user is already part of this project.', [
+          '@user' => $recipient->getDisplayName(),
+        ]),
+        log: FALSE,
+      );
+    }
+
+    try {
+      $invitation->set('requester', $actor->id());
+      $invitation->setStatus(SodaScsProjectMembershipInterface::STATUS_PENDING);
+      $invitation->set('decisionTime', NULL);
+      $invitation->save();
+      $this->messageHelpers->deleteByRelated(self::REQUEST_ENTITY_TYPE, (int) $invitation->id());
+      $this->messageHelpers->createFromProjectInvitation($invitation);
+      $this->sendInvitationEmail($project, $actor, $recipient);
+    }
+    catch (\Throwable $throwable) {
+      $this->logger->error('Failed to resend project invitation @id: @message', [
+        '@id' => $invitation->id(),
+        '@message' => $throwable->getMessage(),
+      ]);
+
+      return SodaScsResult::failure(
+        error: 'storage_error',
+        message: (string) $this->t('Failed to resend the invitation. Please try again.'),
+        log: FALSE,
+      );
+    }
+
+    return SodaScsResult::success(
+      data: ['request' => $invitation->id()],
+      message: (string) $this->t('The invitation for @user has been sent again.', [
+        '@user' => $recipient->getDisplayName(),
       ]),
     );
   }
@@ -558,26 +733,78 @@ final class SodaScsProjectMembershipHelpers {
   }
 
   /**
-   * Check whether a pending request already exists.
+   * Whether a pending or declined invitation already exists for this person.
+   *
+   * Accepted invitations do not block a later invite after the person has
+   * left the project. A second pending or declined row is never created.
    */
-  private function hasPendingRequest(SodaScsProjectInterface $project, UserInterface $recipient): bool {
+  private function hasOpenInvitation(SodaScsProjectInterface $project, UserInterface $recipient): bool {
     $storage = $this->entityTypeManager->getStorage(self::REQUEST_ENTITY_TYPE);
     $ids = $storage->getQuery()
       ->condition('project', $project->id())
       ->condition('recipient', $recipient->id())
-      ->condition('status', SodaScsProjectMembershipInterface::STATUS_PENDING)
+      ->condition('status', [
+        SodaScsProjectMembershipInterface::STATUS_PENDING,
+        SodaScsProjectMembershipInterface::STATUS_REJECTED,
+      ], 'IN')
       ->accessCheck(FALSE)
+      ->range(0, 1)
       ->execute();
 
-    if (empty($ids)) {
-      return FALSE;
+    return $ids !== [];
+  }
+
+  /**
+   * Delete a pending or declined invitation and its inbox message.
+   */
+  private function removeOpenInvitation(
+    SodaScsProjectInterface $project,
+    SodaScsProjectMembershipInterface $invitation,
+    AccountInterface $actor,
+    string $operation,
+  ): SodaScsResult {
+    if (!$this->canRunInvitationOperation($project, $invitation, $actor, $operation)) {
+      return SodaScsResult::failure(
+        error: 'not_allowed',
+        message: (string) $this->t('This invitation cannot be changed.'),
+        log: FALSE,
+      );
     }
 
-    /** @var \Drupal\soda_scs_manager\Entity\SodaScsProjectMembershipInterface[] $requests */
-    $requests = $storage->loadMultiple($ids);
-    $valid = $this->purgeOrphanedAndFilterRequests($requests);
+    $recipient = $invitation->get('recipient')->entity;
+    $recipientName = $recipient instanceof UserInterface
+      ? $recipient->getDisplayName()
+      : (string) $this->t('this person');
 
-    return !empty($valid);
+    try {
+      $this->messageHelpers->deleteByRelated(self::REQUEST_ENTITY_TYPE, (int) $invitation->id());
+      $invitation->delete();
+    }
+    catch (\Throwable $throwable) {
+      $this->logger->error('Failed to remove project invitation @id: @message', [
+        '@id' => $invitation->id(),
+        '@message' => $throwable->getMessage(),
+      ]);
+
+      return SodaScsResult::failure(
+        error: 'storage_error',
+        message: (string) $this->t('Failed to update the invitation. Please try again.'),
+        log: FALSE,
+      );
+    }
+
+    $message = $operation === 'withdraw'
+      ? (string) $this->t('The invitation for @user has been withdrawn.', [
+        '@user' => $recipientName,
+      ])
+      : (string) $this->t('The declined invitation for @user has been removed.', [
+        '@user' => $recipientName,
+      ]);
+
+    return SodaScsResult::success(
+      data: [],
+      message: $message,
+    );
   }
 
 }

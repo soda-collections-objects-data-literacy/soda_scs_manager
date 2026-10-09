@@ -10,6 +10,7 @@ use Drupal\Core\Entity\EntityAccessControlHandler;
 use Drupal\Core\Entity\EntityInterface;
 use Drupal\Core\Session\AccountInterface;
 use Drupal\soda_scs_manager\Entity\SodaScsProjectInterface;
+use Drupal\soda_scs_manager\Entity\SodaScsProjectMembershipInterface;
 use Drupal\user\UserInterface;
 
 /**
@@ -188,6 +189,20 @@ final class SodaScsProjectAccessControlHandler extends EntityAccessControlHandle
     return $allowed
       ? AccessResult::allowed()->cachePerUser()->addCacheableDependency($soda_scs_project)
       : AccessResult::forbidden()->cachePerUser()->addCacheableDependency($soda_scs_project);
+  }
+
+  /**
+   * Access for withdrawing, deleting, or resending one invitation.
+   */
+  public static function accessInvitationAction(SodaScsProjectInterface $soda_scs_project, SodaScsProjectMembershipInterface $soda_scs_project_membership, string $operation): AccessResultInterface {
+    $account = \Drupal::currentUser();
+    /** @var \Drupal\soda_scs_manager\Helpers\SodaScsProjectMembershipHelpers $helpers */
+    $helpers = \Drupal::service('soda_scs_manager.project_membership.helpers');
+    $allowed = $helpers->canRunInvitationOperation($soda_scs_project, $soda_scs_project_membership, $account, $operation);
+
+    return $allowed
+      ? AccessResult::allowed()->cachePerUser()->addCacheableDependency($soda_scs_project)->addCacheableDependency($soda_scs_project_membership)
+      : AccessResult::forbidden()->cachePerUser()->addCacheableDependency($soda_scs_project)->addCacheableDependency($soda_scs_project_membership);
   }
 
 }

@@ -972,6 +972,7 @@ function soda_scs_manager_theme($existing, $type, $theme, $path) {
       'variables' => [
         'add_form' => NULL,
         'can_add_members' => FALSE,
+        'invitations' => [],
         'members' => [],
         'owner' => [],
       ],

@@ -1,0 +1,28 @@
+.project--right .project-members-edit-overlay .overlay__dialog {
+  max-height: calc(100vh - 4rem);
+  overflow: auto;
+}
+
+.project--right .project__members__invitations-title {
+  margin: 0;
+}
+
+.project--right .project__members .project__members__list--invitations .project-member__invitation-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  justify-content: flex-end;
+}
+
+.project--right .project__members .project__members__list--invitations .project-member__resend-form .form-actions {
+  margin: 0;
+}
+
+.project--right .project__members .project__members__list .project-member .project-member__status {
+  color: #4d5866;
+}
+
+.project--right .project__members .project__members__list .project-member--invitation-declined .project-member__status {
+  color: #17212b;
+  font-weight: 700;
+}

@@ -87,6 +87,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   (email or username, no autocomplete). Members can remove themselves with
   **×**; admins and owners can remove other members. Members cannot remove
   other members.
+- The project team editor lists pending invitations and keeps declined ones
+  visible as **Declined**. A pending invitation can be withdrawn. A declined
+  one can be deleted or resent. The same person cannot be invited again while
+  that invitation is still pending or declined.
 
 ### Removed
 

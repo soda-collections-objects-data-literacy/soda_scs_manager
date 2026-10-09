@@ -15,7 +15,9 @@ use Drupal\Core\Form\FormStateInterface;
 use Drupal\Core\Logger\LoggerChannelFactoryInterface;
 use Drupal\Core\Logger\LoggerChannelInterface;
 use Drupal\Core\Session\AccountProxyInterface;
+use Drupal\Core\StringTranslation\TranslatableMarkup;
 use Drupal\soda_scs_manager\Entity\SodaScsProjectInterface;
+use Drupal\soda_scs_manager\Entity\SodaScsProjectMembershipInterface;
 use Drupal\soda_scs_manager\Helpers\SodaScsProjectDbAccessHelpers;
 use Drupal\soda_scs_manager\Helpers\SodaScsProjectHelpers;
 use Drupal\soda_scs_manager\Helpers\SodaScsProjectMembershipHelpers;
@@ -329,26 +331,14 @@ class SodaScsProjectEditForm extends ContentEntityForm {
     /** @var \Drupal\soda_scs_manager\Entity\SodaScsProjectInterface $project */
     $project = $this->entity;
 
-    // Load pending invitations for this project.
-    $storage = $this->entityTypeManager->getStorage('soda_scs_project_membership');
-    $query = $storage->getQuery()
-      ->condition('project', $project->id())
-      ->condition('status', 'pending')
-      ->sort('created', 'DESC')
-      ->accessCheck(FALSE);
-
-    $ids = $query->execute();
-
-    if (empty($ids)) {
+    $openInvitations = $this->projectMembershipHelpers->loadOpenInvitations($project);
+    if ($openInvitations === []) {
       return;
     }
 
-    /** @var \Drupal\soda_scs_manager\Entity\SodaScsProjectMembershipInterface[] $pendingRequests */
-    $pendingRequests = $storage->loadMultiple($ids);
-
     $form['pending_invitations'] = [
       '#type' => 'details',
-      '#title' => $this->t('Pending Invitations (@count)', ['@count' => count($pendingRequests)]),
+      '#title' => $this->t('Pending invitations (@count)', ['@count' => count($openInvitations)]),
       '#open' => TRUE,
       '#weight' => 33,
     ];
@@ -363,6 +353,7 @@ class SodaScsProjectEditForm extends ContentEntityForm {
       '#header' => [
         'recipient' => $this->t('Invited User'),
         'email' => $this->t('Email'),
+        'status' => $this->t('Status'),
         'invited_by' => $this->t('Invited By'),
         'date' => $this->t('Date'),
         'actions' => $this->t('Actions'),
@@ -371,68 +362,81 @@ class SodaScsProjectEditForm extends ContentEntityForm {
       '#attributes' => ['class' => ['project-members-table']],
     ];
 
-    foreach ($pendingRequests as $request) {
+    foreach ($openInvitations as $request) {
       $requestId = $request->id();
-      $recipient = $request->getRecipient();
-      $requester = $request->getRequester();
+      $recipient = $request->get('recipient')->entity;
+      $requester = $request->get('requester')->entity;
+      if (!$recipient instanceof UserInterface) {
+        continue;
+      }
+
+      $isDeclined = $request->hasStatus(SodaScsProjectMembershipInterface::STATUS_REJECTED);
+      $actions = [
+        '#type' => 'container',
+      ];
+      if ($isDeclined) {
+        $actions['resend'] = $this->buildInvitationActionButton($this->t('Resend'), 'resend', $requestId);
+        $actions['delete'] = $this->buildInvitationActionButton($this->t('Delete'), 'delete', $requestId);
+      }
+      else {
+        $actions['withdraw'] = $this->buildInvitationActionButton($this->t('Withdraw'), 'withdraw', $requestId);
+      }
 
       $form['pending_invitations']['table_wrapper']['table'][$requestId] = [
         'recipient' => ['#markup' => $recipient->getDisplayName()],
         'email' => ['#markup' => $recipient->getEmail()],
-        'invited_by' => ['#markup' => $requester->getDisplayName()],
+        'status' => [
+          '#markup' => $isDeclined ? $this->t('Declined') : $this->t('Pending'),
+        ],
+        'invited_by' => [
+          '#markup' => $requester instanceof UserInterface ? $requester->getDisplayName() : '',
+        ],
         'date' => [
           '#markup' => \Drupal::service('date.formatter')->format(
             $request->getCreatedTime(),
             'short'
           ),
         ],
-        'actions' => [
-          '#type' => 'submit',
-          '#value' => $this->t('Cancel'),
-          '#name' => 'cancel_invitation_' . $requestId,
-          '#request_id' => $requestId,
-          '#submit' => ['::cancelInvitation'],
-          '#limit_validation_errors' => [],
-          '#attributes' => ['class' => ['button--danger', 'button--small']],
-        ],
+        'actions' => $actions,
       ];
     }
   }
 
   /**
-   * Cancel invitation submit handler.
+   * Withdraw, delete, or resend an invitation from the project edit form.
    */
-  public function cancelInvitation(array &$form, FormStateInterface $form_state): void {
+  public function manageInvitation(array &$form, FormStateInterface $form_state): void {
     $trigger = $form_state->getTriggeringElement();
     $requestId = (int) ($trigger['#request_id'] ?? 0);
+    $operation = (string) ($trigger['#invitation_operation'] ?? '');
 
-    if ($requestId <= 0) {
-      $this->messenger()->addError($this->t('Invalid invitation ID.'));
-      return;
-    }
-
+    /** @var \Drupal\soda_scs_manager\Entity\SodaScsProjectInterface $project */
+    $project = $this->entity;
+    $actor = $this->loadCurrentUserEntity();
     $storage = $this->entityTypeManager->getStorage('soda_scs_project_membership');
-    /** @var \Drupal\soda_scs_manager\Entity\SodaScsProjectMembershipInterface|null $request */
     $request = $storage->load($requestId);
 
-    if (!$request) {
-      $this->messenger()->addError($this->t('Invitation not found.'));
+    if (!$actor instanceof UserInterface || !$request instanceof SodaScsProjectMembershipInterface || !$project instanceof SodaScsProjectInterface) {
+      $this->messenger()->addError($this->t('This invitation cannot be changed.'));
+      $form_state->setRebuild(TRUE);
       return;
     }
 
-    $recipientName = $request->getRecipient()->getDisplayName();
+    $result = match ($operation) {
+      'withdraw' => $this->projectMembershipHelpers->withdrawInvitation($project, $request, $actor),
+      'delete' => $this->projectMembershipHelpers->deleteDeclinedInvitation($project, $request, $actor),
+      'resend' => $this->projectMembershipHelpers->resendInvitation($project, $request, $actor),
+      default => NULL,
+    };
 
-    try {
-      $request->delete();
-      $this->messenger()->addStatus($this->t('Invitation to @recipient has been cancelled.', [
-        '@recipient' => $recipientName,
-      ]));
+    if ($result === NULL) {
+      $this->messenger()->addError($this->t('This invitation cannot be changed.'));
     }
-    catch (\Exception $e) {
-      $this->logger->error('Failed to cancel invitation: @message', [
-        '@message' => $e->getMessage(),
-      ]);
-      $this->messenger()->addError($this->t('Failed to cancel invitation. Please try again.'));
+    elseif ($result->success) {
+      $this->messenger()->addStatus($result->message);
+    }
+    else {
+      $this->messenger()->addError($result->message);
     }
 
     $form_state->setRebuild(TRUE);
@@ -481,7 +485,12 @@ class SodaScsProjectEditForm extends ContentEntityForm {
 
     $disallowedIds = [(int) $this->currentUser->id()];
     $existingMemberIds = $this->collectExistingMemberIds();
-    $this->validateMemberInvitations($form_state, $disallowedIds, $existingMemberIds);
+    /** @var \Drupal\soda_scs_manager\Entity\SodaScsProjectInterface $project */
+    $project = $this->entity;
+    $alreadyInvitedIds = $project instanceof SodaScsProjectInterface
+      ? $this->projectMembershipHelpers->openInvitationRecipientIds($project)
+      : [];
+    $this->validateMemberInvitations($form_state, $disallowedIds, $existingMemberIds, $alreadyInvitedIds);
   }
 
   /**
@@ -535,6 +544,25 @@ class SodaScsProjectEditForm extends ContentEntityForm {
     $form_state->setRedirect('entity.soda_scs_project.canonical', [
       'soda_scs_project' => $project->id(),
     ]);
+  }
+
+  /**
+   * Submit button for one invitation operation.
+   *
+   * @return array<string, mixed>
+   *   A submit element.
+   */
+  private function buildInvitationActionButton(TranslatableMarkup $label, string $operation, int|string $requestId): array {
+    return [
+      '#type' => 'submit',
+      '#value' => $label,
+      '#name' => $operation . '_invitation_' . $requestId,
+      '#request_id' => $requestId,
+      '#invitation_operation' => $operation,
+      '#submit' => ['::manageInvitation'],
+      '#limit_validation_errors' => [],
+      '#attributes' => ['class' => ['button--small']],
+    ];
   }
 
   /**

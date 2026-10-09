@@ -130,6 +130,7 @@ final class SodaScsProjectAddMemberForm extends FormBase {
       $form_state,
       $disallowedIds,
       array_values(array_unique(array_filter($existingMemberIds))),
+      $this->projectMembershipHelpers->openInvitationRecipientIds($this->project),
     );
   }
 

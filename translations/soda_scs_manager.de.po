@@ -2653,6 +2653,94 @@ msgstr "Sie können @user nicht einladen."
 msgid "@user is already part of this project."
 msgstr "@user ist bereits Teil dieses Projekts."
 
+#: src/Traits/SodaScsProjectMemberInvitationTrait.php:94
+msgid "@user has already been invited to this project."
+msgstr "@user wurde bereits zu diesem Projekt eingeladen."
+
+#: src/Helpers/SodaScsProjectMembershipHelpers.php
+msgid "No invitations were created. Existing members or existing invitations were skipped."
+msgstr "Es wurden keine Einladungen erstellt. Bestehende Mitglieder oder bestehende Einladungen wurden übersprungen."
+
+#: src/Helpers/SodaScsProjectMembershipHelpers.php
+msgid "This invitation cannot be changed."
+msgstr "Diese Einladung kann nicht geändert werden."
+
+#: src/Helpers/SodaScsProjectMembershipHelpers.php
+msgid "Failed to resend the invitation. Please try again."
+msgstr "Die Einladung konnte nicht erneut gesendet werden. Bitte versuchen Sie es noch einmal."
+
+#: src/Helpers/SodaScsProjectMembershipHelpers.php
+msgid "The invitation for @user has been sent again."
+msgstr "Die Einladung für @user wurde erneut gesendet."
+
+#: src/Helpers/SodaScsProjectMembershipHelpers.php
+msgid "this person"
+msgstr "diese Person"
+
+#: src/Helpers/SodaScsProjectMembershipHelpers.php
+msgid "Failed to update the invitation. Please try again."
+msgstr "Die Einladung konnte nicht aktualisiert werden. Bitte versuchen Sie es noch einmal."
+
+#: src/Helpers/SodaScsProjectMembershipHelpers.php
+msgid "The invitation for @user has been withdrawn."
+msgstr "Die Einladung für @user wurde zurückgezogen."
+
+#: src/Helpers/SodaScsProjectMembershipHelpers.php
+msgid "The declined invitation for @user has been removed."
+msgstr "Die abgelehnte Einladung für @user wurde entfernt."
+
+#: src/Form/SodaScsProjectInvitationActionForm.php
+msgid "Resend"
+msgstr "Erneut senden"
+
+#: src/Form/SodaScsProjectInvitationActionForm.php
+msgid "Withdraw"
+msgstr "Zurückziehen"
+
+#: src/Form/SodaScsProjectInvitationActionForm.php
+msgid "The invitation will be cancelled. @user can be invited again afterwards."
+msgstr "Die Einladung wird zurückgezogen. @user kann danach erneut eingeladen werden."
+
+#: src/Form/SodaScsProjectInvitationActionForm.php
+msgid "The declined invitation will be removed. @user can be invited again afterwards."
+msgstr "Die abgelehnte Einladung wird entfernt. @user kann danach erneut eingeladen werden."
+
+#: src/Form/SodaScsProjectInvitationActionForm.php
+msgid "Withdraw invitation for @user?"
+msgstr "Einladung für @user zurückziehen?"
+
+#: src/Form/SodaScsProjectInvitationActionForm.php
+msgid "Delete the declined invitation for @user?"
+msgstr "Abgelehnte Einladung für @user löschen?"
+
+#: src/ViewBuilder/SodaScsProjectViewBuilder.php
+msgid "Declined"
+msgstr "Abgelehnt"
+
+#: src/ViewBuilder/SodaScsProjectViewBuilder.php
+msgid "Pending"
+msgstr "Ausstehend"
+
+#: src/ViewBuilder/SodaScsProjectViewBuilder.php
+msgid "Delete declined invitation for @user"
+msgstr "Abgelehnte Einladung für @user löschen"
+
+#: src/ViewBuilder/SodaScsProjectViewBuilder.php
+msgid "Withdraw invitation for @user"
+msgstr "Einladung für @user zurückziehen"
+
+#: templates/entity/soda-scs-manager--project-members.html.twig
+msgid "Pending invitations"
+msgstr "Ausstehende Einladungen"
+
+#: src/Form/SodaScsProjectEditForm.php
+msgid "Pending invitations (@count)"
+msgstr "Ausstehende Einladungen (@count)"
+
+#: soda_scs_manager.routing.yml
+msgid "Project invitation"
+msgstr "Projekteinladung"
+
 #: src/ViewBuilder/SodaScsComponentViewBuilder.php:156
 msgid "(not set)"
 msgstr "(nicht gesetzt)"
