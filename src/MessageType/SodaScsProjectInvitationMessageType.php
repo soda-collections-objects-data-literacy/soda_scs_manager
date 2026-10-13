@@ -5,11 +5,9 @@ declare(strict_types=1);
 namespace Drupal\soda_scs_manager\MessageType;
 
 use Drupal\Core\Entity\EntityTypeManagerInterface;
-use Drupal\Core\Messenger\MessengerInterface;
 use Drupal\Core\StringTranslation\StringTranslationTrait;
 use Drupal\soda_scs_manager\Entity\SodaScsMessageInterface;
 use Drupal\soda_scs_manager\Entity\SodaScsProjectMembershipInterface;
-use Drupal\soda_scs_manager\Helpers\SodaScsJupyterHelpers;
 use Drupal\soda_scs_manager\Helpers\SodaScsProjectMembershipHelpers;
 use Drupal\soda_scs_manager\ValueObject\SodaScsResult;
 use Drupal\user\UserInterface;
@@ -25,12 +23,8 @@ final class SodaScsProjectInvitationMessageType implements SodaScsMessageTypeInt
   public function __construct(
     #[Autowire(service: 'entity_type.manager')]
     private readonly EntityTypeManagerInterface $entityTypeManager,
-    #[Autowire(service: 'soda_scs_manager.jupyter.helpers')]
-    private readonly SodaScsJupyterHelpers $jupyterHelpers,
     #[Autowire(service: 'soda_scs_manager.project_membership.helpers')]
     private readonly SodaScsProjectMembershipHelpers $membershipHelpers,
-    #[Autowire(service: 'messenger')]
-    private readonly MessengerInterface $messenger,
   ) {}
 
   /**
@@ -191,9 +185,6 @@ final class SodaScsProjectInvitationMessageType implements SodaScsMessageTypeInt
     $project = $membership->getProject();
     $redirect = $project !== NULL ? ['redirect_url' => $project->toUrl()] : [];
     $message->delete();
-    if ($project !== NULL) {
-      $this->jupyterHelpers->warnRestartNotebookForProjectMounts($this->messenger, $project);
-    }
 
     return SodaScsResult::success(
       data: array_merge($result->data ?? [], $redirect),

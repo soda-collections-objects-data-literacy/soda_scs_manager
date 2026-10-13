@@ -134,6 +134,8 @@ services:
     class: Drupal\soda_scs_manager\Service\NextcloudMountManager
   soda_scs_manager.nextcloud_project_mount.manager:
     class: Drupal\soda_scs_manager\Service\NextcloudProjectMountManager
+  soda_scs_manager.jupyterhub.api_client:
+    class: Drupal\soda_scs_manager\Service\SodaScsJupyterHubApiClient
   soda_scs_manager.project.provisioner:
     class: Drupal\soda_scs_manager\Service\SodaScsProjectProvisioner
 

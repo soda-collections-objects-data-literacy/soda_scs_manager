@@ -19,6 +19,7 @@ use Drupal\soda_scs_manager\Helpers\SodaScsProjectDbAccessHelpers;
 use Drupal\soda_scs_manager\Helpers\SodaScsProjectHelpers;
 use Drupal\soda_scs_manager\Helpers\SodaScsMessageHelpers;
 use Drupal\soda_scs_manager\Helpers\SodaScsWebprotegeHelpers;
+use Drupal\soda_scs_manager\Service\SodaScsJupyterHubApiClient;
 use Drupal\soda_scs_manager\ValueObject\SodaScsResult;
 use Drupal\user\UserInterface;
 use Symfony\Component\DependencyInjection\Attribute\Autowire;
@@ -102,6 +103,10 @@ final class SodaScsProjectMembershipHelpers {
     SodaScsWebprotegeHelpers $webprotegeHelpers,
     #[Autowire(service: 'datetime.time')]
     TimeInterface $time,
+    #[Autowire(service: 'soda_scs_manager.jupyter.helpers')]
+    protected SodaScsJupyterHelpers $jupyterHelpers,
+    #[Autowire(service: 'soda_scs_manager.project_application.helpers')]
+    protected SodaScsProjectApplicationHelpers $projectApplicationHelpers,
   ) {
     $this->entityTypeManager = $entityTypeManager;
     $this->languageManager = $languageManager;
@@ -714,11 +719,33 @@ final class SodaScsProjectMembershipHelpers {
       : (string) $this->t('@member has been removed from the project.', [
         '@member' => $member->getDisplayName(),
       ]);
+    if ($this->stopRunningProjectServer($project)) {
+      $message .= ' ' . $this->t("The project's JupyterLab was stopped so the removed member loses access at once. Members can start it again.");
+    }
 
     return SodaScsResult::success(
       data: ['member' => $memberId],
       message: $message,
     );
+  }
+
+  /**
+   * Stops the project's shared JupyterLab if it runs.
+   *
+   * Open Lab sessions outlive the member's hub role by a few minutes; stopping
+   * the server ends them now.
+   *
+   * @return bool
+   *   TRUE when a running server was stopped.
+   */
+  protected function stopRunningProjectServer(SodaScsProjectInterface $project): bool {
+    if (!$this->projectApplicationHelpers->projectHasApplication($project->id(), 'soda_scs_stack', 'soda_scs_jupyter_stack')) {
+      return FALSE;
+    }
+    if ($this->jupyterHelpers->projectServerState($project) !== SodaScsJupyterHubApiClient::STATE_RUNNING) {
+      return FALSE;
+    }
+    return $this->jupyterHelpers->stopProjectServer($project)->success;
   }
 
   /**

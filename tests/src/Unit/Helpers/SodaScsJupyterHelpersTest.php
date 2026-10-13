@@ -4,14 +4,11 @@ declare(strict_types=1);
 
 namespace Drupal\Tests\soda_scs_manager\Unit\Helpers;
 
-use Drupal\Core\Config\ConfigFactoryInterface;
-use Drupal\Core\Config\ImmutableConfig;
-use Drupal\Core\Logger\LoggerChannelFactoryInterface;
-use Drupal\soda_scs_manager\Helpers\SodaScsContainerHelpers;
+use Drupal\Core\Field\FieldItemListInterface;
+use Drupal\soda_scs_manager\Entity\SodaScsProjectInterface;
 use Drupal\soda_scs_manager\Helpers\SodaScsJupyterHelpers;
-use Drupal\soda_scs_manager\RequestActions\SodaScsDockerRunServiceActions;
+use Drupal\soda_scs_manager\Service\SodaScsJupyterHubApiClient;
 use Drupal\Tests\UnitTestCase;
-use Drupal\user\UserInterface;
 use Psr\Log\LoggerInterface;
 
 /**
@@ -21,103 +18,84 @@ use Psr\Log\LoggerInterface;
 class SodaScsJupyterHelpersTest extends UnitTestCase {
 
   /**
-   * Builds a helper with a fixed container name prefix.
+   * Builds a project mock with the given group id.
    */
-  private function createHelper(string $prefix = 'jupyter-'): SodaScsJupyterHelpers {
-    $config = $this->createMock(ImmutableConfig::class);
-    $config->method('get')->with('jupyterhub.generalSettings.containerNamePrefix')
-      ->willReturn($prefix);
+  private function createProject(string $gid = '10001'): SodaScsProjectInterface {
+    $field = $this->createMock(FieldItemListInterface::class);
+    $field->method('__get')->with('value')->willReturn($gid);
 
-    $configFactory = $this->createMock(ConfigFactoryInterface::class);
-    $configFactory->method('get')->with('soda_scs_manager.settings')->willReturn($config);
-
-    return new SodaScsJupyterHelpers(
-      $this->createMock(SodaScsDockerRunServiceActions::class),
-      $this->createMock(SodaScsContainerHelpers::class),
-      $configFactory,
-      $this->createMock(LoggerChannelFactoryInterface::class),
-    );
+    $project = $this->createMock(SodaScsProjectInterface::class);
+    $project->method('get')->with('groupId')->willReturn($field);
+    $project->method('id')->willReturn((int) $gid - 10000);
+    $project->method('label')->willReturn('rnsrk default project');
+    return $project;
   }
 
   /**
-   * @covers ::getNotebookContainerName
+   * Builds a helper around the given hub API client.
    */
-  public function testGetNotebookContainerName(): void {
-    $helper = $this->createHelper();
-    $this->assertSame('jupyter-peter', $helper->getNotebookContainerName('peter'));
+  private function createHelper(SodaScsJupyterHubApiClient $hubApi): SodaScsJupyterHelpers {
+    $helper = new SodaScsJupyterHelpers($hubApi, $this->createMock(LoggerInterface::class));
+    $helper->setStringTranslation($this->getStringTranslationStub());
+    return $helper;
   }
 
   /**
-   * @covers ::getContainerNamePrefix
+   * @covers ::buildProjectLauncherUrl
    */
-  public function testGetContainerNamePrefixDefault(): void {
-    $config = $this->createMock(ImmutableConfig::class);
-    $config->method('get')->with('jupyterhub.generalSettings.containerNamePrefix')
-      ->willReturn('');
-
-    $configFactory = $this->createMock(ConfigFactoryInterface::class);
-    $configFactory->method('get')->with('soda_scs_manager.settings')->willReturn($config);
-
-    $helper = new SodaScsJupyterHelpers(
-      $this->createMock(SodaScsDockerRunServiceActions::class),
-      $this->createMock(SodaScsContainerHelpers::class),
-      $configFactory,
-      $this->createMock(LoggerChannelFactoryInterface::class),
-    );
-
-    $this->assertSame('jupyter-', $helper->getContainerNamePrefix());
-  }
-
-  /**
-   * @covers ::startNotebookContainerForUser
-   */
-  public function testStartNotebookContainerWithoutExistingContainer(): void {
-    $docker = $this->createMock(SodaScsDockerRunServiceActions::class);
-    $docker->method('buildInspectRequest')->willReturn(['routeParams' => ['containerId' => 'jupyter-peter']]);
-    $docker->method('makeRequest')->willReturn([
-      'success' => FALSE,
-      'statusCode' => 404,
-      'error' => 'Not found',
-    ]);
-
-    $logger = $this->createMock(LoggerInterface::class);
-    $loggerFactory = $this->createMock(LoggerChannelFactoryInterface::class);
-    $loggerFactory->method('get')->willReturn($logger);
-
-    $config = $this->createMock(ImmutableConfig::class);
-    $config->method('get')->with('jupyterhub.generalSettings.containerNamePrefix')
-      ->willReturn('jupyter-');
-    $configFactory = $this->createMock(ConfigFactoryInterface::class);
-    $configFactory->method('get')->with('soda_scs_manager.settings')->willReturn($config);
-
-    $helper = new SodaScsJupyterHelpers(
-      $docker,
-      $this->createMock(SodaScsContainerHelpers::class),
-      $configFactory,
-      $loggerFactory,
-    );
-
-    $user = $this->createMock(UserInterface::class);
-    $user->method('getAccountName')->willReturn('peter');
-
-    $result = $helper->startNotebookContainerForUser($user);
-    $this->assertFalse($result['success']);
-    $this->assertFalse($result['started']);
-    $this->assertSame('jupyter-peter', $result['containerName']);
-  }
-
-  /**
-   * @covers ::buildProjectLabUrl
-   */
-  public function testBuildProjectLabUrl(): void {
+  public function testBuildProjectLauncherUrl(): void {
     $this->assertSame(
-      'https://code.dev-scs.sammlungen.io/user/rnsrk/lab/tree/nextcloud/rnsrk%20default%20project',
-      SodaScsJupyterHelpers::buildProjectLabUrl(
-        'https://code.dev-scs.sammlungen.io/',
-        'rnsrk',
-        'rnsrk default project',
-      ),
+      'https://code.dev-scs.sammlungen.io/hub/scs/projects/10001',
+      SodaScsJupyterHelpers::buildProjectLauncherUrl('https://code.dev-scs.sammlungen.io/', $this->createProject()),
     );
+  }
+
+  /**
+   * @covers ::projectServerUserName
+   * @covers ::projectVolumeName
+   */
+  public function testProjectNames(): void {
+    $project = $this->createProject('10027');
+    $this->assertSame('project-10027', SodaScsJupyterHelpers::projectServerUserName($project));
+    $this->assertSame('jupyterhub-user-project-10027', SodaScsJupyterHelpers::projectVolumeName($project));
+  }
+
+  /**
+   * @covers ::startProjectServer
+   */
+  public function testStartProjectServerStartsTheProjectUser(): void {
+    $hubApi = $this->createMock(SodaScsJupyterHubApiClient::class);
+    $hubApi->expects($this->once())->method('startServer')->with('project-10001');
+
+    $result = $this->createHelper($hubApi)->startProjectServer($this->createProject());
+
+    $this->assertTrue($result->success);
+  }
+
+  /**
+   * @covers ::stopProjectServer
+   */
+  public function testHubErrorsBecomeFailures(): void {
+    $hubApi = $this->createMock(SodaScsJupyterHubApiClient::class);
+    $hubApi->method('stopServer')->willThrowException(new \RuntimeException('JupyterHub API returned HTTP 500.'));
+
+    $result = $this->createHelper($hubApi)->stopProjectServer($this->createProject());
+
+    $this->assertFalse($result->success);
+    $this->assertSame('JupyterHub API returned HTTP 500.', $result->error);
+  }
+
+  /**
+   * @covers ::removeProjectServerUser
+   */
+  public function testRemoveKeepsTheUserWhenTheServerDoesNotStop(): void {
+    $hubApi = $this->createMock(SodaScsJupyterHubApiClient::class);
+    $hubApi->method('stopServerAndWait')->willReturn(FALSE);
+    $hubApi->expects($this->never())->method('deleteUser');
+
+    $result = $this->createHelper($hubApi)->removeProjectServerUser($this->createProject());
+
+    $this->assertFalse($result->success);
   }
 
 }

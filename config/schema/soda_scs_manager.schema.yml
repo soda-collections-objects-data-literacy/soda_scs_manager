@@ -46,10 +46,6 @@ soda_scs_manager.settings:
               type: string
               label: 'Base URL'
               description: 'The base URL, like https://code.scs.example.com.'
-            containerNamePrefix:
-              type: string
-              label: 'Notebook container name prefix'
-              description: 'Prefix for DockerSpawner notebook containers (default jupyter-). Full name is prefix plus Drupal account name.'
     keycloak:
       type: mapping
       label: 'Keycloak settings'

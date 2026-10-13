@@ -4,391 +4,191 @@ declare(strict_types=1);
 
 namespace Drupal\soda_scs_manager\Helpers;
 
-use Drupal\Core\Config\ConfigFactoryInterface;
-use Drupal\Core\Logger\LoggerChannelFactoryInterface;
-use Drupal\Core\Messenger\MessengerInterface;
 use Drupal\Core\StringTranslation\StringTranslationTrait;
-use Drupal\Core\Url;
 use Drupal\soda_scs_manager\Entity\SodaScsProjectInterface;
-use Drupal\soda_scs_manager\RequestActions\SodaScsDockerRunServiceActions;
-use Drupal\user\UserInterface;
+use Drupal\soda_scs_manager\Service\SodaScsJupyterHubApiClient;
+use Drupal\soda_scs_manager\ValueObject\SodaScsResult;
+use Psr\Log\LoggerInterface;
 use Symfony\Component\DependencyInjection\Attribute\Autowire;
 
 /**
- * Helper for JupyterHub notebook container lifecycle operations.
+ * Project JupyterLab servers on JupyterHub.
  *
- * DockerSpawner names user servers {@code jupyter-{username}} by default and
- * stores data in the named volume {@code jupyterhub-user-{username}}.
+ * Every project with JupyterHub has one shared server with real-time
+ * collaboration, owned by the hub user project-<gid>. Members open it through
+ * the hub launcher /hub/scs/projects/<gid>; the hub grants access by the
+ * project role it derives from the member's Keycloak groups.
  */
 class SodaScsJupyterHelpers {
 
   use StringTranslationTrait;
 
   /**
-   * Default DockerSpawner container name prefix.
+   * Hub user name prefix of project servers.
    */
-  public const DEFAULT_CONTAINER_NAME_PREFIX = 'jupyter-';
+  public const PROJECT_USER_PREFIX = 'project-';
+
+  /**
+   * DockerSpawner home volume prefix (jupyterhub-user-{username}).
+   */
+  public const VOLUME_PREFIX = 'jupyterhub-user-';
 
   /**
    * Constructs a SodaScsJupyterHelpers object.
    */
   public function __construct(
-    #[Autowire(service: 'soda_scs_manager.docker_run_service.actions')]
-    protected SodaScsDockerRunServiceActions $dockerRunServiceActions,
-    #[Autowire(service: 'soda_scs_manager.container.helpers')]
-    protected SodaScsContainerHelpers $containerHelpers,
-    #[Autowire(service: 'config.factory')]
-    protected ConfigFactoryInterface $configFactory,
-    protected LoggerChannelFactoryInterface $loggerFactory,
-    #[Autowire(service: 'soda_scs_manager.project_application.helpers')]
-    protected SodaScsProjectApplicationHelpers $projectApplicationHelpers,
+    #[Autowire(service: 'soda_scs_manager.jupyterhub.api_client')]
+    protected SodaScsJupyterHubApiClient $hubApi,
+    #[Autowire(service: 'logger.channel.soda_scs_manager')]
+    protected LoggerInterface $logger,
   ) {}
 
   /**
-   * Returns the configured Jupyter notebook container name prefix.
-   */
-  public function getContainerNamePrefix(): string {
-    $prefix = $this->configFactory->get('soda_scs_manager.settings')
-      ->get('jupyterhub.generalSettings.containerNamePrefix');
-    if (!is_string($prefix) || $prefix === '') {
-      return self::DEFAULT_CONTAINER_NAME_PREFIX;
-    }
-    return $prefix;
-  }
-
-  /**
-   * Builds the Docker container name for a user's Jupyter notebook server.
-   *
-   * Matches DockerSpawner's default ({@code jupyter-{username}}) where
-   * {@code username} is Keycloak {@code preferred_username} / Drupal account
-   * name.
-   */
-  public function getNotebookContainerName(string $accountName): string {
-    return $this->getContainerNamePrefix() . $accountName;
-  }
-
-  /**
-   * Builds a JupyterLab URL that opens a project's Team Folder.
-   *
-   * Spawner bind-mounts Team Folders at
-   * {@code /home/jovyan/nextcloud/<project label>}.
+   * Hub launcher URL that opens (and if needed starts) the project's Lab.
    *
    * @param string $baseUrl
    *   JupyterHub public base URL, with or without a trailing slash.
-   * @param string $accountName
-   *   Hub username (Keycloak preferred_username / Drupal account name).
-   * @param string $projectLabel
-   *   Project display name (Team Folder mount name).
+   * @param \Drupal\soda_scs_manager\Entity\SodaScsProjectInterface $project
+   *   The project.
    */
-  public static function buildProjectLabUrl(string $baseUrl, string $accountName, string $projectLabel): string {
-    $base = rtrim($baseUrl, '/');
-    return $base . '/user/' . rawurlencode($accountName)
-      . '/lab/tree/nextcloud/' . rawurlencode($projectLabel);
+  public static function buildProjectLauncherUrl(string $baseUrl, SodaScsProjectInterface $project): string {
+    return rtrim($baseUrl, '/') . '/hub/scs/projects/' . rawurlencode(self::projectGid($project));
   }
 
   /**
-   * Stops a running Jupyter notebook container for the given user.
-   *
-   * Does not remove the container or its {@code jupyterhub-user-{username}}
-   * Docker volume.
-   *
-   * @return array{success: bool, stopped: bool, containerName: string, message: string}
-   *   Operation result. {@code stopped} is FALSE when no running container
-   *   was found.
+   * Hub user that owns the project's server: project-<gid>.
    */
-  public function stopNotebookContainerForUser(UserInterface $user): array {
-    $accountName = $user->getAccountName();
-    $containerName = $this->getNotebookContainerName($accountName);
-    $logger = $this->loggerFactory->get('soda_scs_manager');
+  public static function projectServerUserName(SodaScsProjectInterface $project): string {
+    return self::PROJECT_USER_PREFIX . self::projectGid($project);
+  }
 
-    $inspectRequest = $this->dockerRunServiceActions->buildInspectRequest([
-      'routeParams' => ['containerId' => $containerName],
-    ]);
-    $inspectResponse = $this->dockerRunServiceActions->makeRequest($inspectRequest);
+  /**
+   * Docker volume with the project server's home directory.
+   */
+  public static function projectVolumeName(SodaScsProjectInterface $project): string {
+    return self::VOLUME_PREFIX . self::projectServerUserName($project);
+  }
 
-    if (!$inspectResponse['success']) {
-      if (($inspectResponse['statusCode'] ?? 0) === 404) {
-        $message = 'No Jupyter notebook container found.';
-        $logger->notice('Jupyter notebook stop skipped for @user: no container @container.', [
-          '@user' => $accountName,
-          '@container' => $containerName,
-        ]);
-        return [
-          'success' => TRUE,
-          'stopped' => FALSE,
-          'containerName' => $containerName,
-          'message' => $message,
-        ];
-      }
-
-      $message = (string) ($inspectResponse['error'] ?? 'Failed to inspect notebook container.');
-      $logger->error('Jupyter notebook stop failed for @user (@container): @error', [
-        '@user' => $accountName,
-        '@container' => $containerName,
-        '@error' => $message,
-      ]);
-      return [
-        'success' => FALSE,
-        'stopped' => FALSE,
-        'containerName' => $containerName,
-        'message' => $message,
-      ];
-    }
-
-    $inspectData = json_decode(
-      (string) $inspectResponse['data']['portainerResponse']->getBody()->getContents(),
-      TRUE
+  /**
+   * Creates the project's hub user unless it exists.
+   */
+  public function ensureProjectServerUser(SodaScsProjectInterface $project): SodaScsResult {
+    return $this->callHub(
+      fn () => $this->hubApi->ensureUser(self::projectServerUserName($project)),
+      $project,
+      (string) $this->t('JupyterHub is ready for project @project.', ['@project' => $project->label()]),
+      (string) $this->t('JupyterHub could not be set up for project @project.', ['@project' => $project->label()]),
     );
-    $status = $inspectData['State']['Status'] ?? '';
-    if ($status !== 'running') {
-      $message = 'Jupyter notebook container is not running.';
-      $logger->notice('Jupyter notebook stop skipped for @user: container @container status is @status.', [
-        '@user' => $accountName,
-        '@container' => $containerName,
-        '@status' => $status !== '' ? $status : 'unknown',
-      ]);
-      return [
-        'success' => TRUE,
-        'stopped' => FALSE,
-        'containerName' => $containerName,
-        'message' => $message,
-      ];
-    }
-
-    $stopResult = $this->containerHelpers->stopContainer($containerName);
-    if (!$stopResult->success) {
-      $message = (string) ($stopResult->error ?? $stopResult->message);
-      $logger->error('Jupyter notebook stop failed for @user (@container): @error', [
-        '@user' => $accountName,
-        '@container' => $containerName,
-        '@error' => $message,
-      ]);
-      return [
-        'success' => FALSE,
-        'stopped' => FALSE,
-        'containerName' => $containerName,
-        'message' => $message,
-      ];
-    }
-
-    $message = 'Jupyter notebook container stopped.';
-    $logger->notice('Stopped Jupyter notebook container @container for user @user.', [
-      '@container' => $containerName,
-      '@user' => $accountName,
-    ]);
-    return [
-      'success' => TRUE,
-      'stopped' => TRUE,
-      'containerName' => $containerName,
-      'message' => $message,
-    ];
   }
 
   /**
-   * Starts a stopped Jupyter notebook container for the given user.
+   * State of the project's server (SodaScsJupyterHubApiClient::STATE_*).
    *
-   * Does not spawn a new server. If the container does not exist yet, the user
-   * must start it from JupyterHub so bind mounts are applied.
-   *
-   * @return array{success: bool, started: bool, containerName: string, message: string}
-   *   Operation result.
+   * @return string|null
+   *   The state, or NULL when the hub cannot be asked.
    */
-  public function startNotebookContainerForUser(UserInterface $user): array {
-    $accountName = $user->getAccountName();
-    $containerName = $this->getNotebookContainerName($accountName);
-    $logger = $this->loggerFactory->get('soda_scs_manager');
-
-    $inspect = $this->inspectNotebookContainer($containerName);
-    if ($inspect['statusCode'] === 404) {
-      $message = 'No Jupyter notebook container found. Start it from JupyterHub.';
-      $logger->notice('Jupyter notebook start skipped for @user: no container @container.', [
-        '@user' => $accountName,
-        '@container' => $containerName,
-      ]);
-      return [
-        'success' => FALSE,
-        'started' => FALSE,
-        'containerName' => $containerName,
-        'message' => $message,
-      ];
+  public function projectServerState(SodaScsProjectInterface $project): ?string {
+    try {
+      return $this->hubApi->getServerState(self::projectServerUserName($project));
     }
-    if (!$inspect['success']) {
-      $message = $inspect['error'];
-      $logger->error('Jupyter notebook start failed for @user (@container): @error', [
-        '@user' => $accountName,
-        '@container' => $containerName,
-        '@error' => $message,
+    catch (\RuntimeException $e) {
+      $this->logger->warning('Could not read the JupyterHub server state of project @project: @msg', [
+        '@project' => $project->id(),
+        '@msg' => $e->getMessage(),
       ]);
-      return [
-        'success' => FALSE,
-        'started' => FALSE,
-        'containerName' => $containerName,
-        'message' => $message,
-      ];
+      return NULL;
     }
-
-    if ($inspect['status'] === 'running') {
-      $message = 'Jupyter notebook container is already running.';
-      $logger->notice('Jupyter notebook start skipped for @user: container @container is already running.', [
-        '@user' => $accountName,
-        '@container' => $containerName,
-      ]);
-      return [
-        'success' => TRUE,
-        'started' => FALSE,
-        'containerName' => $containerName,
-        'message' => $message,
-      ];
-    }
-
-    $startResult = $this->containerHelpers->startContainer($containerName);
-    if (!$startResult->success) {
-      $message = (string) ($startResult->error ?? $startResult->message);
-      $logger->error('Jupyter notebook start failed for @user (@container): @error', [
-        '@user' => $accountName,
-        '@container' => $containerName,
-        '@error' => $message,
-      ]);
-      return [
-        'success' => FALSE,
-        'started' => FALSE,
-        'containerName' => $containerName,
-        'message' => $message,
-      ];
-    }
-
-    $message = 'Jupyter notebook container started.';
-    $logger->notice('Started Jupyter notebook container @container for user @user.', [
-      '@container' => $containerName,
-      '@user' => $accountName,
-    ]);
-    return [
-      'success' => TRUE,
-      'started' => TRUE,
-      'containerName' => $containerName,
-      'message' => $message,
-    ];
   }
 
   /**
-   * Restarts a Jupyter notebook container for the given user.
-   *
-   * @return array{success: bool, restarted: bool, containerName: string, message: string}
-   *   Operation result.
+   * Stops the project's server, waits for it, and deletes its hub user.
    */
-  public function restartNotebookContainerForUser(UserInterface $user): array {
-    $accountName = $user->getAccountName();
-    $containerName = $this->getNotebookContainerName($accountName);
-    $logger = $this->loggerFactory->get('soda_scs_manager');
-
-    $inspect = $this->inspectNotebookContainer($containerName);
-    if ($inspect['statusCode'] === 404) {
-      $message = 'No Jupyter notebook container found. Start it from JupyterHub.';
-      $logger->notice('Jupyter notebook restart skipped for @user: no container @container.', [
-        '@user' => $accountName,
-        '@container' => $containerName,
-      ]);
-      return [
-        'success' => FALSE,
-        'restarted' => FALSE,
-        'containerName' => $containerName,
-        'message' => $message,
-      ];
-    }
-    if (!$inspect['success']) {
-      $message = $inspect['error'];
-      $logger->error('Jupyter notebook restart failed for @user (@container): @error', [
-        '@user' => $accountName,
-        '@container' => $containerName,
-        '@error' => $message,
-      ]);
-      return [
-        'success' => FALSE,
-        'restarted' => FALSE,
-        'containerName' => $containerName,
-        'message' => $message,
-      ];
-    }
-
-    $restartResult = $this->containerHelpers->restartContainer($containerName);
-    if (!$restartResult->success) {
-      $message = (string) ($restartResult->error ?? $restartResult->message);
-      $logger->error('Jupyter notebook restart failed for @user (@container): @error', [
-        '@user' => $accountName,
-        '@container' => $containerName,
-        '@error' => $message,
-      ]);
-      return [
-        'success' => FALSE,
-        'restarted' => FALSE,
-        'containerName' => $containerName,
-        'message' => $message,
-      ];
-    }
-
-    $message = 'Jupyter notebook container restarted.';
-    $logger->notice('Restarted Jupyter notebook container @container for user @user.', [
-      '@container' => $containerName,
-      '@user' => $accountName,
-    ]);
-    return [
-      'success' => TRUE,
-      'restarted' => TRUE,
-      'containerName' => $containerName,
-      'message' => $message,
-    ];
-  }
-
-  /**
-   * Inspects a notebook container by Docker name.
-   *
-   * @return array{success: bool, statusCode: int, status: string, error: string}
-   *   Inspect outcome. status is Docker State.Status when inspect succeeds.
-   */
-  private function inspectNotebookContainer(string $containerName): array {
-    $inspectRequest = $this->dockerRunServiceActions->buildInspectRequest([
-      'routeParams' => ['containerId' => $containerName],
-    ]);
-    $inspectResponse = $this->dockerRunServiceActions->makeRequest($inspectRequest);
-    $statusCode = (int) ($inspectResponse['statusCode'] ?? 0);
-
-    if (!$inspectResponse['success']) {
-      return [
-        'success' => FALSE,
-        'statusCode' => $statusCode,
-        'status' => '',
-        'error' => (string) ($inspectResponse['error'] ?? 'Failed to inspect notebook container.'),
-      ];
-    }
-
-    $inspectData = json_decode(
-      (string) $inspectResponse['data']['portainerResponse']->getBody()->getContents(),
-      TRUE
+  public function removeProjectServerUser(SodaScsProjectInterface $project): SodaScsResult {
+    $name = self::projectServerUserName($project);
+    return $this->callHub(
+      function () use ($name): void {
+        if (!$this->hubApi->stopServerAndWait($name)) {
+          throw new \RuntimeException('The project server did not stop in time.');
+        }
+        $this->hubApi->deleteUser($name);
+      },
+      $project,
+      (string) $this->t('Removed JupyterHub from project @project.', ['@project' => $project->label()]),
+      (string) $this->t('JupyterHub could not be removed from project @project.', ['@project' => $project->label()]),
     );
-
-    return [
-      'success' => TRUE,
-      'statusCode' => $statusCode,
-      'status' => (string) ($inspectData['State']['Status'] ?? ''),
-      'error' => '',
-    ];
   }
 
   /**
-   * Warns that Jupyter must be respawned to pick up new project Team Folders.
-   *
-   * Mounts are applied only when the notebook container starts, and only
-   * projects with JupyterHub are mounted. Link goes to the confirm form that
-   * stops the server (user must Start again in Hub).
+   * Restarts the project's server for all members.
    */
-  public function warnRestartNotebookForProjectMounts(MessengerInterface $messenger, SodaScsProjectInterface $project): void {
-    if (!$this->projectApplicationHelpers->projectHasApplication($project->id(), 'soda_scs_stack', 'soda_scs_jupyter_stack')) {
-      return;
+  public function restartProjectServer(SodaScsProjectInterface $project): SodaScsResult {
+    $name = self::projectServerUserName($project);
+    return $this->callHub(
+      function () use ($name): void {
+        if (!$this->hubApi->stopServerAndWait($name)) {
+          throw new \RuntimeException('The project server did not stop in time.');
+        }
+        $this->hubApi->startServer($name);
+      },
+      $project,
+      (string) $this->t('The project notebook server is restarting.'),
+      (string) $this->t('The project notebook server could not be restarted.'),
+    );
+  }
+
+  /**
+   * Starts the project's server.
+   */
+  public function startProjectServer(SodaScsProjectInterface $project): SodaScsResult {
+    return $this->callHub(
+      fn () => $this->hubApi->startServer(self::projectServerUserName($project)),
+      $project,
+      (string) $this->t('The project notebook server is starting.'),
+      (string) $this->t('The project notebook server could not be started.'),
+    );
+  }
+
+  /**
+   * Stops the project's server for all members.
+   */
+  public function stopProjectServer(SodaScsProjectInterface $project): SodaScsResult {
+    return $this->callHub(
+      fn () => $this->hubApi->stopServer(self::projectServerUserName($project)),
+      $project,
+      (string) $this->t('The project notebook server is stopping.'),
+      (string) $this->t('The project notebook server could not be stopped.'),
+    );
+  }
+
+  /**
+   * Runs a hub call and maps it onto a result.
+   */
+  protected function callHub(callable $call, SodaScsProjectInterface $project, string $successMessage, string $failureMessage): SodaScsResult {
+    try {
+      $call();
+      return SodaScsResult::success(
+        data: ['hubUser' => self::projectServerUserName($project)],
+        message: $successMessage,
+      );
     }
-    $url = Url::fromRoute('soda_scs_manager.jupyter.restart_notebook')->toString();
-    $messenger->addWarning($this->t('JupyterLab mounts project Team Folders only when your notebook server starts. To see this project there, <a href=":url">stop your Jupyter notebook server</a>, then start it again from JupyterHub. Unsaved notebook work will be lost when the server stops.', [
-      ':url' => $url,
-    ]));
+    catch (\RuntimeException $e) {
+      $this->logger->error('JupyterHub call for project @project failed: @msg', [
+        '@project' => $project->id(),
+        '@msg' => $e->getMessage(),
+      ]);
+      return SodaScsResult::failure(
+        error: $e->getMessage(),
+        message: $failureMessage,
+        log: FALSE,
+      );
+    }
+  }
+
+  /**
+   * Stable project group id (entity id + 10000).
+   */
+  protected static function projectGid(SodaScsProjectInterface $project): string {
+    return (string) ($project->get('groupId')->value ?? '');
   }
 
 }

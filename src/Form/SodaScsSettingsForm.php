@@ -228,13 +228,6 @@ class SodaScsSettingsForm extends ConfigFormBase {
       '#description' => $this->t('The base URL, like https://code.scs.example.com.'),
     ];
 
-    $form['jupyterhub']['generalSettings']['containerNamePrefix'] = [
-      '#type' => 'textfield',
-      '#title' => $this->t('Notebook container name prefix'),
-      '#default_value' => $this->config('soda_scs_manager.settings')->get('jupyterhub')['generalSettings']['containerNamePrefix'] ?? 'jupyter-',
-      '#description' => $this->t('DockerSpawner notebook container prefix. Full container name is prefix plus Drupal account name (e.g. jupyter-peter).'),
-    ];
-
     // Keycloak settings tab.
     // @see \Drupal\soda_scs_manager\Helpers\SodaScsServiceHelpers::initKeycloakSettings().
     $form['keycloak'] = [

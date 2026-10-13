@@ -1297,8 +1297,7 @@ function soda_scs_manager_soda_scs_snapshot_delete(SodaScsSnapshot $snapshot) {
  * Implements hook_user_delete().
  *
  * Deletes a user from Keycloak when a Drupal user is deleted.
- * Also stops the Jupyter notebook container (volume is kept),
- * deletes linked Nextcloud accounts (when admin API credentials are set),
+ * Also deletes linked Nextcloud accounts (when admin API credentials are set),
  * the user's snapshots, components, stacks, projects, service keys, and enities.
  */
 function soda_scs_manager_user_delete(UserInterface $user) {
@@ -1310,20 +1309,6 @@ function soda_scs_manager_user_delete(UserInterface $user) {
   $logger = \Drupal::logger('soda_scs_manager');
   // Get the messenger.
   $messenger = \Drupal::messenger();
-
-  $jupyterStopResult = \Drupal::service('soda_scs_manager.jupyter.helpers')
-    ->stopNotebookContainerForUser($user);
-  if ($jupyterStopResult['success'] && !empty($jupyterStopResult['stopped'])) {
-    $messenger->addMessage(\Drupal::translation()->translate('Stopped Jupyter notebook container @container for user @username.', [
-      '@container' => $jupyterStopResult['containerName'],
-      '@username' => $user->getAccountName(),
-    ]));
-  }
-  elseif (!$jupyterStopResult['success']) {
-    $messenger->addWarning(\Drupal::translation()->translate('Could not stop Jupyter notebook container for user @username. See logs for details.', [
-      '@username' => $user->getAccountName(),
-    ]));
-  }
 
   // Get the Keycloak user ID.
   $keycloakUserId = \Drupal::service('soda_scs_manager.project.helpers')->getUserSsoUuid($user);

@@ -11,6 +11,7 @@ use Drupal\soda_scs_manager\Entity\SodaScsStackInterface;
 use Drupal\soda_scs_manager\Helpers\SodaScsContainerHelpers;
 use Drupal\soda_scs_manager\Helpers\SodaScsJupyterHelpers;
 use Drupal\soda_scs_manager\Helpers\SodaScsLifecycleHelpers;
+use Drupal\soda_scs_manager\Helpers\SodaScsProjectApplicationHelpers;
 use Drupal\Tests\UnitTestCase;
 
 /**
@@ -28,6 +29,7 @@ class SodaScsLifecycleHelpersTest extends UnitTestCase {
       $this->createMock(SodaScsJupyterHelpers::class),
       $this->createMock(AccountProxyInterface::class),
       $this->createMock(EntityTypeManagerInterface::class),
+      $this->createMock(SodaScsProjectApplicationHelpers::class),
     );
     $helper->setStringTranslation($this->getStringTranslationStub());
     return $helper;

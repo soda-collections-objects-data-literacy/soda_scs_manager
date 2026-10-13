@@ -10,7 +10,6 @@ use Drupal\Core\Entity\EntityTypeManagerInterface;
 use GuzzleHttp\ClientInterface;
 use Drupal\Core\Logger\LoggerChannelFactoryInterface;
 use Drupal\Core\Messenger\MessengerInterface;
-use Drupal\Core\Session\AccountInterface;
 use Drupal\Core\StringTranslation\TranslationInterface;
 use Drupal\Core\StringTranslation\StringTranslationTrait;
 use Drupal\Core\TypedData\Exception\MissingDataException;
@@ -20,7 +19,6 @@ use Drupal\soda_scs_manager\Entity\SodaScsStack;
 use Drupal\soda_scs_manager\Helpers\SodaScsJupyterHelpers;
 use Drupal\soda_scs_manager\Helpers\SodaScsWebprotegeHelpers;
 use Drupal\soda_scs_manager\Helpers\SodaScsDockerDns;
-use Drupal\user\UserInterface;
 use Drupal\soda_scs_manager\RequestActions\SodaScsServiceRequestInterface;
 use Drupal\soda_scs_manager\ServiceActions\SodaScsServiceActionsInterface;
 
@@ -266,8 +264,6 @@ class SodaScsServiceHelpers {
   public function initJupyterHubSettings() {
     $jupyterHubSettings['name'] = 'JupyterHub';
     $jupyterHubSettings['baseUrl'] = $this->settings->get('jupyterhub.generalSettings.baseUrl');
-    $jupyterHubSettings['containerNamePrefix'] = $this->settings->get('jupyterhub.generalSettings.containerNamePrefix')
-      ?: SodaScsJupyterHelpers::DEFAULT_CONTAINER_NAME_PREFIX;
 
     $this->checkSettings($jupyterHubSettings);
 
@@ -693,14 +689,14 @@ class SodaScsServiceHelpers {
   /**
    * Resolves the public service base URL and a login (or entry) URL for a stack.
    *
-   * JupyterHub opens the project's Team Folder in the viewer's notebook. The
+   * JupyterHub opens the project's shared Lab through the hub launcher. The
    * project is $project, or the project the stack belongs to when $project is
-   * not set. Without a viewer, the stack owner's notebook is used.
+   * not set.
    *
    * @return array{url: string, loginUrl: string}|null
    *   URLs for known stack bundles, or NULL for unknown types.
    */
-  public function getStackServiceAndLoginUrls(SodaScsStack $stack, ?SodaScsProjectInterface $project = NULL, ?AccountInterface $viewer = NULL): ?array {
+  public function getStackServiceAndLoginUrls(SodaScsStack $stack, ?SodaScsProjectInterface $project = NULL): ?array {
     $jupyterSettings = $this->initJupyterHubSettings();
     $wisskiInstanceSettings = $this->initWisskiInstanceSettings();
     $bundle = $stack->bundle();
@@ -718,16 +714,10 @@ class SodaScsServiceHelpers {
         $url = $jupyterSettings['baseUrl'];
         $base = rtrim((string) $url, '/');
         $loginUrl = $base . '/hub/login';
+        // The hub launcher opens the project's shared Lab for every member.
         $project ??= $this->loadPartOfProject($stack);
-        $projectLabel = $project !== NULL ? (string) $project->label() : '';
-        $owner = $stack->getOwner();
-        $accountName = match (TRUE) {
-          $viewer !== NULL && $viewer->isAuthenticated() => $viewer->getAccountName(),
-          $owner instanceof UserInterface => $owner->getAccountName(),
-          default => '',
-        };
-        if ($projectLabel !== '' && $accountName !== '') {
-          $url = SodaScsJupyterHelpers::buildProjectLabUrl((string) $url, $accountName, $projectLabel);
+        if ($project !== NULL) {
+          $url = SodaScsJupyterHelpers::buildProjectLauncherUrl((string) $url, $project);
         }
         return ['url' => $url, 'loginUrl' => $loginUrl];
 

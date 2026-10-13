@@ -24,11 +24,14 @@ This document captures work **not** done in the Team Folder MVP (SCS Manager + K
 - Ensure new SQL, Triplestore, and WissKI components always attach to the active project (`partOfProjects`).
 - Do **not** change Docker images/services in the MVP sense without a dedicated ops plan; focus on Manager + Keycloak metadata and access grants.
 
-### 3. JupyterHub project folders
+### 3. JupyterHub project folders — done (2026-10-13)
 
-- Provision a project-scoped directory or share tied to `groupId` / Keycloak group.
-- Sync membership when SCS project members change.
-- Decide whether personal Jupyter stacks remain “central” or become project-bound.
+- Every project with JupyterHub has one shared JupyterLab (hub user
+  `project-<gid>`, real-time collaboration) that binds the project's Team
+  Folder mount of the service account `scs-jupyter`.
+- Membership follows the Keycloak project group (hub role
+  `scs-project-<gid>`); removing a member stops a running server.
+- Personal Jupyter servers and stacks are gone (update 11035).
 
 ### 4. WebProtégé projects
 

@@ -12,7 +12,6 @@ use Drupal\Core\Entity\EntityTypeManagerInterface;
 use Drupal\Core\Entity\EntityViewBuilder;
 use Drupal\Core\Form\FormBuilderInterface;
 use Drupal\Core\Language\LanguageManagerInterface;
-use Drupal\Core\Session\AccountProxyInterface;
 use Drupal\Core\Theme\Registry;
 use Drupal\Core\TypedData\Exception\MissingDataException;
 use Drupal\Core\Url;
@@ -39,7 +38,6 @@ class SodaScsStackViewBuilder extends EntityViewBuilder {
     Registry $theme_registry,
     EntityDisplayRepositoryInterface $entity_display_repository,
     protected SodaScsServiceHelpers $sodaScsServiceHelpers,
-    protected AccountProxyInterface $currentUser,
     protected EntityTypeManagerInterface $entityTypeManager,
     protected SodaScsApplicationCardBuilder $applicationCardBuilder,
     protected FormBuilderInterface $formBuilder,
@@ -58,7 +56,6 @@ class SodaScsStackViewBuilder extends EntityViewBuilder {
       $container->get('theme.registry'),
       $container->get('entity_display.repository'),
       $container->get('soda_scs_manager.service.helpers'),
-      $container->get('current_user'),
       $container->get('entity_type.manager'),
       $container->get('soda_scs_manager.application_card_builder'),
       $container->get('form_builder'),
@@ -91,7 +88,7 @@ class SodaScsStackViewBuilder extends EntityViewBuilder {
     $build['#delete_url'] = $entity->toUrl('delete-form')->toString();
     $build['#delete_destination'] = $this->resolveDeleteDestination($entity);
     try {
-      $serviceUrls = $this->sodaScsServiceHelpers->getStackServiceAndLoginUrls($entity, NULL, $this->currentUser);
+      $serviceUrls = $this->sodaScsServiceHelpers->getStackServiceAndLoginUrls($entity);
       if ($serviceUrls !== NULL && !empty($serviceUrls['loginUrl'])) {
         $build['#attached']['drupalSettings']['entityInfo']['serviceLoginUrl'] = $serviceUrls['loginUrl'];
       }

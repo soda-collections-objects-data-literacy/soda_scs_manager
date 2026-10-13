@@ -1848,3 +1848,32 @@ function soda_scs_manager_update_11034() {
   }
   return t('Removed the default_project field from users. Former default projects remain normal projects.');
 }
+
+/**
+ * Remove personal Jupyter leftovers: unlinked stacks and the container prefix.
+ *
+ * JupyterHub now runs one shared server per project. Personal Jupyter stacks
+ * without a project (kept since update 11032) and the notebook container
+ * prefix setting have no function any more. Set up existing project servers
+ * with: drush scs:jupyter-backfill-project-servers
+ */
+function soda_scs_manager_update_11035() {
+  $stack_storage = \Drupal::entityTypeManager()->getStorage('soda_scs_stack');
+  $ids = $stack_storage->getQuery()
+    ->accessCheck(FALSE)
+    ->condition('bundle', 'soda_scs_jupyter_stack')
+    ->notExists('partOfProjects')
+    ->execute();
+  if ($ids !== []) {
+    $stack_storage->delete($stack_storage->loadMultiple($ids));
+  }
+
+  $config = \Drupal::configFactory()->getEditable('soda_scs_manager.settings');
+  if ($config->get('jupyterhub.generalSettings.containerNamePrefix') !== NULL) {
+    $config->clear('jupyterhub.generalSettings.containerNamePrefix')->save();
+  }
+
+  return t('Deleted @count Jupyter stack(s) without a project. Next: drush scs:jupyter-backfill-project-servers', [
+    '@count' => count($ids),
+  ]);
+}

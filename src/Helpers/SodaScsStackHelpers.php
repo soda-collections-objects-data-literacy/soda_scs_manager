@@ -10,6 +10,7 @@ use Drupal\Core\Messenger\MessengerTrait;
 use Drupal\Core\StringTranslation\StringTranslationTrait;
 use Drupal\soda_scs_manager\Entity\SodaScsComponentInterface;
 use Drupal\soda_scs_manager\Entity\SodaScsStackInterface;
+use Drupal\soda_scs_manager\Service\SodaScsJupyterHubApiClient;
 use GuzzleHttp\ClientInterface;
 
 /**
@@ -67,6 +68,10 @@ class SodaScsStackHelpers {
     SodaScsComponentHelpers $sodaScsComponentHelpers,
     #[Autowire(service: 'soda_scs_manager.service.helpers')]
     SodaScsServiceHelpers $sodaScsServiceHelpers,
+    #[Autowire(service: 'soda_scs_manager.jupyter.helpers')]
+    protected SodaScsJupyterHelpers $jupyterHelpers,
+    #[Autowire(service: 'soda_scs_manager.project_application.helpers')]
+    protected SodaScsProjectApplicationHelpers $projectApplicationHelpers,
   ) {
     $this->entityTypeManager = $entityTypeManager;
     $this->httpClient = $httpClient;
@@ -188,10 +193,9 @@ class SodaScsStackHelpers {
   }
 
   /**
-   * Check the health of a Jupyter stack.
+   * Check the health of a Jupyter stack: the state of the project's server.
    *
-   * Performs an HTTP GET request to the JupyterHub base URL to verify
-   * the service is reachable and responding.
+   * The server runs on demand, so "stopped" is its normal idle state.
    *
    * @param \Drupal\soda_scs_manager\Entity\SodaScsStackInterface $stack
    *   The SODa SCS Stack.
@@ -200,41 +204,34 @@ class SodaScsStackHelpers {
    *   The health check result.
    */
   public function checkJupyterHealth(SodaScsStackInterface $stack) {
-    try {
-      $jupyterSettings = $this->sodaScsServiceHelpers->initJupyterHubSettings();
-      $url = $jupyterSettings['baseUrl'];
-
-      if (empty($url)) {
-        return SodaScsHealthStatus::payload(
-          SodaScsHealthStatus::UNKNOWN,
-          (string) SodaScsHealthStatus::translatableLabel(SodaScsHealthStatus::UNKNOWN),
-          'JupyterHub base URL is not configured in settings.',
-          500,
-        );
-      }
-
-      $response = $this->httpClient->request('GET', $url, [
-        'timeout' => 5,
-        'connect_timeout' => 3,
-        'http_errors' => FALSE,
-      ]);
-
-      $statusCode = $response->getStatusCode();
-      return SodaScsHealthStatus::payload(
-        SodaScsHealthStatus::fromHttpCode($statusCode),
-        NULL,
-        $statusCode >= 200 && $statusCode < 400 ? '' : 'Service returned HTTP ' . $statusCode,
-        $statusCode,
-      );
-    }
-    catch (\Exception $e) {
+    $project = $this->projectApplicationHelpers->loadPartOfProject($stack);
+    if ($project === NULL) {
       return SodaScsHealthStatus::payload(
         SodaScsHealthStatus::UNKNOWN,
-        (string) SodaScsHealthStatus::translatableLabel(SodaScsHealthStatus::UNKNOWN),
-        $e->getMessage(),
-        (int) $e->getCode(),
+        NULL,
+        'Jupyter stack has no project.',
+        404,
       );
     }
+
+    return match ($this->jupyterHelpers->projectServerState($project)) {
+      SodaScsJupyterHubApiClient::STATE_RUNNING => SodaScsHealthStatus::payload(SodaScsHealthStatus::RUNNING),
+      SodaScsJupyterHubApiClient::STATE_STARTING => SodaScsHealthStatus::payload(SodaScsHealthStatus::STARTING, NULL, '', 202),
+      SodaScsJupyterHubApiClient::STATE_STOPPING,
+      SodaScsJupyterHubApiClient::STATE_STOPPED => SodaScsHealthStatus::payload(SodaScsHealthStatus::STOPPED),
+      SodaScsJupyterHubApiClient::STATE_MISSING => SodaScsHealthStatus::payload(
+        SodaScsHealthStatus::PROBLEM,
+        (string) $this->t('JupyterHub is not set up for this project.'),
+        'Hub user missing.',
+        404,
+      ),
+      default => SodaScsHealthStatus::payload(
+        SodaScsHealthStatus::UNKNOWN,
+        NULL,
+        'JupyterHub API is unreachable.',
+        503,
+      ),
+    };
   }
 
   /**

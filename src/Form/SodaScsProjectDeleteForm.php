@@ -44,13 +44,6 @@ class SodaScsProjectDeleteForm extends ContentEntityDeleteForm {
   protected SodaScsProjectApplicationHelpers $projectApplicationHelpers;
 
   /**
-   * The Soda SCS API Actions service.
-   *
-   * @var \Drupal\soda_scs_manager\SodaScsStackActionsInterface
-   */
-  protected SodaScsStackActionsInterface $sodaScsStackActions;
-
-  /**
    * Constructs a new SodaScsStackDeleteForm.
    *
    * @param Drupal\Core\Entity\EntityRepositoryInterface $entity_repository
@@ -65,8 +58,10 @@ class SodaScsProjectDeleteForm extends ContentEntityDeleteForm {
    *   Looks up applications that exist once per project.
    * @param \Drupal\soda_scs_manager\Service\NextcloudProjectMountManager $projectMountManager
    *   Project Team Folder mounts of the Nextcloud service account.
+   * @param \Drupal\soda_scs_manager\StackActions\SodaScsStackActionsInterface $jupyterStackActions
+   *   Removes the project's JupyterHub (server, hub user, volume, mount).
    */
-  public function __construct(EntityRepositoryInterface $entity_repository, EntityTypeBundleInfoInterface $entity_type_bundle_info, SodaScsProjectHelpers $sodaScsProjectHelpers, SodaScsWebprotegeHelpers $webprotegeHelpers, TimeInterface $time, SodaScsProjectApplicationHelpers $projectApplicationHelpers, protected NextcloudProjectMountManager $projectMountManager) {
+  public function __construct(EntityRepositoryInterface $entity_repository, EntityTypeBundleInfoInterface $entity_type_bundle_info, SodaScsProjectHelpers $sodaScsProjectHelpers, SodaScsWebprotegeHelpers $webprotegeHelpers, TimeInterface $time, SodaScsProjectApplicationHelpers $projectApplicationHelpers, protected NextcloudProjectMountManager $projectMountManager, protected SodaScsStackActionsInterface $jupyterStackActions) {
     parent::__construct($entity_repository, $entity_type_bundle_info, $time);
     $this->entityRepository = $entity_repository;
     $this->entityTypeBundleInfo = $entity_type_bundle_info;
@@ -88,6 +83,7 @@ class SodaScsProjectDeleteForm extends ContentEntityDeleteForm {
       $container->get('datetime.time'),
       $container->get('soda_scs_manager.project_application.helpers'),
       $container->get('soda_scs_manager.nextcloud_project_mount.manager'),
+      $container->get('soda_scs_manager.jupyter_stack.actions'),
     );
   }
 
@@ -123,6 +119,13 @@ class SodaScsProjectDeleteForm extends ContentEntityDeleteForm {
     /** @var \Drupal\soda_scs_manager\Entity\SodaScsProject $entity */
     $project = $this->entity;
 
+    // JupyterHub first: it stops the shared server and needs the Team Folder
+    // to remove the project mount group.
+    foreach ($this->projectApplicationHelpers->loadProjectApplications($project->id()) as $application) {
+      if ($application->bundle() === 'soda_scs_jupyter_stack') {
+        $this->jupyterStackActions->deleteStack($application);
+      }
+    }
     // Unmount before the Team Folder disappears under the mount.
     $this->projectMountManager->ensureProjectUnmounted($project);
 
@@ -143,8 +146,8 @@ class SodaScsProjectDeleteForm extends ContentEntityDeleteForm {
       ]));
     }
 
-    // WebProtégé and Jupyter entities only exist for this project; their
-    // remote parts (ontology project, Team Folder) are removed above.
+    // The WebProtégé entity only exists for this project; its ontology project
+    // is trashed above.
     foreach ($this->projectApplicationHelpers->loadProjectApplications($project->id()) as $application) {
       $application->delete();
     }

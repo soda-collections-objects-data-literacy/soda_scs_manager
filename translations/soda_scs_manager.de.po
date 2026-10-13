@@ -4489,3 +4489,59 @@ msgstr "Gruppen des Nextcloud-Teamordners für Projekt @project aktualisiert."
 #: src/StackActions/SodaScsJupyterStackActions.php
 msgid "The project folder is not ready for JupyterHub yet. It is mounted automatically on the next retry."
 msgstr "Der Projektordner ist für JupyterHub noch nicht bereit. Er wird beim nächsten Versuch automatisch eingebunden."
+
+#: src/Helpers/SodaScsJupyterHelpers.php
+msgid "JupyterHub is ready for project @project."
+msgstr "JupyterHub ist für Projekt @project bereit."
+
+#: src/Helpers/SodaScsJupyterHelpers.php
+msgid "JupyterHub could not be set up for project @project."
+msgstr "JupyterHub konnte für Projekt @project nicht eingerichtet werden."
+
+#: src/Helpers/SodaScsJupyterHelpers.php
+msgid "Removed JupyterHub from project @project."
+msgstr "JupyterHub aus Projekt @project entfernt."
+
+#: src/Helpers/SodaScsJupyterHelpers.php
+msgid "JupyterHub could not be removed from project @project."
+msgstr "JupyterHub konnte nicht aus Projekt @project entfernt werden."
+
+#: src/Helpers/SodaScsJupyterHelpers.php
+msgid "The project notebook server is restarting."
+msgstr "Der Notebook-Server des Projekts startet neu."
+
+#: src/Helpers/SodaScsJupyterHelpers.php
+msgid "The project notebook server could not be restarted."
+msgstr "Der Notebook-Server des Projekts konnte nicht neu gestartet werden."
+
+#: src/Helpers/SodaScsJupyterHelpers.php
+msgid "The project notebook server is starting."
+msgstr "Der Notebook-Server des Projekts startet."
+
+#: src/Helpers/SodaScsJupyterHelpers.php
+msgid "The project notebook server could not be started."
+msgstr "Der Notebook-Server des Projekts konnte nicht gestartet werden."
+
+#: src/Helpers/SodaScsJupyterHelpers.php
+msgid "The project notebook server is stopping."
+msgstr "Der Notebook-Server des Projekts wird gestoppt."
+
+#: src/Helpers/SodaScsJupyterHelpers.php
+msgid "The project notebook server could not be stopped."
+msgstr "Der Notebook-Server des Projekts konnte nicht gestoppt werden."
+
+#: src/Helpers/SodaScsLifecycleHelpers.php
+msgid "This JupyterHub belongs to no project."
+msgstr "Dieser JupyterHub gehört zu keinem Projekt."
+
+#: src/Helpers/SodaScsStackHelpers.php
+msgid "JupyterHub is not set up for this project."
+msgstr "JupyterHub ist für dieses Projekt nicht eingerichtet."
+
+#: src/StackActions/SodaScsJupyterStackActions.php
+msgid "The home directory of the project notebook server could not be deleted. See logs for details."
+msgstr "Das Home-Verzeichnis des Notebook-Servers des Projekts konnte nicht gelöscht werden. Details stehen im Log."
+
+#: src/Helpers/SodaScsProjectMembershipHelpers.php
+msgid "The project's JupyterLab was stopped so the removed member loses access at once. Members can start it again."
+msgstr "Das JupyterLab des Projekts wurde gestoppt, damit das entfernte Mitglied sofort keinen Zugriff mehr hat. Mitglieder können es wieder starten."

@@ -11,15 +11,14 @@ use Drupal\Core\StringTranslation\StringTranslationTrait;
 use Drupal\soda_scs_manager\Entity\SodaScsComponentInterface;
 use Drupal\soda_scs_manager\Entity\SodaScsStackInterface;
 use Drupal\soda_scs_manager\ValueObject\SodaScsResult;
-use Drupal\user\UserInterface;
 use Symfony\Component\DependencyInjection\Attribute\Autowire;
 
 /**
  * Start, stop, and restart application containers from dashboard cards.
  *
  * Shared services (WebProtégé, JupyterHub itself) are excluded. Jupyter
- * cards control the current user's notebook container, not the Hub, so any
- * user who can view a project Jupyter stack may manage it.
+ * cards control the project's shared notebook server, not the Hub, so any
+ * project member who can view the Jupyter stack may start or stop it.
  */
 class SodaScsLifecycleHelpers {
 
@@ -61,6 +60,8 @@ class SodaScsLifecycleHelpers {
     protected SodaScsJupyterHelpers $jupyterHelpers,
     protected AccountProxyInterface $currentUser,
     protected EntityTypeManagerInterface $entityTypeManager,
+    #[Autowire(service: 'soda_scs_manager.project_application.helpers')]
+    protected SodaScsProjectApplicationHelpers $projectApplicationHelpers,
   ) {}
 
   /**
@@ -89,8 +90,8 @@ class SodaScsLifecycleHelpers {
   /**
    * Entity operation a user needs to run lifecycle actions on the entity.
    *
-   * Jupyter stacks only control the current user's own notebook container,
-   * so project members need view access, not update access.
+   * Jupyter stacks control the project's shared notebook server, which every
+   * project member may start and stop, so view access is enough.
    */
   public function requiredOperation(EntityInterface $entity): string {
     if ($entity instanceof SodaScsStackInterface && $entity->bundle() === 'soda_scs_jupyter_stack') {
@@ -162,7 +163,7 @@ class SodaScsLifecycleHelpers {
    */
   private function runOnStack(SodaScsStackInterface $stack, string $action): SodaScsResult {
     if ($stack->bundle() === 'soda_scs_jupyter_stack') {
-      return $this->runOnJupyterNotebook($action);
+      return $this->runOnJupyterNotebook($stack, $action);
     }
 
     $wisskiComponent = $this->getIncludedComponent($stack, 'soda_scs_wisski_component');
@@ -178,51 +179,28 @@ class SodaScsLifecycleHelpers {
   }
 
   /**
-   * Controls the current user's Jupyter notebook container.
+   * Controls the project's shared Jupyter notebook server.
    */
-  private function runOnJupyterNotebook(string $action): SodaScsResult {
-    $account = $this->entityTypeManager->getStorage('user')->load($this->currentUser->id());
-    if (!$account instanceof UserInterface) {
+  private function runOnJupyterNotebook(SodaScsStackInterface $stack, string $action): SodaScsResult {
+    $project = $this->projectApplicationHelpers->loadPartOfProject($stack);
+    if ($project === NULL) {
       return SodaScsResult::failure(
-        error: 'Unable to load user account.',
-        message: (string) $this->t('Unable to load your user account. Please try again.'),
+        error: 'Jupyter stack has no project.',
+        message: (string) $this->t('This JupyterHub belongs to no project.'),
         log: FALSE,
       );
     }
 
     return match ($action) {
-      'start' => $this->resultFromJupyterArray($this->jupyterHelpers->startNotebookContainerForUser($account)),
-      'stop' => $this->resultFromJupyterArray($this->jupyterHelpers->stopNotebookContainerForUser($account)),
-      'restart' => $this->resultFromJupyterArray($this->jupyterHelpers->restartNotebookContainerForUser($account)),
+      'start' => $this->jupyterHelpers->startProjectServer($project),
+      'stop' => $this->jupyterHelpers->stopProjectServer($project),
+      'restart' => $this->jupyterHelpers->restartProjectServer($project),
       default => SodaScsResult::failure(
         error: 'Unsupported lifecycle action.',
         message: (string) $this->t('Unsupported action.'),
         log: FALSE,
       ),
     };
-  }
-
-  /**
-   * Maps Jupyter helper array results onto SodaScsResult.
-   *
-   * @param array{success: bool, containerName: string, message: string} $result
-   *   Jupyter helper return value.
-   */
-  private function resultFromJupyterArray(array $result): SodaScsResult {
-    if (!empty($result['success'])) {
-      return SodaScsResult::success(
-        data: [
-          'containerName' => $result['containerName'] ?? '',
-        ],
-        message: (string) ($result['message'] ?? ''),
-      );
-    }
-
-    return SodaScsResult::failure(
-      error: (string) ($result['message'] ?? 'Jupyter notebook operation failed.'),
-      message: (string) ($result['message'] ?? $this->t('The notebook server could not be updated.')),
-      log: FALSE,
-    );
   }
 
   /**

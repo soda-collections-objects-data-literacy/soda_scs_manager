@@ -9,6 +9,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Every project with JupyterHub has one shared JupyterLab with real-time
+  collaboration instead of one notebook per member. Its hub user
+  `project-<gid>` owns the server; the hub grants members access by the role
+  `scs-project-<gid>` from their Keycloak groups. The Jupyter card opens the
+  hub launcher `/hub/scs/projects/<gid>`, which starts the server on demand;
+  start, stop and restart on the card act on this server for all members,
+  and the card health shows its state. Removing a member stops a running
+  server so open sessions end at once. Removing JupyterHub or the project
+  stops the server and deletes its hub user and home volume
+  (`jupyterhub-user-project-<gid>`); the Team Folder files stay. Needs
+  `JUPYTERHUB_SCS_MANAGER_API_TOKEN` (hub service `scs-manager`).
+- `drush scs:jupyter-backfill-project-servers [--dry-run]` and
+  `scs:jupyter-project-status`.
 - Projects with JupyterHub get a project mount: the Nextcloud service account
   `scs-jupyter` mounts the Team Folder through the rclone sidecar at
   `<NEXTCLOUD_MOUNTS_ROOT>/_projects/<gid>/<label>`, independent of the
@@ -53,13 +66,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   or restart dedicated containers (WissKI, MariaDB, triplestore, Jupyter
   notebook). Shared services (Nextcloud, WebProtégé, JupyterHub) are
   unchanged.
-- After project create or invitation accept, warn users that JupyterLab mounts
-  project Team Folders only on notebook start, with a link to
-  **Restart Jupyter** (`/soda-scs-manager/jupyter/restart-notebook`).
-- Confirm form at `/soda-scs-manager/jupyter/restart-notebook` to stop the
-  user’s notebook server (unsaved work warning); user must **Start My Server**
-  in JupyterHub afterwards so new Team Folders remount. The same stop is
-  available from the Jupyter card health icon.
 - Project pages show the user’s central services (JupyterHub, Nextcloud,
   WebProtégé). JupyterHub and Nextcloud open the project Team Folder.
   The Nextcloud card lists recent activity in that folder (via
@@ -68,9 +74,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
-- The JupyterLab restart warning appears only when the project has JupyterHub
-  (on adding JupyterHub and on accepting an invitation), no longer after
-  creating a project.
 - The user mount reconcile leaves mounts under `_projects/` alone, and the
   sidecar mount lookup matches the mount point exactly instead of by suffix.
 - New users start without a project: no default project is created on
@@ -86,8 +89,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   user on the create form with the error message instead of redirecting.
 - JupyterHub and WebProtégé are project applications: a project page shows
   them only when they were added to that project, at most once per project,
-  owned by the project owner. Members open their own notebook at the project
-  Team Folder and may start/stop it from the card. Adding WebProtégé creates
+  owned by the project owner. Members open the project's shared JupyterLab
+  and may start/stop it from the card. Adding WebProtégé creates
   (or reuses) the project's ontology project; deleting it moves the ontology
   project to trash. The add-application popup shows these tiles as
   "Already in this project" when present.
@@ -138,6 +141,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Removed
 
+- Personal Jupyter notebooks: the restart warning after creating or joining a
+  project, stopping the notebook container on user deletion, and the
+  notebook container prefix setting. Update 11035 deletes Jupyter stacks
+  without a project.
 - User field `default_project` and the default project fallbacks
   (`soda_scs_manager_update_11034`). Former default projects stay as normal
   projects.
