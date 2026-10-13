@@ -27,11 +27,6 @@ class SodaScsProjectHelpers {
   use StringTranslationTrait;
 
   /**
-   * Default label for a user's first project.
-   */
-  public const DEFAULT_PROJECT_LABEL = 'Project 1';
-
-  /**
    * The logger channel.
    *
    * @var \Drupal\Core\Logger\LoggerChannelInterface
@@ -933,6 +928,9 @@ class SodaScsProjectHelpers {
         '@project' => $label,
         '@error' => $error,
       ]);
+      if ($this->isNextcloudConflict($response)) {
+        return $this->teamFolderConflict($error, $label);
+      }
       return SodaScsResult::failure(
         $error,
         (string) $this->t('Could not create Nextcloud Team Folder for project @project.', [
@@ -1079,6 +1077,9 @@ class SodaScsProjectHelpers {
         '@project' => $label,
         '@error' => $error,
       ]);
+      if ($this->isNextcloudConflict($response)) {
+        return $this->teamFolderConflict($error, $label);
+      }
       return SodaScsResult::failure(
         $error,
         (string) $this->t('Could not update Nextcloud Team Folder for project @project.', [
@@ -1193,6 +1194,33 @@ class SodaScsProjectHelpers {
       return NULL;
     }
     return (int) ($folder['id'] ?? 0) ?: NULL;
+  }
+
+  /**
+   * Whether scs_manager_integration rejected a Team Folder name as taken.
+   *
+   * @param array $response
+   *   The makeRequest() response.
+   */
+  protected function isNextcloudConflict(array $response): bool {
+    return (int) ($response['statusCode'] ?? 0) === 409;
+  }
+
+  /**
+   * Failure result for a Team Folder name that Nextcloud already uses.
+   *
+   * The data key 'conflict' lets callers roll back instead of keeping a
+   * project without its own folder.
+   */
+  protected function teamFolderConflict(string $error, string $label): SodaScsResult {
+    return new SodaScsResult(
+      success: FALSE,
+      data: ['conflict' => TRUE],
+      error: $error,
+      message: (string) $this->t('The name @project is already used by a folder in Nextcloud. Please choose a different name.', [
+        '@project' => $label,
+      ]),
+    );
   }
 
   /**

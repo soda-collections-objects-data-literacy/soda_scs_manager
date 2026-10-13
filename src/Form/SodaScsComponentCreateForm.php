@@ -17,6 +17,7 @@ use Drupal\Core\Session\AccountProxyInterface;
 use Drupal\soda_scs_manager\ComponentActions\SodaScsComponentActionsInterface;
 use Drupal\soda_scs_manager\Helpers\SodaScsProjectApplicationHelpers;
 use Drupal\soda_scs_manager\RequestActions\SodaScsServiceRequestInterface;
+use Drupal\soda_scs_manager\Traits\SodaScsProjectScopedCreateFormTrait;
 use Drupal\soda_scs_manager\Validation\InputDisallowedTerms;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 
@@ -35,6 +36,8 @@ use Symfony\Component\DependencyInjection\ContainerInterface;
  * and redirects to the components page.
  */
 class SodaScsComponentCreateForm extends ContentEntityForm {
+
+  use SodaScsProjectScopedCreateFormTrait;
 
   /**
    * The SODa SCS Component bundle.
@@ -240,25 +243,32 @@ class SodaScsComponentCreateForm extends ContentEntityForm {
     // Make the machineName field readonly and
     // add JavaScript to auto-generate it.
     if (isset($form['machineName'])) {
+      $form['machineName']['#title'] = '';
+      $form['machineName']['#description'] = '';
       // @todo Check if there is a better way to do this.
       // Add CSS classes for machine name generation.
       $form['label']['widget'][0]['value']['#attributes']['class'][] = 'soda-scs-manager--machine-name-source';
       $form['machineName']['widget'][0]['value']['#attributes']['class'][] = 'soda-scs-manager--machine-name-target';
+      $form['machineName']['widget'][0]['value']['#title'] = '';
+      $form['machineName']['widget'][0]['value']['#description'] = '';
+      $urlTemplate = $this->bundle === 'soda_scs_wisski_component'
+        ? str_replace('{instanceId}', '{machineName}', (string) $this->settings->get('wisski.instances.baseUrl'))
+        : '';
+      $form['machineName']['widget'][0]['value']['#attributes']['data-application-url-template'] = $urlTemplate;
       // Make the machine name field read-only.
       $form['machineName']['widget'][0]['value']['#attributes']['readonly'] = 'readonly';
+      $form['machineName']['widget'][0]['value']['#attributes']['class'][] = 'visually-hidden';
+      $form['machineName']['widget'][0]['value']['#attributes']['aria-hidden'] = 'true';
+      $form['machineName']['widget'][0]['value']['#attributes']['tabindex'] = '-1';
+      if ($urlTemplate !== '') {
+        $form['machineName']['widget'][0]['value']['#suffix'] = '<span class="description soda-scs-manager--machine-name-description"><a class="soda-scs-manager--application-url" target="_blank" rel="noopener noreferrer"></a></span>';
+      }
       // Attach JavaScript to auto-generate machine name.
       $form['#attached']['library'][] = 'soda_scs_manager/machineNameGenerator';
     }
 
-    // Prefer ?project= when the current user owns that project; else default project.
-    if (isset($form['partOfProjects'])) {
-      $projectId = $this->resolvePartOfProjectsDefault();
-      if ($projectId !== NULL) {
-        $form['partOfProjects']['widget']['#default_value'] = [$projectId];
-      }
-      // Hide the partOfProjects field.
-      $form['partOfProjects']['#access'] = FALSE;
-    }
+    // Every application belongs to one of the current user's projects.
+    $this->buildProjectScope($form);
 
     // Hide partOfStack field.
     $form['partOfStack']['#access'] = FALSE;
@@ -283,37 +293,12 @@ class SodaScsComponentCreateForm extends ContentEntityForm {
   }
 
   /**
-   * Resolves the project ID for partOfProjects (query owner override or default).
-   *
-   * @return int|string|null
-   *   Project entity ID, or NULL if none available.
-   */
-  protected function resolvePartOfProjectsDefault(): int|string|null {
-    $requestedProjectId = $this->getRequest()->query->get('project');
-    if ($requestedProjectId !== NULL && $requestedProjectId !== '') {
-      /** @var \Drupal\soda_scs_manager\Entity\SodaScsProjectInterface|null $project */
-      $project = $this->entityTypeManager
-        ->getStorage('soda_scs_project')
-        ->load($requestedProjectId);
-      if ($project && (int) $project->getOwnerId() === (int) $this->currentUser->id()) {
-        return $project->id();
-      }
-    }
-
-    /** @var \Drupal\user\UserInterface|null $user */
-    $user = $this->entityTypeManager->getStorage('user')->load($this->currentUser->id());
-    if ($user && $user->hasField('default_project') && !$user->get('default_project')->isEmpty()) {
-      return $user->get('default_project')->target_id;
-    }
-
-    return NULL;
-  }
-
-  /**
    * {@inheritdoc}
    */
   public function validateForm(array &$form, FormStateInterface $form_state) {
 
+    // Before parent::validateForm() so the entity is built with the project.
+    $this->applySelectedProject($form_state);
     parent::validateForm($form, $form_state);
 
     // Check for Little Bobby Tables SQL injection attempt.
@@ -355,7 +340,7 @@ class SodaScsComponentCreateForm extends ContentEntityForm {
 
     // WebProtégé and JupyterHub exist once per project.
     if ($this->projectApplicationHelpers->isSingleInstanceBundle('soda_scs_component', $this->bundle)) {
-      $projectId = $this->resolvePartOfProjectsDefault();
+      $projectId = $this->resolveSelectedProjectId($form_state);
       $applicationLabel = $this->bundleInfo['label'];
       if ($projectId === NULL) {
         $form_state->setErrorByName('label', $this->t('@application can only be added to a project.', [
@@ -376,6 +361,10 @@ class SodaScsComponentCreateForm extends ContentEntityForm {
    * @throws \Drupal\Core\Entity\EntityStorageException
    */
   public function save(array $form, FormStateInterface $form_state): void {
+
+    $projectId = $this->entity->hasField('partOfProjects') && !$this->entity->get('partOfProjects')->isEmpty()
+      ? $this->entity->get('partOfProjects')->target_id
+      : NULL;
 
     // Set the label of the entity.
     $this->entity->set('label', $this->entity->get('label')->value . ' (' . $this->bundleInfo['label'] . ')');
@@ -399,6 +388,8 @@ class SodaScsComponentCreateForm extends ContentEntityForm {
       $this->loggerFactory->get('soda_scs_manager')->error("Cannot create component: @message", [
         '@message' => $createComponentResult['message'],
       ]);
+      // Without a rebuild, Drupal redirects (also to ?destination=).
+      $form_state->setRebuild(TRUE);
       return;
     }
 
@@ -420,8 +411,14 @@ class SodaScsComponentCreateForm extends ContentEntityForm {
         throw new \Exception('Component ID not found');
     }
 
-    // Redirect to the components page.
-    $form_state->setRedirect('entity.soda_scs_component.canonical', ['soda_scs_component' => $componentId]);
+    if ($projectId !== NULL && $projectId !== '') {
+      $form_state->setRedirect('entity.soda_scs_project.canonical', [
+        'soda_scs_project' => $projectId,
+      ]);
+    }
+    else {
+      $form_state->setRedirect('entity.soda_scs_component.canonical', ['soda_scs_component' => $componentId]);
+    }
   }
 
 }

@@ -19,6 +19,7 @@ use Drupal\Core\Url;
 use Drupal\soda_scs_manager\Helpers\SodaScsNextcloudHelpers;
 use Drupal\soda_scs_manager\Helpers\SodaScsProjectApplicationHelpers;
 use Drupal\soda_scs_manager\StackActions\SodaScsStackActionsInterface;
+use Drupal\soda_scs_manager\Traits\SodaScsProjectScopedCreateFormTrait;
 use Drupal\soda_scs_manager\Validation\InputDisallowedTerms;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 use Drupal\Core\Utility\Error;
@@ -39,6 +40,8 @@ use Psr\Log\LogLevel;
  * and redirects to the components page.
  */
 class SodaScsStackCreateForm extends ContentEntityForm {
+
+  use SodaScsProjectScopedCreateFormTrait;
 
   /**
    * The SODa SCS Stack bundle.
@@ -196,25 +199,35 @@ class SodaScsStackCreateForm extends ContentEntityForm {
     // Make the machineName field readonly and
     // add JavaScript to auto-generate it.
     if (isset($form['machineName'])) {
+      $form['machineName']['#title'] = '';
+      $form['machineName']['#description'] = '';
       // @todo Check if there is a better way to do this.
       // Add CSS classes for machine name generation.
       $form['label']['widget'][0]['value']['#attributes']['class'][] = 'soda-scs-manager--machine-name-source';
       $form['machineName']['widget'][0]['value']['#attributes']['class'][] = 'soda-scs-manager--machine-name-target';
+      $form['machineName']['widget'][0]['value']['#title'] = '';
+      $form['machineName']['widget'][0]['value']['#description'] = '';
+      $urlTemplate = $this->bundle === 'soda_scs_wisski_stack'
+        ? str_replace('{instanceId}', '{machineName}', (string) $this->settings->get('wisski.instances.baseUrl'))
+        : '';
+      $form['machineName']['widget'][0]['value']['#attributes']['data-application-url-template'] = $urlTemplate;
+      if ($this->bundle === 'soda_scs_wisski_stack') {
+        $form['machineName']['widget'][0]['value']['#attributes']['data-application-url-transform'] = 'wisski-stack';
+      }
       // Make the machine name field read-only.
       $form['machineName']['widget'][0]['value']['#attributes']['readonly'] = 'readonly';
+      $form['machineName']['widget'][0]['value']['#attributes']['class'][] = 'visually-hidden';
+      $form['machineName']['widget'][0]['value']['#attributes']['aria-hidden'] = 'true';
+      $form['machineName']['widget'][0]['value']['#attributes']['tabindex'] = '-1';
+      if ($urlTemplate !== '') {
+        $form['machineName']['widget'][0]['value']['#suffix'] = '<span class="description soda-scs-manager--machine-name-description"><a class="soda-scs-manager--application-url" target="_blank" rel="noopener noreferrer"></a></span>';
+      }
       // Attach JavaScript to auto-generate machine name.
       $form['#attached']['library'][] = 'soda_scs_manager/machineNameGenerator';
     }
 
-    // Prefer ?project= when the current user owns that project; else default project.
-    if (isset($form['partOfProjects'])) {
-      $projectId = $this->resolvePartOfProjectsDefault();
-      if ($projectId !== NULL) {
-        $form['partOfProjects']['widget']['#default_value'] = [$projectId];
-      }
-      // Hide the partOfProjects field.
-      $form['partOfProjects']['#access'] = FALSE;
-    }
+    // Every application belongs to one of the current user's projects.
+    $this->buildProjectScope($form);
 
     // Hide the flavours field.
     $form['flavours']['#access'] = FALSE;
@@ -245,37 +258,12 @@ class SodaScsStackCreateForm extends ContentEntityForm {
   }
 
   /**
-   * Resolves the project ID for partOfProjects (query owner override or default).
-   *
-   * @return int|string|null
-   *   Project entity ID, or NULL if none available.
-   */
-  protected function resolvePartOfProjectsDefault(): int|string|null {
-    $requestedProjectId = $this->getRequest()->query->get('project');
-    if ($requestedProjectId !== NULL && $requestedProjectId !== '') {
-      /** @var \Drupal\soda_scs_manager\Entity\SodaScsProjectInterface|null $project */
-      $project = $this->entityTypeManager
-        ->getStorage('soda_scs_project')
-        ->load($requestedProjectId);
-      if ($project && (int) $project->getOwnerId() === (int) $this->currentUser->id()) {
-        return $project->id();
-      }
-    }
-
-    /** @var \Drupal\user\UserInterface|null $user */
-    $user = $this->entityTypeManager->getStorage('user')->load($this->currentUser->id());
-    if ($user && $user->hasField('default_project') && !$user->get('default_project')->isEmpty()) {
-      return $user->get('default_project')->target_id;
-    }
-
-    return NULL;
-  }
-
-  /**
    * {@inheritdoc}
    */
   public function validateForm(array &$form, FormStateInterface $form_state) {
 
+    // Before parent::validateForm() so the entity is built with the project.
+    $this->applySelectedProject($form_state);
     parent::validateForm($form, $form_state);
 
     // Check for Little Bobby Tables SQL injection attempt.
@@ -327,7 +315,7 @@ class SodaScsStackCreateForm extends ContentEntityForm {
 
     // WebProtégé and JupyterHub exist once per project.
     if ($this->projectApplicationHelpers->isSingleInstanceBundle('soda_scs_stack', $this->bundle)) {
-      $projectId = $this->resolvePartOfProjectsDefault();
+      $projectId = $this->resolveSelectedProjectId($form_state);
       $applicationLabel = $this->entityTypeBundleInfo->getBundleInfo('soda_scs_stack')[$this->bundle]['label'] ?? $this->bundle;
       if ($projectId === NULL) {
         $form_state->setErrorByName('label', $this->t('@application can only be added to a project.', [
@@ -366,6 +354,15 @@ class SodaScsStackCreateForm extends ContentEntityForm {
   }
 
   /**
+   * Language from the user's profile, limited to the field's allowed values.
+   */
+  private function resolveProfileLanguage(): string {
+    $user = $this->entityTypeManager->getStorage('user')->load($this->currentUser->id());
+    $langcode = $user?->getPreferredLangcode(FALSE);
+    return in_array($langcode, ['en', 'de'], TRUE) ? $langcode : 'en';
+  }
+
+  /**
    * {@inheritdoc}
    *
    * @throws \Drupal\Core\Entity\EntityStorageException
@@ -375,14 +372,23 @@ class SodaScsStackCreateForm extends ContentEntityForm {
     // We call it stack here.
     /** @var \Drupal\soda_scs_manager\Entity\SodaScsStackInterface $stack */
     $stack = $this->entity;
+    $projectId = $stack->hasField('partOfProjects') && !$stack->get('partOfProjects')->isEmpty()
+      ? $stack->get('partOfProjects')->target_id
+      : NULL;
     $stack->set('bundle', $this->bundle);
     $stack->set('created', $this->time->getRequestTime());
-    $stack->set('defaultLanguage', $form_state->getValue('defaultLanguage'));
+    if ($stack->hasField('defaultLanguage')) {
+      $stack->set('defaultLanguage', $this->resolveProfileLanguage());
+    }
     $developmentInstance = (bool) ($form_state->getValue(['developmentInstance', 'value']) ?? FALSE);
     $wisski8x4xDevelopment = $developmentInstance
       && (bool) ($form_state->getValue(['wisski8x4xDevelopment', 'value']) ?? FALSE);
-    $stack->set('developmentInstance', $developmentInstance);
-    $stack->set('wisski8x4xDevelopment', $wisski8x4xDevelopment);
+    if ($stack->hasField('developmentInstance')) {
+      $stack->set('developmentInstance', $developmentInstance);
+    }
+    if ($stack->hasField('wisski8x4xDevelopment')) {
+      $stack->set('wisski8x4xDevelopment', $wisski8x4xDevelopment);
+    }
     $stack->set('health', 'Unknown');
     $stack->set('machineName', $form_state->getValue('machineName')[0]['value']);
     $stack->set('owner', $this->currentUser->getAccount()->id());
@@ -415,11 +421,19 @@ class SodaScsStackCreateForm extends ContentEntityForm {
         '@label' => $this->entity->label(),
         '@username' => $this->currentUser->getAccount()->getDisplayName(),
       ]), 'error');
+      // Without a rebuild, Drupal redirects (also to ?destination=).
+      $form_state->setRebuild(TRUE);
       return;
     }
 
-    // Redirect to the dashboard page.
-    $form_state->setRedirect('soda_scs_manager.dashboard');
+    if ($projectId !== NULL && $projectId !== '') {
+      $form_state->setRedirect('entity.soda_scs_project.canonical', [
+        'soda_scs_project' => $projectId,
+      ]);
+    }
+    else {
+      $form_state->setRedirect('soda_scs_manager.dashboard');
+    }
   }
 
 }

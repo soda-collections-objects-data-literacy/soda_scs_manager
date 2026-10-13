@@ -10,6 +10,10 @@
       // Find the source (label) and target (machine name) fields
       const $source = $('.soda-scs-manager--machine-name-source', context);
       const $target = $('.soda-scs-manager--machine-name-target', context);
+      const $display = $target.closest('.field--name-machinename').find('.soda-scs-manager--machine-name-description');
+      const $urlDisplay = $display.find('.soda-scs-manager--application-url');
+      const urlTemplate = String($target.attr('data-application-url-template') || '');
+      const urlTransform = String($target.attr('data-application-url-transform') || '');
 
       if ($source.length && $target.length) {
         // Process the label to create a machine name
@@ -21,18 +25,34 @@
             .substring(0, 32);            // Limit length to 32 characters
         };
 
+        const updateMachineNameDisplay = function (machineName) {
+          if (!urlTemplate || !machineName) {
+            $urlDisplay.removeAttr('href').text('');
+            return;
+          }
+          let urlMachineName = machineName;
+          if (urlTransform === 'wisski-stack' && urlMachineName.indexOf('stack-') === 0) {
+            urlMachineName = 'wisski-' + urlMachineName.substring(6);
+          }
+          const url = urlTemplate.replace('{machineName}', encodeURIComponent(urlMachineName));
+          $urlDisplay.attr('href', url).text(url);
+        };
+
         // Use once utility properly
         once('machine-name', $source, context).forEach(function(element) {
           $(element).on('keyup change', function () {
             const label = $(this).val();
             const machineName = createMachineName(label);
             $target.val(machineName);
+            updateMachineNameDisplay(machineName);
           });
         });
 
         // Initial generation if label has a value
         if ($source.val()) {
-          $target.val(createMachineName($source.val()));
+          const machineName = createMachineName($source.val());
+          $target.val(machineName);
+          updateMachineNameDisplay(machineName);
         }
       }
     }

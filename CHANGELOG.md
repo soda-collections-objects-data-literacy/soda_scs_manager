@@ -9,10 +9,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Project names are unique across the platform. Uniqueness is checked on a
+  machine name derived from the label (`machineName` on `soda_scs_project`,
+  umlauts transliterated), so "Mein Projekt" and "mein-projekt" collide. The
+  create and edit forms check the name while typing
+  (`/soda-scs-manager/project-name/check`); `scs-share` is reserved. Update
+  `soda_scs_manager_update_11033` fills the machine name for existing
+  projects.
+- The co-working intro asks for the first project (slide 4) and then offers a
+  WissKI inside it (slide 5). Both steps can be skipped.
+- `drush soda_scs_manager:applications-without-project` lists applications
+  created before projects became mandatory.
 - Sidebar **Messages** link shows the number of unread messages and pending
   invitations as a badge, refreshed every 30 seconds via
   `/soda-scs-manager/messages-unread-count`.
-
 - Project page **Files** section shows recent Nextcloud Team Folder activity
   for the viewing owner/member (same `scs_manager_integration` feed as the
   Nextcloud card). Placeable block **Project files (Nextcloud activity)**
@@ -44,6 +54,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- New users start without a project: no default project is created on
+  registration any more.
+- Applications (WissKI, SQL, triplestore, Jupyter, WebProtégé) always belong
+  to a project. Create forms ask for one of the user's projects (or take
+  `?project=`); without a project they link to project creation. Stack and
+  component actions reject requests without a project.
+- Project creation runs through `SodaScsProjectProvisioner` (form and intro).
+  It deletes the project again when the Keycloak group fails or Nextcloud
+  already has a folder with that name.
+- Failed application creation (WissKI and other stacks/components) keeps the
+  user on the create form with the error message instead of redirecting.
 - JupyterHub and WebProtégé are project applications: a project page shows
   them only when they were added to that project, at most once per project,
   owned by the project owner. Members open their own notebook at the project
@@ -98,12 +119,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Removed
 
+- User field `default_project` and the default project fallbacks
+  (`soda_scs_manager_update_11034`). Former default projects stay as normal
+  projects.
 - Nextcloud stack entities (`soda_scs_nextcloud_stack`) and the project-page
   Nextcloud card. Project files are reached through the files block; update
   11032 deletes the entities (no remote resources belong to them).
 
 ### Fixed
 
+- A new project with the same label as an existing Team Folder no longer takes
+  over that folder's groups. `scs_manager_integration` answers 409, and the
+  manager asks for a different name (or keeps the old name on rename).
 - WebProtégé card links open the project's ontology even for signed-out
   users: they go through `/webprotege/oidc/login?return_to=…`, which keeps
   the target across the Keycloak sign-in (needs the matching WebProtégé

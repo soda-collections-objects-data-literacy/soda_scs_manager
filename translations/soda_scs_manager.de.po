@@ -4301,6 +4301,18 @@ msgstr "Ihr Profil wurde gelöscht."
 msgid "Upload picture"
 msgstr "Bild hochladen"
 
+#: js/machineNameGenerator.js
+msgid "Machine name: @name"
+msgstr "Maschinenname: @name"
+
+#: js/machineNameGenerator.js
+msgid "Machine name:"
+msgstr "Maschinenname:"
+
+#: js/machineNameGenerator.js
+msgid "Application URL: @url"
+msgstr "Anwendungs-URL: @url"
+
 #: src/Form/SodaScsComponentCreateForm.php src/Form/SodaScsStackCreateForm.php
 msgid "@application can only be added to a project."
 msgstr "@application kann nur einem Projekt hinzugefügt werden."
@@ -4348,3 +4360,120 @@ msgstr "WebProtégé-Revisionen für @project gelesen."
 #: src/Helpers/SodaScsWebprotegeHelpers.php
 msgid "Read WebProtégé project details for @project."
 msgstr "WebProtégé-Projektdetails für @project gelesen."
+
+#: src/Helpers/SodaScsProjectNameHelpers.php
+msgid "The project name must contain at least one letter."
+msgstr "Der Projektname muss mindestens einen Buchstaben enthalten."
+
+#: src/Helpers/SodaScsProjectNameHelpers.php
+msgid "This project name is reserved. Please choose a different name."
+msgstr "Dieser Projektname ist reserviert. Bitte wählen Sie einen anderen Namen."
+
+#: src/Helpers/SodaScsProjectNameHelpers.php js/projectNameCheck.js js/coworkingIntroWizard.js
+msgid "A project with this or a very similar name already exists. Please choose a different name."
+msgstr "Ein Projekt mit diesem oder einem sehr ähnlichen Namen existiert bereits. Bitte wählen Sie einen anderen Namen."
+
+#: src/Plugin/Validation/Constraint/SodaScsProjectNameConstraint.php
+msgctxt "Validation"
+msgid "Unique SCS project name"
+msgstr "Eindeutiger SCS-Projektname"
+
+#: src/Entity/SodaScsProject.php
+msgid "Unique machine-readable name derived from the label."
+msgstr "Eindeutiger maschinenlesbarer Name, abgeleitet vom Namen."
+
+#: src/Service/SodaScsProjectProvisioner.php
+msgid "A project with this name is being created right now. Please try again in a moment."
+msgstr "Ein Projekt mit diesem Namen wird gerade angelegt. Bitte versuchen Sie es gleich noch einmal."
+
+#: src/Service/SodaScsProjectProvisioner.php
+msgid "Could not create the project @project because its permission group could not be created. Please try again later."
+msgstr "Das Projekt @project konnte nicht angelegt werden, weil seine Berechtigungsgruppe nicht erstellt werden konnte. Bitte versuchen Sie es später erneut."
+
+#: src/Service/SodaScsProjectProvisioner.php src/Helpers/SodaScsProjectHelpers.php
+msgid "The name @project is already used by a folder in Nextcloud. Please choose a different name."
+msgstr "Der Name @project wird in Nextcloud bereits von einem Ordner verwendet. Bitte wählen Sie einen anderen Namen."
+
+#: src/Traits/SodaScsProjectNameCheckFormTrait.php templates/includes/soda-scs-manager--coworking-intro.html.twig
+msgid "Project names are unique across the platform. The name is also used for the project folder in Nextcloud."
+msgstr "Projektnamen sind plattformweit eindeutig. Der Name wird auch für den Projektordner in Nextcloud verwendet."
+
+#: soda_scs_manager.routing.yml
+msgid "Check project name"
+msgstr "Projektnamen prüfen"
+
+#: soda_scs_manager.routing.yml
+msgid "Create project from intro"
+msgstr "Projekt aus der Einführung anlegen"
+
+#: src/Traits/SodaScsProjectScopedCreateFormTrait.php
+msgid "Choose the project this application belongs to."
+msgstr "Wählen Sie das Projekt, zu dem diese Anwendung gehört."
+
+#: src/Traits/SodaScsProjectScopedCreateFormTrait.php
+msgid "Applications always belong to a project. Create a project first, then add the application from the project page."
+msgstr "Anwendungen gehören immer zu einem Projekt. Legen Sie zuerst ein Projekt an und fügen Sie die Anwendung dann auf der Projektseite hinzu."
+
+#: src/Traits/SodaScsProjectScopedCreateFormTrait.php
+msgid "Create a project"
+msgstr "Projekt anlegen"
+
+#: src/Traits/SodaScsProjectScopedCreateFormTrait.php
+msgid "The application belongs to this project. Its members get access."
+msgstr "Die Anwendung gehört zu diesem Projekt. Seine Mitglieder erhalten Zugriff."
+
+#: src/Traits/SodaScsProjectScopedCreateFormTrait.php
+msgid "- Select a project -"
+msgstr "- Projekt auswählen -"
+
+#: src/ComponentActions/SodaScsComponentActions.php src/StackActions/SodaScsStackActions.php
+msgid "Applications can only be created inside a project."
+msgstr "Anwendungen können nur innerhalb eines Projekts angelegt werden."
+
+#: src/Controller/SodaScsCoworkingIntroController.php js/coworkingIntroWizard.js
+msgid "Please enter a name for your project."
+msgstr "Bitte legen Sie einen Namen für Ihr Projekt fest."
+
+#: src/Controller/SodaScsCoworkingIntroController.php
+msgid "Create a project first. A WissKI environment always belongs to a project."
+msgstr "Legen Sie zuerst ein Projekt an. Eine WissKI-Umgebung gehört immer zu einem Projekt."
+
+#: templates/includes/soda-scs-manager--coworking-intro.html.twig
+msgid "Create your first project"
+msgstr "Legen Sie Ihr erstes Projekt an"
+
+#: templates/includes/soda-scs-manager--coworking-intro.html.twig
+msgid "Projects bundle your applications, a shared Nextcloud folder and your team. Every application belongs to a project."
+msgstr "Projekte bündeln Ihre Anwendungen, einen gemeinsamen Nextcloud-Ordner und Ihr Team. Jede Anwendung gehört zu einem Projekt."
+
+#: templates/includes/soda-scs-manager--coworking-intro.html.twig
+msgid "Project name"
+msgstr "Projektname"
+
+#: templates/includes/soda-scs-manager--coworking-intro.html.twig
+msgid "e.g. Herbarium digitisation"
+msgstr "z. B. Herbar-Digitalisierung"
+
+#: templates/includes/soda-scs-manager--coworking-intro.html.twig
+msgid "Create project"
+msgstr "Projekt anlegen"
+
+#: templates/includes/soda-scs-manager--coworking-intro.html.twig
+msgid "Finish without WissKI"
+msgstr "Ohne WissKI beenden"
+
+#: js/coworkingIntroWizard.js
+msgid "Creating a project is not available. Reload the page or contact an administrator."
+msgstr "Das Anlegen eines Projekts ist nicht verfügbar. Laden Sie die Seite neu oder wenden Sie sich an eine Administratorin oder einen Administrator."
+
+#: js/coworkingIntroWizard.js
+msgid "Could not create the project. Please try again."
+msgstr "Das Projekt konnte nicht angelegt werden. Bitte versuchen Sie es erneut."
+
+#: js/coworkingIntroWizard.js
+msgid "Project @project created."
+msgstr "Projekt @project angelegt."
+
+#: templates/pages/soda-scs-manager--dashboard.html.twig
+msgid "You have no project yet. Create a project to add applications, a shared Nextcloud folder and team members."
+msgstr "Sie haben noch kein Projekt. Legen Sie ein Projekt an, um Anwendungen, einen gemeinsamen Nextcloud-Ordner und Teammitglieder hinzuzufügen."

@@ -49,6 +49,14 @@ machineNameGenerator:
     - core/jquery.once
     - soda_scs_manager/globalStyling
 
+projectNameCheck:
+  version: 1.x
+  js:
+    js/projectNameCheck.js: {}
+  dependencies:
+    - core/drupal
+    - core/once
+
 keycloakRegistration:
   version: 1.x
   js:

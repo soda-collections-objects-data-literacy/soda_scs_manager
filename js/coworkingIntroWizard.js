@@ -7,14 +7,18 @@
   /**
    * Slide indices must match data-coworking-intro-slide in the Twig template
    * (soda-scs-manager--coworking-intro.html.twig): 0 welcome, 1–2 feature slides,
-   * 3 Nextcloud, 4 WissKI name/create, 5 success. Copy blocks use data-coworking-intro-copy-rise.
+   * 3 Nextcloud, 4 first project, 5 WissKI name/create, 6 success. Copy blocks use
+   * data-coworking-intro-copy-rise. Users start without a project, so the WissKI
+   * slide is only reachable after slide 4 created one.
    */
   /** Index of the Nextcloud connect slide (0-based). */
   const SLIDE_NEXTCLOUD = 3;
-  /** Index of the “name + Create” slide (0-based). */
-  const SLIDE_WISSKI_FORM = 4;
+  /** Index of the “first project” slide (0-based). */
+  const SLIDE_PROJECT_FORM = 4;
+  /** Index of the WissKI “name + Create” slide (0-based). */
+  const SLIDE_WISSKI_FORM = 5;
   /** Index of the post-create success slide. */
-  const SLIDE_SUCCESS = 5;
+  const SLIDE_SUCCESS = 6;
 
   const COWORKING_INTRO_ROOT_HIDDEN_CLASS = 'scs-manager--coworking-intro-root--hidden';
   const COWORKING_INTRO_SLIDE_HIDDEN_CLASS = 'scs-manager--coworking-intro-slide--hidden';
@@ -88,7 +92,7 @@
    */
   function nextSlideIndex(root, index) {
     if (index === SLIDE_NEXTCLOUD - 1 && shouldSkipNextcloudSlide(root)) {
-      return SLIDE_WISSKI_FORM;
+      return SLIDE_PROJECT_FORM;
     }
     if (index < SLIDE_SUCCESS) {
       return index + 1;
@@ -102,7 +106,7 @@
    * @return {number}
    */
   function prevSlideIndex(root, index) {
-    if (index === SLIDE_WISSKI_FORM && shouldSkipNextcloudSlide(root)) {
+    if (index === SLIDE_PROJECT_FORM && shouldSkipNextcloudSlide(root)) {
       return SLIDE_NEXTCLOUD - 1;
     }
     if (index > 0) {
@@ -179,7 +183,8 @@
     if ($('.soda-scs-manager__throbber-overlay').length) {
       return;
     }
-    $('body').append(
+    const $overlayContainer = $('.dashboard-main').first();
+    ($overlayContainer.length ? $overlayContainer : $('body')).append(
       '<div class="soda-scs-manager__throbber-overlay">' +
         '<div class="soda-scs-manager__throbber-overlay__content">' +
           '<div class="soda-scs-manager__throbber-overlay__spinner"></div>' +
@@ -206,6 +211,7 @@
     $('.soda-scs-manager__throbber-overlay__message').text(primary);
     $('.soda-scs-manager__throbber-overlay__info').html(info);
     $('.soda-scs-manager__throbber-overlay').addClass('soda-scs-manager__throbber-overlay--active');
+    document.dispatchEvent(new CustomEvent('scs-manager:overlay-state-change'));
   }
 
   function hideWisskiThrobber() {
@@ -213,6 +219,7 @@
       return;
     }
     $('.soda-scs-manager__throbber-overlay').removeClass('soda-scs-manager__throbber-overlay--active');
+    document.dispatchEvent(new CustomEvent('scs-manager:overlay-state-change'));
   }
 
   async function getCsrfToken() {
@@ -228,12 +235,17 @@
   /**
    * Fetches name availability; returns { ok: true } or { ok: false, error: string }.
    *
+   * Used for WissKI names and project names; both endpoints answer
+   * { available: bool, error?: string }.
+   *
    * @param {string} raw
    * @param {string} checkUrl
    * @param {AbortSignal|null} signal
+   * @param {string} [takenMessage]
+   *   Fallback message when the endpoint reports the name as taken without one.
    * @return {Promise<{ok: boolean, error?: string}>}
    */
-  async function fetchWisskiNameAvailability(raw, checkUrl, signal) {
+  async function fetchNameAvailability(raw, checkUrl, signal, takenMessage) {
     if (!checkUrl || !raw) {
       return { ok: true };
     }
@@ -261,7 +273,9 @@
       }
       return {
         ok: false,
-        error: Drupal.t('A stack or application with this name already exists. Please choose a different name.'),
+        error:
+          takenMessage ||
+          Drupal.t('A stack or application with this name already exists. Please choose a different name.'),
       };
     } catch (e) {
       if (e && e.name === 'AbortError') {
@@ -359,17 +373,18 @@
 
     const backBtn = root.querySelector('[data-coworking-intro-back]');
     if (backBtn) {
-      backBtn.disabled = index === 0 || index === SLIDE_SUCCESS;
+      // The project exists once the WissKI slide shows; going back would offer to create another.
+      backBtn.disabled = index === 0 || index === SLIDE_WISSKI_FORM || index === SLIDE_SUCCESS;
     }
     if (nextBtn) {
-      const hideNext = index >= SLIDE_WISSKI_FORM;
+      const hideNext = index >= SLIDE_PROJECT_FORM;
       nextBtn.classList.toggle(COWORKING_INTRO_FOOTER_CONTROL_HIDDEN_CLASS, hideNext);
       const onNextcloudSlide = index === SLIDE_NEXTCLOUD;
       const canProceedNext = !onNextcloudSlide || isNextcloudStatusConnected(root);
       nextBtn.disabled = !canProceedNext;
     }
 
-    const hideIntroSkip = index === SLIDE_NEXTCLOUD || index === SLIDE_WISSKI_FORM;
+    const hideIntroSkip = index === SLIDE_NEXTCLOUD || index === SLIDE_PROJECT_FORM || index === SLIDE_WISSKI_FORM;
     const skipBtn = root.querySelector('[data-coworking-intro-skip]');
     if (skipBtn) {
       skipBtn.classList.toggle(COWORKING_INTRO_FOOTER_CONTROL_HIDDEN_CLASS, hideIntroSkip);
@@ -491,7 +506,7 @@
         nameCheckAbort = new AbortController();
         const sig = nameCheckAbort.signal;
         const currentCheck = nameCheckAbort;
-        fetchWisskiNameAvailability(trimmed, checkUrl, sig)
+        fetchNameAvailability(trimmed, checkUrl, sig)
           .then((result) => {
             if (nameCheckAbort !== currentCheck) {
               return;
@@ -527,6 +542,145 @@
         const raw = (nameInput.value || '').trim();
         if (raw) {
           scheduleWisskiNameCheck(raw, true);
+        }
+      });
+    }
+
+    /** The project created on the first-project slide: { id, label, url }. */
+    let createdProject = null;
+
+    /**
+     * First-project slide: live name check, create, then continue to WissKI.
+     */
+    function setupProjectSlide() {
+      const projectInput = root.querySelector('[data-coworking-intro-project-name]');
+      const projectError = root.querySelector('[data-coworking-intro-project-error]');
+      const createProjectBtn = root.querySelector('[data-coworking-intro-create-project]');
+      const finishProjectBtn = root.querySelector('[data-coworking-intro-finish-project]');
+      const projectCreated = root.querySelector('[data-coworking-intro-project-created]');
+      const projectHintId = 'scs-manager--coworking-intro-project-name-hint';
+      const projectErrorId = 'scs-manager--coworking-intro-project-name-error';
+      const takenMessage = Drupal.t('A project with this or a very similar name already exists. Please choose a different name.');
+      let checkTimer = null;
+      let checkAbort = null;
+
+      function showProjectError(msg) {
+        if (!projectInput || !projectError) {
+          return;
+        }
+        projectError.textContent = msg || '';
+        projectError.hidden = !msg;
+        projectInput.setAttribute('aria-invalid', msg ? 'true' : 'false');
+        projectInput.setAttribute('aria-describedby', msg ? `${projectHintId} ${projectErrorId}` : projectHintId);
+        projectInput.classList.toggle(COWORKING_INTRO_WISSKI_INPUT_INVALID_CLASS, Boolean(msg));
+      }
+
+      function scheduleProjectNameCheck(immediate) {
+        const checkUrl = wisskiCfg()?.projectNameCheckUrl;
+        if (!projectInput || !checkUrl) {
+          return;
+        }
+        window.clearTimeout(checkTimer);
+        if (checkAbort) {
+          checkAbort.abort();
+          checkAbort = null;
+        }
+        const trimmed = (projectInput.value || '').trim();
+        if (trimmed === '') {
+          showProjectError('');
+          return;
+        }
+        const run = () => {
+          checkAbort = new AbortController();
+          const currentCheck = checkAbort;
+          fetchNameAvailability(trimmed, checkUrl, checkAbort.signal, takenMessage)
+            .then((result) => {
+              if (checkAbort === currentCheck) {
+                showProjectError(result.ok ? '' : result.error || takenMessage);
+              }
+            })
+            .catch(() => {});
+        };
+        if (immediate) {
+          run();
+        } else {
+          checkTimer = window.setTimeout(run, NAME_CHECK_DEBOUNCE_MS);
+        }
+      }
+
+      if (projectInput) {
+        projectInput.addEventListener('input', () => scheduleProjectNameCheck(false));
+        projectInput.addEventListener('blur', () => scheduleProjectNameCheck(true));
+      }
+
+      if (finishProjectBtn) {
+        finishProjectBtn.addEventListener('click', async () => {
+          await persistIntroComplete(root);
+          if (createdProject?.url) {
+            window.location.assign(createdProject.url);
+          } else {
+            reloadDashboard();
+          }
+        });
+      }
+
+      if (!createProjectBtn || !projectInput) {
+        return;
+      }
+      createProjectBtn.addEventListener('click', async () => {
+        const label = (projectInput.value || '').trim();
+        if (!label) {
+          showProjectError(Drupal.t('Please enter a name for your project.'));
+          projectInput.focus();
+          return;
+        }
+        const createUrl = wisskiCfg()?.projectCreateUrl;
+        if (!createUrl) {
+          showProjectError(Drupal.t('Creating a project is not available. Reload the page or contact an administrator.'));
+          return;
+        }
+        createProjectBtn.disabled = true;
+        const token = await getCsrfToken();
+        if (!token) {
+          createProjectBtn.disabled = false;
+          showProjectError(Drupal.t('Could not load a security token. Reload the page and try again.'));
+          return;
+        }
+        try {
+          const res = await fetch(createUrl, {
+            method: 'POST',
+            credentials: 'same-origin',
+            headers: {
+              Accept: 'application/json',
+              'Content-Type': 'application/json',
+              'X-CSRF-Token': token,
+            },
+            body: JSON.stringify({ label }),
+          });
+          const data = await res.json().catch(() => ({}));
+          createProjectBtn.disabled = false;
+          if (!res.ok || !data.success) {
+            showProjectError((data && data.error) || Drupal.t('Could not create the project. Please try again.'));
+            projectInput.focus();
+            return;
+          }
+          showProjectError('');
+          createdProject = {
+            id: String(data.projectId),
+            label: String(data.label || label),
+            url: data.projectUrl ? String(data.projectUrl) : '',
+          };
+          if (projectCreated) {
+            projectCreated.textContent = Drupal.t('Project @project created.', { '@project': createdProject.label });
+          }
+          index = SLIDE_WISSKI_FORM;
+          updateStepUi(root, index, total, nextBtn);
+          if (nameInput) {
+            nameInput.focus();
+          }
+        } catch (e) {
+          createProjectBtn.disabled = false;
+          showProjectError(Drupal.t('Request failed. Please try again.'));
         }
       });
     }
@@ -573,7 +727,7 @@
     const backBtn = root.querySelector('[data-coworking-intro-back]');
     if (backBtn) {
       backBtn.addEventListener('click', () => {
-        if (index > 0 && index !== SLIDE_SUCCESS) {
+        if (index > 0 && index !== SLIDE_WISSKI_FORM && index !== SLIDE_SUCCESS) {
           index = prevSlideIndex(root, index);
           updateStepUi(root, index, total, nextBtn);
         }
@@ -589,7 +743,7 @@
     if (skipBtn) {
       skipBtn.addEventListener('click', () => {
         if (index < SLIDE_NEXTCLOUD) {
-          index = shouldSkipNextcloudSlide(root) ? SLIDE_WISSKI_FORM : SLIDE_NEXTCLOUD;
+          index = shouldSkipNextcloudSlide(root) ? SLIDE_PROJECT_FORM : SLIDE_NEXTCLOUD;
           const scrollBody = root.querySelector('.scs-manager--coworking-intro-scroll-body');
           if (scrollBody) {
             scrollBody.scrollTop = 0;
@@ -606,6 +760,8 @@
         skipOrFinish();
       });
     }
+
+    setupProjectSlide();
 
     if (closeSuccessBtn) {
       closeSuccessBtn.addEventListener('click', () => {
@@ -635,7 +791,7 @@
             nameCheckAbort.abort();
             nameCheckAbort = null;
           }
-          const avail = await fetchWisskiNameAvailability(raw, checkUrl, null);
+          const avail = await fetchNameAvailability(raw, checkUrl, null);
           if (!avail.ok) {
             showCreateNameFailure(
               avail.error ||
@@ -674,7 +830,7 @@
               'Content-Type': 'application/json',
               'X-CSRF-Token': token,
             },
-            body: JSON.stringify({ label: raw }),
+            body: JSON.stringify({ label: raw, projectId: createdProject?.id || null }),
           });
           let data = {};
           try {

@@ -63,6 +63,16 @@ class SodaScsStackActions implements SodaScsStackActionsInterface {
    *   The result of the request.
    */
   public function createStack(SodaScsStackInterface $stack): array {
+    // Applications always belong to a project (Team Folder, member access).
+    if (!$stack->hasField('partOfProjects') || $stack->get('partOfProjects')->isEmpty()) {
+      return [
+        'message' => $this->t('Applications can only be created inside a project.'),
+        'data' => [],
+        'success' => FALSE,
+        'error' => 'Stack has no project (partOfProjects is empty).',
+      ];
+    }
+
     switch ($stack->bundle()) {
       case 'soda_scs_wisski_stack':
         return $this->sodaScsWisskiStackActions->createStack($stack);

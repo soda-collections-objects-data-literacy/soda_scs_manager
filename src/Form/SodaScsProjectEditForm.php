@@ -24,6 +24,7 @@ use Drupal\soda_scs_manager\Helpers\SodaScsProjectMembershipHelpers;
 use Drupal\soda_scs_manager\Helpers\SodaScsWebprotegeHelpers;
 use Drupal\soda_scs_manager\RequestActions\SodaScsServiceRequestInterface;
 use Drupal\soda_scs_manager\Traits\SodaScsProjectMemberInvitationTrait;
+use Drupal\soda_scs_manager\Traits\SodaScsProjectNameCheckFormTrait;
 use Drupal\user\UserInterface;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 
@@ -33,6 +34,7 @@ use Symfony\Component\DependencyInjection\ContainerInterface;
 class SodaScsProjectEditForm extends ContentEntityForm {
 
   use SodaScsProjectMemberInvitationTrait;
+  use SodaScsProjectNameCheckFormTrait;
 
   /**
    * The entity being used by this form.
@@ -246,6 +248,7 @@ class SodaScsProjectEditForm extends ContentEntityForm {
     $this->buildCurrentMembersSection($form, $form_state);
     $this->buildPendingInvitationsSection($form, $form_state);
     $this->buildMemberInvitationElement($form, $form_state);
+    $this->attachProjectNameCheck($form, $this->entity->id());
 
     return $form;
   }
@@ -533,7 +536,15 @@ class SodaScsProjectEditForm extends ContentEntityForm {
         ]));
       }
       $updateFolder = $this->sodaScsProjectHelpers->updateProjectTeamFolderLabel($project);
-      if (!$updateFolder->success) {
+      if (!$updateFolder->success && !empty($updateFolder->data['conflict'])) {
+        // Nextcloud already has a folder with that name (e.g. a platform
+        // folder): keep the project and its Team Folder on the old name.
+        $project->set('label', $previousLabel);
+        $project->save();
+        $this->sodaScsProjectHelpers->updateProjectGroupAttributes($project);
+        $this->messenger()->addError($updateFolder->message);
+      }
+      elseif (!$updateFolder->success) {
         $this->messenger()->addError($this->t('Failed to rename Nextcloud Team Folder for project @project: @error', [
           '@project' => $newLabel,
           '@error' => $updateFolder->error,

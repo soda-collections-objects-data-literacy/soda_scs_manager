@@ -3,9 +3,10 @@
  * @file
  * Co-working introduction wizard markup (dashboard and start page).
  *
- * Slide order is driven by data-coworking-intro-slide in this file (0..5). coworkingIntroWizard.js
- * uses the same indices for Next / Back gating, Nextcloud connection, and WissKI flow.
- * Steps 1–5: static line/dot under the panel title (panel divider); step 0 uses the animated divider inside the welcome slide.
+ * Slide order is driven by data-coworking-intro-slide in this file (0..6). coworkingIntroWizard.js
+ * uses the same indices for Next / Back gating, Nextcloud connection, first project and WissKI flow.
+ * Slide 4 creates the first project (users start without one); slide 5 creates a WissKI inside it.
+ * Steps 1–6: static line/dot under the panel title (panel divider); step 0 uses the animated divider inside the welcome slide.
  * Main copy blocks use data-coworking-intro-copy-rise; coworkingIntroWizard.js sets data-coworking-intro-copy-replay per step.
  * Layout and Tailwind utilities live in soda_scs_manager_theme intro-wizard.pcss (scs-manager--coworking-intro-*).
  *
@@ -106,10 +107,27 @@
         </div>
       </div>
 
-      {# Slide 4: WissKI quick-create; POST + name check URLs from drupalSettings.sodaScsManager.coworkingIntro. #}
+      {# Slide 4: first project; POST + name check URLs from drupalSettings.sodaScsManager.coworkingIntro. #}
       <div class="scs-manager--coworking-intro-slide scs-manager--coworking-intro-slide--hidden" data-coworking-intro-slide="4">
         <div class="scs-manager--coworking-intro-copy-rise" data-coworking-intro-copy-rise>
+          <h3 class="scs-manager--coworking-intro-subtitle">{{ 'Create your first project'|t }}</h3>
+          <p class="scs-manager--coworking-intro-slide-lede">{{ 'Projects bundle your applications, a shared Nextcloud folder and your team. Every application belongs to a project.'|t }}</p>
+          <label for="scs-manager--coworking-intro-project-name" class="scs-manager--coworking-intro-field-label">{{ 'Project name'|t }}</label>
+          <p id="scs-manager--coworking-intro-project-name-hint" class="scs-manager--coworking-intro-field-hint">{{ 'Project names are unique across the platform. The name is also used for the project folder in Nextcloud.'|t }}</p>
+          <input id="scs-manager--coworking-intro-project-name" type="text" class="scs-manager--coworking-intro-wisski-name-input" maxlength="255" autocomplete="off" data-coworking-intro-project-name placeholder="{{ 'e.g. Herbarium digitisation'|t }}" aria-describedby="scs-manager--coworking-intro-project-name-hint" />
+          <p id="scs-manager--coworking-intro-project-name-error" class="scs-manager--coworking-intro-field-error" data-coworking-intro-project-error role="alert" aria-live="polite" hidden></p>
+          <div class="scs-manager--coworking-intro-form-actions">
+            <button type="button" class="scs-manager--coworking-intro-btn-create-wisski" data-coworking-intro-create-project>{{ 'Create project'|t }}</button>
+            <button type="button" class="scs-manager--coworking-intro-btn-outlined" data-coworking-intro-finish>{{ 'Later'|t }}</button>
+          </div>
+        </div>
+      </div>
+
+      {# Slide 5: WissKI quick-create inside the new project; POST + name check URLs from drupalSettings.sodaScsManager.coworkingIntro. #}
+      <div class="scs-manager--coworking-intro-slide scs-manager--coworking-intro-slide--hidden" data-coworking-intro-slide="5">
+        <div class="scs-manager--coworking-intro-copy-rise" data-coworking-intro-copy-rise>
           <h3 class="scs-manager--coworking-intro-subtitle">{{ 'Create your first WissKI Environment'|t }}</h3>
+          <p class="scs-manager--coworking-intro-slide-lede" data-coworking-intro-project-created></p>
           <p class="scs-manager--coworking-intro-slide-lede">{{ 'We create a complete environment: database, triplestore, and WissKI. Provisioning starts immediately and may take several minutes.'|t }}</p>
           <label for="scs-manager--coworking-intro-wisski-name" class="scs-manager--coworking-intro-field-label">{{ 'WissKI name'|t }}</label>
           <p id="scs-manager--coworking-intro-wisski-name-hint" class="scs-manager--coworking-intro-field-hint">{{ 'Use at most 25 characters: letters (A–Z, a–z), digits (0–9), and spaces. No other symbols.'|t }}</p>
@@ -117,13 +135,13 @@
           <p id="scs-manager--coworking-intro-wisski-name-error" class="scs-manager--coworking-intro-field-error" data-coworking-intro-wisski-error role="alert" aria-live="polite" hidden></p>
           <div class="scs-manager--coworking-intro-form-actions">
             <button type="button" class="scs-manager--coworking-intro-btn-create-wisski" data-coworking-intro-open-wisski>{{ 'Create WissKI Environment'|t }}</button>
-            <button type="button" class="scs-manager--coworking-intro-btn-outlined" data-coworking-intro-finish>{{ 'Finish without creating'|t }}</button>
+            <button type="button" class="scs-manager--coworking-intro-btn-outlined" data-coworking-intro-finish-project>{{ 'Finish without WissKI'|t }}</button>
           </div>
         </div>
       </div>
 
-      {# Slide 5: after successful WissKI create (server sets coworking_intro_completed); Close reloads the dashboard. #}
-      <div class="scs-manager--coworking-intro-slide scs-manager--coworking-intro-slide--hidden" data-coworking-intro-slide="5" data-coworking-intro-success-slide>
+      {# Slide 6: after successful WissKI create (server sets coworking_intro_completed); Close reloads the dashboard. #}
+      <div class="scs-manager--coworking-intro-slide scs-manager--coworking-intro-slide--hidden" data-coworking-intro-slide="6" data-coworking-intro-success-slide>
         <div class="scs-manager--coworking-intro-copy-rise" data-coworking-intro-copy-rise>
           <h3 class="scs-manager--coworking-intro-success-title">{{ 'WissKI Environment created'|t }}</h3>
           <p class="scs-manager--coworking-intro-success-summary" data-coworking-intro-success-summary></p>

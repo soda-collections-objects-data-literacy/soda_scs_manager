@@ -37,6 +37,8 @@ services:
     class: Drupal\soda_scs_manager\Helpers\SodaScsDatabaseHelpers
   soda_scs_manager.drupal.helpers:
     class: Drupal\soda_scs_manager\Helpers\SodaScsDrupalHelpers
+  soda_scs_manager.machine_name.helpers:
+    class: Drupal\soda_scs_manager\Helpers\SodaScsMachineNameHelper
   soda_scs_manager.opengdb.helpers:
     class: Drupal\soda_scs_manager\Helpers\SodaScsOpenGdbHelpers
   soda_scs_manager.portainer.helpers:
@@ -47,6 +49,8 @@ services:
     class: Drupal\soda_scs_manager\Helpers\SodaScsProjectApplicationHelpers
   soda_scs_manager.project_membership.helpers:
     class: Drupal\soda_scs_manager\Helpers\SodaScsProjectMembershipHelpers
+  soda_scs_manager.project_name.helpers:
+    class: Drupal\soda_scs_manager\Helpers\SodaScsProjectNameHelpers
   soda_scs_manager.message.helpers:
     class: Drupal\soda_scs_manager\Helpers\SodaScsMessageHelpers
   soda_scs_manager.message_type.generic:
@@ -128,6 +132,8 @@ services:
     class: Drupal\soda_scs_manager\Service\NextcloudMountCredentialsStore
   soda_scs_manager.nextcloud_mount.manager:
     class: Drupal\soda_scs_manager\Service\NextcloudMountManager
+  soda_scs_manager.project.provisioner:
+    class: Drupal\soda_scs_manager\Service\SodaScsProjectProvisioner
 
 # Service actions
   soda_scs_manager.sql_service.actions:

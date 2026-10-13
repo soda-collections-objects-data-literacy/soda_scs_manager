@@ -7,17 +7,18 @@ namespace Drupal\soda_scs_manager\Controller;
 use Drupal\Core\Controller\ControllerBase;
 use Drupal\Core\Entity\EntityTypeBundleInfoInterface;
 use Drupal\Core\Url;
+use Drupal\soda_scs_manager\Entity\SodaScsProjectInterface;
 use Drupal\soda_scs_manager\Helpers\SodaScsServiceHelpers;
+use Drupal\soda_scs_manager\Service\SodaScsProjectProvisioner;
 use Drupal\soda_scs_manager\StackActions\SodaScsStackActionsInterface;
 use Drupal\soda_scs_manager\Validation\WisskiIntroReservedBaseSlugs;
 use Drupal\user\UserDataInterface;
-use Drupal\user\UserInterface;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 
 /**
- * Co-working intro: mark complete and create a WissKI stack from the wizard.
+ * Co-working intro: mark complete, create the first project and a WissKI.
  */
 class SodaScsCoworkingIntroController extends ControllerBase {
 
@@ -26,6 +27,7 @@ class SodaScsCoworkingIntroController extends ControllerBase {
     protected EntityTypeBundleInfoInterface $entityTypeBundleInfo,
     protected SodaScsStackActionsInterface $stackActions,
     protected SodaScsServiceHelpers $serviceHelpers,
+    protected SodaScsProjectProvisioner $projectProvisioner,
   ) {}
 
   /**
@@ -37,6 +39,7 @@ class SodaScsCoworkingIntroController extends ControllerBase {
       $container->get('entity_type.bundle.info'),
       $container->get('soda_scs_manager.stack.actions'),
       $container->get('soda_scs_manager.service.helpers'),
+      $container->get('soda_scs_manager.project.provisioner'),
     );
   }
 
@@ -94,6 +97,58 @@ class SodaScsCoworkingIntroController extends ControllerBase {
   }
 
   /**
+   * Creates the user's first project from the intro.
+   *
+   * Body JSON: { "label": string }. Marks the intro as completed, so a reload
+   * does not offer to create another first project.
+   *
+   * CSRF is enforced via route requirement _csrf_request_header_token.
+   */
+  public function createProject(Request $request): JsonResponse {
+    $account = $this->currentUser();
+    if ($account->isAnonymous()) {
+      return new JsonResponse(['success' => FALSE, 'error' => 'Unauthorized'], 401);
+    }
+
+    $payload = json_decode($request->getContent(), TRUE);
+    $label = is_array($payload) && is_string($payload['label'] ?? NULL)
+      ? trim(strip_tags($payload['label']))
+      : '';
+    if ($label === '') {
+      return new JsonResponse([
+        'success' => FALSE,
+        'error' => (string) $this->t('Please enter a name for your project.'),
+      ], 400);
+    }
+
+    /** @var \Drupal\soda_scs_manager\Entity\SodaScsProjectInterface $project */
+    $project = $this->entityTypeManager()->getStorage('soda_scs_project')->create([
+      'bundle' => 'soda_scs_project',
+      'label' => $label,
+      'owner' => $account->id(),
+    ]);
+    $result = $this->projectProvisioner->provision($project);
+    if (!$result->success) {
+      // Name conflicts are the user's to fix; anything else is a backend issue.
+      $isNameConflict = str_starts_with((string) $result->error, 'Project name');
+      return new JsonResponse([
+        'success' => FALSE,
+        'error' => $result->message,
+      ], $isNameConflict ? 409 : 502);
+    }
+
+    $this->userData->set('soda_scs_manager', (int) $account->id(), 'coworking_intro_completed', 1);
+
+    return new JsonResponse([
+      'success' => TRUE,
+      'projectId' => (string) $project->id(),
+      'label' => (string) $project->label(),
+      'projectUrl' => $project->toUrl('canonical', ['absolute' => TRUE])->toString(),
+      'warnings' => $result->data['warnings'] ?? [],
+    ]);
+  }
+
+  /**
    * Creates a WissKI stack (MariaDB + triplestore + WissKI) like the stack add form.
    *
    * CSRF is enforced via route requirement _csrf_request_header_token.
@@ -140,10 +195,12 @@ class SodaScsCoworkingIntroController extends ControllerBase {
       ], 409);
     }
 
-    $userEntity = $this->entityTypeManager()->getStorage('user')->load($account->id());
-    $defaultProject = NULL;
-    if ($userEntity instanceof UserInterface && $userEntity->hasField('default_project')) {
-      $defaultProject = $userEntity->get('default_project')->target_id ?: NULL;
+    $project = $this->loadOwnedProject($payload['projectId'] ?? NULL);
+    if ($project === NULL) {
+      return new JsonResponse([
+        'success' => FALSE,
+        'error' => (string) $this->t('Create a project first. A WissKI environment always belongs to a project.'),
+      ], 400);
     }
 
     $wisskiInstanceSettings = $this->serviceHelpers->initWisskiInstanceSettings();
@@ -165,9 +222,7 @@ class SodaScsCoworkingIntroController extends ControllerBase {
       'defaultLanguage' => 'en',
       'developmentInstance' => FALSE,
     ]);
-    if ($defaultProject) {
-      $stack->set('partOfProjects', [$defaultProject]);
-    }
+    $stack->set('partOfProjects', [$project->id()]);
 
     $bundleLabel = (string) ($bundleInfo['label'] ?? 'WissKI stack');
     $stack->set('label', $stack->get('label')->value . ' (' . $bundleLabel . ')');
@@ -195,6 +250,23 @@ class SodaScsCoworkingIntroController extends ControllerBase {
       'id' => (string) $stack->id(),
       'label' => $stack->label(),
     ]);
+  }
+
+  /**
+   * Loads a project the current user owns.
+   *
+   * @param mixed $projectId
+   *   The project ID from the request payload.
+   */
+  private function loadOwnedProject(mixed $projectId): ?SodaScsProjectInterface {
+    if (!is_scalar($projectId) || !ctype_digit((string) $projectId)) {
+      return NULL;
+    }
+    $project = $this->entityTypeManager()->getStorage('soda_scs_project')->load($projectId);
+    if (!$project instanceof SodaScsProjectInterface) {
+      return NULL;
+    }
+    return (int) $project->getOwnerId() === (int) $this->currentUser()->id() ? $project : NULL;
   }
 
   /**

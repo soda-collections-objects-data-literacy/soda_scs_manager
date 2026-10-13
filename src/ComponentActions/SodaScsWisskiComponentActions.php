@@ -1049,9 +1049,6 @@ class SodaScsWisskiComponentActions implements SodaScsComponentActionsInterface 
         if ($linkedProjects !== []) {
           $project = reset($linkedProjects);
         }
-        elseif ($owner->hasField('default_project') && !$owner->get('default_project')->isEmpty()) {
-          $project = $owner->get('default_project')->entity;
-        }
         if (!$project) {
           throw new \Exception('WissKI must belong to a project so its Nextcloud Team Folder can be mounted.');
         }

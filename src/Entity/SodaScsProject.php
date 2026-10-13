@@ -5,11 +5,13 @@ declare(strict_types=1);
 namespace Drupal\soda_scs_manager\Entity;
 
 use Drupal\Core\Entity\ContentEntityBase;
+use Drupal\Core\Entity\EntityStorageInterface;
 use Drupal\Core\Entity\EntityTypeInterface;
 use Drupal\Core\Field\BaseFieldDefinition;
 use Drupal\Core\Field\FieldStorageDefinitionInterface;
 use Drupal\Core\StringTranslation\TranslatableMarkup;
 use Drupal\soda_scs_manager\ComputedField\SodaScsGroupIdComputedItemList;
+use Drupal\soda_scs_manager\Helpers\SodaScsMachineNameHelper;
 use Drupal\user\EntityOwnerTrait;
 
 /**
@@ -64,6 +66,9 @@ use Drupal\user\EntityOwnerTrait;
  *     "delete-form" = "/soda-scs-manager/project/{soda_scs_project}/delete",
  *     "collection" = "/admin/structure/soda-scs-project/list",
  *   },
+ *   constraints = {
+ *     "SodaScsProjectName" = {},
+ *   },
  *   config_export = {
  *     "bundle",
  *     "connectedComponents",
@@ -93,14 +98,13 @@ class SodaScsProject extends ContentEntityBase implements SodaScsProjectInterfac
   const GROUP_ID_START = 10000;
 
   /**
-   * Get the default project for a user.
+   * Loads all projects owned by a user.
    *
    * @param int $ownerId
    *   The owner ID.
-   *   The user.
    *
    * @return array[SodaScsProject]|null
-   *   The default project for the user.
+   *   The projects owned by the user.
    */
   public static function loadByOwner($ownerId) {
     $query = \Drupal::entityQuery('soda_scs_project')
@@ -206,6 +210,15 @@ class SodaScsProject extends ContentEntityBase implements SodaScsProjectInterfac
         'weight' => 10,
       ]);
 
+    // Derived from the label in preSave(); stable references use id/groupId.
+    $fields['machineName'] = BaseFieldDefinition::create('string')
+      ->setLabel(new TranslatableMarkup('Machine name'))
+      ->setDescription(new TranslatableMarkup('Unique machine-readable name derived from the label.'))
+      ->setSetting('max_length', SodaScsMachineNameHelper::PROJECT_MAX_LENGTH)
+      ->setReadOnly(TRUE)
+      ->setDisplayConfigurable('form', FALSE)
+      ->setDisplayConfigurable('view', FALSE);
+
     $fields['members'] = BaseFieldDefinition::create('entity_reference')
       ->setLabel(new TranslatableMarkup('Members'))
       ->setDescription(new TranslatableMarkup('The members associated with the project.'))
@@ -283,6 +296,18 @@ class SodaScsProject extends ContentEntityBase implements SodaScsProjectInterfac
       ->setDisplayConfigurable('view', FALSE);
 
     return $fields;
+  }
+
+  /**
+   * {@inheritdoc}
+   *
+   * Keeps the machine name in sync with the label, also on rename.
+   */
+  public function preSave(EntityStorageInterface $storage): void {
+    parent::preSave($storage);
+    /** @var \Drupal\soda_scs_manager\Helpers\SodaScsMachineNameHelper $machineNameHelper */
+    $machineNameHelper = \Drupal::service('soda_scs_manager.machine_name.helpers');
+    $this->set('machineName', $machineNameHelper->fromLabel((string) $this->label()));
   }
 
 }

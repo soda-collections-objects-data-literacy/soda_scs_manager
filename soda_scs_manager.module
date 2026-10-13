@@ -156,41 +156,6 @@ function soda_scs_manager_entity_base_field_info(EntityTypeInterface $entity_typ
   $fields = [];
 
   if ($entity_type->id() === 'user') {
-    $fields['default_project'] = BaseFieldDefinition::create('entity_reference')
-      ->setLabel(new TranslatableMarkup('Default Project'))
-      ->setDescription(new TranslatableMarkup('The default project for this user.'))
-      ->setSetting('target_type', 'soda_scs_project')
-      ->setSetting('target_bundles', ['default'])
-      ->setSetting('handler', 'soda_scs_project_access')
-      ->setSetting('handler_settings', [
-        'auto_create' => FALSE,
-        'sort' => [
-          'field' => 'label',
-          'direction' => 'ASC',
-        ],
-      ])
-      ->setRequired(TRUE)
-      ->setCardinality(1)
-      ->setDisplayConfigurable('form', TRUE)
-      ->setDisplayOptions('form', [
-        'type' => 'entity_reference_autocomplete',
-        'weight' => 10,
-        'label' => 'above',
-        'settings' => [
-          'match_operator' => 'CONTAINS',
-          'size' => 60,
-          'placeholder' => '',
-        ],
-      ])
-      ->setDisplayConfigurable('view', TRUE)
-      ->setDisplayOptions('view', [
-        'type' => 'entity_reference_label',
-        'weight' => 10,
-        'label' => 'above',
-        'settings' => [
-          'link' => TRUE,
-        ],
-      ]);
     $fields['first_name'] = BaseFieldDefinition::create('string')
       ->setLabel(new TranslatableMarkup('First Name'))
       ->setDescription(new TranslatableMarkup('The first name of the user.'))
@@ -1538,7 +1503,8 @@ function soda_scs_manager_user_insert(UserInterface $user) {
 
   // Ensure the role exists and has the required permissions.
   _soda_scs_manager_ensure_scs_user_role();
-  _soda_scs_manager_create_default_project_for_user($user);
+  // No default project: users create their first project in the co-working
+  // intro or later from the dashboard.
   _soda_scs_manager_propagate_keycloak_user_data_to_fields($user);
 }
 
@@ -1627,6 +1593,27 @@ function _soda_scs_manager_coworking_intro_gif_src(string $modulePath): string {
     }
   }
   return '';
+}
+
+/**
+ * Relative URL of an intro wizard route, in the current language.
+ *
+ * Falls back to the path from soda_scs_manager.routing.yml so fetch() still
+ * works before the router is rebuilt (drush cr).
+ */
+function _soda_scs_manager_coworking_intro_route_url(string $routeName, string $fallbackPath): string {
+  $lang = \Drupal::languageManager()->getCurrentLanguage();
+  try {
+    return Url::fromRoute($routeName, [], ['language' => $lang])->toString();
+  }
+  catch (\Throwable) {
+    try {
+      return Url::fromUserInput($fallbackPath, ['language' => $lang])->toString();
+    }
+    catch (\Throwable) {
+      return '';
+    }
+  }
 }
 
 /**
@@ -1736,6 +1723,8 @@ function soda_scs_manager_page_attachments(array &$attachments) {
     $attachments['#attached']['drupalSettings']['sodaScsManager']['throbberInfo'] = (string) t('Please note: After creating the WissKI Environment, it can take up to 5 minutes to setup everything.<br><br>Please check the health status to monitor the startup progress.');
     $attachments['#attached']['drupalSettings']['sodaScsManager']['coworkingIntro'] = [
       'completeUrl' => $introCompleteUrl,
+      'projectCreateUrl' => _soda_scs_manager_coworking_intro_route_url('soda_scs_manager.coworking_intro_create_project', '/soda-scs-manager/intro/coworking/create-project'),
+      'projectNameCheckUrl' => _soda_scs_manager_coworking_intro_route_url('soda_scs_manager.project_check_name', '/soda-scs-manager/project-name/check'),
       'wisskiQuickCreateUrl' => $introCreateWisskiUrl,
       'wisskiNameCheckUrl' => $introCheckWisskiNameUrl,
     ];
@@ -2019,84 +2008,6 @@ function soda_scs_manager_file_download($uri) {
   }
 
   return -1;
-}
-
-/**
- * Create default project for new user.
- *
- * The groupId is now automatically set in the insert hook to avoid double save.
- */
-function _soda_scs_manager_create_default_project_for_user(UserInterface $user) {
-
-  /** @var \Drupal\soda_scs_manager\Helpers\SodaScsProjectHelpers $projectHelpers */
-  $projectHelpers = \Drupal::service('soda_scs_manager.project.helpers');
-
-  $project = SodaScsProject::create([
-    'bundle' => 'default',
-    // Translate so German sites store/display "Projekt 1" (also Nextcloud mount).
-    'label' => (string) t($projectHelpers::DEFAULT_PROJECT_LABEL),
-    'owner' => $user->id(),
-  ]);
-
-  $project->save();
-
-  $kcToken = $projectHelpers->getKeycloakToken();
-  if (!$kcToken) {
-    return;
-  }
-
-  $createProjectGroupResult = $projectHelpers->createProjectGroup($project);
-  if (!$createProjectGroupResult->success) {
-    return;
-  }
-  $keycloakUuid = $createProjectGroupResult->data['keycloakGroupData']->uuid;
-
-  if (is_string($keycloakUuid) && $keycloakUuid !== '') {
-    $project->set('keycloakUuid', $keycloakUuid);
-  }
-
-  $project->save();
-
-  // Set the default project for the user.
-  $user->set('default_project', $project->id());
-  $user->save();
-
-  // Sync user and keycloak groups.
-  $syncKeycloakGroupMembersResult = $projectHelpers->syncKeycloakGroupMembers($project);
-  if (!$syncKeycloakGroupMembersResult->success) {
-    $messenger = \Drupal::messenger();
-    $messenger->addError(\Drupal::translation()->translate('Failed to sync user and keycloak groups for user: @username. @error', [
-      '@username' => $user->getDisplayName(),
-      '@error' => $syncKeycloakGroupMembersResult->error,
-    ]));
-    $logger = \Drupal::logger('soda_scs_manager');
-    $logger->error('Failed to sync user and keycloak groups for user: @username. @error', [
-      '@username' => $user->getDisplayName(),
-      '@error' => $syncKeycloakGroupMembersResult->error,
-    ]);
-  }
-  else {
-    $messenger = \Drupal::messenger();
-    $messenger->addMessage(\Drupal::translation()->translate('Successfully synced user and keycloak groups for user: @username', ['@username' => $user->getDisplayName()]));
-    $logger = \Drupal::logger('soda_scs_manager');
-    $logger->notice('Successfully synced user and keycloak groups for user: @username', ['@username' => $user->getDisplayName()]);
-  }
-
-  // Create Nextcloud Team Folder (label = Project 1, machine name = groupId).
-  $createTeamFolderResult = $projectHelpers->createProjectTeamFolder($project);
-  if (!$createTeamFolderResult->success) {
-    \Drupal::messenger()->addError(\Drupal::translation()->translate('Failed to create Nextcloud Team Folder for project @project: @error', [
-      '@project' => $project->label(),
-      '@error' => $createTeamFolderResult->error,
-    ]));
-    \Drupal::logger('soda_scs_manager')->error('Failed to create Nextcloud Team Folder for project @project: @error', [
-      '@project' => $project->label(),
-      '@error' => $createTeamFolderResult->error,
-    ]);
-  }
-
-  // Sync MariaDB access for project members (phpMyAdmin SSO).
-  \Drupal::service('soda_scs_manager.project_db_access.helpers')->syncProjectMembersDbAccess($project);
 }
 
 /**
@@ -2388,7 +2299,7 @@ function _soda_scs_manager_sync_project_component_relationship(SodaScsProject $p
 /**
  * Picks a single project id when a component still has multiple references.
  *
- * Preference: stack project → owner default project (if listed) → first listed.
+ * Preference: stack project → first listed.
  *
  * @param \Drupal\soda_scs_manager\Entity\SodaScsComponent|\Drupal\soda_scs_manager\Entity\SodaScsStack $entity
  *   Component or stack.
@@ -2433,14 +2344,6 @@ function _soda_scs_manager_resolve_single_project_id($entity, array $projectRefs
       if (in_array($stackProjectId, $listed, TRUE)) {
         return $stackProjectId;
       }
-    }
-  }
-
-  $owner = method_exists($entity, 'getOwner') ? $entity->getOwner() : NULL;
-  if ($owner && $owner->hasField('default_project') && !$owner->get('default_project')->isEmpty()) {
-    $defaultId = (int) $owner->get('default_project')->target_id;
-    if (in_array($defaultId, $listed, TRUE)) {
-      return $defaultId;
     }
   }
 

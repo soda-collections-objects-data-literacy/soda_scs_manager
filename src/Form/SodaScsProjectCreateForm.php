@@ -21,8 +21,10 @@ use Drupal\soda_scs_manager\Helpers\SodaScsProjectDbAccessHelpers;
 use Drupal\soda_scs_manager\Helpers\SodaScsProjectHelpers;
 use Drupal\soda_scs_manager\Helpers\SodaScsProjectMembershipHelpers;
 use Drupal\soda_scs_manager\RequestActions\SodaScsServiceRequestInterface;
+use Drupal\soda_scs_manager\Service\SodaScsProjectProvisioner;
 use Drupal\soda_scs_manager\ServiceActions\SodaScsServiceActionsInterface;
 use Drupal\soda_scs_manager\Traits\SodaScsProjectMemberInvitationTrait;
+use Drupal\soda_scs_manager\Traits\SodaScsProjectNameCheckFormTrait;
 use Drupal\user\EntityOwnerTrait;
 use Drupal\user\UserInterface;
 use Symfony\Component\DependencyInjection\ContainerInterface;
@@ -45,6 +47,7 @@ class SodaScsProjectCreateForm extends ContentEntityForm {
 
   use EntityOwnerTrait;
   use SodaScsProjectMemberInvitationTrait;
+  use SodaScsProjectNameCheckFormTrait;
 
   /**
    * The SODa SCS Component bundle.
@@ -150,6 +153,11 @@ class SodaScsProjectCreateForm extends ContentEntityForm {
   protected SodaScsJupyterHelpers $jupyterHelpers;
 
   /**
+   * Creates the project with its Keycloak group and Team Folder.
+   */
+  protected SodaScsProjectProvisioner $projectProvisioner;
+
+  /**
    * Constructs a new SodaScsComponentCreateForm.
    *
    * @param \Drupal\Core\Session\AccountProxyInterface $currentUser
@@ -178,6 +186,10 @@ class SodaScsProjectCreateForm extends ContentEntityForm {
    *   The Soda SCS Project Helpers service.
    * @param \Drupal\soda_scs_manager\ServiceActions\SodaScsServiceActionsInterface $sodaScsSqlServiceActions
    *   The Soda SCS SQL Service Actions service.
+   * @param \Drupal\soda_scs_manager\Helpers\SodaScsJupyterHelpers $jupyterHelpers
+   *   Jupyter notebook lifecycle helpers.
+   * @param \Drupal\soda_scs_manager\Service\SodaScsProjectProvisioner $projectProvisioner
+   *   Creates the project with its Keycloak group and Team Folder.
    * @param \Drupal\Component\Datetime\TimeInterface $time
    *   The time service.
    */
@@ -198,6 +210,7 @@ class SodaScsProjectCreateForm extends ContentEntityForm {
     SodaScsProjectDbAccessHelpers $projectDbAccessHelpers,
     SodaScsServiceActionsInterface $sodaScsSqlServiceActions,
     SodaScsJupyterHelpers $jupyterHelpers,
+    SodaScsProjectProvisioner $projectProvisioner,
     TimeInterface $time,
   ) {
     parent::__construct($entity_repository, $entity_type_bundle_info, $time);
@@ -215,6 +228,7 @@ class SodaScsProjectCreateForm extends ContentEntityForm {
     $this->projectDbAccessHelpers = $projectDbAccessHelpers;
     $this->sodaScsSqlServiceActions = $sodaScsSqlServiceActions;
     $this->jupyterHelpers = $jupyterHelpers;
+    $this->projectProvisioner = $projectProvisioner;
   }
 
   /**
@@ -238,6 +252,7 @@ class SodaScsProjectCreateForm extends ContentEntityForm {
       $container->get('soda_scs_manager.project_db_access.helpers'),
       $container->get('soda_scs_manager.sql_service.actions'),
       $container->get('soda_scs_manager.jupyter.helpers'),
+      $container->get('soda_scs_manager.project.provisioner'),
       $container->get('datetime.time'),
     );
   }
@@ -258,6 +273,13 @@ class SodaScsProjectCreateForm extends ContentEntityForm {
 
     // Build the form.
     $form = parent::buildForm($form, $form_state);
+
+    if (isset($form['note']['widget'][0])) {
+      $form['note']['widget'][0]['#description'] = '';
+      $form['note']['widget'][0]['#format'] = 'plain_text';
+      $form['note']['widget'][0]['#allowed_formats'] = ['plain_text'];
+      $form['note']['widget'][0]['#after_build'][] = [static::class, 'hideNoteTextFormatHelp'];
+    }
 
     $form['owner']['widget']['#default_value'] = $this->currentUser->id();
     if (!$this->currentUser->hasPermission('soda scs manager admin')) {
@@ -281,8 +303,18 @@ class SodaScsProjectCreateForm extends ContentEntityForm {
     }
 
     $this->buildMemberInvitationElement($form, $form_state);
+    $this->attachProjectNameCheck($form);
 
     return $form;
+  }
+
+  /**
+   * Hides format help and guidelines while preserving the selected format.
+   */
+  public static function hideNoteTextFormatHelp(array $element, FormStateInterface $form_state): array {
+    $element['format']['help']['#access'] = FALSE;
+    $element['format']['guidelines']['#access'] = FALSE;
+    return $element;
   }
 
   /**
@@ -300,58 +332,25 @@ class SodaScsProjectCreateForm extends ContentEntityForm {
    * {@inheritdoc}
    */
   public function save(array $form, FormStateInterface $form_state) {
-    parent::save($form, $form_state);
-
-    // Create Keycloak group for the project using the group ID.
-    /** @var \Drupal\soda_scs_manager\Entity\SodaScsProject $project */
+    /** @var \Drupal\soda_scs_manager\Entity\SodaScsProjectInterface $project */
     $project = $this->entity;
 
-    $kcToken = $this->sodaScsProjectHelpers->getKeycloakToken();
-    if (!$kcToken) {
+    $result = $this->projectProvisioner->provision($project);
+    if (!$result->success) {
+      $this->messenger()->addError($result->message);
+      // The provisioner deleted a half-created project; rebuild the form on an
+      // unsaved copy so the user can pick another name.
+      if (!$project->isNew()) {
+        $this->setEntity($project->createDuplicate());
+      }
+      $form_state->setRebuild(TRUE);
       return;
     }
 
-    $createProjectGroupResult = $this->sodaScsProjectHelpers->createProjectGroup($project);
-    if (!$createProjectGroupResult->success) {
-      return;
+    foreach ($result->data['warnings'] ?? [] as $warning) {
+      $this->messenger()->addError($warning);
     }
-    $keycloakUuid = $createProjectGroupResult->data['keycloakGroupData']->uuid;
-
-    if (is_string($keycloakUuid) && $keycloakUuid !== '') {
-      $project->set('keycloakUuid', $keycloakUuid);
-      $project->save();
-    }
-
-    // Sync keycloak group members with owner and project members.
-    $syncKeycloakGroupMembersResponse = $this->sodaScsProjectHelpers->syncKeycloakGroupMembers($project);
-    if ($syncKeycloakGroupMembersResponse->success) {
-      $this->projectDbAccessHelpers->syncProjectMembersDbAccess($project);
-    }
-    if (!$syncKeycloakGroupMembersResponse->success) {
-      $this->messenger()->addError($this->t('Failed to sync keycloak group members for project @project: See logs for details.', [
-        '@project' => $project->label(),
-      ]));
-      $this->logger->error('Failed to sync keycloak group members for project @project: @error', [
-        '@project' => $project->label(),
-        '@error' => $syncKeycloakGroupMembersResponse->error,
-      ]);
-    }
-
-    $createTeamFolderResult = $this->sodaScsProjectHelpers->createProjectTeamFolder($project);
-    if (!$createTeamFolderResult->success) {
-      $this->messenger()->addError($this->t('Failed to create Nextcloud Team Folder for project @project: @error', [
-        '@project' => $project->label(),
-        '@error' => $createTeamFolderResult->error,
-      ]));
-      $this->logger->error('Failed to create Nextcloud Team Folder for project @project: @error', [
-        '@project' => $project->label(),
-        '@error' => $createTeamFolderResult->error,
-      ]);
-    }
-
-    $this->messenger()->addMessage($this->t('Project @project has been created.', [
-      '@project' => $this->entity->label(),
-    ]));
+    $this->messenger()->addMessage($result->message);
     $this->jupyterHelpers->warnRestartNotebookForProjectMounts($this->messenger());
 
     $requester = $this->loadCurrentUserEntity();

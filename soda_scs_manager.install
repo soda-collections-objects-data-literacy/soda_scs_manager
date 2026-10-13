@@ -1782,3 +1782,69 @@ function soda_scs_manager_update_11032() {
     '@jupyter' => $unlinked,
   ]);
 }
+
+/**
+ * Add the unique project machine name and fill it for existing projects.
+ *
+ * Project labels are unique platform-wide; uniqueness is compared on the
+ * machine name derived from the label. Existing projects that would collide
+ * get their group id appended, so the update never fails; renaming such a
+ * project later asks for a free name.
+ */
+function soda_scs_manager_update_11033() {
+  $definition_update_manager = \Drupal::entityDefinitionUpdateManager();
+  if (!$definition_update_manager->getFieldStorageDefinition('machineName', 'soda_scs_project')) {
+    $field = BaseFieldDefinition::create('string')
+      ->setLabel(new TranslatableMarkup('Machine name'))
+      ->setDescription(new TranslatableMarkup('Unique machine-readable name derived from the label.'))
+      ->setSetting('max_length', 64)
+      ->setReadOnly(TRUE)
+      ->setDisplayConfigurable('form', FALSE)
+      ->setDisplayConfigurable('view', FALSE);
+    $definition_update_manager->installFieldStorageDefinition('machineName', 'soda_scs_project', 'soda_scs_manager', $field);
+  }
+
+  /** @var \Drupal\soda_scs_manager\Helpers\SodaScsMachineNameHelper $machine_name_helper */
+  $machine_name_helper = \Drupal::service('soda_scs_manager.machine_name.helpers');
+  $storage = \Drupal::entityTypeManager()->getStorage('soda_scs_project');
+  $ids = $storage->getQuery()->accessCheck(FALSE)->sort('id')->execute();
+
+  $used = [];
+  $suffixed = [];
+  $database = Database::getConnection();
+  foreach ($storage->loadMultiple($ids) as $project) {
+    $machine_name = $machine_name_helper->fromLabel((string) $project->label());
+    if ($machine_name === '' || isset($used[$machine_name])) {
+      $machine_name = ($machine_name === '' ? 'project' : $machine_name) . '-' . $project->get('groupId')->value;
+      $suffixed[] = $project->label() . ' (' . $project->id() . ')';
+    }
+    $used[$machine_name] = TRUE;
+    // Write directly: an entity save would recompute the name in preSave() and
+    // trigger the project update hooks.
+    $database->update('soda_scs_project_field_data')
+      ->fields(['machineName' => $machine_name])
+      ->condition('id', $project->id())
+      ->execute();
+  }
+  $storage->resetCache();
+
+  return t('Set machine names for @count project(s). Suffixed because of collisions: @suffixed', [
+    '@count' => count($used),
+    '@suffixed' => $suffixed === [] ? 'none' : implode(', ', $suffixed),
+  ]);
+}
+
+/**
+ * Remove the default project field from users.
+ *
+ * Users start without a project and create their first one in the co-working
+ * intro or later. Former default projects stay as normal projects.
+ */
+function soda_scs_manager_update_11034() {
+  $definition_update_manager = \Drupal::entityDefinitionUpdateManager();
+  $field = $definition_update_manager->getFieldStorageDefinition('default_project', 'user');
+  if ($field) {
+    $definition_update_manager->uninstallFieldStorageDefinition($field);
+  }
+  return t('Removed the default_project field from users. Former default projects remain normal projects.');
+}

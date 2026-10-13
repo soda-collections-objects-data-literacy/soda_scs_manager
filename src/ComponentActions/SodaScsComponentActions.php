@@ -101,6 +101,16 @@ class SodaScsComponentActions implements SodaScsComponentActionsInterface {
    *   The result of the request.
    */
   public function createComponent(SodaScsComponentInterface $entity): array {
+    // Applications always belong to a project (Team Folder, member access).
+    if (!$entity->hasField('partOfProjects') || $entity->get('partOfProjects')->isEmpty()) {
+      return [
+        'message' => $this->t('Applications can only be created inside a project.'),
+        'data' => [],
+        'success' => FALSE,
+        'error' => 'Component has no project (partOfProjects is empty).',
+      ];
+    }
+
     switch ($entity->bundle()) {
       case 'soda_scs_sql_component':
         return $this->sodaScsSqlComponentActions->createComponent($entity);

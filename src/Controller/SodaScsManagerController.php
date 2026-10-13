@@ -404,6 +404,8 @@ class SodaScsManagerController extends ControllerBase {
     $build['#attached']['drupalSettings']['sodaScsManager']['throbberInfo'] = (string) $this->t('Please note: After creating the WissKI Environment, it can take up to 5 minutes to setup everything.<br><br>Please check the health status to monitor the startup progress.');
     $build['#attached']['drupalSettings']['sodaScsManager']['coworkingIntro'] = [
       'completeUrl' => $introCompleteUrl,
+      'projectCreateUrl' => _soda_scs_manager_coworking_intro_route_url('soda_scs_manager.coworking_intro_create_project', '/soda-scs-manager/intro/coworking/create-project'),
+      'projectNameCheckUrl' => _soda_scs_manager_coworking_intro_route_url('soda_scs_manager.project_check_name', '/soda-scs-manager/project-name/check'),
       'wisskiQuickCreateUrl' => $introCreateWisskiUrl,
       'wisskiNameCheckUrl' => $introCheckWisskiNameUrl,
     ];
