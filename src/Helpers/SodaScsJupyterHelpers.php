@@ -9,6 +9,7 @@ use Drupal\Core\Logger\LoggerChannelFactoryInterface;
 use Drupal\Core\Messenger\MessengerInterface;
 use Drupal\Core\StringTranslation\StringTranslationTrait;
 use Drupal\Core\Url;
+use Drupal\soda_scs_manager\Entity\SodaScsProjectInterface;
 use Drupal\soda_scs_manager\RequestActions\SodaScsDockerRunServiceActions;
 use Drupal\user\UserInterface;
 use Symfony\Component\DependencyInjection\Attribute\Autowire;
@@ -39,6 +40,8 @@ class SodaScsJupyterHelpers {
     #[Autowire(service: 'config.factory')]
     protected ConfigFactoryInterface $configFactory,
     protected LoggerChannelFactoryInterface $loggerFactory,
+    #[Autowire(service: 'soda_scs_manager.project_application.helpers')]
+    protected SodaScsProjectApplicationHelpers $projectApplicationHelpers,
   ) {}
 
   /**
@@ -374,10 +377,14 @@ class SodaScsJupyterHelpers {
   /**
    * Warns that Jupyter must be respawned to pick up new project Team Folders.
    *
-   * Mounts are applied only when the notebook container starts. Link goes to
-   * the confirm form that stops the server (user must Start again in Hub).
+   * Mounts are applied only when the notebook container starts, and only
+   * projects with JupyterHub are mounted. Link goes to the confirm form that
+   * stops the server (user must Start again in Hub).
    */
-  public function warnRestartNotebookForProjectMounts(MessengerInterface $messenger): void {
+  public function warnRestartNotebookForProjectMounts(MessengerInterface $messenger, SodaScsProjectInterface $project): void {
+    if (!$this->projectApplicationHelpers->projectHasApplication($project->id(), 'soda_scs_stack', 'soda_scs_jupyter_stack')) {
+      return;
+    }
     $url = Url::fromRoute('soda_scs_manager.jupyter.restart_notebook')->toString();
     $messenger->addWarning($this->t('JupyterLab mounts project Team Folders only when your notebook server starts. To see this project there, <a href=":url">stop your Jupyter notebook server</a>, then start it again from JupyterHub. Unsaved notebook work will be lost when the server stops.', [
       ':url' => $url,

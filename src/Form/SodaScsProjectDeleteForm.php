@@ -13,6 +13,7 @@ use Drupal\Core\Url;
 use Drupal\soda_scs_manager\Helpers\SodaScsProjectApplicationHelpers;
 use Drupal\soda_scs_manager\Helpers\SodaScsProjectHelpers;
 use Drupal\soda_scs_manager\Helpers\SodaScsWebprotegeHelpers;
+use Drupal\soda_scs_manager\Service\NextcloudProjectMountManager;
 use Drupal\soda_scs_manager\StackActions\SodaScsStackActionsInterface;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 
@@ -62,8 +63,10 @@ class SodaScsProjectDeleteForm extends ContentEntityDeleteForm {
    *   The time service.
    * @param \Drupal\soda_scs_manager\Helpers\SodaScsProjectApplicationHelpers $projectApplicationHelpers
    *   Looks up applications that exist once per project.
+   * @param \Drupal\soda_scs_manager\Service\NextcloudProjectMountManager $projectMountManager
+   *   Project Team Folder mounts of the Nextcloud service account.
    */
-  public function __construct(EntityRepositoryInterface $entity_repository, EntityTypeBundleInfoInterface $entity_type_bundle_info, SodaScsProjectHelpers $sodaScsProjectHelpers, SodaScsWebprotegeHelpers $webprotegeHelpers, TimeInterface $time, SodaScsProjectApplicationHelpers $projectApplicationHelpers) {
+  public function __construct(EntityRepositoryInterface $entity_repository, EntityTypeBundleInfoInterface $entity_type_bundle_info, SodaScsProjectHelpers $sodaScsProjectHelpers, SodaScsWebprotegeHelpers $webprotegeHelpers, TimeInterface $time, SodaScsProjectApplicationHelpers $projectApplicationHelpers, protected NextcloudProjectMountManager $projectMountManager) {
     parent::__construct($entity_repository, $entity_type_bundle_info, $time);
     $this->entityRepository = $entity_repository;
     $this->entityTypeBundleInfo = $entity_type_bundle_info;
@@ -84,6 +87,7 @@ class SodaScsProjectDeleteForm extends ContentEntityDeleteForm {
       $container->get('soda_scs_manager.webprotege.helpers'),
       $container->get('datetime.time'),
       $container->get('soda_scs_manager.project_application.helpers'),
+      $container->get('soda_scs_manager.nextcloud_project_mount.manager'),
     );
   }
 
@@ -118,6 +122,9 @@ class SodaScsProjectDeleteForm extends ContentEntityDeleteForm {
     // Construct properties.
     /** @var \Drupal\soda_scs_manager\Entity\SodaScsProject $entity */
     $project = $this->entity;
+
+    // Unmount before the Team Folder disappears under the mount.
+    $this->projectMountManager->ensureProjectUnmounted($project);
 
     // Delete Nextcloud Team Folder first (lookup uses Drupal project id).
     $deleteFolderResult = $this->sodaScsProjectHelpers->deleteProjectTeamFolder($project);

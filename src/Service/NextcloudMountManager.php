@@ -248,11 +248,10 @@ class NextcloudMountManager {
       $this->credentialsStore->setMountStatus($user, 'mounted');
     }
 
-    foreach ($listed as $mount) {
-      $point = is_array($mount)
-        ? (string) ($mount['MountPoint'] ?? $mount['mountPoint'] ?? '')
-        : (string) $mount;
-      if ($point === '' || !str_starts_with($point, '/mnt/nextcloud/')) {
+    // Project Team Folder mounts belong to NextcloudProjectMountManager.
+    $projectsPrefix = $this->mounterClient->sidecarMountPoint(NextcloudMounterClient::PROJECTS_DIR) . '/';
+    foreach ($this->mounterClient->listMountPoints($listed) as $point) {
+      if (!str_starts_with($point, NextcloudMounterClient::SIDECAR_ROOT . '/') || str_starts_with($point, $projectsPrefix)) {
         continue;
       }
       $machineName = basename($point);

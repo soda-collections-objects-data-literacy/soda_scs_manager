@@ -9,6 +9,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Projects with JupyterHub get a project mount: the Nextcloud service account
+  `scs-jupyter` mounts the Team Folder through the rclone sidecar at
+  `<NEXTCLOUD_MOUNTS_ROOT>/_projects/<gid>/<label>`, independent of the
+  members' personal Drives. Adding JupyterHub adds the group
+  `scs-project-mounts` to the Team Folder and mounts it; removing JupyterHub
+  or the project unmounts it and removes the group. A rename remounts under
+  the new label. Drupal cron reconciles the mounts (at most once per minute;
+  with `automated_cron` only every few hours, so a host timer should run
+  `scs:nextcloud-project-reconcile`). Needs
+  `NEXTCLOUD_PROJECT_MOUNT_USER` and `NEXTCLOUD_PROJECT_MOUNT_APP_PASSWORD`
+  in the manager container; without them project mounts are skipped.
+- `drush scs:nextcloud-project-status`, `scs:nextcloud-project-mount
+  --project=`, `scs:nextcloud-project-unmount --project=` and
+  `scs:nextcloud-project-reconcile`.
 - Project names are unique across the platform. Uniqueness is checked on a
   machine name derived from the label (`machineName` on `soda_scs_project`,
   umlauts transliterated), so "Mein Projekt" and "mein-projekt" collide. The
@@ -54,6 +68,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- The JupyterLab restart warning appears only when the project has JupyterHub
+  (on adding JupyterHub and on accepting an invitation), no longer after
+  creating a project.
+- The user mount reconcile leaves mounts under `_projects/` alone, and the
+  sidecar mount lookup matches the mount point exactly instead of by suffix.
 - New users start without a project: no default project is created on
   registration any more.
 - Applications (WissKI, SQL, triplestore, Jupyter, WebProtégé) always belong

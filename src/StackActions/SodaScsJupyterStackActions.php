@@ -14,8 +14,11 @@ use Drupal\soda_scs_manager\ComponentActions\SodaScsComponentActionsInterface;
 use Drupal\soda_scs_manager\Entity\SodaScsStackInterface;
 use Drupal\soda_scs_manager\Entity\SodaScsSnapshotInterface;
 use Drupal\soda_scs_manager\ValueObject\SodaScsResult;
+use Drupal\soda_scs_manager\Helpers\SodaScsJupyterHelpers;
 use Drupal\soda_scs_manager\Helpers\SodaScsProjectApplicationHelpers;
+use Drupal\soda_scs_manager\Helpers\SodaScsProjectHelpers;
 use Drupal\soda_scs_manager\Helpers\SodaScsStackHelpers;
+use Drupal\soda_scs_manager\Service\NextcloudProjectMountManager;
 use Drupal\Core\Utility\Error;
 use Psr\Log\LogLevel;
 
@@ -66,6 +69,12 @@ class SodaScsJupyterStackActions implements SodaScsStackActionsInterface {
     TranslationInterface $stringTranslation,
     #[Autowire(service: 'soda_scs_manager.project_application.helpers')]
     protected SodaScsProjectApplicationHelpers $projectApplicationHelpers,
+    #[Autowire(service: 'soda_scs_manager.jupyter.helpers')]
+    protected SodaScsJupyterHelpers $jupyterHelpers,
+    #[Autowire(service: 'soda_scs_manager.nextcloud_project_mount.manager')]
+    protected NextcloudProjectMountManager $projectMountManager,
+    #[Autowire(service: 'soda_scs_manager.project.helpers')]
+    protected SodaScsProjectHelpers $projectHelpers,
   ) {
     // Services from container.
     $this->loggerFactory = $loggerFactory;
@@ -79,9 +88,8 @@ class SodaScsJupyterStackActions implements SodaScsStackActionsInterface {
    *
    * The stack marks that a project uses JupyterHub: one per project, owned by
    * the project owner. Each member opens the project's Team Folder in their
-   * own notebook container.
-   *
-   * @todo Provision the project's JupyterHub spawner here once it exists.
+   * own notebook container; the hub binds it from the project mount of the
+   * Nextcloud service account.
    *
    * @param \Drupal\soda_scs_manager\Entity\SodaScsStackInterface $stack
    *   The component.
@@ -106,9 +114,29 @@ class SodaScsJupyterStackActions implements SodaScsStackActionsInterface {
 
     try {
       if ($project !== NULL) {
+        // Without the mount group the service account cannot see the folder.
+        $groups = $this->projectHelpers->syncProjectTeamFolderGroups($project, TRUE);
+        if (!$groups->success) {
+          $this->messenger->addError($groups->message);
+          return [
+            'message' => $groups->message,
+            'data' => [
+              'stack' => NULL,
+            ],
+            'success' => FALSE,
+            'error' => $groups->error,
+          ];
+        }
         $stack->set('owner', $project->getOwnerId());
       }
       $stack->save();
+      if ($project !== NULL) {
+        // The mount reconcile (cron, Drush) retries a failed mount.
+        if (!$this->projectMountManager->ensureProjectMounted($project)) {
+          $this->messenger->addWarning($this->t('The project folder is not ready for JupyterHub yet. It is mounted automatically on the next retry.'));
+        }
+        $this->jupyterHelpers->warnRestartNotebookForProjectMounts($this->messenger, $project);
+      }
       return [
         'message' => $this->t('Created jupyter stack: %message', ['%message' => $stack->label()]),
         'data' => [
@@ -206,7 +234,8 @@ class SodaScsJupyterStackActions implements SodaScsStackActionsInterface {
   /**
    * Delete a jupyter stack.
    *
-   * @todo Remove the project's JupyterHub spawner here once it exists.
+   * Unmounts the project folder and removes the service account's access.
+   * The files stay in the Team Folder.
    *
    * @param \Drupal\soda_scs_manager\Entity\SodaScsStackInterface $stack
    *   The SODa SCS Stack entity.
@@ -218,7 +247,17 @@ class SodaScsJupyterStackActions implements SodaScsStackActionsInterface {
    */
   public function deleteStack(SodaScsStackInterface $stack): array {
     try {
+      $project = $this->projectApplicationHelpers->loadPartOfProject($stack);
+      if ($project !== NULL) {
+        $this->projectMountManager->ensureProjectUnmounted($project);
+      }
       $stack->delete();
+      if ($project !== NULL) {
+        $groups = $this->projectHelpers->syncProjectTeamFolderGroups($project, FALSE);
+        if (!$groups->success) {
+          $this->messenger->addWarning($groups->message);
+        }
+      }
       return [
         'message' => 'Deleted jupyter stack.',
         'data' => [

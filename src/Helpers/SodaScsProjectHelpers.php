@@ -10,6 +10,7 @@ use Drupal\Core\Config\ConfigFactoryInterface;
 use Drupal\Core\Entity\EntityTypeManagerInterface;
 use Drupal\Core\Logger\LoggerChannelFactoryInterface;
 use Drupal\Core\Logger\LoggerChannelInterface;
+use Drupal\Core\Site\Settings;
 use Drupal\externalauth\AuthmapInterface;
 use Drupal\soda_scs_manager\Entity\SodaScsProjectInterface;
 use Drupal\Core\StringTranslation\StringTranslationTrait;
@@ -52,6 +53,8 @@ class SodaScsProjectHelpers {
     #[Autowire(service: 'soda_scs_manager.nextcloud_service.actions')]
     protected SodaScsNextcloudServiceActions $sodaScsNextcloudServiceActions,
     LoggerChannelFactoryInterface $loggerFactory,
+    #[Autowire(service: 'soda_scs_manager.project_application.helpers')]
+    protected SodaScsProjectApplicationHelpers $projectApplicationHelpers,
   ) {
     $this->settings = $this->configFactory->getEditable('soda_scs_manager.settings');
     $this->entityTypeManager = $entityTypeManager;
@@ -77,6 +80,7 @@ class SodaScsProjectHelpers {
       $container->get('soda_scs_manager.keycloak_service.user.actions'),
       $container->get('soda_scs_manager.nextcloud_service.actions'),
       $container->get('logger.factory'),
+      $container->get('soda_scs_manager.project_application.helpers'),
     );
   }
 
@@ -908,7 +912,7 @@ class SodaScsProjectHelpers {
       'name' => $label,
       'machineName' => $groupId,
       'externalProjectId' => $projectId,
-      'groups' => [$groupId],
+      'groups' => $this->buildTeamFolderGroups($project),
       'createGroupFolder' => TRUE,
     ]);
     if (empty($request['success'])) {
@@ -1058,7 +1062,7 @@ class SodaScsProjectHelpers {
     $request = $this->sodaScsNextcloudServiceActions->buildUpdateProjectFolderRequest([
       'folderId' => $folderId,
       'label' => $label,
-      'groups' => $groupId !== '' ? [$groupId] : [],
+      'groups' => $groupId !== '' ? $this->buildTeamFolderGroups($project) : [],
     ]);
     if (empty($request['success'])) {
       return SodaScsResult::failure(
@@ -1091,6 +1095,103 @@ class SodaScsProjectHelpers {
     return SodaScsResult::success(
       data: ['folderId' => $folderId, 'folder' => $data['folder'] ?? []],
       message: (string) $this->t('Updated Nextcloud Team Folder for project @project.', [
+        '@project' => $label,
+      ]),
+    );
+  }
+
+  /**
+   * Nextcloud groups that get access to a project's Team Folder.
+   *
+   * The project group always; the project mount group of the service account
+   * only while the project has JupyterHub, so that account sees no other
+   * Team Folders.
+   *
+   * @param \Drupal\soda_scs_manager\Entity\SodaScsProjectInterface $project
+   *   The project.
+   * @param bool|null $withProjectMount
+   *   Whether to include the project mount group; NULL derives it from the
+   *   project's applications.
+   *
+   * @return list<string>
+   *   Nextcloud group ids.
+   */
+  public function buildTeamFolderGroups(SodaScsProjectInterface $project, ?bool $withProjectMount = NULL): array {
+    $groups = [(string) ($project->get('groupId')->value ?? '')];
+    $withProjectMount ??= $this->projectApplicationHelpers->projectHasApplication(
+      $project->id(),
+      'soda_scs_stack',
+      'soda_scs_jupyter_stack',
+    );
+    if ($withProjectMount) {
+      $groups[] = $this->projectMountGroup();
+    }
+    return array_values(array_filter($groups, static fn (string $group): bool => $group !== ''));
+  }
+
+  /**
+   * Nextcloud group of the project mount service account.
+   */
+  public function projectMountGroup(): string {
+    $group = getenv('NEXTCLOUD_PROJECT_MOUNT_GROUP') ?: Settings::get('nextcloud_project_mount_group', 'scs-project-mounts');
+    return is_string($group) && $group !== '' ? $group : 'scs-project-mounts';
+  }
+
+  /**
+   * Sets the groups of a project's Team Folder (see buildTeamFolderGroups()).
+   *
+   * @param \Drupal\soda_scs_manager\Entity\SodaScsProjectInterface $project
+   *   The project.
+   * @param bool|null $withProjectMount
+   *   Whether to include the project mount group; NULL derives it.
+   *
+   * @return \Drupal\soda_scs_manager\ValueObject\SodaScsResult
+   *   The result.
+   */
+  public function syncProjectTeamFolderGroups(SodaScsProjectInterface $project, ?bool $withProjectMount = NULL): SodaScsResult {
+    $label = (string) $project->label();
+    $folderId = $this->findManagedFolderIdByExternalProjectId((string) $project->id());
+    if ($folderId === NULL) {
+      return SodaScsResult::failure(
+        'Team Folder not found.',
+        (string) $this->t('No Nextcloud Team Folder found for project @project.', [
+          '@project' => $label,
+        ]),
+      );
+    }
+
+    $request = $this->sodaScsNextcloudServiceActions->buildUpdateProjectFolderRequest([
+      'folderId' => $folderId,
+      'groups' => $this->buildTeamFolderGroups($project, $withProjectMount),
+    ]);
+    if (empty($request['success'])) {
+      return SodaScsResult::failure(
+        (string) ($request['error'] ?? 'Nextcloud request could not be built.'),
+        (string) $this->t('Could not update the groups of the Nextcloud Team Folder for project @project.', [
+          '@project' => $label,
+        ]),
+      );
+    }
+
+    $response = $this->sodaScsNextcloudServiceActions->makeRequest($request);
+    if ($this->decodeNextcloudOcsData($response) === NULL) {
+      $error = (string) ($response['error'] ?? 'Invalid Nextcloud response.');
+      $this->logger->error('Failed to sync groups of Nextcloud Team Folder @folder for project @project: @error', [
+        '@folder' => $folderId,
+        '@project' => $project->id(),
+        '@error' => $error,
+      ]);
+      return SodaScsResult::failure(
+        $error,
+        (string) $this->t('Could not update the groups of the Nextcloud Team Folder for project @project.', [
+          '@project' => $label,
+        ]),
+      );
+    }
+
+    return SodaScsResult::success(
+      data: ['folderId' => $folderId],
+      message: (string) $this->t('Updated the groups of the Nextcloud Team Folder for project @project.', [
         '@project' => $label,
       ]),
     );

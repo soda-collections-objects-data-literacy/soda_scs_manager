@@ -4477,3 +4477,15 @@ msgstr "Projekt @project angelegt."
 #: templates/pages/soda-scs-manager--dashboard.html.twig
 msgid "You have no project yet. Create a project to add applications, a shared Nextcloud folder and team members."
 msgstr "Sie haben noch kein Projekt. Legen Sie ein Projekt an, um Anwendungen, einen gemeinsamen Nextcloud-Ordner und Teammitglieder hinzuzufügen."
+
+#: src/Helpers/SodaScsProjectHelpers.php
+msgid "Could not update the groups of the Nextcloud Team Folder for project @project."
+msgstr "Die Gruppen des Nextcloud-Teamordners für Projekt @project konnten nicht aktualisiert werden."
+
+#: src/Helpers/SodaScsProjectHelpers.php
+msgid "Updated the groups of the Nextcloud Team Folder for project @project."
+msgstr "Gruppen des Nextcloud-Teamordners für Projekt @project aktualisiert."
+
+#: src/StackActions/SodaScsJupyterStackActions.php
+msgid "The project folder is not ready for JupyterHub yet. It is mounted automatically on the next retry."
+msgstr "Der Projektordner ist für JupyterHub noch nicht bereit. Er wird beim nächsten Versuch automatisch eingebunden."

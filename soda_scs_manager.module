@@ -2375,24 +2375,32 @@ function soda_scs_manager_cron() {
   $last = (int) $state->get('soda_scs_manager.nextcloud_mount_reconcile_last', 0);
   if (\Drupal::time()->getRequestTime() - $last >= 60) {
     $state->set('soda_scs_manager.nextcloud_mount_reconcile_last', \Drupal::time()->getRequestTime());
-    try {
-      $stats = \Drupal::service('soda_scs_manager.nextcloud_mount.manager')->reconcile();
-      if (($stats['mounted'] + $stats['remounted'] + $stats['unmounted'] + $stats['errors']) > 0) {
-        \Drupal::logger('soda_scs_manager')->info(
-          'Nextcloud mount reconcile: mounted=@m remounted=@r unmounted=@u errors=@e',
-          [
-            '@m' => $stats['mounted'],
-            '@r' => $stats['remounted'],
-            '@u' => $stats['unmounted'],
-            '@e' => $stats['errors'],
-          ],
-        );
+    $reconcilers = [
+      'user' => static fn (): array => \Drupal::service('soda_scs_manager.nextcloud_mount.manager')->reconcile(),
+      'project' => static fn (): array => \Drupal::service('soda_scs_manager.nextcloud_project_mount.manager')->reconcileProjects(),
+    ];
+    foreach ($reconcilers as $kind => $reconcile) {
+      try {
+        $stats = $reconcile();
+        if (($stats['mounted'] + $stats['remounted'] + $stats['unmounted'] + $stats['errors']) > 0) {
+          \Drupal::logger('soda_scs_manager')->info(
+            'Nextcloud @kind mount reconcile: mounted=@m remounted=@r unmounted=@u errors=@e',
+            [
+              '@kind' => $kind,
+              '@m' => $stats['mounted'],
+              '@r' => $stats['remounted'],
+              '@u' => $stats['unmounted'],
+              '@e' => $stats['errors'],
+            ],
+          );
+        }
       }
-    }
-    catch (\Throwable $e) {
-      \Drupal::logger('soda_scs_manager')->warning('Nextcloud mount reconcile failed: @msg', [
-        '@msg' => $e->getMessage(),
-      ]);
+      catch (\Throwable $e) {
+        \Drupal::logger('soda_scs_manager')->warning('Nextcloud @kind mount reconcile failed: @msg', [
+          '@kind' => $kind,
+          '@msg' => $e->getMessage(),
+        ]);
+      }
     }
   }
 }

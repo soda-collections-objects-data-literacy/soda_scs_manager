@@ -5,10 +5,12 @@ declare(strict_types=1);
 namespace Drupal\soda_scs_manager\Drush\Commands;
 
 use Drupal\Core\Entity\EntityTypeManagerInterface;
+use Drupal\soda_scs_manager\Entity\SodaScsProjectInterface;
 use Drupal\soda_scs_manager\Helpers\SodaScsNextcloudHelpers;
 use Drupal\soda_scs_manager\Service\NextcloudMountCredentialsStore;
 use Drupal\soda_scs_manager\Service\NextcloudMounterClient;
 use Drupal\soda_scs_manager\Service\NextcloudMountManager;
+use Drupal\soda_scs_manager\Service\NextcloudProjectMountManager;
 use Drupal\user\UserInterface;
 use Drush\Attributes as CLI;
 use Drush\Commands\AutowireTrait;
@@ -32,6 +34,8 @@ final class SodaScsNextcloudMountCommands extends DrushCommands {
     protected NextcloudMountCredentialsStore $credentialsStore,
     #[Autowire(service: 'soda_scs_manager.nextcloud.helpers')]
     protected SodaScsNextcloudHelpers $nextcloudHelpers,
+    #[Autowire(service: 'soda_scs_manager.nextcloud_project_mount.manager')]
+    protected NextcloudProjectMountManager $projectMountManager,
   ) {
     parent::__construct();
   }
@@ -146,6 +150,122 @@ final class SodaScsNextcloudMountCommands extends DrushCommands {
       $rows,
     );
     return self::EXIT_SUCCESS;
+  }
+
+  /**
+   * Mount a project's Team Folder through the service account.
+   */
+  #[CLI\Command(name: 'soda_scs_manager:nextcloud-project-mount', aliases: ['scs:nextcloud-project-mount'])]
+  #[CLI\Option(name: 'project', description: 'Project id or machine name.')]
+  #[CLI\Usage(name: 'drush scs:nextcloud-project-mount --project=1', description: 'Mount the Team Folder of project 1.')]
+  public function projectMount(array $options = ['project' => NULL]): int {
+    $project = $this->loadProject($options['project'] ?? NULL);
+    if ($project === NULL) {
+      return self::EXIT_FAILURE;
+    }
+    if (!$this->projectMountManager->ensureProjectMounted($project)) {
+      $this->logger()->error(dt('Mount failed for project @id; see the Drupal log.', ['@id' => $project->id()]));
+      return self::EXIT_FAILURE;
+    }
+    $this->logger()->success(dt('Mounted project @id at @path.', [
+      '@id' => $project->id(),
+      '@path' => $this->mounterClient->mountsRootOnHost() . '/' . $this->projectMountManager->relativeMountPath($project),
+    ]));
+    return self::EXIT_SUCCESS;
+  }
+
+  /**
+   * Unmount a project's Team Folder.
+   */
+  #[CLI\Command(name: 'soda_scs_manager:nextcloud-project-unmount', aliases: ['scs:nextcloud-project-unmount'])]
+  #[CLI\Option(name: 'project', description: 'Project id or machine name.')]
+  public function projectUnmount(array $options = ['project' => NULL]): int {
+    $project = $this->loadProject($options['project'] ?? NULL);
+    if ($project === NULL) {
+      return self::EXIT_FAILURE;
+    }
+    $this->projectMountManager->ensureProjectUnmounted($project);
+    $this->logger()->success(dt('Unmounted project @id. Cron mounts it again while the project has JupyterHub.', [
+      '@id' => $project->id(),
+    ]));
+    return self::EXIT_SUCCESS;
+  }
+
+  /**
+   * Run one project mount reconcile pass against the sidecar.
+   */
+  #[CLI\Command(name: 'soda_scs_manager:nextcloud-project-reconcile', aliases: ['scs:nextcloud-project-reconcile'])]
+  public function projectReconcile(): int {
+    if (!$this->projectMountManager->isConfigured()) {
+      $this->logger()->error(dt('Set NEXTCLOUD_PROJECT_MOUNT_USER and NEXTCLOUD_PROJECT_MOUNT_APP_PASSWORD for the manager container.'));
+      return self::EXIT_FAILURE;
+    }
+    if (!$this->mounterClient->ping()) {
+      $this->logger()->error(dt('Sidecar nextcloud-mounter is unreachable.'));
+      return self::EXIT_FAILURE;
+    }
+    $stats = $this->projectMountManager->reconcileProjects();
+    $this->logger()->success(dt('Project reconcile done: mounted=@m remounted=@r unmounted=@u errors=@e', [
+      '@m' => $stats['mounted'],
+      '@r' => $stats['remounted'],
+      '@u' => $stats['unmounted'],
+      '@e' => $stats['errors'],
+    ]));
+    return $stats['errors'] > 0 ? self::EXIT_FAILURE : self::EXIT_SUCCESS;
+  }
+
+  /**
+   * Show the project mount of every project with JupyterHub.
+   */
+  #[CLI\Command(name: 'soda_scs_manager:nextcloud-project-status', aliases: ['scs:nextcloud-project-status'])]
+  public function projectStatus(): int {
+    $this->io()->writeln('Service account configured: ' . ($this->projectMountManager->isConfigured() ? 'yes' : 'no'));
+    try {
+      $listed = $this->mounterClient->listMounts();
+    }
+    catch (\Throwable $e) {
+      $this->logger()->error(dt('listmounts failed: @msg', ['@msg' => $e->getMessage()]));
+      return self::EXIT_FAILURE;
+    }
+
+    $storage = $this->entityTypeManager->getStorage('soda_scs_project');
+    $rows = [];
+    foreach ($storage->loadMultiple($storage->getQuery()->accessCheck(FALSE)->execute()) as $project) {
+      if (!$project instanceof SodaScsProjectInterface || !$this->projectMountManager->needsProjectMount($project)) {
+        continue;
+      }
+      $rows[] = [
+        $project->id(),
+        $project->label(),
+        $this->projectMountManager->relativeMountPath($project) ?? '',
+        $this->projectMountManager->projectMountState($project, $listed),
+      ];
+    }
+    if ($rows === []) {
+      $this->io()->writeln('No project has JupyterHub.');
+      return self::EXIT_SUCCESS;
+    }
+    $this->io()->table(['id', 'label', 'path', 'state'], $rows);
+    return self::EXIT_SUCCESS;
+  }
+
+  /**
+   * Loads a project by id or machine name.
+   */
+  protected function loadProject(?string $idOrMachineName): ?SodaScsProjectInterface {
+    if ($idOrMachineName === NULL || $idOrMachineName === '') {
+      $this->logger()->error(dt('Specify --project=ID_OR_MACHINE_NAME.'));
+      return NULL;
+    }
+    $storage = $this->entityTypeManager->getStorage('soda_scs_project');
+    $project = ctype_digit($idOrMachineName)
+      ? $storage->load((int) $idOrMachineName)
+      : (current($storage->loadByProperties(['machineName' => $idOrMachineName])) ?: NULL);
+    if ($project instanceof SodaScsProjectInterface) {
+      return $project;
+    }
+    $this->logger()->error(dt('Project @id not found.', ['@id' => $idOrMachineName]));
+    return NULL;
   }
 
   /**

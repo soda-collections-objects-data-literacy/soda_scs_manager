@@ -23,6 +23,7 @@ use Drupal\soda_scs_manager\Helpers\SodaScsProjectHelpers;
 use Drupal\soda_scs_manager\Helpers\SodaScsProjectMembershipHelpers;
 use Drupal\soda_scs_manager\Helpers\SodaScsWebprotegeHelpers;
 use Drupal\soda_scs_manager\RequestActions\SodaScsServiceRequestInterface;
+use Drupal\soda_scs_manager\Service\NextcloudProjectMountManager;
 use Drupal\soda_scs_manager\Traits\SodaScsProjectMemberInvitationTrait;
 use Drupal\soda_scs_manager\Traits\SodaScsProjectNameCheckFormTrait;
 use Drupal\user\UserInterface;
@@ -135,6 +136,11 @@ class SodaScsProjectEditForm extends ContentEntityForm {
   protected SodaScsWebprotegeHelpers $webprotegeHelpers;
 
   /**
+   * Project Team Folder mounts of the Nextcloud service account.
+   */
+  protected NextcloudProjectMountManager $projectMountManager;
+
+  /**
    * {@inheritdoc}
    */
   public static function create(ContainerInterface $container) {
@@ -153,6 +159,7 @@ class SodaScsProjectEditForm extends ContentEntityForm {
       $container->get('soda_scs_manager.project_membership.helpers'),
       $container->get('soda_scs_manager.project_db_access.helpers'),
       $container->get('soda_scs_manager.webprotege.helpers'),
+      $container->get('soda_scs_manager.nextcloud_project_mount.manager'),
     );
   }
 
@@ -174,6 +181,7 @@ class SodaScsProjectEditForm extends ContentEntityForm {
     SodaScsProjectMembershipHelpers $projectMembershipHelpers,
     SodaScsProjectDbAccessHelpers $projectDbAccessHelpers,
     SodaScsWebprotegeHelpers $webprotegeHelpers,
+    NextcloudProjectMountManager $projectMountManager,
   ) {
     parent::__construct($entity_repository, $entity_type_bundle_info, $time);
     $this->currentUser = $currentUser;
@@ -187,6 +195,7 @@ class SodaScsProjectEditForm extends ContentEntityForm {
     $this->projectMembershipHelpers = $projectMembershipHelpers;
     $this->projectDbAccessHelpers = $projectDbAccessHelpers;
     $this->webprotegeHelpers = $webprotegeHelpers;
+    $this->projectMountManager = $projectMountManager;
   }
 
   /**
@@ -549,6 +558,10 @@ class SodaScsProjectEditForm extends ContentEntityForm {
           '@project' => $newLabel,
           '@error' => $updateFolder->error,
         ]));
+      }
+      elseif ($this->projectMountManager->needsProjectMount($project)) {
+        // The mount path contains the label; remount now instead of on cron.
+        $this->projectMountManager->ensureProjectMounted($project);
       }
     }
 

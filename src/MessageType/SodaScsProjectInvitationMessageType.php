@@ -191,7 +191,9 @@ final class SodaScsProjectInvitationMessageType implements SodaScsMessageTypeInt
     $project = $membership->getProject();
     $redirect = $project !== NULL ? ['redirect_url' => $project->toUrl()] : [];
     $message->delete();
-    $this->jupyterHelpers->warnRestartNotebookForProjectMounts($this->messenger);
+    if ($project !== NULL) {
+      $this->jupyterHelpers->warnRestartNotebookForProjectMounts($this->messenger, $project);
+    }
 
     return SodaScsResult::success(
       data: array_merge($result->data ?? [], $redirect),

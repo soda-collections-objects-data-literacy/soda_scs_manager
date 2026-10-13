@@ -16,7 +16,6 @@ use Drupal\Core\Logger\LoggerChannelFactoryInterface;
 use Drupal\Core\Logger\LoggerChannelInterface;
 use Drupal\Core\Session\AccountProxyInterface;
 use Drupal\soda_scs_manager\ComponentActions\SodaScsComponentActionsInterface;
-use Drupal\soda_scs_manager\Helpers\SodaScsJupyterHelpers;
 use Drupal\soda_scs_manager\Helpers\SodaScsProjectDbAccessHelpers;
 use Drupal\soda_scs_manager\Helpers\SodaScsProjectHelpers;
 use Drupal\soda_scs_manager\Helpers\SodaScsProjectMembershipHelpers;
@@ -148,11 +147,6 @@ class SodaScsProjectCreateForm extends ContentEntityForm {
   protected SodaScsServiceActionsInterface $sodaScsSqlServiceActions;
 
   /**
-   * Jupyter notebook lifecycle helpers.
-   */
-  protected SodaScsJupyterHelpers $jupyterHelpers;
-
-  /**
    * Creates the project with its Keycloak group and Team Folder.
    */
   protected SodaScsProjectProvisioner $projectProvisioner;
@@ -186,8 +180,6 @@ class SodaScsProjectCreateForm extends ContentEntityForm {
    *   The Soda SCS Project Helpers service.
    * @param \Drupal\soda_scs_manager\ServiceActions\SodaScsServiceActionsInterface $sodaScsSqlServiceActions
    *   The Soda SCS SQL Service Actions service.
-   * @param \Drupal\soda_scs_manager\Helpers\SodaScsJupyterHelpers $jupyterHelpers
-   *   Jupyter notebook lifecycle helpers.
    * @param \Drupal\soda_scs_manager\Service\SodaScsProjectProvisioner $projectProvisioner
    *   Creates the project with its Keycloak group and Team Folder.
    * @param \Drupal\Component\Datetime\TimeInterface $time
@@ -209,7 +201,6 @@ class SodaScsProjectCreateForm extends ContentEntityForm {
     SodaScsProjectMembershipHelpers $projectMembershipHelpers,
     SodaScsProjectDbAccessHelpers $projectDbAccessHelpers,
     SodaScsServiceActionsInterface $sodaScsSqlServiceActions,
-    SodaScsJupyterHelpers $jupyterHelpers,
     SodaScsProjectProvisioner $projectProvisioner,
     TimeInterface $time,
   ) {
@@ -227,7 +218,6 @@ class SodaScsProjectCreateForm extends ContentEntityForm {
     $this->projectMembershipHelpers = $projectMembershipHelpers;
     $this->projectDbAccessHelpers = $projectDbAccessHelpers;
     $this->sodaScsSqlServiceActions = $sodaScsSqlServiceActions;
-    $this->jupyterHelpers = $jupyterHelpers;
     $this->projectProvisioner = $projectProvisioner;
   }
 
@@ -251,7 +241,6 @@ class SodaScsProjectCreateForm extends ContentEntityForm {
       $container->get('soda_scs_manager.project_membership.helpers'),
       $container->get('soda_scs_manager.project_db_access.helpers'),
       $container->get('soda_scs_manager.sql_service.actions'),
-      $container->get('soda_scs_manager.jupyter.helpers'),
       $container->get('soda_scs_manager.project.provisioner'),
       $container->get('datetime.time'),
     );
@@ -351,7 +340,6 @@ class SodaScsProjectCreateForm extends ContentEntityForm {
       $this->messenger()->addError($warning);
     }
     $this->messenger()->addMessage($result->message);
-    $this->jupyterHelpers->warnRestartNotebookForProjectMounts($this->messenger());
 
     $requester = $this->loadCurrentUserEntity();
     if ($requester) {
