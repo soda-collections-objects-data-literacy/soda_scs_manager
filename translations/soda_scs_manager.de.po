@@ -1290,8 +1290,8 @@ msgid "This field is required for filesystem applications."
 msgstr "Dieses Feld ist für Dateisystem-Anwendung erforderlich."
 
 #: src/Form/SodaScsComponentCreateForm.php:214
-msgid "CREATE"
-msgstr "ERSTELLEN"
+msgid "Create"
+msgstr "Erstellen"
 
 #: src/Form/SodaScsComponentCreateForm.php:233
 msgid "The machineName can only contain small letters, digits, minus, and underscore"
@@ -2286,8 +2286,8 @@ msgid "This action will restore the snapshot data of the (bundled) application <
 msgstr "Diese Aktion wird die Snapshot-Daten der (gebündelten) Anwendung <b>@entity_label</b> wiederherstellen und deren aktuellen Zustand dauerhaft überschreiben."
 
 #: src/Form/SodaScsStackCreateForm.php:159
-msgid "CREATE"
-msgstr "ERSTELLEN"
+msgid "Create"
+msgstr "Erstellen"
 
 #: src/Form/SodaScsStackCreateForm.php:178
 msgid "The machinename can only contain small letters, digits, and minus."

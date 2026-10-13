@@ -56,8 +56,18 @@
     attach: function (context, settings) {
       var activeTrigger = null;
 
+      // The back button lives in the loaded form's action row; park it before the form is cleared.
+      var restoreBackButton = function (popupEl) {
+        var back = popupEl.querySelector('.add-app-popup__back');
+        var step = popupEl.querySelector('.add-app-popup__step--form');
+        if (back && step && back.parentElement !== step) {
+          step.prepend(back);
+        }
+      };
+
       var closeOverlay = function (popupEl) {
         popupEl.hidden = true;
+        restoreBackButton(popupEl);
 
         var selectStep = popupEl.querySelector('.add-app-popup__step--select');
         var formStep = popupEl.querySelector('.add-app-popup__step--form');
@@ -84,6 +94,7 @@
         var backButton = popupEl.querySelector('.add-app-popup__back');
 
         var showSelectStep = function () {
+          restoreBackButton(popupEl);
           if (formStep) {
             formStep.hidden = true;
           }
@@ -151,6 +162,11 @@
                 }
 
                 Drupal.attachBehaviors(formContainer, drupalSettings);
+
+                var formActions = formContainer.querySelector('.form-actions');
+                if (formActions && backButton) {
+                  formActions.prepend(backButton);
+                }
 
                 var firstField = formContainer.querySelector('input:not([type="hidden"]), select, textarea');
                 if (firstField) {

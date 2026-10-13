@@ -226,7 +226,11 @@ class SodaScsStackCreateForm extends ContentEntityForm {
     $form['defaultLanguage']['#access'] = FALSE;
 
     // Change the label of the submit button.
-    $form['actions']['submit']['#value'] = $this->t('CREATE');
+    $form['actions']['submit']['#value'] = $this->t('Create');
+    // No Drupal button--primary: the manager theme styles it orange.
+    $form['actions']['submit']['#button_type'] = '';
+    $form['actions']['submit']['#attributes']['class'][] = 'btn';
+    $form['actions']['submit']['#attributes']['class'][] = 'btn--primary';
     $form['actions']['submit']['#attributes']['class'][] = 'soda-scs-stack--stack--form-submit';
 
     $form['#attached']['library'][] = 'soda_scs_manager/globalStyling';

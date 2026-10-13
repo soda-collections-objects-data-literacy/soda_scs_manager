@@ -61,14 +61,14 @@
       <button type="button" class="application__details-delete-trigger btn" data-delete-destination="{{ delete_destination }}" aria-controls="profile-delete-confirmation" aria-expanded="false">
         {{ 'Delete profile'|t }}
       </button>
-      <div id="profile-delete-confirmation" class="application__details-delete-confirmation" role="dialog" aria-modal="true" aria-labelledby="profile-delete-title" hidden>
+      <div id="profile-delete-confirmation" class="application__details-delete-confirmation application__details-delete-confirmation--grid" role="dialog" aria-modal="true" aria-labelledby="profile-delete-title" hidden>
         <div class="application__details-delete-confirmation__backdrop" aria-hidden="true"></div>
         <div class="application__details-delete-confirmation__dialog" role="document">
           <h3 id="profile-delete-title">{{ 'Delete profile?'|t }}</h3>
           <p>{{ 'Do you really want to delete your profile? This action cannot be undone.'|t }}</p>
           <div class="application__details-delete-confirmation__actions">
             <button type="button" class="btn btn--secondary application__details-delete-confirmation__cancel">{{ 'Cancel'|t }}</button>
-            <a class="btn application__details-delete-confirmation__confirm" data-delete-destination="{{ delete_destination }}" href="{{ delete_url }}">{{ 'Delete profile'|t }}</a>
+            <a class="btn btn--primary application__details-delete-confirmation__confirm" data-delete-destination="{{ delete_destination }}" href="{{ delete_url }}">{{ 'Delete profile'|t }}</a>
           </div>
         </div>
       </div>

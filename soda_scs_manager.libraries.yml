@@ -6,6 +6,15 @@ book-styling:
     - core/drupal
     - core/jquery.once
 
+notificationBadge:
+  version: 1.0
+  js:
+    js/notificationBadge.js: {}
+  dependencies:
+    - core/drupal
+    - core/once
+    - core/drupalSettings
+
 healthStatus:
   version: 1.0
   js:

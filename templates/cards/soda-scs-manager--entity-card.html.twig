@@ -15,7 +15,7 @@
 
 {% if bundle_id == "soda_scs_jupyter_stack" %}
     {% set application_type = "jupyterhub" %}
-	{% set application_icons = [] %}
+	{% set application_icons = [directory ~ "/assets/img/jupyter.webp"] %}
     {% set card_type = "single" %}
     {% set application_description = "Data Enrichment" %}
 
@@ -27,15 +27,21 @@
 
 {% elseif bundle_id in ["soda_scs_wisski_stack", "soda_scs_wisski_component"] %}
     {% set application_type = "wisski" %}
-	{% set application_icons = [directory ~ "/assets/img/onlyoffice.svg", directory ~ "/assets/img/openrefine.svg", directory ~ "/assets/img/diagramsnet.svg"] %}
+	{% set application_icons = [directory ~ "/assets/img/wisski.png", directory ~ "/assets/img/opengdb.svg", directory ~ "/assets/img/mariadb.png"] %}
     {% set card_type = "multiple" %}
     {% set application_description = "Data Management" %}
 
 {% elseif bundle_id == "soda_scs_sql_component" %}
     {% set application_type = "db" %}
-	{% set application_icons = [] %}
+	{% set application_icons = [directory ~ "/assets/img/mariadb.png"] %}
     {% set card_type = "single" %}
     {% set application_description = "Database" %}
+
+{% elseif bundle_id == "soda_scs_triplestore_component" %}
+    {% set application_type = "" %}
+    {% set application_icons = [directory ~ "/assets/img/opengdb.svg"] %}
+    {% set card_type = "single" %}
+    {% set application_description = bundle_label %}
 
 {% else %}
     {% set application_type = "" %}
@@ -66,13 +72,13 @@
 	<a href="{{ url }}" class="application__core" aria-label="{{ 'Open @title'|t({'@title': title}) }}">
 		<h2 class="application__title h1">{{ application_description }}</h2>
 		<div class="application__icons-and-arrow">
-			<div class="application__icons">
-				{% if application_icons is defined %}
+			{% if application_icons is defined and application_icons|length %}
+				<div class="application__icons">
 					{% for icon in application_icons %}
-						<img src="{{ icon }}" alt="" class="application__icon">
+						<span class="application__icon-wrapper"><img src="{{ icon }}" alt="" class="application__icon"></span>
 					{% endfor %}
-				{% endif %}
-			</div>
+				</div>
+			{% endif %}
 			<div class="application__arrow">
 				<svg width="34" height="34" viewbox="0 0 34 34" fill="none" xmlns="http://www.w3.org/2000/svg">
 					<circle cx="17" cy="17" r="16.5" stroke="#17212B"/>

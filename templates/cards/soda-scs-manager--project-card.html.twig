@@ -61,19 +61,19 @@
 			<span aria-hidden="true">&#8942;</span>
 		</button>
 		<div id="project-actions-{{ project_id }}" class="project-card__actions" role="menu" hidden>
-			<a role="menuitem" href="{{ path('entity.soda_scs_project.edit_form', {'soda_scs_project': project_id}) }}">{{ 'Edit'|t }}</a>
+			<a role="menuitem" href="{{ url }}">{{ 'Edit'|t }}</a>
 			<button type="button" class="project-card__delete-trigger" data-delete-url="{{ path('entity.soda_scs_project.delete_form', {'soda_scs_project': project_id}) }}" role="menuitem">{{ 'Delete'|t }}</button>
 		</div>
 	</div>
 
-	<div class="project-card__delete-confirmation" role="dialog" aria-modal="true" aria-labelledby="project-delete-title-{{ project_id }}" hidden>
+	<div class="project-card__delete-confirmation project-card__delete-confirmation--grid" role="dialog" aria-modal="true" aria-labelledby="project-delete-title-{{ project_id }}" hidden>
 		<div class="project-card__delete-confirmation__backdrop" aria-hidden="true"></div>
 		<div class="project-card__delete-confirmation__dialog" role="document">
 			<h3 id="project-delete-title-{{ project_id }}">{{ 'Delete project?'|t }}</h3>
 			<p>{{ 'Do you really want to delete “@name”? This action cannot be undone.'|t({'@name': label}) }}</p>
 			<div class="project-card__delete-confirmation__actions">
-				<button type="button" class="project-card__delete-confirmation__cancel">{{ 'Cancel'|t }}</button>
-				<a class="project-card__delete-confirmation__confirm" href="{{ path('entity.soda_scs_project.delete_form', {'soda_scs_project': project_id}) }}">{{ 'Delete project'|t }}</a>
+				<button type="button" class="btn btn--secondary project-card__delete-confirmation__cancel">{{ 'Cancel'|t }}</button>
+				<a class="btn btn--primary project-card__delete-confirmation__confirm" href="{{ path('entity.soda_scs_project.delete_form', {'soda_scs_project': project_id}) }}">{{ 'Delete project'|t }}</a>
 			</div>
 		</div>
 	</div>

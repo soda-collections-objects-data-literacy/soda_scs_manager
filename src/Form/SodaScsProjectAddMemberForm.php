@@ -77,7 +77,7 @@ final class SodaScsProjectAddMemberForm extends FormBase {
         '#type' => 'submit',
         '#value' => $this->t('Add'),
         '#attributes' => [
-          'class' => ['button', 'button--primary', 'button--small'],
+          'class' => ['btn', 'btn--primary'],
         ],
       ],
     ];

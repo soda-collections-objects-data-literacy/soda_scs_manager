@@ -125,7 +125,8 @@
       // Create the overlay element only once if it doesn't exist.
       if (!$('.soda-scs-manager__throbber-overlay', context).length) {
         const defaultThrobberMsg = Drupal.t('Performing action, please do not close the window');
-        $('body', context).append(
+        const $overlayContainer = $('.dashboard-main').first();
+        ($overlayContainer.length ? $overlayContainer : $('body', context)).append(
           '<div class="soda-scs-manager__throbber-overlay">' +
             '<div class="soda-scs-manager__throbber-overlay__content">' +
               '<div class="soda-scs-manager__throbber-overlay__spinner"></div>' +
@@ -170,6 +171,7 @@
           $('.soda-scs-manager__throbber-overlay__message').text(primaryMessage);
           // Show the overlay on form submission.
           $('.soda-scs-manager__throbber-overlay').addClass('soda-scs-manager__throbber-overlay--active');
+          document.dispatchEvent(new CustomEvent('scs-manager:overlay-state-change'));
 
           // Start polling if operation UUID is available and polling is supported.
           if (operationUuid && progressPollingSupported) {
@@ -200,6 +202,7 @@
                                            $(this).data('progress-polling') === 'true' ||
                                            (settings.sodaScsManager && settings.sodaScsManager.progressPolling === true);
           $('.soda-scs-manager__throbber-overlay').addClass('soda-scs-manager__throbber-overlay--active');
+          document.dispatchEvent(new CustomEvent('scs-manager:overlay-state-change'));
 
           // Start polling if operation UUID is available and polling is supported.
           if (operationUuid && progressPollingSupported) {
@@ -242,6 +245,7 @@
           $('.soda-scs-manager__throbber-overlay__message').text(primaryMessage);
           // Show the overlay before form submission.
           $('.soda-scs-manager__throbber-overlay').addClass('soda-scs-manager__throbber-overlay--active');
+          document.dispatchEvent(new CustomEvent('scs-manager:overlay-state-change'));
 
           // Start polling if operation UUID is available and polling is supported.
           if (operationUuid && progressPollingSupported) {

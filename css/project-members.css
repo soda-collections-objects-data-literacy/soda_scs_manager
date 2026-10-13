@@ -1,8 +1,3 @@
-.project--right .project-members-edit-overlay .overlay__dialog {
-  max-height: calc(100vh - 4rem);
-  overflow: auto;
-}
-
 .project--right .project__members__invitations-title {
   margin: 0;
 }

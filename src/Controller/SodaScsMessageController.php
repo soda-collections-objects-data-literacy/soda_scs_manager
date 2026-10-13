@@ -15,6 +15,7 @@ use Drupal\soda_scs_manager\Form\SodaScsMessageActionForm;
 use Drupal\soda_scs_manager\Helpers\SodaScsMessageHelpers;
 use Drupal\soda_scs_manager\MessageType\SodaScsMessageTypeManager;
 use Symfony\Component\DependencyInjection\ContainerInterface;
+use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\RedirectResponse;
 
 /**
@@ -81,6 +82,18 @@ final class SodaScsMessageController extends ControllerBase {
         'max-age' => 0,
       ],
     ];
+  }
+
+  /**
+   * Unread/pending message count for the sidebar badge.
+   */
+  public function unreadCount(): JsonResponse {
+    $response = new JsonResponse([
+      'count' => (int) $this->messageHelpers->countAttentionItems($this->currentUser()),
+    ]);
+    $response->setPrivate();
+    $response->headers->set('Cache-Control', 'no-store, private');
+    return $response;
   }
 
   /**

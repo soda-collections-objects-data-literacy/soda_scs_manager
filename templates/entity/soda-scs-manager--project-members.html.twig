@@ -109,7 +109,7 @@
 			{% endfor %}
 		</ul>
 		{% if invitations is not empty %}
-			<h3 class="project__members__invitations-title">{{ 'Pending invitations'|t }}</h3>
+			<h3 class="project__members__invitations-title h5">{{ 'Pending invitations'|t }}</h3>
 			<ul class="project__members__list project__members__list--edit project__members__list--invitations">
 				{% for invitation in invitations %}
 					<li class="project-member project-member--invitation{% if invitation.status == 'rejected' %} project-member--invitation-declined{% endif %}">
@@ -165,6 +165,5 @@
 				</div>
 			{% endif %}
 		</div>
-		<button type="button" class="project-members-edit-overlay__cancel btn btn--secondary">{{ 'Close'|t }}</button>
 	</div>
 </div>

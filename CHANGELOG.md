@@ -9,6 +9,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Sidebar **Messages** link shows the number of unread messages and pending
+  invitations as a badge, refreshed every 30 seconds via
+  `/soda-scs-manager/messages-unread-count`.
+
 - Project page **Files** section shows recent Nextcloud Team Folder activity
   for the viewing owner/member (same `scs_manager_integration` feed as the
   Nextcloud card). Placeable block **Project files (Nextcloud activity)**

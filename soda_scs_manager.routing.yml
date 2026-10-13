@@ -620,6 +620,15 @@ entity.soda_scs_message.canonical:
         type: entity:soda_scs_message
     no_cache: TRUE
 
+soda_scs_manager.messages.unread_count:
+  path: '/soda-scs-manager/messages-unread-count'
+  defaults:
+    _controller: '\Drupal\soda_scs_manager\Controller\SodaScsMessageController::unreadCount'
+  requirements:
+    _permission: 'soda scs manager user'
+  options:
+    no_cache: TRUE
+
 soda_scs_manager.notifications:
   path: '/soda-scs-manager/notifications'
   defaults:

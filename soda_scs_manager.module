@@ -2543,6 +2543,14 @@ function soda_scs_manager_preprocess_menu(&$variables): void {
     return;
   }
 
+  if ($menu_name === 'sidebar-secondary-nav') {
+    _soda_scs_manager_preprocess_menu_notifications_recursive($variables['items']);
+    $variables['#attached']['library'][] = 'soda_scs_manager/notificationBadge';
+    $variables['#cache']['contexts'][] = 'user';
+    $variables['#cache']['tags'][] = 'soda_scs_message_list:' . \Drupal::currentUser()->id();
+    return;
+  }
+
   if ($menu_name !== 'main') {
     return;
   }
@@ -2587,6 +2595,8 @@ function soda_scs_manager_preprocess_menu(&$variables): void {
   _soda_scs_manager_menu_remove_link_from_tree($variables['items'], 'soda_scs_manager.menu.issue_report');
 
   _soda_scs_manager_preprocess_menu_notifications_recursive($variables['items']);
+  $variables['#attached']['library'][] = 'soda_scs_manager/notificationBadge';
+  $variables['#cache']['contexts'][] = 'user';
 
   // Exact current item: class + underline styling do not rely on active-link.js alone.
   // The main menu block uses a BigPipe placeholder; markup can appear before JS runs.
@@ -2942,8 +2952,9 @@ function _soda_scs_manager_preprocess_menu_notifications_recursive(array &$items
           ->countAttentionItems($currentUser);
       }
 
-      $label = (string) t('Messages');
-      $dot = $count > 0 ? '<span class="notification-dot" aria-hidden="true"></span>' : '';
+      $label = (string) $item['title'];
+      $dot = '<span class="notification-count" data-notification-count="' . $count . '"'
+        . ($count > 0 ? '' : ' hidden') . '>' . ($count > 99 ? '99+' : $count) . '</span>';
       $item['title'] = Markup::create(
         '<span class="notification-icon-wrapper"><span class="notification-icon">'
         . Html::escape($label)
