@@ -118,12 +118,21 @@
   }
 
   /**
+   * Hides the throbber overlay and stops progress polling.
+   */
+  Drupal.sodaScsThrobberOverlayHide = function () {
+    stopProgressPolling();
+    $('.soda-scs-manager__throbber-overlay').removeClass('soda-scs-manager__throbber-overlay--active');
+    document.dispatchEvent(new CustomEvent('scs-manager:overlay-state-change'));
+  };
+
+  /**
    * Adds a throbber overlay to the page when forms are submitted.
    */
   Drupal.behaviors.sodaScsThrobberOverlay = {
     attach: function (context, settings) {
       // Create the overlay element only once if it doesn't exist.
-      if (!$('.soda-scs-manager__throbber-overlay', context).length) {
+      if (!$('.soda-scs-manager__throbber-overlay').length) {
         const defaultThrobberMsg = Drupal.t('Performing action, please do not close the window');
         const $overlayContainer = $('.dashboard-main').first();
         ($overlayContainer.length ? $overlayContainer : $('body', context)).append(

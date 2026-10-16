@@ -74,6 +74,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- If creating an application in the "Add application" popup fails, the popup
+  stays open and shows the error with "Try again" and "Cancel" instead of
+  jumping to the form page.
 - The user mount reconcile leaves mounts under `_projects/` alone, and the
   sidecar mount lookup matches the mount point exactly instead of by suffix.
 - New users start without a project: no default project is created on

@@ -4545,3 +4545,19 @@ msgstr "Das Home-Verzeichnis des Notebook-Servers des Projekts konnte nicht gel�
 #: src/Helpers/SodaScsProjectMembershipHelpers.php
 msgid "The project's JupyterLab was stopped so the removed member loses access at once. Members can start it again."
 msgstr "Das JupyterLab des Projekts wurde gestoppt, damit das entfernte Mitglied sofort keinen Zugriff mehr hat. Mitglieder können es wieder starten."
+
+#: templates/cards/soda-scs-manager--add-application-popup.html.twig
+msgid "The application could not be created"
+msgstr "Die Anwendung konnte nicht erstellt werden"
+
+#: templates/cards/soda-scs-manager--add-application-popup.html.twig
+msgid "Possible reasons: the name is already in use, a required service is temporarily unavailable, or your Nextcloud or Keycloak account is not connected. Please check your entries and try again. If the problem persists, contact an administrator."
+msgstr "Mögliche Gründe: Der Name ist bereits vergeben, ein benötigter Dienst ist vorübergehend nicht erreichbar oder Ihr Nextcloud- bzw. Keycloak-Konto ist nicht verbunden. Bitte prüfen Sie Ihre Eingaben und versuchen Sie es erneut. Besteht das Problem weiter, wenden Sie sich an eine Administratorin oder einen Administrator."
+
+#: templates/cards/soda-scs-manager--add-application-popup.html.twig
+msgid "Try again"
+msgstr "Erneut versuchen"
+
+#: templates/cards/soda-scs-manager--add-application-popup.html.twig
+msgid "Cancel"
+msgstr "Abbrechen"

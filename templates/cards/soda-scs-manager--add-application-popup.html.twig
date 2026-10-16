@@ -140,6 +140,20 @@
       </button>
       <div class="add-app-popup__form-container" aria-live="polite"></div>
     </div>
+
+    <div class="add-app-popup__step add-app-popup__step--error" role="alert" hidden>
+      <h3>{{ 'The application could not be created'|t }}</h3>
+      <p class="add-app-popup__error-detail" hidden></p>
+      <p>{{ 'Possible reasons: the name is already in use, a required service is temporarily unavailable, or your Nextcloud or Keycloak account is not connected. Please check your entries and try again. If the problem persists, contact an administrator.'|t }}</p>
+      <div class="add-app-popup__actions">
+        <button type="button" class="btn btn--secondary add-app-popup__cancel">
+          {{ 'Cancel'|t }}
+        </button>
+        <button type="button" class="btn btn--primary add-app-popup__retry">
+          {{ 'Try again'|t }}
+        </button>
+      </div>
+    </div>
   </div>
 </div>
 

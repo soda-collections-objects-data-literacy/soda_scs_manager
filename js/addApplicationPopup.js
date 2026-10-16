@@ -72,6 +72,10 @@
         var selectStep = popupEl.querySelector('.add-app-popup__step--select');
         var formStep = popupEl.querySelector('.add-app-popup__step--form');
         var formContainer = popupEl.querySelector('.add-app-popup__form-container');
+        var errorStepEl = popupEl.querySelector('.add-app-popup__step--error');
+        if (errorStepEl) {
+          errorStepEl.hidden = true;
+        }
         if (selectStep && formStep) {
           formStep.hidden = true;
           selectStep.hidden = false;
@@ -92,9 +96,46 @@
         var formStep = popupEl.querySelector('.add-app-popup__step--form');
         var formContainer = popupEl.querySelector('.add-app-popup__form-container');
         var backButton = popupEl.querySelector('.add-app-popup__back');
+        var errorStep = popupEl.querySelector('.add-app-popup__step--error');
+        var errorDetail = popupEl.querySelector('.add-app-popup__error-detail');
+        var retryButton = popupEl.querySelector('.add-app-popup__retry');
+        var cancelButton = popupEl.querySelector('.add-app-popup__cancel');
+
+        var showFailure = function (detail) {
+          if (!errorStep || !formStep) {
+            return;
+          }
+          if (errorDetail) {
+            errorDetail.textContent = detail || '';
+            errorDetail.hidden = !detail;
+          }
+          formStep.hidden = true;
+          errorStep.hidden = false;
+          if (retryButton) {
+            retryButton.focus();
+          }
+        };
+
+        if (retryButton) {
+          retryButton.addEventListener('click', function (e) {
+            e.preventDefault();
+            errorStep.hidden = true;
+            formStep.hidden = false;
+          });
+        }
+
+        if (cancelButton) {
+          cancelButton.addEventListener('click', function (e) {
+            e.preventDefault();
+            closeOverlay(popupEl);
+          });
+        }
 
         var showSelectStep = function () {
           restoreBackButton(popupEl);
+          if (errorStep) {
+            errorStep.hidden = true;
+          }
           if (formStep) {
             formStep.hidden = true;
           }
@@ -144,40 +185,106 @@
               }
 
               loadMissingAssets(doc, function () {
-                formContainer.innerHTML = content.innerHTML;
-
-                // Owner is always the current user when creating from this wizard.
-                // The owner widget renders as a fieldset of radio buttons
-                // (options_buttons), so hide the whole fieldset, not just
-                // the first radio's item wrapper.
-                var ownerInput = formContainer.querySelector('[name^="owner"]');
-                if (ownerInput) {
-                  var ownerFieldset = ownerInput.closest('fieldset');
-                  var ownerWrapper = ownerFieldset
-                    ? (ownerFieldset.closest('.js-form-item, .form-item') || ownerFieldset)
-                    : (ownerInput.closest('.js-form-item, .form-item') || ownerInput.parentElement);
-                  if (ownerWrapper) {
-                    ownerWrapper.hidden = true;
-                  }
-                }
-
-                Drupal.attachBehaviors(formContainer, drupalSettings);
-
-                var formActions = formContainer.querySelector('.form-actions');
-                if (formActions && backButton) {
-                  formActions.prepend(backButton);
-                }
-
-                var firstField = formContainer.querySelector('input:not([type="hidden"]), select, textarea');
-                if (firstField) {
-                  firstField.focus();
-                }
+                renderForm(content);
               });
             })
             .catch(function () {
               window.location.href = url;
             });
         };
+
+        var renderForm = function (content) {
+          restoreBackButton(popupEl);
+          formContainer.innerHTML = content.innerHTML;
+
+          // Owner is always the current user when creating from this wizard.
+          // The owner widget renders as a fieldset of radio buttons
+          // (options_buttons), so hide the whole fieldset, not just
+          // the first radio's item wrapper.
+          var ownerInput = formContainer.querySelector('[name^="owner"]');
+          if (ownerInput) {
+            var ownerFieldset = ownerInput.closest('fieldset');
+            var ownerWrapper = ownerFieldset
+              ? (ownerFieldset.closest('.js-form-item, .form-item') || ownerFieldset)
+              : (ownerInput.closest('.js-form-item, .form-item') || ownerInput.parentElement);
+            if (ownerWrapper) {
+              ownerWrapper.hidden = true;
+            }
+          }
+
+          Drupal.attachBehaviors(formContainer, drupalSettings);
+
+          var formActions = formContainer.querySelector('.form-actions');
+          if (formActions && backButton) {
+            formActions.prepend(backButton);
+          }
+
+          var firstField = formContainer.querySelector('input:not([type="hidden"]), select, textarea');
+          if (firstField) {
+            firstField.focus();
+          }
+        };
+
+        // Submit via fetch so a failed creation stays in the overlay instead of navigating to the form page.
+        if (formContainer) {
+          formContainer.addEventListener('submit', function (e) {
+            var formEl = e.target;
+            if (!(formEl instanceof HTMLFormElement)) {
+              return;
+            }
+            e.preventDefault();
+
+            var formData = new FormData(formEl);
+            if (e.submitter && e.submitter.name) {
+              formData.append(e.submitter.name, e.submitter.value || '');
+            }
+            var submitButtons = formEl.querySelectorAll('input[type="submit"], button[type="submit"]');
+            submitButtons.forEach(function (button) {
+              button.disabled = true;
+            });
+
+            var hideThrobber = function () {
+              if (Drupal.sodaScsThrobberOverlayHide) {
+                Drupal.sodaScsThrobberOverlayHide();
+              }
+            };
+            fetch(formEl.getAttribute('action') || window.location.href, {
+              method: 'POST',
+              credentials: 'same-origin',
+              body: formData,
+            })
+              .then(function (response) {
+                if (response.redirected) {
+                  window.location.href = response.url;
+                  return null;
+                }
+                return response.text();
+              })
+              .then(function (html) {
+                if (html === null) {
+                  return;
+                }
+                hideThrobber();
+                var doc = new DOMParser().parseFromString(html, 'text/html');
+                var content = doc.querySelector('.dashboard-content') || doc.querySelector('main');
+                var serverError = doc.querySelector('.messages--error');
+                if (!content || !content.querySelector('form')) {
+                  throw new Error('Unexpected response');
+                }
+                // Server messages may render outside the content region.
+                var serverErrorText = serverError ? serverError.textContent.trim() : '';
+                renderForm(content);
+                showFailure(serverErrorText);
+              })
+              .catch(function () {
+                hideThrobber();
+                submitButtons.forEach(function (button) {
+                  button.disabled = false;
+                });
+                showFailure('');
+              });
+          });
+        }
 
         if (backButton) {
           backButton.addEventListener('click', function (e) {
