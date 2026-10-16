@@ -213,7 +213,7 @@ soda_scs_manager.settings:
             occContainerName:
               type: string
               label: 'OCC container name'
-              description: 'Docker container name for Nextcloud occ commands (default nextcloud--nextcloud).'
+              description: 'Docker container name for Nextcloud occ commands (default nextcloud--nextcloud--app).'
             oidcUsernamePrefix:
               type: string
               label: 'OIDC username prefix'

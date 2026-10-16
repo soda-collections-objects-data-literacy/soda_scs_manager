@@ -30,7 +30,7 @@ class SodaScsNextcloudHelpers {
   /**
    * Default Docker container for occ app-password provisioning.
    */
-  public const DEFAULT_OCC_CONTAINER = 'nextcloud--nextcloud';
+  public const DEFAULT_OCC_CONTAINER = 'nextcloud--nextcloud--app';
 
   /**
    * Keycloak attribute for stored Nextcloud username (profile scope).

@@ -154,6 +154,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- Drive connects automatically again after Keycloak login. Creating the app
+  password via `occ` used the old container name `nextcloud--nextcloud`; the
+  default is now `nextcloud--nextcloud--app`, so new users no longer get the
+  "Connect Drive manually" prompt.
 - A new project with the same label as an existing Team Folder no longer takes
   over that folder's groups. `scs_manager_integration` answers 409, and the
   manager asks for a different name (or keeps the old name on rename).

@@ -94,10 +94,10 @@ OIDC group provisioning adds the user to Nextcloud group `G` on **next login**. 
 
 ```bash
 # Resolve Nextcloud UID (often the Keycloak user UUID under user_oidc).
-docker exec --user www-data nextcloud--nextcloud php /var/www/html/occ user:list | grep -i DISPLAY_NAME
+docker exec --user www-data nextcloud--nextcloud--app php /var/www/html/occ user:list | grep -i DISPLAY_NAME
 
 # Add to project group (G = groupId, e.g. 10001).
-docker exec --user www-data nextcloud--nextcloud php /var/www/html/occ group:adduser G NEXTCLOUD_UID
+docker exec --user www-data nextcloud--nextcloud--app php /var/www/html/occ group:adduser G NEXTCLOUD_UID
 ```
 
 Validated for `rnsrk`:
@@ -111,7 +111,7 @@ Afterwards the user should see the Team Folder named like the project label (e.g
 
 ```bash
 # Team Folders + ACL group
-docker exec --user www-data nextcloud--nextcloud php /var/www/html/occ groupfolders:list
+docker exec --user www-data nextcloud--nextcloud--app php /var/www/html/occ groupfolders:list
 
 # Managed folder registration (via Drupal admin API)
 scs-drush php:eval '

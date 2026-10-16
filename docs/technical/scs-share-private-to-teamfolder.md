@@ -21,7 +21,7 @@ deployment host.
 Nextcloud app `scs_manager_integration`:
 
 ```bash
-docker exec --user www-data nextcloud--nextcloud \
+docker exec --user www-data nextcloud--nextcloud--app \
   php /var/www/html/occ scs_manager_integration:migrate-private-scs-share --help
 ```
 
