@@ -25,7 +25,13 @@
     {% set card_type = "single" %}
     {% set application_description = "Ontology Management" %}
 
-{% elseif bundle_id in ["soda_scs_wisski_stack", "soda_scs_wisski_component"] %}
+{% elseif bundle_id == "soda_scs_wisski_component" %}
+    {% set application_type = "wisski" %}
+	{% set application_icons = [directory ~ "/assets/img/wisski.png"] %}
+    {% set card_type = "single" %}
+    {% set application_description = "Data Management" %}
+
+{% elseif bundle_id == "soda_scs_wisski_stack" %}
     {% set application_type = "wisski" %}
 	{% set application_icons = [directory ~ "/assets/img/wisski.png", directory ~ "/assets/img/opengdb.svg", directory ~ "/assets/img/mariadb.png"] %}
     {% set card_type = "multiple" %}

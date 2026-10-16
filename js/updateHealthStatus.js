@@ -48,7 +48,11 @@
 
     $notification.html(
       '<div class="notification-content">' +
-      '<button class="notification-close" aria-label="' + Drupal.t('Close notification') + '">&times;</button>' +
+      '<button type="button" class="btn btn--secondary btn--icon overlay__close notification-close" aria-label="' + Drupal.t('Close notification') + '">' +
+      '<svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">' +
+      '<line x1="14.8493" y1="14.8493" x2="4.94983" y2="4.94978" stroke="#17212B" stroke-width="2"/>' +
+      '<line x1="4.94979" y1="14.8492" x2="14.8493" y2="4.94975" stroke="#17212B" stroke-width="2"/>' +
+      '</svg></button>' +
       '<p class="text--label">' + Drupal.t('Your WissKI is ready!') + '</p>' +
       '<p>' + Drupal.t('If you visit for the first time, you need to login with SODa SCS Client.') + '</br>' +
       Drupal.t('Go to') + ' <a href="' + loginUrl + '" target="_blank">' + loginUrl + '</a></br>' +

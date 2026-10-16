@@ -61,8 +61,8 @@
 			<span aria-hidden="true">&#8942;</span>
 		</button>
 		<div id="project-actions-{{ project_id }}" class="project-card__actions" role="menu" hidden>
-			<a role="menuitem" href="{{ url }}">{{ 'Edit'|t }}</a>
-			<button type="button" class="project-card__delete-trigger" data-delete-url="{{ path('entity.soda_scs_project.delete_form', {'soda_scs_project': project_id}) }}" role="menuitem">{{ 'Delete'|t }}</button>
+			<a role="menuitem" class="btn btn--secondary" href="{{ url }}">{{ 'Edit'|t }}</a>
+			<button type="button" class="btn project-card__delete-trigger" data-delete-url="{{ path('entity.soda_scs_project.delete_form', {'soda_scs_project': project_id}) }}" role="menuitem">{{ 'Delete'|t }}</button>
 		</div>
 	</div>
 
