@@ -74,6 +74,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- The create-project wizard stores the name, applications and invitations
+  until a review step. The project is created only when that review is
+  confirmed, so closing the window earlier leaves nothing behind.
 - On the last step of the co-working introduction, the Next button becomes
   Close.
 

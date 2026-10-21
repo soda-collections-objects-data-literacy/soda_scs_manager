@@ -4573,3 +4573,67 @@ msgstr "Erneut versuchen"
 #: templates/cards/soda-scs-manager--add-application-popup.html.twig
 msgid "Cancel"
 msgstr "Abbrechen"
+
+#: templates/cards/soda-scs-manager--create-project-wizard.html.twig
+msgid "Invite people to collaborate on this project. They are invited when you create the project. You can also skip this step and invite people later."
+msgstr "Laden Sie Personen zur Mitarbeit an diesem Projekt ein. Die Einladungen werden verschickt, wenn Sie das Projekt anlegen. Sie können diesen Schritt auch überspringen und später Personen einladen."
+
+#: templates/cards/soda-scs-manager--create-project-wizard.html.twig
+msgid "Username or email"
+msgstr "Username oder E-Mail"
+
+#: templates/cards/soda-scs-manager--create-project-wizard.html.twig
+msgid "name@example.org"
+msgstr "name@example.org"
+
+#: templates/cards/soda-scs-manager--create-project-wizard.html.twig
+msgid "Check the details. The project, its applications and the invitations are created when you continue. Closing this window before that discards everything."
+msgstr "Prüfen Sie die Angaben. Das Projekt, seine Anwendungen und die Einladungen werden angelegt, wenn Sie fortfahren. Wenn Sie das Fenster vorher schließen, wird alles verworfen."
+
+#: js/createProjectWizard.js
+msgid "Review"
+msgstr "Überprüfung"
+
+#: js/createProjectWizard.js
+msgid "None"
+msgstr "Keine"
+
+#: js/createProjectWizard.js
+msgid "People"
+msgstr "Personen"
+
+#: js/createProjectWizard.js
+msgid "Enter a project name."
+msgstr "Geben Sie einen Projektnamen ein."
+
+#: js/createProjectWizard.js
+msgid "The label must not exceed 25 characters."
+msgstr "Die Bezeichnung darf höchstens 25 Zeichen lang sein."
+
+#: js/createProjectWizard.js
+msgid "Creating the project…"
+msgstr "Das Projekt wird angelegt …"
+
+#: js/createProjectWizard.js
+msgid "Creating @app…"
+msgstr "@app wird angelegt …"
+
+#: js/createProjectWizard.js
+msgid "The project could not be created. Check the name and the invitations."
+msgstr "Das Projekt konnte nicht angelegt werden. Prüfen Sie den Namen und die Einladungen."
+
+#: js/createProjectWizard.js
+msgid "The project could not be created. Please try again."
+msgstr "Das Projekt konnte nicht angelegt werden. Bitte versuchen Sie es erneut."
+
+#: js/createProjectWizard.js
+msgid "The project form is missing. Go back and enter the project name again."
+msgstr "Das Projektformular fehlt. Gehen Sie zurück und geben Sie den Projektnamen erneut ein."
+
+#: js/createProjectWizard.js
+msgid "The project was created, but its address could not be read. Open your projects to continue."
+msgstr "Das Projekt wurde angelegt, seine Adresse konnte aber nicht gelesen werden. Öffnen Sie Ihre Projekte, um fortzufahren."
+
+#: js/createProjectWizard.js
+msgid "The project was created, but these applications were not: @apps."
+msgstr "Das Projekt wurde angelegt, diese Anwendungen aber nicht: @apps."

@@ -136,7 +136,7 @@ addApplicationPopup:
     - soda_scs_manager/globalStyling
 
 createProjectWizard:
-  version: 1.x
+  version: 1.4
   js:
     js/createProjectWizard.js: {}
   dependencies:

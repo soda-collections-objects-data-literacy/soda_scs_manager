@@ -118,6 +118,7 @@
           appsSelect: root.querySelector('[data-cpw-step="apps-select"]'),
           appsForm: root.querySelector('[data-cpw-step="apps-form"]'),
           members: root.querySelector('[data-cpw-step="members"]'),
+          review: root.querySelector('[data-cpw-step="review"]'),
           done: root.querySelector('[data-cpw-step="done"]'),
         };
         var appsFormTitle = root.querySelector('[data-cpw-apps-form-title]');
@@ -143,23 +144,38 @@
           phase: 'details',
           projectId: null,
           projectLabel: '',
+          projectNote: '',
           selectedAppTypes: [],
           appQueue: [],
           appQueueIndex: 0,
-          invitedCount: 0,
+          appSnapshots: {},
+          invitedPeople: [],
+          creating: false,
+        };
+
+        var SNAPSHOT_SKIP_FIELDS = {
+          form_build_id: true,
+          form_token: true,
+          form_id: true,
+          op: true,
         };
 
         function resetState() {
           state.phase = 'details';
           state.projectId = null;
           state.projectLabel = '';
+          state.projectNote = '';
           state.selectedAppTypes = [];
           state.appQueue = [];
           state.appQueueIndex = 0;
-          state.invitedCount = 0;
+          state.appSnapshots = {};
+          state.invitedPeople = [];
+          state.creating = false;
           if (invitedList) {
             invitedList.innerHTML = '';
           }
+          setReviewError('');
+          setReviewStatus('');
           root.querySelectorAll('.create-project-wizard__app-card[aria-pressed="true"]').forEach(function (card) {
             card.setAttribute('aria-pressed', 'false');
           });
@@ -179,10 +195,16 @@
             { phase: 'details', label: Drupal.t('Create new project') },
             { phase: 'apps-select', label: Drupal.t('Add applications') },
           ];
-          state.appQueue.forEach(function (type) {
+          // Before the selection is confirmed, count the cards that are pressed
+          // so the step total includes the forms still ahead.
+          var types = (state.phase === 'apps-form' || state.phase === 'members' || state.phase === 'review' || state.phase === 'done')
+            ? state.appQueue
+            : state.selectedAppTypes;
+          types.forEach(function (type) {
             pages.push({ phase: 'apps-form', appType: type, label: Drupal.t('Add applications') });
           });
           pages.push({ phase: 'members', label: Drupal.t('Invite members') });
+          pages.push({ phase: 'review', label: Drupal.t('Review') });
           return pages;
         }
 
@@ -221,13 +243,13 @@
           prevBtn.disabled = state.phase === 'details';
           nextBtn.hidden = false;
           finishBtn.hidden = true;
-          skipBtn.hidden = !(state.phase === 'apps-select' || state.phase === 'apps-form');
+          skipBtn.hidden = !(state.phase === 'apps-select' || state.phase === 'apps-form' || state.phase === 'members');
 
           if (state.phase === 'apps-select') {
             nextBtn.textContent = state.selectedAppTypes.length > 0 ? Drupal.t('Next') : Drupal.t('Skip');
           }
-          else if (state.phase === 'members') {
-            nextBtn.textContent = Drupal.t('Finish');
+          else if (state.phase === 'review') {
+            nextBtn.textContent = Drupal.t('Create project');
           }
           else {
             nextBtn.textContent = Drupal.t('Next');
@@ -261,6 +283,9 @@
               var content = extractContent(doc);
               if (!content) {
                 showLoadError(container);
+                if (onLoaded) {
+                  onLoaded(null);
+                }
                 return;
               }
               mergeFetchedSettings(doc);
@@ -278,6 +303,9 @@
             })
             .catch(function () {
               showLoadError(container);
+              if (onLoaded) {
+                onLoaded(null);
+              }
             });
         }
 
@@ -299,12 +327,14 @@
             credentials: 'same-origin',
             body: formData,
           }).then(function (response) {
-            if (response.redirected || (response.url && response.url !== formEl.getAttribute('action'))) {
-              return response.text().then(function () {
-                return { success: true, url: response.url };
-              });
-            }
             return response.text().then(function (html) {
+              // A relative form action never equals the absolute response URL, so
+              // that comparison treated validation errors as success. Creation
+              // redirects to the project page, which is the only success signal.
+              var match = /\/project\/(\d+)/.exec(response.url || '');
+              if (match) {
+                return { success: true, url: response.url, id: match[1] };
+              }
               return { success: false, html: html };
             });
           });
@@ -325,41 +355,45 @@
         }
 
         // --- Step: details ------------------------------------------------
+        // The project form stays in the page until the review is confirmed.
 
         function loadDetailsStep() {
           var container = stepEls.details.querySelector('.create-project-wizard__form-container');
           loadForm(settings.addProjectFormUrl, container, function (loaded) {
+            if (!loaded) {
+              return;
+            }
             hideFieldByName(loaded, 'owner');
             hideFieldByName(loaded, 'memberInvitations');
             hideNativeSubmit(loaded);
           });
         }
 
-        function submitDetailsStep() {
+        function confirmDetailsStep() {
           var container = stepEls.details.querySelector('.create-project-wizard__form-container');
           var formEl = container.querySelector('form');
           if (!formEl) {
             return;
           }
-          setBusy(true);
-          submitForm(formEl).then(function (result) {
-            setBusy(false);
-            if (result.success) {
-              var match = /\/project\/(\d+)/.exec(result.url || '');
-              state.projectId = match ? match[1] : null;
-              var labelInput = formEl.querySelector('[name="label[0][value]"]');
-              state.projectLabel = labelInput ? labelInput.value : '';
-              goToPhase('apps-select');
+          var labelInput = formEl.querySelector('[name="label[0][value]"]');
+          var label = labelInput ? labelInput.value.trim() : '';
+          if (!label) {
+            if (labelInput) {
+              labelInput.setCustomValidity(Drupal.t('Enter a project name.'));
+              labelInput.reportValidity();
+              labelInput.setCustomValidity('');
+              labelInput.focus();
             }
-            else {
-              renderFormErrors(container, result.html);
-              hideFieldByName(container, 'owner');
-              hideFieldByName(container, 'memberInvitations');
-              hideNativeSubmit(container);
-            }
-          }).catch(function () {
-            setBusy(false);
-          });
+            return;
+          }
+          if (labelInput && labelInput.getAttribute('aria-invalid') === 'true') {
+            labelInput.focus();
+            return;
+          }
+          var noteInput = formEl.querySelector('[name="note[0][value]"]');
+          state.projectLabel = label;
+          state.projectNote = noteInput ? noteInput.value.trim() : '';
+          goToPhase('apps-select');
         }
 
         // --- Step: apps-select ---------------------------------------------
@@ -406,11 +440,126 @@
         });
 
         // --- Step: apps-form -------------------------------------------------
+        // Forms are shown with ?deferProject=1 and kept locally. They are
+        // submitted only after the project exists.
+
+        function appFormUrl(type, projectId) {
+          var url = settings.componentCreateUrls && settings.componentCreateUrls[type];
+          if (!url) {
+            return '';
+          }
+          var joiner = url.indexOf('?') === -1 ? '?' : '&';
+          if (projectId) {
+            return url + joiner + 'project=' + encodeURIComponent(projectId);
+          }
+          return url + joiner + 'deferProject=1';
+        }
+
+        function readSnapshot(formEl) {
+          var entries = [];
+          Array.prototype.forEach.call(formEl.elements, function (el) {
+            if (!el.name || SNAPSHOT_SKIP_FIELDS[el.name]) {
+              return;
+            }
+            if (el.type === 'submit' || el.type === 'button' || el.type === 'image') {
+              return;
+            }
+            if (el.type === 'checkbox' || el.type === 'radio') {
+              if (el.checked) {
+                entries.push({ name: el.name, value: el.value });
+              }
+              return;
+            }
+            if (el.type === 'select-multiple') {
+              Array.prototype.forEach.call(el.selectedOptions, function (option) {
+                entries.push({ name: el.name, value: option.value });
+              });
+              return;
+            }
+            entries.push({ name: el.name, value: el.value });
+          });
+          return entries;
+        }
+
+        function applySnapshot(formEl, entries) {
+          var grouped = {};
+          entries.forEach(function (entry) {
+            if (SNAPSHOT_SKIP_FIELDS[entry.name]) {
+              return;
+            }
+            if (!grouped[entry.name]) {
+              grouped[entry.name] = [];
+            }
+            grouped[entry.name].push(entry.value);
+          });
+          Object.keys(grouped).forEach(function (name) {
+            var nodes = formEl.querySelectorAll('[name="' + name.replace(/"/g, '\\"') + '"]');
+            if (!nodes.length) {
+              return;
+            }
+            var values = grouped[name];
+            var first = nodes[0];
+            if (first.type === 'checkbox' || first.type === 'radio') {
+              Array.prototype.forEach.call(nodes, function (node) {
+                node.checked = values.indexOf(node.value) !== -1;
+              });
+              return;
+            }
+            if (first.type === 'select-multiple') {
+              Array.prototype.forEach.call(first.options, function (option) {
+                option.selected = values.indexOf(option.value) !== -1;
+              });
+              return;
+            }
+            first.value = values[0];
+          });
+          var label = formEl.querySelector('[name="label[0][value]"]');
+          if (label) {
+            label.dispatchEvent(new Event('input', { bubbles: true }));
+            label.dispatchEvent(new Event('change', { bubbles: true }));
+          }
+        }
+
+        function rememberAppForm() {
+          var formEl = stepEls.appsForm.querySelector('form');
+          var type = state.appQueue[state.appQueueIndex];
+          if (!formEl || !type) {
+            return;
+          }
+          state.appSnapshots[type] = readSnapshot(formEl);
+        }
+
+        function captureAppFormStep() {
+          var container = stepEls.appsForm.querySelector('.create-project-wizard__form-container');
+          var formEl = container.querySelector('form');
+          if (!formEl) {
+            return false;
+          }
+          var labelInput = formEl.querySelector('[name="label[0][value]"]');
+          var label = labelInput ? labelInput.value.trim() : '';
+          var type = state.appQueue[state.appQueueIndex];
+          if (!label) {
+            if (labelInput) {
+              labelInput.focus();
+              labelInput.reportValidity();
+            }
+            return false;
+          }
+          // Stack create forms reject labels longer than 25 characters.
+          if ((type === 'wisski' || type === 'jupyter') && label.length > 25) {
+            labelInput.setCustomValidity(Drupal.t('The label must not exceed 25 characters.'));
+            labelInput.reportValidity();
+            labelInput.setCustomValidity('');
+            return false;
+          }
+          state.appSnapshots[type] = readSnapshot(formEl);
+          return true;
+        }
 
         function loadAppFormStep() {
           var type = state.appQueue[state.appQueueIndex];
           var container = stepEls.appsForm.querySelector('.create-project-wizard__form-container');
-          var url = settings.componentCreateUrls && settings.componentCreateUrls[type];
+          var url = appFormUrl(type, null);
           if (appsFormTitle) {
             appsFormTitle.textContent = Drupal.t('Configure @app (@current of @total)', {
               '@app': appLabels[type] || type,
@@ -422,88 +571,292 @@
             showLoadError(container);
             return;
           }
-          loadForm(url + '?project=' + encodeURIComponent(state.projectId), container, function (loaded) {
+          loadForm(url, container, function (loaded) {
+            if (!loaded) {
+              return;
+            }
             hideFieldByName(loaded, 'owner');
             hideFieldByName(loaded, 'partOfProjects');
             hideNativeSubmit(loaded);
-          });
-        }
-
-        function submitAppFormStep() {
-          var container = stepEls.appsForm.querySelector('.create-project-wizard__form-container');
-          var formEl = container.querySelector('form');
-          if (!formEl) {
-            return;
-          }
-          setBusy(true);
-          submitForm(formEl).then(function (result) {
-            setBusy(false);
-            if (result.success) {
-              state.appQueueIndex++;
-              if (state.appQueueIndex < state.appQueue.length) {
-                loadAppFormStep();
-                updateFooter();
-              }
-              else {
-                goToPhase('members');
-              }
+            var formEl = loaded.querySelector('form');
+            if (formEl && state.appSnapshots[type]) {
+              applySnapshot(formEl, state.appSnapshots[type]);
             }
-            else {
-              renderFormErrors(container, result.html);
-              hideFieldByName(container, 'owner');
-              hideFieldByName(container, 'partOfProjects');
-              hideNativeSubmit(container);
-            }
-          }).catch(function () {
-            setBusy(false);
           });
         }
 
         // --- Step: members ---------------------------------------------------
 
-        function loadMembersStep() {
-          var container = stepEls.members.querySelector('.create-project-wizard__form-container');
-          var url = (settings.addMemberFormUrlTemplate || '').replace('__PROJECT_ID__', state.projectId);
-          loadForm(url, container, function (loaded) {
-            var formEl = loaded.querySelector('form');
-            if (formEl) {
-              formEl.addEventListener('submit', onMemberFormSubmit);
-            }
+        function renderInvitedList() {
+          if (!invitedList) {
+            return;
+          }
+          invitedList.innerHTML = '';
+          state.invitedPeople.forEach(function (person, index) {
+            var li = document.createElement('li');
+            li.className = 'mt-3 flex items-center gap-2 text-sm text-stone-800';
+            var name = document.createElement('span');
+            name.textContent = person;
+            var remove = document.createElement('button');
+            remove.type = 'button';
+            remove.className = 'btn btn--secondary';
+            remove.textContent = Drupal.t('Remove');
+            remove.addEventListener('click', function () {
+              state.invitedPeople.splice(index, 1);
+              renderInvitedList();
+            });
+            li.appendChild(name);
+            li.appendChild(remove);
+            invitedList.appendChild(li);
           });
         }
 
-        function onMemberFormSubmit(e) {
-          e.preventDefault();
-          var formEl = e.currentTarget;
-          var input = formEl.querySelector('[name="memberInvitations"]');
-          var invitee = input ? input.value.trim() : '';
-          if (!invitee) {
+        function addInvitee() {
+          var input = root.querySelector('[data-cpw-invite-input]');
+          if (!input) {
             return;
           }
+          var value = input.value.trim();
+          if (!value) {
+            return;
+          }
+          var exists = state.invitedPeople.some(function (person) {
+            return person.toLowerCase() === value.toLowerCase();
+          });
+          if (!exists) {
+            state.invitedPeople.push(value);
+            renderInvitedList();
+          }
+          input.value = '';
+          input.focus();
+        }
+
+        // --- Step: review ----------------------------------------------------
+
+        function setReviewError(text) {
+          var el = root.querySelector('[data-cpw-review-error]');
+          if (!el) {
+            return;
+          }
+          el.textContent = text || '';
+          el.hidden = !text;
+        }
+
+        function setReviewStatus(text) {
+          var el = root.querySelector('[data-cpw-review-status]');
+          if (!el) {
+            return;
+          }
+          el.textContent = text || '';
+          el.hidden = !text;
+        }
+
+        function appendReviewRow(review, title, value) {
+          var block = document.createElement('div');
+          block.className = 'mt-3';
+          var heading = document.createElement('p');
+          heading.className = 'text-sm font-medium text-stone-800';
+          heading.textContent = title;
+          block.appendChild(heading);
+          var values = Array.isArray(value) ? value : [value];
+          values.forEach(function (item) {
+            var line = document.createElement('p');
+            line.className = 'text-sm text-stone-600';
+            line.textContent = item;
+            block.appendChild(line);
+          });
+          review.appendChild(block);
+        }
+
+        function renderReview() {
+          var review = root.querySelector('[data-cpw-review]');
+          setReviewError('');
+          setReviewStatus('');
+          if (!review) {
+            return;
+          }
+          review.innerHTML = '';
+          appendReviewRow(review, Drupal.t('Project'), state.projectLabel || Drupal.t('None'));
+          if (state.projectNote) {
+            appendReviewRow(review, Drupal.t('Note'), state.projectNote);
+          }
+          var apps = state.appQueue.map(function (type) {
+            var entries = state.appSnapshots[type] || [];
+            var label = '';
+            entries.forEach(function (entry) {
+              if (entry.name === 'label[0][value]') {
+                label = entry.value;
+              }
+            });
+            var typeLabel = appLabels[type] || type;
+            return label ? (typeLabel + ': ' + label) : typeLabel;
+          });
+          appendReviewRow(review, Drupal.t('Applications'), apps.length ? apps : [Drupal.t('None')]);
+          appendReviewRow(review, Drupal.t('People'), state.invitedPeople.length ? state.invitedPeople.slice() : [Drupal.t('None')]);
+        }
+
+        function collectFormErrors(html) {
+          if (!html) {
+            return [];
+          }
+          var doc = new DOMParser().parseFromString(html, 'text/html');
+          var texts = [];
+          doc.querySelectorAll('.form-item--error-message, .messages--error, [data-drupal-messages] [role="alert"] li').forEach(function (el) {
+            if (el.querySelector('.error-with-backtrace')) {
+              return;
+            }
+            var text = (el.textContent || '').replace(/\s+/g, ' ').trim();
+            if (text && texts.indexOf(text) === -1) {
+              texts.push(text);
+            }
+          });
+          return texts;
+        }
+
+        function htmlFieldHasError(html, namePrefix) {
+          if (!html) {
+            return false;
+          }
+          var doc = new DOMParser().parseFromString(html, 'text/html');
+          var input = doc.querySelector('[name^="' + namePrefix + '"]');
+          if (!input) {
+            return false;
+          }
+          var item = input.closest('.form-item');
+          return !!(item && item.classList.contains('form-item--error'));
+        }
+
+        function showFormBanner(container, text) {
+          var banner = container.querySelector('[data-cpw-form-banner]');
+          if (!banner) {
+            banner = document.createElement('p');
+            banner.className = 'mt-3 text-sm font-medium text-red-700';
+            banner.setAttribute('data-cpw-form-banner', '');
+            container.insertBefore(banner, container.firstChild);
+          }
+          banner.textContent = text;
+        }
+
+        function failRemainingApps(type, detail) {
+          state.creating = false;
+          setBusy(false);
+          setReviewStatus('');
+          var from = state.appQueue.indexOf(type);
+          var remaining = from === -1 ? [] : state.appQueue.slice(from);
+          var names = remaining.map(function (item) {
+            return appLabels[item] || item;
+          }).join(', ');
+          var message = Drupal.t('The project was created, but these applications were not: @apps.', {
+            '@apps': names || (appLabels[type] || type),
+          });
+          if (detail) {
+            message += ' ' + detail;
+          }
+          setReviewError(message);
+          nextBtn.hidden = true;
+          finishBtn.hidden = false;
+          prevBtn.hidden = true;
+          skipBtn.hidden = true;
+        }
+
+        function createQueuedApps(index) {
+          if (index >= state.appQueue.length) {
+            state.creating = false;
+            setBusy(false);
+            setReviewStatus('');
+            goToPhase('done');
+            return;
+          }
+          var type = state.appQueue[index];
+          setReviewStatus(Drupal.t('Creating @app…', {
+            '@app': appLabels[type] || type,
+          }));
+          var staging = root.querySelector('[data-cpw-staging]');
+          var url = appFormUrl(type, state.projectId);
+          if (!url || !staging) {
+            failRemainingApps(type);
+            return;
+          }
+          loadForm(url, staging, function (loaded) {
+            if (!loaded) {
+              failRemainingApps(type);
+              return;
+            }
+            var formEl = loaded.querySelector('form');
+            if (!formEl) {
+              failRemainingApps(type);
+              return;
+            }
+            hideFieldByName(loaded, 'owner');
+            hideFieldByName(loaded, 'partOfProjects');
+            hideNativeSubmit(loaded);
+            applySnapshot(formEl, state.appSnapshots[type] || []);
+            submitForm(formEl).then(function (result) {
+              if (!result.success) {
+                failRemainingApps(type, collectFormErrors(result.html).join(' '));
+                return;
+              }
+              createQueuedApps(index + 1);
+            }).catch(function () {
+              failRemainingApps(type);
+            });
+          });
+        }
+
+        function createProjectFromReview() {
+          if (state.creating) {
+            return;
+          }
+          var container = stepEls.details.querySelector('.create-project-wizard__form-container');
+          var formEl = container.querySelector('form');
+          if (!formEl) {
+            setReviewError(Drupal.t('The project form is missing. Go back and enter the project name again.'));
+            return;
+          }
+          var invitations = formEl.querySelector('[name="memberInvitations"]');
+          if (invitations) {
+            invitations.value = state.invitedPeople.join('\n');
+          }
+          state.creating = true;
           setBusy(true);
+          setReviewError('');
+          setReviewStatus(Drupal.t('Creating the project…'));
           submitForm(formEl).then(function (result) {
-            setBusy(false);
-            if (result.success) {
-              state.invitedCount++;
-              if (invitedList) {
-                var li = document.createElement('li');
-                li.className = 'create-project-wizard__invited-item';
-                li.textContent = invitee;
-                invitedList.appendChild(li);
-              }
-              formEl.reset();
-              input.focus();
-            }
-            else {
-              var container = stepEls.members.querySelector('.create-project-wizard__form-container');
+            if (!result.success) {
+              state.creating = false;
+              setBusy(false);
+              setReviewStatus('');
               renderFormErrors(container, result.html);
-              var newForm = container.querySelector('form');
-              if (newForm) {
-                newForm.addEventListener('submit', onMemberFormSubmit);
+              hideFieldByName(container, 'owner');
+              hideFieldByName(container, 'memberInvitations');
+              hideNativeSubmit(container);
+              var message = collectFormErrors(result.html).join(' ') || Drupal.t('The project could not be created. Check the name and the invitations.');
+              if (htmlFieldHasError(result.html, 'label') || htmlFieldHasError(result.html, 'note')) {
+                goToPhase('details', { reload: false });
+                showFormBanner(container, message);
+                return;
               }
+              setReviewError(message);
+              return;
             }
+            state.projectId = result.id || null;
+            var labelInput = formEl.querySelector('[name="label[0][value]"]');
+            if (labelInput && labelInput.value) {
+              state.projectLabel = labelInput.value;
+            }
+            if (!state.projectId) {
+              state.creating = false;
+              setBusy(false);
+              setReviewStatus('');
+              setReviewError(Drupal.t('The project was created, but its address could not be read. Open your projects to continue.'));
+              return;
+            }
+            createQueuedApps(0);
           }).catch(function () {
+            state.creating = false;
             setBusy(false);
+            setReviewStatus('');
+            setReviewError(Drupal.t('The project could not be created. Please try again.'));
           });
         }
 
@@ -519,12 +872,15 @@
 
         // --- Phase orchestration ----------------------------------------------
 
-        function goToPhase(phase) {
+        function goToPhase(phase, options) {
+          var reload = !options || options.reload !== false;
           state.phase = phase;
           switch (phase) {
             case 'details':
               showStep('details');
-              loadDetailsStep();
+              if (reload) {
+                loadDetailsStep();
+              }
               break;
 
             case 'apps-select':
@@ -538,7 +894,11 @@
 
             case 'members':
               showStep('members');
-              loadMembersStep();
+              break;
+
+            case 'review':
+              showStep('review');
+              renderReview();
               break;
 
             case 'done':
@@ -553,11 +913,15 @@
         }
 
         function goPrev() {
+          if (state.creating) {
+            return;
+          }
           if (state.phase === 'apps-select') {
-            // Project already exists; nothing before it to go back to.
+            goToPhase('details', { reload: false });
             return;
           }
           if (state.phase === 'apps-form') {
+            rememberAppForm();
             if (state.appQueueIndex > 0) {
               state.appQueueIndex--;
               loadAppFormStep();
@@ -576,17 +940,29 @@
             else {
               goToPhase('apps-select');
             }
+            return;
+          }
+          if (state.phase === 'review') {
+            goToPhase('members');
           }
         }
 
         function goNext() {
+          if (state.creating) {
+            return;
+          }
           if (state.phase === 'details') {
-            submitDetailsStep();
+            confirmDetailsStep();
             return;
           }
           if (state.phase === 'apps-select') {
             state.appQueue = state.selectedAppTypes.slice();
             state.appQueueIndex = 0;
+            Object.keys(state.appSnapshots).forEach(function (type) {
+              if (state.appQueue.indexOf(type) === -1) {
+                delete state.appSnapshots[type];
+              }
+            });
             if (state.appQueue.length > 0) {
               goToPhase('apps-form');
             }
@@ -596,27 +972,57 @@
             return;
           }
           if (state.phase === 'apps-form') {
-            submitAppFormStep();
+            if (!captureAppFormStep()) {
+              return;
+            }
+            state.appQueueIndex++;
+            if (state.appQueueIndex < state.appQueue.length) {
+              loadAppFormStep();
+              updateFooter();
+            }
+            else {
+              goToPhase('members');
+            }
             return;
           }
           if (state.phase === 'members') {
-            goToPhase('done');
+            goToPhase('review');
+            return;
+          }
+          if (state.phase === 'review') {
+            createProjectFromReview();
           }
         }
 
         function goSkip() {
+          if (state.creating) {
+            return;
+          }
           if (state.phase === 'apps-select') {
             state.selectedAppTypes = [];
             state.appQueue = [];
+            state.appSnapshots = {};
             goToPhase('members');
             return;
           }
           if (state.phase === 'apps-form') {
+            var dropped = state.appQueue.slice(state.appQueueIndex);
+            dropped.forEach(function (type) {
+              delete state.appSnapshots[type];
+            });
+            state.appQueue = state.appQueue.slice(0, state.appQueueIndex);
             goToPhase('members');
+            return;
+          }
+          if (state.phase === 'members') {
+            goToPhase('review');
           }
         }
 
         function closeOverlay() {
+          if (state.creating) {
+            return;
+          }
           root.hidden = true;
           if (activeTrigger) {
             activeTrigger.setAttribute('aria-expanded', 'false');
@@ -633,6 +1039,23 @@
           activeTrigger.setAttribute('aria-expanded', 'true');
           goToPhase('details');
         });
+
+        var inviteInput = root.querySelector('[data-cpw-invite-input]');
+        var inviteAdd = root.querySelector('[data-cpw-invite-add]');
+        if (inviteAdd) {
+          inviteAdd.addEventListener('click', function (e) {
+            e.preventDefault();
+            addInvitee();
+          });
+        }
+        if (inviteInput) {
+          inviteInput.addEventListener('keydown', function (e) {
+            if (e.key === 'Enter') {
+              e.preventDefault();
+              addInvitee();
+            }
+          });
+        }
 
         prevBtn.addEventListener('click', function (e) {
           e.preventDefault();

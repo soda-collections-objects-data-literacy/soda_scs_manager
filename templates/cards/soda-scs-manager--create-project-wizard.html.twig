@@ -4,8 +4,9 @@
  * Multi-step "Create Project" overlay wizard.
  *
  * Steps: 1) project details, 2) select applications, 2b) one form per
- * selected application, 3) invite members. All content is loaded and
- * submitted via AJAX by js/createProjectWizard.js; drupalSettings.sodaScsManager
+ * selected application, 3) invite members, 4) review. Nothing is saved until
+ * the review is confirmed. js/createProjectWizard.js then creates the project,
+ * the chosen applications and the invitations. drupalSettings.sodaScsManager
  * .createProjectWizard (URLs) is attached in hook_page_attachments().
  */
 #}
@@ -139,14 +140,29 @@
         <div class="create-project-wizard__form-container add-app-popup__form-container" aria-live="polite"></div>
       </div>
 
-      {# Step 3: invite members; loaded from entity.soda_scs_project.add_member_form. #}
+      {# Step 3: collect people locally. Invitations are sent when the review is confirmed. #}
       <div class="create-project-wizard__step add-app-popup__step" data-cpw-step="members" hidden>
-        <p class="create-project-wizard__hint">{{ 'Invite people to collaborate on this project. You can also skip this step and invite people later.'|t }}</p>
+        <p class="create-project-wizard__hint">{{ 'Invite people to collaborate on this project. They are invited when you create the project. You can also skip this step and invite people later.'|t }}</p>
+        <label for="create-project-wizard-invite" class="mt-3 block text-sm font-medium text-stone-800">{{ 'Username or email'|t }}</label>
+        <div class="mt-3 flex gap-2">
+          <input id="create-project-wizard-invite" type="text" class="min-w-0 flex-1 rounded border border-stone-300 px-3 py-2 text-sm" data-cpw-invite-input autocomplete="off" placeholder="{{ 'name@example.org'|t }}" />
+          <button type="button" class="btn btn--secondary" data-cpw-invite-add>{{ 'Add'|t }}</button>
+        </div>
         <ul class="create-project-wizard__invited-list" data-cpw-invited-list></ul>
-        <div class="create-project-wizard__form-container add-app-popup__form-container" aria-live="polite"></div>
       </div>
 
-      {# Step 4: done. #}
+      {# Step 4: review. Confirming this step creates the project. #}
+      <div class="create-project-wizard__step add-app-popup__step" data-cpw-step="review" hidden>
+        <p class="create-project-wizard__hint">{{ 'Check the details. The project, its applications and the invitations are created when you continue. Closing this window before that discards everything.'|t }}</p>
+        <div data-cpw-review></div>
+        <p class="mt-3 text-sm font-medium text-red-700" data-cpw-review-error hidden></p>
+        <p class="create-project-wizard__hint" data-cpw-review-status hidden></p>
+      </div>
+
+      {# Holds application forms while they are submitted after the project exists. #}
+      <div data-cpw-staging hidden></div>
+
+      {# Step 5: done. #}
       <div class="create-project-wizard__step add-app-popup__step" data-cpw-step="done" hidden>
         <p class="create-project-wizard__success" data-cpw-success-message></p>
       </div>

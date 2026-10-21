@@ -26,6 +26,22 @@ trait SodaScsProjectScopedCreateFormTrait {
   private const PROJECT_SELECT_ELEMENT = 'scsProject';
 
   /**
+   * Whether ?deferProject=1 should render the form without a project choice.
+   *
+   * Only the string "1" counts, so a stray flag cannot hide the picker.
+   *
+   * @param mixed $deferProject
+   *   The raw deferProject query value.
+   *
+   * @return bool
+   *   TRUE when the create-project wizard is collecting fields first.
+   */
+  public static function queryDefersProjectSelection(mixed $deferProject): bool {
+    return $deferProject === '1';
+  }
+
+
+  /**
    * Copies the chosen project into the partOfProjects form value.
    *
    * Call before parent::validateForm() so the entity is built with it.
@@ -51,6 +67,13 @@ trait SodaScsProjectScopedCreateFormTrait {
       return;
     }
     $form['partOfProjects']['#access'] = FALSE;
+
+    // The create-project wizard collects application fields before a project
+    // exists. This only skips the project picker; saving still requires one.
+    $request = $this->getRequest();
+    if ($request && self::queryDefersProjectSelection($request->query->get('deferProject'))) {
+      return;
+    }
 
     $requestedProjectId = $this->resolveRequestedProjectId();
     if ($requestedProjectId !== NULL) {
