@@ -97,7 +97,7 @@
 					<p>{{ 'Do you really want to delete this application? This action cannot be undone.'|t }}</p>
 					<div class="application__details-delete-confirmation__actions">
 						<button type="button" class="btn btn--secondary application__details-delete-confirmation__cancel">{{ 'Cancel'|t }}</button>
-						<a class="btn btn--primary application__details-delete-confirmation__confirm" data-delete-destination="{{ elements['#delete_destination'] }}" href="{{ elements['#delete_url'] }}">{{ 'Delete application'|t }}</a>
+						<a class="btn btn--primary application__details-delete-confirmation__confirm" data-delete-destination="{{ elements['#delete_destination'] }}" data-throbber-message="{{ 'Deleting the application. Please do not close this window.'|t }}" href="{{ elements['#delete_url'] }}">{{ 'Delete application'|t }}</a>
 					</div>
 				</div>
 			</div>

@@ -161,6 +161,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- Deleting an application, project, or profile shows the same progress overlay
+  as creating an application, instead of only relabeling the confirm button.
 - Drive connects automatically again after Keycloak login. Creating the app
   password via `occ` used the old container name `nextcloud--nextcloud`; the
   default is now `nextcloud--nextcloud--app`, so new users no longer get the

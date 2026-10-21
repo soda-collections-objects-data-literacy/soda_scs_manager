@@ -73,7 +73,7 @@
 			<p>{{ 'Do you really want to delete “@name”? This action cannot be undone.'|t({'@name': label}) }}</p>
 			<div class="project-card__delete-confirmation__actions">
 				<button type="button" class="btn btn--secondary project-card__delete-confirmation__cancel">{{ 'Cancel'|t }}</button>
-				<a class="btn btn--primary project-card__delete-confirmation__confirm" href="{{ path('entity.soda_scs_project.delete_form', {'soda_scs_project': project_id}) }}">{{ 'Delete project'|t }}</a>
+				<a class="btn btn--primary project-card__delete-confirmation__confirm" data-throbber-message="{{ 'Deleting the project. Please do not close this window.'|t }}" href="{{ path('entity.soda_scs_project.delete_form', {'soda_scs_project': project_id}) }}">{{ 'Delete project'|t }}</a>
 			</div>
 		</div>
 	</div>

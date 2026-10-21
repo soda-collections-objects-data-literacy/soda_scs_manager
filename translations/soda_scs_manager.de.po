@@ -3589,6 +3589,18 @@ msgstr "Passwort in die Zwischenablage kopiert."
 msgid "Performing action, please do not close the window"
 msgstr "Aktion wird ausgeführt, bitte schließen Sie das Fenster nicht."
 
+#: templates/entity/soda-scs-entity.html.twig
+msgid "Deleting the application. Please do not close this window."
+msgstr "Die Anwendung wird gelöscht. Bitte schließen Sie dieses Fenster nicht."
+
+#: templates/pages/soda-scs-manager--profile.html.twig
+msgid "Deleting the profile. Please do not close this window."
+msgstr "Das Profil wird gelöscht. Bitte schließen Sie dieses Fenster nicht."
+
+#: templates/entity/soda-scs-project.html.twig templates/cards/soda-scs-manager--project-card.html.twig
+msgid "Deleting the project. Please do not close this window."
+msgstr "Das Projekt wird gelöscht. Bitte schließen Sie dieses Fenster nicht."
+
 #: src/Controller/SodaScsComponentController.php
 msgid "Checking for updates, please wait."
 msgstr "Updates werden geprüft, bitte warten …"
