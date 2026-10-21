@@ -74,6 +74,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- On the last step of the co-working introduction, the Next button becomes
+  Close.
+
 - If creating an application in the "Add application" popup fails, the popup
   stays open and shows the error with "Try again" and "Cancel" instead of
   jumping to the form page.
@@ -163,6 +166,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Deleting an application, project, or profile shows the same progress overlay
   as creating an application, instead of only relabeling the confirm button.
+- The co-working intro Skip control stays inside the panel and wraps on a narrow
+  screen. Close on the last step marks the introduction complete and dismisses
+  it. Next no longer stays clickable on the project and WissKI steps.
 - Drive connects automatically again after Keycloak login. Creating the app
   password via `occ` used the old container name `nextcloud--nextcloud`; the
   default is now `nextcloud--nextcloud--app`, so new users no longer get the

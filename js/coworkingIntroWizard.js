@@ -289,10 +289,23 @@
   }
 
   /**
-   * @param {HTMLElement} root
+   * The theme's unlayered `button { display: flex }` beats a layered `display: none`,
+   * so the hidden class alone leaves Skip/Next on screen. Inline display wins.
+   *
+   * @param {HTMLElement|null} element
+   * @param {boolean} hidden
    */
+  function setFooterControlHidden(element, hidden) {
+    if (!element) {
+      return;
+    }
+    element.classList.toggle(COWORKING_INTRO_FOOTER_CONTROL_HIDDEN_CLASS, hidden);
+    element.style.display = hidden ? 'none' : '';
+  }
+
   function hideIntro(root) {
     root.classList.add(COWORKING_INTRO_ROOT_HIDDEN_CLASS);
+    root.style.display = 'none';
     root.setAttribute('aria-hidden', 'true');
     root.querySelector('[data-coworking-intro-welcome-divider]')?.removeAttribute('data-coworking-intro-replay');
     root.querySelectorAll('[data-coworking-intro-copy-replay]').forEach((el) => {
@@ -377,18 +390,26 @@
       backBtn.disabled = index === 0 || index === SLIDE_WISSKI_FORM || index === SLIDE_SUCCESS;
     }
     if (nextBtn) {
-      const hideNext = index >= SLIDE_PROJECT_FORM;
-      nextBtn.classList.toggle(COWORKING_INTRO_FOOTER_CONTROL_HIDDEN_CLASS, hideNext);
-      const onNextcloudSlide = index === SLIDE_NEXTCLOUD;
-      const canProceedNext = !onNextcloudSlide || isNextcloudStatusConnected(root);
-      nextBtn.disabled = !canProceedNext;
+      const onSuccess = index === SLIDE_SUCCESS;
+      // Project and WissKI slides have their own actions. On the success slide Next becomes Close.
+      const hideNext = index === SLIDE_PROJECT_FORM || index === SLIDE_WISSKI_FORM;
+      setFooterControlHidden(nextBtn, hideNext);
+      const nextLabel = nextBtn.getAttribute('data-coworking-intro-next-label') || Drupal.t('Next');
+      const closeLabel = nextBtn.getAttribute('data-coworking-intro-close-label') || Drupal.t('Close');
+      nextBtn.textContent = onSuccess ? closeLabel : nextLabel;
+      if (onSuccess) {
+        nextBtn.disabled = false;
+      }
+      else {
+        const onNextcloudSlide = index === SLIDE_NEXTCLOUD;
+        const canProceedNext = !onNextcloudSlide || isNextcloudStatusConnected(root);
+        nextBtn.disabled = !canProceedNext;
+      }
     }
 
-    const hideIntroSkip = index === SLIDE_NEXTCLOUD || index === SLIDE_PROJECT_FORM || index === SLIDE_WISSKI_FORM;
+    const hideIntroSkip = index === SLIDE_NEXTCLOUD || index === SLIDE_PROJECT_FORM || index === SLIDE_WISSKI_FORM || index === SLIDE_SUCCESS;
     const skipBtn = root.querySelector('[data-coworking-intro-skip]');
-    if (skipBtn) {
-      skipBtn.classList.toggle(COWORKING_INTRO_FOOTER_CONTROL_HIDDEN_CLASS, hideIntroSkip);
-    }
+    setFooterControlHidden(skipBtn, hideIntroSkip);
     const introTitle = root.querySelector('#scs-manager--coworking-intro-title');
 
     const label = root.querySelector('[data-coworking-intro-step-label]');
@@ -442,7 +463,6 @@
     const finishBtn = root.querySelector('[data-coworking-intro-finish]');
     const successSummary = root.querySelector('[data-coworking-intro-success-summary]');
     const successLink = root.querySelector('[data-coworking-intro-success-details-link]');
-    const closeSuccessBtn = root.querySelector('[data-coworking-intro-close-success]');
 
     function showNameError(msg) {
       if (!nameError) {
@@ -714,6 +734,16 @@
         if (nextBtn.disabled) {
           return;
         }
+        if (index === SLIDE_SUCCESS) {
+          await persistIntroComplete(root);
+          hideIntro(root);
+          reloadDashboard();
+          return;
+        }
+        // Project and WissKI slides use their own actions. Next must not skip them.
+        if (index === SLIDE_PROJECT_FORM || index === SLIDE_WISSKI_FORM) {
+          return;
+        }
         if (index === SLIDE_NEXTCLOUD - 1) {
           await probeNextcloudSsoForIntro(root);
         }
@@ -737,6 +767,7 @@
     /** Marks intro complete via POST (skip / finish-without-WissKI) then reloads. */
     async function skipOrFinish() {
       await persistIntroComplete(root);
+      hideIntro(root);
       reloadDashboard();
     }
 
@@ -762,12 +793,6 @@
     }
 
     setupProjectSlide();
-
-    if (closeSuccessBtn) {
-      closeSuccessBtn.addEventListener('click', () => {
-        reloadDashboard();
-      });
-    }
 
     if (openWisskiBtn && nameInput) {
       openWisskiBtn.addEventListener('click', async () => {

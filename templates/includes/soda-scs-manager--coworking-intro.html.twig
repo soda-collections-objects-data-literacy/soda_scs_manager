@@ -140,16 +140,13 @@
         </div>
       </div>
 
-      {# Slide 6: after successful WissKI create (server sets coworking_intro_completed); Close reloads the dashboard. #}
+      {# Slide 6: after successful WissKI create (server sets coworking_intro_completed). The footer Next button becomes Close, marks the intro complete, and reloads the dashboard. #}
       <div class="scs-manager--coworking-intro-slide scs-manager--coworking-intro-slide--hidden" data-coworking-intro-slide="6" data-coworking-intro-success-slide>
         <div class="scs-manager--coworking-intro-copy-rise" data-coworking-intro-copy-rise>
           <h3 class="scs-manager--coworking-intro-success-title">{{ 'WissKI Environment created'|t }}</h3>
           <p class="scs-manager--coworking-intro-success-summary" data-coworking-intro-success-summary></p>
           <p class="scs-manager--coworking-intro-success-note">{{ 'Provisioning can take several minutes. You can monitor the applications Health Status from your dashboard or open the details page now.'|t }}</p>
           <a href="#" class="scs-manager--coworking-intro-text-link scs-manager--coworking-intro-success-details-link scs-manager--coworking-intro-success-details-link--pending" data-coworking-intro-success-details-link>{{ 'Open application details'|t }}</a>
-        </div>
-        <div class="scs-manager--coworking-intro-success-footer">
-          <button type="button" class="scs-manager--coworking-intro-btn-close" data-coworking-intro-close-success>{{ 'Close introduction'|t }}</button>
         </div>
       </div>
     </div>
@@ -158,7 +155,7 @@
       <p class="scs-manager--coworking-intro-step-label" data-coworking-intro-step-label aria-live="polite"></p>
       <div class="scs-manager--coworking-intro-footer-actions">
         <button type="button" class="scs-manager--coworking-intro-btn-back" data-coworking-intro-back disabled>{{ 'Back'|t }}</button>
-        <button type="button" class="scs-manager--coworking-intro-btn-next" data-coworking-intro-next>{{ 'Next'|t }}</button>
+        <button type="button" class="scs-manager--coworking-intro-btn-next" data-coworking-intro-next data-coworking-intro-next-label="{{ 'Next'|t }}" data-coworking-intro-close-label="{{ 'Close'|t }}">{{ 'Next'|t }}</button>
       </div>
     </div>
   </div>

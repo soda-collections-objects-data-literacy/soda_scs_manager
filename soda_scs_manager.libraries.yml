@@ -179,7 +179,7 @@ nextcloudConnect:
     - soda_scs_manager/globalStyling
 
 coworkingIntroWizard:
-  version: 1.7
+  version: 1.9
   js:
     js/coworkingIntroWizard.js: {}
   dependencies:
