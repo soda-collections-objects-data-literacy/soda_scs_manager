@@ -168,6 +168,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - A new project with the same label as an existing Team Folder no longer takes
   over that folder's groups. `scs_manager_integration` answers 409, and the
   manager asks for a different name (or keeps the old name on rename).
+- Creating a WissKI right after its project no longer fails with "Nextcloud
+  Team Folder … is not available under the owner mount yet". Nextcloud adds
+  Keycloak groups only at Drive login, so the new Team Folder was missing from
+  the owner's Drive. The manager now adds the owner to the Team Folder group
+  when it creates the project, adds members when they accept an invitation,
+  and removes them when they leave (Nextcloud provisioning API with the
+  admin credentials). Before mounting, the WissKI creation repeats the step
+  for its owner and clears the rclone directory cache, so the folder shows
+  up at once. `scs-backfill-project-tf --grant-nc-access` uses the same API
+  instead of `occ`.
 - WebProtégé card links open the project's ontology even for signed-out
   users: they go through `/webprotege/oidc/login?return_to=…`, which keeps
   the target across the Keycloak sign-in (needs the matching WebProtégé

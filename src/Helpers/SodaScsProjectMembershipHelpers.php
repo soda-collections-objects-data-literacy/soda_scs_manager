@@ -107,6 +107,8 @@ final class SodaScsProjectMembershipHelpers {
     protected SodaScsJupyterHelpers $jupyterHelpers,
     #[Autowire(service: 'soda_scs_manager.project_application.helpers')]
     protected SodaScsProjectApplicationHelpers $projectApplicationHelpers,
+    #[Autowire(service: 'soda_scs_manager.nextcloud.helpers')]
+    protected SodaScsNextcloudHelpers $nextcloudHelpers,
   ) {
     $this->entityTypeManager = $entityTypeManager;
     $this->languageManager = $languageManager;
@@ -251,6 +253,7 @@ final class SodaScsProjectMembershipHelpers {
         $this->projectHelpers->syncKeycloakGroupMembers($project);
         $this->projectDbAccessHelpers->syncProjectMembersDbAccess($project);
         $this->webprotegeHelpers->grantEdit($project, $recipient);
+        $this->nextcloudHelpers->addUserToGroup((string) ($project->get('groupId')->value ?? ''), $recipient);
       }
 
       $request->setStatus(SodaScsProjectMembershipInterface::STATUS_ACCEPTED);
@@ -688,6 +691,7 @@ final class SodaScsProjectMembershipHelpers {
     $memberId = (int) $member->id();
     $this->projectDbAccessHelpers->revokeProjectMemberDbAccess($member, $project);
     $this->webprotegeHelpers->revokeAccess($project, $member);
+    $this->nextcloudHelpers->removeUserFromGroup((string) ($project->get('groupId')->value ?? ''), $member);
 
     $updatedMembers = array_values(array_filter(
       $project->get('members')->getValue(),

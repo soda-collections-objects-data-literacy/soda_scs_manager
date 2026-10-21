@@ -43,6 +43,16 @@ class SodaScsNextcloudHelpers {
   public const ATTR_APP_PASSWORD = 'nextcloud_app_password';
 
   /**
+   * OCS v1 status code of a successful call.
+   */
+  protected const OCS_STATUS_OK = 100;
+
+  /**
+   * OCS v1 status code of the provisioning API for an unknown user.
+   */
+  protected const OCS_STATUS_UNKNOWN_USER = 103;
+
+  /**
    * Constructs a new SodaScsNextcloudHelpers object.
    *
    * @param \Drupal\soda_scs_manager\RequestActions\SodaScsNextcloudServiceActions $nextcloudServiceActions
@@ -785,6 +795,89 @@ class SodaScsNextcloudHelpers {
       return $prefix . $username;
     }
     return $username;
+  }
+
+  /**
+   * Adds a user to a Nextcloud group, e.g. a project's Team Folder group.
+   *
+   * Nextcloud copies Keycloak groups only when the user logs in to Drive, so
+   * a new project's Team Folder stays hidden until then. Keycloak lists the
+   * user in the same group, so the next login keeps this membership.
+   *
+   * @param string $groupId
+   *   The Nextcloud group id (for projects: the Keycloak gid).
+   * @param \Drupal\user\UserInterface $user
+   *   The Drupal user.
+   *
+   * @return bool
+   *   TRUE when the user is in the group afterwards.
+   */
+  public function addUserToGroup(string $groupId, UserInterface $user): bool {
+    return $this->changeGroupMembership($groupId, $user, FALSE);
+  }
+
+  /**
+   * Removes a user from a Nextcloud group.
+   *
+   * Without this, a removed project member keeps the Team Folder until their
+   * next Drive login.
+   *
+   * @param string $groupId
+   *   The Nextcloud group id (for projects: the Keycloak gid).
+   * @param \Drupal\user\UserInterface $user
+   *   The Drupal user.
+   *
+   * @return bool
+   *   TRUE when the user is no longer in the group.
+   */
+  public function removeUserFromGroup(string $groupId, UserInterface $user): bool {
+    return $this->changeGroupMembership($groupId, $user, TRUE);
+  }
+
+  /**
+   * Adds or removes a group membership via the provisioning API.
+   *
+   * Users who never logged in to Drive have no Nextcloud account yet; they
+   * are skipped with a notice and get their groups at the first login.
+   */
+  protected function changeGroupMembership(string $groupId, UserInterface $user, bool $remove): bool {
+    // Nextcloud user ids are the raw Keycloak sub (user_oidc without prefix).
+    $nextcloudUserId = $this->projectHelpers->getUserSsoUuid($user);
+    if ($groupId === '' || $nextcloudUserId === NULL || $nextcloudUserId === '') {
+      return FALSE;
+    }
+
+    $requestParams = ['groupId' => $groupId, 'userId' => $nextcloudUserId];
+    $request = $remove
+      ? $this->nextcloudServiceActions->buildRemoveUserFromGroupRequest($requestParams)
+      : $this->nextcloudServiceActions->buildAddUserToGroupRequest($requestParams);
+    $logger = $this->loggerFactory->get('soda_scs_manager');
+    if (empty($request['success'])) {
+      $logger->warning('Nextcloud group membership for user @user not changed: @error', [
+        '@user' => $user->id(),
+        '@error' => (string) ($request['error'] ?? 'request could not be built'),
+      ]);
+      return FALSE;
+    }
+
+    $response = $this->nextcloudServiceActions->makeRequest($request);
+    $statusCode = NULL;
+    if (!empty($response['success'])) {
+      $decoded = json_decode((string) $response['data']['nextcloudResponse']->getBody(), TRUE);
+      $statusCode = is_array($decoded) ? ($decoded['ocs']['meta']['statuscode'] ?? NULL) : NULL;
+    }
+    if ($statusCode === self::OCS_STATUS_OK) {
+      return TRUE;
+    }
+
+    $level = $statusCode === self::OCS_STATUS_UNKNOWN_USER ? 'notice' : 'warning';
+    $logger->log($level, 'Could not @action Nextcloud group @group for user @user (OCS status @status).', [
+      '@action' => $remove ? 'leave' : 'join',
+      '@group' => $groupId,
+      '@user' => $user->id(),
+      '@status' => $statusCode ?? 'none',
+    ]);
+    return FALSE;
   }
 
 }

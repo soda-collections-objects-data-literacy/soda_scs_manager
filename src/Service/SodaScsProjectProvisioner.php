@@ -8,10 +8,12 @@ use Drupal\Core\Lock\LockBackendInterface;
 use Drupal\Core\StringTranslation\StringTranslationTrait;
 use Drupal\Core\StringTranslation\TranslationInterface;
 use Drupal\soda_scs_manager\Entity\SodaScsProjectInterface;
+use Drupal\soda_scs_manager\Helpers\SodaScsNextcloudHelpers;
 use Drupal\soda_scs_manager\Helpers\SodaScsProjectDbAccessHelpers;
 use Drupal\soda_scs_manager\Helpers\SodaScsProjectHelpers;
 use Drupal\soda_scs_manager\Helpers\SodaScsProjectNameHelpers;
 use Drupal\soda_scs_manager\ValueObject\SodaScsResult;
+use Drupal\user\UserInterface;
 use Psr\Log\LoggerInterface;
 use Symfony\Component\DependencyInjection\Attribute\Autowire;
 
@@ -38,6 +40,8 @@ class SodaScsProjectProvisioner {
     protected LockBackendInterface $lock,
     #[Autowire(service: 'logger.channel.soda_scs_manager')]
     protected LoggerInterface $logger,
+    #[Autowire(service: 'soda_scs_manager.nextcloud.helpers')]
+    protected SodaScsNextcloudHelpers $nextcloudHelpers,
     #[Autowire(service: 'soda_scs_manager.project_db_access.helpers')]
     protected SodaScsProjectDbAccessHelpers $projectDbAccessHelpers,
     #[Autowire(service: 'soda_scs_manager.project.helpers')]
@@ -175,6 +179,9 @@ class SodaScsProjectProvisioner {
         '@error' => (string) $folderResult->error,
       ]);
     }
+    else {
+      $this->grantTeamFolderAccess($project);
+    }
 
     return SodaScsResult::success(
       data: [
@@ -185,6 +192,24 @@ class SodaScsProjectProvisioner {
         '@project' => $label,
       ]),
     );
+  }
+
+  /**
+   * Adds owner and members to the Team Folder group in Nextcloud.
+   *
+   * Nextcloud copies Keycloak groups only at Drive login, so the Team Folder
+   * would stay hidden until then — also for an application created right
+   * away. Users without a Drive account get the group at their first login.
+   */
+  protected function grantTeamFolderAccess(SodaScsProjectInterface $project): void {
+    $groupId = (string) ($project->get('groupId')->value ?? '');
+    $users = $project->get('members')->referencedEntities();
+    $users[] = $project->get('owner')->entity;
+    foreach ($users as $user) {
+      if ($user instanceof UserInterface) {
+        $this->nextcloudHelpers->addUserToGroup($groupId, $user);
+      }
+    }
   }
 
   /**

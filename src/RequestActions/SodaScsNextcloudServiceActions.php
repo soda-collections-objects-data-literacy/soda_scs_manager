@@ -586,6 +586,42 @@ class SodaScsNextcloudServiceActions implements SodaScsServiceRequestInterface {
   }
 
   /**
+   * Builds a request that adds a user to a group via the provisioning API.
+   *
+   * Nextcloud endpoint: POST /ocs/v1.php/cloud/users/{userid}/groups.
+   * Requires Nextcloud admin credentials in module settings.
+   *
+   * @param array $requestParams
+   *   Required:
+   *     - 'groupId' (string): Nextcloud group id.
+   *     - 'userId' (string): Nextcloud user id.
+   *
+   * @return array
+   *   Request array ready to pass to makeRequest().
+   */
+  public function buildAddUserToGroupRequest(array $requestParams): array {
+    return $this->buildUserGroupRequest('POST', $requestParams);
+  }
+
+  /**
+   * Builds a request that removes a user from a group via the provisioning API.
+   *
+   * Nextcloud endpoint: DELETE /ocs/v1.php/cloud/users/{userid}/groups.
+   * Requires Nextcloud admin credentials in module settings.
+   *
+   * @param array $requestParams
+   *   Required:
+   *     - 'groupId' (string): Nextcloud group id.
+   *     - 'userId' (string): Nextcloud user id.
+   *
+   * @return array
+   *   Request array ready to pass to makeRequest().
+   */
+  public function buildRemoveUserFromGroupRequest(array $requestParams): array {
+    return $this->buildUserGroupRequest('DELETE', $requestParams);
+  }
+
+  /**
    * Not applicable for Nextcloud; returns an empty stub.
    *
    * Nextcloud uses Basic Auth or OIDC Bearer tokens directly — there is no
@@ -849,6 +885,53 @@ class SodaScsNextcloudServiceActions implements SodaScsServiceRequestInterface {
     $user = $requestParams['username'] ?? '';
     $pass = $requestParams['password'] ?? '';
     return 'Basic ' . base64_encode($user . ':' . $pass);
+  }
+
+  /**
+   * Builds an admin request on /cloud/users/{userid}/groups.
+   *
+   * Uses OCS v1, which answers HTTP 200 and reports an unknown user or group
+   * as OCS status 102/103, so makeRequest() does not log those as failures.
+   * The group id goes into the query so POST and DELETE send it the same way.
+   *
+   * @param string $method
+   *   POST to add, DELETE to remove.
+   * @param array $requestParams
+   *   Keys 'groupId' and 'userId'.
+   *
+   * @return array
+   *   Request array ready to pass to makeRequest().
+   */
+  protected function buildUserGroupRequest(string $method, array $requestParams): array {
+    $adminAuth = $this->buildAdminAuthHeader();
+    if ($adminAuth === NULL) {
+      return [
+        'success' => FALSE,
+        'method' => '',
+        'route' => '',
+        'headers' => [],
+        'error' => 'Nextcloud admin credentials are not configured.',
+      ];
+    }
+
+    $nextcloudSettings = $this->sodaScsServiceHelpers->initNextcloudSettings();
+    $route = rtrim($nextcloudSettings['baseUrl'], '/')
+      . '/ocs/v1.php/cloud/users/' . rawurlencode((string) ($requestParams['userId'] ?? ''))
+      . '/groups?' . http_build_query([
+        'format' => 'json',
+        'groupid' => (string) ($requestParams['groupId'] ?? ''),
+      ]);
+
+    return [
+      'success' => TRUE,
+      'method' => $method,
+      'route' => $route,
+      'headers' => [
+        'OCS-APIRequest' => 'true',
+        'Accept' => 'application/json',
+        'Authorization' => $adminAuth,
+      ],
+    ];
   }
 
   /**

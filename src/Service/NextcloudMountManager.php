@@ -103,6 +103,10 @@ class NextcloudMountManager {
       return FALSE;
     }
     $path = $this->projectTeamFolderPathInContainer($user, $project);
+    clearstatcache(TRUE, $path);
+    if (!is_dir($path)) {
+      $this->grantProjectTeamFolderAccess($user, $project);
+    }
     $deadline = time() + max(1, $timeoutSeconds);
     do {
       clearstatcache(TRUE, $path);
@@ -268,6 +272,26 @@ class NextcloudMountManager {
     }
 
     return $stats;
+  }
+
+  /**
+   * Makes a just-created Team Folder appear in the user's Drive mount.
+   *
+   * Nextcloud adds Keycloak groups only at Drive login, and rclone caches the
+   * Drive root listing, so a WissKI created right after its project would
+   * otherwise not find the Team Folder.
+   */
+  protected function grantProjectTeamFolderAccess(UserInterface $user, SodaScsProjectInterface $project): void {
+    $this->nextcloudHelpers->addUserToGroup((string) ($project->get('groupId')->value ?? ''), $user);
+    try {
+      $this->mounterClient->forgetDirectoryCache($this->machineNameForUser($user));
+    }
+    catch (\Throwable $e) {
+      $this->logger->warning('Could not refresh the Nextcloud mount of user @user: @msg', [
+        '@user' => $user->id(),
+        '@msg' => $e->getMessage(),
+      ]);
+    }
   }
 
   /**

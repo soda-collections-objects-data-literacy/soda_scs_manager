@@ -4,10 +4,8 @@ declare(strict_types=1);
 
 namespace Drupal\soda_scs_manager\Drush\Commands;
 
-use Drupal\Core\Config\ConfigFactoryInterface;
 use Drupal\Core\Entity\EntityTypeManagerInterface;
 use Drupal\soda_scs_manager\Entity\SodaScsProjectInterface;
-use Drupal\soda_scs_manager\Helpers\SodaScsContainerHelpers;
 use Drupal\soda_scs_manager\Helpers\SodaScsNextcloudHelpers;
 use Drupal\soda_scs_manager\Helpers\SodaScsProjectHelpers;
 use Drupal\user\UserInterface;
@@ -25,11 +23,8 @@ final class SodaScsProjectTeamFolderCommands extends DrushCommands {
 
   public function __construct(
     protected EntityTypeManagerInterface $entityTypeManager,
-    protected ConfigFactoryInterface $configFactory,
     #[Autowire(service: 'soda_scs_manager.project.helpers')]
     protected SodaScsProjectHelpers $projectHelpers,
-    #[Autowire(service: 'soda_scs_manager.container.helpers')]
-    protected SodaScsContainerHelpers $containerHelpers,
     #[Autowire(service: 'soda_scs_manager.nextcloud.helpers')]
     protected SodaScsNextcloudHelpers $nextcloudHelpers,
   ) {
@@ -47,7 +42,7 @@ final class SodaScsProjectTeamFolderCommands extends DrushCommands {
   #[CLI\Option(name: 'project', description: 'Drupal project entity id to backfill.')]
   #[CLI\Option(name: 'all', description: 'Backfill every soda_scs_project.')]
   #[CLI\Option(name: 'limit', description: 'Process at most N projects (after selection).')]
-  #[CLI\Option(name: 'grant-nc-access', description: 'Also run occ group:adduser for owner and members (immediate Drive visibility).')]
+  #[CLI\Option(name: 'grant-nc-access', description: 'Also add owner and members to the Nextcloud group (immediate Drive visibility).')]
   #[CLI\Usage(name: 'drush soda_scs_manager:backfill-project-team-folders --dry-run --all', description: 'Inventory all projects and report missing Team Folders.')]
   #[CLI\Usage(name: 'drush soda_scs_manager:backfill-project-team-folders --project=6', description: 'Backfill a single legacy project.')]
   #[CLI\Usage(name: 'drush soda_scs_manager:backfill-project-team-folders --all --grant-nc-access', description: 'Backfill all projects and grant Nextcloud group membership.')]
@@ -113,7 +108,7 @@ final class SodaScsProjectTeamFolderCommands extends DrushCommands {
 
       if ($dryRun) {
         $this->output()->writeln('  [dry-run] would: updateProjectGroupAttributes → syncKeycloakGroupMembers → createProjectTeamFolder → updateProjectTeamFolderLabel'
-          . ($grantNcAccess ? ' → occ group:adduser' : ''));
+          . ($grantNcAccess ? ' → Nextcloud group:adduser' : ''));
         if ($hasFolder) {
           $skippedExisting++;
         }
@@ -226,7 +221,7 @@ final class SodaScsProjectTeamFolderCommands extends DrushCommands {
   }
 
   /**
-   * Add project owner/members to the Nextcloud ACL group via occ.
+   * Add project owner/members to the Nextcloud ACL group.
    */
   protected function grantNextcloudGroupAccess(SodaScsProjectInterface $project): void {
     $groupId = (string) ($project->get('groupId')->value ?? '');
@@ -238,85 +233,30 @@ final class SodaScsProjectTeamFolderCommands extends DrushCommands {
     $users = [];
     $owner = $project->get('owner')->entity;
     if ($owner instanceof UserInterface) {
-      $users[] = $owner;
+      $users[(int) $owner->id()] = $owner;
     }
     foreach ($project->get('members')->referencedEntities() as $member) {
       if ($member instanceof UserInterface) {
-        $users[] = $member;
+        $users[(int) $member->id()] = $member;
       }
     }
 
-    $seen = [];
     foreach ($users as $user) {
-      $ssoUuid = $this->projectHelpers->getUserSsoUuid($user);
-      if ($ssoUuid === NULL || $ssoUuid === '') {
-        $this->logger()->warning(sprintf(
-          '  grant-nc-access: no SSO UUID for Drupal user %s',
-          $user->getAccountName(),
-        ));
-        continue;
-      }
-
-      // occ / groupfolders use the raw user_oidc id (Keycloak sub), not the
-      // prefixed WebDAV username.
-      $ncUid = $ssoUuid;
-      if (isset($seen[$ncUid])) {
-        continue;
-      }
-      $seen[$ncUid] = TRUE;
-
-      $ok = $this->occGroupAddUser($groupId, $ncUid);
-      if ($ok) {
+      if ($this->nextcloudHelpers->addUserToGroup($groupId, $user)) {
         $this->output()->writeln(sprintf(
-          '  grant-nc-access: group:adduser %s %s (Drupal %s)',
-          $groupId,
-          $ncUid,
+          '  grant-nc-access: added Drupal user %s to group %s',
           $user->getAccountName(),
+          $groupId,
         ));
       }
       else {
         $this->logger()->warning(sprintf(
-          '  grant-nc-access FAILED for %s → group %s (user may need Drive login first)',
+          '  grant-nc-access FAILED for %s → group %s (no SSO link, or user may need Drive login first)',
           $user->getAccountName(),
           $groupId,
         ));
       }
     }
-  }
-
-  /**
-   * Run `occ group:adduser` in the Nextcloud container.
-   */
-  protected function occGroupAddUser(string $groupId, string $ncUid): bool {
-    $settings = $this->configFactory->get('soda_scs_manager.settings')->get('nextcloud')['generalSettings'] ?? [];
-    $container = (string) ($settings['occContainerName'] ?? '');
-    if ($container === '') {
-      $container = SodaScsNextcloudHelpers::DEFAULT_OCC_CONTAINER;
-    }
-
-    $result = $this->containerHelpers->executeDockerExecCommand([
-      'cmd' => [
-        'php',
-        '/var/www/html/occ',
-        'group:adduser',
-        $groupId,
-        $ncUid,
-      ],
-      'containerName' => $container,
-      'user' => 'www-data',
-    ]);
-
-    if ($result->success) {
-      return TRUE;
-    }
-
-    // Already a member is still success for our purposes.
-    $error = strtolower((string) ($result->error ?? '') . ' ' . (string) ($result->data['output'] ?? ''));
-    if (str_contains($error, 'already') || str_contains($error, 'exist')) {
-      return TRUE;
-    }
-
-    return FALSE;
   }
 
 }

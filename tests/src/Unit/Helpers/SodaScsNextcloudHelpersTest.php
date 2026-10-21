@@ -7,14 +7,19 @@ namespace Drupal\Tests\soda_scs_manager\Unit\Helpers;
 use Drupal\Core\Config\ConfigFactoryInterface;
 use Drupal\Core\Config\ImmutableConfig;
 use Drupal\Core\Logger\LoggerChannelFactoryInterface;
+use Drupal\Core\Logger\LoggerChannelInterface;
 use Drupal\Core\Messenger\MessengerInterface;
 use Drupal\Core\Session\AccountProxyInterface;
 use Drupal\openid_connect\OpenIDConnectSessionInterface;
+use Drupal\soda_scs_manager\Helpers\SodaScsContainerHelpers;
 use Drupal\soda_scs_manager\Helpers\SodaScsKeycloakHelpers;
 use Drupal\soda_scs_manager\Helpers\SodaScsNextcloudHelpers;
 use Drupal\soda_scs_manager\Helpers\SodaScsProjectHelpers;
 use Drupal\soda_scs_manager\RequestActions\SodaScsNextcloudServiceActions;
+use Drupal\soda_scs_manager\Service\NextcloudMountCredentialsStore;
 use Drupal\Tests\UnitTestCase;
+use Drupal\user\UserInterface;
+use GuzzleHttp\Psr7\Response;
 
 /**
  * @coversDefaultClass \Drupal\soda_scs_manager\Helpers\SodaScsNextcloudHelpers
@@ -25,8 +30,12 @@ class SodaScsNextcloudHelpersTest extends UnitTestCase {
   /**
    * Builds a helper with a fixed OIDC username prefix.
    */
-  private function createHelper(string $prefix = 'keycloak-'): SodaScsNextcloudHelpers {
-    $nextcloudActions = $this->createMock(SodaScsNextcloudServiceActions::class);
+  private function createHelper(
+    string $prefix = 'keycloak-',
+    ?SodaScsNextcloudServiceActions $nextcloudActions = NULL,
+    ?SodaScsProjectHelpers $projectHelpers = NULL,
+  ): SodaScsNextcloudHelpers {
+    $nextcloudActions ??= $this->createMock(SodaScsNextcloudServiceActions::class);
     $nextcloudActions->method('getOidcUsernamePrefix')->willReturn($prefix);
 
     $config = $this->createMock(ImmutableConfig::class);
@@ -41,6 +50,9 @@ class SodaScsNextcloudHelpersTest extends UnitTestCase {
     $configFactory = $this->createMock(ConfigFactoryInterface::class);
     $configFactory->method('get')->with('soda_scs_manager.settings')->willReturn($config);
 
+    $loggerFactory = $this->createMock(LoggerChannelFactoryInterface::class);
+    $loggerFactory->method('get')->willReturn($this->createMock(LoggerChannelInterface::class));
+
     return new SodaScsNextcloudHelpers(
       $nextcloudActions,
       $configFactory,
@@ -48,9 +60,69 @@ class SodaScsNextcloudHelpersTest extends UnitTestCase {
       $this->createMock(MessengerInterface::class),
       $this->createMock(OpenIDConnectSessionInterface::class),
       $this->createMock(SodaScsKeycloakHelpers::class),
-      $this->createMock(SodaScsProjectHelpers::class),
-      $this->createMock(LoggerChannelFactoryInterface::class),
+      $projectHelpers ?? $this->createMock(SodaScsProjectHelpers::class),
+      $loggerFactory,
+      $this->createMock(SodaScsContainerHelpers::class),
+      $this->createMock(NextcloudMountCredentialsStore::class),
     );
+  }
+
+  /**
+   * Builds Nextcloud actions whose group request answers an OCS status.
+   */
+  private function createGroupActions(int $ocsStatus): SodaScsNextcloudServiceActions {
+    $actions = $this->createMock(SodaScsNextcloudServiceActions::class);
+    $actions->method('buildAddUserToGroupRequest')
+      ->with(['groupId' => '10069', 'userId' => 'sub-1'])
+      ->willReturn(['success' => TRUE, 'method' => 'POST', 'route' => 'https://drive.test', 'headers' => []]);
+    $actions->method('makeRequest')->willReturn([
+      'success' => TRUE,
+      'data' => [
+        'nextcloudResponse' => new Response(200, [], json_encode([
+          'ocs' => ['meta' => ['statuscode' => $ocsStatus], 'data' => []],
+        ])),
+      ],
+    ]);
+    return $actions;
+  }
+
+  /**
+   * Builds project helpers that resolve the given SSO UUID.
+   */
+  private function createProjectHelpers(?string $ssoUuid): SodaScsProjectHelpers {
+    $projectHelpers = $this->createMock(SodaScsProjectHelpers::class);
+    $projectHelpers->method('getUserSsoUuid')->willReturn($ssoUuid);
+    return $projectHelpers;
+  }
+
+  /**
+   * @covers ::addUserToGroup
+   * @dataProvider groupStatusProvider
+   */
+  public function testAddUserToGroupFollowsOcsStatus(int $ocsStatus, bool $expected): void {
+    $helper = $this->createHelper('', $this->createGroupActions($ocsStatus), $this->createProjectHelpers('sub-1'));
+    $this->assertSame($expected, $helper->addUserToGroup('10069', $this->createMock(UserInterface::class)));
+  }
+
+  /**
+   * @return array<string, array{0: int, 1: bool}>
+   */
+  public static function groupStatusProvider(): array {
+    return [
+      'added' => [100, TRUE],
+      'no Drive account yet' => [103, FALSE],
+      'unknown group' => [102, FALSE],
+    ];
+  }
+
+  /**
+   * @covers ::addUserToGroup
+   */
+  public function testAddUserToGroupSkipsUsersWithoutSso(): void {
+    $actions = $this->createMock(SodaScsNextcloudServiceActions::class);
+    $actions->expects($this->never())->method('makeRequest');
+    $helper = $this->createHelper('', $actions, $this->createProjectHelpers(NULL));
+    $this->assertFalse($helper->addUserToGroup('10069', $this->createMock(UserInterface::class)));
   }
 
   /**

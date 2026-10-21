@@ -155,6 +155,31 @@ class NextcloudMounterClient {
   }
 
   /**
+   * Drops the cached directory listings of a mount.
+   *
+   * rclone keeps listings for its dir cache time (5 minutes by default), so a
+   * folder that appears on the remote stays invisible until they expire.
+   * Missing mounts are ignored.
+   *
+   * @throws \RuntimeException
+   *   When an rc call fails.
+   */
+  public function forgetDirectoryCache(string $relativePath): void {
+    $mountPoint = $this->sidecarMountPoint($relativePath);
+    foreach ($this->listMounts() as $mount) {
+      if (!is_array($mount) || ($mount['MountPoint'] ?? $mount['mountPoint'] ?? NULL) !== $mountPoint) {
+        continue;
+      }
+      $fs = $mount['Fs'] ?? $mount['fs'] ?? NULL;
+      if (is_string($fs) && $fs !== '') {
+        // Without paths, vfs/forget drops every cached listing of this VFS.
+        $this->request('vfs/forget', ['fs' => $fs]);
+      }
+      return;
+    }
+  }
+
+  /**
    * Unmounts a mount. Missing mounts are ignored.
    */
   public function unmount(string $relativePath): void {

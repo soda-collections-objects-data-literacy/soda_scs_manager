@@ -28,7 +28,7 @@ For a project with Drupal id `P` and `groupId` `G` (computed: `P + 10000`):
 | Nextcloud Team Folder mount | Project **label** (visible name) |
 | Team Folder ACL group | `G` (plain integer name, **not** `keycloak-G`) |
 | `scs_manager_integration` row | `machineName=G`, `externalProjectId=P` |
-| Nextcloud user in group `G` | After OIDC re-login, or `--grant-nc-access` / manual `occ group:adduser` |
+| Nextcloud user in group `G` | Set by the manager (project creation, accepted invitation, WissKI creation); otherwise after OIDC re-login, `--grant-nc-access` or manual `occ group:adduser` |
 
 ## Drush batch (preferred)
 
@@ -56,7 +56,7 @@ Per project the command runs, in order:
 2. **`syncKeycloakGroupMembers`** — ensures owner/members are in the Keycloak project group.
 3. **`createProjectTeamFolder`** — creates Team Folder + registration; skips if `externalProjectId` already exists.
 4. **`updateProjectTeamFolderLabel`** — re-syncs mount label and group ACL.
-5. With **`--grant-nc-access`**: `occ group:adduser G <keycloak-sub>` for owner and members.
+5. With **`--grant-nc-access`**: adds owner and members to Nextcloud group `G` (`SodaScsNextcloudHelpers::addUserToGroup()`, provisioning API `POST /ocs/v1.php/cloud/users/<keycloak-sub>/groups` with the admin credentials). Users without a Drive account yet are reported as failed and get the group at their first login.
 
 Labels are **not** renamed. Errors are logged per project; the batch continues.
 
@@ -90,7 +90,9 @@ echo "updateProjectTeamFolderLabel: ".($r4->success ? "OK" : $r4->error)."\n";
 
 ## Immediate Nextcloud access (optional)
 
-OIDC group provisioning adds the user to Nextcloud group `G` on **next login**. Prefer `--grant-nc-access` on the Drush command. Manual equivalent:
+OIDC group provisioning adds the user to Nextcloud group `G` only on **next login**. The manager therefore adds members itself: the owner when the project is created, members when they accept an invitation (removed again when they leave), and the WissKI owner before its Team Folder is mounted — the WissKI creation also drops the rclone directory cache of the owner's Drive mount (`vfs/forget`), which otherwise hides a new folder for up to 5 minutes.
+
+For legacy projects prefer `--grant-nc-access` on the Drush command. Manual equivalent:
 
 ```bash
 # Resolve Nextcloud UID (often the Keycloak user UUID under user_oidc).

@@ -56,6 +56,40 @@ class NextcloudMounterClientTest extends UnitTestCase {
   }
 
   /**
+   * @covers ::forgetDirectoryCache
+   */
+  public function testForgetDirectoryCacheTargetsTheMountsVfs(): void {
+    putenv('NEXTCLOUD_MOUNTER_RC_URL=http://mounter.test:5572');
+    putenv('NEXTCLOUD_MOUNTER_RC_USER=user');
+    putenv('NEXTCLOUD_MOUNTER_RC_PASS=pass');
+
+    $forgotten = [];
+    $http = $this->createMock(ClientInterface::class);
+    $http->method('request')
+      ->willReturnCallback(function (string $method, string $uri, array $options) use (&$forgotten) {
+        if (str_ends_with($uri, '/mount/listmounts')) {
+          return new Response(200, [], json_encode([
+            'mountPoints' => [
+              ['Fs' => ':webdav{AAAAA}:', 'MountPoint' => '/mnt/nextcloud/alice'],
+              ['Fs' => ':webdav{BBBBB}:', 'MountPoint' => '/mnt/nextcloud/bob'],
+            ],
+          ]));
+        }
+        if (str_ends_with($uri, '/vfs/forget')) {
+          $forgotten[] = $options['json'];
+          return new Response(200, [], '{}');
+        }
+        $this->fail('Unexpected URI: ' . $uri);
+      });
+
+    $client = new NextcloudMounterClient($http, $this->createMock(LoggerInterface::class));
+    $client->forgetDirectoryCache('bob');
+    $client->forgetDirectoryCache('carol');
+
+    $this->assertSame([['fs' => ':webdav{BBBBB}:']], $forgotten);
+  }
+
+  /**
    * @covers ::sidecarMountPoint
    * @covers ::hostMountPath
    */
