@@ -99,7 +99,7 @@ abstract class SodaScsKernelTestBase extends KernelTestBase {
     $config = $this->config('soda_scs_manager.settings');
     // Set Keycloak settings with the structure used by the code.
     $config->set('keycloak.keycloakTabs.generalSettings.fields', [
-      'keycloakHost' => 'https://test-keycloak.example.com',
+      'keycloakUrl'  => 'https://test-keycloak.example.com',
       'keycloakRealm' => 'test-realm',
       'adminUsername' => 'test-admin',
       'adminPassword' => 'test-password',

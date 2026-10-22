@@ -71,19 +71,19 @@ class SodaScsKeycloakHelpers {
   /**
    * Get a keycloak user by name.
    *
-   * @param string $keycloakToken
-   *   The keycloak token.
+   * @param string|null $keycloakToken
+   *   The keycloak token; NULL when getKeycloakToken() could not get one.
    * @param string $username
    *   The name of the user.
    *
-   * @return array
-   *   The keycloak user.
+   * @return array|null
+   *   The keycloak user, or NULL without a token, user list or match.
    */
-  public function getKeycloakUser(string $keycloakToken, string $username) {
+  public function getKeycloakUser(?string $keycloakToken, string $username) {
     if (!$keycloakToken) {
       return NULL;
     }
-    $keycloakUsers = $this->getKeycloakUsers($keycloakToken);
+    $keycloakUsers = $this->getKeycloakUsers($keycloakToken) ?? [];
     foreach ($keycloakUsers as $keycloakUser) {
       if ($keycloakUser['username'] == $username) {
         return $keycloakUser;

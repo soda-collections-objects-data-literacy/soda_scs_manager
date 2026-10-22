@@ -167,6 +167,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- Saving a user no longer fails with a TypeError when no Keycloak token can
+  be fetched (Keycloak unreachable or not configured); the Keycloak field sync
+  is skipped instead.
 - Pages no longer fail with "Source path … has to start with a slash" on
   Drupal 11.4 while the documentation book does not exist yet: the
   Documentation menu link keeps the leading slash of its unrouted path.
