@@ -26,6 +26,11 @@ use Drupal\Core\Url;
 final class DocumentationInternalPathMenuLink extends MenuLinkDefault {
 
   /**
+   * Unprefixed system path of the documentation book root.
+   */
+  public const DOCUMENTATION_PATH = '/soda-scs-manager/documentation';
+
+  /**
    * {@inheritdoc}
    */
   public function getUrlObject($title_attribute = TRUE) {
@@ -40,7 +45,15 @@ final class DocumentationInternalPathMenuLink extends MenuLinkDefault {
         $options['attributes']['title'] = $description;
       }
     }
-    return Url::fromUri('internal:/soda-scs-manager/documentation', $options);
+    $url = Url::fromUri('internal:' . self::DOCUMENTATION_PATH, $options);
+    if (!$url->isRouted()) {
+      // Without the documentation book the path is unrouted, and internal:
+      // turns it into base: without the leading slash. Outbound path
+      // processing then fails on Drupal 11.4+ ("Source path … has to start
+      // with a slash"), so keep the slash.
+      $url = Url::fromUri('base:' . self::DOCUMENTATION_PATH, $options);
+    }
+    return $url;
   }
 
   /**

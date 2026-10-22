@@ -167,6 +167,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- Pages no longer fail with "Source path … has to start with a slash" on
+  Drupal 11.4 while the documentation book does not exist yet: the
+  Documentation menu link keeps the leading slash of its unrouted path.
 - Installing the module on a fresh site works again. The companion theme was
   listed as a module dependency, which Drupal cannot resolve, so `drush en`
   aborted; the install requirements now check that `soda_scs_manager_theme`
