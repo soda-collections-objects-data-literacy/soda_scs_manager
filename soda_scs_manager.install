@@ -25,6 +25,20 @@ use Drupal\soda_scs_manager\ComputedField\SodaScsGroupIdComputedItemList;
  */
 function soda_scs_manager_requirements($phase): array {
   $requirements = [];
+
+  // The module needs its companion theme, but a module cannot list a theme
+  // under dependencies; check it here and install it in hook_install().
+  if ($phase === 'install') {
+    if (!\Drupal::service('extension.list.theme')->exists('soda_scs_manager_theme')) {
+      $requirements['soda_scs_manager_theme'] = [
+        'title' => t('SCS Manager: companion theme'),
+        'severity' => REQUIREMENT_ERROR,
+        'description' => t('The soda_scs_manager_theme theme is missing. Place it in themes/custom (https://github.com/rnsrk/soda_scs_manager_theme) before installing SODa SCS Manager.'),
+      ];
+    }
+    return $requirements;
+  }
+
   if ($phase !== 'runtime') {
     return $requirements;
   }
@@ -46,6 +60,11 @@ function soda_scs_manager_requirements($phase): array {
  * Implements hook_install().
  */
 function soda_scs_manager_install() {
+  // The module libraries depend on the companion theme's global library.
+  if (!\Drupal::service('theme_handler')->themeExists('soda_scs_manager_theme')) {
+    \Drupal::service('theme_installer')->install(['soda_scs_manager_theme']);
+  }
+
   $source_directory = \Drupal::service('extension.list.module')
     ->getPath('soda_scs_manager') . '/assets/images';
   $destination_directory = 'public://soda_scs_manager/images';

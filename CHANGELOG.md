@@ -167,6 +167,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- Installing the module on a fresh site works again. The companion theme was
+  listed as a module dependency, which Drupal cannot resolve, so `drush en`
+  aborted; the install requirements now check that `soda_scs_manager_theme`
+  is present and `hook_install()` installs it. The Documentation body field
+  ships its own `field.storage.node.body` as optional config, because Drupal
+  11.3+ no longer creates that storage on install; sites that already have it
+  keep theirs.
 - The start page (`/soda-scs-manager/start`) no longer fails with a TypeError
   for users without a first name (e.g. admin or fresh SSO accounts); it greets
   them by account name.

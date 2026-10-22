@@ -11,4 +11,3 @@ dependencies:
   - drupal:openid_connect
   - drupal:smtp
   - drupal:field_group
-  - soda_scs_manager_theme
