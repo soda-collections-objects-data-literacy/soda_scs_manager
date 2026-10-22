@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [3.1.0] - 2026-10-22
+
 ### Added
 
 - Every project with JupyterHub has one shared JupyterLab with real-time
@@ -523,6 +525,7 @@ Development line: branch `2.x`. Major release relative to `1.3.x` (projects on s
 - Move toward fully Portainer-driven lifecycle for managed services.
 
 [unreleased]: https://github.com/soda-collections-objects-data-literacy/soda_scs_manager/compare/3.0.0...HEAD
+[3.1.0]: https://github.com/soda-collections-objects-data-literacy/soda_scs_manager/compare/3.0.0...3.1.0
 [3.0.0]: https://github.com/soda-collections-objects-data-literacy/soda_scs_manager/compare/2.4.2...3.0.0
 [2.4.2]: https://github.com/soda-collections-objects-data-literacy/soda_scs_manager/compare/2.4.1...2.4.2
 [2.4.1]: https://github.com/soda-collections-objects-data-literacy/soda_scs_manager/compare/2.4.0...2.4.1
