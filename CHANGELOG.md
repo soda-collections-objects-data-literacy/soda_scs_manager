@@ -167,6 +167,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- The start page (`/soda-scs-manager/start`) no longer fails with a TypeError
+  for users without a first name (e.g. admin or fresh SSO accounts); it greets
+  them by account name.
 - Deleting an application, project, or profile shows the same progress overlay
   as creating an application, instead of only relabeling the confirm button.
 - The co-working intro Skip control stays inside the panel and wraps on a narrow

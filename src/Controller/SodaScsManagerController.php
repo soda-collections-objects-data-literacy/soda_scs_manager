@@ -292,7 +292,12 @@ class SodaScsManagerController extends ControllerBase {
     $currentUser = $this->currentUser();
     /** @var \Drupal\user\UserInterface $userEntity */
     $userEntity = $this->entityTypeManager->getStorage('user')->load($currentUser->id());
-    $userFirstName = $currentUser && $userEntity && $userEntity->hasField('first_name') ? $userEntity->get('first_name')->value : $currentUser->getAccountName();
+    // An empty first name (e.g. admin or fresh SSO accounts) would reach the
+    // template as a NULL placeholder; fall back to the account name.
+    $userFirstName = $userEntity && $userEntity->hasField('first_name') ? trim((string) $userEntity->get('first_name')->value) : '';
+    if ($userFirstName === '') {
+      $userFirstName = $currentUser->getAccountName();
+    }
     $connectedAccountsUrl = Url::fromRoute('openid_connect.accounts_controller_index', [
       'user' => $currentUser->id(),
     ])->toString();
