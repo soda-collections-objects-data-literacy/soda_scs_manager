@@ -187,6 +187,7 @@ class SodaScsManagerController extends ControllerBase {
       $projectCards[] = [
         '#theme' => 'soda_scs_manager__project_card',
         '#project_id' => (int) $project->id(),
+        '#project_updated' => $project->get('updated')->value,
         '#label' => $project->label(),
         '#owner_id' => $ownerId,
         '#url' => Url::fromRoute('entity.soda_scs_project.canonical', [
