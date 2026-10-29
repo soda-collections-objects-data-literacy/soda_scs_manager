@@ -43,9 +43,7 @@ class SodaScsDemoLabelBuilderTest extends UnitTestCase {
     return [
       'wisski' => [SodaScsDemoLabelBuilder::APP_WISSKI, 1, 'anna Demo-WissKI'],
       'jupyter' => [SodaScsDemoLabelBuilder::APP_JUPYTER, 1, 'anna Demo-JupyterHub'],
-      'first database' => [SodaScsDemoLabelBuilder::APP_DATABASE, 1, 'anna Demo-Datenbank'],
-      'second database' => [SodaScsDemoLabelBuilder::APP_DATABASE, 2, 'anna Demo-Datenbank 2'],
-      'second triplestore' => [SodaScsDemoLabelBuilder::APP_TRIPLESTORE, 2, 'anna Demo-Triplestore 2'],
+      'webprotege' => [SodaScsDemoLabelBuilder::APP_WEBPROTEGE, 1, 'anna Demo-WebProtégé'],
     ];
   }
 
@@ -63,11 +61,10 @@ class SodaScsDemoLabelBuilderTest extends UnitTestCase {
   public static function appMachineNameProvider(): array {
     return [
       'wisski' => [SodaScsDemoLabelBuilder::APP_WISSKI, 'anna', 1, 1, 'anna-demo'],
-      'database' => [SodaScsDemoLabelBuilder::APP_DATABASE, 'anna', 1, 1, 'anna-demo-db'],
-      'triplestore index' => [SodaScsDemoLabelBuilder::APP_TRIPLESTORE, 'anna', 2, 1, 'anna-demo-ts-2'],
+      'webprotege' => [SodaScsDemoLabelBuilder::APP_WEBPROTEGE, 'anna', 1, 1, 'anna-demo-ontology'],
       'jupyter retry' => [SodaScsDemoLabelBuilder::APP_JUPYTER, 'anna', 1, 3, 'anna-demo-jupyter-3'],
       'umlauts and dots' => [SodaScsDemoLabelBuilder::APP_WISSKI, 'Jörg.Müller', 1, 1, 'joerg-mueller-demo'],
-      'no letters' => [SodaScsDemoLabelBuilder::APP_DATABASE, '123', 1, 1, 'user-demo-db'],
+      'no letters' => [SodaScsDemoLabelBuilder::APP_JUPYTER, '123', 1, 1, 'user-demo-jupyter'],
     ];
   }
 

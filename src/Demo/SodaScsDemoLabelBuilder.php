@@ -13,15 +13,15 @@ use Symfony\Component\DependencyInjection\Attribute\Autowire;
  * Labels follow "<username> Demo" and "<username> Demo-<App>". Machine names
  * are bases that the stack and component actions prefix (stack-, sql-, ts-,
  * wisski-), so they stay within the 30 characters of the stack form.
+ * A demo has WissKI, JupyterHub and WebProtégé. The WissKI stack brings its
+ * own database and triplestore; those are not separate demo applications.
  */
 class SodaScsDemoLabelBuilder {
 
   /**
    * Application keys of a demo project.
    */
-  public const APP_DATABASE = 'database';
   public const APP_JUPYTER = 'jupyter';
-  public const APP_TRIPLESTORE = 'triplestore';
   public const APP_WEBPROTEGE = 'webprotege';
   public const APP_WISSKI = 'wisski';
 
@@ -29,9 +29,7 @@ class SodaScsDemoLabelBuilder {
    * Label suffix per application, after "<username> ".
    */
   protected const APP_LABEL_SUFFIXES = [
-    self::APP_DATABASE => 'Demo-Datenbank',
     self::APP_JUPYTER => 'Demo-JupyterHub',
-    self::APP_TRIPLESTORE => 'Demo-Triplestore',
     self::APP_WEBPROTEGE => 'Demo-WebProtégé',
     self::APP_WISSKI => 'Demo-WissKI',
   ];
@@ -40,9 +38,7 @@ class SodaScsDemoLabelBuilder {
    * Machine name suffix per application, after "<username>-".
    */
   protected const APP_MACHINE_NAME_SUFFIXES = [
-    self::APP_DATABASE => 'demo-db',
     self::APP_JUPYTER => 'demo-jupyter',
-    self::APP_TRIPLESTORE => 'demo-ts',
     self::APP_WEBPROTEGE => 'demo-ontology',
     self::APP_WISSKI => 'demo',
   ];
@@ -61,7 +57,7 @@ class SodaScsDemoLabelBuilder {
   ) {}
 
   /**
-   * Label of a demo application, e.g. "anna Demo-WissKI" or "anna Demo-Datenbank 2".
+   * Label of a demo application, e.g. "anna Demo-WissKI".
    *
    * @param string $appKey
    *   One of the APP_* constants.

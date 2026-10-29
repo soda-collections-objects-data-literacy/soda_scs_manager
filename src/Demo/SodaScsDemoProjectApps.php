@@ -12,9 +12,9 @@ use Drupal\soda_scs_manager\Entity\SodaScsStackInterface;
 /**
  * Finds the applications of a project that take part in a demo.
  *
- * Applications are matched by bundle and ordered by id, so the n-th
- * standalone database of the template always lands in the n-th standalone
- * database of the user's demo.
+ * A demo has one WissKI stack, one Jupyter stack and one WebProtégé
+ * component. The database and triplestore inside the WissKI stack stay
+ * part of that stack.
  */
 class SodaScsDemoProjectApps {
 
@@ -38,23 +38,6 @@ class SodaScsDemoProjectApps {
   public function jupyterStack(SodaScsProjectInterface $project): ?SodaScsStackInterface {
     $stacks = $this->projectStacks($project, self::JUPYTER_STACK_BUNDLE);
     return reset($stacks) ?: NULL;
-  }
-
-  /**
-   * Components of a project that do not belong to a stack, ordered by id.
-   *
-   * @return \Drupal\soda_scs_manager\Entity\SodaScsComponentInterface[]
-   *   The components.
-   */
-  public function standaloneComponents(SodaScsProjectInterface $project, string $bundle): array {
-    $ids = $this->entityTypeManager->getStorage('soda_scs_component')->getQuery()
-      ->accessCheck(FALSE)
-      ->condition('bundle', $bundle)
-      ->condition('partOfProjects', $project->id())
-      ->notExists('partOfStack')
-      ->sort('id')
-      ->execute();
-    return array_values($this->entityTypeManager->getStorage('soda_scs_component')->loadMultiple($ids));
   }
 
   /**

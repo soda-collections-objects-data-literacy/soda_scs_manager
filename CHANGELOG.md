@@ -16,26 +16,34 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - While a demo is being set up, the project page lists each application that
   is not ready yet in the sidebar. A line disappears as soon as that
-  application is ready: SQL and the triplestore once they exist, Jupyter once
-  its home directory is restored, WebProtégé once the ontology is imported,
-  and WissKI once it is running again after the restore. Each line shows a
-  spinning throbber next to its status. The application cards are rebuilt
-  when an application is created and again when that application is ready.
+  application is ready: Jupyter once its home directory is restored,
+  WebProtégé once the ontology is imported, and WissKI once it is running
+  again after the restore. Each line shows a spinning throbber next to its
+  status. The application cards are rebuilt when an application is created
+  and again when that application is ready.
+- Demo projects include WissKI, JupyterHub and WebProtégé with sample data.
+  Standalone SQL databases and triplestores are no longer created or
+  restored. The WissKI stack still has its own database and triplestore.
 - Jupyter and WebProtégé cards show the instance name, the same way as WissKI
   and the database. New Jupyter demos are named "<username> Demo-JupyterHub".
+
+### Fixed
+
+- While a demo is being set up or reset, a WissKI that is stopped only for
+  the data restore stays on Starting. It no longer flips to Stopped until
+  the setup job has finished.
 
 ### Added
 
 - The create-project wizard has New and Demo tabs when the user has no demo
-  yet and a demo version is active. Demo explains that every application is
-  included once, with sample data. Next then creates that demo.
+  yet and a demo version is active. Demo explains that it includes WissKI,
+  JupyterHub and WebProtégé with sample data. Next then creates that demo.
 - Demo projects: users can start with "<username> Demo", a copy of the
   central "Demo Projekt" with its WissKI, shared JupyterLab home, Team Folder
-  files, WebProtégé ontology and standalone databases and triplestores. Apps
-  are named "<username> Demo-WissKI", "<username> Demo-JupyterHub",
-  "<username> Demo-Datenbank", "<username> Demo-Triplestore" and
-  "<username> Demo-WebProtégé". The first-project slide
-  of the co-working intro offers the demo when a demo version is active.
+  files and WebProtégé ontology. Apps are named "<username> Demo-WissKI",
+  "<username> Demo-JupyterHub" and "<username> Demo-WebProtégé". The
+  first-project slide of the co-working intro offers the demo when a demo
+  version is active.
 - Owners can reset their demo project to the active demo version on the
   project page; the project card and page show the demo state while it is
   set up or reset.

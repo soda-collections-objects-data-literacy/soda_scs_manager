@@ -5049,8 +5049,8 @@ msgid "New"
 msgstr "Neu"
 
 #: templates/cards/soda-scs-manager--create-project-wizard.html.twig
-msgid "Every application is included once, with sample data."
-msgstr "Alle Anwendungen sind einmal mit Beispieldaten enthalten."
+msgid "The demo includes WissKI, JupyterHub and WebProtégé, with sample data."
+msgstr "Die Demo enthält WissKI, JupyterHub und WebProtégé mit Beispieldaten."
 
 #: js/coworkingIntroWizard.js
 #: js/createProjectWizard.js
@@ -5142,16 +5142,16 @@ msgid "Imported the ontology into @project."
 msgstr "Die Ontologie wurde nach @project importiert."
 
 #: src/Form/SodaScsDemoProjectAdminForm.php
-msgid "Copies the WissKI, the Jupyter home directory, the Team Folder, the WebProtégé ontology and the standalone databases and triplestores of the demo project. The demo WissKI and the Jupyter server are stopped for a few minutes while they are copied."
-msgstr "Kopiert das WissKI, das Jupyter-Home-Verzeichnis, den Team Folder, die WebProtégé-Ontologie sowie die eigenständigen Datenbanken und Triplestores des Demo-Projekts. Das Demo-WissKI und der Jupyter-Server werden während des Kopierens einige Minuten angehalten."
+msgid "Copies the WissKI, the Jupyter home directory, the Team Folder and the WebProtégé ontology of the demo project. The demo WissKI and the Jupyter server are stopped for a few minutes while they are copied."
+msgstr "Kopiert das WissKI, das Jupyter-Home-Verzeichnis, den Team Folder und die WebProtégé-Ontologie des Demo-Projekts. Das Demo-WissKI und der Jupyter-Server werden während des Kopierens einige Minuten angehalten."
 
 #: src/Form/SodaScsDemoProjectResetForm.php
 msgid "All changes in the WissKI, the databases, the triplestores, the Jupyter home directory, the Team Folder and the WebProtégé ontology of this project are overwritten with the demo data. Applications you added yourself are not changed. This cannot be undone."
 msgstr "Alle Änderungen im WissKI, in den Datenbanken, den Triplestores, dem Jupyter-Home-Verzeichnis, dem Team Folder und der WebProtégé-Ontologie dieses Projekts werden mit den Demo-Daten überschrieben. Selbst hinzugefügte Anwendungen bleiben unverändert. Dies kann nicht rückgängig gemacht werden."
 
 #: templates/includes/soda-scs-manager--coworking-intro.html.twig
-msgid "We set up a project with a filled WissKI, a Jupyter notebook, files, a database, a triplestore and a WebProtégé ontology for you. You can try everything and reset the demo at any time."
-msgstr "Wir richten Ihnen ein Projekt mit befülltem WissKI, Jupyter-Notebook, Dateien, einer Datenbank, einem Triplestore und einer WebProtégé-Ontologie ein. Sie können alles ausprobieren und die Demo jederzeit zurücksetzen."
+msgid "We set up a project with a filled WissKI, a Jupyter notebook, files and a WebProtégé ontology for you. You can try everything and reset the demo at any time."
+msgstr "Wir richten Ihnen ein Projekt mit befülltem WissKI, Jupyter-Notebook, Dateien und einer WebProtégé-Ontologie ein. Sie können alles ausprobieren und die Demo jederzeit zurücksetzen."
 
 #: src/Form/SodaScsDemoProjectAdminForm.php
 msgid "Start queued jobs"

@@ -75,6 +75,21 @@ final class SodaScsHealthStatus {
   }
 
   /**
+   * Keeps a stopped application on starting while its setup job is running.
+   *
+   * Demo restore stops WissKI to copy volumes and the database, then starts
+   * it again. Until that job finishes, stopped would tell the user the
+   * application is off.
+   */
+  public static function duringSetup(string $status, bool $setupInProgress): string {
+    $canonical = self::fromStatus($status);
+    if ($setupInProgress && $canonical === self::STOPPED) {
+      return self::STARTING;
+    }
+    return $canonical;
+  }
+
+  /**
    * Maps Docker inspect State (Status, ExitCode, Health.Status).
    *
    * @param array<string, mixed> $state

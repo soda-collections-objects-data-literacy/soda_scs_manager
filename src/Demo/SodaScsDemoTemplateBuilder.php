@@ -9,10 +9,8 @@ use Drupal\Core\Entity\EntityTypeManagerInterface;
 use Drupal\Core\StringTranslation\StringTranslationTrait;
 use Drupal\soda_scs_manager\Entity\SodaScsDemoTemplateInterface;
 use Drupal\soda_scs_manager\Entity\SodaScsProjectInterface;
-use Drupal\soda_scs_manager\Helpers\SodaScsDatabaseHelpers;
 use Drupal\soda_scs_manager\Helpers\SodaScsJupyterHelpers;
 use Drupal\soda_scs_manager\Helpers\SodaScsSnapshotHelpers;
-use Drupal\soda_scs_manager\Helpers\SodaScsTriplestoreHelpers;
 use Drupal\soda_scs_manager\Helpers\SodaScsVolumeArchiveHelpers;
 use Drupal\soda_scs_manager\Helpers\SodaScsWebprotegeHelpers;
 use Drupal\soda_scs_manager\Service\SodaScsJupyterHubApiClient;
@@ -45,8 +43,6 @@ class SodaScsDemoTemplateBuilder {
    */
   public function __construct(
     protected EntityTypeManagerInterface $entityTypeManager,
-    #[Autowire(service: 'soda_scs_manager.database.helpers')]
-    protected SodaScsDatabaseHelpers $databaseHelpers,
     #[Autowire(service: 'soda_scs_manager.jupyter.helpers')]
     protected SodaScsJupyterHelpers $jupyterHelpers,
     #[Autowire(service: 'logger.channel.soda_scs_manager')]
@@ -59,8 +55,6 @@ class SodaScsDemoTemplateBuilder {
     protected SodaScsTeamFolderCopier $teamFolderCopier,
     #[Autowire(service: 'datetime.time')]
     protected TimeInterface $time,
-    #[Autowire(service: 'soda_scs_manager.triplestore_helpers')]
-    protected SodaScsTriplestoreHelpers $triplestoreHelpers,
     #[Autowire(service: 'soda_scs_manager.volume_archive.helpers')]
     protected SodaScsVolumeArchiveHelpers $volumeArchiveHelpers,
     #[Autowire(service: 'soda_scs_manager.webprotege.helpers')]
@@ -123,11 +117,6 @@ class SodaScsDemoTemplateBuilder {
         'directory' => self::TEAM_FOLDER_DIRECTORY,
         'fileCount' => (int) ($teamFolder->data['fileCount'] ?? 0),
       ];
-
-      $reportStep((string) $this->t('Exporting the databases'));
-      $manifest['apps'][SodaScsDemoLabelBuilder::APP_DATABASE] = $this->exportDatabases($source, $directory);
-      $reportStep((string) $this->t('Exporting the triplestores'));
-      $manifest['apps'][SodaScsDemoLabelBuilder::APP_TRIPLESTORE] = $this->exportTriplestores($source, $directory);
 
       $webprotegeComponent = $this->projectApps->webprotegeComponent($source);
       if ($webprotegeComponent !== NULL) {
@@ -268,31 +257,6 @@ class SodaScsDemoTemplateBuilder {
   }
 
   /**
-   * Dumps the standalone databases of the source project.
-   *
-   * @return array<int, array{file: string, sourceComponentId: int, sourceLabel: string}>
-   *   Manifest entries in project order.
-   *
-   * @throws \Drupal\soda_scs_manager\Demo\SodaScsDemoException
-   */
-  protected function exportDatabases(SodaScsProjectInterface $source, string $directory): array {
-    $entries = [];
-    foreach ($this->projectApps->standaloneComponents($source, SodaScsDemoProjectApps::SQL_COMPONENT_BUNDLE) as $position => $component) {
-      $file = sprintf('database-%d.sql', $position + 1);
-      SodaScsDemoException::assertSuccess(
-        $this->databaseHelpers->exportDatabaseToFile((string) $component->get('machineName')->value, $directory . '/' . $file),
-        'Export database ' . $component->id(),
-      );
-      $entries[] = [
-        'file' => $file,
-        'sourceComponentId' => (int) $component->id(),
-        'sourceLabel' => (string) $component->label(),
-      ];
-    }
-    return $entries;
-  }
-
-  /**
    * Archives the project's Jupyter home volume.
    *
    * The server is stopped for a consistent copy and started again if it ran.
@@ -318,33 +282,6 @@ class SodaScsDemoTemplateBuilder {
         $this->jupyterHelpers->startProjectServer($source);
       }
     }
-  }
-
-  /**
-   * Exports the standalone triplestores of the source project.
-   *
-   * @return array<int, array{file: string, sourceComponentId: int, sourceLabel: string}>
-   *   Manifest entries in project order.
-   *
-   * @throws \Drupal\soda_scs_manager\Demo\SodaScsDemoException
-   */
-  protected function exportTriplestores(SodaScsProjectInterface $source, string $directory): array {
-    $entries = [];
-    foreach ($this->projectApps->standaloneComponents($source, SodaScsDemoProjectApps::TRIPLESTORE_COMPONENT_BUNDLE) as $position => $component) {
-      $baseName = sprintf('triplestore-%d', $position + 1);
-      try {
-        $this->triplestoreHelpers->exportTriplestoreRepository((string) $component->get('machineName')->value, $baseName, $directory, 'nq');
-      }
-      catch (\Throwable $e) {
-        throw new SodaScsDemoException(sprintf('Export triplestore %s: %s', $component->id(), $e->getMessage()), 0, $e);
-      }
-      $entries[] = [
-        'file' => $baseName . '.nq',
-        'sourceComponentId' => (int) $component->id(),
-        'sourceLabel' => (string) $component->label(),
-      ];
-    }
-    return $entries;
   }
 
   /**

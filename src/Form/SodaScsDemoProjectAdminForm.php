@@ -86,7 +86,7 @@ final class SodaScsDemoProjectAdminForm extends FormBase {
       '#type' => 'details',
       '#title' => $this->t('New version'),
       '#open' => TRUE,
-      '#description' => $this->t('Copies the WissKI, the Jupyter home directory, the Team Folder, the WebProtégé ontology and the standalone databases and triplestores of the demo project. The demo WissKI and the Jupyter server are stopped for a few minutes while they are copied.'),
+      '#description' => $this->t('Copies the WissKI, the Jupyter home directory, the Team Folder and the WebProtégé ontology of the demo project. The demo WissKI and the Jupyter server are stopped for a few minutes while they are copied.'),
     ];
     $templates = $this->demoManager->templatesByVersion();
     $latestTemplate = $templates[0] ?? NULL;

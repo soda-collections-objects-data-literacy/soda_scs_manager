@@ -36,8 +36,6 @@ class SodaScsDemoStatusBuilder {
     'Waiting for the WissKI installation to finish',
     'Copying files into the Team Folder',
     'Restoring the Jupyter home directory',
-    'Restoring the databases',
-    'Restoring the triplestores',
     'Importing the ontology',
     'Restoring the WissKI',
     'Setting the WissKI API password',
@@ -135,9 +133,7 @@ class SodaScsDemoStatusBuilder {
    */
   protected function appIsPresent(SodaScsProjectInterface $project, string $key): bool {
     return match ($key) {
-      SodaScsDemoLabelBuilder::APP_DATABASE => $this->projectApps->standaloneComponents($project, SodaScsDemoProjectApps::SQL_COMPONENT_BUNDLE) !== [],
       SodaScsDemoLabelBuilder::APP_JUPYTER => $this->projectApps->jupyterStack($project) !== NULL,
-      SodaScsDemoLabelBuilder::APP_TRIPLESTORE => $this->projectApps->standaloneComponents($project, SodaScsDemoProjectApps::TRIPLESTORE_COMPONENT_BUNDLE) !== [],
       SodaScsDemoLabelBuilder::APP_WEBPROTEGE => $this->projectApps->webprotegeComponent($project) !== NULL,
       SodaScsDemoLabelBuilder::APP_WISSKI => $this->projectApps->wisskiStack($project) !== NULL,
       default => FALSE,
@@ -147,17 +143,15 @@ class SodaScsDemoStatusBuilder {
   /**
    * Whether the line for this application should disappear.
    *
-   * SQL and the triplestore are ready once they exist. Jupyter is ready once
-   * its home directory has been restored. WebProtégé is ready once the
-   * ontology import has finished. WissKI is ready once it has been started
-   * again after the restore.
+   * Jupyter is ready once its home directory has been restored. WebProtégé
+   * is ready once the ontology import has finished. WissKI is ready once it
+   * has been started again after the restore.
    */
   protected function appIsReady(string $key, bool $isPresent, int $rank): bool {
     if (!$isPresent) {
       return FALSE;
     }
     return match ($key) {
-      SodaScsDemoLabelBuilder::APP_DATABASE, SodaScsDemoLabelBuilder::APP_TRIPLESTORE => TRUE,
       SodaScsDemoLabelBuilder::APP_JUPYTER => $this->stepIsFinished('Restoring the Jupyter home directory', $rank),
       SodaScsDemoLabelBuilder::APP_WEBPROTEGE => $this->stepIsFinished('Importing the ontology', $rank),
       SodaScsDemoLabelBuilder::APP_WISSKI => $this->stepIsFinished('Restoring the WissKI', $rank),
@@ -170,9 +164,7 @@ class SodaScsDemoStatusBuilder {
    */
   protected function appLabel(string $key): string {
     return (string) match ($key) {
-      SodaScsDemoLabelBuilder::APP_DATABASE => $this->t('SQL Database'),
       SodaScsDemoLabelBuilder::APP_JUPYTER => $this->t('JupyterHub'),
-      SodaScsDemoLabelBuilder::APP_TRIPLESTORE => $this->t('Triplestore'),
       SodaScsDemoLabelBuilder::APP_WEBPROTEGE => $this->t('WebProtégé'),
       SodaScsDemoLabelBuilder::APP_WISSKI => $this->t('WissKI'),
       default => $key,
@@ -222,7 +214,9 @@ class SodaScsDemoStatusBuilder {
    * Application keys the template contains, in setup order.
    *
    * Uses the project's template, or the active template while the first
-   * setup has not stored one yet. Without a manifest, all five are expected.
+   * setup has not stored one yet. Without a manifest, WissKI, JupyterHub
+   * and WebProtégé are expected. Keys for a standalone database or
+   * triplestore in an older manifest are ignored.
    *
    * @return list<string>
    *   Subset of the APP_* constants.
@@ -231,8 +225,6 @@ class SodaScsDemoStatusBuilder {
     $known = [
       SodaScsDemoLabelBuilder::APP_WISSKI,
       SodaScsDemoLabelBuilder::APP_JUPYTER,
-      SodaScsDemoLabelBuilder::APP_DATABASE,
-      SodaScsDemoLabelBuilder::APP_TRIPLESTORE,
       SodaScsDemoLabelBuilder::APP_WEBPROTEGE,
     ];
     $template = $project->get('demoTemplate')->entity;

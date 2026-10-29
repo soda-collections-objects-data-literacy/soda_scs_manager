@@ -14,7 +14,9 @@ use Drupal\Core\StringTranslation\StringTranslationTrait;
 use Drupal\Core\StringTranslation\TranslationInterface;
 use Drupal\Core\TypedData\Exception\MissingDataException;
 use Drupal\soda_scs_manager\ComponentActions\SodaScsComponentActionsInterface;
+use Drupal\soda_scs_manager\Demo\SodaScsDemoProjectStatus;
 use Drupal\soda_scs_manager\Entity\SodaScsComponentInterface;
+use Drupal\soda_scs_manager\Entity\SodaScsProjectInterface;
 use Drupal\soda_scs_manager\Entity\SodaScsSnapshotInterface;
 use Drupal\soda_scs_manager\RequestActions\SodaScsExecRequestInterface;
 use Drupal\soda_scs_manager\RequestActions\SodaScsServiceRequestInterface;
@@ -72,6 +74,13 @@ class SodaScsComponentHelpers {
   protected SodaScsServiceRequestInterface $sodaScsPortainerServiceActions;
 
   /**
+   * Looks up the project an application belongs to.
+   *
+   * @var \Drupal\soda_scs_manager\Helpers\SodaScsProjectApplicationHelpers
+   */
+  protected SodaScsProjectApplicationHelpers $projectApplicationHelpers;
+
+  /**
    * The settings.
    *
    * @var \Drupal\Core\Config
@@ -120,6 +129,8 @@ class SodaScsComponentHelpers {
     SodaScsServiceRequestInterface $sodaScsOpenGdbServiceActions,
     #[Autowire(service: 'soda_scs_manager.portainer_service.actions')]
     SodaScsServiceRequestInterface $sodaScsPortainerServiceActions,
+    #[Autowire(service: 'soda_scs_manager.project_application.helpers')]
+    SodaScsProjectApplicationHelpers $projectApplicationHelpers,
     #[Autowire(service: 'soda_scs_manager.service.helpers')]
     SodaScsServiceHelpers $sodaScsServiceHelpers,
     #[Autowire(service: 'soda_scs_manager.sql_service.actions')]
@@ -136,6 +147,7 @@ class SodaScsComponentHelpers {
     $this->sodaScsDockerExecServiceActions = $sodaScsDockerExecServiceActions;
     $this->sodaScsOpenGdbServiceActions = $sodaScsOpenGdbServiceActions;
     $this->sodaScsPortainerServiceActions = $sodaScsPortainerServiceActions;
+    $this->projectApplicationHelpers = $projectApplicationHelpers;
     $this->sodaScsServiceHelpers = $sodaScsServiceHelpers;
     $this->sodaScsSqlServiceActions = $sodaScsSqlServiceActions;
     $this->stringTranslation = $stringTranslation;
@@ -188,7 +200,7 @@ class SodaScsComponentHelpers {
       : [];
     $containerHealth = SodaScsHealthStatus::fromDockerInspect($containerState);
     if ($containerHealth !== SodaScsHealthStatus::RUNNING) {
-      return SodaScsHealthStatus::payload($containerHealth);
+      return $this->presentContainerHealth($component, $containerHealth);
     }
 
     try {
@@ -424,6 +436,24 @@ class SodaScsComponentHelpers {
   }
 
   /**
+   * Whether the component's project is still being created or reset.
+   *
+   * Demo restore stops WissKI on purpose. The container is exited for that
+   * stretch, but the application is still being set up.
+   */
+  private function demoSetupInProgress(SodaScsComponentInterface $component): bool {
+    $project = $this->projectApplicationHelpers->loadPartOfProject($component);
+    if (
+      !$project instanceof SodaScsProjectInterface
+      || !$project->hasField('demoStatus')
+      || $project->get('demoStatus')->isEmpty()
+    ) {
+      return FALSE;
+    }
+    return SodaScsDemoProjectStatus::tryFrom((string) $project->get('demoStatus')->value)?->isBusy() ?? FALSE;
+  }
+
+  /**
    * Detects TLS/certificate verification failures.
    *
    * Mirrors criteria used for Portainer health-check TLS retry.
@@ -460,6 +490,23 @@ class SodaScsComponentHelpers {
       }
     }
     return FALSE;
+  }
+
+  /**
+   * Reports container health, keeping demo setup on starting.
+   *
+   * @return array
+   *   The health check result.
+   */
+  private function presentContainerHealth(SodaScsComponentInterface $component, string $containerHealth): array {
+    $setupInProgress = $containerHealth === SodaScsHealthStatus::STOPPED
+      && $this->demoSetupInProgress($component);
+    return SodaScsHealthStatus::payload(
+      SodaScsHealthStatus::duringSetup($containerHealth, $setupInProgress),
+      NULL,
+      '',
+      $setupInProgress ? 202 : 200,
+    );
   }
 
 }

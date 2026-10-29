@@ -143,6 +143,27 @@ class SodaScsHealthStatusTest extends UnitTestCase {
   }
 
   /**
+   * @covers ::duringSetup
+   * @dataProvider duringSetupProvider
+   */
+  public function testDuringSetup(string $status, bool $setupInProgress, string $expected): void {
+    $this->assertSame($expected, SodaScsHealthStatus::duringSetup($status, $setupInProgress));
+  }
+
+  /**
+   * Stopped during setup stays starting; every other status is unchanged.
+   */
+  public static function duringSetupProvider(): array {
+    return [
+      'stopped while setting up' => [SodaScsHealthStatus::STOPPED, TRUE, SodaScsHealthStatus::STARTING],
+      'stopped when idle' => [SodaScsHealthStatus::STOPPED, FALSE, SodaScsHealthStatus::STOPPED],
+      'running while setting up' => [SodaScsHealthStatus::RUNNING, TRUE, SodaScsHealthStatus::RUNNING],
+      'already starting' => [SodaScsHealthStatus::STARTING, TRUE, SodaScsHealthStatus::STARTING],
+      'problem while setting up' => [SodaScsHealthStatus::PROBLEM, TRUE, SodaScsHealthStatus::PROBLEM],
+    ];
+  }
+
+  /**
    * @covers ::fromDockerInspect
    */
   public function testFromDockerInspectReadsNestedHealth(): void {

@@ -33,6 +33,7 @@ class SodaScsDemoStatusBuilderTest extends UnitTestCase {
         'database' => [],
         'wisski' => [],
         'jupyter' => [],
+        'triplestore' => [],
       ],
     ]);
 
@@ -43,7 +44,6 @@ class SodaScsDemoStatusBuilderTest extends UnitTestCase {
     $projectApps = $this->createMock(SodaScsDemoProjectApps::class);
     $projectApps->method('wisskiStack')->willReturn($this->createMock(SodaScsStackInterface::class));
     $projectApps->method('jupyterStack')->willReturn(NULL);
-    $projectApps->method('standaloneComponents')->willReturn([]);
     $projectApps->method('webprotegeComponent')->willReturn(NULL);
 
     $project = $this->createMock(SodaScsProjectInterface::class);
@@ -74,7 +74,6 @@ class SodaScsDemoStatusBuilderTest extends UnitTestCase {
       [
         ['detail' => 'Started', 'key' => 'wisski', 'label' => 'WissKI'],
         ['detail' => 'Being created', 'key' => 'jupyter', 'label' => 'JupyterHub'],
-        ['detail' => 'Being created', 'key' => 'database', 'label' => 'SQL Database'],
         ['detail' => 'Being created', 'key' => 'webprotege', 'label' => 'WebProtégé'],
       ],
       $data['apps'],
@@ -104,13 +103,12 @@ class SodaScsDemoStatusBuilderTest extends UnitTestCase {
 
     $progress = $this->createMock(SodaScsProgressHelper::class);
     $progress->method('findLatestStepsByOperation')->willReturn([
-      ['message' => 'Restoring the databases'],
+      ['message' => 'Importing the ontology'],
     ]);
 
     $projectApps = $this->createMock(SodaScsDemoProjectApps::class);
     $projectApps->method('wisskiStack')->willReturn($this->createMock(SodaScsStackInterface::class));
     $projectApps->method('jupyterStack')->willReturn($this->createMock(SodaScsStackInterface::class));
-    $projectApps->method('standaloneComponents')->willReturnCallback(static fn (): array => [new \stdClass()]);
     $projectApps->method('webprotegeComponent')->willReturn($this->createMock(SodaScsComponentInterface::class));
 
     $project = $this->createMock(SodaScsProjectInterface::class);

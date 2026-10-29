@@ -11,9 +11,7 @@ use Drupal\soda_scs_manager\Entity\SodaScsComponentInterface;
 use Drupal\soda_scs_manager\Entity\SodaScsDemoTemplateInterface;
 use Drupal\soda_scs_manager\Entity\SodaScsProjectInterface;
 use Drupal\soda_scs_manager\Entity\SodaScsStackInterface;
-use Drupal\soda_scs_manager\Helpers\SodaScsDatabaseHelpers;
 use Drupal\soda_scs_manager\Helpers\SodaScsJupyterHelpers;
-use Drupal\soda_scs_manager\Helpers\SodaScsTriplestoreHelpers;
 use Drupal\soda_scs_manager\Helpers\SodaScsVolumeArchiveHelpers;
 use Drupal\soda_scs_manager\Helpers\SodaScsWebprotegeHelpers;
 use Drupal\soda_scs_manager\StackActions\SodaScsStackActionsInterface;
@@ -44,8 +42,6 @@ class SodaScsDemoProjectProvisioner {
     protected SodaScsDemoApiCredentials $apiCredentials,
     #[Autowire(service: 'soda_scs_manager.component.actions')]
     protected SodaScsComponentActionsInterface $componentActions,
-    #[Autowire(service: 'soda_scs_manager.database.helpers')]
-    protected SodaScsDatabaseHelpers $databaseHelpers,
     protected EntityTypeManagerInterface $entityTypeManager,
     #[Autowire(service: 'soda_scs_manager.jupyter.helpers')]
     protected SodaScsJupyterHelpers $jupyterHelpers,
@@ -57,8 +53,6 @@ class SodaScsDemoProjectProvisioner {
     protected SodaScsStackActionsInterface $stackActions,
     #[Autowire(service: 'soda_scs_manager.demo.team_folder_copier')]
     protected SodaScsTeamFolderCopier $teamFolderCopier,
-    #[Autowire(service: 'soda_scs_manager.triplestore_helpers')]
-    protected SodaScsTriplestoreHelpers $triplestoreHelpers,
     #[Autowire(service: 'soda_scs_manager.volume_archive.helpers')]
     protected SodaScsVolumeArchiveHelpers $volumeArchiveHelpers,
     #[Autowire(service: 'soda_scs_manager.webprotege.helpers')]
@@ -103,8 +97,6 @@ class SodaScsDemoProjectProvisioner {
     if (isset($apps[SodaScsDemoLabelBuilder::APP_JUPYTER])) {
       $this->ensureJupyterStack($project, $userName);
     }
-    $databases = $this->ensureStandaloneComponents($project, $userName, SodaScsDemoLabelBuilder::APP_DATABASE, count($apps[SodaScsDemoLabelBuilder::APP_DATABASE] ?? []));
-    $triplestores = $this->ensureStandaloneComponents($project, $userName, SodaScsDemoLabelBuilder::APP_TRIPLESTORE, count($apps[SodaScsDemoLabelBuilder::APP_TRIPLESTORE] ?? []));
     $hadOntology = trim((string) ($project->get('webprotegeProjectId')->value ?? '')) !== '';
     if (isset($apps[SodaScsDemoLabelBuilder::APP_WEBPROTEGE])) {
       $this->ensureWebprotegeComponent($project, $userName);
@@ -125,19 +117,6 @@ class SodaScsDemoProjectProvisioner {
         $this->volumeArchiveHelpers->importVolume(SodaScsJupyterHelpers::projectVolumeName($project), $directory, (string) $apps[SodaScsDemoLabelBuilder::APP_JUPYTER]['file']),
         'Import Jupyter home',
       );
-    }
-
-    $reportStep((string) $this->t('Restoring the databases'));
-    foreach ($apps[SodaScsDemoLabelBuilder::APP_DATABASE] ?? [] as $position => $entry) {
-      SodaScsDemoException::assertSuccess(
-        $this->databaseHelpers->importDatabaseFromFile($this->machineName($databases[$position]), $directory . '/' . $entry['file'], TRUE),
-        'Import database ' . $databases[$position]->id(),
-      );
-    }
-
-    $reportStep((string) $this->t('Restoring the triplestores'));
-    foreach ($apps[SodaScsDemoLabelBuilder::APP_TRIPLESTORE] ?? [] as $position => $entry) {
-      $this->importTriplestore($triplestores[$position], $directory . '/' . $entry['file']);
     }
 
     if (isset($apps[SodaScsDemoLabelBuilder::APP_WEBPROTEGE])) {
@@ -199,41 +178,6 @@ class SodaScsDemoProjectProvisioner {
     );
     $this->assertActionSucceeded($this->stackActions->createStack($stack), 'Create Jupyter stack');
     return $stack;
-  }
-
-  /**
-   * Creates standalone SQL or triplestore components until there are enough.
-   *
-   * @return \Drupal\soda_scs_manager\Entity\SodaScsComponentInterface[]
-   *   The first $count components of that kind, in project order.
-   *
-   * @throws \Drupal\soda_scs_manager\Demo\SodaScsDemoException
-   */
-  protected function ensureStandaloneComponents(SodaScsProjectInterface $project, string $userName, string $appKey, int $count): array {
-    $isDatabase = $appKey === SodaScsDemoLabelBuilder::APP_DATABASE;
-    $bundle = $isDatabase ? SodaScsDemoProjectApps::SQL_COMPONENT_BUNDLE : SodaScsDemoProjectApps::TRIPLESTORE_COMPONENT_BUNDLE;
-    $prefix = $isDatabase ? 'sql-' : 'ts-';
-    $resultKey = $isDatabase ? 'sqlComponent' : 'triplestoreComponent';
-
-    $components = $this->projectApps->standaloneComponents($project, $bundle);
-    for ($index = count($components) + 1; $index <= $count; $index++) {
-      $component = $this->entityTypeManager->getStorage('soda_scs_component')->create([
-        'bundle' => $bundle,
-        'health' => 'Unknown',
-        'label' => $this->labelBuilder->appLabel($appKey, $userName, $index),
-        'machineName' => $this->freeMachineName($appKey, $userName, $index, [], [$prefix . '%s', '%s']),
-        'owner' => $project->getOwnerId(),
-        'partOfProjects' => [$project->id()],
-      ]);
-      $result = $this->componentActions->createComponent($component);
-      $this->assertActionSucceeded($result, 'Create ' . $appKey);
-      $created = $result['data'][$resultKey] ?? NULL;
-      if (!$created instanceof SodaScsComponentInterface) {
-        throw new SodaScsDemoException(sprintf('Create %s: no component returned.', $appKey));
-      }
-      $components[] = $created;
-    }
-    return array_slice($components, 0, $count);
   }
 
   /**
@@ -350,21 +294,6 @@ class SodaScsDemoProjectProvisioner {
   }
 
   /**
-   * Replaces the content of a standalone triplestore.
-   *
-   * @throws \Drupal\soda_scs_manager\Demo\SodaScsDemoException
-   */
-  protected function importTriplestore(SodaScsComponentInterface $component, string $file): void {
-    try {
-      $result = $this->triplestoreHelpers->importTriplestoreRepository($this->machineName($component), $file, 'nq');
-    }
-    catch (\Throwable $e) {
-      throw new SodaScsDemoException(sprintf('Import triplestore %s: %s', $component->id(), $e->getMessage()), 0, $e);
-    }
-    SodaScsDemoException::assertSuccess($result, 'Import triplestore ' . $component->id());
-  }
-
-  /**
    * Whether any entity uses a machine name derived from the base.
    */
   protected function isMachineNameUsed(string $entityTypeId, array $patterns, string $base): bool {
@@ -377,13 +306,6 @@ class SodaScsDemoProjectProvisioner {
       ->condition('machineName', $names, 'IN')
       ->range(0, 1)
       ->execute() !== [];
-  }
-
-  /**
-   * Machine name of a component (database name, repository id).
-   */
-  protected function machineName(SodaScsComponentInterface $component): string {
-    return (string) $component->get('machineName')->value;
   }
 
   /**

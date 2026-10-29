@@ -8,18 +8,16 @@ Users can start with a demo project that is a copy of one central admin project,
 |------|-------|-------------------|
 | Project | `<username> Demo` (falls back to `… Demo 2` … `… Demo 10` on conflicts) | derived from the label |
 | WissKI stack | `<username> Demo-WissKI` | `<user>-demo` |
-| Jupyter stack | `<username> Demo-Jupyter` | `<user>-demo-jupyter` |
-| Database (n-th) | `<username> Demo-Datenbank [n]` | `<user>-demo-db[-n]` |
-| Triplestore (n-th) | `<username> Demo-Triplestore [n]` | `<user>-demo-ts[-n]` |
+| Jupyter stack | `<username> Demo-JupyterHub` | `<user>-demo-jupyter` |
 | WebProtégé | `<username> Demo-WebProtégé` | `<user>-demo-ontology` |
 
 Machine name bases stay within 30 characters; the stack and component actions add their prefixes (`stack-`, `sql-`, `ts-`, …). On collisions a counter is appended.
 
 ## Scope
 
-Copied: the WissKI stack (sites and private-files volumes, Drupal database, triplestore repository), the project's shared JupyterLab home volume, the project Team Folder files, the WebProtégé ontology (root ontology and its imports, merged into the demo's root ontology) and the project's standalone SQL databases and triplestores.
+Copied: the WissKI stack (sites and private-files volumes, Drupal database, triplestore repository), the project's shared JupyterLab home volume, the project Team Folder files and the WebProtégé ontology (root ontology and its imports, merged into the demo's root ontology).
 
-Not copied: project members, and apps the user added to their demo. A reset overwrites the data of the demo apps only. The WebProtégé project is trashed and created again on reset, because the API can add axioms but not replace them.
+Not copied: standalone SQL databases and triplestores, project members, and apps the user added to their demo. A reset overwrites the data of the demo apps only. The WebProtégé project is trashed and created again on reset, because the API can add axioms but not replace them.
 
 ## Admin workflow
 
@@ -52,8 +50,6 @@ Versions live under the snapshot filesystem root:
   wisski/                  # wisski-database.sql, wisski-triplestore.nq, wisski-volumes.tar.gz
   jupyter-home.tar.gz
   team-folder/
-  database-<n>.sql
-  triplestore-<n>.nq
   webprotege-ontology.zip   # OWL functional syntax, root ontology plus imports
 ```
 
@@ -65,14 +61,13 @@ The intro button posts to `/soda-scs-manager/demo-project/create`; the reset for
 
 The queue worker (`soda_scs_manager_demo`) then:
 
-1. Creates missing demo apps (WissKI, Jupyter, databases, triplestores, WebProtégé). A new WissKI needs a few minutes to install; until its install marker exists the job is requeued (up to one hour) before any data is overwritten.
+1. Creates missing demo apps (WissKI, Jupyter, WebProtégé). A new WissKI needs a few minutes to install; until its install marker exists the job is requeued (up to one hour) before any data is overwritten.
 2. Copies the Team Folder (purge, then copy through the rclone mount).
 3. Stops the project Jupyter server and replaces its home volume.
-4. Replaces the databases and triplestores.
-5. Imports the WebProtégé ontology. On a reset the ontology project is trashed and created empty first, then every document of the zip is posted as axioms.
-6. Restores the WissKI target-agnostically: it captures the instance-specific config of the target (Salz adapter, OpenID Connect, SSO bouncer, Nextcloud WebDAV mount, IIIF and 3D viewer settings), keeps the target's `settings*.php`/`services*.yml`, imports volumes, database and triplestore, writes the captured config back, sets the site name to the WissKI label, then runs `updatedb` and `cache:rebuild`.
-7. Sets a new password on the local account `api-import` and writes `~/.wisski-demo-api.env` (`WISSKI_USER`, `WISSKI_PASSWORD`, `WISSKI_BASE_URL`) into the project notebook home, mode 0600. The template export leaves that file out, so the source password is not copied.
-8. Sets `demoTemplate` to the version and `demoStatus` to `ready`.
+4. Imports the WebProtégé ontology. On a reset the ontology project is trashed and created empty first, then every document of the zip is posted as axioms.
+5. Restores the WissKI target-agnostically: it captures the instance-specific config of the target (Salz adapter, OpenID Connect, SSO bouncer, Nextcloud WebDAV mount, IIIF and 3D viewer settings), keeps the target's `settings*.php`/`services*.yml`, imports volumes, database and triplestore, writes the captured config back, sets the site name to the WissKI label, then runs `updatedb` and `cache:rebuild`.
+6. Sets a new password on the local account `api-import` and writes `~/.wisski-demo-api.env` (`WISSKI_USER`, `WISSKI_PASSWORD`, `WISSKI_BASE_URL`) into the project notebook home, mode 0600. The template export leaves that file out, so the source password is not copied.
+7. Sets `demoTemplate` to the version and `demoStatus` to `ready`.
 
 Every step is idempotent, so a failed job can simply be reset. Failures set `demoStatus` to `failed` and are logged on channel `soda_scs_manager`; the item is not retried endlessly.
 

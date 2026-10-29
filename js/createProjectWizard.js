@@ -414,8 +414,8 @@
         };
 
         /**
-         * Neu keeps the project form. Demo explains the sample project and
-         * Next creates it with every application already filled.
+         * Neu keeps the project form. Demo explains the sample project
+         * (WissKI, JupyterHub and WebProtégé) and Next creates it.
          */
         function selectMode(mode) {
           var active = mode === 'demo' && settings.demoCreateUrl ? 'demo' : 'new';
