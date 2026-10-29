@@ -2,9 +2,9 @@
  * @file
  * Polls the status of demo projects that are being set up or reset.
  *
- * Drops a line once that application is ready, replaces the application
- * cards as soon as an application exists, and reloads the page once the job
- * has finished.
+ * Drops a line once that application is ready, rebuilds the application
+ * cards when an application appears and again when it is ready, and reloads
+ * the page once the job has finished.
  */
 ((Drupal, once) => {
   const POLL_INTERVAL_MS = 3000;
@@ -18,6 +18,40 @@
       return 0;
     }
     return container.querySelectorAll('.application--card:not(.application--card--add)').length;
+  }
+
+  /**
+   * Keys currently rendered in the status panel.
+   *
+   * @param {HTMLElement} element
+   *
+   * @return {Set<string>}
+   */
+  function renderedAppKeys(element) {
+    return new Set(
+      [...element.querySelectorAll('[data-scs-demo-app]')].map((item) => item.getAttribute('data-scs-demo-app') || ''),
+    );
+  }
+
+  /**
+   * Whether a listed application is no longer pending, so its card is stale.
+   *
+   * @param {Set<string>} rendered
+   * @param {Array<{key: string}>|undefined} apps
+   *
+   * @return {boolean}
+   */
+  function serviceFinished(rendered, apps) {
+    if (!Array.isArray(apps)) {
+      return false;
+    }
+    const pending = new Set(apps.map((app) => app.key));
+    for (const key of rendered) {
+      if (key !== '' && !pending.has(key)) {
+        return true;
+      }
+    }
+    return false;
   }
 
   /**
@@ -41,14 +75,19 @@
       let item = list.querySelector(`[data-scs-demo-app="${CSS.escape(app.key)}"]`);
       if (!item) {
         item = document.createElement('li');
-        item.className = 'flex items-baseline justify-between gap-3';
+        item.className = 'flex items-center justify-between gap-3';
         item.setAttribute('data-scs-demo-app', app.key);
         const label = document.createElement('span');
         label.textContent = app.label;
+        const status = document.createElement('span');
+        status.className = 'inline-flex items-center gap-2 text-gray-500';
+        const throbber = document.createElement('span');
+        throbber.className = 'scs-manager--demo-status-throbber';
+        throbber.setAttribute('aria-hidden', 'true');
         const detail = document.createElement('span');
-        detail.className = 'text-gray-500';
         detail.setAttribute('data-scs-demo-app-detail', '');
-        item.append(label, detail);
+        status.append(throbber, detail);
+        item.append(label, status);
         list.appendChild(item);
       }
       const detail = item.querySelector('[data-scs-demo-app-detail]');
@@ -60,7 +99,7 @@
 
   /**
    * Replaces the application card container with the one from a fresh page
-   * render, so a card appears as soon as its application exists.
+   * render. Used when an application appears and again when it is ready.
    *
    * @return {Promise<void>}
    */
@@ -70,6 +109,7 @@
       return;
     }
     const response = await fetch(window.location.href, {
+      cache: 'no-store',
       credentials: 'same-origin',
       headers: { Accept: 'text/html' },
     });
@@ -110,8 +150,9 @@
     if (label && data.statusLabel) {
       label.textContent = data.statusLabel;
     }
+    const finished = serviceFinished(renderedAppKeys(element), data.apps);
     updateApps(element, data.apps);
-    if (data.isBusy && Number(data.createdCount) > applicationCardCount()) {
+    if (data.isBusy && (finished || Number(data.createdCount) > applicationCardCount())) {
       await refreshApplications();
     }
     return Boolean(data.isBusy);

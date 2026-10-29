@@ -18,7 +18,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   is not ready yet in the sidebar. A line disappears as soon as that
   application is ready: SQL and the triplestore once they exist, Jupyter once
   its home directory is restored, WebProtégé once the ontology is imported,
-  and WissKI once it is running again after the restore.
+  and WissKI once it is running again after the restore. Each line shows a
+  spinning throbber next to its status. The application cards are rebuilt
+  when an application is created and again when that application is ready.
 - Jupyter and WebProtégé cards show the instance name, the same way as WissKI
   and the database. New Jupyter demos are named "<username> Demo-JupyterHub".
 

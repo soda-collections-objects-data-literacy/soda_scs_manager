@@ -5,9 +5,10 @@
  *
  * Busy demos are polled by js/demoProjectStatus.js through status_url. While
  * the job runs, the panel in the sidebar lists one line per application that
- * is not ready yet. A line disappears as soon as that application is ready.
- * The script replaces the application cards as soon as an application exists
- * and reloads the page once the job has finished.
+ * is not ready yet, with a spinning throbber beside its status. A line
+ * disappears as soon as that application is ready.
+ * The script rebuilds the application cards when an application appears and
+ * again when it is ready, and reloads the page once the job has finished.
  *
  * Variables:
  * - variant: "badge" (dashboard card) or "panel" (project page).
@@ -41,9 +42,12 @@
     <h2 class="project__section-title h5" data-scs-demo-status-label>{{ status_label }}</h2>
     <ul class="m-0 flex list-none flex-col gap-2 p-0 text-sm" data-scs-demo-apps>
       {% for app in apps %}
-        <li class="flex items-baseline justify-between gap-3" data-scs-demo-app="{{ app.key }}">
+        <li class="flex items-center justify-between gap-3" data-scs-demo-app="{{ app.key }}">
           <span>{{ app.label }}</span>
-          <span class="text-gray-500" data-scs-demo-app-detail>{{ app.detail }}</span>
+          <span class="inline-flex items-center gap-2 text-gray-500">
+            <span class="scs-manager--demo-status-throbber" aria-hidden="true"></span>
+            <span data-scs-demo-app-detail>{{ app.detail }}</span>
+          </span>
         </li>
       {% endfor %}
     </ul>
