@@ -13,7 +13,6 @@
       const $display = $target.closest('.field--name-machinename').find('.soda-scs-manager--machine-name-description');
       const $urlDisplay = $display.find('.soda-scs-manager--application-url');
       const urlTemplate = String($target.attr('data-application-url-template') || '');
-      const urlTransform = String($target.attr('data-application-url-transform') || '');
 
       if ($source.length && $target.length) {
         // Process the label to create a machine name
@@ -30,11 +29,7 @@
             $urlDisplay.removeAttr('href').text('');
             return;
           }
-          let urlMachineName = machineName;
-          if (urlTransform === 'wisski-stack' && urlMachineName.indexOf('stack-') === 0) {
-            urlMachineName = 'wisski-' + urlMachineName.substring(6);
-          }
-          const url = urlTemplate.replace('{machineName}', encodeURIComponent(urlMachineName));
+          const url = urlTemplate.replace('{machineName}', encodeURIComponent(machineName));
           $urlDisplay.attr('href', url).text(url);
         };
 

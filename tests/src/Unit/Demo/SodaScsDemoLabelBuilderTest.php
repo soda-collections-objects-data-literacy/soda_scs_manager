@@ -42,7 +42,7 @@ class SodaScsDemoLabelBuilderTest extends UnitTestCase {
   public static function appLabelProvider(): array {
     return [
       'wisski' => [SodaScsDemoLabelBuilder::APP_WISSKI, 1, 'anna Demo-WissKI'],
-      'jupyter' => [SodaScsDemoLabelBuilder::APP_JUPYTER, 1, 'anna Demo-Jupyter'],
+      'jupyter' => [SodaScsDemoLabelBuilder::APP_JUPYTER, 1, 'anna Demo-JupyterHub'],
       'first database' => [SodaScsDemoLabelBuilder::APP_DATABASE, 1, 'anna Demo-Datenbank'],
       'second database' => [SodaScsDemoLabelBuilder::APP_DATABASE, 2, 'anna Demo-Datenbank 2'],
       'second triplestore' => [SodaScsDemoLabelBuilder::APP_TRIPLESTORE, 2, 'anna Demo-Triplestore 2'],

@@ -7,12 +7,25 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- While a demo is being set up, the project page lists each application that
+  is not ready yet in the sidebar. A line disappears as soon as that
+  application is ready: SQL and the triplestore once they exist, Jupyter once
+  its home directory is restored, WebProtégé once the ontology is imported,
+  and WissKI once it is running again after the restore.
+- Jupyter and WebProtégé cards show the instance name, the same way as WissKI
+  and the database. New Jupyter demos are named "<username> Demo-JupyterHub".
+
 ### Added
 
+- The create-project wizard has New and Demo tabs when the user has no demo
+  yet and a demo version is active. Demo explains that every application is
+  included once, with sample data. Next then creates that demo.
 - Demo projects: users can start with "<username> Demo", a copy of the
   central "Demo Projekt" with its WissKI, shared JupyterLab home, Team Folder
   files, WebProtégé ontology and standalone databases and triplestores. Apps
-  are named "<username> Demo-WissKI", "<username> Demo-Jupyter",
+  are named "<username> Demo-WissKI", "<username> Demo-JupyterHub",
   "<username> Demo-Datenbank", "<username> Demo-Triplestore" and
   "<username> Demo-WebProtégé". The first-project slide
   of the co-working intro offers the demo when a demo version is active.
@@ -39,6 +52,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- WissKI public hostnames no longer repeat the internal `wisski-` machine-name
+  prefix. A stack stored as `wisski-robert-demo` is reached at
+  `robert-demo.wisski…`. Container names, volumes and Keycloak client ids keep
+  the prefix. Already deployed stacks still answer on the old host until their
+  Portainer env `DRUPAL_DOMAIN` and Drupal trusted hosts are updated.
 - A demo that is still waiting for the WissKI installation says so, instead of
   keeping the message "Creating missing applications".
 - Deleting an account (by the user or an admin) removes the projects they own
@@ -69,6 +87,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Deleting a project that still has members is blocked until those members
   are removed. The delete dialog says so and offers “Remove members and
   delete”, which drops their access and then deletes the project.
+- On a finished demo project, the version sits in the right column with the
+  notes and the team. It is a plain section title, without the green status
+  pill.
 - While a demo project is being set up, the project page shows a shimmer and
   a short progress row (WissKI, JupyterHub, SQL database, triplestore,
   WebProtégé) instead of the template version. Application cards appear as

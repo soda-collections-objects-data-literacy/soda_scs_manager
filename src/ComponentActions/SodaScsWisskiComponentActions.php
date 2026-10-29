@@ -878,9 +878,10 @@ class SodaScsWisskiComponentActions implements SodaScsComponentActionsInterface 
       // Create random openid connect client secret.
       $openidConnectClientSecret = $this->sodaScsComponentHelpers->createSecret();
 
-      // Create openid connect client.
+      // Create openid connect client. The public host drops the internal
+      // wisski- prefix; Keycloak still uses the prefixed machine name as client id.
       $wisskiInstanceSettings = $this->sodaScsServiceHelpers->initWisskiInstanceSettings();
-      $wisskiInstanceUrl = str_replace('{instanceId}', $machineName, $wisskiInstanceSettings['baseUrl']);
+      $wisskiInstanceUrl = $this->sodaScsServiceHelpers->wisskiInstanceBaseUrl($machineName);
       $keycloakBuildCreateClientRequest = $this->sodaScsKeycloakServiceClientActions->buildCreateRequest([
         'clientId' => $machineName,
         'name' => $component->get('label')->value,
@@ -1047,10 +1048,8 @@ class SodaScsWisskiComponentActions implements SodaScsComponentActionsInterface 
 
       $versionSettings = $this->resolveWisskiVersionSettings($component);
 
-      //
-      // Create the WissKI instance at portainer.
-      // @todo Replace "wisski" at one point of the domain name.
-      //
+      // Create the WissKI instance at portainer. SERVICE_NAME stays the
+      // prefixed machine name; the public host is derived in the request.
       $requestParams = [
         'dbName' => $dbName ?? '',
         'defaultLanguage' => $component->get('defaultLanguage')->value,

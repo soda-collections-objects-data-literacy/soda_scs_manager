@@ -325,7 +325,6 @@ class SodaScsPortainerServiceActions implements SodaScsServiceRequestInterface {
     $portainerStacksSettings = $this->sodaScsServiceHelpers->initPortainerStacksSettings();
     $triplestoreServiceSettings = $this->sodaScsServiceHelpers->initTriplestoreServiceSettings();
     $databaseServiceSettings = $this->sodaScsServiceHelpers->initDatabaseServiceSettings();
-    $wisskiInstanceSettings = $this->sodaScsServiceHelpers->initWisskiInstanceSettings();
 
     $triplestoreHost = $this->getTriplestoreHostForWisski($triplestoreServiceSettings);
     $triplestoreRepositoryBase = $triplestoreHost . '/repositories/' . $requestParams['tsRepository'];
@@ -346,7 +345,7 @@ class SodaScsPortainerServiceActions implements SodaScsServiceRequestInterface {
       '@hostDomainName' => $hostDomainName,
     ]);
 
-    $instanceDomain = str_replace('{instanceId}', $requestParams['machineName'], $wisskiInstanceSettings['baseUrl']);
+    $instanceDomain = $this->sodaScsServiceHelpers->wisskiInstanceBaseUrl((string) $requestParams['machineName']);
 
     $instanceDomainName = str_replace('https://', '', $instanceDomain);
 
@@ -880,10 +879,8 @@ class SodaScsPortainerServiceActions implements SodaScsServiceRequestInterface {
         // Use the raw backend host (raw.{host}) so the probe hits Drupal,
         // not only Varnish. Varnish can accept connections before the WissKI
         // backend is ready.
-        $instanceBase = str_replace(
-          '{instanceId}',
-          $requestParams['machineName'],
-          $wisskiInstanceSettings['baseUrl']
+        $instanceBase = $this->sodaScsServiceHelpers->wisskiInstanceBaseUrl(
+          (string) $requestParams['machineName'],
         );
         $instanceBase = $this->wisskiRawBackendBaseUrl($instanceBase);
         $route = rtrim($instanceBase, '/') . $wisskiInstanceSettings['healthCheckUrl'];

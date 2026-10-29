@@ -649,7 +649,6 @@ class SodaScsServiceHelpers {
     $databaseSettings = $this->initDatabaseServiceSettings();
     $triplestoreSettings = $this->initTriplestoreServiceSettings();
     $webprotegeSettings = $this->initWebprotegeInstanceSettings();
-    $wisskiInstanceSettings = $this->initWisskiInstanceSettings();
     $bundle = $component->bundle();
 
     switch ($bundle) {
@@ -675,8 +674,8 @@ class SodaScsServiceHelpers {
         return ['url' => $url, 'loginUrl' => $loginUrl];
 
       case 'soda_scs_wisski_component':
-        $machineName = $component->get('machineName')->value;
-        $url = str_replace('{instanceId}', $machineName, $wisskiInstanceSettings['baseUrl']);
+        $machineName = (string) $component->get('machineName')->value;
+        $url = $this->wisskiInstanceBaseUrl($machineName);
         $base = rtrim($url, '/');
         $loginUrl = $base . '/user/login';
         return ['url' => $url, 'loginUrl' => $loginUrl];
@@ -698,14 +697,12 @@ class SodaScsServiceHelpers {
    */
   public function getStackServiceAndLoginUrls(SodaScsStack $stack, ?SodaScsProjectInterface $project = NULL): ?array {
     $jupyterSettings = $this->initJupyterHubSettings();
-    $wisskiInstanceSettings = $this->initWisskiInstanceSettings();
     $bundle = $stack->bundle();
 
     switch ($bundle) {
       case 'soda_scs_wisski_stack':
-        $machineName = $stack->get('machineName')->value;
-        $machineName = preg_replace('/^stack-/', 'wisski-', (string) $machineName, 1);
-        $url = str_replace('{instanceId}', $machineName, $wisskiInstanceSettings['baseUrl']);
+        $machineName = (string) $stack->get('machineName')->value;
+        $url = $this->wisskiInstanceBaseUrl($machineName);
         $base = rtrim($url, '/');
         $loginUrl = $base . '/user/login';
         return ['url' => $url, 'loginUrl' => $loginUrl];
@@ -724,6 +721,48 @@ class SodaScsServiceHelpers {
       default:
         return NULL;
     }
+  }
+
+  /**
+   * Public host label for a WissKI instance.
+   *
+   * Component machine names keep a leading "wisski-" and stack machine names
+   * a leading "stack-". The public host is already under ".wisski", so that
+   * prefix is not part of the hostname. Exactly one leading prefix is removed.
+   *
+   * @param string $machineName
+   *   Stored machine name, or the name as entered when it has no prefix yet.
+   *
+   * @return string
+   *   The label substituted for {instanceId}.
+   */
+  public static function wisskiPublicInstanceId(string $machineName): string {
+    $publicId = preg_replace('/^(?:wisski-|stack-)/', '', $machineName, 1);
+    if (!is_string($publicId) || $publicId === '') {
+      return $machineName;
+    }
+    return $publicId;
+  }
+
+  /**
+   * Public base URL of a WissKI instance.
+   *
+   * @param string $machineName
+   *   Stored machine name (wisski-… or stack-…).
+   *
+   * @return string
+   *   Base URL from settings, with {instanceId} replaced by the public label.
+   *
+   * @throws \Drupal\Core\TypedData\Exception\MissingDataException
+   *   When WissKI instance settings are incomplete.
+   */
+  public function wisskiInstanceBaseUrl(string $machineName): string {
+    $wisskiInstanceSettings = $this->initWisskiInstanceSettings();
+    return str_replace(
+      '{instanceId}',
+      self::wisskiPublicInstanceId($machineName),
+      (string) $wisskiInstanceSettings['baseUrl'],
+    );
   }
 
   /**

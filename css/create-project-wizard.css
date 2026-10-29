@@ -1,0 +1,40 @@
+/**
+ * New / Demo tabs in the create-project wizard.
+ *
+ * The theme paints every button as a filled control. These rules turn the
+ * mode switch back into text tabs.
+ */
+
+.create-project-wizard__modes {
+  display: flex;
+  gap: 2rem;
+  margin: 0 0 1rem;
+  border-bottom: 1px solid #d6d3d1;
+}
+
+.create-project-wizard__modes[hidden] {
+  display: none;
+}
+
+.create-project-wizard__mode {
+  margin: 0 0 -1px;
+  padding: 1rem 0.25rem;
+  background-color: transparent;
+  color: #57534e;
+  border: 0;
+  border-bottom: 2px solid transparent;
+  border-radius: 0;
+  box-shadow: none;
+  min-height: 0;
+  width: auto;
+}
+
+.create-project-wizard__mode[aria-selected="true"] {
+  color: #17212b;
+  border-bottom-color: #17212b;
+}
+
+.create-project-wizard__mode:hover {
+  box-shadow: none;
+  color: #17212b;
+}

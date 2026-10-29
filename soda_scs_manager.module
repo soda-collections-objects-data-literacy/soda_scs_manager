@@ -447,6 +447,14 @@ function soda_scs_manager_entity_delete(EntityInterface $entity): void {
   _soda_scs_manager_invalidate_cms_app_bundle_cache($entity);
 
   if ($entity instanceof SodaScsProjectInterface) {
+    if ($entity->hasField('demoStatus') && !$entity->get('demoStatus')->isEmpty()) {
+      $ownerId = (int) $entity->getOwnerId();
+      if ($ownerId > 0) {
+        \Drupal::service('cache_tags.invalidator')->invalidateTags([
+          _soda_scs_manager_user_demo_cache_tag($ownerId),
+        ]);
+      }
+    }
     \Drupal::service('soda_scs_manager.project_membership.helpers')
       ->deleteRequestsForProject($entity);
   }
@@ -1008,6 +1016,7 @@ function soda_scs_manager_theme($existing, $type, $theme, $path) {
         'entity_type_id' => NULL,
         'health_status' => NULL,
         'imageUrl' => NULL,
+        'instance_name' => NULL,
         'learn_more_link' => NULL,
         'tags' => NULL,
         'title' => NULL,
@@ -1655,7 +1664,7 @@ function soda_scs_manager_page_attachments(array &$attachments) {
   $account = \Drupal::currentUser();
   if ($account->hasPermission('create soda scs project') || $account->hasPermission('administer soda scs project entities')) {
     $attachments['#attached']['library'][] = 'soda_scs_manager/createProjectWizard';
-    $attachments['#attached']['drupalSettings']['sodaScsManager']['createProjectWizard'] = [
+    $createProjectWizard = [
       'addProjectFormUrl' => Url::fromRoute('entity.soda_scs_project.add_form', ['bundle' => 'soda_scs_project'])->toString(),
       'addMemberFormUrlTemplate' => Url::fromRoute('entity.soda_scs_project.add_member_form', ['soda_scs_project' => '__PROJECT_ID__'])->toString(),
       'projectCanonicalUrlTemplate' => Url::fromRoute('entity.soda_scs_project.canonical', ['soda_scs_project' => '__PROJECT_ID__'])->toString(),
@@ -1667,6 +1676,15 @@ function soda_scs_manager_page_attachments(array &$attachments) {
         'jupyter' => Url::fromRoute('entity.soda_scs_stack.add_form', ['bundle' => 'soda_scs_jupyter_stack'])->toString(),
       ],
     ];
+    // Empty when a demo version is missing or this user already has a demo.
+    // The wizard then omits the checkbox.
+    if ($account->hasPermission('create soda scs project')) {
+      $createProjectWizard['demoCreateUrl'] = _soda_scs_manager_coworking_intro_demo_create_url();
+      $attachments['#cache']['contexts'][] = 'user';
+      $attachments['#cache']['tags'][] = 'config:soda_scs_manager.settings';
+      $attachments['#cache']['tags'][] = _soda_scs_manager_user_demo_cache_tag((int) $account->id());
+    }
+    $attachments['#attached']['drupalSettings']['sodaScsManager']['createProjectWizard'] = $createProjectWizard;
   }
 
   if (_soda_scs_manager_coworking_intro_show_on_front_page()) {
@@ -1692,6 +1710,13 @@ function soda_scs_manager_page_attachments(array &$attachments) {
       'demoCreateUrl' => _soda_scs_manager_coworking_intro_demo_create_url(),
     ];
   }
+}
+
+/**
+ * Cache tag for whether this user may still be offered a demo project.
+ */
+function _soda_scs_manager_user_demo_cache_tag(int $uid): string {
+  return 'soda_scs_manager:user_demo:' . $uid;
 }
 
 /**

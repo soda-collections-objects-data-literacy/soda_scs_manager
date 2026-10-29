@@ -211,9 +211,6 @@ class SodaScsStackCreateForm extends ContentEntityForm {
         ? str_replace('{instanceId}', '{machineName}', (string) $this->settings->get('wisski.instances.baseUrl'))
         : '';
       $form['machineName']['widget'][0]['value']['#attributes']['data-application-url-template'] = $urlTemplate;
-      if ($this->bundle === 'soda_scs_wisski_stack') {
-        $form['machineName']['widget'][0]['value']['#attributes']['data-application-url-transform'] = 'wisski-stack';
-      }
       // Make the machine name field read-only.
       $form['machineName']['widget'][0]['value']['#attributes']['readonly'] = 'readonly';
       $form['machineName']['widget'][0]['value']['#attributes']['class'][] = 'visually-hidden';

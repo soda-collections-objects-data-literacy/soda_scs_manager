@@ -2,22 +2,12 @@
  * @file
  * Polls the status of demo projects that are being set up or reset.
  *
- * Updates the shimmer steps, replaces the application cards as soon as an
- * application exists, and reloads the page once the job has finished.
+ * Drops a line once that application is ready, replaces the application
+ * cards as soon as an application exists, and reloads the page once the job
+ * has finished.
  */
 ((Drupal, once) => {
   const POLL_INTERVAL_MS = 3000;
-
-  /**
-   * @param {Array<{key: string, present: boolean}>|undefined} apps
-   * @return {number}
-   */
-  function presentCount(apps) {
-    if (!Array.isArray(apps)) {
-      return 0;
-    }
-    return apps.filter((app) => app.present).length;
-  }
 
   /**
    * @return {number}
@@ -27,39 +17,43 @@
     if (!container) {
       return 0;
     }
-    return container.querySelectorAll('.application--card').length;
+    return container.querySelectorAll('.application--card:not(.application--card--add)').length;
   }
 
   /**
-   * Marks each step done or still waiting. The first missing step keeps the
-   * pulse so the row shows where setup is.
+   * Rebuilds the pending lines. A line that is no longer reported is removed.
    *
    * @param {HTMLElement} element
-   * @param {Array<{key: string, label: string, present: boolean}>|undefined} apps
+   * @param {Array<{key: string, label: string, detail: string}>|undefined} apps
    */
   function updateApps(element, apps) {
-    if (!Array.isArray(apps)) {
+    const list = element.querySelector('[data-scs-demo-apps]');
+    if (!list || !Array.isArray(apps)) {
       return;
     }
-    let markedCurrent = false;
+    const pending = new Set(apps.map((app) => app.key));
+    list.querySelectorAll('[data-scs-demo-app]').forEach((item) => {
+      if (!pending.has(item.getAttribute('data-scs-demo-app'))) {
+        item.remove();
+      }
+    });
     apps.forEach((app) => {
-      const item = element.querySelector(`[data-scs-demo-app="${CSS.escape(app.key)}"]`);
+      let item = list.querySelector(`[data-scs-demo-app="${CSS.escape(app.key)}"]`);
       if (!item) {
-        return;
+        item = document.createElement('li');
+        item.className = 'flex items-baseline justify-between gap-3';
+        item.setAttribute('data-scs-demo-app', app.key);
+        const label = document.createElement('span');
+        label.textContent = app.label;
+        const detail = document.createElement('span');
+        detail.className = 'text-gray-500';
+        detail.setAttribute('data-scs-demo-app-detail', '');
+        item.append(label, detail);
+        list.appendChild(item);
       }
-      const present = Boolean(app.present);
-      const isCurrent = !present && !markedCurrent;
-      if (isCurrent) {
-        markedCurrent = true;
-      }
-      item.dataset.present = present ? 'true' : 'false';
-      item.classList.toggle('text-emerald-900', present);
-      item.classList.toggle('text-gray-400', !present);
-      const dot = item.querySelector('[data-scs-demo-app-dot]');
-      if (dot) {
-        dot.classList.toggle('bg-emerald-500', present);
-        dot.classList.toggle('bg-gray-200', !present);
-        dot.classList.toggle('animate-pulse', isCurrent);
+      const detail = item.querySelector('[data-scs-demo-app-detail]');
+      if (detail) {
+        detail.textContent = app.detail || '';
       }
     });
   }
@@ -116,13 +110,8 @@
     if (label && data.statusLabel) {
       label.textContent = data.statusLabel;
     }
-    const message = element.querySelector('[data-scs-demo-status-message]');
-    if (message && data.message) {
-      message.textContent = data.message;
-      message.hidden = false;
-    }
     updateApps(element, data.apps);
-    if (data.isBusy && presentCount(data.apps) > applicationCardCount()) {
+    if (data.isBusy && Number(data.createdCount) > applicationCardCount()) {
       await refreshApplications();
     }
     return Boolean(data.isBusy);

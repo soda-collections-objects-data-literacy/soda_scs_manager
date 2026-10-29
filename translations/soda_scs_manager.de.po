@@ -5040,10 +5040,20 @@ msgid "We set up a project with a filled WissKI, a Jupyter notebook, files, a da
 msgstr "Wir richten Ihnen ein Projekt mit befülltem WissKI, Jupyter-Notebook, Dateien, einer Datenbank und einem Triplestore ein. Sie können alles ausprobieren und die Demo jederzeit zurücksetzen."
 
 #: templates/includes/soda-scs-manager--coworking-intro.html.twig
+#: js/createProjectWizard.js
 msgid "Create demo project"
 msgstr "Demo-Projekt anlegen"
 
+#: templates/cards/soda-scs-manager--create-project-wizard.html.twig
+msgid "New"
+msgstr "Neu"
+
+#: templates/cards/soda-scs-manager--create-project-wizard.html.twig
+msgid "Every application is included once, with sample data."
+msgstr "Alle Anwendungen sind einmal mit Beispieldaten enthalten."
+
 #: js/coworkingIntroWizard.js
+#: js/createProjectWizard.js
 msgid "Could not create the demo project. Please try again."
 msgstr "Das Demo-Projekt konnte nicht angelegt werden. Bitte versuchen Sie es erneut."
 
@@ -5190,3 +5200,15 @@ msgstr "Möchten Sie „@name“ wirklich löschen? Das kann nicht rückgängig 
 #: templates/cards/soda-scs-manager--project-card.html.twig templates/entity/soda-scs-project.html.twig
 msgid "Delete project"
 msgstr "Projekt löschen"
+
+#: src/Demo/SodaScsDemoStatusBuilder.php
+msgid "Being created"
+msgstr "Wird angelegt"
+
+#: src/Demo/SodaScsDemoStatusBuilder.php
+msgid "Ready to start"
+msgstr "Bereit zum Start"
+
+#: src/Demo/SodaScsDemoStatusBuilder.php
+msgid "Started"
+msgstr "Gestartet"

@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Drupal\soda_scs_manager\Controller;
 
+use Drupal\Core\Cache\CacheTagsInvalidatorInterface;
 use Drupal\Core\Controller\ControllerBase;
 use Drupal\soda_scs_manager\Demo\SodaScsDemoManager;
 use Drupal\soda_scs_manager\Demo\SodaScsDemoStatusBuilder;
@@ -22,6 +23,7 @@ final class SodaScsDemoProjectController extends ControllerBase {
    * Constructs the controller.
    */
   public function __construct(
+    protected CacheTagsInvalidatorInterface $cacheTagsInvalidator,
     protected SodaScsDemoManager $demoManager,
     protected SodaScsDemoStatusBuilder $statusBuilder,
     protected UserDataInterface $userData,
@@ -32,6 +34,7 @@ final class SodaScsDemoProjectController extends ControllerBase {
    */
   public static function create(ContainerInterface $container): static {
     return new static(
+      $container->get('cache_tags.invalidator'),
       $container->get('soda_scs_manager.demo.manager'),
       $container->get('soda_scs_manager.demo.status_builder'),
       $container->get('user.data'),
@@ -55,6 +58,9 @@ final class SodaScsDemoProjectController extends ControllerBase {
     }
 
     $this->userData->set('soda_scs_manager', (int) $user->id(), 'coworking_intro_completed', 1);
+    $this->cacheTagsInvalidator->invalidateTags([
+      _soda_scs_manager_user_demo_cache_tag((int) $user->id()),
+    ]);
     /** @var \Drupal\soda_scs_manager\Entity\SodaScsProjectInterface $project */
     $project = $result->data['project'];
     return new JsonResponse([

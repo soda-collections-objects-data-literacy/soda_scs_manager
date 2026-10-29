@@ -30,7 +30,7 @@ class SodaScsDemoLabelBuilder {
    */
   protected const APP_LABEL_SUFFIXES = [
     self::APP_DATABASE => 'Demo-Datenbank',
-    self::APP_JUPYTER => 'Demo-Jupyter',
+    self::APP_JUPYTER => 'Demo-JupyterHub',
     self::APP_TRIPLESTORE => 'Demo-Triplestore',
     self::APP_WEBPROTEGE => 'Demo-WebProtégé',
     self::APP_WISSKI => 'Demo-WissKI',

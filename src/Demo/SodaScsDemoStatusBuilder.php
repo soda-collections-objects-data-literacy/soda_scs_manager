@@ -23,6 +23,28 @@ class SodaScsDemoStatusBuilder {
   public const VARIANT_PANEL = 'panel';
 
   /**
+   * Progress messages in the order the provisioner reports them.
+   *
+   * A message is stored when its step starts, so a later message means the
+   * earlier step has finished. Compared against the source string and its
+   * translation, because steps are stored already translated.
+   *
+   * @var list<string>
+   */
+  protected const SETUP_STEPS = [
+    'Creating missing applications',
+    'Waiting for the WissKI installation to finish',
+    'Copying files into the Team Folder',
+    'Restoring the Jupyter home directory',
+    'Restoring the databases',
+    'Restoring the triplestores',
+    'Importing the ontology',
+    'Restoring the WissKI',
+    'Setting the WissKI API password',
+    'The demo project is ready.',
+  ];
+
+  /**
    * Constructs the builder.
    */
   public function __construct(
@@ -60,7 +82,7 @@ class SodaScsDemoStatusBuilder {
       '#status' => $status->value,
       '#status_label' => $this->statusLabel($status),
       '#is_busy' => $status->isBusy(),
-      '#message' => $status->isBusy() ? $this->latestMessage($project) : '',
+      '#message' => '',
       '#status_url' => Url::fromRoute('soda_scs_manager.demo_project_status', ['soda_scs_project' => $project->id()])->toString(),
       '#reset_url' => $isOwner && !$status->isBusy() && $activeTemplate !== NULL
         ? Url::fromRoute('soda_scs_manager.demo_project_reset', ['soda_scs_project' => $project->id()])->toString()
@@ -78,19 +100,34 @@ class SodaScsDemoStatusBuilder {
   /**
    * Status data for the polling endpoint.
    *
-   * @return array{apps: list<array{current: bool, key: string, label: string, present: bool}>, isBusy: bool, message: string, status: string, statusLabel: string}
-   *   JSON-ready status. Apps lists WissKI, Jupyter, SQL, triplestore and
-   *   WebProtégé while a job is running, in that order.
+   * @return array{apps: list<array{detail: string, key: string, label: string}>, createdCount: int, isBusy: bool, status: string, statusLabel: string}
+   *   JSON-ready status. Apps lists only applications that are not ready yet.
    */
   public function data(SodaScsProjectInterface $project): array {
     $status = $this->status($project);
+    $isBusy = $status->isBusy();
     return [
-      'apps'        => $status->isBusy() ? $this->appProgress($project) : [],
-      'isBusy'      => $status->isBusy(),
-      'message'     => $status->isBusy() ? $this->latestMessage($project) : '',
-      'status'      => $status->value,
-      'statusLabel' => $this->statusLabel($status),
+      'apps'         => $isBusy ? $this->appProgress($project) : [],
+      'createdCount' => $isBusy ? $this->createdCount($project) : 0,
+      'isBusy'       => $isBusy,
+      'status'       => $status->value,
+      'statusLabel'  => $this->statusLabel($status),
     ];
+  }
+
+  /**
+   * Current step of one application that is not ready yet.
+   */
+  protected function appDetail(string $key, bool $isPresent): string {
+    if (!$isPresent) {
+      return (string) $this->t('Being created');
+    }
+    return (string) match ($key) {
+      SodaScsDemoLabelBuilder::APP_JUPYTER => $this->t('Ready to start'),
+      SodaScsDemoLabelBuilder::APP_WEBPROTEGE => $this->t('Importing the ontology'),
+      SodaScsDemoLabelBuilder::APP_WISSKI => $this->t('Started'),
+      default => $this->t('Being created'),
+    };
   }
 
   /**
@@ -103,6 +140,27 @@ class SodaScsDemoStatusBuilder {
       SodaScsDemoLabelBuilder::APP_TRIPLESTORE => $this->projectApps->standaloneComponents($project, SodaScsDemoProjectApps::TRIPLESTORE_COMPONENT_BUNDLE) !== [],
       SodaScsDemoLabelBuilder::APP_WEBPROTEGE => $this->projectApps->webprotegeComponent($project) !== NULL,
       SodaScsDemoLabelBuilder::APP_WISSKI => $this->projectApps->wisskiStack($project) !== NULL,
+      default => FALSE,
+    };
+  }
+
+  /**
+   * Whether the line for this application should disappear.
+   *
+   * SQL and the triplestore are ready once they exist. Jupyter is ready once
+   * its home directory has been restored. WebProtégé is ready once the
+   * ontology import has finished. WissKI is ready once it has been started
+   * again after the restore.
+   */
+  protected function appIsReady(string $key, bool $isPresent, int $rank): bool {
+    if (!$isPresent) {
+      return FALSE;
+    }
+    return match ($key) {
+      SodaScsDemoLabelBuilder::APP_DATABASE, SodaScsDemoLabelBuilder::APP_TRIPLESTORE => TRUE,
+      SodaScsDemoLabelBuilder::APP_JUPYTER => $this->stepIsFinished('Restoring the Jupyter home directory', $rank),
+      SodaScsDemoLabelBuilder::APP_WEBPROTEGE => $this->stepIsFinished('Importing the ontology', $rank),
+      SodaScsDemoLabelBuilder::APP_WISSKI => $this->stepIsFinished('Restoring the WissKI', $rank),
       default => FALSE,
     };
   }
@@ -122,31 +180,42 @@ class SodaScsDemoStatusBuilder {
   }
 
   /**
-   * Applications the running demo job will create, with a present flag.
+   * Applications that are not ready yet, in setup order.
    *
-   * Order is WissKI, Jupyter, SQL database, triplestore, WebProtégé. Keys
-   * absent from the template manifest are left out.
+   * Keys absent from the template manifest are left out. A ready application
+   * is omitted so its line disappears.
    *
-   * @return list<array{current: bool, key: string, label: string, present: bool}>
-   *   Progress rows. current marks the first application that is still missing.
+   * @return list<array{detail: string, key: string, label: string}>
+   *   One row per application that is still being set up.
    */
   protected function appProgress(SodaScsProjectInterface $project): array {
+    $rank = $this->highestStepRank($project);
     $apps = [];
-    $waitingMarked = FALSE;
     foreach ($this->expectedAppKeys($project) as $key) {
       $present = $this->appIsPresent($project, $key);
-      $current = !$present && !$waitingMarked;
-      if ($current) {
-        $waitingMarked = TRUE;
+      if ($this->appIsReady($key, $present, $rank)) {
+        continue;
       }
       $apps[] = [
-        'current' => $current,
-        'key'     => $key,
-        'label'   => $this->appLabel($key),
-        'present' => $present,
+        'detail' => $this->appDetail($key, $present),
+        'key'    => $key,
+        'label'  => $this->appLabel($key),
       ];
     }
     return $apps;
+  }
+
+  /**
+   * How many of the expected applications already exist.
+   */
+  protected function createdCount(SodaScsProjectInterface $project): int {
+    $count = 0;
+    foreach ($this->expectedAppKeys($project) as $key) {
+      if ($this->appIsPresent($project, $key)) {
+        $count++;
+      }
+    }
+    return $count;
   }
 
   /**
@@ -181,15 +250,18 @@ class SodaScsDemoStatusBuilder {
   }
 
   /**
-   * Latest progress message of the project's demo job.
+   * Index of the furthest setup step already reported, or -1.
    */
-  protected function latestMessage(SodaScsProjectInterface $project): string {
-    $operationId = $this->demoManager->projectOperationId($project);
-    if ($operationId === NULL) {
-      return '';
+  protected function highestStepRank(SodaScsProjectInterface $project): int {
+    $messages = $this->stepMessages($project);
+    $rank = -1;
+    foreach (self::SETUP_STEPS as $index => $source) {
+      $translated = (string) $this->t($source);
+      if (in_array($source, $messages, TRUE) || in_array($translated, $messages, TRUE)) {
+        $rank = $index;
+      }
     }
-    $steps = $this->progressHelper->findLatestStepsByOperation($operationId, [], 'created', 'DESC', 1);
-    return (string) ($steps[0]['message'] ?? $this->t('Waiting to start'));
+    return $rank;
   }
 
   /**
@@ -209,6 +281,42 @@ class SodaScsDemoStatusBuilder {
       SodaScsDemoProjectStatus::Ready => $this->t('Demo'),
       SodaScsDemoProjectStatus::Failed => $this->t('Demo setup failed'),
     };
+  }
+
+  /**
+   * Position of a setup step, or a rank nothing has reached.
+   */
+  protected function stepIndex(string $source): int {
+    $index = array_search($source, self::SETUP_STEPS, TRUE);
+    return $index === FALSE ? PHP_INT_MAX : $index;
+  }
+
+  /**
+   * Whether a later step than $source has already been reported.
+   */
+  protected function stepIsFinished(string $source, int $rank): bool {
+    return $rank > $this->stepIndex($source);
+  }
+
+  /**
+   * Progress messages recorded for the project's demo job.
+   *
+   * @return list<string>
+   *   Messages in chronological order.
+   */
+  protected function stepMessages(SodaScsProjectInterface $project): array {
+    $operationId = $this->demoManager->projectOperationId($project);
+    if ($operationId === NULL) {
+      return [];
+    }
+    $messages = [];
+    foreach ($this->progressHelper->findLatestStepsByOperation($operationId, [], 'created', 'ASC') as $step) {
+      $message = trim((string) ($step['message'] ?? ''));
+      if ($message !== '') {
+        $messages[] = $message;
+      }
+    }
+    return $messages;
   }
 
 }
