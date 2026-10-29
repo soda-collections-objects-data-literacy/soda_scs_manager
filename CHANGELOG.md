@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Security
+
+- Project pages are visible only to the owner, listed members and SCS
+  administrators. Any other signed-in user who opens a project URL is denied.
+
 ### Changed
 
 - While a demo is being set up, the project page lists each application that

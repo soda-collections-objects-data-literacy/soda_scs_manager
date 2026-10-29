@@ -195,6 +195,7 @@ entity.soda_scs_project.canonical:
       soda_scs_project:
         type: entity:soda_scs_project
   requirements:
+    _entity_access: 'soda_scs_project.view'
     _permission: 'soda scs manager user'
 
 entity.soda_scs_project.add_form:
