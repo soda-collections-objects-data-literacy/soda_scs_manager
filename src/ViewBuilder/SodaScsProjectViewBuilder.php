@@ -146,7 +146,12 @@ final class SodaScsProjectViewBuilder extends EntityViewBuilder
     $build['#project_id'] = (int) $project->id();
     $build['#is_owner'] = $isOwner;
     $build['#owner'] = $project->get('owner')->view('default');
-    $build['#members'] = $this->buildMembersDisplay($project);
+    $membersDisplay = $this->buildMembersDisplay($project);
+    $build['#members'] = $membersDisplay;
+    $build['#other_member_names'] = array_values(array_filter(array_map(
+      static fn(array $member): string => (string) ($member['name'] ?? ''),
+      $membersDisplay['#members'] ?? [],
+    )));
     $build['#note'] = $project->get('note')->isEmpty() ? NULL : $project->get('note')->view('default');
     $build['#note_edit_form'] = $this->formBuilder->getForm(SodaScsProjectNoteForm::class, $project);
     $applicationCards = $this->applicationCardBuilder->buildForProject($project);

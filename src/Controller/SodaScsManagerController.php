@@ -210,6 +210,10 @@ class SodaScsManagerController extends ControllerBase {
         '#members_ids' => $memberIds,
         '#member_profiles' => $memberProfiles,
         '#members_count' => $membersCount,
+        '#other_member_names' => array_values(array_filter(array_map(
+          static fn(array $profile): string => empty($profile['is_owner']) ? (string) ($profile['name'] ?? '') : '',
+          $memberProfiles,
+        ))),
         '#applications' => $applications,
         '#tags' => $sortedTags,
         '#demo_status' => $this->demoStatusBuilder->build($current_user, $project, SodaScsDemoStatusBuilder::VARIANT_BADGE),

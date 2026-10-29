@@ -66,6 +66,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- Deleting a project that still has members is blocked until those members
+  are removed. The delete dialog says so and offers “Remove members and
+  delete”, which drops their access and then deletes the project.
 - While a demo project is being set up, the project page shows a shimmer and
   a short progress row (WissKI, JupyterHub, SQL database, triplestore,
   WebProtégé) instead of the template version. Application cards appear as

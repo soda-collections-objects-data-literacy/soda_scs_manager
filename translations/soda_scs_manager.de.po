@@ -5162,3 +5162,31 @@ msgstr "Die Demo-Jobs konnten nicht gestartet werden. Siehe das Log @log."
 #: src/Demo/SodaScsDemoQueueRunner.php
 msgid "The demo jobs are running."
 msgstr "Die Demo-Jobs laufen."
+
+#: src/Form/SodaScsProjectDeleteForm.php templates/cards/soda-scs-manager--project-card.html.twig templates/entity/soda-scs-project.html.twig
+msgid "“@name” still has members (@members). Remove them before you can delete the project."
+msgstr "„@name“ hat noch Mitglieder (@members). Entfernen Sie sie, bevor Sie das Projekt löschen können."
+
+#: src/Form/SodaScsProjectDeleteForm.php
+msgid "This removes @members from “@name” and then deletes the project. This action cannot be undone."
+msgstr "Damit werden @members aus „@name“ entfernt und danach das Projekt gelöscht. Das kann nicht rückgängig gemacht werden."
+
+#: src/Form/SodaScsProjectDeleteForm.php templates/cards/soda-scs-manager--project-card.html.twig templates/entity/soda-scs-project.html.twig
+msgid "Remove members and delete"
+msgstr "Mitglieder entfernen und löschen"
+
+#: templates/cards/soda-scs-manager--project-card.html.twig templates/entity/soda-scs-project.html.twig
+msgid "Removing the members and deleting the project. Please do not close this window."
+msgstr "Die Mitglieder werden entfernt und das Projekt wird gelöscht. Bitte dieses Fenster nicht schließen."
+
+#: templates/cards/soda-scs-manager--project-card.html.twig templates/entity/soda-scs-project.html.twig
+msgid "Delete project?"
+msgstr "Projekt löschen?"
+
+#: templates/cards/soda-scs-manager--project-card.html.twig templates/entity/soda-scs-project.html.twig
+msgid "Do you really want to delete “@name”? This action cannot be undone."
+msgstr "Möchten Sie „@name“ wirklich löschen? Das kann nicht rückgängig gemacht werden."
+
+#: templates/cards/soda-scs-manager--project-card.html.twig templates/entity/soda-scs-project.html.twig
+msgid "Delete project"
+msgstr "Projekt löschen"

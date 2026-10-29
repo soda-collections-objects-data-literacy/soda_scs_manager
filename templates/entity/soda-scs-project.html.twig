@@ -9,6 +9,7 @@
  * - is_owner: Whether the current user owns the project.
  * - owner: Rendered owner field.
  * - members: Rendered members field.
+ * - other_member_names: Display names of members other than the owner.
  * - note: Rendered note field.
  * - note_edit_form: Form for editing the project notes.
  * - application_cards: Dashboard-style cards for connected applications.
@@ -26,8 +27,6 @@
 		<h1 class="project__title">{{ label }}</h1>
 	</header>
 
-	{{ demo_status }}
-
 	{% if application_cards is not empty %}
 		<div class="project__applications">
 			{% for card in application_cards %}
@@ -43,6 +42,9 @@
 	{% endif %}
 </div>
 <div class="project--right">
+	{% if demo_status %}
+		{{ demo_status }}
+	{% endif %}
 	<div class="project__note project__section">
 		  <div class="project__section__header">
 		<h2 class="project__section-title h5">{{ 'Notes'|t }}</h2>
@@ -79,10 +81,18 @@
 				<div class="project-card__delete-confirmation__backdrop" aria-hidden="true"></div>
 				<div class="project-card__delete-confirmation__dialog" role="document">
 					<h3 id="project-delete-title-{{ project_id }}">{{ 'Delete project?'|t }}</h3>
-					<p>{{ 'Do you really want to delete “@name”? This action cannot be undone.'|t({'@name': label}) }}</p>
+					{% if other_member_names %}
+						<p>{{ '“@name” still has members (@members). Remove them before you can delete the project.'|t({'@name': label, '@members': other_member_names|join(', ')}) }}</p>
+					{% else %}
+						<p>{{ 'Do you really want to delete “@name”? This action cannot be undone.'|t({'@name': label}) }}</p>
+					{% endif %}
 					<div class="project-card__delete-confirmation__actions">
 						<button type="button" class="btn btn--secondary project-card__delete-confirmation__cancel">{{ 'Cancel'|t }}</button>
-						<a class="btn btn--primary project-card__delete-confirmation__confirm" data-delete-destination="{{ path('soda_scs_manager.dashboard') }}" data-throbber-message="{{ 'Deleting the project. Please do not close this window.'|t }}" href="{{ path('entity.soda_scs_project.delete_form', {'soda_scs_project': project_id}) }}">{{ 'Delete project'|t }}</a>
+						{% if other_member_names %}
+							<a class="btn btn--primary project-card__delete-confirmation__confirm" data-delete-destination="{{ path('soda_scs_manager.dashboard') }}" data-throbber-message="{{ 'Removing the members and deleting the project. Please do not close this window.'|t }}" href="{{ path('entity.soda_scs_project.delete_form', {'soda_scs_project': project_id}, {'query': {'remove_members': '1'}}) }}">{{ 'Remove members and delete'|t }}</a>
+						{% else %}
+							<a class="btn btn--primary project-card__delete-confirmation__confirm" data-delete-destination="{{ path('soda_scs_manager.dashboard') }}" data-throbber-message="{{ 'Deleting the project. Please do not close this window.'|t }}" href="{{ path('entity.soda_scs_project.delete_form', {'soda_scs_project': project_id}) }}">{{ 'Delete project'|t }}</a>
+						{% endif %}
 					</div>
 				</div>
 			</div>
