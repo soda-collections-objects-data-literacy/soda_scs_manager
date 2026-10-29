@@ -12,6 +12,10 @@ use Drupal\Core\Link;
 use Drupal\Core\Session\AccountProxyInterface;
 use Drupal\Core\StringTranslation\TranslatableMarkup;
 use Drupal\Core\Url;
+use Drupal\soda_scs_manager\Access\SodaScsManagerAdminAccess;
+use Drupal\soda_scs_manager\Entity\SodaScsComponentInterface;
+use Drupal\soda_scs_manager\Entity\SodaScsStackInterface;
+use Drupal\soda_scs_manager\Form\SodaScsWisskiClearVarnishCacheConfirmForm;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 
 /**
@@ -164,7 +168,36 @@ class SodaScsStackListBuilder extends EntityListBuilder {
       $operations['view']['url'] = $this->ensureBundleParameter($operations['view']['url'], $entity);
     }
 
+    $wisskiComponent = $this->includedWisskiComponent($entity);
+    if ($wisskiComponent !== NULL
+      && $this->currentUser->hasPermission(SodaScsManagerAdminAccess::SCS_MANAGER_ADMIN_PERMISSION)) {
+      $operations['clear_varnish_cache'] = [
+        'title' => $this->t('Clear Varnish cache'),
+        'weight' => 70,
+        'url' => $this->ensureDestination(SodaScsWisskiClearVarnishCacheConfirmForm::confirmUrl($wisskiComponent)),
+      ];
+    }
+
     return $operations;
+  }
+
+  /**
+   * WissKI component bundled in this stack, when the stack is a WissKI stack.
+   */
+  protected function includedWisskiComponent(EntityInterface $entity): ?SodaScsComponentInterface {
+    if (!$entity instanceof SodaScsStackInterface
+      || $entity->bundle() !== 'soda_scs_wisski_stack'
+      || !$entity->hasField('includedComponents')) {
+      return NULL;
+    }
+
+    foreach ($entity->get('includedComponents')->referencedEntities() as $component) {
+      if ($component instanceof SodaScsComponentInterface && $component->bundle() === 'soda_scs_wisski_component') {
+        return $component;
+      }
+    }
+
+    return NULL;
   }
 
   /**

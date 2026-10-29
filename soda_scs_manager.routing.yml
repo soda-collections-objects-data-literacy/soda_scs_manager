@@ -816,6 +816,20 @@ soda_scs_manager.issue_report:
 
 # Tasks
 
+soda_scs_manager.component.clear_varnish_cache:
+  path: '/soda-scs-manager/component/{soda_scs_component}/clear-varnish-cache'
+  defaults:
+    _form: '\Drupal\soda_scs_manager\Form\SodaScsWisskiClearVarnishCacheConfirmForm'
+    _title: 'Clear Varnish cache'
+  requirements:
+    _permission: 'soda scs manager admin'
+    _custom_access: '\Drupal\soda_scs_manager\Form\SodaScsWisskiClearVarnishCacheConfirmForm::access'
+  options:
+    parameters:
+      soda_scs_component:
+        type: entity:soda_scs_component
+    no_cache: TRUE
+
 soda_scs_manager.component.check_drupal_packages:
   path: '/soda-scs-manager/component/check-drupal-packages/{soda_scs_component}'
   defaults:

@@ -86,6 +86,8 @@ services:
     class: Drupal\soda_scs_manager\Helpers\SodaScsTriplestoreHelpers
   soda_scs_manager.wisski_volume.helpers:
     class: Drupal\soda_scs_manager\Helpers\SodaScsWisskiVolumeHelpers
+  soda_scs_manager.wisski_varnish_cache:
+    class: Drupal\soda_scs_manager\Service\SodaScsWisskiVarnishCache
   soda_scs_manager.volume_archive.helpers:
     class: Drupal\soda_scs_manager\Helpers\SodaScsVolumeArchiveHelpers
   soda_scs_manager.demo.api_credentials:

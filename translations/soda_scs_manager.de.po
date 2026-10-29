@@ -5212,3 +5212,51 @@ msgstr "Bereit zum Start"
 #: src/Demo/SodaScsDemoStatusBuilder.php
 msgid "Started"
 msgstr "Gestartet"
+
+#: soda_scs_manager.routing.yml src/Form/SodaScsWisskiClearVarnishCacheConfirmForm.php src/ListBuilder/SodaScsComponentListBuilder.php src/ListBuilder/SodaScsStackListBuilder.php templates/entity/soda-scs-entity.html.twig
+msgid "Clear Varnish cache"
+msgstr "Varnish-Cache leeren"
+
+#: templates/entity/soda-scs-entity.html.twig
+msgid "Varnish cache"
+msgstr "Varnish-Cache"
+
+#: templates/entity/soda-scs-entity.html.twig
+msgid "Clears cached pages of this WissKI instance."
+msgstr "Leert die zwischengespeicherten Seiten dieser WissKI-Instanz."
+
+#: src/Form/SodaScsWisskiClearVarnishCacheConfirmForm.php
+msgid "Clear the Varnish cache of @label?"
+msgstr "Varnish-Cache von @label leeren?"
+
+#: src/Form/SodaScsWisskiClearVarnishCacheConfirmForm.php
+msgid "This removes cached pages of this WissKI instance. The next visit loads fresh pages from WissKI. The instance itself stays online."
+msgstr "Damit werden die zwischengespeicherten Seiten dieser WissKI-Instanz gelöscht. Der nächste Aufruf lädt die Seiten neu aus dem WissKI. Die Instanz bleibt online."
+
+#: src/Form/SodaScsWisskiClearVarnishCacheConfirmForm.php
+msgid "Varnish cache of @label cleared."
+msgstr "Varnish-Cache von @label geleert."
+
+#: src/Form/SodaScsWisskiClearVarnishCacheConfirmForm.php
+msgid "Could not clear the Varnish cache of @label."
+msgstr "Der Varnish-Cache von @label konnte nicht geleert werden."
+
+#: src/Service/SodaScsWisskiVarnishCache.php
+msgid "This WissKI instance has no valid machine name."
+msgstr "Diese WissKI-Instanz hat keinen gültigen Maschinennamen."
+
+#: src/Service/SodaScsWisskiVarnishCache.php
+msgid "Varnish container not found."
+msgstr "Varnish-Container nicht gefunden."
+
+#: src/Service/SodaScsWisskiVarnishCache.php
+msgid "The Varnish container of this WissKI instance is not running."
+msgstr "Der Varnish-Container dieser WissKI-Instanz läuft nicht."
+
+#: src/Service/SodaScsWisskiVarnishCache.php
+msgid "Could not clear the Varnish cache."
+msgstr "Der Varnish-Cache konnte nicht geleert werden."
+
+#: src/Service/SodaScsWisskiVarnishCache.php
+msgid "Varnish cache cleared."
+msgstr "Varnish-Cache geleert."

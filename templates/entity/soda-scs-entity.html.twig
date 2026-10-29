@@ -73,6 +73,14 @@
 		<p class="h2 application__health-status--{{ health_status }}" data-entity-health="{{ health_status }}">{{ {'running': 'Running'|t, 'starting': 'Starting'|t, 'stopped': 'Stopped'|t, 'problem': 'Problem'|t, 'unknown': 'Unknown'|t}[health_status] ?? 'Unknown'|t }}</p>
 	</section>
 
+	{% if elements['#clear_varnish_cache_url'] %}
+		<section class="application__details-card application__details-card--varnish">
+			<h2 class="application__details-card-title h4">{{ 'Varnish cache'|t }}</h2>
+			<p>{{ 'Clears cached pages of this WissKI instance.'|t }}</p>
+			<a class="btn btn--secondary" href="{{ elements['#clear_varnish_cache_url'] }}">{{ 'Clear Varnish cache'|t }}</a>
+		</section>
+	{% endif %}
+
 	{% if elements.version or elements.automatedUpdates %}
 		<section class="application__details-card application__details-card--version">
 			{% if elements.version %}

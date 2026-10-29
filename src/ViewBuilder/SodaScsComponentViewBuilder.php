@@ -11,11 +11,15 @@ use Drupal\Core\Entity\EntityDisplayRepositoryInterface;
 use Drupal\Core\Entity\EntityTypeInterface;
 use Drupal\Core\Form\FormBuilderInterface;
 use Drupal\Core\Language\LanguageManagerInterface;
+use Drupal\Core\Session\AccountProxyInterface;
 use Drupal\Core\Theme\Registry;
 use Drupal\Core\TypedData\Exception\MissingDataException;
 use Drupal\Core\Url;
 use Drupal\soda_scs_manager\Access\SodaScsComponentLinksTasksAccessControlHandler;
+use Drupal\soda_scs_manager\Access\SodaScsManagerAdminAccess;
+use Drupal\soda_scs_manager\Entity\SodaScsComponentInterface;
 use Drupal\soda_scs_manager\Form\SodaScsEntityNoteForm;
+use Drupal\soda_scs_manager\Form\SodaScsWisskiClearVarnishCacheConfirmForm;
 use Drupal\soda_scs_manager\Helpers\SodaScsHealthStatus;
 use Drupal\soda_scs_manager\Helpers\SodaScsServiceHelpers;
 use Symfony\Component\DependencyInjection\ContainerInterface;
@@ -71,6 +75,7 @@ class SodaScsComponentViewBuilder extends EntityViewBuilder {
     EntityTypeInterface $entity_type,
     SodaScsServiceHelpers $soda_scs_service_helpers,
     protected FormBuilderInterface $formBuilder,
+    protected AccountProxyInterface $currentUser,
   ) {
     $this->entityTypeId = $entity_type->id();
     $this->entityType = $entity_type;
@@ -98,6 +103,7 @@ class SodaScsComponentViewBuilder extends EntityViewBuilder {
       $entity_type,
       $container->get('soda_scs_manager.service.helpers'),
       $container->get('form_builder'),
+      $container->get('current_user'),
     );
   }
 
@@ -130,6 +136,7 @@ class SodaScsComponentViewBuilder extends EntityViewBuilder {
     $build['#delete_access'] = SodaScsComponentLinksTasksAccessControlHandler::accessDeleteForm($entity)->isAllowed();
     $build['#delete_url'] = $entity->toUrl('delete-form')->toString();
     $build['#delete_destination'] = $this->resolveDeleteDestination($entity);
+    $build['#clear_varnish_cache_url'] = $this->clearVarnishCacheUrl($entity);
 
     try {
       $serviceUrls = $this->sodaScsServiceHelpers->getComponentServiceAndLoginUrls($entity);
@@ -150,12 +157,28 @@ class SodaScsComponentViewBuilder extends EntityViewBuilder {
       }
     }
 
-    // Disable caching.
+    // Disable caching. The Varnish button depends on the admin permission.
     $build['#cache'] = [
+      'contexts' => ['user.permissions'],
       'max-age' => 0,
     ];
 
     return $build;
+  }
+
+  /**
+   * Confirm-form URL for clearing this component's Varnish cache, or NULL.
+   *
+   * Only SCS administrators see it, and only on a WissKI component.
+   */
+  protected function clearVarnishCacheUrl(EntityInterface $entity): ?string {
+    if (!$entity instanceof SodaScsComponentInterface
+      || $entity->bundle() !== 'soda_scs_wisski_component'
+      || !$this->currentUser->hasPermission(SodaScsManagerAdminAccess::SCS_MANAGER_ADMIN_PERMISSION)) {
+      return NULL;
+    }
+
+    return SodaScsWisskiClearVarnishCacheConfirmForm::confirmUrl($entity, $entity->toUrl()->toString())->toString();
   }
 
   /**

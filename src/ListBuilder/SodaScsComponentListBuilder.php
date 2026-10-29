@@ -14,6 +14,9 @@ use Drupal\Core\Pager\PagerManagerInterface;
 use Drupal\Core\Session\AccountProxyInterface;
 use Drupal\Core\StringTranslation\TranslatableMarkup;
 use Drupal\Core\Url;
+use Drupal\soda_scs_manager\Access\SodaScsManagerAdminAccess;
+use Drupal\soda_scs_manager\Entity\SodaScsComponentInterface;
+use Drupal\soda_scs_manager\Form\SodaScsWisskiClearVarnishCacheConfirmForm;
 use Drupal\soda_scs_manager\Helpers\SodaScsComponentHelpers;
 use Drupal\soda_scs_manager\Helpers\SodaScsHealthStatus;
 use Drupal\soda_scs_manager\Helpers\SodaScsProgressHelper;
@@ -932,6 +935,20 @@ class SodaScsComponentListBuilder extends EntityListBuilder {
       'weight' => 60,
       'url' => $service_link_url,
     ];
+
+    if ($this->currentUser->hasPermission(SodaScsManagerAdminAccess::SCS_MANAGER_ADMIN_PERMISSION)
+      && $entity instanceof SodaScsComponentInterface
+      && $entity->bundle() === 'soda_scs_wisski_component') {
+      $clearVarnishUrl = SodaScsWisskiClearVarnishCacheConfirmForm::confirmUrl($entity);
+      $attributes = $clearVarnishUrl->getOption('attributes') ?: [];
+      $attributes += ['aria-label' => $entity->label() . ' - ' . $this->t('Clear Varnish cache')];
+      $clearVarnishUrl->setOption('attributes', $attributes);
+      $operations['clear_varnish_cache'] = [
+        'title' => $this->t('Clear Varnish cache'),
+        'weight' => 80,
+        'url' => $this->ensureDestination($clearVarnishUrl),
+      ];
+    }
 
     // Package Update operation.
     if ($this->currentUser->hasPermission('soda scs manager admin') && ($entity->bundle() === 'soda_scs_wisski_component')) {
