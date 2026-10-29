@@ -26,6 +26,26 @@ class SodaScsWebprotegeServiceActions implements SodaScsServiceRequestInterface 
   use StringTranslationTrait;
 
   /**
+   * Download format parameter for OWL functional syntax.
+   */
+  public const FUNCTIONAL_SYNTAX_FORMAT = 'ofn';
+
+  /**
+   * Content type WebProtégé expects for posted functional syntax.
+   */
+  public const FUNCTIONAL_SYNTAX_MIME_TYPE = 'text/owl-functional';
+
+  /**
+   * Seconds for ontology downloads and uploads; large ontologies take a while.
+   */
+  protected const ONTOLOGY_TRANSFER_TIMEOUT = 300;
+
+  /**
+   * Seconds for all other API calls.
+   */
+  protected const REQUEST_TIMEOUT = 30;
+
+  /**
    * Constructs the WebProtégé request actions.
    */
   public function __construct(
@@ -50,6 +70,36 @@ class SodaScsWebprotegeServiceActions implements SodaScsServiceRequestInterface 
   protected Config $settings;
 
   /**
+   * Posts axioms in OWL functional syntax into a project's root ontology.
+   *
+   * @param string $commitMessage
+   *   Revision message shown in the WebProtégé history.
+   * @param string $functionalSyntax
+   *   The ontology document; its Import() declarations must be removed,
+   *   because WebProtégé would try to fetch them.
+   * @param string $projectId
+   *   WebProtégé project UUID.
+   */
+  public function buildAddAxiomsRequest(string $commitMessage, string $functionalSyntax, string $projectId): array {
+    $settings = $this->requireApiSettings();
+    if ($settings === NULL) {
+      return $this->missingApiKeyRequest('axioms');
+    }
+
+    $headers = $this->apiHeaders($settings['apiKey']);
+    $headers['Content-Type'] = self::FUNCTIONAL_SYNTAX_MIME_TYPE;
+    return [
+      'type' => 'axioms',
+      'success' => TRUE,
+      'method' => 'POST',
+      'route' => $settings['apiBaseUrl'] . '/data/projects/' . rawurlencode($projectId) . '/axioms?' . http_build_query(['msg' => $commitMessage]),
+      'headers' => $headers,
+      'body' => $functionalSyntax,
+      'timeout' => self::ONTOLOGY_TRANSFER_TIMEOUT,
+    ];
+  }
+
+  /**
    * {@inheritdoc}
    */
   public function buildCreateRequest(array $requestParams): array {
@@ -65,6 +115,33 @@ class SodaScsWebprotegeServiceActions implements SodaScsServiceRequestInterface 
       'route' => $settings['apiBaseUrl'] . '/data/projects',
       'headers' => $this->apiHeaders($settings['apiKey']),
       'body' => json_encode($requestParams['body'] ?? []),
+    ];
+  }
+
+  /**
+   * Downloads the head revision of a project as a zip of ontology documents.
+   *
+   * Needs the SCS endpoint GET /data/projects/{id}/ontology of the
+   * WebProtégé fork. The zip holds the root ontology and its imports.
+   *
+   * @param string $projectId
+   *   WebProtégé project UUID.
+   */
+  public function buildDownloadOntologyRequest(string $projectId): array {
+    $settings = $this->requireApiSettings();
+    if ($settings === NULL) {
+      return $this->missingApiKeyRequest('ontology');
+    }
+
+    $headers = $this->apiHeaders($settings['apiKey']);
+    $headers['Accept'] = 'application/zip';
+    return [
+      'type' => 'ontology',
+      'success' => TRUE,
+      'method' => 'GET',
+      'route' => $settings['apiBaseUrl'] . '/data/projects/' . rawurlencode($projectId) . '/ontology?format=' . self::FUNCTIONAL_SYNTAX_FORMAT,
+      'headers' => $headers,
+      'timeout' => self::ONTOLOGY_TRANSFER_TIMEOUT,
     ];
   }
 
@@ -161,6 +238,17 @@ class SodaScsWebprotegeServiceActions implements SodaScsServiceRequestInterface 
     }
 
     $type = (string) ($requestParams['type'] ?? 'project');
+    if ($type === 'user') {
+      $userName = (string) ($requestParams['routeParams']['userName'] ?? '');
+      return [
+        'type' => 'user',
+        'success' => TRUE,
+        'method' => 'DELETE',
+        'route' => $settings['apiBaseUrl'] . '/data/users/' . rawurlencode($userName),
+        'headers' => $this->apiHeaders($settings['apiKey']),
+      ];
+    }
+
     $projectId = (string) ($requestParams['routeParams']['projectId'] ?? '');
     $route = $settings['apiBaseUrl'] . '/data/projects/' . rawurlencode($projectId);
     if ($type === 'collaborator') {
@@ -205,7 +293,7 @@ class SodaScsWebprotegeServiceActions implements SodaScsServiceRequestInterface 
     $options = [
       'headers' => $request['headers'] ?? [],
       'http_errors' => TRUE,
-      'timeout' => 30,
+      'timeout' => $request['timeout'] ?? self::REQUEST_TIMEOUT,
     ];
     if (isset($request['body'])) {
       $options['body'] = $request['body'];

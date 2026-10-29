@@ -705,6 +705,60 @@
       });
     }
 
+    /**
+     * Demo option on the first-project slide; queues a demo project and opens it.
+     */
+    function setupDemoOption() {
+      const demoBlock = root.querySelector('[data-coworking-intro-demo]');
+      const demoBtn = root.querySelector('[data-coworking-intro-create-demo]');
+      const demoError = root.querySelector('[data-coworking-intro-demo-error]');
+      const demoCreateUrl = wisskiCfg()?.demoCreateUrl;
+      if (!demoBlock || !demoBtn || !demoCreateUrl) {
+        return;
+      }
+      demoBlock.hidden = false;
+
+      function showDemoError(msg) {
+        if (demoError) {
+          demoError.textContent = msg || '';
+          demoError.hidden = !msg;
+        }
+      }
+
+      demoBtn.addEventListener('click', async () => {
+        demoBtn.disabled = true;
+        showDemoError('');
+        const token = await getCsrfToken();
+        if (!token) {
+          demoBtn.disabled = false;
+          showDemoError(Drupal.t('Could not load a security token. Reload the page and try again.'));
+          return;
+        }
+        try {
+          const res = await fetch(demoCreateUrl, {
+            method: 'POST',
+            credentials: 'same-origin',
+            headers: {
+              Accept: 'application/json',
+              'X-CSRF-Token': token,
+            },
+          });
+          const data = await res.json().catch(() => ({}));
+          if (!res.ok || !data.success) {
+            demoBtn.disabled = false;
+            showDemoError((data && data.error) || Drupal.t('Could not create the demo project. Please try again.'));
+            return;
+          }
+          window.location.assign(String(data.projectUrl));
+        } catch (e) {
+          demoBtn.disabled = false;
+          showDemoError(Drupal.t('Request failed. Please try again.'));
+        }
+      });
+    }
+
+    setupDemoOption();
+
     updateStepUi(root, index, total, nextBtn);
 
     probeNextcloudSsoForIntro(root).then((skipped) => {

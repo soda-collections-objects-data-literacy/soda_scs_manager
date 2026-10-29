@@ -888,6 +888,105 @@ class SodaScsContainerHelpers {
   }
 
   /**
+   * Runs a one-off container to completion and removes it.
+   *
+   * Unlike waitForContainerState(), the wait budget does not depend on the
+   * PHP max_execution_time, so long volume copies work from queue workers.
+   *
+   * @param string $name
+   *   Container name; must be unique on the Docker host.
+   * @param array $cmd
+   *   The command, e.g. ['sh', '-c', '...'].
+   * @param array $binds
+   *   Docker bind specs ("volume-or-host-path:/path[:ro]").
+   * @param int $timeoutSeconds
+   *   How long to wait for the container to exit.
+   * @param string $image
+   *   The image to run.
+   * @param string $user
+   *   Docker user ("uid:gid").
+   *
+   * @return \Drupal\soda_scs_manager\ValueObject\SodaScsResult
+   *   Success when the container exited with code 0.
+   */
+  public function runShortLivedContainer(
+    string $name,
+    array $cmd,
+    array $binds,
+    int $timeoutSeconds = 1800,
+    string $image = 'alpine:latest',
+    string $user = '0:0',
+  ): SodaScsResult {
+    $createResponse = $this->sodaScsDockerRunServiceActions->makeRequest(
+      $this->sodaScsDockerRunServiceActions->buildCreateRequest([
+        'name' => $name,
+        'image' => $image,
+        'user' => $user,
+        'cmd' => $cmd,
+        'hostConfig' => [
+          'Binds' => $binds,
+          'AutoRemove' => FALSE,
+        ],
+      ])
+    );
+    if (!$createResponse['success']) {
+      return SodaScsResult::failure(
+        error: (string) $createResponse['error'],
+        message: (string) $this->t('Could not create the helper container @name.', ['@name' => $name]),
+      );
+    }
+    $containerId = (string) (json_decode($createResponse['data']['portainerResponse']->getBody()->getContents(), TRUE)['Id'] ?? '');
+
+    try {
+      $startResponse = $this->sodaScsDockerRunServiceActions->makeRequest(
+        $this->sodaScsDockerRunServiceActions->buildStartRequest(['routeParams' => ['containerId' => $containerId]])
+      );
+      if (!$startResponse['success']) {
+        return SodaScsResult::failure(
+          error: (string) $startResponse['error'],
+          message: (string) $this->t('Could not start the helper container @name.', ['@name' => $name]),
+        );
+      }
+
+      $deadline = time() + $timeoutSeconds;
+      do {
+        $inspectResult = $this->inspectContainer($containerId);
+        if (!$inspectResult->success) {
+          return $inspectResult;
+        }
+        $state = $inspectResult->data[$containerId]['State'] ?? [];
+        if (($state['Status'] ?? '') === 'exited') {
+          $exitCode = (int) ($state['ExitCode'] ?? -1);
+          if ($exitCode !== 0) {
+            return SodaScsResult::failure(
+              error: sprintf('Helper container %s exited with code %d.', $name, $exitCode),
+              message: (string) $this->t('The helper container @name failed.', ['@name' => $name]),
+            );
+          }
+          return SodaScsResult::success(
+            data: ['containerId' => $containerId, 'exitCode' => $exitCode],
+            message: (string) $this->t('The helper container @name finished.', ['@name' => $name]),
+          );
+        }
+        sleep(5);
+      } while (time() < $deadline);
+
+      return SodaScsResult::failure(
+        error: sprintf('Helper container %s did not finish within %d seconds.', $name, $timeoutSeconds),
+        message: (string) $this->t('The helper container @name timed out.', ['@name' => $name]),
+      );
+    }
+    finally {
+      $this->sodaScsDockerRunServiceActions->makeRequest(
+        $this->sodaScsDockerRunServiceActions->buildRemoveRequest([
+          'routeParams' => ['containerId' => $containerId],
+          'queryParams' => ['force' => 'true'],
+        ])
+      );
+    }
+  }
+
+  /**
    * Start a container.
    *
    * If the container is already running, return a success result.
@@ -965,7 +1064,7 @@ class SodaScsContainerHelpers {
     }
 
     $containerState = $inspectContainerResponse->data[$containerId]['State'];
-    if (!$containerState['Status'] === 'running') {
+    if ($containerState['Status'] !== 'running') {
       return SodaScsResult::success(
         message: 'Container already stopped.',
         data: [

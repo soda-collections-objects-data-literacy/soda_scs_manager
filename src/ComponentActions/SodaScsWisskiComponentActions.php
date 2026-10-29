@@ -32,6 +32,7 @@ use Drupal\soda_scs_manager\Helpers\SodaScsProjectHelpers;
 use Drupal\soda_scs_manager\Helpers\SodaScsServiceHelpers;
 use Drupal\soda_scs_manager\Helpers\SodaScsSnapshotHelpers;
 use Drupal\soda_scs_manager\Helpers\SodaScsStackHelpers;
+use Drupal\soda_scs_manager\Helpers\SodaScsWisskiVolumeHelpers;
 use Drupal\soda_scs_manager\RequestActions\SodaScsExecRequestInterface;
 use Drupal\soda_scs_manager\RequestActions\SodaScsRunRequestInterface;
 use Drupal\soda_scs_manager\RequestActions\SodaScsServiceRequestInterface;
@@ -302,6 +303,8 @@ class SodaScsWisskiComponentActions implements SodaScsComponentActionsInterface 
     #[Autowire(service: 'soda_scs_manager.stack.helpers')]
     SodaScsStackHelpers $sodaScsStackHelpers,
     TranslationInterface $stringTranslation,
+    #[Autowire(service: 'soda_scs_manager.wisski_volume.helpers')]
+    protected SodaScsWisskiVolumeHelpers $wisskiVolumeHelpers,
   ) {
     // Services from container.
     $this->bundleInfo = $bundleInfo;
@@ -345,7 +348,7 @@ class SodaScsWisskiComponentActions implements SodaScsComponentActionsInterface 
    *   Named volume (e.g. wisski-foo--drupal-sites).
    */
   private function wisskiDrupalSitesVolumeName(string $machineName): string {
-    return $machineName . '--drupal-sites';
+    return SodaScsWisskiVolumeHelpers::sitesVolumeName($machineName);
   }
 
   /**
@@ -358,7 +361,7 @@ class SodaScsWisskiComponentActions implements SodaScsComponentActionsInterface 
    *   Named volume (e.g. wisski-foo--drupal-private-files).
    */
   private function wisskiDrupalPrivateFilesVolumeName(string $machineName): string {
-    return $machineName . '--drupal-private-files';
+    return SodaScsWisskiVolumeHelpers::privateFilesVolumeName($machineName);
   }
 
   /**
@@ -391,27 +394,6 @@ class SodaScsWisskiComponentActions implements SodaScsComponentActionsInterface 
       'rm -rf /staging && ' .
       'cd /backup && sha256sum ' . $tarFileName . ' > ' . $sha256FileName . ' && ' .
       'chown ' . $owner . ' /backup/' . $tarFileName . ' /backup/' . $sha256FileName;
-  }
-
-  /**
-   * Shell command to purge both volumes and restore from a snapshot tar.
-   *
-   * Supports 3.x (sites/, private-files/) and 2.x (web/sites/, private-files/).
-   */
-  private function buildWisskiRestoreFromTarCommand(string $tarFileName): string {
-    $owner = SodaScsSnapshotHelpers::SNAPSHOT_FILE_OWNER_UID . ':' . SodaScsSnapshotHelpers::SNAPSHOT_FILE_OWNER_GID;
-    return 'STAGING=/staging && ' .
-      'mkdir -p "$STAGING" && ' .
-      'rm -rf /volume-sites/* /volume-sites/.[!.]* /volume-sites/..?* && ' .
-      'rm -rf /volume-private/* /volume-private/.[!.]* /volume-private/..?* && ' .
-      'tar -xzf /restore/' . $tarFileName . ' -C "$STAGING" && ' .
-      'if [ -d "$STAGING/sites" ]; then ' .
-      'cp -a "$STAGING/sites/." /volume-sites/ && cp -a "$STAGING/private-files/." /volume-private/; ' .
-      'elif [ -d "$STAGING/web/sites" ]; then ' .
-      'cp -a "$STAGING/web/sites/." /volume-sites/ && ' .
-      '[ -d "$STAGING/private-files" ] && cp -a "$STAGING/private-files/." /volume-private/ || true; ' .
-      'else echo "Unrecognized WissKI snapshot layout" >&2; exit 1; fi && ' .
-      'rm -rf "$STAGING" && chown -R ' . $owner . ' /volume-sites /volume-private';
   }
 
   /**
@@ -2034,71 +2016,11 @@ class SodaScsWisskiComponentActions implements SodaScsComponentActionsInterface 
       //
       // Restore into fresh state: purge both volumes and extract snapshot tar.
       //
-      $restoreCmd = [
-        'sh',
-        '-c',
-        $this->buildWisskiRestoreFromTarCommand($snapshotTarFileName),
-      ];
-
-      $restoreContainerName = 'restore--' . $machineName . '--drupal__' . $this->sodaScsSnapshotHelpers->generateRandomSuffix();
-      $restoreContainerCreateRequestParams = [
-        'name' => $restoreContainerName,
-        'image' => 'alpine:latest',
-        'user' => SodaScsSnapshotHelpers::SNAPSHOT_VOLUME_ARCHIVE_DOCKER_USER,
-        'cmd' => $restoreCmd,
-        'hostConfig' => [
-          'Binds' => [
-            $wisskiVolumes['sites'] . ':/volume-sites',
-            $wisskiVolumes['privateFiles'] . ':/volume-private',
-            $restoreMountPath . ':/restore:ro',
-          ],
-          'AutoRemove' => FALSE,
-        ],
-      ];
-
-      // Build and make the create restore container request.
-      $restoreContainerCreateRequest = $this->sodaScsDockerRunServiceActions->buildCreateRequest($restoreContainerCreateRequestParams);
-      $restoreContainerCreateResponse = $this->sodaScsDockerRunServiceActions->makeRequest($restoreContainerCreateRequest);
-      if (!$restoreContainerCreateResponse['success']) {
-        // Delete the rollback container if the
-        // restore container creation failed.
-        $rollbackContainerDeleteRequestParams = [
-          'routeParams' => ['containerId' => $rollbackContainerId],
-        ];
-        $rollbackContainerDeleteRequest = $this->sodaScsDockerRunServiceActions->buildRemoveRequest($rollbackContainerDeleteRequestParams);
-
-        $rollbackContainerDeleteResponse = $this->sodaScsDockerRunServiceActions->makeRequest($rollbackContainerDeleteRequest);
-        if (!$rollbackContainerDeleteResponse['success']) {
-          return SodaScsResult::failure(
-            message: 'Failed to delete rollback container.',
-            error: (string) $rollbackContainerDeleteResponse['error'],
-          );
-        }
+      $restoreResult = $this->wisskiVolumeHelpers->importVolumes($machineName, $restoreMountPath, $snapshotTarFileName, FALSE);
+      if (!$restoreResult->success) {
         return SodaScsResult::failure(
-          message: 'Failed to create restore container.',
-          error: (string) $restoreContainerCreateResponse['error'],
-        );
-      }
-      // Build and make the start container request.
-      $restoreContainerId = json_decode($restoreContainerCreateResponse['data']['portainerResponse']->getBody()->getContents(), TRUE)['Id'];
-
-      $restoreContainerStartRequest = $this->sodaScsDockerRunServiceActions->buildStartRequest([
-        'routeParams' => ['containerId' => $restoreContainerId],
-      ]);
-      $restoreContainerStartResponse = $this->sodaScsDockerRunServiceActions->makeRequest($restoreContainerStartRequest);
-      if (!$restoreContainerStartResponse['success']) {
-        return SodaScsResult::failure(
-          message: 'Failed to start restore container.',
-          error: (string) $restoreContainerStartResponse['error'],
-        );
-      }
-
-      // Wait for the restore container to finish.
-      $waitForRestoreContainerStateResponse = $this->sodaScsContainerHelpers->waitForContainerState($restoreContainerId, 'exited');
-      if (!$waitForRestoreContainerStateResponse->success) {
-        return SodaScsResult::failure(
-          message: 'Failed to wait for restore container to finish.',
-          error: (string) $waitForRestoreContainerStateResponse->error,
+          message: 'Failed to restore the WissKI volumes.',
+          error: (string) $restoreResult->error,
         );
       }
 

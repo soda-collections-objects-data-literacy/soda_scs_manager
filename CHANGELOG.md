@@ -7,6 +7,82 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- Demo projects: users can start with "<username> Demo", a copy of the
+  central "Demo Projekt" with its WissKI, shared JupyterLab home, Team Folder
+  files, WebProtégé ontology and standalone databases and triplestores. Apps
+  are named "<username> Demo-WissKI", "<username> Demo-Jupyter",
+  "<username> Demo-Datenbank", "<username> Demo-Triplestore" and
+  "<username> Demo-WebProtégé". The first-project slide
+  of the co-working intro offers the demo when a demo version is active.
+- Owners can reset their demo project to the active demo version on the
+  project page; the project card and page show the demo state while it is
+  set up or reset.
+- Admin page `/admin/config/soda-scs-manager/demo-project` (SODa SCS-Manager
+  settings): choose the source project (renamed to "Demo Projekt"), build
+  demo versions numbered `major.minor.patch` with a required changelog,
+  activate or delete them. The page suggests the next patch, minor and major
+  version; a new version must be higher than all existing ones. Versions are
+  stored under `<snapshot root>/_demo-templates/v<major.minor.patch>/` with a
+  checksummed manifest. The WebProtégé ontology is exported as a zip and
+  imported into a fresh ontology project; a reset replaces that project,
+  because WebProtégé can only add axioms. Needs the SCS WebProtégé endpoint
+  `GET /data/projects/{id}/ontology` (image rebuild of the WebProtégé fork).
+- Before a reset to a newer demo version, owners see the changelogs of all
+  versions in between.
+- Demo builds, setups and resets run in the queue `soda_scs_manager_demo`.
+  The admin button "Start queued jobs", and creating or resetting a demo,
+  start that queue in the background. No systemd timer. Update hook 11036
+  installs the template entity and the project fields `demoTemplate` and
+  `demoStatus`.
+
+### Fixed
+
+- A demo that is still waiting for the WissKI installation says so, instead of
+  keeping the message "Creating missing applications".
+- Deleting an account (by the user or an admin) removes the projects they own
+  and the accounts in Keycloak, Nextcloud, MariaDB, the triplestore and
+  WebProtégé. Projects they only belong to stay; they are removed from those.
+  When an owned project still has other members, the delete form asks before
+  those projects go too. Needs a rebuild of the WebProtégé image so
+  `DELETE /data/users/{name}` exists.
+- Demo export and SQL snapshots talk to MariaDB by its container name
+  (`SCS_CONTAINER_DATABASE`). The configured `dbHost` is only the DNS alias
+  and Portainer cannot exec into it.
+- Stopping a container no longer sends a stop request when the container is
+  not running.
+- Demo provisioning copies the Team Folder after a new WissKI has finished
+  installing. The background queue used to exit while that job was only
+  delayed, so the project folder stayed empty. Volume archives of a template
+  (Jupyter home, WissKI files) are written into the snapshot directory the
+  manager actually reads.
+
+### Security
+
+- Each demo WissKI gets its own password for the local account `api-import`.
+  It is stored only in the private notebook home (`~/.wisski-demo-api.env`),
+  not in the shared Team Folder and not in the template.
+
+### Changed
+
+- While a demo project is being set up, the project page shows a shimmer and
+  a short progress row (WissKI, JupyterHub, SQL database, triplestore,
+  WebProtégé) instead of the template version. Application cards appear as
+  soon as each application exists.
+- A failed demo version can be built again with the same number. That replaces
+  the failed attempt. A finished version keeps its number.
+- The version field only hints at the notation `{Major}.{Minor}.{Patch}`,
+  without a leading `v`.
+- Application configuration dialogs now show a live application preview with
+  its documentation link, product name and application type.
+- Application cards now show the product name, user-defined instance name,
+  and application type as separate strings without added field labels.
+- Add-application popup cards now use the same product and application type
+  strings as application cards.
+- Add-project wizard application choices now use the same translated product
+  and application type strings.
+
 ## [3.1.0] - 2026-10-22
 
 ### Added

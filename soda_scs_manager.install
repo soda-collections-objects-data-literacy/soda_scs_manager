@@ -1896,3 +1896,34 @@ function soda_scs_manager_update_11035() {
     '@count' => count($ids),
   ]);
 }
+
+/**
+ * Install demo project templates and the demo fields on projects.
+ *
+ * The central demo project is chosen per site on the admin page
+ * /admin/config/soda-scs-manager/demo-project, so no project is renamed here.
+ */
+function soda_scs_manager_update_11036() {
+  $entity_type_manager = \Drupal::entityTypeManager();
+  $update_manager = \Drupal::entityDefinitionUpdateManager();
+  $entity_type_manager->clearCachedDefinitions();
+  \Drupal::service('entity_field.manager')->clearCachedFieldDefinitions();
+
+  if (!$update_manager->getEntityType('soda_scs_demo_template')) {
+    $update_manager->installEntityType($entity_type_manager->getDefinition('soda_scs_demo_template'));
+  }
+
+  $definitions = \Drupal::service('entity_field.manager')->getFieldStorageDefinitions('soda_scs_project');
+  foreach (['demoStatus', 'demoTemplate'] as $field_name) {
+    if (!$update_manager->getFieldStorageDefinition($field_name, 'soda_scs_project')) {
+      $update_manager->installFieldStorageDefinition($field_name, 'soda_scs_project', 'soda_scs_manager', $definitions[$field_name]);
+    }
+  }
+
+  $config = \Drupal::configFactory()->getEditable('soda_scs_manager.settings');
+  if ($config->get('demo') === NULL) {
+    $config->set('demo', ['sourceProjectId' => 0, 'activeTemplateId' => 0])->save();
+  }
+
+  return t('Installed demo project templates. Choose the central demo project under /admin/config/soda-scs-manager/demo-project.');
+}

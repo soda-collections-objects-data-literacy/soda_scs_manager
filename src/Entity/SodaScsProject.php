@@ -73,6 +73,8 @@ use Drupal\user\EntityOwnerTrait;
  *     "bundle",
  *     "connectedComponents",
  *     "created",
+ *     "demoStatus",
+ *     "demoTemplate",
  *     "description",
  *     "id",
  *     "groupId",
@@ -157,6 +159,20 @@ class SodaScsProject extends ContentEntityBase implements SodaScsProjectInterfac
       ->setRequired(TRUE)
       ->setReadOnly(TRUE)
       ->setTranslatable(FALSE)
+      ->setDisplayConfigurable('view', FALSE);
+
+    $fields['demoStatus'] = BaseFieldDefinition::create('string')
+      ->setLabel(new TranslatableMarkup('Demo status'))
+      ->setDescription(new TranslatableMarkup('Set on demo projects created from a demo template; empty for normal projects.'))
+      ->setSetting('max_length', 16)
+      ->setDisplayConfigurable('form', FALSE)
+      ->setDisplayConfigurable('view', FALSE);
+
+    $fields['demoTemplate'] = BaseFieldDefinition::create('entity_reference')
+      ->setLabel(new TranslatableMarkup('Demo template'))
+      ->setDescription(new TranslatableMarkup('The demo template version this demo project was last created or reset from.'))
+      ->setSetting('target_type', 'soda_scs_demo_template')
+      ->setDisplayConfigurable('form', FALSE)
       ->setDisplayConfigurable('view', FALSE);
 
     $fields['description'] = BaseFieldDefinition::create('string_long')

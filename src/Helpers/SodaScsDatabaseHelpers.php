@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Drupal\soda_scs_manager\Helpers;
 
 use Drupal\Component\Datetime\TimeInterface;
+use Drupal\Core\Config\ConfigFactoryInterface;
 use Drupal\Core\StringTranslation\StringTranslationTrait;
 use Drupal\Core\StringTranslation\TranslationInterface;
 use Drupal\soda_scs_manager\Entity\SodaScsComponentInterface;
@@ -94,6 +95,7 @@ class SodaScsDatabaseHelpers {
     #[Autowire(service: 'datetime.time')]
     TimeInterface $time,
     TranslationInterface $stringTranslation,
+    protected ConfigFactoryInterface $configFactory,
   ) {
     $this->sodaScsContainerHelpers = $sodaScsContainerHelpers;
     $this->sodaScsComponentHelpers = $sodaScsComponentHelpers;
@@ -192,6 +194,99 @@ class SodaScsDatabaseHelpers {
         message: (string) $this->t('Failed to dump database.'),
       );
     }
+  }
+
+  /**
+   * Dumps a database of the shared MariaDB into a plain SQL file.
+   *
+   * Runs inside the database container, so the file path must be on the
+   * snapshot bind mount that Drupal and MariaDB share.
+   *
+   * @param string $databaseName
+   *   The database name (machine name of the SQL component).
+   * @param string $filePath
+   *   Absolute target path of the .sql file.
+   *
+   * @return \Drupal\soda_scs_manager\ValueObject\SodaScsResult
+   *   The result.
+   */
+  public function exportDatabaseToFile(string $databaseName, string $filePath): SodaScsResult {
+    return $this->runRootDatabaseCommand(
+      'mariadb-dump --single-transaction --routines --triggers -uroot ' . escapeshellarg($databaseName) . ' > ' . escapeshellarg($filePath),
+      SodaScsSnapshotHelpers::snapshotDockerExecUser(),
+      (string) $this->t('Could not export the database @database.', ['@database' => $databaseName]),
+    );
+  }
+
+  /**
+   * Imports a plain SQL file into a database of the shared MariaDB.
+   *
+   * The target may belong to another component than the dump; grants stay as
+   * they are because only tables are replaced.
+   *
+   * @param string $databaseName
+   *   The target database name.
+   * @param string $filePath
+   *   Absolute path of the .sql file on the shared snapshot bind mount.
+   * @param bool $dropExistingTables
+   *   Drop all tables of the target first, so tables that exist only in the
+   *   target do not survive the import.
+   *
+   * @return \Drupal\soda_scs_manager\ValueObject\SodaScsResult
+   *   The result.
+   */
+  public function importDatabaseFromFile(string $databaseName, string $filePath, bool $dropExistingTables = FALSE): SodaScsResult {
+    $database = escapeshellarg($databaseName);
+    $command = 'set -o pipefail && ';
+    if ($dropExistingTables) {
+      $listTablesQuery = escapeshellarg(sprintf(
+        "SELECT CONCAT('DROP TABLE IF EXISTS `', table_name, '`;') FROM information_schema.tables WHERE table_schema = '%s'",
+        str_replace("'", "''", $databaseName),
+      ));
+      $command .= '{ echo "SET FOREIGN_KEY_CHECKS=0;"; mariadb -uroot -N -e ' . $listTablesQuery . '; } | mariadb -uroot ' . $database . ' && ';
+    }
+    $command .= 'mariadb -uroot ' . $database . ' < ' . escapeshellarg($filePath);
+
+    return $this->runRootDatabaseCommand(
+      $command,
+      'root',
+      (string) $this->t('Could not import into the database @database.', ['@database' => $databaseName]),
+    );
+  }
+
+  /**
+   * Runs a shell command as MariaDB root in the shared database container.
+   *
+   * The root password goes in through MYSQL_PWD to keep it out of the
+   * process list and the logs.
+   */
+  private function runRootDatabaseCommand(string $command, string $user, string $failureMessage): SodaScsResult {
+    $rootPassword = (string) $this->configFactory->get('soda_scs_manager.settings')->get('dbRootPassword');
+    if ($rootPassword === '') {
+      return SodaScsResult::failure(
+        error: 'Database root password setting missing.',
+        message: $failureMessage,
+      );
+    }
+
+    $result = $this->sodaScsContainerHelpers->executeDockerExecCommand([
+      'cmd' => ['bash', '-c', $command],
+      // Portainer addresses the container by name. dbHost is the DNS alias
+      // scs--database, which the Docker API does not resolve.
+      'containerName' => SodaScsDockerDns::database(),
+      'env' => ['MYSQL_PWD=' . $rootPassword],
+      'user' => $user,
+      // Dumps of WissKI databases exceed Guzzle's default 30s HTTP timeout.
+      'detach' => TRUE,
+      'timeout' => 3600,
+    ]);
+    if (!$result->success) {
+      return SodaScsResult::failure(
+        error: (string) $result->error,
+        message: $failureMessage,
+      );
+    }
+    return $result;
   }
 
   /**

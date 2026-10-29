@@ -78,13 +78,14 @@
 
   function hideFieldByName(container, namePrefix) {
     var input = container.querySelector('[name^="' + namePrefix + '"]');
-    if (!input) {
+    var field = input || container.querySelector('[data-drupal-selector="edit-' + namePrefix + '"]');
+    if (!field) {
       return;
     }
-    var fieldset = input.closest('fieldset');
+    var fieldset = field.closest('fieldset');
     var wrapper = fieldset
       ? (fieldset.closest('.js-form-item, .form-item') || fieldset)
-      : (input.closest('.js-form-item, .form-item') || input.parentElement);
+      : (field.closest('.js-form-item, .form-item, .js-form-wrapper, .form-wrapper') || field.parentElement);
     if (wrapper) {
       wrapper.hidden = true;
     }
@@ -122,6 +123,7 @@
           done: root.querySelector('[data-cpw-step="done"]'),
         };
         var appsFormTitle = root.querySelector('[data-cpw-apps-form-title]');
+        var applicationPreview = root.querySelector('[data-cpw-step="apps-form"] .application-config-preview');
         var invitedList = root.querySelector('[data-cpw-invited-list]');
         var successMessage = root.querySelector('[data-cpw-success-message]');
         var stepLabelEl = root.querySelector('[data-cpw-step-label]');
@@ -139,6 +141,34 @@
           mariadb: Drupal.t('Database'),
           openGdb: Drupal.t('Triplestore'),
         };
+
+        function updateApplicationPreview(card) {
+          if (!applicationPreview || !card) {
+            return;
+          }
+          var productName = card.querySelector('.add-app-popup-card__description');
+          var documentationButton = card.querySelector('.add-app-popup-card__doc-link');
+          var documentationUrl = documentationButton && documentationButton.getAttribute('data-doc-url');
+          var applicationType = card.querySelector('.add-app-popup-card__bundle');
+          var documentationLink = applicationPreview.querySelector('.application-config-preview__documentation');
+          var title = applicationPreview.querySelector('.application-config-preview__title');
+          var type = applicationPreview.querySelector('.application-config-preview__type');
+          if (!productName || !applicationType || !documentationUrl || !documentationLink || !title || !type) {
+            applicationPreview.hidden = true;
+            return;
+          }
+
+          title.textContent = productName.textContent.trim();
+          type.textContent = applicationType.textContent.trim();
+          documentationLink.href = documentationUrl;
+          documentationLink.setAttribute('aria-label', documentationButton.getAttribute('aria-label') || '');
+          documentationLink.innerHTML = '';
+          var documentationIcon = documentationButton.querySelector('svg');
+          if (documentationIcon) {
+            documentationLink.appendChild(documentationIcon.cloneNode(true));
+          }
+          applicationPreview.hidden = false;
+        }
 
         var state = {
           phase: 'details',
@@ -559,7 +589,12 @@
         function loadAppFormStep() {
           var type = state.appQueue[state.appQueueIndex];
           var container = stepEls.appsForm.querySelector('.create-project-wizard__form-container');
+          var selectedCard = Array.prototype.find.call(
+            stepEls.appsSelect.querySelectorAll('[data-app-type]'),
+            function (card) { return card.getAttribute('data-app-type') === type; }
+          );
           var url = appFormUrl(type, null);
+          updateApplicationPreview(selectedCard);
           if (appsFormTitle) {
             appsFormTitle.textContent = Drupal.t('Configure @app (@current of @total)', {
               '@app': appLabels[type] || type,
@@ -577,10 +612,14 @@
             }
             hideFieldByName(loaded, 'owner');
             hideFieldByName(loaded, 'partOfProjects');
+            hideFieldByName(loaded, 'info');
             hideNativeSubmit(loaded);
             var formEl = loaded.querySelector('form');
             if (formEl && state.appSnapshots[type]) {
               applySnapshot(formEl, state.appSnapshots[type]);
+            }
+            if (formEl) {
+              updateApplicationPreview(selectedCard);
             }
           });
         }
@@ -653,17 +692,26 @@
 
         function appendReviewRow(review, title, value) {
           var block = document.createElement('div');
-          block.className = 'mt-3';
-          var heading = document.createElement('p');
-          heading.className = 'text-sm font-medium text-stone-800';
-          heading.textContent = title;
-          block.appendChild(heading);
+          block.className = 'create-project-wizard__review-grid';
           var values = Array.isArray(value) ? value : [value];
           values.forEach(function (item) {
-            var line = document.createElement('p');
-            line.className = 'text-sm text-stone-600';
-            line.textContent = item;
-            block.appendChild(line);
+            var row = document.createElement('div');
+            row.className = 'create-project-wizard__review-row';
+            var label = document.createElement('strong');
+            label.className = 'create-project-wizard__review-label';
+            var valueCell = document.createElement('span');
+            valueCell.className = 'create-project-wizard__review-value';
+            if (item && typeof item === 'object' && item.label) {
+              label.textContent = item.label + ':';
+              valueCell.textContent = item.value;
+            }
+            else {
+              label.textContent = title + ':';
+              valueCell.textContent = item;
+            }
+            row.appendChild(label);
+            row.appendChild(valueCell);
+            block.appendChild(row);
           });
           review.appendChild(block);
         }
@@ -689,7 +737,7 @@
               }
             });
             var typeLabel = appLabels[type] || type;
-            return label ? (typeLabel + ': ' + label) : typeLabel;
+            return label ? { label: typeLabel, value: label } : typeLabel;
           });
           appendReviewRow(review, Drupal.t('Applications'), apps.length ? apps : [Drupal.t('None')]);
           appendReviewRow(review, Drupal.t('People'), state.invitedPeople.length ? state.invitedPeople.slice() : [Drupal.t('None')]);

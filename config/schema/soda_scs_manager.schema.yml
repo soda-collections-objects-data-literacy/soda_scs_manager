@@ -10,6 +10,18 @@ soda_scs_manager.settings:
       type: string
       label: 'Administrator email'
       description: 'The administrator email, like admin@scs.example.com.'
+    demo:
+      type: mapping
+      label: 'Demo project settings'
+      mapping:
+        sourceProjectId:
+          type: integer
+          label: 'Source project ID'
+          description: 'The central demo project templates are built from; 0 when not configured.'
+        activeTemplateId:
+          type: integer
+          label: 'Active template ID'
+          description: 'The demo template version user demos are created and reset from; 0 when none.'
     snapshotPath:
       type: string
       label: 'Snapshot filesystem path'

@@ -29,7 +29,6 @@ use Drupal\soda_scs_manager\Entity\SodaScsComponent;
 use Drupal\soda_scs_manager\Entity\SodaScsProject;
 use Drupal\soda_scs_manager\Entity\SodaScsProjectInterface;
 use Drupal\soda_scs_manager\Entity\SodaScsProjectMembershipInterface;
-use Drupal\soda_scs_manager\Entity\SodaScsServiceKey;
 use Drupal\soda_scs_manager\Entity\SodaScsSnapshot;
 use Drupal\soda_scs_manager\Entity\SodaScsStack;
 use Drupal\soda_scs_manager\Helpers\SodaScsSnapshotHelpers;
@@ -930,8 +929,24 @@ function soda_scs_manager_theme($existing, $type, $theme, $path) {
         'note_edit_form' => NULL,
         'owner' => NULL,
         'project_id' => NULL,
+        'demo_status' => NULL,
       ],
       'template' => 'entity/soda-scs-project',
+    ],
+    'soda_scs_manager__demo_status' => [
+      'variables' => [
+        'apps' => [],
+        'current_version' => NULL,
+        'is_busy' => FALSE,
+        'message' => '',
+        'newer_version' => NULL,
+        'reset_url' => '',
+        'status' => '',
+        'status_label' => '',
+        'status_url' => '',
+        'variant' => 'badge',
+      ],
+      'template' => 'includes/soda-scs-manager--demo-status',
     ],
     'soda_scs_manager__project_members' => [
       'variables' => [
@@ -968,6 +983,7 @@ function soda_scs_manager_theme($existing, $type, $theme, $path) {
     'soda_scs_manager__project_card' => [
       'variables' => [
         'project_id' => NULL,
+        'project_updated' => NULL,
         'label' => NULL,
         'url' => '',
         'is_owner' => FALSE,
@@ -977,6 +993,7 @@ function soda_scs_manager_theme($existing, $type, $theme, $path) {
         'members_count' => 0,
         'applications' => [],
         'tags' => [],
+        'demo_status' => NULL,
       ],
       'template' => 'cards/soda-scs-manager--project-card',
     ],
@@ -1294,178 +1311,136 @@ function soda_scs_manager_soda_scs_snapshot_delete(SodaScsSnapshot $snapshot) {
 }
 
 /**
- * Implements hook_user_delete().
+ * Implements hook_user_predelete().
  *
- * Deletes a user from Keycloak when a Drupal user is deleted.
- * Also deletes linked Nextcloud accounts (when admin API credentials are set),
- * the user's snapshots, components, stacks, projects, service keys, and enities.
+ * Runs before the account row and the SSO link disappear. Owned projects and
+ * their applications are removed. Projects the user only belongs to stay;
+ * the user is removed from them. Shared ownership is confirmed on the
+ * delete forms before this hook runs.
  */
-function soda_scs_manager_user_delete(UserInterface $user) {
-  // Get the Keycloak service user actions.
-  $keycloakServiceUserActions = \Drupal::service('soda_scs_manager.keycloak_service.user.actions');
-  // Get the service helpers.
-  $serviceHelpers = \Drupal::service('soda_scs_manager.service.helpers');
-  // Get the logger.
-  $logger = \Drupal::logger('soda_scs_manager');
-  // Get the messenger.
-  $messenger = \Drupal::messenger();
+function soda_scs_manager_user_predelete(UserInterface $user): void {
+  \Drupal::service('soda_scs_manager.user_offboarding')->purge($user);
+}
 
-  // Get the Keycloak user ID.
-  $keycloakUserId = \Drupal::service('soda_scs_manager.project.helpers')->getUserSsoUuid($user);
+/**
+ * Implements hook_form_FORM_ID_alter() for user_cancel_form.
+ */
+function soda_scs_manager_form_user_cancel_form_alter(array &$form, FormStateInterface $form_state, string $form_id): void {
+  _soda_scs_manager_alter_user_cancel_form($form, $form_state);
+}
 
-  // Skip Keycloak delete if user has no SSO link.
-  if ($keycloakUserId === NULL || $keycloakUserId === '') {
-      $logger->notice('User @username has no Keycloak SSO link, skipping Keycloak delete.', ['@username' => $user->getAccountName()]);
-      return;
+/**
+ * Implements hook_form_FORM_ID_alter() for user_multiple_cancel_confirm.
+ */
+function soda_scs_manager_form_user_multiple_cancel_confirm_alter(array &$form, FormStateInterface $form_state, string $form_id): void {
+  _soda_scs_manager_alter_user_cancel_form($form, $form_state);
+}
+
+/**
+ * Asks before an admin deletes an account that owns shared projects.
+ */
+function _soda_scs_manager_alter_user_cancel_form(array &$form, FormStateInterface $form_state): void {
+  $shared = _soda_scs_manager_shared_projects_on_cancel_form($form, $form_state);
+  if ($shared === []) {
+    return;
   }
 
-  // Unmount sidecar mount and delete the user from Nextcloud.
-  if ($keycloakUserId !== NULL && $keycloakUserId !== '') {
-    \Drupal::service('soda_scs_manager.nextcloud_mount.manager')->ensureUnmounted($user);
-    \Drupal::service('soda_scs_manager.nextcloud.helpers')
-      ->deleteNextcloudAccountForKeycloakUser($keycloakUserId, $user);
-    $messenger->addMessage(\Drupal::translation()->translate('Successfully deleted user from Nextcloud: @username (ID: @id)', [
-      '@username' => $user->getAccountName(),
-      '@id' => $keycloakUserId,
-    ]));
-    $logger->notice('Successfully deleted user from Nextcloud: @username (ID: @id)', [
-      '@username' => $user->getAccountName(),
-      '@id' => $keycloakUserId,
-    ]);
+  $items = [];
+  foreach ($shared as $project) {
+    $items[] = $project->label();
   }
-
-  try {
-
-    // Get Keycloak settings.
-    $keycloakGeneralSettings = $serviceHelpers->initKeycloakGeneralSettings();
-
-    // First get a token for Keycloak API authentication.
-    $tokenRequest = $keycloakServiceUserActions->buildTokenRequest([]);
-    $tokenResponse = $keycloakServiceUserActions->makeRequest($tokenRequest);
-
-    if (!$tokenResponse['success']) {
-      $logger->error('Failed to get Keycloak token for user deletion: @error', ['@error' => $tokenResponse['error']]);
-      return;
-    }
-
-    // Extract the access token.
-    $tokenData = json_decode($tokenResponse['data']['keycloakResponse']->getBody()->getContents(), TRUE);
-    $accessToken = $tokenData['access_token'];
-
-    // Set the type.
-    $deleteUserParams['type'] = 'user';
-    // Set the token.
-    $deleteUserParams['token'] = $accessToken;
-
-    $deleteUserParams['routeParams'] = [
-        'realm' => $keycloakGeneralSettings['realm'],
-        'userId' => $keycloakUserId,
-      ];
-
-    // Build the delete request.
-    $deleteUserRequest = $keycloakServiceUserActions->buildDeleteRequest($deleteUserParams);
-    // Make the delete request.
-    $deleteUserResponse = $keycloakServiceUserActions->makeRequest($deleteUserRequest);
-
-    if ($deleteUserResponse['success']) {
-      $messenger->addMessage(\Drupal::translation()->translate('Successfully deleted user from Keycloak: @username (ID: @id)', [
-        '@username' => $user->getAccountName(),
-        '@id' => $keycloakUserId,
-      ]));
-      $logger->notice('Successfully deleted user from Keycloak: @username (ID: @id)', [
-        '@username' => $user->getAccountName(),
-        '@id' => $keycloakUserId,
-      ]);
-    }
-    else {
-      $logger->error('Failed to delete user from Keycloak: @error', ['@error' => $deleteUserResponse['error']]);
-    }
-  }
-  catch (\Exception $e) {
-    $messenger->addError(\Drupal::translation()->translate('Failed to delete user from Keycloak: @error', [
-      '@error' => $e->getMessage(),
-    ]));
-    $logger->error('Error deleting user @username from Keycloak: @error', [
-      '@username' => $user->getDisplayName(),
-      '@error' => $e->getMessage(),
-    ]);
-  }
-
-  // Clean database users.
-  $cleanDatabaseUsers = \Drupal::service('soda_scs_manager.sql_service.actions')->cleanServiceUsers($user->getDisplayName());
-
-  if ($cleanDatabaseUsers['success']) {
-    $messenger->addMessage(\Drupal::translation()->translate('Successfully cleaned database users for user: @username', ['@username' => $user->getDisplayName()]));
-    $logger->notice('Successfully cleaned database users for user: @username', ['@username' => $user->getDisplayName()]);
-  }
-  else {
-    $messenger->addError(\Drupal::translation()->translate('Failed to clean database users for user: @username', ['@username' => $user->getDisplayName()]));
-    $logger->error('Failed to clean database users for user: @username. @message @error', [
-      '@username' => $user->getDisplayName(),
-      '@message' => $cleanDatabaseUsers['message'],
-      '@error' => $cleanDatabaseUsers['error'],
-    ]);
-  }
-
-  // Clean triplestore users.
-  $tsDeleteRequestParams = [
-    'type' => 'user',
-    'queryParams' => [],
-    'routeParams' => [
-      'username' => $user->getDisplayName(),
+  $form['soda_scs_shared_projects'] = [
+    '#type' => 'item',
+    '#title' => t('Projects with other members'),
+    '#markup' => t('This account owns projects that still have other members. Deleting the account deletes those projects and their applications. Projects where the account is only a member stay, and the account is removed from them.'),
+    'list' => [
+      '#theme' => 'item_list',
+      '#items' => $items,
     ],
   ];
-  $cleanTriplestoreUsers = \Drupal::service('soda_scs_manager.opengdb_service.actions')->buildDeleteRequest($tsDeleteRequestParams);
+  $form['soda_scs_confirm_shared_projects'] = [
+    '#type' => 'checkbox',
+    '#title' => t('Delete these projects for the other members as well.'),
+    '#weight' => 10,
+  ];
+  $form['#validate'][] = 'soda_scs_manager_user_cancel_validate_shared_projects';
+}
 
-  if ($cleanTriplestoreUsers['success']) {
-    $messenger->addMessage(\Drupal::translation()->translate('Successfully cleaned triplestore users for user: @username', ['@username' => $user->getDisplayName()]));
+/**
+ * Requires the shared-project confirmation when the account is deleted.
+ */
+function soda_scs_manager_user_cancel_validate_shared_projects(array &$form, FormStateInterface $form_state): void {
+  $method = (string) $form_state->getValue('user_cancel_method');
+  if (!in_array($method, ['user_cancel_delete', 'user_cancel_reassign'], TRUE)) {
+    return;
   }
-  else {
-    $messenger->addError(\Drupal::translation()->translate('Failed to clean triplestore users for user: @username', ['@username' => $user->getDisplayName()]));
-    $logger->error('Failed to clean triplestore users for user: @username. @message @error', [
-      '@username' => $user->getDisplayName(),
-      '@message' => $cleanTriplestoreUsers['message'],
-      '@error' => $cleanTriplestoreUsers['error'],
-    ]);
+  if ($form_state->getValue('soda_scs_confirm_shared_projects')) {
+    return;
   }
-  // Clean enities.
-  $snapshots = SodaScsSnapshot::loadByOwner($user->id());
-  foreach ($snapshots as $snapshot) {
-    $snapshot->delete();
+  if (_soda_scs_manager_shared_projects_on_cancel_form($form, $form_state) === []) {
+    return;
+  }
+  $form_state->setErrorByName('soda_scs_confirm_shared_projects', t('Confirm that the shared projects may be deleted.'));
+}
+
+/**
+ * Owned projects with other members for the accounts on a cancel form.
+ *
+ * @return list<\Drupal\soda_scs_manager\Entity\SodaScsProjectInterface>
+ *   The projects.
+ */
+function _soda_scs_manager_shared_projects_on_cancel_form(array $form, FormStateInterface $form_state): array {
+  $offboarding = \Drupal::service('soda_scs_manager.user_offboarding');
+  $storage = \Drupal::entityTypeManager()->getStorage('user');
+  $shared = [];
+  foreach (_soda_scs_manager_cancel_form_user_ids($form, $form_state) as $userId) {
+    $account = $storage->load($userId);
+    if (!$account instanceof UserInterface) {
+      continue;
+    }
+    foreach ($offboarding->inventory($account)->ownedShared() as $project) {
+      $shared[(int) $project->id()] = $project;
+    }
+  }
+  return array_values($shared);
+}
+
+/**
+ * User ids submitted by the single or bulk account cancel form.
+ *
+ * @return list<int>
+ *   The user ids.
+ */
+function _soda_scs_manager_cancel_form_user_ids(array $form, FormStateInterface $form_state): array {
+  $formObject = $form_state->getFormObject();
+  if ($formObject instanceof \Drupal\Core\Entity\ContentEntityFormInterface) {
+    $entity = $formObject->getEntity();
+    if ($entity instanceof UserInterface) {
+      return [(int) $entity->id()];
+    }
   }
 
-  $components = SodaScsComponent::loadByOwner($user->id());
-  foreach ($components as $component) {
-    $component->delete();
+  $ids = [];
+  foreach ((array) $form_state->getValue('accounts') as $userId) {
+    $userId = (int) $userId;
+    if ($userId > 0) {
+      $ids[] = $userId;
+    }
   }
-  $messenger->addMessage(\Drupal::translation()->translate('Successfully deleted @count components for user @username', [
-    '@count' => count($components),
-    '@username' => $user->getDisplayName(),
-  ]));
-  $stacks = SodaScsStack::loadByOwner($user->id());
-  foreach ($stacks as $stack) {
-    $stack->delete();
+  if ($ids !== []) {
+    return $ids;
   }
-  $messenger->addMessage(\Drupal::translation()->translate('Successfully deleted @count stacks for user @username', [
-    '@count' => count($stacks),
-    '@username' => $user->getDisplayName(),
-  ]));
-  $projects = (array) SodaScsProject::loadByOwner($user->id());
-  foreach ($projects as $project) {
-    $project->delete();
+
+  foreach ($form['accounts'] ?? [] as $key => $element) {
+    if (!is_array($element)) {
+      continue;
+    }
+    $userId = (int) ($element['#value'] ?? $key);
+    if ($userId > 0) {
+      $ids[] = $userId;
+    }
   }
-  $messenger->addMessage(\Drupal::translation()->translate('Successfully deleted @count projects for user @username', [
-    '@count' => count($projects),
-    '@username' => $user->getDisplayName(),
-  ]));
-  $servicekeys = SodaScsServiceKey::loadByOwner($user->id());
-  foreach ($servicekeys as $servicekey) {
-    $servicekey->delete();
-  }
-  $messenger->addMessage(\Drupal::translation()->translate('Successfully deleted @count service keys for user @username', [
-    '@count' => count($servicekeys),
-    '@username' => $user->getDisplayName(),
-  ]));
+  return $ids;
 }
 
 /**
@@ -1712,8 +1687,28 @@ function soda_scs_manager_page_attachments(array &$attachments) {
       'projectNameCheckUrl' => _soda_scs_manager_coworking_intro_route_url('soda_scs_manager.project_check_name', '/soda-scs-manager/project-name/check'),
       'wisskiQuickCreateUrl' => $introCreateWisskiUrl,
       'wisskiNameCheckUrl' => $introCheckWisskiNameUrl,
+      'demoCreateUrl' => _soda_scs_manager_coworking_intro_demo_create_url(),
     ];
   }
+}
+
+/**
+ * Demo project create URL for the intro, or '' when no demo can be offered.
+ *
+ * A demo is offered when an active demo version exists, the user may create
+ * projects and does not have a demo project yet.
+ */
+function _soda_scs_manager_coworking_intro_demo_create_url(): string {
+  $account = \Drupal::currentUser();
+  if (!$account->hasPermission('create soda scs project')) {
+    return '';
+  }
+  /** @var \Drupal\soda_scs_manager\Demo\SodaScsDemoManager $demoManager */
+  $demoManager = \Drupal::service('soda_scs_manager.demo.manager');
+  if ($demoManager->activeTemplate() === NULL || $demoManager->findDemoProject($account) !== NULL) {
+    return '';
+  }
+  return _soda_scs_manager_coworking_intro_route_url('soda_scs_manager.demo_project_create', '/soda-scs-manager/demo-project/create');
 }
 
 /**
@@ -2441,6 +2436,7 @@ function soda_scs_manager_preprocess_menu(&$variables): void {
 
   if ($menu_name === 'sidebar-secondary-nav') {
     _soda_scs_manager_preprocess_menu_notifications_recursive($variables['items']);
+    _soda_scs_manager_preprocess_menu_icons_recursive($variables['items']);
     $variables['#attached']['library'][] = 'soda_scs_manager/notificationBadge';
     $variables['#cache']['contexts'][] = 'user';
     $variables['#cache']['tags'][] = 'soda_scs_message_list:' . \Drupal::currentUser()->id();
@@ -2827,6 +2823,62 @@ function _soda_scs_manager_menu_item_is_notifications_link(array $item, string $
       || $systemPath === 'soda-scs-manager/notifications';
   }
   return FALSE;
+}
+
+/**
+ * Inline SVG markup for a sidebar menu icon (inline so no CSS mask is needed).
+ *
+ * @param string $name
+ *   One of 'bell', 'sliders' or 'book'.
+ */
+function _soda_scs_manager_menu_icon_svg(string $name): string {
+  $svgOpen = '<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" aria-hidden="true" focusable="false" ';
+  return match ($name) {
+    'bell' => $svgOpen . 'viewBox="0 0 24 24" fill="currentColor"><path d="M12 22a2.5 2.5 0 0 0 2.4-1.8H9.6A2.5 2.5 0 0 0 12 22zm7-5.5V11a7 7 0 0 0-5.5-6.8V3.5a1.5 1.5 0 0 0-3 0v.7A7 7 0 0 0 5 11v5.5L3 18.5V20h18v-1.5z"/></svg>',
+    'sliders' => $svgOpen . 'viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 7h10M18 7h2M4 17h2M10 17h10"/><circle cx="16" cy="7" r="2"/><circle cx="8" cy="17" r="2"/></svg>',
+    'book' => $svgOpen . 'viewBox="0 0 640 640" fill="currentColor"><path d="M320 205.3L320 514.6L320.5 514.4C375.1 491.7 433.7 480 492.8 480L512 480L512 160L492.8 160C450.6 160 408.7 168.4 369.7 184.6C352.9 191.6 336.3 198.5 320 205.3zM294.9 125.5L320 136L345.1 125.5C391.9 106 442.1 96 492.8 96L528 96C554.5 96 576 117.5 576 144L576 496C576 522.5 554.5 544 528 544L492.8 544C442.1 544 391.9 554 345.1 573.5L332.3 578.8C324.4 582.1 315.6 582.1 307.7 578.8L294.9 573.5C248.1 554 197.9 544 147.2 544L112 544C85.5 544 64 522.5 64 496L64 144C64 117.5 85.5 96 112 96L147.2 96C197.9 96 248.1 106 294.9 125.5z"/></svg>',
+    default => '',
+  };
+}
+
+/**
+ * Prepends an inline icon to the Notifications, Administration and docs links.
+ *
+ * Runs after the notifications pass, which has already wrapped that title.
+ *
+ * @param array $items
+ *   Menu items from template_preprocess_menu() (by reference).
+ */
+function _soda_scs_manager_preprocess_menu_icons_recursive(array &$items): void {
+  foreach ($items as &$item) {
+    $iconSpan = fn(string $name): string => '<span class="menu-item__icon" aria-hidden="true">' . _soda_scs_manager_menu_icon_svg($name) . '</span>';
+
+    if (isset($item['attributes']) && $item['attributes']->hasClass('menu-item--notifications')) {
+      $item['title'] = Markup::create(str_replace(
+        '<span class="notification-icon-wrapper">',
+        '<span class="notification-icon-wrapper">' . $iconSpan('bell'),
+        (string) $item['title']
+      ));
+    }
+    elseif (isset($item['url']) && $item['url'] instanceof Url) {
+      $icon = NULL;
+      if ($item['url']->isExternal()) {
+        $icon = 'book';
+      }
+      elseif ($item['url']->isRouted() && $item['url']->getRouteName() === 'system.admin') {
+        $icon = 'sliders';
+      }
+      if ($icon !== NULL) {
+        $item['title'] = Markup::create(
+          $iconSpan($icon) . '<span class="menu-item__label">' . Html::escape((string) $item['title']) . '</span>'
+        );
+      }
+    }
+
+    if (!empty($item['below'])) {
+      _soda_scs_manager_preprocess_menu_icons_recursive($item['below']);
+    }
+  }
 }
 
 /**

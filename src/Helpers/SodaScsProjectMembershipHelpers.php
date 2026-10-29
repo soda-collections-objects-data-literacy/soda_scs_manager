@@ -688,7 +688,54 @@ final class SodaScsProjectMembershipHelpers {
       );
     }
 
+    $detached = $this->detachMember($project, $member);
+    if (!$detached->success) {
+      return $detached;
+    }
+
     $memberId = (int) $member->id();
+    $isSelf = (int) $actor->id() === $memberId;
+    $message = $isSelf
+      ? (string) $this->t('You have left the project @project.', [
+        '@project' => $project->label(),
+      ])
+      : (string) $this->t('@member has been removed from the project.', [
+        '@member' => $member->getDisplayName(),
+      ]);
+    if (!empty($detached->data['serverStopped'])) {
+      $message .= ' ' . $this->t("The project's JupyterLab was stopped so the removed member loses access at once. Members can start it again.");
+    }
+
+    return SodaScsResult::success(
+      data: ['member' => $memberId],
+      message: $message,
+    );
+  }
+
+  /**
+   * Removes a listed member and their service access. The project stays.
+   *
+   * The owner is never removed. Used when an account is deleted and when a
+   * member leaves or is removed.
+   */
+  public function detachMember(SodaScsProjectInterface $project, UserInterface $member): SodaScsResult {
+    $memberId = (int) $member->id();
+    if ($memberId <= 0 || (int) $project->getOwnerId() === $memberId) {
+      return SodaScsResult::success(
+        data: ['skipped' => TRUE],
+        message: (string) $this->t('The project owner stays on the project.'),
+      );
+    }
+    if (!$this->isListedMember($project, $memberId)) {
+      return SodaScsResult::success(
+        data: ['skipped' => TRUE],
+        message: (string) $this->t('@member is not a member of @project.', [
+          '@member' => $member->getDisplayName(),
+          '@project' => $project->label(),
+        ]),
+      );
+    }
+
     $this->projectDbAccessHelpers->revokeProjectMemberDbAccess($member, $project);
     $this->webprotegeHelpers->revokeAccess($project, $member);
     $this->nextcloudHelpers->removeUserFromGroup((string) ($project->get('groupId')->value ?? ''), $member);
@@ -715,21 +762,16 @@ final class SodaScsProjectMembershipHelpers {
       );
     }
 
-    $isSelf = (int) $actor->id() === $memberId;
-    $message = $isSelf
-      ? (string) $this->t('You have left the project @project.', [
-        '@project' => $project->label(),
-      ])
-      : (string) $this->t('@member has been removed from the project.', [
-        '@member' => $member->getDisplayName(),
-      ]);
-    if ($this->stopRunningProjectServer($project)) {
-      $message .= ' ' . $this->t("The project's JupyterLab was stopped so the removed member loses access at once. Members can start it again.");
-    }
+    $serverStopped = $this->stopRunningProjectServer($project);
 
     return SodaScsResult::success(
-      data: ['member' => $memberId],
-      message: $message,
+      data: [
+        'member' => $memberId,
+        'serverStopped' => $serverStopped,
+      ],
+      message: (string) $this->t('@member has been removed from the project.', [
+        '@member' => $member->getDisplayName(),
+      ]),
     );
   }
 

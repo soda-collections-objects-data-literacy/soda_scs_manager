@@ -17,42 +17,49 @@
     {% set application_type = "jupyterhub" %}
 	{% set application_icons = [directory ~ "/assets/img/jupyter.webp"] %}
     {% set card_type = "single" %}
-    {% set application_description = "Data Enrichment" %}
+	{% set application_name = "JupyterHub"|t %}
+	{% set application_description = "Data Enrichment"|t %}
 
 {% elseif bundle_id == "soda_scs_webprotege_component" %}
     {% set application_type = "webprotege" %}
 	{% set application_icons = [directory ~ "/assets/img/protege.svg"] %}
     {% set card_type = "single" %}
-    {% set application_description = "Ontology Management" %}
+	{% set application_name = "WebProtégé"|t %}
+	{% set application_description = "Ontology Management"|t %}
 
 {% elseif bundle_id == "soda_scs_wisski_component" %}
     {% set application_type = "wisski" %}
 	{% set application_icons = [directory ~ "/assets/img/wisski.png"] %}
     {% set card_type = "single" %}
-    {% set application_description = "Data Management" %}
+	{% set application_name = "WissKI"|t %}
+	{% set application_description = "Data Management"|t %}
 
 {% elseif bundle_id == "soda_scs_wisski_stack" %}
     {% set application_type = "wisski" %}
 	{% set application_icons = [directory ~ "/assets/img/wisski.png", directory ~ "/assets/img/opengdb.svg", directory ~ "/assets/img/mariadb.png"] %}
     {% set card_type = "multiple" %}
-    {% set application_description = "Data Management" %}
+	{% set application_name = "WissKI"|t %}
+	{% set application_description = "Data Management"|t %}
 
 {% elseif bundle_id == "soda_scs_sql_component" %}
     {% set application_type = "db" %}
 	{% set application_icons = [directory ~ "/assets/img/mariadb.png"] %}
     {% set card_type = "single" %}
-    {% set application_description = "Database" %}
+	{% set application_name = "SQL Database"|t %}
+	{% set application_description = "Database"|t %}
 
 {% elseif bundle_id == "soda_scs_triplestore_component" %}
     {% set application_type = "" %}
     {% set application_icons = [directory ~ "/assets/img/opengdb.svg"] %}
     {% set card_type = "single" %}
-    {% set application_description = bundle_label %}
+	{% set application_name = "Triplestore"|t %}
+	{% set application_description = "Database"|t %}
 
 {% else %}
     {% set application_type = "" %}
     {% set application_icons = [] %}
     {% set card_type = "single" %}
+	{% set application_name = bundle_label %}
     {% set application_description = bundle_label %}
 
 {% endif %}
@@ -76,7 +83,7 @@
 	</div>
 
 	<a href="{{ url }}" class="application__core" aria-label="{{ 'Open @title'|t({'@title': title}) }}">
-		<h2 class="application__title h1">{{ application_description }}</h2>
+		<h2 class="application__title h1">{{ application_name }}</h2>
 		<div class="application__icons-and-arrow">
 			{% if application_icons is defined and application_icons|length %}
 				<div class="application__icons">
@@ -95,9 +102,9 @@
 	</a>
 
 	<div class="application__name">
-		<h3 class="h4">{{ title }}</h3>
+		<h3 class="h4">{{ instance_name|default(title) }}</h3>
 		<div class="application__type">
-			{{ bundle_label }}
+			{{ application_description }}
 		</div>
 	</div>
 

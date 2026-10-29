@@ -72,16 +72,23 @@
         var selectStep = popupEl.querySelector('.add-app-popup__step--select');
         var formStep = popupEl.querySelector('.add-app-popup__step--form');
         var formContainer = popupEl.querySelector('.add-app-popup__form-container');
+        var applicationPreview = popupEl.querySelector('.application-config-preview');
         var errorStepEl = popupEl.querySelector('.add-app-popup__step--error');
         if (errorStepEl) {
           errorStepEl.hidden = true;
         }
+        popupEl.querySelectorAll('.add-app-popup-card.is-selected').forEach(function (card) {
+          card.classList.remove('is-selected');
+        });
         if (selectStep && formStep) {
           formStep.hidden = true;
           selectStep.hidden = false;
         }
         if (formContainer) {
           formContainer.innerHTML = '';
+        }
+        if (applicationPreview) {
+          applicationPreview.hidden = true;
         }
 
         if (activeTrigger) {
@@ -95,11 +102,41 @@
         var selectStep = popupEl.querySelector('.add-app-popup__step--select');
         var formStep = popupEl.querySelector('.add-app-popup__step--form');
         var formContainer = popupEl.querySelector('.add-app-popup__form-container');
+        var applicationPreview = popupEl.querySelector('.application-config-preview');
         var backButton = popupEl.querySelector('.add-app-popup__back');
         var errorStep = popupEl.querySelector('.add-app-popup__step--error');
         var errorDetail = popupEl.querySelector('.add-app-popup__error-detail');
         var retryButton = popupEl.querySelector('.add-app-popup__retry');
         var cancelButton = popupEl.querySelector('.add-app-popup__cancel');
+        var activeCard = null;
+
+        var updateApplicationPreview = function (card) {
+          if (!applicationPreview || !card) {
+            return;
+          }
+          var productName = card.querySelector('.add-app-popup-card__description');
+          var documentationButton = card.querySelector('.add-app-popup-card__doc-link');
+          var documentationUrl = documentationButton && documentationButton.getAttribute('data-doc-url');
+          var applicationType = card.querySelector('.add-app-popup-card__bundle');
+          var documentationLink = applicationPreview.querySelector('.application-config-preview__documentation');
+          var title = applicationPreview.querySelector('.application-config-preview__title');
+          var type = applicationPreview.querySelector('.application-config-preview__type');
+          if (!productName || !applicationType || !documentationUrl || !documentationLink || !title || !type) {
+            applicationPreview.hidden = true;
+            return;
+          }
+
+          title.textContent = productName.textContent.trim();
+          type.textContent = applicationType.textContent.trim();
+          documentationLink.href = documentationUrl;
+          documentationLink.setAttribute('aria-label', documentationButton.getAttribute('aria-label') || '');
+          documentationLink.innerHTML = '';
+          var documentationIcon = documentationButton.querySelector('svg');
+          if (documentationIcon) {
+            documentationLink.appendChild(documentationIcon.cloneNode(true));
+          }
+          applicationPreview.hidden = false;
+        };
 
         var showFailure = function (detail) {
           if (!errorStep || !formStep) {
@@ -133,6 +170,13 @@
 
         var showSelectStep = function () {
           restoreBackButton(popupEl);
+          activeCard = null;
+          popupEl.querySelectorAll('.add-app-popup-card.is-selected').forEach(function (card) {
+            card.classList.remove('is-selected');
+          });
+          if (applicationPreview) {
+            applicationPreview.hidden = true;
+          }
           if (errorStep) {
             errorStep.hidden = true;
           }
@@ -154,6 +198,12 @@
           }
 
           formContainer.innerHTML = '<p>' + Drupal.t('Loading…') + '</p>';
+          popupEl.querySelectorAll('.add-app-popup-card.is-selected').forEach(function (selectedCard) {
+            selectedCard.classList.remove('is-selected');
+          });
+          card.classList.add('is-selected');
+          activeCard = card;
+          updateApplicationPreview(card);
           selectStep.hidden = true;
           formStep.hidden = false;
 
@@ -197,6 +247,12 @@
           restoreBackButton(popupEl);
           formContainer.innerHTML = content.innerHTML;
 
+          var infoSummary = formContainer.querySelector('[data-drupal-selector="edit-info"]');
+          if (infoSummary) {
+            var infoWrapper = infoSummary.closest('.js-form-wrapper, .form-wrapper') || infoSummary;
+            infoWrapper.hidden = true;
+          }
+
           // Owner is always the current user when creating from this wizard.
           // The owner widget renders as a fieldset of radio buttons
           // (options_buttons), so hide the whole fieldset, not just
@@ -220,6 +276,10 @@
           }
 
           var firstField = formContainer.querySelector('input:not([type="hidden"]), select, textarea');
+          var formEl = formContainer.querySelector('form');
+          if (formEl) {
+            updateApplicationPreview(activeCard);
+          }
           if (firstField) {
             firstField.focus();
           }

@@ -10,6 +10,7 @@ use Drupal\Core\Entity\EntityTypeManagerInterface;
 use Drupal\Core\Language\LanguageInterface;
 use Drupal\Core\Session\AccountInterface;
 use Drupal\Core\Url;
+use Drupal\soda_scs_manager\Demo\SodaScsDemoStatusBuilder;
 use Drupal\soda_scs_manager\Entity\SodaScsProjectInterface;
 use Drupal\soda_scs_manager\Helpers\SodaScsHelpers;
 use Drupal\soda_scs_manager\Service\SodaScsApplicationCardBuilder;
@@ -57,6 +58,13 @@ class SodaScsManagerController extends ControllerBase {
   protected SodaScsApplicationCardBuilder $applicationCardBuilder;
 
   /**
+   * Builds the demo badge of demo projects.
+   *
+   * @var \Drupal\soda_scs_manager\Demo\SodaScsDemoStatusBuilder
+   */
+  protected SodaScsDemoStatusBuilder $demoStatusBuilder;
+
+  /**
    * Class constructor.
    *
    * @param \Drupal\soda_scs_manager\Service\SodaScsApplicationCardBuilder $applicationCardBuilder
@@ -69,6 +77,8 @@ class SodaScsManagerController extends ControllerBase {
    *   The Soda SCS helpers.
    * @param \Drupal\user\UserDataInterface $userData
    *   User data for intro / onboarding flags.
+   * @param \Drupal\soda_scs_manager\Demo\SodaScsDemoStatusBuilder $demoStatusBuilder
+   *   Demo badge builder.
    */
   public function __construct(
     SodaScsApplicationCardBuilder $applicationCardBuilder,
@@ -76,12 +86,14 @@ class SodaScsManagerController extends ControllerBase {
     EntityTypeManagerInterface $entityTypeManager,
     SodaScsHelpers $sodaScsHelpers,
     UserDataInterface $userData,
+    SodaScsDemoStatusBuilder $demoStatusBuilder,
   ) {
     $this->applicationCardBuilder = $applicationCardBuilder;
     $this->currentUser = $currentUser;
     $this->entityTypeManager = $entityTypeManager;
     $this->sodaScsHelpers = $sodaScsHelpers;
     $this->userData = $userData;
+    $this->demoStatusBuilder = $demoStatusBuilder;
   }
 
   /**
@@ -97,6 +109,7 @@ class SodaScsManagerController extends ControllerBase {
       $container->get('entity_type.manager'),
       $container->get('soda_scs_manager.helpers'),
       $container->get('user.data'),
+      $container->get('soda_scs_manager.demo.status_builder'),
     );
   }
 
@@ -199,6 +212,7 @@ class SodaScsManagerController extends ControllerBase {
         '#members_count' => $membersCount,
         '#applications' => $applications,
         '#tags' => $sortedTags,
+        '#demo_status' => $this->demoStatusBuilder->build($current_user, $project, SodaScsDemoStatusBuilder::VARIANT_BADGE),
         '#cache' => [
           'max-age' => 0,
           'contexts' => ['user', 'languages:language_interface'],
@@ -414,6 +428,7 @@ class SodaScsManagerController extends ControllerBase {
       'projectNameCheckUrl' => _soda_scs_manager_coworking_intro_route_url('soda_scs_manager.project_check_name', '/soda-scs-manager/project-name/check'),
       'wisskiQuickCreateUrl' => $introCreateWisskiUrl,
       'wisskiNameCheckUrl' => $introCheckWisskiNameUrl,
+      'demoCreateUrl' => _soda_scs_manager_coworking_intro_demo_create_url(),
     ];
   }
 

@@ -431,4 +431,29 @@ class SodaScsUserDeleteTest extends SodaScsKernelTestBase {
     $this->assertCount(0, SodaScsServiceKey::loadByOwner($this->testUser->id()));
   }
 
+  /**
+   * Memberships stay out of the owned-project lists.
+   */
+  public function testInventorySeparatesMembershipsFromOwnedProjects(): void {
+    $other = $this->createTestUser();
+    $ownedAlone = $this->createTestProject();
+    $ownedShared = $this->createTestProject([
+      'members' => [$other->id()],
+    ]);
+    $foreign = $this->createTestProject([
+      'owner' => $other->id(),
+      'members' => [$this->testUser->id()],
+    ]);
+
+    $inventory = $this->container->get('soda_scs_manager.user_offboarding')->inventory($this->testUser);
+    $ids = static function (array $projects): array {
+      return array_map(static fn ($project): int => (int) $project->id(), $projects);
+    };
+
+    $this->assertSame([(int) $ownedAlone->id()], $ids($inventory->ownedAlone()));
+    $this->assertSame([(int) $ownedShared->id()], $ids($inventory->ownedShared()));
+    $this->assertSame([(int) $foreign->id()], $ids($inventory->memberships()));
+    $this->assertTrue($inventory->hasSharedOwnership());
+  }
+
 }

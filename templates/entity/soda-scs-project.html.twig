@@ -16,6 +16,7 @@
  * - files: Nextcloud Team Folder recent activity for the current user.
  * - attributes: HTML attributes for the container.
  * - filter_tags: Tag machine names for the application filter bar.
+ * - demo_status: Demo status panel for user demo projects, otherwise NULL.
  *
  * @ingroup themeable
  */
@@ -24,6 +25,8 @@
 	<header class="project__header">
 		<h1 class="project__title">{{ label }}</h1>
 	</header>
+
+	{{ demo_status }}
 
 	{% if application_cards is not empty %}
 		<div class="project__applications">

@@ -64,6 +64,8 @@ services:
     arguments:
       - '@soda_scs_manager.message_type.generic'
       - !tagged_iterator { tag: soda_scs_manager.message_type }
+  soda_scs_manager.user_offboarding:
+    class: Drupal\soda_scs_manager\Service\SodaScsUserOffboarding
   soda_scs_manager.project_db_access.helpers:
     class: Drupal\soda_scs_manager\Helpers\SodaScsProjectDbAccessHelpers
   soda_scs_manager.keycloak_service.helpers:
@@ -82,6 +84,32 @@ services:
     class: Drupal\soda_scs_manager\Helpers\SodaScsSnapshotIntegrityHelpers
   soda_scs_manager.triplestore_helpers:
     class: Drupal\soda_scs_manager\Helpers\SodaScsTriplestoreHelpers
+  soda_scs_manager.wisski_volume.helpers:
+    class: Drupal\soda_scs_manager\Helpers\SodaScsWisskiVolumeHelpers
+  soda_scs_manager.volume_archive.helpers:
+    class: Drupal\soda_scs_manager\Helpers\SodaScsVolumeArchiveHelpers
+  soda_scs_manager.demo.api_credentials:
+    class: Drupal\soda_scs_manager\Demo\SodaScsDemoApiCredentials
+  soda_scs_manager.demo.wisski_config_remapper:
+    class: Drupal\soda_scs_manager\Demo\SodaScsWisskiInstanceConfigRemapper
+  soda_scs_manager.demo.team_folder_copier:
+    class: Drupal\soda_scs_manager\Demo\SodaScsTeamFolderCopier
+  soda_scs_manager.demo.label_builder:
+    class: Drupal\soda_scs_manager\Demo\SodaScsDemoLabelBuilder
+  soda_scs_manager.demo.project_apps:
+    class: Drupal\soda_scs_manager\Demo\SodaScsDemoProjectApps
+  soda_scs_manager.demo.wisski_transfer:
+    class: Drupal\soda_scs_manager\Demo\SodaScsDemoWisskiTransfer
+  soda_scs_manager.demo.template_builder:
+    class: Drupal\soda_scs_manager\Demo\SodaScsDemoTemplateBuilder
+  soda_scs_manager.demo.project_provisioner:
+    class: Drupal\soda_scs_manager\Demo\SodaScsDemoProjectProvisioner
+  soda_scs_manager.demo.manager:
+    class: Drupal\soda_scs_manager\Demo\SodaScsDemoManager
+  soda_scs_manager.demo.queue_runner:
+    class: Drupal\soda_scs_manager\Demo\SodaScsDemoQueueRunner
+  soda_scs_manager.demo.status_builder:
+    class: Drupal\soda_scs_manager\Demo\SodaScsDemoStatusBuilder
   soda_scs_manager.progress.helpers:
     class: Drupal\soda_scs_manager\Helpers\SodaScsProgressHelper
 

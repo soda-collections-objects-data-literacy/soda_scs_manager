@@ -23,6 +23,7 @@ use Drupal\soda_scs_manager\Entity\SodaScsSnapshotInterface;
 use Drupal\soda_scs_manager\Exception\SodaScsSqlServiceException;
 use Drupal\soda_scs_manager\Helpers\SodaScsComponentHelpers;
 use Drupal\soda_scs_manager\Helpers\SodaScsContainerHelpers;
+use Drupal\soda_scs_manager\Helpers\SodaScsDatabaseHelpers;
 use Drupal\soda_scs_manager\Helpers\SodaScsDockerDns;
 use Drupal\soda_scs_manager\Helpers\SodaScsHelpers;
 use Drupal\soda_scs_manager\Helpers\SodaScsKeycloakHelpers;
@@ -199,6 +200,8 @@ class SodaScsSqlComponentActions implements SodaScsComponentActionsInterface {
     #[Autowire(service: 'soda_scs_manager.service_key.actions')]
     SodaScsServiceKeyActionsInterface $sodaScsServiceKeyActions,
     TranslationInterface $stringTranslation,
+    #[Autowire(service: 'soda_scs_manager.database.helpers')]
+    protected SodaScsDatabaseHelpers $sodaScsDatabaseHelpers,
   ) {
     // Services from container.
     $this->entityTypeBundleInfo = $entityTypeBundleInfo;
@@ -821,34 +824,14 @@ class SodaScsSqlComponentActions implements SodaScsComponentActionsInterface {
       // Its already unpacked and validated within the
       // SodaScsSnapshotActions::restoreFromSnapshot logic.
       //
-      // Construct restore command.
       $snapshotSqlPath = $tempDirPath . '/sql/' . $databaseName . '.sql';
-      $restoreFromSnapshotExecRequestCommand = [
-        'bash',
-        '-c',
-        'mariadb -uroot -p' . $dbRootPassword . ' "' . $databaseName . '" < ' . $snapshotSqlPath,
-      ];
-
-      // Construct restore request parameters.
-      $restoreFromSnapshotExecRequestParams = [
-        'cmd' => $restoreFromSnapshotExecRequestCommand,
-        'containerName' => $this->getDatabaseContainerName(),
-        'user' => 'root',
-      ];
-
-      // Execute the restore command and capture output.
-      // @todo This is much more elegant, we should make this everywhere like this.
-      $restoreFromSnapshotResponse = $this->sodaScsContainerHelpers->executeDockerExecCommand($restoreFromSnapshotExecRequestParams);
-
+      $restoreFromSnapshotResponse = $this->sodaScsDatabaseHelpers->importDatabaseFromFile($databaseName, $snapshotSqlPath);
       if (!$restoreFromSnapshotResponse->success) {
         return SodaScsResult::failure(
           error: $restoreFromSnapshotResponse->error,
           message: 'Snapshot restoration failed: ' . $restoreFromSnapshotResponse->message,
         );
       }
-
-      // The executeCommandWithOutput method already waits for completion
-      // and provides exit code.
     }
     catch (\Exception $e) {
       Error::logException(
@@ -873,11 +856,8 @@ class SodaScsSqlComponentActions implements SodaScsComponentActionsInterface {
    * Docker container name for the shared MariaDB service (dbHost setting).
    */
   protected function getDatabaseContainerName(): string {
-    return SodaScsDockerDns::configOrEnv(
-      $this->settings->get('dbHost'),
-      'SCS_CONTAINER_DATABASE',
-      'scs--database',
-    );
+    // Portainer needs the container name. dbHost may be only the DNS alias.
+    return SodaScsDockerDns::database();
   }
 
 }

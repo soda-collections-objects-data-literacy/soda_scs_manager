@@ -18,6 +18,7 @@ use Drupal\Core\Session\AccountProxyInterface;
 use Drupal\Core\StringTranslation\StringTranslationTrait;
 use Drupal\Core\Theme\Registry;
 use Drupal\Core\Url;
+use Drupal\soda_scs_manager\Demo\SodaScsDemoStatusBuilder;
 use Drupal\soda_scs_manager\Entity\SodaScsProjectInterface;
 use Drupal\soda_scs_manager\Entity\SodaScsProjectMembershipInterface;
 use Drupal\soda_scs_manager\Form\SodaScsProjectAddMemberForm;
@@ -56,6 +57,7 @@ final class SodaScsProjectViewBuilder extends EntityViewBuilder
     protected SodaScsNextcloudPreview $nextcloudPreview,
     protected SodaScsProjectMembershipHelpers $projectMembershipHelpers,
     protected SodaScsProjectApplicationHelpers $projectApplicationHelpers,
+    protected SodaScsDemoStatusBuilder $demoStatusBuilder,
   ) {
     parent::__construct($entity_type, $entity_repository, $language_manager, $theme_registry, $entity_display_repository);
     $this->moduleHandler = $module_handler;
@@ -81,6 +83,7 @@ final class SodaScsProjectViewBuilder extends EntityViewBuilder
       $container->get('soda_scs_manager.nextcloud.preview'),
       $container->get('soda_scs_manager.project_membership.helpers'),
       $container->get('soda_scs_manager.project_application.helpers'),
+      $container->get('soda_scs_manager.demo.status_builder'),
     );
   }
 
@@ -150,6 +153,7 @@ final class SodaScsProjectViewBuilder extends EntityViewBuilder
     $build['#application_cards'] = $applicationCards;
     $build['#filter_tags'] = $this->applicationCardBuilder->collectFilterTags($applicationCards);
     $build['#files'] = $this->buildFilesDisplay($project);
+    $build['#demo_status'] = $this->demoStatusBuilder->build($this->currentUser, $project, SodaScsDemoStatusBuilder::VARIANT_PANEL);
     $build['#add_application_card'] = $isOwner ? [
       '#theme' => 'soda_scs_manager__add_application_card',
       '#asset_base' => $assetBase,

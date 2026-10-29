@@ -7,6 +7,12 @@ accessProxy:
   generalSettings:
     containerName: 'scs--access-proxy'
 
+demo:
+  # Project the demo templates are built from; 0 = not configured.
+  sourceProjectId: 0
+  # Template version new and reset user demos are created from; 0 = none.
+  activeTemplateId: 0
+
 snapshotPath: '/var/scs-manager/snapshots'
 # Host path for Portainer bind mounts. Leave empty when it matches snapshotPath.
 snapshotHostPath: ''

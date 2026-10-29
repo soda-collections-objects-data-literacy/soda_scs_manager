@@ -217,10 +217,10 @@ final class SodaScsApplicationCardBuilder {
     if ($project !== NULL) {
       $cacheTags = array_merge($cacheTags, $project->getCacheTags());
     }
-
     return [
       '#theme' => 'soda_scs_manager__entity_card',
       '#title' => $this->cardTitle($stack->bundle(), (string) $stack->label()),
+      '#instance_name' => (string) $stack->label(),
       '#bundle_label' => $bundleInfo['label'],
       '#bundle_id' => $stack->bundle(),
       '#description' => $bundleInfo['description'],
@@ -276,10 +276,10 @@ final class SodaScsApplicationCardBuilder {
     if ($project !== NULL) {
       $cacheTags = array_merge($cacheTags, $project->getCacheTags());
     }
-
     return [
       '#theme' => 'soda_scs_manager__entity_card',
       '#title' => $this->cardTitle($component->bundle(), (string) $component->label()),
+      '#instance_name' => (string) $component->label(),
       '#bundle_label' => $bundleInfo['label'],
       '#bundle_id' => $component->bundle(),
       '#description' => $bundleInfo['description'],

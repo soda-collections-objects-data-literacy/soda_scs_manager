@@ -460,6 +460,53 @@ class SodaScsWebprotegeHelpers {
   }
 
   /**
+   * Deletes the local WebProtégé account of a Drupal user.
+   *
+   * Ontology projects are not removed here. Missing accounts are a success.
+   * The endpoint exists in the SCS WebProtégé fork; an older image answers
+   * 404 until it is rebuilt.
+   */
+  public function deleteUserAccount(UserInterface $user): SodaScsResult {
+    $userName = self::sanitizeUserName($user->getAccountName());
+    if ($userName === '' || $userName === 'guest') {
+      return SodaScsResult::failure(
+        'Could not map the user to a WebProtégé user id.',
+        (string) $this->t('Could not delete the WebProtégé account of @user.', [
+          '@user' => $user->getDisplayName(),
+        ]),
+      );
+    }
+
+    $request = $this->webprotegeServiceActions->buildDeleteRequest([
+      'type' => 'user',
+      'routeParams' => ['userName' => $userName],
+    ]);
+    $response = $this->webprotegeServiceActions->makeRequest($request);
+    $statusCode = (int) ($response['statusCode'] ?? 0);
+    if (!empty($response['success']) || $statusCode === 404) {
+      return SodaScsResult::success(
+        data: ['userName' => $userName],
+        message: (string) $this->t('Deleted the WebProtégé account of @user.', [
+          '@user' => $user->getDisplayName(),
+        ]),
+      );
+    }
+
+    $error = (string) ($response['error'] ?? 'WebProtégé user delete failed.');
+    $this->logger->error('Failed to delete WebProtégé account of @user: @error', [
+      '@user' => $user->getAccountName(),
+      '@error' => $error,
+    ]);
+    return SodaScsResult::failure(
+      $error,
+      (string) $this->t('Could not delete the WebProtégé account of @user.', [
+        '@user' => $user->getDisplayName(),
+      ]),
+      FALSE,
+    );
+  }
+
+  /**
    * Loads the details (createdAt, modifiedAt, …) of the linked WebProtégé project.
    *
    * @return \Drupal\soda_scs_manager\ValueObject\SodaScsResult
@@ -562,6 +609,114 @@ class SodaScsWebprotegeHelpers {
   }
 
   /**
+   * Saves the ontology of the linked WebProtégé project as a zip file.
+   *
+   * The zip holds the root ontology and its imports in OWL functional syntax.
+   */
+  public function downloadOntologyArchive(SodaScsProjectInterface $project, string $targetFile): SodaScsResult {
+    $projectId = $this->linkedProjectId($project);
+    if ($projectId === NULL) {
+      return SodaScsResult::failure(
+        'No WebProtégé project is linked.',
+        (string) $this->t('No WebProtégé project is linked for @project.', ['@project' => $project->label()]),
+        FALSE,
+      );
+    }
+
+    $response = $this->webprotegeServiceActions->makeRequest($this->webprotegeServiceActions->buildDownloadOntologyRequest($projectId));
+    $rawResponse = $response['data']['webprotegeResponse'] ?? NULL;
+    if (empty($response['success']) || !is_object($rawResponse) || !method_exists($rawResponse, 'getBody')) {
+      return SodaScsResult::failure(
+        (string) ($response['error'] ?? '') ?: 'WebProtégé ontology download failed.',
+        (string) $this->t('Could not download the ontology of @project.', ['@project' => $project->label()]),
+        FALSE,
+      );
+    }
+    if (file_put_contents($targetFile, (string) $rawResponse->getBody()) === FALSE) {
+      return SodaScsResult::failure(
+        sprintf('Could not write %s.', $targetFile),
+        (string) $this->t('Could not download the ontology of @project.', ['@project' => $project->label()]),
+      );
+    }
+
+    return SodaScsResult::success(
+      data: ['file' => $targetFile, 'webprotegeProjectId' => $projectId],
+      message: (string) $this->t('Downloaded the ontology of @project.', ['@project' => $project->label()]),
+    );
+  }
+
+  /**
+   * Adds all axioms of an ontology zip to the linked WebProtégé project.
+   *
+   * Every document of the zip (root ontology and imports) is posted on its
+   * own, so imported ontologies end up merged into the root ontology.
+   *
+   * @param string $archiveFile
+   *   Zip as written by downloadOntologyArchive().
+   * @param string $commitMessage
+   *   Revision message shown in the WebProtégé history.
+   * @param \Drupal\soda_scs_manager\Entity\SodaScsProjectInterface $project
+   *   The SCS project whose WebProtégé project receives the axioms.
+   */
+  public function importOntologyArchive(string $archiveFile, string $commitMessage, SodaScsProjectInterface $project): SodaScsResult {
+    $projectId = $this->linkedProjectId($project);
+    $failureMessage = (string) $this->t('Could not import the ontology into @project.', ['@project' => $project->label()]);
+    if ($projectId === NULL) {
+      return SodaScsResult::failure('No WebProtégé project is linked.', $failureMessage, FALSE);
+    }
+
+    $documents = $this->readOntologyDocuments($archiveFile);
+    if ($documents === NULL) {
+      return SodaScsResult::failure(sprintf('%s is not a readable ontology zip.', $archiveFile), $failureMessage);
+    }
+
+    foreach ($documents as $name => $document) {
+      $request = $this->webprotegeServiceActions->buildAddAxiomsRequest($commitMessage, self::removeImportDeclarations($document), $projectId);
+      $response = $this->webprotegeServiceActions->makeRequest($request);
+      if (empty($response['success'])) {
+        $error = sprintf('Posting %s failed: %s', $name, (string) ($response['error'] ?? 'unknown error'));
+        $this->logger->error('Failed to import ontology document @document into WebProtégé project @id: @error', [
+          '@document' => $name,
+          '@error' => $error,
+          '@id' => $projectId,
+        ]);
+        return SodaScsResult::failure($error, $failureMessage, FALSE);
+      }
+    }
+
+    return SodaScsResult::success(
+      data: ['documentCount' => count($documents), 'webprotegeProjectId' => $projectId],
+      message: (string) $this->t('Imported the ontology into @project.', ['@project' => $project->label()]),
+    );
+  }
+
+  /**
+   * Replaces the linked WebProtégé project with a new, empty one.
+   *
+   * WebProtégé cannot clear a project, so a reset trashes the old project
+   * and creates a new one; members get EDIT again.
+   */
+  public function recreateOntologyProject(SodaScsProjectInterface $project): SodaScsResult {
+    $trash = $this->trashOntologyProject($project);
+    if (!$trash->success) {
+      return $trash;
+    }
+    $project->set('webprotegeProjectId', NULL);
+    $project->save();
+    return $this->createOntologyProject($project);
+  }
+
+  /**
+   * Removes Import() declarations from an OWL functional syntax document.
+   *
+   * WebProtégé resolves imports of posted documents over the network; the
+   * imported documents are posted separately instead.
+   */
+  public static function removeImportDeclarations(string $functionalSyntax): string {
+    return (string) preg_replace('/^[ \t]*Import\(<[^>]*>\)[ \t]*\R?/m', '', $functionalSyntax);
+  }
+
+  /**
    * Maps a Drupal user to the WebProtégé UserId string.
    */
   public function toWebprotegeUserId(UserInterface $user): string {
@@ -611,6 +766,28 @@ class SodaScsWebprotegeHelpers {
       return NULL;
     }
     return strtolower($projectId);
+  }
+
+  /**
+   * Functional syntax documents of an ontology zip, keyed by entry name.
+   *
+   * @return array<string, string>|null
+   *   Documents, or NULL when the zip cannot be read or holds none.
+   */
+  private function readOntologyDocuments(string $archiveFile): ?array {
+    $zip = new \ZipArchive();
+    if ($zip->open($archiveFile, \ZipArchive::RDONLY) !== TRUE) {
+      return NULL;
+    }
+    $documents = [];
+    for ($index = 0; $index < $zip->numFiles; $index++) {
+      $name = (string) $zip->getNameIndex($index);
+      if (str_ends_with($name, '.' . SodaScsWebprotegeServiceActions::FUNCTIONAL_SYNTAX_FORMAT)) {
+        $documents[$name] = (string) $zip->getFromIndex($index);
+      }
+    }
+    $zip->close();
+    return $documents === [] ? NULL : $documents;
   }
 
   private function langTagForProject(SodaScsProjectInterface $project): string {

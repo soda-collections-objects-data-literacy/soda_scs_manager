@@ -211,7 +211,7 @@ class SodaScsSnapshotHelpers {
    * @throws \Exception
    *   When a configured path is not absolute.
    */
-  protected function getSnapshotFilesystemRoot(): string {
+  public function getSnapshotFilesystemRoot(): string {
     $fromSiteSettings = rtrim(
       trim((string) Settings::get(self::SNAPSHOT_FILESYSTEM_PATH_SETTINGS_KEY, '')),
       '/',
@@ -717,10 +717,12 @@ class SodaScsSnapshotHelpers {
   /**
    * Convert container path to host path for bind mounts.
    *
-   * Maps the configured in-container snapshot root to the host path used by
-   * Compose/Portainer bind mounts. Configure snapshotHostPath in settings (or
-   * $settings['soda_scs_manager.snapshot_host_path']). When unset, the
-   * container path is returned unchanged.
+   * Maps the in-container snapshot root (see getSnapshotFilesystemRoot(),
+   * which treats the legacy /srv/backups path as the container default) to
+   * snapshotHostPath. Short-lived containers bind the host path; using the
+   * raw config value here wrote volume archives next to the bind mount
+   * instead of into it. When the host path is unset or equal to the
+   * container root, the container path is returned unchanged.
    *
    * @param string $containerPath
    *   Path as seen inside the Drupal container.
@@ -730,7 +732,7 @@ class SodaScsSnapshotHelpers {
    */
   public function convertContainerPathToHostPath(string $containerPath): string {
     $config = $this->configFactory->get('soda_scs_manager.settings');
-    $containerRoot = rtrim(trim((string) ($config->get('snapshotPath') ?: self::DEFAULT_SNAPSHOT_FILESYSTEM_PATH)), '/');
+    $containerRoot = $this->getSnapshotFilesystemRoot();
     $hostRoot = rtrim(trim((string) ($config->get('snapshotHostPath') ?? '')), '/');
     if ($hostRoot === '') {
       $hostRoot = rtrim(trim((string) Settings::get(self::SNAPSHOT_HOST_PATH_SETTINGS_KEY, '')), '/');

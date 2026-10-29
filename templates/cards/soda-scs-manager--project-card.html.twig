@@ -5,7 +5,7 @@
  *
  * Available variables:
  * - project_id: Project entity ID.
- * - project_updated: Value of project field updated.
+ * - project_updated: Value of project updated field.
  * - label: Project label.
  * - url: Canonical project URL.
  * - is_owner: Whether the current user owns the project.
@@ -15,6 +15,7 @@
  * - members_profiles: Array of project member details (name, initials, is_owner, picture).
  * - applications: List of application summaries (label, is_online, url, …).
  * - tags: Aggregated filter tags from contained applications.
+ * - demo_status: Demo badge for user demo projects, otherwise NULL.
  */
 #}
 {% set tags_hidden_from_ui = ['data-science', 'publishing'] %}
@@ -32,6 +33,7 @@
 	</div>
 
 	<div class="project-card__tags">
+		{{ demo_status }}
 		{% for tag in tags|sort %}
 			{% if tag not in tags_hidden_from_ui %}
 				<span class="tag" data-tag="{{ tag }}">{{ tag|t }}</span>

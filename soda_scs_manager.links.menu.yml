@@ -88,6 +88,14 @@ soda_scs_manager.keycloak_users:
     requirements:
       _permission: 'soda scs manager admin'
 
+soda_scs_manager.demo_project_admin:
+    title: 'Demo project'
+    description: 'Choose the central demo project and build the versions users get their demo projects from.'
+    parent: soda_scs_manager.settings_menu_block
+    route_name: soda_scs_manager.demo_project_admin
+    requirements:
+      _permission: 'soda scs manager admin'
+
 # Debug pages
 soda_scs_manager.debug_menu_block:
   title: 'SODa SCS Manager Debug'

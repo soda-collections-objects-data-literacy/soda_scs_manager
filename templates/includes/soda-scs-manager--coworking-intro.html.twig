@@ -120,6 +120,15 @@
             <button type="button" class="scs-manager--coworking-intro-btn-create-wisski" data-coworking-intro-create-project>{{ 'Create project'|t }}</button>
             <button type="button" class="scs-manager--coworking-intro-btn-outlined" data-coworking-intro-finish>{{ 'Later'|t }}</button>
           </div>
+          {# Shown by coworkingIntroWizard.js when drupalSettings provide demoCreateUrl (active demo version, user has no demo yet). #}
+          <div class="scs-manager--coworking-intro-demo mt-6 flex flex-col gap-2 border-t border-gray-200 pt-4" data-coworking-intro-demo hidden>
+            <h4 class="m-0 text-base font-semibold">{{ 'Or start with a demo project'|t }}</h4>
+            <p class="m-0 text-sm">{{ 'We set up a project with a filled WissKI, a Jupyter notebook, files, a database, a triplestore and a WebProtégé ontology for you. You can try everything and reset the demo at any time.'|t }}</p>
+            <p class="scs-manager--coworking-intro-field-error m-0" data-coworking-intro-demo-error role="alert" aria-live="polite" hidden></p>
+            <div>
+              <button type="button" class="scs-manager--coworking-intro-btn-outlined" data-coworking-intro-create-demo>{{ 'Create demo project'|t }}</button>
+            </div>
+          </div>
         </div>
       </div>
 

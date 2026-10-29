@@ -161,6 +161,26 @@ class SodaScsJupyterHelpers {
   }
 
   /**
+   * Stops the project's server and returns once it is down.
+   *
+   * Required before the home volume is replaced, because a running server
+   * keeps writing into it.
+   */
+  public function stopProjectServerAndWait(SodaScsProjectInterface $project): SodaScsResult {
+    $name = self::projectServerUserName($project);
+    return $this->callHub(
+      function () use ($name): void {
+        if (!$this->hubApi->stopServerAndWait($name)) {
+          throw new \RuntimeException('The project server did not stop in time.');
+        }
+      },
+      $project,
+      (string) $this->t('The project notebook server is stopped.'),
+      (string) $this->t('The project notebook server could not be stopped.'),
+    );
+  }
+
+  /**
    * Runs a hub call and maps it onto a result.
    */
   protected function callHub(callable $call, SodaScsProjectInterface $project, string $successMessage, string $failureMessage): SodaScsResult {

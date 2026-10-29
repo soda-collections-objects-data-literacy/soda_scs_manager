@@ -4298,8 +4298,37 @@ msgid "Do you really want to delete your profile?"
 msgstr "Möchten Sie Ihr Profil wirklich löschen?"
 
 #: src/Form/SodaScsProfileDeleteForm.php
-msgid "This deletes your account, including your login. This action cannot be undone."
-msgstr "Dadurch wird Ihr Konto einschließlich Ihres Logins gelöscht. Diese Aktion kann nicht rückgängig gemacht werden."
+msgid "This deletes your account, including your login, the projects you own and their applications. Projects where you are only a member stay, and you are removed from them. This action cannot be undone."
+msgstr "Dadurch werden Ihr Konto einschließlich Ihres Logins, die Projekte, die Ihnen gehören, und deren Anwendungen gelöscht. Projekte, in denen Sie nur Mitglied sind, bleiben bestehen, und Sie werden daraus entfernt. Diese Aktion kann nicht rückgängig gemacht werden."
+
+#: src/Form/SodaScsProfileDeleteForm.php
+msgid "Projects you own, which will be deleted"
+msgstr "Projekte, die Ihnen gehören und gelöscht werden"
+
+#: src/Form/SodaScsProfileDeleteForm.php
+msgid "Projects you only belong to, which will be kept"
+msgstr "Projekte, in denen Sie nur Mitglied sind und die bestehen bleiben"
+
+#: src/Form/SodaScsProfileDeleteForm.php
+#: soda_scs_manager.module
+msgid "Delete these projects for the other members as well."
+msgstr "Diese Projekte auch für die anderen Mitglieder löschen."
+
+#: src/Form/SodaScsProfileDeleteForm.php
+msgid "Some projects you own still have other members. Confirm that those projects and their applications may be deleted."
+msgstr "Einige Projekte, die Ihnen gehören, haben noch andere Mitglieder. Bestätigen Sie, dass diese Projekte und ihre Anwendungen gelöscht werden dürfen."
+
+#: soda_scs_manager.module
+msgid "Projects with other members"
+msgstr "Projekte mit anderen Mitgliedern"
+
+#: soda_scs_manager.module
+msgid "This account owns projects that still have other members. Deleting the account deletes those projects and their applications. Projects where the account is only a member stay, and the account is removed from them."
+msgstr "Dieses Konto besitzt Projekte, die noch andere Mitglieder haben. Beim Löschen des Kontos werden diese Projekte und ihre Anwendungen gelöscht. Projekte, in denen das Konto nur Mitglied ist, bleiben bestehen, und das Konto wird daraus entfernt."
+
+#: soda_scs_manager.module
+msgid "Confirm that the shared projects may be deleted."
+msgstr "Bestätigen Sie, dass die gemeinsamen Projekte gelöscht werden dürfen."
 
 #: src/Form/SodaScsProfileDeleteForm.php
 msgid "This profile cannot be deleted."
@@ -4645,3 +4674,491 @@ msgstr "SCS Manager: Begleit-Theme"
 #: soda_scs_manager.install
 msgid "The soda_scs_manager_theme theme is missing. Place it in themes/custom (https://github.com/rnsrk/soda_scs_manager_theme) before installing SODa SCS Manager."
 msgstr "Das Theme soda_scs_manager_theme fehlt. Legen Sie es vor der Installation von SODa SCS Manager in themes/custom ab (https://github.com/rnsrk/soda_scs_manager_theme)."
+
+#: src/Demo/SodaScsDemoManager.php
+msgid "Version @version is active or used by demo projects and cannot be deleted."
+msgstr "Version @version ist aktiv oder wird von Demo-Projekten genutzt und kann nicht gelöscht werden."
+
+#: src/Demo/SodaScsDemoManager.php
+msgid "Version @version is still being built."
+msgstr "Version @version wird noch erzeugt."
+
+#: src/Demo/SodaScsDemoManager.php
+msgid "Version @version has been deleted."
+msgstr "Version @version wurde gelöscht."
+
+#: src/Demo/SodaScsDemoManager.php
+msgid "No demo is available at the moment."
+msgstr "Derzeit ist keine Demo verfügbar."
+
+#: src/Demo/SodaScsDemoManager.php
+msgid "You already have a demo project."
+msgstr "Sie haben bereits ein Demo-Projekt."
+
+#: src/Demo/SodaScsDemoManager.php
+msgid "Your demo project is being set up. This takes a few minutes."
+msgstr "Ihr Demo-Projekt wird eingerichtet. Das dauert einige Minuten."
+
+#: src/Demo/SodaScsDemoManager.php
+msgid "This demo project cannot be reset right now."
+msgstr "Dieses Demo-Projekt kann gerade nicht zurückgesetzt werden."
+
+#: src/Demo/SodaScsDemoManager.php
+msgid "The demo project is already being prepared."
+msgstr "Das Demo-Projekt wird bereits vorbereitet."
+
+#: src/Demo/SodaScsDemoManager.php
+msgid "The demo project is being reset. This takes a few minutes."
+msgstr "Das Demo-Projekt wird zurückgesetzt. Das dauert einige Minuten."
+
+#: src/Demo/SodaScsDemoManager.php
+msgid "Choose the demo project first."
+msgstr "Wählen Sie zuerst das Demo-Projekt."
+
+#: src/Demo/SodaScsDemoManager.php
+msgid "Version @version is being built in the background."
+msgstr "Version @version wird im Hintergrund erzeugt."
+
+#: src/Demo/SodaScsDemoManager.php
+msgid "Only finished versions can be activated."
+msgstr "Nur fertige Versionen können aktiviert werden."
+
+#: src/Demo/SodaScsDemoManager.php
+msgid "Version @version is now used for demo projects."
+msgstr "Version @version wird jetzt für Demo-Projekte verwendet."
+
+#: src/Demo/SodaScsDemoManager.php
+msgid "A user demo project cannot be the source of demos."
+msgstr "Das Demo-Projekt eines Nutzers kann nicht Quelle für Demos sein."
+
+#: src/Demo/SodaScsDemoManager.php
+msgid "@project is now the demo project."
+msgstr "@project ist jetzt das Demo-Projekt."
+
+#: src/Demo/SodaScsDemoManager.php
+msgid "Could not find a free name for your demo project."
+msgstr "Für Ihr Demo-Projekt wurde kein freier Name gefunden."
+
+#: src/Demo/SodaScsDemoTemplateBuilder.php
+msgid "Exporting the WissKI"
+msgstr "WissKI wird exportiert"
+
+#: src/Demo/SodaScsDemoTemplateBuilder.php
+msgid "Exporting the Jupyter home directory"
+msgstr "Jupyter-Home-Verzeichnis wird exportiert"
+
+#: src/Demo/SodaScsDemoTemplateBuilder.php
+msgid "Copying the Team Folder"
+msgstr "Team Folder wird kopiert"
+
+#: src/Demo/SodaScsDemoTemplateBuilder.php
+msgid "Exporting the databases"
+msgstr "Datenbanken werden exportiert"
+
+#: src/Demo/SodaScsDemoTemplateBuilder.php
+msgid "Exporting the triplestores"
+msgstr "Triplestores werden exportiert"
+
+#: src/Demo/SodaScsDemoProjectProvisioner.php
+msgid "Creating missing applications"
+msgstr "Fehlende Anwendungen werden angelegt"
+
+#: src/Demo/SodaScsDemoProjectProvisioner.php
+msgid "Waiting for the WissKI installation to finish"
+msgstr "Warten, bis die WissKI-Installation fertig ist"
+
+#: src/Demo/SodaScsDemoProjectProvisioner.php
+msgid "Copying files into the Team Folder"
+msgstr "Dateien werden in den Team Folder kopiert"
+
+#: src/Demo/SodaScsDemoProjectProvisioner.php
+msgid "Restoring the Jupyter home directory"
+msgstr "Jupyter-Home-Verzeichnis wird wiederhergestellt"
+
+#: src/Demo/SodaScsDemoProjectProvisioner.php
+msgid "Restoring the databases"
+msgstr "Datenbanken werden wiederhergestellt"
+
+#: src/Demo/SodaScsDemoProjectProvisioner.php
+msgid "Restoring the triplestores"
+msgstr "Triplestores werden wiederhergestellt"
+
+#: src/Demo/SodaScsDemoProjectProvisioner.php
+msgid "Restoring the WissKI"
+msgstr "WissKI wird wiederhergestellt"
+
+#: src/Demo/SodaScsDemoProjectProvisioner.php
+msgid "Setting the WissKI API password"
+msgstr "WissKI-API-Passwort wird gesetzt"
+
+#: src/Demo/SodaScsDemoProjectProvisioner.php
+msgid "The demo project is ready."
+msgstr "Das Demo-Projekt ist bereit."
+
+#: src/Demo/SodaScsDemoStatusBuilder.php
+msgid "Waiting to start"
+msgstr "Wartet auf den Start"
+
+#: src/Demo/SodaScsDemoStatusBuilder.php
+msgid "Demo is being set up"
+msgstr "Demo wird eingerichtet"
+
+#: src/Demo/SodaScsDemoStatusBuilder.php
+msgid "Demo is being reset"
+msgstr "Demo wird zurückgesetzt"
+
+#: src/Demo/SodaScsDemoStatusBuilder.php
+msgid "Demo"
+msgstr "Demo"
+
+#: src/Demo/SodaScsDemoStatusBuilder.php
+msgid "Demo setup failed"
+msgstr "Einrichten der Demo fehlgeschlagen"
+
+#: src/Plugin/QueueWorker/SodaScsDemoQueueWorker.php
+msgid "SCS demo projects"
+msgstr "SCS-Demo-Projekte"
+
+#: src/Plugin/QueueWorker/SodaScsDemoQueueWorker.php
+msgid "Setting up the demo failed. Please try to reset it or contact the support."
+msgstr "Das Einrichten der Demo ist fehlgeschlagen. Bitte setzen Sie die Demo zurück oder wenden Sie sich an den Support."
+
+#: src/Form/SodaScsDemoProjectAdminForm.php
+msgid "Demo project"
+msgstr "Demo-Projekt"
+
+#: src/Form/SodaScsDemoProjectAdminForm.php
+msgid "Users get a copy of this project. Choosing a project renames it to \"@label\"."
+msgstr "Nutzer erhalten eine Kopie dieses Projekts. Das gewählte Projekt wird in „@label“ umbenannt."
+
+#: src/Form/SodaScsDemoProjectAdminForm.php
+msgid "- Choose a project -"
+msgstr "- Projekt wählen -"
+
+#: src/Form/SodaScsDemoProjectAdminForm.php
+msgid "Use as demo project"
+msgstr "Als Demo-Projekt verwenden"
+
+#: src/Form/SodaScsDemoProjectAdminForm.php
+msgid "Current demo project"
+msgstr "Aktuelles Demo-Projekt"
+
+#: src/Form/SodaScsDemoProjectAdminForm.php
+msgid "New version"
+msgstr "Neue Version"
+
+#: src/Form/SodaScsDemoProjectAdminForm.php
+msgid "Copies the WissKI, the Jupyter home directory, the Team Folder and the standalone databases and triplestores of the demo project. The demo WissKI and the Jupyter server are stopped for a few minutes while they are copied."
+msgstr "Kopiert das WissKI, das Jupyter-Home-Verzeichnis, den Team Folder sowie die eigenständigen Datenbanken und Triplestores des Demo-Projekts. Das Demo-WissKI und der Jupyter-Server werden während des Kopierens einige Minuten angehalten."
+
+#: src/Form/SodaScsDemoProjectAdminForm.php
+msgid "Build new version"
+msgstr "Neue Version erzeugen"
+
+#: src/Form/SodaScsDemoProjectAdminForm.php
+msgid "Choose a project."
+msgstr "Wählen Sie ein Projekt."
+
+#: src/Form/SodaScsDemoProjectAdminForm.php
+msgid "Versions"
+msgstr "Versionen"
+
+#: src/Form/SodaScsDemoProjectAdminForm.php
+msgid "Demo projects"
+msgstr "Demo-Projekte"
+
+#: src/Form/SodaScsDemoProjectAdminForm.php
+msgid "No version has been built yet."
+msgstr "Es wurde noch keine Version erzeugt."
+
+#: src/Form/SodaScsDemoProjectAdminForm.php
+msgid "v@version (active)"
+msgstr "v@version (aktiv)"
+
+#: src/Form/SodaScsDemoProjectAdminForm.php
+msgid "v@version"
+msgstr "v@version"
+
+#: src/Form/SodaScsDemoProjectAdminForm.php
+msgid "Activate"
+msgstr "Aktivieren"
+
+#: src/Form/SodaScsDemoProjectAdminForm.php
+msgid "@label (ID @id)"
+msgstr "@label (ID @id)"
+
+#: src/Form/SodaScsDemoProjectAdminForm.php
+msgid "Ready"
+msgstr "Bereit"
+
+#: src/Form/SodaScsDemoProjectAdminForm.php
+msgid "Failed"
+msgstr "Fehlgeschlagen"
+
+#: src/Form/SodaScsDemoProjectAdminForm.php
+msgid "Building"
+msgstr "Wird erzeugt"
+
+#: src/Form/SodaScsDemoProjectAdminForm.php
+msgid "Waiting for the job runner"
+msgstr "Wartet auf den Job-Runner"
+
+#: src/Form/SodaScsDemoTemplateDeleteForm.php
+msgid "The files of this version are deleted from the server. This cannot be undone."
+msgstr "Die Dateien dieser Version werden vom Server gelöscht. Dies kann nicht rückgängig gemacht werden."
+
+#: src/Form/SodaScsDemoTemplateDeleteForm.php
+msgid "Delete demo version v@version?"
+msgstr "Demo-Version v@version löschen?"
+
+#: src/Form/SodaScsDemoProjectResetForm.php
+msgid "A newer demo version is available (v@new, your demo has v@current). The reset uses the newer version."
+msgstr "Eine neuere Demo-Version ist verfügbar (v@new, Ihre Demo hat v@current). Beim Zurücksetzen wird die neuere Version verwendet."
+
+#: src/Form/SodaScsDemoProjectResetForm.php
+msgid "Reset demo"
+msgstr "Demo zurücksetzen"
+
+#: src/Form/SodaScsDemoProjectResetForm.php
+msgid "All changes in the WissKI, the databases, the triplestores, the Jupyter home directory and the Team Folder of this project are overwritten with the demo data. Applications you added yourself are not changed. This cannot be undone."
+msgstr "Alle Änderungen im WissKI, in den Datenbanken, den Triplestores, dem Jupyter-Home-Verzeichnis und dem Team Folder dieses Projekts werden mit den Demo-Daten überschrieben. Selbst hinzugefügte Anwendungen bleiben unverändert. Dies kann nicht rückgängig gemacht werden."
+
+#: src/Form/SodaScsDemoProjectResetForm.php
+msgid "Reset @project?"
+msgstr "@project zurücksetzen?"
+
+#: src/Entity/SodaScsDemoTemplate.php
+msgid "Artifact directory"
+msgstr "Artefakt-Verzeichnis"
+
+#: src/Entity/SodaScsDemoTemplate.php
+msgid "Absolute directory with the exported data of this version."
+msgstr "Absolutes Verzeichnis mit den exportierten Daten dieser Version."
+
+#: src/Entity/SodaScsDemoTemplate.php
+msgid "Manifest"
+msgstr "Manifest"
+
+#: src/Entity/SodaScsDemoTemplate.php
+msgid "JSON list of the exported applications and their artifacts."
+msgstr "JSON-Liste der exportierten Anwendungen und ihrer Artefakte."
+
+#: src/Entity/SodaScsDemoTemplate.php
+msgid "Source project"
+msgstr "Quellprojekt"
+
+#: src/Entity/SodaScsDemoTemplate.php
+msgid "Demo project template"
+msgstr "Demo-Projektvorlage"
+
+#: src/Entity/SodaScsDemoTemplate.php
+msgid "Demo project templates"
+msgstr "Demo-Projektvorlagen"
+
+#: src/Entity/SodaScsDemoTemplate.php
+msgid "demo project template"
+msgstr "Demo-Projektvorlage"
+
+#: src/Entity/SodaScsDemoTemplate.php
+msgid "demo project templates"
+msgstr "Demo-Projektvorlagen"
+
+#: src/Entity/SodaScsProject.php
+msgid "Demo status"
+msgstr "Demo-Status"
+
+#: src/Entity/SodaScsProject.php
+msgid "Set on demo projects created from a demo template; empty for normal projects."
+msgstr "Gesetzt bei Demo-Projekten, die aus einer Demo-Vorlage erzeugt wurden; leer bei normalen Projekten."
+
+#: src/Entity/SodaScsProject.php
+msgid "Demo template"
+msgstr "Demo-Vorlage"
+
+#: src/Entity/SodaScsProject.php
+msgid "The demo template version this demo project was last created or reset from."
+msgstr "Die Version der Demo-Vorlage, aus der dieses Demo-Projekt zuletzt erzeugt oder zurückgesetzt wurde."
+
+#: src/Helpers/SodaScsContainerHelpers.php
+msgid "Could not create the helper container @name."
+msgstr "Der Hilfscontainer @name konnte nicht angelegt werden."
+
+#: src/Helpers/SodaScsContainerHelpers.php
+msgid "Could not start the helper container @name."
+msgstr "Der Hilfscontainer @name konnte nicht gestartet werden."
+
+#: src/Helpers/SodaScsContainerHelpers.php
+msgid "The helper container @name failed."
+msgstr "Der Hilfscontainer @name ist fehlgeschlagen."
+
+#: src/Helpers/SodaScsContainerHelpers.php
+msgid "The helper container @name finished."
+msgstr "Der Hilfscontainer @name ist fertig."
+
+#: src/Helpers/SodaScsContainerHelpers.php
+msgid "The helper container @name timed out."
+msgstr "Beim Hilfscontainer @name ist die Zeit abgelaufen."
+
+#: src/Helpers/SodaScsDatabaseHelpers.php
+msgid "Could not export the database @database."
+msgstr "Die Datenbank @database konnte nicht exportiert werden."
+
+#: src/Helpers/SodaScsDatabaseHelpers.php
+msgid "Could not import into the database @database."
+msgstr "Der Import in die Datenbank @database ist fehlgeschlagen."
+
+#: src/Helpers/SodaScsJupyterHelpers.php
+msgid "The project notebook server is stopped."
+msgstr "Der Notebook-Server des Projekts ist gestoppt."
+
+#: soda_scs_manager.install
+msgid "Installed demo project templates. Choose the central demo project under /admin/config/soda-scs-manager/demo-project."
+msgstr "Demo-Projektvorlagen installiert. Wählen Sie das zentrale Demo-Projekt unter /admin/config/soda-scs-manager/demo-project."
+
+#: templates/includes/soda-scs-manager--demo-status.html.twig
+msgid "Setup progress"
+msgstr "Fortschritt"
+
+#: templates/includes/soda-scs-manager--demo-status.html.twig
+msgid "Version @version"
+msgstr "Version @version"
+
+#: templates/includes/soda-scs-manager--demo-status.html.twig
+msgid "Setting up the demo failed. Reset the demo to try again."
+msgstr "Das Einrichten der Demo ist fehlgeschlagen. Setzen Sie die Demo zurück, um es erneut zu versuchen."
+
+#: templates/includes/soda-scs-manager--demo-status.html.twig
+msgid "A newer demo version (v@version) is available. Reset the demo to use it."
+msgstr "Eine neuere Demo-Version (v@version) ist verfügbar. Setzen Sie die Demo zurück, um sie zu verwenden."
+
+#: templates/includes/soda-scs-manager--coworking-intro.html.twig
+msgid "Or start with a demo project"
+msgstr "Oder mit einem Demo-Projekt starten"
+
+#: templates/includes/soda-scs-manager--coworking-intro.html.twig
+msgid "We set up a project with a filled WissKI, a Jupyter notebook, files, a database and a triplestore for you. You can try everything and reset the demo at any time."
+msgstr "Wir richten Ihnen ein Projekt mit befülltem WissKI, Jupyter-Notebook, Dateien, einer Datenbank und einem Triplestore ein. Sie können alles ausprobieren und die Demo jederzeit zurücksetzen."
+
+#: templates/includes/soda-scs-manager--coworking-intro.html.twig
+msgid "Create demo project"
+msgstr "Demo-Projekt anlegen"
+
+#: js/coworkingIntroWizard.js
+msgid "Could not create the demo project. Please try again."
+msgstr "Das Demo-Projekt konnte nicht angelegt werden. Bitte versuchen Sie es erneut."
+
+#: soda_scs_manager.routing.yml
+msgid "Demo project status"
+msgstr "Status des Demo-Projekts"
+
+#: soda_scs_manager.routing.yml
+msgid "Reset demo project"
+msgstr "Demo-Projekt zurücksetzen"
+
+#: soda_scs_manager.routing.yml
+msgid "Delete demo version"
+msgstr "Demo-Version löschen"
+
+#: soda_scs_manager.links.menu.yml
+msgid "Choose the central demo project and build the versions users get their demo projects from."
+msgstr "Zentrales Demo-Projekt wählen und Versionen erzeugen, aus denen Nutzer ihre Demo-Projekte erhalten."
+
+#: src/Entity/SodaScsDemoTemplate.php
+msgid "Changelog"
+msgstr "Changelog"
+
+#: src/Entity/SodaScsDemoTemplate.php
+msgid "What changed compared to the previous version."
+msgstr "Was sich gegenüber der vorherigen Version geändert hat."
+
+#: src/Entity/SodaScsDemoTemplate.php
+msgid "Semantic version \"major.minor.patch\"."
+msgstr "Semantische Version „major.minor.patch“."
+
+#: src/Demo/SodaScsDemoManager.php
+msgid "Describe the changes of this version in the changelog."
+msgstr "Beschreiben Sie die Änderungen dieser Version im Changelog."
+
+#: src/Demo/SodaScsDemoManager.php
+msgid "Enter the version as major.minor.patch, e.g. @example."
+msgstr "Geben Sie die Version als major.minor.patch an, z. B. @example."
+
+#: src/Demo/SodaScsDemoManager.php
+msgid "The version must be higher than the latest version @latest."
+msgstr "Die Version muss höher sein als die neueste Version @latest."
+
+#: src/Demo/SodaScsDemoManager.php
+msgid "Version @version already exists."
+msgstr "Die Version @version gibt es bereits."
+
+#: src/Form/SodaScsDemoProjectAdminForm.php
+msgid "{Major}.{Minor}.{Patch}, without a leading v."
+msgstr "{Major}.{Minor}.{Patch}, ohne v davor."
+
+#: src/Form/SodaScsDemoProjectAdminForm.php
+msgid "What changed compared to the previous version. Demo owners see it before they reset their demo."
+msgstr "Was sich gegenüber der vorherigen Version geändert hat. Demo-Besitzer sehen es, bevor sie ihre Demo zurücksetzen."
+
+#: src/Form/SodaScsDemoProjectResetForm.php
+msgid "What is new"
+msgstr "Was ist neu"
+
+#: src/Demo/SodaScsDemoTemplateBuilder.php
+msgid "Exporting the ontology"
+msgstr "Ontologie wird exportiert"
+
+#: src/Demo/SodaScsDemoProjectProvisioner.php
+msgid "Importing the ontology"
+msgstr "Ontologie wird importiert"
+
+#: src/Demo/SodaScsDemoProjectProvisioner.php
+msgid "Demo version @version"
+msgstr "Demo-Version @version"
+
+#: src/Helpers/SodaScsWebprotegeHelpers.php
+msgid "Could not download the ontology of @project."
+msgstr "Die Ontologie von @project konnte nicht heruntergeladen werden."
+
+#: src/Helpers/SodaScsWebprotegeHelpers.php
+msgid "Downloaded the ontology of @project."
+msgstr "Die Ontologie von @project wurde heruntergeladen."
+
+#: src/Helpers/SodaScsWebprotegeHelpers.php
+msgid "Could not import the ontology into @project."
+msgstr "Die Ontologie konnte nicht nach @project importiert werden."
+
+#: src/Helpers/SodaScsWebprotegeHelpers.php
+msgid "Imported the ontology into @project."
+msgstr "Die Ontologie wurde nach @project importiert."
+
+#: src/Form/SodaScsDemoProjectAdminForm.php
+msgid "Copies the WissKI, the Jupyter home directory, the Team Folder, the WebProtégé ontology and the standalone databases and triplestores of the demo project. The demo WissKI and the Jupyter server are stopped for a few minutes while they are copied."
+msgstr "Kopiert das WissKI, das Jupyter-Home-Verzeichnis, den Team Folder, die WebProtégé-Ontologie sowie die eigenständigen Datenbanken und Triplestores des Demo-Projekts. Das Demo-WissKI und der Jupyter-Server werden während des Kopierens einige Minuten angehalten."
+
+#: src/Form/SodaScsDemoProjectResetForm.php
+msgid "All changes in the WissKI, the databases, the triplestores, the Jupyter home directory, the Team Folder and the WebProtégé ontology of this project are overwritten with the demo data. Applications you added yourself are not changed. This cannot be undone."
+msgstr "Alle Änderungen im WissKI, in den Datenbanken, den Triplestores, dem Jupyter-Home-Verzeichnis, dem Team Folder und der WebProtégé-Ontologie dieses Projekts werden mit den Demo-Daten überschrieben. Selbst hinzugefügte Anwendungen bleiben unverändert. Dies kann nicht rückgängig gemacht werden."
+
+#: templates/includes/soda-scs-manager--coworking-intro.html.twig
+msgid "We set up a project with a filled WissKI, a Jupyter notebook, files, a database, a triplestore and a WebProtégé ontology for you. You can try everything and reset the demo at any time."
+msgstr "Wir richten Ihnen ein Projekt mit befülltem WissKI, Jupyter-Notebook, Dateien, einer Datenbank, einem Triplestore und einer WebProtégé-Ontologie ein. Sie können alles ausprobieren und die Demo jederzeit zurücksetzen."
+
+#: src/Form/SodaScsDemoProjectAdminForm.php
+msgid "Start queued jobs"
+msgstr "Wartende Jobs starten"
+
+#: src/Demo/SodaScsDemoQueueRunner.php
+msgid "There are no demo jobs waiting."
+msgstr "Es warten keine Demo-Jobs."
+
+#: src/Demo/SodaScsDemoQueueRunner.php
+msgid "The demo jobs are already running."
+msgstr "Die Demo-Jobs laufen bereits."
+
+#: src/Demo/SodaScsDemoQueueRunner.php
+msgid "Could not start the demo jobs. See the log @log."
+msgstr "Die Demo-Jobs konnten nicht gestartet werden. Siehe das Log @log."
+
+#: src/Demo/SodaScsDemoQueueRunner.php
+msgid "The demo jobs are running."
+msgstr "Die Demo-Jobs laufen."
