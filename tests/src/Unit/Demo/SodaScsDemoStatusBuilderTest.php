@@ -138,4 +138,59 @@ class SodaScsDemoStatusBuilderTest extends UnitTestCase {
     );
   }
 
+  /**
+   * Jupyter is done once it exists, and WebProtégé only stays while importing.
+   *
+   * @covers ::data
+   */
+  public function testDataTreatsExistingJupyterAndIdleWebprotegeAsReady(): void {
+    $template = $this->createMock(SodaScsDemoTemplateInterface::class);
+    $template->method('getManifest')->willReturn([
+      'apps' => [
+        'jupyter' => [],
+        'webprotege' => [],
+        'wisski' => [],
+      ],
+    ]);
+
+    $demoManager = $this->createMock(SodaScsDemoManager::class);
+    $demoManager->method('projectOperationId')->willReturn('operation-1');
+    $demoManager->method('activeTemplate')->willReturn($template);
+
+    $progress = $this->createMock(SodaScsProgressHelper::class);
+    $progress->method('findLatestStepsByOperation')->willReturn([
+      ['message' => 'Creating missing applications'],
+    ]);
+
+    $projectApps = $this->createMock(SodaScsDemoProjectApps::class);
+    $projectApps->method('wisskiStack')->willReturn($this->createMock(SodaScsStackInterface::class));
+    $projectApps->method('jupyterStack')->willReturn($this->createMock(SodaScsStackInterface::class));
+    $projectApps->method('webprotegeComponent')->willReturn($this->createMock(SodaScsComponentInterface::class));
+
+    $project = $this->createMock(SodaScsProjectInterface::class);
+    $project->method('get')->willReturnCallback(static function (string $field): object {
+      return match ($field) {
+        'demoStatus' => new class() {
+          public string $value = 'provisioning';
+        },
+        'demoTemplate' => new class() {
+          public mixed $entity = NULL;
+        },
+        default => new \stdClass(),
+      };
+    });
+
+    $builder = new SodaScsDemoStatusBuilder($demoManager, $progress, $projectApps);
+    $builder->setStringTranslation($this->getStringTranslationStub());
+
+    $data = $builder->data($project);
+
+    $this->assertSame(
+      [
+        ['detail' => 'Started', 'key' => 'wisski', 'label' => 'WissKI'],
+      ],
+      $data['apps'],
+    );
+  }
+
 }

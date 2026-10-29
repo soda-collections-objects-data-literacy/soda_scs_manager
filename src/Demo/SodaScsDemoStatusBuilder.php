@@ -121,7 +121,6 @@ class SodaScsDemoStatusBuilder {
       return (string) $this->t('Being created');
     }
     return (string) match ($key) {
-      SodaScsDemoLabelBuilder::APP_JUPYTER => $this->t('Ready to start'),
       SodaScsDemoLabelBuilder::APP_WEBPROTEGE => $this->t('Importing the ontology'),
       SodaScsDemoLabelBuilder::APP_WISSKI => $this->t('Started'),
       default => $this->t('Being created'),
@@ -143,17 +142,19 @@ class SodaScsDemoStatusBuilder {
   /**
    * Whether the line for this application should disappear.
    *
-   * Jupyter is ready once its home directory has been restored. WebProtégé
-   * is ready once the ontology import has finished. WissKI is ready once it
-   * has been started again after the restore.
+   * Jupyter is ready once its stack exists. The server stays stopped until
+   * someone opens it, and that still counts as finished. WebProtégé is ready
+   * once its component exists, except while the ontology import is the
+   * current step. WissKI is ready once it has been started again after the
+   * restore.
    */
   protected function appIsReady(string $key, bool $isPresent, int $rank): bool {
     if (!$isPresent) {
       return FALSE;
     }
     return match ($key) {
-      SodaScsDemoLabelBuilder::APP_JUPYTER => $this->stepIsFinished('Restoring the Jupyter home directory', $rank),
-      SodaScsDemoLabelBuilder::APP_WEBPROTEGE => $this->stepIsFinished('Importing the ontology', $rank),
+      SodaScsDemoLabelBuilder::APP_JUPYTER => TRUE,
+      SodaScsDemoLabelBuilder::APP_WEBPROTEGE => !$this->stepIsCurrent('Importing the ontology', $rank),
       SodaScsDemoLabelBuilder::APP_WISSKI => $this->stepIsFinished('Restoring the WissKI', $rank),
       default => FALSE,
     };
@@ -281,6 +282,13 @@ class SodaScsDemoStatusBuilder {
   protected function stepIndex(string $source): int {
     $index = array_search($source, self::SETUP_STEPS, TRUE);
     return $index === FALSE ? PHP_INT_MAX : $index;
+  }
+
+  /**
+   * Whether $source is the furthest setup step reported so far.
+   */
+  protected function stepIsCurrent(string $source, int $rank): bool {
+    return $rank === $this->stepIndex($source);
   }
 
   /**

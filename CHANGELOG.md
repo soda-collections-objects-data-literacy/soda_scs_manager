@@ -16,11 +16,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - While a demo is being set up, the project page lists each application that
   is not ready yet in the sidebar. A line disappears as soon as that
-  application is ready: Jupyter once its home directory is restored,
-  WebProtégé once the ontology is imported, and WissKI once it is running
-  again after the restore. Each line shows a spinning throbber next to its
-  status. The application cards are rebuilt when an application is created
-  and again when that application is ready.
+  application is ready: Jupyter once its stack exists, even while the server
+  is stopped, WebProtégé once its component exists except while the ontology
+  import is the current step, and WissKI once it is running again after the
+  restore. Each line shows a spinning throbber next to its status. The
+  application cards are rebuilt when an application is created and again when
+  that application is ready.
 - Demo projects include WissKI, JupyterHub and WebProtégé with sample data.
   Standalone SQL databases and triplestores are no longer created or
   restored. The WissKI stack still has its own database and triplestore.
@@ -35,6 +36,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- SCS administrators can clear the Varnish cache of a WissKI instance from
+  the instance page and from the component and stack lists. The button asks
+  for confirmation, then bans every cached page in that instance's Varnish
+  container. The WissKI itself stays online.
 - The create-project wizard has New and Demo tabs when the user has no demo
   yet and a demo version is active. Demo explains that it includes WissKI,
   JupyterHub and WebProtégé with sample data. Next then creates that demo.
