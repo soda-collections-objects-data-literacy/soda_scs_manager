@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- Guided onboarding tour across the dashboard, a project and an application
+  page, with the overlay centered or placed next to the highlighted elements.
+  It starts once after the co-working intro is completed, can be skipped or
+  closed with Escape, and can be restarted via "Start onboarding tour" in the
+  account menu (temporary development trigger). German translations included.
+
 ### Security
 
 - Project pages are visible only to the owner, listed members and SCS
@@ -30,6 +38,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- A demo import no longer puts the WissKI login and logout redirects back to
+  "home". Those paths stay as they are in the imported template
+  ("/wisski_home"). The instance's own SSO client is still written back.
 - While a demo is being set up or reset, a WissKI that is stopped only for
   the data restore stays on Starting. It no longer flips to Stopped until
   the setup job has finished.

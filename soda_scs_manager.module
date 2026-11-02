@@ -1687,6 +1687,17 @@ function soda_scs_manager_page_attachments(array &$attachments) {
     $attachments['#attached']['drupalSettings']['sodaScsManager']['createProjectWizard'] = $createProjectWizard;
   }
 
+  if ($account->hasPermission('soda scs manager user')) {
+    $attachments['#attached']['library'][] = 'soda_scs_manager/onboardingTour';
+    $attachments['#attached']['drupalSettings']['sodaScsManager']['onboardingTour'] = [
+      'completeUrl' => Url::fromRoute('soda_scs_manager.onboarding_complete')->toString(),
+      'dashboardUrl' => Url::fromRoute('soda_scs_manager.dashboard')->toString(),
+      'stateUrl' => Url::fromRoute('soda_scs_manager.onboarding_state')->toString(),
+    ];
+    $attachments['#cache']['contexts'][] = 'languages:language_interface';
+    $attachments['#cache']['contexts'][] = 'user.permissions';
+  }
+
   if (_soda_scs_manager_coworking_intro_show_on_front_page()) {
     $lang = \Drupal::languageManager()->getCurrentLanguage();
     $introCompleteUrl = Url::fromRoute('soda_scs_manager.coworking_intro_complete', [], [

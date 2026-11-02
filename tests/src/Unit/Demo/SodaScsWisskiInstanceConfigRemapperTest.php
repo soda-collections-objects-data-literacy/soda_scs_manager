@@ -49,6 +49,29 @@ class SodaScsWisskiInstanceConfigRemapperTest extends UnitTestCase {
   }
 
   /**
+   * @covers ::omitLoginRedirects
+   */
+  public function testOmitLoginRedirectsKeepsTheSsoClient(): void {
+    $configs = [
+      'openid_connect.settings' => [
+        'redirect_login' => 'home',
+        'redirect_logout' => 'home',
+        'user_login_display' => 'hidden',
+      ],
+      'openid_connect.client.scs_sso' => [
+        'settings' => ['client_id' => 'https://robert-demo.example'],
+      ],
+    ];
+
+    $result = $this->remapper->omitLoginRedirects($configs);
+
+    $this->assertArrayNotHasKey('redirect_login', $result['openid_connect.settings']);
+    $this->assertArrayNotHasKey('redirect_logout', $result['openid_connect.settings']);
+    $this->assertSame('hidden', $result['openid_connect.settings']['user_login_display']);
+    $this->assertSame($configs['openid_connect.client.scs_sso'], $result['openid_connect.client.scs_sso']);
+  }
+
+  /**
    * Drush outputs that carry no usable payload.
    */
   public static function invalidPayloadProvider(): array {

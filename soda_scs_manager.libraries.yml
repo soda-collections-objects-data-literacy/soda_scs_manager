@@ -211,3 +211,12 @@ coworkingIntroWizard:
     - soda_scs_manager/globalStyling
     - soda_scs_manager/throbberOverlay
     - soda_scs_manager/nextcloudConnect
+
+onboardingTour:
+  version: 1.0
+  js:
+    js/onboardingTour.js: {}
+  dependencies:
+    - core/drupal
+    - core/once
+    - core/drupalSettings

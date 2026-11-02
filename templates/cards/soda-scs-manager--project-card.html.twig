@@ -20,7 +20,7 @@
  */
 #}
 {% set tags_hidden_from_ui = ['data-science', 'publishing'] %}
-<article class="project--card project-card">
+<article class="project--card project-card"{% if demo_status %} data-demo-project{% endif %}>
 
 	<div class="project-card__header">
 		<a class="project-card__link" href="{{ url }}" aria-label="{{ 'Open project @name'|t({'@name': label}) }}">

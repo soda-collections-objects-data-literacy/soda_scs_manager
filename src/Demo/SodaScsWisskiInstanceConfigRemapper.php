@@ -17,6 +17,8 @@ use Symfony\Component\DependencyInjection\Attribute\Autowire;
  * adapter, SSO client, IIIF server, Nextcloud mount, site name). The
  * container entrypoint writes these values only on first install, so they are
  * captured from the target before the import and written back afterwards.
+ * Login and logout redirects stay with the imported template: a fresh install
+ * points them at "home", while the demo template uses "/wisski_home".
  */
 class SodaScsWisskiInstanceConfigRemapper {
 
@@ -64,6 +66,7 @@ class SodaScsWisskiInstanceConfigRemapper {
    *   The result.
    */
   public function applyInstanceConfig(array $configs, string $siteName, SodaScsComponentInterface $wisskiComponent): SodaScsResult {
+    $configs = $this->omitLoginRedirects($configs);
     $payload = base64_encode(json_encode(
       ['configs' => $configs, 'siteName' => $siteName],
       JSON_THROW_ON_ERROR | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE,
@@ -115,6 +118,7 @@ class SodaScsWisskiInstanceConfigRemapper {
         error: 'Missing or malformed drush output.',
       );
     }
+    $configs = $this->omitLoginRedirects($configs);
     if (!array_filter(array_keys($configs), static fn (string $name): bool => str_starts_with($name, 'wisski_salz.wisski_salz_adapter.'))) {
       return SodaScsResult::failure(
         message: 'The WissKI has no triplestore adapter yet.',
@@ -126,6 +130,30 @@ class SodaScsWisskiInstanceConfigRemapper {
       message: 'Instance configuration captured.',
       data: ['configs' => $configs],
     );
+  }
+
+  /**
+   * Drops login redirects so the imported template keeps its own paths.
+   *
+   * The fresh install records "home". The demo template uses "/wisski_home".
+   * Writing the captured values back would undo that. The SSO client itself
+   * stays in the snapshot.
+   *
+   * @param array<string, array> $configs
+   *   Config data keyed by config name.
+   *
+   * @return array<string, array>
+   *   The same map without redirect_login and redirect_logout.
+   */
+  public function omitLoginRedirects(array $configs): array {
+    if (!isset($configs['openid_connect.settings']) || !is_array($configs['openid_connect.settings'])) {
+      return $configs;
+    }
+    unset(
+      $configs['openid_connect.settings']['redirect_login'],
+      $configs['openid_connect.settings']['redirect_logout'],
+    );
+    return $configs;
   }
 
   /**

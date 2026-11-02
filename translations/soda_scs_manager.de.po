@@ -5260,3 +5260,147 @@ msgstr "Der Varnish-Cache konnte nicht geleert werden."
 #: src/Service/SodaScsWisskiVarnishCache.php
 msgid "Varnish cache cleared."
 msgstr "Varnish-Cache geleert."
+
+#: ../../themes/custom/scs_custom_theme/templates/page--dashboard.html.twig
+msgid "Start onboarding tour"
+msgstr "Einführungstour starten"
+
+#: js/onboardingTour.js
+msgid "Want me to show you around?"
+msgstr "Soll ich Ihnen alles zeigen?"
+
+#: js/onboardingTour.js
+msgid "No, I already know everything"
+msgstr "Nein, ich kenne mich bereits aus"
+
+#: js/onboardingTour.js
+msgid "Yes, Please"
+msgstr "Ja, bitte"
+
+#: js/onboardingTour.js
+msgid "One step back"
+msgstr "Einen Schritt zurück"
+
+#: js/onboardingTour.js
+msgid "Got it!"
+msgstr "Verstanden!"
+
+#: js/onboardingTour.js
+msgid "Done"
+msgstr "Fertig"
+
+#: js/onboardingTour.js
+msgid "Great, so let's go!"
+msgstr "Sehr gut, dann legen wir los!"
+
+#: js/onboardingTour.js
+msgid "This is your dashboard"
+msgstr "Das ist Ihr Dashboard"
+
+#: js/onboardingTour.js
+msgid "Here you can see all your projects and add new ones."
+msgstr "Hier sehen Sie alle Ihre Projekte und können neue hinzufügen."
+
+#: js/onboardingTour.js
+msgid "These are your projects"
+msgstr "Das sind Ihre Projekte"
+
+#: js/onboardingTour.js
+msgid "We already created a Demo Project for you."
+msgstr "Wir haben bereits ein Demoprojekt für Sie angelegt."
+
+#: js/onboardingTour.js
+msgid "Click on it to explore it!"
+msgstr "Klicken Sie darauf, um es zu erkunden!"
+
+#: js/onboardingTour.js
+msgid "This is your project!"
+msgstr "Das ist Ihr Projekt!"
+
+#: js/onboardingTour.js
+msgid "There is so much to explore, let's just dive right in!"
+msgstr "Es gibt so viel zu entdecken – tauchen wir einfach ein!"
+
+#: js/onboardingTour.js
+msgid "Your project details"
+msgstr "Ihre Projektdetails"
+
+#: js/onboardingTour.js
+msgid "Create notes for each other and manage your team."
+msgstr "Erstellen Sie Notizen füreinander und verwalten Sie Ihr Team."
+
+#: js/onboardingTour.js
+msgid "Organize your files"
+msgstr "Organisieren Sie Ihre Dateien"
+
+#: js/onboardingTour.js
+msgid "Check your most recent files or hop straight into your project's file system."
+msgstr "Sehen Sie sich Ihre zuletzt verwendeten Dateien an oder springen Sie direkt in das Dateisystem Ihres Projekts."
+
+#: js/onboardingTour.js
+msgid "Click the @button to get to the file system."
+msgstr "Klicken Sie auf die @button, um zum Dateisystem zu gelangen."
+
+#: js/onboardingTour.js
+msgid "button"
+msgstr "Schaltfläche"
+
+#: js/onboardingTour.js
+msgid "tile"
+msgstr "Kachel"
+
+#: js/onboardingTour.js
+msgid "Now the most important, your applications!"
+msgstr "Jetzt das Wichtigste: Ihre Anwendungen!"
+
+#: js/onboardingTour.js
+msgid "Get an overview, add or inspect your apps!"
+msgstr "Verschaffen Sie sich einen Überblick, fügen Sie Anwendungen hinzu oder sehen Sie sie sich genauer an!"
+
+#: js/onboardingTour.js
+msgid "Jump right in by clicking on the @tile."
+msgstr "Steigen Sie direkt ein, indem Sie auf die @tile klicken."
+
+#: js/onboardingTour.js
+msgid "Or click the details @button to get to the application details."
+msgstr "Oder klicken Sie auf die Details-@button, um zu den Anwendungsdetails zu gelangen."
+
+#: js/onboardingTour.js
+msgid "Your Application Details"
+msgstr "Ihre Anwendungsdetails"
+
+#: js/onboardingTour.js
+msgid "Inspect your application's health status and check on subsystems."
+msgstr "Prüfen Sie den Gesundheitsstatus Ihrer Anwendung und werfen Sie einen Blick auf die Subsysteme."
+
+#: js/onboardingTour.js
+msgid "Your application details"
+msgstr "Ihre Anwendungsdetails"
+
+#: js/onboardingTour.js
+msgid "Everything you need to know about your application."
+msgstr "Alles, was Sie über Ihre Anwendung wissen müssen."
+
+#: js/onboardingTour.js
+msgid "Your subsystems"
+msgstr "Ihre Subsysteme"
+
+#: js/onboardingTour.js
+msgid "Manage them directly from their own dashboards!"
+msgstr "Verwalten Sie sie direkt in ihren eigenen Dashboards!"
+
+#: js/onboardingTour.js
+msgid "That's it!"
+msgstr "Das war's schon!"
+
+#: js/onboardingTour.js
+msgid "Have fun exploring!"
+msgstr "Viel Spaß beim Erkunden!"
+
+#: js/onboardingTour.js
+msgid "If you have further questions, you can always go to the documentation by clicking on @icon or navigating there via the menu!"
+msgstr "Bei weiteren Fragen finden Sie die Dokumentation jederzeit über @icon oder über das Menü!"
+
+#: js/onboardingTour.js
+msgid "I'll take you back to your dashboard now!"
+msgstr "Ich bringe Sie jetzt zurück zu Ihrem Dashboard!"
