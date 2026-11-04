@@ -12,6 +12,7 @@ use Drupal\Core\Logger\LoggerChannelFactoryInterface;
 use Drupal\Core\Logger\LoggerChannelInterface;
 use Drupal\Core\Site\Settings;
 use Drupal\externalauth\AuthmapInterface;
+use Drupal\soda_scs_manager\Entity\SodaScsComponentInterface;
 use Drupal\soda_scs_manager\Entity\SodaScsProjectInterface;
 use Drupal\Core\StringTranslation\StringTranslationTrait;
 use Drupal\user\UserInterface;
@@ -26,6 +27,28 @@ use Drupal\soda_scs_manager\ValueObject\SodaScsKeycloakGroupData;
  */
 class SodaScsProjectHelpers {
   use StringTranslationTrait;
+
+  /**
+   * Member role that maps to the component's Keycloak -admin group.
+   */
+  public const ROLE_ADMIN = 'admin';
+
+  /**
+   * Member role that maps to the component's Keycloak -user group.
+   */
+  public const ROLE_USER = 'user';
+
+  /**
+   * Component bundles whose members can get a role other than the default.
+   *
+   * SQL and triplestore components also have -admin/-user groups, but their
+   * members always stay in -user until those services honour the admin group.
+   *
+   * @var array<string, list<string>>
+   */
+  public const MEMBER_ROLE_BUNDLES = [
+    'soda_scs_wisski_component' => [self::ROLE_ADMIN, self::ROLE_USER],
+  ];
 
   /**
    * The logger channel.
@@ -636,8 +659,9 @@ class SodaScsProjectHelpers {
    *
    * Keycloak group assignment rules:
    *  - Project group: owner + all members
-   *  - Component -admin group (WissKI/SQL/Triplestore): owner only
-   *  - Component -user group (WissKI/SQL/Triplestore): regular members only
+   *  - Component -admin group (WissKI/SQL/Triplestore): owner, plus members
+   *    with the admin role on that component (WissKI only)
+   *  - Component -user group (WissKI/SQL/Triplestore): all other members
    *
    * @param \Drupal\soda_scs_manager\Entity\SodaScsProjectInterface $project
    *   The project entity.
@@ -686,14 +710,16 @@ class SodaScsProjectHelpers {
       );
     }
 
-    // Resolve regular members' Keycloak UUIDs (owner excluded).
-    $memberSsoUuids = [];
+    // Resolve regular members' Keycloak UUIDs (owner excluded), keyed by uid
+    // so per-component roles can be looked up.
+    $memberSsoUuidsByUid = [];
     foreach ($project->get('members')->referencedEntities() as $projectMember) {
       $ssoUuid = $this->getUserSsoUuid($projectMember);
-      if ($ssoUuid) {
-        $memberSsoUuids[] = $ssoUuid;
+      if ($ssoUuid && $ssoUuid !== $ownerSsoUuid) {
+        $memberSsoUuidsByUid[(int) $projectMember->id()] = $ssoUuid;
       }
     }
+    $memberSsoUuids = array_values($memberSsoUuidsByUid);
 
     // Ensure the project's Keycloak group UUID is cached locally.
     if (!$project->get('keycloakUuid')->value) {
@@ -720,7 +746,8 @@ class SodaScsProjectHelpers {
       return $syncResult;
     }
 
-    // Component access groups: owner → -admin, members → -user.
+    // Component access groups: owner and admin-role members → -admin,
+    // everyone else → -user.
     $componentAccessGroupBundles = [
       'soda_scs_wisski_component',
       'soda_scs_sql_component',
@@ -734,21 +761,30 @@ class SodaScsProjectHelpers {
 
       $machineName = $connectedComponent->get('machineName')->value;
 
-      // Resolve -admin group UUID and sync the project owner into it.
+      $adminSsoUuids = [$ownerSsoUuid];
+      $userSsoUuids = [];
+      foreach ($memberSsoUuidsByUid as $memberUid => $memberSsoUuid) {
+        if ($this->getMemberComponentRole($project, $connectedComponent, $memberUid) === self::ROLE_ADMIN) {
+          $adminSsoUuids[] = $memberSsoUuid;
+        }
+        else {
+          $userSsoUuids[] = $memberSsoUuid;
+        }
+      }
+
       $adminGroupName = $machineName . '-admin';
       $adminGroupUuid = $this->resolveKeycloakGroupUuid($adminGroupName);
       if ($adminGroupUuid) {
-        $syncResult = $this->syncUsersToKeycloakGroup($adminGroupUuid, [$ownerSsoUuid], $project->label());
+        $syncResult = $this->syncUsersToKeycloakGroup($adminGroupUuid, $adminSsoUuids, $project->label());
         if (!$syncResult->success) {
           return $syncResult;
         }
       }
 
-      // Resolve -user group UUID and sync regular members into it.
       $userGroupName = $machineName . '-user';
       $userGroupUuid = $this->resolveKeycloakGroupUuid($userGroupName);
       if ($userGroupUuid) {
-        $syncResult = $this->syncUsersToKeycloakGroup($userGroupUuid, $memberSsoUuids, $project->label());
+        $syncResult = $this->syncUsersToKeycloakGroup($userGroupUuid, $userSsoUuids, $project->label());
         if (!$syncResult->success) {
           return $syncResult;
         }
@@ -781,8 +817,82 @@ class SodaScsProjectHelpers {
     if (!$response['success']) {
       return NULL;
     }
+    // Keycloak's search matches substrings: "wisski-foo-admin" also finds
+    // "wisski-foo-admin2", so only an exact name match may be used.
     $groups = json_decode($response['data']['keycloakResponse']->getBody()->getContents(), TRUE) ?? [];
-    return $groups[0]['id'] ?? NULL;
+    foreach ($groups as $group) {
+      if (($group['name'] ?? NULL) === $groupName && !empty($group['id'])) {
+        return (string) $group['id'];
+      }
+    }
+    return NULL;
+  }
+
+  /**
+   * Connected components whose members can be given a role.
+   *
+   * @return list<\Drupal\soda_scs_manager\Entity\SodaScsComponentInterface>
+   *   Components of a bundle listed in MEMBER_ROLE_BUNDLES.
+   */
+  public function getRoleAssignableComponents(SodaScsProjectInterface $project): array {
+    $components = [];
+    foreach ($project->get('connectedComponents')->referencedEntities() as $component) {
+      if ($component instanceof SodaScsComponentInterface && isset(self::MEMBER_ROLE_BUNDLES[$component->bundle()])) {
+        $components[] = $component;
+      }
+    }
+    return $components;
+  }
+
+  /**
+   * The role of a user on one of the project's components.
+   *
+   * The owner is always admin; members without a stored role are users.
+   */
+  public function getMemberComponentRole(SodaScsProjectInterface $project, SodaScsComponentInterface $component, int $userId): string {
+    if ($userId === (int) $project->getOwnerId()) {
+      return self::ROLE_ADMIN;
+    }
+    $allowedRoles = self::MEMBER_ROLE_BUNDLES[$component->bundle()] ?? [self::ROLE_USER];
+    $storedRole = $this->getStoredComponentRoles($project)[(string) $component->id()][(string) $userId] ?? self::ROLE_USER;
+    return in_array($storedRole, $allowedRoles, TRUE) ? $storedRole : self::ROLE_USER;
+  }
+
+  /**
+   * Stored member roles per component: [componentId => [userId => role]].
+   *
+   * Kept as JSON in the project's "rights" field.
+   *
+   * @return array<string, array<string, string>>
+   *   The stored roles; empty when none are set or the JSON is invalid.
+   */
+  public function getStoredComponentRoles(SodaScsProjectInterface $project): array {
+    $raw = (string) ($project->get('rights')->value ?? '');
+    if ($raw === '') {
+      return [];
+    }
+    $decoded = json_decode($raw, TRUE);
+    if (!is_array($decoded) || !is_array($decoded['componentRoles'] ?? NULL)) {
+      $this->logger->warning('Ignoring unreadable member roles on project @id.', ['@id' => (string) $project->id()]);
+      return [];
+    }
+    return $decoded['componentRoles'];
+  }
+
+  /**
+   * Writes member roles per component to the project (without saving).
+   *
+   * Default user roles are not stored, so the field stays small.
+   *
+   * @param array<string, array<string, string>> $componentRoles
+   *   [componentId => [userId => role]].
+   */
+  public function setStoredComponentRoles(SodaScsProjectInterface $project, array $componentRoles): void {
+    $componentRoles = array_filter(array_map(
+      static fn(array $roles): array => array_filter($roles, static fn(string $role): bool => $role !== self::ROLE_USER),
+      $componentRoles,
+    ));
+    $project->set('rights', $componentRoles === [] ? NULL : json_encode(['componentRoles' => $componentRoles]));
   }
 
   /**

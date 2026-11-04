@@ -292,6 +292,26 @@ entity.soda_scs_project.remove_member_form:
     _permission: 'soda scs manager user'
     _custom_access: '\Drupal\soda_scs_manager\Access\SodaScsProjectAccessControlHandler::accessRemoveMemberForm'
 
+soda_scs_manager.project.member_component_role:
+  path: '/soda-scs-manager/project/{soda_scs_project}/members/{user}/roles/{soda_scs_component}'
+  defaults:
+    _controller: '\Drupal\soda_scs_manager\Controller\SodaScsProjectMemberRoleController::setRole'
+    _title: 'Set member role'
+  methods: [POST]
+  options:
+    parameters:
+      soda_scs_project:
+        type: entity:soda_scs_project
+      user:
+        type: entity:user
+      soda_scs_component:
+        type: entity:soda_scs_component
+    no_cache: TRUE
+  requirements:
+    _permission: 'soda scs manager user'
+    _custom_access: '\Drupal\soda_scs_manager\Access\SodaScsProjectAccessControlHandler::accessAddMemberForm'
+    _csrf_request_header_token: 'TRUE'
+
 entity.soda_scs_project.invitation_action:
   path: '/soda-scs-manager/project/{soda_scs_project}/invitations/{soda_scs_project_membership}/{operation}'
   defaults:

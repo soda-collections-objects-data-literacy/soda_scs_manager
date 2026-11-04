@@ -5404,3 +5404,55 @@ msgstr "Bei weiteren Fragen finden Sie die Dokumentation jederzeit über @icon o
 #: js/onboardingTour.js
 msgid "I'll take you back to your dashboard now!"
 msgstr "Ich bringe Sie jetzt zurück zu Ihrem Dashboard!"
+
+#: src/ViewBuilder/SodaScsProjectViewBuilder.php
+msgid "Administrator"
+msgstr "Administrator"
+
+#: src/ViewBuilder/SodaScsProjectViewBuilder.php
+msgid "User"
+msgstr "Benutzer"
+
+#: src/ViewBuilder/SodaScsProjectViewBuilder.php
+msgid "Roles of @member"
+msgstr "Rollen von @member"
+
+#: templates/entity/soda-scs-manager--project-members.html.twig
+msgid "Roles per application"
+msgstr "Rollen pro Anwendung"
+
+#: js/projectMembers.js
+msgid "Saving…"
+msgstr "Wird gespeichert…"
+
+#: js/projectMembers.js
+msgid "Role saved."
+msgstr "Rolle gespeichert."
+
+#: js/projectMembers.js
+msgid "The role could not be saved. Please try again."
+msgstr "Die Rolle konnte nicht gespeichert werden. Bitte versuchen Sie es erneut."
+
+#: src/Helpers/SodaScsProjectMembershipHelpers.php
+msgid "You are not allowed to change member roles."
+msgstr "Sie dürfen die Rollen von Mitgliedern nicht ändern."
+
+#: src/Helpers/SodaScsProjectMembershipHelpers.php
+msgid "@member is not a member of @project."
+msgstr "@member ist kein Mitglied von @project."
+
+#: src/Helpers/SodaScsProjectMembershipHelpers.php
+msgid "This role cannot be assigned for @application."
+msgstr "Diese Rolle kann für @application nicht vergeben werden."
+
+#: src/Helpers/SodaScsProjectMembershipHelpers.php
+msgid "The role was saved, but Keycloak could not be updated. Please try again later."
+msgstr "Die Rolle wurde gespeichert, aber Keycloak konnte nicht aktualisiert werden. Bitte versuchen Sie es später erneut."
+
+#: src/Helpers/SodaScsProjectMembershipHelpers.php
+msgid "@member is now @role of @application. The change applies at their next login."
+msgstr "@member ist jetzt @role von @application. Die Änderung gilt ab der nächsten Anmeldung."
+
+#: soda_scs_manager.routing.yml
+msgid "Set member role"
+msgstr "Mitgliederrolle festlegen"

@@ -25,6 +25,7 @@ use Drupal\soda_scs_manager\Form\SodaScsProjectAddMemberForm;
 use Drupal\soda_scs_manager\Form\SodaScsProjectInvitationActionForm;
 use Drupal\soda_scs_manager\Form\SodaScsProjectNoteForm;
 use Drupal\soda_scs_manager\Helpers\SodaScsProjectApplicationHelpers;
+use Drupal\soda_scs_manager\Helpers\SodaScsProjectHelpers;
 use Drupal\soda_scs_manager\Helpers\SodaScsProjectMembershipHelpers;
 use Drupal\soda_scs_manager\Service\SodaScsApplicationCardBuilder;
 use Drupal\soda_scs_manager\Service\SodaScsNextcloudPreview;
@@ -58,6 +59,7 @@ final class SodaScsProjectViewBuilder extends EntityViewBuilder
     protected SodaScsProjectMembershipHelpers $projectMembershipHelpers,
     protected SodaScsProjectApplicationHelpers $projectApplicationHelpers,
     protected SodaScsDemoStatusBuilder $demoStatusBuilder,
+    protected SodaScsProjectHelpers $projectHelpers,
   ) {
     parent::__construct($entity_type, $entity_repository, $language_manager, $theme_registry, $entity_display_repository);
     $this->moduleHandler = $module_handler;
@@ -84,6 +86,7 @@ final class SodaScsProjectViewBuilder extends EntityViewBuilder
       $container->get('soda_scs_manager.project_membership.helpers'),
       $container->get('soda_scs_manager.project_application.helpers'),
       $container->get('soda_scs_manager.demo.status_builder'),
+      $container->get('soda_scs_manager.project.helpers'),
     );
   }
 
@@ -232,6 +235,8 @@ final class SodaScsProjectViewBuilder extends EntityViewBuilder
     $ownerId = (int) ($project->getOwnerId() ?? 0);
     $items = [];
     $owner = [];
+    $canManageRoles = $this->projectMembershipHelpers->canAddMembers($project, $this->currentUser);
+    $roleComponents = $canManageRoles ? $this->projectHelpers->getRoleAssignableComponents($project) : [];
 
     // The owner is not part of the 'members' field, so it is loaded separately.
     $ownerAccount = $project->getOwner();
@@ -275,6 +280,8 @@ final class SodaScsProjectViewBuilder extends EntityViewBuilder
           'remove_label' => $memberId === (int) $this->currentUser->id()
             ? $this->t('Leave project')
             : $this->t('Remove @member', ['@member' => $member->getDisplayName()]),
+          'roles' => $this->buildMemberRoleRows($project, $member, $roleComponents),
+          'roles_label' => $this->t('Roles of @member', ['@member' => $member->getDisplayName()]),
         ];
       }
     }
@@ -300,6 +307,41 @@ final class SodaScsProjectViewBuilder extends EntityViewBuilder
         'max-age' => 0,
       ],
     ];
+  }
+
+  /**
+   * Role selects for one member, one row per role-assignable application.
+   *
+   * @param list<\Drupal\soda_scs_manager\Entity\SodaScsComponentInterface> $components
+   *   Components of the project that support member roles.
+   *
+   * @return list<array<string, mixed>>
+   *   Rows with component_id, label, role, options and url.
+   */
+  protected function buildMemberRoleRows(SodaScsProjectInterface $project, UserInterface $member, array $components): array {
+    $roleLabels = [
+      SodaScsProjectHelpers::ROLE_ADMIN => $this->t('Administrator'),
+      SodaScsProjectHelpers::ROLE_USER => $this->t('User'),
+    ];
+    $rows = [];
+    foreach ($components as $component) {
+      $options = [];
+      foreach (SodaScsProjectHelpers::MEMBER_ROLE_BUNDLES[$component->bundle()] as $role) {
+        $options[$role] = $roleLabels[$role] ?? $role;
+      }
+      $rows[] = [
+        'component_id' => (int) $component->id(),
+        'label' => $component->label(),
+        'role' => $this->projectHelpers->getMemberComponentRole($project, $component, (int) $member->id()),
+        'options' => $options,
+        'url' => Url::fromRoute('soda_scs_manager.project.member_component_role', [
+          'soda_scs_project' => $project->id(),
+          'user' => $member->id(),
+          'soda_scs_component' => $component->id(),
+        ])->toString(),
+      ];
+    }
+    return $rows;
   }
 
   /**

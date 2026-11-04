@@ -14,9 +14,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   It starts once after the co-working intro is completed, can be skipped or
   closed with Escape, and can be restarted via "Start onboarding tour" in the
   account menu (temporary development trigger). German translations included.
+- Project owners and SCS administrators can set each team member's role per
+  WissKI instance (Administrator or User) from a role button in "Edit team
+  members". The change goes straight to the instance's Keycloak `-admin` /
+  `-user` groups and applies at the member's next login; the owner is always
+  administrator.
 
 ### Security
 
+- Keycloak component groups are matched by exact name, so a member is never
+  synced into a similarly named group of another instance.
 - Project pages are visible only to the owner, listed members and SCS
   administrators. Any other signed-in user who opens a project URL is denied.
 

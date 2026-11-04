@@ -13,6 +13,7 @@ use Drupal\Core\Mail\MailManagerInterface;
 use Drupal\Core\Session\AccountInterface;
 use Drupal\Core\StringTranslation\StringTranslationTrait;
 use Drupal\Core\Url;
+use Drupal\soda_scs_manager\Entity\SodaScsComponentInterface;
 use Drupal\soda_scs_manager\Entity\SodaScsProjectInterface;
 use Drupal\soda_scs_manager\Entity\SodaScsProjectMembershipInterface;
 use Drupal\soda_scs_manager\Helpers\SodaScsProjectDbAccessHelpers;
@@ -745,6 +746,13 @@ final class SodaScsProjectMembershipHelpers {
       static fn(array $item): bool => (int) ($item['target_id'] ?? 0) !== $memberId,
     ));
     $project->set('members', $updatedMembers);
+    // A member who rejoins later starts as user again.
+    $componentRoles = $this->projectHelpers->getStoredComponentRoles($project);
+    foreach ($componentRoles as &$rolesOfComponent) {
+      unset($rolesOfComponent[(string) $memberId]);
+    }
+    unset($rolesOfComponent);
+    $this->projectHelpers->setStoredComponentRoles($project, $componentRoles);
 
     try {
       $project->save();
@@ -771,6 +779,106 @@ final class SodaScsProjectMembershipHelpers {
       ],
       message: (string) $this->t('@member has been removed from the project.', [
         '@member' => $member->getDisplayName(),
+      ]),
+    );
+  }
+
+  /**
+   * Gives a listed member a role on one of the project's components.
+   *
+   * The change is pushed to the component's Keycloak groups at once; WissKI
+   * applies it at the member's next login.
+   */
+  public function setMemberComponentRole(
+    SodaScsProjectInterface $project,
+    UserInterface $member,
+    SodaScsComponentInterface $component,
+    string $role,
+    AccountInterface $actor,
+  ): SodaScsResult {
+    if (!$this->canAddMembers($project, $actor)) {
+      return SodaScsResult::failure(
+        error: 'not_allowed',
+        message: (string) $this->t('You are not allowed to change member roles.'),
+        log: FALSE,
+      );
+    }
+
+    $memberId = (int) $member->id();
+    if (!$this->isListedMember($project, $memberId) || $memberId === (int) $project->getOwnerId()) {
+      return SodaScsResult::failure(
+        error: 'not_a_member',
+        message: (string) $this->t('@member is not a member of @project.', [
+          '@member' => $member->getDisplayName(),
+          '@project' => $project->label(),
+        ]),
+        log: FALSE,
+      );
+    }
+
+    $isAssignable = in_array(
+      (int) $component->id(),
+      array_map(static fn(SodaScsComponentInterface $item): int => (int) $item->id(), $this->projectHelpers->getRoleAssignableComponents($project)),
+      TRUE,
+    );
+    $allowedRoles = SodaScsProjectHelpers::MEMBER_ROLE_BUNDLES[$component->bundle()] ?? [];
+    if (!$isAssignable || !in_array($role, $allowedRoles, TRUE)) {
+      return SodaScsResult::failure(
+        error: 'invalid_role',
+        message: (string) $this->t('This role cannot be assigned for @application.', [
+          '@application' => $component->label(),
+        ]),
+        log: FALSE,
+      );
+    }
+
+    $componentRoles = $this->projectHelpers->getStoredComponentRoles($project);
+    $componentRoles[(string) $component->id()][(string) $memberId] = $role;
+    $this->projectHelpers->setStoredComponentRoles($project, $componentRoles);
+
+    try {
+      $project->save();
+    }
+    catch (\Throwable $throwable) {
+      $this->logger->error('Failed to store role of member @uid on component @component: @message', [
+        '@uid' => (string) $memberId,
+        '@component' => (string) $component->id(),
+        '@message' => $throwable->getMessage(),
+      ]);
+      return SodaScsResult::failure(
+        error: 'storage_error',
+        message: (string) $this->t('The role could not be saved. Please try again.'),
+        log: FALSE,
+      );
+    }
+
+    $syncResult = $this->projectHelpers->syncKeycloakGroupMembers($project);
+    if (!$syncResult->success) {
+      $this->logger->error('Keycloak sync after role change failed for project @project: @error', [
+        '@project' => (string) $project->id(),
+        '@error' => (string) $syncResult->error,
+      ]);
+      return SodaScsResult::failure(
+        error: 'keycloak_sync_failed',
+        message: (string) $this->t('The role was saved, but Keycloak could not be updated. Please try again later.'),
+        log: FALSE,
+      );
+    }
+
+    $this->logger->notice('Role of member @uid on component @component in project @project set to @role by uid @actor.', [
+      '@uid' => (string) $memberId,
+      '@component' => (string) $component->id(),
+      '@project' => (string) $project->id(),
+      '@role' => $role,
+      '@actor' => (string) $actor->id(),
+    ]);
+
+    return SodaScsResult::success(
+      data: ['role' => $role],
+      message: (string) $this->t('@member is now @role of @application. The change applies at their next login.', [
+        '@member' => $member->getDisplayName(),
+        '@role' => $role === SodaScsProjectHelpers::ROLE_ADMIN ? $this->t('Administrator') : $this->t('User'),
+        '@application' => $component->label(),
       ]),
     );
   }
