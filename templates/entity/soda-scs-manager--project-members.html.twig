@@ -4,9 +4,10 @@
  * Members list on the SODa SCS Project entity view.
  *
  * Available variables:
- * - members: List of { id, first_name, last_name, name, initials, username, mail, picture, is_current_user, remove_url, remove_form, remove_label, roles, roles_label }.
- *   roles lists { component_id, label, role, options, url } per application
- *   whose member role can be set (owners and admins only).
+ * - members: List of { id, first_name, last_name, name, initials, username, mail, picture, is_current_user, remove_url, remove_form, remove_label, can_manage_roles, roles, roles_label }.
+ *   roles lists { component_id, label, type, role, options, url } per application
+ *   whose member role can be set; can_manage_roles is TRUE for owners and
+ *   admins, who see the role menu even when no such application exists.
  * - owner: Owner profile with the same keys (no remove_url/remove_label).
  * - can_add_members: Whether the current user may invite members.
  * - add_form: Invite form (owners and admins).
@@ -94,7 +95,8 @@
 						<p class="project-member__name">{{ member.name }}</p>
 						<p class="project-member__mail">{{ member.mail }}</p>
 					</div>
-					{% if member.roles is not empty %}
+					<div class="project-member__actions">
+					{% if member.can_manage_roles %}
 						<div class="project-member__roles-menu">
 							<button type="button" class="project-member__roles-trigger btn btn--secondary btn--icon" aria-label="{{ member.roles_label }}" title="{{ member.roles_label }}" aria-expanded="false">
 								<svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
@@ -105,11 +107,17 @@
 							</button>
 							<div class="project-member__roles-panel" hidden>
 								<p class="project-member__roles-title">{{ 'Roles per application'|t }}</p>
+								{% if member.roles is empty %}
+									<p class="project-member__roles-empty">{{ 'This project has no application with roles yet. Roles can currently be set for WissKI instances.'|t }}</p>
+								{% endif %}
 								<ul class="project-member__roles-list">
 									{% for row in member.roles %}
 										{% set select_id = 'project-member-role-' ~ member.id ~ '-' ~ row.component_id %}
 										<li class="project-member__role">
-											<label class="project-member__role-label" for="{{ select_id }}">{{ row.label }}</label>
+											<label class="project-member__role-label" for="{{ select_id }}">
+												<span class="project-member__role-name">{{ row.label }}</span>
+												<span class="project-member__role-type">{{ row.type }}</span>
+											</label>
 											<select id="{{ select_id }}" class="project-member__role-select form-select" data-role-url="{{ row.url }}" data-current-role="{{ row.role }}">
 												{% for value, option_label in row.options %}
 													<option value="{{ value }}"{% if value == row.role %} selected{% endif %}>{{ option_label }}</option>
@@ -135,6 +143,7 @@
 							</div>
 						</div>
 					{% endif %}
+					</div>
 				</li>
 			{% endfor %}
 		</ul>

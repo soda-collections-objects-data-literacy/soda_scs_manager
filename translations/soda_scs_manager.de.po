@@ -5456,3 +5456,7 @@ msgstr "@member ist jetzt @role von @application. Die Änderung gilt ab der näc
 #: soda_scs_manager.routing.yml
 msgid "Set member role"
 msgstr "Mitgliederrolle festlegen"
+
+#: templates/entity/soda-scs-manager--project-members.html.twig
+msgid "This project has no application with roles yet. Roles can currently be set for WissKI instances."
+msgstr "Dieses Projekt hat noch keine Anwendung mit Rollen. Rollen lassen sich derzeit für WissKI-Instanzen festlegen."

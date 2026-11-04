@@ -86,3 +86,30 @@
 .project-member__roles-status--error {
   color: #b00020;
 }
+
+.project-member__roles-empty {
+  margin: 0;
+  color: #4d5866;
+}
+
+.project-member__roles-list:empty {
+  display: none;
+}
+
+/* Role menu and remove button share the third grid column of a member row. */
+.project-member__actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+.project-member__role-name,
+.project-member__role-type {
+  display: block;
+}
+
+.project-member__role-type {
+  color: #4d5866;
+  font-size: 0.875rem;
+}

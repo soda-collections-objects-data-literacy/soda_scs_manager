@@ -8,6 +8,7 @@ use Drupal\Core\Config\ConfigFactoryInterface;
 use Drupal\Core\Entity\EntityDisplayRepositoryInterface;
 use Drupal\Core\Entity\EntityInterface;
 use Drupal\Core\Entity\EntityRepositoryInterface;
+use Drupal\Core\Entity\EntityTypeBundleInfoInterface;
 use Drupal\Core\Entity\EntityTypeInterface;
 use Drupal\Core\Entity\EntityTypeManagerInterface;
 use Drupal\Core\Entity\EntityViewBuilder;
@@ -60,6 +61,7 @@ final class SodaScsProjectViewBuilder extends EntityViewBuilder
     protected SodaScsProjectApplicationHelpers $projectApplicationHelpers,
     protected SodaScsDemoStatusBuilder $demoStatusBuilder,
     protected SodaScsProjectHelpers $projectHelpers,
+    protected EntityTypeBundleInfoInterface $bundleInfo,
   ) {
     parent::__construct($entity_type, $entity_repository, $language_manager, $theme_registry, $entity_display_repository);
     $this->moduleHandler = $module_handler;
@@ -87,6 +89,7 @@ final class SodaScsProjectViewBuilder extends EntityViewBuilder
       $container->get('soda_scs_manager.project_application.helpers'),
       $container->get('soda_scs_manager.demo.status_builder'),
       $container->get('soda_scs_manager.project.helpers'),
+      $container->get('entity_type.bundle.info'),
     );
   }
 
@@ -280,6 +283,7 @@ final class SodaScsProjectViewBuilder extends EntityViewBuilder
           'remove_label' => $memberId === (int) $this->currentUser->id()
             ? $this->t('Leave project')
             : $this->t('Remove @member', ['@member' => $member->getDisplayName()]),
+          'can_manage_roles' => $canManageRoles,
           'roles' => $this->buildMemberRoleRows($project, $member, $roleComponents),
           'roles_label' => $this->t('Roles of @member', ['@member' => $member->getDisplayName()]),
         ];
@@ -316,13 +320,14 @@ final class SodaScsProjectViewBuilder extends EntityViewBuilder
    *   Components of the project that support member roles.
    *
    * @return list<array<string, mixed>>
-   *   Rows with component_id, label, role, options and url.
+   *   Rows with component_id, label, type, role, options and url.
    */
   protected function buildMemberRoleRows(SodaScsProjectInterface $project, UserInterface $member, array $components): array {
     $roleLabels = [
       SodaScsProjectHelpers::ROLE_ADMIN => $this->t('Administrator'),
       SodaScsProjectHelpers::ROLE_USER => $this->t('User'),
     ];
+    $bundleInfo = $this->bundleInfo->getBundleInfo('soda_scs_component');
     $rows = [];
     foreach ($components as $component) {
       $options = [];
@@ -332,6 +337,7 @@ final class SodaScsProjectViewBuilder extends EntityViewBuilder
       $rows[] = [
         'component_id' => (int) $component->id(),
         'label' => $component->label(),
+        'type' => $bundleInfo[$component->bundle()]['label'] ?? $component->bundle(),
         'role' => $this->projectHelpers->getMemberComponentRole($project, $component, (int) $member->id()),
         'options' => $options,
         'url' => Url::fromRoute('soda_scs_manager.project.member_component_role', [
