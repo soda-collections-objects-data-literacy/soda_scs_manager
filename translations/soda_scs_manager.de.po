@@ -3690,10 +3690,6 @@ msgid "No applications found."
 msgstr "Keine Anwendungen gefunden."
 
 #: templates/entity/soda-scs-project.html.twig
-msgid "You"
-msgstr "Sie"
-
-#: templates/entity/soda-scs-project.html.twig
 msgid "No members"
 msgstr "Keine Mitglieder"
 
@@ -4148,6 +4144,10 @@ msgstr "Projekt verlassen"
 #: src/ViewBuilder/SodaScsProjectViewBuilder.php
 msgid "Remove @member"
 msgstr "@member entfernen"
+
+#: src/ViewBuilder/SodaScsProjectViewBuilder.php
+msgid "You"
+msgstr "Sie"
 
 #: src/Form/SodaScsProjectRemoveMemberForm.php
 msgid "Remove @member from project @project?"
