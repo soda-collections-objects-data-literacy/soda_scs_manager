@@ -175,7 +175,6 @@
           projectId: null,
           projectLabel: '',
           projectNote: '',
-          createDemo: false,
           doneMessage: '',
           selectedAppTypes: [],
           appQueue: [],
@@ -197,7 +196,6 @@
           state.projectId = null;
           state.projectLabel = '';
           state.projectNote = '';
-          state.createDemo = false;
           state.doneMessage = '';
           state.selectedAppTypes = [];
           state.appQueue = [];
@@ -210,7 +208,6 @@
           }
           setReviewError('');
           setReviewStatus('');
-          selectMode('new');
           root.querySelectorAll('.create-project-wizard__app-card[aria-pressed="true"]').forEach(function (card) {
             card.setAttribute('aria-pressed', 'false');
           });
@@ -226,9 +223,6 @@
         }
 
         function computePages() {
-          if (state.createDemo) {
-            return [{ phase: 'details', label: Drupal.t('Create demo project') }];
-          }
           var pages = [
             { phase: 'details', label: Drupal.t('Create new project') },
             { phase: 'apps-select', label: Drupal.t('Add applications') },
@@ -405,125 +399,6 @@
             hideFieldByName(loaded, 'memberInvitations');
             hideNativeSubmit(loaded);
           });
-        }
-
-        var modeTabs = root.querySelector('[data-cpw-modes]');
-        var modePanels = {
-          new: root.querySelector('[data-cpw-mode-panel="new"]'),
-          demo: root.querySelector('[data-cpw-mode-panel="demo"]'),
-        };
-
-        /**
-         * Neu keeps the project form. Demo explains the sample project
-         * (WissKI, JupyterHub and WebProtégé) and Next creates it.
-         */
-        function selectMode(mode) {
-          var active = mode === 'demo' && settings.demoCreateUrl ? 'demo' : 'new';
-          state.createDemo = active === 'demo';
-          if (modeTabs) {
-            modeTabs.hidden = !settings.demoCreateUrl;
-            modeTabs.querySelectorAll('[data-cpw-mode]').forEach(function (tab) {
-              var selected = tab.getAttribute('data-cpw-mode') === active;
-              tab.setAttribute('aria-selected', selected ? 'true' : 'false');
-              tab.tabIndex = selected ? 0 : -1;
-            });
-          }
-          Object.keys(modePanels).forEach(function (key) {
-            if (modePanels[key]) {
-              modePanels[key].hidden = key !== active;
-            }
-          });
-          setDemoError('');
-          if (state.phase === 'details') {
-            updateFooter();
-          }
-        }
-
-        if (modeTabs) {
-          modeTabs.querySelectorAll('[data-cpw-mode]').forEach(function (tab) {
-            tab.addEventListener('click', function () {
-              if (state.creating) {
-                return;
-              }
-              selectMode(tab.getAttribute('data-cpw-mode'));
-            });
-          });
-        }
-
-        function setDemoError(message) {
-          var error = stepEls.details.querySelector('[data-cpw-demo-error]');
-          if (!error) {
-            return;
-          }
-          error.textContent = message || '';
-          error.hidden = !message;
-        }
-
-        function sessionTokenUrl() {
-          if (typeof Drupal.url === 'function') {
-            return Drupal.url('session/token');
-          }
-          return '/session/token';
-        }
-
-        /**
-         * Queues the user's demo project and skips the application steps.
-         */
-        function createDemoFromWizard() {
-          if (state.creating || !settings.demoCreateUrl) {
-            return;
-          }
-          state.creating = true;
-          setBusy(true);
-          setDemoError('');
-          fetch(sessionTokenUrl(), { credentials: 'same-origin' })
-            .then(function (tokenResponse) {
-              if (!tokenResponse.ok) {
-                throw new Error('token');
-              }
-              return tokenResponse.text();
-            })
-            .then(function (token) {
-              if (!token) {
-                throw new Error('token');
-              }
-              return fetch(settings.demoCreateUrl, {
-                method: 'POST',
-                credentials: 'same-origin',
-                headers: {
-                  Accept: 'application/json',
-                  'X-CSRF-Token': token,
-                },
-              });
-            })
-            .then(function (response) {
-              return response.json().catch(function () {
-                return {};
-              }).then(function (data) {
-                return { ok: response.ok, data: data };
-              });
-            })
-            .then(function (result) {
-              state.creating = false;
-              setBusy(false);
-              if (!result.ok || !result.data || !result.data.success) {
-                setDemoError((result.data && result.data.error) || Drupal.t('Could not create the demo project. Please try again.'));
-                return;
-              }
-              state.projectId = result.data.projectId ? String(result.data.projectId) : null;
-              state.doneMessage = result.data.message || Drupal.t('Your demo project is being set up. This takes a few minutes.');
-              settings.demoCreateUrl = '';
-              goToPhase('done');
-            })
-            .catch(function (error) {
-              state.creating = false;
-              setBusy(false);
-              if (error && error.message === 'token') {
-                setDemoError(Drupal.t('Could not load a security token. Reload the page and try again.'));
-                return;
-              }
-              setDemoError(Drupal.t('Request failed. Please try again.'));
-            });
         }
 
         function confirmDetailsStep() {
@@ -1132,10 +1007,6 @@
             return;
           }
           if (state.phase === 'details') {
-            if (state.createDemo) {
-              createDemoFromWizard();
-              return;
-            }
             confirmDetailsStep();
             return;
           }

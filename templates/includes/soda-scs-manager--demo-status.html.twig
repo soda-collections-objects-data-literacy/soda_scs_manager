@@ -25,18 +25,8 @@
  * @ingroup themeable
  */
 #}
-{% set tone_classes = {
-  'provisioning': 'bg-amber-100 text-amber-900',
-  'resetting': 'bg-amber-100 text-amber-900',
-  'ready': 'bg-emerald-100 text-emerald-900',
-  'failed': 'bg-red-100 text-red-900',
-} %}
-{% set badge_classes = 'scs-manager--demo-status-badge inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-semibold ' ~ (tone_classes[status] ?? tone_classes.failed) %}
-
 {% if variant == 'badge' %}
-  <span class="{{ badge_classes }}" data-scs-demo-status data-status-url="{{ status_url }}" data-is-busy="{{ is_busy ? 'true' : 'false' }}">
-    <span data-scs-demo-status-label>{{ status_label }}</span>
-  </span>
+  <span class="tag tag--demo" data-scs-demo-status data-status-url="{{ status_url }}" data-is-busy="{{ is_busy ? 'true' : 'false' }}">{{ status_label }}</span>
 {% elseif is_busy %}
   <section class="scs-manager--demo-status-panel project__section" aria-live="polite" data-scs-demo-status data-status-url="{{ status_url }}" data-is-busy="true">
     <h2 class="project__section-title h5" data-scs-demo-status-label>{{ status_label }}</h2>

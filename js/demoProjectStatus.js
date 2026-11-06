@@ -146,8 +146,9 @@
       throw new Error(`Demo status request failed with ${response.status}`);
     }
     const data = await response.json();
-    const label = element.querySelector('[data-scs-demo-status-label]');
-    if (label && data.statusLabel) {
+    // The badge variant has no label child; its own text is the label.
+    const label = element.querySelector('[data-scs-demo-status-label]') || element;
+    if (data.statusLabel) {
       label.textContent = data.statusLabel;
     }
     const finished = serviceFinished(renderedAppKeys(element), data.apps);

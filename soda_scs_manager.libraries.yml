@@ -136,10 +136,7 @@ addApplicationPopup:
     - soda_scs_manager/globalStyling
 
 createProjectWizard:
-  version: 1.8
-  css:
-    component:
-      css/create-project-wizard.css: {}
+  version: 1.9
   js:
     js/createProjectWizard.js: {}
   dependencies:
@@ -199,18 +196,6 @@ demoVersionStatus:
   dependencies:
     - core/drupal
     - core/once
-
-coworkingIntroWizard:
-  version: 1.10
-  js:
-    js/coworkingIntroWizard.js: {}
-  dependencies:
-    - core/drupal
-    - core/once
-    - core/drupalSettings
-    - soda_scs_manager/globalStyling
-    - soda_scs_manager/throbberOverlay
-    - soda_scs_manager/nextcloudConnect
 
 onboardingTour:
   version: 1.0

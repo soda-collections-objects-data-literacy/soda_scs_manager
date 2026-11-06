@@ -58,16 +58,12 @@ final class SodaScsOnboardingController extends ControllerBase {
 
   /**
    * Tells the client whether the tour should start on its own.
-   *
-   * It waits for the co-working intro, so the two first-login flows never
-   * show at the same time.
    */
   public function state(): JsonResponse {
     $uid = (int) $this->currentUser()->id();
-    $introCompleted = (bool) $this->userData->get(self::USER_DATA_MODULE, $uid, 'coworking_intro_completed');
     $tourCompleted = (bool) $this->userData->get(self::USER_DATA_MODULE, $uid, self::USER_DATA_TOUR_COMPLETED);
 
-    $response = new JsonResponse(['autoStart' => $introCompleted && !$tourCompleted]);
+    $response = new JsonResponse(['autoStart' => !$tourCompleted]);
     $response->setPrivate();
     $response->setMaxAge(0);
     return $response;

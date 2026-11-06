@@ -188,9 +188,14 @@ class KeycloakUserRegistrationForm extends FormBase {
     $introText = (string) $this->t(
       'Register for an account. You will receive an email confirming your registration. Your registration will be reviewed by an administrator. You will receive another email when your account is approved or rejected.'
     );
+    $form['heading'] = [
+      '#type' => 'markup',
+      '#markup' => Markup::create('<h1 class="register__title">' . Html::escape((string) $this->t('Register for an account')) . '</h1>'),
+    ];
+
     $form['description'] = [
       '#type' => 'markup',
-      '#markup' => Markup::create('<p><strong>' . Html::escape($introText) . '</strong></p>'),
+      '#markup' => Markup::create('<p class="register__intro">' . Html::escape($introText) . '</p>'),
     ];
 
     $form['email'] = [
@@ -318,6 +323,7 @@ class KeycloakUserRegistrationForm extends FormBase {
       '#type' => 'submit',
       '#value' => $this->t('Register'),
       '#button_type' => 'primary',
+      '#attributes' => ['class' => ['btn', 'btn--primary']],
     ];
 
     return $form;

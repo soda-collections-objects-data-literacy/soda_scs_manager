@@ -9,7 +9,6 @@ use Drupal\Core\Controller\ControllerBase;
 use Drupal\soda_scs_manager\Demo\SodaScsDemoManager;
 use Drupal\soda_scs_manager\Demo\SodaScsDemoStatusBuilder;
 use Drupal\soda_scs_manager\Entity\SodaScsProjectInterface;
-use Drupal\user\UserDataInterface;
 use Drupal\user\UserInterface;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 use Symfony\Component\HttpFoundation\JsonResponse;
@@ -26,7 +25,6 @@ final class SodaScsDemoProjectController extends ControllerBase {
     protected CacheTagsInvalidatorInterface $cacheTagsInvalidator,
     protected SodaScsDemoManager $demoManager,
     protected SodaScsDemoStatusBuilder $statusBuilder,
-    protected UserDataInterface $userData,
   ) {}
 
   /**
@@ -37,7 +35,6 @@ final class SodaScsDemoProjectController extends ControllerBase {
       $container->get('cache_tags.invalidator'),
       $container->get('soda_scs_manager.demo.manager'),
       $container->get('soda_scs_manager.demo.status_builder'),
-      $container->get('user.data'),
     );
   }
 
@@ -57,7 +54,6 @@ final class SodaScsDemoProjectController extends ControllerBase {
       return new JsonResponse(['success' => FALSE, 'error' => $result->message], 409);
     }
 
-    $this->userData->set('soda_scs_manager', (int) $user->id(), 'coworking_intro_completed', 1);
     $this->cacheTagsInvalidator->invalidateTags([
       _soda_scs_manager_user_demo_cache_tag((int) $user->id()),
     ]);

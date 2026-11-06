@@ -531,18 +531,6 @@ soda_scs_manager.dashboard:
   options:
     no_cache: TRUE
 
-soda_scs_manager.coworking_intro_complete:
-  path: '/soda-scs-manager/intro/coworking/complete'
-  defaults:
-    _controller: '\Drupal\soda_scs_manager\Controller\SodaScsCoworkingIntroController::complete'
-    _title: 'Co-working intro complete'
-  requirements:
-    _permission: 'soda scs manager user'
-    _csrf_request_header_token: 'TRUE'
-  methods: [POST]
-  options:
-    no_cache: TRUE
-
 soda_scs_manager.onboarding_complete:
   path: '/soda-scs-manager/onboarding/complete'
   defaults:
@@ -566,17 +554,6 @@ soda_scs_manager.onboarding_state:
   options:
     no_cache: TRUE
 
-soda_scs_manager.coworking_intro_check_wisski_name:
-  path: '/soda-scs-manager/intro/coworking/check-wisski-name'
-  defaults:
-    _controller: '\Drupal\soda_scs_manager\Controller\SodaScsCoworkingIntroController::checkWisskiName'
-    _title: 'Check WissKI name from intro'
-  requirements:
-    _permission: 'soda scs manager user'
-  methods: [GET]
-  options:
-    no_cache: TRUE
-
 soda_scs_manager.project_check_name:
   path: '/soda-scs-manager/project-name/check'
   defaults:
@@ -585,18 +562,6 @@ soda_scs_manager.project_check_name:
   requirements:
     _permission: 'create soda scs project'
   methods: [GET]
-  options:
-    no_cache: TRUE
-
-soda_scs_manager.coworking_intro_create_project:
-  path: '/soda-scs-manager/intro/coworking/create-project'
-  defaults:
-    _controller: '\Drupal\soda_scs_manager\Controller\SodaScsCoworkingIntroController::createProject'
-    _title: 'Create project from intro'
-  requirements:
-    _permission: 'create soda scs project'
-    _csrf_request_header_token: 'TRUE'
-  methods: [POST]
   options:
     no_cache: TRUE
 
@@ -637,18 +602,6 @@ soda_scs_manager.demo_project_reset:
     parameters:
       soda_scs_project:
         type: entity:soda_scs_project
-
-soda_scs_manager.coworking_intro_create_wisski:
-  path: '/soda-scs-manager/intro/coworking/create-wisski'
-  defaults:
-    _controller: '\Drupal\soda_scs_manager\Controller\SodaScsCoworkingIntroController::createWisski'
-    _title: 'Create WissKI stack from intro'
-  requirements:
-    _permission: 'soda scs manager user'
-    _csrf_request_header_token: 'TRUE'
-  methods: [POST]
-  options:
-    no_cache: TRUE
 
 soda_scs_manager.user_account_scs_manager:
   path: '/user/{user}/scs-manager'

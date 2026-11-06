@@ -1,6 +1,6 @@
 # Demo projects from versioned templates
 
-Users can start with a demo project that is a copy of one central admin project, **"Demo Projekt"**. The admin freezes that project into numbered versions (templates); user demos are created from and reset to the active version.
+Every approved platform user (`scs_user`) gets one demo project, a copy of one central admin project, **"Demo Projekt"**. It is created on sign-in, including the first sign-in while onboarding runs. The admin freezes that project into numbered versions (templates); user demos are created from and reset to the active version. An own project stays optional and is created from the project wizard.
 
 ## Naming
 
@@ -57,7 +57,7 @@ The manifest lists the exported apps, the Team Folder file count and SHA-256 che
 
 ## How a demo is created or reset
 
-The intro button posts to `/soda-scs-manager/demo-project/create`; the reset form lives at `/soda-scs-manager/project/{id}/demo-reset` (owner or admin). Both only queue a job and set `demoStatus` (`provisioning`, `resetting`); the page polls `/soda-scs-manager/project/{id}/demo-status` and reloads when the job is done.
+Sign-in of an `scs_user` without a demo calls the same creation as `POST /soda-scs-manager/demo-project/create`. The project shell (name, Keycloak group, Team Folder) exists before the dashboard is rendered, so onboarding can point at the card. Filling the apps is queued. The reset form lives at `/soda-scs-manager/project/{id}/demo-reset` (owner or admin). Both only queue a job and set `demoStatus` (`provisioning`, `resetting`); the page polls `/soda-scs-manager/project/{id}/demo-status` and reloads when the job is done. There is no second demo per account. A missing active demo version does not block sign-in; the next sign-in tries again.
 
 The queue worker (`soda_scs_manager_demo`) then:
 

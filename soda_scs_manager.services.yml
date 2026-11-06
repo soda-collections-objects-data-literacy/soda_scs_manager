@@ -108,6 +108,11 @@ services:
     class: Drupal\soda_scs_manager\Demo\SodaScsDemoProjectProvisioner
   soda_scs_manager.demo.manager:
     class: Drupal\soda_scs_manager\Demo\SodaScsDemoManager
+  soda_scs_manager.demo.automatic:
+    class: Drupal\soda_scs_manager\Demo\SodaScsAutomaticDemoProject
+    arguments:
+      $demoManager: '@soda_scs_manager.demo.manager'
+      $logger: '@logger.channel.soda_scs_manager'
   soda_scs_manager.demo.queue_runner:
     class: Drupal\soda_scs_manager\Demo\SodaScsDemoQueueRunner
   soda_scs_manager.demo.status_builder:

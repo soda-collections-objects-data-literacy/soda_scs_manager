@@ -11,14 +11,27 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Guided onboarding tour across the dashboard, a project and an application
   page, with the overlay centered or placed next to the highlighted elements.
-  It starts once after the co-working intro is completed, can be skipped or
-  closed with Escape, and can be restarted via "Start onboarding tour" in the
+  It starts on a user's first visit and takes them to the dashboard, can be skipped or closed with
+  Escape, and can be restarted via "Start onboarding tour" in the
   account menu (temporary development trigger). German translations included.
 - Project owners and SCS administrators can set each team member's role per
   WissKI instance (Administrator or User) from a role button in "Edit team
   members". The change goes straight to the instance's Keycloak `-admin` /
   `-user` groups and applies at the member's next login; the owner is always
   administrator.
+
+### Changed
+
+- The login route now redirects directly to the configured Keycloak provider
+  instead of displaying an intermediate Drupal login page.
+- The registration page is restyled to match the site design: heading, card
+  layout, first and last name side by side, and legal checkboxes with their
+  text beside the box.
+
+### Removed
+
+- Removed the separate co-working first-login intro; the guided onboarding tour
+  now starts instead.
 
 ### Security
 
@@ -29,6 +42,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- Approved platform users get one demo project automatically on sign-in. The
+  project card is there for onboarding; WissKI, JupyterHub and WebProtégé
+  fill in the background. Creating an own project stays optional. The
+  create-project wizard no longer offers New and Demo tabs.
 - While a demo is being set up, the project page lists each application that
   is not ready yet in the sidebar. A line disappears as soon as that
   application is ready: Jupyter once its stack exists, even while the server
@@ -58,15 +75,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   the instance page and from the component and stack lists. The button asks
   for confirmation, then bans every cached page in that instance's Varnish
   container. The WissKI itself stays online.
-- The create-project wizard has New and Demo tabs when the user has no demo
-  yet and a demo version is active. Demo explains that it includes WissKI,
-  JupyterHub and WebProtégé with sample data. Next then creates that demo.
-- Demo projects: users can start with "<username> Demo", a copy of the
+- Demo projects: each approved user gets "<username> Demo", a copy of the
   central "Demo Projekt" with its WissKI, shared JupyterLab home, Team Folder
   files and WebProtégé ontology. Apps are named "<username> Demo-WissKI",
-  "<username> Demo-JupyterHub" and "<username> Demo-WebProtégé". The
-  first-project slide of the co-working intro offers the demo when a demo
-  version is active.
+  "<username> Demo-JupyterHub" and "<username> Demo-WebProtégé".
 - Owners can reset their demo project to the active demo version on the
   project page; the project card and page show the demo state while it is
   set up or reset.

@@ -38,9 +38,12 @@ class SodaScsDisableDrupalLoginRouteSubscriber extends RouteSubscriberBase {
       if ($route = $collection->get('user.register')) {
         $route->setRequirement('_access', 'FALSE');
       }
-      // Override the login route to disable default Drupal login form.
+      // Start Keycloak authentication without showing an intermediate form.
       if ($route = $collection->get('user.login')) {
-        $route->setDefault('_form', '\Drupal\soda_scs_manager\Form\SodaScsDisableDrupalLoginForm');
+        $defaults = $route->getDefaults();
+        unset($defaults['_form']);
+        $defaults['_controller'] = '\Drupal\soda_scs_manager\Controller\SodaScsKeycloakLoginRedirectController::redirectToKeycloak';
+        $route->setDefaults($defaults);
       }
       // Password reset: Keycloak / SSO only; Drupal's form when SSO is off.
       if ($route = $collection->get('user.pass')) {

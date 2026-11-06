@@ -11,7 +11,7 @@ use Drupal\user\UserInterface;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 
 /**
- * Per-user SCS Manager preferences on the user profile (co-working intro flag).
+ * Per-user SCS Manager preferences on the user profile.
  */
 class SodaScsUserScsManagerSettingsForm extends FormBase {
 
@@ -50,12 +50,12 @@ class SodaScsUserScsManagerSettingsForm extends FormBase {
     ];
 
     $uid = (int) $user->id();
-    $completed = (bool) $this->userData->get('soda_scs_manager', $uid, 'coworking_intro_completed');
+    $completed = (bool) $this->userData->get('soda_scs_manager', $uid, 'onboarding_tour_completed');
 
-    $form['coworking_intro_completed'] = [
+    $form['onboarding_tour_completed'] = [
       '#type' => 'checkbox',
-      '#title' => $this->t('SCS introduction completed'),
-      '#description' => $this->t('When checked, the welcoming tour is not shown on the SCS Manager dashboard or start page. Uncheck to run the introduction again the next time you open those pages.'),
+      '#title' => $this->t('Guided onboarding completed'),
+      '#description' => $this->t('When checked, the guided onboarding does not start automatically. Uncheck to start it on the next SCS Manager page visit.'),
       '#default_value' => $completed,
     ];
 
@@ -77,11 +77,11 @@ class SodaScsUserScsManagerSettingsForm extends FormBase {
     $user = $form['#user'];
     $uid = (int) $user->id();
 
-    if ($form_state->getValue('coworking_intro_completed')) {
-      $this->userData->set('soda_scs_manager', $uid, 'coworking_intro_completed', 1);
+    if ($form_state->getValue('onboarding_tour_completed')) {
+      $this->userData->set('soda_scs_manager', $uid, 'onboarding_tour_completed', 1);
     }
     else {
-      $this->userData->delete('soda_scs_manager', $uid, 'coworking_intro_completed');
+      $this->userData->delete('soda_scs_manager', $uid, 'onboarding_tour_completed');
     }
 
     $this->messenger()->addStatus($this->t('Your SCS Manager preferences have been saved.'));

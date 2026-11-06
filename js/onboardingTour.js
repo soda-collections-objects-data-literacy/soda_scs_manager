@@ -103,7 +103,7 @@
     const element = document.createElement('span');
     element.className = 'scs-onboarding__accent scs-onboarding__accent--' + tone;
     if (isExternal) {
-      element.classList.add('scs-onboarding__accent--external');
+      element.classList.add('link--external');
     }
     element.textContent = label;
     return element;
@@ -526,6 +526,13 @@
   }
 
   function fillCard(step) {
+    const closeButton = document.createElement('button');
+    closeButton.type = 'button';
+    closeButton.className = 'btn btn--secondary btn--icon overlay__close scs-onboarding__close';
+    closeButton.setAttribute('aria-label', Drupal.t('Close'));
+    closeButton.innerHTML = '<svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg"><line x1="14.8493" y1="14.8493" x2="4.94983" y2="4.94978" stroke="#17212B" stroke-width="2"/><line x1="4.94979" y1="14.8492" x2="14.8493" y2="4.94975" stroke="#17212B" stroke-width="2"/></svg>';
+    closeButton.addEventListener('click', endTour);
+
     const content = document.createElement('div');
     content.className = 'scs-onboarding__content';
     content.id = 'scs-onboarding-content';
@@ -550,7 +557,7 @@
       actions.appendChild(button);
     });
 
-    ui.card.replaceChildren(content, actions);
+    ui.card.replaceChildren(closeButton, content, actions);
   }
 
   function observeTargets(targets) {
@@ -768,7 +775,7 @@
 
   async function startOnFirstVisit() {
     const settings = config();
-    if (currentPage() !== 'dashboard' || !settings.stateUrl) {
+    if (!settings.stateUrl) {
       return;
     }
     try {

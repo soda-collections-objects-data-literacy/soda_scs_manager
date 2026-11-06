@@ -26,37 +26,10 @@
     <h2 id="create-project-wizard-title">{{ 'Create Project'|t }}</h2>
 
     <div class="create-project-wizard__body">
-      {# Step 1: project details. The Demo tab is shown by createProjectWizard.js when this user has no demo yet. #}
+      {# Step 1: project details. The demo project is created on sign-in, not here. #}
       <div class="create-project-wizard__step add-app-popup__step" data-cpw-step="details">
-        <div class="create-project-wizard__modes" role="tablist" data-cpw-modes hidden>
-          <button type="button"
-                  role="tab"
-                  id="create-project-wizard-tab-new"
-                  class="create-project-wizard__mode"
-                  data-cpw-mode="new"
-                  aria-selected="true"
-                  aria-controls="create-project-wizard-panel-new">
-            {{ 'New'|t }}
-          </button>
-          <button type="button"
-                  role="tab"
-                  id="create-project-wizard-tab-demo"
-                  class="create-project-wizard__mode"
-                  data-cpw-mode="demo"
-                  aria-selected="false"
-                  aria-controls="create-project-wizard-panel-demo"
-                  tabindex="-1">
-            {{ 'Demo'|t }}
-          </button>
-        </div>
-        <div id="create-project-wizard-panel-new" role="tabpanel" aria-labelledby="create-project-wizard-tab-new" data-cpw-mode-panel="new">
-          <div class="create-project-wizard__form-container add-app-popup__form-container" aria-live="polite">
-            <p>{{ 'Loading…'|t }}</p>
-          </div>
-        </div>
-        <div id="create-project-wizard-panel-demo" role="tabpanel" aria-labelledby="create-project-wizard-tab-demo" data-cpw-mode-panel="demo" hidden>
-          <p class="create-project-wizard__hint">{{ 'The demo includes WissKI, JupyterHub and WebProtégé, with sample data.'|t }}</p>
-          <p class="mt-3 text-sm font-medium text-red-700" data-cpw-demo-error role="alert" hidden></p>
+        <div class="create-project-wizard__form-container add-app-popup__form-container" aria-live="polite">
+          <p>{{ 'Loading…'|t }}</p>
         </div>
       </div>
 

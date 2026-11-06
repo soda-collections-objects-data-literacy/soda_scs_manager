@@ -96,6 +96,14 @@ msgstr "E-Mail-Adresse"
 msgid "Enter a valid email address. This will be used for communication and login."
 msgstr "Geben Sie eine gültige E-Mail-Adresse ein. Diese wird für die Kommunikation und die Anmeldung verwendet."
 
+#: src/Form/KeycloakUserRegistrationForm.php:208
+msgid "Enter at least @count characters. Only letters, digits, and underscores are allowed."
+msgstr "Geben Sie mindestens @count Zeichen ein. Es sind nur Buchstaben, Zahlen und Unterstriche erlaubt.
+
+#: src/Form/KeycloakUserRegistrationForm.php:214
+msgid "Enter at least @count letters. Only letters, spaces, hyphens, apostrophes, and periods are allowed. Digits and reserved words are not allowed.
+msgstr "Geben Sie mindestens @count Zeichen ein. Es sind nur Buchstaben, Leerzeichen, Bindestriche, Apostrophe und Punkte zulässig. Ziffern und reservierte Wörter sind nicht zulässig.
+
 #: src/Form/KeycloakUserRegistrationForm.php:151
 msgid "Username"
 msgstr "Username"
@@ -2305,13 +2313,13 @@ msgstr "%message Siehe Protokolle für weitere Informationen."
 msgid "%message %error %trace"
 msgstr "%message %error %trace"
 
-#  src/Form/SodaScsUserScsManagerSettingsForm.php:57
-msgid "SCS introduction completed"
-msgstr "SCS-Einführung abgeschlossen"
+#: src/Form/SodaScsUserScsManagerSettingsForm.php
+msgid "Guided onboarding completed"
+msgstr "Geführte Einführung abgeschlossen"
 
-#  src/Form/SodaScsUserScsManagerSettingsForm.php:58
-msgid "When checked, the welcoming tour is not shown on the SCS Manager dashboard or start page. Uncheck to run the introduction again the next time you open those pages."
-msgstr "Wenn dieses Kontrollkästchen aktiviert ist, wird die Willkommenstour nicht auf dem SCS Manager-Dashboard oder der Startseite angezeigt. Deaktivieren Sie das Kontrollkästchen, um die Willkommenstour beim nächsten Aufrufen dieser Seiten erneut auszuführen."
+#: src/Form/SodaScsUserScsManagerSettingsForm.php
+msgid "When checked, the guided onboarding does not start automatically. Uncheck to start it on the next SCS Manager page visit."
+msgstr "Wenn dieses Kontrollkästchen aktiviert ist, startet die geführte Einführung nicht automatisch. Deaktivieren Sie das Kontrollkästchen, um sie beim nächsten Besuch einer SCS-Manager-Seite zu starten."
 
 #  src/Form/SodaScsUserScsManagerSettingsForm.:87
 msgid "Your SCS Manager preferences have been saved."
@@ -2816,6 +2824,14 @@ msgstr "Sekundäre Registerkarten"
 #: templates/node/node.html.twig:87
 msgid "Submitted by @author_name on @date"
 msgstr "Eingereicht von @author_name am @date"
+
+# templates/pages/soda-scs-manager--dashboard.html.twig:15
+msgid "Account menu"
+msgstr "Konto"
+
+# templates/pages/soda-scs-manager--dashboard.html.twig:15
+msgid "Search projects"
+msgstr "Projekte durchsuchen"
 
 # templates/pages/soda-scs-manager--dashboard.html.twig:15
 msgid "Filter by Tags"
@@ -3652,6 +3668,30 @@ msgstr "Status wird geprüft"
 #: js/dashboardHealthStatus.js templates/cards/soda-scs-manager--entity-card.html.twig
 msgid "We have not confirmed whether this application is running yet. The dashboard checks automatically in the background."
 msgstr "Es ist noch nicht bestätigt, ob diese Anwendung läuft. Das Dashboard prüft das automatisch im Hintergrund."
+
+#: templates/entity/soda-scs-entity.html.twig
+msgid "General information"
+msgstr "Allgemeine Informationen"
+
+#: templates/entity/soda-scs-entity.html.twig
+msgid "Health status"
+msgstr "Betriebszustand"
+
+#: templates/entity/soda-scs-entity.html.twig
+msgid "Development instance"
+msgstr "Entwicklungsinstanz"
+
+#: templates/entity/soda-scs-entity.html.twig
+msgid "Automated updates"
+msgstr "Automatisierte Updates"
+
+#: templates/entity/soda-scs-project.html.twig
+msgid "No applications found."
+msgstr "Keine Anwendungen gefunden."
+
+#: templates/entity/soda-scs-project.html.twig
+msgid "You"
+msgstr "Sie"
 
 #: templates/entity/soda-scs-project.html.twig
 msgid "No members"
@@ -4604,6 +4644,10 @@ msgid "Cancel"
 msgstr "Abbrechen"
 
 #: templates/cards/soda-scs-manager--create-project-wizard.html.twig
+msgid "Select one or more applications to add to your project. You can also skip this step."
+msgstr "Wählen Sie eine oder mehrere Anwendungen aus, die Sie Ihrem Projekt hinzufügen möchten. Sie können diesen Schritt auch überspringen."
+
+#: templates/cards/soda-scs-manager--create-project-wizard.html.twig
 msgid "Invite people to collaborate on this project. They are invited when you create the project. You can also skip this step and invite people later."
 msgstr "Laden Sie Personen zur Mitarbeit an diesem Projekt ein. Die Einladungen werden verschickt, wenn Sie das Projekt anlegen. Sie können diesen Schritt auch überspringen und später Personen einladen."
 
@@ -4618,6 +4662,18 @@ msgstr "name@example.org"
 #: templates/cards/soda-scs-manager--create-project-wizard.html.twig
 msgid "Check the details. The project, its applications and the invitations are created when you continue. Closing this window before that discards everything."
 msgstr "Prüfen Sie die Angaben. Das Projekt, seine Anwendungen und die Einladungen werden angelegt, wenn Sie fortfahren. Wenn Sie das Fenster vorher schließen, wird alles verworfen."
+
+#: js/createProjectWizard.js
+msgid "Create new project"
+msgstr "Neues Projekt erstellen"
+
+#: js/createProjectWizard.js
+msgid "Skip"
+msgstr "Überspringen"
+
+#: js/createProjectWizard.js
+msgid "Add applications"
+msgstr "Anwendungen hinzufügen"
 
 #: js/createProjectWizard.js
 msgid "Review"
