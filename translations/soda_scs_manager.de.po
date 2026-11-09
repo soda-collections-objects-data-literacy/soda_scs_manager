@@ -5314,12 +5314,12 @@ msgid "Update @label?"
 msgstr "@label aktualisieren?"
 
 #: src/Form/SodaScsWisskiUpdateConfirmForm.php
-msgid "The WissKI stack is redeployed with the current development images. The database is backed up first and rolled back if the database update fails. The instance is offline for a few minutes."
-msgstr "Der WissKI-Stack wird mit den aktuellen Entwicklungs-Images neu bereitgestellt. Die Datenbank wird vorher gesichert und zurückgespielt, falls das Datenbank-Update fehlschlägt. Die Instanz ist einige Minuten offline."
+msgid "The WissKI stack is redeployed with the current development images. The database is backed up first; if the update fails, database and version are rolled back. The update runs in the background, its progress is shown on the application page. The instance is offline for a few minutes."
+msgstr "Der WissKI-Stack wird mit den aktuellen Entwicklungs-Images neu bereitgestellt. Die Datenbank wird vorher gesichert; schlägt das Update fehl, werden Datenbank und Version zurückgesetzt. Das Update läuft im Hintergrund, sein Fortschritt erscheint auf der Anwendungsseite. Die Instanz ist einige Minuten offline."
 
 #: src/Form/SodaScsWisskiUpdateConfirmForm.php
-msgid "The WissKI stack is redeployed with the latest production version. The database is backed up first and rolled back if the database update fails. The instance is offline for a few minutes."
-msgstr "Der WissKI-Stack wird mit der neuesten Produktionsversion neu bereitgestellt. Die Datenbank wird vorher gesichert und zurückgespielt, falls das Datenbank-Update fehlschlägt. Die Instanz ist einige Minuten offline."
+msgid "The WissKI stack is redeployed with the latest production version. The database is backed up first; if the update fails, database and version are rolled back. The update runs in the background, its progress is shown on the application page. The instance is offline for a few minutes."
+msgstr "Der WissKI-Stack wird mit der neuesten Produktionsversion neu bereitgestellt. Die Datenbank wird vorher gesichert; schlägt das Update fehl, werden Datenbank und Version zurückgesetzt. Das Update läuft im Hintergrund, sein Fortschritt erscheint auf der Anwendungsseite. Die Instanz ist einige Minuten offline."
 
 #: src/Form/SodaScsWisskiUpdateConfirmForm.php
 msgid "Could not update @label."
@@ -5580,3 +5580,27 @@ msgstr "Das Update ist fehlgeschlagen. Die Datenbank wurde wiederhergestellt, di
 #: src/Helpers/SodaScsDrupalHelpers.php
 msgid "The update failed and could not be rolled back. The site stays in maintenance mode; the log names the backup files."
 msgstr "Das Update ist fehlgeschlagen und konnte nicht zurückgesetzt werden. Die Seite bleibt im Wartungsmodus; das Protokoll nennt die Sicherungsdateien."
+
+#: src/Service/SodaScsWisskiUpdateQueue.php
+msgid "An update of @label is already queued or running."
+msgstr "Ein Update von @label ist bereits eingereiht oder läuft."
+
+#: src/Service/SodaScsWisskiUpdateQueue.php
+msgid "The update of @label has started. Its progress is shown on this page."
+msgstr "Das Update von @label wurde gestartet. Der Fortschritt wird auf dieser Seite angezeigt."
+
+#: src/Form/SodaScsComponentAutomatedUpdatesConfirmForm.php
+msgid "Queued updates for @count component(s): @components. They run one after the other in the background."
+msgstr "Updates für @count Komponente(n) eingereiht: @components. Sie laufen nacheinander im Hintergrund."
+
+#: templates/entity/soda-scs-entity.html.twig
+msgid "Update running"
+msgstr "Update läuft"
+
+#: templates/entity/soda-scs-entity.html.twig
+msgid "Last update"
+msgstr "Letztes Update"
+
+#: src/Plugin/QueueWorker/SodaScsWisskiUpdateQueueWorker.php
+msgid "SCS WissKI updates"
+msgstr "SCS-WissKI-Updates"

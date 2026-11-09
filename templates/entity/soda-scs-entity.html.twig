@@ -92,6 +92,12 @@
 						<a class="btn btn--secondary" href="{{ wisski_admin.updateUrl }}" title="{{ wisski_admin.isDevelopment ?'Redeploys this instance with the current development images.'|t : 'Updates this instance to the latest production version.'|t }}">{{ 'Update'|t }}</a>
 					{% endif %}
 				</div>
+				{% if wisski_admin.updateRunning %}
+					{{ attach_library('soda_scs_manager/wisskiUpdateStatus') }}
+					<p class="application__version-update-running" data-scs-wisski-update-status-url="{{ wisski_admin.updateStatusUrl }}" role="status" aria-live="polite"><span class="text--label">{{ 'Update running'|t }}: </span><span data-scs-wisski-update-step>{{ wisski_admin.updateStep }}</span></p>
+				{% elseif wisski_admin.lastUpdateMessage %}
+					<p class="application__version-update-result{{ wisski_admin.lastUpdateFailed ? ' application__version-update-result--failed' }}"><span class="text--label">{{ 'Last update'|t }}: </span>{{ wisski_admin.lastUpdateMessage }}</p>
+				{% endif %}
 				{% if wisski_admin.commitLabel %}
 					<p><span class="text--label">{{ 'Commit'|t }}: </span><span title="{{ wisski_admin.commitHash }}">{{ wisski_admin.commitLabel }}</span></p>
 				{% endif %}

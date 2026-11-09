@@ -4,30 +4,18 @@ declare(strict_types=1);
 
 namespace Drupal\soda_scs_manager\Form;
 
-use Drupal\Core\Cache\CacheTagsInvalidatorInterface;
 use Drupal\Core\Form\ConfirmFormBase;
 use Drupal\Core\Form\FormStateInterface;
-use Drupal\Core\Logger\LoggerChannelFactoryInterface;
 use Drupal\Core\Url;
-use Drupal\Core\Utility\Error;
 use Drupal\soda_scs_manager\Entity\SodaScsComponentInterface;
-use Drupal\soda_scs_manager\Helpers\SodaScsDrupalHelpers;
-use Drupal\soda_scs_manager\Helpers\SodaScsProgressHelper;
 use Drupal\soda_scs_manager\Helpers\SodaScsServiceHelpers;
-use Psr\Log\LogLevel;
+use Drupal\soda_scs_manager\Service\SodaScsWisskiUpdateQueue;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 
 /**
  * Provides a confirmation form for updating Drupal packages of a component.
  */
 class SodaScsComponentSetPackageEnvironmentConfirmForm extends ConfirmFormBase {
-
-  /**
-   * The SODa SCS Drupal helpers.
-   *
-   * @var \Drupal\soda_scs_manager\Helpers\SodaScsDrupalHelpers
-   */
-  protected $sodaScsDrupalHelpers;
 
   /**
    * The component whose Drupal packages should be updated.
@@ -37,71 +25,25 @@ class SodaScsComponentSetPackageEnvironmentConfirmForm extends ConfirmFormBase {
   protected $component;
 
   /**
-   * The logger factory.
-   *
-   * @var \Drupal\Core\Logger\LoggerChannelFactoryInterface
-   */
-  protected $loggerFactory;
-
-  /**
-   * Cache tags invalidator.
-   *
-   * @var \Drupal\Core\Cache\CacheTagsInvalidatorInterface
-   */
-  protected CacheTagsInvalidatorInterface $cacheTagsInvalidator;
-
-  /**
-   * The SODa SCS Manager service helpers.
-   *
-   * @var \Drupal\soda_scs_manager\Helpers\SodaScsServiceHelpers
-   */
-  protected SodaScsServiceHelpers $sodaScsServiceHelpers;
-
-  /**
-   * The progress helper service.
-   *
-   * @var \Drupal\soda_scs_manager\Helpers\SodaScsProgressHelper
-   */
-  protected SodaScsProgressHelper $sodaScsProgressHelper;
-
-  /**
    * Constructs a new SodaScsComponentSetPackageEnvironmentConfirmForm.
    *
-   * @param \Drupal\Core\Cache\CacheTagsInvalidatorInterface $cacheTagsInvalidator
-   *   The cache tags invalidator.
-   * @param \Drupal\Core\Logger\LoggerChannelFactoryInterface $logger_factory
-   *   The logger factory.
-   * @param \Drupal\soda_scs_manager\Helpers\SodaScsDrupalHelpers $sodaScsDrupalHelpers
-   *   The SODa SCS Drupal helpers.
-   * @param \Drupal\soda_scs_manager\Helpers\SodaScsProgressHelper $sodaScsProgressHelper
-   *   The progress helper service.
    * @param \Drupal\soda_scs_manager\Helpers\SodaScsServiceHelpers $sodaScsServiceHelpers
    *   The SODa SCS service helpers.
+   * @param \Drupal\soda_scs_manager\Service\SodaScsWisskiUpdateQueue $wisskiUpdateQueue
+   *   Queue that runs WissKI updates in the background.
    */
   public function __construct(
-    CacheTagsInvalidatorInterface $cacheTagsInvalidator,
-    LoggerChannelFactoryInterface $logger_factory,
-    SodaScsDrupalHelpers $sodaScsDrupalHelpers,
-    SodaScsProgressHelper $sodaScsProgressHelper,
-    SodaScsServiceHelpers $sodaScsServiceHelpers,
-  ) {
-    $this->cacheTagsInvalidator = $cacheTagsInvalidator;
-    $this->loggerFactory = $logger_factory;
-    $this->sodaScsDrupalHelpers = $sodaScsDrupalHelpers;
-    $this->sodaScsProgressHelper = $sodaScsProgressHelper;
-    $this->sodaScsServiceHelpers = $sodaScsServiceHelpers;
-  }
+    protected SodaScsServiceHelpers $sodaScsServiceHelpers,
+    protected SodaScsWisskiUpdateQueue $wisskiUpdateQueue,
+  ) {}
 
   /**
    * {@inheritdoc}
    */
   public static function create(ContainerInterface $container): self {
     return new self(
-      $container->get('cache_tags.invalidator'),
-      $container->get('logger.factory'),
-      $container->get('soda_scs_manager.drupal.helpers'),
-      $container->get('soda_scs_manager.progress.helpers'),
       $container->get('soda_scs_manager.service.helpers'),
+      $container->get('soda_scs_manager.wisski_update_queue'),
     );
   }
 
@@ -132,22 +74,8 @@ class SodaScsComponentSetPackageEnvironmentConfirmForm extends ConfirmFormBase {
       $form['actions']['submit']['#attributes']['class'][] = 'soda-scs-component--component--form-submit';
     }
 
-    // Enable progress polling for this form (drupal_packages_update operation).
-    $form['#attributes']['data-progress-polling'] = 'true';
-
     // Attach the throbber overlay library.
     $form['#attached']['library'][] = 'soda_scs_manager/throbberOverlay';
-
-    // Get operation UUID from query parameters or create a new one.
-    $request = $this->requestStack->getCurrentRequest();
-    $operationUuid = $request->query->get('operation_uuid');
-
-    // Store in form state for use in submitForm.
-    $form_state->set('operationUuid', $operationUuid);
-
-    // Enable progress polling in drupalSettings as well.
-    $form['#attached']['drupalSettings']['sodaScsManager']['progressPolling'] = TRUE;
-    $form['#attached']['drupalSettings']['sodaScsManager']['operationUuid'] = $operationUuid;
 
     return $form;
   }
@@ -190,61 +118,16 @@ class SodaScsComponentSetPackageEnvironmentConfirmForm extends ConfirmFormBase {
    * {@inheritdoc}
    */
   public function submitForm(array &$form, FormStateInterface $form_state): void {
-    $version = $form_state->getValue('version_dropdown', 'latest');
-
-    // Create a new operation UUID for the update.
-    // @todo We may make this an own object in the future.
-    $operationUuid = $this->sodaScsProgressHelper->createOperation('drupal_packages_update', 'started', $form_state->get('operationUuid'));
-
-    try {
-      $updateResult = $this->sodaScsDrupalHelpers->updateDrupalPackages(
-        $this->component,
-        $operationUuid,
-        $version,
-      );
-
-      if ($updateResult->success) {
-        $this->messenger()->addStatus($updateResult->message);
-
-        $this->cacheTagsInvalidator->invalidateTags([
-          'soda_scs_manager:drupal_packages',
-          'soda_scs_manager:drupal_packages:' . $this->component->id(),
-        ]);
-      }
-      else {
-        $this->messenger()->addError($this->t('Failed to update Drupal packages. @message', [
-          '@message' => $updateResult->message,
-        ]));
-
-        if (!empty($updateResult->error)) {
-          Error::logException(
-            $this->loggerFactory->get('soda_scs_manager'),
-            new \Exception($updateResult->error),
-            (string) $this->t('Failed to update Drupal packages for component @id. @error', [
-              '@id' => $this->component->id(),
-              '@error' => $updateResult->error,
-            ]),
-            [],
-            LogLevel::ERROR,
-          );
-        }
-      }
+    $version = (string) $form_state->getValue('version_dropdown', 'latest');
+    // The update outlives a web request, so it runs as a queued job; the
+    // component page shows its progress.
+    $result = $this->wisskiUpdateQueue->enqueue($this->component, $version);
+    if ($result->success) {
+      $this->messenger()->addStatus($result->message);
+      $form_state->setRedirectUrl($this->component->toUrl());
+      return;
     }
-    catch (\Exception $e) {
-      $this->messenger()->addError($this->t('Failed to update Drupal packages. See logs for more details.'));
-      Error::logException(
-        $this->loggerFactory->get('soda_scs_manager'),
-        $e,
-        (string) $this->t('Failed to update Drupal packages for component @id. @error', [
-          '@id' => $this->component->id(),
-          '@error' => $e->getMessage(),
-        ]),
-        [],
-        LogLevel::ERROR,
-      );
-    }
-
-    // Redirect back to the Installed Drupal packages page for this component.
+    $this->messenger()->addError($result->message);
     $form_state->setRedirectUrl(Url::fromRoute('soda_scs_manager.component.installed_drupal_packages', [
       'soda_scs_component' => $this->component->id(),
     ]));

@@ -14,6 +14,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   date of the next image (read from the image registry). The update button
   names its target ("Update to 5.6.1").
 
+### Changed
+
+- WissKI updates run as queued background jobs instead of inside the web
+  request, which php-fpm ends after 600 seconds, possibly in the middle of a
+  rollback. The update button, "Set package environment" and the automated
+  updates form queue the update (queue `soda_scs_manager_wisski_update`) and
+  start `drush queue:run` in the background; updates run one after the
+  other, and a lock keeps a second update of the same instance from
+  starting. The version card shows "Update running" with the current step
+  while it runs, reloads when it ends, and shows the outcome for a day. The
+  Update button is hidden while an update is queued or running.
+  The host timer `scs-wisski-update-queue.timer` (deployment repo,
+  `01_scripts/global/`) picks up updates whose background run did not start.
+
 ### Fixed
 
 - WissKI updates no longer destroy data when the database update fails. The
@@ -47,6 +61,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   redeployed, the site stays in maintenance mode on the new image with the
   restored database.
 - A failed pre-update dump no longer leaves the site in maintenance mode.
+- Progress steps stored their time as single-precision float, which rounds a
+  Unix timestamp to about two minutes, so the steps of an operation came
+  back in random order. Update 11038 changes `soda_scs_steps.created` to
+  double.
 
 ## [4.1.0] - 2026-11-09
 

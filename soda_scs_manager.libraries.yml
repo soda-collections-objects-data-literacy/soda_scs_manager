@@ -205,3 +205,11 @@ onboardingTour:
     - core/drupal
     - core/once
     - core/drupalSettings
+
+wisskiUpdateStatus:
+  version: 1.0
+  js:
+    js/wisskiUpdateStatus.js: {}
+  dependencies:
+    - core/drupal
+    - core/once

@@ -1433,6 +1433,7 @@ function _soda_scs_manager_schema_steps(): array {
 
       'created' => [
         'type' => 'float',
+        'size' => 'big',
         'not null' => TRUE,
         'default' => 0,
         'description' => 'Unix timestamp with microsecond precision when the step was created.',
@@ -1904,4 +1905,25 @@ function soda_scs_manager_update_11037() {
   return $removed
     ? t('Removed wisski8x4xDevelopment from: @types.', ['@types' => implode(', ', $removed)])
     : t('wisski8x4xDevelopment was not installed.');
+}
+
+/**
+ * Store progress step times as double so steps keep their order.
+ *
+ * A single-precision float rounds a Unix timestamp to about two minutes, so
+ * steps of one update shared a timestamp and came back in random order.
+ */
+function soda_scs_manager_update_11038() {
+  $schema = \Drupal::database()->schema();
+  if (!$schema->tableExists('soda_scs_steps')) {
+    return t('soda_scs_steps does not exist.');
+  }
+  $schema->changeField('soda_scs_steps', 'created', 'created', [
+    'type' => 'float',
+    'size' => 'big',
+    'not null' => TRUE,
+    'default' => 0,
+    'description' => 'Unix timestamp with microsecond precision when the step was created.',
+  ]);
+  return t('soda_scs_steps.created is a double now.');
 }

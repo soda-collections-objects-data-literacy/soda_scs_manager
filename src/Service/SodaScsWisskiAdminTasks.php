@@ -9,6 +9,7 @@ use Drupal\Core\Entity\ContentEntityInterface;
 use Drupal\Core\Logger\LoggerChannelInterface;
 use Drupal\Core\Session\AccountInterface;
 use Drupal\Core\StringTranslation\StringTranslationTrait;
+use Drupal\Core\Url;
 use Drupal\soda_scs_manager\Access\SodaScsManagerAdminAccess;
 use Drupal\soda_scs_manager\Entity\SodaScsComponentInterface;
 use Drupal\soda_scs_manager\Entity\SodaScsStackInterface;
@@ -65,6 +66,8 @@ class SodaScsWisskiAdminTasks {
     protected LoggerChannelInterface $logger,
     #[Autowire(service: 'soda_scs_manager.service.helpers')]
     protected SodaScsServiceHelpers $serviceHelpers,
+    #[Autowire(service: 'soda_scs_manager.wisski_update_queue')]
+    protected SodaScsWisskiUpdateQueue $updateQueue,
   ) {}
 
   /**
@@ -82,9 +85,17 @@ class SodaScsWisskiAdminTasks {
    *   commitHash: string,
    *   commitLabel: string,
    *   isDevelopment: bool,
+   *   lastUpdateFailed: bool,
+   *   lastUpdateMessage: string,
+   *   updateRunning: bool,
+   *   updateStatusUrl: string,
+   *   updateStep: string,
    *   updateUrl: string,
    * }
-   *   Empty strings for everything that does not apply. availableLabel is the
+   *   Empty strings for everything that does not apply. While an update is
+   *   queued or running, updateStatusUrl serves its progress as JSON and
+   *   updateUrl is empty; lastUpdateMessage is the outcome of an update
+   *   that ended within the last day. availableLabel is the
    *   update target ("5.6.1" or "main (4c498db from 09.11.2026)"),
    *   commitLabel the running build ("4c498db from 08.11.2026").
    */
@@ -96,6 +107,11 @@ class SodaScsWisskiAdminTasks {
       'commitHash'           => '',
       'commitLabel'          => '',
       'isDevelopment'        => FALSE,
+      'lastUpdateFailed'     => FALSE,
+      'lastUpdateMessage'    => '',
+      'updateRunning'        => FALSE,
+      'updateStatusUrl'      => '',
+      'updateStep'           => '',
       'updateUrl'            => '',
     ];
 
@@ -111,7 +127,8 @@ class SodaScsWisskiAdminTasks {
 
     if ($isAdmin) {
       $build['clearVarnishCacheUrl'] = SodaScsWisskiClearVarnishCacheConfirmForm::confirmUrl($component, $destination)->toString();
-      if ($this->booleanField($entity, 'automatedUpdates')) {
+      $build = $this->addUpdateStatus($build, $component);
+      if (!$build['updateRunning'] && $this->booleanField($entity, 'automatedUpdates')) {
         $build['updateUrl'] = SodaScsWisskiUpdateConfirmForm::confirmUrl($component, $destination)->toString();
       }
     }
@@ -138,6 +155,38 @@ class SodaScsWisskiAdminTasks {
       );
     }
 
+    return $build;
+  }
+
+  /**
+   * Adds the queued, running or last update of the instance to the build.
+   *
+   * @param array $build
+   *   The template variables built so far.
+   * @param \Drupal\soda_scs_manager\Entity\SodaScsComponentInterface $component
+   *   The WissKI component.
+   *
+   * @return array
+   *   The build with the update fields set.
+   */
+  protected function addUpdateStatus(array $build, SodaScsComponentInterface $component): array {
+    $activeUpdate = $this->updateQueue->activeUpdate($component);
+    if ($activeUpdate !== NULL) {
+      $build['updateRunning'] = TRUE;
+      $build['updateStep'] = $this->updateQueue->latestStep($activeUpdate['operationUuid']);
+      $build['updateStatusUrl'] = Url::fromRoute(
+        'soda_scs_manager.progress.latest_steps',
+        ['operation_uuid' => $activeUpdate['operationUuid']],
+        ['query' => ['limit' => 1]],
+      )->toString();
+      return $build;
+    }
+
+    $lastUpdate = $this->updateQueue->lastUpdate($component);
+    if ($lastUpdate !== NULL) {
+      $build['lastUpdateFailed'] = $lastUpdate['status'] !== 'completed';
+      $build['lastUpdateMessage'] = $this->updateQueue->latestStep($lastUpdate['operationUuid']);
+    }
     return $build;
   }
 
