@@ -1266,55 +1266,10 @@ function soda_scs_manager_update_11024() {
 }
 
 /**
- * Add wisski8x4xDevelopment field to soda_scs_stack and soda_scs_component.
+ * Formerly added the wisski8x4xDevelopment field (removed again in 11037).
  */
 function soda_scs_manager_update_11025() {
-  $definition_update_manager = \Drupal::entityDefinitionUpdateManager();
-  \Drupal::service('entity_field.manager')->clearCachedFieldDefinitions();
-
-  $field_name = 'wisski8x4xDevelopment';
-  $targets = [
-    [
-      'entity_type_id' => 'soda_scs_stack',
-      'bundle' => 'soda_scs_wisski_stack',
-      'class' => \Drupal\soda_scs_manager\Entity\Bundle\SodaScsStackBundle::class,
-    ],
-    [
-      'entity_type_id' => 'soda_scs_component',
-      'bundle' => 'soda_scs_wisski_component',
-      'class' => \Drupal\soda_scs_manager\Entity\Bundle\SodaScsComponentBundle::class,
-    ],
-  ];
-
-  foreach ($targets as $target) {
-    if ($definition_update_manager->getFieldStorageDefinition($field_name, $target['entity_type_id'])) {
-      continue;
-    }
-
-    $bundle_definitions = $target['class']::bundleFieldDefinitions(
-      \Drupal::entityTypeManager()->getDefinition($target['entity_type_id']),
-      $target['bundle'],
-      []
-    );
-
-    if (!isset($bundle_definitions[$field_name])) {
-      throw new \Exception(sprintf(
-        'Field %s not found on %s (%s).',
-        $field_name,
-        $target['entity_type_id'],
-        $target['bundle']
-      ));
-    }
-
-    $definition_update_manager->installFieldStorageDefinition(
-      $field_name,
-      $target['entity_type_id'],
-      'soda_scs_manager',
-      $bundle_definitions[$field_name]
-    );
-  }
-
-  return t('Added wisski8x4xDevelopment field to soda_scs_stack and soda_scs_component.');
+  return t('Skipped: the wisski8x4xDevelopment field is no longer used.');
 }
 
 /**
@@ -1926,4 +1881,27 @@ function soda_scs_manager_update_11036() {
   }
 
   return t('Installed demo project templates. Choose the central demo project under /admin/config/soda-scs-manager/demo-project.');
+}
+
+/**
+ * Remove the obsolete wisski8x4xDevelopment field.
+ *
+ * Development instances run WissKI 8.x-4.x themselves, so the separate
+ * opt-in is gone.
+ */
+function soda_scs_manager_update_11037() {
+  $update_manager = \Drupal::entityDefinitionUpdateManager();
+  $removed = [];
+  foreach (['soda_scs_stack', 'soda_scs_component'] as $entity_type_id) {
+    $storage_definition = $update_manager->getFieldStorageDefinition('wisski8x4xDevelopment', $entity_type_id);
+    if ($storage_definition) {
+      $update_manager->uninstallFieldStorageDefinition($storage_definition);
+      $removed[] = $entity_type_id;
+    }
+  }
+  \Drupal::service('entity_field.manager')->clearCachedFieldDefinitions();
+
+  return $removed
+    ? t('Removed wisski8x4xDevelopment from: @types.', ['@types' => implode(', ', $removed)])
+    : t('wisski8x4xDevelopment was not installed.');
 }

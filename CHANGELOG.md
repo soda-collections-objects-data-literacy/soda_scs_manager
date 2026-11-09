@@ -30,6 +30,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Removed
 
+- Removed the "WissKI 8.x-4.x Development" option when creating a WissKI.
+  Development instances run WissKI 8.x-4.x themselves; update 11037 drops the
+  `wisski8x4xDevelopment` field and `WISSKI_8X_4X_DEVELOPMENT` is no longer
+  passed to the container.
 - Removed the separate co-working first-login intro; the guided onboarding tour
   now starts instead.
 

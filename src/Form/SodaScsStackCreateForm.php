@@ -184,16 +184,6 @@ class SodaScsStackCreateForm extends ContentEntityForm {
       $form['owner']['#access'] = FALSE;
       $form['developmentInstance']['#access'] = FALSE;
       $form['automatedUpdates']['#access'] = FALSE;
-      $form['wisski8x4xDevelopment']['#access'] = FALSE;
-    }
-
-    // WissKI 8.x-4.x Development is only usable with Development Instance.
-    if (isset($form['wisski8x4xDevelopment'], $form['developmentInstance'])) {
-      $form['wisski8x4xDevelopment']['#states'] = [
-        'enabled' => [
-          ':input[name="developmentInstance[value]"]' => ['checked' => TRUE],
-        ],
-      ];
     }
 
     // Make the machineName field readonly and
@@ -304,12 +294,6 @@ class SodaScsStackCreateForm extends ContentEntityForm {
       $form_state->setErrorByName('machineName', $this->t('The machine name must not exceed 30 characters.'));
     }
 
-    $developmentInstance = (bool) ($form_state->getValue(['developmentInstance', 'value']) ?? FALSE);
-    $wisski8x4xDevelopment = (bool) ($form_state->getValue(['wisski8x4xDevelopment', 'value']) ?? FALSE);
-    if ($wisski8x4xDevelopment && !$developmentInstance) {
-      $form_state->setErrorByName('wisski8x4xDevelopment', $this->t('WissKI 8.x-4.x Development can only be enabled when Development Instance is enabled.'));
-    }
-
     // WebProtégé and JupyterHub exist once per project.
     if ($this->projectApplicationHelpers->isSingleInstanceBundle('soda_scs_stack', $this->bundle)) {
       $projectId = $this->resolveSelectedProjectId($form_state);
@@ -378,13 +362,8 @@ class SodaScsStackCreateForm extends ContentEntityForm {
       $stack->set('defaultLanguage', $this->resolveProfileLanguage());
     }
     $developmentInstance = (bool) ($form_state->getValue(['developmentInstance', 'value']) ?? FALSE);
-    $wisski8x4xDevelopment = $developmentInstance
-      && (bool) ($form_state->getValue(['wisski8x4xDevelopment', 'value']) ?? FALSE);
     if ($stack->hasField('developmentInstance')) {
       $stack->set('developmentInstance', $developmentInstance);
-    }
-    if ($stack->hasField('wisski8x4xDevelopment')) {
-      $stack->set('wisski8x4xDevelopment', $wisski8x4xDevelopment);
     }
     $stack->set('health', 'Unknown');
     $stack->set('machineName', $form_state->getValue('machineName')[0]['value']);
