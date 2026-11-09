@@ -826,6 +826,20 @@ soda_scs_manager.component.clear_varnish_cache:
         type: entity:soda_scs_component
     no_cache: TRUE
 
+soda_scs_manager.component.update_wisski:
+  path: '/soda-scs-manager/component/{soda_scs_component}/update-wisski'
+  defaults:
+    _form: '\Drupal\soda_scs_manager\Form\SodaScsWisskiUpdateConfirmForm'
+    _title: 'Update WissKI'
+  requirements:
+    _permission: 'soda scs manager admin'
+    _custom_access: '\Drupal\soda_scs_manager\Form\SodaScsWisskiUpdateConfirmForm::access'
+  options:
+    parameters:
+      soda_scs_component:
+        type: entity:soda_scs_component
+    no_cache: TRUE
+
 soda_scs_manager.component.check_drupal_packages:
   path: '/soda-scs-manager/component/check-drupal-packages/{soda_scs_component}'
   defaults:

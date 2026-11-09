@@ -73,11 +73,12 @@
 		<p class="h2 application__health-status--{{ health_status }}" data-entity-health="{{ health_status }}">{{ {'running': 'Running'|t, 'starting': 'Starting'|t, 'stopped': 'Stopped'|t, 'problem': 'Problem'|t, 'unknown': 'Unknown'|t}[health_status] ?? 'Unknown'|t }}</p>
 	</section>
 
-	{% if elements['#clear_varnish_cache_url'] %}
-		<section class="application__details-card application__details-card--varnish">
-			<h2 class="application__details-card-title h4">{{ 'Varnish cache'|t }}</h2>
-			<p>{{ 'Clears cached pages of this WissKI instance.'|t }}</p>
-			<a class="btn btn--secondary" href="{{ elements['#clear_varnish_cache_url'] }}">{{ 'Clear Varnish cache'|t }}</a>
+	{% set wisski_admin = elements['#wisski_admin']|default({}) %}
+
+	{% if wisski_admin.clearVarnishCacheUrl %}
+		<section class="application__details-card application__details-card--admin-tasks">
+			<h2 class="application__details-card-title h4">{{ 'Admin tasks'|t }}</h2>
+			<a class="btn btn--secondary" href="{{ wisski_admin.clearVarnishCacheUrl }}" title="{{ 'Clears cached pages of this WissKI instance.'|t }}">{{ 'Clear Varnish cache'|t }}</a>
 		</section>
 	{% endif %}
 
@@ -85,7 +86,18 @@
 		<section class="application__details-card application__details-card--version">
 			{% if elements.version %}
 				<h2 class="application__details-card-title h4">{{ 'Version'|t }}</h2>
-				<p class="h2">{{ elements.version }}</p>
+				<div class="application__version-row">
+					<p class="h2">{{ elements.version }}</p>
+					{% if wisski_admin.updateUrl %}
+						<a class="btn btn--secondary" href="{{ wisski_admin.updateUrl }}" title="{{ wisski_admin.isDevelopment ?'Redeploys this instance with the current development images.'|t : 'Updates this instance to the latest production version.'|t }}">{{ 'Update'|t }}</a>
+					{% endif %}
+				</div>
+				{% if wisski_admin.commitHashShort %}
+					<p><span class="text--label">{{ 'Commit'|t }}: </span><code title="{{ wisski_admin.commitHash }}">{{ wisski_admin.commitHashShort }}</code></p>
+				{% endif %}
+				{% if wisski_admin.availableVersion %}
+					<p class="application__version-update-available"><span class="text--label">{{ 'Update available'|t }}: </span>{{ wisski_admin.availableVersion }}</p>
+				{% endif %}
 			{% endif %}
 			{% if elements.automatedUpdates %}
 				<p><span class="text--label">{{ 'Automated updates'|t }}: </span>{{ elements.automatedUpdates }}</p>

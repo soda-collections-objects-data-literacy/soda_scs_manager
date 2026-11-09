@@ -9,6 +9,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- WissKI application pages show an "Admin tasks" panel for SCS
+  administrators. "Clear Varnish cache" lives there; its explanation is now
+  a tooltip on the button.
+- The version card of a WissKI instance has an "Update" button for SCS
+  administrators when automated updates are on. Production instances move to
+  the latest production version; development instances are redeployed with
+  the current development images.
+- Production instances show which newer version is available. Development
+  instances show the commit of the running image (OCI label
+  `org.opencontainers.image.revision`; locally built images have none).
 - Guided onboarding tour across the dashboard, a project and an application
   page, with the overlay centered or placed next to the highlighted elements.
   It starts on a user's first visit and takes them to the dashboard, can be skipped or closed with
@@ -22,6 +32,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- Updating a development instance to "Nightly" keeps its version label
+  (for example `5.x`) instead of `nightly-<timestamp>`.
 - The login route now redirects directly to the configured Keycloak provider
   instead of displaying an intermediate Drupal login page.
 - The registration page is restyled to match the site design: heading, card

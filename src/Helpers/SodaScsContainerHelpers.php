@@ -663,7 +663,8 @@ class SodaScsContainerHelpers {
    *   Container name without a leading slash.
    *
    * @return \Drupal\soda_scs_manager\ValueObject\SodaScsResult
-   *   Success data contains containerId, containerName, and state.
+   *   Success data contains containerId, containerName, labels (container
+   *   and image labels), and state.
    */
   public function findLiveContainerByName(string $containerName): SodaScsResult {
     $dockerGetAllContainersRequest = $this->sodaScsDockerRunServiceActions->buildGetAllRequest([
@@ -699,6 +700,7 @@ class SodaScsContainerHelpers {
       data: [
         'containerId' => (string) ($matchedContainer['Id'] ?? ''),
         'containerName' => $containerName,
+        'labels' => is_array($matchedContainer['Labels'] ?? NULL) ? $matchedContainer['Labels'] : [],
         'state' => (string) ($matchedContainer['State'] ?? ''),
       ],
     );

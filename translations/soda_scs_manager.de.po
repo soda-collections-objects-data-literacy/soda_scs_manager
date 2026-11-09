@@ -5274,8 +5274,52 @@ msgid "Clear Varnish cache"
 msgstr "Varnish-Cache leeren"
 
 #: templates/entity/soda-scs-entity.html.twig
-msgid "Varnish cache"
-msgstr "Varnish-Cache"
+msgid "Admin tasks"
+msgstr "Admin-Aufgaben"
+
+#: templates/entity/soda-scs-entity.html.twig
+msgid "Commit"
+msgstr "Commit"
+
+#: templates/entity/soda-scs-entity.html.twig
+msgid "Update available"
+msgstr "Update verfügbar"
+
+#: templates/entity/soda-scs-entity.html.twig
+msgid "Redeploys this instance with the current development images."
+msgstr "Stellt diese Instanz mit den aktuellen Entwicklungs-Images neu bereit."
+
+#: templates/entity/soda-scs-entity.html.twig
+msgid "Updates this instance to the latest production version."
+msgstr "Aktualisiert diese Instanz auf die neueste Produktionsversion."
+
+#: soda_scs_manager.routing.yml
+msgid "Update WissKI"
+msgstr "WissKI aktualisieren"
+
+#: src/Form/SodaScsWisskiUpdateConfirmForm.php templates/entity/soda-scs-entity.html.twig
+msgid "Update"
+msgstr "Aktualisieren"
+
+#: src/Form/SodaScsWisskiUpdateConfirmForm.php
+msgid "Update @label?"
+msgstr "@label aktualisieren?"
+
+#: src/Form/SodaScsWisskiUpdateConfirmForm.php
+msgid "The WissKI stack is redeployed with the current development images. The database is backed up first and rolled back if the database update fails. The instance is offline for a few minutes."
+msgstr "Der WissKI-Stack wird mit den aktuellen Entwicklungs-Images neu bereitgestellt. Die Datenbank wird vorher gesichert und zurückgespielt, falls das Datenbank-Update fehlschlägt. Die Instanz ist einige Minuten offline."
+
+#: src/Form/SodaScsWisskiUpdateConfirmForm.php
+msgid "The WissKI stack is redeployed with the latest production version. The database is backed up first and rolled back if the database update fails. The instance is offline for a few minutes."
+msgstr "Der WissKI-Stack wird mit der neuesten Produktionsversion neu bereitgestellt. Die Datenbank wird vorher gesichert und zurückgespielt, falls das Datenbank-Update fehlschlägt. Die Instanz ist einige Minuten offline."
+
+#: src/Form/SodaScsWisskiUpdateConfirmForm.php
+msgid "Could not update @label."
+msgstr "@label konnte nicht aktualisiert werden."
+
+#: src/Form/SodaScsWisskiUpdateConfirmForm.php
+msgid "Could not update @label. @message"
+msgstr "@label konnte nicht aktualisiert werden. @message"
 
 #: templates/entity/soda-scs-entity.html.twig
 msgid "Clears cached pages of this WissKI instance."

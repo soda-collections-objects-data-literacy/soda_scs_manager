@@ -16,14 +16,12 @@ use Drupal\Core\Session\AccountProxyInterface;
 use Drupal\Core\Theme\Registry;
 use Drupal\Core\TypedData\Exception\MissingDataException;
 use Drupal\Core\Url;
-use Drupal\soda_scs_manager\Access\SodaScsManagerAdminAccess;
 use Drupal\soda_scs_manager\Access\SodaScsStackLinksTasksAccessControlHandler;
-use Drupal\soda_scs_manager\Entity\SodaScsStackInterface;
 use Drupal\soda_scs_manager\Form\SodaScsEntityNoteForm;
-use Drupal\soda_scs_manager\Form\SodaScsWisskiClearVarnishCacheConfirmForm;
 use Drupal\soda_scs_manager\Helpers\SodaScsHealthStatus;
 use Drupal\soda_scs_manager\Helpers\SodaScsServiceHelpers;
 use Drupal\soda_scs_manager\Service\SodaScsApplicationCardBuilder;
+use Drupal\soda_scs_manager\Service\SodaScsWisskiAdminTasks;
 use Drupal\soda_scs_manager\Entity\SodaScsComponentInterface;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 
@@ -46,6 +44,7 @@ class SodaScsStackViewBuilder extends EntityViewBuilder {
     protected SodaScsApplicationCardBuilder $applicationCardBuilder,
     protected FormBuilderInterface $formBuilder,
     protected AccountProxyInterface $currentUser,
+    protected SodaScsWisskiAdminTasks $wisskiAdminTasks,
   ) {
     parent::__construct($entity_type, $entity_repository, $language_manager, $theme_registry, $entity_display_repository);
   }
@@ -65,6 +64,7 @@ class SodaScsStackViewBuilder extends EntityViewBuilder {
       $container->get('soda_scs_manager.application_card_builder'),
       $container->get('form_builder'),
       $container->get('current_user'),
+      $container->get('soda_scs_manager.wisski_admin_tasks'),
     );
   }
 
@@ -93,7 +93,7 @@ class SodaScsStackViewBuilder extends EntityViewBuilder {
     $build['#delete_access'] = SodaScsStackLinksTasksAccessControlHandler::accessDeleteForm($entity)->isAllowed();
     $build['#delete_url'] = $entity->toUrl('delete-form')->toString();
     $build['#delete_destination'] = $this->resolveDeleteDestination($entity);
-    $build['#clear_varnish_cache_url'] = $this->clearVarnishCacheUrl($entity);
+    $build['#wisski_admin'] = $this->wisskiAdminTasks->build($entity, $this->currentUser);
     try {
       $serviceUrls = $this->sodaScsServiceHelpers->getStackServiceAndLoginUrls($entity);
       if ($serviceUrls !== NULL && !empty($serviceUrls['loginUrl'])) {
@@ -119,7 +119,8 @@ class SodaScsStackViewBuilder extends EntityViewBuilder {
       $build['#attached']['library'][] = 'soda_scs_manager/dashboardHealthStatus';
     }
 
-    // Disable caching. The Varnish button depends on the admin permission.
+    // Disable caching. The admin tasks depend on the admin permission and the
+    // live container.
     $build['#cache'] = [
       'contexts' => ['user.permissions'],
       'max-age' => 0,
@@ -140,29 +141,6 @@ class SodaScsStackViewBuilder extends EntityViewBuilder {
     $build['#view_mode'] = $view_mode;
 
     return $build;
-  }
-
-  /**
-   * Confirm-form URL for clearing this stack's Varnish cache, or NULL.
-   *
-   * Only SCS administrators see it, and only on a WissKI stack that still
-   * has its WissKI component.
-   */
-  protected function clearVarnishCacheUrl(EntityInterface $entity): ?string {
-    if (!$entity instanceof SodaScsStackInterface
-      || $entity->bundle() !== 'soda_scs_wisski_stack'
-      || !$this->currentUser->hasPermission(SodaScsManagerAdminAccess::SCS_MANAGER_ADMIN_PERMISSION)
-      || !$entity->hasField('includedComponents')) {
-      return NULL;
-    }
-
-    foreach ($entity->get('includedComponents')->referencedEntities() as $component) {
-      if ($component instanceof SodaScsComponentInterface && $component->bundle() === 'soda_scs_wisski_component') {
-        return SodaScsWisskiClearVarnishCacheConfirmForm::confirmUrl($component, $entity->toUrl()->toString())->toString();
-      }
-    }
-
-    return NULL;
   }
 
   /**

@@ -813,7 +813,12 @@ class SodaScsDrupalHelpers {
         $actualVersion = $wisskiInstanceSettings['defaultVersion'] ?? '';
       }
       elseif ($targetVersion === 'nightly') {
-        $actualVersion = 'nightly-' . $this->time->getCurrentTime();
+        // Development instances keep their line label (e.g. 5.x); the image
+        // commit shown next to it identifies the build.
+        $developmentLabel = trim((string) ($wisskiInstanceSettings['componentDevelopmentVersion'] ?? ''));
+        $actualVersion = $component->get('developmentInstance')->value && $developmentLabel !== ''
+          ? $developmentLabel
+          : 'nightly-' . $this->time->getCurrentTime();
       }
 
       if (empty($actualVersion)) {
