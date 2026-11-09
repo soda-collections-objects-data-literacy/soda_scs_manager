@@ -7,6 +7,36 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- The version card of a WissKI instance names the running build as
+  "<commit> from <date>", and for development instances the commit and build
+  date of the next image (read from the image registry). The update button
+  names its target ("Update to 5.6.1").
+
+### Fixed
+
+- WissKI updates no longer destroy data when the database update fails. The
+  rollback could cut a site's database in half: it ran inside the old Drupal
+  container while Portainer was still replacing it, so the restore was
+  killed mid-import (seen on a development instance, whose `config` table
+  lost every row after `views.view.*`).
+  - After the redeploy, the update waits until Portainer has actually
+    replaced the Drupal container (up to three minutes) before it checks
+    health and runs `drush updatedb`.
+  - The pre-update dump is written from the MariaDB container to
+    `<snapshot root>/.wisski-update-backups/<instance>/<timestamp>.sql`
+    instead of `/opt/drupal/bkp` inside the WissKI container, which did not
+    survive the redeploy. The dump is checked for completeness; the three
+    newest updates keep their dumps.
+  - `drush updatedb` is retried twice before the update counts as failed, so
+    a dropped Redis connection right after the redeploy no longer triggers a
+    rollback.
+  - The rollback stops the WissKI container, dumps the current state to
+    `<timestamp>-failed-update.sql`, and restores from inside the MariaDB
+    container. The site stays in maintenance mode on the new image; the
+    error names the dump files.
+
 ## [4.1.0] - 2026-11-09
 
 ### Added

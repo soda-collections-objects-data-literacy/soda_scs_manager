@@ -63,6 +63,20 @@ class SodaScsWisskiComponentActions implements SodaScsComponentActionsInterface 
   private const WISSKI_SNAPSHOT_LAYOUT_2X = '2.x-drupal-root';
 
   /**
+   * Seconds to wait for Portainer to replace the Drupal container.
+   *
+   * The redeploy request can return before the old container is replaced.
+   * Docker Compose keeps a container whose image and settings did not
+   * change, so after this window the old container counts as current.
+   */
+  private const CONTAINER_REPLACEMENT_WAIT_SECONDS = 180;
+
+  /**
+   * Seconds between container lookups while waiting.
+   */
+  private const CONTAINER_POLL_INTERVAL_SECONDS = 5;
+
+  /**
    * The bundle info.
    *
    * @var \Drupal\Core\Entity\EntityTypeBundleInfoInterface
@@ -621,6 +635,15 @@ class SodaScsWisskiComponentActions implements SodaScsComponentActionsInterface 
         $this->mapVersionSettingsToEnvVars($versionSettings),
       );
 
+      $containerName = (string) ($component->get('containerName')->value ?? '');
+      if ($containerName === '') {
+        $containerName = (string) $component->get('machineName')->value . '--drupal';
+      }
+      // Remember the running container, so the wait below does not mistake
+      // it for the redeployed one.
+      $previousContainer = $this->sodaScsContainerHelpers->findLiveContainerByName($containerName);
+      $previousContainerId = $previousContainer->success ? (string) ($previousContainer->data['containerId'] ?? '') : '';
+
       $portainerRedeployRequest = $this->sodaScsPortainerServiceActions->buildGitRedeployRequest([
         'env' => $updatedEnv,
         'repullImageAndRedeploy' => TRUE,
@@ -637,12 +660,7 @@ class SodaScsWisskiComponentActions implements SodaScsComponentActionsInterface 
         );
       }
 
-      $containerName = (string) ($component->get('containerName')->value ?? '');
-      if ($containerName === '') {
-        $containerName = (string) $component->get('machineName')->value . '--drupal';
-      }
-
-      $waitForRunningResponse = $this->waitForContainerByName($containerName);
+      $waitForRunningResponse = $this->waitForReplacedContainer($containerName, $previousContainerId);
       if (!$waitForRunningResponse->success) {
         return $waitForRunningResponse;
       }
@@ -1452,36 +1470,68 @@ class SodaScsWisskiComponentActions implements SodaScsComponentActionsInterface 
   }
 
   /**
-   * Waits until a container with the given name is running.
+   * Waits until the redeploy has replaced the running Drupal container.
+   *
+   * Succeeds as soon as a running container with another ID than
+   * $previousContainerId shows up. When the old container is still the
+   * running one after CONTAINER_REPLACEMENT_WAIT_SECONDS, Compose kept it
+   * because nothing changed, and it counts as current.
    *
    * @param string $containerName
    *   The Docker container name.
+   * @param string $previousContainerId
+   *   ID of the container that ran before the redeploy; empty when none ran.
    *
    * @return \Drupal\soda_scs_manager\ValueObject\SodaScsResult
-   *   Success when a running container is found.
+   *   Success when a running container is found; data['replaced'] tells
+   *   whether it is a new one.
    */
-  private function waitForContainerByName(string $containerName): SodaScsResult {
-    $maxAttempts = $this->sodaScsHelpers->adjustMaxAttempts(5);
+  private function waitForReplacedContainer(string $containerName, string $previousContainerId): SodaScsResult {
+    $maxAttempts = $this->sodaScsHelpers->adjustMaxAttempts(self::CONTAINER_POLL_INTERVAL_SECONDS);
     if ($maxAttempts === FALSE) {
       return SodaScsResult::failure(
         error: 'PHP request timeout error',
         message: (string) $this->t('Timed out waiting for WissKI container to start.'),
       );
     }
+    $maxAttempts = min($maxAttempts, intdiv(self::CONTAINER_REPLACEMENT_WAIT_SECONDS, self::CONTAINER_POLL_INTERVAL_SECONDS));
 
+    $previousContainerStillRunning = FALSE;
     for ($attempt = 0; $attempt < $maxAttempts; $attempt++) {
       $matched = $this->sodaScsContainerHelpers->findLiveContainerByName($containerName);
       if ($matched->success && (string) ($matched->data['state'] ?? '') === 'running') {
-        return SodaScsResult::success(
-          message: (string) $this->t('WissKI container is running.'),
-          data: [
-            'containerId' => (string) ($matched->data['containerId'] ?? ''),
-            'containerName' => $containerName,
-          ],
-        );
+        $containerId = (string) ($matched->data['containerId'] ?? '');
+        if ($previousContainerId === '' || $containerId !== $previousContainerId) {
+          return SodaScsResult::success(
+            message: (string) $this->t('WissKI container is running.'),
+            data: [
+              'containerId'   => $containerId,
+              'containerName' => $containerName,
+              'replaced'      => TRUE,
+            ],
+          );
+        }
+        $previousContainerStillRunning = TRUE;
+      }
+      else {
+        $previousContainerStillRunning = FALSE;
       }
 
-      sleep(5);
+      sleep(self::CONTAINER_POLL_INTERVAL_SECONDS);
+    }
+
+    if ($previousContainerStillRunning) {
+      $this->logger->info('WissKI container @container was not replaced by the redeploy; its image and settings are unchanged.', [
+        '@container' => $containerName,
+      ]);
+      return SodaScsResult::success(
+        message: (string) $this->t('WissKI container is running.'),
+        data: [
+          'containerId'   => $previousContainerId,
+          'containerName' => $containerName,
+          'replaced'      => FALSE,
+        ],
+      );
     }
 
     return SodaScsResult::failure(

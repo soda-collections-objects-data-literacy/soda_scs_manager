@@ -31,6 +31,37 @@ class SodaScsDrupalHelpers {
   private const DRUPAL_PACKAGES_CACHE_TTL = 600;
 
   /**
+   * Marker that mariadb-dump writes as the last line of a complete dump.
+   */
+  private const DATABASE_DUMP_COMPLETE_MARKER = '-- Dump completed';
+
+  /**
+   * Directory below the snapshot root that holds pre-update database dumps.
+   *
+   * The snapshot root is shared by the manager and the MariaDB container and
+   * survives the WissKI redeploy, unlike the WissKI container file system.
+   */
+  private const UPDATE_BACKUP_DIRECTORY = '.wisski-update-backups';
+
+  /**
+   * Pre-update database dumps kept per WissKI instance.
+   */
+  private const UPDATE_BACKUPS_TO_KEEP = 3;
+
+  /**
+   * Attempts of drush updatedb before an update counts as failed.
+   *
+   * Right after a redeploy, Redis or the database may drop single
+   * connections; updatedb is idempotent, so a retry is safe.
+   */
+  private const UPDATEDB_MAX_ATTEMPTS = 3;
+
+  /**
+   * Seconds between drush updatedb attempts.
+   */
+  private const UPDATEDB_RETRY_DELAY_SECONDS = 10;
+
+  /**
    * Cache backend.
    *
    * @var \Drupal\Core\Cache\CacheBackendInterface
@@ -141,6 +172,8 @@ class SodaScsDrupalHelpers {
    *   The progress helper.
    * @param \Drupal\soda_scs_manager\ComponentActions\SodaScsWisskiComponentActions $sodaScsWisskiComponentActions
    *   WissKI component actions.
+   * @param \Drupal\soda_scs_manager\Helpers\SodaScsSnapshotHelpers $sodaScsSnapshotHelpers
+   *   Snapshot helpers, for the shared backup file system root.
    */
   public function __construct(
     #[Autowire(service: 'cache.default')]
@@ -167,6 +200,8 @@ class SodaScsDrupalHelpers {
     SodaScsProgressHelper $sodaScsProgressHelper,
     #[Autowire(service: 'soda_scs_manager.wisski_component.actions')]
     SodaScsWisskiComponentActions $sodaScsWisskiComponentActions,
+    #[Autowire(service: 'soda_scs_manager.snapshot.helpers')]
+    protected SodaScsSnapshotHelpers $sodaScsSnapshotHelpers,
   ) {
     $this->cacheBackend = $cacheBackend;
     $this->entityTypeManager = $entityTypeManager;
@@ -754,15 +789,29 @@ class SodaScsDrupalHelpers {
    *   The Soda SCS result.
    */
   protected function updateDrupalDatabase(SodaScsComponentInterface $component): SodaScsResult {
-    $updateDbResponse = $this->sodaScsContainerHelpers->executeDockerExecCommand([
-      'cmd'           => [
-        'drush',
-        'updatedb',
-        '--yes',
-      ],
-      'containerName' => (string) $component->get('containerId')->value,
-      'user'          => 'www-data',
-    ]);
+    for ($attempt = 1; $attempt <= self::UPDATEDB_MAX_ATTEMPTS; $attempt++) {
+      $updateDbResponse = $this->sodaScsContainerHelpers->executeDockerExecCommand([
+        'cmd'           => [
+          'drush',
+          'updatedb',
+          '--yes',
+        ],
+        'containerName' => (string) $component->get('containerId')->value,
+        'user'          => 'www-data',
+      ]);
+      if ($updateDbResponse->success) {
+        break;
+      }
+      if ($attempt < self::UPDATEDB_MAX_ATTEMPTS) {
+        $this->loggerFactory->get('soda_scs_manager')->warning('drush updatedb failed on WissKI component @id (attempt @attempt of @max), retrying: @error', [
+          '@attempt' => $attempt,
+          '@error'   => $updateDbResponse->error ?? '',
+          '@id'      => $component->id(),
+          '@max'     => self::UPDATEDB_MAX_ATTEMPTS,
+        ]);
+        sleep(self::UPDATEDB_RETRY_DELAY_SECONDS);
+      }
+    }
 
     if (!$updateDbResponse->success) {
       $errorDetail = 'Failed to update database: ' . ($updateDbResponse->error ?? '');
@@ -909,7 +958,7 @@ class SodaScsDrupalHelpers {
         $this->sodaScsProgressHelper->createStep($updateDrupalPackagesOperationUuid, 'Rolled back database');
         $resultData['rollbackDatabaseUpdate'] = $rollbackDatabaseUpdateResult->data;
         return SodaScsResult::failure(
-          error: 'Failed to update database: ' . ($databaseUpdateResult->error ?? ''),
+          error: 'Failed to update database; restored ' . $backupPath . ', the site stays in maintenance mode: ' . ($databaseUpdateResult->error ?? ''),
           message: (string) $this->t('Failed to update database. Not updating packages.'),
         );
       }
@@ -943,9 +992,9 @@ class SodaScsDrupalHelpers {
 
       // Post update steps.
       $this->sodaScsProgressHelper->createStep($updateDrupalPackagesOperationUuid, 'Perform post update steps');
-      $postUpdateStepsResult = $this->postUpdateSteps($component, $backupPath);
+      $postUpdateStepsResult = $this->postUpdateSteps($component);
       if (!$postUpdateStepsResult->success) {
-        $this->sodaScsProgressHelper->createStep($updateDrupalPackagesOperationUuid, 'Failed to perform post update steps. Rolling back...');
+        $this->sodaScsProgressHelper->createStep($updateDrupalPackagesOperationUuid, 'Failed to perform post update steps');
         return SodaScsResult::failure(
           error: 'Failed to perform post update steps: ' . ($postUpdateStepsResult->error ?? ''),
           message: (string) $this->t('Failed to perform post update steps. Not updating packages.'),
@@ -1075,31 +1124,37 @@ class SodaScsDrupalHelpers {
   /**
    * Secure the Drupal database before updating.
    *
-   * 1. Prepare for dumping.
-   *  1.1. Ensure the backup directory exists.
-   *  1.2. Set Drupal to maintainment mode.
-   *  1.3. Clear the Drupal cache.
-   * 2. Dump the database.
-   *  2.1. Ensure the backup directory exists.
-   *  2.2. Dump the database to a tar file.
+   * 1. Set Drupal to maintenance mode and clear the Drupal cache.
+   * 2. Dump the database from inside the MariaDB container to the shared
+   *    snapshot root, where it survives the redeploy of the WissKI stack.
+   * 3. Check that the dump is complete.
    *
    * @param \Drupal\soda_scs_manager\Entity\SodaScsComponentInterface $component
    *   The component.
    *
    * @return \Drupal\soda_scs_manager\ValueObject\SodaScsResult
-   *   The Soda SCS result.
+   *   The Soda SCS result. On success data['backupPath'] is the dump file.
    */
   public function secureDrupalPackagesAndDatabase(SodaScsComponentInterface $component): SodaScsResult {
     try {
-      // Environment variables.
-      $timestamp = $this->time->getCurrentTime();
-      $backupPath = strtr('/opt/drupal/bkp/{timestamp}', [
-        '{timestamp}' => $timestamp,
-      ]);
+      $databaseName = $this->getConnectedDatabaseName($component);
+      if ($databaseName === '') {
+        return SodaScsResult::failure(
+          error: 'Connected SQL component not found.',
+          message: (string) $this->t('Connected SQL component not found for the Drupal component.'),
+        );
+      }
 
-      // Prepare the backup directory, set Drupal to maintenance mode and
-      // clear the Drupal cache.
-      $preDumpStepsResult = $this->preDumpSteps($component, $backupPath);
+      $backupDirectory = $this->getUpdateBackupDirectory($component);
+      if (!is_dir($backupDirectory) && !@mkdir($backupDirectory, 0750, TRUE) && !is_dir($backupDirectory)) {
+        return SodaScsResult::failure(
+          error: 'Could not create backup directory ' . $backupDirectory . '.',
+          message: (string) $this->t('Failed to secure Drupal database.'),
+        );
+      }
+      $backupPath = $backupDirectory . '/' . $this->time->getCurrentTime() . '.sql';
+
+      $preDumpStepsResult = $this->preDumpSteps($component);
       if (!$preDumpStepsResult->success) {
         $errorDetail = 'Failed to prepare pre-dump steps: ' . ($preDumpStepsResult->error ?? '');
         return SodaScsResult::failure(
@@ -1108,12 +1163,17 @@ class SodaScsDrupalHelpers {
         );
       }
 
-      // Dump the database to a tar file.
-      $dumpDatabaseResult = $this->sodaScsDatabaseHelpers->dumpDatabase($backupPath, $component);
+      $dumpDatabaseResult = $this->sodaScsDatabaseHelpers->exportDatabaseToFile($databaseName, $backupPath);
       if (!$dumpDatabaseResult->success) {
         $errorDetail = 'Failed to dump database: ' . ($dumpDatabaseResult->error ?? '');
         return SodaScsResult::failure(
           error: $errorDetail,
+          message: (string) $this->t('Failed to secure Drupal database.'),
+        );
+      }
+      if (!$this->isCompleteDatabaseDump($backupPath)) {
+        return SodaScsResult::failure(
+          error: 'Database dump ' . $backupPath . ' is missing or incomplete.',
           message: (string) $this->t('Failed to secure Drupal database.'),
         );
       }
@@ -1122,7 +1182,6 @@ class SodaScsDrupalHelpers {
         message: (string) $this->t('Drupal database secured successfully.'),
         data: [
           'backupPath' => $backupPath,
-          'dumpDatabase' => $dumpDatabaseResult->data,
         ],
       );
     }
@@ -1206,37 +1265,18 @@ class SodaScsDrupalHelpers {
   /**
    * Prepares everything needed before dumping the database.
    *
-   * 1. Ensures the backup directory exists.
-   * 2. Sets Drupal to maintainment mode.
-   * 3. Clears the Drupal cache.
+   * 1. Sets Drupal to maintainment mode.
+   * 2. Clears the Drupal cache.
    *
    * @param \Drupal\soda_scs_manager\Entity\SodaScsComponentInterface $drupalComponent
    *   The Drupal component.
-   * @param string $backupPath
-   *   The backup path.
    *
    * @return \Drupal\soda_scs_manager\ValueObject\SodaScsResult
    *   The Soda SCS result.
    */
-  private function preDumpSteps(SodaScsComponentInterface $drupalComponent, string $backupPath): SodaScsResult {
+  private function preDumpSteps(SodaScsComponentInterface $drupalComponent): SodaScsResult {
 
     try {
-      if (!$drupalComponent) {
-        return SodaScsResult::success(
-          data: ['skipped' => TRUE],
-          message: (string) $this->t('Drupal component not provided, skipping cache clear.'),
-        );
-      }
-
-      $directoryResult = $this->sodaScsContainerHelpers->ensureContainerDirectory($drupalComponent, $backupPath);
-      if (!$directoryResult->success) {
-        $errorDetail = 'Failed to ensure container directory: ' . ($directoryResult->error ?? '');
-        return SodaScsResult::failure(
-          error: $errorDetail,
-          message: (string) $this->t('Failed to prepare pre-dump steps.'),
-        );
-      }
-
       $maintainmentModeResult = $this->setDrupalMaintainmentMode($drupalComponent, TRUE);
       if (!$maintainmentModeResult->success) {
         $errorDetail = 'Failed to set Drupal to maintainment mode: ' . ($maintainmentModeResult->error ?? '');
@@ -1324,78 +1364,70 @@ class SodaScsDrupalHelpers {
   /**
    * Rolls back the database update.
    *
-   * Restores the database from the backup located in the backup path.
+   * Restores the pre-update dump while the WissKI container is stopped, so
+   * neither the container entrypoint nor a running request writes to the
+   * database meanwhile. The import runs inside the MariaDB container and
+   * therefore cannot be cut off by a redeploy of the WissKI stack. The
+   * current state is dumped first, so a failed restore loses nothing.
+   *
+   * The stack keeps the new image; the restored database still has
+   * maintenance mode enabled, as it was dumped after enabling it.
    *
    * @param \Drupal\soda_scs_manager\Entity\SodaScsComponentInterface $component
    *   The Drupal component.
    * @param string $backupPath
-   *   The backup path.
+   *   The dump file written by secureDrupalPackagesAndDatabase().
    *
    * @return \Drupal\soda_scs_manager\ValueObject\SodaScsResult
    *   The Soda SCS result.
    */
   private function rollbackDatabaseUpdate(SodaScsComponentInterface $component, string $backupPath): SodaScsResult {
+    if (!$this->isCompleteDatabaseDump($backupPath)) {
+      return SodaScsResult::failure(
+        error: 'Database dump ' . $backupPath . ' is missing or incomplete; database left untouched.',
+        message: (string) $this->t('Failed to restore database from backup.'),
+      );
+    }
+
+    $databaseName = $this->getConnectedDatabaseName($component);
+    if ($databaseName === '') {
+      return SodaScsResult::failure(
+        error: 'Connected SQL component not found.',
+        message: (string) $this->t('Connected SQL component not found for the Drupal component.'),
+      );
+    }
+
+    $containerName = $this->sodaScsContainerHelpers->getComponentContainerName($component);
+    $stopResult = $this->sodaScsContainerHelpers->stopContainer($containerName);
+    if (!$stopResult->success) {
+      return SodaScsResult::failure(
+        error: 'Could not stop the WissKI container before the restore: ' . ($stopResult->error ?? ''),
+        message: (string) $this->t('Failed to restore database from backup.'),
+      );
+    }
+
     try {
-      // Get the database dump file path.
-      $dumpFilePath = $backupPath . '/database.dump.sql.gz';
-
-      // Get the connected SQL component.
-      $resolvedComponents = $this->sodaScsComponentHelpers->resolveConnectedComponents($component);
-      $sqlComponent = $resolvedComponents['sql'] ?? NULL;
-
-      if (!$sqlComponent) {
+      $failedStatePath = preg_replace('/\.sql$/', '', $backupPath) . '-failed-update.sql';
+      $failedStateResult = $this->sodaScsDatabaseHelpers->exportDatabaseToFile($databaseName, $failedStatePath);
+      if (!$failedStateResult->success) {
         return SodaScsResult::failure(
-          error: 'Connected SQL component not found.',
-          message: (string) $this->t('Connected SQL component not found for the Drupal component.'),
+          error: 'Could not dump the current database state before the restore; database left untouched: ' . ($failedStateResult->error ?? ''),
+          message: (string) $this->t('Failed to restore database from backup.'),
         );
       }
 
-      // Get the database name.
-      $databaseName = $sqlComponent->get('machineName')->value;
-
-      // Get the client container name.
-      $clientContainerName = $component->get('containerName')->value;
-
-      // Get service key for the SQL component.
-      $sqlComponentServiceKey = $this->sodaScsServiceKeyActions->getServiceKey([
-        'bundle' => 'soda_scs_sql_component',
-        'type'   => 'password',
-        'userId' => $sqlComponent->getOwnerId(),
-      ]);
-      if (!$sqlComponentServiceKey) {
+      $restoreResult = $this->sodaScsDatabaseHelpers->importDatabaseFromFile($databaseName, $backupPath, TRUE);
+      if (!$restoreResult->success) {
         return SodaScsResult::failure(
-          error: 'SQL component service key not found for user.',
-          message: (string) $this->t('SQL component service key not found for user.'),
-        );
-      }
-
-      $sqlComponentServiceKeyPassword = $sqlComponentServiceKey->get('servicePassword')->value;
-      $databaseHost = $this->sodaScsServiceHelpers->getDatabaseDockerHost();
-
-      // Run the database restore command.
-      $restoreExecCommand = [
-        'bash',
-        '-c',
-        'set -o pipefail && gunzip -c ' . $dumpFilePath . ' | mariadb -h' . $databaseHost . ' -u' . $sqlComponent->getOwner()->getDisplayName() . ' -p' . $sqlComponentServiceKeyPassword . ' "' . $databaseName . '"',
-      ];
-
-      $restoreExecResponse = $this->sodaScsContainerHelpers->executeDockerExecCommand([
-        'cmd'           => $restoreExecCommand,
-        'containerName' => $clientContainerName,
-        'user'          => 'www-data',
-      ]);
-
-      if (!$restoreExecResponse->success) {
-        return SodaScsResult::failure(
-          error: $restoreExecResponse->error ?? 'Failed to restore database from backup.',
+          error: 'Restore from ' . $backupPath . ' failed; the state before the restore is in ' . $failedStatePath . ': ' . ($restoreResult->error ?? ''),
           message: (string) $this->t('Failed to restore database from backup.'),
         );
       }
 
       return SodaScsResult::success(
         data: [
-          'skipped' => FALSE,
-          'restore' => $restoreExecResponse->data,
+          'backupPath'      => $backupPath,
+          'failedStatePath' => $failedStatePath,
         ],
         message: (string) $this->t('Database restored successfully from backup.'),
       );
@@ -1406,93 +1438,117 @@ class SodaScsDrupalHelpers {
         message: (string) $this->t('Failed to rollback database update.'),
       );
     }
+    finally {
+      $startResult = $this->sodaScsContainerHelpers->startContainer($containerName);
+      if (!$startResult->success) {
+        $this->loggerFactory->get('soda_scs_manager')->error('Could not start WissKI container @container after the database restore: @error', [
+          '@container' => $containerName,
+          '@error'     => $startResult->error ?? '',
+        ]);
+      }
+    }
   }
 
   /**
-   * Deletes the backup directory.
+   * Returns the database name of the SQL component connected to a WissKI.
    *
-   * @param string $backupPath
-   *   The backup path.
    * @param \Drupal\soda_scs_manager\Entity\SodaScsComponentInterface $component
-   *   The component.
-   * @param string $user
-   *   User that should execute the command.
+   *   The WissKI component.
    *
-   * @return \Drupal\soda_scs_manager\ValueObject\SodaScsResult
-   *   The Soda SCS result.
+   * @return string
+   *   The database name, empty when no SQL component is connected.
    */
-  private function deleteBackupDirectory(string $backupPath, SodaScsComponentInterface $component, string $user = 'www-data'): SodaScsResult {
-    // Validate backup path using abstract validation function.
-    $validationResult = $this->sodaScsHelpers->validatePathForSafeDeletion($backupPath);
+  private function getConnectedDatabaseName(SodaScsComponentInterface $component): string {
+    $sqlComponent = $this->sodaScsComponentHelpers->resolveConnectedComponents($component)['sql'] ?? NULL;
+    return $sqlComponent ? (string) $sqlComponent->get('machineName')->value : '';
+  }
 
-    if (!$validationResult['isValid']) {
-      $errorMessage = match ($validationResult['errorCode']) {
-        'empty', 'root', 'forbidden', 'relative', 'traversal' => (string) $this->t('Refused to delete potentially unsafe or invalid backup path.'),
-        'hierarchy' => (string) $this->t('Refused to delete path not matching backup or snapshot hierarchy.'),
-        default => (string) $this->t('Invalid backup path for deletion.'),
-      };
+  /**
+   * Returns the directory for the pre-update dumps of a WissKI instance.
+   *
+   * @param \Drupal\soda_scs_manager\Entity\SodaScsComponentInterface $component
+   *   The WissKI component.
+   *
+   * @return string
+   *   Absolute path without trailing slash.
+   */
+  private function getUpdateBackupDirectory(SodaScsComponentInterface $component): string {
+    return $this->sodaScsSnapshotHelpers->getSnapshotFilesystemRoot()
+      . '/' . self::UPDATE_BACKUP_DIRECTORY
+      . '/' . basename((string) $component->get('machineName')->value);
+  }
 
-      return SodaScsResult::failure(
-        error: 'Invalid or unsafe backup path for deletion: ' . htmlspecialchars($backupPath) . ' (' . $validationResult['errorCode'] . ')',
-        message: $errorMessage,
-      );
+  /**
+   * Whether a dump file exists and ends with the mariadb-dump completion line.
+   *
+   * @param string $dumpPath
+   *   Absolute path of the .sql file.
+   *
+   * @return bool
+   *   TRUE for a complete dump.
+   */
+  private function isCompleteDatabaseDump(string $dumpPath): bool {
+    clearstatcache(TRUE, $dumpPath);
+    if (!is_file($dumpPath) || filesize($dumpPath) === 0) {
+      return FALSE;
     }
-    try {
-      // Delete the backup directory using normalized path.
-      $normalizedBackupPath = $validationResult['normalizedPath'];
-      $deleteBackupDirectoryResponse = $this->sodaScsContainerHelpers->executeDockerExecCommand([
-        'cmd'           => [
-          'rm',
-          '-rf',
-          $normalizedBackupPath,
-        ],
-        'containerName' => (string) $component->get('containerId')->value,
-        'user'          => $user,
-      ]);
-      if (!$deleteBackupDirectoryResponse->success) {
-        return SodaScsResult::failure(
-          error: 'Failed to delete backup directory: ' . ($deleteBackupDirectoryResponse->error ?? ''),
-          message: (string) $this->t('Failed to delete backup directory.'),
-        );
+    $tail = file_get_contents($dumpPath, FALSE, NULL, max(0, filesize($dumpPath) - 256));
+    return is_string($tail) && str_contains($tail, self::DATABASE_DUMP_COMPLETE_MARKER);
+  }
+
+  /**
+   * Deletes all but the newest pre-update dumps of a WissKI instance.
+   *
+   * A failure is only logged: the update itself has succeeded by then.
+   *
+   * @param \Drupal\soda_scs_manager\Entity\SodaScsComponentInterface $component
+   *   The WissKI component.
+   *
+   * @return string[]
+   *   Deleted file paths.
+   */
+  private function pruneUpdateBackups(SodaScsComponentInterface $component): array {
+    $dumps = glob($this->getUpdateBackupDirectory($component) . '/*.sql') ?: [];
+    // File names start with the Unix timestamp of the update.
+    rsort($dumps, SORT_NATURAL);
+    $timestamps = array_unique(array_map(
+      static fn (string $path): string => (string) strtok(basename($path), '.-'),
+      $dumps,
+    ));
+    $keptTimestamps = array_slice(array_values($timestamps), 0, self::UPDATE_BACKUPS_TO_KEEP);
+
+    $deleted = [];
+    foreach ($dumps as $dump) {
+      if (in_array((string) strtok(basename($dump), '.-'), $keptTimestamps, TRUE)) {
+        continue;
       }
-      return SodaScsResult::success(
-        data: ['skipped' => FALSE],
-        message: (string) $this->t('Backup directory deleted successfully.'),
-      );
+      if (@unlink($dump)) {
+        $deleted[] = $dump;
+        continue;
+      }
+      $this->loggerFactory->get('soda_scs_manager')->warning('Could not delete old WissKI update backup @path.', [
+        '@path' => $dump,
+      ]);
     }
-    catch (\Exception $e) {
-      return SodaScsResult::failure(
-        error: 'Failed to delete backup directory: ' . $e->getMessage(),
-        message: (string) $this->t('Failed to delete backup directory.'),
-      );
-    }
+    return $deleted;
   }
 
   /**
    * Post update steps.
    *
-   * 1. Delete backup directory.
+   * 1. Delete old pre-update dumps; the newest ones stay for a manual restore.
    * 2. Escape maintenance mode.
    * 3. Clear Drupal cache.
    *
    * @param \Drupal\soda_scs_manager\Entity\SodaScsComponentInterface $component
    *   The component.
-   * @param string $backupPath
-   *   The backup path.
    *
    * @return \Drupal\soda_scs_manager\ValueObject\SodaScsResult
    *   The Soda SCS result.
    */
-  private function postUpdateSteps(SodaScsComponentInterface $component, string $backupPath): SodaScsResult {
+  private function postUpdateSteps(SodaScsComponentInterface $component): SodaScsResult {
     try {
-      // Clean backup directory.
-      $cleanBackupDirectoryResult = $this->deleteBackupDirectory($backupPath, $component);
-      if (!$cleanBackupDirectoryResult->success) {
-        return SodaScsResult::failure(
-          error: 'Failed to clean backup directory: ' . ($cleanBackupDirectoryResult->error ?? ''),
-          message: (string) $this->t('Failed to clean backup directory.'),
-        );
-      }
+      $deletedBackups = $this->pruneUpdateBackups($component);
 
       // Escape maintenance mode.
       $escapeMaintenanceModeResult = $this->setDrupalMaintainmentMode($component, FALSE);
@@ -1514,9 +1570,9 @@ class SodaScsDrupalHelpers {
 
       return SodaScsResult::success(
         data: [
-          'cleanBackupDirectory' => $cleanBackupDirectoryResult->data,
+          'deletedBackups'        => $deletedBackups,
           'escapeMaintenanceMode' => $escapeMaintenanceModeResult->data,
-          'clearDrupalCache' => $clearDrupalCacheResult->data,
+          'clearDrupalCache'      => $clearDrupalCacheResult->data,
         ],
         message: (string) $this->t('Post update steps completed successfully.'),
       );
