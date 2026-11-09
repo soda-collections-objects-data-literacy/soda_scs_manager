@@ -4,9 +4,11 @@ declare(strict_types=1);
 
 namespace Drupal\soda_scs_manager\Service;
 
+use Drupal\Core\Datetime\DateFormatterInterface;
 use Drupal\Core\Entity\ContentEntityInterface;
 use Drupal\Core\Logger\LoggerChannelInterface;
 use Drupal\Core\Session\AccountInterface;
+use Drupal\Core\StringTranslation\StringTranslationTrait;
 use Drupal\soda_scs_manager\Access\SodaScsManagerAdminAccess;
 use Drupal\soda_scs_manager\Entity\SodaScsComponentInterface;
 use Drupal\soda_scs_manager\Entity\SodaScsStackInterface;
@@ -24,15 +26,25 @@ use Symfony\Component\DependencyInjection\Attribute\Autowire;
  */
 class SodaScsWisskiAdminTasks {
 
+  use StringTranslationTrait;
+
+  /**
+   * Date format of image build dates.
+   */
+  private const BUILD_DATE_FORMAT = 'd.m.Y';
+
   /**
    * Characters of the image commit hash shown on the page.
    */
   public const SHORT_COMMIT_LENGTH = 7;
 
   /**
-   * OCI image label that carries the source commit of the image build.
+   * Image repository development instances are redeployed from.
+   *
+   * Used when the running image name does not reveal it (locally built or
+   * referenced by ID).
    */
-  private const REVISION_LABEL = 'org.opencontainers.image.revision';
+  private const DEVELOPMENT_IMAGE_REPOSITORY = 'ghcr.io/soda-collections-objects-data-literacy/wisski-base-image-development';
 
   /**
    * Bundle of WissKI components.
@@ -45,6 +57,10 @@ class SodaScsWisskiAdminTasks {
   public function __construct(
     #[Autowire(service: 'soda_scs_manager.container.helpers')]
     protected SodaScsContainerHelpers $containerHelpers,
+    #[Autowire(service: 'date.formatter')]
+    protected DateFormatterInterface $dateFormatter,
+    #[Autowire(service: 'soda_scs_manager.image_registry_client')]
+    protected SodaScsImageRegistryClient $imageRegistryClient,
     #[Autowire(service: 'logger.channel.soda_scs_manager')]
     protected LoggerChannelInterface $logger,
     #[Autowire(service: 'soda_scs_manager.service.helpers')]
@@ -60,21 +76,25 @@ class SodaScsWisskiAdminTasks {
    *   The viewing user.
    *
    * @return array{
-   *   availableVersion: string,
+   *   availableCommit: string,
+   *   availableLabel: string,
    *   clearVarnishCacheUrl: string,
    *   commitHash: string,
-   *   commitHashShort: string,
+   *   commitLabel: string,
    *   isDevelopment: bool,
    *   updateUrl: string,
    * }
-   *   Empty strings for everything that does not apply.
+   *   Empty strings for everything that does not apply. availableLabel is the
+   *   update target ("5.6.1" or "main (4c498db from 09.11.2026)"),
+   *   commitLabel the running build ("4c498db from 08.11.2026").
    */
   public function build(ContentEntityInterface $entity, AccountInterface $account): array {
     $build = [
-      'availableVersion'     => '',
+      'availableCommit'      => '',
+      'availableLabel'       => '',
       'clearVarnishCacheUrl' => '',
       'commitHash'           => '',
-      'commitHashShort'      => '',
+      'commitLabel'          => '',
       'isDevelopment'        => FALSE,
       'updateUrl'            => '',
     ];
@@ -96,15 +116,66 @@ class SodaScsWisskiAdminTasks {
       }
     }
 
+    $settings = $this->wisskiInstanceSettings();
     if ($isDevelopment) {
-      $build['commitHash'] = $this->imageCommit($component);
-      $build['commitHashShort'] = substr($build['commitHash'], 0, self::SHORT_COMMIT_LENGTH);
+      $running = $this->runningImage($component);
+      $build['commitHash'] = $running['revision'];
+      $build['commitLabel'] = $this->commitLabel($running);
+
+      $available = $this->availableDevelopmentBuild($running, (string) ($settings['imageDevelopmentVersion'] ?? ''));
+      $build['availableCommit'] = $available['revision'];
+      if ($available['tag'] !== '') {
+        $availableCommitLabel = $this->commitLabel($available);
+        $build['availableLabel'] = $availableCommitLabel !== ''
+          ? $available['tag'] . ' (' . $availableCommitLabel . ')'
+          : $available['tag'];
+      }
     }
     elseif ($entity->hasField('version')) {
-      $build['availableVersion'] = $this->availableVersion((string) ($entity->get('version')->value ?? ''));
+      $build['availableLabel'] = $this->availableProductionVersion(
+        (string) ($entity->get('version')->value ?? ''),
+        (string) ($settings['defaultVersion'] ?? ''),
+      );
     }
 
     return $build;
+  }
+
+  /**
+   * Newer development build than the running one.
+   *
+   * A development update redeploys from the configured development tag.
+   * There is an update when the instance runs another tag, or when the
+   * registry's build of that tag has another commit than the running image.
+   *
+   * @param array{created: int, image: string, revision: string} $running
+   *   The running image, see runningImage().
+   * @param string $targetTag
+   *   Configured development image tag, for example main.
+   *
+   * @return array{created: int, revision: string, tag: string}
+   *   Empty values when no update is known.
+   */
+  protected function availableDevelopmentBuild(array $running, string $targetTag): array {
+    $none = ['created' => 0, 'revision' => '', 'tag' => ''];
+    if ($targetTag === '') {
+      return $none;
+    }
+
+    [$runningRepository, $runningTag] = $this->splitImageReference($running['image']);
+    $repository = str_ends_with($runningRepository, '/wisski-base-image-development')
+      ? $runningRepository
+      : self::DEVELOPMENT_IMAGE_REPOSITORY;
+    $registryBuild = $this->imageRegistryClient->build($repository, $targetTag);
+
+    $otherTag = $runningTag !== '' && $runningTag !== $targetTag;
+    $otherCommit = $registryBuild['revision'] !== ''
+      && $running['revision'] !== ''
+      && $registryBuild['revision'] !== $running['revision'];
+    if (!$otherTag && !$otherCommit) {
+      return $none;
+    }
+    return $registryBuild + ['tag' => $targetTag];
   }
 
   /**
@@ -112,16 +183,10 @@ class SodaScsWisskiAdminTasks {
    *
    * @param string $installedVersion
    *   Version label stored on the displayed entity.
+   * @param string $defaultVersion
+   *   Version new production instances get.
    */
-  protected function availableVersion(string $installedVersion): string {
-    try {
-      $defaultVersion = (string) ($this->serviceHelpers->initWisskiInstanceSettings()['defaultVersion'] ?? '');
-    }
-    catch (\Throwable $e) {
-      $this->logger->warning('Could not read the WissKI default version: @message', ['@message' => $e->getMessage()]);
-      return '';
-    }
-
+  protected function availableProductionVersion(string $installedVersion, string $defaultVersion): string {
     if ($defaultVersion === '' || $installedVersion === '') {
       return '';
     }
@@ -136,21 +201,64 @@ class SodaScsWisskiAdminTasks {
   }
 
   /**
-   * Source commit of the image the WissKI Drupal container runs.
+   * Short commit hash with build date, e.g. "4c498db from 09.11.2026".
    *
-   * Images from the registry carry the OCI revision label; locally built
-   * images do not, so the result can be empty.
+   * @param array{created: int, revision: string} $build
+   *   Image build, see SodaScsImageRegistryClient::buildFromLabels().
+   *
+   * @return string
+   *   Empty when the commit is unknown.
    */
-  protected function imageCommit(SodaScsComponentInterface $component): string {
+  protected function commitLabel(array $build): string {
+    if ($build['revision'] === '') {
+      return '';
+    }
+    $shortCommit = substr($build['revision'], 0, self::SHORT_COMMIT_LENGTH);
+    if ($build['created'] <= 0) {
+      return $shortCommit;
+    }
+    return (string) $this->t('@commit from @date', [
+      '@commit' => $shortCommit,
+      '@date'   => $this->dateFormatter->format($build['created'], 'custom', self::BUILD_DATE_FORMAT),
+    ]);
+  }
+
+  /**
+   * Image name, source commit and build time of the WissKI Drupal container.
+   *
+   * Images from the registry carry the OCI labels; locally built images do
+   * not, so commit and build time can be empty.
+   *
+   * @return array{created: int, image: string, revision: string}
+   *   Empty values when the container is not found.
+   */
+  protected function runningImage(SodaScsComponentInterface $component): array {
     $lookup = $this->containerHelpers->findLiveContainerByName(
       $this->containerHelpers->getComponentContainerName($component),
     );
     if (!$lookup->success) {
-      return '';
+      return ['created' => 0, 'image' => '', 'revision' => ''];
     }
 
-    $revision = (string) ($lookup->data['labels'][self::REVISION_LABEL] ?? '');
-    return preg_match('/^[0-9a-f]{7,64}$/', $revision) ? $revision : '';
+    $labels = $lookup->data['labels'] ?? [];
+    return SodaScsImageRegistryClient::buildFromLabels(is_array($labels) ? $labels : [])
+      + ['image' => (string) ($lookup->data['image'] ?? '')];
+  }
+
+  /**
+   * Splits an image reference into repository and tag.
+   *
+   * @return array{0: string, 1: string}
+   *   Repository and tag; the tag is empty for digests and bare image IDs.
+   */
+  protected function splitImageReference(string $image): array {
+    $image = explode('@', $image, 2)[0];
+    $slash = strrpos($image, '/');
+    $colon = strrpos($image, ':');
+    if ($colon === FALSE || ($slash !== FALSE && $colon < $slash)) {
+      return [$image, ''];
+    }
+    return [substr($image, 0, $colon), substr($image, $colon + 1)];
   }
 
   /**
@@ -172,6 +280,22 @@ class SodaScsWisskiAdminTasks {
       }
     }
     return NULL;
+  }
+
+  /**
+   * WissKI instance settings, or an empty array when they are incomplete.
+   *
+   * @return array<string, mixed>
+   *   See SodaScsServiceHelpers::initWisskiInstanceSettings().
+   */
+  protected function wisskiInstanceSettings(): array {
+    try {
+      return $this->serviceHelpers->initWisskiInstanceSettings();
+    }
+    catch (\Throwable $e) {
+      $this->logger->warning('Could not read the WissKI instance settings: @message', ['@message' => $e->getMessage()]);
+      return [];
+    }
   }
 
 }

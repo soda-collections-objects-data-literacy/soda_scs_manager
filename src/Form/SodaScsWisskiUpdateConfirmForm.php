@@ -16,6 +16,7 @@ use Drupal\soda_scs_manager\Access\SodaScsManagerAdminAccess;
 use Drupal\soda_scs_manager\Entity\SodaScsComponentInterface;
 use Drupal\soda_scs_manager\Helpers\SodaScsDrupalHelpers;
 use Drupal\soda_scs_manager\Helpers\SodaScsProgressHelper;
+use Drupal\soda_scs_manager\Service\SodaScsWisskiAdminTasks;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 
 /**
@@ -32,6 +33,11 @@ class SodaScsWisskiUpdateConfirmForm extends ConfirmFormBase {
   protected SodaScsComponentInterface $component;
 
   /**
+   * Version or build the update moves to, empty when unknown.
+   */
+  protected string $updateTarget = '';
+
+  /**
    * Constructs the confirm form.
    */
   public function __construct(
@@ -39,6 +45,7 @@ class SodaScsWisskiUpdateConfirmForm extends ConfirmFormBase {
     protected LoggerChannelInterface $logger,
     protected SodaScsDrupalHelpers $sodaScsDrupalHelpers,
     protected SodaScsProgressHelper $sodaScsProgressHelper,
+    protected SodaScsWisskiAdminTasks $wisskiAdminTasks,
   ) {}
 
   /**
@@ -50,6 +57,7 @@ class SodaScsWisskiUpdateConfirmForm extends ConfirmFormBase {
       $container->get('logger.channel.soda_scs_manager'),
       $container->get('soda_scs_manager.drupal.helpers'),
       $container->get('soda_scs_manager.progress.helpers'),
+      $container->get('soda_scs_manager.wisski_admin_tasks'),
     );
   }
 
@@ -91,6 +99,7 @@ class SodaScsWisskiUpdateConfirmForm extends ConfirmFormBase {
       throw new \InvalidArgumentException('WissKI component is required.');
     }
     $this->component = $soda_scs_component;
+    $this->updateTarget = $this->wisskiAdminTasks->build($soda_scs_component, $this->currentUser())['availableLabel'];
 
     $form = parent::buildForm($form, $form_state);
     $form['actions']['submit']['#attributes']['class'][] = 'soda-scs-component--component--form-submit';
@@ -120,6 +129,9 @@ class SodaScsWisskiUpdateConfirmForm extends ConfirmFormBase {
    * {@inheritdoc}
    */
   public function getConfirmText() {
+    if ($this->updateTarget !== '') {
+      return $this->t('Update to @target', ['@target' => $this->updateTarget]);
+    }
     return $this->t('Update');
   }
 

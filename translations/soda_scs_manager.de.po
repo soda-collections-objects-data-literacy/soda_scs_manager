@@ -5302,6 +5302,14 @@ msgid "Update"
 msgstr "Aktualisieren"
 
 #: src/Form/SodaScsWisskiUpdateConfirmForm.php
+msgid "Update to @target"
+msgstr "Aktualisieren auf @target"
+
+#: src/Service/SodaScsWisskiAdminTasks.php
+msgid "@commit from @date"
+msgstr "@commit vom @date"
+
+#: src/Form/SodaScsWisskiUpdateConfirmForm.php
 msgid "Update @label?"
 msgstr "@label aktualisieren?"
 

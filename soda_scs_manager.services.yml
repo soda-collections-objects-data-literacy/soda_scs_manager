@@ -90,6 +90,8 @@ services:
     class: Drupal\soda_scs_manager\Service\SodaScsWisskiVarnishCache
   soda_scs_manager.wisski_admin_tasks:
     class: Drupal\soda_scs_manager\Service\SodaScsWisskiAdminTasks
+  soda_scs_manager.image_registry_client:
+    class: Drupal\soda_scs_manager\Service\SodaScsImageRegistryClient
   soda_scs_manager.volume_archive.helpers:
     class: Drupal\soda_scs_manager\Helpers\SodaScsVolumeArchiveHelpers
   soda_scs_manager.demo.api_credentials:

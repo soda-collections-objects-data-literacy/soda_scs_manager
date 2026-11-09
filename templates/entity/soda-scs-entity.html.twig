@@ -92,11 +92,11 @@
 						<a class="btn btn--secondary" href="{{ wisski_admin.updateUrl }}" title="{{ wisski_admin.isDevelopment ?'Redeploys this instance with the current development images.'|t : 'Updates this instance to the latest production version.'|t }}">{{ 'Update'|t }}</a>
 					{% endif %}
 				</div>
-				{% if wisski_admin.commitHashShort %}
-					<p><span class="text--label">{{ 'Commit'|t }}: </span><code title="{{ wisski_admin.commitHash }}">{{ wisski_admin.commitHashShort }}</code></p>
+				{% if wisski_admin.commitLabel %}
+					<p><span class="text--label">{{ 'Commit'|t }}: </span><span title="{{ wisski_admin.commitHash }}">{{ wisski_admin.commitLabel }}</span></p>
 				{% endif %}
-				{% if wisski_admin.availableVersion %}
-					<p class="application__version-update-available"><span class="text--label">{{ 'Update available'|t }}: </span>{{ wisski_admin.availableVersion }}</p>
+				{% if wisski_admin.availableLabel %}
+					<p class="application__version-update-available"><span class="text--label">{{ 'Update available'|t }}: </span><span title="{{ wisski_admin.availableCommit }}">{{ wisski_admin.availableLabel }}</span></p>
 				{% endif %}
 			{% endif %}
 			{% if elements.automatedUpdates %}
