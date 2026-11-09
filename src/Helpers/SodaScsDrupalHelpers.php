@@ -36,6 +36,11 @@ class SodaScsDrupalHelpers {
   private const DATABASE_DUMP_COMPLETE_MARKER = '-- Dump completed';
 
   /**
+   * Package-set marker the WissKI entrypoint keeps in the sites volume.
+   */
+  private const SITE_PACKAGES_VERSION_FILE = '/opt/drupal/web/sites/.wisski-packages-version';
+
+  /**
    * Directory below the snapshot root that holds pre-update database dumps.
    *
    * The snapshot root is shared by the manager and the MariaDB container and
@@ -904,11 +909,32 @@ class SodaScsDrupalHelpers {
       $this->sodaScsProgressHelper->createStep($updateDrupalPackagesOperationUuid, 'Drupal is healthy');
       $resultData['ensureDrupalHealthy'] = $ensureDrupalHealthyResult->data;
 
-      // 2. Secure the database before updating.
+      // 2. Record the current deployment, so a failed update can return to
+      // exactly this image, compose stack and package-set marker.
+      $this->sodaScsProgressHelper->createStep($updateDrupalPackagesOperationUuid, 'Record current deployment');
+      $captureDeploymentResult = $this->sodaScsWisskiComponentActions->captureDeployment($component);
+      if (!$captureDeploymentResult->success) {
+        $this->sodaScsProgressHelper->createStep($updateDrupalPackagesOperationUuid, 'Failed to record current deployment');
+        return SodaScsResult::failure(
+          error: 'Failed to record the current deployment: ' . ($captureDeploymentResult->error ?? ''),
+          message: (string) $this->t('Failed to secure Drupal database. Not updating packages.'),
+        );
+      }
+      $previousDeployment = $captureDeploymentResult->data['deployment'];
+      $previousDeployment['sitePackagesVersion'] = $this->readSitePackagesVersion($component);
+      $resultData['previousDeployment'] = [
+        'imageVersion'        => $previousDeployment['imageVersion'],
+        'repositoryReference' => $previousDeployment['repositoryReference'],
+        'sitePackagesVersion' => $previousDeployment['sitePackagesVersion'],
+      ];
+
+      // 3. Secure the database before updating.
       $this->sodaScsProgressHelper->createStep($updateDrupalPackagesOperationUuid, 'Secure Drupal database');
       $secureDrupalPackagesAndDatabaseResult = $this->secureDrupalPackagesAndDatabase($component);
       if (!$secureDrupalPackagesAndDatabaseResult->success) {
         $this->sodaScsProgressHelper->createStep($updateDrupalPackagesOperationUuid, 'Failed to secure Drupal database');
+        // Nothing has changed yet; only maintenance mode may be on.
+        $this->setDrupalMaintainmentMode($component, FALSE);
         return SodaScsResult::failure(
           error: 'Failed to secure Drupal database: ' . ($secureDrupalPackagesAndDatabaseResult->error ?? ''),
           message: (string) $this->t('Failed to secure Drupal database. Not updating packages.'),
@@ -918,15 +944,14 @@ class SodaScsDrupalHelpers {
       $resultData['secureDrupalPackagesAndDatabase'] = $secureDrupalPackagesAndDatabaseResult->data;
       $backupPath = $secureDrupalPackagesAndDatabaseResult->data['backupPath'];
 
-      // 3. Redeploy the WissKI stack with the baked-in package image.
+      // 4. Redeploy the WissKI stack with the baked-in package image. From
+      // here on the new image's entrypoint may change the database, so every
+      // failure rolls back database and deployment together.
       $this->sodaScsProgressHelper->createStep($updateDrupalPackagesOperationUuid, 'Redeploy WissKI stack with updated image');
       $stackRedeployResult = $this->sodaScsWisskiComponentActions->redeployStackWithVersion($component, $targetVersion);
       if (!$stackRedeployResult->success) {
-        $this->sodaScsProgressHelper->createStep($updateDrupalPackagesOperationUuid, 'Failed to redeploy WissKI stack');
-        return SodaScsResult::failure(
-          error: 'Failed to redeploy WissKI stack: ' . ($stackRedeployResult->error ?? ''),
-          message: (string) $this->t('Failed to redeploy WissKI stack. Not updating packages.'),
-        );
+        return $this->rollbackUpdate($component, $backupPath, $previousDeployment, $updateDrupalPackagesOperationUuid,
+          'Failed to redeploy WissKI stack: ' . ($stackRedeployResult->error ?? ''));
       }
       $this->sodaScsProgressHelper->createStep($updateDrupalPackagesOperationUuid, 'Redeployed WissKI stack');
       $resultData['stackRedeploy'] = $stackRedeployResult->data;
@@ -934,33 +959,17 @@ class SodaScsDrupalHelpers {
       $this->sodaScsProgressHelper->createStep($updateDrupalPackagesOperationUuid, 'Wait for Drupal to become healthy');
       $ensureDrupalHealthyAfterRedeployResult = $this->ensureDrupalHealthy($component, wait: TRUE);
       if (!$ensureDrupalHealthyAfterRedeployResult->success) {
-        $this->sodaScsProgressHelper->createStep($updateDrupalPackagesOperationUuid, 'Failed to ensure Drupal is healthy after redeploy');
-        return SodaScsResult::failure(
-          error: 'Drupal is not healthy after redeploy: ' . ($ensureDrupalHealthyAfterRedeployResult->error ?? ''),
-          message: (string) $this->t('Drupal is not healthy after redeploy. Not updating packages.'),
-        );
+        return $this->rollbackUpdate($component, $backupPath, $previousDeployment, $updateDrupalPackagesOperationUuid,
+          'Drupal is not healthy after redeploy: ' . ($ensureDrupalHealthyAfterRedeployResult->error ?? ''));
       }
       $resultData['ensureDrupalHealthyAfterRedeploy'] = $ensureDrupalHealthyAfterRedeployResult->data;
 
-      // 4. Update the Drupal database with drush updatedb.
+      // 5. Update the Drupal database with drush updatedb.
       $this->sodaScsProgressHelper->createStep($updateDrupalPackagesOperationUuid, 'Perform database update');
       $databaseUpdateResult = $this->updateDrupalDatabase($component);
       if (!$databaseUpdateResult->success) {
-        $this->sodaScsProgressHelper->createStep($updateDrupalPackagesOperationUuid, 'Failed to perform database update. Rolling back...');
-        $rollbackDatabaseUpdateResult = $this->rollbackDatabaseUpdate($component, $backupPath);
-        if (!$rollbackDatabaseUpdateResult->success) {
-          $this->sodaScsProgressHelper->createStep($updateDrupalPackagesOperationUuid, 'Failed to roll back database');
-          return SodaScsResult::failure(
-            error: 'Failed to rollback database update: ' . ($rollbackDatabaseUpdateResult->error ?? ''),
-            message: (string) $this->t('Failed to rollback database update. Not updating packages.'),
-          );
-        }
-        $this->sodaScsProgressHelper->createStep($updateDrupalPackagesOperationUuid, 'Rolled back database');
-        $resultData['rollbackDatabaseUpdate'] = $rollbackDatabaseUpdateResult->data;
-        return SodaScsResult::failure(
-          error: 'Failed to update database; restored ' . $backupPath . ', the site stays in maintenance mode: ' . ($databaseUpdateResult->error ?? ''),
-          message: (string) $this->t('Failed to update database. Not updating packages.'),
-        );
+        return $this->rollbackUpdate($component, $backupPath, $previousDeployment, $updateDrupalPackagesOperationUuid,
+          'Failed to update database: ' . ($databaseUpdateResult->error ?? ''));
       }
       $this->sodaScsProgressHelper->createStep($updateDrupalPackagesOperationUuid, 'Performed database update');
       $resultData['databaseUpdate'] = $databaseUpdateResult->data;
@@ -1362,26 +1371,83 @@ class SodaScsDrupalHelpers {
   }
 
   /**
-   * Rolls back the database update.
+   * Rolls back a failed update and reports the outcome.
+   *
+   * Restores the pre-update database and the recorded deployment. When both
+   * succeed and Drupal comes up healthy, maintenance mode is switched off;
+   * otherwise the site stays in maintenance mode for a manual check.
+   *
+   * @param \Drupal\soda_scs_manager\Entity\SodaScsComponentInterface $component
+   *   The WissKI component.
+   * @param string $backupPath
+   *   The dump file written by secureDrupalPackagesAndDatabase().
+   * @param array $previousDeployment
+   *   The deployment recorded before the update.
+   * @param string $operationUuid
+   *   The progress operation UUID.
+   * @param string $reason
+   *   Why the update failed, for the log.
+   *
+   * @return \Drupal\soda_scs_manager\ValueObject\SodaScsResult
+   *   Always a failure; the message tells how far the rollback got.
+   */
+  private function rollbackUpdate(SodaScsComponentInterface $component, string $backupPath, array $previousDeployment, string $operationUuid, string $reason): SodaScsResult {
+    $this->sodaScsProgressHelper->createStep($operationUuid, 'Update failed. Rolling back...');
+    $rollbackResult = $this->rollbackDatabaseUpdate($component, $backupPath, $previousDeployment);
+    if (!$rollbackResult->success) {
+      $this->sodaScsProgressHelper->createStep($operationUuid, 'Failed to roll back');
+      return SodaScsResult::failure(
+        error: $reason . ' Rollback failed: ' . ($rollbackResult->error ?? ''),
+        message: (string) $this->t('The update failed and could not be rolled back. The site stays in maintenance mode; the log names the backup files.'),
+      );
+    }
+
+    if (!$rollbackResult->data['deploymentRestored']) {
+      $this->sodaScsProgressHelper->createStep($operationUuid, 'Restored database; previous version not redeployed');
+      return SodaScsResult::failure(
+        error: $reason . ' Database restored from ' . $backupPath . ', but the previous deployment could not be redeployed: ' . $rollbackResult->data['deploymentError'],
+        message: (string) $this->t('The update failed. The database was restored, but the previous version could not be redeployed; the site stays in maintenance mode.'),
+      );
+    }
+
+    $healthResult = $this->ensureDrupalHealthy($component, wait: TRUE);
+    if ($healthResult->success) {
+      $this->setDrupalMaintainmentMode($component, FALSE);
+      $this->clearDrupalCache($component);
+    }
+    $this->sodaScsProgressHelper->createStep($operationUuid, 'Rolled back to the previous version');
+    return SodaScsResult::failure(
+      error: $reason . ' Rolled back to ' . $previousDeployment['imageVersion'] . ' with the database from ' . $backupPath
+        . ($healthResult->success ? '.' : '; Drupal is not healthy yet and stays in maintenance mode.'),
+      message: (string) $this->t('The update failed and was rolled back to the previous version.'),
+    );
+  }
+
+  /**
+   * Restores the pre-update database and the previous deployment.
    *
    * Restores the pre-update dump while the WissKI container is stopped, so
    * neither the container entrypoint nor a running request writes to the
    * database meanwhile. The import runs inside the MariaDB container and
    * therefore cannot be cut off by a redeploy of the WissKI stack. The
-   * current state is dumped first, so a failed restore loses nothing.
+   * current state is dumped first, so a failed restore loses nothing. Then
+   * the stack is redeployed with the previous image, pinned by digest.
    *
-   * The stack keeps the new image; the restored database still has
-   * maintenance mode enabled, as it was dumped after enabling it.
+   * The restored database still has maintenance mode enabled, as it was
+   * dumped after enabling it.
    *
    * @param \Drupal\soda_scs_manager\Entity\SodaScsComponentInterface $component
    *   The Drupal component.
    * @param string $backupPath
    *   The dump file written by secureDrupalPackagesAndDatabase().
+   * @param array $previousDeployment
+   *   The deployment recorded before the update.
    *
    * @return \Drupal\soda_scs_manager\ValueObject\SodaScsResult
-   *   The Soda SCS result.
+   *   Success when the database is restored; data['deploymentRestored'] and
+   *   data['deploymentError'] tell whether the previous deployment is back.
    */
-  private function rollbackDatabaseUpdate(SodaScsComponentInterface $component, string $backupPath): SodaScsResult {
+  private function rollbackDatabaseUpdate(SodaScsComponentInterface $component, string $backupPath, array $previousDeployment): SodaScsResult {
     if (!$this->isCompleteDatabaseDump($backupPath)) {
       return SodaScsResult::failure(
         error: 'Database dump ' . $backupPath . ' is missing or incomplete; database left untouched.',
@@ -1397,48 +1463,46 @@ class SodaScsDrupalHelpers {
       );
     }
 
+    // The previous image's entrypoint must see its own package set, or it
+    // re-imports the recipe config over the restored database.
+    $sitePackagesVersion = (string) ($previousDeployment['sitePackagesVersion'] ?? '');
+    if ($sitePackagesVersion !== '') {
+      $this->writeSitePackagesVersion($component, $sitePackagesVersion);
+    }
+
     $containerName = $this->sodaScsContainerHelpers->getComponentContainerName($component);
     $stopResult = $this->sodaScsContainerHelpers->stopContainer($containerName);
     if (!$stopResult->success) {
+      $container = $this->sodaScsContainerHelpers->findLiveContainerByName($containerName);
+      if (!$container->success || ($container->data['state'] ?? '') === 'running') {
+        return SodaScsResult::failure(
+          error: 'Could not stop the WissKI container before the restore: ' . ($stopResult->error ?? ''),
+          message: (string) $this->t('Failed to restore database from backup.'),
+        );
+      }
+    }
+
+    $failedStatePath = preg_replace('/\.sql$/', '', $backupPath) . '-failed-update.sql';
+    $failedStateResult = $this->sodaScsDatabaseHelpers->exportDatabaseToFile($databaseName, $failedStatePath);
+    if (!$failedStateResult->success) {
+      $this->sodaScsContainerHelpers->startContainer($containerName);
       return SodaScsResult::failure(
-        error: 'Could not stop the WissKI container before the restore: ' . ($stopResult->error ?? ''),
+        error: 'Could not dump the current database state before the restore; database left untouched: ' . ($failedStateResult->error ?? ''),
         message: (string) $this->t('Failed to restore database from backup.'),
       );
     }
 
-    try {
-      $failedStatePath = preg_replace('/\.sql$/', '', $backupPath) . '-failed-update.sql';
-      $failedStateResult = $this->sodaScsDatabaseHelpers->exportDatabaseToFile($databaseName, $failedStatePath);
-      if (!$failedStateResult->success) {
-        return SodaScsResult::failure(
-          error: 'Could not dump the current database state before the restore; database left untouched: ' . ($failedStateResult->error ?? ''),
-          message: (string) $this->t('Failed to restore database from backup.'),
-        );
-      }
-
-      $restoreResult = $this->sodaScsDatabaseHelpers->importDatabaseFromFile($databaseName, $backupPath, TRUE);
-      if (!$restoreResult->success) {
-        return SodaScsResult::failure(
-          error: 'Restore from ' . $backupPath . ' failed; the state before the restore is in ' . $failedStatePath . ': ' . ($restoreResult->error ?? ''),
-          message: (string) $this->t('Failed to restore database from backup.'),
-        );
-      }
-
-      return SodaScsResult::success(
-        data: [
-          'backupPath'      => $backupPath,
-          'failedStatePath' => $failedStatePath,
-        ],
-        message: (string) $this->t('Database restored successfully from backup.'),
-      );
-    }
-    catch (\Exception $e) {
+    $restoreResult = $this->sodaScsDatabaseHelpers->importDatabaseFromFile($databaseName, $backupPath, TRUE);
+    if (!$restoreResult->success) {
+      // The container stays stopped: the database may be half imported.
       return SodaScsResult::failure(
-        error: 'Failed to rollback database update: ' . $e->getMessage(),
-        message: (string) $this->t('Failed to rollback database update.'),
+        error: 'Restore from ' . $backupPath . ' failed; the WissKI container stays stopped and the state before the restore is in ' . $failedStatePath . ': ' . ($restoreResult->error ?? ''),
+        message: (string) $this->t('Failed to restore database from backup.'),
       );
     }
-    finally {
+
+    $deploymentResult = $this->sodaScsWisskiComponentActions->restoreDeployment($component, $previousDeployment);
+    if (!$deploymentResult->success) {
       $startResult = $this->sodaScsContainerHelpers->startContainer($containerName);
       if (!$startResult->success) {
         $this->loggerFactory->get('soda_scs_manager')->error('Could not start WissKI container @container after the database restore: @error', [
@@ -1446,6 +1510,60 @@ class SodaScsDrupalHelpers {
           '@error'     => $startResult->error ?? '',
         ]);
       }
+    }
+
+    return SodaScsResult::success(
+      data: [
+        'backupPath'         => $backupPath,
+        'deploymentError'    => $deploymentResult->success ? '' : (string) ($deploymentResult->error ?? ''),
+        'deploymentRestored' => $deploymentResult->success,
+        'failedStatePath'    => $failedStatePath,
+      ],
+      message: (string) $this->t('Database restored successfully from backup.'),
+    );
+  }
+
+  /**
+   * Reads the package-set marker the WissKI entrypoint keeps in sites/.
+   *
+   * @param \Drupal\soda_scs_manager\Entity\SodaScsComponentInterface $component
+   *   The WissKI component.
+   *
+   * @return string
+   *   The marker, empty when it cannot be read.
+   */
+  private function readSitePackagesVersion(SodaScsComponentInterface $component): string {
+    $result = $this->sodaScsContainerHelpers->executeDockerExecCommand([
+      'cmd'           => ['cat', self::SITE_PACKAGES_VERSION_FILE],
+      'containerName' => $this->sodaScsContainerHelpers->getComponentContainerName($component),
+      'user'          => 'www-data',
+    ]);
+    $version = $result->success ? trim((string) ($result->data['output'] ?? '')) : '';
+    return preg_match('/^[\w.\-]+$/', $version) ? $version : '';
+  }
+
+  /**
+   * Writes the package-set marker the WissKI entrypoint keeps in sites/.
+   *
+   * A failure is only logged: the rollback continues, and the entrypoint
+   * then re-imports the recipe config once.
+   *
+   * @param \Drupal\soda_scs_manager\Entity\SodaScsComponentInterface $component
+   *   The WissKI component.
+   * @param string $version
+   *   The marker value.
+   */
+  private function writeSitePackagesVersion(SodaScsComponentInterface $component, string $version): void {
+    $result = $this->sodaScsContainerHelpers->executeDockerExecCommand([
+      'cmd'           => ['sh', '-c', 'printf "%s\n" "$0" > ' . self::SITE_PACKAGES_VERSION_FILE, $version],
+      'containerName' => $this->sodaScsContainerHelpers->getComponentContainerName($component),
+      'user'          => 'root',
+    ]);
+    if (!$result->success) {
+      $this->loggerFactory->get('soda_scs_manager')->warning('Could not reset the package-set marker of WissKI component @id: @error', [
+        '@error' => $result->error ?? '',
+        '@id'    => $component->id(),
+      ]);
     }
   }
 

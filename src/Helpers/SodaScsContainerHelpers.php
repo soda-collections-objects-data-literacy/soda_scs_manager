@@ -663,8 +663,8 @@ class SodaScsContainerHelpers {
    *   Container name without a leading slash.
    *
    * @return \Drupal\soda_scs_manager\ValueObject\SodaScsResult
-   *   Success data contains containerId, containerName, image, labels
-   *   (container and image labels), and state.
+   *   Success data contains containerId, containerName, image, imageId,
+   *   labels (container and image labels), and state.
    */
   public function findLiveContainerByName(string $containerName): SodaScsResult {
     $dockerGetAllContainersRequest = $this->sodaScsDockerRunServiceActions->buildGetAllRequest([
@@ -701,8 +701,41 @@ class SodaScsContainerHelpers {
         'containerId' => (string) ($matchedContainer['Id'] ?? ''),
         'containerName' => $containerName,
         'image' => (string) ($matchedContainer['Image'] ?? ''),
+        'imageId' => (string) ($matchedContainer['ImageID'] ?? ''),
         'labels' => is_array($matchedContainer['Labels'] ?? NULL) ? $matchedContainer['Labels'] : [],
         'state' => (string) ($matchedContainer['State'] ?? ''),
+      ],
+    );
+  }
+
+  /**
+   * Returns the registry digests of a local image.
+   *
+   * @param string $imageId
+   *   The image ID (sha256:…).
+   *
+   * @return \Drupal\soda_scs_manager\ValueObject\SodaScsResult
+   *   Success data['repoDigests'] holds "repository@sha256:…" strings; empty
+   *   for images that were never pulled from a registry.
+   */
+  public function findImageRepoDigests(string $imageId): SodaScsResult {
+    $response = $this->sodaScsDockerRunServiceActions->makeRequest(
+      $this->sodaScsDockerRunServiceActions->buildImageInspectRequest($imageId),
+    );
+    if (!$response['success']) {
+      return SodaScsResult::failure(
+        error: (string) ($response['error'] ?? 'Docker image inspect failed.'),
+        message: (string) $this->t('Failed to inspect image.'),
+        log: FALSE,
+      );
+    }
+
+    $image = json_decode($response['data']['portainerResponse']->getBody()->getContents(), TRUE);
+    $repoDigests = is_array($image['RepoDigests'] ?? NULL) ? $image['RepoDigests'] : [];
+    return SodaScsResult::success(
+      message: (string) $this->t('Image inspected.'),
+      data: [
+        'repoDigests' => array_values(array_filter($repoDigests, 'is_string')),
       ],
     );
   }

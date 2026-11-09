@@ -453,6 +453,35 @@ class SodaScsDockerRunServiceActions implements SodaScsRunRequestInterface {
   }
 
   /**
+   * Builds the inspect image request for the Docker image API.
+   *
+   * @param string $imageId
+   *   The image ID (sha256:…) or reference.
+   *
+   * @return array
+   *   The inspect request.
+   */
+  public function buildImageInspectRequest(string $imageId): array {
+    $portainerServiceSettings = $this->sodaScsServiceHelpers->initPortainerServiceSettings();
+    $dockerApiSettings = $this->sodaScsServiceHelpers->initDockerApiSettings();
+
+    // https://portainer.example.com/api/endpoints/{endpointId}/docker/images/{id}/json.
+    $route = $portainerServiceSettings['host']
+      . $portainerServiceSettings['baseUrl']
+      . str_replace('{endpointId}', (string) $portainerServiceSettings['endpointId'], $dockerApiSettings['baseUrl'])
+      . '/images/' . rawurlencode($imageId) . '/json';
+
+    return [
+      'method' => 'GET',
+      'route' => $route,
+      'headers' => [
+        'Accept' => 'application/json',
+        'X-API-Key' => $portainerServiceSettings['authenticationToken'],
+      ],
+    ];
+  }
+
+  /**
    * Builds the inspect container request for the Docker container API.
    *
    * @param array $requestParams

@@ -34,8 +34,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     rollback.
   - The rollback stops the WissKI container, dumps the current state to
     `<timestamp>-failed-update.sql`, and restores from inside the MariaDB
-    container. The site stays in maintenance mode on the new image; the
-    error names the dump files.
+    container. The error names the dump files.
+- A failed WissKI update now returns to the previous version, not only the
+  previous database. Before the redeploy the manager records the Portainer
+  env, the compose stack ref and the running Drupal image by registry digest
+  (`main@sha256:…`, so this also works for development instances on a
+  rolling tag), plus the entrypoint's package-set marker. Any failure from
+  the redeploy on (redeploy error, Drupal not healthy, `drush updatedb`)
+  restores the database, resets the marker so the old entrypoint does not
+  re-import recipe config, redeploys the recorded state, and leaves
+  maintenance mode once Drupal is healthy. If the previous version cannot be
+  redeployed, the site stays in maintenance mode on the new image with the
+  restored database.
+- A failed pre-update dump no longer leaves the site in maintenance mode.
 
 ## [4.1.0] - 2026-11-09
 

@@ -5568,3 +5568,15 @@ msgstr "Mitgliederrolle festlegen"
 #: templates/entity/soda-scs-manager--project-members.html.twig
 msgid "This project has no application with roles yet. Roles can currently be set for WissKI instances."
 msgstr "Dieses Projekt hat noch keine Anwendung mit Rollen. Rollen lassen sich derzeit für WissKI-Instanzen festlegen."
+
+#: src/Helpers/SodaScsDrupalHelpers.php
+msgid "The update failed and was rolled back to the previous version."
+msgstr "Das Update ist fehlgeschlagen und wurde auf die vorherige Version zurückgesetzt."
+
+#: src/Helpers/SodaScsDrupalHelpers.php
+msgid "The update failed. The database was restored, but the previous version could not be redeployed; the site stays in maintenance mode."
+msgstr "Das Update ist fehlgeschlagen. Die Datenbank wurde wiederhergestellt, die vorherige Version konnte aber nicht erneut ausgerollt werden; die Seite bleibt im Wartungsmodus."
+
+#: src/Helpers/SodaScsDrupalHelpers.php
+msgid "The update failed and could not be rolled back. The site stays in maintenance mode; the log names the backup files."
+msgstr "Das Update ist fehlgeschlagen und konnte nicht zurückgesetzt werden. Die Seite bleibt im Wartungsmodus; das Protokoll nennt die Sicherungsdateien."

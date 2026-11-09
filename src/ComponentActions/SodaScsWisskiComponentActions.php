@@ -77,6 +77,13 @@ class SodaScsWisskiComponentActions implements SodaScsComponentActionsInterface 
   private const CONTAINER_POLL_INTERVAL_SECONDS = 5;
 
   /**
+   * Image repository of the WissKI Drupal container, without the mode suffix.
+   *
+   * The stack uses "<prefix><MODE>:<WISSKI_BASE_IMAGE_VERSION>".
+   */
+  private const WISSKI_BASE_IMAGE_REPOSITORY_PREFIX = 'ghcr.io/soda-collections-objects-data-literacy/wisski-base-image-';
+
+  /**
    * The bundle info.
    *
    * @var \Drupal\Core\Entity\EntityTypeBundleInfoInterface
@@ -582,6 +589,67 @@ class SodaScsWisskiComponentActions implements SodaScsComponentActionsInterface 
   }
 
   /**
+   * Records how the WissKI stack is deployed right now.
+   *
+   * The result can be passed to restoreDeployment() to return to exactly this
+   * state. The Drupal image is pinned by its registry digest, so a rolling
+   * tag such as "main" or "latest" resolves to the image that ran before.
+   *
+   * @param \Drupal\soda_scs_manager\Entity\SodaScsComponentInterface $component
+   *   The WissKI component.
+   *
+   * @return \Drupal\soda_scs_manager\ValueObject\SodaScsResult
+   *   Success data['deployment'] holds env, repositoryReference,
+   *   imageVersion and imagePinned.
+   */
+  public function captureDeployment(SodaScsComponentInterface $component): SodaScsResult {
+    $stackResult = $this->loadStackPayload($component);
+    if (!$stackResult->success) {
+      return $stackResult;
+    }
+    $stackPayload = $stackResult->data['stackPayload'];
+    $env = is_array($stackPayload['Env'] ?? NULL) ? $stackPayload['Env'] : [];
+    $envByName = array_column(array_filter($env, 'is_array'), 'value', 'name');
+
+    $imageTag = (string) ($envByName['WISSKI_BASE_IMAGE_VERSION'] ?? '') ?: 'latest';
+    $imageTag = (string) strtok($imageTag, '@');
+    $imageRepository = self::WISSKI_BASE_IMAGE_REPOSITORY_PREFIX . ((string) ($envByName['MODE'] ?? '') ?: 'production');
+
+    $imageDigest = '';
+    $container = $this->sodaScsContainerHelpers->findLiveContainerByName($this->getDrupalContainerName($component));
+    $imageId = $container->success ? (string) ($container->data['imageId'] ?? '') : '';
+    if ($imageId !== '') {
+      $digestResult = $this->sodaScsContainerHelpers->findImageRepoDigests($imageId);
+      foreach ($digestResult->success ? $digestResult->data['repoDigests'] : [] as $repoDigest) {
+        if (str_starts_with($repoDigest, $imageRepository . '@')) {
+          $imageDigest = substr($repoDigest, strlen($imageRepository) + 1);
+          break;
+        }
+      }
+    }
+    if ($imageDigest === '') {
+      $this->logger->warning('No registry digest for the image of WissKI component @id; a rollback would redeploy tag @tag, which may point to a newer image.', [
+        '@id'  => $component->id(),
+        '@tag' => $imageTag,
+      ]);
+    }
+
+    return SodaScsResult::success(
+      message: (string) $this->t('WissKI deployment recorded.'),
+      data: [
+        'deployment' => [
+          'env'                 => $env,
+          'imagePinned'         => $imageDigest !== '',
+          // Compose builds "<repository>:<tag>@<digest>"; Docker then pulls
+          // and runs by digest and ignores the tag.
+          'imageVersion'        => $imageDigest !== '' ? $imageTag . '@' . $imageDigest : $imageTag,
+          'repositoryReference' => (string) ($stackPayload['GitConfig']['ReferenceName'] ?? ''),
+        ],
+      ],
+    );
+  }
+
+  /**
    * Redeploys a WissKI stack to pick up baked-in Drupal/WissKI packages.
    *
    * Packages are now shipped in the wisski-base-image, so updates pull the
@@ -596,6 +664,85 @@ class SodaScsWisskiComponentActions implements SodaScsComponentActionsInterface 
    *   Result of the redeploy operation.
    */
   public function redeployStackWithVersion(SodaScsComponentInterface $component, ?string $targetVersion = 'latest'): SodaScsResult {
+    $stackResult = $this->loadStackPayload($component);
+    if (!$stackResult->success) {
+      return $stackResult;
+    }
+
+    $versionSettings = $this->resolveWisskiVersionSettings($component, $targetVersion);
+    $updatedEnv = $this->mergeStackEnvVars(
+      $stackResult->data['stackPayload']['Env'] ?? [],
+      $this->mapVersionSettingsToEnvVars($versionSettings),
+    );
+    $composeStackVersion = (string) ($versionSettings['wisskiComposeStackVersion'] ?? '');
+
+    $redeployResult = $this->redeployStack($component, $stackResult->data['stackId'], $updatedEnv, $composeStackVersion, TRUE);
+    if (!$redeployResult->success) {
+      return $redeployResult;
+    }
+
+    return SodaScsResult::success(
+      message: (string) $this->t('WissKI stack redeployed successfully.'),
+      data: $redeployResult->data + ['versionSettings' => $versionSettings],
+    );
+  }
+
+  /**
+   * Returns a WissKI stack to a deployment recorded by captureDeployment().
+   *
+   * @param \Drupal\soda_scs_manager\Entity\SodaScsComponentInterface $component
+   *   The WissKI component.
+   * @param array $deployment
+   *   data['deployment'] of captureDeployment().
+   *
+   * @return \Drupal\soda_scs_manager\ValueObject\SodaScsResult
+   *   Result of the redeploy operation.
+   */
+  public function restoreDeployment(SodaScsComponentInterface $component, array $deployment): SodaScsResult {
+    $stackResult = $this->loadStackPayload($component);
+    if (!$stackResult->success) {
+      return $stackResult;
+    }
+
+    $env = $this->mergeStackEnvVars(
+      is_array($deployment['env'] ?? NULL) ? $deployment['env'] : [],
+      ['WISSKI_BASE_IMAGE_VERSION' => (string) ($deployment['imageVersion'] ?? '')],
+    );
+    // No repull: a pinned image is normally still on the host, and Compose
+    // pulls it by digest if not.
+    return $this->redeployStack(
+      $component,
+      $stackResult->data['stackId'],
+      $env,
+      (string) ($deployment['repositoryReference'] ?? ''),
+      FALSE,
+    );
+  }
+
+  /**
+   * Returns the name of the Drupal container of a WissKI component.
+   *
+   * @param \Drupal\soda_scs_manager\Entity\SodaScsComponentInterface $component
+   *   The WissKI component.
+   *
+   * @return string
+   *   The container name.
+   */
+  private function getDrupalContainerName(SodaScsComponentInterface $component): string {
+    $containerName = (string) ($component->get('containerName')->value ?? '');
+    return $containerName !== '' ? $containerName : (string) $component->get('machineName')->value . '--drupal';
+  }
+
+  /**
+   * Loads the Portainer stack of a WissKI component.
+   *
+   * @param \Drupal\soda_scs_manager\Entity\SodaScsComponentInterface $component
+   *   The WissKI component.
+   *
+   * @return \Drupal\soda_scs_manager\ValueObject\SodaScsResult
+   *   Success data holds stackId and stackPayload (decoded Portainer stack).
+   */
+  private function loadStackPayload(SodaScsComponentInterface $component): SodaScsResult {
     $stackId = (string) ($component->get('externalId')->value ?? '');
     if ($stackId === '') {
       return SodaScsResult::failure(
@@ -605,54 +752,76 @@ class SodaScsWisskiComponentActions implements SodaScsComponentActionsInterface 
     }
 
     try {
-      $portainerGetRequest = $this->sodaScsPortainerServiceActions->buildGetRequest([
-        'routeParams' => [
-          'stackId' => $stackId,
-        ],
-      ]);
-      $portainerGetResponse = $this->sodaScsPortainerServiceActions->makeRequest($portainerGetRequest);
-      if (!$portainerGetResponse['success']) {
-        return SodaScsResult::failure(
-          error: $portainerGetResponse['error'] ?? 'Failed to load Portainer stack.',
-          message: (string) $this->t('Failed to load WissKI stack from Portainer.'),
-        );
-      }
-
-      $stackPayload = json_decode(
-        $portainerGetResponse['data']['portainerResponse']->getBody()->getContents(),
-        TRUE,
+      $portainerGetResponse = $this->sodaScsPortainerServiceActions->makeRequest(
+        $this->sodaScsPortainerServiceActions->buildGetRequest(['routeParams' => ['stackId' => $stackId]]),
       );
-      if (!is_array($stackPayload)) {
-        return SodaScsResult::failure(
-          error: 'Invalid Portainer stack response.',
-          message: (string) $this->t('Failed to load WissKI stack from Portainer.'),
-        );
-      }
-
-      $versionSettings = $this->resolveWisskiVersionSettings($component, $targetVersion);
-      $updatedEnv = $this->mergeStackEnvVars(
-        $stackPayload['Env'] ?? [],
-        $this->mapVersionSettingsToEnvVars($versionSettings),
+    }
+    catch (\Throwable $e) {
+      return SodaScsResult::failure(
+        error: 'Failed to load Portainer stack: ' . $e->getMessage(),
+        message: (string) $this->t('Failed to load WissKI stack from Portainer.'),
       );
+    }
+    if (!$portainerGetResponse['success']) {
+      return SodaScsResult::failure(
+        error: $portainerGetResponse['error'] ?? 'Failed to load Portainer stack.',
+        message: (string) $this->t('Failed to load WissKI stack from Portainer.'),
+      );
+    }
 
-      $containerName = (string) ($component->get('containerName')->value ?? '');
-      if ($containerName === '') {
-        $containerName = (string) $component->get('machineName')->value . '--drupal';
-      }
+    $stackPayload = json_decode(
+      $portainerGetResponse['data']['portainerResponse']->getBody()->getContents(),
+      TRUE,
+    );
+    if (!is_array($stackPayload)) {
+      return SodaScsResult::failure(
+        error: 'Invalid Portainer stack response.',
+        message: (string) $this->t('Failed to load WissKI stack from Portainer.'),
+      );
+    }
+
+    return SodaScsResult::success(
+      message: (string) $this->t('WissKI stack loaded.'),
+      data: [
+        'stackId'      => $stackId,
+        'stackPayload' => $stackPayload,
+      ],
+    );
+  }
+
+  /**
+   * Redeploys the Portainer stack and waits for the new Drupal container.
+   *
+   * @param \Drupal\soda_scs_manager\Entity\SodaScsComponentInterface $component
+   *   The WissKI component.
+   * @param string $stackId
+   *   The Portainer stack ID.
+   * @param array $env
+   *   Complete stack env for Portainer.
+   * @param string $repositoryReference
+   *   Git branch, tag or full ref of the compose stack; empty keeps it.
+   * @param bool $repullImages
+   *   Whether Portainer pulls the images again.
+   *
+   * @return \Drupal\soda_scs_manager\ValueObject\SodaScsResult
+   *   Result of the redeploy operation.
+   */
+  private function redeployStack(SodaScsComponentInterface $component, string $stackId, array $env, string $repositoryReference, bool $repullImages): SodaScsResult {
+    try {
+      $containerName = $this->getDrupalContainerName($component);
       // Remember the running container, so the wait below does not mistake
       // it for the redeployed one.
       $previousContainer = $this->sodaScsContainerHelpers->findLiveContainerByName($containerName);
       $previousContainerId = $previousContainer->success ? (string) ($previousContainer->data['containerId'] ?? '') : '';
 
-      $portainerRedeployRequest = $this->sodaScsPortainerServiceActions->buildGitRedeployRequest([
-        'env' => $updatedEnv,
-        'repullImageAndRedeploy' => TRUE,
-        'routeParams' => [
-          'stackId' => $stackId,
-        ],
-        'wisskiComposeStackVersion' => $versionSettings['wisskiComposeStackVersion'] ?? '',
-      ]);
-      $portainerRedeployResponse = $this->sodaScsPortainerServiceActions->makeRequest($portainerRedeployRequest);
+      $portainerRedeployResponse = $this->sodaScsPortainerServiceActions->makeRequest(
+        $this->sodaScsPortainerServiceActions->buildGitRedeployRequest([
+          'env'                       => $env,
+          'repullImageAndRedeploy'    => $repullImages,
+          'routeParams'               => ['stackId' => $stackId],
+          'wisskiComposeStackVersion' => $repositoryReference,
+        ]),
+      );
       if (!$portainerRedeployResponse['success']) {
         return SodaScsResult::failure(
           error: $portainerRedeployResponse['error'] ?? 'Portainer redeploy failed.',
@@ -674,8 +843,7 @@ class SodaScsWisskiComponentActions implements SodaScsComponentActionsInterface 
         message: (string) $this->t('WissKI stack redeployed successfully.'),
         data: [
           'portainerRedeploy' => $portainerRedeployResponse['data'] ?? [],
-          'versionSettings' => $versionSettings,
-          'container' => $refreshContainerResponse->data,
+          'container'         => $refreshContainerResponse->data,
         ],
       );
     }
