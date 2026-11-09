@@ -19,6 +19,7 @@ use Drupal\Core\File\FileSystemInterface;
 use Drupal\Core\Site\Settings;
 use Drupal\Core\StringTranslation\TranslatableMarkup;
 use Drupal\soda_scs_manager\ComputedField\SodaScsGroupIdComputedItemList;
+use Drupal\soda_scs_manager\ValueObject\SodaScsSystemCheckResult;
 
 /**
  * Implements hook_requirements().
@@ -50,6 +51,23 @@ function soda_scs_manager_requirements($phase): array {
       'description' => t(
         'Snapshot file fields use private:// URIs. Drupal registers that stream wrapper only when $settings["file_private_path"] is set in settings.php. Without it, pages can throw InvalidStreamWrapperException. For the default Docker layout use the parent of the snapshot directory, e.g. /var/scs-manager when data is under /var/scs-manager/snapshots, so private://snapshots/… matches the bind mount. Rebuild caches after changing this.'
       ),
+    ];
+  }
+
+  // Settings, services, host timers, queues and WissKI containers. The
+  // probes take seconds, so the report reuses a run of the last minutes;
+  // "drush scs:check" always runs them fresh.
+  $severities = [
+    SodaScsSystemCheckResult::STATUS_ERROR   => REQUIREMENT_ERROR,
+    SodaScsSystemCheckResult::STATUS_OK      => REQUIREMENT_OK,
+    SodaScsSystemCheckResult::STATUS_WARNING => REQUIREMENT_WARNING,
+  ];
+  foreach (\Drupal::service('soda_scs_manager.system_check')->run(TRUE) as $result) {
+    $requirements['soda_scs_manager_check_' . $result->id] = [
+      'title' => t('SCS @group: @check', ['@group' => $result->group, '@check' => $result->title]),
+      'value' => $result->value,
+      'severity' => $severities[$result->status] ?? REQUIREMENT_INFO,
+      'description' => $result->description,
     ];
   }
 

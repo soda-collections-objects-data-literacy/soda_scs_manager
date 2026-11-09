@@ -9,6 +9,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- SCS system check, in the Drupal status report (`/admin/reports/status`)
+  and as `drush scs:check` (`--problems` lists only warnings and errors;
+  exits with 1 on errors). It checks the required SCS Manager settings,
+  reaches MariaDB (root), Portainer (with its token), Keycloak, Nextcloud,
+  the Nextcloud mount sidecar, the triplestore, JupyterHub and WebProtégé,
+  checks the snapshot directory and its free space, the host timers, the
+  demo and WissKI update queues and whether every WissKI container runs.
+  The status report reuses a run for five minutes.
+- `drush scs:heartbeat <name>`: the systemd timer units call it after each
+  run, so the system check can tell a missing or stopped host timer.
+  **Re-copy the unit files** from `01_scripts/global/` to
+  `/etc/systemd/system/` and run `systemctl daemon-reload`.
+
 - The version card of a WissKI instance names the running build as
   "<commit> from <date>", and for development instances the commit and build
   date of the next image (read from the image registry). The update button

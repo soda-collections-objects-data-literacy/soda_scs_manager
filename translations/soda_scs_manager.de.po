@@ -5604,3 +5604,167 @@ msgstr "Letztes Update"
 #: src/Plugin/QueueWorker/SodaScsWisskiUpdateQueueWorker.php
 msgid "SCS WissKI updates"
 msgstr "SCS-WissKI-Updates"
+
+#: src/Service/SodaScsSystemCheck.php
+msgid "File system"
+msgstr "Dateisystem"
+
+#: src/Service/SodaScsSystemCheck.php
+msgid "Snapshot directory"
+msgstr "Snapshot-Verzeichnis"
+
+#: src/Service/SodaScsSystemCheck.php
+msgid "@path is missing or not writable for the web server. Snapshots and the database dumps of WissKI updates are written there."
+msgstr "@path fehlt oder ist für den Webserver nicht beschreibbar. Dort landen Snapshots und die Datenbank-Dumps der WissKI-Updates."
+
+#: src/Service/SodaScsSystemCheck.php
+msgid "@free GB free of @total GB"
+msgstr "@free GB von @total GB frei"
+
+#: src/Service/SodaScsSystemCheck.php
+msgid "Free space for snapshots"
+msgstr "Freier Platz für Snapshots"
+
+#: src/Service/SodaScsSystemCheck.php
+msgid "Less than 10% free. Delete old snapshots or grow the volume."
+msgstr "Weniger als 10 % frei. Alte Snapshots löschen oder das Volume vergrößern."
+
+#: src/Service/SodaScsSystemCheck.php
+msgid "Host timers"
+msgstr "Host-Timer"
+
+#: src/Service/SodaScsSystemCheck.php
+msgid "never ran"
+msgstr "nie gelaufen"
+
+#: src/Service/SodaScsSystemCheck.php
+msgid "The timer is not installed or has never run. Install it on the host as described in the pre-start steps (docs/en/technical/initial-setup/pre-start-steps.md)."
+msgstr "Der Timer ist nicht installiert oder ist nie gelaufen. Auf dem Host installieren, wie in den Pre-start steps beschrieben (docs/en/technical/initial-setup/pre-start-steps.md)."
+
+#: src/Service/SodaScsSystemCheck.php
+msgid "last run @minutes min ago"
+msgstr "zuletzt vor @minutes Min."
+
+#: src/Service/SodaScsSystemCheck.php
+msgid "The timer stopped or its runs fail. Check \"systemctl status @unit\" and the service unit on the host."
+msgstr "Der Timer läuft nicht mehr oder seine Läufe schlagen fehl. Auf dem Host „systemctl status @unit“ und die Service-Unit prüfen."
+
+#: src/Service/SodaScsSystemCheck.php
+msgid "Job queues"
+msgstr "Job-Warteschlangen"
+
+#: src/Service/SodaScsSystemCheck.php
+msgid "Demo jobs"
+msgstr "Demo-Jobs"
+
+#: src/Service/SodaScsSystemCheck.php
+msgid "WissKI updates"
+msgstr "WissKI-Updates"
+
+#: src/Service/SodaScsSystemCheck.php
+msgid "@count waiting"
+msgstr "@count wartend"
+
+#: src/Service/SodaScsSystemCheck.php
+msgid "A job has been waiting for more than 30 minutes. No background run picks it up; check the host timer and @log in the manager container."
+msgstr "Ein Job wartet seit mehr als 30 Minuten. Kein Hintergrundlauf nimmt ihn auf; den Host-Timer und @log im Manager-Container prüfen."
+
+#: src/Service/SodaScsSystemCheck.php
+msgid "Services"
+msgstr "Dienste"
+
+#: src/Service/SodaScsSystemCheck.php
+msgid "SCS Manager settings"
+msgstr "SCS-Manager-Einstellungen"
+
+#: src/Service/SodaScsSystemCheck.php
+msgid "@count missing"
+msgstr "@count fehlen"
+
+#: src/Service/SodaScsSystemCheck.php
+msgid "Not set: @settings. Fill them in on the SCS Manager settings pages."
+msgstr "Nicht gesetzt: @settings. Auf den Einstellungsseiten des SCS Managers ausfüllen."
+
+#: src/Service/SodaScsSystemCheck.php
+msgid "@count required settings set"
+msgstr "@count Pflichteinstellungen gesetzt"
+
+#: src/Service/SodaScsSystemCheck.php
+msgid "WissKI instances"
+msgstr "WissKI-Instanzen"
+
+#: src/Service/SodaScsSystemCheck.php
+msgid "Drupal containers"
+msgstr "Drupal-Container"
+
+#: src/Service/SodaScsSystemCheck.php
+msgid "not found"
+msgstr "nicht gefunden"
+
+#: src/Service/SodaScsSystemCheck.php
+msgid "@running of @total running"
+msgstr "@running von @total laufen"
+
+#: src/Service/SodaScsSystemCheck.php
+msgid "Not running: @instances."
+msgstr "Laufen nicht: @instances."
+
+#: src/Service/SodaScsSystemCheck.php
+msgid "Updates"
+msgstr "Updates"
+
+#: src/Service/SodaScsSystemCheck.php
+msgid "@count running for more than 30 minutes"
+msgstr "@count seit mehr als 30 Minuten aktiv"
+
+#: src/Service/SodaScsSystemCheck.php
+msgid "Updates of @instances have been queued or running for more than 30 minutes. Check @log in the manager container."
+msgstr "Updates von @instances sind seit mehr als 30 Minuten eingereiht oder aktiv. @log im Manager-Container prüfen."
+
+#: src/Service/SodaScsSystemCheck.php
+msgid "Database (MariaDB root)"
+msgstr "Datenbank (MariaDB root)"
+
+#: src/Service/SodaScsSystemCheck.php
+msgid "reachable"
+msgstr "erreichbar"
+
+#: src/Service/SodaScsSystemCheck.php
+msgid "not reachable"
+msgstr "nicht erreichbar"
+
+#: src/Service/SodaScsSystemCheck.php
+msgid "Root login failed: @error. SQL components, snapshots and WissKI update backups need it."
+msgstr "Root-Anmeldung fehlgeschlagen: @error. SQL-Komponenten, Snapshots und die Sicherungen der WissKI-Updates brauchen sie."
+
+#: src/Service/SodaScsSystemCheck.php
+msgid "Nextcloud mount sidecar"
+msgstr "Nextcloud-Mount-Sidecar"
+
+#: src/Service/SodaScsSystemCheck.php
+msgid "User Drives and project folders cannot be mounted. Check the nextcloud-mounter container and the NEXTCLOUD_MOUNTER_RC_* variables of the manager."
+msgstr "Benutzer-Drives und Projektordner können nicht eingebunden werden. Den Container nextcloud-mounter und die Variablen NEXTCLOUD_MOUNTER_RC_* des Managers prüfen."
+
+#: src/Service/SodaScsSystemCheck.php
+msgid "no URL"
+msgstr "keine URL"
+
+#: src/Service/SodaScsSystemCheck.php
+msgid "The URL of this service is not set."
+msgstr "Die URL dieses Dienstes ist nicht gesetzt."
+
+#: src/Service/SodaScsSystemCheck.php
+msgid "@url: @error"
+msgstr "@url: @error"
+
+#: src/Service/SodaScsSystemCheck.php
+msgid "HTTP @code"
+msgstr "HTTP @code"
+
+#: src/Service/SodaScsSystemCheck.php
+msgid "@url answered with HTTP @code. Check the service and its credentials in the SCS Manager settings."
+msgstr "@url antwortete mit HTTP @code. Den Dienst und seine Zugangsdaten in den Einstellungen des SCS Managers prüfen."
+
+#: soda_scs_manager.install
+msgid "SCS @group: @check"
+msgstr "SCS @group: @check"
