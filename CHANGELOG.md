@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [4.1.0] - 2026-11-09
+
 ### Added
 
 - WissKI application pages show an "Admin tasks" panel for SCS
@@ -19,6 +21,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Production instances show which newer version is available. Development
   instances show the commit of the running image (OCI label
   `org.opencontainers.image.revision`; locally built images have none).
+
+### Changed
+
+- Updating a development instance to "Nightly" keeps its version label
+  (for example `5.x`) instead of `nightly-<timestamp>`.
+
+### Removed
+
+- Removed the "WissKI 8.x-4.x Development" option when creating a WissKI.
+  Development instances run WissKI 8.x-4.x themselves; update 11037 drops the
+  `wisski8x4xDevelopment` field and `WISSKI_8X_4X_DEVELOPMENT` is no longer
+  passed to the container.
+
+## [4.0.0] - 2026-11-06
+
+### Added
+
 - Guided onboarding tour across the dashboard, a project and an application
   page, with the overlay centered or placed next to the highlighted elements.
   It starts on a user's first visit and takes them to the dashboard, can be skipped or closed with
@@ -32,8 +51,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
-- Updating a development instance to "Nightly" keeps its version label
-  (for example `5.x`) instead of `nightly-<timestamp>`.
 - The login route now redirects directly to the configured Keycloak provider
   instead of displaying an intermediate Drupal login page.
 - The registration page is restyled to match the site design: heading, card
@@ -42,10 +59,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Removed
 
-- Removed the "WissKI 8.x-4.x Development" option when creating a WissKI.
-  Development instances run WissKI 8.x-4.x themselves; update 11037 drops the
-  `wisski8x4xDevelopment` field and `WISSKI_8X_4X_DEVELOPMENT` is no longer
-  passed to the container.
 - Removed the separate co-working first-login intro; the guided onboarding tour
   now starts instead.
 
@@ -690,7 +703,9 @@ Development line: branch `2.x`. Major release relative to `1.3.x` (projects on s
 
 - Move toward fully Portainer-driven lifecycle for managed services.
 
-[unreleased]: https://github.com/soda-collections-objects-data-literacy/soda_scs_manager/compare/3.0.0...HEAD
+[Unreleased]: https://github.com/soda-collections-objects-data-literacy/soda_scs_manager/compare/4.1.0...HEAD
+[4.1.0]: https://github.com/soda-collections-objects-data-literacy/soda_scs_manager/compare/4.0.0...4.1.0
+[4.0.0]: https://github.com/soda-collections-objects-data-literacy/soda_scs_manager/compare/3.1.0...4.0.0
 [3.1.0]: https://github.com/soda-collections-objects-data-literacy/soda_scs_manager/compare/3.0.0...3.1.0
 [3.0.0]: https://github.com/soda-collections-objects-data-literacy/soda_scs_manager/compare/2.4.2...3.0.0
 [2.4.2]: https://github.com/soda-collections-objects-data-literacy/soda_scs_manager/compare/2.4.1...2.4.2
