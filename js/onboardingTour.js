@@ -134,10 +134,11 @@
   function buildSteps() {
     const demoCard = () => document.querySelector('.dashboard__projects .project--card[data-demo-project]')
       || document.querySelector('.dashboard__projects .project--card');
-    const detailsLink = () => document.querySelector('.project__applications .application--card:not(.application--card--add) .application__details-link');
-    const projectTile = () => document.querySelector('.project__applications .application--card:not(.application--card--add) .application__core');
-    const subsystemTile = () => document.querySelector('.application__details-card--applications .application--card .application__core');
-    const outline = (element, tone) => (element ? [{ element, tone }] : []);
+    const projectTiles = () => findAll('.project__applications .application--card:not(.application--card--add) .application__core[href]');
+    const projectDetails = () => findAll('.project__applications .application--card:not(.application--card--add) .application__details-link[href]');
+    const detailsLink = () => projectDetails()[0];
+    const subsystemTiles = () => findAll('.application__details-card--applications .application--card .application__core[href]');
+    const outline = (elements, tone) => elements.map((element) => ({ element, tone }));
     const backAction = () => ({ label: Drupal.t('One step back'), tone: 'secondary', command: 'back' });
     const nextAction = () => ({ label: Drupal.t('Next'), tone: 'primary', command: 'next' });
 
@@ -211,7 +212,7 @@
         ],
         actions: [backAction(), nextAction()],
         targets: () => findAll('.project--right .project__files'),
-        accents: () => outline(document.querySelector('.project__files .project__files__button'), 'blue'),
+        accents: () => outline(findAll('.project__files .project__files__button[href]'), 'blue'),
       },
       {
         page: 'project',
@@ -232,7 +233,7 @@
         actions: [backAction(), nextAction()],
         targets: () => findAll('.project--left .project__applications'),
         available: () => Boolean(detailsLink()),
-        accents: () => outline(projectTile(), 'blue').concat(outline(detailsLink(), 'green')),
+        accents: () => outline(projectTiles(), 'blue').concat(outline(projectDetails(), 'green')),
         capture: (state) => {
           state.urls.application = detailsLink().href;
         },
@@ -267,8 +268,8 @@
         ],
         actions: [backAction(), nextAction()],
         targets: () => findAll('.application__details-card--applications'),
-        available: () => Boolean(subsystemTile()),
-        accents: () => outline(subsystemTile(), 'blue'),
+        available: () => subsystemTiles().length > 0,
+        accents: () => outline(subsystemTiles(), 'blue'),
       },
       {
         page: 'any',

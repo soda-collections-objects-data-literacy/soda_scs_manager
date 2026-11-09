@@ -43,6 +43,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- The onboarding tour now outlines all relevant clickable file, application,
+  and subsystem controls using the colours shown in the instructions.
 - WissKI updates no longer destroy data when the database update fails. The
   rollback could cut a site's database in half: it ran inside the old Drupal
   container while Portainer was still replacing it, so the restore was
