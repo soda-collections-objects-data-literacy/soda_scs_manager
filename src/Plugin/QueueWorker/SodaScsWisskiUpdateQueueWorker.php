@@ -110,7 +110,9 @@ class SodaScsWisskiUpdateQueueWorker extends QueueWorkerBase implements Containe
         ]);
       }
       // The last step is what the version card shows once the update ends.
-      $this->progressHelper->createStep($operationUuid, $result->message);
+      if ($this->updateQueue->latestStep($operationUuid) !== $result->message) {
+        $this->progressHelper->createStep($operationUuid, $result->message);
+      }
       $this->progressHelper->updateOperation($operationUuid, ['status' => $result->success ? 'completed' : 'failed']);
       $this->cacheTagsInvalidator->invalidateTags([
         'soda_scs_manager:drupal_packages',

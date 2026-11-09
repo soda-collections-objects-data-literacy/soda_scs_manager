@@ -61,6 +61,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   redeployed, the site stays in maintenance mode on the new image with the
   restored database.
 - A failed pre-update dump no longer leaves the site in maintenance mode.
+- Operations never left their first status: `updateOperation()` called
+  `fields()` once per field, and each call replaced the previous list, so
+  only the `updated` time was written. Completed and failed operations now
+  say so.
 - Progress steps stored their time as single-precision float, which rounds a
   Unix timestamp to about two minutes, so the steps of an operation came
   back in random order. Update 11038 changes `soda_scs_steps.created` to

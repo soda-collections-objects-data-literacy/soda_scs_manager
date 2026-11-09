@@ -149,14 +149,12 @@ class SodaScsProgressHelper {
     try {
       $fields['updated'] = $this->time->getCurrentTime();
 
-      $query = $this->database->update('soda_scs_operations')
-        ->condition('uuid', $operationId);
-
-      foreach ($fields as $field => $value) {
-        $query->fields([$field => $value]);
-      }
-
-      $affected = $query->execute();
+      // One fields() call: each call replaces the previous field list, so a
+      // loop would only write the last field ('updated') and never a status.
+      $affected = $this->database->update('soda_scs_operations')
+        ->condition('uuid', $operationId)
+        ->fields($fields)
+        ->execute();
 
       return $affected > 0;
     }
