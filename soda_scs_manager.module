@@ -899,6 +899,25 @@ function soda_scs_manager_soda_scs_stack_view(array &$build, EntityInterface $en
 }
 
 /**
+ * Implements hook_preprocess_HOOK() for views_view_field.
+ *
+ * Gin's views-view-field--status.html.twig calls
+ * entity.hasTranslation(row.node_field_data_langcode), which only exists on
+ * node views. On other entity views (e.g. the People view) the value is NULL
+ * and PHP 8.5 raises "Using null as an array offset is deprecated". Fill in
+ * the row entity's own langcode so the template gets a valid string.
+ */
+function soda_scs_manager_preprocess_views_view_field(array &$variables): void {
+  $row = $variables['row'] ?? NULL;
+  if (!is_object($row) || isset($row->node_field_data_langcode)) {
+    return;
+  }
+  if (($row->_entity ?? NULL) instanceof ContentEntityInterface) {
+    $row->node_field_data_langcode = $row->_entity->language()->getId();
+  }
+}
+
+/**
  * Implements hook_preprocess_book_navigation().
  */
 function soda_scs_manager_preprocess_book_navigation(&$variables) {

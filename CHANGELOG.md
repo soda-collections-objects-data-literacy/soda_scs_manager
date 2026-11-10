@@ -13,6 +13,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   34 errors). Three strings of the Keycloak registration form lacked their
   closing quote, so their German text never reached the form; 31 duplicate
   entries are merged, keeping the translation the import used so far.
+- Gin's status field template no longer triggers a PHP 8.5 deprecation on
+  non-node Views (for example People). When the row has no
+  `node_field_data_langcode`, preprocess fills it from the row entity's
+  language so `hasTranslation()` gets a string instead of `NULL`.
 
 ## [4.3.0] - 2026-11-10
 
