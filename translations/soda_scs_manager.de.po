@@ -75,6 +75,7 @@ msgstr ""
 "PO-Revision-Date: 2025-10-04 20:45+0000\n"
 "Last-Translator: Robert Nasarek <r.nasarek@gnm.de>\n"
 "Language-Team: German <j.neubauer@gnm.de>\n"
+"Language: de\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=utf-8\n"
 "Content-Transfer-Encoding: 8bit\n"
@@ -98,11 +99,11 @@ msgstr "Geben Sie eine gültige E-Mail-Adresse ein. Diese wird für die Kommunik
 
 #: src/Form/KeycloakUserRegistrationForm.php:208
 msgid "Enter at least @count characters. Only letters, digits, and underscores are allowed."
-msgstr "Geben Sie mindestens @count Zeichen ein. Es sind nur Buchstaben, Zahlen und Unterstriche erlaubt.
+msgstr "Geben Sie mindestens @count Zeichen ein. Es sind nur Buchstaben, Zahlen und Unterstriche erlaubt."
 
 #: src/Form/KeycloakUserRegistrationForm.php:214
-msgid "Enter at least @count letters. Only letters, spaces, hyphens, apostrophes, and periods are allowed. Digits and reserved words are not allowed.
-msgstr "Geben Sie mindestens @count Zeichen ein. Es sind nur Buchstaben, Leerzeichen, Bindestriche, Apostrophe und Punkte zulässig. Ziffern und reservierte Wörter sind nicht zulässig.
+msgid "Enter at least @count letters. Only letters, spaces, hyphens, apostrophes, and periods are allowed. Digits and reserved words are not allowed."
+msgstr "Geben Sie mindestens @count Zeichen ein. Es sind nur Buchstaben, Leerzeichen, Bindestriche, Apostrophe und Punkte zulässig. Ziffern und reservierte Wörter sind nicht zulässig."
 
 #: src/Form/KeycloakUserRegistrationForm.php:151
 msgid "Username"
@@ -365,6 +366,8 @@ msgid "SODa SCS Manager"
 msgstr "SODa SCS-Manager"
 
 #: soda_scs_manager.links.menu.yml:0 src/Plugin/Block/SodaScsNavigationBlock.php:56
+#: src/Plugin/Block/SodaScsNavigationBlock.php:47
+#: templates/pages/soda-scs-manager--start-page.html.twig:26
 msgid "Dashboard"
 msgstr "Dashboard"
 
@@ -377,6 +380,7 @@ msgid "Your projects and central services"
 msgstr "Ihre Projekte und zentrale Dienste"
 
 #: soda_scs_manager.links.menu.yml:0
+#: src/Controller/SodaScsAdministrationController.php:45
 msgid "Projects"
 msgstr "Projekte"
 
@@ -389,6 +393,7 @@ msgid "Collaboration projects and memberships"
 msgstr "Kollaborative Projekte und Mitgliedschaften"
 
 #: soda_scs_manager.links.menu.yml:0
+#: templates/pages/soda-scs-manager--start-page.html.twig:49
 msgid "Documentation"
 msgstr "Dokumentation"
 
@@ -397,6 +402,7 @@ msgid "Messages"
 msgstr "Nachrichten"
 
 #: soda_scs_manager.links.menu.yml:156
+#: templates/pages/soda-scs-manager--start-page.html.twig:60
 msgid "Administration"
 msgstr "Administration"
 
@@ -413,8 +419,9 @@ msgid "SODa SCS Components"
 msgstr "SODa SCS-Komponenten"
 
 #: soda_scs_manager.links.menu.yml:0
+#: src/Controller/SodaScsAdministrationController.php:26
 msgid "Manage single application components like databases and triplestores."
-msgstr "Einzelanwendungen wie Datenbanken und Triplestores verwalten."
+msgstr "Verwalten Sie singuläre Anwendungskomponenten wie Datenbanken und Triplestores."
 
 #: soda_scs_manager.links.menu.yml:0
 msgid "Manage projects for collaboration and resource sharing."
@@ -425,8 +432,9 @@ msgid "Manage snapshots for backup and restore."
 msgstr "Snapshots für Sicherung und Wiederherstellung verwalten."
 
 #: soda_scs_manager.links.menu.yml:0
+#: src/Controller/SodaScsAdministrationController.php:36
 msgid "Manage application environments like JupyterHub and Nextcloud."
-msgstr "Anwendungsumgebungen wie JupyterHub und Nextcloud verwalten"
+msgstr "Verwalten Sie Anwendungsumgebungen wie JupyterHub und Nextcloud."
 
 #: soda_scs_manager.links.menu.yml:0
 msgid "SODa SCS Manager settings and configurations"
@@ -541,8 +549,9 @@ msgid "Edit SODa SCS Component"
 msgstr "SODa SCS-Anwendung bearbeiten"
 
 #: soda_scs_manager.permissions.yml:0
+#: soda_scs_manager.routing.yml:0
 msgid "Delete SODa SCS Component"
-msgstr "SODa SCS-Anwendung löschen"
+msgstr "SODa SCS-Komponente löschen"
 
 #: soda_scs_manager.permissions.yml:0
 msgid "Create SODa SCS Stack"
@@ -609,16 +618,14 @@ msgid "Create SODa SCS Snapshot"
 msgstr "SODa SCS-Snapshot erstellen"
 
 #: soda_scs_manager.routing.yml:0
+#: src/Entity/SodaScsComponent.php:12;12 src/Entity/SodaScsServiceKey.php:119
+
 msgid "SODa SCS Component"
 msgstr "SODa SCS-Komponente"
 
 #: soda_scs_manager.routing.yml:0
 msgid "Add SODa SCS Component"
 msgstr "SODa SCS-Komponente hinzufügen"
-
-#: soda_scs_manager.routing.yml:0
-msgid "Delete SODa SCS Component"
-msgstr "SODa SCS-Komponente löschen"
 
 #: soda_scs_manager.routing.yml:0
 msgid "SODa SCS Service Key"
@@ -788,14 +795,6 @@ msgstr "WissKI-Komponente kann nicht gelöscht werden. Weitere Details finden Si
 msgid "Portainer request failed: @error"
 msgstr "Portainer-Anfrage fehlgeschlagen: @error"
 
-#: src/Controller/SodaScsAdministrationController.php:26
-msgid "Manage single application components like databases and triplestores."
-msgstr "Verwalten Sie singuläre Anwendungskomponenten wie Datenbanken und Triplestores."
-
-#: src/Controller/SodaScsAdministrationController.php:36
-msgid "Manage application environments like JupyterHub and Nextcloud."
-msgstr "Verwalten Sie Anwendungsumgebungen wie JupyterHub und Nextcloud."
-
 #: src/Controller/SodaScsAdministrationController.php:46
 msgid "Manage projects to collaborate with other users and share resources."
 msgstr "Verwalten Sie Projekte zur Zusammenarbeit mit anderen Nutzenden und zum Teilen von Ressourcen."
@@ -815,10 +814,6 @@ msgstr "Konfigurieren Sie SODa SCS Manager Einstellungen und Präferenzen."
 #: src/Controller/SodaScsAdministrationController.php:25
 msgid "Components"
 msgstr "Komponenten"
-
-#: src/Controller/SodaScsAdministrationController.php:45
-msgid "Projects"
-msgstr "Projekte"
 
 #: src/Controller/SodaScsAdministrationController.php:55
 msgid "Snapshots"
@@ -869,6 +864,7 @@ msgid "Machine name must contain only lowercase letters, numbers, and minus."
 msgstr "Der Maschinenname darf nur Kleinbuchstaben, Zahlen und Minuszeichen enthalten."
 
 #: src/Entity/SodaScsComponent.php:162 src/Entity/SodaScsProject.php:128 src/Entity/SodaScsSnapshot.php:96 src/Entity/SodaScsStack.php:129 src/ListBuilder/SodaScsSnapshotListBuilder.php:78
+#: templates/cards/soda-scs-manager--entity-card.html.twig
 msgid "Created"
 msgstr "Erstellt"
 
@@ -949,6 +945,7 @@ msgid "The owner of the application."
 msgstr "Die besitzende Person der Anwendung."
 
 #: src/Entity/SodaScsComponent.php:307 src/Entity/SodaScsStack.php:258
+#: src/Form/SodaScsProjectMembershipForm:253
 msgid "Project"
 msgstr "Projekt"
 
@@ -992,11 +989,6 @@ msgstr "Der Zeitpunkt der letzten Aktualisierung der SODa SCS-Komponente."
 msgid "Notes about the SODa SCS application."
 msgstr "Notizen über die SODa SCS-Anwendung."
 
-
-#: src/Entity/SodaScsComponent.php:12;12 src/Entity/SodaScsServiceKey.php:119
-msgid "SODa SCS Component"
-msgstr "SODa SCS-Komponente"
-
 #: src/Entity/SodaScsProject.php:100
 msgid "The SCS applications associated with this project."
 msgstr "Die mit diesem Projekt verbundenen SCS-Anwendungen."
@@ -1026,9 +1018,6 @@ msgid "The Keycloak UUID of the project group."
 msgstr "Die Keycloak UUID der Projektgruppe."
 
 #: src/Entity/SodaScsProject.php:209
-msgid "Members"
-msgstr "Mitglieder"
-
 #: src/Entity/SodaScsProject.php:198 src/ListBuilder/SodaScsProjectListBuilder.php:25
 msgid "Members"
 msgstr "Mitglieder"
@@ -1070,6 +1059,7 @@ msgid "The bundle of the SODa SCS Component."
 msgstr "Das Bundle der SODa SCS-Komponente."
 
 #: src/Entity/SodaScsServiceKey.php:144 src/ListBuilder/SodaScsServiceKeyListBuilder.php:27
+#: src/ViewBuilder/SodaScsComponentViewBuilder.php:188
 msgid "Password"
 msgstr "Passwort"
 
@@ -1173,10 +1163,6 @@ msgstr "Soda SCS Stack-Typ"
 msgid "Part of Stack"
 msgstr "Teil des Stacks"
 
-#: src/Entity/Bundle/SodaScsComponentBundle.php:42
-msgid "Part of Stack"
-msgstr "Teil des Stacks"
-
 #: src/Entity/Bundle/SodaScsComponentBundle.php:43
 msgid "The stack that this component is part of."
 msgstr "Der Stack, zu dem diese Komponente gehört."
@@ -1238,10 +1224,13 @@ msgid "Whether this is a Development Instance. Nightly builds are used for devel
 msgstr "Gibt an, ob es sich um eine Entwicklungsinstanz handelt. Nightly Builds werden für die Entwicklung und Tests verwendet. Dies kann nach der Erstellung nicht mehr geändert werden."
 
 #: src/Entity/Bundle/SodaScsComponentBundle.php:137
+#: src/ViewBuilder/SodaScsComponentViewBuilder.php:166
 msgid "Yes"
 msgstr "Ja"
 
 #: src/Entity/Bundle/SodaScsComponentBundle.php:138
+#: src/ViewBuilder/SodaScsComponentViewBuilder.php:166
+#: templates/pages/soda-scs-manager--dashboard.html.twig:20
 msgid "No"
 msgstr "Nein"
 
@@ -1262,6 +1251,7 @@ msgid "The name of the container."
 msgstr "Der Name des Containers."
 
 #: src/Entity/Bundle/SodaScsComponentBundle.php:215
+#: src/ListBuilder/SodaScsComponentListBuilder.php:0
 msgid "Version"
 msgstr "Version"
 
@@ -1298,6 +1288,7 @@ msgid "This field is required for filesystem applications."
 msgstr "Dieses Feld ist für Dateisystem-Anwendung erforderlich."
 
 #: src/Form/SodaScsComponentCreateForm.php:214
+#: src/Form/SodaScsStackCreateForm.php:159
 msgid "Create"
 msgstr "Erstellen"
 
@@ -1385,10 +1376,6 @@ msgstr "Annehmen"
 msgid "Reject"
 msgstr "Ablehnen"
 
-#: src/Form/SodaScsProjectMembershipForm:253
-msgid "Project"
-msgstr "Projekt"
-
 #: src/Form/SodaScsProjectMembershipForm:254
 msgid "Invited by"
 msgstr "Eingeladen von"
@@ -1434,6 +1421,7 @@ msgid "Rejected"
 msgstr "Abgelehnt"
 
 #: src/Form/SodaScsProjectMembershipForm:440
+#: src/ListBuilder/SodaScsComponentListBuilder.php:0
 msgid "Unknown"
 msgstr "Unbekannt"
 
@@ -2293,10 +2281,6 @@ msgstr "Snapshot @label wiederherstellen?"
 msgid "This action will restore the snapshot data of the (bundled) application <b>@entity_label</b>, permanently overwriting its current state."
 msgstr "Diese Aktion wird die Snapshot-Daten der (gebündelten) Anwendung <b>@entity_label</b> wiederherstellen und deren aktuellen Zustand dauerhaft überschreiben."
 
-#: src/Form/SodaScsStackCreateForm.php:159
-msgid "Create"
-msgstr "Erstellen"
-
 #: src/Form/SodaScsStackCreateForm.php:178
 msgid "The machinename can only contain small letters, digits, and minus."
 msgstr "Der Maschinenname darf nur Kleinbuchstaben, Ziffern und Minus enthalten."
@@ -2418,16 +2402,8 @@ msgid "Not yet implemented"
 msgstr "Noch nicht implementiert"
 
 #: src/ListBuilder/SodaScsComponentListBuilder.php:0
-msgid "Version"
-msgstr "Version"
-
-#: src/ListBuilder/SodaScsComponentListBuilder.php:0
 msgid "Sort by @field"
 msgstr "Sortieren nach @field"
-
-#: src/ListBuilder/SodaScsComponentListBuilder.php:0
-msgid "Unknown"
-msgstr "Unbekannt"
 
 #: src/ListBuilder/SodaScsComponentListBuilder.php:0
 msgid "N/A"
@@ -2450,14 +2426,20 @@ msgid "● Unavailable"
 msgstr "● Nicht verfügbar"
 
 #: src/ListBuilder/SodaScsComponentListBuilder.php:0
+#: js/dashboardHealthStatus.js:97
+#: js/dashboardHealthStatus.js:106
 msgid "Running"
 msgstr "Läuft"
 
 #: src/ListBuilder/SodaScsComponentListBuilder.php:0
+#: js/dashboardHealthStatus.js:100
+#: js/dashboardHealthStatus.js:117
 msgid "Starting"
 msgstr "Startet"
 
 #: src/ListBuilder/SodaScsComponentListBuilder.php:0
+#: js/dashboardHealthStatus.js:103
+#: js/dashboardHealthStatus.js:120
 msgid "Stopped"
 msgstr "Gestoppt"
 
@@ -2512,10 +2494,6 @@ msgstr "Verwendet von Komponente(n)"
 #: src/ListBuilder/SodaScsSnapshotListBuilder.php:75
 msgid "ID"
 msgstr "ID"
-
-#: src/Plugin/Block/SodaScsNavigationBlock.php:47
-msgid "Dashboard"
-msgstr "Dashboard"
 
 #: src/Plugin/Block/SodaScsNavigationBlock.php:75
 msgid "Settings"
@@ -2761,14 +2739,6 @@ msgstr "Endpunkt-Zugriff"
 msgid "Public read"
 msgstr "Öffentliches Lesen"
 
-#: src/ViewBuilder/SodaScsComponentViewBuilder.php:166
-msgid "Yes"
-msgstr "Ja"
-
-#: src/ViewBuilder/SodaScsComponentViewBuilder.php:166
-msgid "No"
-msgstr "Nein"
-
 #: src/ViewBuilder/SodaScsComponentViewBuilder.php:167
 msgid "When enabled, the SPARQL endpoint is readable without authentication."
 msgstr "Wenn aktiviert, ist der SPARQL-Endpunkt ohne Authentifizierung lesbar."
@@ -2792,10 +2762,6 @@ msgstr "Schreib-URL"
 #: src/ViewBuilder/SodaScsComponentViewBuilder.php:183
 msgid "SPARQL write endpoint for INSERT/UPDATE/DELETE."
 msgstr "SPARQL-Schreibendpunkt für INSERT/UPDATE/DELETE."
-
-#: src/ViewBuilder/SodaScsComponentViewBuilder.php:188
-msgid "Password"
-msgstr "Passwort"
 
 #: src/ViewBuilder/SodaScsComponentViewBuilder.php:191
 msgid "Use with Basic Auth for authentication. Click to copy."
@@ -2834,14 +2800,6 @@ msgid "Search projects"
 msgstr "Projekte durchsuchen"
 
 # templates/pages/soda-scs-manager--dashboard.html.twig:15
-msgid "Filter by Tags"
-msgstr "Nach Schlagwörtern filtern"
-
-#: templates/pages/soda-scs-manager--dashboard.html.twig:20
-msgid "No"
-msgstr "Nein"
-
-# templates/pages/soda-scs-manager--catalogue.html.twig:14
 msgid "Filter by Tags"
 msgstr "Nach Schlagwörtern filtern"
 
@@ -2986,6 +2944,7 @@ msgid "We have a extensive <a href=\"/soda-scs-manager/documentation\" target=\"
 msgstr "Unsere ausführliche <a href=\"/soda-scs-manager/documentation\" target=\"_blank\" rel=\"noopener noreferrer\">Dokumentation</a> enthält hilfreiche Informationen und Anleitungen. Sie kommen nicht weiter? Wenden Sie sich an unser SCS-Support-Team unter <a href=\"mailto:scs-manager@sammlungen.io\">scs-manager@sammlungen.io</a>. "
 
 #: templates/includes/soda-scs-manager--coworking-intro.html.twig
+#: templates/pages/soda-scs-manager--start-page.html.twig:23
 msgid "Connect Nextcloud"
 msgstr "Nextcloud verbinden"
 
@@ -3006,6 +2965,7 @@ msgid "SCS Manager links to your Drive using the same Keycloak login. We verify 
 msgstr "SCS Manager verbindet sich mit Ihrem Drive über dieselbe Keycloak-Anmeldung. Wir prüfen die Verbindung automatisch — kein separates Drive-Passwort und kein Popup-Login erforderlich."
 
 #: templates/includes/soda-scs-manager--coworking-intro.html.twig
+#: templates/pages/soda-scs-manager--start-page.html.twig:23
 msgid "Retry connection check"
 msgstr "Verbindungsprüfung wiederholen"
 
@@ -3097,10 +3057,6 @@ msgstr "Keine Administrationsbereiche verfügbar."
 msgid "New here? Start <a href=\"@tour_url\">the beginners tour</a> to learn more about the possibilities."
 msgstr "Neu hier? Starten Sie <a href=\"@tour_url\">die Einführungstour</a>, um mehr über die Möglichkeiten zu erfahren."
 
-#: templates/pages/soda-scs-manager--start-page.html.twig:26
-msgid "Dashboard"
-msgstr "Dashboard"
-
 #: templates/pages/soda-scs-manager--start-page.html.twig:27
 msgid "Manage your applications in use"
 msgstr "Verwalten Sie Ihre verwendeten Anwendungen"
@@ -3113,17 +3069,9 @@ msgstr "Katalog"
 msgid "Browse available applications"
 msgstr "Verfügbare Anwendungen durchsuchen"
 
-#: templates/pages/soda-scs-manager--start-page.html.twig:49
-msgid "Documentation"
-msgstr "Dokumentation"
-
 #: templates/pages/soda-scs-manager--start-page.html.twig:50
 msgid "Read guides and documentation"
 msgstr "Anleitungen und Dokumentation lesen"
-
-#: templates/pages/soda-scs-manager--start-page.html.twig:60
-msgid "Administration"
-msgstr "Administration"
 
 #: templates/pages/soda-scs-manager--start-page.html.twig:61
 msgid "Configure system settings"
@@ -3148,14 +3096,6 @@ msgstr "Nextcloud-Konto verbinden"
 #: templates/pages/soda-scs-manager--start-page.html.twig:18
 msgid "To use Nextcloud with WissKI and other applications, connect your account once. A popup will open where you log in to Nextcloud. You can also connect later from your <a href=\":url\">Connected Accounts</a> page."
 msgstr "Um Nextcloud mit WissKI und anderen Anwendungen zu nutzen, verbinden Sie Ihr Konto einmalig. Es öffnet sich ein Pop-up zur Anmeldung bei Nextcloud. Sie können die Verbindung auch später über die Seite <a href=\":url\">Verbundene Konten</a> herstellen."
-
-#: templates/pages/soda-scs-manager--start-page.html.twig:23
-msgid "Retry connection check"
-msgstr "Verbindungsprüfung wiederholen"
-
-#: templates/pages/soda-scs-manager--start-page.html.twig:23
-msgid "Connect Nextcloud"
-msgstr "Nextcloud verbinden"
 
 #: templates/pages/soda-scs-manager--start-page.html.twig:26
 msgid "Later"
@@ -3414,6 +3354,7 @@ msgid "Could not create WissKI. Check the message below or try again."
 msgstr "WissKI konnte nicht erstellt werden. Lesen Sie die Meldung unten oder versuchen Sie es erneut."
 
 #: js/coworkingIntroWizard.js:65
+#: src/Form/SodaScsComponentCreateForm.php;src/Form/SodaScsStackCreateForm.php
 msgid "Creating your WissKI environment. Please do not close this window."
 msgstr "Die Einrichtung Ihrer WissKI-Umgebung beginnt. Bitte schließen Sie dieses Fenster nicht."
 
@@ -3472,30 +3413,6 @@ msgstr "Mit SODa SCS Client anmelden"
 #: js/dashboardHealthStatus.js:72
 msgid "Health status: @status"
 msgstr "Betriebszustand: @status"
-
-#: js/dashboardHealthStatus.js:97
-msgid "Running"
-msgstr "Läuft"
-
-#: js/dashboardHealthStatus.js:100
-msgid "Starting"
-msgstr "Startet"
-
-#: js/dashboardHealthStatus.js:103
-msgid "Stopped"
-msgstr "Gestoppt"
-
-#: js/dashboardHealthStatus.js:106
-msgid "Running"
-msgstr "Läuft"
-
-#: js/dashboardHealthStatus.js:117
-msgid "Starting"
-msgstr "Startet"
-
-#: js/dashboardHealthStatus.js:120
-msgid "Stopped"
-msgstr "Gestoppt"
 
 #: js/dashboardHealthStatus.js:174
 msgid "Could not refresh status"
@@ -3622,10 +3539,6 @@ msgid "Checking for updates, please wait."
 msgstr "Updates werden geprüft, bitte warten …"
 
 #: src/Form/SodaScsComponentCreateForm.php;src/Form/SodaScsStackCreateForm.php
-msgid "Creating your WissKI environment. Please do not close this window."
-msgstr "Die Einrichtung Ihrer WissKI-Umgebung beginnt. Bitte schließen Sie dieses Fenster nicht."
-
-#: src/Form/SodaScsComponentCreateForm.php;src/Form/SodaScsStackCreateForm.php
 msgid "Please note: After creating the WissKI Environment, it can take up to 5 minutes to setup everything.<br><br>Please check the Health Status to monitor the startup progress."
 msgstr "Hinweis: Nach dem Anlegen der WissKI-Umgebung kann die Einrichtung bis zu 5 Minuten dauern.<br><br>Bitte prüfen Sie den Betriebszustand, um den Start zu verfolgen."
 
@@ -3747,9 +3660,6 @@ msgid "Project 1"
 msgstr "Projekt 1"
 
 #: soda_scs_manager.module
-msgid "Failed to create Nextcloud Team Folder for project @project: @error"
-msgstr "Nextcloud-Teamordner für Projekt @project konnte nicht erstellt werden: @error"
-
 #: src/Form/SodaScsProjectCreateForm.php
 msgid "Failed to create Nextcloud Team Folder for project @project: @error"
 msgstr "Nextcloud-Teamordner für Projekt @project konnte nicht erstellt werden: @error"
@@ -3961,10 +3871,6 @@ msgstr "Der Betriebszustand der Anwendung wurde aktualisiert."
 #: js/dashboardHealthStatus.js
 msgid "The application could not be updated."
 msgstr "Die Anwendung konnte nicht aktualisiert werden."
-
-#: templates/cards/soda-scs-manager--entity-card.html.twig
-msgid "Created"
-msgstr "Erstellt"
 
 #: templates/cards/soda-scs-manager--entity-card.html.twig
 msgid "Edited"

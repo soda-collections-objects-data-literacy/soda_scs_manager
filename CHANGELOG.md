@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- The German translation file is valid gettext again (`msgfmt -c` reported
+  34 errors). Three strings of the Keycloak registration form lacked their
+  closing quote, so their German text never reached the form; 31 duplicate
+  entries are merged, keeping the translation the import used so far.
+
 ## [4.3.0] - 2026-11-10
 
 ### Changed
