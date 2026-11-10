@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [4.3.1] - 2026-11-10
+
 ### Fixed
 
 - The German translation file is valid gettext again (`msgfmt -c` reported
@@ -817,7 +819,8 @@ Development line: branch `2.x`. Major release relative to `1.3.x` (projects on s
 
 - Move toward fully Portainer-driven lifecycle for managed services.
 
-[Unreleased]: https://github.com/soda-collections-objects-data-literacy/soda_scs_manager/compare/4.3.0...HEAD
+[Unreleased]: https://github.com/soda-collections-objects-data-literacy/soda_scs_manager/compare/4.3.1...HEAD
+[4.3.1]: https://github.com/soda-collections-objects-data-literacy/soda_scs_manager/compare/4.3.0...4.3.1
 [4.3.0]: https://github.com/soda-collections-objects-data-literacy/soda_scs_manager/compare/4.2.0...4.3.0
 [4.2.0]: https://github.com/soda-collections-objects-data-literacy/soda_scs_manager/compare/4.1.0...4.2.0
 [4.1.0]: https://github.com/soda-collections-objects-data-literacy/soda_scs_manager/compare/4.0.0...4.1.0
