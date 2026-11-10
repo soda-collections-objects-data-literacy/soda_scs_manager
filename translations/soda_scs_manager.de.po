@@ -4723,14 +4723,6 @@ msgstr "Das Projekt wurde angelegt, seine Adresse konnte aber nicht gelesen werd
 msgid "The project was created, but these applications were not: @apps."
 msgstr "Das Projekt wurde angelegt, diese Anwendungen aber nicht: @apps."
 
-#: soda_scs_manager.install
-msgid "SCS Manager: companion theme"
-msgstr "SCS Manager: Begleit-Theme"
-
-#: soda_scs_manager.install
-msgid "The soda_scs_manager_theme theme is missing. Place it in themes/custom (https://github.com/rnsrk/soda_scs_manager_theme) before installing SODa SCS Manager."
-msgstr "Das Theme soda_scs_manager_theme fehlt. Legen Sie es vor der Installation von SODa SCS Manager in themes/custom ab (https://github.com/rnsrk/soda_scs_manager_theme)."
-
 #: src/Demo/SodaScsDemoManager.php
 msgid "Version @version is active or used by demo projects and cannot be deleted."
 msgstr "Version @version ist aktiv oder wird von Demo-Projekten genutzt und kann nicht gelöscht werden."

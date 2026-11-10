@@ -35,9 +35,10 @@ entityHelpers:
 
 globalStyling:
   version: 1.x
-  dependencies:
-    # All Tailwind / module component CSS is built into the active theme bundle.
-    - soda_scs_manager_theme/global
+  css:
+    component:
+      # Built from pcss/ with `npm run build`; no preflight, no page-level rules.
+      css/soda-scs-manager.css: { minified: true }
 
 machineNameGenerator:
   version: 1.x

@@ -1,0 +1,8 @@
+@layer components {
+  .scs-manager--nextcloud-connect-status-inline[data-status="connected"][data-method="bearer"]::before,
+  .scs-manager--nextcloud-connect-status[data-status="connected"][data-method="bearer"]::before,
+  .scs-manager--nextcloud-status-check-result[data-status="connected"][data-method="bearer"]::before {
+    content: "✓";
+    @apply mr-1.5 inline-block font-bold text-green-600;
+  }
+}

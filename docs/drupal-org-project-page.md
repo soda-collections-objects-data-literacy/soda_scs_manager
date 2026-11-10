@@ -50,7 +50,7 @@ Self-service portal for the SODa Semantic Co-Working Space: provision WissKI, Ne
 
 <ol>
   <li><strong>Deploy the stack</strong> — follow <a href="https://github.com/soda-collections-objects-data-literacy/soda_scs_manager_deployment">soda_scs_manager_deployment</a> (clone, submodules, <code>.env</code> from <code>example-env</code>, <code>./start.sh</code>, <code>docker compose up -d</code>, then MkDocs post-configuration for Keycloak, Nextcloud, DBMS SSO, etc.).</li>
-  <li><strong>Enable the module and theme</strong> — enable <code>soda_scs_manager</code> and its companion theme <code>soda_scs_manager_theme</code>; rebuild theme assets (<code>npm install</code> / <code>npm run build</code> in the theme) if you maintain CSS.</li>
+  <li><strong>Enable the module</strong> — enable <code>soda_scs_manager</code>. It ships its own UI styles; the front theme provides the page frame, base reset and fonts.</li>
   <li><strong>Configure settings</strong> — go to <em>Administration → Configuration → SODa SCS Manager</em> (<code>/admin/config/soda-scs-manager</code> or the route from the module’s configure link). Set integration endpoints/secrets (Keycloak, Portainer/Docker, Nextcloud, mail/SMTP, security/logging, etc.).</li>
   <li><strong>OpenID Connect</strong> — configure the OpenID Connect client so users log in via Keycloak (no separate “local-only” SCS workflow).</li>
   <li><strong>Permissions &amp; roles</strong> — grant SCS users permissions such as managing own stacks/components/projects and “Manage own connected accounts”; keep admin permissions restricted.</li>
@@ -64,7 +64,7 @@ Self-service portal for the SODa Semantic Co-Working Space: provision WissKI, Ne
 
 <ul>
   <li><strong>Drupal</strong> 10 or 11 (module: <code>^10 | ^11</code>).</li>
-  <li><strong>Drupal dependencies</strong> (declared): Language (core), <a href="https://www.drupal.org/project/openid_connect">OpenID Connect</a>, <a href="https://www.drupal.org/project/smtp">SMTP</a>, Field Group, and the <strong>soda_scs_manager_theme</strong> theme.</li>
+  <li><strong>Drupal dependencies</strong> (declared): Language (core), <a href="https://www.drupal.org/project/openid_connect">OpenID Connect</a>, <a href="https://www.drupal.org/project/smtp">SMTP</a> and Field Group. No companion theme is needed.</li>
   <li><strong>Composer-related</strong> (module <code>composer.json</code>): e.g. <code>drupal/openid_connect</code>, <code>drupal/smtp</code>, Tailwind-related packages for the theme stack.</li>
   <li><strong>Infrastructure (required for real use)</strong>: Keycloak (SSO/groups/attributes), Docker + Portainer (or equivalent) for container lifecycle, MariaDB, Traefik (or similar reverse proxy), Nextcloud (+ integration app where used), JupyterHub, OpenGDB/triplestore services, WebProtégé as configured in the deployment. The reference Compose wiring is in <a href="https://github.com/soda-collections-objects-data-literacy/soda_scs_manager_deployment">soda_scs_manager_deployment</a>.</li>
   <li><strong>Host tools for operators</strong>: Docker, Git (submodules), <code>jq</code>, <code>curl</code>; Node/npm on the host for theme builds.</li>
@@ -73,7 +73,6 @@ Self-service portal for the SODa Semantic Co-Working Space: provision WissKI, Ne
 <h3 id="module-project--recommended-libraries">Recommended modules/libraries</h3>
 
 <ul>
-  <li><strong>soda_scs_manager_theme</strong> — required companion theme (Tailwind/PostCSS UI); styling lives there, not in the module.</li>
   <li><strong>OpenID Connect</strong> + Keycloak realm/clients as documented in the deployment MkDocs.</li>
   <li><strong>SMTP</strong> — reliable outbound mail for invitations/notifications.</li>
   <li>Platform companions from the SODa stacks (Nextcloud <code>scs_manager_integration</code>, WissKI base images/packages, default WissKI data model) as used by the deployment—these extend what the manager can provision.</li>

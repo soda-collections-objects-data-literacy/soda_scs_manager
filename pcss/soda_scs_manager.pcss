@@ -1,0 +1,22 @@
+/*
+ * SCS Manager UI styles, shipped with the module so it works under any front
+ * theme. Build: `npm run build` in the module directory → css/soda-scs-manager.css.
+ *
+ * No Tailwind preflight and no html/body rules: the active theme owns the page
+ * (fonts, colours, layout). Only theme tokens and the utilities used in the
+ * module's markup are generated.
+ */
+@layer theme, base, components, utilities;
+
+@import "tailwindcss/theme.css" layer(theme);
+@import "tailwindcss/utilities.css" layer(utilities);
+
+@source "../templates/**/*.twig";
+@source "../js/**/*.js";
+@source "../src/**/*.php";
+@source "../soda_scs_manager.module";
+
+@import "./colors.pcss";
+@import "./base.pcss";
+@import "./components/index.pcss";
+@import "./unlayered/components.pcss";

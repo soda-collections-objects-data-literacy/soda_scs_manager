@@ -7,6 +7,25 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- The module ships its own UI styles: `css/soda-scs-manager.css`, built from
+  `pcss/` with `npm run build`. The `globalStyling` library no longer depends
+  on `soda_scs_manager_theme`, and installing the module no longer needs or
+  installs that theme.
+
+### Removed
+
+- The dependency on `soda_scs_manager_theme`. Update 11039 uninstalls the
+  theme (with its blocks and settings) unless it is the default or admin
+  theme; on sites where its files are already gone it is removed from the
+  installed themes. **Remove `web/themes/custom/soda_scs_manager_theme`**
+  after the update.
+- The site-wide styles that came with the theme bundle: Tailwind's preflight
+  reset, the `html`/`body` font (Inter), Olivero/Claro page-frame and
+  cookie-banner rules. In the SCS deployment `scs_custom_theme` provides them
+  now; **another front theme must bring its own base reset and fonts**.
+
 ## [4.2.0] - 2026-11-10
 
 The tag `4.1.1` on git.drupal.org was never released; its changes are part of this release.

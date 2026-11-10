@@ -27,19 +27,6 @@ use Drupal\soda_scs_manager\ValueObject\SodaScsSystemCheckResult;
 function soda_scs_manager_requirements($phase): array {
   $requirements = [];
 
-  // The module needs its companion theme, but a module cannot list a theme
-  // under dependencies; check it here and install it in hook_install().
-  if ($phase === 'install') {
-    if (!\Drupal::service('extension.list.theme')->exists('soda_scs_manager_theme')) {
-      $requirements['soda_scs_manager_theme'] = [
-        'title' => t('SCS Manager: companion theme'),
-        'severity' => REQUIREMENT_ERROR,
-        'description' => t('The soda_scs_manager_theme theme is missing. Place it in themes/custom (https://github.com/rnsrk/soda_scs_manager_theme) before installing SODa SCS Manager.'),
-      ];
-    }
-    return $requirements;
-  }
-
   if ($phase !== 'runtime') {
     return $requirements;
   }
@@ -78,11 +65,6 @@ function soda_scs_manager_requirements($phase): array {
  * Implements hook_install().
  */
 function soda_scs_manager_install() {
-  // The module libraries depend on the companion theme's global library.
-  if (!\Drupal::service('theme_handler')->themeExists('soda_scs_manager_theme')) {
-    \Drupal::service('theme_installer')->install(['soda_scs_manager_theme']);
-  }
-
   $source_directory = \Drupal::service('extension.list.module')
     ->getPath('soda_scs_manager') . '/assets/images';
   $destination_directory = 'public://soda_scs_manager/images';
@@ -1944,4 +1926,66 @@ function soda_scs_manager_update_11038() {
     'description' => 'Unix timestamp with microsecond precision when the step was created.',
   ]);
   return t('soda_scs_steps.created is a double now.');
+}
+
+/**
+ * Uninstall the retired soda_scs_manager_theme.
+ *
+ * The module ships its own CSS now (css/soda-scs-manager.css). The theme was
+ * never the active theme, so its blocks and settings go with it. A theme that
+ * is still the default or admin theme is left alone.
+ */
+function soda_scs_manager_update_11039() {
+  $theme = 'soda_scs_manager_theme';
+  $system_theme = \Drupal::config('system.theme');
+  if (in_array($theme, [$system_theme->get('default'), $system_theme->get('admin')], TRUE)) {
+    return t('@theme is the default or admin theme and stays installed. Pick another theme, then uninstall it by hand.', ['@theme' => $theme]);
+  }
+
+  if (\Drupal::service('theme_handler')->themeExists($theme)) {
+    \Drupal::service('theme_installer')->uninstall([$theme]);
+    return t('@theme uninstalled.', ['@theme' => $theme]);
+  }
+
+  // The theme files are already gone (new image) but core.extension may still
+  // list the theme.
+  $removed = _soda_scs_manager_forget_missing_theme($theme);
+  if ($removed === NULL) {
+    return t('@theme was not installed.', ['@theme' => $theme]);
+  }
+  return t('@theme removed from the installed themes, with @count blocks and its settings.', ['@theme' => $theme, '@count' => $removed]);
+}
+
+/**
+ * Forgets an installed theme whose files no longer exist.
+ *
+ * The theme installer cannot uninstall a theme it cannot find, so drop the
+ * core.extension entry, its blocks and its settings directly.
+ *
+ * @param string $theme
+ *   The theme machine name.
+ *
+ * @return int|null
+ *   The number of removed blocks, or NULL if the theme was not installed.
+ */
+function _soda_scs_manager_forget_missing_theme(string $theme): ?int {
+  $config_factory = \Drupal::configFactory();
+  $extensions = $config_factory->getEditable('core.extension');
+  $themes = $extensions->get('theme') ?? [];
+  if (!isset($themes[$theme])) {
+    return NULL;
+  }
+  unset($themes[$theme]);
+  $extensions->set('theme', $themes)->save();
+
+  $removed = 0;
+  foreach ($config_factory->listAll('block.block.') as $name) {
+    if ($config_factory->get($name)->get('theme') === $theme) {
+      $config_factory->getEditable($name)->delete();
+      $removed++;
+    }
+  }
+  $config_factory->getEditable($theme . '.settings')->delete();
+  \Drupal::service('theme_handler')->reset();
+  return $removed;
 }

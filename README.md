@@ -39,14 +39,13 @@ If you are new to Drupal: you mainly use a dashboard and wizards. Drupal hosts t
 This module is meant to run inside the **SODa SCS Manager deployment** (or an equivalent stack), not as a drop-in on a bare Drupal site.
 
 - **Drupal** 10 or 11 (`^10 | ^11`).
-- **Drupal dependencies** (declared): Language (core), [OpenID Connect](https://www.drupal.org/project/openid_connect), [SMTP](https://www.drupal.org/project/smtp), Field Group, and the **soda_scs_manager_theme** theme.
-- **Composer-related** (module `composer.json`): e.g. `drupal/openid_connect`, `drupal/smtp`, Tailwind-related packages for the theme stack.
+- **Drupal dependencies** (declared): Language (core), [OpenID Connect](https://www.drupal.org/project/openid_connect), [SMTP](https://www.drupal.org/project/smtp), and Field Group. No companion theme: the module ships its own UI styles (`css/soda-scs-manager.css`).
+- **Composer-related** (module `composer.json`): e.g. `drupal/openid_connect`, `drupal/smtp`, Tailwind is only a build tool for the module CSS (`package.json`).
 - **Infrastructure (required for real use):** Keycloak (SSO/groups/attributes), Docker + Portainer (or equivalent) for container lifecycle, MariaDB, Traefik (or similar reverse proxy), Nextcloud (+ integration app where used), JupyterHub, OpenGDB/triplestore services, WebProtégé as configured in the deployment. The reference Compose wiring is in [soda_scs_manager_deployment](https://github.com/soda-collections-objects-data-literacy/soda_scs_manager_deployment).
-- **Host tools for operators:** Docker, Git (submodules), `jq`, `curl`; Node/npm on the host for theme builds.
+- **Host tools for operators:** Docker, Git (submodules), `jq`, `curl`; Node/npm (host or `node:22-alpine` container) only to rebuild the module CSS.
 
 ### Recommended modules / libraries
 
-- **soda_scs_manager_theme** — required companion theme (Tailwind/PostCSS UI); styling lives there, not in the module.
 - **OpenID Connect** + Keycloak realm/clients as documented in the deployment MkDocs.
 - **SMTP** — reliable outbound mail for invitations/notifications.
 - Platform companions from the SODa stacks (Nextcloud `scs_manager_integration`, WissKI base images/packages, default WissKI data model) as used by the deployment—these extend what the manager can provision.
@@ -56,7 +55,7 @@ This module is meant to run inside the **SODa SCS Manager deployment** (or an eq
 Supported install path: the [soda_scs_manager_deployment](https://github.com/soda-collections-objects-data-literacy/soda_scs_manager_deployment) Compose stack (this module ships with that deployment under `scs-manager-stack`).
 
 1. **Deploy the stack** — follow [soda_scs_manager_deployment](https://github.com/soda-collections-objects-data-literacy/soda_scs_manager_deployment) (clone, submodules, `.env` from `example-env`, `./start.sh`, `docker compose up -d`, then MkDocs post-configuration for Keycloak, Nextcloud, DBMS SSO, etc.).
-2. **Enable the module and theme** — enable `soda_scs_manager` and its companion theme `soda_scs_manager_theme`; rebuild theme assets (`npm install` / `npm run build` in the theme) if you maintain CSS.
+2. **Enable the module** — enable `soda_scs_manager`. The front theme of the deployment is `scs_custom_theme`; it provides the page frame, base reset and fonts.
 3. **Composer (standalone reference only)** — on Drupal.org the package is `drupal/soda_scs_manager`. A plain `composer require 'drupal/soda_scs_manager:^3.0'` without the deployment stack will not provide working provisioning; use the Compose environment above.
 
 ## Configuration (post-installation)
@@ -79,7 +78,13 @@ Navigate to **Administration → SODa SCS Manager → Settings → Security Sett
 
 ## Theming (development)
 
-Tailwind and component styles live in the **soda_scs_manager_theme** subtheme (`web/themes/custom/soda_scs_manager_theme/pcss`), including `pcss/manager/` (migrated from this module). Install [Node](https://nodejs.org/) or [nvm](https://github.com/nvm-sh/nvm), then from that theme directory run `npm install` and `npm run build` (or `npm run watch` while developing).
+Component styles live in `pcss/` (Tailwind v4 + PostCSS) and build to `css/soda-scs-manager.css`, which is committed and attached by the `globalStyling` library. The build has no Tailwind preflight and no `html`/`body` rules: page frame, reset and fonts belong to the front theme (`scs_custom_theme`).
+
+```bash
+npm install && npm run build        # or: npm run watch while developing
+# without Node on the host:
+docker run --rm -u "$(id -u):$(getent group www-data | cut -d: -f3)" -v "$PWD":/m -w /m node:22-alpine sh -c 'npm install && npm run build'
+```
 
 ## Content sync
 

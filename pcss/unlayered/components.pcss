@@ -1,0 +1,203 @@
+/*
+ * Unlayered manager overrides: must beat Claro/Gin and theme link rules,
+ * so they sit outside @layer. Moved from soda_scs_manager_theme (site-overrides).
+ */
+
+:root {
+  --scs-manager--card-dot-size: 20px;
+  --scs-manager--card-dot-offset: -10px;
+  --scs-manager--card-dot-color: #ffa933;
+}
+
+.scs-manager--card-dot,
+.soda-scs-manager--card-content-wrapper,
+a.soda-scs-manager--tile-card {
+  position: relative;
+  z-index: 0;
+  box-sizing: border-box;
+}
+
+.scs-manager--card-dot::before,
+.soda-scs-manager--card-content-wrapper::before,
+a.soda-scs-manager--tile-card::before {
+  content: '';
+  position: absolute;
+  top: var(--scs-manager--card-dot-offset);
+  right: var(--scs-manager--card-dot-offset);
+  width: var(--scs-manager--card-dot-size);
+  height: var(--scs-manager--card-dot-size);
+  background-color: var(--scs-manager--card-dot-color);
+  border-radius: 50%;
+  z-index: 1;
+  pointer-events: none;
+}
+
+.scs-manager--card-dot > * {
+  position: relative;
+  z-index: 2;
+}
+
+/*
+ * Manager forms: Claro .button--primary uses blue tokens; match SODa orange
+ * (co-working intro CTA, tabs, focus ring).
+ */
+.soda-scs-stack--stack--form-submit.button--primary,
+#soda-scs-manager-project-edit-form .button--primary,
+#soda-scs-user-scs-manager-settings .button--primary {
+  color: #fff;
+  background-color: #e68500;
+  border-color: #e68500;
+}
+
+.soda-scs-stack--stack--form-submit.button--primary:hover,
+.soda-scs-stack--stack--form-submit.button--primary:active,
+#soda-scs-manager-project-edit-form .button--primary:hover,
+#soda-scs-manager-project-edit-form .button--primary:active,
+#soda-scs-user-scs-manager-settings .button--primary:hover,
+#soda-scs-user-scs-manager-settings .button--primary:active {
+  color: #fff;
+  background-color: #b86a00;
+  border-color: #b86a00;
+}
+
+.soda-scs-stack--stack--form-submit.button--primary:focus,
+.soda-scs-stack--stack--form-submit.button--primary:focus-visible,
+#soda-scs-manager-project-edit-form .button--primary:focus,
+#soda-scs-manager-project-edit-form .button--primary:focus-visible,
+#soda-scs-user-scs-manager-settings .button--primary:focus,
+#soda-scs-user-scs-manager-settings .button--primary:focus-visible {
+  outline: none;
+  box-shadow:
+    0 0 0 2px #e68500,
+    0 0 0 4px rgba(230, 133, 0, 0.28);
+}
+
+/*
+ * Project edit: Claro checkboxes use focus blue when checked; match SODa orange.
+ * :not(.error) keeps Claro validation styling.
+ */
+#soda-scs-manager-project-edit-form .form-boolean--type-checkbox:checked:not(.error) {
+  border-color: #e68500;
+  background-color: #e68500;
+}
+
+#soda-scs-manager-project-edit-form .form-boolean--type-checkbox:checked:not(.error):hover,
+#soda-scs-manager-project-edit-form .form-boolean--type-checkbox:checked:not(.error):active {
+  border-color: #b86a00;
+  background-color: #b86a00;
+}
+
+#soda-scs-manager-project-edit-form .form-boolean--type-checkbox:focus:not(.error),
+#soda-scs-manager-project-edit-form .form-boolean--type-checkbox:focus-visible:not(.error) {
+  outline: none;
+  box-shadow:
+    0 0 0 2px #e68500,
+    0 0 0 4px rgba(230, 133, 0, 0.28);
+}
+
+#soda-scs-manager-project-edit-form .form-boolean--type-checkbox:focus:not(.error):hover,
+#soda-scs-manager-project-edit-form .form-boolean--type-checkbox:focus:not(.error):active,
+#soda-scs-manager-project-edit-form .form-boolean--type-checkbox:focus-visible:not(.error):hover,
+#soda-scs-manager-project-edit-form .form-boolean--type-checkbox:focus-visible:not(.error):active {
+  outline: none;
+  box-shadow:
+    0 0 0 2px #e68500,
+    0 0 0 4px rgba(230, 133, 0, 0.28),
+    inset 0 0 0 1px var(--input-fg-color);
+}
+
+/*
+ * Entity card chips (health / details / docs): sit above .soda-scs-manager--card--not-running::after (z-index 40).
+ * Opaque white + isolation avoids the grey wash reading through; !important beats Claro/global link backgrounds.
+ */
+.soda-scs-manager--card-content-wrapper > .soda-scs-manager--health-icon,
+.soda-scs-manager--card-content-wrapper > a.soda-scs-manager--card-icon {
+  isolation: isolate;
+  z-index: 55;
+  background-color: #fff !important;
+}
+
+.soda-scs-manager--card-content-wrapper > a.soda-scs-manager--card-icon:hover,
+.soda-scs-manager--card-content-wrapper > a.soda-scs-manager--card-icon:focus,
+.soda-scs-manager--card-content-wrapper > a.soda-scs-manager--card-icon:focus-visible,
+.soda-scs-manager--card-content-wrapper > a.soda-scs-manager--card-icon:active {
+  background-color: #fff !important;
+}
+
+/*
+ * Claro: .page-wrapper *:focus applies a green (--color-focus) box-shadow on links
+ * and buttons. Use SODa orange focus ring (same as .field--name-field__use-button:focus).
+ */
+.soda-scs-manager--card-content-wrapper > a.soda-scs-manager--card-icon:focus,
+.soda-scs-manager--card-content-wrapper > a.soda-scs-manager--card-icon:focus-visible {
+  outline: none;
+  box-shadow:
+    0 0 0 2px #e68500,
+    0 0 0 4px rgba(230, 133, 0, 0.28);
+}
+
+.soda-scs-manager--tag-filter-button:focus,
+.soda-scs-manager--tag-filter-button:focus-visible {
+  outline: none;
+  box-shadow:
+    0 0 0 2px #e68500,
+    0 0 0 4px rgba(230, 133, 0, 0.28);
+}
+
+#clear-all-tags:focus,
+#clear-all-tags:focus-visible {
+  outline: none;
+  box-shadow:
+    0 0 0 2px #e68500,
+    0 0 0 4px rgba(230, 133, 0, 0.28);
+}
+
+/*
+ * Entity header health chip as <a> (e.g. WissKI login): @layer components styles lose to
+ * unlayered Claro/Gin and load order. Pin the running pill (Tailwind green palette) here, last
+ * in the theme bundle, with !important (same idea as .soda-scs-manager--health-icon chips).
+ */
+.soda-scs-manager--entity--health a.health-badge.health-badge--running {
+  background-color: #dcfce7 !important;
+  color: #166534 !important;
+  border: 1px solid #bbf7d0 !important;
+  text-decoration: none !important;
+}
+
+.soda-scs-manager--entity--health a.health-badge.health-badge--running:hover,
+.soda-scs-manager--entity--health a.health-badge.health-badge--running:focus,
+.soda-scs-manager--entity--health a.health-badge.health-badge--running:focus-visible,
+.soda-scs-manager--entity--health a.health-badge.health-badge--running:active,
+.soda-scs-manager--entity--health a.health-badge.health-badge--running:visited {
+  color: #166534 !important;
+  background-color: #dcfce7 !important;
+  border-color: #bbf7d0 !important;
+  text-decoration: none !important;
+}
+
+.soda-scs-manager--entity--health a.health-badge.health-badge--running .health-badge__symbol {
+  color: #16a34a !important;
+}
+
+.soda-scs-manager--entity--health a.health-badge.health-badge--running:hover {
+  opacity: 0.9;
+}
+
+/*
+ * Claro styles raw <button> elements (padding, min-height, green focus).
+ * Health speed-dial chips must stay 2rem circles matching the status icon.
+ */
+button.soda-scs-manager--health-icon,
+button.soda-scs-manager--health-action {
+  min-height: 0;
+  min-width: 0;
+  padding: 0;
+  line-height: 1;
+  background-image: none;
+}
+
+button.soda-scs-manager--health-icon:focus:not(:focus-visible),
+button.soda-scs-manager--health-action:focus:not(:focus-visible) {
+  outline: none;
+  box-shadow: none;
+}

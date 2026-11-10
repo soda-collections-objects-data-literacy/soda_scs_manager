@@ -1,0 +1,9 @@
+/* Grid Components */
+/* These styles define grid layout components */
+
+@layer components {
+  /* 1 col phone, 2 col tablet, 3–4 col wide desktop (dashboard + catalogue) */
+  .soda-scs-manager--view--grid {
+    @apply grid min-h-0 grid-cols-1 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 items-stretch gap-4 md:gap-5 xl:gap-6;
+  }
+}

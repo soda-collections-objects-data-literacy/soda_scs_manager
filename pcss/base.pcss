@@ -1,0 +1,13 @@
+/*
+ * The module's markup is sized with border-box everywhere (the old theme
+ * bundle applied Tailwind's reset site-wide, also under Gin). Scoped to the
+ * module's own elements; :where() keeps the specificity at 0.
+ */
+@layer base {
+  :where([class*="soda-scs-"], [class*="scs-manager--"]),
+  :where([class*="soda-scs-"], [class*="scs-manager--"]) *,
+  :where([class*="soda-scs-"], [class*="scs-manager--"]) ::before,
+  :where([class*="soda-scs-"], [class*="scs-manager--"]) ::after {
+    box-sizing: border-box;
+  }
+}

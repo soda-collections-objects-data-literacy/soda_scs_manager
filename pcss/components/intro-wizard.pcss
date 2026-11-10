@@ -1,0 +1,413 @@
+/*
+ * Co-working intro modal. Scoped to #scs-manager--coworking-intro; @layer components + @apply
+ * matches other manager component PCSS.
+ */
+
+@theme {
+  --animate-scs-coworking-intro-welcome-line: scs-manager-coworking-intro-welcome-line-in 1.5s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+  --animate-scs-coworking-intro-welcome-dot: scs-manager-coworking-intro-welcome-dot-pump 1s cubic-bezier(0.34, 1.56, 0.64, 1) 0.72s both;
+  --animate-scs-coworking-intro-welcome-content: scs-manager-coworking-intro-welcome-content-in 0.55s cubic-bezier(0.22, 1, 0.36, 1) 1.05s both;
+  --animate-scs-coworking-intro-copy-rise: scs-manager-coworking-intro-welcome-content-in 0.55s cubic-bezier(0.22, 1, 0.36, 1) 0.15s both;
+  --animate-scs-coworking-intro-welcome-visual: scs-manager-coworking-intro-welcome-visual-in 0.7s cubic-bezier(0.22, 1, 0.36, 1) 0.3s both;
+
+  @keyframes scs-manager-coworking-intro-welcome-visual-in {
+    from {
+      opacity: 0;
+      transform: scale(0.97);
+    }
+
+    to {
+      opacity: 1;
+      transform: scale(1);
+    }
+  }
+
+  @keyframes scs-manager-coworking-intro-welcome-line-in {
+    from {
+      transform: scaleX(0);
+    }
+
+    to {
+      transform: scaleX(1);
+    }
+  }
+
+  @keyframes scs-manager-coworking-intro-welcome-dot-pump {
+    0% {
+      opacity: 0;
+      transform: scale(0);
+    }
+
+    12% {
+      opacity: 1;
+    }
+
+    50% {
+      transform: scale(1.2);
+    }
+
+    100% {
+      opacity: 1;
+      transform: scale(1);
+    }
+  }
+
+  @keyframes scs-manager-coworking-intro-welcome-content-in {
+    from {
+      opacity: 0;
+      transform: translateY(1rem);
+    }
+
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+}
+
+@layer components {
+  /* Modal overlay: gutters shrink on small viewports so the panel never exceeds the screen. */
+  .scs-manager--coworking-intro {
+    @apply fixed inset-0 z-[60] flex items-center justify-center bg-slate-950/70 p-2 sm:p-3;
+  }
+
+  #scs-manager--coworking-intro.scs-manager--coworking-intro-root--hidden {
+    @apply hidden;
+  }
+
+  /*
+   * Panel: max width 1024px. Height must stay *inside* the padded overlay (100dvh − overlay gutters),
+   * otherwise flex-centering still clips the top/bottom. Cap pixel height so it never fills the whole screen.
+   */
+  .scs-manager--coworking-intro-panel {
+    @apply flex min-h-0 w-[min(1024px,calc(100vw-1rem))] max-w-full flex-col overflow-hidden rounded-xl border border-stone-200 bg-white shadow-2xl;
+    height: min(680px, calc(100dvh - 2.5rem));
+    max-height: min(680px, calc(100dvh - 2.5rem));
+  }
+
+  @supports (height: 100svh) {
+    .scs-manager--coworking-intro-panel {
+      height: min(680px, calc(100svh - 2.5rem));
+      max-height: min(680px, calc(100svh - 2.5rem));
+    }
+  }
+
+  .scs-manager--coworking-intro-header {
+    @apply relative shrink-0 px-4 pb-2 pt-4 sm:px-6 sm:pt-5;
+  }
+
+  /* Right edge. Chrome reset is unlayered (intro-wizard.pcss) so it beats theme `button`. */
+  .scs-manager--coworking-intro-skip-row {
+    @apply text-right;
+  }
+
+  .scs-manager--coworking-intro-skip {
+    @apply z-10 max-w-full text-end text-sm leading-snug text-stone-500 underline;
+  }
+
+  .scs-manager--coworking-intro-skip:hover {
+    @apply text-stone-800;
+  }
+
+  /* Line + dot under the title; hidden on welcome (slide 0) — see data-coworking-intro-active-slide on #scs-manager--coworking-intro. */
+  .scs-manager--coworking-intro-panel-divider {
+    @apply shrink-0 px-4 sm:px-6;
+  }
+
+  #scs-manager--coworking-intro[data-coworking-intro-active-slide="0"] .scs-manager--coworking-intro-panel-divider {
+    @apply hidden;
+  }
+
+  /*
+   * Welcome visual (slide 0 only): grows into extra vertical space so the modal isn’t empty under the video.
+   * Video scales up with object-contain inside the flex slot (capped so header/footer stay on-screen).
+   */
+  .scs-manager--coworking-intro-welcome-visual-wrap {
+    @apply mx-auto mb-3 flex w-full max-h-[min(520px,58svh)] flex-1 basis-0 min-h-0 items-center justify-center overflow-hidden rounded-md bg-stone-100;
+  }
+
+  .scs-manager--coworking-intro-welcome-visual {
+    @apply block max-h-full max-w-full object-contain object-center;
+  }
+
+  /* Flex column: visible slide grows; overflow hidden (no inner scrollbar). */
+  .scs-manager--coworking-intro-scroll-body {
+    @apply flex min-h-0 flex-1 flex-col overflow-hidden px-4 text-stone-700 sm:px-6;
+    font-size: clamp(0.75rem, 0.35vw + 0.68rem, 0.875rem);
+    line-height: 1.45;
+  }
+
+  .scs-manager--coworking-intro-slide:not(.scs-manager--coworking-intro-slide--hidden) {
+    @apply flex min-h-0 flex-1 flex-col overflow-hidden;
+  }
+
+  /* Body copy uses flex-1; thin inner scroll only if a slide’s text exceeds space (modal chrome stays viewport-bound). */
+  #scs-manager--coworking-intro .scs-manager--coworking-intro-slide:not(.scs-manager--coworking-intro-slide--hidden) .scs-manager--coworking-intro-copy-rise {
+    @apply min-h-0 flex-1 overflow-x-hidden overflow-y-auto overscroll-contain;
+  }
+
+  /* Welcome slide: text stays natural height; spare space goes to the video region above (flex-1 on visual wrap). */
+  #scs-manager--coworking-intro .scs-manager--coworking-intro-slide:not(.scs-manager--coworking-intro-slide--hidden)[data-coworking-intro-slide='0'] .scs-manager--coworking-intro-copy-rise {
+    @apply shrink-0 flex-grow-0 basis-auto overflow-visible;
+  }
+
+  /* Video slides 1 & 2: same non-growing treatment so the video wrap gets the spare flex space. */
+  #scs-manager--coworking-intro .scs-manager--coworking-intro-slide:not(.scs-manager--coworking-intro-slide--hidden)[data-coworking-intro-slide='1'] .scs-manager--coworking-intro-copy-rise,
+  #scs-manager--coworking-intro .scs-manager--coworking-intro-slide:not(.scs-manager--coworking-intro-slide--hidden)[data-coworking-intro-slide='2'] .scs-manager--coworking-intro-copy-rise {
+    @apply shrink-0 flex-grow-0 basis-auto overflow-y-auto;
+  }
+
+  .scs-manager--coworking-intro-slide--hidden {
+    @apply hidden;
+  }
+
+  .scs-manager--coworking-intro-welcome-content > p:first-of-type {
+    @apply mb-3;
+  }
+
+  #scs-manager--coworking-intro [data-coworking-intro-slide="6"] .scs-manager--coworking-intro-slide-lede {
+    @apply mb-4;
+  }
+
+  #scs-manager--coworking-intro [data-coworking-intro-slide="7"] .scs-manager--coworking-intro-slide-lede {
+    @apply mb-3;
+  }
+
+  .scs-manager--coworking-intro-footer {
+    @apply flex shrink-0 flex-wrap items-center justify-between gap-2 border-t border-stone-100 bg-stone-50 px-4 py-3 sm:gap-3 sm:px-6 sm:py-4;
+  }
+
+  .scs-manager--coworking-intro-step-label {
+    @apply text-xs text-stone-500;
+  }
+
+  .scs-manager--coworking-intro-footer-actions {
+    @apply flex gap-2;
+  }
+
+  .scs-manager--coworking-intro-footer-control--hidden {
+    @apply hidden;
+  }
+
+  .scs-manager--coworking-intro-btn-back,
+  .scs-manager--coworking-intro-btn-next {
+    @apply rounded px-4 py-2 text-sm disabled:cursor-not-allowed disabled:opacity-40;
+  }
+
+  .scs-manager--coworking-intro-btn-back {
+    @apply border border-stone-300 hover:bg-white;
+  }
+
+  .scs-manager--coworking-intro-btn-next {
+    @apply bg-stone-800 text-white hover:bg-stone-900;
+  }
+
+  #scs-manager--coworking-intro .scs-manager--nextcloud-connect-wrapper.scs-manager--nextcloud-connect-inline {
+    @apply rounded-lg border border-stone-200 bg-stone-50 p-4;
+  }
+
+  #scs-manager--coworking-intro .scs-manager--nextcloud-connect-btn {
+    @apply mb-4 w-full rounded-lg bg-stone-800 px-4 py-3 text-sm font-medium text-white hover:bg-stone-900 focus:outline-none focus:ring-2 focus:ring-stone-500 focus:ring-offset-2;
+  }
+
+  #scs-manager--coworking-intro .scs-manager--coworking-intro-nextcloud-status {
+    @apply mb-3 text-sm;
+  }
+
+  #scs-manager--coworking-intro .scs-manager--coworking-intro-nextcloud-hint {
+    @apply text-xs text-stone-600;
+  }
+
+  .scs-manager--coworking-intro-sso-note {
+    @apply mt-4 text-sm text-stone-600;
+  }
+
+  .scs-manager--coworking-intro-text-link {
+    @apply font-medium text-blue-700 underline hover:text-blue-900;
+  }
+
+  .scs-manager--coworking-intro-success-details-link {
+    @apply mb-4 inline-block text-sm;
+  }
+
+  .scs-manager--coworking-intro-field-label {
+    @apply mb-1 block text-sm font-medium text-stone-800;
+  }
+
+  .scs-manager--coworking-intro-field-hint {
+    @apply mb-2 text-xs text-stone-500;
+  }
+
+  .scs-manager--coworking-intro-wisski-name-input {
+    @apply mb-1 w-full rounded-md border border-stone-300 px-3 py-2 text-stone-900 focus:border-stone-400 focus:outline-none focus:ring-2 focus:ring-stone-200;
+  }
+
+  #scs-manager--coworking-intro .scs-manager--coworking-intro-wisski-name-input.scs-manager--coworking-intro-wisski-name-input--invalid {
+    @apply border-red-600 ring-2 ring-red-200 focus:border-red-600 focus:ring-red-200;
+  }
+
+  .scs-manager--coworking-intro-field-error {
+    @apply mb-3 text-sm font-medium text-red-700;
+  }
+
+  .scs-manager--coworking-intro-form-actions {
+    @apply flex flex-col flex-nowrap justify-center gap-2 py-2.5;
+  }
+
+  .scs-manager--coworking-intro-success-note {
+    @apply mb-4 text-sm text-stone-600;
+  }
+
+  .scs-manager--coworking-intro-success-footer {
+    @apply block;
+  }
+
+  .scs-manager--coworking-intro-btn-close {
+    @apply rounded bg-stone-800 px-4 py-2 text-sm text-white hover:bg-stone-900;
+  }
+
+  .scs-manager--coworking-intro-btn-outlined {
+    @apply rounded border border-stone-300 px-4 py-2 text-sm hover:bg-stone-50;
+  }
+
+  /* Primary action + success heading — SODa orange (matches cards / focus ring). */
+  .scs-manager--coworking-intro-btn-create-wisski {
+    @apply rounded bg-[#e68500] px-4 py-2 text-sm text-white focus:outline-none focus:ring-2 focus:ring-[#e68500] focus:ring-offset-2;
+  }
+
+  .scs-manager--coworking-intro-btn-create-wisski:hover {
+    @apply bg-[#b86a00];
+  }
+
+  .scs-manager--coworking-intro-success-details-link.scs-manager--coworking-intro-success-details-link--pending {
+    @apply pointer-events-none opacity-50;
+  }
+
+  .scs-manager--coworking-intro-title {
+    @apply w-full max-w-full text-center text-lg font-semibold text-stone-900 sm:text-xl;
+  }
+
+  .scs-manager--coworking-intro-subtitle {
+    @apply mb-2 text-center text-sm font-medium text-stone-900 sm:mb-3 sm:text-base;
+  }
+
+  .scs-manager--coworking-intro-success-title {
+    @apply text-[#b86a00];
+  }
+
+  /*
+   * Welcome slide: fixed-height track; line paints above dot (same as page menu-bar divider).
+   */
+  .scs-manager--coworking-intro-welcome-divider {
+    @apply mb-5 w-full max-w-full;
+  }
+
+  .scs-manager--coworking-intro-welcome-divider-track {
+    @apply relative mx-auto mt-px mb-px h-9 w-full max-w-full overflow-visible;
+  }
+
+  .scs-manager--coworking-intro-welcome-divider-line {
+    /* Vertical center: half track height minus half line (3px). */
+    @apply absolute top-[calc(50%_-_1.5px)] right-[3px] left-[3px] z-[2] h-[3px] origin-left scale-x-100 bg-black;
+  }
+
+  .scs-manager--coworking-intro-welcome-divider-dot {
+    /* Center on track: half track height/width minus half dot (30px). */
+    @apply pointer-events-none absolute top-[calc(50%_-_15px)] left-[calc(50%_-_15px)] z-0 h-[30px] w-[30px] origin-center rounded-full bg-[#ffa933];
+  }
+
+  /*
+   * Panel divider + in-slide static (if any): same geometry as welcome divider end state; no animation.
+   */
+  #scs-manager--coworking-intro .scs-manager--coworking-intro-welcome-divider--static .scs-manager--coworking-intro-welcome-divider-line {
+    @apply scale-x-100;
+  }
+
+  #scs-manager--coworking-intro .scs-manager--coworking-intro-welcome-divider--static .scs-manager--coworking-intro-welcome-divider-dot {
+    @apply scale-100 opacity-100;
+  }
+
+  /*
+   * Before data-coworking-intro-replay is set (or after it is cleared): match animation t=0
+   * so there is no one-frame flash of a full line + visible dot before JS runs.
+   */
+  #scs-manager--coworking-intro
+    .scs-manager--coworking-intro-slide[data-coworking-intro-slide="0"]:not(.scs-manager--coworking-intro-slide--hidden)
+    [data-coworking-intro-welcome-divider]:not([data-coworking-intro-replay])
+    .scs-manager--coworking-intro-welcome-divider-line {
+    @apply scale-x-0;
+  }
+
+  #scs-manager--coworking-intro
+    .scs-manager--coworking-intro-slide[data-coworking-intro-slide="0"]:not(.scs-manager--coworking-intro-slide--hidden)
+    [data-coworking-intro-welcome-divider]:not([data-coworking-intro-replay])
+    .scs-manager--coworking-intro-welcome-divider-dot {
+    @apply scale-0 opacity-0;
+  }
+
+  #scs-manager--coworking-intro
+    .scs-manager--coworking-intro-slide:not(.scs-manager--coworking-intro-slide--hidden)
+    [data-coworking-intro-copy-rise]:not([data-coworking-intro-copy-replay]) {
+    @apply translate-y-4 opacity-0;
+  }
+
+  /* Visual wrap pre-animation state: scale instead of translateY for a natural zoom-in feel. */
+  #scs-manager--coworking-intro
+    .scs-manager--coworking-intro-slide:not(.scs-manager--coworking-intro-slide--hidden)
+    .scs-manager--coworking-intro-welcome-visual-wrap[data-coworking-intro-copy-rise]:not([data-coworking-intro-copy-replay]) {
+    @apply scale-[0.97] translate-y-0 opacity-0;
+  }
+
+  /* Visual wrap entrance: fade + scale-up, fires ahead of the copy text (0.3s vs 1.05s delay). */
+  #scs-manager--coworking-intro
+    .scs-manager--coworking-intro-slide[data-coworking-intro-slide="0"]:not(.scs-manager--coworking-intro-slide--hidden)
+    .scs-manager--coworking-intro-welcome-visual-wrap[data-coworking-intro-copy-rise][data-coworking-intro-copy-replay] {
+    @apply animate-scs-coworking-intro-welcome-visual motion-reduce:animate-none motion-reduce:scale-100 motion-reduce:opacity-100;
+  }
+
+  /*
+   * Strict order: line finishes (0.7s), then dot runs (delay 0.72s, duration 0.5s).
+   * motion-reduce: mirrors the old @media (prefers-reduced-motion) block via Tailwind variants.
+   */
+  #scs-manager--coworking-intro
+    [data-coworking-intro-welcome-divider][data-coworking-intro-replay]
+    .scs-manager--coworking-intro-welcome-divider-line {
+    @apply animate-scs-coworking-intro-welcome-line motion-reduce:animate-none motion-reduce:scale-x-100;
+  }
+
+  /*
+   * Dot: no opacity on this rule — a hardcoded opacity: 0 here was winning after the animation
+   * ended and hid the dot. `both` applies 0% during the delay (invisible), then keeps 100% after.
+   */
+  #scs-manager--coworking-intro
+    [data-coworking-intro-welcome-divider][data-coworking-intro-replay]
+    .scs-manager--coworking-intro-welcome-divider-dot {
+    @apply animate-scs-coworking-intro-welcome-dot motion-reduce:animate-none motion-reduce:scale-100 motion-reduce:opacity-100;
+  }
+
+  #scs-manager--coworking-intro
+    .scs-manager--coworking-intro-slide[data-coworking-intro-slide="0"]:not(.scs-manager--coworking-intro-slide--hidden)
+    [data-coworking-intro-copy-rise][data-coworking-intro-copy-replay] {
+    /* Same beat as former + .welcome-content (after line/dot). */
+    @apply animate-scs-coworking-intro-welcome-content motion-reduce:animate-none motion-reduce:translate-y-0 motion-reduce:opacity-100;
+  }
+
+  #scs-manager--coworking-intro
+    .scs-manager--coworking-intro-slide:not([data-coworking-intro-slide="0"]):not(.scs-manager--coworking-intro-slide--hidden)
+    [data-coworking-intro-copy-rise][data-coworking-intro-copy-replay] {
+    @apply animate-scs-coworking-intro-copy-rise motion-reduce:animate-none motion-reduce:translate-y-0 motion-reduce:opacity-100;
+  }
+
+  /*
+   * Claro green focus ring on buttons/inputs/links — use SODa orange
+   * (same as .field--name-field__use-button:focus).
+   */
+  button:focus,
+  button:focus-visible,
+  a:focus,
+  a:focus-visible,
+  input:focus,
+  input:focus-visible {
+    @apply outline-none shadow-[0_0_0_2px_#e68500,0_0_0_4px_rgba(230,133,0,0.28)];
+  }
+}
