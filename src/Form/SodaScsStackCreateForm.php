@@ -221,6 +221,13 @@ class SodaScsStackCreateForm extends ContentEntityForm {
       $form['machineName']['widget'][0]['value']['#attributes']['class'][] = 'visually-hidden';
       $form['machineName']['widget'][0]['value']['#attributes']['aria-hidden'] = 'true';
       $form['machineName']['widget'][0]['value']['#attributes']['tabindex'] = '-1';
+      // FormValidator checks #required on the element before form #validate,
+      // so ensureMachineNameFromLabel() would run too late. Enforce emptiness
+      // after deriving in validateForm() instead.
+      $form['machineName']['#required'] = FALSE;
+      $form['machineName']['widget']['#required'] = FALSE;
+      $form['machineName']['widget'][0]['#required'] = FALSE;
+      $form['machineName']['widget'][0]['value']['#required'] = FALSE;
       if ($urlTemplate !== '') {
         $form['machineName']['widget'][0]['value']['#suffix'] = '<span class="description soda-scs-manager--machine-name-description"><a class="soda-scs-manager--application-url" target="_blank" rel="noopener noreferrer"></a></span>';
       }
@@ -267,7 +274,9 @@ class SodaScsStackCreateForm extends ContentEntityForm {
     // Before parent::validateForm() so the entity is built with the project.
     $this->applySelectedProject($form_state);
     // Wizard/fetch submits can omit machineName when JS aggregation skips the
-    // client generator; derive it before required/regex checks run.
+    // client generator; derive it before regex/entity checks run. Form API
+    // #required is off on this widget so element validation does not reject
+    // the empty posted value before this runs.
     $this->ensureMachineNameFromLabel($form_state);
     parent::validateForm($form, $form_state);
 
@@ -278,37 +287,41 @@ class SodaScsStackCreateForm extends ContentEntityForm {
       $form_state->setErrorByName('label', $this->t('Little Bobby Tables has no power here!'));
     }
 
-    $machineName = $form_state->getValue('machineName')[0]['value'];
-
-    $pattern = '/^[a-z0-9-]+$/';
-
-    if (!preg_match($pattern, $machineName)) {
-      $form_state->setErrorByName('machineName', $this->t('The machinename can only contain small letters, digits, and minus.'));
+    $machineName = trim((string) ($form_state->getValue(['machineName', 0, 'value']) ?? ''));
+    if ($machineName === '') {
+      $form_state->setErrorByName('machineName', $this->t('The machine name could not be derived from the label.'));
     }
+    else {
+      $pattern = '/^[a-z0-9-]+$/';
 
-    if (InputDisallowedTerms::isSqlMachineName($machineName)) {
-      $form_state->setErrorByName('machineName', $this->t('The machineName cannot contain the word "@word"', [
-        '@word' => mb_strtolower(trim($machineName)),
-      ]));
-    }
+      if (!preg_match($pattern, $machineName)) {
+        $form_state->setErrorByName('machineName', $this->t('The machinename can only contain small letters, digits, and minus.'));
+      }
 
-    // Check if the machineName is already in use
-    // by another SodaScsComponent entity.
-    $entity_query = $this->entityTypeManager->getStorage('soda_scs_component')->getQuery()
-      ->accessCheck(FALSE)
-      ->condition('machineName', $machineName);
-    $existing_entities = $entity_query->execute();
+      if (InputDisallowedTerms::isSqlMachineName($machineName)) {
+        $form_state->setErrorByName('machineName', $this->t('The machineName cannot contain the word "@word"', [
+          '@word' => mb_strtolower(trim($machineName)),
+        ]));
+      }
 
-    if (!empty($existing_entities)) {
-      $form_state->setErrorByName('machineName', $this->t('The machineName is already in use by another SODa SCS Component entity'));
+      // Check if the machineName is already in use
+      // by another SodaScsComponent entity.
+      $entity_query = $this->entityTypeManager->getStorage('soda_scs_component')->getQuery()
+        ->accessCheck(FALSE)
+        ->condition('machineName', $machineName);
+      $existing_entities = $entity_query->execute();
+
+      if (!empty($existing_entities)) {
+        $form_state->setErrorByName('machineName', $this->t('The machineName is already in use by another SODa SCS Component entity'));
+      }
+
+      if (strlen($machineName) > SodaScsMachineNameHelper::APPLICATION_MAX_LENGTH) {
+        $form_state->setErrorByName('machineName', $this->t('The machine name must not exceed 30 characters.'));
+      }
     }
 
     if (strlen($form_state->getValue('label')[0]['value']) > 25) {
       $form_state->setErrorByName('label', $this->t('The label must not exceed 25 characters.'));
-    }
-
-    if (strlen($machineName) > SodaScsMachineNameHelper::APPLICATION_MAX_LENGTH) {
-      $form_state->setErrorByName('machineName', $this->t('The machine name must not exceed 30 characters.'));
     }
 
     // WebProtégé and JupyterHub exist once per project.

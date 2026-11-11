@@ -550,6 +550,32 @@
             label.dispatchEvent(new Event('input', { bubbles: true }));
             label.dispatchEvent(new Event('change', { bubbles: true }));
           }
+          // machineNameGenerator may not attach under JS aggregation; fill
+          // before submit so the POST is not empty even then.
+          ensureMachineNameFromLabel(formEl);
+        }
+
+        /**
+         * Fills machineName from label when the client generator left it empty.
+         *
+         * Mirrors js/machineNameGenerator.js / SodaScsMachineNameHelper::fromLabel
+         * for the ASCII case the wizard uses; length matches APPLICATION_MAX_LENGTH.
+         */
+        function ensureMachineNameFromLabel(formEl) {
+          var machineInput = formEl.querySelector('[name="machineName[0][value]"]');
+          var labelInput = formEl.querySelector('[name="label[0][value]"]');
+          if (!machineInput || !labelInput) {
+            return;
+          }
+          if (String(machineInput.value || '').trim() !== '') {
+            return;
+          }
+          machineInput.value = String(labelInput.value || '')
+            .toLowerCase()
+            .replace(/[^a-z0-9-]+/g, '-')
+            .replace(/^[^a-z]+/, '')
+            .replace(/-+$/, '')
+            .substring(0, 30);
         }
 
         function rememberAppForm() {
@@ -841,6 +867,7 @@
             hideFieldByName(loaded, 'partOfProjects');
             hideNativeSubmit(loaded);
             applySnapshot(formEl, state.appSnapshots[type] || []);
+            ensureMachineNameFromLabel(formEl);
             submitForm(formEl).then(function (result) {
               if (!result.success) {
                 failRemainingApps(type, collectFormErrors(result.html).join(' '));

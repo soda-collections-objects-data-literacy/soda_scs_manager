@@ -2281,6 +2281,11 @@ msgstr "Snapshot @label wiederherstellen?"
 msgid "This action will restore the snapshot data of the (bundled) application <b>@entity_label</b>, permanently overwriting its current state."
 msgstr "Diese Aktion wird die Snapshot-Daten der (gebündelten) Anwendung <b>@entity_label</b> wiederherstellen und deren aktuellen Zustand dauerhaft überschreiben."
 
+#: src/Form/SodaScsStackCreateForm.php
+#: src/Form/SodaScsComponentCreateForm.php
+msgid "The machine name could not be derived from the label."
+msgstr "Der Maschinenname konnte nicht aus dem Label abgeleitet werden."
+
 #: src/Form/SodaScsStackCreateForm.php:178
 msgid "The machinename can only contain small letters, digits, and minus."
 msgstr "Der Maschinenname darf nur Kleinbuchstaben, Ziffern und Minus enthalten."
