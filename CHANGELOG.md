@@ -7,6 +7,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- The Create Project wizard creates selected applications even when JS
+  aggregation is on (as on production). The stack and component create forms
+  derive `machineName` from the label on the server if the client left it
+  empty, and validation messages name the field again
+  (`#title_display` invisible instead of an empty title).
+  Related: [#3637344](https://www.drupal.org/project/soda_scs_manager/issues/3637344).
+
 ## [4.3.1] - 2026-11-10
 
 ### Fixed

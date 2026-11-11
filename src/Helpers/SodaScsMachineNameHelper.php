@@ -21,6 +21,13 @@ class SodaScsMachineNameHelper {
   public const PROJECT_MAX_LENGTH = 64;
 
   /**
+   * Maximum length of a stack/component application machine name.
+   *
+   * Matches the create-form validation in SodaScsStackCreateForm.
+   */
+  public const APPLICATION_MAX_LENGTH = 30;
+
+  /**
    * Project machine names that must never be used.
    *
    * These collide with platform-wide Nextcloud Team Folders.

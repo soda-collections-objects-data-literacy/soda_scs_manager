@@ -16,6 +16,7 @@ use Drupal\Core\Form\FormStateInterface;
 use Drupal\Core\Logger\LoggerChannelFactoryInterface;
 use Drupal\Core\Session\AccountProxyInterface;
 use Drupal\Core\Url;
+use Drupal\soda_scs_manager\Helpers\SodaScsMachineNameHelper;
 use Drupal\soda_scs_manager\Helpers\SodaScsNextcloudHelpers;
 use Drupal\soda_scs_manager\Helpers\SodaScsProjectApplicationHelpers;
 use Drupal\soda_scs_manager\StackActions\SodaScsStackActionsInterface;
@@ -93,6 +94,13 @@ class SodaScsStackCreateForm extends ContentEntityForm {
   protected SodaScsProjectApplicationHelpers $projectApplicationHelpers;
 
   /**
+   * Derives machine names from labels when the client omits them.
+   *
+   * @var \Drupal\soda_scs_manager\Helpers\SodaScsMachineNameHelper
+   */
+  protected SodaScsMachineNameHelper $machineNameHelper;
+
+  /**
    * Constructs a new SodaScsComponentCreateForm.
    *
    * @param \Drupal\Core\Session\AccountProxyInterface $currentUser
@@ -115,6 +123,8 @@ class SodaScsStackCreateForm extends ContentEntityForm {
    *   The Nextcloud helpers.
    * @param \Drupal\soda_scs_manager\Helpers\SodaScsProjectApplicationHelpers $projectApplicationHelpers
    *   Looks up applications that exist once per project.
+   * @param \Drupal\soda_scs_manager\Helpers\SodaScsMachineNameHelper $machineNameHelper
+   *   Derives machine names from labels.
    */
   public function __construct(
     AccountProxyInterface $currentUser,
@@ -130,6 +140,8 @@ class SodaScsStackCreateForm extends ContentEntityForm {
     SodaScsNextcloudHelpers $nextcloudHelpers,
     #[Autowire(service: 'soda_scs_manager.project_application.helpers')]
     SodaScsProjectApplicationHelpers $projectApplicationHelpers,
+    #[Autowire(service: 'soda_scs_manager.machine_name.helpers')]
+    SodaScsMachineNameHelper $machineNameHelper,
   ) {
     parent::__construct($entity_repository, $entity_type_bundle_info, $time);
     $this->currentUser = $currentUser;
@@ -139,6 +151,7 @@ class SodaScsStackCreateForm extends ContentEntityForm {
     $this->entityTypeManager = $entityTypeManager;
     $this->nextcloudHelpers = $nextcloudHelpers;
     $this->projectApplicationHelpers = $projectApplicationHelpers;
+    $this->machineNameHelper = $machineNameHelper;
   }
 
   /**
@@ -156,6 +169,7 @@ class SodaScsStackCreateForm extends ContentEntityForm {
       $container->get('entity_type.manager'),
       $container->get('soda_scs_manager.nextcloud.helpers'),
       $container->get('soda_scs_manager.project_application.helpers'),
+      $container->get('soda_scs_manager.machine_name.helpers'),
     );
   }
 
@@ -189,13 +203,14 @@ class SodaScsStackCreateForm extends ContentEntityForm {
     // Make the machineName field readonly and
     // add JavaScript to auto-generate it.
     if (isset($form['machineName'])) {
-      $form['machineName']['#title'] = '';
+      // Keep the title for validation messages; hide it in the UI.
+      $form['machineName']['#title_display'] = 'invisible';
       $form['machineName']['#description'] = '';
       // @todo Check if there is a better way to do this.
       // Add CSS classes for machine name generation.
       $form['label']['widget'][0]['value']['#attributes']['class'][] = 'soda-scs-manager--machine-name-source';
       $form['machineName']['widget'][0]['value']['#attributes']['class'][] = 'soda-scs-manager--machine-name-target';
-      $form['machineName']['widget'][0]['value']['#title'] = '';
+      $form['machineName']['widget'][0]['value']['#title_display'] = 'invisible';
       $form['machineName']['widget'][0]['value']['#description'] = '';
       $urlTemplate = $this->bundle === 'soda_scs_wisski_stack'
         ? str_replace('{instanceId}', '{machineName}', (string) $this->settings->get('wisski.instances.baseUrl'))
@@ -251,6 +266,9 @@ class SodaScsStackCreateForm extends ContentEntityForm {
 
     // Before parent::validateForm() so the entity is built with the project.
     $this->applySelectedProject($form_state);
+    // Wizard/fetch submits can omit machineName when JS aggregation skips the
+    // client generator; derive it before required/regex checks run.
+    $this->ensureMachineNameFromLabel($form_state);
     parent::validateForm($form, $form_state);
 
     // Check for Little Bobby Tables SQL injection attempt.
@@ -289,8 +307,7 @@ class SodaScsStackCreateForm extends ContentEntityForm {
       $form_state->setErrorByName('label', $this->t('The label must not exceed 25 characters.'));
     }
 
-    // Check if the machineName is longer than 30 characters.
-    if (strlen($machineName) > 30) {
+    if (strlen($machineName) > SodaScsMachineNameHelper::APPLICATION_MAX_LENGTH) {
       $form_state->setErrorByName('machineName', $this->t('The machine name must not exceed 30 characters.'));
     }
 
@@ -410,6 +427,28 @@ class SodaScsStackCreateForm extends ContentEntityForm {
     else {
       $form_state->setRedirect('soda_scs_manager.dashboard');
     }
+  }
+
+  /**
+   * Fills machineName from label when the client left it empty.
+   *
+   * The project wizard posts application forms loaded via fetch; with JS
+   * aggregation the machine-name behavior may never run, so the field arrives
+   * empty even though the label is set.
+   *
+   * @param \Drupal\Core\Form\FormStateInterface $form_state
+   *   The form state.
+   */
+  protected function ensureMachineNameFromLabel(FormStateInterface $form_state): void {
+    $machineName = trim((string) ($form_state->getValue(['machineName', 0, 'value']) ?? ''));
+    if ($machineName !== '') {
+      return;
+    }
+    $label = (string) ($form_state->getValue(['label', 0, 'value']) ?? '');
+    $form_state->setValue(
+      ['machineName', 0, 'value'],
+      $this->machineNameHelper->fromLabel($label, SodaScsMachineNameHelper::APPLICATION_MAX_LENGTH),
+    );
   }
 
 }

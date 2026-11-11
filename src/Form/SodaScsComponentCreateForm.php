@@ -15,6 +15,7 @@ use Drupal\Core\Form\FormStateInterface;
 use Drupal\Core\Logger\LoggerChannelFactoryInterface;
 use Drupal\Core\Session\AccountProxyInterface;
 use Drupal\soda_scs_manager\ComponentActions\SodaScsComponentActionsInterface;
+use Drupal\soda_scs_manager\Helpers\SodaScsMachineNameHelper;
 use Drupal\soda_scs_manager\Helpers\SodaScsProjectApplicationHelpers;
 use Drupal\soda_scs_manager\RequestActions\SodaScsServiceRequestInterface;
 use Drupal\soda_scs_manager\Traits\SodaScsProjectScopedCreateFormTrait;
@@ -103,6 +104,13 @@ class SodaScsComponentCreateForm extends ContentEntityForm {
   protected SodaScsProjectApplicationHelpers $projectApplicationHelpers;
 
   /**
+   * Derives machine names from labels when the client omits them.
+   *
+   * @var \Drupal\soda_scs_manager\Helpers\SodaScsMachineNameHelper
+   */
+  protected SodaScsMachineNameHelper $machineNameHelper;
+
+  /**
    * Constructs a new SodaScsComponentCreateForm.
    *
    * @param \Drupal\Core\Session\AccountProxyInterface $currentUser
@@ -125,6 +133,8 @@ class SodaScsComponentCreateForm extends ContentEntityForm {
    *   The entity type manager.
    * @param \Drupal\soda_scs_manager\Helpers\SodaScsProjectApplicationHelpers $projectApplicationHelpers
    *   Looks up applications that exist once per project.
+   * @param \Drupal\soda_scs_manager\Helpers\SodaScsMachineNameHelper $machineNameHelper
+   *   Derives machine names from labels.
    */
   public function __construct(
     AccountProxyInterface $currentUser,
@@ -137,6 +147,7 @@ class SodaScsComponentCreateForm extends ContentEntityForm {
     SodaScsComponentActionsInterface $sodaScsComponentActions,
     EntityTypeManagerInterface $entityTypeManager,
     SodaScsProjectApplicationHelpers $projectApplicationHelpers,
+    SodaScsMachineNameHelper $machineNameHelper,
   ) {
     parent::__construct($entity_repository, $entity_type_bundle_info, $time);
     $this->currentUser = $currentUser;
@@ -146,6 +157,7 @@ class SodaScsComponentCreateForm extends ContentEntityForm {
     $this->sodaScsDockerRegistryServiceActions = $sodaScsDockerRegistryServiceActions;
     $this->sodaScsComponentActions = $sodaScsComponentActions;
     $this->projectApplicationHelpers = $projectApplicationHelpers;
+    $this->machineNameHelper = $machineNameHelper;
   }
 
   /**
@@ -163,6 +175,7 @@ class SodaScsComponentCreateForm extends ContentEntityForm {
       $container->get('soda_scs_manager.component.actions'),
       $container->get('entity_type.manager'),
       $container->get('soda_scs_manager.project_application.helpers'),
+      $container->get('soda_scs_manager.machine_name.helpers'),
     );
   }
 
@@ -231,13 +244,14 @@ class SodaScsComponentCreateForm extends ContentEntityForm {
     // Make the machineName field readonly and
     // add JavaScript to auto-generate it.
     if (isset($form['machineName'])) {
-      $form['machineName']['#title'] = '';
+      // Keep the title for validation messages; hide it in the UI.
+      $form['machineName']['#title_display'] = 'invisible';
       $form['machineName']['#description'] = '';
       // @todo Check if there is a better way to do this.
       // Add CSS classes for machine name generation.
       $form['label']['widget'][0]['value']['#attributes']['class'][] = 'soda-scs-manager--machine-name-source';
       $form['machineName']['widget'][0]['value']['#attributes']['class'][] = 'soda-scs-manager--machine-name-target';
-      $form['machineName']['widget'][0]['value']['#title'] = '';
+      $form['machineName']['widget'][0]['value']['#title_display'] = 'invisible';
       $form['machineName']['widget'][0]['value']['#description'] = '';
       $urlTemplate = $this->bundle === 'soda_scs_wisski_component'
         ? str_replace('{instanceId}', '{machineName}', (string) $this->settings->get('wisski.instances.baseUrl'))
@@ -287,6 +301,9 @@ class SodaScsComponentCreateForm extends ContentEntityForm {
 
     // Before parent::validateForm() so the entity is built with the project.
     $this->applySelectedProject($form_state);
+    // Fetch/wizard submits can omit machineName when JS aggregation skips the
+    // client generator; derive it before required/regex checks run.
+    $this->ensureMachineNameFromLabel($form_state);
     parent::validateForm($form, $form_state);
 
     // Check for Little Bobby Tables SQL injection attempt.
@@ -393,6 +410,24 @@ class SodaScsComponentCreateForm extends ContentEntityForm {
     else {
       $form_state->setRedirect('entity.soda_scs_component.canonical', ['soda_scs_component' => $componentId]);
     }
+  }
+
+  /**
+   * Fills machineName from label when the client left it empty.
+   *
+   * @param \Drupal\Core\Form\FormStateInterface $form_state
+   *   The form state.
+   */
+  protected function ensureMachineNameFromLabel(FormStateInterface $form_state): void {
+    $machineName = trim((string) ($form_state->getValue(['machineName', 0, 'value']) ?? ''));
+    if ($machineName !== '') {
+      return;
+    }
+    $label = (string) ($form_state->getValue(['label', 0, 'value']) ?? '');
+    $form_state->setValue(
+      ['machineName', 0, 'value'],
+      $this->machineNameHelper->fromLabel($label, SodaScsMachineNameHelper::APPLICATION_MAX_LENGTH),
+    );
   }
 
 }
