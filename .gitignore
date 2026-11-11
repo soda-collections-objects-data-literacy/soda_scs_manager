@@ -13,3 +13,4 @@ setup-xdebug.sh
 XDEBUG_TROUBLESHOOTING.md
 .phpunit.cache/
 .claude
+.devcontainer
