@@ -9,12 +9,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
-- Create-application forms no longer reject an empty `machineName` before the
-  server can derive it from the label. Form API `#required` on the widget ran
-  ahead of `ensureMachineNameFromLabel()` in `validateForm()`, so the Create
-  Project wizard still failed under JS aggregation after 4.3.2. The widget is
-  not Form-API-required anymore; emptiness is checked after deriving, and the
-  wizard fills `machineName` before submit as a second line of defense.
+- Create-application forms derive an empty `machineName` from the label while
+  the POST is read (`#value_callback`), before Form API `#required` runs. The
+  field stays required. The 4.3.2 derive in `validateForm()` was too late:
+  `FormValidator` had already rejected the empty widget, so the Create Project
+  wizard still failed under JS aggregation. The wizard also fills the field
+  before submit.
   Related: [#3637344](https://www.drupal.org/project/soda_scs_manager/issues/3637344).
 
 ## [4.3.2] - 2026-11-11

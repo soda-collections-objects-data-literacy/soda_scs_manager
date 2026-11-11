@@ -221,13 +221,12 @@ class SodaScsStackCreateForm extends ContentEntityForm {
       $form['machineName']['widget'][0]['value']['#attributes']['class'][] = 'visually-hidden';
       $form['machineName']['widget'][0]['value']['#attributes']['aria-hidden'] = 'true';
       $form['machineName']['widget'][0]['value']['#attributes']['tabindex'] = '-1';
-      // FormValidator checks #required on the element before form #validate,
-      // so ensureMachineNameFromLabel() would run too late. Enforce emptiness
-      // after deriving in validateForm() instead.
-      $form['machineName']['#required'] = FALSE;
-      $form['machineName']['widget']['#required'] = FALSE;
-      $form['machineName']['widget'][0]['#required'] = FALSE;
-      $form['machineName']['widget'][0]['value']['#required'] = FALSE;
+      // Fill machineName before the #required check. It stays required.
+      $form['machineName']['widget'][0]['value']['#value_callback'] = [
+        SodaScsMachineNameHelper::class,
+        'valueCallback',
+      ];
+      $form['machineName']['widget'][0]['value']['#required_error'] = $this->t('The machine name could not be derived from the label.');
       if ($urlTemplate !== '') {
         $form['machineName']['widget'][0]['value']['#suffix'] = '<span class="description soda-scs-manager--machine-name-description"><a class="soda-scs-manager--application-url" target="_blank" rel="noopener noreferrer"></a></span>';
       }
@@ -273,10 +272,9 @@ class SodaScsStackCreateForm extends ContentEntityForm {
 
     // Before parent::validateForm() so the entity is built with the project.
     $this->applySelectedProject($form_state);
-    // Wizard/fetch submits can omit machineName when JS aggregation skips the
-    // client generator; derive it before regex/entity checks run. Form API
-    // #required is off on this widget so element validation does not reject
-    // the empty posted value before this runs.
+    // Backstop when the form is validated without the value callback (the
+    // callback already filled a normal POST). Entity required still runs in
+    // parent::validateForm() and needs the derived value.
     $this->ensureMachineNameFromLabel($form_state);
     parent::validateForm($form, $form_state);
 

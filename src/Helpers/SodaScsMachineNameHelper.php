@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Drupal\soda_scs_manager\Helpers;
 
 use Drupal\Component\Transliteration\TransliterationInterface;
+use Drupal\Core\Form\FormStateInterface;
 use Symfony\Component\DependencyInjection\Attribute\Autowire;
 
 /**
@@ -60,6 +61,41 @@ class SodaScsMachineNameHelper {
     $machineName = (string) preg_replace('/[^a-z0-9]+/', '-', mb_strtolower($transliterated));
     $machineName = (string) preg_replace('/^[^a-z]+/', '', $machineName);
     return rtrim(mb_substr($machineName, 0, max(1, $maxLength)), '-');
+  }
+
+  /**
+   * Form API value callback: derive machineName before #required runs.
+   *
+   * FormValidator checks element #required while walking children, before
+   * form #validate. Filling the value here keeps the field required and
+   * still accepts an empty POST from the project wizard.
+   *
+   * @param array $element
+   *   The machineName textfield.
+   * @param mixed $input
+   *   The posted value, or FALSE when the element was not submitted.
+   * @param \Drupal\Core\Form\FormStateInterface $form_state
+   *   The form state. The label is read from user input.
+   *
+   * @return string|null
+   *   The posted or derived machine name, or NULL when there was no input.
+   */
+  public static function valueCallback(array &$element, mixed $input, FormStateInterface $form_state): ?string {
+    if ($input === FALSE || $input === NULL) {
+      return NULL;
+    }
+    if (!is_scalar($input)) {
+      $input = '';
+    }
+    $posted = str_replace(["\r", "\n"], '', (string) $input);
+    if (trim($posted) !== '') {
+      return $posted;
+    }
+    $label = (string) ($form_state->getUserInput()['label'][0]['value'] ?? '');
+    // Value callbacks are static; the helper is a service.
+    // phpcs:ignore DrupalPractice.Objects.GlobalDrupal.GlobalDrupal
+    $helper = \Drupal::service('soda_scs_manager.machine_name.helpers');
+    return $helper->fromLabel($label, self::APPLICATION_MAX_LENGTH);
   }
 
   /**
