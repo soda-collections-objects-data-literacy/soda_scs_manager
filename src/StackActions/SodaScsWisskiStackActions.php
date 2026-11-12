@@ -376,6 +376,7 @@ class SodaScsWisskiStackActions implements SodaScsStackActionsInterface {
         'connectedComponents' => [$sqlComponent->id(), $triplestoreComponent->id()],
         'flavours' => $stack->get('flavours')->value,
         'version' => $stack->get('version')->value,
+        'withDefaultDataModel' => $stack->get('withDefaultDataModel')->value ?? TRUE,
       ]);
       $wisskiComponentCreateResult = $this->sodaScsWisskiComponentActions->createComponent($wisskiComponent);
       if (empty($wisskiComponentCreateResult['success'])) {

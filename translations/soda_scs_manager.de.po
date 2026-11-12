@@ -1211,6 +1211,14 @@ msgstr "Entwicklungsinstanz"
 msgid "Whether this is a Development Instance. Nightly builds are used for development and testing. Can not be changed after creation."
 msgstr "Gibt an, ob es sich um eine Entwicklungsinstanz handelt. Nightly Builds werden für die Entwicklung und Tests verwendet. Dies kann nach der Erstellung nicht mehr geändert werden."
 
+#: src/Entity/Bundle/SodaScsComponentBundle.php:153
+msgid "With WissKI Default Data Model"
+msgstr "Mit WissKI Default Data Model"
+
+#: src/Entity/Bundle/SodaScsComponentBundle.php:154
+msgid "Imports the WissKI ontology and the WissKI Default Data Model. Without it, the WissKI starts as a plain Drupal/WissKI site. Can not be changed after creation."
+msgstr "Importiert die WissKI-Ontologie und das WissKI Default Data Model. Ohne diese Option startet die WissKI als reine Drupal/WissKI-Site. Dies kann nach der Erstellung nicht mehr geändert werden."
+
 #: src/Entity/Bundle/SodaScsComponentBundle.php:137
 #: src/ViewBuilder/SodaScsComponentViewBuilder.php:166
 msgid "Yes"

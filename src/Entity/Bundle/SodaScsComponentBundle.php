@@ -148,6 +148,28 @@ class SodaScsComponentBundle extends SodaScsComponent implements SodaScsComponen
             'weight' => 100,
           ]);
 
+        $definitions['withDefaultDataModel'] = BundleFieldDefinition::create('boolean')
+          ->setLabel(new TranslatableMarkup('With WissKI Default Data Model'))
+          ->setDescription(new TranslatableMarkup('Imports the WissKI ontology and the WissKI Default Data Model. Without it, the WissKI starts as a plain Drupal/WissKI site. Can not be changed after creation.'))
+          ->setCardinality(1)
+          ->setDefaultValue(TRUE)
+          ->setSetting('on_label', new TranslatableMarkup('Yes'))
+          ->setSetting('off_label', new TranslatableMarkup('No'))
+          ->setDisplayConfigurable('form', FALSE)
+          ->setDisplayConfigurable('view', FALSE)
+          ->setDisplayOptions('form', [
+            'type' => 'boolean_checkbox',
+            'weight' => 90,
+            'settings' => [
+              'display_label' => TRUE,
+            ],
+          ])
+          ->setDisplayOptions('view', [
+            'label' => 'above',
+            'type' => 'boolean',
+            'weight' => 90,
+          ]);
+
         $definitions['flavours'] = BundleFieldDefinition::create('list_string')
           ->setLabel(new TranslatableMarkup('Flavour'))
           ->setDescription(new TranslatableMarkup('The flavour of the SODa SCS Component.'))

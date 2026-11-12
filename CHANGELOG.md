@@ -7,6 +7,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- The WissKI create form has a checkbox "With WissKI Default Data Model",
+  checked by default. Without it, the WissKI starts as a plain Drupal/WissKI
+  site with the triplestore adapter but without the WissKI ontology and the
+  default data model. Needs a WissKI base image that accepts an empty
+  `WISSKI_DEFAULT_DATA_MODEL_VERSION`. **Run `drush updb` (update 11040).**
+  Related: [#3637662](https://www.drupal.org/project/soda_scs_manager/issues/3637662).
+
 ### Fixed
 
 - Pages of the SCS Manager no longer show the PHP 8.4+ deprecation

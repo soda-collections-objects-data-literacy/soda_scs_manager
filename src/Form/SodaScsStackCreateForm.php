@@ -392,6 +392,9 @@ class SodaScsStackCreateForm extends ContentEntityForm {
     if ($stack->hasField('developmentInstance')) {
       $stack->set('developmentInstance', $developmentInstance);
     }
+    if ($stack->hasField('withDefaultDataModel')) {
+      $stack->set('withDefaultDataModel', (bool) ($form_state->getValue(['withDefaultDataModel', 'value']) ?? TRUE));
+    }
     $stack->set('health', 'Unknown');
     $stack->set('machineName', $form_state->getValue('machineName')[0]['value']);
     $stack->set('owner', $this->currentUser->getAccount()->id());

@@ -78,6 +78,11 @@ class SodaScsWisskiComponentActions implements SodaScsComponentActionsInterface 
   private const CONTAINER_POLL_INTERVAL_SECONDS = 5;
 
   /**
+   * Value of WISSKI_DEFAULT_DATA_MODEL_VERSION when no version is configured.
+   */
+  private const DEFAULT_DATA_MODEL_APPLY_FLAG = 'true';
+
+  /**
    * Seconds to wait for the Drupal container of a new WissKI stack.
    */
   private const NEW_CONTAINER_WAIT_SECONDS = 30;
@@ -451,9 +456,58 @@ class SodaScsWisskiComponentActions implements SodaScsComponentActionsInterface 
    *   wisskiStarterRecipeVersion: string,
    *   wisskiVersion: string,
    * }
-   *   Version settings passed to Portainer on stack create.
+   *   Version settings passed to Portainer on stack create. The default data
+   *   model recipe version is empty for a WissKI without the default data
+   *   model.
    */
   private function resolveWisskiVersionSettings(SodaScsComponentInterface $component, ?string $targetVersion = NULL): array {
+    $versionSettings = $this->resolveWisskiReleaseVersionSettings($component, $targetVersion);
+    if (!$this->usesWisskiDefaultDataModel($component)) {
+      // The image skips the ontology import and the default data model recipe
+      // when WISSKI_DEFAULT_DATA_MODEL_VERSION is empty.
+      $versionSettings['wisskiDefaultDataModelRecipeVersion'] = '';
+    }
+    elseif ($versionSettings['wisskiDefaultDataModelRecipeVersion'] === '') {
+      // An empty setting would now mean "plain WissKI"; the value is only an
+      // apply flag, the recipe version is baked into the image.
+      $versionSettings['wisskiDefaultDataModelRecipeVersion'] = self::DEFAULT_DATA_MODEL_APPLY_FLAG;
+    }
+    return $versionSettings;
+  }
+
+  /**
+   * Whether a WissKI component gets the WissKI Default Data Model.
+   *
+   * @param \Drupal\soda_scs_manager\Entity\SodaScsComponentInterface $component
+   *   The WissKI component.
+   *
+   * @return bool
+   *   TRUE unless the field is explicitly off; components created before the
+   *   field existed have NULL and got the default data model.
+   */
+  private function usesWisskiDefaultDataModel(SodaScsComponentInterface $component): bool {
+    if (!$component->hasField('withDefaultDataModel')) {
+      return TRUE;
+    }
+    $value = $component->get('withDefaultDataModel')->value;
+    return $value === NULL || (bool) $value;
+  }
+
+  /**
+   * Resolves the release version pins for a WissKI component.
+   *
+   * @param \Drupal\soda_scs_manager\Entity\SodaScsComponentInterface $component
+   *   The WissKI component.
+   * @param string|null $targetVersion
+   *   Optional update target: latest, nightly, or a version label.
+   *
+   * @return array<string, string>
+   *   Version settings of the development build, the version entity, or the
+   *   production fallback, keyed by mode, varnishImageVersion,
+   *   wisskiComposeStackVersion, wisskiDefaultDataModelRecipeVersion,
+   *   wisskiBaseImageVersion, wisskiStarterRecipeVersion and wisskiVersion.
+   */
+  private function resolveWisskiReleaseVersionSettings(SodaScsComponentInterface $component, ?string $targetVersion): array {
     $wisskiInstanceSettings = $this->sodaScsServiceHelpers->initWisskiInstanceSettings();
 
     if ($targetVersion === 'nightly') {

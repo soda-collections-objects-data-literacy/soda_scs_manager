@@ -66,6 +66,7 @@ class SodaScsComponentEditForm extends ContentEntityForm {
     $form['automatedUpdates']['#access'] = FALSE;
     $form['partOfStack']['#access'] = FALSE;
     $form['developmentInstance']['#access'] = FALSE;
+    $form['withDefaultDataModel']['#access'] = FALSE;
     $form['defaultLanguage']['#access'] = FALSE;
     $form['partOfProjects']['#access'] = FALSE;
 
