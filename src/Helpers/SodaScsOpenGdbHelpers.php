@@ -99,7 +99,7 @@ class SodaScsOpenGdbHelpers {
    *   The username of the user.
    * @param string $password
    *   The password of the user.
-   * @param string $machineName
+   * @param string|null $machineName
    *   The machine name of the repository.
    *
    * @return array
@@ -108,7 +108,7 @@ class SodaScsOpenGdbHelpers {
    * @throws \Drupal\soda_scs_manager\Exception\SodaScsRequestException
    *   If the request fails.
    */
-  public function createUser(string $username, string $password, string $machineName = NULL) {
+  public function createUser(string $username, string $password, ?string $machineName = NULL) {
     try {
       $createUserRequestParams = [
         'type' => 'user',

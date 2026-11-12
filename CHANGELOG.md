@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- Pages of the SCS Manager no longer show the PHP 8.4+ deprecation
+  "Implicitly marking parameter $machineName as nullable" from
+  `SodaScsOpenGdbHelpers::createUser()`; the parameter is now explicitly
+  nullable.
+  Related: [#3637657](https://www.drupal.org/project/soda_scs_manager/issues/3637657).
+
 ## [4.3.3] - 2026-11-11
 
 ### Fixed
