@@ -7,6 +7,7 @@ namespace Drupal\soda_scs_manager\EventSubscriber;
 use Drupal\Core\Form\EnforcedResponseException;
 use Drupal\Core\Form\FormAjaxException;
 use Drupal\Core\Logger\LoggerChannelFactoryInterface;
+use Drupal\Core\ParamConverter\ParamNotConvertedException;
 use Drupal\Core\Render\RendererInterface;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 use Symfony\Component\HttpFoundation\Response;
@@ -58,6 +59,11 @@ final class WsodCatcherSubscriber implements EventSubscriberInterface {
     if ($exception instanceof FormAjaxException) {
       return;
     }
+    // An entity ID in the path that cannot be loaded (e.g. a deleted
+    // component). ParamConversionEnhancer (priority 75) turns it into a 404.
+    if ($exception instanceof ParamNotConvertedException) {
+      return;
+    }
     if ($exception instanceof HttpExceptionInterface && $exception->getStatusCode() < 500) {
       return;
     }
@@ -67,10 +73,11 @@ final class WsodCatcherSubscriber implements EventSubscriberInterface {
       ['@message' => $exception->getMessage() !== '' ? $exception->getMessage() : $exception::class]
     );
 
+    // The exception message stays in the log: it can carry internal details
+    // (SQL, service URLs, paths) and the page is public.
     try {
       $build = [
         '#theme' => 'scs_custom_theme_wsod',
-        '#error_message' => $exception->getMessage(),
       ];
       $output = $this->renderer->renderRoot($build);
     }
@@ -79,7 +86,9 @@ final class WsodCatcherSubscriber implements EventSubscriberInterface {
         'The WSOD error template could not be rendered: @message',
         ['@message' => $renderException->getMessage()]
       );
-      $output = '<h1>Something went wrong</h1><pre>' . htmlspecialchars($exception->getMessage(), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') . '</pre>';
+      // Plain English on purpose: this runs when rendering itself failed, so
+      // it must not depend on the theme or the translation service.
+      $output = '<h1>Something went wrong</h1><p>The page could not be displayed.</p>';
     }
 
     $event->setResponse(new Response((string) $output, 500, [

@@ -18,6 +18,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- URLs of deleted or unknown components, stacks, projects and other SCS
+  entities show the "Page not found" page (404) instead of "Something went
+  wrong" (500).
+  Related: [#3637698](https://www.drupal.org/project/soda_scs_manager/issues/3637698).
 - Pages of the SCS Manager no longer show the PHP 8.4+ deprecation
   "Implicitly marking parameter $machineName as nullable" from
   `SodaScsOpenGdbHelpers::createUser()`; the parameter is now explicitly
@@ -37,6 +41,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   exact name, so a WissKI can no longer store the container of another
   WissKI whose name contains its own.
   Related: [#3637658](https://www.drupal.org/project/soda_scs_manager/issues/3637658).
+
+### Security
+
+- The "Something went wrong" error page no longer prints the exception
+  message, which anyone, including anonymous visitors, could see (e.g. SQL
+  errors or service host names). The message stays in the log.
+  Related: [#3637698](https://www.drupal.org/project/soda_scs_manager/issues/3637698).
 
 ## [4.3.3] - 2026-11-11
 
