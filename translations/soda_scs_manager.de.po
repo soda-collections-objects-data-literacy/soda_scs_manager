@@ -711,14 +711,6 @@ msgstr "Komponente vom Typ @bundle konnte nicht gelöscht werden."
 msgid "Deleted Filesystem component @name."
 msgstr "Dateisystemkomponente @name gelöscht."
 
-#: src/ComponentActions/SodaScsSqlComponentActions.php:198
-msgid "Database already exists. See logs for more details."
-msgstr "Datenbank existiert bereits. Weitere Details finden Sie in den Logs."
-
-#: src/ComponentActions/SodaScsSqlComponentActions.php:280
-msgid "Cannot create database. See logs for more details."
-msgstr "Datenbank kann nicht erstellt werden. Weitere Details finden Sie in den Logs."
-
 #: src/ComponentActions/SodaScsSqlComponentActions.php:355 src/StackActions/SodaScsSqlStackActions.php:208;219 src/StackActions/SodaScsWisskiStackActions.php:463;476
 msgid "Cannot delete database. See logs for more details."
 msgstr "Datenbank kann nicht gelöscht werden. Weitere Details finden Sie in den Logs."
@@ -766,10 +758,6 @@ msgstr "OpenGDB-User %username konnte nicht gelöscht werden"
 #: src/ComponentActions/SodaScsTriplestoreComponentActions.php:633
 msgid "Deleted triplestore component %component"
 msgstr "Triplestore-Komponente %component gelöscht"
-
-#: src/ComponentActions/SodaScsWisskiComponentActions.php:343
-msgid "Request failed. See logs for more details."
-msgstr "Anfrage fehlgeschlagen. Weitere Details finden Sie in den Logs."
 
 #: src/ComponentActions/SodaScsWisskiComponentActions.php:555;568
 msgid "Cannot get WissKI component @component at portainer."
@@ -1303,10 +1291,6 @@ msgstr "Der Maschinenname darf das Wort \"@word\" nicht enthalten"
 #: src/Form/SodaScsComponentCreateForm.php:294 src/Form/SodaScsStackCreateForm.php:239
 msgid "The machineName is already in use by another SODa SCS Component entity"
 msgstr "Der Maschinenname wird bereits von einer anderen SODa SCS-Komponente verwendet"
-
-#: src/Form/SodaScsComponentCreateForm.php:311
-msgid "Cannot create component \"@label\". See logs for more details."
-msgstr "Komponente \"@label\" kann nicht erstellt werden. Siehe Protokolle für weitere Details."
 
 #: src/Form/SodaScsComponentCreateForm.php:315
 msgid "Cannot create component: @message"
@@ -2290,10 +2274,6 @@ msgstr "Der Maschinenname konnte nicht aus dem Label abgeleitet werden."
 msgid "The machinename can only contain small letters, digits, and minus."
 msgstr "Der Maschinenname darf nur Kleinbuchstaben, Ziffern und Minus enthalten."
 
-#: src/Form/SodaScsStackCreateForm.php:267
-msgid "Cannot create stack \"@label\". See logs for more details."
-msgstr "Stack \"@label\" kann nicht erstellt werden. Siehe Protokolle für weitere Details."
-
 #: src/Form/SodaScsStackDeleteForm.php:94
 msgid "%message See logs for more information."
 msgstr "%message Siehe Protokolle für weitere Informationen."
@@ -2580,10 +2560,6 @@ msgstr "User besitzt Datenbanken"
 msgid "User owned no databases, and was deleted"
 msgstr "User besaß keine Datenbanken und wurde gelöscht"
 
-#: src/StackActions/SodaScsSqlStackActions.php:115 src/StackActions/SodaScsWisskiStackActions.php:232
-msgid "Could not create database component. See logs for more details."
-msgstr "Datenbankkomponente konnte nicht erstellt werden. Siehe Protokolle für weitere Details."
-
 #: src/StackActions/SodaScsTriplestoreStackActions.php:88
 msgid "Could not create triplestore stack: %message"
 msgstr "Triplestore-Stack konnte nicht erstellt werden: %message"
@@ -2596,21 +2572,9 @@ msgstr "Triplestore-Stack erstellt: %message"
 msgid "Could not create triplestore component. See logs for more details."
 msgstr "Triplestore-Komponente konnte nicht erstellt werden. Siehe Protokolle für weitere Details."
 
-#: src/StackActions/SodaScsTriplestoreStackActions.php:110
-msgid "Could not create stack: %message"
-msgstr "Stack konnte nicht erstellt werden: %message"
-
 #: src/StackActions/SodaScsTriplestoreStackActions.php:202
 msgid "Could not delete triplestore component. See logs for more details."
 msgstr "Triplestore-Komponente konnte nicht gelöscht werden. Siehe Protokolle für weitere Details."
-
-#: src/StackActions/SodaScsWisskiStackActions.php:263
-msgid "Could not create triplestore. See logs for more details."
-msgstr "Triplestore konnte nicht erstellt werden. Siehe Protokolle für weitere Details."
-
-#: src/StackActions/SodaScsWisskiStackActions.php:296;310;352
-msgid "Could not create WissKI. See logs for more details."
-msgstr "WissKI konnte nicht erstellt werden. Siehe Protokolle für weitere Details."
 
 #: src/StackActions/SodaScsWisskiStackActions.php:398;557
 msgid "Request error. See logs for more details."
@@ -5671,3 +5635,71 @@ msgstr "@url antwortete mit HTTP @code. Den Dienst und seine Zugangsdaten in den
 #: soda_scs_manager.install
 msgid "SCS @group: @check"
 msgstr "SCS @group: @check"
+
+#: src/ComponentActions/SodaScsSqlComponentActions.php
+msgid "A database with this application name already exists. Choose another name."
+msgstr "Eine Datenbank mit diesem Anwendungsnamen existiert bereits. Wählen Sie einen anderen Namen."
+
+#: src/ComponentActions/SodaScsSqlComponentActions.php
+msgid "The database could not be created."
+msgstr "Die Datenbank konnte nicht angelegt werden."
+
+#: src/ComponentActions/SodaScsWisskiComponentActions.php
+msgid "Your Nextcloud account is not connected. <a href=\":url\">Connect it</a> and try again."
+msgstr "Ihr Nextcloud-Konto ist nicht verbunden. <a href=\":url\">Verbinden Sie es</a> und versuchen Sie es erneut."
+
+#: src/ComponentActions/SodaScsWisskiComponentActions.php
+msgid "The Team Folder of project %project is not ready yet. Try again in a few minutes."
+msgstr "Der Team Folder des Projekts %project ist noch nicht bereit. Versuchen Sie es in ein paar Minuten erneut."
+
+#: src/ComponentActions/SodaScsWisskiComponentActions.php
+msgid "The WissKI instance could not be prepared."
+msgstr "Die WissKI-Instanz konnte nicht vorbereitet werden."
+
+#: src/ComponentActions/SodaScsWisskiComponentActions.php
+msgid "The WissKI container could not be created."
+msgstr "Der WissKI-Container konnte nicht angelegt werden."
+
+#: src/ComponentActions/SodaScsWisskiComponentActions.php
+msgid "The WissKI container was not found after it was created."
+msgstr "Der WissKI-Container wurde nach dem Anlegen nicht gefunden."
+
+#: src/ComponentActions/SodaScsTriplestoreComponentActions.php
+msgid "The triplestore could not be created."
+msgstr "Der Triplestore konnte nicht angelegt werden."
+
+#: src/ComponentActions/SodaScsTriplestoreComponentActions.php
+msgid "The triplestore access rights could not be set."
+msgstr "Die Zugriffsrechte für den Triplestore konnten nicht gesetzt werden."
+
+#: src/ComponentActions/SodaScsTriplestoreComponentActions.php
+msgid "The access groups for the triplestore could not be created."
+msgstr "Die Zugriffsgruppen für den Triplestore konnten nicht angelegt werden."
+
+#: src/StackActions/SodaScsWisskiStackActions.php
+msgid "@step: @reason"
+msgstr "@step: @reason"
+
+#: src/StackActions/SodaScsWisskiStackActions.php
+msgid "@step could not be created."
+msgstr "@step konnte nicht angelegt werden."
+
+#: src/StackActions/SodaScsWisskiStackActions.php
+msgid "The WissKI application could not be set up."
+msgstr "Die WissKI-Anwendung konnte nicht eingerichtet werden."
+
+#: src/StackActions/SodaScsJupyterStackActions.php
+msgid "JupyterHub could not be set up for this project."
+msgstr "JupyterHub konnte für dieses Projekt nicht eingerichtet werden."
+
+#: src/StackActions/SodaScsJupyterStackActions.php
+msgid "The project folder is not ready for JupyterHub: @reason"
+msgstr "Der Projektordner ist noch nicht bereit für JupyterHub: @reason"
+
+#: src/Form/SodaScsStackCreateForm.php
+msgid "Could not create %label. @reason"
+msgstr "%label konnte nicht angelegt werden. @reason"
+
+#: src/Form/SodaScsStackCreateForm.php
+msgid "Could not create %label. Try again later or contact support."
+msgstr "%label konnte nicht angelegt werden. Versuchen Sie es später erneut oder wenden Sie sich an den Support."

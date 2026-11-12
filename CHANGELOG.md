@@ -14,6 +14,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `SodaScsOpenGdbHelpers::createUser()`; the parameter is now explicitly
   nullable.
   Related: [#3637657](https://www.drupal.org/project/soda_scs_manager/issues/3637657).
+- Creating an application that fails now shows one message that names the
+  failed step and, where it is safe, the reason (database name taken,
+  Nextcloud account not connected, Team Folder not ready) instead of
+  "Cannot create stack … See logs". The log entry keeps the original
+  exception and its backtrace instead of "Unknown error occurred". A failed
+  triplestore repository request now stops the creation instead of saving a
+  triplestore without repository.
+  Related: [#3637658](https://www.drupal.org/project/soda_scs_manager/issues/3637658).
 
 ## [4.3.3] - 2026-11-11
 

@@ -17,6 +17,7 @@ use Drupal\Core\Logger\LoggerChannelFactoryInterface;
 use Drupal\Core\Mail\MailManagerInterface;
 use Drupal\Core\Messenger\MessengerInterface;
 use Drupal\Core\StringTranslation\StringTranslationTrait;
+use Drupal\Core\StringTranslation\TranslatableMarkup;
 use Drupal\Core\StringTranslation\TranslationInterface;
 use Drupal\Core\Template\TwigEnvironment;
 use Drupal\Core\TypedData\Exception\MissingDataException;
@@ -268,8 +269,7 @@ class SodaScsWisskiStackActions implements SodaScsStackActionsInterface {
    *   The result of the request.
    *
    * @throws \Exception
-   *
-   * @todo Refactor error handling.
+   *   When the bundle info is missing or the stack cannot be saved.
    */
   public function createStack(SodaScsStackInterface $stack): array {
 
@@ -331,6 +331,9 @@ class SodaScsWisskiStackActions implements SodaScsStackActionsInterface {
       'partOfProjects' => $stack->get('partOfProjects'),
       'health' => 'Unknown',
     ];
+    $sqlComponentCreateResult = NULL;
+    $triplestoreComponentCreateResult = NULL;
+    $wisskiComponentCreateResult = NULL;
     try {
       // Create the SQL component.
       $sqlComponent = $this->entityTypeManager->getStorage('soda_scs_component')->create([
@@ -338,89 +341,31 @@ class SodaScsWisskiStackActions implements SodaScsStackActionsInterface {
         ...$basicComponentProperties,
       ]);
       $sqlComponentCreateResult = $this->sodaScsSqlComponentActions->createComponent($sqlComponent);
-
-      if (!$sqlComponentCreateResult['success']) {
-        return [
-          'message' => 'Could not create database component.',
-          'data' => [
-            'sqlComponentCreateResult' => $sqlComponentCreateResult,
-          ],
-          'success' => FALSE,
-          'error' => $sqlComponentCreateResult['error'],
-        ];
+      if (empty($sqlComponentCreateResult['success'])) {
+        return $this->buildCreateStackFailure($this->t('Database'), $sqlComponentCreateResult, [
+          'sqlComponentCreateResult' => $sqlComponentCreateResult,
+        ]);
       }
       /** @var \Drupal\soda_scs_manager\Entity\SodaScsComponentInterface $sqlComponent */
       $sqlComponent = $sqlComponentCreateResult['data']['sqlComponent'];
-
-      // Add the SQL component to the stack.
       $stack->setValue($stack, 'includedComponents', $sqlComponent->id());
 
-    }
-    catch (\Exception $e) {
-      Error::logException(
-        $this->loggerFactory->get('soda_scs_manager'),
-        $e,
-        'Could not create database component: @message',
-        ['@message' => $e->getMessage()],
-        LogLevel::ERROR
-      );
-      $this->messenger->addError($this->t("Could not create database component. See logs for more details."));
-      return [
-        'message' => 'Could not create database component.',
-        'data' => [
-          'sqlComponentCreateResult' => $sqlComponentCreateResult,
-        ],
-        'success' => FALSE,
-        'error' => $sqlComponentCreateResult['error'],
-      ];
-    }
-
-    try {
       // Create the triplestore component.
       $triplestoreComponent = $this->entityTypeManager->getStorage('soda_scs_component')->create([
         'bundle' => 'soda_scs_triplestore_component',
         ...$basicComponentProperties,
       ]);
       $triplestoreComponentCreateResult = $this->sodaScsTriplestoreComponentActions->createComponent($triplestoreComponent);
-      if (!$triplestoreComponentCreateResult['success']) {
-        return [
-          'message' => 'Could not create triplestore component.',
-          'data' => [
-            'sqlComponentCreateResult' => $sqlComponentCreateResult,
-            'triplestoreComponentCreateResult' => NULL,
-            'wisskiComponentCreateResult' => NULL,
-          ],
-          'success' => FALSE,
-          'error' => $triplestoreComponentCreateResult['error'],
-        ];
+      if (empty($triplestoreComponentCreateResult['success'])) {
+        return $this->buildCreateStackFailure($this->t('Triplestore'), $triplestoreComponentCreateResult, [
+          'sqlComponentCreateResult' => $sqlComponentCreateResult,
+          'triplestoreComponentCreateResult' => $triplestoreComponentCreateResult,
+        ]);
       }
-      $triplestoreComponent = $triplestoreComponentCreateResult['data']['triplestoreComponent'];
       /** @var \Drupal\soda_scs_manager\Entity\SodaScsComponentInterface $triplestoreComponent */
+      $triplestoreComponent = $triplestoreComponentCreateResult['data']['triplestoreComponent'];
       $stack->setValue($stack, 'includedComponents', $triplestoreComponent->id());
 
-    }
-    catch (\Exception $e) {
-      Error::logException(
-        $this->loggerFactory->get('soda_scs_manager'),
-        $e,
-        'Could not create triplestore component: @message',
-        ['@message' => $e->getMessage()],
-        LogLevel::ERROR
-      );
-      $this->messenger->addError($this->t("Could not create triplestore. See logs for more details."));
-      return [
-        'message' => 'Could not create triplestore component.',
-        'data' => [
-          'sqlComponentCreateResult' => $sqlComponentCreateResult,
-          'triplestoreComponentCreateResult' => NULL,
-          'wisskiComponentCreateResult' => NULL,
-        ],
-        'success' => FALSE,
-        'error' => $e->getMessage(),
-      ];
-    }
-
-    try {
       // Create the WissKI component.
       $wisskiComponent = $this->entityTypeManager->getStorage('soda_scs_component')->create([
         ...$basicComponentProperties,
@@ -433,65 +378,17 @@ class SodaScsWisskiStackActions implements SodaScsStackActionsInterface {
         'version' => $stack->get('version')->value,
       ]);
       $wisskiComponentCreateResult = $this->sodaScsWisskiComponentActions->createComponent($wisskiComponent);
-      if (!$wisskiComponentCreateResult['success']) {
-        return [
-          'message' => 'Could not create WissKI component.',
-          'data' => [
-            'sqlComponentCreateResult' => $sqlComponentCreateResult,
-            'triplestoreComponentCreateResult' => $triplestoreComponentCreateResult,
-            'wisskiComponentCreateResult' => NULL,
-          ],
-          'success' => FALSE,
-          'error' => $wisskiComponentCreateResult['error'],
-        ];
+      if (empty($wisskiComponentCreateResult['success'])) {
+        return $this->buildCreateStackFailure($this->t('WissKI'), $wisskiComponentCreateResult, [
+          'sqlComponentCreateResult' => $sqlComponentCreateResult,
+          'triplestoreComponentCreateResult' => $triplestoreComponentCreateResult,
+          'wisskiComponentCreateResult' => $wisskiComponentCreateResult,
+        ]);
       }
       /** @var \Drupal\soda_scs_manager\Entity\SodaScsComponentInterface $wisskiComponent */
       $wisskiComponent = $wisskiComponentCreateResult['data']['wisskiComponent'];
       $stack->setValue($stack, 'includedComponents', $wisskiComponent->id());
 
-    }
-    catch (\Exception $e) {
-      Error::logException(
-        $this->loggerFactory->get('soda_scs_manager'),
-        $e,
-        'Could not create WissKI component: @message',
-        ['@message' => $e->getMessage()],
-        LogLevel::ERROR
-      );
-      $this->messenger->addError($this->t("Could not create WissKI. See logs for more details."));
-      return [
-        'message' => 'Could not create WissKI component.',
-        'data' => [
-          'sqlComponentCreateResult' => $sqlComponentCreateResult,
-          'triplestoreComponentCreateResult' => $triplestoreComponentCreateResult,
-          'wisskiComponentCreateResult' => NULL,
-        ],
-        'success' => FALSE,
-        'error' => $wisskiComponentCreateResult['error'],
-      ];
-    }
-    catch (SodaScsRequestException $e) {
-      Error::logException(
-        $this->loggerFactory->get('soda_scs_manager'),
-        $e,
-        'Request failed: @message',
-        ['@message' => $e->getMessage()],
-        LogLevel::ERROR
-      );
-      $this->messenger->addError($this->t("Could not create WissKI. See logs for more details."));
-      return [
-        'message' => 'Could not create WissKI component.',
-        'data' => [
-          'sqlComponentCreateResult' => $sqlComponentCreateResult,
-          'triplestoreComponentCreateResult' => $triplestoreComponentCreateResult,
-          'wisskiComponentCreateResult' => NULL,
-        ],
-        'success' => FALSE,
-        'error' => $wisskiComponentCreateResult['error'],
-      ];
-    }
-
-    try {
       // Set the connected components for the SQL component.
       $sqlComponent->set('connectedComponents', $wisskiComponent->id());
       $sqlComponent->set('partOfStack', $stack->id());
@@ -521,24 +418,62 @@ class SodaScsWisskiStackActions implements SodaScsStackActionsInterface {
         'error' => FALSE,
       ];
     }
-    catch (MissingDataException $e) {
+    // The component actions return their failures; what lands here is an
+    // unexpected exception (entity storage, missing data, a service call).
+    catch (\Exception $e) {
       Error::logException(
         $this->loggerFactory->get('soda_scs_manager'),
         $e,
-        'Could not create WissKI component: @message',
-        ['@message' => $e->getMessage()],
+        'Could not create WissKI stack @machineName: @message',
+        [
+          '@machineName' => $stack->get('machineName')->value,
+          '@message' => $e->getMessage(),
+        ],
         LogLevel::ERROR
       );
-      $this->messenger->addError($this->t("Could not create WissKI. See logs for more details."));
       return [
-        'message' => 'Could not create WissKI component.',
+        'message' => $this->t('The WissKI application could not be set up.'),
         'data' => [
           'sqlComponentCreateResult' => $sqlComponentCreateResult,
           'triplestoreComponentCreateResult' => $triplestoreComponentCreateResult,
-          'wisskiComponentCreateResult' => NULL,
+          'wisskiComponentCreateResult' => $wisskiComponentCreateResult,
         ],
+        'success' => FALSE,
+        'error' => $e,
       ];
     }
+  }
+
+  /**
+   * Builds the failure result of createStack() from a failed component step.
+   *
+   * @param \Drupal\Core\StringTranslation\TranslatableMarkup $step
+   *   The name of the failed step, shown to the user.
+   * @param array $componentResult
+   *   The result of the component action that failed.
+   * @param array $data
+   *   The component results collected so far.
+   *
+   * @return array
+   *   The createStack() result with a user message and a non-empty error.
+   */
+  private function buildCreateStackFailure(TranslatableMarkup $step, array $componentResult, array $data): array {
+    // Only translated messages are meant for users; plain strings may hold
+    // service details.
+    $reason = $componentResult['message'] ?? NULL;
+    $message = $reason instanceof TranslatableMarkup
+      ? $this->t('@step: @reason', ['@step' => $step, '@reason' => $reason])
+      : $this->t('@step could not be created.', ['@step' => $step]);
+    $error = $componentResult['error'] ?? NULL;
+    if (!$error instanceof \Throwable && (!is_string($error) || $error === '')) {
+      $error = sprintf('%s step failed without error details.', $step->getUntranslatedString());
+    }
+    return [
+      'message' => $message,
+      'data' => $data,
+      'success' => FALSE,
+      'error' => $error,
+    ];
   }
 
   /**

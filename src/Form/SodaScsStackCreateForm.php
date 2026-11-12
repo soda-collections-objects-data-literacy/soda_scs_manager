@@ -15,6 +15,7 @@ use Drupal\Core\Entity\EntityTypeManagerInterface;
 use Drupal\Core\Form\FormStateInterface;
 use Drupal\Core\Logger\LoggerChannelFactoryInterface;
 use Drupal\Core\Session\AccountProxyInterface;
+use Drupal\Core\StringTranslation\TranslatableMarkup;
 use Drupal\Core\Url;
 use Drupal\soda_scs_manager\Helpers\SodaScsMachineNameHelper;
 use Drupal\soda_scs_manager\Helpers\SodaScsNextcloudHelpers;
@@ -373,8 +374,6 @@ class SodaScsStackCreateForm extends ContentEntityForm {
 
   /**
    * {@inheritdoc}
-   *
-   * @throws \Drupal\Core\Entity\EntityStorageException
    */
   public function save(array $form, FormStateInterface $form_state): void {
 
@@ -401,30 +400,46 @@ class SodaScsStackCreateForm extends ContentEntityForm {
     $stack->setLabel($form_state->getValue('label')[0]['value']);
 
     // Create external stack.
-    $createStackResult = $this->sodaScsStackActions->createStack($stack);
+    try {
+      $createStackResult = $this->sodaScsStackActions->createStack($stack);
+    }
+    catch (\Exception $e) {
+      $createStackResult = [
+        'message' => NULL,
+        'success' => FALSE,
+        'error' => $e,
+      ];
+    }
 
-    if (!$createStackResult['success']) {
-      $error = $createStackResult['error'];
-      // Handle different error types: Exception object, string, or null/false.
-      if ($error instanceof \Exception) {
-        $exception = $error;
-        $errorMessage = $error->getMessage();
-      }
-      else {
-        $errorMessage = $error ?? 'Unknown error occurred';
-        $exception = new \Exception($errorMessage);
-      }
+    if (empty($createStackResult['success'])) {
+      $error = $createStackResult['error'] ?? NULL;
+      // Keep the original exception so the log shows where it failed.
+      $exception = $error instanceof \Throwable
+        ? $error
+        : new \RuntimeException(is_string($error) && $error !== '' ? $error : 'Stack creation returned no error details.');
       Error::logException(
         $this->loggerFactory->get('soda_scs_manager'),
         $exception,
-        'Cannot create stack: @message',
-        ['@message' => $errorMessage],
+        'Cannot create stack @machineName (@bundle) for user @uid: @message',
+        [
+          '@bundle' => $this->bundle,
+          '@machineName' => $stack->get('machineName')->value,
+          '@message' => $exception->getMessage(),
+          '@uid' => $this->currentUser->id(),
+        ],
         LogLevel::ERROR
       );
-      $this->messenger()->addMessage($this->t('Cannot create stack "@label". See logs for more details.', [
-        '@label' => $this->entity->label(),
-        '@username' => $this->currentUser->getAccount()->getDisplayName(),
-      ]), 'error');
+      // Only translated messages are meant for users; plain strings and
+      // exception texts may hold service details.
+      $reason = $createStackResult['message'] ?? NULL;
+      $this->messenger()->addError($reason instanceof TranslatableMarkup
+        ? $this->t('Could not create %label. @reason', [
+          '%label' => $stack->label(),
+          '@reason' => $reason,
+        ])
+        : $this->t('Could not create %label. Try again later or contact support.', [
+          '%label' => $stack->label(),
+        ]));
       // Without a rebuild, Drupal redirects (also to ?destination=).
       $form_state->setRebuild(TRUE);
       return;

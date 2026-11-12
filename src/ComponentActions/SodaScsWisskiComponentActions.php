@@ -21,6 +21,7 @@ use Drupal\Core\Url;
 use Drupal\Core\Utility\Error;
 use Drupal\soda_scs_manager\Entity\SodaScsComponentInterface;
 use Drupal\soda_scs_manager\Entity\SodaScsSnapshotInterface;
+use Drupal\soda_scs_manager\Exception\SodaScsUserFacingException;
 use Drupal\soda_scs_manager\Helpers\SodaScsComponentHelpers;
 use Drupal\soda_scs_manager\Helpers\SodaScsContainerHelpers;
 use Drupal\soda_scs_manager\Helpers\SodaScsHelpers;
@@ -1207,10 +1208,15 @@ class SodaScsWisskiComponentActions implements SodaScsComponentActionsInterface 
           $connectUrl = Url::fromRoute('openid_connect.accounts_controller_index', [
             'user' => $owner->id(),
           ])->toString();
-          throw new \Exception(sprintf(
-            'Nextcloud account is not connected for this user. Visit %s to connect before creating a WissKI stack.',
-            $connectUrl
-          ));
+          // The translated text is the separate user message; the exception
+          // message stays English for the log.
+          // phpcs:ignore DrupalPractice.General.ExceptionT.ExceptionT
+          throw new SodaScsUserFacingException(
+            sprintf('Nextcloud account of user %s is not connected.', $owner->id()),
+            $this->t('Your Nextcloud account is not connected. <a href=":url">Connect it</a> and try again.', [
+              ':url' => $connectUrl,
+            ]),
+          );
         }
 
         $project = NULL;
@@ -1224,10 +1230,15 @@ class SodaScsWisskiComponentActions implements SodaScsComponentActionsInterface 
 
         $this->nextcloudMountManager->ensureUserMountDirectory($owner);
         if (!$this->nextcloudMountManager->ensureProjectTeamFolderReady($owner, $project)) {
-          throw new \Exception(sprintf(
-            'Nextcloud Team Folder "%s" is not available under the owner mount yet. Ensure the project Team Folder exists and try again.',
-            $project->label(),
-          ));
+          // The translated text is the separate user message; the exception
+          // message stays English for the log.
+          // phpcs:ignore DrupalPractice.General.ExceptionT.ExceptionT
+          throw new SodaScsUserFacingException(
+            sprintf('Nextcloud Team Folder of project %s is not available under the owner mount yet.', $project->id()),
+            $this->t('The Team Folder of project %project is not ready yet. Try again in a few minutes.', [
+              '%project' => $project->label(),
+            ]),
+          );
         }
         $nextcloudUserMountSource = $this->nextcloudMountManager->projectTeamFolderMountSource($owner, $project);
       }
@@ -1268,18 +1279,19 @@ class SodaScsWisskiComponentActions implements SodaScsComponentActionsInterface 
       Error::logException(
         $this->logger,
         $e,
-        'Request failed: @message',
-        ['@message' => $e->getMessage()],
+        'Cannot prepare WissKI instance @machineName: @message',
+        ['@machineName' => $machineName ?? '', '@message' => $e->getMessage()],
         LogLevel::ERROR
       );
-      $this->messenger->addError($this->t("Request failed. See logs for more details."));
       return [
-        'message' => 'Request failed.',
+        'message' => $e instanceof SodaScsUserFacingException
+          ? $e->getUserMessage()
+          : $this->t('The WissKI instance could not be prepared.'),
         'data' => [
           'portainerResponse' => NULL,
         ],
         'success' => FALSE,
-        'error' => $e->getMessage(),
+        'error' => $e,
       ];
     }
 
@@ -1287,30 +1299,40 @@ class SodaScsWisskiComponentActions implements SodaScsComponentActionsInterface 
       $portainerCreateRequestResult = $this->sodaScsPortainerServiceActions->makeRequest($portainerCreateRequest);
     }
     catch (\Exception $e) {
-      $this->logger->error("Portainer request failed: @error", [
-        '@error' => $e->getMessage(),
-      ]);
+      Error::logException(
+        $this->logger,
+        $e,
+        'Portainer request to create WissKI instance @machineName failed: @message',
+        ['@machineName' => $machineName, '@message' => $e->getMessage()],
+        LogLevel::ERROR
+      );
       return [
-        'message' => 'Portainer request failed.',
+        'message' => $this->t('The WissKI container could not be created.'),
         'data' => [
           'wisskiComponent' => NULL,
-          'portainerCreateRequestResult' => $portainerCreateRequestResult,
+          'portainerCreateRequestResult' => NULL,
         ],
-        'statusCode' => $portainerCreateRequestResult['statusCode'],
         'success' => FALSE,
-        'error' => $portainerCreateRequestResult['error'],
+        'error' => $e,
       ];
     }
     if (!$portainerCreateRequestResult['success']) {
+      $portainerError = $portainerCreateRequestResult['error'] ?? '';
+      $statusCode = $portainerCreateRequestResult['statusCode'] ?? 0;
+      $this->logger->error('Portainer request to create WissKI instance @machineName failed with status @status: @message', [
+        '@machineName' => $machineName,
+        '@message' => $portainerError,
+        '@status' => $statusCode,
+      ]);
       return [
-        'message' => 'Portainer request failed.',
+        'message' => $this->t('The WissKI container could not be created.'),
         'data' => [
           'wisskiComponent' => NULL,
           'portainerCreateRequestResult' => $portainerCreateRequestResult,
         ],
-        'statusCode' => $portainerCreateRequestResult['statusCode'],
+        'statusCode' => $statusCode,
         'success' => FALSE,
-        'error' => $portainerCreateRequestResult['error'],
+        'error' => $portainerError !== '' ? $portainerError : "Portainer returned status $statusCode.",
       ];
     }
     $portainerResponsePayload = json_decode($portainerCreateRequestResult['data']['portainerResponse']->getBody()->getContents(), TRUE);
@@ -1328,19 +1350,27 @@ class SodaScsWisskiComponentActions implements SodaScsComponentActionsInterface 
     // Build and make the get all containers request.
     $dockerGetAllContainersRequest = $this->sodaScsDockerRunServiceActions->buildGetAllRequest($dockerGetAllContainersRequestParams);
     $dockerGetAllContainersResponse = $this->sodaScsDockerRunServiceActions->makeRequest($dockerGetAllContainersRequest);
-    if (!$dockerGetAllContainersResponse['success']) {
+    $containerId = NULL;
+    if ($dockerGetAllContainersResponse['success']) {
+      $dockerGetAllContainersResponsePayload = json_decode($dockerGetAllContainersResponse['data']['portainerResponse']->getBody()->getContents(), TRUE);
+      $containerId = $dockerGetAllContainersResponsePayload[0]['Id'] ?? NULL;
+    }
+    if ($containerId === NULL) {
+      $dockerError = $dockerGetAllContainersResponse['error'] ?? '';
+      $this->logger->error('Container @containerName of the new WissKI instance not found: @message', [
+        '@containerName' => $containerName,
+        '@message' => $dockerError,
+      ]);
       return [
-        'message' => 'Docker request failed.',
+        'message' => $this->t('The WissKI container was not found after it was created.'),
         'data' => [
           'wisskiComponent' => NULL,
           'dockerGetAllContainersResponse' => $dockerGetAllContainersResponse,
         ],
+        'success' => FALSE,
+        'error' => $dockerError !== '' ? $dockerError : "Container $containerName not found.",
       ];
     }
-
-    // Get the response payload.
-    $dockerGetAllContainersResponsePayload = json_decode($dockerGetAllContainersResponse['data']['portainerResponse']->getBody()->getContents(), TRUE);
-    $containerId = $dockerGetAllContainersResponsePayload[0]['Id'];
 
     // Set the external ID and container name and id.
     $component->set('externalId', $portainerResponsePayload['Id']);

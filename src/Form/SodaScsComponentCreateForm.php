@@ -14,12 +14,15 @@ use Drupal\Core\Entity\EntityTypeManagerInterface;
 use Drupal\Core\Form\FormStateInterface;
 use Drupal\Core\Logger\LoggerChannelFactoryInterface;
 use Drupal\Core\Session\AccountProxyInterface;
+use Drupal\Core\StringTranslation\TranslatableMarkup;
+use Drupal\Core\Utility\Error;
 use Drupal\soda_scs_manager\ComponentActions\SodaScsComponentActionsInterface;
 use Drupal\soda_scs_manager\Helpers\SodaScsMachineNameHelper;
 use Drupal\soda_scs_manager\Helpers\SodaScsProjectApplicationHelpers;
 use Drupal\soda_scs_manager\RequestActions\SodaScsServiceRequestInterface;
 use Drupal\soda_scs_manager\Traits\SodaScsProjectScopedCreateFormTrait;
 use Drupal\soda_scs_manager\Validation\InputDisallowedTerms;
+use Psr\Log\LogLevel;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 
 /**
@@ -382,14 +385,34 @@ class SodaScsComponentCreateForm extends ContentEntityForm {
     // Create external stack.
     $createComponentResult = $this->sodaScsComponentActions->createComponent($this->entity);
 
-    if (!$createComponentResult['success']) {
-      $this->messenger()->addMessage($this->t('Cannot create component "@label". See logs for more details.', [
-        '@label' => $this->entity->label(),
-        '@username' => $this->currentUser->getAccount()->getDisplayName(),
-      ]), 'error');
-      $this->loggerFactory->get('soda_scs_manager')->error("Cannot create component: @message", [
-        '@message' => $createComponentResult['message'],
-      ]);
+    if (empty($createComponentResult['success'])) {
+      $error = $createComponentResult['error'] ?? NULL;
+      $exception = $error instanceof \Throwable
+        ? $error
+        : new \RuntimeException(is_string($error) && $error !== '' ? $error : 'Component creation returned no error details.');
+      Error::logException(
+        $this->loggerFactory->get('soda_scs_manager'),
+        $exception,
+        'Cannot create component @machineName (@bundle) for user @uid: @message',
+        [
+          '@bundle' => $this->bundle,
+          '@machineName' => $this->entity->get('machineName')->value,
+          '@message' => $exception->getMessage(),
+          '@uid' => $this->currentUser->id(),
+        ],
+        LogLevel::ERROR
+      );
+      // Only translated messages are meant for users; plain strings and
+      // exception texts may hold service details.
+      $reason = $createComponentResult['message'] ?? NULL;
+      $this->messenger()->addError($reason instanceof TranslatableMarkup
+        ? $this->t('Could not create %label. @reason', [
+          '%label' => $this->entity->label(),
+          '@reason' => $reason,
+        ])
+        : $this->t('Could not create %label. Try again later or contact support.', [
+          '%label' => $this->entity->label(),
+        ]));
       // Without a rebuild, Drupal redirects (also to ?destination=).
       $form_state->setRebuild(TRUE);
       return;

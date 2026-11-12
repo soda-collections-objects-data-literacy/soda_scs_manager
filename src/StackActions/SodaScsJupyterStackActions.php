@@ -121,9 +121,11 @@ class SodaScsJupyterStackActions implements SodaScsStackActionsInterface {
         // Without the mount group the service account cannot see the folder.
         $groups = $this->projectHelpers->syncProjectTeamFolderGroups($project, TRUE);
         if (!$groups->success) {
-          $this->messenger->addError($groups->message);
           return [
-            'message' => $groups->message,
+            // Already translated by the helper and free of service details.
+            'message' => $this->t('The project folder is not ready for JupyterHub: @reason', [
+              '@reason' => $groups->message,
+            ]),
             'data' => [
               'stack' => NULL,
             ],
@@ -162,9 +164,8 @@ class SodaScsJupyterStackActions implements SodaScsStackActionsInterface {
         ['@message' => $e->getMessage()],
         LogLevel::ERROR
       );
-      $this->messenger->addError($this->t("Could not create jupyter stack. See logs for more details."));
       return [
-        'message' => $this->t('Could not create stack: %message', ['%message' => $e->getMessage()]),
+        'message' => $this->t('JupyterHub could not be set up for this project.'),
         'data' => [
           'stack' => NULL,
         ],

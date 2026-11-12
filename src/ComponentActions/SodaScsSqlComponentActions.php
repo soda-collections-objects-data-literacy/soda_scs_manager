@@ -21,6 +21,7 @@ use Drupal\Core\Utility\Error;
 use Drupal\soda_scs_manager\Entity\SodaScsComponentInterface;
 use Drupal\soda_scs_manager\Entity\SodaScsSnapshotInterface;
 use Drupal\soda_scs_manager\Exception\SodaScsSqlServiceException;
+use Drupal\soda_scs_manager\Exception\SodaScsUserFacingException;
 use Drupal\soda_scs_manager\Helpers\SodaScsComponentHelpers;
 use Drupal\soda_scs_manager\Helpers\SodaScsContainerHelpers;
 use Drupal\soda_scs_manager\Helpers\SodaScsDatabaseHelpers;
@@ -307,9 +308,13 @@ class SodaScsSqlComponentActions implements SodaScsComponentActionsInterface {
       }
 
       if ($checkDbExistsResult['result']) {
-        // Database already exists.
-        $this->messenger->addError($this->t('Database already exists. See logs for more details.'));
-        return [];
+        // The translated text is the separate user message; the exception
+        // message stays English for the log.
+        // phpcs:ignore DrupalPractice.General.ExceptionT.ExceptionT
+        throw new SodaScsUserFacingException(
+          "Database $dbName already exists.",
+          $this->t('A database with this application name already exists. Choose another name.'),
+        );
       }
 
       // Check if the user exists.
@@ -414,7 +419,9 @@ class SodaScsSqlComponentActions implements SodaScsComponentActionsInterface {
         'error' => FALSE,
       ];
     }
-    catch (MissingDataException $e) {
+    // Service exceptions used to escape this method and reach the stack with
+    // no error at all; every failure now returns a complete result.
+    catch (\Exception $e) {
       Error::logException(
         $this->logger,
         $e,
@@ -422,12 +429,13 @@ class SodaScsSqlComponentActions implements SodaScsComponentActionsInterface {
         ['@message' => $e->getMessage()],
         LogLevel::ERROR
       );
-      $this->messenger->addError($this->t("Cannot create database. See logs for more details."));
       return [
-        'message' => 'Cannot create database.',
+        'message' => $e instanceof SodaScsUserFacingException
+          ? $e->getUserMessage()
+          : $this->t('The database could not be created.'),
         'data' => NULL,
         'success' => FALSE,
-        'error' => $e->getMessage(),
+        'error' => $e,
       ];
     }
   }

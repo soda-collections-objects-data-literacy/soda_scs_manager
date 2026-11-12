@@ -14,7 +14,6 @@ use Drupal\Core\Entity\EntityTypeManagerInterface;
 use Drupal\Core\Logger\LoggerChannelFactoryInterface;
 use Drupal\Core\Messenger\MessengerInterface;
 use Drupal\Core\StringTranslation\StringTranslationTrait;
-use Drupal\Core\TypedData\Exception\MissingDataException;
 use Drupal\Core\Utility\Error;
 use Drupal\soda_scs_manager\Entity\SodaScsComponentInterface;
 use Drupal\soda_scs_manager\Entity\SodaScsSnapshotInterface;
@@ -237,25 +236,33 @@ class SodaScsTriplestoreComponentActions implements SodaScsComponentActionsInter
       // Create triplestore repository.
       $openGdbCreateRepoRequest = $this->sodaScsOpenGdbServiceActions->buildCreateRequest($createRepoRequestParams);
       $createRepoResponse = $this->sodaScsOpenGdbServiceActions->makeRequest($openGdbCreateRepoRequest);
+      // A failed repository request used to go unnoticed and the component
+      // was saved without a repository.
+      if (empty($createRepoResponse['success'])) {
+        throw new \RuntimeException(sprintf(
+          'OpenGDB repository %s could not be created: %s',
+          $machineName,
+          $createRepoResponse['error'] ?? $createRepoResponse['message'] ?? 'no details',
+        ));
+      }
     }
-    catch (MissingDataException $e) {
+    catch (\Exception $e) {
       Error::logException(
         $this->loggerFactory->get('soda_scs_manager'),
         $e,
-        'Cannot assemble Request: @message',
+        'Cannot create triplestore repository: @message',
         [
           '@message' => $e->getMessage(),
         ],
         LogLevel::ERROR
       );
-      $this->messenger->addError($this->t("Cannot assemble request. See logs for more details."));
       return [
-        'message' => 'Cannot assemble Request.',
+        'message' => $this->t('The triplestore could not be created.'),
         'data' => [
-          'createRepoResponse' => NULL,
+          'createRepoResponse' => $createRepoResponse ?? NULL,
         ],
         'success' => FALSE,
-        'error' => $e->getMessage(),
+        'error' => $e,
       ];
     }
 
@@ -302,24 +309,23 @@ class SodaScsTriplestoreComponentActions implements SodaScsComponentActionsInter
       $openGdbUpdateUserRequest = $this->sodaScsOpenGdbServiceActions->buildUpdateRequest($updateUserRequestParams);
       $openGdbUpdateUserResponse = $this->sodaScsOpenGdbServiceActions->makeRequest($openGdbUpdateUserRequest);
     }
-    catch (MissingDataException $e) {
+    catch (\Exception $e) {
       Error::logException(
         $this->loggerFactory->get('soda_scs_manager'),
         $e,
-        'Cannot assemble Request: @message',
+        'Cannot grant triplestore repository rights: @message',
         [
           '@message' => $e->getMessage(),
         ],
         LogLevel::ERROR
       );
-      $this->messenger->addError($this->t("Cannot assemble request. See logs for more details."));
       return [
-        'message' => 'Cannot assemble Request.',
+        'message' => $this->t('The triplestore access rights could not be set.'),
         'data' => [
-          'createRepoResponse' => NULL,
+          'createRepoResponse' => $createRepoResponse,
         ],
         'success' => FALSE,
-        'error' => $e->getMessage(),
+        'error' => $e,
       ];
     }
 
@@ -351,15 +357,14 @@ class SodaScsTriplestoreComponentActions implements SodaScsComponentActionsInter
         ],
         LogLevel::ERROR
       );
-      $this->messenger->addError($this->t("Cannot create Keycloak groups for triplestore. See logs for more details."));
       return [
-        'message' => 'Cannot create Keycloak groups for triplestore.',
+        'message' => $this->t('The access groups for the triplestore could not be created.'),
         'data' => [
           'createRepoResponse' => $createRepoResponse ?? NULL,
           'openGdbUpdateUserResponse' => $openGdbUpdateUserResponse ?? NULL,
         ],
         'success' => FALSE,
-        'error' => $e->getMessage(),
+        'error' => $e,
       ];
     }
 
