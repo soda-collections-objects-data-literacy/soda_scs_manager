@@ -37,6 +37,7 @@ use Drupal\soda_scs_manager\RequestActions\SodaScsServiceRequestInterface;
 use Drupal\soda_scs_manager\Service\NextcloudMountManager;
 use Drupal\soda_scs_manager\ServiceActions\SodaScsServiceActionsInterface;
 use Drupal\soda_scs_manager\ServiceKeyActions\SodaScsServiceKeyActionsInterface;
+use Drupal\soda_scs_manager\ValueObject\SodaScsResult;
 use Drupal\Tests\soda_scs_manager\Unit\SodaScsCreatePathTestTrait;
 use Drupal\Tests\UnitTestCase;
 use Drupal\user\UserInterface;
@@ -45,12 +46,20 @@ use GuzzleHttp\Psr7\Response;
 use Prophecy\Argument;
 use Prophecy\PhpUnit\ProphecyTrait;
 
+require_once __DIR__ . '/SodaScsSleepStub.php';
+
 /**
  * Failure results of SodaScsWisskiComponentActions::createComponent().
  *
  * Issue 3637658: every failure returns success FALSE, an error and a
- * translated message; the Portainer and container-lookup failures no longer
- * read the result of the request that threw or failed.
+ * translated message; the Portainer failures no longer read the result of the
+ * request that threw or failed. A Drupal container that is not found right
+ * after the stack was created does not fail the creation: the container ID
+ * stays empty. Issue 3637662: a WissKI without the default data model gets an
+ * empty recipe version.
+ *
+ * The wait for the container runs against a sleep() stand-in
+ * (SodaScsSleepStub.php), so the tests do not wait.
  *
  * @coversDefaultClass \Drupal\soda_scs_manager\ComponentActions\SodaScsWisskiComponentActions
  * @group soda_scs_manager
@@ -110,6 +119,27 @@ class SodaScsWisskiComponentActionsCreateTest extends UnitTestCase {
   protected $logger;
 
   /**
+   * The mocked container helpers.
+   *
+   * @var \Drupal\soda_scs_manager\Helpers\SodaScsContainerHelpers|\Prophecy\Prophecy\ObjectProphecy
+   */
+  protected $containerHelpers;
+
+  /**
+   * The mocked service helpers.
+   *
+   * @var \Drupal\soda_scs_manager\Helpers\SodaScsServiceHelpers|\Prophecy\Prophecy\ObjectProphecy
+   */
+  protected $serviceHelpers;
+
+  /**
+   * The mocked service key actions.
+   *
+   * @var \Drupal\soda_scs_manager\ServiceKeyActions\SodaScsServiceKeyActionsInterface|\Prophecy\Prophecy\ObjectProphecy
+   */
+  protected $serviceKeyActions;
+
+  /**
    * The service under test.
    *
    * @var \Drupal\soda_scs_manager\ComponentActions\SodaScsWisskiComponentActions
@@ -121,6 +151,8 @@ class SodaScsWisskiComponentActionsCreateTest extends UnitTestCase {
    */
   protected function setUp(): void {
     parent::setUp();
+
+    SodaScsSleepStub::$seconds = [];
 
     $this->bundleInfo = $this->prophesize(EntityTypeBundleInfoInterface::class);
     $this->bundleInfo->getBundleInfo('soda_scs_component')->willReturn([
@@ -144,9 +176,10 @@ class SodaScsWisskiComponentActionsCreateTest extends UnitTestCase {
     $componentHelpers->createSecret()->willReturn('not-a-secret');
     $componentHelpers->resolveConnectedComponents(Argument::any())->willReturn(['sql' => NULL, 'triplestore' => NULL]);
 
-    $serviceHelpers = $this->prophesize(SodaScsServiceHelpers::class);
-    $serviceHelpers->initWisskiInstanceSettings()->willReturn([]);
-    $serviceHelpers->wisskiInstanceBaseUrl(Argument::type('string'))->willReturn('https://wisski.invalid');
+    $this->serviceHelpers = $this->prophesize(SodaScsServiceHelpers::class);
+    $this->serviceHelpers->initWisskiInstanceSettings()->willReturn([]);
+    $this->serviceHelpers->wisskiInstanceBaseUrl(Argument::type('string'))->willReturn('https://wisski.invalid');
+    $this->containerHelpers = $this->prophesize(SodaScsContainerHelpers::class);
 
     $keycloakHelpers = $this->prophesize(SodaScsKeycloakHelpers::class);
     $keycloakHelpers->getKeycloakToken()->willReturn('not-a-token');
@@ -191,8 +224,8 @@ class SodaScsWisskiComponentActionsCreateTest extends UnitTestCase {
     $serviceKey = $this->prophesize(SodaScsServiceKeyInterface::class);
     $serviceKey->get('servicePassword')->willReturn($this->fieldList('not-a-password'));
     $serviceKey->save()->shouldNotBeCalled();
-    $serviceKeyActions = $this->prophesize(SodaScsServiceKeyActionsInterface::class);
-    $serviceKeyActions->getServiceKey(Argument::type('array'))->willReturn($serviceKey->reveal());
+    $this->serviceKeyActions = $this->prophesize(SodaScsServiceKeyActionsInterface::class);
+    $this->serviceKeyActions->getServiceKey(Argument::type('array'))->willReturn($serviceKey->reveal());
 
     $this->actions = new SodaScsWisskiComponentActions(
       $this->bundleInfo->reveal(),
@@ -204,7 +237,7 @@ class SodaScsWisskiComponentActionsCreateTest extends UnitTestCase {
       $this->messenger->reveal(),
       $this->prophesize(FileSystemInterface::class)->reveal(),
       $componentHelpers->reveal(),
-      $this->prophesize(SodaScsContainerHelpers::class)->reveal(),
+      $this->containerHelpers->reveal(),
       $this->prophesize(SodaScsHelpers::class)->reveal(),
       $this->prophesize(SodaScsExecRequestInterface::class)->reveal(),
       $this->dockerRun->reveal(),
@@ -217,8 +250,8 @@ class SodaScsWisskiComponentActionsCreateTest extends UnitTestCase {
       $this->prophesize(SodaScsPortainerHelpers::class)->reveal(),
       $this->portainer->reveal(),
       $projectHelpers->reveal(),
-      $serviceHelpers->reveal(),
-      $serviceKeyActions->reveal(),
+      $this->serviceHelpers->reveal(),
+      $this->serviceKeyActions->reveal(),
       $this->prophesize(SodaScsSnapshotHelpers::class)->reveal(),
       $this->prophesize(SodaScsServiceActionsInterface::class)->reveal(),
       $this->prophesize(SodaScsStackHelpers::class)->reveal(),
@@ -345,47 +378,407 @@ class SodaScsWisskiComponentActionsCreateTest extends UnitTestCase {
   }
 
   /**
-   * A failed container lookup returns a failure and saves nothing.
+   * The container ID of the new stack is stored when the first lookup finds it.
    *
    * @covers ::createComponent
+   * @covers ::waitForNewContainerId
    */
-  public function testCreateComponentFailsWhenContainerLookupFails(): void {
+  public function testCreateComponentStoresContainerIdFoundOnFirstLookup(): void {
     $this->portainerCreatesStack();
-    $this->dockerRun->makeRequest(['request' => 'docker'])->willReturn(['success' => FALSE]);
+    $this->containerHelpers->findLiveContainerByName('wisski-foo--drupal')
+      ->willReturn($this->containerFound('abc123'))
+      ->shouldBeCalledOnce();
+    $this->logger->warning(Argument::cetera())->shouldNotBeCalled();
     $component = $this->component();
 
     $result = $this->actions->createComponent($component);
 
-    $this->assertCompleteFailure($result);
-    $this->assertSame('Container wisski-foo--drupal not found.', $result['error']);
-    $this->assertSame('The WissKI container was not found after it was created.', $result['message']->getUntranslatedString());
-    $this->assertSame(0, $component->saveCount);
+    $this->assertTrue($result['success']);
+    $this->assertNull($result['error']);
+    $this->assertSame('abc123', $component->setValues['containerId']);
+    $this->assertSame('wisski-foo--drupal', $component->setValues['containerName']);
+    $this->assertSame(42, $component->setValues['externalId']);
+    $this->assertSame([], SodaScsSleepStub::$seconds, 'No wait when the container is there.');
   }
 
   /**
-   * An empty container list returns a failure and saves nothing.
+   * A container that shows up on a later lookup is found after a poll wait.
    *
    * @covers ::createComponent
+   * @covers ::waitForNewContainerId
    */
-  public function testCreateComponentFailsWhenContainerListIsEmpty(): void {
+  public function testCreateComponentWaitsUntilContainerAppears(): void {
     $this->portainerCreatesStack();
-    $this->dockerRun->makeRequest(['request' => 'docker'])->willReturn([
-      'success' => TRUE,
-      'data' => ['portainerResponse' => new Response(200, [], '[]')],
-    ]);
+    $this->containerHelpers->findLiveContainerByName('wisski-foo--drupal')->willReturn(
+      $this->containerMissing(),
+      $this->containerMissing(),
+      $this->containerFound('abc123'),
+    );
+    $this->logger->warning(Argument::cetera())->shouldNotBeCalled();
     $component = $this->component();
 
     $result = $this->actions->createComponent($component);
 
-    $this->assertCompleteFailure($result);
-    $this->assertSame('Container wisski-foo--drupal not found.', $result['error']);
-    $this->assertSame(0, $component->saveCount);
+    $this->assertTrue($result['success']);
+    $this->assertSame('abc123', $component->setValues['containerId']);
+    $this->assertSame([5, 5], SodaScsSleepStub::$seconds);
+  }
+
+  /**
+   * A container that never shows up does not fail the creation.
+   *
+   * The ID stays NULL (inspectComponentContainer() resolves it by name later),
+   * the stack and the component are kept and a warning is logged.
+   *
+   * @covers ::createComponent
+   * @covers ::waitForNewContainerId
+   */
+  public function testCreateComponentSucceedsWithEmptyContainerIdWhenContainerNeverAppears(): void {
+    $this->portainerCreatesStack();
+    $this->containerHelpers->findLiveContainerByName('wisski-foo--drupal')
+      ->willReturn($this->containerMissing())
+      ->shouldBeCalledTimes(6);
+    $this->logger->warning(
+      Argument::containingString('not found after'),
+      Argument::that(fn(array $context) => $context['@containerName'] === 'wisski-foo--drupal'
+        && $context['@seconds'] === 30
+        && $context['@message'] === 'Container not found for name: wisski-foo--drupal')
+    )->shouldBeCalledOnce();
+    $this->logger->error(Argument::cetera())->shouldNotBeCalled();
+    $component = $this->component();
+
+    $result = $this->actions->createComponent($component);
+
+    $this->assertTrue($result['success']);
+    $this->assertNull($result['error']);
+    $this->assertSame($component, $result['data']['wisskiComponent']);
+    $this->assertNull($component->setValues['containerId']);
+    $this->assertSame('wisski-foo--drupal', $component->setValues['containerName']);
+    $this->assertSame(42, $component->setValues['externalId']);
+    $this->assertGreaterThan(0, $component->saveCount, 'The component is saved without a container ID.');
+    $this->assertSame([5, 5, 5, 5, 5], SodaScsSleepStub::$seconds);
+  }
+
+  /**
+   * A lookup that answers without a container ID counts as not found.
+   *
+   * @covers ::createComponent
+   * @covers ::waitForNewContainerId
+   */
+  public function testCreateComponentTreatsLookupWithoutContainerIdAsNotFound(): void {
+    $this->portainerCreatesStack();
+    $this->containerHelpers->findLiveContainerByName('wisski-foo--drupal')
+      ->willReturn($this->containerFound(''));
+    $this->logger->warning(Argument::cetera())->shouldBeCalledOnce();
+    $component = $this->component();
+
+    $result = $this->actions->createComponent($component);
+
+    $this->assertTrue($result['success']);
+    $this->assertNull($component->setValues['containerId']);
+  }
+
+  /**
+   * A WissKI without the default data model gets an empty recipe version.
+   *
+   * @covers ::createComponent
+   * @covers ::resolveWisskiVersionSettings
+   * @covers ::usesWisskiDefaultDataModel
+   */
+  public function testCreateComponentPassesEmptyRecipeVersionWithoutDefaultDataModel(): void {
+    $this->productionVersionSettings();
+    $this->portainerCreatesStack();
+    $this->portainer->buildCreateRequest(Argument::that(
+      fn(array $params) => $params['wisskiDefaultDataModelRecipeVersion'] === ''
+        && $params['wisskiStarterRecipeVersion'] === 'starter-1'
+    ))->willReturn(['request' => 'portainer'])->shouldBeCalledOnce();
+    $this->containerHelpers->findLiveContainerByName(Argument::any())->willReturn($this->containerFound('abc123'));
+
+    $result = $this->actions->createComponent($this->component(['withDefaultDataModel' => '0']));
+
+    $this->assertTrue($result['success']);
+  }
+
+  /**
+   * A WissKI with the default data model keeps the resolved recipe version.
+   *
+   * @covers ::createComponent
+   * @covers ::resolveWisskiVersionSettings
+   * @covers ::usesWisskiDefaultDataModel
+   */
+  public function testCreateComponentPassesRecipeVersionWithDefaultDataModel(): void {
+    $this->productionVersionSettings();
+    $this->portainerCreatesStack();
+    $this->portainer->buildCreateRequest(Argument::that(
+      fn(array $params) => $params['wisskiDefaultDataModelRecipeVersion'] === 'ddm-1'
+    ))->willReturn(['request' => 'portainer'])->shouldBeCalledOnce();
+    $this->containerHelpers->findLiveContainerByName(Argument::any())->willReturn($this->containerFound('abc123'));
+
+    $result = $this->actions->createComponent($this->component(['withDefaultDataModel' => '1']));
+
+    $this->assertTrue($result['success']);
+  }
+
+  /**
+   * Components created before the field existed keep the recipe version.
+   *
+   * @covers ::createComponent
+   * @covers ::usesWisskiDefaultDataModel
+   *
+   * @dataProvider legacyDefaultDataModelProvider
+   */
+  public function testCreateComponentKeepsRecipeVersionWhenFieldIsNullOrMissing(array $extraFields): void {
+    $this->productionVersionSettings();
+    $this->portainerCreatesStack();
+    $this->portainer->buildCreateRequest(Argument::that(
+      fn(array $params) => $params['wisskiDefaultDataModelRecipeVersion'] === 'ddm-1'
+    ))->willReturn(['request' => 'portainer'])->shouldBeCalledOnce();
+    $this->containerHelpers->findLiveContainerByName(Argument::any())->willReturn($this->containerFound('abc123'));
+
+    $result = $this->actions->createComponent($this->component($extraFields));
+
+    $this->assertTrue($result['success']);
+  }
+
+  /**
+   * Components whose field is NULL or absent.
+   *
+   * @return array<string, array>
+   *   The extra fields of the component.
+   */
+  public static function legacyDefaultDataModelProvider(): array {
+    return [
+      'field is NULL' => [['withDefaultDataModel' => NULL]],
+      'no such field' => [[]],
+    ];
+  }
+
+  /**
+   * An empty development recipe setting becomes the apply flag.
+   *
+   * An empty version would otherwise mean "plain WissKI" to the image.
+   *
+   * @covers ::createComponent
+   * @covers ::resolveWisskiVersionSettings
+   *
+   * @dataProvider emptyRecipeSettingProvider
+   */
+  public function testCreateComponentPassesApplyFlagWhenDevelopmentRecipeSettingIsEmpty(array $fields): void {
+    $this->serviceHelpers->initWisskiInstanceSettings()->willReturn([
+      'varnishImageDevelopmentVersion' => 'varnish-dev',
+      'stackDevelopmentVersion' => 'stack-dev',
+      'defaultDataModelRecipeDevelopmentVersion' => '',
+      'imageDevelopmentVersion' => 'image-dev',
+      'starterRecipeDevelopmentVersion' => 'starter-dev',
+    ]);
+    $this->portainerCreatesStack();
+    $this->portainer->buildCreateRequest(Argument::that(
+      fn(array $params) => $params['wisskiDefaultDataModelRecipeVersion'] === 'true'
+        && $params['wisskiStarterRecipeVersion'] === 'starter-dev'
+    ))->willReturn(['request' => 'portainer'])->shouldBeCalledOnce();
+    $this->containerHelpers->findLiveContainerByName(Argument::any())->willReturn($this->containerFound('abc123'));
+
+    $result = $this->actions->createComponent($this->component($fields + ['developmentInstance' => 1]));
+
+    $this->assertTrue($result['success']);
+  }
+
+  /**
+   * An empty production recipe setting becomes the apply flag.
+   *
+   * @covers ::createComponent
+   * @covers ::resolveWisskiVersionSettings
+   *
+   * @dataProvider emptyRecipeSettingProvider
+   */
+  public function testCreateComponentPassesApplyFlagWhenProductionRecipeSettingIsEmpty(array $fields): void {
+    $this->serviceHelpers->initWisskiInstanceSettings()->willReturn([
+      'defaultDataModelRecipeProductionVersion' => '',
+      'starterRecipeProductionVersion' => 'starter-1',
+    ]);
+    $this->portainerCreatesStack();
+    $this->portainer->buildCreateRequest(Argument::that(
+      fn(array $params) => $params['wisskiDefaultDataModelRecipeVersion'] === 'true'
+        && $params['wisskiStarterRecipeVersion'] === 'starter-1'
+    ))->willReturn(['request' => 'portainer'])->shouldBeCalledOnce();
+    $this->containerHelpers->findLiveContainerByName(Argument::any())->willReturn($this->containerFound('abc123'));
+
+    $result = $this->actions->createComponent($this->component($fields));
+
+    $this->assertTrue($result['success']);
+  }
+
+  /**
+   * Fields of a component that uses the default data model.
+   *
+   * @return array<string, array>
+   *   The extra fields of the component.
+   */
+  public static function emptyRecipeSettingProvider(): array {
+    return [
+      'field is TRUE' => [['withDefaultDataModel' => 1]],
+      'field is NULL' => [['withDefaultDataModel' => NULL]],
+      'no such field' => [[]],
+    ];
+  }
+
+  /**
+   * An empty recipe setting stays empty without the default data model.
+   *
+   * @covers ::createComponent
+   * @covers ::resolveWisskiVersionSettings
+   */
+  public function testCreateComponentKeepsEmptyRecipeVersionWithoutDefaultDataModelWhenSettingIsEmpty(): void {
+    $this->serviceHelpers->initWisskiInstanceSettings()->willReturn([
+      'defaultDataModelRecipeProductionVersion' => '',
+    ]);
+    $this->portainerCreatesStack();
+    $this->portainer->buildCreateRequest(Argument::that(
+      fn(array $params) => $params['wisskiDefaultDataModelRecipeVersion'] === ''
+    ))->willReturn(['request' => 'portainer'])->shouldBeCalledOnce();
+    $this->containerHelpers->findLiveContainerByName(Argument::any())->willReturn($this->containerFound('abc123'));
+
+    $result = $this->actions->createComponent($this->component(['withDefaultDataModel' => 0]));
+
+    $this->assertTrue($result['success']);
+  }
+
+  /**
+   * A snapshot of a WissKI without a stored container ID needs the sync.
+   *
+   * A failed sync is returned as it is and no Docker request is made.
+   *
+   * @covers ::createSnapshot
+   * @covers ::refreshComponentContainerId
+   */
+  public function testCreateSnapshotReturnsFailureWhenContainerIdSyncFails(): void {
+    $failure = SodaScsResult::failure(
+      error: 'Container not found for name: wisski-foo--drupal',
+      message: 'WissKI container not found.',
+      log: FALSE,
+    );
+    $component = $this->component(['containerId' => NULL]);
+    $this->containerHelpers->syncComponentContainerId($component)->willReturn($failure)->shouldBeCalledOnce();
+    $this->dockerRun->buildInspectRequest(Argument::cetera())->shouldNotBeCalled();
+    $this->dockerRun->buildStopRequest(Argument::cetera())->shouldNotBeCalled();
+    $this->dockerRun->makeRequest(Argument::cetera())->shouldNotBeCalled();
+
+    $result = $this->actions->createSnapshot($component, 'snap-1', 1700000000);
+
+    $this->assertSame($failure, $result);
+    $this->assertFalse($result->success);
+  }
+
+  /**
+   * A successful sync lets the snapshot go on with the Docker requests.
+   *
+   * The inspect request fails here, which ends the run after the sync.
+   *
+   * @covers ::createSnapshot
+   * @covers ::refreshComponentContainerId
+   */
+  public function testCreateSnapshotContinuesWithInspectAfterContainerIdSync(): void {
+    $loggerFactory = $this->prophesize(LoggerChannelFactoryInterface::class);
+    $loggerFactory->get('soda_scs_manager')->willReturn($this->logger->reveal());
+    $container = new ContainerBuilder();
+    $container->set('logger.factory', $loggerFactory->reveal());
+    \Drupal::setContainer($container);
+    $component = $this->component(['containerId' => '']);
+    $this->containerHelpers->syncComponentContainerId($component)
+      ->willReturn(SodaScsResult::success(['containerId' => 'abc123'], 'Refreshed.'))
+      ->shouldBeCalledOnce();
+    $this->dockerRun->buildInspectRequest(Argument::type('array'))->willReturn(['request' => 'inspect'])->shouldBeCalledOnce();
+    $this->dockerRun->makeRequest(['request' => 'inspect'])->willReturn(['success' => FALSE, 'error' => 'Not found.']);
+
+    $result = $this->actions->createSnapshot($component, 'snap-1', 1700000000);
+
+    $this->assertFalse($result->success);
+    $this->assertSame('Snapshot creation failed: Could not inspect container.', $result->message);
+  }
+
+  /**
+   * A stored container ID is not synced before the snapshot.
+   *
+   * @covers ::createSnapshot
+   */
+  public function testCreateSnapshotDoesNotSyncWhenContainerIdIsStored(): void {
+    $loggerFactory = $this->prophesize(LoggerChannelFactoryInterface::class);
+    $loggerFactory->get('soda_scs_manager')->willReturn($this->logger->reveal());
+    $container = new ContainerBuilder();
+    $container->set('logger.factory', $loggerFactory->reveal());
+    \Drupal::setContainer($container);
+    $component = $this->component(['containerId' => 'abc123']);
+    $this->containerHelpers->syncComponentContainerId(Argument::cetera())->shouldNotBeCalled();
+    $this->dockerRun->buildInspectRequest(Argument::that(
+      fn(array $params) => $params['routeParams']['containerId'] === 'abc123'
+    ))->willReturn(['request' => 'inspect'])->shouldBeCalledOnce();
+    $this->dockerRun->makeRequest(['request' => 'inspect'])->willReturn(['success' => FALSE, 'error' => 'Not found.']);
+
+    $result = $this->actions->createSnapshot($component, 'snap-1', 1700000000);
+
+    $this->assertFalse($result->success);
+  }
+
+  /**
+   * The off switch only empties the recipe version, not the other pins.
+   *
+   * @covers ::createComponent
+   * @covers ::resolveWisskiVersionSettings
+   */
+  public function testCreateComponentKeepsOtherVersionPinsWithoutDefaultDataModel(): void {
+    $this->productionVersionSettings();
+    $this->portainerCreatesStack();
+    $this->portainer->buildCreateRequest(Argument::that(
+      fn(array $params) => $params['wisskiComposeStackVersion'] === 'stack-1'
+        && $params['wisskiBaseImageVersion'] === 'image-1'
+        && $params['wisskiStarterRecipeVersion'] === 'starter-1'
+    ))->willReturn(['request' => 'portainer'])->shouldBeCalledOnce();
+    $this->containerHelpers->findLiveContainerByName(Argument::any())->willReturn($this->containerFound('abc123'));
+
+    $result = $this->actions->createComponent($this->component(['withDefaultDataModel' => 0]));
+
+    $this->assertTrue($result['success']);
+  }
+
+  /**
+   * Lets the settings resolve to the production version pins.
+   */
+  protected function productionVersionSettings(): void {
+    $this->serviceHelpers->initWisskiInstanceSettings()->willReturn([
+      'defaultDataModelRecipeProductionVersion' => 'ddm-1',
+      'starterRecipeProductionVersion' => 'starter-1',
+      'wisskiBaseImageProductionVersion' => 'image-1',
+      'wisskiStackProductionVersion' => 'stack-1',
+    ]);
+  }
+
+  /**
+   * A successful container lookup result.
+   */
+  protected function containerFound(string $containerId): SodaScsResult {
+    return SodaScsResult::success(['containerId' => $containerId], 'Container resolved.');
+  }
+
+  /**
+   * A container lookup result that found nothing.
+   */
+  protected function containerMissing(): SodaScsResult {
+    return SodaScsResult::failure(
+      error: 'Container not found for name: wisski-foo--drupal',
+      message: 'Container not found.',
+      log: FALSE,
+    );
   }
 
   /**
    * Lets the Portainer request succeed.
    */
   protected function portainerCreatesStack(): void {
+    // The success path saves the service key; the failure paths must not.
+    $serviceKey = $this->prophesize(SodaScsServiceKeyInterface::class);
+    $serviceKey->get('servicePassword')->willReturn($this->fieldList('not-a-password'));
+    $serviceKey->save()->willReturn(1);
+    $this->serviceKeyActions->getServiceKey(Argument::type('array'))->willReturn($serviceKey->reveal());
     $this->portainer->makeRequest(['request' => 'portainer'])->willReturn([
       'success' => TRUE,
       'data' => ['portainerResponse' => new Response(200, [], json_encode(['Id' => 42]))],
@@ -398,10 +791,14 @@ class SodaScsWisskiComponentActionsCreateTest extends UnitTestCase {
    * A real entity class without constructor: the method assigns
    * `$component->serviceKey[]`, which a mock object cannot take.
    *
+   * @param array $extraFields
+   *   Field values to add, by field name; a field that is not listed does not
+   *   exist on the component.
+   *
    * @return \Drupal\soda_scs_manager\Entity\SodaScsComponent
-   *   The component, with a `saveCount` property.
+   *   The component, with `saveCount` and `setValues` properties.
    */
-  protected function component(): SodaScsComponent {
+  protected function component(array $extraFields = []): SodaScsComponent {
     $owner = $this->prophesize(UserInterface::class);
     $owner->id()->willReturn(7);
     $owner->getDisplayName()->willReturn('alice');
@@ -421,6 +818,9 @@ class SodaScsWisskiComponentActionsCreateTest extends UnitTestCase {
       'flavours' => $this->fieldList(NULL),
       'partOfProjects' => $this->fieldList(NULL, [$project->reveal()]),
     ];
+    foreach ($extraFields as $name => $value) {
+      $fields[$name] = $this->fieldList($value);
+    }
 
     return new class($owner->reveal(), $fields) extends SodaScsComponent {
 
@@ -433,6 +833,11 @@ class SodaScsWisskiComponentActionsCreateTest extends UnitTestCase {
        * How often save() ran.
        */
       public int $saveCount = 0;
+
+      /**
+       * The values set on the component, by field name.
+       */
+      public array $setValues = [];
 
       /**
        * Constructs the component without the entity machinery.
@@ -450,7 +855,15 @@ class SodaScsWisskiComponentActionsCreateTest extends UnitTestCase {
        * {@inheritdoc}
        */
       public function set($name, $value, $notify = TRUE) {
+        $this->setValues[$name] = $value;
         return $this;
+      }
+
+      /**
+       * {@inheritdoc}
+       */
+      public function hasField($field_name) {
+        return array_key_exists($field_name, $this->fieldStubs);
       }
 
       /**

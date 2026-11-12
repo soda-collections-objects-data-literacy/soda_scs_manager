@@ -82,6 +82,13 @@ class SodaScsWisskiStackActionsCreateTest extends UnitTestCase {
   protected $logger;
 
   /**
+   * The mocked component storage.
+   *
+   * @var \Drupal\Core\Entity\EntityStorageInterface|\Prophecy\Prophecy\ObjectProphecy
+   */
+  protected $componentStorage;
+
+  /**
    * The service under test.
    *
    * @var \Drupal\soda_scs_manager\StackActions\SodaScsWisskiStackActions
@@ -101,7 +108,7 @@ class SodaScsWisskiStackActionsCreateTest extends UnitTestCase {
 
     $component = $this->prophesize(SodaScsComponentInterface::class);
     $component->id()->willReturn('5');
-    $componentStorage = $this->prophesize(EntityStorageInterface::class);
+    $componentStorage = $this->componentStorage = $this->prophesize(EntityStorageInterface::class);
     $componentStorage->create(Argument::type('array'))->willReturn($component->reveal());
     $versionStorage = $this->prophesize(EntityStorageInterface::class);
     $versionStorage->loadMultiple()->willReturn([]);
@@ -215,6 +222,45 @@ class SodaScsWisskiStackActionsCreateTest extends UnitTestCase {
     $this->assertSame($error, $result['error']);
     $this->assertSame('WissKI: The WissKI container could not be created.', (string) $result['message']);
     $this->assertArrayHasKey('wisskiComponentCreateResult', $result['data']);
+  }
+
+  /**
+   * The WissKI component is created with the choice stored on the stack.
+   *
+   * @covers ::createStack
+   *
+   * @dataProvider withDefaultDataModelProvider
+   */
+  public function testCreateStackPassesWithDefaultDataModelToWisskiComponent(mixed $stackValue, bool $expected): void {
+    $this->componentStorage->create(Argument::that(
+      fn(array $values) => ($values['bundle'] ?? '') === 'soda_scs_wisski_component'
+        && array_key_exists('withDefaultDataModel', $values)
+        && (bool) $values['withDefaultDataModel'] === $expected
+    ))->willReturn($this->prophesize(SodaScsComponentInterface::class)->reveal())->shouldBeCalledOnce();
+    $this->sqlActions->createComponent(Argument::any())->willReturn($this->sqlSuccess());
+    $this->triplestoreActions->createComponent(Argument::any())->willReturn($this->triplestoreSuccess());
+    $this->wisskiActions->createComponent(Argument::any())->willReturn([
+      'message' => $this->t('The WissKI container could not be created.'),
+      'success' => FALSE,
+      'error' => 'stop here',
+    ]);
+
+    $this->actions->createStack($this->stack(['withDefaultDataModel' => $stackValue]));
+  }
+
+  /**
+   * Stack values of the field and what the WissKI component gets.
+   *
+   * @return array<string, array>
+   *   The stored value and the expected boolean.
+   */
+  public static function withDefaultDataModelProvider(): array {
+    return [
+      'stack with default data model' => [1, TRUE],
+      'stack without default data model' => [0, FALSE],
+      'stack without default data model, string from the database' => ['0', FALSE],
+      'stack from before the field existed' => [NULL, TRUE],
+    ];
   }
 
   /**
@@ -333,8 +379,11 @@ class SodaScsWisskiStackActionsCreateTest extends UnitTestCase {
    * A real entity class without constructor: createStack() calls the static
    * SodaScsStack::setValue() through the instance, which a Prophecy double
    * cannot take.
+   *
+   * @param array $overrides
+   *   Field values by field name that replace the defaults.
    */
-  protected function stack(): SodaScsStack {
+  protected function stack(array $overrides = []): SodaScsStack {
     $fields = [];
     foreach ([
       'developmentInstance' => 0,
@@ -344,8 +393,9 @@ class SodaScsWisskiStackActionsCreateTest extends UnitTestCase {
       'defaultLanguage' => 'en',
       'flavours' => NULL,
       'version' => '',
+      'withDefaultDataModel' => NULL,
     ] as $name => $value) {
-      $fields[$name] = $this->fieldList($value);
+      $fields[$name] = $this->fieldList(array_key_exists($name, $overrides) ? $overrides[$name] : $value);
     }
     $fields['partOfProjects'] = $this->fieldList();
 

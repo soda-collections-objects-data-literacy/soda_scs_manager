@@ -55,6 +55,13 @@ class SodaScsStackCreateFormSaveTest extends UnitTestCase {
   protected $logger;
 
   /**
+   * The mocked stack entity of the form.
+   *
+   * @var \Drupal\soda_scs_manager\Entity\SodaScsStackInterface|\Prophecy\Prophecy\ObjectProphecy
+   */
+  protected $stack;
+
+  /**
    * The form under test.
    *
    * @var \Drupal\soda_scs_manager\Form\SodaScsStackCreateForm
@@ -79,7 +86,7 @@ class SodaScsStackCreateFormSaveTest extends UnitTestCase {
     $time = $this->prophesize(TimeInterface::class);
     $time->getRequestTime()->willReturn(1700000000);
 
-    $stack = $this->prophesize(SodaScsStackInterface::class);
+    $stack = $this->stack = $this->prophesize(SodaScsStackInterface::class);
     $stack->hasField(Argument::any())->willReturn(FALSE);
     $stack->set(Argument::cetera())->willReturn($stack->reveal());
     $stack->setLabel(Argument::any())->willReturn($stack->reveal());
@@ -250,6 +257,64 @@ class SodaScsStackCreateFormSaveTest extends UnitTestCase {
 
     $this->assertFalse($formState->isRebuilding());
     $this->assertSame('soda_scs_manager.dashboard', $formState->getRedirect()->getRouteName());
+  }
+
+  /**
+   * The form stores the state of the default data model checkbox.
+   *
+   * @covers ::save
+   *
+   * @dataProvider withDefaultDataModelProvider
+   */
+  public function testSaveStoresWithDefaultDataModelFromFormState(array $postedValue, bool $expected): void {
+    $this->stack->hasField('withDefaultDataModel')->willReturn(TRUE);
+    $this->stack->set('withDefaultDataModel', $expected)->shouldBeCalledOnce();
+    $this->stackActions->createStack(Argument::any())->willReturn([
+      'success' => TRUE,
+      'error' => NULL,
+      'message' => 'ok',
+    ]);
+
+    $formState = new FormState();
+    foreach ($postedValue as $key => $value) {
+      $formState->setValue($key, $value);
+    }
+    $this->save($formState);
+  }
+
+  /**
+   * Posted values of the checkbox and what the stack stores.
+   *
+   * @return array<string, array>
+   *   Form state values and the expected stored boolean.
+   */
+  public static function withDefaultDataModelProvider(): array {
+    return [
+      'checked' => [['withDefaultDataModel' => ['value' => 1]], TRUE],
+      'unchecked' => [['withDefaultDataModel' => ['value' => 0]], FALSE],
+      'unchecked as FALSE' => [['withDefaultDataModel' => ['value' => FALSE]], FALSE],
+      'not posted' => [[], TRUE],
+      'value missing' => [['withDefaultDataModel' => []], TRUE],
+    ];
+  }
+
+  /**
+   * A stack without the field is left alone.
+   *
+   * @covers ::save
+   */
+  public function testSaveDoesNotSetWithDefaultDataModelWhenStackHasNoField(): void {
+    $this->stack->hasField('withDefaultDataModel')->willReturn(FALSE);
+    $this->stack->set('withDefaultDataModel', Argument::any())->shouldNotBeCalled();
+    $this->stackActions->createStack(Argument::any())->willReturn([
+      'success' => TRUE,
+      'error' => NULL,
+      'message' => 'ok',
+    ]);
+
+    $formState = new FormState();
+    $formState->setValue('withDefaultDataModel', ['value' => 0]);
+    $this->save($formState);
   }
 
   /**
