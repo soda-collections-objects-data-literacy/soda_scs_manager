@@ -22,6 +22,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   triplestore repository request now stops the creation instead of saving a
   triplestore without repository.
   Related: [#3637658](https://www.drupal.org/project/soda_scs_manager/issues/3637658).
+- Creating a WissKI no longer fails when its Drupal container starts a few
+  seconds after the stack: the SCS Manager waits up to 30 seconds for it and
+  otherwise looks the container up later. The container is matched by its
+  exact name, so a WissKI can no longer store the container of another
+  WissKI whose name contains its own.
+  Related: [#3637658](https://www.drupal.org/project/soda_scs_manager/issues/3637658).
 
 ## [4.3.3] - 2026-11-11
 

@@ -78,6 +78,11 @@ class SodaScsWisskiComponentActions implements SodaScsComponentActionsInterface 
   private const CONTAINER_POLL_INTERVAL_SECONDS = 5;
 
   /**
+   * Seconds to wait for the Drupal container of a new WissKI stack.
+   */
+  private const NEW_CONTAINER_WAIT_SECONDS = 30;
+
+  /**
    * Image repository of the WissKI Drupal container, without the mode suffix.
    *
    * The stack uses "<prefix><MODE>:<WISSKI_BASE_IMAGE_VERSION>".
@@ -1337,40 +1342,12 @@ class SodaScsWisskiComponentActions implements SodaScsComponentActionsInterface 
     }
     $portainerResponsePayload = json_decode($portainerCreateRequestResult['data']['portainerResponse']->getBody()->getContents(), TRUE);
 
-    // Get the container name and id of the WissKI component container.
-    // Construct the request parameters.
+    // The stack exists now. Its Drupal container may start a few seconds
+    // later (it waits for its dependencies), so a missing container does not
+    // fail the creation: the ID stays empty and is looked up by name before
+    // it is used (health checks, snapshots, drush commands).
     $containerName = $machineName . '--drupal';
-    $dockerGetAllContainersRequestParams = [
-      'queryParams' => [
-        'all' => TRUE,
-        'filters' => json_encode(['name' => [$containerName]]),
-      ],
-    ];
-
-    // Build and make the get all containers request.
-    $dockerGetAllContainersRequest = $this->sodaScsDockerRunServiceActions->buildGetAllRequest($dockerGetAllContainersRequestParams);
-    $dockerGetAllContainersResponse = $this->sodaScsDockerRunServiceActions->makeRequest($dockerGetAllContainersRequest);
-    $containerId = NULL;
-    if ($dockerGetAllContainersResponse['success']) {
-      $dockerGetAllContainersResponsePayload = json_decode($dockerGetAllContainersResponse['data']['portainerResponse']->getBody()->getContents(), TRUE);
-      $containerId = $dockerGetAllContainersResponsePayload[0]['Id'] ?? NULL;
-    }
-    if ($containerId === NULL) {
-      $dockerError = $dockerGetAllContainersResponse['error'] ?? '';
-      $this->logger->error('Container @containerName of the new WissKI instance not found: @message', [
-        '@containerName' => $containerName,
-        '@message' => $dockerError,
-      ]);
-      return [
-        'message' => $this->t('The WissKI container was not found after it was created.'),
-        'data' => [
-          'wisskiComponent' => NULL,
-          'dockerGetAllContainersResponse' => $dockerGetAllContainersResponse,
-        ],
-        'success' => FALSE,
-        'error' => $dockerError !== '' ? $dockerError : "Container $containerName not found.",
-      ];
-    }
+    $containerId = $this->waitForNewContainerId($containerName);
 
     // Set the external ID and container name and id.
     $component->set('externalId', $portainerResponsePayload['Id']);
@@ -1410,6 +1387,14 @@ class SodaScsWisskiComponentActions implements SodaScsComponentActionsInterface 
    */
   public function createSnapshot(SodaScsComponentInterface $component, string $snapshotMachineName, int $timestamp): SodaScsResult {
     try {
+      // A WissKI whose container started after the create request has no
+      // stored container ID yet; the requests below read it directly.
+      if ((string) ($component->get('containerId')->value ?? '') === '') {
+        $syncResult = $this->refreshComponentContainerId($component);
+        if (!$syncResult->success) {
+          return $syncResult;
+        }
+      }
 
       //
       // Inspect if the WissKI component
@@ -1665,6 +1650,37 @@ class SodaScsWisskiComponentActions implements SodaScsComponentActionsInterface 
    */
   public function getComponent(SodaScsComponentInterface $component): array {
     return [];
+  }
+
+  /**
+   * Waits for the Drupal container of a newly created WissKI stack.
+   *
+   * @param string $containerName
+   *   The Docker container name.
+   *
+   * @return string|null
+   *   The container ID, or NULL when it did not show up in time.
+   */
+  private function waitForNewContainerId(string $containerName): ?string {
+    $maxAttempts = intdiv(self::NEW_CONTAINER_WAIT_SECONDS, self::CONTAINER_POLL_INTERVAL_SECONDS);
+    $lookup = NULL;
+    for ($attempt = 0; $attempt < $maxAttempts; $attempt++) {
+      if ($attempt > 0) {
+        sleep(self::CONTAINER_POLL_INTERVAL_SECONDS);
+      }
+      $lookup = $this->sodaScsContainerHelpers->findLiveContainerByName($containerName);
+      $containerId = (string) ($lookup->data['containerId'] ?? '');
+      if ($lookup->success && $containerId !== '') {
+        return $containerId;
+      }
+    }
+
+    $this->logger->warning('Container @containerName of the new WissKI instance not found after @seconds seconds; its ID is resolved later: @message', [
+      '@containerName' => $containerName,
+      '@message' => $lookup?->error ?? '',
+      '@seconds' => self::NEW_CONTAINER_WAIT_SECONDS,
+    ]);
+    return NULL;
   }
 
   /**

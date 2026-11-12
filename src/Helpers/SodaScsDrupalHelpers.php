@@ -375,7 +375,7 @@ class SodaScsDrupalHelpers {
           '--no-ansi',
           '--no-interaction',
         ],
-        'containerName' => (string) $component->get('containerId')->value,
+        'containerName' => $this->resolveContainerId($component),
         'user'          => 'www-data',
       ]);
       if (!$dockerExecCommandResponse->success) {
@@ -482,7 +482,7 @@ class SodaScsDrupalHelpers {
           '--no-ansi',
           '--no-interaction',
         ],
-        'containerName' => (string) $component->get('containerId')->value,
+        'containerName' => $this->resolveContainerId($component),
         'user'          => 'www-data',
         'env'           => [
           'COMPOSER_HOME=/tmp/composer-home-scs-manager',
@@ -586,7 +586,7 @@ class SodaScsDrupalHelpers {
           'system.maintenance_mode',
           $enable ? '1' : '0',
         ],
-        'containerName' => (string) $component->get('containerId')->value,
+        'containerName' => $this->resolveContainerId($component),
         'user'          => 'www-data',
       ]);
       if (!$dockerExecCommandResponse->success) {
@@ -626,7 +626,7 @@ class SodaScsDrupalHelpers {
         'update',
         '--no-interaction',
       ],
-      'containerName' => (string) $component->get('containerId')->value,
+      'containerName' => $this->resolveContainerId($component),
       'user'          => 'www-data',
     ]);
 
@@ -682,7 +682,7 @@ class SodaScsDrupalHelpers {
         '-c',
         'rm -rf /opt/drupal/vendor /opt/drupal/composer.json /opt/drupal/composer.lock',
       ],
-      'containerName' => (string) $component->get('containerId')->value,
+      'containerName' => $this->resolveContainerId($component),
       'user'          => 'root',
     ]);
 
@@ -702,7 +702,7 @@ class SodaScsDrupalHelpers {
         '-O',
         '/opt/drupal/composer.json',
       ],
-      'containerName' => (string) $component->get('containerId')->value,
+      'containerName' => $this->resolveContainerId($component),
       'user'          => 'root',
     ]);
 
@@ -722,7 +722,7 @@ class SodaScsDrupalHelpers {
         '-O',
         '/opt/drupal/composer.lock',
       ],
-      'containerName' => (string) $component->get('containerId')->value,
+      'containerName' => $this->resolveContainerId($component),
       'user'          => 'root',
     ]);
 
@@ -743,7 +743,7 @@ class SodaScsDrupalHelpers {
         '-c',
         'chown -R www-data:www-data /opt/drupal && chmod -R 775 /opt/drupal',
       ],
-      'containerName' => (string) $component->get('containerId')->value,
+      'containerName' => $this->resolveContainerId($component),
       'user'          => 'root',
     ]);
 
@@ -762,7 +762,7 @@ class SodaScsDrupalHelpers {
         'install',
         '--no-interaction',
       ],
-      'containerName' => (string) $component->get('containerId')->value,
+      'containerName' => $this->resolveContainerId($component),
       'user'          => 'www-data',
     ]);
 
@@ -801,7 +801,7 @@ class SodaScsDrupalHelpers {
           'updatedb',
           '--yes',
         ],
-        'containerName' => (string) $component->get('containerId')->value,
+        'containerName' => $this->resolveContainerId($component),
         'user'          => 'www-data',
       ]);
       if ($updateDbResponse->success) {
@@ -1055,6 +1055,27 @@ class SodaScsDrupalHelpers {
   }
 
   /**
+   * Returns the stored container ID, or looks it up by name when it is empty.
+   *
+   * A WissKI whose container started after the create request has no stored
+   * ID until a lookup fills it in.
+   *
+   * @param \Drupal\soda_scs_manager\Entity\SodaScsComponentInterface $component
+   *   The Drupal/WissKI component.
+   *
+   * @return string
+   *   The container ID, or an empty string when the container is not found.
+   */
+  private function resolveContainerId(SodaScsComponentInterface $component): string {
+    $containerId = (string) ($component->get('containerId')->value ?? '');
+    if ($containerId !== '') {
+      return $containerId;
+    }
+    $syncResult = $this->sodaScsContainerHelpers->syncComponentContainerId($component);
+    return $syncResult->success ? (string) ($syncResult->data['containerId'] ?? '') : '';
+  }
+
+  /**
    * Cache tags for Drupal package data for a component.
    *
    * @param \Drupal\soda_scs_manager\Entity\SodaScsComponentInterface $component
@@ -1245,7 +1266,7 @@ class SodaScsDrupalHelpers {
           'composer.json',
           'composer.lock',
         ],
-        'containerName' => (string) $component->get('containerId')->value,
+        'containerName' => $this->resolveContainerId($component),
         'user'          => $user,
       ]);
       if (!$composerTarResponse->success) {
@@ -1346,7 +1367,7 @@ class SodaScsDrupalHelpers {
           '/opt/drupal',
           '--overwrite',
         ],
-        'containerName' => (string) $component->get('containerId')->value,
+        'containerName' => $this->resolveContainerId($component),
         'user'          => 'root',
       ]);
       if (!$composerTarResponse->success) {
