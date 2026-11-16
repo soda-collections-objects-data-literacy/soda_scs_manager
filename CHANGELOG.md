@@ -14,6 +14,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   Update 11041 removes the suffix from existing WebProtégé labels.
   **Run `drush updb`.**
 
+### Fixed
+
+- A demo project is created even when the source WissKI of the active demo
+  template has no `api-import` account. The account is then created in the
+  demo WissKI with the roles `wisski_user` and `wisski_api_import`, and a
+  warning in the log names the demo template and the demo project. **Add the
+  account to the source WissKI and build a new template version.**
+  Related: [#3638487](https://www.drupal.org/project/soda_scs_manager/issues/3638487).
+
 ## [4.4.0] - 2026-11-12
 
 ### Added

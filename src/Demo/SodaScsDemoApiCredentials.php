@@ -18,9 +18,10 @@ use Symfony\Component\DependencyInjection\Attribute\Autowire;
 /**
  * Gives each demo WissKI its own API password.
  *
- * The template database contains the source account api-import, so a plain
- * restore would leave every demo with the same password. After the restore
- * this sets a new random password and writes it to the project notebook's
+ * The template database usually contains the source account api-import, so a
+ * plain restore would leave every demo with the same password. After the
+ * restore this creates the account if the template lacks it, sets a new random
+ * password and writes it to the project notebook's
  * private home (~/.wisski-demo-api.env, mode 0600). The Team Folder and the
  * template never receive it, and it is not written to the log.
  */
@@ -30,6 +31,18 @@ class SodaScsDemoApiCredentials {
    * Local Drupal account the demo notebook uses for HTTP Basic auth.
    */
   public const USERNAME = 'api-import';
+
+  /**
+   * Roles a newly created API account gets; missing roles are skipped.
+   *
+   * An account that comes with the template keeps its roles.
+   */
+  public const ROLES = ['wisski_user', 'wisski_api_import'];
+
+  /**
+   * Line the WissKI script prints when it had to create the account.
+   */
+  protected const ACCOUNT_CREATED_MARKER = 'account created';
 
   /**
    * File in the Jupyter home. Excluded from template exports.
@@ -80,7 +93,7 @@ class SodaScsDemoApiCredentials {
     }
 
     $password = $this->generatePassword();
-    $this->setApiPassword($this->wisskiComponent($wisskiStack), $password);
+    $this->setApiPassword($password, $project, $this->wisskiComponent($wisskiStack));
     $this->writeCredentialsFile($project, $this->credentialsFileContents($baseUrl, $password));
     $this->logger->info('Set a new WissKI API password for demo project @project.', [
       '@project' => $project->id(),
@@ -107,11 +120,19 @@ class SodaScsDemoApiCredentials {
    * Replaces the password of the API account inside the WissKI.
    *
    * The password travels as an environment variable of the exec, not as a
-   * command argument, and the script prints nothing.
+   * command argument. The script prints only the created marker, never the
+   * password.
+   *
+   * @param string $password
+   *   The new password.
+   * @param \Drupal\soda_scs_manager\Entity\SodaScsProjectInterface $project
+   *   The demo project, named in the log when the account had to be created.
+   * @param \Drupal\soda_scs_manager\Entity\SodaScsComponentInterface $wisskiComponent
+   *   The demo WissKI component.
    *
    * @throws \Drupal\soda_scs_manager\Demo\SodaScsDemoException
    */
-  protected function setApiPassword(SodaScsComponentInterface $wisskiComponent, string $password): void {
+  protected function setApiPassword(string $password, SodaScsProjectInterface $project, SodaScsComponentInterface $wisskiComponent): void {
     $script = <<<'PHP'
 $username = getenv('SCS_DEMO_API_USER') ?: '';
 $password = getenv('SCS_DEMO_API_PASSWORD') ?: '';
@@ -119,14 +140,24 @@ if ($username === '' || $password === '') {
   fwrite(STDERR, "credentials missing\n");
   exit(1);
 }
-$accounts = \Drupal::entityTypeManager()->getStorage('user')->loadByProperties(['name' => $username]);
+$roles = array_filter(explode(',', getenv('SCS_DEMO_API_ROLES') ?: ''));
+$storage = \Drupal::entityTypeManager()->getStorage('user');
+$accounts = $storage->loadByProperties(['name' => $username]);
 $account = reset($accounts);
+$created = FALSE;
 if (!$account) {
-  fwrite(STDERR, "user missing\n");
-  exit(1);
+  $account = $storage->create(['name' => $username, 'status' => 1]);
+  $existingRoles = \Drupal::entityTypeManager()->getStorage('user_role')->loadMultiple($roles);
+  foreach (array_keys($existingRoles) as $role) {
+    $account->addRole($role);
+  }
+  $created = TRUE;
 }
 $account->setPassword($password);
 $account->save();
+if ($created) {
+  print "account created\n";
+}
 PHP;
     $result = $this->containerHelpers->executeDockerExecCommand([
       'cmd' => ['drush', 'php:eval', $script],
@@ -134,16 +165,27 @@ PHP;
       'env' => [
         'SCS_DEMO_API_USER=' . self::USERNAME,
         'SCS_DEMO_API_PASSWORD=' . $password,
+        'SCS_DEMO_API_ROLES=' . implode(',', self::ROLES),
       ],
       'timeout' => 120,
       'user' => 'www-data',
     ]);
     if (!$result->success) {
+      // The script's stderr holds no password: it only travels in the env.
       throw new SodaScsDemoException(sprintf(
-        'Could not set the API password in WissKI %s. The account %s must exist.',
+        'Could not set the API password in WissKI %s for the account %s: %s',
         $wisskiComponent->id(),
         self::USERNAME,
+        trim((string) $result->error) ?: 'no output',
       ));
+    }
+    if (str_contains((string) ($result->data['output'] ?? ''), self::ACCOUNT_CREATED_MARKER)) {
+      $this->logger->warning('The demo template @template lacks the account @account, so it was created in WissKI @component of demo project @project. Add the account to the source WissKI of the template and build a new template version.', [
+        '@account' => self::USERNAME,
+        '@component' => $wisskiComponent->id(),
+        '@project' => $project->id(),
+        '@template' => $project->get('demoTemplate')->target_id ?? '-',
+      ]);
     }
   }
 
