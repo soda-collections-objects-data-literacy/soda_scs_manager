@@ -32,10 +32,13 @@ use Prophecy\Argument;
 use Prophecy\PhpUnit\ProphecyTrait;
 
 /**
- * Failure results of SodaScsWisskiStackActions::createStack().
+ * Failure results of createStack() and deleteStack() of the WissKI stack.
  *
  * Issue 3637658: whichever step fails, the result has success FALSE, a
  * non-empty error and a translated message naming the step.
+ *
+ * Issue 3638514: a component that cannot be deleted stays in the stack, the
+ * stack is kept and the result has success FALSE.
  *
  * @coversDefaultClass \Drupal\soda_scs_manager\StackActions\SodaScsWisskiStackActions
  * @group soda_scs_manager
@@ -66,6 +69,13 @@ class SodaScsWisskiStackActionsCreateTest extends UnitTestCase {
    * @var \Drupal\soda_scs_manager\ComponentActions\SodaScsComponentActionsInterface|\Prophecy\Prophecy\ObjectProphecy
    */
   protected $wisskiActions;
+
+  /**
+   * The mocked stack helpers.
+   *
+   * @var \Drupal\soda_scs_manager\Helpers\SodaScsStackHelpers|\Prophecy\Prophecy\ObjectProphecy
+   */
+  protected $stackHelpers;
 
   /**
    * The mocked messenger.
@@ -128,6 +138,7 @@ class SodaScsWisskiStackActionsCreateTest extends UnitTestCase {
     $this->sqlActions = $this->prophesize(SodaScsComponentActionsInterface::class);
     $this->triplestoreActions = $this->prophesize(SodaScsComponentActionsInterface::class);
     $this->wisskiActions = $this->prophesize(SodaScsComponentActionsInterface::class);
+    $this->stackHelpers = $this->prophesize(SodaScsStackHelpers::class);
 
     $this->actions = new SodaScsWisskiStackActions(
       $configFactory->reveal(),
@@ -146,7 +157,7 @@ class SodaScsWisskiStackActionsCreateTest extends UnitTestCase {
       $this->prophesize(SodaScsServiceRequestInterface::class)->reveal(),
       $this->prophesize(SodaScsSnapshotActionsInterface::class)->reveal(),
       $this->prophesize(SodaScsSnapshotHelpers::class)->reveal(),
-      $this->prophesize(SodaScsStackHelpers::class)->reveal(),
+      $this->stackHelpers->reveal(),
       $this->getStringTranslationStub(),
     );
   }
@@ -353,6 +364,132 @@ class SodaScsWisskiStackActionsCreateTest extends UnitTestCase {
     $this->assertCompleteFailure($result);
     $this->assertSame($failure, $result['error']);
     $this->assertSame('The WissKI application could not be set up.', $result['message']->getUntranslatedString());
+  }
+
+  /**
+   * A failed database delete keeps the stack and stops before the rest.
+   *
+   * @covers ::deleteStack
+   * @covers ::buildDeleteStackFailure
+   */
+  public function testDeleteStackKeepsStackWhenDatabaseDeleteFails(): void {
+    $stack = $this->deletableStack();
+    $sql = $this->includedComponent($stack, 'soda_scs_sql_component');
+    $this->sqlActions->deleteComponent($sql)->willReturn([
+      'message' => 'Cannot delete database.',
+      'success' => FALSE,
+      'error' => 'Portainer answered 500.',
+    ]);
+    $this->triplestoreActions->deleteComponent(Argument::any())->shouldNotBeCalled();
+    $this->wisskiActions->deleteComponent(Argument::any())->shouldNotBeCalled();
+    $this->stackHelpers->removeIncludedComponentValue(Argument::cetera())->shouldNotBeCalled();
+    $stack->delete()->shouldNotBeCalled();
+    $this->logger->error(Argument::containingString('Kept WissKI stack'), Argument::withEntry('@stack', 40))->shouldBeCalledOnce();
+
+    $result = $this->actions->deleteStack($stack->reveal());
+
+    $this->assertFalse($result['success']);
+    $this->assertSame('Portainer answered 500.', $result['error']);
+    $this->assertSame('Could not delete the database of the WissKI stack.', (string) $result['message']);
+  }
+
+  /**
+   * A failed triplestore delete keeps the stack and the WissKI.
+   *
+   * @covers ::deleteStack
+   * @covers ::buildDeleteStackFailure
+   */
+  public function testDeleteStackKeepsStackWhenTriplestoreDeleteFails(): void {
+    $stack = $this->deletableStack();
+    $sql = $this->includedComponent($stack, 'soda_scs_sql_component');
+    $triplestore = $this->includedComponent($stack, 'soda_scs_triplestore_component');
+    $this->sqlActions->deleteComponent($sql)->willReturn(['success' => TRUE]);
+    $this->triplestoreActions->deleteComponent($triplestore)->willReturn([
+      'message' => 'Cannot delete triplestore.',
+      'success' => FALSE,
+      'error' => 'User not found.',
+    ]);
+    $this->wisskiActions->deleteComponent(Argument::any())->shouldNotBeCalled();
+    // Only the database leaves the stack.
+    $this->stackHelpers->removeIncludedComponentValue(Argument::cetera())->shouldBeCalledOnce();
+    $stack->delete()->shouldNotBeCalled();
+
+    $result = $this->actions->deleteStack($stack->reveal());
+
+    $this->assertFalse($result['success']);
+    $this->assertSame('User not found.', $result['error']);
+    $this->assertSame('Could not delete the triplestore of the WissKI stack.', (string) $result['message']);
+  }
+
+  /**
+   * A WissKI delete answer without a success flag keeps the stack.
+   *
+   * @covers ::deleteStack
+   * @covers ::buildDeleteStackFailure
+   */
+  public function testDeleteStackKeepsStackWhenWisskiDeleteAnswersWithoutSuccess(): void {
+    $stack = $this->deletableStack();
+    $sql = $this->includedComponent($stack, 'soda_scs_sql_component');
+    $triplestore = $this->includedComponent($stack, 'soda_scs_triplestore_component');
+    $wisski = $this->includedComponent($stack, 'soda_scs_wisski_component');
+    $this->sqlActions->deleteComponent($sql)->willReturn(['success' => TRUE]);
+    $this->triplestoreActions->deleteComponent($triplestore)->willReturn(['success' => TRUE]);
+    $this->wisskiActions->deleteComponent($wisski)->willReturn(['message' => 'Cannot get WissKI component client uuid at keycloak.']);
+    // Database and triplestore leave the stack; the WissKI stays in it.
+    $this->stackHelpers->removeIncludedComponentValue(Argument::cetera())->shouldBeCalledTimes(2);
+    $stack->delete()->shouldNotBeCalled();
+
+    $result = $this->actions->deleteStack($stack->reveal());
+
+    $this->assertFalse($result['success']);
+    $this->assertSame('Cannot get WissKI component client uuid at keycloak.', $result['error']);
+    $this->assertSame('Could not delete the WissKI instance of the WissKI stack.', (string) $result['message']);
+  }
+
+  /**
+   * The stack is deleted once every component is gone.
+   *
+   * @covers ::deleteStack
+   */
+  public function testDeleteStackDeletesStackWhenEveryComponentIsDeleted(): void {
+    $stack = $this->deletableStack();
+    $sql = $this->includedComponent($stack, 'soda_scs_sql_component');
+    $triplestore = $this->includedComponent($stack, 'soda_scs_triplestore_component');
+    $this->stackHelpers->retrieveIncludedComponent($stack, 'soda_scs_wisski_component')->willReturn(NULL);
+    $this->sqlActions->deleteComponent($sql)->willReturn(['success' => TRUE]);
+    $this->triplestoreActions->deleteComponent($triplestore)->willReturn(['success' => TRUE]);
+    $this->stackHelpers->removeIncludedComponentValue(Argument::cetera())->shouldBeCalledTimes(2);
+    $stack->delete()->shouldBeCalledOnce();
+
+    $result = $this->actions->deleteStack($stack->reveal());
+
+    $this->assertTrue($result['success']);
+  }
+
+  /**
+   * A stack double for deleteStack().
+   *
+   * @return \Drupal\soda_scs_manager\Entity\SodaScsStackInterface|\Prophecy\Prophecy\ObjectProphecy
+   *   The stack prophecy.
+   */
+  protected function deletableStack() {
+    $stack = $this->prophesize(SodaScsStackInterface::class);
+    $stack->id()->willReturn(40);
+    return $stack;
+  }
+
+  /**
+   * A component of a bundle that the stack helpers find in the stack.
+   *
+   * @param \Drupal\soda_scs_manager\Entity\SodaScsStackInterface|\Prophecy\Prophecy\ObjectProphecy $stack
+   *   The stack prophecy.
+   * @param string $bundle
+   *   The component bundle.
+   */
+  protected function includedComponent($stack, string $bundle): SodaScsComponentInterface {
+    $component = $this->prophesize(SodaScsComponentInterface::class)->reveal();
+    $this->stackHelpers->retrieveIncludedComponent($stack, $bundle)->willReturn($component);
+    return $component;
   }
 
   /**
