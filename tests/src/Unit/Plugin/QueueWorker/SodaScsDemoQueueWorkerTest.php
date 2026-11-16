@@ -13,6 +13,7 @@ use Drupal\Core\Lock\LockBackendInterface;
 use Drupal\Core\Queue\DelayedRequeueException;
 use Drupal\Core\StringTranslation\TranslatableMarkup;
 use Drupal\Core\StringTranslation\TranslationInterface;
+use Drupal\soda_scs_manager\Demo\SodaScsDemoIncompleteAppException;
 use Drupal\soda_scs_manager\Demo\SodaScsDemoManager;
 use Drupal\soda_scs_manager\Demo\SodaScsDemoNotReadyException;
 use Drupal\soda_scs_manager\Demo\SodaScsDemoProjectProvisioner;
@@ -224,6 +225,24 @@ class SodaScsDemoQueueWorkerTest extends UnitTestCase {
 
     $this->assertSame([], $this->createdSteps);
     $this->assertSame(['running', 'waiting'], $this->operationStatuses);
+  }
+
+  /**
+   * An incomplete WissKI fails the project at once with its own reason.
+   *
+   * No wait and no requeue: retrying would not create the missing WissKI.
+   *
+   * @covers ::applyTemplate
+   * @covers ::failProject
+   */
+  public function testIncompleteAppFailsWithWisskiIncompleteReasonWithoutRequeue(): void {
+    $this->provisioner->method('apply')->willThrowException(new SodaScsDemoIncompleteAppException('WissKI stack 7 has no WissKI component.'));
+    $this->expectProjectFailed();
+
+    $this->processProvisionJob();
+
+    $this->assertSame([SodaScsDemoStatusBuilder::REASON_WISSKI_INCOMPLETE], $this->createdSteps);
+    $this->assertSame(['running', 'failed'], $this->operationStatuses);
   }
 
   /**

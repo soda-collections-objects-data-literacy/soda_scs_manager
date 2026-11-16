@@ -329,6 +329,7 @@ class SodaScsDemoStatusBuilderTest extends UnitTestCase {
     $translations = [
       SodaScsDemoStatusBuilder::REASON_TEMPLATE_GONE => 'Die Demo-Vorlage existiert nicht mehr.',
       SodaScsDemoStatusBuilder::REASON_TIMEOUT => 'Die WissKI-Installation wurde nicht innerhalb einer Stunde fertig.',
+      SodaScsDemoStatusBuilder::REASON_WISSKI_INCOMPLETE => 'Das WissKI dieser Demo ist unvollständig.',
     ];
     foreach ($translations as $reason => $translated) {
       $line = $this->jobLine(['status' => 'failed', 'updated' => 2000], [
