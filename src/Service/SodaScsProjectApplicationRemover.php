@@ -72,17 +72,46 @@ final class SodaScsProjectApplicationRemover {
    */
   public function removeApplications(SodaScsProjectInterface $project, bool $stopOnFailure): SodaScsResult {
     try {
+      $this->dropUnlinkedComponents($project);
       return $this->removeLinked($project, $stopOnFailure);
     }
     catch (\Throwable $throwable) {
-      // A failed lookup must not let the caller go on to delete the project.
-      $this->logger->error('Could not look up the applications of project @project before its deletion: @message', [
-        '@message' => $throwable->getMessage(),
-        '@project' => $project->id(),
-      ]);
-      return $this->failureResult($this->t('Could not delete the applications of project @project. The project was not deleted.', [
-        '@project' => $project->label(),
-      ]));
+      return $this->lookupFailure($project, $throwable);
+    }
+  }
+
+  /**
+   * Deletes or detaches one application of the project: a stack first.
+   *
+   * Lets the delete form remove the applications one per batch request, so a
+   * project with many WissKI instances does not run into the request timeout.
+   * A removed application no longer lists the project, so the next call goes
+   * on with the next one.
+   *
+   * @param \Drupal\soda_scs_manager\Entity\SodaScsProjectInterface $project
+   *   The project about to be deleted.
+   *
+   * @return \Drupal\soda_scs_manager\ValueObject\SodaScsResult
+   *   Success with data 'application' holding the label of the removed
+   *   application, or NULL when none is left, and 'key' its entity type and
+   *   id. Failure as in removeApplications().
+   */
+  public function removeNextApplication(SodaScsProjectInterface $project): SodaScsResult {
+    try {
+      foreach ($this->loadLinked($project, 'soda_scs_stack', self::STACK_BUNDLES) as $stack) {
+        if ($stack instanceof SodaScsStackInterface) {
+          return $this->removeStack($project, $stack) ?? $this->removedResult($stack);
+        }
+      }
+      foreach ($this->loadLinked($project, 'soda_scs_component', self::LOOSE_COMPONENT_BUNDLES) as $component) {
+        if ($component instanceof SodaScsComponentInterface && !$this->hasExistingStack($component)) {
+          return $this->removeComponent($project, $component) ?? $this->removedResult($component);
+        }
+      }
+      return SodaScsResult::success(data: ['application' => NULL], message: '');
+    }
+    catch (\Throwable $throwable) {
+      return $this->lookupFailure($project, $throwable);
     }
   }
 
@@ -133,6 +162,27 @@ final class SodaScsProjectApplicationRemover {
       )));
     }
     return NULL;
+  }
+
+  /**
+   * Drops components from connectedComponents that no longer list the project.
+   *
+   * The detach() call changes the project object only in memory. When the
+   * applications were removed in earlier requests (the delete form's batch),
+   * the project loaded now still lists them, and its hooks would link them
+   * again.
+   */
+  private function dropUnlinkedComponents(SodaScsProjectInterface $project): void {
+    if (!$project->hasField('connectedComponents')) {
+      return;
+    }
+    $kept = [];
+    foreach ($project->get('connectedComponents')->referencedEntities() as $component) {
+      if ($component instanceof ContentEntityInterface && $this->listsProject($component, $project)) {
+        $kept[] = ['target_id' => $component->id()];
+      }
+    }
+    $project->set('connectedComponents', $kept);
   }
 
   /**
@@ -209,6 +259,21 @@ final class SodaScsProjectApplicationRemover {
       '@project' => $project->id(),
       '@type' => $entity->getEntityTypeId(),
     ]);
+  }
+
+  /**
+   * Logs a failed lookup of the project's applications and builds the result.
+   *
+   * A failed lookup must not let the caller go on to delete the project.
+   */
+  private function lookupFailure(SodaScsProjectInterface $project, \Throwable $throwable): SodaScsResult {
+    $this->logger->error('Could not look up the applications of project @project before its deletion: @message', [
+      '@message' => $throwable->getMessage(),
+      '@project' => $project->id(),
+    ]);
+    return $this->failureResult($this->t('Could not delete the applications of project @project. The project was not deleted.', [
+      '@project' => $project->label(),
+    ]));
   }
 
   /**
@@ -305,6 +370,16 @@ final class SodaScsProjectApplicationRemover {
       return $this->deleteFailure($project, $stack, (string) ($result['error'] ?? $result['message'] ?? ''));
     }
     return NULL;
+  }
+
+  /**
+   * Builds the success result of removeNextApplication().
+   */
+  private function removedResult(ContentEntityInterface $application): SodaScsResult {
+    return SodaScsResult::success(data: [
+      'application' => (string) $application->label(),
+      'key' => $application->getEntityTypeId() . ':' . $application->id(),
+    ], message: '');
   }
 
 }

@@ -129,7 +129,7 @@ final class SodaScsProfileDeleteForm extends ConfirmFormBase {
       $this->userOffboarding->demoProjectsInSetup($user),
     );
     if ($labels !== []) {
-      $form_state->setErrorByName('', $this->t('A demo setup is still running (@projects). Delete your profile when the setup is done.', ['@projects' => implode(', ', $labels)]));
+      $form_state->setErrorByName('', $this->t('A demo project is being set up or deleted right now (@projects). Delete your profile when that is done.', ['@projects' => implode(', ', $labels)]));
     }
   }
 

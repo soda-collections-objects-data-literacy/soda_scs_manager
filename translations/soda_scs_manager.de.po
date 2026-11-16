@@ -1337,6 +1337,26 @@ msgstr "Sind Sie sicher, dass Sie das Projekt löschen möchten: @label?"
 msgid "Project @label has been deleted."
 msgstr "Projekt @label wurde gelöscht."
 
+#: src/Form/SodaScsProjectDeleteForm.php
+msgid "Deleting project @label"
+msgstr "Projekt @label wird gelöscht"
+
+#: src/Form/SodaScsProjectDeleteForm.php
+msgid "Deleting the applications of the project."
+msgstr "Die Anwendungen des Projekts werden gelöscht."
+
+#: src/Form/SodaScsProjectDeleteForm.php
+msgid "The project could not be deleted."
+msgstr "Das Projekt konnte nicht gelöscht werden."
+
+#: src/Form/SodaScsProjectDeleteForm.php
+msgid "Removed @application."
+msgstr "@application entfernt."
+
+#: src/Form/SodaScsProjectDeleteForm.php
+msgid "The project @label could not be deleted. Some of its applications may already be deleted; try again."
+msgstr "Das Projekt @label konnte nicht gelöscht werden. Einige seiner Anwendungen sind eventuell schon gelöscht; versuchen Sie es erneut."
+
 #: src/Form/SodaScsProjectDeleteForm.php:80
 msgid "Deleting project: @label"
 msgstr "Projekt wird gelöscht: @label"
@@ -4764,16 +4784,16 @@ msgid "The WissKI of this demo is incomplete. Delete it in the project, then res
 msgstr "Das WissKI dieser Demo ist unvollständig. Löschen Sie es im Projekt und setzen Sie die Demo dann zurück."
 
 #: src/Form/SodaScsProjectDeleteForm.php
-msgid "The demo project @project is being set up right now. Delete it when the setup is done."
-msgstr "Das Demo-Projekt @project wird gerade eingerichtet. Löschen Sie es, wenn die Einrichtung abgeschlossen ist."
+msgid "The project @project is being set up or deleted right now. Try again when that is done."
+msgstr "Das Projekt @project wird gerade eingerichtet oder gelöscht. Versuchen Sie es erneut, wenn das abgeschlossen ist."
 
 #: src/Form/SodaScsProfileDeleteForm.php
-msgid "A demo setup is still running (@projects). Delete your profile when the setup is done."
-msgstr "Die Einrichtung eines Demo-Projekts läuft noch (@projects). Löschen Sie Ihr Profil, wenn die Einrichtung abgeschlossen ist."
+msgid "A demo project is being set up or deleted right now (@projects). Delete your profile when that is done."
+msgstr "Ein Demo-Projekt wird gerade eingerichtet oder gelöscht (@projects). Löschen Sie Ihr Profil, wenn das abgeschlossen ist."
 
 #: soda_scs_manager.module
-msgid "A demo setup is still running (@projects). Delete the account when the setup is done."
-msgstr "Die Einrichtung eines Demo-Projekts läuft noch (@projects). Löschen Sie das Konto, wenn die Einrichtung abgeschlossen ist."
+msgid "A demo project is being set up or deleted right now (@projects). Delete the account when that is done."
+msgstr "Ein Demo-Projekt wird gerade eingerichtet oder gelöscht (@projects). Löschen Sie das Konto, wenn das abgeschlossen ist."
 
 #: src/Form/SodaScsProjectDeleteForm.php
 msgid "@description Its WissKI instances, databases and triplestores are deleted as well. Applications of other members stay and only lose the link to this project."

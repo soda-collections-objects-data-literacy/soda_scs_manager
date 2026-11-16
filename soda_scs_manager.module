@@ -1416,7 +1416,7 @@ function soda_scs_manager_user_cancel_validate_demo_setup(array &$form, FormStat
   // One error names all projects: the form state keeps only the first per
   // element.
   if ($labels !== []) {
-    $form_state->setErrorByName('user_cancel_method', t('A demo setup is still running (@projects). Delete the account when the setup is done.', ['@projects' => implode(', ', $labels)]));
+    $form_state->setErrorByName('user_cancel_method', t('A demo project is being set up or deleted right now (@projects). Delete the account when that is done.', ['@projects' => implode(', ', $labels)]));
   }
 }
 

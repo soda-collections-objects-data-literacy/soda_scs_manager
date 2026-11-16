@@ -26,6 +26,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   the project and its members stay. Deleting an account applies the same rule to the projects it owns:
   before, it deleted the applications of other members in them as well.
   Related: [#3638570](https://www.drupal.org/project/soda_scs_manager/issues/3638570).
+- Deleting a project shows a progress bar and deletes its applications one
+  per request. Before, a project with several WissKI instances could run into
+  the time limit of the request and end with an error page, half deleted.
+  When an application cannot be deleted, the project page opens with the
+  reason, and the project stays. While a project is being deleted, a second
+  delete of it is refused.
+  Related: [#3638705](https://www.drupal.org/project/soda_scs_manager/issues/3638705).
 - A new WebProtégé application keeps the label you enter. The create form no
   longer adds " (WebProtégé)" to it; its card is already titled "WebProtégé".
   Update 11041 removes the suffix from existing WebProtégé labels.
