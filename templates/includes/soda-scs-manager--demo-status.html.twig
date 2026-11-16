@@ -16,6 +16,8 @@
  * - status_label: Translated status.
  * - is_busy: Whether a job is running.
  * - message: Unused; kept for the theme variable.
+ * - job_line: What the demo job does and since when (queued, running,
+ *   waiting with the next attempt, or the reason it failed); may be empty.
  * - apps: Rows of key, label and detail for applications that are not ready.
  * - status_url: JSON status endpoint.
  * - reset_url: Reset confirmation URL; empty when the viewer cannot reset.
@@ -26,10 +28,11 @@
  */
 #}
 {% if variant == 'badge' %}
-  <span class="tag tag--demo" data-scs-demo-status data-status-url="{{ status_url }}" data-is-busy="{{ is_busy ? 'true' : 'false' }}">{{ status_label }}</span>
+  <span class="tag tag--demo" data-scs-demo-status data-status-url="{{ status_url }}" data-is-busy="{{ is_busy ? 'true' : 'false' }}"{% if job_line %} title="{{ job_line }}"{% endif %}>{{ status_label }}</span>
 {% elseif is_busy %}
   <section class="scs-manager--demo-status-panel project__section" aria-live="polite" data-scs-demo-status data-status-url="{{ status_url }}" data-is-busy="true">
     <h2 class="project__section-title h5" data-scs-demo-status-label>{{ status_label }}</h2>
+    <p class="m-0 mb-2 text-sm text-gray-600" data-scs-demo-job-line{% if not job_line %} hidden{% endif %}>{{ job_line }}</p>
     <ul class="m-0 flex list-none flex-col gap-2 p-0 text-sm" data-scs-demo-apps>
       {% for app in apps %}
         <li class="flex items-center justify-between gap-3" data-scs-demo-app="{{ app.key }}">
@@ -54,6 +57,9 @@
       <p class="m-0 text-sm text-gray-600">{{ 'Version @version'|t({'@version': current_version}) }}</p>
     {% endif %}
     {% if status == 'failed' %}
+      {% if job_line %}
+        <p class="m-0 mt-2 text-sm text-gray-700">{{ job_line }}</p>
+      {% endif %}
       <p class="m-0 mt-2 text-sm text-gray-700">{{ 'Setting up the demo failed. Reset the demo to try again.'|t }}</p>
     {% endif %}
     {% if newer_version %}

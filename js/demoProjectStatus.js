@@ -98,6 +98,31 @@
   }
 
   /**
+   * Shows what the job does: a line in the panel, the tooltip on the badge.
+   *
+   * @param {HTMLElement} element
+   * @param {HTMLElement} label
+   * @param {string|undefined} jobLine
+   */
+  function updateJobLine(element, label, jobLine) {
+    const text = typeof jobLine === 'string' ? jobLine : '';
+    const line = element.querySelector('[data-scs-demo-job-line]');
+    if (line) {
+      line.textContent = text;
+      line.hidden = text === '';
+      return;
+    }
+    if (label === element) {
+      if (text === '') {
+        element.removeAttribute('title');
+      }
+      else {
+        element.title = text;
+      }
+    }
+  }
+
+  /**
    * Replaces the application card container with the one from a fresh page
    * render. Used when an application appears and again when it is ready.
    *
@@ -151,6 +176,7 @@
     if (data.statusLabel) {
       label.textContent = data.statusLabel;
     }
+    updateJobLine(element, label, data.jobLine);
     const finished = serviceFinished(renderedAppKeys(element), data.apps);
     updateApps(element, data.apps);
     if (data.isBusy && (finished || Number(data.createdCount) > applicationCardCount())) {

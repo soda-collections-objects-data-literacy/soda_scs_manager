@@ -6,6 +6,7 @@ namespace Drupal\soda_scs_manager\Demo;
 
 use Drupal\Core\Entity\EntityTypeManagerInterface;
 use Drupal\Core\StringTranslation\StringTranslationTrait;
+use Drupal\Core\StringTranslation\TranslatableMarkup;
 use Drupal\soda_scs_manager\ComponentActions\SodaScsComponentActionsInterface;
 use Drupal\soda_scs_manager\Entity\SodaScsComponentInterface;
 use Drupal\soda_scs_manager\Entity\SodaScsDemoTemplateInterface;
@@ -69,7 +70,8 @@ class SodaScsDemoProjectProvisioner {
    * @param \Drupal\soda_scs_manager\Entity\SodaScsDemoTemplateInterface $template
    *   A ready template.
    * @param callable|null $reportStep
-   *   Receives a translated progress message per step.
+   *   Receives the progress message of each step; the worker stores its
+   *   source string so the status translates it for each viewer.
    *
    * @throws \Drupal\soda_scs_manager\Demo\SodaScsDemoNotReadyException
    *   While a new WissKI is still installing; nothing was overwritten yet.
@@ -77,7 +79,7 @@ class SodaScsDemoProjectProvisioner {
    *   When a step fails.
    */
   public function apply(SodaScsProjectInterface $project, SodaScsDemoTemplateInterface $template, ?callable $reportStep = NULL): void {
-    $reportStep ??= static function (string $message): void {};
+    $reportStep ??= static function (TranslatableMarkup $message): void {};
     if (!$template->isReady()) {
       throw new SodaScsDemoException(sprintf('Demo template v%s is not ready.', $template->getVersion()));
     }
@@ -92,7 +94,7 @@ class SodaScsDemoProjectProvisioner {
     $userName = (string) $owner->getAccountName();
     $apps = $manifest['apps'] ?? [];
 
-    $reportStep((string) $this->t('Creating missing applications'));
+    $reportStep($this->t('Creating missing applications'));
     $wisskiStack = isset($apps[SodaScsDemoLabelBuilder::APP_WISSKI]) ? $this->ensureWisskiStack($project, $userName) : NULL;
     if (isset($apps[SodaScsDemoLabelBuilder::APP_JUPYTER])) {
       $this->ensureJupyterStack($project, $userName);
@@ -103,15 +105,15 @@ class SodaScsDemoProjectProvisioner {
     }
 
     if ($wisskiStack !== NULL && !$this->wisskiTransfer->isInstallComplete($wisskiStack)) {
-      $reportStep((string) $this->t('Waiting for the WissKI installation to finish'));
+      $reportStep($this->t('Waiting for the WissKI installation to finish'));
       throw new SodaScsDemoNotReadyException(sprintf('The WissKI of demo project %s is still being installed.', $project->id()));
     }
 
-    $reportStep((string) $this->t('Copying files into the Team Folder'));
+    $reportStep($this->t('Copying files into the Team Folder'));
     $this->importTeamFolder($project, $manifest, $directory);
 
     if (isset($apps[SodaScsDemoLabelBuilder::APP_JUPYTER])) {
-      $reportStep((string) $this->t('Restoring the Jupyter home directory'));
+      $reportStep($this->t('Restoring the Jupyter home directory'));
       SodaScsDemoException::assertSuccess($this->jupyterHelpers->stopProjectServerAndWait($project), 'Stop Jupyter server');
       SodaScsDemoException::assertSuccess(
         $this->volumeArchiveHelpers->importVolume(SodaScsJupyterHelpers::projectVolumeName($project), $directory, (string) $apps[SodaScsDemoLabelBuilder::APP_JUPYTER]['file']),
@@ -120,12 +122,12 @@ class SodaScsDemoProjectProvisioner {
     }
 
     if (isset($apps[SodaScsDemoLabelBuilder::APP_WEBPROTEGE])) {
-      $reportStep((string) $this->t('Importing the ontology'));
+      $reportStep($this->t('Importing the ontology'));
       $this->importOntology($project, $hadOntology, $directory . '/' . $apps[SodaScsDemoLabelBuilder::APP_WEBPROTEGE]['file'], (string) $template->getVersion());
     }
 
     if ($wisskiStack !== NULL) {
-      $reportStep((string) $this->t('Restoring the WissKI'));
+      $reportStep($this->t('Restoring the WissKI'));
       $this->wisskiTransfer->import(
         $wisskiStack,
         $directory . '/' . $apps[SodaScsDemoLabelBuilder::APP_WISSKI]['directory'],
@@ -134,14 +136,14 @@ class SodaScsDemoProjectProvisioner {
     }
 
     if ($wisskiStack !== NULL && isset($apps[SodaScsDemoLabelBuilder::APP_JUPYTER])) {
-      $reportStep((string) $this->t('Setting the WissKI API password'));
+      $reportStep($this->t('Setting the WissKI API password'));
       $this->apiCredentials->install($project, $wisskiStack);
     }
 
     $project->set('demoTemplate', $template->id());
     $project->set('demoStatus', SodaScsDemoProjectStatus::Ready->value);
     $project->save();
-    $reportStep((string) $this->t('The demo project is ready.'));
+    $reportStep($this->t('The demo project is ready.'));
   }
 
   /**

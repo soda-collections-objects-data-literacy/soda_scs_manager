@@ -966,6 +966,7 @@ function soda_scs_manager_theme($existing, $type, $theme, $path) {
         'apps' => [],
         'current_version' => NULL,
         'is_busy' => FALSE,
+        'job_line' => '',
         'message' => '',
         'newer_version' => NULL,
         'reset_url' => '',

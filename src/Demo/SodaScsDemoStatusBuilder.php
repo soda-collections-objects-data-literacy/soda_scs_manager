@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace Drupal\soda_scs_manager\Demo;
 
+use Drupal\Component\Datetime\TimeInterface;
+use Drupal\Core\Datetime\DateFormatterInterface;
 use Drupal\Core\Session\AccountInterface;
 use Drupal\Core\StringTranslation\StringTranslationTrait;
 use Drupal\Core\Url;
@@ -23,11 +25,18 @@ class SodaScsDemoStatusBuilder {
   public const VARIANT_PANEL = 'panel';
 
   /**
+   * Steps per operation ID, read once per request.
+   *
+   * @var array<string, list<array{created: float, message: string}>>
+   */
+  protected array $stepCache = [];
+
+  /**
    * Progress messages in the order the provisioner reports them.
    *
    * A message is stored when its step starts, so a later message means the
-   * earlier step has finished. Compared against the source string and its
-   * translation, because steps are stored already translated.
+   * earlier step has finished. The worker stores source strings; jobs from
+   * before that stored the translation, which stepSource() still maps back.
    *
    * @var list<string>
    */
@@ -43,15 +52,39 @@ class SodaScsDemoStatusBuilder {
   ];
 
   /**
+   * Step the job repeats until the WissKI installation has finished.
+   */
+  protected const WAIT_STEP = 'Waiting for the WissKI installation to finish';
+
+  /**
+   * Seconds between two attempts of a waiting job; see the queue worker.
+   */
+  public const RETRY_DELAY_SECONDS = 60;
+
+  /**
+   * Stored failure reason: the WissKI did not finish installing in time.
+   */
+  public const REASON_TIMEOUT = 'The WissKI installation did not finish within an hour.';
+
+  /**
+   * Stored failure reason: the job's template version was deleted.
+   */
+  public const REASON_TEMPLATE_GONE = 'The demo template no longer exists.';
+
+  /**
    * Constructs the builder.
    */
   public function __construct(
+    #[Autowire(service: 'date.formatter')]
+    protected DateFormatterInterface $dateFormatter,
     #[Autowire(service: 'soda_scs_manager.demo.manager')]
     protected SodaScsDemoManager $demoManager,
     #[Autowire(service: 'soda_scs_manager.progress.helpers')]
     protected SodaScsProgressHelper $progressHelper,
     #[Autowire(service: 'soda_scs_manager.demo.project_apps')]
     protected SodaScsDemoProjectApps $projectApps,
+    #[Autowire(service: 'datetime.time')]
+    protected TimeInterface $timeService,
   ) {}
 
   /**
@@ -81,6 +114,7 @@ class SodaScsDemoStatusBuilder {
       '#status_label' => $this->statusLabel($status),
       '#is_busy' => $status->isBusy(),
       '#message' => '',
+      '#job_line' => $this->jobLine($project),
       '#status_url' => Url::fromRoute('soda_scs_manager.demo_project_status', ['soda_scs_project' => $project->id()])->toString(),
       '#reset_url' => $isOwner && !$status->isBusy() && $activeTemplate !== NULL
         ? Url::fromRoute('soda_scs_manager.demo_project_reset', ['soda_scs_project' => $project->id()])->toString()
@@ -98,8 +132,9 @@ class SodaScsDemoStatusBuilder {
   /**
    * Status data for the polling endpoint.
    *
-   * @return array{apps: list<array{detail: string, key: string, label: string}>, createdCount: int, isBusy: bool, status: string, statusLabel: string}
-   *   JSON-ready status. Apps lists only applications that are not ready yet.
+   * @return array{apps: list<array{detail: string, key: string, label: string}>, createdCount: int, isBusy: bool, jobLine: string, status: string, statusLabel: string}
+   *   JSON-ready status. Apps lists only applications that are not ready yet;
+   *   jobLine says what the demo job does and since when.
    */
   public function data(SodaScsProjectInterface $project): array {
     $status = $this->status($project);
@@ -108,6 +143,7 @@ class SodaScsDemoStatusBuilder {
       'apps'         => $isBusy ? $this->appProgress($project) : [],
       'createdCount' => $isBusy ? $this->createdCount($project) : 0,
       'isBusy'       => $isBusy,
+      'jobLine'      => $this->jobLine($project),
       'status'       => $status->value,
       'statusLabel'  => $this->statusLabel($status),
     ];
@@ -246,15 +282,57 @@ class SodaScsDemoStatusBuilder {
    * Index of the furthest setup step already reported, or -1.
    */
   protected function highestStepRank(SodaScsProjectInterface $project): int {
-    $messages = $this->stepMessages($project);
     $rank = -1;
-    foreach (self::SETUP_STEPS as $index => $source) {
-      $translated = (string) $this->t($source);
-      if (in_array($source, $messages, TRUE) || in_array($translated, $messages, TRUE)) {
-        $rank = $index;
+    foreach ($this->stepMessages($project) as $message) {
+      $source = $this->stepSource($message);
+      if ($source !== NULL) {
+        $rank = max($rank, $this->stepIndex($source));
       }
     }
     return $rank;
+  }
+
+  /**
+   * One translated line on the demo job: its state, step and times.
+   *
+   * Empty when the project has no job or the job has completed. A failed job
+   * shows the reason the worker stored as its last step; details stay in the
+   * log.
+   */
+  protected function jobLine(SodaScsProjectInterface $project): string {
+    $operationId = $this->demoManager->projectOperationId($project);
+    $operation = $operationId !== NULL ? $this->progressHelper->readOperation($operationId) : NULL;
+    if ($operation === NULL) {
+      return '';
+    }
+    $steps = $this->steps($project);
+    $lastStep = $steps === [] ? '' : $steps[array_key_last($steps)]['message'];
+    $updated = (int) ($operation['updated'] ?? 0);
+
+    return (string) match ((string) ($operation['status'] ?? '')) {
+      'queued' => $this->t('Queued since @time', ['@time' => $this->time((int) ($operation['created'] ?? 0))]),
+      'running' => $lastStep !== ''
+        ? $this->t('Running: @step', ['@step' => $this->stepLabel($lastStep)])
+        : $this->t('Running since @time', ['@time' => $this->time($updated)]),
+      'waiting' => $this->waitingLine($steps, $updated),
+      'failed' => $lastStep !== '' ? $this->failureReason($lastStep) : $this->t('Failed at @time', ['@time' => $this->time($updated)]),
+      default => '',
+    };
+  }
+
+  /**
+   * Translated reason of a failed job from its last stored step.
+   *
+   * The worker stores a REASON_* constant, or leaves the step the job failed
+   * at as the last one.
+   */
+  protected function failureReason(string $lastStep): string {
+    return (string) match (TRUE) {
+      $lastStep === self::REASON_TIMEOUT => $this->t('The WissKI installation did not finish within an hour.'),
+      $lastStep === self::REASON_TEMPLATE_GONE => $this->t('The demo template no longer exists.'),
+      $this->stepSource($lastStep) !== NULL => $this->t('Setting up the demo failed at the step: @step', ['@step' => $this->stepLabel($lastStep)]),
+      default => $lastStep,
+    };
   }
 
   /**
@@ -274,6 +352,46 @@ class SodaScsDemoStatusBuilder {
       SodaScsDemoProjectStatus::Ready => $this->t('Demo'),
       SodaScsDemoProjectStatus::Failed => $this->t('Demo setup failed'),
     };
+  }
+
+  /**
+   * Translated label of a stored setup step; unknown text is shown as is.
+   */
+  protected function stepLabel(string $message): string {
+    $source = $this->stepSource($message);
+    return $source !== NULL ? $this->stepLabels()[$source] : $message;
+  }
+
+  /**
+   * Setup steps by source string, translated for the viewer.
+   *
+   * @return array<string, string>
+   *   Translations keyed by the entries of SETUP_STEPS.
+   */
+  protected function stepLabels(): array {
+    return [
+      'Creating missing applications' => (string) $this->t('Creating missing applications'),
+      'Waiting for the WissKI installation to finish' => (string) $this->t('Waiting for the WissKI installation to finish'),
+      'Copying files into the Team Folder' => (string) $this->t('Copying files into the Team Folder'),
+      'Restoring the Jupyter home directory' => (string) $this->t('Restoring the Jupyter home directory'),
+      'Importing the ontology' => (string) $this->t('Importing the ontology'),
+      'Restoring the WissKI' => (string) $this->t('Restoring the WissKI'),
+      'Setting the WissKI API password' => (string) $this->t('Setting the WissKI API password'),
+      'The demo project is ready.' => (string) $this->t('The demo project is ready.'),
+    ];
+  }
+
+  /**
+   * Source string of a stored setup step, or NULL for other text.
+   *
+   * Also maps a step stored in the viewer's language by older jobs.
+   */
+  protected function stepSource(string $message): ?string {
+    if (in_array($message, self::SETUP_STEPS, TRUE)) {
+      return $message;
+    }
+    $source = array_search($message, $this->stepLabels(), TRUE);
+    return $source === FALSE ? NULL : $source;
   }
 
   /**
@@ -305,18 +423,79 @@ class SodaScsDemoStatusBuilder {
    *   Messages in chronological order.
    */
   protected function stepMessages(SodaScsProjectInterface $project): array {
+    return array_column($this->steps($project), 'message');
+  }
+
+  /**
+   * Progress steps of the project's demo job, with their times.
+   *
+   * Read once per request: badge, panel and polling ask several times.
+   *
+   * @return list<array{created: float, message: string}>
+   *   Non-empty steps in chronological order.
+   */
+  protected function steps(SodaScsProjectInterface $project): array {
     $operationId = $this->demoManager->projectOperationId($project);
     if ($operationId === NULL) {
       return [];
     }
-    $messages = [];
+    if (isset($this->stepCache[$operationId])) {
+      return $this->stepCache[$operationId];
+    }
+    $steps = [];
     foreach ($this->progressHelper->findLatestStepsByOperation($operationId, [], 'created', 'ASC') as $step) {
       $message = trim((string) ($step['message'] ?? ''));
       if ($message !== '') {
-        $messages[] = $message;
+        $steps[] = ['created' => (float) ($step['created'] ?? 0), 'message' => $message];
       }
     }
-    return $messages;
+    return $this->stepCache[$operationId] = $steps;
+  }
+
+  /**
+   * Time of day in the viewer's time zone.
+   */
+  protected function time(int $timestamp): string {
+    return $this->dateFormatter->format($timestamp, 'custom', 'H:i');
+  }
+
+  /**
+   * When the job first reported that it waits for the WissKI, or NULL.
+   *
+   * @param list<array{created: float, message: string}> $steps
+   *   Steps of the job.
+   */
+  protected function waitingSince(array $steps): ?int {
+    foreach ($steps as $step) {
+      if ($this->stepSource($step['message']) === self::WAIT_STEP) {
+        return (int) $step['created'];
+      }
+    }
+    return NULL;
+  }
+
+  /**
+   * Line of a job that waits for the WissKI installation.
+   *
+   * The next attempt is left out once it is a full retry delay overdue: then
+   * the queue runner has stopped and the job waits until someone starts it
+   * again.
+   *
+   * @param list<array{created: float, message: string}> $steps
+   *   Steps of the job.
+   * @param int $updated
+   *   When the job last changed its status.
+   */
+  protected function waitingLine(array $steps, int $updated): string {
+    $since = $this->time($this->waitingSince($steps) ?? $updated);
+    $next = $updated + self::RETRY_DELAY_SECONDS;
+    if ($next + self::RETRY_DELAY_SECONDS < $this->timeService->getCurrentTime()) {
+      return (string) $this->t('Waiting for the WissKI installation since @since', ['@since' => $since]);
+    }
+    return (string) $this->t('Waiting for the WissKI installation since @since, next attempt at @next', [
+      '@next' => $this->time($next),
+      '@since' => $since,
+    ]);
   }
 
 }

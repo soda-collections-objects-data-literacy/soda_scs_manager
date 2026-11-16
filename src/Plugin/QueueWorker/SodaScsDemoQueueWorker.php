@@ -17,6 +17,7 @@ use Drupal\soda_scs_manager\Demo\SodaScsDemoManager;
 use Drupal\soda_scs_manager\Demo\SodaScsDemoNotReadyException;
 use Drupal\soda_scs_manager\Demo\SodaScsDemoProjectProvisioner;
 use Drupal\soda_scs_manager\Demo\SodaScsDemoProjectStatus;
+use Drupal\soda_scs_manager\Demo\SodaScsDemoStatusBuilder;
 use Drupal\soda_scs_manager\Demo\SodaScsDemoTemplateBuilder;
 use Drupal\soda_scs_manager\Entity\SodaScsDemoTemplateInterface;
 use Drupal\soda_scs_manager\Entity\SodaScsProjectInterface;
@@ -47,12 +48,17 @@ class SodaScsDemoQueueWorker extends QueueWorkerBase implements ContainerFactory
   /**
    * Seconds until a job that waits for an installation is tried again.
    */
-  protected const RETRY_DELAY_SECONDS = 60;
+  protected const RETRY_DELAY_SECONDS = SodaScsDemoStatusBuilder::RETRY_DELAY_SECONDS;
 
   /**
    * Seconds a job may wait for new applications before it fails.
    */
   protected const MAX_WAIT_SECONDS = 3600;
+
+  /**
+   * Source string of the last step the current job reported.
+   */
+  protected string $lastStep = '';
 
   /**
    * Constructs the worker.
@@ -131,10 +137,17 @@ class SodaScsDemoQueueWorker extends QueueWorkerBase implements ContainerFactory
         '@project' => $data['projectId'] ?? '-',
         '@template' => $data['templateId'] ?? '-',
       ]);
-      $this->setOperationStatus($operationId, 'failed');
+      if ($project instanceof SodaScsProjectInterface) {
+        // Without this the project stays busy and its status polls forever.
+        $this->markProjectFailed($project, $operationId, SodaScsDemoStatusBuilder::REASON_TEMPLATE_GONE);
+      }
+      else {
+        $this->setOperationStatus($operationId, 'failed');
+      }
       return;
     }
 
+    $this->lastStep = '';
     try {
       $this->projectProvisioner->apply($project, $template, $this->stepReporter($operationId));
       $this->setOperationStatus($operationId, 'completed');
@@ -144,7 +157,7 @@ class SodaScsDemoQueueWorker extends QueueWorkerBase implements ContainerFactory
         $this->setOperationStatus($operationId, 'waiting');
         throw new DelayedRequeueException(self::RETRY_DELAY_SECONDS, $e->getMessage(), 0, $e);
       }
-      $this->failProject($project, $operationId, $e);
+      $this->failProject($project, $operationId, $e, SodaScsDemoStatusBuilder::REASON_TIMEOUT);
     }
     catch (\Throwable $e) {
       $this->failProject($project, $operationId, $e);
@@ -179,27 +192,80 @@ class SodaScsDemoQueueWorker extends QueueWorkerBase implements ContainerFactory
   }
 
   /**
-   * Marks a demo project as failed; the user can start a reset to retry.
+   * Logs why a demo job failed and marks its project as failed.
+   *
+   * @param \Drupal\soda_scs_manager\Entity\SodaScsProjectInterface $project
+   *   The demo project.
+   * @param string|null $operationId
+   *   The progress operation of the job.
+   * @param \Throwable $error
+   *   The cause, written to the log only.
+   * @param string|null $reason
+   *   A SodaScsDemoStatusBuilder::REASON_* source string, or NULL when the
+   *   step the job failed at is the reason.
    */
-  protected function failProject(SodaScsProjectInterface $project, ?string $operationId, \Throwable $error): void {
+  protected function failProject(SodaScsProjectInterface $project, ?string $operationId, \Throwable $error, ?string $reason = NULL): void {
     $this->logger->error('Demo job for project @project failed: @message', [
       '@message' => $error->getMessage(),
       '@project' => $project->id(),
     ]);
+    $this->markProjectFailed($project, $operationId, $reason);
+  }
+
+  /**
+   * Marks a demo project as failed; the user can start a reset to retry.
+   *
+   * The status shows the last step as the reason, translated for the viewer,
+   * so the stored step is a source string: the given reason, or the step the
+   * job failed at.
+   */
+  protected function markProjectFailed(SodaScsProjectInterface $project, ?string $operationId, ?string $reason): void {
     $project->set('demoStatus', SodaScsDemoProjectStatus::Failed->value);
     $project->save();
-    $this->reportStep($operationId, (string) new TranslatableMarkup('Setting up the demo failed. Please try to reset it or contact the support.'));
+    $this->recordLastStep($operationId, $reason ?? $this->lastStep);
     $this->setOperationStatus($operationId, 'failed');
   }
 
   /**
-   * Adds a progress step; progress problems never stop the job.
+   * Makes $message the operation's last step, even when it was recorded before.
+   *
+   * A job that waited records its steps once; when it fails at an earlier
+   * step on a later attempt, that step must still come last.
    */
-  protected function reportStep(?string $operationId, string $message): void {
+  protected function recordLastStep(?string $operationId, string $message): void {
+    if ($operationId === NULL || $message === '') {
+      return;
+    }
+    try {
+      $recorded = array_column($this->progressHelper->findLatestStepsByOperation($operationId, [], 'created', 'ASC'), 'message');
+      if (end($recorded) !== $message) {
+        $this->progressHelper->createStep($operationId, $message);
+      }
+    }
+    catch (\Throwable $e) {
+      $this->logger->warning('Could not record demo progress: @message', ['@message' => $e->getMessage()]);
+    }
+  }
+
+  /**
+   * Adds a progress step; progress problems never stop the job.
+   *
+   * Stores the source string of translatable messages, so the status shows
+   * the step in the viewer's language, not in the site default the queue
+   * runs in. A job that waits for an installation runs its steps again on
+   * every attempt; a step the job already has is not written a second time.
+   */
+  protected function reportStep(?string $operationId, TranslatableMarkup|string $message): void {
+    $message = $message instanceof TranslatableMarkup ? $message->getUntranslatedString() : $message;
+    $this->lastStep = $message;
     if ($operationId === NULL) {
       return;
     }
     try {
+      $recorded = array_column($this->progressHelper->findLatestStepsByOperation($operationId), 'message');
+      if (in_array($message, $recorded, TRUE)) {
+        return;
+      }
       $this->progressHelper->createStep($operationId, $message);
     }
     catch (\Throwable $e) {
@@ -220,7 +286,7 @@ class SodaScsDemoQueueWorker extends QueueWorkerBase implements ContainerFactory
    * Callback that records progress steps of an operation.
    */
   protected function stepReporter(?string $operationId): callable {
-    return fn (string $message) => $this->reportStep($operationId, $message);
+    return fn (TranslatableMarkup|string $message) => $this->reportStep($operationId, $message);
   }
 
 }

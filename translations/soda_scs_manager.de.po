@@ -4750,9 +4750,41 @@ msgstr "Einrichten der Demo fehlgeschlagen"
 msgid "SCS demo projects"
 msgstr "SCS-Demo-Projekte"
 
-#: src/Plugin/QueueWorker/SodaScsDemoQueueWorker.php
-msgid "Setting up the demo failed. Please try to reset it or contact the support."
-msgstr "Das Einrichten der Demo ist fehlgeschlagen. Bitte setzen Sie die Demo zurück oder wenden Sie sich an den Support."
+#: src/Demo/SodaScsDemoStatusBuilder.php
+msgid "Setting up the demo failed at the step: @step"
+msgstr "Das Einrichten der Demo ist bei diesem Schritt fehlgeschlagen: @step"
+
+#: src/Demo/SodaScsDemoStatusBuilder.php
+msgid "The WissKI installation did not finish within an hour."
+msgstr "Die WissKI-Installation wurde nicht innerhalb einer Stunde fertig."
+
+#: src/Demo/SodaScsDemoStatusBuilder.php
+msgid "The demo template no longer exists."
+msgstr "Die Demo-Vorlage existiert nicht mehr."
+
+#: src/Demo/SodaScsDemoStatusBuilder.php
+msgid "Queued since @time"
+msgstr "In der Warteschlange seit @time"
+
+#: src/Demo/SodaScsDemoStatusBuilder.php
+msgid "Running: @step"
+msgstr "Läuft: @step"
+
+#: src/Demo/SodaScsDemoStatusBuilder.php
+msgid "Running since @time"
+msgstr "Läuft seit @time"
+
+#: src/Demo/SodaScsDemoStatusBuilder.php
+msgid "Waiting for the WissKI installation since @since, next attempt at @next"
+msgstr "Wartet seit @since auf die WissKI-Installation, nächster Versuch um @next"
+
+#: src/Demo/SodaScsDemoStatusBuilder.php
+msgid "Waiting for the WissKI installation since @since"
+msgstr "Wartet seit @since auf die WissKI-Installation"
+
+#: src/Demo/SodaScsDemoStatusBuilder.php
+msgid "Failed at @time"
+msgstr "Fehlgeschlagen um @time"
 
 #: src/Form/SodaScsDemoProjectAdminForm.php
 msgid "Demo project"

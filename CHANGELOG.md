@@ -7,6 +7,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- The demo panel on the project page shows what the demo job is doing: queued
+  since when, the current step, waiting for the WissKI installation with the
+  time of the next attempt, or the reason it failed (the step, or that the
+  WissKI did not finish within an hour). The demo badge on the dashboard
+  shows the same line as a tooltip, in the viewer's language.
+  Related: [#3638495](https://www.drupal.org/project/soda_scs_manager/issues/3638495).
+
 ### Changed
 
 - A new WebProtégé application keeps the label you enter. The create form no
@@ -16,6 +25,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- A demo job that waits for the WissKI installation no longer writes the same
+  steps again on every attempt. A demo whose template version was deleted
+  during a reset is now marked as failed instead of showing as busy forever.
+  Related: [#3638495](https://www.drupal.org/project/soda_scs_manager/issues/3638495).
 - A demo project is created even when the source WissKI of the active demo
   template has no `api-import` account. The account is then created in the
   demo WissKI with the roles `wisski_user` and `wisski_api_import`, and a
