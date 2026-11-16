@@ -4768,10 +4768,6 @@ msgid "The WissKI of this demo is incomplete. Delete it in the project, then res
 msgstr "Das WissKI dieser Demo ist unvollständig. Löschen Sie es im Projekt und setzen Sie die Demo dann zurück."
 
 #: src/Form/SodaScsProjectDeleteForm.php
-msgid "Could not delete the WissKI of demo project @project. The project was not deleted."
-msgstr "Das WissKI des Demo-Projekts @project konnte nicht gelöscht werden. Das Projekt wurde nicht gelöscht."
-
-#: src/Form/SodaScsProjectDeleteForm.php
 msgid "The demo project @project is being set up right now. Delete it when the setup is done."
 msgstr "Das Demo-Projekt @project wird gerade eingerichtet. Löschen Sie es, wenn die Einrichtung abgeschlossen ist."
 
@@ -4784,8 +4780,25 @@ msgid "A demo setup is still running (@projects). Delete the account when the se
 msgstr "Die Einrichtung eines Demo-Projekts läuft noch (@projects). Löschen Sie das Konto, wenn die Einrichtung abgeschlossen ist."
 
 #: src/Form/SodaScsProjectDeleteForm.php
-msgid "@description The WissKI of the demo, with its database and triplestore, is deleted as well."
-msgstr "@description Das WissKI der Demo wird mit seiner Datenbank und seinem Triplestore ebenfalls gelöscht."
+msgid "@description Its WissKI instances, databases and triplestores are deleted as well. Applications of other members stay and only lose the link to this project."
+msgstr "@description Seine WissKI-Instanzen, Datenbanken und Triplestores werden ebenfalls gelöscht. Anwendungen anderer Mitglieder bleiben erhalten und verlieren nur die Verknüpfung zu diesem Projekt."
+
+#: templates/cards/soda-scs-manager--project-card.html.twig
+#: templates/entity/soda-scs-project.html.twig
+msgid "Its WissKI instances, databases and triplestores are deleted as well. Applications of other members stay and only lose the link to this project."
+msgstr "Seine WissKI-Instanzen, Datenbanken und Triplestores werden ebenfalls gelöscht. Anwendungen anderer Mitglieder bleiben erhalten und verlieren nur die Verknüpfung zu diesem Projekt."
+
+#: src/Service/SodaScsProjectApplicationRemover.php
+msgid "Could not delete the application @application of project @project. The project was not deleted."
+msgstr "Die Anwendung @application des Projekts @project konnte nicht gelöscht werden. Das Projekt wurde nicht gelöscht."
+
+#: src/Service/SodaScsProjectApplicationRemover.php
+msgid "Could not delete the applications of project @project. The project was not deleted."
+msgstr "Die Anwendungen des Projekts @project konnten nicht gelöscht werden. Das Projekt wurde nicht gelöscht."
+
+#: src/Service/SodaScsProjectApplicationRemover.php
+msgid "Could not detach the application @application from project @project. The project was not deleted."
+msgstr "Die Anwendung @application konnte nicht vom Projekt @project gelöst werden. Das Projekt wurde nicht gelöscht."
 
 #: src/StackActions/SodaScsWisskiStackActions.php
 msgid "Could not delete the database of the WissKI stack."

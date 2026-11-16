@@ -74,6 +74,8 @@ final class SodaScsUserOffboarding {
     private readonly NextcloudProjectMountManager $nextcloudProjectMountManager,
     #[Autowire(service: 'soda_scs_manager.opengdb_service.actions')]
     private readonly SodaScsOpenGdbServiceActions $openGdbServiceActions,
+    #[Autowire(service: 'soda_scs_manager.project_application.remover')]
+    private readonly SodaScsProjectApplicationRemover $applicationRemover,
     #[Autowire(service: 'soda_scs_manager.project.helpers')]
     private readonly SodaScsProjectHelpers $projectHelpers,
     #[Autowire(service: 'soda_scs_manager.service.helpers')]
@@ -249,21 +251,26 @@ final class SodaScsUserOffboarding {
    */
   private function deleteOwnedProject(SodaScsProjectInterface $project): void {
     $projectId = (int) $project->id();
-    $stacks = $this->loadLinked('soda_scs_stack', $projectId);
-    usort($stacks, static function (SodaScsStackInterface $left, SodaScsStackInterface $right): int {
-      $leftJupyter = $left->bundle() === 'soda_scs_jupyter_stack' ? 0 : 1;
-      $rightJupyter = $right->bundle() === 'soda_scs_jupyter_stack' ? 0 : 1;
-      return $leftJupyter <=> $rightJupyter;
-    });
-    foreach ($stacks as $stack) {
+    // JupyterHub first: it stops the shared server of the project.
+    foreach ($this->loadLinked('soda_scs_stack', $projectId) as $stack) {
+      if (!$stack instanceof SodaScsStackInterface || $stack->bundle() !== 'soda_scs_jupyter_stack') {
+        continue;
+      }
       $this->runStep('delete stack ' . $stack->id(), function () use ($stack): void {
         $this->stackActions->deleteStack($stack);
       });
       $this->forceDelete($stack);
     }
 
+    // Same rule as the project delete form: applications of other members
+    // only lose the link. One that fails stays and is
+    // retried by purgeLeftovers() when this user owns it.
+    $this->runStep('remove applications of project ' . $projectId, function () use ($project): void {
+      $this->applicationRemover->removeApplications($project, FALSE);
+    });
+
     foreach ($this->loadLinked('soda_scs_component', $projectId) as $component) {
-      if (!$component instanceof SodaScsComponentInterface) {
+      if (!$component instanceof SodaScsComponentInterface || $component->bundle() !== 'soda_scs_webprotege_component') {
         continue;
       }
       $this->runStep('delete component ' . $component->id(), function () use ($component): void {

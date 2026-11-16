@@ -81,6 +81,7 @@
 			{% else %}
 				<p>{{ 'Do you really want to delete “@name”? This action cannot be undone.'|t({'@name': label}) }}</p>
 			{% endif %}
+			<p>{{ 'Its WissKI instances, databases and triplestores are deleted as well. Applications of other members stay and only lose the link to this project.'|t }}</p>
 			<div class="project-card__delete-confirmation__actions">
 				<button type="button" class="btn btn--secondary project-card__delete-confirmation__cancel">{{ 'Cancel'|t }}</button>
 				{% if other_member_names %}

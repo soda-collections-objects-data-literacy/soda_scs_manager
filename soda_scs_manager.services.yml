@@ -66,6 +66,8 @@ services:
       - !tagged_iterator { tag: soda_scs_manager.message_type }
   soda_scs_manager.user_offboarding:
     class: Drupal\soda_scs_manager\Service\SodaScsUserOffboarding
+  soda_scs_manager.project_application.remover:
+    class: Drupal\soda_scs_manager\Service\SodaScsProjectApplicationRemover
   soda_scs_manager.project_db_access.helpers:
     class: Drupal\soda_scs_manager\Helpers\SodaScsProjectDbAccessHelpers
   soda_scs_manager.keycloak_service.helpers:

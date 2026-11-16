@@ -18,6 +18,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- Deleting a project now deletes its WissKI instances, databases and
+  triplestores too, with their data; before, only demo projects took their
+  WissKI along, and the others stayed without a project. A WissKI, database
+  or triplestore of another member stays and only loses the link to the
+  deleted project. The delete dialog says so. When one cannot be deleted,
+  the project and its members stay. Deleting an account applies the same rule to the projects it owns:
+  before, it deleted the applications of other members in them as well.
+  Related: [#3638570](https://www.drupal.org/project/soda_scs_manager/issues/3638570).
 - A new WebProtégé application keeps the label you enter. The create form no
   longer adds " (WebProtégé)" to it; its card is already titled "WebProtégé".
   Update 11041 removes the suffix from existing WebProtégé labels.

@@ -13,13 +13,13 @@ use Drupal\Core\Lock\LockBackendInterface;
 use Drupal\Core\StringTranslation\TranslatableMarkup;
 use Drupal\Core\Url;
 use Drupal\soda_scs_manager\Demo\SodaScsDemoManager;
-use Drupal\soda_scs_manager\Demo\SodaScsDemoProjectApps;
 use Drupal\soda_scs_manager\Entity\SodaScsProjectInterface;
 use Drupal\soda_scs_manager\Helpers\SodaScsProjectApplicationHelpers;
 use Drupal\soda_scs_manager\Helpers\SodaScsProjectHelpers;
 use Drupal\soda_scs_manager\Helpers\SodaScsProjectMembershipHelpers;
 use Drupal\soda_scs_manager\Helpers\SodaScsWebprotegeHelpers;
 use Drupal\soda_scs_manager\Service\NextcloudProjectMountManager;
+use Drupal\soda_scs_manager\Service\SodaScsProjectApplicationRemover;
 use Drupal\soda_scs_manager\StackActions\SodaScsStackActionsInterface;
 use Drupal\user\UserInterface;
 use Symfony\Component\DependencyInjection\ContainerInterface;
@@ -76,10 +76,8 @@ class SodaScsProjectDeleteForm extends ContentEntityDeleteForm {
    *   Removes listed members and their service access.
    * @param \Drupal\soda_scs_manager\Demo\SodaScsDemoManager $demoManager
    *   Tells demo projects apart from regular ones.
-   * @param \Drupal\soda_scs_manager\Demo\SodaScsDemoProjectApps $demoProjectApps
-   *   Finds the WissKI stacks of a demo project.
-   * @param \Drupal\soda_scs_manager\StackActions\SodaScsStackActionsInterface $wisskiStackActions
-   *   Deletes a WissKI stack with its database and triplestore.
+   * @param \Drupal\soda_scs_manager\Service\SodaScsProjectApplicationRemover $applicationRemover
+   *   Deletes or detaches the WissKI stacks, databases and triplestores.
    * @param \Drupal\Core\Lock\LockBackendInterface $lock
    *   The demo project lock that the demo queue job holds as well.
    */
@@ -94,8 +92,7 @@ class SodaScsProjectDeleteForm extends ContentEntityDeleteForm {
     protected SodaScsStackActionsInterface $jupyterStackActions,
     protected SodaScsProjectMembershipHelpers $projectMembershipHelpers,
     protected SodaScsDemoManager $demoManager,
-    protected SodaScsDemoProjectApps $demoProjectApps,
-    protected SodaScsStackActionsInterface $wisskiStackActions,
+    protected SodaScsProjectApplicationRemover $applicationRemover,
     protected LockBackendInterface $lock,
   ) {
     parent::__construct($entity_repository, $entity_type_bundle_info, $time);
@@ -122,8 +119,7 @@ class SodaScsProjectDeleteForm extends ContentEntityDeleteForm {
       $container->get('soda_scs_manager.jupyter_stack.actions'),
       $container->get('soda_scs_manager.project_membership.helpers'),
       $container->get('soda_scs_manager.demo.manager'),
-      $container->get('soda_scs_manager.demo.project_apps'),
-      $container->get('soda_scs_manager.wisski_stack.actions'),
+      $container->get('soda_scs_manager.project_application.remover'),
       $container->get('lock'),
     );
   }
@@ -158,10 +154,7 @@ class SodaScsProjectDeleteForm extends ContentEntityDeleteForm {
       return parent::getDescription();
     }
     $description = $this->memberDescription($project) ?? parent::getDescription();
-    if (!$this->demoManager->isDemoProject($project)) {
-      return $description;
-    }
-    return $this->t('@description The WissKI of the demo, with its database and triplestore, is deleted as well.', [
+    return $this->t('@description Its WissKI instances, databases and triplestores are deleted as well. Applications of other members stay and only lose the link to this project.', [
       '@description' => $description,
     ]);
   }
@@ -217,7 +210,7 @@ class SodaScsProjectDeleteForm extends ContentEntityDeleteForm {
     }
 
     // A running demo job may still save a WissKI stack after the lookup in
-    // deleteDemoWisskiStacks(); holding its lock keeps the job out until the
+    // the application remover; holding its lock keeps the job out until the
     // project is gone, and the job then drops itself.
     $lockName = SodaScsDemoManager::PROJECT_LOCK_PREFIX . $project->id();
     if (!$this->lock->acquire($lockName, self::DEMO_LOCK_TIMEOUT_SECONDS)) {
@@ -247,12 +240,15 @@ class SodaScsProjectDeleteForm extends ContentEntityDeleteForm {
   private function deleteProject(SodaScsProjectInterface $project, FormStateInterface $form_state): void {
     $this->logger('soda_scs_manager')->notice('Deleting project: @label', ['@label' => $project->label()]);
 
-    // Members are detached only after the demo WissKI is gone: a failed
-    // WissKI delete must leave the project as it was.
+    // Members are detached only after the applications are gone: a failed
+    // WissKI or database delete must leave the project and its members.
     if (!$this->membersMayBeRemoved($project, $form_state)) {
       return;
     }
-    if (!$this->deleteDemoWisskiStacks($project, $form_state)) {
+    $removed = $this->applicationRemover->removeApplications($project, TRUE);
+    if (!$removed->success) {
+      $this->messenger()->addError($removed->data['message'] ?? $removed->message);
+      $form_state->setRebuild();
       return;
     }
     if (!$this->detachMembersBeforeDelete($project, $form_state)) {
@@ -300,51 +296,6 @@ class SodaScsProjectDeleteForm extends ContentEntityDeleteForm {
 
     $this->messenger()->addStatus($this->t('Project @label has been deleted.', ['@label' => $project->label()]));
     $form_state->setRedirect('soda_scs_manager.dashboard');
-  }
-
-  /**
-   * Deletes the WissKI stacks the demo created, with database and triplestore.
-   *
-   * The demo WissKI belongs to the demo alone; left behind, it keeps running
-   * and the next demo of the user gets a "-2" machine name. A failed run can
-   * leave a second stack, so all of them go. Regular projects keep their
-   * WissKI stacks. Any failure stops the project deletion before anything
-   * else is removed.
-   *
-   * @return bool
-   *   FALSE when deletion must stop.
-   */
-  private function deleteDemoWisskiStacks(SodaScsProjectInterface $project, FormStateInterface $form_state): bool {
-    if (!$this->demoManager->isDemoProject($project)) {
-      return TRUE;
-    }
-    try {
-      $stacks = $this->demoProjectApps->demoWisskiStacks($project);
-    }
-    catch (\Throwable $e) {
-      $this->logger('soda_scs_manager')->error('Could not look up the WissKI stacks of demo project @project: @message', [
-        '@message' => $e->getMessage(),
-        '@project' => $project->id(),
-      ]);
-      $this->messenger()->addError($this->t('Could not delete the WissKI of demo project @project. The project was not deleted.', ['@project' => $project->label()]));
-      $form_state->setRebuild();
-      return FALSE;
-    }
-
-    foreach ($stacks as $stack) {
-      $result = $this->wisskiStackActions->deleteStack($stack);
-      if (empty($result['success'])) {
-        $this->logger('soda_scs_manager')->error('Could not delete WissKI stack @stack of demo project @project: @message', [
-          '@message' => (string) ($result['error'] ?? $result['message'] ?? ''),
-          '@project' => $project->id(),
-          '@stack' => $stack->id(),
-        ]);
-        $this->messenger()->addError($this->t('Could not delete the WissKI of demo project @project. The project was not deleted.', ['@project' => $project->label()]));
-        $form_state->setRebuild();
-        return FALSE;
-      }
-    }
-    return TRUE;
   }
 
   /**
