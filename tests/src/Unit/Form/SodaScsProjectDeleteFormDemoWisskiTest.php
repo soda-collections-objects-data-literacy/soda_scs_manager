@@ -8,6 +8,7 @@ use Drupal\Component\Datetime\TimeInterface;
 use Drupal\Core\DependencyInjection\ContainerBuilder;
 use Drupal\Core\Entity\EntityRepositoryInterface;
 use Drupal\Core\Entity\EntityStorageInterface;
+use Drupal\Core\Entity\Query\QueryInterface;
 use Drupal\Core\Entity\EntityTypeManagerInterface;
 use Drupal\Core\Entity\EntityTypeBundleInfoInterface;
 use Drupal\Core\Form\FormState;
@@ -15,8 +16,9 @@ use Drupal\Core\Lock\LockBackendInterface;
 use Drupal\Core\Logger\LoggerChannelFactoryInterface;
 use Drupal\Core\Logger\LoggerChannelInterface;
 use Drupal\Core\Messenger\MessengerInterface;
+use Drupal\Core\StringTranslation\TranslatableMarkup;
+use Drupal\soda_scs_manager\ComponentActions\SodaScsComponentActionsInterface;
 use Drupal\soda_scs_manager\Demo\SodaScsDemoManager;
-use Drupal\soda_scs_manager\Demo\SodaScsDemoProjectApps;
 use Drupal\soda_scs_manager\Entity\SodaScsProjectInterface;
 use Drupal\soda_scs_manager\Entity\SodaScsStackInterface;
 use Drupal\soda_scs_manager\Form\SodaScsProjectDeleteForm;
@@ -25,6 +27,7 @@ use Drupal\soda_scs_manager\Helpers\SodaScsProjectHelpers;
 use Drupal\soda_scs_manager\Helpers\SodaScsProjectMembershipHelpers;
 use Drupal\soda_scs_manager\Helpers\SodaScsWebprotegeHelpers;
 use Drupal\soda_scs_manager\Service\NextcloudProjectMountManager;
+use Drupal\soda_scs_manager\Service\SodaScsProjectApplicationRemover;
 use Drupal\soda_scs_manager\StackActions\SodaScsStackActionsInterface;
 use Drupal\soda_scs_manager\ValueObject\SodaScsResult;
 use Drupal\Core\Field\EntityReferenceFieldItemListInterface;
@@ -32,11 +35,13 @@ use Drupal\Tests\UnitTestCase;
 use Drupal\user\UserInterface;
 
 /**
- * What deleting a project does with the WissKI stacks of a demo.
+ * What deleting a project does with its WissKI stacks.
  *
- * A demo project takes the WissKI stacks of its demo with it, through the
- * WissKI stack actions; any failure stops the deletion before anything else,
- * members included, is removed. A regular project keeps its WissKI stacks.
+ * The form hands the applications to the application remover (real here, on
+ * doubles of the entity storage and of the stack and component actions): the
+ * WissKI stacks of the project owner are deleted through the WissKI stack
+ * actions, demo or not; any failure stops the deletion before anything else,
+ * members included, is removed.
  *
  * @coversDefaultClass \Drupal\soda_scs_manager\Form\SodaScsProjectDeleteForm
  * @group soda_scs_manager
@@ -49,7 +54,7 @@ class SodaScsProjectDeleteFormDemoWisskiTest extends UnitTestCase {
   private bool $isDemo = TRUE;
 
   /**
-   * The WissKI stacks the inventory finds, or an exception to throw.
+   * The WissKI stacks the project lists, or an exception to throw.
    *
    * @var \Drupal\soda_scs_manager\Entity\SodaScsStackInterface[]|\Throwable
    */
@@ -125,7 +130,7 @@ class SodaScsProjectDeleteFormDemoWisskiTest extends UnitTestCase {
   private bool $isProjectGone = FALSE;
 
   /**
-   * How often the WissKI stacks of the demo project were looked up.
+   * How often the WissKI stacks of the project were looked up.
    */
   private int $wisskiLookupCount = 0;
 
@@ -181,13 +186,14 @@ class SodaScsProjectDeleteFormDemoWisskiTest extends UnitTestCase {
     $loggerFactory->method('get')->willReturn($this->logger);
     $container = new ContainerBuilder();
     $container->set('logger.factory', $loggerFactory);
+    $container->set('string_translation', $this->getStringTranslationStub());
     \Drupal::setContainer($container);
   }
 
   /**
    * Every WissKI stack of a demo project is deleted, in id order.
    *
-   * @covers ::deleteDemoWisskiStacks
+   * @covers ::deleteProject
    * @covers ::submitForm
    */
   public function testDemoProjectDeletesEveryWisskiStack(): void {
@@ -237,7 +243,7 @@ class SodaScsProjectDeleteFormDemoWisskiTest extends UnitTestCase {
   /**
    * A demo project without a WissKI stack is deleted as usual.
    *
-   * @covers ::deleteDemoWisskiStacks
+   * @covers ::deleteProject
    */
   public function testDemoProjectWithoutWisskiStackIsDeleted(): void {
     $this->wisskiStacks = [];
@@ -250,7 +256,7 @@ class SodaScsProjectDeleteFormDemoWisskiTest extends UnitTestCase {
   /**
    * A failed stack deletion stops the project deletion and keeps the rest.
    *
-   * @covers ::deleteDemoWisskiStacks
+   * @covers ::deleteProject
    */
   public function testFailedWisskiStackDeletionStopsProjectDeletion(): void {
     $first = $this->stack(11);
@@ -267,13 +273,14 @@ class SodaScsProjectDeleteFormDemoWisskiTest extends UnitTestCase {
       });
     $this->expectNothingElseDeleted();
     $this->logger->expects($this->once())->method('error')
-      ->with($this->stringContains('Could not delete WissKI stack'), $this->callback(
-        fn(array $context): bool => $context['@stack'] === 12
+      ->with($this->stringContains('Could not remove @type @id from project'), $this->callback(
+        fn(array $context): bool => $context['@id'] === 12
+          && $context['@type'] === 'soda_scs_stack'
           && $context['@project'] === 3
           && $context['@message'] === 'Portainer answered 500.'
       ));
     $this->messenger->expects($this->once())->method('addError')
-      ->with($this->callback(fn($message): bool => str_contains((string) $message, 'The project was not deleted.')));
+      ->with($this->callback(fn($message): bool => str_contains((string) $message, 'Could not delete the application Stack 12 of project Demo. The project was not deleted.')));
 
     $formState = new FormState();
     $this->submit($formState);
@@ -335,7 +342,7 @@ class SodaScsProjectDeleteFormDemoWisskiTest extends UnitTestCase {
   /**
    * An answer without a success flag counts as a failure.
    *
-   * @covers ::deleteDemoWisskiStacks
+   * @covers ::deleteProject
    */
   public function testMalformedStackDeletionAnswerStopsProjectDeletion(): void {
     $this->wisskiStacks = [$this->stack(11)];
@@ -350,18 +357,63 @@ class SodaScsProjectDeleteFormDemoWisskiTest extends UnitTestCase {
   }
 
   /**
-   * A failed WissKI lookup stops the project deletion before any deletion.
+   * A failed lookup of the applications deletes nothing and frees the lock.
    *
-   * @covers ::deleteDemoWisskiStacks
+   * The user gets the message instead of an error page; the project, its
+   * members and the services stay as they were.
+   *
+   * @covers ::deleteProject
    */
-  public function testFailedWisskiLookupStopsProjectDeletion(): void {
+  public function testFailedApplicationLookupDeletesNothing(): void {
     $this->wisskiStacks = new \RuntimeException('Query failed.');
     $this->wisskiStackActions->expects($this->never())->method('deleteStack');
     $this->expectNothingElseDeleted();
-    $this->logger->expects($this->once())->method('error')
-      ->with($this->stringContains('Could not look up the WissKI stacks'), $this->callback(
-        fn(array $context): bool => $context['@project'] === 3 && $context['@message'] === 'Query failed.'
-      ));
+    $this->messenger->expects($this->once())->method('addError')
+      ->with($this->callback(fn($message): bool => $message instanceof TranslatableMarkup
+        && str_contains((string) $message, 'The project was not deleted.')));
+
+    $formState = new FormState();
+    $this->submit($formState);
+
+    $this->assertTrue($formState->isRebuilding());
+    $this->assertSame(
+      ['acquire:soda_scs_manager.demo.project.3:900', 'release:soda_scs_manager.demo.project.3'],
+      $this->lockCalls,
+    );
+  }
+
+  /**
+   * A regular project deletes the WissKI stacks of its owner as well.
+   *
+   * @covers ::deleteProject
+   */
+  public function testRegularProjectDeletesItsWisskiStacks(): void {
+    $this->isDemo = FALSE;
+    $stack = $this->stack(11);
+    $this->wisskiStacks = [$stack];
+    $this->wisskiStackActions->expects($this->once())->method('deleteStack')
+      ->with($stack)
+      ->willReturn(['success' => TRUE]);
+    $this->project->expects($this->once())->method('delete');
+
+    $formState = new FormState();
+    $this->submit($formState);
+
+    $this->assertNotFalse($formState->getRedirect());
+    $this->assertSame([], $this->lockCalls);
+  }
+
+  /**
+   * A regular project whose WissKI stack cannot be deleted stays.
+   *
+   * @covers ::deleteProject
+   */
+  public function testRegularProjectStaysWhenWisskiStackCannotBeDeleted(): void {
+    $this->isDemo = FALSE;
+    $this->wisskiStacks = [$this->stack(11)];
+    $this->wisskiStackActions->expects($this->once())->method('deleteStack')
+      ->willReturn(['success' => FALSE, 'error' => 'Portainer answered 500.']);
+    $this->expectNothingElseDeleted();
     $this->messenger->expects($this->once())->method('addError')
       ->with($this->callback(fn($message): bool => str_contains((string) $message, 'The project was not deleted.')));
 
@@ -370,23 +422,6 @@ class SodaScsProjectDeleteFormDemoWisskiTest extends UnitTestCase {
 
     $this->assertTrue($formState->isRebuilding());
     $this->assertFalse($formState->getRedirect());
-  }
-
-  /**
-   * A regular project keeps its WissKI stacks and is not even looked up.
-   *
-   * @covers ::deleteDemoWisskiStacks
-   */
-  public function testRegularProjectDoesNotDeleteWisskiStacks(): void {
-    $this->isDemo = FALSE;
-    $this->wisskiStacks = [$this->stack(11)];
-    $this->wisskiStackActions->expects($this->never())->method('deleteStack');
-    $this->project->expects($this->once())->method('delete');
-
-    $formState = new FormState();
-    $this->submit($formState);
-
-    $this->assertNotFalse($formState->getRedirect());
   }
 
   /**
@@ -535,12 +570,67 @@ class SodaScsProjectDeleteFormDemoWisskiTest extends UnitTestCase {
   }
 
   /**
-   * A stack double with an id.
+   * A stack double with an id, owned by the project owner.
    */
   private function stack(int $id): SodaScsStackInterface {
+    $owner = $this->createMock(EntityReferenceFieldItemListInterface::class);
+    $owner->method('__get')->with('target_id')->willReturn(1);
     $stack = $this->createMock(SodaScsStackInterface::class);
     $stack->method('id')->willReturn($id);
+    $stack->method('label')->willReturn('Stack ' . $id);
+    $stack->method('getEntityTypeId')->willReturn('soda_scs_stack');
+    $stack->method('get')->with('owner')->willReturn($owner);
     return $stack;
+  }
+
+  /**
+   * The application remover on doubles of the storage and the actions.
+   */
+  private function applicationRemover(): SodaScsProjectApplicationRemover {
+    $stackQuery = $this->createMock(QueryInterface::class);
+    $stackQuery->method('accessCheck')->willReturnSelf();
+    $stackQuery->method('condition')->willReturnSelf();
+    $stackQuery->method('sort')->willReturnSelf();
+    $stackQuery->method('execute')->willReturnCallback(function (): array {
+      $this->wisskiLookupCount++;
+      if ($this->wisskiStacks instanceof \Throwable) {
+        throw $this->wisskiStacks;
+      }
+      $ids = array_map(static fn(SodaScsStackInterface $stack) => $stack->id(), $this->wisskiStacks);
+      return array_combine($ids, $ids);
+    });
+    $stackStorage = $this->createMock(EntityStorageInterface::class);
+    $stackStorage->method('getQuery')->willReturn($stackQuery);
+    $stackStorage->method('loadMultiple')->willReturnCallback(function (): array {
+      $stacks = [];
+      foreach ($this->wisskiStacks as $stack) {
+        $stacks[$stack->id()] = $stack;
+      }
+      return $stacks;
+    });
+
+    $componentQuery = $this->createMock(QueryInterface::class);
+    $componentQuery->method('accessCheck')->willReturnSelf();
+    $componentQuery->method('condition')->willReturnSelf();
+    $componentQuery->method('sort')->willReturnSelf();
+    $componentQuery->method('execute')->willReturn([]);
+    $componentStorage = $this->createMock(EntityStorageInterface::class);
+    $componentStorage->method('getQuery')->willReturn($componentQuery);
+
+    $entityTypeManager = $this->createMock(EntityTypeManagerInterface::class);
+    $entityTypeManager->method('getStorage')->willReturnMap([
+      ['soda_scs_stack', $stackStorage],
+      ['soda_scs_component', $componentStorage],
+    ]);
+
+    $remover = new SodaScsProjectApplicationRemover(
+      $this->createMock(SodaScsComponentActionsInterface::class),
+      $entityTypeManager,
+      $this->logger,
+      $this->wisskiStackActions,
+    );
+    $remover->setStringTranslation($this->getStringTranslationStub());
+    return $remover;
   }
 
   /**
@@ -549,14 +639,6 @@ class SodaScsProjectDeleteFormDemoWisskiTest extends UnitTestCase {
   private function submit(FormState $formState): void {
     $demoManager = $this->createMock(SodaScsDemoManager::class);
     $demoManager->method('isDemoProject')->willReturn($this->isDemo);
-    $demoProjectApps = $this->createMock(SodaScsDemoProjectApps::class);
-    $demoProjectApps->method('demoWisskiStacks')->willReturnCallback(function (): array {
-      $this->wisskiLookupCount++;
-      if ($this->wisskiStacks instanceof \Throwable) {
-        throw $this->wisskiStacks;
-      }
-      return $this->wisskiStacks;
-    });
 
     // Final class; detachMember() must never be reached in these tests.
     $membershipHelpers = (new \ReflectionClass(SodaScsProjectMembershipHelpers::class))->newInstanceWithoutConstructor();
@@ -572,8 +654,7 @@ class SodaScsProjectDeleteFormDemoWisskiTest extends UnitTestCase {
       $this->jupyterStackActions,
       $membershipHelpers,
       $demoManager,
-      $demoProjectApps,
-      $this->wisskiStackActions,
+      $this->applicationRemover(),
       $this->lock,
     );
     $storage = $this->createMock(EntityStorageInterface::class);

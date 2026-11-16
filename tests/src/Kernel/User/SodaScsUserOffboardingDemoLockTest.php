@@ -20,10 +20,12 @@ use Drupal\soda_scs_manager\Helpers\SodaScsServiceHelpers;
 use Drupal\soda_scs_manager\Helpers\SodaScsWebprotegeHelpers;
 use Drupal\soda_scs_manager\Service\NextcloudMountManager;
 use Drupal\soda_scs_manager\Service\NextcloudProjectMountManager;
+use Drupal\soda_scs_manager\Service\SodaScsProjectApplicationRemover;
 use Drupal\soda_scs_manager\Service\SodaScsUserOffboarding;
 use Drupal\soda_scs_manager\RequestActions\SodaScsKeycloakServiceUserActions;
 use Drupal\soda_scs_manager\RequestActions\SodaScsOpenGdbServiceActions;
 use Drupal\soda_scs_manager\ServiceActions\SodaScsSqlServiceActions;
+use Drupal\soda_scs_manager\Entity\SodaScsStackInterface;
 use Drupal\soda_scs_manager\StackActions\SodaScsStackActionsInterface;
 use Drupal\soda_scs_manager\ValueObject\SodaScsResult;
 use Drupal\Tests\soda_scs_manager\Kernel\SodaScsKernelTestBase;
@@ -96,11 +98,35 @@ class SodaScsUserOffboardingDemoLockTest extends SodaScsKernelTestBase {
   private UserInterface $account;
 
   /**
+   * The stack actions double the purge and the application remover use.
+   */
+  private SodaScsStackActionsInterface $stackActions;
+
+  /**
+   * The component actions double the purge and the application remover use.
+   */
+  private SodaScsComponentActionsInterface $componentActions;
+
+  /**
+   * Messages of the errors the service logged.
+   *
+   * @var list<string>
+   */
+  private array $errors = [];
+
+  /**
    * {@inheritdoc}
    */
   protected function setUp(): void {
     parent::setUp();
     $this->account = $this->createTestUser();
+    $this->stackActions = $this->createMock(SodaScsStackActionsInterface::class);
+    $this->componentActions = $this->createMock(SodaScsComponentActionsInterface::class);
+    // Linking a database to a project grants the members access through the
+    // SQL service; the double stops the helper at the MariaDB user check.
+    $sqlServiceActions = $this->createMock(SodaScsSqlServiceActions::class);
+    $sqlServiceActions->method('existServiceUser')->willReturn(['execStatus' => 1, 'output' => []]);
+    $this->container->set('soda_scs_manager.sql_service.actions', $sqlServiceActions);
   }
 
   /**
@@ -438,6 +464,72 @@ class SodaScsUserOffboardingDemoLockTest extends SodaScsKernelTestBase {
   }
 
   /**
+   * The purge deletes the owner's stack and detaches a member's database.
+   */
+  public function testPurgeDeletesOwnersStackAndDetachesMembersComponent(): void {
+    $member = $this->createTestUser();
+    $project = $this->createTestProject(['owner' => $this->account->id()]);
+    $stack = $this->createTestStack('soda_scs_wisski_stack', [
+      'owner' => $this->account->id(),
+      'partOfProjects' => [$project->id()],
+    ]);
+    $component = $this->createTestComponent('soda_scs_sql_component', [
+      'owner' => $member->id(),
+      'partOfProjects' => [$project->id()],
+    ]);
+    $deletedStacks = [];
+    $this->stackActions->method('deleteStack')->willReturnCallback(function (SodaScsStackInterface $given) use (&$deletedStacks): array {
+      $deletedStacks[] = (int) $given->id();
+      return ['success' => TRUE];
+    });
+    $this->componentActions->expects($this->never())->method('deleteComponent');
+
+    $this->buildService()->purge($this->account);
+
+    $this->assertContains((int) $stack->id(), $deletedStacks);
+    $this->assertProjectGone((int) $project->id());
+    $storage = $this->entityTypeManager->getStorage('soda_scs_component');
+    $storage->resetCache([$component->id()]);
+    $kept = $storage->load($component->id());
+    $this->assertNotNull($kept, 'The database of the other member survives the purge.');
+    $this->assertTrue($kept->get('partOfProjects')->isEmpty(), 'It lost the deleted project.');
+  }
+
+  /**
+   * A WissKI stack that cannot be deleted does not stop the rest of the purge.
+   */
+  public function testPurgeGoesOnWhenWisskiStackCannotBeDeleted(): void {
+    $member = $this->createTestUser();
+    $project = $this->createTestProject(['owner' => $this->account->id()]);
+    $first = $this->createTestStack('soda_scs_wisski_stack', [
+      'owner' => $this->account->id(),
+      'partOfProjects' => [$project->id()],
+    ]);
+    $second = $this->createTestStack('soda_scs_wisski_stack', [
+      'owner' => $this->account->id(),
+      'partOfProjects' => [$project->id()],
+    ]);
+    $component = $this->createTestComponent('soda_scs_sql_component', [
+      'owner' => $member->id(),
+      'partOfProjects' => [$project->id()],
+    ]);
+    $attempted = [];
+    $this->stackActions->method('deleteStack')->willReturnCallback(function (SodaScsStackInterface $given) use (&$attempted, $first): array {
+      $attempted[] = (int) $given->id();
+      return (int) $given->id() === (int) $first->id() ? ['success' => FALSE, 'error' => 'Portainer answered 500.'] : ['success' => TRUE];
+    });
+
+    $this->buildService()->purge($this->account);
+
+    $this->assertSame([(int) $first->id(), (int) $second->id()], array_slice($attempted, 0, 2), 'The stack after the failed one is tried.');
+    $this->assertCount(1, array_filter($this->errors, static fn (string $message): bool => str_contains($message, 'Could not remove')));
+    $this->assertProjectGone((int) $project->id());
+    $storage = $this->entityTypeManager->getStorage('soda_scs_component');
+    $storage->resetCache([$component->id()]);
+    $this->assertNotNull($storage->load($component->id()));
+  }
+
+  /**
    * Creates an owned demo project, by default of the account under test.
    *
    * @param array<string, mixed> $values
@@ -516,23 +608,37 @@ class SodaScsUserOffboardingDemoLockTest extends SodaScsKernelTestBase {
       }
     });
 
+    $loggerFactory = $this->buildLoggerFactory();
     return new SodaScsUserOffboarding(
-      $this->createMock(SodaScsComponentActionsInterface::class),
+      $this->componentActions,
       $this->container->get('soda_scs_manager.demo.manager'),
       $this->entityTypeManager,
       $this->buildLock(),
-      $this->buildLoggerFactory(),
+      $loggerFactory,
       $this->container->get('soda_scs_manager.project_membership.helpers'),
       $this->createMock(SodaScsNextcloudHelpers::class),
       $this->createMock(NextcloudMountManager::class),
       $this->createMock(NextcloudProjectMountManager::class),
       $this->createMock(SodaScsOpenGdbServiceActions::class),
+      $this->buildApplicationRemover($loggerFactory),
       $projectHelpers,
       $this->createMock(SodaScsServiceHelpers::class),
       $this->createMock(SodaScsSqlServiceActions::class),
-      $this->createMock(SodaScsStackActionsInterface::class),
+      $this->stackActions,
       $this->createMock(SodaScsKeycloakServiceUserActions::class),
       $this->buildWebprotegeHelpers(),
+    );
+  }
+
+  /**
+   * The application remover on the real storage and the action doubles.
+   */
+  private function buildApplicationRemover(LoggerChannelFactoryInterface $loggerFactory): SodaScsProjectApplicationRemover {
+    return new SodaScsProjectApplicationRemover(
+      $this->componentActions,
+      $this->entityTypeManager,
+      $loggerFactory->get('soda_scs_manager'),
+      $this->stackActions,
     );
   }
 
@@ -581,6 +687,9 @@ class SodaScsUserOffboardingDemoLockTest extends SodaScsKernelTestBase {
     $channel = $this->createMock(LoggerChannelInterface::class);
     $channel->method('warning')->willReturnCallback(function ($message, array $context = []): void {
       $this->warnings[] = (string) $message;
+    });
+    $channel->method('error')->willReturnCallback(function ($message, array $context = []): void {
+      $this->errors[] = (string) $message;
     });
     $factory = $this->createMock(LoggerChannelFactoryInterface::class);
     $factory->method('get')->willReturn($channel);
