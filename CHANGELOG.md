@@ -25,6 +25,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- Demo jobs started by drush as root (by hand or from a host timer) run
+  again. The run writes its output to `/tmp/scs-demo-queue-root.log`, because
+  root may not open the web server's `/tmp/scs-demo-queue.log`; before, the
+  run did not start and the jobs stayed queued.
+  Related: [#3638553](https://www.drupal.org/project/soda_scs_manager/issues/3638553).
 - Deleting a demo project now also deletes the WissKI of the demo with its
   database and triplestore. Before, they kept running, and the user's next
   demo got a WissKI with a "-2" machine name. A WissKI that a member, or the

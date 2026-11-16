@@ -12,6 +12,7 @@ use Drupal\Core\Entity\EntityTypeManagerInterface;
 use Drupal\Core\State\StateInterface;
 use Drupal\Core\StringTranslation\StringTranslationTrait;
 use Drupal\soda_scs_manager\Demo\SodaScsDemoManager;
+use Drupal\soda_scs_manager\Demo\SodaScsDemoQueueRunner;
 use Drupal\soda_scs_manager\Helpers\SodaScsContainerHelpers;
 use Drupal\soda_scs_manager\Helpers\SodaScsSnapshotHelpers;
 use Drupal\soda_scs_manager\ValueObject\SodaScsSystemCheckResult;
@@ -268,7 +269,7 @@ class SodaScsSystemCheck {
       $value = (string) $this->t('@count waiting', ['@count' => $count]);
       if ($oldest !== FALSE && $this->time->getCurrentTime() - (int) $oldest > self::QUEUE_ITEM_MAX_AGE_SECONDS) {
         $results[] = $this->warning('queue_' . $queueName, $group, $title, $value, (string) $this->t('A job has been waiting for more than 30 minutes. No background run picks it up; check the host timer and @log in the manager container.', [
-          '@log' => $queueName === SodaScsWisskiUpdateQueue::QUEUE_NAME ? SodaScsWisskiUpdateQueue::LOG_FILE : '/tmp/scs-demo-queue.log',
+          '@log' => $queueName === SodaScsWisskiUpdateQueue::QUEUE_NAME ? SodaScsWisskiUpdateQueue::LOG_FILE : SodaScsDemoQueueRunner::LOG_FILE_GLOB,
         ]));
         continue;
       }

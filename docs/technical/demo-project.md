@@ -85,6 +85,8 @@ The page refreshes the status every 5 seconds while a version is building and re
 docker exec manager--drupal--app tail -f /tmp/scs-demo-queue.log
 ```
 
+That file belongs to `www-data` (web requests and the queue timer). A run that another user starts, for example drush as root, writes `/tmp/scs-demo-queue-{user}.log` instead (`/tmp/scs-demo-queue-root.log`): `/tmp` is sticky and `fs.protected_regular` keeps even root from opening another user's file there, so a shared file would stop the run before it starts. A uid without a passwd entry (`docker exec -u 1234 …`) writes `/tmp/scs-demo-queue-1234.log`. The error message names the file that was used; the system check's stale-queue warning points to `/tmp/scs-demo-queue*.log`.
+
 The same run from a shell:
 
 ```bash
