@@ -47,6 +47,13 @@ class SodaScsDemoQueueWorkerTest extends UnitTestCase {
   private array $createdSteps = [];
 
   /**
+   * Names of the locks the worker acquired, in order.
+   *
+   * @var list<string>
+   */
+  private array $acquiredLocks = [];
+
+  /**
    * Operation statuses written with updateOperation(), in order.
    *
    * @var list<string>
@@ -89,6 +96,7 @@ class SodaScsDemoQueueWorkerTest extends UnitTestCase {
     $container->set('string_translation', $this->getStringTranslationStub());
     \Drupal::setContainer($container);
 
+    $this->acquiredLocks = [];
     $this->createdSteps = [];
     $this->operationStatuses = [];
     $this->recordedSteps = [];
@@ -349,6 +357,17 @@ class SodaScsDemoQueueWorkerTest extends UnitTestCase {
   }
 
   /**
+   * A project job takes the lock the project delete form takes.
+   *
+   * @covers ::processItem
+   */
+  public function testProjectJobTakesTheProjectLockOfTheDeleteForm(): void {
+    $this->processProvisionJob();
+
+    $this->assertSame([SodaScsDemoManager::PROJECT_LOCK_PREFIX . '5'], $this->acquiredLocks);
+  }
+
+  /**
    * The project is expected to be marked as failed exactly once.
    */
   private function expectProjectFailed(): void {
@@ -371,7 +390,10 @@ class SodaScsDemoQueueWorkerTest extends UnitTestCase {
       ['soda_scs_demo_template', $templateStorage],
     ]);
     $lock = $this->createMock(LockBackendInterface::class);
-    $lock->method('acquire')->willReturn(TRUE);
+    $lock->method('acquire')->willReturnCallback(function (string $name): bool {
+      $this->acquiredLocks[] = $name;
+      return TRUE;
+    });
     $time = $this->createMock(TimeInterface::class);
     $time->method('getCurrentTime')->willReturn(self::NOW);
 
