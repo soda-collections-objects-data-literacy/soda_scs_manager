@@ -22,6 +22,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   warning in the log names the demo template and the demo project. **Add the
   account to the source WissKI and build a new template version.**
   Related: [#3638487](https://www.drupal.org/project/soda_scs_manager/issues/3638487).
+- The demo project of a new user gets its WissKI again. The demo was started
+  before the sign-in had stored the user's Nextcloud credentials, so the
+  background job stopped with "Nextcloud account … is not connected". The
+  credentials are now stored at sign-in, before the demo is queued, and only
+  when a demo will be queued. Demos are created only for sign-ins through
+  OpenID Connect (Keycloak).
+  Related: [#3638489](https://www.drupal.org/project/soda_scs_manager/issues/3638489).
 
 ## [4.4.0] - 2026-11-12
 

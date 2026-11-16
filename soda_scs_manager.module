@@ -1643,6 +1643,29 @@ function soda_scs_manager_form_openid_connect_accounts_form_alter(&$form, &$form
 }
 
 /**
+ * Implements hook_openid_connect_post_authorize().
+ *
+ * Approved platform users always get one demo. This runs after
+ * hook_user_login(), once openid_connect has put the access token into the
+ * session: the demo service needs it to store the Nextcloud app password the
+ * background demo job uses. The shell exists before the dashboard renders, so
+ * onboarding can point at it while the apps fill. Without an access token in
+ * the session (linking an existing account) no demo is queued.
+ */
+function soda_scs_manager_openid_connect_post_authorize(UserInterface $account, array $context) {
+  // Linking an existing account to Keycloak fires this hook too but saves no
+  // access token, so the demo could not get Nextcloud credentials there.
+  if (empty(\Drupal::service('openid_connect.session')->retrieveAccessToken(FALSE))) {
+    return;
+  }
+  if (\Drupal::service('soda_scs_manager.demo.automatic')->ensureFor($account)) {
+    \Drupal::service('cache_tags.invalidator')->invalidateTags([
+      _soda_scs_manager_user_demo_cache_tag((int) $account->id()),
+    ]);
+  }
+}
+
+/**
  * Implements hook_user_login().
  *
  * Syncs preferred interface language and timezone from Keycloak registration data (and
@@ -1653,14 +1676,6 @@ function soda_scs_manager_form_openid_connect_accounts_form_alter(&$form, &$form
  * Login redirects are handled by SodaScsKeycloakLoginRedirectController.
  */
 function soda_scs_manager_user_login(UserInterface $account) {
-  // Approved platform users always get one demo. The shell exists before the
-  // dashboard renders, so onboarding can point at it while the apps fill.
-  if (\Drupal::service('soda_scs_manager.demo.automatic')->ensureFor($account)) {
-    \Drupal::service('cache_tags.invalidator')->invalidateTags([
-      _soda_scs_manager_user_demo_cache_tag((int) $account->id()),
-    ]);
-  }
-
   _soda_scs_manager_propagate_keycloak_user_data_to_fields($account);
   \Drupal::service('soda_scs_manager.nextcloud.helpers')
     ->invalidateMismatchedStoredCredentials($account);

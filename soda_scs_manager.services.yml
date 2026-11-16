@@ -121,6 +121,7 @@ services:
     arguments:
       $demoManager: '@soda_scs_manager.demo.manager'
       $logger: '@logger.channel.soda_scs_manager'
+      $nextcloudHelpers: '@soda_scs_manager.nextcloud.helpers'
   soda_scs_manager.demo.queue_runner:
     class: Drupal\soda_scs_manager\Demo\SodaScsDemoQueueRunner
   soda_scs_manager.demo.status_builder:
