@@ -478,6 +478,45 @@ class SodaScsWisskiStackActions implements SodaScsStackActionsInterface {
   }
 
   /**
+   * Builds the failure result of deleteStack() from a failed component delete.
+   *
+   * The failed component stays in the stack and the stack is not deleted, so
+   * nothing is left behind without a stack and the delete can be repeated.
+   *
+   * @param \Drupal\soda_scs_manager\Entity\SodaScsStackInterface $stack
+   *   The stack that is being deleted.
+   * @param \Drupal\Core\StringTranslation\TranslatableMarkup $message
+   *   The message for the user, naming the part that failed.
+   * @param array $componentResult
+   *   The result of the component delete that failed.
+   * @param array $data
+   *   The component results collected so far.
+   *
+   * @return array
+   *   The deleteStack() result with success FALSE and a non-empty error.
+   */
+  private function buildDeleteStackFailure(SodaScsStackInterface $stack, TranslatableMarkup $message, array $componentResult, array $data): array {
+    $error = $componentResult['error'] ?? NULL;
+    if ($error instanceof \Throwable) {
+      $error = $error->getMessage();
+    }
+    if (!is_string($error) || $error === '') {
+      $error = (string) ($componentResult['message'] ?? 'The component delete failed without error details.');
+    }
+    $this->loggerFactory->get('soda_scs_manager')->error('Kept WissKI stack @stack: @message @error', [
+      '@error'   => $error,
+      '@message' => $message->getUntranslatedString(),
+      '@stack'   => $stack->id(),
+    ]);
+    return [
+      'message' => $message,
+      'data'    => $data,
+      'success' => FALSE,
+      'error'   => $error,
+    ];
+  }
+
+  /**
    * Create a snapshot of a WissKI stack.
    *
    * @param \Drupal\soda_scs_manager\Entity\SodaScsStackInterface $stack
@@ -606,6 +645,13 @@ class SodaScsWisskiStackActions implements SodaScsStackActionsInterface {
       // Delete SQL component.
       if ($sqlComponent) {
         $deleteDatabaseResult = $this->sodaScsSqlComponentActions->deleteComponent($sqlComponent);
+        if (empty($deleteDatabaseResult['success'])) {
+          return $this->buildDeleteStackFailure($stack, $this->t('Could not delete the database of the WissKI stack.'), $deleteDatabaseResult, [
+            'deleteDatabaseResult' => $deleteDatabaseResult,
+            'deleteWisskiResult' => NULL,
+            'deleteTriplestoreResult' => NULL,
+          ]);
+        }
         // Remove included component from stack.
         $this->sodaScsStackHelpers->removeIncludedComponentValue($stack, $sqlComponent);
       }
@@ -642,6 +688,13 @@ class SodaScsWisskiStackActions implements SodaScsStackActionsInterface {
       if ($triplestoreComponent) {
         // Delete SQL component.
         $deletetriplestoreResult = $this->sodaScsTriplestoreComponentActions->deleteComponent($triplestoreComponent);
+        if (empty($deletetriplestoreResult['success'])) {
+          return $this->buildDeleteStackFailure($stack, $this->t('Could not delete the triplestore of the WissKI stack.'), $deletetriplestoreResult, [
+            'deleteDatabaseResult' => $deleteDatabaseResult,
+            'deleteWisskiResult' => NULL,
+            'deleteTriplestoreResult' => $deletetriplestoreResult,
+          ]);
+        }
         // Remove the includedComponent from the stack field includedComponents.
         $this->sodaScsStackHelpers->removeIncludedComponentValue($stack, $triplestoreComponent);
       }
@@ -678,6 +731,13 @@ class SodaScsWisskiStackActions implements SodaScsStackActionsInterface {
       if ($wisskiComponent) {
         // Delete WissKI component.
         $deleteWisskiResult = $this->sodaScsWisskiComponentActions->deleteComponent($wisskiComponent);
+        if (empty($deleteWisskiResult['success'])) {
+          return $this->buildDeleteStackFailure($stack, $this->t('Could not delete the WissKI instance of the WissKI stack.'), $deleteWisskiResult, [
+            'deleteDatabaseResult' => $deleteDatabaseResult,
+            'deleteWisskiResult' => $deleteWisskiResult,
+            'deleteTriplestoreResult' => $deletetriplestoreResult,
+          ]);
+        }
         $this->sodaScsStackHelpers->removeIncludedComponentValue($stack, $wisskiComponent);
         // Remove the includedComponent from the stack field includedComponents.
       }

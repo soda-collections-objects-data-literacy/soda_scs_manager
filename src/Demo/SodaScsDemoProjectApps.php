@@ -33,6 +33,29 @@ class SodaScsDemoProjectApps {
   ) {}
 
   /**
+   * The WissKI stacks the demo created for a project.
+   *
+   * A failed run can leave more than one. Only stacks of the project owner
+   * that belong to this project alone count: a WissKI that a member or the
+   * owner added to the demo project from elsewhere is not part of the demo.
+   *
+   * @return \Drupal\soda_scs_manager\Entity\SodaScsStackInterface[]
+   *   The stacks, ordered by id.
+   */
+  public function demoWisskiStacks(SodaScsProjectInterface $project): array {
+    $ownerId = (int) $project->getOwnerId();
+    if ($ownerId <= 0) {
+      return [];
+    }
+    $projectIds = [(int) $project->id()];
+    return array_values(array_filter(
+      $this->projectStacks($project, self::WISSKI_STACK_BUNDLE),
+      static fn (SodaScsStackInterface $stack): bool => (int) $stack->getOwnerId() === $ownerId
+        && array_map('intval', array_column($stack->get('partOfProjects')->getValue(), 'target_id')) === $projectIds,
+    ));
+  }
+
+  /**
    * The Jupyter stack of a project, if any.
    */
   public function jupyterStack(SodaScsProjectInterface $project): ?SodaScsStackInterface {

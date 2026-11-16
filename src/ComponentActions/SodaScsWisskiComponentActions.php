@@ -1995,6 +1995,8 @@ class SodaScsWisskiComponentActions implements SodaScsComponentActionsInterface 
             'portainerResponse' => $portainerDeleteResponse,
             'keycloakClientResponse' => $keycloakMakeGetAllClientResponse,
           ],
+          'success' => FALSE,
+          'error' => $keycloakMakeGetAllClientResponse['error'] ?? NULL,
         ];
       }
       $keycloakGetAllClientResponseContents = json_decode($keycloakMakeGetAllClientResponse['data']['keycloakResponse']->getBody()->getContents(), TRUE);

@@ -25,6 +25,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- Deleting a demo project now also deletes the WissKI of the demo with its
+  database and triplestore. Before, they kept running, and the user's next
+  demo got a WissKI with a "-2" machine name. A WissKI that a member, or the
+  owner from another project, added to the demo project stays. If the demo
+  WissKI cannot be deleted, the project and its members stay as they were.
+  Related: [#3638514](https://www.drupal.org/project/soda_scs_manager/issues/3638514).
+- Deleting a WissKI stack keeps the stack when its database, triplestore or
+  WissKI instance cannot be deleted, and says which part failed. Before, the
+  stack was deleted anyway and the part that failed was left behind without
+  it.
+  Related: [#3638514](https://www.drupal.org/project/soda_scs_manager/issues/3638514).
 - Resetting a demo whose WissKI was left incomplete by a failed setup now
   fails at once and says to delete the WissKI in the project first, instead
   of waiting an hour for an installation that never runs.

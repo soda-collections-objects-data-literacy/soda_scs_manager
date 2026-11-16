@@ -73,6 +73,8 @@ Every step is idempotent, so a failed job can simply be reset. Failures set `dem
 
 Template builds share one lock (`soda_scs_manager.demo.template_build`); each project has its own lock. A busy lock requeues the item after 60 seconds.
 
+Deleting a demo project (`SodaScsProjectDeleteForm`) first deletes the WissKI stacks of the demo (`SodaScsDemoProjectApps::demoWisskiStacks()`: stacks of the project owner whose only project is this one; a failed run can leave more than one) through `SodaScsWisskiStackActions::deleteStack()`, with its database and triplestore. A WissKI stack of another user, or one that is part of another project too, stays. `deleteStack()` keeps the stack and returns `success` FALSE when one of its components cannot be deleted. A failed lookup or deletion stops there: members, JupyterHub, the Team Folder, the Keycloak group and the project stay; members are detached only after the WissKI is gone. Regular projects keep their WissKI stacks.
+
 ## Queue runner
 
 Demo jobs take minutes and do not run during Drupal cron. Building a version, creating a demo and resetting a demo spawn a background loop inside `manager--drupal--app` and return at once. The loop runs `drush queue:run soda_scs_manager_demo` and, while items are only delayed (a new WissKI is still installing), sleeps and tries again for up to two hours. A job that is already waiting is started with **Start queued jobs** on the demo admin page.

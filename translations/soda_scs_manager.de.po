@@ -4766,6 +4766,26 @@ msgstr "Die Demo-Vorlage existiert nicht mehr."
 msgid "The WissKI of this demo is incomplete. Delete it in the project, then reset the demo."
 msgstr "Das WissKI dieser Demo ist unvollständig. Löschen Sie es im Projekt und setzen Sie die Demo dann zurück."
 
+#: src/Form/SodaScsProjectDeleteForm.php
+msgid "Could not delete the WissKI of demo project @project. The project was not deleted."
+msgstr "Das WissKI des Demo-Projekts @project konnte nicht gelöscht werden. Das Projekt wurde nicht gelöscht."
+
+#: src/Form/SodaScsProjectDeleteForm.php
+msgid "@description The WissKI of the demo, with its database and triplestore, is deleted as well."
+msgstr "@description Das WissKI der Demo wird mit seiner Datenbank und seinem Triplestore ebenfalls gelöscht."
+
+#: src/StackActions/SodaScsWisskiStackActions.php
+msgid "Could not delete the database of the WissKI stack."
+msgstr "Die Datenbank des WissKI-Stacks konnte nicht gelöscht werden."
+
+#: src/StackActions/SodaScsWisskiStackActions.php
+msgid "Could not delete the triplestore of the WissKI stack."
+msgstr "Der Triplestore des WissKI-Stacks konnte nicht gelöscht werden."
+
+#: src/StackActions/SodaScsWisskiStackActions.php
+msgid "Could not delete the WissKI instance of the WissKI stack."
+msgstr "Die WissKI-Instanz des WissKI-Stacks konnte nicht gelöscht werden."
+
 #: src/Demo/SodaScsDemoStatusBuilder.php
 msgid "Queued since @time"
 msgstr "In der Warteschlange seit @time"

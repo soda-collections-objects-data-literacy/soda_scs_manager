@@ -9,7 +9,10 @@ use Drupal\Core\Entity\ContentEntityDeleteForm;
 use Drupal\Core\Entity\EntityRepositoryInterface;
 use Drupal\Core\Entity\EntityTypeBundleInfoInterface;
 use Drupal\Core\Form\FormStateInterface;
+use Drupal\Core\StringTranslation\TranslatableMarkup;
 use Drupal\Core\Url;
+use Drupal\soda_scs_manager\Demo\SodaScsDemoManager;
+use Drupal\soda_scs_manager\Demo\SodaScsDemoProjectApps;
 use Drupal\soda_scs_manager\Entity\SodaScsProjectInterface;
 use Drupal\soda_scs_manager\Helpers\SodaScsProjectApplicationHelpers;
 use Drupal\soda_scs_manager\Helpers\SodaScsProjectHelpers;
@@ -65,6 +68,12 @@ class SodaScsProjectDeleteForm extends ContentEntityDeleteForm {
    *   Removes the project's JupyterHub (server, hub user, volume, mount).
    * @param \Drupal\soda_scs_manager\Helpers\SodaScsProjectMembershipHelpers $projectMembershipHelpers
    *   Removes listed members and their service access.
+   * @param \Drupal\soda_scs_manager\Demo\SodaScsDemoManager $demoManager
+   *   Tells demo projects apart from regular ones.
+   * @param \Drupal\soda_scs_manager\Demo\SodaScsDemoProjectApps $demoProjectApps
+   *   Finds the WissKI stacks of a demo project.
+   * @param \Drupal\soda_scs_manager\StackActions\SodaScsStackActionsInterface $wisskiStackActions
+   *   Deletes a WissKI stack with its database and triplestore.
    */
   public function __construct(
     EntityRepositoryInterface $entity_repository,
@@ -76,6 +85,9 @@ class SodaScsProjectDeleteForm extends ContentEntityDeleteForm {
     protected NextcloudProjectMountManager $projectMountManager,
     protected SodaScsStackActionsInterface $jupyterStackActions,
     protected SodaScsProjectMembershipHelpers $projectMembershipHelpers,
+    protected SodaScsDemoManager $demoManager,
+    protected SodaScsDemoProjectApps $demoProjectApps,
+    protected SodaScsStackActionsInterface $wisskiStackActions,
   ) {
     parent::__construct($entity_repository, $entity_type_bundle_info, $time);
     $this->entityRepository = $entity_repository;
@@ -100,6 +112,9 @@ class SodaScsProjectDeleteForm extends ContentEntityDeleteForm {
       $container->get('soda_scs_manager.nextcloud_project_mount.manager'),
       $container->get('soda_scs_manager.jupyter_stack.actions'),
       $container->get('soda_scs_manager.project_membership.helpers'),
+      $container->get('soda_scs_manager.demo.manager'),
+      $container->get('soda_scs_manager.demo.project_apps'),
+      $container->get('soda_scs_manager.wisski_stack.actions'),
     );
   }
 
@@ -132,19 +147,12 @@ class SodaScsProjectDeleteForm extends ContentEntityDeleteForm {
     if (!$project instanceof SodaScsProjectInterface) {
       return parent::getDescription();
     }
-    $names = $this->otherMemberNames($project);
-    if ($names === []) {
-      return parent::getDescription();
+    $description = $this->memberDescription($project) ?? parent::getDescription();
+    if (!$this->demoManager->isDemoProject($project)) {
+      return $description;
     }
-    if ($this->getRequest()->query->get('remove_members') === '1') {
-      return $this->t('This removes @members from “@name” and then deletes the project. This action cannot be undone.', [
-        '@members' => implode(', ', $names),
-        '@name' => $project->label(),
-      ]);
-    }
-    return $this->t('“@name” still has members (@members). Remove them before you can delete the project.', [
-      '@members' => implode(', ', $names),
-      '@name' => $project->label(),
+    return $this->t('@description The WissKI of the demo, with its database and triplestore, is deleted as well.', [
+      '@description' => $description,
     ]);
   }
 
@@ -197,6 +205,14 @@ class SodaScsProjectDeleteForm extends ContentEntityDeleteForm {
     // Construct properties.
     /** @var \Drupal\soda_scs_manager\Entity\SodaScsProject $project */
     $project = $this->entity;
+    // Members are detached only after the demo WissKI is gone: a failed
+    // WissKI delete must leave the project as it was.
+    if (!$this->membersMayBeRemoved($project, $form_state)) {
+      return;
+    }
+    if (!$this->deleteDemoWisskiStacks($project, $form_state)) {
+      return;
+    }
     if (!$this->detachMembersBeforeDelete($project, $form_state)) {
       return;
     }
@@ -245,29 +261,60 @@ class SodaScsProjectDeleteForm extends ContentEntityDeleteForm {
   }
 
   /**
-   * Drops listed members when that was confirmed. The owner stays.
+   * Deletes the WissKI stacks the demo created, with database and triplestore.
    *
-   * Plain deletion is refused while other members remain, so their access is
-   * not left behind on a deleted project.
+   * The demo WissKI belongs to the demo alone; left behind, it keeps running
+   * and the next demo of the user gets a "-2" machine name. A failed run can
+   * leave a second stack, so all of them go. Regular projects keep their
+   * WissKI stacks. Any failure stops the project deletion before anything
+   * else is removed.
+   *
+   * @return bool
+   *   FALSE when deletion must stop.
+   */
+  private function deleteDemoWisskiStacks(SodaScsProjectInterface $project, FormStateInterface $form_state): bool {
+    if (!$this->demoManager->isDemoProject($project)) {
+      return TRUE;
+    }
+    try {
+      $stacks = $this->demoProjectApps->demoWisskiStacks($project);
+    }
+    catch (\Throwable $e) {
+      $this->logger('soda_scs_manager')->error('Could not look up the WissKI stacks of demo project @project: @message', [
+        '@message' => $e->getMessage(),
+        '@project' => $project->id(),
+      ]);
+      $this->messenger()->addError($this->t('Could not delete the WissKI of demo project @project. The project was not deleted.', ['@project' => $project->label()]));
+      $form_state->setRebuild();
+      return FALSE;
+    }
+
+    foreach ($stacks as $stack) {
+      $result = $this->wisskiStackActions->deleteStack($stack);
+      if (empty($result['success'])) {
+        $this->logger('soda_scs_manager')->error('Could not delete WissKI stack @stack of demo project @project: @message', [
+          '@message' => (string) ($result['error'] ?? $result['message'] ?? ''),
+          '@project' => $project->id(),
+          '@stack' => $stack->id(),
+        ]);
+        $this->messenger()->addError($this->t('Could not delete the WissKI of demo project @project. The project was not deleted.', ['@project' => $project->label()]));
+        $form_state->setRebuild();
+        return FALSE;
+      }
+    }
+    return TRUE;
+  }
+
+  /**
+   * Drops listed members; membersMayBeRemoved() checked the confirmation.
+   *
+   * The owner stays.
    *
    * @return bool
    *   FALSE when deletion must stop.
    */
   private function detachMembersBeforeDelete(SodaScsProjectInterface $project, FormStateInterface $form_state): bool {
-    $members = $this->otherMembers($project);
-    if ($members === []) {
-      return TRUE;
-    }
-    if ((string) $form_state->getValue('remove_members') !== '1') {
-      $this->messenger()->addError($this->t('“@name” still has members (@members). Remove them before you can delete the project.', [
-        '@members' => implode(', ', $this->otherMemberNames($project)),
-        '@name' => $project->label(),
-      ]));
-      $form_state->setRebuild();
-      return FALSE;
-    }
-
-    foreach ($members as $member) {
+    foreach ($this->otherMembers($project) as $member) {
       $detached = $this->projectMembershipHelpers->detachMember($project, $member);
       if (!$detached->success) {
         $this->messenger()->addError($detached->message);
@@ -276,6 +323,47 @@ class SodaScsProjectDeleteForm extends ContentEntityDeleteForm {
       }
     }
     return TRUE;
+  }
+
+  /**
+   * The confirmation text about listed members, if there are any.
+   */
+  private function memberDescription(SodaScsProjectInterface $project): ?TranslatableMarkup {
+    $names = $this->otherMemberNames($project);
+    if ($names === []) {
+      return NULL;
+    }
+    if ($this->getRequest()->query->get('remove_members') === '1') {
+      return $this->t('This removes @members from “@name” and then deletes the project. This action cannot be undone.', [
+        '@members' => implode(', ', $names),
+        '@name' => $project->label(),
+      ]);
+    }
+    return $this->t('“@name” still has members (@members). Remove them before you can delete the project.', [
+      '@members' => implode(', ', $names),
+      '@name' => $project->label(),
+    ]);
+  }
+
+  /**
+   * Whether the deletion may go on with the listed members.
+   *
+   * Plain deletion is refused while other members remain, so their access is
+   * not left behind on a deleted project; "remove members and delete" goes on.
+   *
+   * @return bool
+   *   FALSE when deletion must stop.
+   */
+  private function membersMayBeRemoved(SodaScsProjectInterface $project, FormStateInterface $form_state): bool {
+    if ($this->otherMembers($project) === [] || (string) $form_state->getValue('remove_members') === '1') {
+      return TRUE;
+    }
+    $this->messenger()->addError($this->t('“@name” still has members (@members). Remove them before you can delete the project.', [
+      '@members' => implode(', ', $this->otherMemberNames($project)),
+      '@name' => $project->label(),
+    ]));
+    $form_state->setRebuild();
+    return FALSE;
   }
 
   /**
