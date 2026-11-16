@@ -25,6 +25,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- Resetting a demo whose WissKI was left incomplete by a failed setup now
+  fails at once and says to delete the WissKI in the project first, instead
+  of waiting an hour for an installation that never runs.
+  Related: [#3638496](https://www.drupal.org/project/soda_scs_manager/issues/3638496).
 - A demo job that waits for the WissKI installation no longer writes the same
   steps again on every attempt. A demo whose template version was deleted
   during a reset is now marked as failed instead of showing as busy forever.

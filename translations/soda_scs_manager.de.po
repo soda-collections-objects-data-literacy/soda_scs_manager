@@ -4763,6 +4763,10 @@ msgid "The demo template no longer exists."
 msgstr "Die Demo-Vorlage existiert nicht mehr."
 
 #: src/Demo/SodaScsDemoStatusBuilder.php
+msgid "The WissKI of this demo is incomplete. Delete it in the project, then reset the demo."
+msgstr "Das WissKI dieser Demo ist unvollständig. Löschen Sie es im Projekt und setzen Sie die Demo dann zurück."
+
+#: src/Demo/SodaScsDemoStatusBuilder.php
 msgid "Queued since @time"
 msgstr "In der Warteschlange seit @time"
 

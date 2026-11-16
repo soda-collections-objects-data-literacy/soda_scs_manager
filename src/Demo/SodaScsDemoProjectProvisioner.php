@@ -75,6 +75,8 @@ class SodaScsDemoProjectProvisioner {
    *
    * @throws \Drupal\soda_scs_manager\Demo\SodaScsDemoNotReadyException
    *   While a new WissKI is still installing; nothing was overwritten yet.
+   * @throws \Drupal\soda_scs_manager\Demo\SodaScsDemoIncompleteAppException
+   *   When the project's WissKI stack has no WissKI component.
    * @throws \Drupal\soda_scs_manager\Demo\SodaScsDemoException
    *   When a step fails.
    */
@@ -214,11 +216,18 @@ class SodaScsDemoProjectProvisioner {
   /**
    * Creates the WissKI stack of the demo project unless it exists.
    *
+   * A stack without a WissKI component is what a failed creation leaves
+   * behind: no installation runs for it, so waiting would only time out.
+   *
    * @throws \Drupal\soda_scs_manager\Demo\SodaScsDemoException
+   * @throws \Drupal\soda_scs_manager\Demo\SodaScsDemoIncompleteAppException
    */
   protected function ensureWisskiStack(SodaScsProjectInterface $project, string $userName): SodaScsStackInterface {
     $existing = $this->projectApps->wisskiStack($project);
     if ($existing !== NULL) {
+      if ($this->projectApps->stackComponent($existing, SodaScsDemoProjectApps::WISSKI_COMPONENT_BUNDLE) === NULL) {
+        throw new SodaScsDemoIncompleteAppException(sprintf('WissKI stack %s of demo project %s has no WissKI component.', $existing->id(), $project->id()));
+      }
       return $existing;
     }
     $stack = $this->newStack(

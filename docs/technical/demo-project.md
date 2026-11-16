@@ -61,7 +61,7 @@ Sign-in of an `scs_user` without a demo calls the same creation as `POST /soda-s
 
 The queue worker (`soda_scs_manager_demo`) then:
 
-1. Creates missing demo apps (WissKI, Jupyter, WebProtégé). A new WissKI needs a few minutes to install; until its install marker exists the job is requeued (up to one hour) before any data is overwritten.
+1. Creates missing demo apps (WissKI, Jupyter, WebProtégé). A new WissKI needs a few minutes to install; until its install marker exists the job is requeued (up to one hour) before any data is overwritten. A WissKI stack without a WissKI component (left by a failed `createStack()`) is not waited for: the job fails at once with `SodaScsDemoStatusBuilder::REASON_WISSKI_INCOMPLETE`, and the user deletes that stack before resetting again. Deleting it removes only the stack entity: the SQL, triplestore and possibly WissKI components the failed creation made were never attached to the stack, so they stay in the project. `createStack()` does not roll them back yet; that needs its own issue.
 2. Copies the Team Folder (purge, then copy through the rclone mount).
 3. Stops the project Jupyter server and replaces its home volume.
 4. Imports the WebProtégé ontology. On a reset the ontology project is trashed and created empty first, then every document of the zip is posted as axioms.

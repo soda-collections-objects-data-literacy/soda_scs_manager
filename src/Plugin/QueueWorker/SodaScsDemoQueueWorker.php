@@ -13,6 +13,7 @@ use Drupal\Core\Queue\Attribute\QueueWorker;
 use Drupal\Core\Queue\DelayedRequeueException;
 use Drupal\Core\Queue\QueueWorkerBase;
 use Drupal\Core\StringTranslation\TranslatableMarkup;
+use Drupal\soda_scs_manager\Demo\SodaScsDemoIncompleteAppException;
 use Drupal\soda_scs_manager\Demo\SodaScsDemoManager;
 use Drupal\soda_scs_manager\Demo\SodaScsDemoNotReadyException;
 use Drupal\soda_scs_manager\Demo\SodaScsDemoProjectProvisioner;
@@ -158,6 +159,9 @@ class SodaScsDemoQueueWorker extends QueueWorkerBase implements ContainerFactory
         throw new DelayedRequeueException(self::RETRY_DELAY_SECONDS, $e->getMessage(), 0, $e);
       }
       $this->failProject($project, $operationId, $e, SodaScsDemoStatusBuilder::REASON_TIMEOUT);
+    }
+    catch (SodaScsDemoIncompleteAppException $e) {
+      $this->failProject($project, $operationId, $e, SodaScsDemoStatusBuilder::REASON_WISSKI_INCOMPLETE);
     }
     catch (\Throwable $e) {
       $this->failProject($project, $operationId, $e);

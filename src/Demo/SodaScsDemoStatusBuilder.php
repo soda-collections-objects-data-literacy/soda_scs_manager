@@ -72,6 +72,11 @@ class SodaScsDemoStatusBuilder {
   public const REASON_TEMPLATE_GONE = 'The demo template no longer exists.';
 
   /**
+   * Stored failure reason: the project's WissKI stack has no WissKI.
+   */
+  public const REASON_WISSKI_INCOMPLETE = 'The WissKI of this demo is incomplete. Delete it in the project, then reset the demo.';
+
+  /**
    * Constructs the builder.
    */
   public function __construct(
@@ -330,6 +335,7 @@ class SodaScsDemoStatusBuilder {
     return (string) match (TRUE) {
       $lastStep === self::REASON_TIMEOUT => $this->t('The WissKI installation did not finish within an hour.'),
       $lastStep === self::REASON_TEMPLATE_GONE => $this->t('The demo template no longer exists.'),
+      $lastStep === self::REASON_WISSKI_INCOMPLETE => $this->t('The WissKI of this demo is incomplete. Delete it in the project, then reset the demo.'),
       $this->stepSource($lastStep) !== NULL => $this->t('Setting up the demo failed at the step: @step', ['@step' => $this->stepLabel($lastStep)]),
       default => $lastStep,
     };
