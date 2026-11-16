@@ -26,6 +26,8 @@ use Drupal\soda_scs_manager\ServiceKeyActions\SodaScsServiceKeyActionsInterface;
 use Drupal\Tests\soda_scs_manager\Unit\SodaScsCreatePathTestTrait;
 use Drupal\Tests\UnitTestCase;
 use Drupal\user\UserInterface;
+use GuzzleHttp\Exception\ServerException;
+use GuzzleHttp\Psr7\Request;
 use GuzzleHttp\Psr7\Response;
 use Prophecy\Argument;
 use Prophecy\PhpUnit\ProphecyTrait;
@@ -407,6 +409,253 @@ class SodaScsTriplestoreComponentActionsCreateTest extends UnitTestCase {
   }
 
   /**
+   * The grants of the deleted repository leave the list; the rest is a list.
+   *
+   * Issue 3638647: array_filter() left gaps in the keys, which made OpenGDB
+   * receive a JSON object instead of a list.
+   *
+   * @covers ::deleteComponent
+   */
+  public function testDeleteComponentSendsRemainingGrantsAsJsonList(): void {
+    $this->stubRepositoryDeleted();
+    $this->stubUserGrants(['ROLE_USER', 'READ_REPO_ts-foo', 'WRITE_REPO_ts-foo', 'READ_REPO_ts-b', 'WRITE_REPO_ts-b']);
+    $sent = $this->captureUserUpdate(['success' => TRUE, 'statusCode' => 200]);
+    $this->openGdb->buildDeleteRequest(Argument::that(fn(array $params) => ($params['type'] ?? '') === 'user'))->shouldNotBeCalled();
+    $this->keycloakHelpers->deleteComponentAccessGroups('ts-foo')->willReturn([])->shouldBeCalledOnce();
+    $component = $this->deletableComponent();
+    $component->delete()->shouldBeCalledOnce();
+
+    $result = $this->actions->deleteComponent($component->reveal());
+
+    $this->assertTrue($result['success']);
+    $this->assertSame('alice', $sent['params']['routeParams']['username']);
+    $this->assertSame('user', $sent['params']['type']);
+    $authorities = $sent['params']['body']['grantedAuthorities'];
+    $this->assertSame([0, 1, 2], array_keys($authorities));
+    $this->assertSame('["ROLE_USER","READ_REPO_ts-b","WRITE_REPO_ts-b"]', json_encode($authorities));
+  }
+
+  /**
+   * The last repository removed leaves ROLE_USER; the user is never deleted.
+   *
+   * @covers ::deleteComponent
+   */
+  public function testDeleteComponentKeepsUserWithRoleUserWhenLastRepositoryIsRemoved(): void {
+    $this->stubRepositoryDeleted();
+    $this->stubUserGrants(['ROLE_USER', 'READ_REPO_ts-foo', 'WRITE_REPO_ts-foo']);
+    $sent = $this->captureUserUpdate(['success' => TRUE, 'statusCode' => 200]);
+    $this->openGdb->buildDeleteRequest(Argument::that(fn(array $params) => ($params['type'] ?? '') === 'user'))->shouldNotBeCalled();
+    $this->keycloakHelpers->deleteComponentAccessGroups('ts-foo')->willReturn([])->shouldBeCalledOnce();
+    $component = $this->deletableComponent();
+    $component->delete()->shouldBeCalledOnce();
+
+    $result = $this->actions->deleteComponent($component->reveal());
+
+    $this->assertTrue($result['success']);
+    $this->assertSame('["ROLE_USER"]', json_encode($sent['params']['body']['grantedAuthorities']));
+    $this->assertNull($result['data']['openGdbDeleteUserResponse']);
+  }
+
+  /**
+   * A user without a grant of this repository is not updated.
+   *
+   * @covers ::deleteComponent
+   */
+  public function testDeleteComponentSendsNoUpdateWhenUserHasNoGrantOfRepository(): void {
+    $this->stubRepositoryDeleted();
+    $this->stubUserGrants(['ROLE_USER', 'READ_REPO_ts-b', 'WRITE_REPO_ts-b']);
+    $this->openGdb->buildUpdateRequest(Argument::cetera())->shouldNotBeCalled();
+    $this->openGdb->buildDeleteRequest(Argument::that(fn(array $params) => ($params['type'] ?? '') === 'user'))->shouldNotBeCalled();
+    $this->keycloakHelpers->deleteComponentAccessGroups('ts-foo')->willReturn([])->shouldBeCalledOnce();
+    $component = $this->deletableComponent();
+    $component->delete()->shouldBeCalledOnce();
+
+    $result = $this->actions->deleteComponent($component->reveal());
+
+    $this->assertTrue($result['success']);
+    $this->assertNull($result['data']['openGdbUpdateUserResponse']);
+  }
+
+  /**
+   * A grant update that OpenGDB refuses keeps the component and the groups.
+   *
+   * @covers ::deleteComponent
+   */
+  public function testDeleteComponentKeepsComponentWhenGrantUpdateIsRefused(): void {
+    $this->stubRepositoryDeleted();
+    $this->stubUserGrants(['ROLE_USER', 'READ_REPO_ts-foo', 'WRITE_REPO_ts-foo']);
+    $this->captureUserUpdate([
+      'success' => FALSE,
+      'error' => 'Server error.',
+      'statusCode' => 500,
+    ]);
+    $this->keycloakHelpers->deleteComponentAccessGroups(Argument::any())->shouldNotBeCalled();
+    $component = $this->deletableComponent();
+    $component->delete()->shouldNotBeCalled();
+
+    $result = $this->actions->deleteComponent($component->reveal());
+
+    $this->assertFalse($result['success']);
+    $this->assertStringContainsString('OpenGDB answered HTTP 500: Server error.', $result['error']);
+    $this->assertFalse($result['data']['openGdbUpdateUserResponse']['success']);
+  }
+
+  /**
+   * A grant update that throws keeps the component and the groups.
+   *
+   * @covers ::deleteComponent
+   */
+  public function testDeleteComponentKeepsComponentWhenGrantUpdateThrows(): void {
+    $this->stubRepositoryDeleted();
+    $this->stubUserGrants(['ROLE_USER', 'READ_REPO_ts-foo']);
+    $this->openGdb->buildUpdateRequest(Argument::that(fn(array $params) => ($params['type'] ?? '') === 'user'))->willReturn(['request' => 'update-user']);
+    $this->openGdb->makeRequest(['request' => 'update-user'])->willThrow(new \RuntimeException('Connection refused.'));
+    $this->keycloakHelpers->deleteComponentAccessGroups(Argument::any())->shouldNotBeCalled();
+    $component = $this->deletableComponent();
+    $component->delete()->shouldNotBeCalled();
+
+    $result = $this->actions->deleteComponent($component->reveal());
+
+    $this->assertFalse($result['success']);
+    $this->assertSame('Connection refused.', $result['error']);
+  }
+
+  /**
+   * A missing user has no grants to remove; the delete goes on.
+   *
+   * The user-404 answer of the request layer carries no statusCode, only the
+   * exception's code.
+   *
+   * @covers ::deleteComponent
+   * @covers ::getOpenGdbStatusCode
+   */
+  public function testDeleteComponentContinuesWhenUserIsMissing(): void {
+    $this->stubRepositoryDeleted();
+    $this->openGdb->buildGetRequest(Argument::that(fn(array $params) => ($params['type'] ?? '') === 'user'))->willReturn(['request' => 'get-user']);
+    $this->openGdb->makeRequest(['request' => 'get-user'])->willReturn([
+      'success' => FALSE,
+      'error' => 'Client error: 404 Not Found',
+      'data' => ['openGdbResponse' => new \RuntimeException('Not found.', 404)],
+    ]);
+    $this->openGdb->buildUpdateRequest(Argument::cetera())->shouldNotBeCalled();
+    $this->openGdb->buildDeleteRequest(Argument::that(fn(array $params) => ($params['type'] ?? '') === 'user'))->shouldNotBeCalled();
+    $this->logger->warning(Argument::containingString('does not exist; no grants to remove'), Argument::withEntry('@component', 'ts-foo'))->shouldBeCalledOnce();
+    $this->logger->error(Argument::containingString('Could not get OpenGDB user'), Argument::any())->shouldNotBeCalled();
+    $this->keycloakHelpers->deleteComponentAccessGroups('ts-foo')->willReturn([])->shouldBeCalledOnce();
+    $component = $this->deletableComponent();
+    $component->delete()->shouldBeCalledOnce();
+
+    $result = $this->actions->deleteComponent($component->reveal());
+
+    $this->assertTrue($result['success']);
+    $this->assertNull($result['data']['openGdbUpdateUserResponse']);
+  }
+
+  /**
+   * A failed user lookup stops before any grant is touched.
+   *
+   * @covers ::deleteComponent
+   * @covers ::getOpenGdbStatusCode
+   *
+   * @dataProvider failedUserLookupProvider
+   */
+  public function testDeleteComponentKeepsComponentWhenUserLookupFails(array $response, int $expectedStatus): void {
+    $this->stubRepositoryDeleted();
+    $this->openGdb->buildGetRequest(Argument::that(fn(array $params) => ($params['type'] ?? '') === 'user'))->willReturn(['request' => 'get-user']);
+    $this->openGdb->makeRequest(['request' => 'get-user'])->willReturn($response);
+    $this->openGdb->buildUpdateRequest(Argument::cetera())->shouldNotBeCalled();
+    $this->openGdb->buildDeleteRequest(Argument::that(fn(array $params) => ($params['type'] ?? '') === 'user'))->shouldNotBeCalled();
+    $this->keycloakHelpers->deleteComponentAccessGroups(Argument::any())->shouldNotBeCalled();
+    $component = $this->deletableComponent();
+    $component->delete()->shouldNotBeCalled();
+    $this->logger->error(
+      Argument::containingString('Could not get OpenGDB user'),
+      Argument::withEntry('@status', $expectedStatus)
+    )->shouldBeCalledOnce();
+
+    $result = $this->actions->deleteComponent($component->reveal());
+
+    $this->assertFalse($result['success']);
+    $this->assertSame($response['error'], $result['error']);
+    $this->assertNull($result['data']['openGdbUpdateUserResponse']);
+    $this->assertSame($response, $result['data']['openGdbGetUserResponse']);
+  }
+
+  /**
+   * Failed user lookups other than a missing user: server error, no status.
+   *
+   * @return array<string, array>
+   *   The answers of the OpenGDB request layer and the logged status.
+   */
+  public static function failedUserLookupProvider(): array {
+    return [
+      'server error with status code' => [
+        [
+          'success' => FALSE,
+          'error' => 'HTTP 500',
+          'statusCode' => 500,
+          'data' => ['openGdbResponse' => new ServerException('Server error.', new Request('GET', 'user'), new Response(500))],
+        ],
+        500,
+      ],
+      'status only on the exception' => [
+        [
+          'success' => FALSE,
+          'error' => 'HTTP 502',
+          'data' => ['openGdbResponse' => new \RuntimeException('Bad gateway.', 502)],
+        ],
+        502,
+      ],
+      'no exception and no details' => [
+        ['success' => FALSE, 'error' => 'Connection refused.'],
+        0,
+      ],
+    ];
+  }
+
+  /**
+   * A user answer without a usable grant list keeps the component.
+   *
+   * @covers ::deleteComponent
+   *
+   * @dataProvider malformedUserBodyProvider
+   */
+  public function testDeleteComponentKeepsComponentWhenUserHasNoGrantList(string $body): void {
+    $this->stubRepositoryDeleted();
+    $this->openGdb->buildGetRequest(Argument::that(fn(array $params) => ($params['type'] ?? '') === 'user'))->willReturn(['request' => 'get-user']);
+    $this->openGdb->makeRequest(['request' => 'get-user'])->willReturn([
+      'success' => TRUE,
+      'data' => ['openGdbResponse' => new Response(200, [], $body)],
+    ]);
+    $this->openGdb->buildUpdateRequest(Argument::cetera())->shouldNotBeCalled();
+    $this->keycloakHelpers->deleteComponentAccessGroups(Argument::any())->shouldNotBeCalled();
+    $component = $this->deletableComponent();
+    $component->delete()->shouldNotBeCalled();
+    $this->logger->error(Argument::containingString('no readable grant list'), Argument::any())->shouldBeCalledOnce();
+
+    $result = $this->actions->deleteComponent($component->reveal());
+
+    $this->assertFalse($result['success']);
+    $this->assertSame('No grant list in the OpenGDB user response.', $result['error']);
+  }
+
+  /**
+   * User bodies without a grantedAuthorities array.
+   *
+   * @return array<string, array>
+   *   The raw response bodies.
+   */
+  public static function malformedUserBodyProvider(): array {
+    return [
+      'key missing' => ['{"username":"alice"}'],
+      'key is a string' => ['{"grantedAuthorities":"ROLE_USER"}'],
+      'key is null' => ['{"grantedAuthorities":null}'],
+      'empty body' => [''],
+      'no JSON' => ['<html>Bad gateway</html>'],
+    ];
+  }
+
+  /**
    * The main path still saves the component and reports success.
    *
    * @covers ::createComponent
@@ -454,6 +703,49 @@ class SodaScsTriplestoreComponentActionsCreateTest extends UnitTestCase {
       fn(array $params) => !in_array('READ_REPO_ts-foo', $params['body']['grantedAuthorities'] ?? [], TRUE)
     ))->willReturn(['request' => 'restore-rights']);
     $this->openGdb->makeRequest(['request' => 'restore-rights'])->willReturn(['success' => TRUE]);
+  }
+
+  /**
+   * Lets the repository delete succeed.
+   */
+  protected function stubRepositoryDeleted(): void {
+    $this->openGdb->buildDeleteRequest(Argument::that(fn(array $params) => ($params['type'] ?? '') === 'repository'))->willReturn(['request' => 'delete-repo']);
+    $this->openGdb->makeRequest(['request' => 'delete-repo'])->willReturn(['success' => TRUE]);
+  }
+
+  /**
+   * Lets OpenGDB answer the user lookup with the given grants.
+   *
+   * @param string[] $grants
+   *   The grantedAuthorities of the user.
+   */
+  protected function stubUserGrants(array $grants): void {
+    $this->openGdb->buildGetRequest(Argument::that(fn(array $params) => ($params['type'] ?? '') === 'user'))->willReturn(['request' => 'get-user']);
+    $this->openGdb->makeRequest(['request' => 'get-user'])->willReturn([
+      'success' => TRUE,
+      'data' => ['openGdbResponse' => new Response(200, [], json_encode(['grantedAuthorities' => $grants]))],
+    ]);
+  }
+
+  /**
+   * Answers the user update and records the request params it was built from.
+   *
+   * @param array $response
+   *   The answer of the update request.
+   *
+   * @return \ArrayObject
+   *   The holder whose 'params' entry is set when the update is built.
+   */
+  protected function captureUserUpdate(array $response): \ArrayObject {
+    $sent = new \ArrayObject(['params' => NULL]);
+    $this->openGdb->buildUpdateRequest(Argument::that(fn(array $params) => ($params['type'] ?? '') === 'user'))
+      ->will(function (array $args) use ($sent) {
+        $sent['params'] = $args[0];
+        return ['request' => 'update-user'];
+      })
+      ->shouldBeCalledOnce();
+    $this->openGdb->makeRequest(['request' => 'update-user'])->willReturn($response);
+    return $sent;
   }
 
   /**
