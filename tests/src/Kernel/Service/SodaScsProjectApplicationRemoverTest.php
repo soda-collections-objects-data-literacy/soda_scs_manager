@@ -515,6 +515,355 @@ class SodaScsProjectApplicationRemoverTest extends SodaScsKernelTestBase {
   }
 
   /**
+   * The next application is a stack, before any loose component.
+   *
+   * @covers ::removeNextApplication
+   */
+  public function testNextApplicationIsTheStackBeforeLooseComponents(): void {
+    $this->createComponent('soda_scs_sql_component', $this->testUser, ['label' => 'Loose database']);
+    $stack = $this->createStack($this->testUser, label: 'Wisski stack');
+    $this->deleteEntitiesWithTheActions();
+    $this->componentActions->expects($this->never())->method('deleteComponent');
+
+    $result = $this->remover()->removeNextApplication($this->freshProject());
+
+    $this->assertTrue($result->success);
+    $this->assertSame('Wisski stack', $result->data['application']);
+    $this->assertSame('soda_scs_stack:' . $stack->id(), $result->data['key']);
+    $this->assertNull($this->reload($stack), 'The stack was deleted.');
+  }
+
+  /**
+   * The key of a loose component names its entity type and id.
+   *
+   * @covers ::removeNextApplication
+   * @covers ::removedResult
+   */
+  public function testNextApplicationKeyOfTheLooseComponent(): void {
+    $component = $this->createComponent('soda_scs_sql_component', $this->testUser, ['label' => 'Loose database']);
+    $this->deleteEntitiesWithTheActions();
+
+    $result = $this->remover()->removeNextApplication($this->freshProject());
+
+    $this->assertSame('soda_scs_component:' . $component->id(), $result->data['key']);
+  }
+
+  /**
+   * Each removed application has its own key, so a repeat can be told apart.
+   *
+   * @covers ::removeNextApplication
+   * @covers ::removedResult
+   */
+  public function testNextApplicationKeysDifferPerApplication(): void {
+    $first = $this->createStack($this->testUser, label: 'First stack');
+    $second = $this->createStack($this->testUser, label: 'Second stack');
+    $this->deleteEntitiesWithTheActions();
+    $remover = $this->remover();
+
+    $firstResult = $remover->removeNextApplication($this->freshProject());
+    $secondResult = $remover->removeNextApplication($this->freshProject());
+
+    $this->assertSame('soda_scs_stack:' . $first->id(), $firstResult->data['key']);
+    $this->assertSame('soda_scs_stack:' . $second->id(), $secondResult->data['key']);
+  }
+
+  /**
+   * An application whose deletion succeeds but that stays comes back by key.
+   *
+   * The delete form's batch compares the keys to stop on such an application.
+   *
+   * @covers ::removeNextApplication
+   */
+  public function testNextApplicationReportsTheSameKeyForTheStackThatStays(): void {
+    $stack = $this->createStack($this->testUser, label: 'Stubborn stack');
+    $this->stackActions->method('deleteStack')->willReturn(['success' => TRUE]);
+    $remover = $this->remover();
+
+    $first = $remover->removeNextApplication($this->freshProject());
+    $second = $remover->removeNextApplication($this->freshProject());
+
+    $this->assertSame('soda_scs_stack:' . $stack->id(), $first->data['key']);
+    $this->assertSame($first->data['key'], $second->data['key']);
+  }
+
+  /**
+   * Each call removes one application and then reports that none is left.
+   *
+   * @covers ::removeNextApplication
+   */
+  public function testNextApplicationRemovesOneApplicationPerCall(): void {
+    $this->createStack($this->testUser, label: 'First stack');
+    $this->createStack($this->testUser, label: 'Second stack');
+    $this->createComponent('soda_scs_sql_component', $this->testUser, ['label' => 'Loose database']);
+    $this->createComponent('soda_scs_triplestore_component', $this->testUser, ['label' => 'Loose triplestore']);
+    $this->deleteEntitiesWithTheActions();
+    $remover = $this->remover();
+
+    $labels = [];
+    for ($call = 0; $call < 5; $call++) {
+      $result = $remover->removeNextApplication($this->freshProject());
+      $this->assertTrue($result->success);
+      $labels[] = $result->data['application'];
+    }
+
+    $this->assertSame(['First stack', 'Second stack', 'Loose database', 'Loose triplestore', NULL], $labels);
+  }
+
+  /**
+   * Without applications the result succeeds with no application and no call.
+   *
+   * @covers ::removeNextApplication
+   */
+  public function testNextApplicationIsNullWithoutApplications(): void {
+    $this->stackActions->expects($this->never())->method('deleteStack');
+    $this->componentActions->expects($this->never())->method('deleteComponent');
+
+    $result = $this->remover()->removeNextApplication($this->freshProject());
+
+    $this->assertTrue($result->success);
+    $this->assertArrayHasKey('application', $result->data);
+    $this->assertNull($result->data['application']);
+    $this->assertArrayNotHasKey('key', $result->data);
+  }
+
+  /**
+   * Jupyter stack, WebProtégé component and other projects' applications stay.
+   *
+   * @covers ::removeNextApplication
+   */
+  public function testNextApplicationIgnoresOtherBundlesAndProjects(): void {
+    $this->createStack($this->testUser, 'soda_scs_jupyter_stack');
+    $this->createComponent('soda_scs_webprotege_component', $this->testUser);
+    $other = $this->createTestProject(['label' => 'Other project']);
+    $this->createStack($this->testUser, 'soda_scs_wisski_stack', $other);
+    $this->createComponent('soda_scs_sql_component', $this->member, [], $other);
+    $this->stackActions->expects($this->never())->method('deleteStack');
+    $this->componentActions->expects($this->never())->method('deleteComponent');
+
+    $result = $this->remover()->removeNextApplication($this->freshProject());
+
+    $this->assertTrue($result->success);
+    $this->assertNull($result->data['application']);
+  }
+
+  /**
+   * A database of an existing stack goes with the stack, not as next one.
+   *
+   * @covers ::removeNextApplication
+   */
+  public function testNextApplicationSkipsComponentsOfAnExistingStack(): void {
+    $stack = $this->createStack($this->testUser, label: 'Wisski stack');
+    $this->createComponent('soda_scs_sql_component', $this->testUser, ['partOfStack' => $stack->id()]);
+    $this->deleteEntitiesWithTheActions();
+    $this->componentActions->expects($this->never())->method('deleteComponent');
+    $remover = $this->remover();
+
+    $first = $remover->removeNextApplication($this->freshProject());
+    $second = $remover->removeNextApplication($this->freshProject());
+
+    $this->assertSame('Wisski stack', $first->data['application']);
+    $this->assertNull($second->data['application']);
+  }
+
+  /**
+   * A component whose stack is gone is the next application as a loose one.
+   *
+   * @covers ::removeNextApplication
+   */
+  public function testNextApplicationTakesTheComponentWithMissingStack(): void {
+    $component = $this->createComponent('soda_scs_sql_component', $this->testUser, [
+      'label' => 'Orphan database',
+      'partOfStack' => 999999,
+    ]);
+    $this->deleteEntitiesWithTheActions();
+
+    $result = $this->remover()->removeNextApplication($this->freshProject());
+
+    $this->assertSame('Orphan database', $result->data['application']);
+    $this->assertNull($this->reload($component));
+  }
+
+  /**
+   * An application of another member only loses the project and stays.
+   *
+   * The next call goes on to the next application, so the batch ends.
+   *
+   * @covers ::removeNextApplication
+   */
+  public function testNextApplicationDetachesAnotherMembersApplication(): void {
+    $stack = $this->createStack($this->member, label: 'Member stack');
+    $database = $this->createComponent('soda_scs_sql_component', $this->member, ['partOfStack' => $stack->id()]);
+    $stack->set('includedComponents', [['target_id' => $database->id()]]);
+    $stack->save();
+    $this->stackActions->expects($this->never())->method('deleteStack');
+    $this->componentActions->expects($this->never())->method('deleteComponent');
+    $remover = $this->remover();
+
+    $first = $remover->removeNextApplication($this->freshProject());
+    $second = $remover->removeNextApplication($this->freshProject());
+
+    $this->assertTrue($first->success);
+    $this->assertSame('Member stack', $first->data['application']);
+    $this->assertSame('soda_scs_stack:' . $stack->id(), $first->data['key']);
+    $this->assertNull($second->data['application']);
+    $this->assertNotNull($this->reload($stack), 'The stack of the member stays.');
+    $this->assertSame([], $this->projectIds($this->reload($stack)));
+    $this->assertSame([], $this->projectIds($this->reload($database)));
+  }
+
+  /**
+   * A failed deletion fails the call, keeps the application and its link.
+   *
+   * @covers ::removeNextApplication
+   */
+  public function testNextApplicationStopsAtTheFailedDeletion(): void {
+    $first = $this->createStack($this->testUser, label: 'First stack');
+    $second = $this->createStack($this->testUser, label: 'Second stack');
+    $attempted = [];
+    $this->stackActions->method('deleteStack')
+      ->willReturnCallback(function (SodaScsStackInterface $stack) use (&$attempted): array {
+        $attempted[] = (int) $stack->id();
+        return ['success' => FALSE, 'error' => 'Portainer answered 500.'];
+      });
+    $this->componentActions->expects($this->never())->method('deleteComponent');
+    $this->logger->expects($this->once())->method('error')
+      ->with($this->stringContains('Could not remove @type @id from project'), $this->callback(
+        fn(array $context): bool => (int) $context['@id'] === (int) $first->id() && $context['@message'] === 'Portainer answered 500.'
+      ));
+
+    $result = $this->remover()->removeNextApplication($this->freshProject());
+
+    $this->assertFalse($result->success);
+    $this->assertSame('application_not_removed', $result->error);
+    $this->assertSame('Could not delete the application First stack of project Shared project. The project was not deleted.', (string) $result->data['message']);
+    $this->assertSame([(int) $first->id()], $attempted, 'The stack after the failed one is not tried.');
+    $this->assertSame([(int) $this->project->id()], $this->projectIds($this->reload($first)));
+    $this->assertSame([(int) $this->project->id()], $this->projectIds($this->reload($second)));
+  }
+
+  /**
+   * A malformed answer of the component actions fails the call.
+   *
+   * @covers ::removeNextApplication
+   */
+  public function testNextApplicationFailsOnMalformedComponentAnswer(): void {
+    $component = $this->createComponent('soda_scs_sql_component', $this->testUser);
+    $this->componentActions->method('deleteComponent')->willReturn([]);
+
+    $result = $this->remover()->removeNextApplication($this->freshProject());
+
+    $this->assertFalse($result->success);
+    $this->assertNotNull($this->reload($component));
+  }
+
+  /**
+   * A failed lookup fails the call, so the caller keeps the project.
+   *
+   * @covers ::removeNextApplication
+   */
+  public function testNextApplicationFailsWhenTheLookupFails(): void {
+    $entityTypeManager = $this->createMock(EntityTypeManagerInterface::class);
+    $entityTypeManager->method('getStorage')->willThrowException(new \RuntimeException('Query failed.'));
+    $this->stackActions->expects($this->never())->method('deleteStack');
+    $this->componentActions->expects($this->never())->method('deleteComponent');
+    $this->logger->expects($this->once())->method('error')
+      ->with($this->stringContains('Could not look up the applications'), $this->callback(fn(array $context): bool => $context['@message'] === 'Query failed.'));
+    $remover = new SodaScsProjectApplicationRemover($this->componentActions, $entityTypeManager, $this->logger, $this->stackActions);
+
+    $result = $remover->removeNextApplication($this->freshProject());
+
+    $this->assertFalse($result->success);
+    $this->assertSame('application_not_removed', $result->error);
+    $this->assertInstanceOf(TranslatableMarkup::class, $result->data['message']);
+    $this->assertStringContainsString('The project was not deleted.', (string) $result->data['message']);
+  }
+
+  /**
+   * Components detached in earlier requests leave connectedComponents.
+   *
+   * The delete form's batch keeps the project object it was started with
+   * across the requests, while each request detaches one application; that
+   * object still lists every component.
+   *
+   * @covers ::removeApplications
+   * @covers ::dropUnlinkedComponents
+   */
+  public function testRemoveApplicationsDropsComponentsDetachedInEarlierRequests(): void {
+    $component = $this->createComponent('soda_scs_sql_component', $this->member);
+    $startedProject = $this->projectHeldByCaller();
+    $this->assertContains((int) $component->id(), $this->connectedIds($startedProject), 'Fixture: the project lists the component.');
+    $remover = $this->remover();
+    $remover->removeNextApplication($this->freshProject());
+    $this->assertSame([], $this->projectIds($this->reload($component)), 'Fixture: an earlier request detached the component.');
+    $this->assertContains((int) $component->id(), $this->connectedIds($startedProject), 'Fixture: the started project still lists it.');
+
+    $result = $remover->removeApplications($startedProject, TRUE);
+
+    $this->assertTrue($result->success);
+    $this->assertNotContains((int) $component->id(), $this->connectedIds($startedProject));
+  }
+
+  /**
+   * The project delete does not link a component detached earlier again.
+   *
+   * @covers ::removeApplications
+   * @covers ::dropUnlinkedComponents
+   */
+  public function testComponentDetachedInEarlierRequestStaysWithoutProjectAfterProjectDelete(): void {
+    $component = $this->createComponent('soda_scs_sql_component', $this->member);
+    $startedProject = $this->projectHeldByCaller();
+    $remover = $this->remover();
+    $remover->removeNextApplication($this->freshProject());
+
+    $remover->removeApplications($startedProject, TRUE);
+    $startedProject->delete();
+
+    $kept = $this->reload($component);
+    $this->assertNotNull($kept);
+    $this->assertSame([], $this->projectIds($kept));
+  }
+
+  /**
+   * Components that still list the project stay in connectedComponents.
+   *
+   * @covers ::dropUnlinkedComponents
+   */
+  public function testRemoveApplicationsKeepsComponentsThatListTheProject(): void {
+    $webprotege = $this->createComponent('soda_scs_webprotege_component', $this->testUser);
+    $detached = $this->createComponent('soda_scs_sql_component', $this->member);
+    $startedProject = $this->projectHeldByCaller();
+    $remover = $this->remover();
+    $remover->removeNextApplication($this->freshProject());
+
+    $remover->removeApplications($startedProject, TRUE);
+
+    $this->assertSame([(int) $webprotege->id()], $this->connectedIds($startedProject));
+    $this->assertNotContains((int) $detached->id(), $this->connectedIds($startedProject));
+  }
+
+  /**
+   * Makes the stack and component actions delete the entity they are given.
+   *
+   * The real actions remove the application with its service data; the next
+   * lookup then no longer finds it, which the one-per-call removal relies on.
+   * A stack takes the components that are part of it along.
+   */
+  private function deleteEntitiesWithTheActions(): void {
+    $this->stackActions->method('deleteStack')->willReturnCallback(function (SodaScsStackInterface $stack): array {
+      $components = $this->entityTypeManager->getStorage('soda_scs_component')->loadByProperties(['partOfStack' => $stack->id()]);
+      foreach ($components as $component) {
+        $component->delete();
+      }
+      $stack->delete();
+      return ['success' => TRUE];
+    });
+    $this->componentActions->method('deleteComponent')->willReturnCallback(function (SodaScsComponentInterface $component): array {
+      $component->delete();
+      return ['success' => TRUE];
+    });
+  }
+
+  /**
    * Builds the remover on the doubles.
    */
   private function remover(): SodaScsProjectApplicationRemover {

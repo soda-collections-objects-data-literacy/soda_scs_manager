@@ -263,7 +263,8 @@ class SodaScsUserOffboardingDemoLockTest extends SodaScsKernelTestBase {
     $errors = array_map('strval', $formState->getErrors());
     $this->assertCount(1, $errors);
     $this->assertStringContainsString('Setup demo', reset($errors));
-    $this->assertStringContainsString('demo setup is still running', reset($errors));
+    $this->assertStringContainsString('is being set up or deleted right now', reset($errors));
+    $this->assertStringContainsString('Delete your profile when that is done.', reset($errors));
   }
 
   /**
@@ -317,6 +318,7 @@ class SodaScsUserOffboardingDemoLockTest extends SodaScsKernelTestBase {
     $errors = $formState->getErrors();
     $this->assertSame(['user_cancel_method'], array_keys($errors));
     $this->assertStringContainsString('Setup demo', (string) $errors['user_cancel_method']);
+    $this->assertStringContainsString('Delete the account when that is done.', (string) $errors['user_cancel_method']);
   }
 
   /**
