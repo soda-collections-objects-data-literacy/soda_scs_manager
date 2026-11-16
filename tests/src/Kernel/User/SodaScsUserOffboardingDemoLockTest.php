@@ -100,7 +100,6 @@ class SodaScsUserOffboardingDemoLockTest extends SodaScsKernelTestBase {
    */
   protected function setUp(): void {
     parent::setUp();
-    $this->installEntitySchema('soda_scs_project_membership');
     $this->account = $this->createTestUser();
   }
 

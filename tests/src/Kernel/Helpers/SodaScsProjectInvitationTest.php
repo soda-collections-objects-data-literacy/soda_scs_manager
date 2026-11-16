@@ -28,7 +28,6 @@ class SodaScsProjectInvitationTest extends SodaScsKernelTestBase {
    */
   protected function setUp(): void {
     parent::setUp();
-    $this->installEntitySchema('soda_scs_project_membership');
     $this->installEntitySchema('soda_scs_message');
     $this->membershipHelpers = $this->container->get('soda_scs_manager.project_membership.helpers');
   }

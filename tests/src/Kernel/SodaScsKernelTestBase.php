@@ -76,6 +76,7 @@ abstract class SodaScsKernelTestBase extends KernelTestBase {
     $this->installEntitySchema('soda_scs_component');
     $this->installEntitySchema('soda_scs_stack');
     $this->installEntitySchema('soda_scs_project');
+    $this->installEntitySchema('soda_scs_project_membership');
     $this->installEntitySchema('soda_scs_snapshot');
     $this->installEntitySchema('soda_scs_service_key');
 
