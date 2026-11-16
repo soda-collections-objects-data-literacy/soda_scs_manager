@@ -17,6 +17,7 @@ use Drupal\Core\Messenger\MessengerInterface;
 use Drupal\Core\Routing\UrlGeneratorInterface;
 use Drupal\soda_scs_manager\ComponentActions\SodaScsWisskiComponentActions;
 use Drupal\soda_scs_manager\Entity\SodaScsComponent;
+use Drupal\soda_scs_manager\Entity\SodaScsComponentInterface;
 use Drupal\soda_scs_manager\Entity\SodaScsProjectInterface;
 use Drupal\soda_scs_manager\Entity\SodaScsServiceKeyInterface;
 use Drupal\soda_scs_manager\Exception\SodaScsUserFacingException;
@@ -57,6 +58,11 @@ require_once __DIR__ . '/SodaScsSleepStub.php';
  * after the stack was created does not fail the creation: the container ID
  * stays empty. Issue 3637662: a WissKI without the default data model gets an
  * empty recipe version.
+ *
+ * Issue 3638552: a Keycloak client that createComponent() created is deleted
+ * with its groups when a later step fails; a client that already existed
+ * (409) is left alone. deleteKeycloakResources() treats a missing client or
+ * group as deleted and stops at the first failed request.
  *
  * The wait for the container runs against a sleep() stand-in
  * (SodaScsSleepStub.php), so the tests do not wait.
@@ -140,6 +146,34 @@ class SodaScsWisskiComponentActionsCreateTest extends UnitTestCase {
   protected $serviceKeyActions;
 
   /**
+   * The mocked Keycloak token helpers.
+   *
+   * @var \Drupal\soda_scs_manager\Helpers\SodaScsKeycloakHelpers|\Prophecy\Prophecy\ObjectProphecy
+   */
+  protected $keycloakHelpers;
+
+  /**
+   * The mocked Keycloak client request actions.
+   *
+   * @var \Drupal\soda_scs_manager\RequestActions\SodaScsServiceRequestInterface|\Prophecy\Prophecy\ObjectProphecy
+   */
+  protected $keycloakClient;
+
+  /**
+   * The mocked Keycloak group request actions.
+   *
+   * @var \Drupal\soda_scs_manager\RequestActions\SodaScsServiceRequestInterface|\Prophecy\Prophecy\ObjectProphecy
+   */
+  protected $keycloakGroups;
+
+  /**
+   * The mocked Portainer helpers.
+   *
+   * @var \Drupal\soda_scs_manager\Helpers\SodaScsPortainerHelpers|\Prophecy\Prophecy\ObjectProphecy
+   */
+  protected $portainerHelpers;
+
+  /**
    * The service under test.
    *
    * @var \Drupal\soda_scs_manager\ComponentActions\SodaScsWisskiComponentActions
@@ -181,8 +215,8 @@ class SodaScsWisskiComponentActionsCreateTest extends UnitTestCase {
     $this->serviceHelpers->wisskiInstanceBaseUrl(Argument::type('string'))->willReturn('https://wisski.invalid');
     $this->containerHelpers = $this->prophesize(SodaScsContainerHelpers::class);
 
-    $keycloakHelpers = $this->prophesize(SodaScsKeycloakHelpers::class);
-    $keycloakHelpers->getKeycloakToken()->willReturn('not-a-token');
+    $this->keycloakHelpers = $this->prophesize(SodaScsKeycloakHelpers::class);
+    $this->keycloakHelpers->getKeycloakToken()->willReturn('not-a-token');
 
     $projectHelpers = $this->prophesize(SodaScsProjectHelpers::class);
     $projectHelpers->getUserSsoUuid(Argument::any())->willReturn(NULL);
@@ -198,14 +232,14 @@ class SodaScsWisskiComponentActionsCreateTest extends UnitTestCase {
     $this->mountManager->ensureProjectTeamFolderReady(Argument::cetera())->willReturn(TRUE);
     $this->mountManager->projectTeamFolderMountSource(Argument::cetera())->willReturn('/mnt/team');
 
-    $keycloakClient = $this->prophesize(SodaScsServiceRequestInterface::class);
-    $keycloakClient->buildCreateRequest(Argument::any())->willReturn([]);
-    $keycloakClient->makeRequest(Argument::any())->willReturn(['success' => TRUE]);
+    $this->keycloakClient = $this->prophesize(SodaScsServiceRequestInterface::class);
+    $this->keycloakClient->buildCreateRequest(Argument::any())->willReturn([]);
+    $this->keycloakClient->makeRequest(Argument::any())->willReturn(['success' => TRUE]);
 
-    $keycloakGroups = $this->prophesize(SodaScsServiceRequestInterface::class);
-    $keycloakGroups->buildCreateRequest(Argument::any())->willReturn([]);
-    $keycloakGroups->buildGetAllRequest(Argument::any())->willReturn([]);
-    $keycloakGroups->makeRequest(Argument::any())->will(fn() => [
+    $this->keycloakGroups = $this->prophesize(SodaScsServiceRequestInterface::class);
+    $this->keycloakGroups->buildCreateRequest(Argument::any())->willReturn([]);
+    $this->keycloakGroups->buildGetAllRequest(Argument::any())->willReturn([]);
+    $this->keycloakGroups->makeRequest(Argument::any())->will(fn() => [
       'success' => TRUE,
       'data' => [
         'keycloakResponse' => new Response(200, [], json_encode([
@@ -214,6 +248,12 @@ class SodaScsWisskiComponentActionsCreateTest extends UnitTestCase {
         ])),
       ],
     ]);
+
+    // A failed create deletes the Keycloak client: by default none is left.
+    $this->stubKeycloakResources(clients: []);
+
+    $this->portainerHelpers = $this->prophesize(SodaScsPortainerHelpers::class);
+    $this->portainerHelpers->removeVolumesOfComposeStack(Argument::any())->willReturn(SodaScsResult::success(data: [], message: 'Volumes removed.'));
 
     $this->portainer = $this->prophesize(SodaScsServiceRequestInterface::class);
     $this->portainer->buildCreateRequest(Argument::type('array'))->willReturn(['request' => 'portainer']);
@@ -241,13 +281,13 @@ class SodaScsWisskiComponentActionsCreateTest extends UnitTestCase {
       $this->prophesize(SodaScsHelpers::class)->reveal(),
       $this->prophesize(SodaScsExecRequestInterface::class)->reveal(),
       $this->dockerRun->reveal(),
-      $keycloakHelpers->reveal(),
+      $this->keycloakHelpers->reveal(),
       $this->nextcloudHelpers->reveal(),
       $this->mountManager->reveal(),
-      $keycloakClient->reveal(),
-      $keycloakGroups->reveal(),
+      $this->keycloakClient->reveal(),
+      $this->keycloakGroups->reveal(),
       $this->prophesize(SodaScsServiceRequestInterface::class)->reveal(),
-      $this->prophesize(SodaScsPortainerHelpers::class)->reveal(),
+      $this->portainerHelpers->reveal(),
       $this->portainer->reveal(),
       $projectHelpers->reveal(),
       $this->serviceHelpers->reveal(),
@@ -738,6 +778,625 @@ class SodaScsWisskiComponentActionsCreateTest extends UnitTestCase {
     $result = $this->actions->createComponent($this->component(['withDefaultDataModel' => 0]));
 
     $this->assertTrue($result['success']);
+  }
+
+  /**
+   * The client and both groups of the instance are deleted.
+   *
+   * @covers ::deleteKeycloakResources
+   */
+  public function testDeleteKeycloakResourcesDeletesClientAndBothGroups(): void {
+    $this->stubKeycloakResources(clients: [['id' => 'client-uuid', 'clientId' => 'wisski-foo']]);
+    $this->keycloakClient->makeRequest(['request' => 'client-delete'])->willReturn(['success' => TRUE])->shouldBeCalledOnce();
+    $this->keycloakHelpers->deleteComponentAccessGroups('wisski-foo')->willReturn($this->groupsResult())->shouldBeCalledOnce();
+
+    $result = $this->actions->deleteKeycloakResources('wisski-foo');
+
+    $this->assertTrue($result->success);
+    $this->assertNull($result->error);
+    $this->assertSame(['client', 'wisski-foo-admin', 'wisski-foo-user'], $result->data['deleted']);
+  }
+
+  /**
+   * A client that is already gone counts as deleted; the groups still go.
+   *
+   * @covers ::deleteKeycloakResources
+   */
+  public function testDeleteKeycloakResourcesCountsMissingClientAsDeleted(): void {
+    $this->stubKeycloakResources(clients: []);
+    $this->keycloakClient->buildDeleteRequest(Argument::any())->shouldNotBeCalled();
+    $this->keycloakHelpers->deleteComponentAccessGroups('wisski-foo')->willReturn($this->groupsResult())->shouldBeCalledOnce();
+
+    $result = $this->actions->deleteKeycloakResources('wisski-foo');
+
+    $this->assertTrue($result->success);
+    $this->assertSame(['wisski-foo-admin', 'wisski-foo-user'], $result->data['deleted']);
+  }
+
+  /**
+   * Groups that are already gone count as deleted; the client still goes.
+   *
+   * @covers ::deleteKeycloakResources
+   */
+  public function testDeleteKeycloakResourcesCountsMissingGroupsAsDeleted(): void {
+    $this->stubKeycloakResources(clients: [['id' => 'client-uuid', 'clientId' => 'wisski-foo']]);
+    $this->keycloakClient->makeRequest(['request' => 'client-delete'])->willReturn(['success' => TRUE])->shouldBeCalledOnce();
+    $this->keycloakHelpers->deleteComponentAccessGroups('wisski-foo')->willReturn($this->groupsResult(FALSE, FALSE));
+
+    $result = $this->actions->deleteKeycloakResources('wisski-foo');
+
+    $this->assertTrue($result->success);
+    $this->assertSame(['client'], $result->data['deleted']);
+  }
+
+  /**
+   * Only the groups that existed are reported as deleted.
+   *
+   * @covers ::deleteKeycloakResources
+   */
+  public function testDeleteKeycloakResourcesReportsOnlyTheGroupThatWasDeleted(): void {
+    $this->stubKeycloakResources(clients: []);
+    $this->keycloakHelpers->deleteComponentAccessGroups('wisski-foo')->willReturn($this->groupsResult(FALSE, TRUE));
+
+    $result = $this->actions->deleteKeycloakResources('wisski-foo');
+
+    $this->assertTrue($result->success);
+    $this->assertSame(['wisski-foo-user'], $result->data['deleted']);
+  }
+
+  /**
+   * Nothing to delete at all is a success, so a repeated call is harmless.
+   *
+   * @covers ::deleteKeycloakResources
+   */
+  public function testDeleteKeycloakResourcesSucceedsWhenNothingExists(): void {
+    $this->stubKeycloakResources(clients: []);
+    $this->keycloakClient->buildDeleteRequest(Argument::any())->shouldNotBeCalled();
+    $this->keycloakHelpers->deleteComponentAccessGroups('wisski-foo')->willReturn($this->groupsResult(FALSE, FALSE));
+
+    $result = $this->actions->deleteKeycloakResources('wisski-foo');
+
+    $this->assertTrue($result->success);
+    $this->assertSame([], $result->data['deleted']);
+  }
+
+  /**
+   * A client with another client ID in the answer is not deleted.
+   *
+   * @covers ::deleteKeycloakResources
+   */
+  public function testDeleteKeycloakResourcesIgnoresClientWithOtherClientId(): void {
+    $this->stubKeycloakResources(clients: [['id' => 'other-uuid', 'clientId' => 'wisski-foo-2']]);
+    $this->keycloakClient->buildDeleteRequest(Argument::any())->shouldNotBeCalled();
+    $this->keycloakHelpers->deleteComponentAccessGroups('wisski-foo')->willReturn($this->groupsResult(FALSE, FALSE));
+
+    $result = $this->actions->deleteKeycloakResources('wisski-foo');
+
+    $this->assertTrue($result->success);
+    $this->assertNotContains('client', $result->data['deleted']);
+  }
+
+  /**
+   * With a required client and none found, nothing is deleted.
+   *
+   * @covers ::deleteKeycloakResources
+   */
+  public function testDeleteKeycloakResourcesSkipsGroupsWhenClientIsRequiredAndMissing(): void {
+    $this->stubKeycloakResources(clients: []);
+    $this->keycloakClient->buildDeleteRequest(Argument::any())->shouldNotBeCalled();
+    $this->keycloakHelpers->deleteComponentAccessGroups(Argument::any())->shouldNotBeCalled();
+
+    $result = $this->actions->deleteKeycloakResources('wisski-foo', 'Foo', TRUE);
+
+    $this->assertTrue($result->success);
+    $this->assertSame(['deleted' => [], 'skipped' => 'no client'], $result->data);
+  }
+
+  /**
+   * A required client that exists is deleted together with the groups.
+   *
+   * @covers ::deleteKeycloakResources
+   */
+  public function testDeleteKeycloakResourcesDeletesWhenClientIsRequiredAndPresent(): void {
+    $this->stubKeycloakResources(clients: [['id' => 'client-uuid', 'clientId' => 'wisski-foo', 'name' => 'Foo']]);
+    $this->keycloakClient->makeRequest(['request' => 'client-delete'])->willReturn(['success' => TRUE])->shouldBeCalledOnce();
+    $this->keycloakHelpers->deleteComponentAccessGroups('wisski-foo')->willReturn($this->groupsResult())->shouldBeCalledOnce();
+
+    $result = $this->actions->deleteKeycloakResources('wisski-foo', 'Foo', TRUE);
+
+    $this->assertTrue($result->success);
+    $this->assertSame(['client', 'wisski-foo-admin', 'wisski-foo-user'], $result->data['deleted']);
+  }
+
+  /**
+   * A client that carries another name belongs to another WissKI.
+   *
+   * @covers ::deleteKeycloakResources
+   */
+  public function testDeleteKeycloakResourcesLeavesClientWithOtherNameAlone(): void {
+    $this->stubKeycloakResources(clients: [['id' => 'client-uuid', 'clientId' => 'wisski-foo', 'name' => 'Bar']]);
+    $this->keycloakClient->buildDeleteRequest(Argument::any())->shouldNotBeCalled();
+    $this->keycloakHelpers->deleteComponentAccessGroups(Argument::any())->shouldNotBeCalled();
+
+    $result = $this->actions->deleteKeycloakResources('wisski-foo', 'Foo');
+
+    $this->assertTrue($result->success);
+    $this->assertSame(['deleted' => [], 'skipped' => 'other client'], $result->data);
+  }
+
+  /**
+   * A client without a name is not the one named in the call.
+   *
+   * @covers ::deleteKeycloakResources
+   */
+  public function testDeleteKeycloakResourcesLeavesUnnamedClientAloneWhenNameIsGiven(): void {
+    $this->stubKeycloakResources(clients: [['id' => 'client-uuid', 'clientId' => 'wisski-foo']]);
+    $this->keycloakClient->buildDeleteRequest(Argument::any())->shouldNotBeCalled();
+    $this->keycloakHelpers->deleteComponentAccessGroups(Argument::any())->shouldNotBeCalled();
+
+    $result = $this->actions->deleteKeycloakResources('wisski-foo', 'Foo');
+
+    $this->assertSame('other client', $result->data['skipped']);
+  }
+
+  /**
+   * Without a client, a given name does not keep the groups from going.
+   *
+   * @covers ::deleteKeycloakResources
+   */
+  public function testDeleteKeycloakResourcesDeletesGroupsWithoutClientWhenClientIsNotRequired(): void {
+    $this->stubKeycloakResources(clients: []);
+    $this->keycloakHelpers->deleteComponentAccessGroups('wisski-foo')->willReturn($this->groupsResult())->shouldBeCalledOnce();
+
+    $result = $this->actions->deleteKeycloakResources('wisski-foo', 'Foo');
+
+    $this->assertTrue($result->success);
+    $this->assertSame(['wisski-foo-admin', 'wisski-foo-user'], $result->data['deleted']);
+  }
+
+  /**
+   * Without a Keycloak token nothing is asked or deleted.
+   *
+   * @covers ::deleteKeycloakResources
+   */
+  public function testDeleteKeycloakResourcesFailsWithoutToken(): void {
+    $this->keycloakHelpers->getKeycloakToken()->willReturn(NULL);
+    $this->keycloakClient->buildGetAllRequest(Argument::any())->shouldNotBeCalled();
+    $this->keycloakClient->buildDeleteRequest(Argument::any())->shouldNotBeCalled();
+    $this->keycloakHelpers->deleteComponentAccessGroups(Argument::any())->shouldNotBeCalled();
+
+    $result = $this->actions->deleteKeycloakResources('wisski-foo');
+
+    $this->assertFalse($result->success);
+    $this->assertSame('Keycloak token request failed.', $result->error);
+  }
+
+  /**
+   * A failed client lookup stops the call before anything is deleted.
+   *
+   * @covers ::deleteKeycloakResources
+   */
+  public function testDeleteKeycloakResourcesStopsWhenClientLookupFails(): void {
+    $this->stubKeycloakResources();
+    $this->keycloakClient->makeRequest(['request' => 'client-lookup'])
+      ->willReturn(['success' => FALSE, 'error' => 'Server error.']);
+    $this->keycloakClient->buildDeleteRequest(Argument::any())->shouldNotBeCalled();
+    $this->keycloakHelpers->deleteComponentAccessGroups(Argument::any())->shouldNotBeCalled();
+
+    $result = $this->actions->deleteKeycloakResources('wisski-foo');
+
+    $this->assertFalse($result->success);
+    $this->assertSame('Keycloak client lookup failed: Server error.', $result->error);
+    $this->assertSame('Could not delete the Keycloak client of the WissKI instance.', $result->message);
+  }
+
+  /**
+   * A client lookup that throws is a failure result, not an exception.
+   *
+   * @covers ::deleteKeycloakResources
+   */
+  public function testDeleteKeycloakResourcesReturnsFailureWhenClientLookupThrows(): void {
+    $this->stubKeycloakResources();
+    $this->keycloakClient->makeRequest(['request' => 'client-lookup'])->willThrow(new \RuntimeException('Connection refused.'));
+    $this->keycloakClient->buildDeleteRequest(Argument::any())->shouldNotBeCalled();
+    $this->keycloakHelpers->deleteComponentAccessGroups(Argument::any())->shouldNotBeCalled();
+
+    $result = $this->actions->deleteKeycloakResources('wisski-foo');
+
+    $this->assertFalse($result->success);
+    $this->assertSame('Connection refused.', $result->error);
+  }
+
+  /**
+   * A malformed client lookup answer is no client; nothing is deleted for it.
+   *
+   * @covers ::deleteKeycloakResources
+   */
+  public function testDeleteKeycloakResourcesTreatsMalformedClientAnswerAsNoClient(): void {
+    $this->stubKeycloakResources();
+    $this->keycloakClient->makeRequest(['request' => 'client-lookup'])->willReturn([
+      'success' => TRUE,
+      'data' => ['keycloakResponse' => new Response(200, [], 'not json')],
+    ]);
+    $this->keycloakClient->buildDeleteRequest(Argument::any())->shouldNotBeCalled();
+    $this->keycloakHelpers->deleteComponentAccessGroups(Argument::any())->shouldNotBeCalled();
+
+    $result = $this->actions->deleteKeycloakResources('wisski-foo', NULL, TRUE);
+
+    $this->assertTrue($result->success);
+    $this->assertSame('no client', $result->data['skipped']);
+  }
+
+  /**
+   * A failed client delete leaves the groups alone.
+   *
+   * @covers ::deleteKeycloakResources
+   */
+  public function testDeleteKeycloakResourcesStopsWhenClientDeleteFails(): void {
+    $this->stubKeycloakResources(clients: [['id' => 'client-uuid', 'clientId' => 'wisski-foo']]);
+    $this->keycloakClient->makeRequest(['request' => 'client-delete'])
+      ->willReturn(['success' => FALSE, 'error' => 'Forbidden.']);
+    $this->keycloakHelpers->deleteComponentAccessGroups(Argument::any())->shouldNotBeCalled();
+
+    $result = $this->actions->deleteKeycloakResources('wisski-foo');
+
+    $this->assertFalse($result->success);
+    $this->assertSame('Keycloak client delete failed: Forbidden.', $result->error);
+  }
+
+  /**
+   * A failing group delete is a failure result with the reason of the helper.
+   *
+   * @covers ::deleteKeycloakResources
+   */
+  public function testDeleteKeycloakResourcesFailsWhenGroupDeleteThrows(): void {
+    $this->stubKeycloakResources(clients: [['id' => 'client-uuid', 'clientId' => 'wisski-foo']]);
+    $this->keycloakHelpers->deleteComponentAccessGroups('wisski-foo')
+      ->willThrow(new \Exception('Cannot delete Keycloak user group wisski-foo-user: Forbidden.'));
+
+    $result = $this->actions->deleteKeycloakResources('wisski-foo');
+
+    $this->assertFalse($result->success);
+    $this->assertSame('Cannot delete Keycloak user group wisski-foo-user: Forbidden.', $result->error);
+    $this->assertSame('Could not delete the Keycloak client of the WissKI instance.', $result->message);
+  }
+
+  /**
+   * A failed group lookup of the helper stops the delete with its reason.
+   *
+   * @covers ::deleteKeycloakResources
+   */
+  public function testDeleteKeycloakResourcesFailsWhenGroupLookupThrows(): void {
+    $this->stubKeycloakResources();
+    $this->keycloakHelpers->deleteComponentAccessGroups('wisski-foo')
+      ->willThrow(new \RuntimeException('Keycloak group lookup of wisski-foo-admin failed: Server error.'));
+
+    $result = $this->actions->deleteKeycloakResources('wisski-foo');
+
+    $this->assertFalse($result->success);
+    $this->assertSame('Keycloak group lookup of wisski-foo-admin failed: Server error.', $result->error);
+  }
+
+  /**
+   * A deleted WissKI loses its Portainer stack, volumes, Keycloak and entity.
+   *
+   * @covers ::deleteComponent
+   */
+  public function testDeleteComponentDeletesPortainerStackKeycloakAndEntity(): void {
+    $component = $this->deletableComponent();
+    $this->portainerAnswersDeleteWith(['success' => TRUE, 'statusCode' => 200]);
+    $this->portainerHelpers->removeVolumesOfComposeStack('wisski-foo')->willReturn(SodaScsResult::success(data: [], message: 'Removed.'))->shouldBeCalledOnce();
+    $this->stubKeycloakResources();
+    $this->keycloakHelpers->deleteComponentAccessGroups('wisski-foo')->willReturn($this->groupsResult())->shouldBeCalledOnce();
+    $component->delete()->shouldBeCalledOnce();
+
+    $result = $this->actions->deleteComponent($component->reveal());
+
+    $this->assertTrue($result['success']);
+    $this->assertSame(200, $result['statusCode']);
+  }
+
+  /**
+   * A Portainer stack that is already gone (404) does not stop the delete.
+   *
+   * @covers ::deleteComponent
+   */
+  public function testDeleteComponentGoesOnWhenPortainerStackIsAlreadyGone(): void {
+    $component = $this->deletableComponent();
+    $this->portainerAnswersDeleteWith(['success' => FALSE, 'error' => 'Not found.', 'statusCode' => 404]);
+    $this->stubKeycloakResources();
+    $this->keycloakHelpers->deleteComponentAccessGroups('wisski-foo')->willReturn($this->groupsResult())->shouldBeCalledOnce();
+    $component->delete()->shouldBeCalledOnce();
+
+    $result = $this->actions->deleteComponent($component->reveal());
+
+    $this->assertTrue($result['success']);
+    $this->assertSame(404, $result['statusCode']);
+  }
+
+  /**
+   * A failed Portainer delete keeps Keycloak, volumes and the entity.
+   *
+   * @covers ::deleteComponent
+   *
+   * @dataProvider failedPortainerDeleteProvider
+   */
+  public function testDeleteComponentKeepsEverythingWhenPortainerDeleteFails(array $portainerAnswer): void {
+    $component = $this->deletableComponent();
+    $this->portainerAnswersDeleteWith($portainerAnswer);
+    $this->portainerHelpers->removeVolumesOfComposeStack(Argument::any())->shouldNotBeCalled();
+    $this->keycloakHelpers->getKeycloakToken()->shouldNotBeCalled();
+    $this->keycloakHelpers->deleteComponentAccessGroups(Argument::any())->shouldNotBeCalled();
+    $this->keycloakClient->buildDeleteRequest(Argument::any())->shouldNotBeCalled();
+    $component->delete()->shouldNotBeCalled();
+
+    $result = $this->actions->deleteComponent($component->reveal());
+
+    $this->assertFalse($result['success']);
+    $this->assertSame($portainerAnswer['error'] ?? 'Unknown error occurred', $result['error']);
+    $this->assertSame('Could not delete WissKI component @component at portainer.', $result['message']->getUntranslatedString());
+  }
+
+  /**
+   * Portainer answers that are no success and no 404.
+   *
+   * @return array<string, array>
+   *   The delete answer of Portainer.
+   */
+  public static function failedPortainerDeleteProvider(): array {
+    return [
+      'server error' => [['success' => FALSE, 'error' => 'Server error.', 'statusCode' => 500]],
+      'forbidden' => [['success' => FALSE, 'error' => 'Forbidden.', 'statusCode' => 403]],
+      'no status code' => [['success' => FALSE, 'error' => 'Connection reset.']],
+      'no error text' => [['success' => FALSE, 'statusCode' => 502]],
+    ];
+  }
+
+  /**
+   * A Portainer delete that throws keeps Keycloak, volumes and the entity.
+   *
+   * @covers ::deleteComponent
+   */
+  public function testDeleteComponentKeepsEverythingWhenPortainerDeleteThrows(): void {
+    $component = $this->deletableComponent();
+    $this->portainer->makeRequest(['request' => 'stack-delete'])->willThrow(new \RuntimeException('Connection refused.'));
+    $this->portainerHelpers->removeVolumesOfComposeStack(Argument::any())->shouldNotBeCalled();
+    $this->keycloakHelpers->getKeycloakToken()->shouldNotBeCalled();
+    $this->keycloakHelpers->deleteComponentAccessGroups(Argument::any())->shouldNotBeCalled();
+    $component->delete()->shouldNotBeCalled();
+
+    $result = $this->actions->deleteComponent($component->reveal());
+
+    $this->assertFalse($result['success']);
+    $this->assertSame('Connection refused.', $result['error']);
+  }
+
+  /**
+   * A failed Keycloak cleanup keeps the entity, so the delete can be repeated.
+   *
+   * @covers ::deleteComponent
+   */
+  public function testDeleteComponentKeepsEntityWhenKeycloakCleanupFails(): void {
+    $component = $this->deletableComponent();
+    $this->portainerAnswersDeleteWith(['success' => TRUE, 'statusCode' => 200]);
+    $this->stubKeycloakResources();
+    $this->keycloakHelpers->deleteComponentAccessGroups('wisski-foo')->willThrow(new \Exception('Forbidden.'));
+    $component->delete()->shouldNotBeCalled();
+
+    $result = $this->actions->deleteComponent($component->reveal());
+
+    $this->assertFalse($result['success']);
+    $this->assertSame('Forbidden.', $result['error']);
+  }
+
+  /**
+   * A Keycloak client that already exists (409) is not ours to delete.
+   *
+   * @covers ::createComponent
+   */
+  public function testCreateComponentLeavesExistingKeycloakClientAloneOnConflict(): void {
+    $this->stubKeycloakResources();
+    $this->keycloakClient->buildCreateRequest(Argument::any())->willReturn(['request' => 'client-create']);
+    $this->keycloakClient->makeRequest(['request' => 'client-create'])
+      ->willReturn(['success' => FALSE, 'error' => 'Conflict', 'statusCode' => 409]);
+    $this->expectNoKeycloakCleanup();
+    $this->portainer->makeRequest(Argument::cetera())->shouldNotBeCalled();
+
+    $result = $this->actions->createComponent($this->component());
+
+    $this->assertCompleteFailure($result);
+    $this->assertSame('Keycloak create client request failed: Conflict', $result['error']->getMessage());
+    $this->assertSame('The WissKI instance could not be prepared.', $result['message']->getUntranslatedString());
+  }
+
+  /**
+   * The Keycloak client of a failed Portainer answer goes with its groups.
+   *
+   * @covers ::createComponent
+   */
+  public function testCreateComponentDeletesKeycloakResourcesWhenPortainerAnswersWithError(): void {
+    $this->portainer->makeRequest(['request' => 'portainer'])
+      ->willReturn(['success' => FALSE, 'error' => 'Conflict', 'statusCode' => 409]);
+    $this->stubKeycloakResources();
+    $this->expectKeycloakCleanup();
+
+    $result = $this->actions->createComponent($this->component());
+
+    $this->assertCompleteFailure($result);
+    $this->assertSame('Conflict', $result['error']);
+  }
+
+  /**
+   * The Keycloak client of an unreachable Portainer is deleted with its groups.
+   *
+   * @covers ::createComponent
+   */
+  public function testCreateComponentDeletesKeycloakResourcesWhenPortainerRequestThrows(): void {
+    $failure = new \RuntimeException('Connection refused.');
+    $this->portainer->makeRequest(['request' => 'portainer'])->willThrow($failure);
+    $this->stubKeycloakResources();
+    $this->expectKeycloakCleanup();
+
+    $result = $this->actions->createComponent($this->component());
+
+    $this->assertCompleteFailure($result);
+    $this->assertSame($failure, $result['error']);
+  }
+
+  /**
+   * A step after the Keycloak client that fails deletes client and groups.
+   *
+   * @covers ::createComponent
+   */
+  public function testCreateComponentDeletesKeycloakResourcesWhenPreparationFailsAfterClientCreation(): void {
+    $this->mountManager->ensureProjectTeamFolderReady(Argument::cetera())->willReturn(FALSE);
+    $this->stubKeycloakResources();
+    $this->expectKeycloakCleanup();
+    $this->portainer->makeRequest(Argument::cetera())->shouldNotBeCalled();
+
+    $result = $this->actions->createComponent($this->component());
+
+    $this->assertCompleteFailure($result);
+    $this->assertInstanceOf(SodaScsUserFacingException::class, $result['error']);
+  }
+
+  /**
+   * A failed Keycloak cleanup does not hide the failure of the creation.
+   *
+   * @covers ::createComponent
+   */
+  public function testCreateComponentReturnsPortainerFailureWhenKeycloakCleanupFails(): void {
+    $this->portainer->makeRequest(['request' => 'portainer'])
+      ->willReturn(['success' => FALSE, 'error' => 'Conflict', 'statusCode' => 409]);
+    $this->stubKeycloakResources();
+    $this->keycloakClient->makeRequest(['request' => 'client-lookup'])
+      ->willReturn(['success' => FALSE, 'error' => 'Server error.']);
+
+    $result = $this->actions->createComponent($this->component());
+
+    $this->assertCompleteFailure($result);
+    $this->assertSame('Conflict', $result['error']);
+    $this->assertSame(409, $result['statusCode']);
+    $this->assertSame('The WissKI container could not be created.', $result['message']->getUntranslatedString());
+  }
+
+  /**
+   * A created WissKI keeps its Keycloak client and groups.
+   *
+   * @covers ::createComponent
+   */
+  public function testCreateComponentKeepsKeycloakResourcesWhenPortainerSucceeds(): void {
+    $this->portainerCreatesStack();
+    $this->containerHelpers->findLiveContainerByName('wisski-foo--drupal')->willReturn($this->containerFound('abc123'));
+    $this->stubKeycloakResources();
+    $this->expectNoKeycloakCleanup();
+
+    $result = $this->actions->createComponent($this->component());
+
+    $this->assertTrue($result['success']);
+  }
+
+  /**
+   * A successful Keycloak answer with a JSON list.
+   *
+   * @param array $body
+   *   The list the answer carries.
+   *
+   * @return array
+   *   The request result.
+   */
+  protected function keycloakAnswer(array $body): array {
+    return [
+      'success' => TRUE,
+      'data' => ['keycloakResponse' => new Response(200, [], json_encode($body))],
+    ];
+  }
+
+  /**
+   * The answer of the group delete of the Keycloak helpers.
+   *
+   * @param bool $adminDeleted
+   *   Whether the admin group existed and was deleted.
+   * @param bool $userDeleted
+   *   Whether the user group existed and was deleted.
+   *
+   * @return array
+   *   What deleteComponentAccessGroups() returns for wisski-foo.
+   */
+  protected function groupsResult(bool $adminDeleted = TRUE, bool $userDeleted = TRUE): array {
+    return [
+      'adminGroupName' => 'wisski-foo-admin',
+      'userGroupName' => 'wisski-foo-user',
+      'adminDeleted' => $adminDeleted,
+      'userDeleted' => $userDeleted,
+    ];
+  }
+
+  /**
+   * A component double for deleteComponent().
+   *
+   * @return \Prophecy\Prophecy\ObjectProphecy
+   *   The component prophecy.
+   */
+  protected function deletableComponent() {
+    $component = $this->prophesize(SodaScsComponentInterface::class);
+    $component->get('externalId')->willReturn($this->fieldList('12'));
+    $component->get('machineName')->willReturn($this->fieldList('wisski-foo'));
+    $component->getLabel()->willReturn('Foo');
+    $this->portainer->buildGetRequest(['routeParams' => ['stackId' => '12']])->willReturn(['request' => 'stack-get']);
+    $this->portainer->makeRequest(['request' => 'stack-get'])->willReturn(['success' => TRUE]);
+    $this->portainer->buildDeleteRequest(['routeParams' => ['stackId' => '12']])->willReturn(['request' => 'stack-delete']);
+    return $component;
+  }
+
+  /**
+   * Lets Portainer answer the stack delete with the given result.
+   *
+   * @param array $answer
+   *   The result of the delete request.
+   */
+  protected function portainerAnswersDeleteWith(array $answer): void {
+    $this->portainer->makeRequest(['request' => 'stack-delete'])->willReturn($answer);
+  }
+
+  /**
+   * Lets Keycloak know the clients of wisski-foo and their deletes.
+   *
+   * The lookups and delete requests are tagged, so a test can tell which
+   * request the code made. The groups go through the Keycloak helpers, which
+   * a test stubs itself.
+   *
+   * @param array|null $clients
+   *   The answer of the client lookup; the instance's client by default.
+   */
+  protected function stubKeycloakResources(?array $clients = NULL): void {
+    $token = 'not-a-token';
+    $clients ??= [['id' => 'client-uuid', 'clientId' => 'wisski-foo']];
+
+    $this->keycloakClient->buildGetAllRequest(['queryParams' => ['clientId' => 'wisski-foo'], 'token' => $token])
+      ->willReturn(['request' => 'client-lookup']);
+    $this->keycloakClient->makeRequest(['request' => 'client-lookup'])->willReturn($this->keycloakAnswer($clients));
+    $this->keycloakClient->buildDeleteRequest(['routeParams' => ['clientUuid' => 'client-uuid'], 'token' => $token])
+      ->willReturn(['request' => 'client-delete']);
+    $this->keycloakClient->makeRequest(['request' => 'client-delete'])->willReturn(['success' => TRUE]);
+    $this->keycloakHelpers->deleteComponentAccessGroups('wisski-foo')->willReturn($this->groupsResult());
+  }
+
+  /**
+   * Expects the delete of the client and both groups, once each.
+   */
+  protected function expectKeycloakCleanup(): void {
+    $this->keycloakClient->makeRequest(['request' => 'client-delete'])->shouldBeCalledOnce();
+    $this->keycloakHelpers->deleteComponentAccessGroups('wisski-foo')->shouldBeCalledOnce();
+  }
+
+  /**
+   * Expects that no Keycloak lookup or delete happens.
+   */
+  protected function expectNoKeycloakCleanup(): void {
+    $this->keycloakClient->buildGetAllRequest(Argument::any())->shouldNotBeCalled();
+    $this->keycloakClient->buildDeleteRequest(Argument::any())->shouldNotBeCalled();
+    $this->keycloakHelpers->deleteComponentAccessGroups(Argument::any())->shouldNotBeCalled();
   }
 
   /**

@@ -26,6 +26,7 @@ use Drupal\soda_scs_manager\ServiceKeyActions\SodaScsServiceKeyActionsInterface;
 use Drupal\Tests\soda_scs_manager\Unit\SodaScsCreatePathTestTrait;
 use Drupal\Tests\UnitTestCase;
 use Drupal\user\UserInterface;
+use GuzzleHttp\Psr7\Response;
 use Prophecy\Argument;
 use Prophecy\PhpUnit\ProphecyTrait;
 
@@ -65,6 +66,13 @@ class SodaScsTriplestoreComponentActionsCreateTest extends UnitTestCase {
   protected $messenger;
 
   /**
+   * The mocked logger channel.
+   *
+   * @var \Drupal\Core\Logger\LoggerChannelInterface|\Prophecy\Prophecy\ObjectProphecy
+   */
+  protected $logger;
+
+  /**
    * The component created by the storage.
    *
    * @var \Drupal\soda_scs_manager\Entity\SodaScsComponentInterface|\Prophecy\Prophecy\ObjectProphecy
@@ -101,6 +109,8 @@ class SodaScsTriplestoreComponentActionsCreateTest extends UnitTestCase {
     $this->component->getOwner()->willReturn($owner->reveal());
     $this->component->get('partOfProjects')->willReturn($this->fieldList());
     $this->component->save()->willReturn(1);
+    $this->component->get('machineName')->willReturn($this->fieldList('ts-foo'));
+    $this->component->delete()->willReturn(NULL);
 
     $storage = $this->prophesize(EntityStorageInterface::class);
     $storage->create(Argument::type('array'))->willReturn($this->component->reveal());
@@ -111,7 +121,8 @@ class SodaScsTriplestoreComponentActionsCreateTest extends UnitTestCase {
     $configFactory->getEditable('soda_scs_manager.settings')->willReturn($this->prophesize(Config::class)->reveal());
 
     $loggerFactory = $this->prophesize(LoggerChannelFactoryInterface::class);
-    $loggerFactory->get('soda_scs_manager')->willReturn($this->prophesize(LoggerChannelInterface::class)->reveal());
+    $this->logger = $this->prophesize(LoggerChannelInterface::class);
+    $loggerFactory->get('soda_scs_manager')->willReturn($this->logger->reveal());
 
     $this->messenger = $this->prophesize(MessengerInterface::class);
 
@@ -165,6 +176,10 @@ class SodaScsTriplestoreComponentActionsCreateTest extends UnitTestCase {
     $this->keycloakHelpers->createAndPopulateComponentAccessGroups(Argument::cetera())->shouldNotBeCalled();
     $this->component->save()->shouldNotBeCalled();
     $this->messenger->addError(Argument::cetera())->shouldNotBeCalled();
+    // Nothing was created, so nothing is rolled back.
+    $this->openGdb->buildDeleteRequest(Argument::cetera())->shouldNotBeCalled();
+    $this->keycloakHelpers->deleteComponentAccessGroups(Argument::cetera())->shouldNotBeCalled();
+    $this->component->delete()->shouldNotBeCalled();
 
     $result = $this->actions->createComponent($this->entity());
 
@@ -198,6 +213,8 @@ class SodaScsTriplestoreComponentActionsCreateTest extends UnitTestCase {
     $failure = new \RuntimeException('Connection refused.');
     $this->openGdb->makeRequest(['request' => 'create'])->willThrow($failure);
     $this->component->save()->shouldNotBeCalled();
+    $this->openGdb->buildDeleteRequest(Argument::cetera())->shouldNotBeCalled();
+    $this->component->delete()->shouldNotBeCalled();
 
     $result = $this->actions->createComponent($this->entity());
 
@@ -217,6 +234,7 @@ class SodaScsTriplestoreComponentActionsCreateTest extends UnitTestCase {
     $this->openGdb->makeRequest(['request' => 'update'])->willThrow($failure);
     $this->keycloakHelpers->createAndPopulateComponentAccessGroups(Argument::cetera())->shouldNotBeCalled();
     $this->component->save()->shouldNotBeCalled();
+    $this->expectRollback();
 
     $result = $this->actions->createComponent($this->entity());
 
@@ -236,12 +254,156 @@ class SodaScsTriplestoreComponentActionsCreateTest extends UnitTestCase {
     $failure = new \RuntimeException('Keycloak group request failed.');
     $this->keycloakHelpers->createAndPopulateComponentAccessGroups('ts-foo', NULL, [])->willThrow($failure);
     $this->component->save()->shouldNotBeCalled();
+    $this->expectRollback();
 
     $result = $this->actions->createComponent($this->entity());
 
     $this->assertCompleteFailure($result);
     $this->assertSame($failure, $result['error']);
     $this->assertSame('The access groups for the triplestore could not be created.', $result['message']->getUntranslatedString());
+  }
+
+  /**
+   * A failing save deletes repository, rights and groups again.
+   *
+   * @covers ::createComponent
+   * @covers ::rollBackCreateComponent
+   */
+  public function testCreateComponentRollsBackWhenSavingTheComponentFails(): void {
+    $this->openGdb->makeRequest(['request' => 'create'])->willReturn(['success' => TRUE]);
+    $this->openGdb->makeRequest(['request' => 'update'])->willReturn(['success' => TRUE]);
+    $this->keycloakHelpers->createAndPopulateComponentAccessGroups('ts-foo', NULL, [])->willReturn([]);
+    $failure = new \RuntimeException('Storage failed.');
+    $this->component->save()->willThrow($failure);
+    $this->expectRollback();
+
+    $result = $this->actions->createComponent($this->entity());
+
+    $this->assertCompleteFailure($result);
+    $this->assertSame($failure, $result['error']);
+    $this->assertSame('The triplestore could not be created.', $result['message']->getUntranslatedString());
+    $this->assertSame(['success' => TRUE], $result['data']['createRepoResponse']);
+  }
+
+  /**
+   * A failed rollback is logged and the original failure is returned.
+   *
+   * @covers ::createComponent
+   * @covers ::rollBackCreateComponent
+   */
+  public function testCreateComponentReturnsOriginalFailureWhenRollbackFails(): void {
+    $this->openGdb->makeRequest(['request' => 'create'])->willReturn(['success' => TRUE]);
+    $this->openGdb->makeRequest(['request' => 'update'])->willReturn(['success' => TRUE]);
+    $failure = new \RuntimeException('Keycloak group request failed.');
+    $this->keycloakHelpers->createAndPopulateComponentAccessGroups(Argument::cetera())->willThrow($failure);
+    $this->openGdb->buildDeleteRequest(Argument::cetera())->willReturn(['request' => 'delete-repo']);
+    $this->openGdb->makeRequest(['request' => 'delete-repo'])
+      ->willReturn([
+        'success' => FALSE,
+        'error' => 'HTTP 500',
+        'data' => ['openGdbResponse' => new \RuntimeException('Server error.', 500)],
+      ]);
+    $this->keycloakHelpers->deleteComponentAccessGroups(Argument::any())->shouldNotBeCalled();
+    $this->component->delete()->shouldNotBeCalled();
+    // The creation failure and the failed delete are logged through log().
+    $this->logger->log('error', Argument::type('string'), Argument::type('array'))->shouldBeCalledTimes(2);
+    $this->logger->error(Argument::containingString('Could not remove the repository'), Argument::withEntry('@machineName', 'ts-foo'))->shouldBeCalledOnce();
+
+    $result = $this->actions->createComponent($this->entity());
+
+    $this->assertCompleteFailure($result);
+    $this->assertSame($failure, $result['error']);
+  }
+
+  /**
+   * A repository that cannot be deleted keeps the component and the groups.
+   *
+   * @covers ::deleteComponent
+   *
+   * @dataProvider failedRepositoryDeleteProvider
+   */
+  public function testDeleteComponentKeepsComponentWhenRepositoryDeleteFails(array $response): void {
+    $this->openGdb->buildDeleteRequest(Argument::cetera())->willReturn(['request' => 'delete-repo']);
+    $this->openGdb->makeRequest(['request' => 'delete-repo'])->willReturn($response);
+    $this->openGdb->buildGetRequest(Argument::cetera())->shouldNotBeCalled();
+    $this->keycloakHelpers->deleteComponentAccessGroups(Argument::any())->shouldNotBeCalled();
+    $component = $this->deletableComponent();
+    $component->delete()->shouldNotBeCalled();
+    $this->messenger->addError(Argument::cetera())->shouldNotBeCalled();
+
+    $result = $this->actions->deleteComponent($component->reveal());
+
+    $this->assertFalse($result['success']);
+    $this->assertStringContainsString('Repository ts-foo could not be deleted', $result['error']);
+  }
+
+  /**
+   * Repository delete answers that are no success and no 404.
+   *
+   * @return array<string, array>
+   *   The answers of the OpenGDB request layer.
+   */
+  public static function failedRepositoryDeleteProvider(): array {
+    return [
+      'server error' => [
+        [
+          'success' => FALSE,
+          'error' => 'HTTP 500',
+          'data' => ['openGdbResponse' => new \RuntimeException('Server error.', 500)],
+        ],
+      ],
+      'forbidden' => [
+        [
+          'success' => FALSE,
+          'error' => 'HTTP 403',
+          'data' => ['openGdbResponse' => new \RuntimeException('Forbidden.', 403)],
+        ],
+      ],
+      'no exception in the answer' => [['success' => FALSE, 'error' => 'Connection refused.']],
+      'no details at all' => [['success' => FALSE]],
+    ];
+  }
+
+  /**
+   * A repository delete that throws keeps the component.
+   *
+   * @covers ::deleteComponent
+   */
+  public function testDeleteComponentKeepsComponentWhenRepositoryDeleteThrows(): void {
+    $this->openGdb->buildDeleteRequest(Argument::cetera())->willReturn(['request' => 'delete-repo']);
+    $this->openGdb->makeRequest(['request' => 'delete-repo'])->willThrow(new \RuntimeException('Connection refused.'));
+    $this->keycloakHelpers->deleteComponentAccessGroups(Argument::any())->shouldNotBeCalled();
+    $component = $this->deletableComponent();
+    $component->delete()->shouldNotBeCalled();
+
+    $result = $this->actions->deleteComponent($component->reveal());
+
+    $this->assertFalse($result['success']);
+    $this->assertSame('Connection refused.', $result['error']);
+  }
+
+  /**
+   * A repository that is already gone (404) does not stop the delete.
+   *
+   * @covers ::deleteComponent
+   */
+  public function testDeleteComponentGoesOnWhenRepositoryIsAlreadyGone(): void {
+    $this->stubUserOfDeletedComponent();
+    $this->openGdb->buildDeleteRequest(Argument::that(fn(array $params) => ($params['type'] ?? '') === 'repository'))->willReturn(['request' => 'delete-repo']);
+    $this->openGdb->makeRequest(['request' => 'delete-repo'])
+      ->willReturn([
+        'success' => FALSE,
+        'error' => 'HTTP 404',
+        'data' => ['openGdbResponse' => new \RuntimeException('Not found.', 404)],
+      ]);
+    $this->messenger->addError(Argument::cetera())->willReturn($this->messenger->reveal())->shouldBeCalledOnce();
+    $this->keycloakHelpers->deleteComponentAccessGroups('ts-foo')->willReturn([])->shouldBeCalledOnce();
+    $component = $this->deletableComponent();
+    $component->delete()->shouldBeCalledOnce();
+
+    $result = $this->actions->deleteComponent($component->reveal());
+
+    $this->assertTrue($result['success']);
   }
 
   /**
@@ -260,6 +422,53 @@ class SodaScsTriplestoreComponentActionsCreateTest extends UnitTestCase {
     $this->assertTrue($result['success']);
     $this->assertNull($result['error']);
     $this->assertSame($this->component->reveal(), $result['data']['triplestoreComponent']);
+  }
+
+  /**
+   * Expects that a failed creation deletes everything it created, once.
+   */
+  protected function expectRollback(): void {
+    $this->stubUserOfDeletedComponent();
+    $this->openGdb->buildDeleteRequest(Argument::that(fn(array $params) => ($params['type'] ?? '') === 'repository'))->willReturn(['request' => 'delete-repo']);
+    $this->openGdb->makeRequest(['request' => 'delete-repo'])->willReturn(['success' => TRUE])->shouldBeCalledOnce();
+    $this->keycloakHelpers->deleteComponentAccessGroups('ts-foo')->willReturn([])->shouldBeCalledOnce();
+    $this->component->delete()->shouldBeCalledOnce();
+  }
+
+  /**
+   * Lets the OpenGDB user of the owner hold the rights of the repository.
+   *
+   * The restoring update is told from the granting one by the rights it
+   * carries: the granting one has READ_REPO_ts-foo, the restoring one not.
+   */
+  protected function stubUserOfDeletedComponent(): void {
+    $this->openGdb->buildGetRequest(Argument::that(fn(array $params) => ($params['type'] ?? '') === 'user'))->willReturn(['request' => 'get-user']);
+    $userBody = json_encode([
+      'grantedAuthorities' => ['ROLE_USER', 'READ_REPO_ts-foo', 'WRITE_REPO_ts-foo', 'READ_REPO_other'],
+    ]);
+    $this->openGdb->makeRequest(['request' => 'get-user'])->willReturn([
+      'success' => TRUE,
+      'data' => ['openGdbResponse' => new Response(200, [], $userBody)],
+    ]);
+    $this->openGdb->buildUpdateRequest(Argument::that(
+      fn(array $params) => !in_array('READ_REPO_ts-foo', $params['body']['grantedAuthorities'] ?? [], TRUE)
+    ))->willReturn(['request' => 'restore-rights']);
+    $this->openGdb->makeRequest(['request' => 'restore-rights'])->willReturn(['success' => TRUE]);
+  }
+
+  /**
+   * A component double for deleteComponent().
+   *
+   * @return \Prophecy\Prophecy\ObjectProphecy
+   *   The component prophecy.
+   */
+  protected function deletableComponent() {
+    $owner = $this->prophesize(UserInterface::class);
+    $owner->getDisplayName()->willReturn('alice');
+    $component = $this->prophesize(SodaScsComponentInterface::class);
+    $component->getOwner()->willReturn($owner->reveal());
+    $component->get('machineName')->willReturn($this->fieldList('ts-foo'));
+    return $component;
   }
 
   /**

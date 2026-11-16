@@ -127,6 +127,9 @@ class SodaScsSqlComponentActionsCreateTest extends UnitTestCase {
     $this->sqlComponent->set(Argument::cetera())->willReturn($this->sqlComponent->reveal());
     $this->sqlComponent->get('partOfProjects')->willReturn($this->fieldList());
     $this->sqlComponent->save()->willReturn(1);
+    $this->sqlComponent->get('machineName')->willReturn($this->fieldList('sql-foo'));
+    $this->sqlComponent->id()->willReturn(NULL);
+    $this->sqlComponent->delete()->willReturn(NULL);
 
     $storage = $this->prophesize(EntityStorageInterface::class);
     $storage->create(Argument::type('array'))->willReturn($this->sqlComponent->reveal());
@@ -263,20 +266,209 @@ class SodaScsSqlComponentActionsCreateTest extends UnitTestCase {
    * @covers ::createComponent
    */
   public function testCreateComponentCatchesKeycloakFailure(): void {
-    $this->sqlServiceActions->existService('sql-foo')->willReturn(['execStatus' => 0, 'result' => FALSE]);
-    $this->sqlServiceActions->existServiceUser(Argument::any())->willReturn(['execStatus' => 0, 'result' => 1]);
-    $this->sqlServiceActions->grantServiceRights(Argument::cetera())->willReturn(['execStatus' => 0]);
-    $this->sqlServiceActions->createService(Argument::any())->willReturn(['execStatus' => 0]);
+    $this->databaseCanBeCreated();
     $keycloakFailure = new \RuntimeException('Keycloak group request failed.');
     $this->keycloakHelpers
       ->createAndPopulateComponentAccessGroups('sql-foo', NULL, [])
       ->willThrow($keycloakFailure);
+    $this->databaseRollsBack();
     $this->sqlComponent->save()->shouldNotBeCalled();
 
     $result = $this->actions->createComponent($this->entity());
 
     $this->assertCompleteFailure($result);
     $this->assertSame($keycloakFailure, $result['error']);
+  }
+
+  /**
+   * A failure after the database was created deletes it again.
+   *
+   * @covers ::createComponent
+   * @covers ::rollBackCreateComponent
+   */
+  public function testCreateComponentDeletesDatabaseWhenKeycloakGroupsFail(): void {
+    $this->databaseCanBeCreated();
+    $this->keycloakHelpers->createAndPopulateComponentAccessGroups(Argument::cetera())
+      ->willThrow(new \RuntimeException('Keycloak group request failed.'));
+    $this->sqlServiceActions->deleteService($this->sqlComponent->reveal())
+      ->willReturn(['success' => TRUE])
+      ->shouldBeCalledOnce();
+    $this->keycloakHelpers->deleteComponentAccessGroups('sql-foo')
+      ->willReturn([
+        'adminGroupName' => 'sql-foo-admin',
+        'userGroupName' => 'sql-foo-user',
+        'adminDeleted' => FALSE,
+        'userDeleted' => FALSE,
+      ])
+      ->shouldBeCalledOnce();
+
+    $result = $this->actions->createComponent($this->entity());
+
+    $this->assertCompleteFailure($result);
+    $this->assertSame('Keycloak group request failed.', $result['error']->getMessage());
+  }
+
+  /**
+   * A failure when the component is saved deletes the database as well.
+   *
+   * @covers ::createComponent
+   * @covers ::rollBackCreateComponent
+   */
+  public function testCreateComponentDeletesDatabaseWhenSavingTheComponentFails(): void {
+    $this->databaseCanBeCreated();
+    $this->sqlComponent->save()->willThrow(new \RuntimeException('Storage failed.'));
+    $this->sqlServiceActions->deleteService($this->sqlComponent->reveal())
+      ->willReturn(['success' => TRUE])
+      ->shouldBeCalledOnce();
+    $this->keycloakHelpers->deleteComponentAccessGroups('sql-foo')->willReturn([
+      'adminGroupName' => 'sql-foo-admin',
+      'userGroupName' => 'sql-foo-user',
+      'adminDeleted' => TRUE,
+      'userDeleted' => TRUE,
+    ])->shouldBeCalledOnce();
+
+    $result = $this->actions->createComponent($this->entity());
+
+    $this->assertCompleteFailure($result);
+    $this->assertSame('Storage failed.', $result['error']->getMessage());
+  }
+
+  /**
+   * A failed rollback is logged and does not hide the original failure.
+   *
+   * @covers ::createComponent
+   * @covers ::rollBackCreateComponent
+   */
+  public function testCreateComponentReturnsOriginalFailureWhenRollbackFails(): void {
+    $this->databaseCanBeCreated();
+    $keycloakFailure = new \RuntimeException('Keycloak group request failed.');
+    $this->keycloakHelpers->createAndPopulateComponentAccessGroups(Argument::cetera())->willThrow($keycloakFailure);
+    $this->sqlServiceActions->deleteService($this->sqlComponent->reveal())
+      ->willReturn(['success' => FALSE, 'error' => 'Access denied.']);
+    $this->keycloakHelpers->deleteComponentAccessGroups(Argument::any())->shouldNotBeCalled();
+    // The creation failure and the failed delete are logged through log().
+    $this->logger->log('error', Argument::type('string'), Argument::type('array'))->shouldBeCalledTimes(2);
+    $this->messenger->addError(Argument::cetera())->willReturn($this->messenger->reveal());
+    $this->logger->error(Argument::containingString('Could not remove the database'), Argument::withEntry('@machineName', 'sql-foo'))->shouldBeCalledOnce();
+
+    $result = $this->actions->createComponent($this->entity());
+
+    $this->assertCompleteFailure($result);
+    $this->assertSame($keycloakFailure, $result['error']);
+  }
+
+  /**
+   * Failures before the database exists delete nothing.
+   *
+   * @covers ::createComponent
+   *
+   * @dataProvider failureBeforeDatabaseCreationProvider
+   */
+  public function testCreateComponentDeletesNothingWhenItFailsBeforeCreatingTheDatabase(array $createResult): void {
+    $this->sqlServiceActions->existService('sql-foo')->willReturn(['execStatus' => 0, 'result' => FALSE]);
+    $this->sqlServiceActions->existServiceUser(Argument::any())->willReturn(['execStatus' => 0, 'result' => 1]);
+    $this->sqlServiceActions->grantServiceRights(Argument::cetera())->willReturn(['execStatus' => 0]);
+    $this->sqlServiceActions->createService(Argument::any())->willReturn($createResult);
+    $this->sqlServiceActions->deleteService(Argument::any())->shouldNotBeCalled();
+    $this->keycloakHelpers->deleteComponentAccessGroups(Argument::any())->shouldNotBeCalled();
+
+    $result = $this->actions->createComponent($this->entity());
+
+    $this->assertCompleteFailure($result);
+  }
+
+  /**
+   * Failed answers of the create database command.
+   *
+   * @return array<string, array>
+   *   The answer of createService().
+   */
+  public static function failureBeforeDatabaseCreationProvider(): array {
+    return [
+      'create command failed' => [['execStatus' => 1, 'command' => 'CREATE DATABASE', 'output' => 'boom']],
+    ];
+  }
+
+  /**
+   * An existing database is never deleted by the rollback.
+   *
+   * @covers ::createComponent
+   */
+  public function testCreateComponentDoesNotDeleteExistingDatabase(): void {
+    $this->sqlServiceActions->existService('sql-foo')->willReturn(['execStatus' => 0, 'result' => TRUE]);
+    $this->sqlServiceActions->deleteService(Argument::any())->shouldNotBeCalled();
+    $this->keycloakHelpers->deleteComponentAccessGroups(Argument::any())->shouldNotBeCalled();
+
+    $result = $this->actions->createComponent($this->entity());
+
+    $this->assertCompleteFailure($result);
+  }
+
+  /**
+   * A database that cannot be deleted keeps the component and the groups.
+   *
+   * @covers ::deleteComponent
+   *
+   * @dataProvider failedDatabaseDeleteProvider
+   */
+  public function testDeleteComponentKeepsComponentAndGroupsWhenDatabaseDeleteFails(array $deleteResult, string $expectedError): void {
+    $component = $this->prophesize(SodaScsComponentInterface::class);
+    $component->id()->willReturn(5);
+    $component->get('machineName')->willReturn($this->fieldList('sql-foo'));
+    $this->sqlServiceActions->deleteService($component->reveal())->willReturn($deleteResult);
+    $this->keycloakHelpers->deleteComponentAccessGroups(Argument::any())->shouldNotBeCalled();
+    $component->delete()->shouldNotBeCalled();
+    $this->messenger->addError(Argument::cetera())->shouldBeCalledOnce();
+
+    $result = $this->actions->deleteComponent($component->reveal());
+
+    $this->assertFalse($result['success']);
+    $this->assertSame($expectedError, $result['error']);
+  }
+
+  /**
+   * Delete answers that are no success.
+   *
+   * @return array<string, array>
+   *   The answer of deleteService() and the error that is returned.
+   */
+  public static function failedDatabaseDeleteProvider(): array {
+    return [
+      'failure with reason' => [
+        ['success' => FALSE, 'error' => 'Access denied.'],
+        'Database of component 5 could not be deleted: Access denied.',
+      ],
+      'failure without reason' => [
+        ['success' => FALSE],
+        'Database of component 5 could not be deleted: no details',
+      ],
+      'answer without success flag' => [
+        [],
+        'Database of component 5 could not be deleted: no details',
+      ],
+    ];
+  }
+
+  /**
+   * A deleted database takes the groups and the component with it.
+   *
+   * @covers ::deleteComponent
+   */
+  public function testDeleteComponentDeletesDatabaseGroupsAndComponent(): void {
+    $component = $this->prophesize(SodaScsComponentInterface::class);
+    $component->get('machineName')->willReturn($this->fieldList('sql-foo'));
+    $this->sqlServiceActions->deleteService($component->reveal())->willReturn(['success' => TRUE]);
+    $this->keycloakHelpers->deleteComponentAccessGroups('sql-foo')->willReturn([
+      'adminGroupName' => 'sql-foo-admin',
+      'userGroupName' => 'sql-foo-user',
+      'adminDeleted' => TRUE,
+      'userDeleted' => TRUE,
+    ])->shouldBeCalledOnce();
+    $component->delete()->shouldBeCalledOnce();
+
+    $result = $this->actions->deleteComponent($component->reveal());
+
+    $this->assertTrue($result['success']);
   }
 
   /**
@@ -321,6 +513,30 @@ class SodaScsSqlComponentActionsCreateTest extends UnitTestCase {
 
     $this->assertCompleteFailure($result);
     $this->assertInstanceOf(\Exception::class, $result['error']);
+  }
+
+  /**
+   * Lets every step up to and including the database creation succeed.
+   */
+  protected function databaseCanBeCreated(): void {
+    $this->sqlServiceActions->existService('sql-foo')->willReturn(['execStatus' => 0, 'result' => FALSE]);
+    $this->sqlServiceActions->existServiceUser(Argument::any())->willReturn(['execStatus' => 0, 'result' => 1]);
+    $this->sqlServiceActions->grantServiceRights(Argument::cetera())->willReturn(['execStatus' => 0]);
+    $this->sqlServiceActions->createService(Argument::any())->willReturn(['execStatus' => 0]);
+    $this->keycloakHelpers->createAndPopulateComponentAccessGroups(Argument::cetera())->willReturn([]);
+  }
+
+  /**
+   * Lets the rollback delete the database and the groups.
+   */
+  protected function databaseRollsBack(): void {
+    $this->sqlServiceActions->deleteService(Argument::any())->willReturn(['success' => TRUE]);
+    $this->keycloakHelpers->deleteComponentAccessGroups(Argument::any())->willReturn([
+      'adminGroupName' => 'sql-foo-admin',
+      'userGroupName' => 'sql-foo-user',
+      'adminDeleted' => FALSE,
+      'userDeleted' => FALSE,
+    ]);
   }
 
   /**
