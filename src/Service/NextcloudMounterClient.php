@@ -212,21 +212,65 @@ class NextcloudMounterClient {
 
   /**
    * Ensures the mount directory and its parents exist on the shared host bind.
+   *
+   * @param string $relativePath
+   *   The directory relative to the mounts root.
+   *
+   * @throws \RuntimeException
+   *   When neither the Manager nor the sidecar could create a directory.
    */
   public function ensureMountDirectory(string $relativePath): void {
     $path = rtrim($this->mountsRootInContainer(), '/');
+    $sidecarRelativePath = '';
     foreach (explode('/', $relativePath) as $segment) {
       $path .= '/' . $segment;
+      $sidecarRelativePath .= ($sidecarRelativePath === '' ? '' : '/') . $segment;
       if (is_dir($path)) {
         continue;
       }
-      if (!@mkdir($path, 0755) && !is_dir($path)) {
-        throw new \RuntimeException(sprintf('Could not create mount directory %s.', $path));
+      if (@mkdir($path, 0755) || is_dir($path)) {
+        // Drush runs as root, PHP-FPM as www-data; both must manage the tree.
+        @chown($path, self::MOUNT_DIRECTORY_OWNER);
+        @chgrp($path, self::MOUNT_DIRECTORY_OWNER);
+        continue;
       }
-      // Drush runs as root, PHP-FPM as www-data; both must manage the tree.
-      @chown($path, self::MOUNT_DIRECTORY_OWNER);
-      @chgrp($path, self::MOUNT_DIRECTORY_OWNER);
+      $this->createMountDirectoryInSidecar($path, $sidecarRelativePath);
     }
+  }
+
+  /**
+   * Creates a mount directory through the sidecar, which runs as root.
+   *
+   * The mounts root is root:root 755 on hosts set up before the Manager could
+   * write to it, so www-data cannot create a user's directory there. The
+   * sidecar binds the same host directory; its directory belongs to root,
+   * which is enough for a mount point.
+   *
+   * @param string $path
+   *   The directory in the Manager container, for the check and the message.
+   * @param string $sidecarRelativePath
+   *   The same directory relative to the mounts root.
+   *
+   * @throws \RuntimeException
+   *   When the directory still does not exist afterwards.
+   */
+  protected function createMountDirectoryInSidecar(string $path, string $sidecarRelativePath): void {
+    try {
+      $this->request('operations/mkdir', [
+        'fs' => self::SIDECAR_ROOT,
+        'remote' => $sidecarRelativePath,
+      ]);
+    }
+    catch (\RuntimeException $e) {
+      throw new \RuntimeException(sprintf('Could not create mount directory %s.', $path), 0, $e);
+    }
+    clearstatcache(TRUE, $path);
+    if (!is_dir($path)) {
+      throw new \RuntimeException(sprintf('Could not create mount directory %s.', $path));
+    }
+    $this->logger->debug('Created mount directory @path through the Nextcloud mounter; the Manager cannot write to the mounts root.', [
+      '@path' => $path,
+    ]);
   }
 
   /**

@@ -103,6 +103,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   account (e.g. after the owner was renamed or deleted) no longer blocks the
   delete. The OpenGDB account itself stays until the user account is deleted.
   Related: [#3638647](https://www.drupal.org/project/soda_scs_manager/issues/3638647).
+- A new user gets a WissKI again on hosts where the Nextcloud mounts root
+  belongs to root (as `setup-nextcloud-mounts.sh` leaves it). The Manager
+  could not create the user's mount directory there, so every WissKI of a
+  user without that directory, including the demo, failed with "Could not
+  create mount directory". The Nextcloud mounter now creates the directory
+  when the Manager cannot.
+  Related: [#3638703](https://www.drupal.org/project/soda_scs_manager/issues/3638703).
 
 ## [4.4.0] - 2026-11-12
 
