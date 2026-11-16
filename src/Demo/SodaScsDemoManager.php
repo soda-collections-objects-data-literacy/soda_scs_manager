@@ -38,6 +38,11 @@ class SodaScsDemoManager {
   public const OPERATION_RESET = 'reset';
 
   /**
+   * Lock name prefix of a demo project, held while a job or a delete runs.
+   */
+  public const PROJECT_LOCK_PREFIX = 'soda_scs_manager.demo.project.';
+
+  /**
    * Fixed label of the central demo project.
    */
   public const SOURCE_PROJECT_LABEL = 'Demo Projekt';

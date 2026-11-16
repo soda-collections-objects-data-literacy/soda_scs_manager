@@ -4772,6 +4772,10 @@ msgid "Could not delete the WissKI of demo project @project. The project was not
 msgstr "Das WissKI des Demo-Projekts @project konnte nicht gelöscht werden. Das Projekt wurde nicht gelöscht."
 
 #: src/Form/SodaScsProjectDeleteForm.php
+msgid "The demo project @project is being set up right now. Delete it when the setup is done."
+msgstr "Das Demo-Projekt @project wird gerade eingerichtet. Löschen Sie es, wenn die Einrichtung abgeschlossen ist."
+
+#: src/Form/SodaScsProjectDeleteForm.php
 msgid "@description The WissKI of the demo, with its database and triplestore, is deleted as well."
 msgstr "@description Das WissKI der Demo wird mit seiner Datenbank und seinem Triplestore ebenfalls gelöscht."
 

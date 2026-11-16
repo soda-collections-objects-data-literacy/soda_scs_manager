@@ -38,6 +38,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   them too, unless they belong to another WissKI. Before, the next WissKI with
   the same name failed with "Client … already exists".
   Related: [#3638568](https://www.drupal.org/project/soda_scs_manager/issues/3638568).
+- A demo project can no longer be deleted while its demo job is creating or
+  resetting the apps; the delete says so and works once that step is done.
+  Before, a WissKI that the job created during the delete stayed without a
+  project. A job that starts during the delete stops without creating
+  anything.
+  Related: [#3638567](https://www.drupal.org/project/soda_scs_manager/issues/3638567).
 - Demo jobs started by drush as root (by hand or from a host timer) run
   again. The run writes its output to `/tmp/scs-demo-queue-root.log`, because
   root may not open the web server's `/tmp/scs-demo-queue.log`; before, the

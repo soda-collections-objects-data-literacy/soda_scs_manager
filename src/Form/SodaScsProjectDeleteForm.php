@@ -9,6 +9,7 @@ use Drupal\Core\Entity\ContentEntityDeleteForm;
 use Drupal\Core\Entity\EntityRepositoryInterface;
 use Drupal\Core\Entity\EntityTypeBundleInfoInterface;
 use Drupal\Core\Form\FormStateInterface;
+use Drupal\Core\Lock\LockBackendInterface;
 use Drupal\Core\StringTranslation\TranslatableMarkup;
 use Drupal\Core\Url;
 use Drupal\soda_scs_manager\Demo\SodaScsDemoManager;
@@ -27,6 +28,11 @@ use Symfony\Component\DependencyInjection\ContainerInterface;
  * Provides a form for deleting Soda SCS Stack entities.
  */
 class SodaScsProjectDeleteForm extends ContentEntityDeleteForm {
+
+  /**
+   * Seconds the demo project lock is held at most; covers a slow WissKI delete.
+   */
+  private const DEMO_LOCK_TIMEOUT_SECONDS = 900.0;
 
   /**
    * The Soda SCS Project Helpers service.
@@ -74,6 +80,8 @@ class SodaScsProjectDeleteForm extends ContentEntityDeleteForm {
    *   Finds the WissKI stacks of a demo project.
    * @param \Drupal\soda_scs_manager\StackActions\SodaScsStackActionsInterface $wisskiStackActions
    *   Deletes a WissKI stack with its database and triplestore.
+   * @param \Drupal\Core\Lock\LockBackendInterface $lock
+   *   The demo project lock that the demo queue job holds as well.
    */
   public function __construct(
     EntityRepositoryInterface $entity_repository,
@@ -88,6 +96,7 @@ class SodaScsProjectDeleteForm extends ContentEntityDeleteForm {
     protected SodaScsDemoManager $demoManager,
     protected SodaScsDemoProjectApps $demoProjectApps,
     protected SodaScsStackActionsInterface $wisskiStackActions,
+    protected LockBackendInterface $lock,
   ) {
     parent::__construct($entity_repository, $entity_type_bundle_info, $time);
     $this->entityRepository = $entity_repository;
@@ -115,6 +124,7 @@ class SodaScsProjectDeleteForm extends ContentEntityDeleteForm {
       $container->get('soda_scs_manager.demo.manager'),
       $container->get('soda_scs_manager.demo.project_apps'),
       $container->get('soda_scs_manager.wisski_stack.actions'),
+      $container->get('lock'),
     );
   }
 
@@ -199,12 +209,44 @@ class SodaScsProjectDeleteForm extends ContentEntityDeleteForm {
    * {@inheritdoc}
    */
   public function submitForm(array &$form, FormStateInterface $form_state) {
-    // Add custom logic before deletion.
-    \Drupal::logger('soda_scs_manager')->notice('Deleting project: @label', ['@label' => $this->entity->label()]);
-
-    // Construct properties.
     /** @var \Drupal\soda_scs_manager\Entity\SodaScsProject $project */
     $project = $this->entity;
+    if (!$this->demoManager->isDemoProject($project)) {
+      $this->deleteProject($project, $form_state);
+      return;
+    }
+
+    // A running demo job may still save a WissKI stack after the lookup in
+    // deleteDemoWisskiStacks(); holding its lock keeps the job out until the
+    // project is gone, and the job then drops itself.
+    $lockName = SodaScsDemoManager::PROJECT_LOCK_PREFIX . $project->id();
+    if (!$this->lock->acquire($lockName, self::DEMO_LOCK_TIMEOUT_SECONDS)) {
+      $this->messenger()->addError($this->t('The demo project @project is being set up right now. Delete it when the setup is done.', ['@project' => $project->label()]));
+      $form_state->setRebuild();
+      return;
+    }
+    try {
+      // A job attempt that ended just before the lock was taken may have
+      // saved fields (e.g. webprotegeProjectId) the form's copy lacks.
+      $current = $this->entityTypeManager->getStorage('soda_scs_project')->loadUnchanged($project->id());
+      if (!$current instanceof SodaScsProjectInterface) {
+        $this->messenger()->addStatus($this->t('Project @label has been deleted.', ['@label' => $project->label()]));
+        $form_state->setRedirect('soda_scs_manager.dashboard');
+        return;
+      }
+      $this->deleteProject($current, $form_state);
+    }
+    finally {
+      $this->lock->release($lockName);
+    }
+  }
+
+  /**
+   * Deletes the project with its applications, Team Folder and group.
+   */
+  private function deleteProject(SodaScsProjectInterface $project, FormStateInterface $form_state): void {
+    $this->logger('soda_scs_manager')->notice('Deleting project: @label', ['@label' => $project->label()]);
+
     // Members are detached only after the demo WissKI is gone: a failed
     // WissKI delete must leave the project as it was.
     if (!$this->membersMayBeRemoved($project, $form_state)) {

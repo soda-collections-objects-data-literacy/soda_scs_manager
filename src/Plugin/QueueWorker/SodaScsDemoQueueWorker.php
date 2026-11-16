@@ -106,7 +106,7 @@ class SodaScsDemoQueueWorker extends QueueWorkerBase implements ContainerFactory
     $operation = (string) ($data['operation'] ?? '');
     $lockName = $operation === SodaScsDemoManager::OPERATION_BUILD_TEMPLATE
       ? 'soda_scs_manager.demo.template_build'
-      : 'soda_scs_manager.demo.project.' . (int) ($data['projectId'] ?? 0);
+      : SodaScsDemoManager::PROJECT_LOCK_PREFIX . (int) ($data['projectId'] ?? 0);
     if (!$this->lock->acquire($lockName, self::LOCK_TIMEOUT_SECONDS)) {
       throw new DelayedRequeueException(self::RETRY_DELAY_SECONDS);
     }
