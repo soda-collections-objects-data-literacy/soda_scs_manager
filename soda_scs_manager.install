@@ -2000,6 +2000,39 @@ function soda_scs_manager_update_11040() {
 }
 
 /**
+ * Remove the " (WebProtégé)" suffix from WebProtégé component labels.
+ *
+ * The create form used to append the application type to every label. The
+ * WebProtégé card is already titled "WebProtégé", so the suffix only repeats
+ * it. Only the label in the SCS Manager changes; WebProtégé is not called.
+ */
+function soda_scs_manager_update_11041() {
+  $suffix = ' (WebProtégé)';
+  $storage = \Drupal::entityTypeManager()->getStorage('soda_scs_component');
+  $ids = $storage->getQuery()
+    ->accessCheck(FALSE)
+    ->condition('bundle', 'soda_scs_webprotege_component')
+    ->execute();
+
+  $renamed = 0;
+  foreach ($storage->loadMultiple($ids) as $component) {
+    $label = (string) $component->label();
+    if (!str_ends_with($label, $suffix)) {
+      continue;
+    }
+    $newLabel = trim(substr($label, 0, -strlen($suffix)));
+    if ($newLabel === '') {
+      continue;
+    }
+    $component->set('label', $newLabel);
+    $component->save();
+    $renamed++;
+  }
+
+  return (string) t('Removed the WebProtégé suffix from @count labels.', ['@count' => $renamed]);
+}
+
+/**
  * Forgets an installed theme whose files no longer exist.
  *
  * The theme installer cannot uninstall a theme it cannot find, so drop the

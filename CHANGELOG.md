@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- A new WebProtégé application keeps the label you enter. The create form no
+  longer adds " (WebProtégé)" to it; its card is already titled "WebProtégé".
+  Update 11041 removes the suffix from existing WebProtégé labels.
+  **Run `drush updb`.**
+
 ## [4.4.0] - 2026-11-12
 
 ### Added

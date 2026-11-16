@@ -379,8 +379,11 @@ class SodaScsComponentCreateForm extends ContentEntityForm {
       ? $this->entity->get('partOfProjects')->target_id
       : NULL;
 
-    // Set the label of the entity.
-    $this->entity->set('label', $this->entity->get('label')->value . ' (' . $this->bundleInfo['label'] . ')');
+    // Append the application type to the label. WebProtégé is left out: its
+    // card is already titled "WebProtégé".
+    if ($this->entity->bundle() !== 'soda_scs_webprotege_component') {
+      $this->entity->set('label', $this->entity->get('label')->value . ' (' . $this->bundleInfo['label'] . ')');
+    }
 
     // Create external stack.
     $createComponentResult = $this->sodaScsComponentActions->createComponent($this->entity);
