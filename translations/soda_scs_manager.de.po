@@ -4775,6 +4775,14 @@ msgstr "Das WissKI des Demo-Projekts @project konnte nicht gelöscht werden. Das
 msgid "The demo project @project is being set up right now. Delete it when the setup is done."
 msgstr "Das Demo-Projekt @project wird gerade eingerichtet. Löschen Sie es, wenn die Einrichtung abgeschlossen ist."
 
+#: src/Form/SodaScsProfileDeleteForm.php
+msgid "A demo setup is still running (@projects). Delete your profile when the setup is done."
+msgstr "Die Einrichtung eines Demo-Projekts läuft noch (@projects). Löschen Sie Ihr Profil, wenn die Einrichtung abgeschlossen ist."
+
+#: soda_scs_manager.module
+msgid "A demo setup is still running (@projects). Delete the account when the setup is done."
+msgstr "Die Einrichtung eines Demo-Projekts läuft noch (@projects). Löschen Sie das Konto, wenn die Einrichtung abgeschlossen ist."
+
 #: src/Form/SodaScsProjectDeleteForm.php
 msgid "@description The WissKI of the demo, with its database and triplestore, is deleted as well."
 msgstr "@description Das WissKI der Demo wird mit seiner Datenbank und seinem Triplestore ebenfalls gelöscht."

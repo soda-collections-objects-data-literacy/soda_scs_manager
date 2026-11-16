@@ -7,9 +7,11 @@ namespace Drupal\soda_scs_manager\Service;
 use Drupal\Core\Entity\EntityInterface;
 use Drupal\Core\Entity\EntityTypeManagerInterface;
 use Drupal\Core\Entity\FieldableEntityInterface;
+use Drupal\Core\Lock\LockBackendInterface;
 use Drupal\Core\Logger\LoggerChannelFactoryInterface;
 use Drupal\Core\Logger\LoggerChannelInterface;
 use Drupal\soda_scs_manager\ComponentActions\SodaScsComponentActionsInterface;
+use Drupal\soda_scs_manager\Demo\SodaScsDemoManager;
 use Drupal\soda_scs_manager\Entity\SodaScsComponent;
 use Drupal\soda_scs_manager\Entity\SodaScsComponentInterface;
 use Drupal\soda_scs_manager\Entity\SodaScsProjectInterface;
@@ -39,6 +41,11 @@ use Symfony\Component\DependencyInjection\Attribute\Autowire;
 final class SodaScsUserOffboarding {
 
   /**
+   * Seconds a demo project lock is held at most; covers a slow WissKI delete.
+   */
+  private const DEMO_LOCK_TIMEOUT_SECONDS = 900.0;
+
+  /**
    * The logger channel.
    */
   private LoggerChannelInterface $logger;
@@ -49,8 +56,12 @@ final class SodaScsUserOffboarding {
   public function __construct(
     #[Autowire(service: 'soda_scs_manager.component.actions')]
     private readonly SodaScsComponentActionsInterface $componentActions,
+    #[Autowire(service: 'soda_scs_manager.demo.manager')]
+    private readonly SodaScsDemoManager $demoManager,
     #[Autowire(service: 'entity_type.manager')]
     private readonly EntityTypeManagerInterface $entityTypeManager,
+    #[Autowire(service: 'lock')]
+    private readonly LockBackendInterface $lock,
     #[Autowire(service: 'logger.factory')]
     LoggerChannelFactoryInterface $loggerFactory,
     #[Autowire(service: 'soda_scs_manager.project_membership.helpers')]
@@ -77,6 +88,26 @@ final class SodaScsUserOffboarding {
     private readonly SodaScsWebprotegeHelpers $webprotegeHelpers,
   ) {
     $this->logger = $loggerFactory->get('soda_scs_manager');
+  }
+
+  /**
+   * Owned demo projects whose demo job runs right now.
+   *
+   * The job holds the project lock while an attempt runs; the account
+   * delete forms refuse while one is listed.
+   *
+   * @return list<\Drupal\soda_scs_manager\Entity\SodaScsProjectInterface>
+   *   The demo projects in setup.
+   */
+  public function demoProjectsInSetup(UserInterface $user): array {
+    $inSetup = [];
+    foreach ($this->loadProjects('owner', (int) $user->id()) as $project) {
+      if ($this->demoManager->isDemoProject($project)
+        && !$this->lock->lockMayBeAvailable(SodaScsDemoManager::PROJECT_LOCK_PREFIX . $project->id())) {
+        $inSetup[] = $project;
+      }
+    }
+    return $inSetup;
   }
 
   /**
@@ -134,7 +165,9 @@ final class SodaScsUserOffboarding {
     $this->deleteInvitations($user);
 
     foreach ($inventory->ownedProjects() as $project) {
-      $this->deleteOwnedProject($project);
+      $this->withDemoProjectLock($project, function () use ($project): void {
+        $this->deleteOwnedProject($project);
+      });
     }
 
     $this->purgeLeftovers($user);
@@ -239,7 +272,7 @@ final class SodaScsUserOffboarding {
       $this->forceDelete($component);
     }
 
-    $fresh = $this->entityTypeManager->getStorage('soda_scs_project')->load($projectId);
+    $fresh = $this->entityTypeManager->getStorage('soda_scs_project')->loadUnchanged($projectId);
     if (!$fresh instanceof SodaScsProjectInterface) {
       return;
     }
@@ -478,6 +511,42 @@ final class SodaScsUserOffboarding {
         '@step' => $step,
         '@message' => $throwable->getMessage(),
       ]);
+    }
+  }
+
+  /**
+   * Runs the delete of a demo project while holding its demo job lock.
+   *
+   * A job attempt could otherwise save an app after the project's stacks
+   * were listed. The delete runs inside the account delete transaction, so
+   * the lock row is not committed yet: a job that starts meanwhile waits on
+   * it (up to the database lock wait timeout), then finds the project gone
+   * and drops itself, or is requeued. The account delete cannot be refused
+   * here (hook_user_predelete), so a busy lock is logged and the delete goes
+   * on. Fields a finished attempt saved are read again under the lock
+   * (deleteOwnedProject() reloads the project unchanged).
+   */
+  private function withDemoProjectLock(SodaScsProjectInterface $project, callable $delete): void {
+    if (!$this->demoManager->isDemoProject($project)) {
+      $delete();
+      return;
+    }
+
+    $lockName = SodaScsDemoManager::PROJECT_LOCK_PREFIX . $project->id();
+    $locked = $this->lock->acquire($lockName, self::DEMO_LOCK_TIMEOUT_SECONDS);
+    if (!$locked) {
+      $this->logger->warning('Deleting demo project @project (@id) while its demo job runs; apps the job creates afterwards stay without a project.', [
+        '@project' => $project->label(),
+        '@id'      => $project->id(),
+      ]);
+    }
+    try {
+      $delete();
+    }
+    finally {
+      if ($locked) {
+        $this->lock->release($lockName);
+      }
     }
   }
 

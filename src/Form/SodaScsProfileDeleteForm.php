@@ -116,6 +116,26 @@ final class SodaScsProfileDeleteForm extends ConfirmFormBase {
   /**
    * {@inheritdoc}
    */
+  public function validateForm(array &$form, FormStateInterface $form_state): void {
+    parent::validateForm($form, $form_state);
+    $user = $this->entityTypeManager->getStorage('user')->load($this->currentUser()->id());
+    if (!$user instanceof UserInterface) {
+      return;
+    }
+    // A running demo job could still create apps after the delete. One error
+    // names all projects: the form state keeps only the first per element.
+    $labels = array_map(
+      static fn ($project): string => (string) $project->label(),
+      $this->userOffboarding->demoProjectsInSetup($user),
+    );
+    if ($labels !== []) {
+      $form_state->setErrorByName('', $this->t('A demo setup is still running (@projects). Delete your profile when the setup is done.', ['@projects' => implode(', ', $labels)]));
+    }
+  }
+
+  /**
+   * {@inheritdoc}
+   */
   public function submitForm(array &$form, FormStateInterface $form_state): void {
     $user = $this->entityTypeManager->getStorage('user')->load($this->currentUser()->id());
     if (!$user instanceof UserInterface || (int) $user->id() === 1) {

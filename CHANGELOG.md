@@ -44,6 +44,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   project. A job that starts during the delete stops without creating
   anything.
   Related: [#3638567](https://www.drupal.org/project/soda_scs_manager/issues/3638567).
+- An account can no longer be deleted (own profile or by an admin) while the
+  demo job of its demo project is creating or resetting the apps; the form
+  says so and works once that step is done. Before, a WissKI that the job
+  created during the delete stayed without a project.
+  Related: [#3638643](https://www.drupal.org/project/soda_scs_manager/issues/3638643).
 - Demo jobs started by drush as root (by hand or from a host timer) run
   again. The run writes its output to `/tmp/scs-demo-queue-root.log`, because
   root may not open the web server's `/tmp/scs-demo-queue.log`; before, the

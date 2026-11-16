@@ -1346,6 +1346,7 @@ function soda_scs_manager_form_user_multiple_cancel_confirm_alter(array &$form, 
  * Asks before an admin deletes an account that owns shared projects.
  */
 function _soda_scs_manager_alter_user_cancel_form(array &$form, FormStateInterface $form_state): void {
+  $form['#validate'][] = 'soda_scs_manager_user_cancel_validate_demo_setup';
   $shared = _soda_scs_manager_shared_projects_on_cancel_form($form, $form_state);
   if ($shared === []) {
     return;
@@ -1387,6 +1388,36 @@ function soda_scs_manager_user_cancel_validate_shared_projects(array &$form, For
     return;
   }
   $form_state->setErrorByName('soda_scs_confirm_shared_projects', t('Confirm that the shared projects may be deleted.'));
+}
+
+/**
+ * Refuses to delete an account while the demo job of its demo project runs.
+ *
+ * The job could still create apps after the delete; they would stay
+ * without a project.
+ */
+function soda_scs_manager_user_cancel_validate_demo_setup(array &$form, FormStateInterface $form_state): void {
+  $method = (string) $form_state->getValue('user_cancel_method');
+  if (!in_array($method, ['user_cancel_delete', 'user_cancel_reassign'], TRUE)) {
+    return;
+  }
+  $offboarding = \Drupal::service('soda_scs_manager.user_offboarding');
+  $storage = \Drupal::entityTypeManager()->getStorage('user');
+  $labels = [];
+  foreach (_soda_scs_manager_cancel_form_user_ids($form, $form_state) as $userId) {
+    $account = $storage->load($userId);
+    if (!$account instanceof UserInterface) {
+      continue;
+    }
+    foreach ($offboarding->demoProjectsInSetup($account) as $project) {
+      $labels[] = (string) $project->label();
+    }
+  }
+  // One error names all projects: the form state keeps only the first per
+  // element.
+  if ($labels !== []) {
+    $form_state->setErrorByName('user_cancel_method', t('A demo setup is still running (@projects). Delete the account when the setup is done.', ['@projects' => implode(', ', $labels)]));
+  }
 }
 
 /**
