@@ -40,6 +40,18 @@ class SodaScsComponentCreateFormSaveTest extends UnitTestCase {
   protected $componentActions;
 
   /**
+   * The bundle the mocked component reports.
+   */
+  protected string $bundleId = 'soda_scs_sql_component';
+
+  /**
+   * The mocked component the form saves.
+   *
+   * @var \Drupal\soda_scs_manager\Entity\SodaScsComponentInterface|\Prophecy\Prophecy\ObjectProphecy
+   */
+  protected $component;
+
+  /**
    * The mocked messenger.
    *
    * @var \Drupal\Core\Messenger\MessengerInterface|\Prophecy\Prophecy\ObjectProphecy
@@ -77,11 +89,15 @@ class SodaScsComponentCreateFormSaveTest extends UnitTestCase {
     $account->getAccount()->willReturn($account->reveal());
 
     $component = $this->prophesize(SodaScsComponentInterface::class);
+    // Prophecy binds non-static callbacks to the double, so pass the test.
+    $test = $this;
+    $component->bundle()->will(static fn() => $test->bundleId);
     $component->hasField(Argument::any())->willReturn(FALSE);
     $component->set(Argument::cetera())->willReturn($component->reveal());
     $component->get('machineName')->willReturn($this->fieldList('foo'));
     $component->get('label')->willReturn($this->fieldList('Foo'));
     $component->label()->willReturn('Foo (SQL)');
+    $this->component = $component;
 
     $this->form = $this->getMockBuilder(SodaScsComponentCreateForm::class)
       ->disableOriginalConstructor()
@@ -226,6 +242,43 @@ class SodaScsComponentCreateFormSaveTest extends UnitTestCase {
 
     $this->assertFalse($formState->isRebuilding());
     $this->assertSame('entity.soda_scs_component.canonical', $formState->getRedirect()->getRouteName());
+  }
+
+  /**
+   * The application type is appended to the label.
+   *
+   * @covers ::save
+   */
+  public function testSaveAppendsApplicationTypeToLabel(): void {
+    $this->succeedCreation();
+    $this->component->set('label', 'Foo (SQL)')->shouldBeCalledOnce();
+
+    $this->save(new FormState());
+  }
+
+  /**
+   * A WebProtégé label stays as entered: its card is titled "WebProtégé".
+   *
+   * @covers ::save
+   */
+  public function testSaveKeepsWebprotegeLabel(): void {
+    $this->bundleId = 'soda_scs_webprotege_component';
+    $this->succeedCreation();
+    $this->component->set('label', Argument::any())->shouldNotBeCalled();
+
+    $this->save(new FormState());
+  }
+
+  /**
+   * Lets createComponent() succeed with the created SQL component.
+   */
+  protected function succeedCreation(): void {
+    $this->componentActions->createComponent(Argument::any())->willReturn([
+      'success' => TRUE,
+      'error' => FALSE,
+      'message' => 'ok',
+      'data' => ['sqlComponent' => $this->sqlComponent()],
+    ]);
   }
 
   /**
