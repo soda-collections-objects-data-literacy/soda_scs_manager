@@ -94,6 +94,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   when a demo will be queued. Demos are created only for sign-ins through
   OpenID Connect (Keycloak).
   Related: [#3638489](https://www.drupal.org/project/soda_scs_manager/issues/3638489).
+- Deleting a triplestore removes its read and write rights from the owner's
+  OpenGDB account and keeps the rights to the owner's other triplestores.
+  Before, the remaining rights were sent to OpenGDB in a form it does not
+  expect, and a failed update went unnoticed. When the rights cannot be
+  removed, or the account cannot be read, the triplestore is not deleted and
+  the log names the triplestore and the HTTP status. A missing OpenGDB
+  account (e.g. after the owner was renamed or deleted) no longer blocks the
+  delete. The OpenGDB account itself stays until the user account is deleted.
+  Related: [#3638647](https://www.drupal.org/project/soda_scs_manager/issues/3638647).
 
 ## [4.4.0] - 2026-11-12
 

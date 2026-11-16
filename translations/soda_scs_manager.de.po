@@ -751,10 +751,6 @@ msgstr "Triplestore-User der Komponente %component konnte nicht abgerufen werden
 msgid "Could not update triplestore user %username"
 msgstr "Triplestore-User %username konnte nicht aktualisiert werden"
 
-#: src/ComponentActions/SodaScsTriplestoreComponentActions.php:619
-msgid "Could not delete OpenGDB user %username"
-msgstr "OpenGDB-User %username konnte nicht gelöscht werden"
-
 #: src/ComponentActions/SodaScsTriplestoreComponentActions.php:633
 msgid "Deleted triplestore component %component"
 msgstr "Triplestore-Komponente %component gelöscht"

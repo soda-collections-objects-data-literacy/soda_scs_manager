@@ -691,24 +691,42 @@ class SodaScsTriplestoreComponentActions implements SodaScsComponentActionsInter
       $openGdbGetUserRequest = $this->sodaScsOpenGdbServiceActions->buildGetRequest($requestParams);
       $openGdbGetUserResponse = $this->sodaScsOpenGdbServiceActions->makeRequest($openGdbGetUserRequest);
 
-      // Check if the user exists.
-      if (!$openGdbGetUserResponse['success']) {
-        /** @var \GuzzleHttp\Exception\ClientException $clientException */
-        $clientException = $openGdbGetUserResponse['data']['openGdbResponse'];
-        if ($clientException->getResponse()->getStatusCode() === 404) {
-
-          return [
-            'message' => 'Could not get User information for triplestore component.',
-            'data' => [
-              'openGdbResponse' => $openGdbGetUserResponse,
-              'openGdbUpdateUserResponse' => NULL,
-              'openGdbGetUserResponse' => $clientException,
-              'openGdbDeleteUserResponse' => NULL,
-            ],
-            'success' => FALSE,
-            'error' => $openGdbGetUserResponse['error'],
-          ];
-        }
+      // A missing user has no grants to remove, and the repository is already
+      // gone: stopping here would make the component impossible to delete
+      // (renamed or deleted owner). Any other failure stops before the grants
+      // are touched; the component stays so the delete can be retried.
+      $isUserMissing = !$openGdbGetUserResponse['success']
+        && $this->getOpenGdbStatusCode($openGdbGetUserResponse) === 404;
+      if ($isUserMissing) {
+        $this->loggerFactory->get('soda_scs_manager')->warning(
+          'OpenGDB user @username of triplestore component @component does not exist; no grants to remove.',
+          [
+            '@component' => $machineName,
+            '@username' => $username,
+          ]
+        );
+      }
+      elseif (!$openGdbGetUserResponse['success']) {
+        $this->loggerFactory->get('soda_scs_manager')->error(
+          'Could not get OpenGDB user @username of triplestore component @component (HTTP @status): @error',
+          [
+            '@component' => $machineName,
+            '@error' => $openGdbGetUserResponse['error'] ?? 'no details',
+            '@status' => $this->getOpenGdbStatusCode($openGdbGetUserResponse),
+            '@username' => $username,
+          ]
+        );
+        return [
+          'message' => $this->t('Could not get triplestore user of component %component', ['%component' => $machineName]),
+          'data' => [
+            'openGdbDeleteRepositoryResponse' => $openGdbDeleteRepositoryResponse,
+            'openGdbGetUserResponse' => $openGdbGetUserResponse,
+            'openGdbUpdateUserResponse' => NULL,
+            'openGdbDeleteUserResponse' => NULL,
+          ],
+          'success' => FALSE,
+          'error' => $openGdbGetUserResponse['error'] ?? '',
+        ];
       }
     }
     catch (\Exception $e) {
@@ -735,30 +753,58 @@ class SodaScsTriplestoreComponentActions implements SodaScsComponentActionsInter
       ];
     }
 
-    // Get the response data.
-    $openGdbGetUserResponseData = json_decode($openGdbGetUserResponse['data']['openGdbResponse']->getBody()->getContents(), TRUE);
+    if ($isUserMissing) {
+      $authorities = [];
+    }
+    else {
+      $openGdbGetUserResponseData = json_decode((string) $openGdbGetUserResponse['data']['openGdbResponse']->getBody(), TRUE);
+      $authorities = $openGdbGetUserResponseData['grantedAuthorities'] ?? NULL;
+    }
+    if (!is_array($authorities)) {
+      $this->loggerFactory->get('soda_scs_manager')->error(
+        'OpenGDB user @username of triplestore component @component has no readable grant list.',
+        [
+          '@component' => $machineName,
+          '@username' => $username,
+        ]
+      );
+      return [
+        'message' => $this->t('Could not get triplestore user of component %component', ['%component' => $machineName]),
+        'data' => [
+          'openGdbDeleteRepositoryResponse' => $openGdbDeleteRepositoryResponse,
+          'openGdbGetUserResponse' => $openGdbGetUserResponse,
+          'openGdbUpdateUserResponse' => NULL,
+          'openGdbDeleteUserResponse' => NULL,
+        ],
+        'success' => FALSE,
+        'error' => 'No grant list in the OpenGDB user response.',
+      ];
+    }
 
-    // Get the authorities.
-    $authorities = $openGdbGetUserResponseData['grantedAuthorities'];
+    // Only the grants of this repository are removed. The account stays even
+    // without repository grants: its token service key is reused by the next
+    // triplestore, and the account offboarding deletes the account.
+    $repositoryAuthorities = [
+      "READ_REPO_$machineName",
+      "WRITE_REPO_$machineName",
+    ];
+    // array_values() keeps the list a JSON array after array_filter() left
+    // gaps in the keys; OpenGDB expects a list.
+    $remainingAuthorities = array_values(array_filter(
+      $authorities,
+      static fn ($authority): bool => !in_array($authority, $repositoryAuthorities, TRUE),
+    ));
+    $openGdbUpdateUserResponse = NULL;
+    $openGdbDeleteUserResponse = NULL;
 
-    // Check if the user has more than 3 authorities.
-    if ($authorities > 3) {
-
+    if (count($remainingAuthorities) !== count($authorities)) {
       try {
-        $authorities = array_filter($authorities, function ($authority) use ($machineName) {
-          return !in_array($authority, [
-            "READ_REPO_$machineName",
-            "WRITE_REPO_$machineName",
-          ]);
-        });
-
         $updateUserRequestParams = [
           'type' => 'user',
           'queryParams' => [],
           'routeParams' => ['username' => $username],
           'body' => [
-
-            'grantedAuthorities' => $authorities,
+            'grantedAuthorities' => $remainingAuthorities,
             "appSettings" => [
               "DEFAULT_INFERENCE" => TRUE,
               "DEFAULT_SAMEAS" => TRUE,
@@ -766,24 +812,28 @@ class SodaScsTriplestoreComponentActions implements SodaScsComponentActionsInter
               "EXECUTE_COUNT" => TRUE,
               "IGNORE_SHARED_QUERIES" => FALSE,
             ],
-              // "dateUpdated" => \Drupal::time()->getRequestTime(),
           ],
         ];
 
-        // Update the user.
         $openGdbUpdateUserRequest = $this->sodaScsOpenGdbServiceActions->buildUpdateRequest($updateUserRequestParams);
         $openGdbUpdateUserResponse = $this->sodaScsOpenGdbServiceActions->makeRequest($openGdbUpdateUserRequest);
-        $openGdbDeleteUserResponse = NULL;
-
+        if (!$openGdbUpdateUserResponse['success']) {
+          throw new \RuntimeException(sprintf(
+            'OpenGDB answered HTTP %d: %s',
+            $this->getOpenGdbStatusCode($openGdbUpdateUserResponse),
+            $openGdbUpdateUserResponse['error'] ?? 'no details'
+          ));
+        }
       }
       catch (\Exception $e) {
         Error::logException(
           $this->loggerFactory->get('soda_scs_manager'),
           $e,
-          'Could not update triplestore user: @message',
+          'Could not remove the grants of triplestore component @component from OpenGDB user @username: @message',
           [
-            '%component' => $machineName,
+            '@component' => $machineName,
             '@message' => $e->getMessage(),
+            '@username' => $username,
           ],
           LogLevel::ERROR
         );
@@ -792,45 +842,7 @@ class SodaScsTriplestoreComponentActions implements SodaScsComponentActionsInter
           'data' => [
             'openGdbDeleteRepositoryResponse' => $openGdbDeleteRepositoryResponse,
             'openGdbGetUserResponse' => $openGdbGetUserResponse,
-            'openGdbUpdateUserResponse' => NULL,
-            'openGdbDeleteUserResponse' => NULL,
-          ],
-          'success' => FALSE,
-          'error' => $e->getMessage(),
-        ];
-      }
-    }
-    elseif ($authorities === 3) {
-
-      try {
-        $deleteUserRequestParams = [
-          'type' => 'user',
-          'queryParams' => [],
-          'routeParams' => ['username' => $username],
-          'body' => [],
-        ];
-
-        $openGdbDeleteUserRequest = $this->sodaScsOpenGdbServiceActions->buildDeleteRequest($deleteUserRequestParams);
-        $openGdbDeleteUserResponse = $this->sodaScsOpenGdbServiceActions->makeRequest($openGdbDeleteUserRequest);
-        $openGdbUpdateUserResponse = NULL;
-      }
-      catch (\Exception $e) {
-        Error::logException(
-          $this->loggerFactory->get('soda_scs_manager'),
-          $e,
-          'Could not delete OpenGDB user: @message',
-          [
-            '%username' => $username,
-            '@message' => $e->getMessage(),
-          ],
-          LogLevel::ERROR
-        );
-        return [
-          'message' => $this->t('Could not delete OpenGDB user %username', ['%username' => $username]),
-          'data' => [
-            'openGdbDeleteRepositoryResponse' => $openGdbDeleteRepositoryResponse,
-            'openGdbGetUserResponse' => $openGdbGetUserResponse,
-            'openGdbUpdateUserResponse' => NULL,
+            'openGdbUpdateUserResponse' => $openGdbUpdateUserResponse,
             'openGdbDeleteUserResponse' => NULL,
           ],
           'success' => FALSE,
@@ -961,6 +973,23 @@ class SodaScsTriplestoreComponentActions implements SodaScsComponentActionsInter
       message: 'Not yet implemented.',
       error: 'Not yet implemented.',
     );
+  }
+
+  /**
+   * Returns the HTTP status of a failed OpenGDB request, for the log.
+   *
+   * @param array $response
+   *   The result of SodaScsOpenGdbServiceActions::makeRequest().
+   *
+   * @return int
+   *   The HTTP status, or 0 when the request got no response.
+   */
+  private function getOpenGdbStatusCode(array $response): int {
+    if (isset($response['statusCode'])) {
+      return (int) $response['statusCode'];
+    }
+    $exception = $response['data']['openGdbResponse'] ?? NULL;
+    return $exception instanceof \Throwable ? (int) $exception->getCode() : 0;
   }
 
   /**
