@@ -319,6 +319,7 @@ class SodaScsTriplestoreComponentActions implements SodaScsComponentActionsInter
         ],
         LogLevel::ERROR
       );
+      $this->rollBackCreateComponent($triplestoreComponent);
       return [
         'message' => $this->t('The triplestore access rights could not be set.'),
         'data' => [
@@ -357,6 +358,7 @@ class SodaScsTriplestoreComponentActions implements SodaScsComponentActionsInter
         ],
         LogLevel::ERROR
       );
+      $this->rollBackCreateComponent($triplestoreComponent);
       return [
         'message' => $this->t('The access groups for the triplestore could not be created.'),
         'data' => [
@@ -368,8 +370,30 @@ class SodaScsTriplestoreComponentActions implements SodaScsComponentActionsInter
       ];
     }
 
-    // Save the component.
-    $triplestoreComponent->save();
+    try {
+      $triplestoreComponent->save();
+    }
+    catch (\Exception $e) {
+      Error::logException(
+        $this->loggerFactory->get('soda_scs_manager'),
+        $e,
+        'Cannot save triplestore component @machineName: @message',
+        [
+          '@machineName' => $machineName,
+          '@message' => $e->getMessage(),
+        ],
+        LogLevel::ERROR
+      );
+      $this->rollBackCreateComponent($triplestoreComponent);
+      return [
+        'message' => $this->t('The triplestore could not be created.'),
+        'data' => [
+          'createRepoResponse' => $createRepoResponse,
+        ],
+        'success' => FALSE,
+        'error' => $e,
+      ];
+    }
 
     return [
       'message' => $this->t('Created triplestore component %machineName.', ['%machineName' => $machineName]),
@@ -623,11 +647,13 @@ class SodaScsTriplestoreComponentActions implements SodaScsComponentActionsInter
       $openGdbDeleteRepositoryResponse = $this->sodaScsOpenGdbServiceActions->makeRequest($openGdbDeleteRepositoryRequest);
 
       if (!$openGdbDeleteRepositoryResponse['success']) {
-        /** @var \GuzzleHttp\Exception\ClientException $clientException */
-        $clientException = $openGdbDeleteRepositoryResponse['data']['openGdbResponse'];
-        if ($clientException->getCode() === 404) {
-          $this->messenger->addError($this->t("Could not delete repository of component %component, because it does not exist. Move on to delete the component.", ['%component' => $machineName]));
+        $requestException = $openGdbDeleteRepositoryResponse['data']['openGdbResponse'] ?? NULL;
+        // Only a missing repository lets the delete go on; any other failure
+        // keeps the component, so it is not dropped while its data remains.
+        if (!$requestException instanceof \Throwable || $requestException->getCode() !== 404) {
+          throw new \RuntimeException(sprintf('Repository %s could not be deleted: %s', $machineName, $openGdbDeleteRepositoryResponse['error'] ?? 'no details'));
         }
+        $this->messenger->addError($this->t("Could not delete repository of component %component, because it does not exist. Move on to delete the component.", ['%component' => $machineName]));
       }
     }
     catch (\Exception $e) {
@@ -935,6 +961,27 @@ class SodaScsTriplestoreComponentActions implements SodaScsComponentActionsInter
       message: 'Not yet implemented.',
       error: 'Not yet implemented.',
     );
+  }
+
+  /**
+   * Removes the repository, rights and groups of a failed createComponent().
+   *
+   * Only called after this call created the repository. Runs
+   * deleteComponent() on the component, which may still be unsaved. A failure
+   * is logged; the caller returns its original error either way.
+   *
+   * @param \Drupal\soda_scs_manager\Entity\SodaScsComponentInterface $component
+   *   The component whose repository this call created.
+   */
+  private function rollBackCreateComponent(SodaScsComponentInterface $component): void {
+    $result = $this->deleteComponent($component);
+    if (empty($result['success'])) {
+      $error = $result['error'] ?? 'no details';
+      $this->loggerFactory->get('soda_scs_manager')->error('Could not remove the repository @machineName of a failed triplestore component: @error', [
+        '@error'       => $error instanceof \Throwable ? $error->getMessage() : (string) $error,
+        '@machineName' => $component->get('machineName')->value,
+      ]);
+    }
   }
 
 }

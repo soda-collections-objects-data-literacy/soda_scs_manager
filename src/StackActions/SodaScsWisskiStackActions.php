@@ -23,6 +23,8 @@ use Drupal\Core\Template\TwigEnvironment;
 use Drupal\Core\TypedData\Exception\MissingDataException;
 use Drupal\Core\Utility\Error;
 use Drupal\soda_scs_manager\ComponentActions\SodaScsComponentActionsInterface;
+use Drupal\soda_scs_manager\ComponentActions\SodaScsWisskiComponentActions;
+use Drupal\soda_scs_manager\Entity\SodaScsComponentInterface;
 use Drupal\soda_scs_manager\Entity\SodaScsSnapshotInterface;
 use Drupal\soda_scs_manager\Entity\SodaScsStackInterface;
 use Drupal\soda_scs_manager\Exception\SodaScsRequestException;
@@ -190,9 +192,9 @@ class SodaScsWisskiStackActions implements SodaScsStackActionsInterface {
   /**
    * The SCS wisski component actions service.
    *
-   * @var \Drupal\soda_scs_manager\ComponentActions\SodaScsComponentActionsInterface
+   * @var \Drupal\soda_scs_manager\ComponentActions\SodaScsWisskiComponentActions
    */
-  protected SodaScsComponentActionsInterface $sodaScsWisskiComponentActions;
+  protected SodaScsWisskiComponentActions $sodaScsWisskiComponentActions;
 
   /**
    * The Twig renderer.
@@ -219,7 +221,7 @@ class SodaScsWisskiStackActions implements SodaScsStackActionsInterface {
     #[Autowire(service: 'soda_scs_manager.triplestore_component.actions')]
     SodaScsComponentActionsInterface $sodaScsTriplestoreComponentActions,
     #[Autowire(service: 'soda_scs_manager.wisski_component.actions')]
-    SodaScsComponentActionsInterface $sodaScsWisskiComponentActions,
+    SodaScsWisskiComponentActions $sodaScsWisskiComponentActions,
     #[Autowire(service: 'soda_scs_manager.sql_service.actions')]
     SodaScsServiceActionsInterface $sodaScsSqlServiceActions,
     #[Autowire(service: 'soda_scs_manager.service_key.actions')]
@@ -334,6 +336,8 @@ class SodaScsWisskiStackActions implements SodaScsStackActionsInterface {
     $sqlComponentCreateResult = NULL;
     $triplestoreComponentCreateResult = NULL;
     $wisskiComponentCreateResult = NULL;
+    // What this call created, in order; a failure removes exactly these.
+    $createdComponents = [];
     try {
       // Create the SQL component.
       $sqlComponent = $this->entityTypeManager->getStorage('soda_scs_component')->create([
@@ -342,12 +346,14 @@ class SodaScsWisskiStackActions implements SodaScsStackActionsInterface {
       ]);
       $sqlComponentCreateResult = $this->sodaScsSqlComponentActions->createComponent($sqlComponent);
       if (empty($sqlComponentCreateResult['success'])) {
+        $this->rollBackCreateStack($stack, $createdComponents);
         return $this->buildCreateStackFailure($this->t('Database'), $sqlComponentCreateResult, [
           'sqlComponentCreateResult' => $sqlComponentCreateResult,
         ]);
       }
       /** @var \Drupal\soda_scs_manager\Entity\SodaScsComponentInterface $sqlComponent */
       $sqlComponent = $sqlComponentCreateResult['data']['sqlComponent'];
+      $createdComponents[] = $sqlComponent;
       $stack->setValue($stack, 'includedComponents', $sqlComponent->id());
 
       // Create the triplestore component.
@@ -357,6 +363,7 @@ class SodaScsWisskiStackActions implements SodaScsStackActionsInterface {
       ]);
       $triplestoreComponentCreateResult = $this->sodaScsTriplestoreComponentActions->createComponent($triplestoreComponent);
       if (empty($triplestoreComponentCreateResult['success'])) {
+        $this->rollBackCreateStack($stack, $createdComponents);
         return $this->buildCreateStackFailure($this->t('Triplestore'), $triplestoreComponentCreateResult, [
           'sqlComponentCreateResult' => $sqlComponentCreateResult,
           'triplestoreComponentCreateResult' => $triplestoreComponentCreateResult,
@@ -364,6 +371,7 @@ class SodaScsWisskiStackActions implements SodaScsStackActionsInterface {
       }
       /** @var \Drupal\soda_scs_manager\Entity\SodaScsComponentInterface $triplestoreComponent */
       $triplestoreComponent = $triplestoreComponentCreateResult['data']['triplestoreComponent'];
+      $createdComponents[] = $triplestoreComponent;
       $stack->setValue($stack, 'includedComponents', $triplestoreComponent->id());
 
       // Create the WissKI component.
@@ -380,6 +388,7 @@ class SodaScsWisskiStackActions implements SodaScsStackActionsInterface {
       ]);
       $wisskiComponentCreateResult = $this->sodaScsWisskiComponentActions->createComponent($wisskiComponent);
       if (empty($wisskiComponentCreateResult['success'])) {
+        $this->rollBackCreateStack($stack, $createdComponents);
         return $this->buildCreateStackFailure($this->t('WissKI'), $wisskiComponentCreateResult, [
           'sqlComponentCreateResult' => $sqlComponentCreateResult,
           'triplestoreComponentCreateResult' => $triplestoreComponentCreateResult,
@@ -388,6 +397,7 @@ class SodaScsWisskiStackActions implements SodaScsStackActionsInterface {
       }
       /** @var \Drupal\soda_scs_manager\Entity\SodaScsComponentInterface $wisskiComponent */
       $wisskiComponent = $wisskiComponentCreateResult['data']['wisskiComponent'];
+      $createdComponents[] = $wisskiComponent;
       $stack->setValue($stack, 'includedComponents', $wisskiComponent->id());
 
       // Set the connected components for the SQL component.
@@ -432,6 +442,12 @@ class SodaScsWisskiStackActions implements SodaScsStackActionsInterface {
         ],
         LogLevel::ERROR
       );
+      // createComponent() may have saved the WissKI before it threw; it is
+      // ours then, though it never came back as a result.
+      if (isset($wisskiComponent) && !$wisskiComponent->isNew() && !in_array($wisskiComponent, $createdComponents, TRUE)) {
+        $createdComponents[] = $wisskiComponent;
+      }
+      $this->rollBackCreateStack($stack, $createdComponents);
       return [
         'message' => $this->t('The WissKI application could not be set up.'),
         'data' => [
@@ -514,6 +530,166 @@ class SodaScsWisskiStackActions implements SodaScsStackActionsInterface {
       'success' => FALSE,
       'error'   => $error,
     ];
+  }
+
+  /**
+   * The component actions that create and delete a component of this bundle.
+   *
+   * @param \Drupal\soda_scs_manager\Entity\SodaScsComponentInterface $component
+   *   A component of a WissKI stack.
+   *
+   * @return \Drupal\soda_scs_manager\ComponentActions\SodaScsComponentActionsInterface
+   *   The SQL, triplestore or WissKI component actions.
+   *
+   * @throws \UnexpectedValueException
+   *   When the component is of another bundle.
+   */
+  private function componentActionsFor(SodaScsComponentInterface $component): SodaScsComponentActionsInterface {
+    return match ($component->bundle()) {
+      'soda_scs_sql_component'         => $this->sodaScsSqlComponentActions,
+      'soda_scs_triplestore_component' => $this->sodaScsTriplestoreComponentActions,
+      'soda_scs_wisski_component'      => $this->sodaScsWisskiComponentActions,
+      default                          => throw new \UnexpectedValueException(sprintf('Component %s of bundle %s is not part of a WissKI stack.', $component->id(), $component->bundle())),
+    };
+  }
+
+  /**
+   * Deletes the Keycloak client and groups of a stack without WissKI.
+   *
+   * A WissKI creation that failed after its Keycloak step, before this
+   * release, left them behind; the WissKI component that would delete them
+   * was never saved. The client id is only derived from the stack name: a
+   * failed creation keeps the raw name, a finished one got "stack-" in front,
+   * and a raw name may itself start with "stack-". The raw reading is tried
+   * first; the reading without "stack-" only acts on a client that carries
+   * the stack's label. A client whose label differs is left alone.
+   *
+   * @param \Drupal\soda_scs_manager\Entity\SodaScsStackInterface $stack
+   *   The stack that is being deleted.
+   *
+   * @return \Drupal\soda_scs_manager\ValueObject\SodaScsResult
+   *   Success when nothing of the stack is left in Keycloak or what is there
+   *   belongs to another WissKI; failure when Keycloak could not be asked.
+   */
+  private function deleteOrphanedKeycloakResources(SodaScsStackInterface $stack): SodaScsResult {
+    $machineName = (string) $stack->get('machineName')->value;
+    $label = (string) $stack->get('label')->value;
+    // Base name => whether a client must exist before anything is deleted.
+    $readings = $machineName === '' ? [] : [$machineName => FALSE];
+    if (str_starts_with($machineName, 'stack-') && strlen($machineName) > strlen('stack-')) {
+      $readings[substr($machineName, strlen('stack-'))] = TRUE;
+    }
+
+    $results = [];
+    foreach ($readings as $baseName => $requireClient) {
+      if ($this->isWisskiNameInUse((string) $baseName, $stack)) {
+        $results[$baseName] = ['skipped' => 'in use'];
+        continue;
+      }
+      $result = $this->sodaScsWisskiComponentActions->deleteKeycloakResources('wisski-' . $baseName, $label, $requireClient);
+      if (!$result->success) {
+        return $result;
+      }
+      $results[$baseName] = $result->data;
+    }
+    return SodaScsResult::success(
+      data: $results,
+      message: 'Checked the Keycloak client and groups of the stack.',
+    );
+  }
+
+  /**
+   * Whether another WissKI uses this base name.
+   *
+   * A WissKI component wisski-{name} owns the client. Another stack with the
+   * name may be a creation in progress: createStack() saves the stack before
+   * the client is created, and the WissKI component only at the end.
+   *
+   * @param string $baseName
+   *   The machine name without "stack-" and "wisski-".
+   * @param \Drupal\soda_scs_manager\Entity\SodaScsStackInterface $stack
+   *   The stack that is being deleted; it does not count.
+   *
+   * @return bool
+   *   TRUE when a WissKI component or another WissKI stack has the name.
+   */
+  private function isWisskiNameInUse(string $baseName, SodaScsStackInterface $stack): bool {
+    $components = $this->entityTypeManager->getStorage('soda_scs_component')->getQuery()
+      ->accessCheck(FALSE)
+      ->condition('bundle', 'soda_scs_wisski_component')
+      ->condition('machineName', 'wisski-' . $baseName)
+      ->range(0, 1)
+      ->execute();
+    if ($components !== []) {
+      return TRUE;
+    }
+    $stacksQuery = $this->entityTypeManager->getStorage('soda_scs_stack')->getQuery()
+      ->accessCheck(FALSE)
+      ->condition('bundle', 'soda_scs_wisski_stack')
+      ->condition('machineName', [$baseName, 'stack-' . $baseName], 'IN')
+      ->range(0, 1);
+    if ($stack->id() !== NULL) {
+      $stacksQuery->condition('id', $stack->id(), '<>');
+    }
+    return $stacksQuery->execute() !== [];
+  }
+
+  /**
+   * Removes what a failed createStack() call created.
+   *
+   * The components are deleted in reverse order through their component
+   * actions, so their database, repository and Keycloak client go with them;
+   * then the stack. A component that cannot be deleted stays in the stack and
+   * the stack stays, so deleting the stack later finds it.
+   *
+   * @param \Drupal\soda_scs_manager\Entity\SodaScsStackInterface $stack
+   *   The stack saved by the failed call.
+   * @param \Drupal\soda_scs_manager\Entity\SodaScsComponentInterface[] $createdComponents
+   *   The components this call created, in creation order.
+   */
+  private function rollBackCreateStack(SodaScsStackInterface $stack, array $createdComponents): void {
+    $logger = $this->loggerFactory->get('soda_scs_manager');
+    $kept = [];
+    foreach (array_reverse($createdComponents) as $component) {
+      try {
+        $result = $this->componentActionsFor($component)->deleteComponent($component);
+        $reason = empty($result['success']) ? ($result['error'] ?? $result['message'] ?? 'no details') : NULL;
+      }
+      catch (\Exception $e) {
+        $reason = $e;
+      }
+      if ($reason === NULL) {
+        continue;
+      }
+      $logger->error('Could not remove component @component of the failed WissKI stack @stack: @reason', [
+        '@component' => $component->id(),
+        '@reason'    => $reason instanceof \Throwable ? $reason->getMessage() : (string) $reason,
+        '@stack'     => $stack->id(),
+      ]);
+      array_unshift($kept, $component);
+    }
+
+    try {
+      if ($kept === []) {
+        $stack->delete();
+        return;
+      }
+      $stack->set('includedComponents', array_map(
+        static fn (SodaScsComponentInterface $component): array => ['target_id' => $component->id()],
+        $kept,
+      ));
+      $stack->save();
+      $logger->warning('Kept the failed WissKI stack @stack with @count components that could not be removed.', [
+        '@count' => count($kept),
+        '@stack' => $stack->id(),
+      ]);
+    }
+    catch (\Exception $e) {
+      Error::logException($logger, $e, 'Could not clean up the failed WissKI stack @stack: @message', [
+        '@message' => $e->getMessage(),
+        '@stack'   => $stack->id(),
+      ], LogLevel::ERROR);
+    }
   }
 
   /**
@@ -789,6 +965,19 @@ class SodaScsWisskiStackActions implements SodaScsStackActionsInterface {
         'success' => FALSE,
         'error' => $e->getMessage(),
       ];
+    }
+    if ($wisskiComponent === NULL) {
+      $keycloakResult = $this->deleteOrphanedKeycloakResources($stack);
+      if (!$keycloakResult->success) {
+        return $this->buildDeleteStackFailure($stack, $this->t('Could not delete the Keycloak client of the WissKI stack.'), [
+          'error'   => $keycloakResult->error,
+          'message' => $keycloakResult->message,
+        ], [
+          'deleteDatabaseResult'    => $deleteDatabaseResult,
+          'deleteTriplestoreResult' => $deletetriplestoreResult,
+          'deleteWisskiResult'      => NULL,
+        ]);
+      }
     }
     $stack->delete();
     // Everything went fine.

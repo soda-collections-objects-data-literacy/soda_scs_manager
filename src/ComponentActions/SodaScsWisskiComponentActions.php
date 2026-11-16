@@ -986,6 +986,10 @@ class SodaScsWisskiComponentActions implements SodaScsComponentActionsInterface 
    *   The created WissKI component configuration.
    */
   public function createComponent(SodaScsComponentInterface $component): array {
+    // Set once this call created the Keycloak client. Only then the client
+    // and its groups are ours to remove when a later step fails; a client
+    // that already existed (409) may belong to a running WissKI.
+    $createdKeycloakClientId = NULL;
     try {
 
       // Get some basic information about the WissKI component.
@@ -1144,6 +1148,7 @@ class SodaScsWisskiComponentActions implements SodaScsComponentActionsInterface 
       if (!$keycloakMakeCreateClientResponse['success']) {
         throw new \Exception('Keycloak create client request failed: ' . $keycloakMakeCreateClientResponse['error']);
       }
+      $createdKeycloakClientId = $machineName;
 
       // Create keycloak group for admin.
       $keycloakWisskiInstanceAdminGroupName = $machineName . '-admin';
@@ -1342,6 +1347,9 @@ class SodaScsWisskiComponentActions implements SodaScsComponentActionsInterface 
         ['@machineName' => $machineName ?? '', '@message' => $e->getMessage()],
         LogLevel::ERROR
       );
+      if ($createdKeycloakClientId !== NULL) {
+        $this->deleteKeycloakResources($createdKeycloakClientId);
+      }
       return [
         'message' => $e instanceof SodaScsUserFacingException
           ? $e->getUserMessage()
@@ -1365,6 +1373,7 @@ class SodaScsWisskiComponentActions implements SodaScsComponentActionsInterface 
         ['@machineName' => $machineName, '@message' => $e->getMessage()],
         LogLevel::ERROR
       );
+      $this->deleteKeycloakResources($machineName);
       return [
         'message' => $this->t('The WissKI container could not be created.'),
         'data' => [
@@ -1383,6 +1392,7 @@ class SodaScsWisskiComponentActions implements SodaScsComponentActionsInterface 
         '@message' => $portainerError,
         '@status' => $statusCode,
       ]);
+      $this->deleteKeycloakResources($machineName);
       return [
         'message' => $this->t('The WissKI container could not be created.'),
         'data' => [
@@ -1917,30 +1927,33 @@ class SodaScsWisskiComponentActions implements SodaScsComponentActionsInterface 
         'statusCode' => $e->getCode(),
       ];
     }
+    // A failed Portainer delete keeps the component (and with it the
+    // Keycloak client), so the containers are not left without a record.
+    // 404: the Portainer stack is already gone.
     try {
-      // Send the delete request to the portainer service.
-      /** @var array $portainerResponse */
       $portainerDeleteResponse = $this->sodaScsPortainerServiceActions->makeRequest($portainerDeleteRequest);
-      if (!$portainerDeleteResponse['success']) {
-        $errorMessage = $portainerDeleteResponse['error'] ?? 'Unknown error occurred';
-        Error::logException(
-          $this->logger,
-          new \Exception($errorMessage),
-          'Could not delete WissKI stack at portainer: @message',
-          ['@message' => $errorMessage],
-          LogLevel::ERROR
-        );
-        $this->messenger->addError($this->t("Could not delete WissKI stack at portainer, but will delete the component anyway. See logs for more details."));
+      if (!$portainerDeleteResponse['success'] && (int) ($portainerDeleteResponse['statusCode'] ?? 0) !== 404) {
+        throw new \RuntimeException((string) ($portainerDeleteResponse['error'] ?? 'Unknown error occurred'));
       }
     }
     catch (\Exception $e) {
       Error::logException(
         $this->logger,
         $e,
-        'Cannot get WissKI component at portainer: @message',
-        ['@message' => $e->getMessage()],
+        'Could not delete WissKI stack @machineName at portainer: @message',
+        ['@machineName' => $component->get('machineName')->value, '@message' => $e->getMessage()],
         LogLevel::ERROR
       );
+      return [
+        'message' => $this->t('Could not delete WissKI component @component at portainer.', ['@component' => $component->getLabel()]),
+        'data' => [
+          'portainerResponse' => $portainerDeleteResponse ?? NULL,
+          'keycloakResult' => NULL,
+        ],
+        'success' => FALSE,
+        'error' => $e->getMessage(),
+        'statusCode' => $portainerDeleteResponse['statusCode'] ?? $e->getCode(),
+      ];
     }
 
     // Delete connected docker volumes of the WissKI component.
@@ -1966,159 +1979,21 @@ class SodaScsWisskiComponentActions implements SodaScsComponentActionsInterface 
       );
     }
 
-    try {
-      // Delete the client in keycloak.
-      // @todo export this to own helper function.
-      //
-      // Request keycloak token.
-      $keycloakBuildTokenRequest = $this->sodaScsKeycloakServiceClientActions->buildTokenRequest([]);
-      $keycloakMakeTokenRequest = $this->sodaScsKeycloakServiceClientActions->makeRequest($keycloakBuildTokenRequest);
-      if (!$keycloakMakeTokenRequest['success']) {
-        throw new \Exception('Keycloak token request failed.');
-      }
-      $keycloakTokenResponseContents = json_decode($keycloakMakeTokenRequest['data']['keycloakResponse']->getBody()->getContents(), TRUE);
-      $keycloakToken = $keycloakTokenResponseContents['access_token'];
-
-      // Get client uuid.
-      $getAllClientsRequestParams = [
-        'queryParams' => [
-          'clientId' => $component->get('machineName')->value,
-        ],
-        'token' => $keycloakToken,
-      ];
-      $keycloakBuildGetAllClientRequest = $this->sodaScsKeycloakServiceClientActions->buildGetAllRequest($getAllClientsRequestParams);
-      $keycloakMakeGetAllClientResponse = $this->sodaScsKeycloakServiceClientActions->makeRequest($keycloakBuildGetAllClientRequest);
-      if (!$keycloakMakeGetAllClientResponse['success']) {
-        return [
-          'message' => 'Cannot get WissKI component client uuid at keycloak.',
-          'data' => [
-            'portainerResponse' => $portainerDeleteResponse,
-            'keycloakClientResponse' => $keycloakMakeGetAllClientResponse,
-          ],
-          'success' => FALSE,
-          'error' => $keycloakMakeGetAllClientResponse['error'] ?? NULL,
-        ];
-      }
-      $keycloakGetAllClientResponseContents = json_decode($keycloakMakeGetAllClientResponse['data']['keycloakResponse']->getBody()->getContents(), TRUE);
-      $clientUuid = $keycloakGetAllClientResponseContents[0]['id'] ?? NULL;
-
-      // Delete the client in keycloak (it may already be gone).
-      $keycloakMakeDeleteClientResponse = ['success' => TRUE];
-      if ($clientUuid !== NULL) {
-        $deleteRequestParams = [
-          'routeParams' => [
-            'clientUuid' => $clientUuid,
-          ],
-          'token' => $keycloakToken,
-        ];
-        $keycloakBuildDeleteClientRequest = $this->sodaScsKeycloakServiceClientActions->buildDeleteRequest($deleteRequestParams);
-        $keycloakMakeDeleteClientResponse = $this->sodaScsKeycloakServiceClientActions->makeRequest($keycloakBuildDeleteClientRequest);
-      }
-
-      if (!$keycloakMakeDeleteClientResponse['success']) {
-        return [
-          'message' => 'Cannot delete WissKI component at keycloak.',
-          'data' => [
-            'portainerResponse' => $portainerDeleteResponse,
-            'keycloakClientResponse' => $keycloakMakeDeleteClientResponse,
-            'keycloakAdminGroupResponse' => NULL,
-            'keycloakUserGroupResponse' => NULL,
-          ],
-          'success' => FALSE,
-          'error' => NULL,
-          'statusCode' => $keycloakMakeDeleteClientResponse['statusCode'],
-        ];
-      }
-
-      $keycloakWisskiInstanceAdminGroupName = $component->get('machineName')->value . '-admin';
-      $keycloakWisskiInstanceUserGroupName = $component->get('machineName')->value . '-user';
-      // Get all groups from Keycloak for group ids.
-      $keycloakBuildGetAllGroupsRequest = $this->sodaScsKeycloakServiceGroupActions->buildGetAllRequest([
-        'token' => $keycloakToken,
-      ]);
-      $keycloakMakeGetAllGroupsResponse = $this->sodaScsKeycloakServiceGroupActions->makeRequest($keycloakBuildGetAllGroupsRequest);
-
-      if ($keycloakMakeGetAllGroupsResponse['success']) {
-        $keycloakGroups = json_decode($keycloakMakeGetAllGroupsResponse['data']['keycloakResponse']->getBody()->getContents(), TRUE);
-        // Get the admin group id of the WissKI instance.
-        // Get admin group details.
-        $keycloakWisskiInstanceAdminGroup = array_filter($keycloakGroups, function ($group) use ($keycloakWisskiInstanceAdminGroupName) {
-          return $group['name'] === $keycloakWisskiInstanceAdminGroupName;
-        });
-        $keycloakWisskiInstanceAdminGroup = reset($keycloakWisskiInstanceAdminGroup);
-
-        // Get user group details.
-        $keycloakWisskiInstanceUserGroup = array_filter($keycloakGroups, function ($group) use ($keycloakWisskiInstanceUserGroupName) {
-          return $group['name'] === $keycloakWisskiInstanceUserGroupName;
-        });
-        $keycloakWisskiInstanceUserGroup = reset($keycloakWisskiInstanceUserGroup);
-      }
-
-      // Delete the admin group in keycloak.
-      $deleteAdminGroupRequestParams = [
-        'routeParams' => [
-          'groupId' => $keycloakWisskiInstanceAdminGroup['id'],
-        ],
-        'token' => $keycloakToken,
-      ];
-      $keycloakBuildDeleteAdminGroupRequest = $this->sodaScsKeycloakServiceGroupActions->buildDeleteRequest($deleteAdminGroupRequestParams);
-      $keycloakMakeDeleteAdminGroupResponse = $this->sodaScsKeycloakServiceGroupActions->makeRequest($keycloakBuildDeleteAdminGroupRequest);
-
-      if (!$keycloakMakeDeleteAdminGroupResponse['success']) {
-        return [
-          'message' => 'Cannot delete WissKI component admin group at keycloak.',
-          'data' => [
-            'portainerResponse' => $portainerDeleteResponse,
-            'keycloakClientResponse' => $keycloakMakeDeleteClientResponse,
-            'keycloakAdminGroupResponse' => $keycloakMakeDeleteAdminGroupResponse,
-            'keycloakUserGroupResponse' => NULL,
-          ],
-          'success' => FALSE,
-          'error' => NULL,
-          'statusCode' => $keycloakMakeDeleteAdminGroupResponse['statusCode'],
-        ];
-      }
-
-      // Delete the user group in keycloak.
-      $deleteUserGroupRequestParams = [
-        'routeParams' => [
-          'groupId' => $keycloakWisskiInstanceUserGroup['id'],
-        ],
-        'token' => $keycloakToken,
-      ];
-      $keycloakBuildDeleteUserGroupRequest = $this->sodaScsKeycloakServiceGroupActions->buildDeleteRequest($deleteUserGroupRequestParams);
-      $keycloakMakeDeleteUserGroupResponse = $this->sodaScsKeycloakServiceGroupActions->makeRequest($keycloakBuildDeleteUserGroupRequest);
-
-      if (!$keycloakMakeDeleteUserGroupResponse['success']) {
-        return [
-          'message' => 'Cannot delete WissKI component user group at keycloak.',
-          'data' => [
-            'portainerResponse' => $portainerDeleteResponse,
-            'keycloakClientResponse' => $keycloakMakeDeleteClientResponse,
-            'keycloakAdminGroupResponse' => $keycloakMakeDeleteAdminGroupResponse,
-            'keycloakUserGroupResponse' => $keycloakMakeDeleteUserGroupResponse,
-          ],
-          'success' => FALSE,
-          'error' => NULL,
-          'statusCode' => $keycloakMakeDeleteUserGroupResponse['statusCode'],
-        ];
-      }
-
-      // Delete the component.
-      $component->delete();
-
+    $keycloakResult = $this->deleteKeycloakResources($component->get('machineName')->value);
+    if (!$keycloakResult->success) {
       return [
-        'message' => 'Deleted WissKI component.',
+        'message' => 'Cannot delete WissKI component at keycloak.',
         'data' => [
           'portainerResponse' => $portainerDeleteResponse,
-          'keycloakClientResponse' => $keycloakMakeDeleteClientResponse,
-          'keycloakAdminGroupResponse' => $keycloakMakeDeleteAdminGroupResponse,
-          'keycloakUserGroupResponse' => $keycloakMakeDeleteUserGroupResponse,
+          'keycloakResult' => $keycloakResult,
         ],
-        'success' => TRUE,
-        'error' => NULL,
-        'statusCode' => $portainerDeleteResponse['statusCode'],
+        'success' => FALSE,
+        'error' => $keycloakResult->error,
       ];
+    }
+
+    try {
+      $component->delete();
     }
     catch (\Exception $e) {
       Error::logException(
@@ -2132,16 +2007,120 @@ class SodaScsWisskiComponentActions implements SodaScsComponentActionsInterface 
       return [
         'message' => 'Cannot delete WissKI component.',
         'data' => [
-          'portainerResponse' => NULL,
-          'keycloakClientResponse' => NULL,
-          'keycloakAdminGroupResponse' => NULL,
-          'keycloakUserGroupResponse' => NULL,
+          'portainerResponse' => $portainerDeleteResponse,
+          'keycloakResult' => $keycloakResult,
         ],
         'success' => FALSE,
         'error' => $e->getMessage(),
         'statusCode' => $e->getCode(),
       ];
     }
+
+    return [
+      'message' => 'Deleted WissKI component.',
+      'data' => [
+        'portainerResponse' => $portainerDeleteResponse,
+        'keycloakResult' => $keycloakResult,
+      ],
+      'success' => TRUE,
+      'error' => NULL,
+      'statusCode' => $portainerDeleteResponse['statusCode'] ?? NULL,
+    ];
+  }
+
+  /**
+   * Deletes the Keycloak client and groups of a WissKI instance.
+   *
+   * A client or group that does not exist counts as deleted, so the call can
+   * be repeated after a partial failure. A failed request stops the call.
+   *
+   * The two conditions are for a client id that is only derived from a stack
+   * name: then nothing is deleted when the client belongs to another WissKI.
+   *
+   * @param string $machineName
+   *   The machine name of the WissKI component (wisski-…): the client id and
+   *   the prefix of the groups {machineName}-admin and {machineName}-user.
+   * @param string|null $clientName
+   *   When set, a client whose display name differs is someone else's: nothing
+   *   is deleted. createComponent() names the client after the WissKI label.
+   * @param bool $requireClient
+   *   When TRUE and there is no client, the groups are left alone as well.
+   *
+   * @return \Drupal\soda_scs_manager\ValueObject\SodaScsResult
+   *   Success when neither the client nor the groups are left in Keycloak, or
+   *   when a condition skipped them (data 'skipped').
+   */
+  public function deleteKeycloakResources(string $machineName, ?string $clientName = NULL, bool $requireClient = FALSE): SodaScsResult {
+    try {
+      $token = $this->sodaScsKeycloakHelpers->getKeycloakToken();
+      if (!$token) {
+        throw new \RuntimeException('Keycloak token request failed.');
+      }
+
+      $deleted = [];
+      $clientsResponse = $this->sodaScsKeycloakServiceClientActions->makeRequest(
+        $this->sodaScsKeycloakServiceClientActions->buildGetAllRequest([
+          'queryParams' => ['clientId' => $machineName],
+          'token' => $token,
+        ])
+      );
+      if (empty($clientsResponse['success'])) {
+        throw new \RuntimeException('Keycloak client lookup failed: ' . ($clientsResponse['error'] ?? 'no details'));
+      }
+      $clients = json_decode($clientsResponse['data']['keycloakResponse']->getBody()->getContents(), TRUE);
+      $clients = array_filter(
+        is_array($clients) ? $clients : [],
+        static fn ($client): bool => is_array($client) && ($client['clientId'] ?? NULL) === $machineName && !empty($client['id']),
+      );
+      if ($requireClient && $clients === []) {
+        return SodaScsResult::success(data: ['deleted' => [], 'skipped' => 'no client'], message: 'There is no Keycloak client to delete.');
+      }
+      foreach ($clients as $client) {
+        if ($clientName !== NULL && ($client['name'] ?? NULL) !== $clientName) {
+          $this->logger->notice('Left the Keycloak client @client alone: it is named @name, not @expected.', [
+            '@client'   => $machineName,
+            '@expected' => $clientName,
+            '@name'     => $client['name'] ?? '',
+          ]);
+          return SodaScsResult::success(data: ['deleted' => [], 'skipped' => 'other client'], message: 'The Keycloak client belongs to another WissKI.');
+        }
+      }
+      foreach ($clients as $client) {
+        $deleteResponse = $this->sodaScsKeycloakServiceClientActions->makeRequest(
+          $this->sodaScsKeycloakServiceClientActions->buildDeleteRequest([
+            'routeParams' => ['clientUuid' => $client['id']],
+            'token' => $token,
+          ])
+        );
+        if (empty($deleteResponse['success'])) {
+          throw new \RuntimeException('Keycloak client delete failed: ' . ($deleteResponse['error'] ?? 'no details'));
+        }
+        $deleted[] = 'client';
+      }
+
+      $groupsResult = $this->sodaScsKeycloakHelpers->deleteComponentAccessGroups($machineName);
+      foreach (['admin', 'user'] as $role) {
+        if ($groupsResult[$role . 'Deleted']) {
+          $deleted[] = $groupsResult[$role . 'GroupName'];
+        }
+      }
+    }
+    catch (\Exception $e) {
+      $this->logger->error('Could not delete the Keycloak client and groups of @client: @message', [
+        '@client'  => $machineName,
+        '@message' => $e->getMessage(),
+      ]);
+      return SodaScsResult::failure(
+        error: $e->getMessage(),
+        message: (string) $this->t('Could not delete the Keycloak client of the WissKI instance.'),
+        log: FALSE,
+      );
+    }
+
+    return SodaScsResult::success(
+      data: ['deleted' => $deleted],
+      message: 'Deleted the Keycloak client and groups of the WissKI instance.',
+    );
   }
 
   /**

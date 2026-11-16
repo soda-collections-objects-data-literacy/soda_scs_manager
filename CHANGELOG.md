@@ -25,6 +25,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- A WissKI that cannot be created no longer leaves its database, triplestore
+  and stack behind; a database or triplestore that fails on its own removes
+  what it created too. Before, they stayed without a working WissKI, and the
+  next WissKI with the same name got a "-2" machine name. Deleting a
+  database, triplestore or WissKI instance now stops when its database,
+  repository or Portainer stack cannot be deleted, instead of dropping the
+  record and leaving the data. Existing leftovers have to be deleted by hand.
+  Related: [#3638552](https://www.drupal.org/project/soda_scs_manager/issues/3638552).
+- A WissKI that cannot be created no longer leaves its Keycloak client and
+  groups behind, and deleting a WissKI stack without a WissKI instance deletes
+  them too, unless they belong to another WissKI. Before, the next WissKI with
+  the same name failed with "Client … already exists".
+  Related: [#3638568](https://www.drupal.org/project/soda_scs_manager/issues/3638568).
 - Demo jobs started by drush as root (by hand or from a host timer) run
   again. The run writes its output to `/tmp/scs-demo-queue-root.log`, because
   root may not open the web server's `/tmp/scs-demo-queue.log`; before, the

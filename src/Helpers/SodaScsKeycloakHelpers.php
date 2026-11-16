@@ -464,7 +464,10 @@ class SodaScsKeycloakHelpers {
   }
 
   /**
-   * Finds a Keycloak group by exact name.
+   * Finds a top-level Keycloak group by exact name.
+   *
+   * A failed lookup throws instead of answering "no group": callers delete
+   * what they find, and must not mistake an outage for a missing group.
    *
    * @param string $groupName
    *   Exact group name.
@@ -472,25 +475,29 @@ class SodaScsKeycloakHelpers {
    *   Optional Keycloak token; fetched when NULL.
    *
    * @return array|null
-   *   Group representation, or NULL if not found.
+   *   Group representation, or NULL if there is no such group.
+   *
+   * @throws \RuntimeException
+   *   When no token can be fetched or the lookup fails.
    */
   public function findGroupByName(string $groupName, ?string $token = NULL): ?array {
     $token = $token ?? $this->getKeycloakToken();
     if (!$token) {
-      return NULL;
+      throw new \RuntimeException('Keycloak token request failed.');
     }
 
     $response = $this->sodaScsKeycloakServiceGroupActions->makeRequest(
       $this->sodaScsKeycloakServiceGroupActions->buildGetAllRequest([
-        'token' => $token,
+        'queryParams' => ['exact' => 'true', 'search' => $groupName],
+        'token'       => $token,
       ])
     );
-    if (!$response['success']) {
-      return NULL;
+    if (empty($response['success'])) {
+      throw new \RuntimeException(sprintf('Keycloak group lookup of %s failed: %s', $groupName, $response['error'] ?? 'no details'));
     }
 
-    $groups = json_decode($response['data']['keycloakResponse']->getBody()->getContents(), TRUE) ?? [];
-    foreach ($groups as $group) {
+    $groups = json_decode($response['data']['keycloakResponse']->getBody()->getContents(), TRUE);
+    foreach (is_array($groups) ? $groups : [] as $group) {
       if (($group['name'] ?? NULL) === $groupName) {
         return $group;
       }

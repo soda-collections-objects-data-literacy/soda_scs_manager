@@ -763,6 +763,10 @@ msgstr "Triplestore-Komponente %component gelöscht"
 msgid "Cannot get WissKI component @component at portainer."
 msgstr "WissKI-Komponente @component kann nicht bei Portainer abgerufen werden."
 
+#: src/ComponentActions/SodaScsWisskiComponentActions.php
+msgid "Could not delete WissKI component @component at portainer."
+msgstr "Die WissKI-Komponente @component konnte in Portainer nicht gelöscht werden."
+
 #: src/ComponentActions/SodaScsWisskiComponentActions.php:566
 msgid "Cannot get WissKI component @component at portainer. See logs for more details."
 msgstr "WissKI-Komponente @component kann nicht bei Portainer abgerufen werden. Weitere Details finden Sie in den Logs."
@@ -771,9 +775,6 @@ msgstr "WissKI-Komponente @component kann nicht bei Portainer abgerufen werden. 
 msgid "Cannot assemble WissKI component delete request. See logs for more details."
 msgstr "WissKI-Komponenten-Löschanfrage kann nicht zusammengestellt werden. Weitere Details finden Sie in den Logs."
 
-#: src/ComponentActions/SodaScsWisskiComponentActions.php:596
-msgid "Could not delete WissKI stack at portainer, but will delete the component anyway. See logs for more details."
-msgstr "WissKI-Stack konnte nicht bei Portainer gelöscht werden, die Komponente wird trotzdem gelöscht. Weitere Details finden Sie in den Logs."
 
 #: src/ComponentActions/SodaScsWisskiComponentActions.php:612 src/StackActions/SodaScsWisskiStackActions.php:570
 msgid "Cannot delete WissKI component. See logs for more details."
@@ -4785,6 +4786,14 @@ msgstr "Der Triplestore des WissKI-Stacks konnte nicht gelöscht werden."
 #: src/StackActions/SodaScsWisskiStackActions.php
 msgid "Could not delete the WissKI instance of the WissKI stack."
 msgstr "Die WissKI-Instanz des WissKI-Stacks konnte nicht gelöscht werden."
+
+#: src/StackActions/SodaScsWisskiStackActions.php
+msgid "Could not delete the Keycloak client of the WissKI stack."
+msgstr "Der Keycloak-Client des WissKI-Stacks konnte nicht gelöscht werden."
+
+#: src/ComponentActions/SodaScsWisskiComponentActions.php
+msgid "Could not delete the Keycloak client of the WissKI instance."
+msgstr "Der Keycloak-Client der WissKI-Instanz konnte nicht gelöscht werden."
 
 #: src/Demo/SodaScsDemoStatusBuilder.php
 msgid "Queued since @time"

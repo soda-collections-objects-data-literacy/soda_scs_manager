@@ -237,6 +237,9 @@ class SodaScsSqlComponentActions implements SodaScsComponentActionsInterface {
    *   The result array with the created component.
    */
   public function createComponent(SodaScsComponentInterface $entity): array {
+    // Set once this call created the database; only then a later failure
+    // removes it again. An existing database is never touched here.
+    $createdDatabaseOf = NULL;
     try {
       $sqlComponentBundleInfo = $this->entityTypeBundleInfo->getBundleInfo('soda_scs_component')['soda_scs_sql_component'];
 
@@ -386,6 +389,7 @@ class SodaScsSqlComponentActions implements SodaScsComponentActionsInterface {
           $createDatabaseServiceResult['output']
         );
       }
+      $createdDatabaseOf = $sqlComponent;
 
       // Keycloak access groups: {machineName}-admin / {machineName}-user.
       $memberSsoUuids = [];
@@ -429,6 +433,9 @@ class SodaScsSqlComponentActions implements SodaScsComponentActionsInterface {
         ['@message' => $e->getMessage()],
         LogLevel::ERROR
       );
+      if ($createdDatabaseOf !== NULL) {
+        $this->rollBackCreateComponent($createdDatabaseOf);
+      }
       return [
         'message' => $e instanceof SodaScsUserFacingException
           ? $e->getUserMessage()
@@ -712,6 +719,9 @@ class SodaScsSqlComponentActions implements SodaScsComponentActionsInterface {
   public function deleteComponent(SodaScsComponentInterface $component): array {
     try {
       $deleteDbResult = $this->sodaScsMysqlServiceActions->deleteService($component);
+      if (empty($deleteDbResult['success'])) {
+        throw new \RuntimeException(sprintf('Database of component %s could not be deleted: %s', $component->id() ?? 'new', $deleteDbResult['error'] ?? 'no details'));
+      }
       $keycloakGroupsDeleteResult = $this->sodaScsKeycloakHelpers->deleteComponentAccessGroups(
         $component->get('machineName')->value,
       );
@@ -866,6 +876,25 @@ class SodaScsSqlComponentActions implements SodaScsComponentActionsInterface {
   protected function getDatabaseContainerName(): string {
     // Portainer needs the container name. dbHost may be only the DNS alias.
     return SodaScsDockerDns::database();
+  }
+
+  /**
+   * Removes the database, groups and entity of a failed createComponent().
+   *
+   * Runs deleteComponent() on the component, which may still be unsaved. A
+   * failure is logged; the caller returns its original error either way.
+   *
+   * @param \Drupal\soda_scs_manager\Entity\SodaScsComponentInterface $component
+   *   The component whose database this call created.
+   */
+  private function rollBackCreateComponent(SodaScsComponentInterface $component): void {
+    $result = $this->deleteComponent($component);
+    if (empty($result['success'])) {
+      $this->logger->error('Could not remove the database @machineName of a failed SQL component: @error', [
+        '@error'       => $result['error'] ?? 'no details',
+        '@machineName' => $component->get('machineName')->value,
+      ]);
+    }
   }
 
 }
