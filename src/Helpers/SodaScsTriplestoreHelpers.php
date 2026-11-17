@@ -11,6 +11,8 @@ use Drupal\soda_scs_manager\Exception\SodaScsHelpersException;
 use Drupal\soda_scs_manager\ValueObject\SodaScsResult;
 use Drupal\Core\Logger\LoggerChannelFactoryInterface;
 use Drupal\Core\Entity\EntityTypeBundleInfoInterface;
+use Drupal\Core\Entity\EntityTypeManagerInterface;
+use Drupal\soda_scs_manager\Entity\SodaScsComponentInterface;
 use Drupal\soda_scs_manager\ServiceKeyActions\SodaScsServiceKeyActionsInterface;
 
 /**
@@ -61,6 +63,13 @@ class SodaScsTriplestoreHelpers {
   protected EntityTypeBundleInfoInterface $entityTypeBundleInfo;
 
   /**
+   * The entity type manager.
+   *
+   * @var \Drupal\Core\Entity\EntityTypeManagerInterface
+   */
+  protected EntityTypeManagerInterface $entityTypeManager;
+
+  /**
    * Constructor.
    *
    * @param \Drupal\Core\Logger\LoggerChannelFactoryInterface $loggerFactory
@@ -75,6 +84,8 @@ class SodaScsTriplestoreHelpers {
    *   The SCS OpenGDB helpers.
    * @param \Drupal\Core\Entity\EntityTypeBundleInfoInterface $entityTypeBundleInfo
    *   The entity type bundle info.
+   * @param \Drupal\Core\Entity\EntityTypeManagerInterface $entityTypeManager
+   *   The entity type manager.
    */
   public function __construct(
     LoggerChannelFactoryInterface $loggerFactory,
@@ -87,6 +98,7 @@ class SodaScsTriplestoreHelpers {
     #[Autowire(service: 'soda_scs_manager.opengdb.helpers')]
     SodaScsOpenGdbHelpers $sodaScsOpenGdbHelpers,
     EntityTypeBundleInfoInterface $entityTypeBundleInfo,
+    EntityTypeManagerInterface $entityTypeManager,
   ) {
     $this->loggerFactory = $loggerFactory;
     $this->sodaScsOpenGdbServiceActions = $sodaScsOpenGdbServiceActions;
@@ -94,6 +106,7 @@ class SodaScsTriplestoreHelpers {
     $this->sodaScsServiceKeyActions = $sodaScsServiceKeyActions;
     $this->sodaScsOpenGdbHelpers = $sodaScsOpenGdbHelpers;
     $this->entityTypeBundleInfo = $entityTypeBundleInfo;
+    $this->entityTypeManager = $entityTypeManager;
   }
 
   /**
@@ -285,6 +298,7 @@ class SodaScsTriplestoreHelpers {
     $userCreated = !$userData;
     if ($userCreated) {
       $this->sodaScsOpenGdbHelpers->createUser($component->getOwner()->getDisplayName(), $componentServiceKeyPassword->get('servicePassword')->value);
+      $this->grantOwnedRepositories($component);
     }
     else {
       // If there is a user, update the the user credentials to sync with the
@@ -344,6 +358,53 @@ class SodaScsTriplestoreHelpers {
 
     return $userData;
 
+  }
+
+  /**
+   * Gives a recreated OpenGDB account its rights on the owner's repositories.
+   *
+   * A new account has no rights; the triplestore being created gets its own
+   * later. Without this, the owner's other repositories stay in RDF4J but
+   * answer 404 to the owner's token. A failure is logged with the
+   * repositories, so an administrator can grant them, and does not stop the
+   * new triplestore.
+   *
+   * @param \Drupal\soda_scs_manager\Entity\SodaScsComponentInterface $component
+   *   The triplestore component being created.
+   */
+  private function grantOwnedRepositories(SodaScsComponentInterface $component): void {
+    $storage = $this->entityTypeManager->getStorage('soda_scs_component');
+    $ids = $storage->getQuery()
+      ->accessCheck(FALSE)
+      ->condition('bundle', 'soda_scs_triplestore_component')
+      ->condition('owner', $component->getOwnerId())
+      ->execute();
+    $machineNames = [];
+    foreach ($storage->loadMultiple($ids) as $owned) {
+      $machineName = (string) $owned->get('machineName')->value;
+      if ($machineName !== '') {
+        $machineNames[] = $machineName;
+      }
+    }
+    if ($machineNames === []) {
+      return;
+    }
+
+    $logger = $this->loggerFactory->get('soda_scs_manager');
+    try {
+      $this->sodaScsOpenGdbHelpers->setUserRepositoryGrants($component->getOwner()->getDisplayName(), $machineNames);
+      $logger->notice('Granted the recreated OpenGDB account of user @user its rights on @repositories.', [
+        '@repositories' => implode(', ', $machineNames),
+        '@user' => $component->getOwnerId(),
+      ]);
+    }
+    catch (\Exception $e) {
+      $logger->error('Could not grant the recreated OpenGDB account of user @user its rights on @repositories: @message', [
+        '@message' => $e->getMessage(),
+        '@repositories' => implode(', ', $machineNames),
+        '@user' => $component->getOwnerId(),
+      ]);
+    }
   }
 
 }

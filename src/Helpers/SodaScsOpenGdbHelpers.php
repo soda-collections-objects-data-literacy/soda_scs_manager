@@ -15,6 +15,17 @@ use Drupal\soda_scs_manager\Exception\SodaScsHelpersException;
 class SodaScsOpenGdbHelpers {
 
   /**
+   * App settings the SCS Manager sends with every grant update of an account.
+   */
+  public const USER_APP_SETTINGS = [
+    'DEFAULT_INFERENCE' => TRUE,
+    'DEFAULT_SAMEAS' => TRUE,
+    'DEFAULT_VIS_GRAPH_SCHEMA' => TRUE,
+    'EXECUTE_COUNT' => TRUE,
+    'IGNORE_SHARED_QUERIES' => FALSE,
+  ];
+
+  /**
    * The SCS OpenGDB service actions.
    *
    * @var \Drupal\soda_scs_manager\RequestActions\SodaScsOpenGdbRequestInterface
@@ -160,6 +171,46 @@ class SodaScsOpenGdbHelpers {
     }
     catch (\Exception $e) {
       throw SodaScsHelpersException::opengdbFailed($e->getMessage(), 'update_user', ['username' => $username], $e);
+    }
+  }
+
+  /**
+   * Sets an account's grants to read and write on the given repositories.
+   *
+   * Replaces the whole grant list with ROLE_USER and the repository rights,
+   * so it is meant for an account that was just created.
+   *
+   * @param string $username
+   *   The username of the account.
+   * @param string[] $machineNames
+   *   The repository ids.
+   *
+   * @throws \Drupal\soda_scs_manager\Exception\SodaScsHelpersException
+   *   If OpenGDB does not accept the grants.
+   */
+  public function setUserRepositoryGrants(string $username, array $machineNames): void {
+    $authorities = ['ROLE_USER'];
+    foreach ($machineNames as $machineName) {
+      $authorities[] = "READ_REPO_$machineName";
+      $authorities[] = "WRITE_REPO_$machineName";
+    }
+    try {
+      $request = $this->sodaScsOpenGdbServiceActions->buildUpdateRequest([
+        'type' => 'user',
+        'queryParams' => [],
+        'routeParams' => ['username' => $username],
+        'body' => [
+          'grantedAuthorities' => $authorities,
+          'appSettings' => self::USER_APP_SETTINGS,
+        ],
+      ]);
+      $response = $this->sodaScsOpenGdbServiceActions->makeRequest($request);
+    }
+    catch (\Exception $e) {
+      throw SodaScsHelpersException::opengdbFailed($e->getMessage(), 'set_user_repository_grants', ['username' => $username], $e);
+    }
+    if (empty($response['success'])) {
+      throw SodaScsHelpersException::opengdbFailed('OpenGDB did not accept the repository grants.', 'set_user_repository_grants', ['username' => $username], new \Exception($response['error'] ?? 'no details'));
     }
   }
 

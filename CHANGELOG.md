@@ -75,6 +75,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   was created again, but the "Triplestore token" key kept the token of the
   deleted account, which the triplestore rejected.
   Related: [#3638810](https://www.drupal.org/project/soda_scs_manager/issues/3638810).
+- When the user's triplestore account has to be created again, it gets its
+  rights on the user's other triplestores back, not only on the new one.
+  Before, those triplestores still existed but could no longer be queried
+  with the user's token.
+  Related: [#3638851](https://www.drupal.org/project/soda_scs_manager/issues/3638851).
 - A WissKI that cannot be created no longer leaves its database, triplestore
   and stack behind; a database or triplestore that fails on its own removes
   what it created too. Before, they stayed without a working WissKI, and the

@@ -296,13 +296,7 @@ class SodaScsTriplestoreComponentActions implements SodaScsComponentActionsInter
               "READ_REPO_$machineName",
               "WRITE_REPO_$machineName",
             ]),
-          "appSettings" => [
-            "DEFAULT_INFERENCE" => TRUE,
-            "DEFAULT_SAMEAS" => TRUE,
-            "DEFAULT_VIS_GRAPH_SCHEMA" => TRUE,
-            "EXECUTE_COUNT" => TRUE,
-            "IGNORE_SHARED_QUERIES" => FALSE,
-          ],
+          'appSettings' => SodaScsOpenGdbHelpers::USER_APP_SETTINGS,
           // "dateUpdated" => \Drupal::time()->getRequestTime(),
         ],
       ];
@@ -805,13 +799,7 @@ class SodaScsTriplestoreComponentActions implements SodaScsComponentActionsInter
           'routeParams' => ['username' => $username],
           'body' => [
             'grantedAuthorities' => $remainingAuthorities,
-            "appSettings" => [
-              "DEFAULT_INFERENCE" => TRUE,
-              "DEFAULT_SAMEAS" => TRUE,
-              "DEFAULT_VIS_GRAPH_SCHEMA" => TRUE,
-              "EXECUTE_COUNT" => TRUE,
-              "IGNORE_SHARED_QUERIES" => FALSE,
-            ],
+            'appSettings' => SodaScsOpenGdbHelpers::USER_APP_SETTINGS,
           ],
         ];
 
