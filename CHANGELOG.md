@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [4.6.0] - 2026-11-17
+
 ### Added
 
 - WebProtégé applications have an "Import ontology" tab. The owner uploads an
@@ -1108,7 +1110,8 @@ Development line: branch `2.x`. Major release relative to `1.3.x` (projects on s
 
 - Move toward fully Portainer-driven lifecycle for managed services.
 
-[Unreleased]: https://github.com/soda-collections-objects-data-literacy/soda_scs_manager/compare/4.5.0...HEAD
+[Unreleased]: https://github.com/soda-collections-objects-data-literacy/soda_scs_manager/compare/4.6.0...HEAD
+[4.6.0]: https://github.com/soda-collections-objects-data-literacy/soda_scs_manager/compare/4.5.0...4.6.0
 [4.5.0]: https://github.com/soda-collections-objects-data-literacy/soda_scs_manager/compare/4.4.0...4.5.0
 [4.4.0]: https://github.com/soda-collections-objects-data-literacy/soda_scs_manager/compare/4.3.3...4.4.0
 [4.3.3]: https://github.com/soda-collections-objects-data-literacy/soda_scs_manager/compare/4.3.2...4.3.3
