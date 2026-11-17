@@ -138,11 +138,11 @@ final class SodaScsWebprotegeProjectCommands extends DrushCommands {
 
       if ($dryRun) {
         if ($linkedId === '') {
-          $this->output()->writeln('  [dry-run] would: POST /data/projects (owner CAN_MANAGE) then PUT EDIT for members');
+          $this->output()->writeln('  [dry-run] would: POST /data/projects (owner CAN_MANAGE), write a first revision, then PUT EDIT for members');
           $created++;
         }
         else {
-          $this->output()->writeln('  [dry-run] would: PUT EDIT for members (ontology project already linked)');
+          $this->output()->writeln('  [dry-run] would: write a first revision if the project has none, then PUT EDIT for members (ontology project already linked)');
           $synced++;
         }
         continue;
@@ -195,7 +195,8 @@ final class SodaScsWebprotegeProjectCommands extends DrushCommands {
    * Handles projects that got an ontology project automatically (before
    * WebProtégé became opt-in) but have no WebProtégé component. An ontology
    * project counts as used when it has a revision or was modified after it
-   * was created.
+   * was created. The first revision the manager writes itself
+   * (SodaScsWebprotegeHelpers::INITIAL_REVISION_MESSAGE) does not count.
    *
    * @param array{dry-run?: bool, project?: string|null, all?: bool} $options
    *   Command options.
@@ -272,7 +273,7 @@ final class SodaScsWebprotegeProjectCommands extends DrushCommands {
       $latest = $revisions->data['latest'];
       $createdAt = (string) ($details->data['details']['createdAt'] ?? '');
       $modifiedAt = (string) ($details->data['details']['modifiedAt'] ?? '');
-      $used = $count > 0 || $createdAt === '' || $modifiedAt !== $createdAt;
+      $used = $this->webprotegeHelpers->isOntologyProjectUsed($count, is_array($latest) ? $latest : NULL, $createdAt, $modifiedAt);
       $this->output()->writeln(sprintf(
         '— project=%s label=%s wp=%s revisions=%d createdAt=%s modifiedAt=%s latest=%s',
         (string) $project->id(),

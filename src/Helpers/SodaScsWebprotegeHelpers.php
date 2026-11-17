@@ -26,9 +26,26 @@ class SodaScsWebprotegeHelpers {
   public const CLASSES_PERSPECTIVE_ID = '69df8fa8-4f84-499e-9341-28eb5085c40b';
 
   /**
+   * Commit message of the first revision the manager writes.
+   *
+   * Not translated: it stays in the project history, and the reconcile
+   * command recognizes the revision by it.
+   */
+  public const INITIAL_REVISION_MESSAGE = 'Initial revision created by the SCS Manager';
+
+  /**
    * WebProtégé OIDC login endpoint (see OidcAuthServlet in the webprotege repo).
    */
   private const OIDC_LOGIN_PATH = '/webprotege/oidc/login';
+
+  /**
+   * Smallest document whose axiom makes WebProtégé write a first revision.
+   *
+   * A project created through the API has no ontology and no revision, so it
+   * cannot be downloaded. Declaring the built-in rdfs:label changes no
+   * meaning but creates the project ontology and revision 1.
+   */
+  private const INITIAL_REVISION_DOCUMENT = "Prefix(rdfs:=<http://www.w3.org/2000/01/rdf-schema#>)\nOntology(\nDeclaration(AnnotationProperty(rdfs:label))\n)\n";
 
   /**
    * UUID pattern used by WebProtégé project ids.
@@ -237,6 +254,16 @@ class SodaScsWebprotegeHelpers {
     $project->set('webprotegeProjectId', $projectId);
     $project->save();
 
+    // The project stays linked: the next sync or download retries this.
+    $initialRevision = $this->ensureInitialRevision($project);
+    if (!$initialRevision->success) {
+      $this->logger->warning('WebProtégé project @id of SCS project @project has no revision yet: @error', [
+        '@error'   => (string) $initialRevision->error,
+        '@id'      => $projectId,
+        '@project' => $project->id(),
+      ]);
+    }
+
     $this->syncMemberEditAccess($project);
 
     return SodaScsResult::success(
@@ -261,7 +288,15 @@ class SodaScsWebprotegeHelpers {
       return $create;
     }
 
+    // A new project got its first revision in createOntologyProject().
+    // Members are synced even when this fails, and the failure is returned
+    // afterwards.
+    $initialRevision = $alreadyLinked ? $this->ensureInitialRevision($project) : NULL;
+
     $members = $this->syncMemberEditAccess($project);
+    if ($initialRevision !== NULL && !$initialRevision->success) {
+      return $initialRevision;
+    }
     $failedMembers = [];
     foreach ($members as $row) {
       if (empty($row['success'])) {
@@ -623,6 +658,11 @@ class SodaScsWebprotegeHelpers {
       );
     }
 
+    $initialRevision = $this->ensureInitialRevision($project);
+    if (!$initialRevision->success) {
+      return $initialRevision;
+    }
+
     $response = $this->webprotegeServiceActions->makeRequest($this->webprotegeServiceActions->buildDownloadOntologyRequest($projectId));
     $rawResponse = $response['data']['webprotegeResponse'] ?? NULL;
     if (empty($response['success']) || !is_object($rawResponse) || !method_exists($rawResponse, 'getBody')) {
@@ -643,6 +683,99 @@ class SodaScsWebprotegeHelpers {
       data: ['file' => $targetFile, 'webprotegeProjectId' => $projectId],
       message: (string) $this->t('Downloaded the ontology of @project.', ['@project' => $project->label()]),
     );
+  }
+
+  /**
+   * Gives a linked WebProtégé project without revisions its first revision.
+   *
+   * Projects created through the API stay empty until someone edits them,
+   * and WebProtégé can neither export nor diff an empty project. Projects
+   * that already have a revision are left untouched.
+   *
+   * @param \Drupal\soda_scs_manager\Entity\SodaScsProjectInterface $project
+   *   The SCS project whose WebProtégé project is checked.
+   *
+   * @return \Drupal\soda_scs_manager\ValueObject\SodaScsResult
+   *   On success, data has webprotegeProjectId and created (TRUE when the
+   *   first revision was written now).
+   */
+  public function ensureInitialRevision(SodaScsProjectInterface $project): SodaScsResult {
+    $revisions = $this->listRevisions($project);
+    if (!$revisions->success) {
+      return $revisions;
+    }
+
+    $projectId = (string) $revisions->data['webprotegeProjectId'];
+    if ((int) $revisions->data['count'] > 0) {
+      return SodaScsResult::success(
+        data: ['created' => FALSE, 'webprotegeProjectId' => $projectId],
+        message: (string) $this->t('The WebProtégé project of @project already has a revision.', ['@project' => $project->label()]),
+      );
+    }
+
+    $request = $this->webprotegeServiceActions->buildAddAxiomsRequest(
+      self::INITIAL_REVISION_MESSAGE,
+      self::INITIAL_REVISION_DOCUMENT,
+      $projectId,
+    );
+    $response = $this->webprotegeServiceActions->makeRequest($request);
+    if (empty($response['success'])) {
+      $error = (string) ($response['error'] ?? 'WebProtégé axioms request failed.');
+      $this->logger->error('Failed to write the initial revision of WebProtégé project @id for SCS project @project: @error', [
+        '@error'   => $error,
+        '@id'      => $projectId,
+        '@project' => $project->id(),
+      ]);
+      return SodaScsResult::failure(
+        $error,
+        (string) $this->t('Could not prepare the WebProtégé project of @project.', ['@project' => $project->label()]),
+        FALSE,
+      );
+    }
+
+    $this->logger->info('Wrote the initial revision of WebProtégé project @id for SCS project @project.', [
+      '@id'      => $projectId,
+      '@project' => $project->id(),
+    ]);
+    return SodaScsResult::success(
+      data: ['created' => TRUE, 'webprotegeProjectId' => $projectId],
+      message: (string) $this->t('Wrote the first revision of the WebProtégé project of @project.', ['@project' => $project->label()]),
+    );
+  }
+
+  /**
+   * Tells whether someone has worked in a WebProtégé project.
+   *
+   * A project counts as used when it has a revision or was modified after it
+   * was created. The manager's own first revision does not count: when it is
+   * the only one, a modification time equal to its timestamp is not use
+   * either. Missing details count as used, so nothing is trashed on doubt.
+   *
+   * @param int $count
+   *   Number of revisions, as returned by listRevisions().
+   * @param array<string, mixed>|null $latest
+   *   The latest revision, as returned by listRevisions().
+   * @param string $createdAt
+   *   The project's createdAt from getProjectDetails(), or ''.
+   * @param string $modifiedAt
+   *   The project's modifiedAt from getProjectDetails(), or ''.
+   *
+   * @return bool
+   *   TRUE when the project must be kept.
+   */
+  public function isOntologyProjectUsed(int $count, ?array $latest, string $createdAt, string $modifiedAt): bool {
+    if ($createdAt === '') {
+      return TRUE;
+    }
+
+    $onlyInitialRevision = $count === 1
+      && is_array($latest)
+      && ($latest['msg'] ?? NULL) === self::INITIAL_REVISION_MESSAGE;
+    if ($onlyInitialRevision) {
+      return $modifiedAt !== $createdAt && $modifiedAt !== (string) ($latest['timestamp'] ?? '');
+    }
+
+    return $count > 0 || $modifiedAt !== $createdAt;
   }
 
   /**

@@ -6069,3 +6069,15 @@ msgstr "Noch keine Snapshots."
 #: templates/entity/soda-scs-entity.html.twig
 msgid "Create snapshot"
 msgstr "Snapshot erstellen"
+
+#: src/Helpers/SodaScsWebprotegeHelpers.php
+msgid "The WebProtégé project of @project already has a revision."
+msgstr "Das WebProtégé-Projekt von @project hat bereits eine Revision."
+
+#: src/Helpers/SodaScsWebprotegeHelpers.php
+msgid "Could not prepare the WebProtégé project of @project."
+msgstr "Das WebProtégé-Projekt von @project konnte nicht vorbereitet werden."
+
+#: src/Helpers/SodaScsWebprotegeHelpers.php
+msgid "Wrote the first revision of the WebProtégé project of @project."
+msgstr "Erste Revision des WebProtégé-Projekts von @project geschrieben."

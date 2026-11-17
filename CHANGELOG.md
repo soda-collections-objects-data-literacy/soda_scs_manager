@@ -7,6 +7,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- A WebProtégé project created by the SCS Manager gets a first revision right
+  away. Before, it stayed empty until someone edited it: its ontology could
+  not be downloaded, and building a demo template from the project failed at
+  "Export WebProtégé ontology".
+  Existing projects are repaired before their ontology is downloaded.
+  **After updating, run `drush soda_scs_manager:backfill-webprotege-projects --all`
+  once to repair all existing WebProtégé projects.**
+  Related: [#3638989](https://www.drupal.org/project/soda_scs_manager/issues/3638989).
+
 ## [4.5.0] - 2026-11-17
 
 ### Added

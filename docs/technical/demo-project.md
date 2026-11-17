@@ -100,6 +100,7 @@ scs-drush queue:run soda_scs_manager_demo --time-limit=900 --lease-time=7200
 
 - Triplestore data keeps the URIs of the source WissKI domain; the Salz adapter of the demo WissKI points to its own repository, so the data is readable, but entity URIs show the source domain.
 - WebProtégé keeps the ontology in its own project store. Forms, perspectives and the revision history of the source are not copied; the demo gets the axioms of the head revision.
+- WebProtégé cannot export a project without revisions. Before the download, `SodaScsWebprotegeHelpers::ensureInitialRevision()` gives such a source project a first revision ("Initial revision created by the SCS Manager", it declares `rdfs:label`), so the export also writes into an otherwise empty source project.
 - The ontology download needs the SCS endpoint `GET /data/projects/{id}/ontology` of the WebProtégé fork. Rebuild and recreate `webprotege--webprotege--app` after pulling that change.
 - The source WissKI and the source Jupyter server are briefly offline while a version is built.
 - The demo notebook reads `WISSKI_BASE_URL` from `~/.wisski-demo-api.env`. The central demo project needs that line in its own notebook home as well; user demos get a fresh file on every create and reset. The account `api-import` belongs in the source WissKI (roles `wisski_api_import` and `wisski_user`). Without it every demo creates the account itself and logs a warning.
