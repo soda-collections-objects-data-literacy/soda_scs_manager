@@ -101,6 +101,88 @@ class SodaScsWebprotegeServiceActionsTest extends UnitTestCase {
   }
 
   /**
+   * @covers ::buildAddAxiomsRequest
+   */
+  public function testBuildAddAxiomsRequestDefaultsToFunctionalSyntax(): void {
+    $actions = $this->createActions([
+      'host' => 'https://webprotege.example.com',
+      'apiBaseUrl' => 'http://webprotege:8080',
+      'apiKey' => 'secret-api-key',
+    ]);
+
+    $request = $actions->buildAddAxiomsRequest('Add classes', 'Ontology()', 'aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee');
+
+    $this->assertTrue($request['success']);
+    $this->assertSame('POST', $request['method']);
+    $this->assertSame('text/owl-functional', $request['headers']['Content-Type']);
+    $this->assertSame('apikey secret-api-key', $request['headers']['Authorization']);
+    $this->assertSame('Ontology()', $request['body']);
+    $this->assertSame(300, $request['timeout']);
+    $this->assertSame(
+      'http://webprotege:8080/data/projects/aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee/axioms?msg=Add+classes',
+      $request['route'],
+    );
+  }
+
+  /**
+   * @covers ::buildAddAxiomsRequest
+   */
+  public function testBuildAddAxiomsRequestUsesGivenTimeout(): void {
+    $actions = $this->createActions([
+      'host' => 'https://webprotege.example.com',
+      'apiBaseUrl' => 'http://webprotege:8080',
+      'apiKey' => 'secret-api-key',
+    ]);
+
+    $request = $actions->buildAddAxiomsRequest('Add classes', '<a> <b> <c> .', 'aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee', 'text/ttl', 240);
+
+    $this->assertSame(240, $request['timeout']);
+  }
+
+  /**
+   * @covers ::buildAddAxiomsRequest
+   */
+  public function testBuildAddAxiomsRequestSendsGivenContentType(): void {
+    $actions = $this->createActions([
+      'host' => 'https://webprotege.example.com',
+      'apiBaseUrl' => 'http://webprotege:8080',
+      'apiKey' => 'secret-api-key',
+    ]);
+
+    $request = $actions->buildAddAxiomsRequest('Add classes', '<a> <b> <c> .', 'aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee', 'text/ttl');
+
+    $this->assertTrue($request['success']);
+    $this->assertSame('text/ttl', $request['headers']['Content-Type']);
+    $this->assertSame('<a> <b> <c> .', $request['body']);
+  }
+
+  /**
+   * @covers ::buildAddAxiomsRequest
+   */
+  public function testBuildAddAxiomsRequestFailsWhenApiKeyMissing(): void {
+    $actions = $this->createActions([
+      'host' => 'https://webprotege.example.com',
+      'apiBaseUrl' => 'http://webprotege:8080',
+      'apiKey' => '',
+    ]);
+
+    $request = $actions->buildAddAxiomsRequest('Add classes', 'Ontology()', 'aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee', 'text/ttl');
+
+    $this->assertFalse($request['success']);
+  }
+
+  /**
+   * Content types of the import: one per extension, all with a parser.
+   */
+  public function testOntologyDocumentMimeTypesCoverTheImportExtensions(): void {
+    $this->assertSame(
+      ['ofn', 'owl', 'rdf', 'ttl'],
+      array_keys(SodaScsWebprotegeServiceActions::ONTOLOGY_DOCUMENT_MIME_TYPES),
+    );
+    $this->assertSame('text/owl-functional', SodaScsWebprotegeServiceActions::ONTOLOGY_DOCUMENT_MIME_TYPES['ofn']);
+  }
+
+  /**
    * @param array{host: string, apiBaseUrl: string, apiKey: string} $settings
    */
   private function createActions(array $settings): SodaScsWebprotegeServiceActions {
