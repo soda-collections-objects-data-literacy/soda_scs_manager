@@ -222,4 +222,28 @@ class SodaScsEntityOwnerAccessTest extends SodaScsKernelTestBase {
     $this->assertTrue($serviceKey->access('delete', $admin));
   }
 
+  /**
+   * Tests that only the owner of a service key may view or change it.
+   *
+   * The scs_user role has the view and delete permissions for service keys;
+   * they must not open another user's key.
+   */
+  public function testServiceKeyOwnerAccess(): void {
+    $owner = $this->testUser;
+    $otherUser = $this->createTestUser();
+    $otherUser->addRole('scs_user');
+    $otherUser->save();
+
+    $serviceKey = $this->createTestServiceKey('default', [
+      'owner' => $owner->id(),
+    ]);
+
+    $this->assertTrue($serviceKey->access('view', $owner));
+    $this->assertTrue($serviceKey->access('update', $owner));
+    $this->assertTrue($serviceKey->access('delete', $owner));
+    $this->assertFalse($serviceKey->access('view', $otherUser));
+    $this->assertFalse($serviceKey->access('update', $otherUser));
+    $this->assertFalse($serviceKey->access('delete', $otherUser));
+  }
+
 }

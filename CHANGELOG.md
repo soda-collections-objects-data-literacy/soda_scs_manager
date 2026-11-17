@@ -28,6 +28,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- A service key can only be opened, changed or deleted by its owner and by
+  roles with **Administer SODa SCS Manager**.
 - Roles with **Administer SODa SCS Manager** now have full access to all
   projects, components (databases, triplestores, WissKI components) and
   service keys, as they already had to stacks. Before, these entity types
