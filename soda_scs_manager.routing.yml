@@ -687,6 +687,79 @@ soda_scs_manager.messages.unread_count:
   options:
     no_cache: TRUE
 
+entity.soda_scs_conversation.canonical:
+  path: '/soda-scs-manager/conversations/{soda_scs_conversation}'
+  defaults:
+    _controller: '\Drupal\soda_scs_manager\Controller\SodaScsConversationController::view'
+    _title_callback: '\Drupal\soda_scs_manager\Controller\SodaScsConversationController::viewTitle'
+  requirements:
+    _permission: 'soda scs manager user'
+    _entity_access: 'soda_scs_conversation.view'
+  options:
+    parameters:
+      soda_scs_conversation:
+        type: entity:soda_scs_conversation
+    no_cache: TRUE
+
+soda_scs_manager.conversation.messages:
+  path: '/soda-scs-manager/conversations/{soda_scs_conversation}/messages'
+  defaults:
+    _controller: '\Drupal\soda_scs_manager\Controller\SodaScsConversationController::messages'
+  requirements:
+    _permission: 'soda scs manager user'
+    _entity_access: 'soda_scs_conversation.view'
+  options:
+    parameters:
+      soda_scs_conversation:
+        type: entity:soda_scs_conversation
+    no_cache: TRUE
+
+soda_scs_manager.conversation_message.edit:
+  path: '/soda-scs-manager/conversation-messages/{soda_scs_conversation_message}/edit'
+  defaults:
+    _form: '\Drupal\soda_scs_manager\Form\SodaScsConversationMessageEditForm'
+    _title: 'Edit message'
+  requirements:
+    _permission: 'soda scs manager user'
+    _entity_access: 'soda_scs_conversation_message.update'
+  options:
+    parameters:
+      soda_scs_conversation_message:
+        type: entity:soda_scs_conversation_message
+    no_cache: TRUE
+
+soda_scs_manager.conversation_message.delete:
+  path: '/soda-scs-manager/conversation-messages/{soda_scs_conversation_message}/delete'
+  defaults:
+    _form: '\Drupal\soda_scs_manager\Form\SodaScsConversationMessageDeleteForm'
+    _title: 'Delete message'
+  requirements:
+    _permission: 'soda scs manager user'
+    _entity_access: 'soda_scs_conversation_message.delete'
+  options:
+    parameters:
+      soda_scs_conversation_message:
+        type: entity:soda_scs_conversation_message
+    no_cache: TRUE
+
+soda_scs_manager.conversations.team:
+  path: '/soda-scs-manager/administration/conversations'
+  defaults:
+    _controller: '\Drupal\soda_scs_manager\Controller\SodaScsConversationController::teamList'
+    _title: 'Conversations'
+  requirements:
+    _permission: 'soda scs manager admin'
+
+soda_scs_manager.conversations.start:
+  path: '/soda-scs-manager/administration/conversations/new'
+  defaults:
+    _form: '\Drupal\soda_scs_manager\Form\SodaScsConversationStartForm'
+    _title: 'New message'
+  requirements:
+    _permission: 'soda scs manager admin'
+  options:
+    no_cache: TRUE
+
 soda_scs_manager.notifications:
   path: '/soda-scs-manager/notifications'
   defaults:
@@ -702,6 +775,14 @@ soda_scs_manager.administration:
   defaults:
     _controller: '\Drupal\soda_scs_manager\Controller\SodaScsAdministrationController::administrationPage'
     _title: 'SCS Administration'
+  requirements:
+    _permission: 'soda scs manager admin'
+
+soda_scs_manager.config:
+  path: '/admin/config/soda-scs-manager'
+  defaults:
+    _controller: '\Drupal\system\Controller\SystemController::systemAdminMenuBlockPage'
+    _title: 'SODa SCS Manager'
   requirements:
     _permission: 'soda scs manager admin'
 
@@ -764,7 +845,7 @@ soda_scs_manager.user_registration:
     _admin_route: FALSE
 
 soda_scs_manager.user_registration_approvals:
-  path: '/admin/people/keycloak-registrations'
+  path: '/admin/config/soda-scs-manager/keycloak-registrations'
   defaults:
     _form: '\Drupal\soda_scs_manager\Form\KeycloakUserApprovalForm'
     _title: 'Keycloak User Registrations'
@@ -773,8 +854,18 @@ soda_scs_manager.user_registration_approvals:
   options:
     _admin_route: TRUE
 
+# Approval e-mails sent before the move to the configuration link here.
+soda_scs_manager.user_registration_approvals_legacy:
+  path: '/admin/people/keycloak-registrations'
+  defaults:
+    _controller: '\Drupal\soda_scs_manager\Controller\SodaScsAdministrationController::redirectKeycloakRegistrations'
+  requirements:
+    _permission: 'administer users'
+  options:
+    no_cache: TRUE
+
 soda_scs_manager.user_registration_approve:
-  path: '/admin/people/keycloak-registrations/{id}/approve'
+  path: '/admin/config/soda-scs-manager/keycloak-registrations/{id}/approve'
   defaults:
     _controller: '\Drupal\soda_scs_manager\Form\KeycloakUserApprovalForm::approveRegistration'
     _title: 'Approve User Registration'
@@ -787,7 +878,7 @@ soda_scs_manager.user_registration_approve:
         type: integer
 
 soda_scs_manager.user_registration_reject:
-  path: '/admin/people/keycloak-registrations/{id}/reject'
+  path: '/admin/config/soda-scs-manager/keycloak-registrations/{id}/reject'
   defaults:
     _controller: '\Drupal\soda_scs_manager\Form\KeycloakUserApprovalForm::rejectRegistration'
     _title: 'Reject User Registration'

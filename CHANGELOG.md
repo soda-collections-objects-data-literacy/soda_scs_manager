@@ -9,6 +9,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Administrators can write to users. Under **Conversations** in the
+  administration and in **Configuration → SODa SCS Manager** they send a message to single users, all members of a
+  project or all users; each user gets a conversation of their own and can
+  reply. Conversations show as chat bubbles, refresh while open, and count
+  towards the message badge, for the user and for all administrators. Authors
+  edit and delete their own messages, administrators delete any; a deleted
+  message stays as "Message deleted". Deleting an account deletes its
+  conversations. **Run drush updb** (update 11042 installs the conversation
+  tables).
+  Related: [#3638680](https://www.drupal.org/project/soda_scs_manager/issues/3638680).
 - The demo panel on the project page shows what the demo job is doing: queued
   since when, the current step, waiting for the WissKI installation with the
   time of the next attempt, or the reason it failed (the step, or that the
@@ -18,6 +28,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- **Configuration → SODa SCS Manager** (`/admin/config/soda-scs-manager`) is
+  now an overview of the settings, the demo project, the Keycloak
+  registrations and the conversations. The Keycloak registrations moved there
+  from **People**; the old address `/admin/people/keycloak-registrations`
+  forwards to the new one, so links in earlier approval e-mails still work.
+  Related: [#3638680](https://www.drupal.org/project/soda_scs_manager/issues/3638680).
 - Deleting a project now deletes its WissKI instances, databases and
   triplestores too, with their data; before, only demo projects took their
   WissKI along, and the others stayed without a project. A WissKI, database

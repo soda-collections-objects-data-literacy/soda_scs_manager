@@ -10,3 +10,68 @@
 .scs-manager--message-actions-row .button {
   @apply cursor-pointer;
 }
+
+.scs-manager--messages-conversation {
+  @apply flex min-w-0 flex-col no-underline text-inherit;
+}
+
+.scs-manager--messages-preview {
+  @apply truncate text-sm text-stone-500;
+}
+
+.scs-manager--conversation-back,
+.scs-manager--conversation-participant {
+  @apply mb-3;
+}
+
+.scs-manager--conversation-list {
+  @apply m-0 flex list-none flex-col gap-4 p-0;
+}
+
+.scs-manager--conversation-message {
+  @apply flex max-w-[48rem] items-end gap-2 self-start;
+}
+
+.scs-manager--conversation-message--own {
+  @apply flex-row-reverse self-end;
+}
+
+.scs-manager--conversation-avatar {
+  @apply flex h-9 w-9 shrink-0 items-center justify-center overflow-hidden rounded-full bg-stone-200 text-sm font-semibold text-stone-700;
+
+  & img {
+    @apply h-full w-full object-cover;
+  }
+}
+
+.scs-manager--conversation-bubble {
+  @apply min-w-0 rounded-2xl rounded-bl-sm bg-stone-100 px-4 py-2 text-stone-900;
+}
+
+.scs-manager--conversation-message--own .scs-manager--conversation-bubble {
+  @apply rounded-2xl rounded-br-sm bg-orange-100;
+}
+
+.scs-manager--conversation-message--deleted .scs-manager--conversation-bubble {
+  @apply bg-transparent text-stone-500 ring-1 ring-stone-300;
+}
+
+.scs-manager--conversation-meta {
+  @apply mb-1 flex flex-wrap items-baseline gap-2 text-xs text-stone-500;
+}
+
+.scs-manager--conversation-author {
+  @apply font-semibold text-stone-700;
+}
+
+.scs-manager--conversation-body {
+  @apply m-0 break-words;
+}
+
+.scs-manager--conversation-actions {
+  @apply mt-1 flex gap-3 text-xs;
+}
+
+.scs-manager--conversation-reply {
+  @apply mt-6;
+}

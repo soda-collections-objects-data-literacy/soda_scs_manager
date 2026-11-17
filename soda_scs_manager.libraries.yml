@@ -6,6 +6,14 @@ book-styling:
     - core/drupal
     - core/jquery.once
 
+conversationThread:
+  version: 1.0
+  js:
+    js/conversationThread.js: {}
+  dependencies:
+    - core/drupal
+    - core/once
+
 notificationBadge:
   version: 1.0
   js:

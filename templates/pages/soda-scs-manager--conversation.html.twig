@@ -1,0 +1,26 @@
+{#
+/**
+ * @file
+ * A conversation between a user and the admin team.
+ *
+ * Available variables:
+ * - subject: the subject.
+ * - participant: name of the user, shown to admins only.
+ * - messages: the rendered message list.
+ * - reply_form: the reply form, or empty.
+ * - back_url: the inbox or the admin list.
+ * - refresh_url: URL of the message list for the refresh.
+ */
+#}
+<div class="scs-manager--conversation" data-conversation-refresh-url="{{ refresh_url }}">
+  <p class="scs-manager--conversation-back"><a href="{{ back_url }}">{{ 'Back to the messages'|t }}</a></p>
+  {% if participant %}
+    <p class="scs-manager--conversation-participant">{{ 'Conversation with @name'|t({'@name': participant}) }}</p>
+  {% endif %}
+  <div class="scs-manager--conversation-messages" aria-live="polite">
+    {{ messages }}
+  </div>
+  {% if reply_form %}
+    {{ reply_form }}
+  {% endif %}
+</div>

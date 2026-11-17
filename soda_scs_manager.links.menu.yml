@@ -10,6 +10,16 @@ soda_scs_manager.administration:
   requirements:
     _permission: 'soda scs manager admin'
 
+### Conversations
+soda_scs_manager.administration.conversations:
+  title: 'SODa SCS Conversations'
+  description: 'Write to users and answer their replies.'
+  parent: soda_scs_manager.administration
+  route_name: soda_scs_manager.conversations.team
+  weight: 90
+  requirements:
+    _permission: 'soda scs manager admin'
+
 ### Components
 soda_scs_manager.administration.components:
   title: 'SODa SCS Components'
@@ -65,26 +75,28 @@ soda_scs_manager.administration.stacks:
 # Settings pages
 soda_scs_manager.settings_menu_block:
   title: 'SODa SCS Manager'
-  description: 'SODa SCS Manager settings and configurations'
+  description: 'Settings, demo project, Keycloak registrations and conversations.'
   parent: system.admin_config
-  route_name: soda_scs_manager.settings
+  route_name: soda_scs_manager.config
   weight: 100
   requirements:
-    _permission: 'soda scs manager user'
+    _permission: 'soda scs manager admin'
 
 soda_scs_manager.settings:
     title: 'SODa SCS manager settings'
     description: 'Configure SODa SCS Manager settings and preferences.'
     parent: soda_scs_manager.settings_menu_block
     route_name: soda_scs_manager.settings
+    weight: 0
     requirements:
       _permission: 'soda scs manager admin'
 
 soda_scs_manager.keycloak_users:
-    title: 'Keycloak users'
-    description: 'Manage Keycloak users'
+    title: 'Keycloak registrations'
+    description: 'Approve or reject pending registrations for new Keycloak accounts.'
     parent: soda_scs_manager.settings_menu_block
     route_name: soda_scs_manager.user_registration_approvals
+    weight: 10
     requirements:
       _permission: 'soda scs manager admin'
 
@@ -93,6 +105,16 @@ soda_scs_manager.demo_project_admin:
     description: 'Choose the central demo project and build the versions users get their demo projects from.'
     parent: soda_scs_manager.settings_menu_block
     route_name: soda_scs_manager.demo_project_admin
+    weight: 20
+    requirements:
+      _permission: 'soda scs manager admin'
+
+soda_scs_manager.config.conversations:
+    title: 'Conversations'
+    description: 'Write to users and answer their replies.'
+    parent: soda_scs_manager.settings_menu_block
+    route_name: soda_scs_manager.conversations.team
+    weight: 30
     requirements:
       _permission: 'soda scs manager admin'
 
@@ -179,11 +201,3 @@ soda_scs_manager.anonymous_documentation:
     node: '1'
   weight: 12
 
-soda_scs_manager.user_registration_approvals:
-  title: 'Keycloak User Registrations'
-  description: 'Manage pending Keycloak user registrations'
-  parent: entity.user.collection
-  route_name: soda_scs_manager.user_registration_approvals
-  weight: 10
-  requirements:
-    _permission: 'soda scs manager admin'

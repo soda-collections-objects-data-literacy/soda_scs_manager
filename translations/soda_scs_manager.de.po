@@ -437,8 +437,8 @@ msgid "Manage application environments like JupyterHub and Nextcloud."
 msgstr "Verwalten Sie Anwendungsumgebungen wie JupyterHub und Nextcloud."
 
 #: soda_scs_manager.links.menu.yml:0
-msgid "SODa SCS Manager settings and configurations"
-msgstr "Einstellungen und Konfiguration des SODa SCS-Managers"
+msgid "Settings, demo project, Keycloak registrations and conversations."
+msgstr "Einstellungen, Demo-Projekt, Keycloak-Registrierungen und Konversationen."
 
 #: soda_scs_manager.links.menu.yml:0
 msgid "Manage SODa SCS Manager settings"
@@ -449,8 +449,12 @@ msgid "Keycloak users"
 msgstr "Keycloak-User"
 
 #: soda_scs_manager.links.menu.yml:0
-msgid "Manage Keycloak users"
-msgstr "Keycloak-User verwalten"
+msgid "Keycloak registrations"
+msgstr "Keycloak-Registrierungen"
+
+#: soda_scs_manager.links.menu.yml:0
+msgid "Approve or reject pending registrations for new Keycloak accounts."
+msgstr "Ausstehende Registrierungen für neue Keycloak-Konten freigeben oder ablehnen."
 
 #: soda_scs_manager.links.menu.yml:0
 msgid "SODa SCS Manager Debug"
@@ -488,9 +492,6 @@ msgstr "Problem melden"
 msgid "Keycloak User Registrations"
 msgstr "Keycloak-User-Registrierungen"
 
-#: soda_scs_manager.links.menu.yml:0
-msgid "Manage pending Keycloak user registrations"
-msgstr "Ausstehende Keycloak-User-Registrierungen verwalten"
 
 #: soda_scs_manager.links.task.yml:0;0;0;0 src/ListBuilder/SodaScsSnapshotListBuilder.php:145
 msgid "View"
@@ -5817,3 +5818,204 @@ msgstr "%label konnte nicht angelegt werden. @reason"
 #: src/Form/SodaScsStackCreateForm.php
 msgid "Could not create %label. Try again later or contact support."
 msgstr "%label konnte nicht angelegt werden. Versuchen Sie es später erneut oder wenden Sie sich an den Support."
+
+# Conversations between users and the admin team (#3638680).
+
+msgid "All members of a project"
+msgstr "Alle Mitglieder eines Projekts"
+
+msgid "All users"
+msgstr "Alle Benutzer"
+
+msgid "Author"
+msgstr "Autor"
+
+msgid "Author of the last message"
+msgstr "Autor der letzten Nachricht"
+
+msgid "Back to the messages"
+msgstr "Zurück zu den Nachrichten"
+
+msgid "Choose at least one user."
+msgstr "Wählen Sie mindestens einen Benutzer."
+
+msgid "Confirm that the message goes to all users."
+msgstr "Bestätigen Sie, dass die Nachricht an alle Benutzer geht."
+
+msgid "conversation"
+msgstr "Konversation"
+
+msgid "Conversation"
+msgstr "Konversation"
+
+msgid "conversation message"
+msgstr "Konversationsnachricht"
+
+msgid "Conversation message"
+msgstr "Konversationsnachricht"
+
+msgid "conversation messages"
+msgstr "Konversationsnachrichten"
+
+msgid "Conversation messages"
+msgstr "Konversationsnachrichten"
+
+msgid "conversations"
+msgstr "Konversationen"
+
+msgid "Conversations"
+msgstr "Konversationen"
+
+msgid "Conversation with @name"
+msgstr "Konversation mit @name"
+
+msgid "@current of @total"
+msgstr "@current von @total"
+
+msgid "Delete message"
+msgstr "Nachricht löschen"
+
+msgid "Delete this message?"
+msgstr "Diese Nachricht löschen?"
+
+msgid "(edited)"
+msgstr "(bearbeitet)"
+
+msgid "Edit message"
+msgstr "Nachricht bearbeiten"
+
+msgid "Last activity"
+msgstr "Letzte Aktivität"
+
+msgid "Last message"
+msgstr "Letzte Nachricht"
+
+msgid "Message deleted"
+msgstr "Nachricht gelöscht"
+
+msgid "New message"
+msgstr "Neue Nachricht"
+
+msgid "New reply"
+msgstr "Neue Antwort"
+
+msgid "No conversations yet."
+msgstr "Noch keine Konversationen."
+
+msgid "No messages yet."
+msgstr "Noch keine Nachrichten."
+
+msgid "None of the chosen users can receive messages. Blocked users and you yourself are left out."
+msgstr "Keiner der gewählten Benutzer kann Nachrichten empfangen. Gesperrte Benutzer und Sie selbst werden ausgelassen."
+
+msgid "Plain text; empty once the message is deleted."
+msgstr "Reiner Text; leer, sobald die Nachricht gelöscht ist."
+
+msgid "Plain text; line breaks are kept."
+msgstr "Reiner Text; Zeilenumbrüche bleiben erhalten."
+
+msgid "Recipients"
+msgstr "Empfänger"
+
+msgid "Sending the message"
+msgstr "Die Nachricht wird gesendet"
+
+msgid "Sent to @count recipients."
+msgstr "An @count Empfänger gesendet."
+
+msgid "Separate several users with commas."
+msgstr "Trennen Sie mehrere Benutzer mit Kommas."
+
+msgid "Single users"
+msgstr "Einzelne Benutzer"
+
+msgid "SODa SCS Conversations"
+msgstr "SODa SCS Konversationen"
+
+msgid "Some conversations could not be started. See the log for details."
+msgstr "Einige Konversationen konnten nicht begonnen werden. Details stehen im Protokoll."
+
+msgid "Started by"
+msgstr "Begonnen von"
+
+msgid "Starting the conversations."
+msgstr "Die Konversationen werden begonnen."
+
+msgid "Text"
+msgstr "Text"
+
+msgid "The admin who started the conversation."
+msgstr "Der Administrator, der die Konversation begonnen hat."
+
+msgid "The conversation no longer exists."
+msgstr "Die Konversation existiert nicht mehr."
+
+msgid "The message has been changed."
+msgstr "Die Nachricht wurde geändert."
+
+msgid "The message is empty."
+msgstr "Die Nachricht ist leer."
+
+msgid "The text is removed. The conversation shows \"Message deleted\" in its place."
+msgstr "Der Text wird entfernt. Die Konversation zeigt an seiner Stelle „Nachricht gelöscht“."
+
+msgid "The user who talks with the admin team."
+msgstr "Der Benutzer, der mit dem Administrationsteam schreibt."
+
+msgid "Unknown user"
+msgstr "Unbekannter Benutzer"
+
+msgid "Unread for the admin team"
+msgstr "Ungelesen für das Administrationsteam"
+
+msgid "Unread for the user"
+msgstr "Ungelesen für den Benutzer"
+
+msgid "User id; kept when the account is gone."
+msgstr "Benutzer-ID; bleibt erhalten, wenn das Konto gelöscht ist."
+
+msgid "Write a reply"
+msgstr "Antwort schreiben"
+
+msgid "Write to users and answer their replies."
+msgstr "Benutzern schreiben und ihre Antworten beantworten."
+
+msgid "You cannot delete this message."
+msgstr "Sie können diese Nachricht nicht löschen."
+
+msgid "You cannot edit this message."
+msgstr "Sie können diese Nachricht nicht bearbeiten."
+
+msgid "You cannot reply to this conversation."
+msgstr "Sie können auf diese Konversation nicht antworten."
+
+msgid "Your message has been sent."
+msgstr "Ihre Nachricht wurde gesendet."
+
+msgid "Your reply"
+msgstr "Ihre Antwort"
+
+msgid "Users"
+msgstr "Benutzer"
+
+msgid "Send"
+msgstr "Senden"
+
+msgid "Save"
+msgstr "Speichern"
+
+msgid "Send to all users (1 recipient)."
+msgid_plural "Send to all users (@count recipients)."
+msgstr[0] "An alle Benutzer senden (1 Empfänger)."
+msgstr[1] "An alle Benutzer senden (@count Empfänger)."
+
+msgid "Started 1 conversation."
+msgid_plural "Started @count conversations."
+msgstr[0] "1 Konversation begonnen."
+msgstr[1] "@count Konversationen begonnen."
+
+msgid "Conversations are not installed yet. Run drush updb."
+msgstr "Konversationen sind noch nicht installiert. Führen Sie drush updb aus."
+
+msgid "This conversation is no longer available. Reload the page."
+msgstr "Diese Konversation ist nicht mehr verfügbar. Laden Sie die Seite neu."

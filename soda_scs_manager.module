@@ -1138,6 +1138,24 @@ function soda_scs_manager_theme($existing, $type, $theme, $path) {
       ],
       'template' => 'pages/soda-scs-manager--messages',
     ],
+    'soda_scs_manager__conversation' => [
+      'variables' => [
+        'back_url' => '',
+        'messages' => NULL,
+        'participant' => '',
+        'refresh_url' => '',
+        'reply_form' => NULL,
+        'subject' => '',
+      ],
+      'template' => 'pages/soda-scs-manager--conversation',
+    ],
+    'soda_scs_manager__conversation_messages' => [
+      'variables' => [
+        'messages' => [],
+        'signature' => '',
+      ],
+      'template' => 'pages/soda-scs-manager--conversation-messages',
+    ],
     'soda_scs_manager__message' => [
       'variables' => [
         'actions' => NULL,
@@ -1326,6 +1344,11 @@ function soda_scs_manager_soda_scs_snapshot_delete(SodaScsSnapshot $snapshot) {
  */
 function soda_scs_manager_user_predelete(UserInterface $user): void {
   \Drupal::service('soda_scs_manager.user_offboarding')->purge($user);
+  // The user's conversations go; messages of a deleted admin stay and show an
+  // unknown sender.
+  if (\Drupal::hasService('soda_scs_manager.conversation.helpers')) {
+    \Drupal::service('soda_scs_manager.conversation.helpers')->deleteForUser((int) $user->id());
+  }
 }
 
 /**
@@ -2277,6 +2300,7 @@ function soda_scs_manager_preprocess_menu(&$variables): void {
     $variables['#attached']['library'][] = 'soda_scs_manager/notificationBadge';
     $variables['#cache']['contexts'][] = 'user';
     $variables['#cache']['tags'][] = 'soda_scs_message_list:' . \Drupal::currentUser()->id();
+    _soda_scs_manager_add_conversation_team_tag($variables);
     return;
   }
 
@@ -2297,6 +2321,7 @@ function soda_scs_manager_preprocess_menu(&$variables): void {
     $variables['#cache']['tags'] = [];
   }
   $variables['#cache']['tags'][] = 'soda_scs_message_list:' . \Drupal::currentUser()->id();
+  _soda_scs_manager_add_conversation_team_tag($variables);
 
   // Two YAML links target the same documentation node route; both would pass
   // access for anonymous users. Show one Documentation item per session state.
@@ -2637,6 +2662,7 @@ function _soda_scs_manager_menu_item_is_notifications_link(array $item, string $
     'soda_scs_manager.messages',
     'soda_scs_manager.notifications',
     'entity.soda_scs_message.canonical',
+    'entity.soda_scs_conversation.canonical',
   ], TRUE)) {
     return TRUE;
   }
@@ -2715,6 +2741,18 @@ function _soda_scs_manager_preprocess_menu_icons_recursive(array &$items): void 
     if (!empty($item['below'])) {
       _soda_scs_manager_preprocess_menu_icons_recursive($item['below']);
     }
+  }
+}
+
+/**
+ * Lets the menu badge of admins follow replies in any conversation.
+ *
+ * @param array $variables
+ *   Menu preprocess variables (by reference).
+ */
+function _soda_scs_manager_add_conversation_team_tag(array &$variables): void {
+  if (\Drupal::currentUser()->hasPermission('soda scs manager admin')) {
+    $variables['#cache']['tags'][] = 'soda_scs_conversation_team';
   }
 }
 

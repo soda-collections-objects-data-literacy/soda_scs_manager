@@ -24,18 +24,23 @@ final class SodaScsMessageHelpers {
   public function __construct(
     #[Autowire(service: 'entity_type.manager')]
     private readonly EntityTypeManagerInterface $entityTypeManager,
+    // Optional: a container compiled before conversations existed lacks it.
+    #[Autowire(service: 'soda_scs_manager.conversation.helpers')]
+    private readonly ?SodaScsConversationHelpers $conversationHelpers = NULL,
   ) {}
 
   /**
    * Count messages that should light the inbox menu badge.
    *
    * Unread copies, plus project invitations that are still pending even if
-   * already opened.
+   * already opened, plus conversations with an unread message (for admins
+   * also those the team has not read).
    */
   public function countAttentionItems(AccountInterface $account): int {
     $unreadIds = $this->queryRecipientMessageIds($account, unreadOnly: TRUE);
     $pendingInvitationIds = $this->queryPendingInvitationMessageIds($account);
-    return count(array_unique([...$unreadIds, ...$pendingInvitationIds]));
+    return count(array_unique([...$unreadIds, ...$pendingInvitationIds]))
+      + ($this->conversationHelpers?->countUnread($account) ?? 0);
   }
 
   /**

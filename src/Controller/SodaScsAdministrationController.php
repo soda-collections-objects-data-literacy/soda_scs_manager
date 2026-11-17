@@ -6,6 +6,7 @@ namespace Drupal\soda_scs_manager\Controller;
 
 use Drupal\Core\Controller\ControllerBase;
 use Drupal\Core\Url;
+use Symfony\Component\HttpFoundation\RedirectResponse;
 
 /**
  * The SODa SCS Manager administration controller.
@@ -72,6 +73,16 @@ final class SodaScsAdministrationController extends ControllerBase {
         'color' => 'rose',
       ],
       [
+        'title' => $this->t('Conversations'),
+        'description' => $this->t('Write to users and answer their replies.'),
+        'icon' => 'chat-bubbles',
+        'icon_path' => '/' . $modulePath . '/assets/images/chat-bubbles.svg',
+        'icon_class' => 'soda-scs-manager--admin-icon-chat-bubbles',
+        'url' => Url::fromRoute('soda_scs_manager.conversations.team'),
+        'permission' => 'soda scs manager admin',
+        'color' => 'blue',
+      ],
+      [
         'title' => $this->t('Settings'),
         'description' => $this->t('Configure SODa SCS Manager settings and preferences.'),
         'icon' => 'cog',
@@ -119,5 +130,15 @@ final class SodaScsAdministrationController extends ControllerBase {
     return $build;
   }
 
-}
+  /**
+   * Sends the old People path of the registrations to the new page.
+   *
+   * Approval e-mails sent before the move link to the old path.
+   */
+  public function redirectKeycloakRegistrations(): RedirectResponse {
+    return new RedirectResponse(
+      Url::fromRoute('soda_scs_manager.user_registration_approvals')->toString(),
+    );
+  }
 
+}

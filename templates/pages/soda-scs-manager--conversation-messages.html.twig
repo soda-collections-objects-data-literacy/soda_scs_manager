@@ -1,0 +1,47 @@
+{#
+/**
+ * @file
+ * The messages of a conversation as chat bubbles, oldest first.
+ *
+ * Available variables:
+ * - messages: list of {id, is_own, author, initials, picture, date,
+ *   is_edited, is_deleted, body, edit_url, delete_url}.
+ * - signature: changes when a message is added, edited or deleted.
+ */
+#}
+<ol class="scs-manager--conversation-list" data-conversation-signature="{{ signature }}">
+  {% for item in messages %}
+    <li id="message-{{ item.id }}" class="scs-manager--conversation-message{{ item.is_own ? ' scs-manager--conversation-message--own' : '' }}{{ item.is_deleted ? ' scs-manager--conversation-message--deleted' : '' }}"{{ loop.last ? ' data-conversation-newest' : '' }}>
+      <span class="scs-manager--conversation-avatar" title="{{ item.author }}" aria-hidden="true">
+        {% if item.picture %}
+          {{ item.picture }}
+        {% else %}
+          <span class="scs-manager--messages-initials">{{ item.initials }}</span>
+        {% endif %}
+      </span>
+      <div class="scs-manager--conversation-bubble">
+        <div class="scs-manager--conversation-meta">
+          <span class="scs-manager--conversation-author">{{ item.author }}</span>
+          <time class="scs-manager--conversation-date">{{ item.date }}</time>
+          {% if item.is_edited %}
+            <span class="scs-manager--conversation-edited">{{ '(edited)'|t }}</span>
+          {% endif %}
+        </div>
+        {% if item.is_deleted %}
+          <p class="scs-manager--conversation-body"><em>{{ 'Message deleted'|t }}</em></p>
+        {% else %}
+          <p class="scs-manager--conversation-body">{{ item.body }}</p>
+        {% endif %}
+        {% if item.edit_url or item.delete_url %}
+          <div class="scs-manager--conversation-actions">
+            {% if item.edit_url %}<a href="{{ item.edit_url }}">{{ 'Edit'|t }}</a>{% endif %}
+            {% if item.delete_url %}<a href="{{ item.delete_url }}">{{ 'Delete'|t }}</a>{% endif %}
+          </div>
+        {% endif %}
+      </div>
+    </li>
+  {% else %}
+    <li class="scs-manager--conversation-empty">{{ 'No messages yet.'|t }}</li>
+  {% endfor %}
+</ol>
+<span id="newest"></span>

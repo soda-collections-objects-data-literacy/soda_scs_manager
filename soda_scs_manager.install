@@ -2065,3 +2065,20 @@ function _soda_scs_manager_forget_missing_theme(string $theme): ?int {
   \Drupal::service('theme_handler')->reset();
   return $removed;
 }
+
+/**
+ * Install conversations between users and the admin team.
+ */
+function soda_scs_manager_update_11042() {
+  $entity_type_manager = \Drupal::entityTypeManager();
+  $update_manager = \Drupal::entityDefinitionUpdateManager();
+  $entity_type_manager->clearCachedDefinitions();
+
+  foreach (['soda_scs_conversation', 'soda_scs_conversation_message'] as $entity_type_id) {
+    if (!$update_manager->getEntityType($entity_type_id)) {
+      $update_manager->installEntityType($entity_type_manager->getDefinition($entity_type_id));
+    }
+  }
+
+  return t('Installed conversations. Admins write to users under /soda-scs-manager/administration/conversations.');
+}

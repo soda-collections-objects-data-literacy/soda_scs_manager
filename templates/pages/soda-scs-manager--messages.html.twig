@@ -4,7 +4,9 @@
  * Inbox list of in-app messages.
  *
  * Available variables:
- * - messages: list of {id, is_unread, sender, subject, date, url, actions}.
+ * - messages: list of {kind, id, is_unread, sender, subject, date, url,
+ *   actions}; kind is 'message' (notification) or 'conversation', which has
+ *   a preview of its last message instead of actions.
  */
 #}
 
@@ -23,7 +25,14 @@
                 <span class="scs-manager--messages-initials" aria-hidden="true">{{ item.sender_initials }}</span>
               {% endif %}
             </span>
-            <span class="scs-manager--messages-subject">{{ item.subject }}</span>
+            {% if item.kind == 'conversation' %}
+              <a class="scs-manager--messages-subject scs-manager--messages-conversation" href="{{ item.url }}">
+                <span class="scs-manager--messages-conversation-subject">{{ item.subject }}</span>
+                <span class="scs-manager--messages-preview">{{ item.preview }}</span>
+              </a>
+            {% else %}
+              <span class="scs-manager--messages-subject">{{ item.subject }}</span>
+            {% endif %}
             <time class="scs-manager--messages-date">{{ item.date }}</time>
             <div class="scs-manager--messages-actions">{{ item.actions }}</div>
           </div>
