@@ -51,7 +51,7 @@ class PersonalNameValidatorTest extends UnitTestCase {
   public static function invalidNamesProvider(): iterable {
     yield 'digits' => ['Test123', 'contains_digits'];
     yield 'only digits' => ['123', 'contains_digits'];
-    yield 'special chars' => ['User@123', 'invalid_characters'];
+    yield 'special chars' => ['User@Name', 'invalid_characters'];
     yield 'too short' => ['Al', 'too_few_letters'];
     yield 'sql keyword' => ['Insert', 'disallowed_term'];
     yield 'coding term token' => ['Jane Empty', 'disallowed_term'];
@@ -62,8 +62,8 @@ class PersonalNameValidatorTest extends UnitTestCase {
    * @covers ::countLetters
    */
   public function testCountLettersIgnoresSeparators(): void {
-    $this->assertSame(5, PersonalNameValidator::countLetters("O'Brien"));
-    $this->assertSame(3, PersonalNameValidator::countLetters('A-B'));
+    $this->assertSame(6, PersonalNameValidator::countLetters("O'Brien"));
+    $this->assertSame(2, PersonalNameValidator::countLetters('A-B'));
   }
 
   /**

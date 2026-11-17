@@ -56,6 +56,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- A first or last name with digits is now refused with "… may not contain
+  digits." instead of the general message about allowed characters, which
+  did not say what was wrong.
+  Related: [#3638863](https://www.drupal.org/project/soda_scs_manager/issues/3638863).
 - Log messages no longer lose text after a `-p` inside other words: container
   names such as `wisski-prod--drupal`, `--port` and `--password` stay
   readable. Passwords in quotes with spaces and SQL passwords after

@@ -25,12 +25,14 @@ final class PersonalNameValidator {
       return NULL;
     }
 
-    if (!preg_match(self::ALLOWED_CHARACTERS_PATTERN, $trimmed)) {
-      return ['code' => 'invalid_characters'];
-    }
-
+    // Digits first: the character class rejects them too, with a less precise
+    // message.
     if (preg_match('/\d/u', $trimmed)) {
       return ['code' => 'contains_digits'];
+    }
+
+    if (!preg_match(self::ALLOWED_CHARACTERS_PATTERN, $trimmed)) {
+      return ['code' => 'invalid_characters'];
     }
 
     if (self::countLetters($trimmed) < InputDisallowedTerms::PERSONAL_NAME_MIN_LETTERS) {
