@@ -9,6 +9,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- The detail page of a stack or a component (WissKI, database, triplestore,
+  …) has a **Snapshots** card: the newest snapshots of the application with
+  their date, and a **Create snapshot** button for the owner and
+  administrators. The card is hidden when the viewer can neither create nor
+  see a snapshot (e.g. WebProtégé, JupyterHub).
+  Related: [#3638861](https://www.drupal.org/project/soda_scs_manager/issues/3638861).
 - Administrators can write to users. Under **Conversations** in the
   administration and in **Configuration → SODa SCS Manager** they send a
   message to users (including **All** as one recipient chip) or to the members

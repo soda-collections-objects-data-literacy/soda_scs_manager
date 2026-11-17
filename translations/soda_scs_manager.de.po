@@ -6061,3 +6061,15 @@ msgstr "@field darf das Wort „@word“ nicht enthalten."
 #: src/Validation/PersonalNameValidator.php
 msgid "@field is not valid."
 msgstr "@field ist ungültig."
+
+#: templates/entity/soda-scs-entity.html.twig
+msgid "Showing the newest @shown of @total snapshots."
+msgstr "Die neuesten @shown von @total Snapshots werden angezeigt."
+
+#: templates/entity/soda-scs-entity.html.twig
+msgid "No snapshots yet."
+msgstr "Noch keine Snapshots."
+
+#: templates/entity/soda-scs-entity.html.twig
+msgid "Create snapshot"
+msgstr "Snapshot erstellen"

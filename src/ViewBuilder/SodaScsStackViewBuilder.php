@@ -21,6 +21,7 @@ use Drupal\soda_scs_manager\Form\SodaScsEntityNoteForm;
 use Drupal\soda_scs_manager\Helpers\SodaScsHealthStatus;
 use Drupal\soda_scs_manager\Helpers\SodaScsServiceHelpers;
 use Drupal\soda_scs_manager\Service\SodaScsApplicationCardBuilder;
+use Drupal\soda_scs_manager\Service\SodaScsSnapshotCardBuilder;
 use Drupal\soda_scs_manager\Service\SodaScsWisskiAdminTasks;
 use Drupal\soda_scs_manager\Entity\SodaScsComponentInterface;
 use Symfony\Component\DependencyInjection\ContainerInterface;
@@ -45,6 +46,7 @@ class SodaScsStackViewBuilder extends EntityViewBuilder {
     protected FormBuilderInterface $formBuilder,
     protected AccountProxyInterface $currentUser,
     protected SodaScsWisskiAdminTasks $wisskiAdminTasks,
+    protected SodaScsSnapshotCardBuilder $snapshotCardBuilder,
   ) {
     parent::__construct($entity_type, $entity_repository, $language_manager, $theme_registry, $entity_display_repository);
   }
@@ -65,6 +67,7 @@ class SodaScsStackViewBuilder extends EntityViewBuilder {
       $container->get('form_builder'),
       $container->get('current_user'),
       $container->get('soda_scs_manager.wisski_admin_tasks'),
+      $container->get('soda_scs_manager.snapshot_card_builder'),
     );
   }
 
@@ -94,6 +97,7 @@ class SodaScsStackViewBuilder extends EntityViewBuilder {
     $build['#delete_url'] = $entity->toUrl('delete-form')->toString();
     $build['#delete_destination'] = $this->resolveDeleteDestination($entity);
     $build['#wisski_admin'] = $this->wisskiAdminTasks->build($entity, $this->currentUser);
+    $build['#snapshot_card'] = $this->snapshotCardBuilder->build($entity);
     try {
       $serviceUrls = $this->sodaScsServiceHelpers->getStackServiceAndLoginUrls($entity);
       if ($serviceUrls !== NULL && !empty($serviceUrls['loginUrl'])) {
