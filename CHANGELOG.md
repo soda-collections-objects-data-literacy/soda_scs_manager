@@ -62,6 +62,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   log in or connect Nextcloud again, so the Keycloak error "User not found"
   is logged once a day instead of every minute.
   Related: [#3638812](https://www.drupal.org/project/soda_scs_manager/issues/3638812).
+- A triplestore created after the user's triplestore account was deleted
+  (for example by an administrator) gets a working token again. The account
+  was created again, but the "Triplestore token" key kept the token of the
+  deleted account, which the triplestore rejected.
+  Related: [#3638810](https://www.drupal.org/project/soda_scs_manager/issues/3638810).
 - A WissKI that cannot be created no longer leaves its database, triplestore
   and stack behind; a database or triplestore that fails on its own removes
   what it created too. Before, they stayed without a working WissKI, and the

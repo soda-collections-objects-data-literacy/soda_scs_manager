@@ -282,7 +282,8 @@ class SodaScsTriplestoreHelpers {
     // Note: We don't pass machineName here because the repository doesn't exist yet.
     // Repository permissions will be added later after the repository is created.
     $userData = $this->sodaScsOpenGdbHelpers->getUserDataByName($component->getOwner()->getDisplayName());
-    if (!$userData) {
+    $userCreated = !$userData;
+    if ($userCreated) {
       $this->sodaScsOpenGdbHelpers->createUser($component->getOwner()->getDisplayName(), $componentServiceKeyPassword->get('servicePassword')->value);
     }
     else {
@@ -322,6 +323,17 @@ class SodaScsTriplestoreHelpers {
 
       $userData['token'] = $userToken;
 
+    }
+    elseif ($userCreated) {
+      // OpenGDB issues tokens per account: the stored token belonged to the
+      // account that was deleted and is rejected with 401.
+      $userToken = $this->sodaScsOpenGdbHelpers->createUserToken($component->getOwner()->getDisplayName(), $componentServiceKeyPassword->get('servicePassword')->value);
+      $componentServiceKeyToken->set('servicePassword', $userToken);
+      $componentServiceKeyToken->save();
+      $this->loggerFactory->get('soda_scs_manager')->notice('Renewed the triplestore token of user @user: their OpenGDB account was created again.', [
+        '@user' => $component->getOwnerId(),
+      ]);
+      $userData['token'] = $userToken;
     }
     else {
       $userData['token'] = $componentServiceKeyToken->get('servicePassword')->value;
