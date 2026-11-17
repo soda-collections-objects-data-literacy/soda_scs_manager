@@ -4,7 +4,10 @@ declare(strict_types=1);
 
 namespace Drupal\Tests\soda_scs_manager\Unit\Helpers;
 
+use Drupal\Core\Entity\EntityStorageInterface;
 use Drupal\Core\Entity\EntityTypeBundleInfoInterface;
+use Drupal\Core\Entity\EntityTypeManagerInterface;
+use Drupal\Core\Entity\Query\QueryInterface;
 use Drupal\Core\Field\FieldItemList;
 use Drupal\Core\Logger\LoggerChannelFactoryInterface;
 use Drupal\Core\Logger\LoggerChannelInterface;
@@ -26,6 +29,9 @@ use PHPUnit\Framework\MockObject\MockObject;
  * be created again, the stored token belongs to the deleted account and is
  * replaced; for an existing account the stored token stays. The OpenGDB and
  * service key calls are doubles.
+ *
+ * Issue 3638851: a recreated account gets its rights on the owner's other
+ * repositories back.
  *
  * @coversDefaultClass \Drupal\soda_scs_manager\Helpers\SodaScsTriplestoreHelpers
  * @group soda_scs_manager
@@ -51,6 +57,13 @@ class SodaScsTriplestoreHelpersUserDataTest extends UnitTestCase {
    * The password service key of the owner.
    */
   private SodaScsServiceKeyInterface&MockObject $passwordKey;
+
+  /**
+   * Machine names of the triplestore components the owner has stored.
+   *
+   * @var string[]
+   */
+  private array $ownedRepositories = [];
 
   /**
    * {@inheritdoc}
@@ -159,6 +172,81 @@ class SodaScsTriplestoreHelpersUserDataTest extends UnitTestCase {
   }
 
   /**
+   * A recreated user gets its rights on the owner's stored repositories.
+   *
+   * @covers ::ensureUserDataExists
+   */
+  public function testRecreatedUserGetsRightsOnOwnedRepositories(): void {
+    $this->ownedRepositories = ['ts-first', 'ts-second'];
+    $this->openGdbHelpers->method('getUserDataByName')->willReturnCallback($this->userDataAfterCreate());
+    $this->openGdbHelpers->method('createUserToken')->willReturn('new-token');
+    $this->openGdbHelpers->expects($this->once())
+      ->method('setUserRepositoryGrants')
+      ->with('alice', ['ts-first', 'ts-second']);
+    $this->useServiceKeys($this->createServiceKey('stale-token'));
+    $notices = [];
+    $this->logger->method('notice')->willReturnCallback(static function (string $message, array $context) use (&$notices): void {
+      $notices[] = [$message, $context];
+    });
+
+    $this->helpers()->ensureUserDataExists($this->createComponent());
+
+    $this->assertStringContainsString('Granted the recreated OpenGDB account', $notices[0][0]);
+    $this->assertSame(['@repositories' => 'ts-first, ts-second', '@user' => 7], $notices[0][1]);
+  }
+
+  /**
+   * A recreated user without stored repositories gets no grant request.
+   *
+   * @covers ::ensureUserDataExists
+   */
+  public function testRecreatedUserWithoutOwnedRepositoriesSendsNoGrants(): void {
+    $this->openGdbHelpers->method('getUserDataByName')->willReturnCallback($this->userDataAfterCreate());
+    $this->openGdbHelpers->method('createUserToken')->willReturn('new-token');
+    $this->openGdbHelpers->expects($this->never())->method('setUserRepositoryGrants');
+    $this->useServiceKeys($this->createServiceKey('stale-token'));
+
+    $this->helpers()->ensureUserDataExists($this->createComponent());
+  }
+
+  /**
+   * An existing user keeps its rights; no grant request is sent.
+   *
+   * @covers ::ensureUserDataExists
+   */
+  public function testExistingUserGetsNoGrantRequest(): void {
+    $this->ownedRepositories = ['ts-first'];
+    $this->openGdbHelpers->method('getUserDataByName')->willReturn(['username' => 'alice']);
+    $this->openGdbHelpers->expects($this->never())->method('setUserRepositoryGrants');
+    $this->useServiceKeys($this->createServiceKey('stored-token'));
+
+    $this->helpers()->ensureUserDataExists($this->createComponent());
+  }
+
+  /**
+   * A refused grant request is logged and the new triplestore goes on.
+   *
+   * The error names the repositories, so an administrator can grant them.
+   *
+   * @covers ::ensureUserDataExists
+   */
+  public function testRefusedGrantsAreLoggedAndTokenIsStillRenewed(): void {
+    $this->ownedRepositories = ['ts-first'];
+    $this->openGdbHelpers->method('getUserDataByName')->willReturnCallback($this->userDataAfterCreate());
+    $this->openGdbHelpers->method('setUserRepositoryGrants')->willThrowException(new \RuntimeException('OpenGDB answered 500.'));
+    $this->openGdbHelpers->method('createUserToken')->willReturn('new-token');
+    $this->useServiceKeys($this->createServiceKey('stale-token'));
+    $this->logger->expects($this->once())->method('error')->with(
+      $this->stringContains('Could not grant the recreated OpenGDB account'),
+      ['@message' => 'OpenGDB answered 500.', '@repositories' => 'ts-first', '@user' => 7],
+    );
+
+    $userData = $this->helpers()->ensureUserDataExists($this->createComponent());
+
+    $this->assertSame('new-token', $userData['token']);
+  }
+
+  /**
    * Feeds the password key and the given token key to the key lookup.
    */
   private function useServiceKeys(SodaScsServiceKeyInterface $tokenKey): void {
@@ -196,7 +284,36 @@ class SodaScsTriplestoreHelpersUserDataTest extends UnitTestCase {
       $this->serviceKeyActions,
       $this->openGdbHelpers,
       $bundleInfo,
+      $this->entityTypeManager(),
     );
+  }
+
+  /**
+   * An entity type manager whose component storage holds owned repositories.
+   */
+  private function entityTypeManager(): EntityTypeManagerInterface {
+    $components = [];
+    foreach ($this->ownedRepositories as $index => $machineName) {
+      $field = $this->createMock(FieldItemList::class);
+      $field->method('__get')->with('value')->willReturn($machineName);
+      $component = $this->createMock(SodaScsComponentInterface::class);
+      $component->method('get')->with('machineName')->willReturn($field);
+      $components[$index + 1] = $component;
+    }
+    $query = $this->createMock(QueryInterface::class);
+    $query->method('accessCheck')->willReturnSelf();
+    $query->method('condition')->willReturnCallback(function (string $field, $value) use ($query): QueryInterface {
+      $expected = ['bundle' => 'soda_scs_triplestore_component', 'owner' => 7];
+      $this->assertSame($expected[$field], $value);
+      return $query;
+    });
+    $query->method('execute')->willReturn(array_combine(array_keys($components), array_keys($components)));
+    $storage = $this->createMock(EntityStorageInterface::class);
+    $storage->method('getQuery')->willReturn($query);
+    $storage->method('loadMultiple')->willReturn($components);
+    $entityTypeManager = $this->createMock(EntityTypeManagerInterface::class);
+    $entityTypeManager->method('getStorage')->with('soda_scs_component')->willReturn($storage);
+    return $entityTypeManager;
   }
 
   /**
