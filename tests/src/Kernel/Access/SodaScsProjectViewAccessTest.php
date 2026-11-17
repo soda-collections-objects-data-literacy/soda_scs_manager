@@ -34,10 +34,9 @@ class SodaScsProjectViewAccessTest extends SodaScsKernelTestBase {
       'id' => 'scs_admin',
       'label' => 'scs_admin',
     ]);
-    // As the site's administrator role: the entity's admin permission
-    // (administer soda scs project entities) is not defined in
-    // permissions.yml, so a role cannot be granted it.
-    $adminRole->setIsAdmin(TRUE);
+    // Not is_admin: the project's admin permission alone must be enough.
+    $adminRole->grantPermission('soda scs manager user');
+    $adminRole->grantPermission('soda scs manager admin');
     $adminRole->save();
 
     $this->container->get('router.builder')->rebuild();

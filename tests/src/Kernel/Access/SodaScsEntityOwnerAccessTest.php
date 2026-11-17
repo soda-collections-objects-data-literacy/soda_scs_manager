@@ -189,4 +189,37 @@ class SodaScsEntityOwnerAccessTest extends SodaScsKernelTestBase {
     $accountSwitcher->switchBack();
   }
 
+  /**
+   * Tests that soda scs manager admin is the admin permission of all types.
+   *
+   * Projects, components and service keys named permissions that were not
+   * defined, so no role could get their admin access.
+   */
+  public function testScsManagerAdminIsEntityAdminPermission(): void {
+    foreach (['soda_scs_component', 'soda_scs_project', 'soda_scs_service_key', 'soda_scs_wisski_component_ver'] as $entityTypeId) {
+      $this->assertSame(
+        'soda scs manager admin',
+        $this->entityTypeManager->getDefinition($entityTypeId)->getAdminPermission(),
+        $entityTypeId,
+      );
+    }
+
+    $admin = $this->createTestUser();
+    $adminRole = Role::create([
+      'id' => 'scs_manager_admin',
+      'label' => 'scs_manager_admin',
+    ]);
+    $adminRole->grantPermission('soda scs manager admin');
+    $adminRole->save();
+    $admin->addRole('scs_manager_admin');
+    $admin->save();
+
+    $serviceKey = $this->createTestServiceKey('default', [
+      'owner' => $this->testUser->id(),
+    ]);
+    $this->assertTrue($serviceKey->access('view', $admin));
+    $this->assertTrue($serviceKey->access('update', $admin));
+    $this->assertTrue($serviceKey->access('delete', $admin));
+  }
+
 }
