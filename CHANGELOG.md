@@ -56,6 +56,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- The messages of the first and last name check (registration, profile) are
+  translated into German.
 - A first or last name with digits is now refused with "… may not contain
   digits." instead of the general message about allowed characters, which
   did not say what was wrong.

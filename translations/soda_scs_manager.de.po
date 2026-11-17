@@ -6023,3 +6023,19 @@ msgstr "Diese Konversation ist nicht mehr verfügbar. Laden Sie die Seite neu."
 #: src/Validation/PersonalNameValidator.php
 msgid "@field may not contain digits."
 msgstr "@field darf keine Ziffern enthalten."
+
+#: src/Validation/PersonalNameValidator.php
+msgid "@field may only contain letters, spaces, hyphens, apostrophes, and periods."
+msgstr "@field darf nur Buchstaben, Leerzeichen, Bindestriche, Apostrophe und Punkte enthalten."
+
+#: src/Validation/PersonalNameValidator.php
+msgid "@field must contain at least @count letters."
+msgstr "@field muss mindestens @count Buchstaben enthalten."
+
+#: src/Validation/PersonalNameValidator.php
+msgid "@field may not contain the word \"@word\"."
+msgstr "@field darf das Wort „@word“ nicht enthalten."
+
+#: src/Validation/PersonalNameValidator.php
+msgid "@field is not valid."
+msgstr "@field ist ungültig."
