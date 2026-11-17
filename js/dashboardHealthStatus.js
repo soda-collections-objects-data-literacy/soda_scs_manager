@@ -391,67 +391,6 @@
           });
         });
       });
-
-      // Compact online/offline badges on project dashboard cards.
-      once('dashboardProjectAppHealth', '.soda-scs-manager--project-card-app[data-entity-id]', context).forEach(function (row) {
-        var $row = $(row);
-        var entityId = $row.data('entity-id');
-        var entityType = $row.data('entity-type');
-        var $status = $row.find('.soda-scs-manager--project-card-app__status');
-        var $dot = $row.find('.soda-scs-manager--project-card-app__dot');
-        var $label = $row.find('.soda-scs-manager--project-card-app__label');
-
-        if (!entityId || !entityType || !$status.length) {
-          return;
-        }
-
-        var healthUrl = entityType === 'soda_scs_stack'
-          ? Drupal.url('soda-scs-manager/health/stack/' + entityId)
-          : Drupal.url('soda-scs-manager/health/component/' + entityId);
-
-        function setProjectAppStatus(statusKey) {
-          $status
-            .attr('data-status', statusKey)
-            .removeClass('bg-emerald-100 text-emerald-800 bg-amber-100 text-amber-800 bg-rose-100 text-rose-800 bg-stone-100 text-stone-700');
-          $dot.removeClass('bg-emerald-500 bg-amber-500 bg-rose-500 bg-stone-400');
-
-          if (statusKey === 'running') {
-            $status.addClass('bg-emerald-100 text-emerald-800');
-            $dot.addClass('bg-emerald-500');
-          }
-          else if (statusKey === 'stopped') {
-            $status.addClass('bg-stone-100 text-stone-700');
-            $dot.addClass('bg-stone-400');
-          }
-          else if (statusKey === 'problem') {
-            $status.addClass('bg-rose-100 text-rose-800');
-            $dot.addClass('bg-rose-500');
-          }
-          else {
-            $status.addClass('bg-amber-100 text-amber-800');
-            $dot.addClass('bg-amber-500');
-          }
-
-          $label.text(Drupal.sodaScsHealth.label(statusKey));
-          $row.attr('data-health-status', statusKey);
-        }
-
-        function checkProjectAppHealth() {
-          $.ajax({
-            url: healthUrl,
-            method: 'GET',
-            timeout: 8000,
-            dataType: 'json',
-          }).done(function (data) {
-            setProjectAppStatus(Drupal.sodaScsHealth.fromPayload(data));
-          }).fail(function () {
-            setProjectAppStatus('unknown');
-          });
-        }
-
-        checkProjectAppHealth();
-        setInterval(checkProjectAppHealth, 15000);
-      });
     }
   };
 })(jQuery, Drupal, once, drupalSettings);

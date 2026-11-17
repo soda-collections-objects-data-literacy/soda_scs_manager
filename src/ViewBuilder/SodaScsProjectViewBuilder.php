@@ -181,7 +181,7 @@ final class SodaScsProjectViewBuilder extends EntityViewBuilder
         'max-age' => 0,
       ],
     ] : NULL;
-    $build['#attributes'] = ['class' => ['container', 'scs-manager--project-view']];
+    $build['#attributes'] = ['class' => ['scs-manager--project-view']];
     $build['#cache'] = [
       'tags' => $project->getCacheTags(),
       'contexts' => ['user', 'languages:language_interface'],
@@ -189,7 +189,6 @@ final class SodaScsProjectViewBuilder extends EntityViewBuilder
     ];
 
     $libraries = [
-      'soda_scs_manager/globalStyling',
       'soda_scs_manager/dashboardHealthStatus',
       'soda_scs_manager/tagFilter',
       'scs_custom_theme/global-scripts',

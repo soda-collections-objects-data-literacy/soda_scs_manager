@@ -75,12 +75,12 @@
       let item = list.querySelector(`[data-scs-demo-app="${CSS.escape(app.key)}"]`);
       if (!item) {
         item = document.createElement('li');
-        item.className = 'flex items-center justify-between gap-3';
+        item.className = 'scs-manager--demo-status-app';
         item.setAttribute('data-scs-demo-app', app.key);
         const label = document.createElement('span');
         label.textContent = app.label;
         const status = document.createElement('span');
-        status.className = 'inline-flex items-center gap-2 text-gray-500';
+        status.className = 'scs-manager--demo-status-app-state';
         const throbber = document.createElement('span');
         throbber.className = 'scs-manager--demo-status-throbber';
         throbber.setAttribute('aria-hidden', 'true');

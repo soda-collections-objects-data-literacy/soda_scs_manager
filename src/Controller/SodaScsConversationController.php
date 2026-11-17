@@ -166,7 +166,6 @@ final class SodaScsConversationController extends ControllerBase {
         ],
       ],
       'pager' => ['#type' => 'pager'],
-      '#attached' => ['library' => ['soda_scs_manager/globalStyling', 'soda_scs_manager/table-list']],
       '#cache' => [
         'contexts' => ['url.query_args', 'user.permissions'],
         'tags' => [SodaScsConversationInterface::TEAM_CACHE_TAG],
@@ -198,7 +197,7 @@ final class SodaScsConversationController extends ControllerBase {
         'soda_scs_conversation' => $soda_scs_conversation->id(),
       ])->toString(),
       '#attached' => [
-        'library' => ['soda_scs_manager/globalStyling', 'soda_scs_manager/conversationThread'],
+        'library' => ['soda_scs_manager/conversationThread'],
       ],
       '#cache' => ['max-age' => 0],
     ];

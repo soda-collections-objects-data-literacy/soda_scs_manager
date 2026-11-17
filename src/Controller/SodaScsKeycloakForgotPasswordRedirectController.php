@@ -43,7 +43,7 @@ final class SodaScsKeycloakForgotPasswordRedirectController extends ControllerBa
     if ($resetUrl !== '') {
       $build['direct'] = [
         '#type' => 'container',
-        '#attributes' => ['class' => ['mt-6']],
+        '#attributes' => ['class' => ['scs-manager--keycloak-forgot-password']],
         'hint' => [
           '#type' => 'html_tag',
           '#tag' => 'p',

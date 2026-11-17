@@ -32,12 +32,12 @@
 {% elseif is_busy %}
   <section class="scs-manager--demo-status-panel project__section" aria-live="polite" data-scs-demo-status data-status-url="{{ status_url }}" data-is-busy="true">
     <h2 class="project__section-title h5" data-scs-demo-status-label>{{ status_label }}</h2>
-    <p class="m-0 mb-2 text-sm text-gray-600" data-scs-demo-job-line{% if not job_line %} hidden{% endif %}>{{ job_line }}</p>
-    <ul class="m-0 flex list-none flex-col gap-2 p-0 text-sm" data-scs-demo-apps>
+    <p class="scs-manager--demo-status-job-line" data-scs-demo-job-line{% if not job_line %} hidden{% endif %}>{{ job_line }}</p>
+    <ul class="scs-manager--demo-status-apps" data-scs-demo-apps>
       {% for app in apps %}
-        <li class="flex items-center justify-between gap-3" data-scs-demo-app="{{ app.key }}">
+        <li class="scs-manager--demo-status-app" data-scs-demo-app="{{ app.key }}">
           <span>{{ app.label }}</span>
-          <span class="inline-flex items-center gap-2 text-gray-500">
+          <span class="scs-manager--demo-status-app-state">
             <span class="scs-manager--demo-status-throbber" aria-hidden="true"></span>
             <span data-scs-demo-app-detail>{{ app.detail }}</span>
           </span>
@@ -54,16 +54,16 @@
       {% endif %}
     </div>
     {% if current_version %}
-      <p class="m-0 text-sm text-gray-600">{{ 'Version @version'|t({'@version': current_version}) }}</p>
+      <p class="scs-manager--demo-status-version">{{ 'Version @version'|t({'@version': current_version}) }}</p>
     {% endif %}
     {% if status == 'failed' %}
       {% if job_line %}
-        <p class="m-0 mt-2 text-sm text-gray-700">{{ job_line }}</p>
+        <p class="scs-manager--demo-status-note">{{ job_line }}</p>
       {% endif %}
-      <p class="m-0 mt-2 text-sm text-gray-700">{{ 'Setting up the demo failed. Reset the demo to try again.'|t }}</p>
+      <p class="scs-manager--demo-status-note">{{ 'Setting up the demo failed. Reset the demo to try again.'|t }}</p>
     {% endif %}
     {% if newer_version %}
-      <p class="m-0 mt-2 text-sm text-gray-700">{{ 'A newer demo version (v@version) is available. Reset the demo to use it.'|t({'@version': newer_version}) }}</p>
+      <p class="scs-manager--demo-status-note">{{ 'A newer demo version (v@version) is available. Reset the demo to use it.'|t({'@version': newer_version}) }}</p>
     {% endif %}
   </section>
 {% endif %}

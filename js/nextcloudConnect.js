@@ -240,7 +240,7 @@
 
   function setConnectButtonsVisible(container, visible) {
     getConnectButtons(container).forEach((btn) => {
-      btn.style.display = visible ? '' : 'none';
+      btn.hidden = !visible;
       btn.classList.toggle('scs-manager--nextcloud-connect-btn--hidden', !visible);
     });
   }
@@ -253,7 +253,7 @@
     const verifyBtn = fieldset?.querySelector('.scs-manager--nextcloud-verify-btn');
     if (!statusEl) return;
 
-    if (fallbackHint) fallbackHint.style.display = 'none';
+    if (fallbackHint) fallbackHint.hidden = true;
     if (verifyBtn && isVerifying) verifyBtn.disabled = true;
     if (isVerifying) updateStatusCheckResult(fieldset, Drupal.t('Checking...'), 'checking', '', '');
     if (!isVerifying && useBearerToken()) {
@@ -273,7 +273,7 @@
         statusEl.title = statusTitle;
         updateStatusCheckResult(fieldset, message, 'connected', statusTitle, data.method || '');
         setConnectButtonsVisible(container, false);
-        if (fallbackHint) fallbackHint.style.display = 'none';
+        if (fallbackHint) fallbackHint.hidden = true;
       } else {
         statusEl.textContent = message;
         statusEl.dataset.status = 'disconnected';
@@ -281,7 +281,7 @@
         statusEl.title = statusTitle;
         updateStatusCheckResult(fieldset, message, 'disconnected', statusTitle, '');
         setConnectButtonsVisible(container, !useBearerToken() || Boolean(data.bearer_error));
-        if (fallbackHint) fallbackHint.style.display = '';
+        if (fallbackHint) fallbackHint.hidden = false;
       }
     } catch (e) {
       const errMsg = e?.message || Drupal.t('Unable to check status');
@@ -289,7 +289,7 @@
       statusEl.dataset.status = 'error';
       updateStatusCheckResult(fieldset, errMsg, 'error', '', '');
       setConnectButtonsVisible(container, true);
-      if (fallbackHint) fallbackHint.style.display = '';
+      if (fallbackHint) fallbackHint.hidden = false;
     }
     if (verifyBtn) verifyBtn.disabled = false;
     connectBtns.forEach((btn) => {

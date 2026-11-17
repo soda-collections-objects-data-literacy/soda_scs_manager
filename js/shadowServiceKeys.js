@@ -17,13 +17,10 @@
                 document.execCommand('copy');
                 document.body.removeChild(el);
                 const popup = document.createElement('div');
-                popup.style.position = 'absolute';
+                popup.className = 'scs-manager--copy-confirmation';
+                // Only the click position stays inline; the look is theme CSS.
                 popup.style.top = event.clientY + 'px';
                 popup.style.left = event.clientX + 'px';
-                popup.style.background = 'lightgreen';
-                popup.style.padding = '5px';
-                popup.style.borderRadius = '5px';
-                popup.style.zIndex = '1000';
                 popup.textContent = Drupal.t('Password copied to clipboard.');
                 document.body.appendChild(popup);
                 setTimeout(function () {

@@ -11,24 +11,24 @@
  */
 #}
 
-<article class="scs-manager--message mx-auto max-w-3xl">
-  <p class="mb-4">
-    <a href="{{ inbox_url }}" class="text-stone-600 hover:text-stone-900 no-underline hover:underline">{{ 'Back to messages'|t }}</a>
+<article class="scs-manager--message">
+  <p class="scs-manager--message-back">
+    <a href="{{ inbox_url }}" class="scs-manager--message-back-link">{{ 'Back to messages'|t }}</a>
   </p>
-  <header class="border-b border-stone-200 pb-4 mb-6">
-    <h1 class="text-xl font-semibold text-stone-800 m-0">{{ subject }}</h1>
-    <dl class="mt-3 grid gap-1 text-sm text-stone-600 m-0">
+  <header class="scs-manager--message-header">
+    <h1 class="scs-manager--message-subject">{{ subject }}</h1>
+    <dl class="scs-manager--message-meta">
       <div>
-        <dt class="inline font-medium">{{ 'From'|t }}:</dt>
-        <dd class="inline m-0">{{ sender }}</dd>
+        <dt class="scs-manager--message-meta-label">{{ 'From'|t }}:</dt>
+        <dd class="scs-manager--message-meta-value">{{ sender }}</dd>
       </div>
       <div>
-        <dt class="inline font-medium">{{ 'Date'|t }}:</dt>
-        <dd class="inline m-0">{{ date }}</dd>
+        <dt class="scs-manager--message-meta-label">{{ 'Date'|t }}:</dt>
+        <dd class="scs-manager--message-meta-value">{{ date }}</dd>
       </div>
     </dl>
   </header>
-  <div class="scs-manager--message-body text-stone-700 mb-8">
+  <div class="scs-manager--message-body">
     {{ body }}
   </div>
   {{ actions }}

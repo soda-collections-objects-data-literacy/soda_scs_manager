@@ -90,9 +90,6 @@ final class SodaScsMessageController extends ControllerBase {
     return [
       '#theme' => 'soda_scs_manager__messages',
       '#messages' => $rows,
-      '#attached' => [
-        'library' => ['soda_scs_manager/globalStyling'],
-      ],
       '#cache' => [
         'contexts' => ['user'],
         'tags' => ['soda_scs_message_list:' . $this->currentUser()->id()],
@@ -137,9 +134,6 @@ final class SodaScsMessageController extends ControllerBase {
       '#body' => $type->buildBody($soda_scs_message),
       '#actions' => $this->formBuilder->getForm(SodaScsMessageActionForm::class, $soda_scs_message),
       '#inbox_url' => Url::fromRoute('soda_scs_manager.messages')->toString(),
-      '#attached' => [
-        'library' => ['soda_scs_manager/globalStyling'],
-      ],
       '#cache' => [
         'max-age' => 0,
       ],

@@ -41,6 +41,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Conversation and message UI styling: the module keeps layout classes only;
   colours and radii for bubbles, chips and unread marks live in
   `scs_custom_theme` (`_messages.scss`).
+- **Breaking:** the module no longer ships any CSS: it only sets CSS classes,
+  and all front-end styling lives in `scs_custom_theme` (`assets/scss/manager/`).
+  Tailwind utility classes and inline styles in the markup were replaced by
+  semantic classes; the registration honeypot is hidden with core's
+  `visually-hidden` class. The `globalStyling` library, `pcss/`, `css/` and
+  the Node/Tailwind build are gone; sites or themes that attached
+  `soda_scs_manager/globalStyling` must drop that dependency. Module admin pages under Gin show Gin's
+  defaults. The unused start page, catalogue and sidebar navigation block
+  are left unstyled.
+  **Update `scs_custom_theme` together with the module; without it the
+  front pages lose their styling.**
+  Related: [#3638885](https://www.drupal.org/project/soda_scs_manager/issues/3638885).
 - A service key can only be opened, changed or deleted by its owner and by
   roles with **Administer SODa SCS Manager**.
 - Roles with **Administer SODa SCS Manager** now have full access to all

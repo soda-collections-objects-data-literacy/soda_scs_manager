@@ -878,7 +878,6 @@ class SodaScsComponentListBuilder extends EntityListBuilder {
       '#attached' => [
         'library' => [
           'soda_scs_manager/componentListHealthStatus',
-          'soda_scs_manager/table-list',
         ],
       ],
     ];

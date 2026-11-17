@@ -3276,10 +3276,6 @@ msgstr "Veröffentlichung"
 msgid "triplestore"
 msgstr "Triplestore"
 
-#: templates/pages/soda-scs-manager--dashboard.html.twig:52
-msgid "Clear all filters"
-msgstr "Alle Filter löschen"
-
 #: soda_scs_manager.module:157
 msgid "First Name"
 msgstr "Vorname"

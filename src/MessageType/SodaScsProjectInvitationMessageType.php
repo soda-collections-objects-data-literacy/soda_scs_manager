@@ -74,7 +74,7 @@ final class SodaScsProjectInvitationMessageType implements SodaScsMessageTypeInt
     $items = [
       '#type' => 'container',
       '#attributes' => [
-        'class' => ['scs-manager--message-body-copy', 'space-y-3'],
+        'class' => ['scs-manager--message-body-copy', 'scs-manager--invitation-body'],
       ],
       'intro' => [
         '#markup' => '<p>' . $this->t('@sender has invited you to join the project "@project".', [
@@ -108,7 +108,7 @@ final class SodaScsProjectInvitationMessageType implements SodaScsMessageTypeInt
           '#title' => $this->t('Open project @project', ['@project' => $projectLabel]),
           '#url' => $project->toUrl(),
           '#attributes' => [
-            'class' => ['inline-block', 'mt-2'],
+            'class' => ['scs-manager--invitation-project-link'],
           ],
         ];
       }

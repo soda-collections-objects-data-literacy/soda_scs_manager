@@ -114,14 +114,7 @@ final class SodaScsAdministrationController extends ControllerBase {
 
     $build = [
       '#theme' => 'soda_scs_manager__administration',
-      '#attributes' => ['class' => ['container', 'mx-auto']],
       '#cards' => $cards,
-      '#attached' => [
-        'library' => [
-          'soda_scs_manager/globalStyling',
-          'soda_scs_manager/administration',
-        ],
-      ],
       '#cache' => [
         'contexts' => ['user.permissions'],
       ],

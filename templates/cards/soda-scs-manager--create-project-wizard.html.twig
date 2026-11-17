@@ -150,9 +150,9 @@
       {# Step 3: collect people locally. Invitations are sent when the review is confirmed. #}
       <div class="create-project-wizard__step add-app-popup__step" data-cpw-step="members" hidden>
         <p class="create-project-wizard__hint">{{ 'Invite people to collaborate on this project. They are invited when you create the project. You can also skip this step and invite people later.'|t }}</p>
-        <label for="create-project-wizard-invite" class="mt-3 block text-sm font-medium text-stone-800">{{ 'Username or email'|t }}</label>
-        <div class="mt-3 flex gap-2">
-          <input id="create-project-wizard-invite" type="text" class="min-w-0 flex-1 rounded border border-stone-300 px-3 py-2 text-sm" data-cpw-invite-input autocomplete="off" placeholder="{{ 'name@example.org'|t }}" />
+        <label for="create-project-wizard-invite" class="create-project-wizard__invite-label">{{ 'Username or email'|t }}</label>
+        <div class="create-project-wizard__invite-row">
+          <input id="create-project-wizard-invite" type="text" class="create-project-wizard__invite-input" data-cpw-invite-input autocomplete="off" placeholder="{{ 'name@example.org'|t }}" />
           <button type="button" class="btn btn--secondary" data-cpw-invite-add>{{ 'Add'|t }}</button>
         </div>
         <ul class="create-project-wizard__invited-list" data-cpw-invited-list></ul>
@@ -162,7 +162,7 @@
       <div class="create-project-wizard__step add-app-popup__step" data-cpw-step="review" hidden>
         <p class="create-project-wizard__hint">{{ 'Check the details. The project, its applications and the invitations are created when you continue. Closing this window before that discards everything.'|t }}</p>
         <div data-cpw-review></div>
-        <p class="mt-3 text-sm font-medium text-red-700" data-cpw-review-error hidden></p>
+        <p class="create-project-wizard__form-error" data-cpw-review-error hidden></p>
         <p class="create-project-wizard__hint" data-cpw-review-status hidden></p>
       </div>
 

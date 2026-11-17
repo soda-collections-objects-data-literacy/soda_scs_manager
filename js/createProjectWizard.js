@@ -661,7 +661,7 @@
           invitedList.innerHTML = '';
           state.invitedPeople.forEach(function (person, index) {
             var li = document.createElement('li');
-            li.className = 'mt-3 flex items-center gap-2 text-sm text-stone-800';
+            li.className = 'create-project-wizard__invited-person';
             var name = document.createElement('span');
             name.textContent = person;
             var remove = document.createElement('button');
@@ -806,7 +806,7 @@
           var banner = container.querySelector('[data-cpw-form-banner]');
           if (!banner) {
             banner = document.createElement('p');
-            banner.className = 'mt-3 text-sm font-medium text-red-700';
+            banner.className = 'create-project-wizard__form-error';
             banner.setAttribute('data-cpw-form-banner', '');
             container.insertBefore(banner, container.firstChild);
           }

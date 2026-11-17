@@ -63,7 +63,6 @@ final class SodaScsProfileController extends ControllerBase {
       '#delete_destination' => Url::fromRoute('<front>')->toString(),
       '#attached' => [
         'library' => [
-          'soda_scs_manager/globalStyling',
           'scs_custom_theme/global-scripts',
         ],
       ],

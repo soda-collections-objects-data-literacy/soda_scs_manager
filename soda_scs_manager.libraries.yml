@@ -22,7 +22,6 @@ conversationStartForm:
     - core/drupal
     - core/once
     - core/drupalSettings
-    - soda_scs_manager/globalStyling
 
 notificationBadge:
   version: 1.0
@@ -48,15 +47,7 @@ entityHelpers:
     - core/jquery
     - core/drupal
     - core/once
-    - soda_scs_manager/globalStyling
     - soda_scs_manager/healthStatus
-
-globalStyling:
-  version: 1.1
-  css:
-    component:
-      # Built from pcss/ with `npm run build`; no preflight, no page-level rules.
-      css/soda-scs-manager.css: { minified: true }
 
 machineNameGenerator:
   version: 1.x
@@ -66,7 +57,6 @@ machineNameGenerator:
     - core/jquery
     - core/drupal
     - core/jquery.once
-    - soda_scs_manager/globalStyling
 
 projectNameCheck:
   version: 1.x
@@ -82,7 +72,6 @@ keycloakRegistration:
     js/keycloakRegistration.js: {}
   dependencies:
     - core/drupal
-    - soda_scs_manager/globalStyling
 
 security:
   version: 1.x
@@ -91,7 +80,6 @@ security:
   dependencies:
     - core/drupal
     - core/once
-    - soda_scs_manager/globalStyling
 
 tagFilter:
   version: 1.x
@@ -99,14 +87,7 @@ tagFilter:
     js/tagFilter.js: {}
   dependencies:
     - core/drupal
-    - soda_scs_manager/globalStyling
 
-administration:
-  version: 1.x
-  dependencies:
-    - soda_scs_manager/globalStyling
-
-# Give own css.
 throbberOverlay:
   version: 1.1
   js:
@@ -116,11 +97,6 @@ throbberOverlay:
     - core/drupal
     - core/drupalSettings
     - core/jquery
-
-table-list:
-  version: 1.x
-  dependencies:
-    - soda_scs_manager/globalStyling
 
 componentListHealthStatus:
   version: 1.2
@@ -141,7 +117,6 @@ dashboardHealthStatus:
     - core/drupal
     - core/drupalSettings
     - core/once
-    - soda_scs_manager/globalStyling
     - soda_scs_manager/healthStatus
 
 addApplicationPopup:
@@ -152,7 +127,6 @@ addApplicationPopup:
     - core/jquery
     - core/drupal
     - core/once
-    - soda_scs_manager/globalStyling
 
 createProjectWizard:
   version: 1.9
@@ -163,20 +137,15 @@ createProjectWizard:
     - core/drupal
     - core/once
     - core/drupalSettings
-    - soda_scs_manager/globalStyling
     - soda_scs_manager/throbberOverlay
 
 projectMembers:
   version: 1.x
-  css:
-    theme:
-      css/project-members.css: {}
   js:
     js/projectMembers.js: {}
   dependencies:
     - core/drupal
     - core/once
-    - soda_scs_manager/globalStyling
 
 startPagePie:
   version: 1.x
@@ -185,7 +154,6 @@ startPagePie:
   dependencies:
     - core/drupal
     - core/once
-    - soda_scs_manager/globalStyling
 
 nextcloudConnect:
   version: 1.4
@@ -195,13 +163,9 @@ nextcloudConnect:
     - core/drupal
     - core/once
     - core/drupalSettings
-    - soda_scs_manager/globalStyling
 
 demoProjectStatus:
-  version: 1.3
-  css:
-    component:
-      css/demo-status.css: {}
+  version: 1.4
   js:
     js/demoProjectStatus.js: {}
   dependencies:

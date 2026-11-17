@@ -67,7 +67,6 @@ final class SodaScsConversationStartForm extends FormBase {
     $form['#attributes']['class'][] = 'scs-manager--conversation-start';
     $form['#attached'] = [
       'library' => [
-        'soda_scs_manager/globalStyling',
         'soda_scs_manager/conversationStartForm',
       ],
       'drupalSettings' => [

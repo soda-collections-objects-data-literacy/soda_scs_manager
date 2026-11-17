@@ -302,8 +302,8 @@ class SodaScsProjectListBuilder extends EntityListBuilder {
       '#type' => 'container',
       '#attributes' => [
         'class' => [
-          'mb-8',
           'soda-scs-manager--dashboard-heading-with-add',
+          'scs-manager--projects-list-heading',
         ],
       ],
       '#cache' => [

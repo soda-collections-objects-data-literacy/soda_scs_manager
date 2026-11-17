@@ -39,10 +39,10 @@ If you are new to Drupal: you mainly use a dashboard and wizards. Drupal hosts t
 This module is meant to run inside the **SODa SCS Manager deployment** (or an equivalent stack), not as a drop-in on a bare Drupal site.
 
 - **Drupal** 10 or 11 (`^10 | ^11`).
-- **Drupal dependencies** (declared): Language (core), [OpenID Connect](https://www.drupal.org/project/openid_connect), [SMTP](https://www.drupal.org/project/smtp), and Field Group. No companion theme: the module ships its own UI styles (`css/soda-scs-manager.css`).
-- **Composer-related** (module `composer.json`): e.g. `drupal/openid_connect`, `drupal/smtp`, Tailwind is only a build tool for the module CSS (`package.json`).
+- **Drupal dependencies** (declared): Language (core), [OpenID Connect](https://www.drupal.org/project/openid_connect), [SMTP](https://www.drupal.org/project/smtp), and Field Group. The module ships no CSS: its front-end styling comes from the companion theme [`scs_custom_theme`](https://github.com/soda-collections-objects-data-literacy/scs_custom_theme).
+- **Composer-related** (module `composer.json`): e.g. `drupal/openid_connect`, `drupal/smtp`.
 - **Infrastructure (required for real use):** Keycloak (SSO/groups/attributes), Docker + Portainer (or equivalent) for container lifecycle, MariaDB, Traefik (or similar reverse proxy), Nextcloud (+ integration app where used), JupyterHub, OpenGDB/triplestore services, WebProtégé as configured in the deployment. The reference Compose wiring is in [soda_scs_manager_deployment](https://github.com/soda-collections-objects-data-literacy/soda_scs_manager_deployment).
-- **Host tools for operators:** Docker, Git (submodules), `jq`, `curl`; Node/npm (host or `node:22-alpine` container) only to rebuild the module CSS.
+- **Host tools for operators:** Docker, Git (submodules), `jq`, `curl`.
 
 ### Recommended modules / libraries
 
@@ -78,13 +78,7 @@ Navigate to **Administration → SODa SCS Manager → Settings → Security Sett
 
 ## Theming (development)
 
-Component styles live in `pcss/` (Tailwind v4 + PostCSS) and build to `css/soda-scs-manager.css`, which is committed and attached by the `globalStyling` library. The build has no Tailwind preflight and no `html`/`body` rules: page frame, reset and fonts belong to the front theme (`scs_custom_theme`).
-
-```bash
-npm install && npm run build        # or: npm run watch while developing
-# without Node on the host:
-docker run --rm -u "$(id -u):$(getent group www-data | cut -d: -f3)" -v "$PWD":/m -w /m node:22-alpine sh -c 'npm install && npm run build'
-```
+The module sets CSS classes only; it has no stylesheet, no utility classes and no inline styles. All front-end styling lives in `scs_custom_theme` under `assets/scss/manager/` (one partial per component, built with the theme's `npm run build`). Admin pages under Gin use Gin's defaults. Name new markup with semantic classes (`scs-manager--<component>__<element>` or the component's existing prefix), hide and show with the `hidden` attribute or a state class, and add the styles to the theme.
 
 ## Content sync
 

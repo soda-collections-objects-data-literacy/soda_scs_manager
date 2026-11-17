@@ -301,8 +301,10 @@ class KeycloakUserRegistrationForm extends FormBase {
         'autocomplete' => 'off',
         'tabindex' => '-1',
       ],
+      // Core's visually-hidden class hides the field without theme CSS, so
+      // humans never fill it in while bots still see an input.
       '#wrapper_attributes' => [
-        'style' => 'position:absolute;left:-9999px;height:0;overflow:hidden;',
+        'class' => ['visually-hidden'],
         'aria-hidden' => 'true',
       ],
     ];

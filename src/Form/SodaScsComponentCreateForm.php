@@ -292,7 +292,6 @@ class SodaScsComponentCreateForm extends ContentEntityForm {
     $form['actions']['submit']['#attributes']['class'][] = 'btn--primary';
     $form['actions']['submit']['#attributes']['class'][] = 'soda-scs-component--component--form-submit';
 
-    $form['#attached']['library'][] = 'soda_scs_manager/globalStyling';
     $form['#attached']['library'][] = 'soda_scs_manager/throbberOverlay';
 
     if ($this->bundle === 'soda_scs_wisski_component') {

@@ -217,7 +217,7 @@ class SodaScsManagerController extends ControllerBase {
 
     $build = [
       '#theme' => 'soda_scs_manager__dashboard',
-      '#attributes' => ['class' => 'container soda-scs-manager--view--grid'],
+      '#attributes' => ['class' => 'soda-scs-manager--view--grid'],
       '#project_cards' => $projectCards,
       '#cache' => [
         'max-age' => 0,
@@ -225,7 +225,6 @@ class SodaScsManagerController extends ControllerBase {
       ],
       '#attached' => [
         'library' => [
-          'soda_scs_manager/globalStyling',
           'soda_scs_manager/tagFilter',
           'soda_scs_manager/dashboardHealthStatus',
         ],
@@ -308,12 +307,11 @@ class SodaScsManagerController extends ControllerBase {
     $uid = (int) $currentUser->id();
     $build = [
       '#theme' => 'soda_scs_manager__start_page',
-      '#attributes' => ['class' => ['container', 'mx-auto']],
+      '#attributes' => ['class' => ['scs-manager--start-page']],
       '#user' => $userFirstName,
       '#connected_accounts_url' => $connectedAccountsUrl,
       '#attached' => [
         'library' => [
-          'soda_scs_manager/globalStyling',
           'soda_scs_manager/startPagePie',
           'soda_scs_manager/nextcloudConnect',
         ],
@@ -338,9 +336,6 @@ class SodaScsManagerController extends ControllerBase {
   public function tourPage(): array {
     return [
       '#theme' => 'soda_scs_manager__tour_page',
-      '#attached' => [
-        'library' => ['soda_scs_manager/globalStyling'],
-      ],
       '#cache' => [
         'max-age' => 0,
       ],
