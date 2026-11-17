@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [4.5.0] - 2026-11-17
+
 ### Added
 
 - The detail page of a stack or a component (WissKI, database, triplestore,
@@ -1082,7 +1084,9 @@ Development line: branch `2.x`. Major release relative to `1.3.x` (projects on s
 
 - Move toward fully Portainer-driven lifecycle for managed services.
 
-[Unreleased]: https://github.com/soda-collections-objects-data-literacy/soda_scs_manager/compare/4.3.3...HEAD
+[Unreleased]: https://github.com/soda-collections-objects-data-literacy/soda_scs_manager/compare/4.5.0...HEAD
+[4.5.0]: https://github.com/soda-collections-objects-data-literacy/soda_scs_manager/compare/4.4.0...4.5.0
+[4.4.0]: https://github.com/soda-collections-objects-data-literacy/soda_scs_manager/compare/4.3.3...4.4.0
 [4.3.3]: https://github.com/soda-collections-objects-data-literacy/soda_scs_manager/compare/4.3.2...4.3.3
 [4.3.2]: https://github.com/soda-collections-objects-data-literacy/soda_scs_manager/compare/4.3.1...4.3.2
 [4.3.1]: https://github.com/soda-collections-objects-data-literacy/soda_scs_manager/compare/4.3.0...4.3.1
