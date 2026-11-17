@@ -61,7 +61,29 @@ abstract class SodaScsKernelTestBase extends KernelTestBase {
    */
   protected function setUp(): void {
     parent::setUp();
+    $this->installSchemas();
 
+    // Install config.
+    $this->installConfig(['system', 'field', 'user', 'node', 'soda_scs_manager']);
+
+    // Set up minimal Keycloak configuration for testing.
+    $this->setupKeycloakConfig();
+
+    // Get the entity type manager.
+    $this->entityTypeManager = $this->container->get('entity_type.manager');
+
+    // Create a test user.
+    $this->testUser = $this->createTestUser();
+  }
+
+  /**
+   * Creates the tables the tests of this class need.
+   *
+   * Every table costs about a second to create and drop on the dev host's
+   * MariaDB, once per test method. A test class that needs fewer entity types
+   * overrides this and installs only those.
+   */
+  protected function installSchemas(): void {
     // Install required schemas.
     $this->installSchema('system', ['sequences']);
     $this->installSchema('file', ['file_usage']);
@@ -79,18 +101,6 @@ abstract class SodaScsKernelTestBase extends KernelTestBase {
     $this->installEntitySchema('soda_scs_project_membership');
     $this->installEntitySchema('soda_scs_snapshot');
     $this->installEntitySchema('soda_scs_service_key');
-
-    // Install config.
-    $this->installConfig(['system', 'field', 'user', 'node', 'soda_scs_manager']);
-
-    // Set up minimal Keycloak configuration for testing.
-    $this->setupKeycloakConfig();
-
-    // Get the entity type manager.
-    $this->entityTypeManager = $this->container->get('entity_type.manager');
-
-    // Create a test user.
-    $this->testUser = $this->createTestUser();
   }
 
   /**
