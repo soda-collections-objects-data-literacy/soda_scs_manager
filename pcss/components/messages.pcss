@@ -3,6 +3,31 @@
  * In-app message inbox and detail.
  */
 
+.scs-manager--conversation-start {
+  @apply flex flex-col gap-4;
+}
+
+.scs-manager--conversation-start__chip {
+  @apply inline-flex items-center gap-2 rounded-full bg-stone-100 px-3 py-1 text-sm text-stone-800;
+}
+
+.scs-manager--conversation-start__chip-remove {
+  @apply inline-flex h-5 w-5 cursor-pointer items-center justify-center rounded-full border-0 bg-stone-300 p-0 text-base leading-none text-stone-800;
+
+  &:hover,
+  &:focus-visible {
+    @apply bg-stone-400 outline outline-2 outline-offset-2 outline-orange-500;
+  }
+}
+
+.scs-manager--conversation-team__new {
+  @apply mb-4 inline-flex;
+}
+
+.scs-manager--conversation-team__filters {
+  @apply mb-4;
+}
+
 .scs-manager--messages-row--unread {
   box-shadow: inset 0.25rem 0 0 #e68500;
 }
@@ -66,6 +91,33 @@
 
 .scs-manager--conversation-body {
   @apply m-0 break-words;
+
+  h3,
+  h4,
+  h5 {
+    @apply m-0 mb-1 font-semibold text-stone-900;
+  }
+
+  h3 {
+    @apply text-base;
+  }
+
+  h4 {
+    @apply text-sm;
+  }
+
+  h5 {
+    @apply text-sm font-medium;
+  }
+
+  a {
+    @apply underline;
+    color: rgb(198, 105, 0);
+
+    &:hover {
+      color: rgb(255, 138, 5);
+    }
+  }
 }
 
 .scs-manager--conversation-actions {

@@ -742,6 +742,20 @@ soda_scs_manager.conversation_message.delete:
         type: entity:soda_scs_conversation_message
     no_cache: TRUE
 
+soda_scs_manager.conversation.delete:
+  path: '/soda-scs-manager/conversations/{soda_scs_conversation}/delete'
+  defaults:
+    _form: '\Drupal\soda_scs_manager\Form\SodaScsConversationDeleteForm'
+    _title: 'Delete conversation'
+  requirements:
+    _permission: 'soda scs manager admin'
+    _entity_access: 'soda_scs_conversation.delete'
+  options:
+    parameters:
+      soda_scs_conversation:
+        type: entity:soda_scs_conversation
+    no_cache: TRUE
+
 soda_scs_manager.conversations.team:
   path: '/soda-scs-manager/administration/conversations'
   defaults:

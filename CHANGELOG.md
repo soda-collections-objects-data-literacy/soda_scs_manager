@@ -10,14 +10,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 - Administrators can write to users. Under **Conversations** in the
-  administration and in **Configuration → SODa SCS Manager** they send a message to single users, all members of a
-  project or all users; each user gets a conversation of their own and can
+  administration and in **Configuration → SODa SCS Manager** they send a
+  message to users (including **All** as one recipient chip) or to the members
+  of one or more projects; each user gets a conversation of their own and can
   reply. Conversations show as chat bubbles, refresh while open, and count
   towards the message badge, for the user and for all administrators. Authors
-  edit and delete their own messages, administrators delete any; a deleted
-  message stays as "Message deleted". Deleting an account deletes its
-  conversations. **Run drush updb** (update 11042 installs the conversation
-  tables).
+  edit and delete their own messages, administrators delete any message or a
+  whole conversation; a deleted message stays as "Message deleted". The admin
+  list filters and sorts by user, subject, activity and status. Message text
+  supports simple Markdown (headings, bold, italic, underline, strike, links).
+  Deleting an
+  account deletes its conversations. **Run drush updb** (update 11042 installs
+  the conversation tables).
   Related: [#3638680](https://www.drupal.org/project/soda_scs_manager/issues/3638680).
 - The demo panel on the project page shows what the demo job is doing: queued
   since when, the current step, waiting for the WissKI installation with the

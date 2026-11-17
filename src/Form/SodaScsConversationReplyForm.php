@@ -48,6 +48,7 @@ final class SodaScsConversationReplyForm extends FormBase {
       '#type' => 'textarea',
       '#title' => $this->t('Your reply'),
       '#title_display' => 'invisible',
+      '#description' => $this->t('Markdown: # headings, **bold**, *italic*, ++underline++, ~~strike~~, https://… or [label](https://…).'),
       '#placeholder' => $this->t('Write a reply'),
       '#rows' => 3,
       '#required' => TRUE,

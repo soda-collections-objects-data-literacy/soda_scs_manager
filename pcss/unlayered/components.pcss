@@ -201,3 +201,108 @@ button.soda-scs-manager--health-action:focus:not(:focus-visible) {
   outline: none;
   box-shadow: none;
 }
+
+/*
+ * Dashboard content is a 9-column grid; direct children default to one column
+ * (~90px). --full pages and our conversation blocks must span the row.
+ */
+.dashboard-content--full > .scs-manager--conversation-start,
+.dashboard-content--full > .scs-manager--conversation-team,
+.dashboard-content--full > form.soda-scs-manager-conversation-start-form {
+  grid-column: 1 / -1;
+}
+
+/*
+ * Conversation start form and admin list: theme input rules are unlayered and
+ * leave width to the size/cols attributes. Beat that here.
+ */
+.scs-manager--conversation-start {
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  width: 100%;
+  max-width: 100%;
+  padding: 1rem;
+}
+
+.scs-manager--conversation-start .form-item,
+.scs-manager--conversation-start .js-form-item {
+  width: 100%;
+  max-width: 100%;
+}
+
+/* Radios render as #edit-mode without .form-radios (stable9 template). */
+.scs-manager--conversation-start #edit-mode {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem 1.5rem;
+  align-items: center;
+}
+
+.scs-manager--conversation-start #edit-mode .form-item,
+.scs-manager--conversation-start #edit-mode .js-form-item {
+  display: inline-flex;
+  width: auto;
+  max-width: none;
+  align-items: center;
+  gap: 0.5rem;
+  margin: 0;
+}
+
+.scs-manager--conversation-start #edit-mode input.form-radio {
+  display: inline-block;
+  width: auto !important;
+  max-width: none !important;
+  min-width: 0;
+  height: auto;
+  margin: 0;
+  padding: 0;
+}
+
+.scs-manager--conversation-start input.form-text,
+.scs-manager--conversation-start input.form-autocomplete,
+.scs-manager--conversation-start textarea.form-textarea,
+.scs-manager--conversation-start select.form-select,
+.scs-manager--conversation-start .scs-manager--conversation-start__field,
+.scs-manager--conversation-start .scs-manager--conversation-start__picker {
+  box-sizing: border-box;
+  width: 100% !important;
+  max-width: 100% !important;
+  min-width: 0;
+}
+
+.scs-manager--conversation-start__chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  min-height: 2.5rem;
+}
+
+.scs-manager--conversation-team {
+  width: 100%;
+  max-width: 100%;
+}
+
+.scs-manager--conversation-team .soda-scs-table-list-wrapper {
+  width: 100%;
+  max-width: 100%;
+}
+
+.scs-manager--conversation-team .soda-scs-table-list {
+  width: 100%;
+  min-width: 100%;
+}
+
+.scs-manager--conversation-team .soda-scs-table-list thead th,
+.scs-manager--conversation-team .soda-scs-table-list tbody td {
+  max-width: none;
+}
+
+.scs-manager--conversation-team .soda-scs-table-list tbody td[colspan] {
+  padding: 2.5rem 1.5rem;
+  font-size: 1rem;
+  line-height: 1.5;
+  text-align: center;
+  color: #57534e;
+}

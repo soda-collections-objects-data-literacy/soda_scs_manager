@@ -766,7 +766,7 @@ class SodaScsConversationHelpersTest extends SodaScsKernelTestBase {
       (int) $this->admin->id(),
     ];
 
-    $recipients = $this->helpers->resolveRecipients(SodaScsConversationHelpers::RECIPIENTS_USERS, $picked, NULL, $this->admin);
+    $recipients = $this->helpers->resolveRecipients(SodaScsConversationHelpers::RECIPIENTS_USERS, $picked, [], $this->admin);
 
     $this->assertSame([(int) $this->alice->id(), (int) $this->bob->id()], $recipients);
   }
@@ -777,8 +777,8 @@ class SodaScsConversationHelpersTest extends SodaScsKernelTestBase {
    * @covers ::resolveRecipients
    */
   public function testResolveRecipientsForEmptyPickIsEmpty(): void {
-    $this->assertSame([], $this->helpers->resolveRecipients(SodaScsConversationHelpers::RECIPIENTS_USERS, [], NULL, $this->admin));
-    $this->assertSame([], $this->helpers->resolveRecipients('unknown', [(int) $this->alice->id()], NULL, $this->admin));
+    $this->assertSame([], $this->helpers->resolveRecipients(SodaScsConversationHelpers::RECIPIENTS_USERS, [], [], $this->admin));
+    $this->assertSame([], $this->helpers->resolveRecipients('unknown', [(int) $this->alice->id()], [], $this->admin));
   }
 
   /**
@@ -801,7 +801,7 @@ class SodaScsConversationHelpersTest extends SodaScsKernelTestBase {
       ],
     ]);
 
-    $recipients = $this->helpers->resolveRecipients(SodaScsConversationHelpers::RECIPIENTS_PROJECT, [], (int) $project->id(), $this->admin);
+    $recipients = $this->helpers->resolveRecipients(SodaScsConversationHelpers::RECIPIENTS_PROJECT, [], [(int) $project->id()], $this->admin);
 
     $this->assertSame([(int) $this->alice->id(), (int) $this->bob->id()], $recipients);
     $this->assertNotContains((int) $outsider->id(), $recipients);
@@ -813,8 +813,8 @@ class SodaScsConversationHelpersTest extends SodaScsKernelTestBase {
    * @covers ::resolveRecipients
    */
   public function testResolveRecipientsForMissingProjectIsEmpty(): void {
-    $this->assertSame([], $this->helpers->resolveRecipients(SodaScsConversationHelpers::RECIPIENTS_PROJECT, [], NULL, $this->admin));
-    $this->assertSame([], $this->helpers->resolveRecipients(SodaScsConversationHelpers::RECIPIENTS_PROJECT, [], 99999, $this->admin));
+    $this->assertSame([], $this->helpers->resolveRecipients(SodaScsConversationHelpers::RECIPIENTS_PROJECT, [], [], $this->admin));
+    $this->assertSame([], $this->helpers->resolveRecipients(SodaScsConversationHelpers::RECIPIENTS_PROJECT, [], [99999], $this->admin));
   }
 
   /**
@@ -825,7 +825,7 @@ class SodaScsConversationHelpersTest extends SodaScsKernelTestBase {
   public function testResolveRecipientsForAllExcludesBlockedUnauthorizedAndSender(): void {
     $this->createBlockedUser();
 
-    $recipients = $this->helpers->resolveRecipients(SodaScsConversationHelpers::RECIPIENTS_ALL, [], NULL, $this->admin);
+    $recipients = $this->helpers->resolveRecipients(SodaScsConversationHelpers::RECIPIENTS_ALL, [], [], $this->admin);
 
     // The first user of the test (uid 1) is active and has the role too.
     $this->assertSame([
@@ -854,7 +854,7 @@ class SodaScsConversationHelpersTest extends SodaScsKernelTestBase {
     $this->mallory->removeRole('scs_user')->save();
     Role::load('authenticated')->grantPermission('soda scs manager user')->save();
 
-    $all = $this->helpers->resolveRecipients(SodaScsConversationHelpers::RECIPIENTS_ALL, [], NULL, $this->admin);
+    $all = $this->helpers->resolveRecipients(SodaScsConversationHelpers::RECIPIENTS_ALL, [], [], $this->admin);
 
     $this->assertContains((int) $withoutRoles->id(), $all);
     $this->assertContains((int) $this->mallory->id(), $all);
@@ -864,7 +864,7 @@ class SodaScsConversationHelpersTest extends SodaScsKernelTestBase {
     $picked = $this->helpers->resolveRecipients(
       SodaScsConversationHelpers::RECIPIENTS_USERS,
       [(int) $withoutRoles->id(), (int) $blocked->id(), (int) $this->admin->id()],
-      NULL,
+      [],
       $this->admin,
     );
     $this->assertSame([(int) $withoutRoles->id()], $picked);
@@ -880,7 +880,7 @@ class SodaScsConversationHelpersTest extends SodaScsKernelTestBase {
       Role::load($roleId)->delete();
     }
 
-    $this->assertSame([], $this->helpers->resolveRecipients(SodaScsConversationHelpers::RECIPIENTS_ALL, [], NULL, $this->admin));
+    $this->assertSame([], $this->helpers->resolveRecipients(SodaScsConversationHelpers::RECIPIENTS_ALL, [], [], $this->admin));
   }
 
   /**

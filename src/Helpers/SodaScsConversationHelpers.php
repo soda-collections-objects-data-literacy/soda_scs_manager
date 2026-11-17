@@ -8,6 +8,7 @@ use Drupal\Component\Datetime\TimeInterface;
 use Drupal\Core\Database\Connection;
 use Drupal\Core\Entity\EntityStorageInterface;
 use Drupal\Core\Entity\EntityTypeManagerInterface;
+use Drupal\Core\Entity\Query\QueryInterface;
 use Drupal\Core\Logger\LoggerChannelInterface;
 use Drupal\Core\Session\AccountInterface;
 use Drupal\Core\StringTranslation\StringTranslationTrait;
@@ -66,15 +67,17 @@ final class SodaScsConversationHelpers {
 
   /**
    * Number of conversations in the admin list.
+   *
+   * @param array{subject?: string, user?: string, status?: string} $filters
+   *   Optional subject, user name and unread status filters.
    */
-  public function countForTeam(): int {
+  public function countForTeam(array $filters = []): int {
     if (!$this->isInstalled()) {
       return 0;
     }
-    return (int) $this->conversationStorage()->getQuery()
-      ->accessCheck(FALSE)
-      ->count()
-      ->execute();
+    $query = $this->conversationStorage()->getQuery()->accessCheck(FALSE);
+    $this->applyTeamFilters($query, $filters);
+    return (int) $query->count()->execute();
   }
 
   /**
@@ -103,14 +106,14 @@ final class SodaScsConversationHelpers {
   }
 
   /**
-   * Deletes a message: its text goes, a placeholder stays.
+   * Deletes a conversation and every message in it.
    */
-  public function deleteMessage(SodaScsConversationMessageInterface $message, AccountInterface $actor): SodaScsResult {
-    if (!$message->access('delete', $actor)) {
-      return SodaScsResult::failure('access_denied', (string) $this->t('You cannot delete this message.'), FALSE);
+  public function deleteConversation(SodaScsConversationInterface $conversation, AccountInterface $actor): SodaScsResult {
+    if (!$conversation->access('delete', $actor)) {
+      return SodaScsResult::failure('access_denied', (string) $this->t('You cannot delete this conversation.'), FALSE);
     }
-    $message->markDeleted($this->time->getRequestTime())->save();
-    return SodaScsResult::success([], (string) $this->t('The message has been deleted.'));
+    $this->deleteConversationsByIds([(int) $conversation->id()]);
+    return SodaScsResult::success([], (string) $this->t('The conversation has been deleted.'));
   }
 
   /**
@@ -123,23 +126,22 @@ final class SodaScsConversationHelpers {
     if (!$this->isInstalled()) {
       return;
     }
-    $conversationStorage = $this->conversationStorage();
-    $conversationIds = $conversationStorage->getQuery()
+    $conversationIds = $this->conversationStorage()->getQuery()
       ->accessCheck(FALSE)
       ->condition('user', $userId)
       ->execute();
-    if ($conversationIds === []) {
-      return;
+    $this->deleteConversationsByIds(array_map('intval', array_values($conversationIds)));
+  }
+
+  /**
+   * Deletes a message: its text goes, a placeholder stays.
+   */
+  public function deleteMessage(SodaScsConversationMessageInterface $message, AccountInterface $actor): SodaScsResult {
+    if (!$message->access('delete', $actor)) {
+      return SodaScsResult::failure('access_denied', (string) $this->t('You cannot delete this message.'), FALSE);
     }
-    $messageStorage = $this->messageStorage();
-    $messageIds = $messageStorage->getQuery()
-      ->accessCheck(FALSE)
-      ->condition('conversation', array_values($conversationIds), 'IN')
-      ->execute();
-    foreach (array_chunk(array_values($messageIds), 100) as $chunk) {
-      $messageStorage->delete($messageStorage->loadMultiple($chunk));
-    }
-    $conversationStorage->delete($conversationStorage->loadMultiple($conversationIds));
+    $message->markDeleted($this->time->getRequestTime())->save();
+    return SodaScsResult::success([], (string) $this->t('The message has been deleted.'));
   }
 
   /**
@@ -170,21 +172,38 @@ final class SodaScsConversationHelpers {
   }
 
   /**
-   * Conversations for the admin list, latest activity first.
+   * Conversations for the admin list.
+   *
+   * @param int $limit
+   *   Maximum number of conversations.
+   * @param int $offset
+   *   Number of conversations to skip.
+   * @param array{subject?: string, user?: string, status?: string} $filters
+   *   Optional subject, user name and unread status filters.
+   * @param string $sort
+   *   Field: label, lastMessageAt, teamUnread, user or id.
+   * @param string $direction
+   *   ASC or DESC.
    *
    * @return list<\Drupal\soda_scs_manager\Entity\SodaScsConversationInterface>
    *   The conversations.
    */
-  public function loadForTeam(int $limit, int $offset = 0): array {
+  public function loadForTeam(int $limit, int $offset = 0, array $filters = [], string $sort = 'lastMessageAt', string $direction = 'DESC'): array {
     if (!$this->isInstalled()) {
       return [];
     }
-    $ids = $this->conversationStorage()->getQuery()
-      ->accessCheck(FALSE)
-      ->sort('lastMessageAt', 'DESC')
-      ->sort('id', 'DESC')
-      ->range($offset, $limit)
-      ->execute();
+    $allowedSorts = ['label', 'lastMessageAt', 'teamUnread', 'user', 'id'];
+    if (!in_array($sort, $allowedSorts, TRUE)) {
+      $sort = 'lastMessageAt';
+    }
+    $direction = strtoupper($direction) === 'ASC' ? 'ASC' : 'DESC';
+    $query = $this->conversationStorage()->getQuery()->accessCheck(FALSE);
+    $this->applyTeamFilters($query, $filters);
+    $query->sort($sort, $direction);
+    if ($sort !== 'id') {
+      $query->sort('id', $direction);
+    }
+    $ids = $query->range($offset, $limit)->execute();
     return $this->loadConversations($ids);
   }
 
@@ -315,18 +334,18 @@ final class SodaScsConversationHelpers {
    *   One of the RECIPIENTS_* constants.
    * @param list<int> $userIds
    *   The picked users, for RECIPIENTS_USERS.
-   * @param int|null $projectId
-   *   The project, for RECIPIENTS_PROJECT.
+   * @param list<int> $projectIds
+   *   The projects, for RECIPIENTS_PROJECT; members are united.
    * @param \Drupal\Core\Session\AccountInterface $sender
    *   The admin who writes.
    *
    * @return list<int>
    *   User ids, ascending.
    */
-  public function resolveRecipients(string $mode, array $userIds, ?int $projectId, AccountInterface $sender): array {
+  public function resolveRecipients(string $mode, array $userIds, array $projectIds, AccountInterface $sender): array {
     $candidates = match ($mode) {
       self::RECIPIENTS_USERS => array_map('intval', $userIds),
-      self::RECIPIENTS_PROJECT => $this->projectUserIds($projectId),
+      self::RECIPIENTS_PROJECT => $this->projectUserIds($projectIds),
       self::RECIPIENTS_ALL => NULL,
       default => [],
     };
@@ -391,10 +410,68 @@ final class SodaScsConversationHelpers {
   }
 
   /**
+   * Applies subject, user-name and unread filters to a team list query.
+   *
+   * @param \Drupal\Core\Entity\Query\QueryInterface $query
+   *   The query.
+   * @param array{subject?: string, user?: string, status?: string} $filters
+   *   The filters.
+   */
+  private function applyTeamFilters(QueryInterface $query, array $filters): void {
+    $subject = trim((string) ($filters['subject'] ?? ''));
+    if ($subject !== '') {
+      $query->condition('label', '%' . $this->database->escapeLike($subject) . '%', 'LIKE');
+    }
+    $userName = trim((string) ($filters['user'] ?? ''));
+    if ($userName !== '') {
+      $userIds = $this->entityTypeManager->getStorage('user')->getQuery()
+        ->accessCheck(FALSE)
+        ->condition('name', '%' . $this->database->escapeLike($userName) . '%', 'LIKE')
+        ->execute();
+      if ($userIds === []) {
+        $query->condition('id', 0);
+      }
+      else {
+        $query->condition('user', array_values(array_map('intval', $userIds)), 'IN');
+      }
+    }
+    $status = (string) ($filters['status'] ?? '');
+    if ($status === 'unread') {
+      $query->condition('teamUnread', 1);
+    }
+    elseif ($status === 'read') {
+      $query->condition('teamUnread', 0);
+    }
+  }
+
+  /**
    * The conversation storage.
    */
   private function conversationStorage(): EntityStorageInterface {
     return $this->entityTypeManager->getStorage('soda_scs_conversation');
+  }
+
+  /**
+   * Hard-deletes conversations and every message that belongs to them.
+   *
+   * @param list<int> $conversationIds
+   *   Conversation ids.
+   */
+  private function deleteConversationsByIds(array $conversationIds): void {
+    $conversationIds = array_values(array_filter(array_map('intval', $conversationIds)));
+    if ($conversationIds === []) {
+      return;
+    }
+    $messageStorage = $this->messageStorage();
+    $messageIds = $messageStorage->getQuery()
+      ->accessCheck(FALSE)
+      ->condition('conversation', $conversationIds, 'IN')
+      ->execute();
+    foreach (array_chunk(array_values($messageIds), 100) as $chunk) {
+      $messageStorage->delete($messageStorage->loadMultiple($chunk));
+    }
+    $conversationStorage = $this->conversationStorage();
+    $conversationStorage->delete($conversationStorage->loadMultiple($conversationIds));
   }
 
   /**
@@ -447,21 +524,30 @@ final class SodaScsConversationHelpers {
   }
 
   /**
-   * Owner and members of a project.
+   * Owners and members of the given projects, united.
+   *
+   * @param list<int> $projectIds
+   *   Project ids.
    *
    * @return list<int>
-   *   User ids; empty when the project does not exist.
+   *   User ids; empty when none of the projects exist.
    */
-  private function projectUserIds(?int $projectId): array {
-    if ($projectId === NULL) {
-      return [];
+  private function projectUserIds(array $projectIds): array {
+    $ids = [];
+    foreach (array_unique(array_map('intval', $projectIds)) as $projectId) {
+      if ($projectId <= 0) {
+        continue;
+      }
+      $project = $this->entityTypeManager->getStorage('soda_scs_project')->load($projectId);
+      if (!$project instanceof SodaScsProjectInterface) {
+        continue;
+      }
+      $ids = array_merge(
+        $ids,
+        array_map('intval', array_column($project->get('members')->getValue(), 'target_id')),
+        [(int) $project->getOwnerId()],
+      );
     }
-    $project = $this->entityTypeManager->getStorage('soda_scs_project')->load($projectId);
-    if (!$project instanceof SodaScsProjectInterface) {
-      return [];
-    }
-    $ids = array_map('intval', array_column($project->get('members')->getValue(), 'target_id'));
-    $ids[] = (int) $project->getOwnerId();
     return array_values(array_unique($ids));
   }
 
