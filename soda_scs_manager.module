@@ -1581,7 +1581,7 @@ function soda_scs_manager_page_attachments(array &$attachments) {
   $attachments['#attached']['library'][] = 'soda_scs_manager/globalStyling';
 
   $account = \Drupal::currentUser();
-  if ($account->hasPermission('create soda scs project') || $account->hasPermission('administer soda scs project entities')) {
+  if ($account->hasPermission('create soda scs project') || $account->hasPermission('soda scs manager admin')) {
     $attachments['#attached']['library'][] = 'soda_scs_manager/createProjectWizard';
     $createProjectWizard = [
       'addProjectFormUrl' => Url::fromRoute('entity.soda_scs_project.add_form', ['bundle' => 'soda_scs_project'])->toString(),

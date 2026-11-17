@@ -49,7 +49,7 @@ use Drupal\user\EntityOwnerTrait;
  *   },
  *   base_table = "soda_scs_service_key",
  *   data_table = "soda_scs_service_key_field_data",
- *   admin_permission = "administer soda scs service key entities",
+ *   admin_permission = "soda scs manager admin",
  *   field_ui_base_route = "entity.soda_scs_service_key.edit_form",
  *   fieldable = TRUE,
  *   translatable = TRUE,

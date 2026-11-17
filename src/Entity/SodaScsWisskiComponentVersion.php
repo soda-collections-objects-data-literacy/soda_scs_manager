@@ -33,7 +33,7 @@ use Drupal\Core\Config\Entity\ConfigEntityBase;
  *     },
  *   },
  *   config_prefix = "wisski_component_version",
- *   admin_permission = "administer soda scs manager settings",
+ *   admin_permission = "soda scs manager admin",
  *   entity_keys = {
  *     "id" = "id",
  *     "label" = "version",

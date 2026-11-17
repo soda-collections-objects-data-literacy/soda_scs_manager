@@ -67,7 +67,7 @@ final class SodaScsServiceKeyAccessControlHandler extends EntityAccessControlHan
    * {@inheritdoc}
    */
   protected function checkCreateAccess(AccountInterface $account, array $context, $entity_bundle = NULL): AccessResult {
-    return AccessResult::allowedIfHasPermissions($account, ['create soda scs service key', 'administer soda scs service key entities'], 'OR');
+    return AccessResult::allowedIfHasPermissions($account, ['create soda scs service key', 'soda scs manager admin'], 'OR');
   }
 
 }

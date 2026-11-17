@@ -45,7 +45,7 @@ use Drupal\user\EntityOwnerTrait;
  *   },
  *   base_table = "soda_scs_project",
  *   data_table = "soda_scs_project_field_data",
- *   admin_permission = "administer soda scs project entities",
+ *   admin_permission = "soda scs manager admin",
  *   field_ui_base_route = "entity.soda_scs_project.edit_form",
  *   common_reference_target = TRUE,
  *   fieldable = TRUE,

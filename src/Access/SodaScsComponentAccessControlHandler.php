@@ -78,7 +78,7 @@ final class SodaScsComponentAccessControlHandler extends EntityAccessControlHand
    */
   public static function accessSnapshotForm(SodaScsComponentInterface $soda_scs_component): AccessResultInterface {
     $account = \Drupal::currentUser();
-    if (SodaScsManagerAdminAccess::isAdmin($account, 'administer soda scs component entities')) {
+    if (SodaScsManagerAdminAccess::isAdmin($account)) {
       return AccessResult::allowed()->cachePerPermissions()->addCacheableDependency($soda_scs_component);
     }
     if ((int) $soda_scs_component->getOwnerId() === (int) $account->id()) {

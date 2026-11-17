@@ -71,7 +71,7 @@ final class SodaScsProjectAccessControlHandler extends EntityAccessControlHandle
    * {@inheritdoc}
    */
   protected function checkCreateAccess(AccountInterface $account, array $context, $entity_bundle = NULL): AccessResult {
-    return AccessResult::allowedIfHasPermissions($account, ['create soda scs project', 'administer soda scs project entities'], 'OR');
+    return AccessResult::allowedIfHasPermissions($account, ['create soda scs project', 'soda scs manager admin'], 'OR');
   }
 
   /**
@@ -120,7 +120,7 @@ final class SodaScsProjectAccessControlHandler extends EntityAccessControlHandle
     $accountId = (int) $account->id();
 
     // Admins cannot leave projects (they have full access anyway).
-    if ($account->hasPermission('administer soda scs project entities')) {
+    if ($account->hasPermission('soda scs manager admin')) {
       return AccessResult::forbidden()->addCacheableDependency($soda_scs_project);
     }
 

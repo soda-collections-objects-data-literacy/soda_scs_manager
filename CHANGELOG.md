@@ -28,6 +28,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- Roles with **Administer SODa SCS Manager** now have full access to all
+  projects, components (databases, triplestores, WissKI components) and
+  service keys, as they already had to stacks. Before, these entity types
+  checked permissions that were not defined, so only roles with "Is admin"
+  passed. **Check which roles have Administer SODa SCS Manager**: they can
+  now open, change and delete other users' projects and service keys.
+  Related: [#3638865](https://www.drupal.org/project/soda_scs_manager/issues/3638865).
 - **Configuration → SODa SCS Manager** (`/admin/config/soda-scs-manager`) is
   now an overview of the settings, the demo project, the Keycloak
   registrations and the conversations. The Keycloak registrations moved there

@@ -68,7 +68,7 @@ class SodaScsProjectSelection extends DefaultSelection {
     $current_user = \Drupal::currentUser();
 
     // If user has admin permission, don't restrict access.
-    if ($current_user->hasPermission('administer soda scs project entities')) {
+    if ($current_user->hasPermission('soda scs manager admin')) {
       return;
     }
 
