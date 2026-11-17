@@ -122,14 +122,15 @@ final class SodaScsProfileDeleteForm extends ConfirmFormBase {
     if (!$user instanceof UserInterface) {
       return;
     }
-    // A running demo job could still create apps after the delete. One error
+    // A running demo job could still create apps after the delete, and a
+    // project delete would remove the same apps at the same time. One error
     // names all projects: the form state keeps only the first per element.
     $labels = array_map(
       static fn ($project): string => (string) $project->label(),
-      $this->userOffboarding->demoProjectsInSetup($user),
+      $this->userOffboarding->lockedProjects($user),
     );
     if ($labels !== []) {
-      $form_state->setErrorByName('', $this->t('A demo project is being set up or deleted right now (@projects). Delete your profile when that is done.', ['@projects' => implode(', ', $labels)]));
+      $form_state->setErrorByName('', $this->t('A project is being set up or deleted right now (@projects). Delete your profile when that is done.', ['@projects' => implode(', ', $labels)]));
     }
   }
 
@@ -144,10 +145,19 @@ final class SodaScsProfileDeleteForm extends ConfirmFormBase {
       return;
     }
 
-    // hook_user_predelete removes owned projects and service accounts.
-    $user->delete();
-    $this->messenger()->addStatus($this->t('Your profile has been deleted.'));
+    // user_cancel() deletes the account in a batch, after the applications
+    // of the owned projects were removed one per request
+    // (soda_scs_manager_batch_alter()); hook_user_predelete removes the rest
+    // and the service accounts. Core logs the user out and says so.
+    $this->cancelAccount((int) $user->id());
     $form_state->setRedirect('<front>');
+  }
+
+  /**
+   * Hands the account delete to core, which adds it to the form's batch.
+   */
+  protected function cancelAccount(int $userId): void {
+    user_cancel([], $userId, 'user_cancel_delete');
   }
 
 }

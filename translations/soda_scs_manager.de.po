@@ -4275,10 +4275,6 @@ msgstr "Bestätigen Sie, dass die gemeinsamen Projekte gelöscht werden dürfen.
 msgid "This profile cannot be deleted."
 msgstr "Dieses Profil kann nicht gelöscht werden."
 
-#: src/Form/SodaScsProfileDeleteForm.php
-msgid "Your profile has been deleted."
-msgstr "Ihr Profil wurde gelöscht."
-
 #: templates/pages/soda-scs-manager--profile.html.twig
 msgid "Upload picture"
 msgstr "Bild hochladen"
@@ -4789,12 +4785,16 @@ msgid "The project @project is being set up or deleted right now. Try again when
 msgstr "Das Projekt @project wird gerade eingerichtet oder gelöscht. Versuchen Sie es erneut, wenn das abgeschlossen ist."
 
 #: src/Form/SodaScsProfileDeleteForm.php
-msgid "A demo project is being set up or deleted right now (@projects). Delete your profile when that is done."
-msgstr "Ein Demo-Projekt wird gerade eingerichtet oder gelöscht (@projects). Löschen Sie Ihr Profil, wenn das abgeschlossen ist."
+msgid "A project is being set up or deleted right now (@projects). Delete your profile when that is done."
+msgstr "Ein Projekt wird gerade eingerichtet oder gelöscht (@projects). Löschen Sie Ihr Profil, wenn das abgeschlossen ist."
 
 #: soda_scs_manager.module
-msgid "A demo project is being set up or deleted right now (@projects). Delete the account when that is done."
-msgstr "Ein Demo-Projekt wird gerade eingerichtet oder gelöscht (@projects). Löschen Sie das Konto, wenn das abgeschlossen ist."
+msgid "A project is being set up or deleted right now (@projects). Delete the account when that is done."
+msgstr "Ein Projekt wird gerade eingerichtet oder gelöscht (@projects). Löschen Sie das Konto, wenn das abgeschlossen ist."
+
+#: src/Batch/SodaScsUserOffboardingBatch.php
+msgid "The account %name was not deleted: a project is being set up or deleted right now (@projects). Try again when that is done."
+msgstr "Das Konto %name wurde nicht gelöscht: Ein Projekt wird gerade eingerichtet oder gelöscht (@projects). Versuchen Sie es erneut, wenn das abgeschlossen ist."
 
 #: src/Form/SodaScsProjectDeleteForm.php
 msgid "@description Its WissKI instances, databases and triplestores are deleted as well. Applications of other members stay and only lose the link to this project."

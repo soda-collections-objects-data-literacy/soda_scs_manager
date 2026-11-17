@@ -28,6 +28,7 @@ use Drupal\soda_scs_manager\RequestActions\SodaScsKeycloakServiceUserActions;
 use Drupal\soda_scs_manager\RequestActions\SodaScsOpenGdbServiceActions;
 use Drupal\soda_scs_manager\ServiceActions\SodaScsSqlServiceActions;
 use Drupal\soda_scs_manager\StackActions\SodaScsStackActionsInterface;
+use Drupal\soda_scs_manager\ValueObject\SodaScsResult;
 use Drupal\soda_scs_manager\ValueObject\SodaScsUserOffboardingInventory;
 use Drupal\user\UserInterface;
 use Symfony\Component\DependencyInjection\Attribute\Autowire;
@@ -46,6 +47,20 @@ final class SodaScsUserOffboarding {
   private const DEMO_LOCK_TIMEOUT_SECONDS = 900.0;
 
   /**
+   * Seconds the account delete batch holds a project lock at most.
+   *
+   * Released in its last step; an abandoned batch lets it expire.
+   */
+  private const ACCOUNT_DELETE_LOCK_TIMEOUT_SECONDS = 3600.0;
+
+  /**
+   * Projects whose lock the running account delete batch holds.
+   *
+   * @var list<int>
+   */
+  private array $heldProjectLocks = [];
+
+  /**
    * The logger channel.
    */
   private LoggerChannelInterface $logger;
@@ -62,6 +77,8 @@ final class SodaScsUserOffboarding {
     private readonly EntityTypeManagerInterface $entityTypeManager,
     #[Autowire(service: 'lock')]
     private readonly LockBackendInterface $lock,
+    #[Autowire(service: 'lock.persistent')]
+    private readonly LockBackendInterface $persistentLock,
     #[Autowire(service: 'logger.factory')]
     LoggerChannelFactoryInterface $loggerFactory,
     #[Autowire(service: 'soda_scs_manager.project_membership.helpers')]
@@ -93,23 +110,16 @@ final class SodaScsUserOffboarding {
   }
 
   /**
-   * Owned demo projects whose demo job runs right now.
+   * Tells purge() which project locks the account delete batch holds.
    *
-   * The job holds the project lock while an attempt runs; the account
-   * delete forms refuse while one is listed.
+   * The batch takes them through lock.persistent; purge() would find them
+   * busy and warn.
    *
-   * @return list<\Drupal\soda_scs_manager\Entity\SodaScsProjectInterface>
-   *   The demo projects in setup.
+   * @param list<int> $projectIds
+   *   The projects, or an empty list when the batch is done.
    */
-  public function demoProjectsInSetup(UserInterface $user): array {
-    $inSetup = [];
-    foreach ($this->loadProjects('owner', (int) $user->id()) as $project) {
-      if ($this->demoManager->isDemoProject($project)
-        && !$this->lock->lockMayBeAvailable(SodaScsDemoManager::PROJECT_LOCK_PREFIX . $project->id())) {
-        $inSetup[] = $project;
-      }
-    }
-    return $inSetup;
+  public function holdProjectLocks(array $projectIds): void {
+    $this->heldProjectLocks = array_map('intval', $projectIds);
   }
 
   /**
@@ -136,6 +146,70 @@ final class SodaScsUserOffboarding {
     }
 
     return new SodaScsUserOffboardingInventory($memberships, $ownedAlone, $ownedShared);
+  }
+
+  /**
+   * Takes the project lock of each project for the account delete batch.
+   *
+   * The lock goes through lock.persistent, so it lasts across the batch
+   * requests, as in the project delete form: a demo job that waits between
+   * attempts cannot create a new WissKI after the batch deleted the old one,
+   * and a project delete in another tab cannot delete the same stack. A
+   * project whose lock is busy is left out; the batch then refuses the
+   * account delete.
+   *
+   * @param list<int> $projectIds
+   *   The projects of the account.
+   *
+   * @return list<int>
+   *   The projects whose lock this call took.
+   */
+  public function lockProjectsForAccountDelete(array $projectIds): array {
+    $locked = [];
+    foreach ($projectIds as $projectId) {
+      if ($this->persistentLock->acquire(SodaScsDemoManager::PROJECT_LOCK_PREFIX . $projectId, self::ACCOUNT_DELETE_LOCK_TIMEOUT_SECONDS)) {
+        $locked[] = $projectId;
+        continue;
+      }
+      $this->logger->warning('Project @project is being set up or deleted right now; the account delete is refused.', [
+        '@project' => $projectId,
+      ]);
+    }
+    return $locked;
+  }
+
+  /**
+   * Owned projects whose project lock is held right now.
+   *
+   * A demo job attempt or a project delete holds it; the account delete
+   * forms refuse while one is listed.
+   *
+   * @return list<\Drupal\soda_scs_manager\Entity\SodaScsProjectInterface>
+   *   The projects being set up or deleted.
+   */
+  public function lockedProjects(UserInterface $user): array {
+    $locked = [];
+    foreach ($this->loadProjects('owner', (int) $user->id()) as $project) {
+      if (!$this->lock->lockMayBeAvailable(SodaScsDemoManager::PROJECT_LOCK_PREFIX . $project->id())) {
+        $locked[] = $project;
+      }
+    }
+    return $locked;
+  }
+
+  /**
+   * Ids of the projects the user owns.
+   *
+   * @return list<int>
+   *   The project ids, in ascending order.
+   */
+  public function ownedProjectIds(UserInterface $user): array {
+    $ids = array_map(
+      static fn (SodaScsProjectInterface $project): int => (int) $project->id(),
+      $this->loadProjects('owner', (int) $user->id()),
+    );
+    sort($ids);
+    return $ids;
   }
 
   /**
@@ -174,6 +248,34 @@ final class SodaScsUserOffboarding {
 
     $this->purgeLeftovers($user);
     $this->deletePersonalServiceAccounts($user);
+  }
+
+  /**
+   * Releases the project locks the account delete batch took.
+   *
+   * @param list<int> $projectIds
+   *   The projects lockProjectsForAccountDelete() returned.
+   */
+  public function releaseProjectLocks(array $projectIds): void {
+    foreach ($projectIds as $projectId) {
+      $this->persistentLock->release(SodaScsDemoManager::PROJECT_LOCK_PREFIX . $projectId);
+    }
+  }
+
+  /**
+   * Deletes or detaches one application of a project the user owns.
+   *
+   * The account delete batch calls it once per request before the account
+   * goes, so an account with many WissKI instances does not run into the
+   * request timeout; purge() then finds only the fast steps left. Same rule
+   * as purge(); the caller holds the project lock
+   * (lockProjectsForAccountDelete()).
+   *
+   * @return \Drupal\soda_scs_manager\ValueObject\SodaScsResult
+   *   See SodaScsProjectApplicationRemover::removeNextApplication().
+   */
+  public function removeNextProjectApplication(SodaScsProjectInterface $project): SodaScsResult {
+    return $this->applicationRemover->removeNextApplication($project);
   }
 
   /**
@@ -534,7 +636,7 @@ final class SodaScsUserOffboarding {
    * (deleteOwnedProject() reloads the project unchanged).
    */
   private function withDemoProjectLock(SodaScsProjectInterface $project, callable $delete): void {
-    if (!$this->demoManager->isDemoProject($project)) {
+    if (!$this->demoManager->isDemoProject($project) || in_array((int) $project->id(), $this->heldProjectLocks, TRUE)) {
       $delete();
       return;
     }

@@ -21,6 +21,7 @@ use Drupal\Core\Routing\StackedRouteMatchInterface;
 use Drupal\Core\Render\Markup;
 use Drupal\Core\StringTranslation\TranslatableMarkup;
 use Drupal\Core\Url;
+use Drupal\soda_scs_manager\Batch\SodaScsUserOffboardingBatch;
 use Drupal\soda_scs_manager\Entity\Bundle\SodaScsComponentBundle;
 use Drupal\soda_scs_manager\Entity\Bundle\SodaScsProjectsBundle;
 use Drupal\soda_scs_manager\Entity\Bundle\SodaScsServiceKeyBundle;
@@ -1352,6 +1353,16 @@ function soda_scs_manager_user_predelete(UserInterface $user): void {
 }
 
 /**
+ * Implements hook_batch_alter().
+ *
+ * Removes the applications of an account's own projects in batch requests of
+ * their own before the account delete, which then runs in one request.
+ */
+function soda_scs_manager_batch_alter(array &$batch): void {
+  SodaScsUserOffboardingBatch::addToAccountDeletes($batch);
+}
+
+/**
  * Implements hook_form_FORM_ID_alter() for user_cancel_form.
  */
 function soda_scs_manager_form_user_cancel_form_alter(array &$form, FormStateInterface $form_state, string $form_id): void {
@@ -1414,10 +1425,11 @@ function soda_scs_manager_user_cancel_validate_shared_projects(array &$form, For
 }
 
 /**
- * Refuses to delete an account while the demo job of its demo project runs.
+ * Refuses to delete an account while one of its projects is locked.
  *
- * The job could still create apps after the delete; they would stay
- * without a project.
+ * A demo job attempt could still create apps after the delete, which would
+ * stay without a project; a project delete would remove the same apps at
+ * the same time.
  */
 function soda_scs_manager_user_cancel_validate_demo_setup(array &$form, FormStateInterface $form_state): void {
   $method = (string) $form_state->getValue('user_cancel_method');
@@ -1432,14 +1444,14 @@ function soda_scs_manager_user_cancel_validate_demo_setup(array &$form, FormStat
     if (!$account instanceof UserInterface) {
       continue;
     }
-    foreach ($offboarding->demoProjectsInSetup($account) as $project) {
+    foreach ($offboarding->lockedProjects($account) as $project) {
       $labels[] = (string) $project->label();
     }
   }
   // One error names all projects: the form state keeps only the first per
   // element.
   if ($labels !== []) {
-    $form_state->setErrorByName('user_cancel_method', t('A demo project is being set up or deleted right now (@projects). Delete the account when that is done.', ['@projects' => implode(', ', $labels)]));
+    $form_state->setErrorByName('user_cancel_method', t('A project is being set up or deleted right now (@projects). Delete the account when that is done.', ['@projects' => implode(', ', $labels)]));
   }
 }
 

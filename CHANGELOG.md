@@ -56,6 +56,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- Deleting an account (profile delete, the account cancel forms, the link in
+  the confirmation e-mail, `drush user:cancel`) removes the WissKI instances,
+  databases and triplestores of the projects it owns first, one per request
+  with a progress bar, and deletes the account afterwards. While a project of
+  the account is being set up or deleted, the account delete is refused.
+  Before, all of it ran in one request, and an account with several WissKI
+  instances could run into the time limit and stay half deleted.
+  Related: [#3638781](https://www.drupal.org/project/soda_scs_manager/issues/3638781).
 - The Nextcloud mount check that runs every minute asks Keycloak only for
   users with a stored Nextcloud app password, not for every active user. A
   user whose Keycloak account is gone is skipped for a day, or until they
