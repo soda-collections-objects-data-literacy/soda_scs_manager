@@ -34,6 +34,7 @@ class SodaScsNextcloudHelpersTest extends UnitTestCase {
     string $prefix = 'keycloak-',
     ?SodaScsNextcloudServiceActions $nextcloudActions = NULL,
     ?SodaScsProjectHelpers $projectHelpers = NULL,
+    ?SodaScsKeycloakHelpers $keycloakHelpers = NULL,
   ): SodaScsNextcloudHelpers {
     $nextcloudActions ??= $this->createMock(SodaScsNextcloudServiceActions::class);
     $nextcloudActions->method('getOidcUsernamePrefix')->willReturn($prefix);
@@ -59,7 +60,7 @@ class SodaScsNextcloudHelpersTest extends UnitTestCase {
       $this->createMock(AccountProxyInterface::class),
       $this->createMock(MessengerInterface::class),
       $this->createMock(OpenIDConnectSessionInterface::class),
-      $this->createMock(SodaScsKeycloakHelpers::class),
+      $keycloakHelpers ?? $this->createMock(SodaScsKeycloakHelpers::class),
       $projectHelpers ?? $this->createMock(SodaScsProjectHelpers::class),
       $loggerFactory,
       $this->createMock(SodaScsContainerHelpers::class),
@@ -169,6 +170,59 @@ class SodaScsNextcloudHelpersTest extends UnitTestCase {
         'rnsrk default project',
       ),
     );
+  }
+
+  /**
+   * A user whose Keycloak account answers "not found" is missing.
+   *
+   * @covers ::isKeycloakUserMissing
+   */
+  public function testIsKeycloakUserMissingAsksKeycloakWithTheSsoUuid(): void {
+    $keycloakHelpers = $this->createMock(SodaScsKeycloakHelpers::class);
+    $keycloakHelpers->expects($this->once())->method('isKeycloakUserMissing')->with('sub-1')->willReturn(TRUE);
+    $helper = $this->createHelper('', NULL, $this->createProjectHelpers('sub-1'), $keycloakHelpers);
+
+    $this->assertTrue($helper->isKeycloakUserMissing($this->createMock(UserInterface::class)));
+  }
+
+  /**
+   * Keycloak that still knows the user means the user is not missing.
+   *
+   * @covers ::isKeycloakUserMissing
+   */
+  public function testIsKeycloakUserMissingIsFalseWhenKeycloakKnowsTheUser(): void {
+    $keycloakHelpers = $this->createMock(SodaScsKeycloakHelpers::class);
+    $keycloakHelpers->method('isKeycloakUserMissing')->willReturn(FALSE);
+    $helper = $this->createHelper('', NULL, $this->createProjectHelpers('sub-1'), $keycloakHelpers);
+
+    $this->assertFalse($helper->isKeycloakUserMissing($this->createMock(UserInterface::class)));
+  }
+
+  /**
+   * Without an SSO link nothing is asked and the user is not called missing.
+   *
+   * @covers ::isKeycloakUserMissing
+   * @dataProvider provideNoSsoUuid
+   */
+  public function testIsKeycloakUserMissingIsFalseWithoutSsoLink(?string $ssoUuid): void {
+    $keycloakHelpers = $this->createMock(SodaScsKeycloakHelpers::class);
+    $keycloakHelpers->expects($this->never())->method('isKeycloakUserMissing');
+    $helper = $this->createHelper('', NULL, $this->createProjectHelpers($ssoUuid), $keycloakHelpers);
+
+    $this->assertFalse($helper->isKeycloakUserMissing($this->createMock(UserInterface::class)));
+  }
+
+  /**
+   * SSO UUIDs that count as no link.
+   *
+   * @return array<string, array{0: string|null}>
+   *   The values.
+   */
+  public static function provideNoSsoUuid(): array {
+    return [
+      'null' => [NULL],
+      'empty string' => [''],
+    ];
   }
 
 }
