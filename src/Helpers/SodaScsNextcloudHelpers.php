@@ -209,6 +209,23 @@ class SodaScsNextcloudHelpers {
   }
 
   /**
+   * Whether the user's Keycloak account is gone (Keycloak answers 404).
+   *
+   * @param \Drupal\user\UserInterface $owner
+   *   The Drupal user.
+   *
+   * @return bool
+   *   FALSE also when the user has no SSO link or Keycloak cannot be asked.
+   */
+  public function isKeycloakUserMissing(UserInterface $owner): bool {
+    $keycloakUserId = $this->projectHelpers->getUserSsoUuid($owner);
+    if (empty($keycloakUserId)) {
+      return FALSE;
+    }
+    return $this->keycloakHelpers->isKeycloakUserMissing($keycloakUserId);
+  }
+
+  /**
    * Returns stored credentials only when they match the Keycloak sub.
    *
    * Stale credentials (e.g. after Keycloak user recreation) are cleared from

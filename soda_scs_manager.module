@@ -1734,6 +1734,10 @@ function soda_scs_manager_user_login(UserInterface $account) {
   _soda_scs_manager_propagate_keycloak_user_data_to_fields($account);
   \Drupal::service('soda_scs_manager.nextcloud.helpers')
     ->invalidateMismatchedStoredCredentials($account);
+  // A login proves the Keycloak account exists again; the mount reconcile
+  // takes the user back.
+  \Drupal::service('soda_scs_manager.nextcloud_mount.credentials')
+    ->clearKeycloakUserMissing($account);
 
   if (!\Drupal::moduleHandler()->moduleExists('language')) {
     return;

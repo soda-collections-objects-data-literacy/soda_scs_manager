@@ -309,23 +309,40 @@ class NextcloudMountManager {
   /**
    * Loads Drupal users that currently have Nextcloud credentials.
    *
+   * Only users with a stored app password are asked for their Keycloak
+   * login name: the reconcile runs every minute, one Keycloak request per
+   * user. A user whose Keycloak account is gone is marked and skipped for a
+   * day (or until a login), instead of an error in the log every minute.
+   *
    * @return list<\Drupal\user\UserInterface>
+   *   The users.
    */
   protected function loadUsersWithCredentials(): array {
+    $candidateIds = $this->credentialsStore->userIdsWithAppPassword();
+    if ($candidateIds === []) {
+      return [];
+    }
     $storage = $this->entityTypeManager->getStorage('user');
     $ids = $storage->getQuery()
       ->accessCheck(FALSE)
       ->condition('status', 1)
       ->condition('uid', 0, '>')
+      ->condition('uid', $candidateIds, 'IN')
       ->execute();
 
     $users = [];
     foreach ($storage->loadMultiple($ids) as $user) {
-      if (!$user instanceof UserInterface) {
+      if (!$user instanceof UserInterface || $this->credentialsStore->isKeycloakUserMarkedMissing($user)) {
         continue;
       }
       if ($this->nextcloudHelpers->getMountCredentials($user) !== NULL) {
         $users[] = $user;
+      }
+      elseif ($this->nextcloudHelpers->isKeycloakUserMissing($user)) {
+        $this->credentialsStore->markKeycloakUserMissing($user);
+        $this->logger->warning('Keycloak has no account for user @uid; their Nextcloud mount is skipped for a day, or until they log in or connect Nextcloud again.', [
+          '@uid' => $user->id(),
+        ]);
       }
     }
     return $users;

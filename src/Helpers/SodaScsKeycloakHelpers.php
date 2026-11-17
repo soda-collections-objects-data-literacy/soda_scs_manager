@@ -6,6 +6,7 @@ namespace Drupal\soda_scs_manager\Helpers;
 
 use Drupal\soda_scs_manager\RequestActions\SodaScsKeycloakServiceGroupActions;
 use Drupal\soda_scs_manager\RequestActions\SodaScsServiceRequestInterface;
+use GuzzleHttp\Exception\RequestException;
 use Symfony\Component\DependencyInjection\Attribute\Autowire;
 
 /**
@@ -135,6 +136,34 @@ class SodaScsKeycloakHelpers {
     }
     $body = json_decode($response['data']['keycloakResponse']->getBody()->getContents(), TRUE);
     return is_array($body) ? $body : NULL;
+  }
+
+  /**
+   * Whether Keycloak answers that the user does not exist.
+   *
+   * Only a 404 with "User not found" counts; a failed request or another
+   * error (e.g. an unknown realm) is not taken as a missing user.
+   *
+   * @param string $keycloakUserId
+   *   The Keycloak user ID (OIDC sub claim).
+   *
+   * @return bool
+   *   TRUE when Keycloak reports the user as not found.
+   */
+  public function isKeycloakUserMissing(string $keycloakUserId): bool {
+    $request = $this->sodaScsKeycloakServiceUserActions->buildGetRequest([
+      'routeParams' => ['userId' => $keycloakUserId],
+      'token' => $this->getKeycloakToken(),
+    ]);
+    $response = $this->sodaScsKeycloakServiceUserActions->makeRequest($request);
+    if ($response['success'] || (int) ($response['statusCode'] ?? 0) !== 404) {
+      return FALSE;
+    }
+    $exception = $response['data']['keycloakResponse'] ?? NULL;
+    if (!$exception instanceof RequestException || $exception->getResponse() === NULL) {
+      return FALSE;
+    }
+    return str_contains((string) $exception->getResponse()->getBody(), 'User not found');
   }
 
   /**

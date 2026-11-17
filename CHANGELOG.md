@@ -56,6 +56,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- The Nextcloud mount check that runs every minute asks Keycloak only for
+  users with a stored Nextcloud app password, not for every active user. A
+  user whose Keycloak account is gone is skipped for a day, or until they
+  log in or connect Nextcloud again, so the Keycloak error "User not found"
+  is logged once a day instead of every minute.
+  Related: [#3638812](https://www.drupal.org/project/soda_scs_manager/issues/3638812).
 - A WissKI that cannot be created no longer leaves its database, triplestore
   and stack behind; a database or triplestore that fails on its own removes
   what it created too. Before, they stayed without a working WissKI, and the
