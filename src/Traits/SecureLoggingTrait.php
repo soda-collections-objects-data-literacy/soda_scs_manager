@@ -39,20 +39,35 @@ trait SecureLoggingTrait {
    *   The sanitized string.
    */
   protected function sanitizeForLogging(string $input, array $additionalPatterns = []): string {
+    // A shell word: quoted parts, escaped characters and plain characters, so
+    // escapeshellarg('ab\'cd') ('ab'\''cd') and SQL 'it''s' are redacted as a
+    // whole. A value that opens a quote and never closes it (e.g. a truncated
+    // message) is redacted to the end.
+    $value = '((?:"[^"]*"|\'[^\']*\'|\\\\.|[^\s"\'\\\\;&|])+|"[^"]*|\'[^\']*)';
+    // A KEY=value value: the quotes are kept around [REDACTED]; a missing
+    // closing quote (e.g. a truncated message) redacts to the end.
+    $assignedValue = '(?:(["\'])(?:(?!\2).)*\2?|[^\'"\s;&]+)';
+    // The -p option starts a word, also inside quotes, brackets or a list,
+    // but not inside --password, --port or names such as wisski-prod.
+    $optionStart = '(?<![^\s"\'(\[,])';
+
     $defaultPatterns = [
-      // MySQL password patterns.
-      '/(-p)([^\s]+)/' => '$1[REDACTED]',
-      '/(-p\s+)([^\s]+)/' => '$1[REDACTED]',
+      // MySQL -p option.
+      '/' . $optionStart . '(-p)(?!\s)' . $value . '/' => '$1[REDACTED]',
+      '/' . $optionStart . '(-p\s+)' . $value . '/' => '$1[REDACTED]',
+
+      // SQL statements that set a password.
+      '/(IDENTIFIED\s+BY\s+)' . $value . '/i' => '$1[REDACTED]',
 
       // Various password= patterns.
-      '/(password\s*=\s*[\'"]?)([^\'"\s;&]+)([\'"]?)/' => '$1[REDACTED]$3',
-      '/(pwd\s*=\s*[\'"]?)([^\'"\s;&]+)([\'"]?)/' => '$1[REDACTED]$3',
-      '/(pass\s*=\s*[\'"]?)([^\'"\s;&]+)([\'"]?)/' => '$1[REDACTED]$3',
+      '/(password\s*=\s*)' . $assignedValue . '/s' => '$1$2[REDACTED]$2',
+      '/(pwd\s*=\s*)' . $assignedValue . '/s' => '$1$2[REDACTED]$2',
+      '/(pass\s*=\s*)' . $assignedValue . '/s' => '$1$2[REDACTED]$2',
 
       // Environment variable patterns.
-      '/([A-Z_]*PASSWORD\s*=\s*[\'"]?)([^\'"\s;&]+)([\'"]?)/' => '$1[REDACTED]$3',
-      '/([A-Z_]*SECRET\s*=\s*[\'"]?)([^\'"\s;&]+)([\'"]?)/' => '$1[REDACTED]$3',
-      '/([A-Z_]*KEY\s*=\s*[\'"]?)([^\'"\s;&]+)([\'"]?)/' => '$1[REDACTED]$3',
+      '/([A-Z_]*PASSWORD\s*=\s*)' . $assignedValue . '/s' => '$1$2[REDACTED]$2',
+      '/([A-Z_]*SECRET\s*=\s*)' . $assignedValue . '/s' => '$1$2[REDACTED]$2',
+      '/([A-Z_]*KEY\s*=\s*)' . $assignedValue . '/s' => '$1$2[REDACTED]$2',
 
       // API tokens and keys.
       '/(token\s*[:\=]\s*[\'"]?)([a-zA-Z0-9+\/=]{20,})([\'"]?)/' => '$1[REDACTED]$3',
@@ -87,22 +102,9 @@ trait SecureLoggingTrait {
    *   The sanitized command string.
    */
   protected function sanitizeCommandForLogging(string $command): string {
-    $commandPatterns = [
-      // MySQL specific patterns.
-      '/(-p)([^\s]+)/' => '$1[REDACTED]',
-      '/(-p\s+)([^\s]+)/' => '$1[REDACTED]',
-      '/(--password=)([^\s]+)/' => '$1[REDACTED]',
-
-      // PostgreSQL patterns.
-      '/(PGPASSWORD=)([^\s]+)/' => '$1[REDACTED]',
-
-      // General command patterns.
-      '/(password=)([^\s;&]+)/' => '$1[REDACTED]',
-      '/(pwd=)([^\s;&]+)/' => '$1[REDACTED]',
-      '/(pass=)([^\s;&]+)/' => '$1[REDACTED]',
-    ];
-
-    return $this->sanitizeForLogging($command, $commandPatterns);
+    // The default patterns cover the mysql -p and --password options,
+    // IDENTIFIED BY, PGPASSWORD= and the other KEY=value forms.
+    return $this->sanitizeForLogging($command);
   }
 
   /**

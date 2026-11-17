@@ -56,6 +56,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- Log messages no longer lose text after a `-p` inside other words: container
+  names such as `wisski-prod--drupal`, `--port` and `--password` stay
+  readable. Passwords in quotes with spaces and SQL passwords after
+  `IDENTIFIED BY` are now redacted completely.
+  Related: [#3638862](https://www.drupal.org/project/soda_scs_manager/issues/3638862).
 - Deleting an account (profile delete, the account cancel forms, the link in
   the confirmation e-mail, `drush user:cancel`) removes the WissKI instances,
   databases and triplestores of the projects it owns first, one per request
