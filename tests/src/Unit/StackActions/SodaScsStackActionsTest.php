@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Drupal\Tests\soda_scs_manager\Unit\StackActions;
 
+use Drupal\Core\Field\FieldItemListInterface;
 use Drupal\Core\StringTranslation\TranslationInterface;
 use Drupal\soda_scs_manager\Entity\SodaScsStackInterface;
 use Drupal\soda_scs_manager\StackActions\SodaScsStackActions;
@@ -11,6 +12,7 @@ use Drupal\soda_scs_manager\StackActions\SodaScsStackActionsInterface;
 use Drupal\soda_scs_manager\ValueObject\SodaScsResult;
 use Drupal\Tests\UnitTestCase;
 use Prophecy\PhpUnit\ProphecyTrait;
+use Prophecy\Prophecy\ObjectProphecy;
 
 /**
  * Tests the SodaScsStackActions orchestration service.
@@ -77,6 +79,7 @@ class SodaScsStackActionsTest extends UnitTestCase {
   public function testCreateStackWisski(): void {
     $stack = $this->prophesize(SodaScsStackInterface::class);
     $stack->bundle()->willReturn('soda_scs_wisski_stack');
+    $this->addProject($stack);
 
     $expectedResult = [
       'success' => TRUE,
@@ -101,6 +104,7 @@ class SodaScsStackActionsTest extends UnitTestCase {
   public function testCreateStackJupyter(): void {
     $stack = $this->prophesize(SodaScsStackInterface::class);
     $stack->bundle()->willReturn('soda_scs_jupyter_stack');
+    $this->addProject($stack);
 
     $expectedResult = [
       'success' => TRUE,
@@ -125,6 +129,7 @@ class SodaScsStackActionsTest extends UnitTestCase {
   public function testCreateStackUnknownBundle(): void {
     $stack = $this->prophesize(SodaScsStackInterface::class);
     $stack->bundle()->willReturn('unknown_stack');
+    $this->addProject($stack);
 
     $this->expectException(\Exception::class);
     $this->expectExceptionMessage('Stack type not supported for creation.');
@@ -370,6 +375,40 @@ class SodaScsStackActionsTest extends UnitTestCase {
     $this->expectExceptionMessage('Component type not supported.');
 
     $this->stackActions->updateStack($component->reveal());
+  }
+
+  /**
+   * Gives the entity a project, which createStack() requires.
+   *
+   * @param \Prophecy\Prophecy\ObjectProphecy $entity
+   *   The stack prophecy.
+   */
+  private function addProject(ObjectProphecy $entity): void {
+    $projects = $this->prophesize(FieldItemListInterface::class);
+    $projects->isEmpty()->willReturn(FALSE);
+    $entity->hasField('partOfProjects')->willReturn(TRUE);
+    $entity->get('partOfProjects')->willReturn($projects->reveal());
+  }
+
+  /**
+   * Tests that createStack() refuses an entity without a project.
+   *
+   * @covers ::createStack
+   */
+  public function testCreateStackWithoutProject(): void {
+    $projects = $this->prophesize(FieldItemListInterface::class);
+    $projects->isEmpty()->willReturn(TRUE);
+    $entity = $this->prophesize(SodaScsStackInterface::class);
+    $entity->bundle()->willReturn('soda_scs_wisski_stack');
+    $entity->hasField('partOfProjects')->willReturn(TRUE);
+    $entity->get('partOfProjects')->willReturn($projects->reveal());
+
+    $this->wisskiStackActions->createStack($entity->reveal())->shouldNotBeCalled();
+
+    $result = $this->stackActions->createStack($entity->reveal());
+
+    $this->assertFalse($result['success']);
+    $this->assertSame('Stack has no project (partOfProjects is empty).', $result['error']);
   }
 
 }

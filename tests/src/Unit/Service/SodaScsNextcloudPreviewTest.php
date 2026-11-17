@@ -127,7 +127,7 @@ class SodaScsNextcloudPreviewTest extends UnitTestCase {
     $this->assertSame('notes.md', $result['activities']['items'][0]['label']);
     $this->assertSame('https://drive.example.com/f/99', $result['activities']['items'][0]['url']);
     $this->assertSame('created', $result['activities']['items'][0]['action']);
-    $this->assertSame('2023-11-14 22:13', $result['activities']['items'][0]['subtitle']);
+    $this->assertSame('14.11.2023 - 22:13', $result['activities']['items'][0]['subtitle']);
   }
 
   /**

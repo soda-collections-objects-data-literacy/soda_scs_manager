@@ -23,6 +23,8 @@ class SodaScsJupyterHelpersTest extends UnitTestCase {
   private function createProject(string $gid = '10001'): SodaScsProjectInterface {
     $field = $this->createMock(FieldItemListInterface::class);
     $field->method('__get')->with('value')->willReturn($gid);
+    // The code reads ->value ?? '', which calls __isset() first.
+    $field->method('__isset')->with('value')->willReturn(TRUE);
 
     $project = $this->createMock(SodaScsProjectInterface::class);
     $project->method('get')->with('groupId')->willReturn($field);

@@ -22,11 +22,11 @@ class SodaScsEntityOwnerAccessTest extends SodaScsKernelTestBase {
   protected function setUp(): void {
     parent::setUp();
 
-    $role = Role::create([
+    // hook_user_insert() already created scs_user for the base class's user.
+    $role = Role::load('scs_user') ?? Role::create([
       'id' => 'scs_user',
       'label' => 'scs_user',
     ]);
-    $role->save();
     $role->grantPermission('view soda scs component');
     $role->grantPermission('edit soda scs component');
     $role->grantPermission('delete soda scs component');
@@ -35,6 +35,7 @@ class SodaScsEntityOwnerAccessTest extends SodaScsKernelTestBase {
     $role->grantPermission('delete soda scs stack');
     $role->grantPermission('create soda scs snapshot');
     $role->grantPermission('view soda scs snapshot');
+    $role->save();
   }
 
   /**
@@ -152,7 +153,6 @@ class SodaScsEntityOwnerAccessTest extends SodaScsKernelTestBase {
       'id' => 'scs_manager_admin',
       'label' => 'scs_manager_admin',
     ]);
-    $adminRole->save();
     $adminRole->grantPermission('soda scs manager admin');
     $adminRole->grantPermission('view soda scs component');
     $adminRole->grantPermission('edit soda scs component');
@@ -161,6 +161,7 @@ class SodaScsEntityOwnerAccessTest extends SodaScsKernelTestBase {
     $adminRole->grantPermission('edit soda scs stack');
     $adminRole->grantPermission('delete soda scs stack');
     $adminRole->grantPermission('view soda scs snapshot');
+    $adminRole->save();
     $admin->addRole('scs_manager_admin');
     $admin->save();
 

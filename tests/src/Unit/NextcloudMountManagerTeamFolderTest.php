@@ -128,6 +128,8 @@ class NextcloudMountManagerTeamFolderTest extends UnitTestCase {
   private function createProject(): SodaScsProjectInterface {
     $groupId = $this->createMock(FieldItemListInterface::class);
     $groupId->method('__get')->with('value')->willReturn('10069');
+    // The code reads ->value ?? '', which calls __isset() first.
+    $groupId->method('__isset')->with('value')->willReturn(TRUE);
 
     $project = $this->createMock(SodaScsProjectInterface::class);
     $project->method('label')->willReturn('wat26-workshop');

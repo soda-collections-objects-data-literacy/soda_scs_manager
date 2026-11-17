@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Drupal\Tests\soda_scs_manager\Unit\Helpers;
 
+use Drupal\Core\DependencyInjection\ContainerBuilder;
 use Drupal\soda_scs_manager\Helpers\SodaScsHealthStatus;
 use Drupal\Tests\UnitTestCase;
 
@@ -130,6 +131,11 @@ class SodaScsHealthStatusTest extends UnitTestCase {
    * @covers ::normalizePayload
    */
   public function testNormalizePayloadRewritesLegacyStatus(): void {
+    // normalizePayload() casts the status label (TranslatableMarkup) to string.
+    $container = new ContainerBuilder();
+    $container->set('string_translation', $this->getStringTranslationStub());
+    \Drupal::setContainer($container);
+
     $payload = SodaScsHealthStatus::normalizePayload([
       'status' => 'healthy',
       'message' => 'Available',

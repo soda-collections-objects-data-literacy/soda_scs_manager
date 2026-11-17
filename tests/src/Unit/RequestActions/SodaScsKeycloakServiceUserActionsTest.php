@@ -137,7 +137,7 @@ class SodaScsKeycloakServiceUserActionsTest extends UnitTestCase {
    */
   protected function setupDefaultKeycloakSettings(): void {
     $generalSettings = [
-      'host' => 'https://keycloak.example.com',
+      'url' => 'https://keycloak.example.com',
       'realm' => 'test-realm',
       'adminUsername' => 'admin',
       'adminPassword' => 'admin-password',

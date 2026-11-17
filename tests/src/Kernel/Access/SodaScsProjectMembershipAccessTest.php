@@ -30,7 +30,8 @@ class SodaScsProjectMembershipAccessTest extends SodaScsKernelTestBase {
   protected function setUp(): void {
     parent::setUp();
 
-    $userRole = Role::create([
+    // hook_user_insert() already created scs_user for the base class's user.
+    $userRole = Role::load('scs_user') ?? Role::create([
       'id' => 'scs_user',
       'label' => 'scs_user',
     ]);

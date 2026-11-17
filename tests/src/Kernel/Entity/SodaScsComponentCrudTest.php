@@ -199,8 +199,9 @@ class SodaScsComponentCrudTest extends SodaScsKernelTestBase {
     // Create a project.
     $project = $this->createTestProject();
 
-    // Create a component with project reference.
-    $component = $this->createTestComponent('soda_scs_sql_component', [
+    // Create a component with project reference. Not an SQL component: its
+    // insert hook grants the project members access on the database server.
+    $component = $this->createTestComponent('soda_scs_triplestore_component', [
       'partOfProjects' => [$project->id()],
     ]);
 

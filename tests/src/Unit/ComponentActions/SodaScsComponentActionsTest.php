@@ -5,12 +5,14 @@ declare(strict_types=1);
 namespace Drupal\Tests\soda_scs_manager\Unit\ComponentActions;
 
 use Drupal\Core\Entity\EntityTypeManagerInterface;
+use Drupal\Core\Field\FieldItemListInterface;
 use Drupal\Core\StringTranslation\TranslationInterface;
 use Drupal\soda_scs_manager\ComponentActions\SodaScsComponentActions;
 use Drupal\soda_scs_manager\ComponentActions\SodaScsComponentActionsInterface;
 use Drupal\soda_scs_manager\Entity\SodaScsComponentInterface;
 use Drupal\Tests\UnitTestCase;
 use Prophecy\PhpUnit\ProphecyTrait;
+use Prophecy\Prophecy\ObjectProphecy;
 
 /**
  * Tests the SodaScsComponentActions orchestration service.
@@ -104,6 +106,7 @@ class SodaScsComponentActionsTest extends UnitTestCase {
   public function testCreateComponentSql(): void {
     $component = $this->prophesize(SodaScsComponentInterface::class);
     $component->bundle()->willReturn('soda_scs_sql_component');
+    $this->addProject($component);
 
     $expectedResult = [
       'success' => TRUE,
@@ -128,6 +131,7 @@ class SodaScsComponentActionsTest extends UnitTestCase {
   public function testCreateComponentTriplestore(): void {
     $component = $this->prophesize(SodaScsComponentInterface::class);
     $component->bundle()->willReturn('soda_scs_triplestore_component');
+    $this->addProject($component);
 
     $expectedResult = [
       'success' => TRUE,
@@ -152,6 +156,7 @@ class SodaScsComponentActionsTest extends UnitTestCase {
   public function testCreateComponentWisski(): void {
     $component = $this->prophesize(SodaScsComponentInterface::class);
     $component->bundle()->willReturn('soda_scs_wisski_component');
+    $this->addProject($component);
 
     $expectedResult = [
       'success' => TRUE,
@@ -176,6 +181,7 @@ class SodaScsComponentActionsTest extends UnitTestCase {
   public function testCreateComponentWebprotege(): void {
     $component = $this->prophesize(SodaScsComponentInterface::class);
     $component->bundle()->willReturn('soda_scs_webprotege_component');
+    $this->addProject($component);
 
     $expectedResult = [
       'success' => TRUE,
@@ -200,6 +206,7 @@ class SodaScsComponentActionsTest extends UnitTestCase {
   public function testCreateComponentUnknownBundle(): void {
     $component = $this->prophesize(SodaScsComponentInterface::class);
     $component->bundle()->willReturn('unknown_bundle');
+    $this->addProject($component);
 
     $result = $this->componentActions->createComponent($component->reveal());
 
@@ -355,6 +362,40 @@ class SodaScsComponentActionsTest extends UnitTestCase {
       'wisski' => ['soda_scs_wisski_component', 'wisski'],
       'webprotege' => ['soda_scs_webprotege_component', 'webprotege'],
     ];
+  }
+
+  /**
+   * Gives the entity a project, which createComponent() requires.
+   *
+   * @param \Prophecy\Prophecy\ObjectProphecy $entity
+   *   The component prophecy.
+   */
+  private function addProject(ObjectProphecy $entity): void {
+    $projects = $this->prophesize(FieldItemListInterface::class);
+    $projects->isEmpty()->willReturn(FALSE);
+    $entity->hasField('partOfProjects')->willReturn(TRUE);
+    $entity->get('partOfProjects')->willReturn($projects->reveal());
+  }
+
+  /**
+   * Tests that createComponent() refuses an entity without a project.
+   *
+   * @covers ::createComponent
+   */
+  public function testCreateComponentWithoutProject(): void {
+    $projects = $this->prophesize(FieldItemListInterface::class);
+    $projects->isEmpty()->willReturn(TRUE);
+    $entity = $this->prophesize(SodaScsComponentInterface::class);
+    $entity->bundle()->willReturn('soda_scs_sql_component');
+    $entity->hasField('partOfProjects')->willReturn(TRUE);
+    $entity->get('partOfProjects')->willReturn($projects->reveal());
+
+    $this->sqlComponentActions->createComponent($entity->reveal())->shouldNotBeCalled();
+
+    $result = $this->componentActions->createComponent($entity->reveal());
+
+    $this->assertFalse($result['success']);
+    $this->assertSame('Component has no project (partOfProjects is empty).', $result['error']);
   }
 
 }

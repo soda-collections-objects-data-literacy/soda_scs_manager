@@ -22,7 +22,8 @@ class SodaScsProjectViewAccessTest extends SodaScsKernelTestBase {
   protected function setUp(): void {
     parent::setUp();
 
-    $userRole = Role::create([
+    // hook_user_insert() already created scs_user for the base class's user.
+    $userRole = Role::load('scs_user') ?? Role::create([
       'id' => 'scs_user',
       'label' => 'scs_user',
     ]);
@@ -33,8 +34,10 @@ class SodaScsProjectViewAccessTest extends SodaScsKernelTestBase {
       'id' => 'scs_admin',
       'label' => 'scs_admin',
     ]);
-    $adminRole->grantPermission('soda scs manager user');
-    $adminRole->grantPermission('administer soda scs project entities');
+    // As the site's administrator role: the entity's admin permission
+    // (administer soda scs project entities) is not defined in
+    // permissions.yml, so a role cannot be granted it.
+    $adminRole->setIsAdmin(TRUE);
     $adminRole->save();
 
     $this->container->get('router.builder')->rebuild();
