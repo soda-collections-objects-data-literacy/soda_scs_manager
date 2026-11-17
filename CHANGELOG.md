@@ -38,6 +38,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- Conversation and message UI styling: the module keeps layout classes only;
+  colours and radii for bubbles, chips and unread marks live in
+  `scs_custom_theme` (`_messages.scss`).
 - A service key can only be opened, changed or deleted by its owner and by
   roles with **Administer SODa SCS Manager**.
 - Roles with **Administer SODa SCS Manager** now have full access to all
