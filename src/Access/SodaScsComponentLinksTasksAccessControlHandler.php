@@ -49,6 +49,26 @@ final class SodaScsComponentLinksTasksAccessControlHandler {
   }
 
   /**
+   * Determines access for the WebProtégé ontology import form.
+   *
+   * Only WebProtégé components, and only for users who may update the
+   * component (owner or administrator).
+   *
+   * @param \Drupal\soda_scs_manager\Entity\SodaScsComponentInterface $soda_scs_component
+   *   The SODa SCS Component entity.
+   *
+   * @return \Drupal\Core\Access\AccessResultInterface
+   *   Allowed for the owner or an administrator of a WebProtégé component.
+   */
+  public static function accessImportOntologyForm(SodaScsComponentInterface $soda_scs_component): AccessResultInterface {
+    if ($soda_scs_component->bundle() !== 'soda_scs_webprotege_component') {
+      return AccessResult::forbidden()->addCacheableDependency($soda_scs_component);
+    }
+
+    return SodaScsComponentAccessControlHandler::accessEditForm($soda_scs_component);
+  }
+
+  /**
    * Determines access for the installed Drupal packages task.
    *
    * @param \Drupal\soda_scs_manager\Entity\SodaScsComponentInterface $soda_scs_component

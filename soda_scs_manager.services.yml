@@ -170,6 +170,8 @@ services:
     class: Drupal\soda_scs_manager\RequestActions\SodaScsWebprotegeServiceActions
   soda_scs_manager.webprotege.helpers:
     class: Drupal\soda_scs_manager\Helpers\SodaScsWebprotegeHelpers
+  soda_scs_manager.ontology_import_inspector:
+    class: Drupal\soda_scs_manager\Helpers\SodaScsOntologyImportInspector
   soda_scs_manager.nextcloud.preview:
     class: Drupal\soda_scs_manager\Service\SodaScsNextcloudPreview
   soda_scs_manager.application_card_builder:

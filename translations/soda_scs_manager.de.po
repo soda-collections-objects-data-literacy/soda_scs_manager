@@ -6081,3 +6081,71 @@ msgstr "Das WebProtégé-Projekt von @project konnte nicht vorbereitet werden."
 #: src/Helpers/SodaScsWebprotegeHelpers.php
 msgid "Wrote the first revision of the WebProtégé project of @project."
 msgstr "Erste Revision des WebProtégé-Projekts von @project geschrieben."
+
+#: soda_scs_manager.links.task.yml src/Form/SodaScsWebprotegeOntologyImportForm.php
+msgid "Import ontology"
+msgstr "Ontologie importieren"
+
+#: src/Form/SodaScsWebprotegeOntologyImportForm.php
+msgid "The classes, properties and other axioms of the file are added to the ontology of this WebProtégé project. Nothing in the project is removed or replaced."
+msgstr "Die Klassen, Properties und übrigen Axiome der Datei werden der Ontologie dieses WebProtégé-Projekts hinzugefügt. Im Projekt wird nichts entfernt oder ersetzt."
+
+#: src/Form/SodaScsWebprotegeOntologyImportForm.php
+msgid "Ontology file"
+msgstr "Ontologie-Datei"
+
+#: src/Form/SodaScsWebprotegeOntologyImportForm.php
+msgid "RDF/XML, Turtle or OWL functional syntax. Allowed extensions: @extensions. Maximum size: @size. An .owl file must be RDF/XML: save OWL/XML files from Protégé as RDF/XML first. Imports (owl:imports) are loaded too and must be public http or https addresses."
+msgstr "RDF/XML, Turtle oder OWL Functional Syntax. Erlaubte Endungen: @extensions. Maximale Größe: @size. Eine .owl-Datei muss RDF/XML sein: Speichern Sie OWL/XML-Dateien in Protégé zuerst als RDF/XML. Importe (owl:imports) werden mitgeladen und müssen öffentliche http- oder https-Adressen sein."
+
+#: src/Form/SodaScsWebprotegeOntologyImportForm.php
+msgid "The file is larger than @size."
+msgstr "Die Datei ist größer als @size."
+
+#: src/Form/SodaScsWebprotegeOntologyImportForm.php
+msgid "Revision message"
+msgstr "Revisionsnachricht"
+
+#: src/Form/SodaScsWebprotegeOntologyImportForm.php
+msgid "Shown in the history of the WebProtégé project."
+msgstr "Erscheint in der Historie des WebProtégé-Projekts."
+
+#: src/Form/SodaScsWebprotegeOntologyImportForm.php
+msgid "This WebProtégé application belongs to no project."
+msgstr "Diese WebProtégé-Anwendung gehört zu keinem Projekt."
+
+#: src/Form/SodaScsWebprotegeOntologyImportForm.php
+msgid "The uploaded file could not be read."
+msgstr "Die hochgeladene Datei konnte nicht gelesen werden."
+
+#: src/Form/SodaScsWebprotegeOntologyImportForm.php
+msgid "Choose an ontology file."
+msgstr "Wählen Sie eine Ontologie-Datei aus."
+
+#: src/Form/SodaScsWebprotegeOntologyImportForm.php
+msgid "The file could not be uploaded. It may be larger than @size."
+msgstr "Die Datei konnte nicht hochgeladen werden. Möglicherweise ist sie größer als @size."
+
+#: src/Form/SodaScsWebprotegeOntologyImportForm.php
+msgid "Only files with these extensions can be imported: @extensions."
+msgstr "Nur Dateien mit diesen Endungen können importiert werden: @extensions."
+
+#: src/Helpers/SodaScsWebprotegeHelpers.php
+msgid "WebProtégé could not read the ontology file. Check that it is valid RDF/XML, Turtle or OWL functional syntax."
+msgstr "WebProtégé konnte die Ontologie-Datei nicht lesen. Prüfen Sie, ob sie gültiges RDF/XML, Turtle oder OWL Functional Syntax enthält."
+
+#: src/Helpers/SodaScsWebprotegeHelpers.php
+msgid "WebProtégé could not read the ontology file or one of its imports. Check that the file is valid RDF/XML, Turtle or OWL functional syntax and that every import can be downloaded."
+msgstr "WebProtégé konnte die Ontologie-Datei oder einen ihrer Importe nicht lesen. Prüfen Sie, ob die Datei gültiges RDF/XML, Turtle oder OWL Functional Syntax enthält und ob sich jeder Import herunterladen lässt."
+
+#: src/Helpers/SodaScsWebprotegeHelpers.php
+msgid "This file is OWL/XML, which cannot be imported. Save the ontology as RDF/XML or Turtle in Protégé and upload that file."
+msgstr "Diese Datei ist OWL/XML und kann nicht importiert werden. Speichern Sie die Ontologie in Protégé als RDF/XML oder Turtle und laden Sie diese Datei hoch."
+
+#: src/Helpers/SodaScsWebprotegeHelpers.php
+msgid "The ontology file or one of its imports (owl:imports) could not be read. Check that the file is valid RDF/XML, Turtle or OWL functional syntax and that every import is a full http or https address."
+msgstr "Die Ontologie-Datei oder einer ihrer Importe (owl:imports) konnte nicht gelesen werden. Prüfen Sie, ob die Datei gültiges RDF/XML, Turtle oder OWL Functional Syntax enthält und ob jeder Import eine vollständige http- oder https-Adresse ist."
+
+#: src/Helpers/SodaScsWebprotegeHelpers.php
+msgid "The ontology file imports @iri, which is not a public http or https address. WebProtégé can only load imports that anyone can download from the internet."
+msgstr "Die Ontologie-Datei importiert @iri, das keine öffentliche http- oder https-Adresse ist. WebProtégé kann nur Importe laden, die jeder aus dem Internet herunterladen kann."

@@ -8,6 +8,7 @@ use Drupal\Core\Logger\LoggerChannelFactoryInterface;
 use Drupal\Core\Logger\LoggerChannelInterface;
 use Drupal\Core\StringTranslation\StringTranslationTrait;
 use Drupal\soda_scs_manager\Entity\SodaScsProjectInterface;
+use Drupal\soda_scs_manager\Exception\SodaScsOntologyImportsException;
 use Drupal\soda_scs_manager\RequestActions\SodaScsWebprotegeServiceActions;
 use Drupal\soda_scs_manager\ValueObject\SodaScsResult;
 use Drupal\user\UserInterface;
@@ -39,6 +40,14 @@ class SodaScsWebprotegeHelpers {
   private const OIDC_LOGIN_PATH = '/webprotege/oidc/login';
 
   /**
+   * Seconds an uploaded ontology may take, imports included.
+   *
+   * Below nginx's fastcgi_read_timeout (300 s), so the user gets a message
+   * instead of a gateway timeout while WebProtégé is still busy.
+   */
+  private const ONTOLOGY_IMPORT_TIMEOUT = 240;
+
+  /**
    * Smallest document whose axiom makes WebProtégé write a first revision.
    *
    * A project created through the API has no ontology and no revision, so it
@@ -59,6 +68,8 @@ class SodaScsWebprotegeHelpers {
     #[Autowire(service: 'soda_scs_manager.webprotege_service.actions')]
     protected SodaScsWebprotegeServiceActions $webprotegeServiceActions,
     LoggerChannelFactoryInterface $loggerFactory,
+    #[Autowire(service: 'soda_scs_manager.ontology_import_inspector')]
+    protected SodaScsOntologyImportInspector $ontologyImportInspector,
   ) {
     $this->logger = $loggerFactory->get('soda_scs_manager');
   }
@@ -824,6 +835,82 @@ class SodaScsWebprotegeHelpers {
   }
 
   /**
+   * Adds the axioms of one uploaded ontology document to the linked project.
+   *
+   * WebProtégé's own "Apply external edits" only merges an ontology with the
+   * same ontology IRI, which a project created by the manager never has, so
+   * users import files through this method. Axioms are added, never removed.
+   * The document's owl:imports stay: WebProtégé fetches them and adds their
+   * axioms too, once the inspector has found every direct import to point at
+   * a public http(s) address.
+   *
+   * @param string $commitMessage
+   *   Revision message shown in the WebProtégé history.
+   * @param string $document
+   *   The ontology document.
+   * @param string $extension
+   *   File extension; a key of ONTOLOGY_DOCUMENT_MIME_TYPES.
+   * @param \Drupal\soda_scs_manager\Entity\SodaScsProjectInterface $project
+   *   The SCS project whose WebProtégé project receives the axioms.
+   *
+   * @return \Drupal\soda_scs_manager\ValueObject\SodaScsResult
+   *   On success, data has webprotegeProjectId and the checked imports.
+   */
+  public function importOntologyDocument(string $commitMessage, string $document, string $extension, SodaScsProjectInterface $project): SodaScsResult {
+    $failureMessage = (string) $this->t('Could not import the ontology into @project.', ['@project' => $project->label()]);
+    $projectId = $this->linkedProjectId($project);
+    if ($projectId === NULL) {
+      return SodaScsResult::failure('No WebProtégé project is linked.', $failureMessage, FALSE);
+    }
+
+    $extension = strtolower($extension);
+    $mimeType = SodaScsWebprotegeServiceActions::ONTOLOGY_DOCUMENT_MIME_TYPES[$extension] ?? NULL;
+    if ($mimeType === NULL) {
+      return SodaScsResult::failure(sprintf('Unsupported ontology file extension "%s".', $extension), $failureMessage, FALSE);
+    }
+
+    $imports = $this->checkOntologyImports($document, $mimeType, $projectId, $project);
+    if ($imports instanceof SodaScsResult) {
+      return $imports;
+    }
+
+    $request = $this->webprotegeServiceActions->buildAddAxiomsRequest($commitMessage, $document, $projectId, $mimeType, self::ONTOLOGY_IMPORT_TIMEOUT);
+    $response = $this->webprotegeServiceActions->makeRequest($request);
+    if (empty($response['success'])) {
+      $parserError = self::parserErrorFromResponse($response['data']['webprotegeResponse'] ?? NULL);
+      $this->logger->error('Failed to import an ontology document (@format, @imports imports) into WebProtégé project @id for SCS project @project, HTTP @status: @error', [
+        '@error' => $parserError ?? (string) ($response['error'] ?? 'unknown error'),
+        '@format' => $mimeType,
+        '@id' => $projectId,
+        '@imports' => count($imports),
+        '@project' => $project->id(),
+        '@status' => (int) ($response['statusCode'] ?? 0),
+      ]);
+      $status = (int) ($response['statusCode'] ?? 0);
+      // WebProtégé answers 400 for a file it cannot parse, but 500 when an
+      // import downloads as something else than an ontology (an HTML page).
+      if ($imports !== [] && in_array($status, [400, 500], TRUE)) {
+        $failureMessage = (string) $this->t('WebProtégé could not read the ontology file or one of its imports. Check that the file is valid RDF/XML, Turtle or OWL functional syntax and that every import can be downloaded.');
+      }
+      elseif ($status === 400) {
+        $failureMessage = (string) $this->t('WebProtégé could not read the ontology file. Check that it is valid RDF/XML, Turtle or OWL functional syntax.');
+      }
+      return SodaScsResult::failure((string) ($response['error'] ?? 'WebProtégé request failed.'), $failureMessage, FALSE);
+    }
+
+    $this->logger->info('Imported an ontology document (@format, @imports imports) into WebProtégé project @id for SCS project @project.', [
+      '@format' => $mimeType,
+      '@id' => $projectId,
+      '@imports' => count($imports),
+      '@project' => $project->id(),
+    ]);
+    return SodaScsResult::success(
+      data: ['imports' => $imports, 'webprotegeProjectId' => $projectId],
+      message: (string) $this->t('Imported the ontology into @project.', ['@project' => $project->label()]),
+    );
+  }
+
+  /**
    * Replaces the linked WebProtégé project with a new, empty one.
    *
    * WebProtégé cannot clear a project, so a reset trashes the old project
@@ -840,10 +927,36 @@ class SodaScsWebprotegeHelpers {
   }
 
   /**
+   * Reads the parser error of a failed POST …/axioms response.
+   *
+   * WebProtégé answers 400 with errorMessage, lineNumber and columnNumber
+   * when it cannot parse a posted document.
+   *
+   * @return string|null
+   *   The message with line and column, or NULL when the body has none.
+   */
+  public static function parserErrorFromResponse(mixed $response): ?string {
+    if (!is_object($response) || !method_exists($response, 'getBody')) {
+      return NULL;
+    }
+    $payload = json_decode((string) $response->getBody(), TRUE);
+    if (!is_array($payload) || !is_string($payload['errorMessage'] ?? NULL)) {
+      return NULL;
+    }
+    return sprintf(
+      '%s (line %d, column %d)',
+      mb_substr($payload['errorMessage'], 0, 500),
+      (int) ($payload['lineNumber'] ?? -1),
+      (int) ($payload['columnNumber'] ?? -1),
+    );
+  }
+
+  /**
    * Removes Import() declarations from an OWL functional syntax document.
    *
-   * WebProtégé resolves imports of posted documents over the network; the
-   * imported documents are posted separately instead.
+   * Used for ontology zips: WebProtégé would resolve the imports over the
+   * network, but the zip already holds the imported documents, which are
+   * posted separately.
    */
   public static function removeImportDeclarations(string $functionalSyntax): string {
     return (string) preg_replace('/^[ \t]*Import\(<[^>]*>\)[ \t]*\R?/m', '', $functionalSyntax);
@@ -862,6 +975,46 @@ class SodaScsWebprotegeHelpers {
   public function isApiConfigured(): bool {
     $request = $this->webprotegeServiceActions->buildCreateRequest(['body' => []]);
     return !empty($request['success']);
+  }
+
+  /**
+   * Reads the direct imports of a document and checks where they point.
+   *
+   * @return list<string>|\Drupal\soda_scs_manager\ValueObject\SodaScsResult
+   *   The import IRIs, or a failure when one cannot be read or is not public.
+   */
+  private function checkOntologyImports(string $document, string $mimeType, string $projectId, SodaScsProjectInterface $project): array|SodaScsResult {
+    try {
+      $imports = $this->ontologyImportInspector->importIris($document, $mimeType);
+    }
+    catch (SodaScsOntologyImportsException $e) {
+      $this->logger->warning('Refused an ontology document (@format) for WebProtégé project @id of SCS project @project: @error', [
+        '@error' => $e->getMessage(),
+        '@format' => $mimeType,
+        '@id' => $projectId,
+        '@project' => $project->id(),
+      ]);
+      $message = $e->getCode() === SodaScsOntologyImportsException::OWL_XML
+        ? $this->t('This file is OWL/XML, which cannot be imported. Save the ontology as RDF/XML or Turtle in Protégé and upload that file.')
+        : $this->t('The ontology file or one of its imports (owl:imports) could not be read. Check that the file is valid RDF/XML, Turtle or OWL functional syntax and that every import is a full http or https address.');
+      return SodaScsResult::failure($e->getMessage(), (string) $message, FALSE);
+    }
+
+    foreach ($imports as $iri) {
+      if (!$this->ontologyImportInspector->isAllowedImportIri($iri)) {
+        $this->logger->warning('Refused an ontology document for WebProtégé project @id of SCS project @project: import @iri is not a public http(s) address.', [
+          '@id' => $projectId,
+          '@iri' => mb_substr($iri, 0, 500),
+          '@project' => $project->id(),
+        ]);
+        return SodaScsResult::failure(
+          sprintf('Import %s is not a public http(s) address.', $iri),
+          (string) $this->t('The ontology file imports @iri, which is not a public http or https address. WebProtégé can only load imports that anyone can download from the internet.', ['@iri' => $iri]),
+          FALSE,
+        );
+      }
+    }
+    return $imports;
   }
 
   /**

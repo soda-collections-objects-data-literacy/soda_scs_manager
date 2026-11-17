@@ -36,6 +36,16 @@ class SodaScsWebprotegeServiceActions implements SodaScsServiceRequestInterface 
   public const FUNCTIONAL_SYNTAX_MIME_TYPE = 'text/owl-functional';
 
   /**
+   * Content types POST …/axioms accepts, keyed by file extension.
+   */
+  public const ONTOLOGY_DOCUMENT_MIME_TYPES = [
+    'ofn' => self::FUNCTIONAL_SYNTAX_MIME_TYPE,
+    'owl' => 'application/rdf+xml',
+    'rdf' => 'application/rdf+xml',
+    'ttl' => 'text/ttl',
+  ];
+
+  /**
    * Seconds for ontology downloads and uploads; large ontologies take a while.
    */
   protected const ONTOLOGY_TRANSFER_TIMEOUT = 300;
@@ -70,32 +80,42 @@ class SodaScsWebprotegeServiceActions implements SodaScsServiceRequestInterface 
   protected Config $settings;
 
   /**
-   * Posts axioms in OWL functional syntax into a project's root ontology.
+   * Posts the axioms of an ontology document into a project's root ontology.
+   *
+   * WebProtégé adds the axioms; it removes none from the project.
+   *
+   * WebProtégé fetches the document's owl:imports itself and adds their
+   * axioms too; callers check or remove the imports before (see
+   * SodaScsOntologyImportInspector).
    *
    * @param string $commitMessage
    *   Revision message shown in the WebProtégé history.
-   * @param string $functionalSyntax
-   *   The ontology document; its Import() declarations must be removed,
-   *   because WebProtégé would try to fetch them.
+   * @param string $document
+   *   The ontology document.
    * @param string $projectId
    *   WebProtégé project UUID.
+   * @param string $mimeType
+   *   Content type of the document: one of the ONTOLOGY_DOCUMENT_MIME_TYPES
+   *   values. Defaults to OWL functional syntax.
+   * @param int $timeout
+   *   Request timeout in seconds.
    */
-  public function buildAddAxiomsRequest(string $commitMessage, string $functionalSyntax, string $projectId): array {
+  public function buildAddAxiomsRequest(string $commitMessage, string $document, string $projectId, string $mimeType = self::FUNCTIONAL_SYNTAX_MIME_TYPE, int $timeout = self::ONTOLOGY_TRANSFER_TIMEOUT): array {
     $settings = $this->requireApiSettings();
     if ($settings === NULL) {
       return $this->missingApiKeyRequest('axioms');
     }
 
     $headers = $this->apiHeaders($settings['apiKey']);
-    $headers['Content-Type'] = self::FUNCTIONAL_SYNTAX_MIME_TYPE;
+    $headers['Content-Type'] = $mimeType;
     return [
       'type' => 'axioms',
       'success' => TRUE,
       'method' => 'POST',
       'route' => $settings['apiBaseUrl'] . '/data/projects/' . rawurlencode($projectId) . '/axioms?' . http_build_query(['msg' => $commitMessage]),
       'headers' => $headers,
-      'body' => $functionalSyntax,
-      'timeout' => self::ONTOLOGY_TRANSFER_TIMEOUT,
+      'body' => $document,
+      'timeout' => $timeout,
     ];
   }
 

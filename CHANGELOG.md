@@ -7,6 +7,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- WebProtégé applications have an "Import ontology" tab. The owner uploads an
+  RDF/XML, Turtle or OWL functional syntax file, and its axioms are added to
+  the project's ontology; nothing is removed. The file's `owl:imports` are
+  loaded too, but only from public http(s) addresses: imports of internal
+  addresses, local files or relative paths are refused. OWL/XML files get a
+  hint to save them as RDF/XML; files are limited to 50 MB. WebProtégé's own
+  "Apply external edits" cannot do this for projects created by the SCS
+  Manager: it only merges an ontology with the same ontology IRI, imports
+  nothing and still reports success.
+  Related: [#3638992](https://www.drupal.org/project/soda_scs_manager/issues/3638992).
+
 ### Fixed
 
 - A WebProtégé project created by the SCS Manager gets a first revision right

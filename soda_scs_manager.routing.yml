@@ -183,6 +183,20 @@ entity.soda_scs_component.snapshot:
       soda_scs_component:
         type: entity:soda_scs_component
 
+entity.soda_scs_component.import_ontology:
+  path: '/soda-scs-manager/component/{soda_scs_component}/import-ontology'
+  defaults:
+    _form: '\Drupal\soda_scs_manager\Form\SodaScsWebprotegeOntologyImportForm'
+    _title: 'Import ontology'
+  requirements:
+    _permission: 'soda scs manager user'
+    _custom_access: '\Drupal\soda_scs_manager\Access\SodaScsComponentLinksTasksAccessControlHandler::accessImportOntologyForm'
+  options:
+    parameters:
+      soda_scs_component:
+        type: entity:soda_scs_component
+    no_cache: TRUE
+
 # SODa SCS Project Entities
 
 entity.soda_scs_project.canonical:
