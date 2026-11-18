@@ -79,9 +79,69 @@ class SodaScsOrphanCleanup {
   }
 
   /**
-   * Deletes the selected orphan keys.
+   * Builds the set of selection keys that are orphans right now.
    *
-   * Re-runs detection first and skips anything that is no longer an orphan.
+   * @return array<string, true>
+   *   Allowed keys from a fresh detect() run.
+   */
+  public function currentAllowedKeys(): array {
+    return $this->allowedKeysFromReport($this->orphanDetector->detect());
+  }
+
+  /**
+   * Deletes one orphan key.
+   *
+   * @param string $key
+   *   Selection key from the form.
+   * @param array<string, true>|null $allowed
+   *   Optional precomputed allowed keys; NULL re-runs detection.
+   *
+   * @return array{status: string, error: string|null}
+   *   status is "deleted", "skipped" or "error".
+   */
+  public function deleteOne(string $key, ?array $allowed = NULL): array {
+    $allowed ??= $this->currentAllowedKeys();
+    if (!isset($allowed[$key])) {
+      return ['status' => 'skipped', 'error' => NULL];
+    }
+    $parsed = self::parseSelectionKey($key);
+    if ($parsed === NULL) {
+      return ['status' => 'skipped', 'error' => NULL];
+    }
+    [$kind, $parts] = $parsed;
+    try {
+      $ok = match ($kind) {
+        self::KIND_DANGLING => $this->deleteDanglingEntity($parts),
+        self::KIND_PORTAINER => $this->deletePortainerOrphan($parts),
+        self::KIND_DATABASE => $this->deleteDatabaseOrphan($parts),
+        self::KIND_REPOSITORY => $this->deleteRepositoryOrphan($parts),
+        default => FALSE,
+      };
+    }
+    catch (\Throwable $e) {
+      $this->logger->error('Orphan cleanup failed for @key: @message', [
+        '@key' => $key,
+        '@message' => $e->getMessage(),
+      ]);
+      return [
+        'status' => 'error',
+        'error' => (string) $this->t('Could not delete @key: @message', [
+          '@key' => $key,
+          '@message' => $e->getMessage(),
+        ]),
+      ];
+    }
+    return [
+      'status' => $ok ? 'deleted' : 'skipped',
+      'error' => NULL,
+    ];
+  }
+
+  /**
+   * Deletes the selected orphan keys in one go.
+   *
+   * Prefer the batch on the confirm form for many items. Re-runs detection
+   * first and skips anything that is no longer an orphan.
    *
    * @param list<string> $keys
    *   Selection keys from the form.
@@ -90,49 +150,21 @@ class SodaScsOrphanCleanup {
    *   Counts and soft error messages.
    */
   public function deleteSelected(array $keys): array {
-    $report = $this->orphanDetector->detect();
-    $allowed = $this->allowedKeysFromReport($report);
-
+    $allowed = $this->currentAllowedKeys();
     $deleted = 0;
     $skipped = 0;
     $errors = [];
 
-    // Stacks first so child components selected with them are already gone.
-    $ordered = $this->orderKeys($keys);
-
-    foreach ($ordered as $key) {
-      if (!isset($allowed[$key])) {
-        $skipped++;
-        continue;
-      }
-      $parsed = self::parseSelectionKey($key);
-      if ($parsed === NULL) {
-        $skipped++;
-        continue;
-      }
-      [$kind, $parts] = $parsed;
-      try {
-        $ok = match ($kind) {
-          self::KIND_DANGLING => $this->deleteDanglingEntity($parts),
-          self::KIND_PORTAINER => $this->deletePortainerOrphan($parts),
-          self::KIND_DATABASE => $this->deleteDatabaseOrphan($parts),
-          self::KIND_REPOSITORY => $this->deleteRepositoryOrphan($parts),
-          default => FALSE,
-        };
-      }
-      catch (\Throwable $e) {
-        $ok = FALSE;
-        $errors[] = (string) $this->t('Could not delete @key: @message', [
-          '@key' => $key,
-          '@message' => $e->getMessage(),
-        ]);
-        $this->logger->error('Orphan cleanup failed for @key: @message', [
-          '@key' => $key,
-          '@message' => $e->getMessage(),
-        ]);
-      }
-      if ($ok) {
+    foreach ($this->orderKeys($keys) as $key) {
+      $result = $this->deleteOne($key, $allowed);
+      if ($result['status'] === 'deleted') {
         $deleted++;
+      }
+      elseif ($result['status'] === 'error') {
+        $skipped++;
+        if ($result['error'] !== NULL) {
+          $errors[] = $result['error'];
+        }
       }
       else {
         $skipped++;
@@ -189,7 +221,7 @@ class SodaScsOrphanCleanup {
    * @return list<string>
    *   Ordered keys.
    */
-  protected function orderKeys(array $keys): array {
+  public function orderKeys(array $keys): array {
     $stacks = [];
     $rest = [];
     foreach (array_unique($keys) as $key) {

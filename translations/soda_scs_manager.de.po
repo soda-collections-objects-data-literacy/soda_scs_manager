@@ -6363,3 +6363,32 @@ msgstr "Repository @name"
 #: orphan cleanup form
 msgid "Could not delete @key: @message"
 msgstr "@key konnte nicht gelöscht werden: @message"
+
+#: orphan cleanup batch
+msgid "This permanently deletes the selected stacks, components, Portainer stacks, databases and triplestore repositories. Deletion runs one item at a time with a progress page. This action cannot be undone."
+msgstr "Damit werden die ausgewählten Stacks, Komponenten, Portainer-Stacks, Datenbanken und Triplestore-Repositories dauerhaft gelöscht. Das Löschen läuft einzeln mit einer Fortschrittsseite. Das lässt sich nicht rückgängig machen."
+
+#: orphan cleanup batch
+msgid "Deleting orphan resources"
+msgstr "Verwaiste Ressourcen werden gelöscht"
+
+#: orphan cleanup batch
+msgid "Preparing to delete the selected orphan resources."
+msgstr "Vorbereitung zum Löschen der ausgewählten verwaisten Ressourcen."
+
+#: orphan cleanup batch
+msgid "The orphan cleanup stopped with an error."
+msgstr "Das Aufräumen der verwaisten Ressourcen ist mit einem Fehler abgebrochen."
+
+#: orphan cleanup batch
+msgid "Deleted @item."
+msgstr "@item gelöscht."
+
+#: orphan cleanup batch
+msgid "Could not delete @item."
+msgstr "@item konnte nicht gelöscht werden."
+
+#: orphan cleanup batch
+msgid "Skipped @item."
+msgstr "@item übersprungen."
+

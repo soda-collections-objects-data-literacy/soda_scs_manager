@@ -14,8 +14,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   backend but have no matching SCS Manager stack or component entity, and
   stacks or components that still point at a deleted project. Each category
   explains when something counts as an orphan (hover title and description).
-  Selected items can be deleted after a confirmation. Shared infrastructure
-  databases are ignored.
+  Selected items can be deleted after a confirmation; deletion runs as a
+  Drupal batch with a progress page (one item per request). Shared
+  infrastructure databases are ignored.
 
 ### Changed
 
