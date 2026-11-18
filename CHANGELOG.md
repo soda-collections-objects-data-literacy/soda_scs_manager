@@ -16,6 +16,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- The demo reset confirmation now opens in an overlay on the project page.
 - The SCS Administration overview uses Drupal's standard admin menu block
   page, so Gin and Claro can render it. The custom card grid is gone.
 
@@ -26,16 +27,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   database, triplestore and stack, or a standalone SQL database or
   triplestore). Before, a taken WissKI name passed the form and failed only
   while the WissKI was created ("A database with this application name already
-  exists"). A rejected name is logged with the names it collides with. The
-  Create-Project wizard still creates the project before it sends the
-  application forms, so there a taken name still stops the applications queued
-  after it; the dialog now names the reason.
+  exists"). A rejected name is logged with the names it collides with.
   Related: [#3639084](https://www.drupal.org/project/soda_scs_manager/issues/3639084).
 - The "Add application" dialog shows the reason the server gave when an
   application cannot be created, for example that the name is taken. Before,
   it only showed the general list of possible reasons. The Create-Project
   wizard now also shows a single error message, not only lists of several.
   Related: [#3639084](https://www.drupal.org/project/soda_scs_manager/issues/3639084).
+- The Create-Project wizard checks each application on the server when you
+  leave its step, before the project is created. A taken name or another
+  invalid value is shown in that step, and you can correct it there. Before,
+  the wizard created the project first, and an invalid application stopped it
+  and every application after it.
+  Related: [#3639087](https://www.drupal.org/project/soda_scs_manager/issues/3639087).
 
 ## [4.6.0] - 2026-11-17
 

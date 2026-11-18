@@ -4950,8 +4950,13 @@ msgid "A newer demo version is available (v@new, your demo has v@current). The r
 msgstr "Eine neuere Demo-Version ist verfügbar (v@new, Ihre Demo hat v@current). Beim Zurücksetzen wird die neuere Version verwendet."
 
 #: src/Form/SodaScsDemoProjectResetForm.php
+#: templates/includes/soda-scs-manager--demo-status.html.twig
 msgid "Reset demo"
 msgstr "Demo zurücksetzen"
+
+#: templates/includes/soda-scs-manager--demo-status.html.twig
+msgid "The reset confirmation could not be loaded."
+msgstr "Die Bestätigung zum Zurücksetzen konnte nicht geladen werden."
 
 #: src/Form/SodaScsDemoProjectResetForm.php
 msgid "All changes in the WissKI, the databases, the triplestores, the Jupyter home directory and the Team Folder of this project are overwritten with the demo data. Applications you added yourself are not changed. This cannot be undone."
@@ -5090,6 +5095,10 @@ msgstr "Die Demo enthält WissKI, JupyterHub und WebProtégé mit Beispieldaten.
 #: js/createProjectWizard.js
 msgid "Could not create the demo project. Please try again."
 msgstr "Das Demo-Projekt konnte nicht angelegt werden. Bitte versuchen Sie es erneut."
+
+#: js/createProjectWizard.js
+msgid "The application could not be checked. Please try again."
+msgstr "Die Anwendung konnte nicht geprüft werden. Bitte versuchen Sie es erneut."
 
 #: soda_scs_manager.routing.yml
 msgid "Demo project status"

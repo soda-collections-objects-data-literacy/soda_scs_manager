@@ -40,6 +40,47 @@ trait SodaScsProjectScopedCreateFormTrait {
     return $deferProject === '1';
   }
 
+  /**
+   * Whether the wizard only asks the server to validate the form.
+   *
+   * ?deferProject=1&validateOnly=1: the create-project wizard checks an
+   * application step before the project exists. Nothing is saved, and the
+   * checks that need the project run again when the form is really sent.
+   *
+   * @return bool
+   *   TRUE when both query values are the string "1".
+   */
+  protected function isValidateOnlyRequest(): bool {
+    $request = $this->getRequest();
+    return $request
+      && self::queryDefersProjectSelection($request->query->get('deferProject'))
+      && $request->query->get('validateOnly') === '1';
+  }
+
+  /**
+   * Submit handler of a validate-only request: rebuild, never save.
+   *
+   * The rebuilt form carries no error message, which tells the wizard that
+   * the step is valid.
+   */
+  public function submitValidateOnly(array &$form, FormStateInterface $form_state): void {
+    $form_state->setRebuild();
+  }
+
+  /**
+   * {@inheritdoc}
+   *
+   * A validate-only request has no project yet, so the required
+   * partOfProjects field is not reported.
+   */
+  protected function getEditedFieldNames(FormStateInterface $form_state) {
+    $fieldNames = parent::getEditedFieldNames($form_state);
+    if (!$this->isValidateOnlyRequest()) {
+      return $fieldNames;
+    }
+    return array_values(array_diff($fieldNames, ['partOfProjects']));
+  }
+
 
   /**
    * Copies the chosen project into the partOfProjects form value.
@@ -47,9 +88,13 @@ trait SodaScsProjectScopedCreateFormTrait {
    * Call before parent::validateForm() so the entity is built with it.
    *
    * @return int|string|null
-   *   The project ID, or NULL when none was chosen (an error is set).
+   *   The project ID, or NULL when none was chosen (an error is set) or the
+   *   request only validates.
    */
   protected function applySelectedProject(FormStateInterface $form_state): int|string|null {
+    if ($this->isValidateOnlyRequest()) {
+      return NULL;
+    }
     $projectId = $this->resolveSelectedProjectId($form_state);
     if ($projectId === NULL) {
       $form_state->setErrorByName(self::PROJECT_SELECT_ELEMENT, $this->t('Choose the project this application belongs to.'));
@@ -72,6 +117,11 @@ trait SodaScsProjectScopedCreateFormTrait {
     // exists. This only skips the project picker; saving still requires one.
     $request = $this->getRequest();
     if ($request && self::queryDefersProjectSelection($request->query->get('deferProject'))) {
+      if ($this->isValidateOnlyRequest() && isset($form['actions'])) {
+        foreach (Element::children($form['actions']) as $key) {
+          $form['actions'][$key]['#submit'] = ['::submitValidateOnly'];
+        }
+      }
       return;
     }
 

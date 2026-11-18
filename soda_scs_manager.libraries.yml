@@ -130,7 +130,7 @@ addApplicationPopup:
     - soda_scs_manager/formErrorMessages
 
 createProjectWizard:
-  version: 1.10
+  version: 1.11
   js:
     js/createProjectWizard.js: {}
   dependencies:
@@ -170,6 +170,14 @@ demoProjectStatus:
   version: 1.4
   js:
     js/demoProjectStatus.js: {}
+  dependencies:
+    - core/drupal
+    - core/once
+
+demoResetOverlay:
+  version: 1.0
+  js:
+    js/demoResetOverlay.js: {}
   dependencies:
     - core/drupal
     - core/once

@@ -321,8 +321,9 @@ class SodaScsStackCreateForm extends ContentEntityForm {
       $form_state->setErrorByName('label', $this->t('The label must not exceed 25 characters.'));
     }
 
-    // WebProtégé and JupyterHub exist once per project.
-    if ($this->projectApplicationHelpers->isSingleInstanceBundle('soda_scs_stack', $this->bundle)) {
+    // WebProtégé and JupyterHub exist once per project. A validate-only
+    // request of the wizard has no project yet; the real submit checks it.
+    if (!$this->isValidateOnlyRequest() && $this->projectApplicationHelpers->isSingleInstanceBundle('soda_scs_stack', $this->bundle)) {
       $projectId = $this->resolveSelectedProjectId($form_state);
       $applicationLabel = $this->entityTypeBundleInfo->getBundleInfo('soda_scs_stack')[$this->bundle]['label'] ?? $this->bundle;
       if ($projectId === NULL) {
@@ -374,6 +375,10 @@ class SodaScsStackCreateForm extends ContentEntityForm {
    * {@inheritdoc}
    */
   public function save(array $form, FormStateInterface $form_state): void {
+    // Backstop: a validate-only request of the wizard never creates anything.
+    if ($this->isValidateOnlyRequest()) {
+      return;
+    }
 
     // We call it stack here.
     /** @var \Drupal\soda_scs_manager\Entity\SodaScsStackInterface $stack */

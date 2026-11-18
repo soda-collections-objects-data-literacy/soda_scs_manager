@@ -182,6 +182,7 @@
           appSnapshots: {},
           invitedPeople: [],
           creating: false,
+          validating: false,
         };
 
         var SNAPSHOT_SKIP_FIELDS = {
@@ -614,6 +615,59 @@
           return true;
         }
 
+        /**
+         * Lets the server validate the current application form.
+         *
+         * Posts it with ?validateOnly=1, which runs validateForm() and saves
+         * nothing, so a taken name shows up before the project is created.
+         * Resolves with true when the server reported no error.
+         */
+        function validateAppFormStep() {
+          var type = state.appQueue[state.appQueueIndex];
+          var container = stepEls.appsForm.querySelector('.create-project-wizard__form-container');
+          var formEl = container.querySelector('form');
+          var url = appFormUrl(type, null);
+          if (!formEl || !url) {
+            return Promise.resolve(false);
+          }
+          var formData = new FormData(formEl);
+          var submitControl = formEl.querySelector('input[type="submit"], button[type="submit"]');
+          if (submitControl && submitControl.name) {
+            formData.append(submitControl.name, submitControl.value || '');
+          }
+          state.validating = true;
+          setBusy(true);
+          return fetch(url + '&validateOnly=1', {
+            method: 'POST',
+            credentials: 'same-origin',
+            body: formData,
+          }).then(function (response) {
+            if (!response.ok) {
+              throw new Error('HTTP ' + response.status);
+            }
+            return response.text();
+          }).then(function (html) {
+            var doc = new DOMParser().parseFromString(html, 'text/html');
+            // Without the rebuilt form the answer is no validation result
+            // (for example a login page).
+            if (!doc.querySelector('form [name="form_id"]')) {
+              throw new Error('No form in the response');
+            }
+            var errors = Drupal.sodaScsManager.collectFormErrors(doc);
+            if (errors.length) {
+              showFormBanner(container, errors.join(' '));
+              return false;
+            }
+            return true;
+          }).catch(function () {
+            showFormBanner(container, Drupal.t('The application could not be checked. Please try again.'));
+            return false;
+          }).finally(function () {
+            state.validating = false;
+            setBusy(false);
+          });
+        }
+
         function loadAppFormStep() {
           var type = state.appQueue[state.appQueueIndex];
           var container = stepEls.appsForm.querySelector('.create-project-wizard__form-container');
@@ -1020,7 +1074,7 @@
         }
 
         function goNext() {
-          if (state.creating) {
+          if (state.creating || state.validating) {
             return;
           }
           if (state.phase === 'details') {
@@ -1047,14 +1101,19 @@
             if (!captureAppFormStep()) {
               return;
             }
-            state.appQueueIndex++;
-            if (state.appQueueIndex < state.appQueue.length) {
-              loadAppFormStep();
-              updateFooter();
-            }
-            else {
-              goToPhase('members');
-            }
+            validateAppFormStep().then(function (valid) {
+              if (!valid) {
+                return;
+              }
+              state.appQueueIndex++;
+              if (state.appQueueIndex < state.appQueue.length) {
+                loadAppFormStep();
+                updateFooter();
+              }
+              else {
+                goToPhase('members');
+              }
+            });
             return;
           }
           if (state.phase === 'members') {

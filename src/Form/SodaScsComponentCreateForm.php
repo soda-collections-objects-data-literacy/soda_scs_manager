@@ -350,8 +350,9 @@ class SodaScsComponentCreateForm extends ContentEntityForm {
       }
     }
 
-    // WebProtégé and JupyterHub exist once per project.
-    if ($this->projectApplicationHelpers->isSingleInstanceBundle('soda_scs_component', $this->bundle)) {
+    // WebProtégé and JupyterHub exist once per project. A validate-only
+    // request of the wizard has no project yet; the real submit checks it.
+    if (!$this->isValidateOnlyRequest() && $this->projectApplicationHelpers->isSingleInstanceBundle('soda_scs_component', $this->bundle)) {
       $projectId = $this->resolveSelectedProjectId($form_state);
       $applicationLabel = $this->bundleInfo['label'];
       if ($projectId === NULL) {
@@ -373,6 +374,10 @@ class SodaScsComponentCreateForm extends ContentEntityForm {
    * @throws \Drupal\Core\Entity\EntityStorageException
    */
   public function save(array $form, FormStateInterface $form_state): void {
+    // Backstop: a validate-only request of the wizard never creates anything.
+    if ($this->isValidateOnlyRequest()) {
+      return;
+    }
 
     $projectId = $this->entity->hasField('partOfProjects') && !$this->entity->get('partOfProjects')->isEmpty()
       ? $this->entity->get('partOfProjects')->target_id
