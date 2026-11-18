@@ -100,6 +100,8 @@ services:
     class: Drupal\soda_scs_manager\Service\SodaScsWisskiUpdateQueue
   soda_scs_manager.system_check:
     class: Drupal\soda_scs_manager\Service\SodaScsSystemCheck
+  soda_scs_manager.orphan_detector:
+    class: Drupal\soda_scs_manager\Service\SodaScsOrphanDetector
   soda_scs_manager.volume_archive.helpers:
     class: Drupal\soda_scs_manager\Helpers\SodaScsVolumeArchiveHelpers
   soda_scs_manager.demo.api_credentials:

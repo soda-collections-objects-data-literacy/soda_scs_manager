@@ -6149,3 +6149,96 @@ msgstr "Die Ontologie-Datei oder einer ihrer Importe (owl:imports) konnte nicht 
 #: src/Helpers/SodaScsWebprotegeHelpers.php
 msgid "The ontology file imports @iri, which is not a public http or https address. WebProtégé can only load imports that anyone can download from the internet."
 msgstr "Die Ontologie-Datei importiert @iri, das keine öffentliche http- oder https-Adresse ist. WebProtégé kann nur Importe laden, die jeder aus dem Internet herunterladen kann."
+
+#: orphan detection / administration menu
+msgid "Orphan resources"
+msgstr "Verwaiste Ressourcen"
+
+#: orphan detection / administration menu
+msgid "Find Portainer stacks, databases and triplestore repositories without an SCS Manager entity."
+msgstr "Portainer-Stacks, Datenbanken und Triplestore-Repositories finden, die keine SCS-Manager-Entity haben."
+
+#: orphan detection / administration menu
+msgid "Scanned at @time. Found @count orphan resource(s) without an SCS Manager entity."
+msgstr "Gescannt um @time. @count verwaiste Ressource(n) ohne SCS-Manager-Entity gefunden."
+
+#: orphan detection / administration menu
+msgid "Orphans are Portainer stacks, MariaDB databases or triplestore repositories that still exist in the backend but have no matching stack or component entity. Shared infrastructure databases are ignored."
+msgstr "Verwaiste Ressourcen sind Portainer-Stacks, MariaDB-Datenbanken oder Triplestore-Repositories, die im Backend noch existieren, aber keine passende Stack- oder Komponenten-Entity haben. Gemeinsame Infrastruktur-Datenbanken werden ignoriert."
+
+#: orphan detection / administration menu
+msgid "Orphan Portainer stacks (@count)"
+msgstr "Verwaiste Portainer-Stacks (@count)"
+
+#: orphan detection / administration menu
+msgid "No orphan Portainer stacks found."
+msgstr "Keine verwaisten Portainer-Stacks gefunden."
+
+#: orphan detection / administration menu
+msgid "Portainer ID"
+msgstr "Portainer-ID"
+
+#: orphan detection / administration menu
+msgid "Orphan databases"
+msgstr "Verwaiste Datenbanken"
+
+#: orphan detection / administration menu
+msgid "No orphan databases found."
+msgstr "Keine verwaisten Datenbanken gefunden."
+
+#: orphan detection / administration menu
+msgid "Orphan triplestore repositories"
+msgstr "Verwaiste Triplestore-Repositories"
+
+#: orphan detection / administration menu
+msgid "Repository"
+msgstr "Repository"
+
+#: orphan detection / administration menu
+msgid "No orphan triplestore repositories found."
+msgstr "Keine verwaisten Triplestore-Repositories gefunden."
+
+
+#: orphan detection / administration menu
+msgid "Portainer settings are incomplete."
+msgstr "Die Portainer-Einstellungen sind unvollständig."
+
+#: orphan detection / administration menu
+msgid "Could not reach Portainer."
+msgstr "Portainer war nicht erreichbar."
+
+#: orphan detection / administration menu
+msgid "Portainer returned HTTP @code when listing stacks."
+msgstr "Portainer hat beim Auflisten der Stacks HTTP @code zurückgegeben."
+
+#: orphan detection / administration menu
+msgid "Portainer returned an invalid stack list."
+msgstr "Portainer hat eine ungültige Stack-Liste zurückgegeben."
+
+#: orphan detection / administration menu
+msgid "Database settings are incomplete."
+msgstr "Die Datenbank-Einstellungen sind unvollständig."
+
+#: orphan detection / administration menu
+msgid "Could not list MariaDB databases."
+msgstr "MariaDB-Datenbanken konnten nicht aufgelistet werden."
+
+#: orphan detection / administration menu
+msgid "Triplestore settings are incomplete."
+msgstr "Die Triplestore-Einstellungen sind unvollständig."
+
+#: orphan detection / administration menu
+msgid "Could not reach the triplestore."
+msgstr "Der Triplestore war nicht erreichbar."
+
+#: orphan detection / administration menu
+msgid "Triplestore returned HTTP @code when listing repositories."
+msgstr "Der Triplestore hat beim Auflisten der Repositories HTTP @code zurückgegeben."
+
+#: src/Controller/SodaScsOrphanController.php
+msgid "Orphan databases (@count)"
+msgstr "Verwaiste Datenbanken (@count)"
+
+#: src/Controller/SodaScsOrphanController.php
+msgid "Orphan triplestore repositories (@count)"
+msgstr "Verwaiste Triplestore-Repositories (@count)"

@@ -801,10 +801,23 @@ soda_scs_manager.notifications:
 soda_scs_manager.administration:
   path: '/soda-scs-manager/administration'
   defaults:
-    _controller: '\Drupal\soda_scs_manager\Controller\SodaScsAdministrationController::administrationPage'
+    _controller: '\Drupal\system\Controller\SystemController::systemAdminMenuBlockPage'
     _title: 'SCS Administration'
   requirements:
     _permission: 'soda scs manager admin'
+  options:
+    _admin_route: TRUE
+
+soda_scs_manager.orphans:
+  path: '/soda-scs-manager/administration/orphans'
+  defaults:
+    _controller: '\Drupal\soda_scs_manager\Controller\SodaScsOrphanController::report'
+    _title: 'Orphan resources'
+  requirements:
+    _permission: 'soda scs manager admin'
+  options:
+    _admin_route: TRUE
+    no_cache: TRUE
 
 soda_scs_manager.config:
   path: '/admin/config/soda-scs-manager'

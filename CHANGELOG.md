@@ -7,6 +7,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- Administration has an "Orphan resources" page that lists Portainer stacks,
+  MariaDB databases and triplestore repositories that still exist in the
+  backend but have no matching SCS Manager stack or component entity. Shared
+  infrastructure databases are ignored.
+
+### Changed
+
+- The SCS Administration overview uses Drupal's standard admin menu block
+  page, so Gin and Claro can render it. The custom card grid is gone.
+
 ### Fixed
 
 - The application forms reject a name that an existing application already

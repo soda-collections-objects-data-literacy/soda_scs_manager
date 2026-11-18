@@ -10,65 +10,85 @@ soda_scs_manager.administration:
   requirements:
     _permission: 'soda scs manager admin'
 
-### Conversations
-soda_scs_manager.administration.conversations:
-  title: 'SODa SCS Conversations'
-  description: 'Write to users and answer their replies.'
-  parent: soda_scs_manager.administration
-  route_name: soda_scs_manager.conversations.team
-  weight: 90
-  requirements:
-    _permission: 'soda scs manager admin'
-
 ### Components
 soda_scs_manager.administration.components:
-  title: 'SODa SCS Components'
+  title: 'Components'
   description: 'Manage single application components like databases and triplestores.'
   parent: soda_scs_manager.administration
   route_name: entity.soda_scs_component.collection
-  weight: 100
-  requirements:
-    _permission: 'soda scs manager user'
-
-### Projects
-soda_scs_manager.administration.projects:
-  title: 'SODa SCS Projects'
-  description: 'Manage projects to collaborate with other users and share resources.'
-  parent: soda_scs_manager.administration
-  route_name: entity.soda_scs_project.collection
-  weight: 100
-  requirements:
-    _permission: 'soda scs manager user'
-
-### Service Keys
-soda_scs_manager.administration.service_keys:
-  title: 'SODa SCS Service Keys'
-  description: 'Manage service keys for applications and external services.'
-  parent: soda_scs_manager.administration
-  route_name: entity.soda_scs_service_key.collection
-  weight: 100
-  requirements:
-    _permission: 'soda scs manager admin'
-
-### Snapshots
-soda_scs_manager.administration.snapshots:
-  title: 'SODa SCS Snapshots'
-  description: 'Manage snapshots for backup and restore operations.'
-  parent: soda_scs_manager.administration
-  route_name: entity.soda_scs_snapshot.collection
-  weight: 100
+  weight: 10
   requirements:
     _permission: 'soda scs manager user'
 
 ### Stacks
 soda_scs_manager.administration.stacks:
-  title: 'SODa SCS Stacks'
+  title: 'Stacks'
   description: 'Manage application environments like JupyterHub and Nextcloud.'
   parent: soda_scs_manager.administration
   route_name: entity.soda_scs_stack.collection
-  weight: 100
+  weight: 20
   requirements:
     _permission: 'soda scs manager user'
+
+### Projects
+soda_scs_manager.administration.projects:
+  title: 'Projects'
+  description: 'Manage projects to collaborate with other users and share resources.'
+  parent: soda_scs_manager.administration
+  route_name: entity.soda_scs_project.collection
+  weight: 30
+  requirements:
+    _permission: 'soda scs manager user'
+
+### Snapshots
+soda_scs_manager.administration.snapshots:
+  title: 'Snapshots'
+  description: 'Manage snapshots for backup and restore operations.'
+  parent: soda_scs_manager.administration
+  route_name: entity.soda_scs_snapshot.collection
+  weight: 40
+  requirements:
+    _permission: 'soda scs manager user'
+
+### Service Keys
+soda_scs_manager.administration.service_keys:
+  title: 'Service Keys'
+  description: 'Manage service keys for applications and external services.'
+  parent: soda_scs_manager.administration
+  route_name: entity.soda_scs_service_key.collection
+  weight: 50
+  requirements:
+    _permission: 'soda scs manager admin'
+
+### Conversations
+soda_scs_manager.administration.conversations:
+  title: 'Conversations'
+  description: 'Write to users and answer their replies.'
+  parent: soda_scs_manager.administration
+  route_name: soda_scs_manager.conversations.team
+  weight: 60
+  requirements:
+    _permission: 'soda scs manager admin'
+
+### Orphan resources
+soda_scs_manager.administration.orphans:
+  title: 'Orphan resources'
+  description: 'Find Portainer stacks, databases and triplestore repositories without an SCS Manager entity.'
+  parent: soda_scs_manager.administration
+  route_name: soda_scs_manager.orphans
+  weight: 70
+  requirements:
+    _permission: 'soda scs manager admin'
+
+### Settings
+soda_scs_manager.administration.settings:
+  title: 'Settings'
+  description: 'Configure SODa SCS Manager settings and preferences.'
+  parent: soda_scs_manager.administration
+  route_name: soda_scs_manager.settings
+  weight: 80
+  requirements:
+    _permission: 'soda scs manager admin'
 
 # Configuration pages
 

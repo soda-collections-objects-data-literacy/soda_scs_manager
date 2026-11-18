@@ -1059,25 +1059,6 @@ function soda_scs_manager_theme($existing, $type, $theme, $path) {
       ],
       'template' => 'pages/soda-scs-manager--start-page',
     ],
-    'soda_scs_manager__administration' => [
-      'variables' => [
-        'cards' => NULL,
-        'attributes' => NULL,
-      ],
-      'template' => 'pages/soda-scs-manager--administration',
-    ],
-    'soda_scs_manager__admin_card' => [
-      'variables' => [
-        'title' => NULL,
-        'description' => NULL,
-        'icon' => NULL,
-        'icon_path' => NULL,
-        'icon_class' => NULL,
-        'url' => NULL,
-        'color' => NULL,
-      ],
-      'template' => 'cards/soda-scs-manager--admin-card',
-    ],
     'soda_scs_manager__add_application_card' => [
       'variables' => [
         'attributes' => NULL,
