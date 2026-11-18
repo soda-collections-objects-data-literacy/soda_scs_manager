@@ -16,6 +16,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- The WissKI update confirmation uses primary Update and secondary Cancel
+  buttons side by side. **Update the SCS custom theme** for the action layout.
 - The demo reset confirmation now opens in an overlay on the project page.
 - The SCS Administration overview uses Drupal's standard admin menu block
   page, so Gin and Claro can render it. The custom card grid is gone.

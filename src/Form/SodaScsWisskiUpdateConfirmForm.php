@@ -98,6 +98,11 @@ class SodaScsWisskiUpdateConfirmForm extends ConfirmFormBase {
       $form['actions']['submit']['#access'] = FALSE;
     }
     $form['actions']['submit']['#attributes']['class'][] = 'soda-scs-component--component--form-submit';
+    $form['actions']['submit']['#attributes']['class'][] = 'btn';
+    $form['actions']['submit']['#attributes']['class'][] = 'btn--primary';
+    $form['actions']['cancel']['#attributes']['class'][] = 'btn';
+    $form['actions']['cancel']['#attributes']['class'][] = 'btn--secondary';
+    $form['actions']['#attributes']['class'][] = 'scs-manager--wisski-update-actions';
     $form['#attached']['library'][] = 'soda_scs_manager/throbberOverlay';
     return $form;
   }
