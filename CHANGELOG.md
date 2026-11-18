@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [4.7.0] - 2026-11-18
+
 ### Added
 
 - Administration has an "Orphan resources" page that lists Portainer stacks,
@@ -84,7 +86,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   the wizard created the project first, and an invalid application stopped it
   and every application after it.
   Related: [#3639087](https://www.drupal.org/project/soda_scs_manager/issues/3639087).
-
 ## [4.6.0] - 2026-11-17
 
 ### Added
