@@ -10,6 +10,8 @@ use Drupal\soda_scs_manager\Helpers\SodaScsContainerHelpers;
 use Drupal\soda_scs_manager\Helpers\SodaScsDatabaseHelpers;
 use Drupal\soda_scs_manager\Helpers\SodaScsTriplestoreHelpers;
 use Drupal\soda_scs_manager\Helpers\SodaScsWisskiVolumeHelpers;
+use Drupal\soda_scs_manager\Service\SodaScsWisskiTriplestoreTokenSync;
+use Drupal\soda_scs_manager\Service\SodaScsWisskiVarnishCache;
 use Symfony\Component\DependencyInjection\Attribute\Autowire;
 
 /**
@@ -28,6 +30,11 @@ class SodaScsDemoWisskiTransfer {
    * Written by the WissKI entrypoint once the site is installed.
    */
   protected const INSTALL_COMPLETE_MARKER = '/opt/drupal/web/sites/.wisski-install-complete';
+
+  /**
+   * Present while the WissKI entrypoint runs the installation.
+   */
+  protected const INSTALL_IN_PROGRESS_MARKER = '/opt/drupal/web/sites/.wisski-install-in-progress';
 
   /**
    * How often and how long to wait for drush after a container start.
@@ -49,6 +56,10 @@ class SodaScsDemoWisskiTransfer {
     protected SodaScsWisskiInstanceConfigRemapper $configRemapper,
     #[Autowire(service: 'soda_scs_manager.triplestore_helpers')]
     protected SodaScsTriplestoreHelpers $triplestoreHelpers,
+    #[Autowire(service: 'soda_scs_manager.wisski_triplestore_token_sync')]
+    protected SodaScsWisskiTriplestoreTokenSync $tokenSync,
+    #[Autowire(service: 'soda_scs_manager.wisski_varnish_cache')]
+    protected SodaScsWisskiVarnishCache $varnishCache,
     #[Autowire(service: 'soda_scs_manager.wisski_volume.helpers')]
     protected SodaScsWisskiVolumeHelpers $volumeHelpers,
   ) {}
@@ -79,6 +90,7 @@ class SodaScsDemoWisskiTransfer {
     }
     // A failed start must not replace the export exception from the try block.
     SodaScsDemoException::assertSuccess($startResult, 'Start WissKI');
+    SodaScsDemoException::assertSuccess($this->varnishCache->restart($this->machineName($wisskiComponent)), 'Restart Varnish');
   }
 
   /**
@@ -118,16 +130,26 @@ class SodaScsDemoWisskiTransfer {
       $startResult = $this->containerHelpers->startContainer($containerName);
     }
     SodaScsDemoException::assertSuccess($startResult, 'Start WissKI');
+    SodaScsDemoException::assertSuccess($this->varnishCache->restart($this->machineName($wisskiComponent)), 'Restart Varnish');
 
     $this->waitForDrush($wisskiComponent);
     SodaScsDemoException::assertSuccess(
       $this->configRemapper->applyInstanceConfig($instanceConfig, $siteName, $wisskiComponent),
       'Restore WissKI instance configuration',
     );
+    // The captured adapter keeps the target's token, which is stale when
+    // OpenGDB issued a new one for the owner since the WissKI was installed.
+    SodaScsDemoException::assertSuccess(
+      $this->tokenSync->syncComponents($wisskiComponent, $triplestoreComponent),
+      'Update WissKI triplestore token',
+    );
   }
 
   /**
    * Whether the WissKI of a stack has finished its first installation.
+   *
+   * The in-progress marker stays when an installation was interrupted; the
+   * entrypoint then refuses to start the site, so it counts as not done.
    */
   public function isInstallComplete(SodaScsStackInterface $stack): bool {
     $wisskiComponent = $this->projectApps->stackComponent($stack, SodaScsDemoProjectApps::WISSKI_COMPONENT_BUNDLE);
@@ -135,7 +157,7 @@ class SodaScsDemoWisskiTransfer {
       return FALSE;
     }
     return $this->containerHelpers->executeDockerExecCommand([
-      'cmd' => ['test', '-f', self::INSTALL_COMPLETE_MARKER],
+      'cmd' => ['test', '-f', self::INSTALL_COMPLETE_MARKER, '-a', '!', '-e', self::INSTALL_IN_PROGRESS_MARKER],
       'containerName' => $this->containerHelpers->getComponentContainerName($wisskiComponent),
       'user' => 'www-data',
     ])->success;

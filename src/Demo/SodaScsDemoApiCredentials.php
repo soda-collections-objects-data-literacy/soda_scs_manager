@@ -119,6 +119,10 @@ class SodaScsDemoApiCredentials {
   /**
    * Replaces the password of the API account inside the WissKI.
    *
+   * The account gets every role of self::ROLES. A role that the WissKI does
+   * not have fails the call: without it the account cannot use the API, and
+   * the demo would look ready while the notebook import is refused.
+   *
    * The password travels as an environment variable of the exec, not as a
    * command argument. The script prints only the created marker, never the
    * password.
@@ -141,17 +145,22 @@ if ($username === '' || $password === '') {
   exit(1);
 }
 $roles = array_filter(explode(',', getenv('SCS_DEMO_API_ROLES') ?: ''));
+$existingRoles = array_keys(\Drupal::entityTypeManager()->getStorage('user_role')->loadMultiple($roles));
+$missingRoles = array_diff($roles, $existingRoles);
+if ($missingRoles !== []) {
+  fwrite(STDERR, 'missing roles: ' . implode(', ', $missingRoles) . "\n");
+  exit(1);
+}
 $storage = \Drupal::entityTypeManager()->getStorage('user');
 $accounts = $storage->loadByProperties(['name' => $username]);
 $account = reset($accounts);
 $created = FALSE;
 if (!$account) {
   $account = $storage->create(['name' => $username, 'status' => 1]);
-  $existingRoles = \Drupal::entityTypeManager()->getStorage('user_role')->loadMultiple($roles);
-  foreach (array_keys($existingRoles) as $role) {
-    $account->addRole($role);
-  }
   $created = TRUE;
+}
+foreach ($roles as $role) {
+  $account->addRole($role);
 }
 $account->setPassword($password);
 $account->save();

@@ -38,6 +38,13 @@ class SodaScsWisskiVarnishCache {
   private const CONTAINER_SUFFIX = '--varnish';
 
   /**
+   * Start of the lookup error when no container has the name.
+   *
+   * @see \Drupal\soda_scs_manager\Helpers\SodaScsContainerHelpers::findLiveContainerByName()
+   */
+  private const CONTAINER_NOT_FOUND_ERROR = 'Container not found for name:';
+
+  /**
    * Machine names accepted for WissKI instances.
    */
   private const MACHINE_NAME_PATTERN = '/^[a-z0-9-]+$/';
@@ -129,6 +136,61 @@ class SodaScsWisskiVarnishCache {
       ],
       message: (string) $this->t('Varnish cache cleared.'),
     );
+  }
+
+  /**
+   * Restarts the Varnish container after the WissKI container started again.
+   *
+   * Varnish resolves the backend host name only when it loads the VCL. A
+   * restarted WissKI container may get another address on the shared
+   * network, so Varnish must load the VCL again. Instances without a Varnish
+   * container, or with a stopped one, are left as they are.
+   *
+   * @param string $machineName
+   *   WissKI component machine name (Portainer SERVICE_NAME).
+   *
+   * @return \Drupal\soda_scs_manager\ValueObject\SodaScsResult
+   *   Success when Varnish was restarted or there was nothing to restart.
+   */
+  public function restart(string $machineName): SodaScsResult {
+    if (!$this->isValidMachineName($machineName)) {
+      return SodaScsResult::failure(
+        error: 'Invalid WissKI machine name.',
+        message: (string) $this->t('This WissKI instance has no valid machine name.'),
+      );
+    }
+
+    $containerName = $this->varnishContainerName($machineName);
+    $lookup = $this->containerHelpers->findLiveContainerByName($containerName);
+    if (!$lookup->success) {
+      if (str_starts_with((string) $lookup->error, self::CONTAINER_NOT_FOUND_ERROR)) {
+        $this->logger->info('WissKI @name has no Varnish container to restart.', ['@name' => $machineName]);
+        return SodaScsResult::success(message: 'No Varnish container.', data: ['containerName' => $containerName]);
+      }
+      return SodaScsResult::failure(
+        error: (string) ($lookup->error ?? 'Varnish container lookup failed.'),
+        message: 'Could not restart the Varnish container.',
+      );
+    }
+    if (($lookup->data['state'] ?? '') !== 'running') {
+      return SodaScsResult::success(message: 'Varnish container is not running.', data: ['containerName' => $containerName]);
+    }
+
+    $containerId = (string) ($lookup->data['containerId'] ?? '');
+    $restartResult = $this->containerHelpers->restartContainer($containerId !== '' ? $containerId : $containerName);
+    if (!$restartResult->success) {
+      $this->logger->error('Restarting Varnish container @container of WissKI @name failed: @error', [
+        '@container' => $containerName,
+        '@error' => (string) ($restartResult->error ?? $restartResult->message),
+        '@name' => $machineName,
+      ]);
+      return SodaScsResult::failure(
+        error: (string) ($restartResult->error ?? 'Varnish restart failed.'),
+        message: 'Could not restart the Varnish container.',
+        log: FALSE,
+      );
+    }
+    return SodaScsResult::success(message: 'Varnish container restarted.', data: ['containerName' => $containerName]);
   }
 
   /**

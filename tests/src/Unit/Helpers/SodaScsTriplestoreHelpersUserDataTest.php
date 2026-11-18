@@ -17,6 +17,7 @@ use Drupal\soda_scs_manager\Helpers\SodaScsOpenGdbHelpers;
 use Drupal\soda_scs_manager\Helpers\SodaScsSnapshotHelpers;
 use Drupal\soda_scs_manager\Helpers\SodaScsTriplestoreHelpers;
 use Drupal\soda_scs_manager\RequestActions\SodaScsOpenGdbRequestInterface;
+use Drupal\soda_scs_manager\Service\SodaScsWisskiTriplestoreTokenSync;
 use Drupal\soda_scs_manager\ServiceKeyActions\SodaScsServiceKeyActionsInterface;
 use Drupal\Tests\UnitTestCase;
 use Drupal\user\UserInterface;
@@ -285,6 +286,7 @@ class SodaScsTriplestoreHelpersUserDataTest extends UnitTestCase {
       $this->openGdbHelpers,
       $bundleInfo,
       $this->entityTypeManager(),
+      $this->createMock(SodaScsWisskiTriplestoreTokenSync::class),
     );
   }
 

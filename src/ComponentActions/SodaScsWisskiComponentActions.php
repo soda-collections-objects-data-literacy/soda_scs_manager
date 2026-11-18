@@ -30,6 +30,7 @@ use Drupal\soda_scs_manager\Helpers\SodaScsMachineNameHelper;
 use Drupal\soda_scs_manager\Helpers\SodaScsNextcloudHelpers;
 use Drupal\soda_scs_manager\Helpers\SodaScsPortainerHelpers;
 use Drupal\soda_scs_manager\Service\NextcloudMountManager;
+use Drupal\soda_scs_manager\Service\SodaScsWisskiVarnishCache;
 use Drupal\soda_scs_manager\Helpers\SodaScsProjectHelpers;
 use Drupal\soda_scs_manager\Helpers\SodaScsServiceHelpers;
 use Drupal\soda_scs_manager\Helpers\SodaScsSnapshotHelpers;
@@ -338,6 +339,8 @@ class SodaScsWisskiComponentActions implements SodaScsComponentActionsInterface 
     TranslationInterface $stringTranslation,
     #[Autowire(service: 'soda_scs_manager.wisski_volume.helpers')]
     protected SodaScsWisskiVolumeHelpers $wisskiVolumeHelpers,
+    #[Autowire(service: 'soda_scs_manager.wisski_varnish_cache')]
+    protected SodaScsWisskiVarnishCache $wisskiVarnishCache,
   ) {
     // Services from container.
     $this->bundleInfo = $bundleInfo;
@@ -1667,6 +1670,8 @@ class SodaScsWisskiComponentActions implements SodaScsComponentActionsInterface 
           message: 'Snapshot creation failed: Could not start container.',
         );
       }
+      // The snapshot itself is fine; restart() logs a failure as an error.
+      $this->wisskiVarnishCache->restart((string) $component->get('machineName')->value);
 
       // Set the start WissKI container response.
       $snapshotContainerData->startWisskiContainerResponse = $startWisskiContainerResponse;
@@ -2332,6 +2337,13 @@ class SodaScsWisskiComponentActions implements SodaScsComponentActionsInterface 
         return SodaScsResult::failure(
           message: 'Restore completed, but failed to start the container.',
           error: (string) $startContainerResponse['error'],
+        );
+      }
+      $varnishRestartResult = $this->wisskiVarnishCache->restart((string) $machineName);
+      if (!$varnishRestartResult->success) {
+        return SodaScsResult::failure(
+          message: 'Restore completed, but failed to restart the Varnish container.',
+          error: (string) $varnishRestartResult->error,
         );
       }
 

@@ -19,6 +19,13 @@ use Symfony\Component\DependencyInjection\Attribute\Autowire;
 class SodaScsTeamFolderCopier {
 
   /**
+   * Files and directories that are not copied, at any depth.
+   *
+   * Jupyter checkpoints are per-user editor state, not demo content.
+   */
+  protected const SKIPPED_NAMES = ['.ipynb_checkpoints'];
+
+  /**
    * Constructs the copier.
    */
   public function __construct(
@@ -104,7 +111,10 @@ class SodaScsTeamFolderCopier {
     $this->ensureDirectory($targetDirectory);
     $fileCount = 0;
     $items = new \RecursiveIteratorIterator(
-      new \RecursiveDirectoryIterator($sourceDirectory, \FilesystemIterator::SKIP_DOTS),
+      new \RecursiveCallbackFilterIterator(
+        new \RecursiveDirectoryIterator($sourceDirectory, \FilesystemIterator::SKIP_DOTS),
+        static fn (\SplFileInfo $item): bool => !in_array($item->getFilename(), self::SKIPPED_NAMES, TRUE),
+      ),
       \RecursiveIteratorIterator::SELF_FIRST,
     );
     foreach ($items as $item) {

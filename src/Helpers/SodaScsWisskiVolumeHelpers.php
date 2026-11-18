@@ -30,6 +30,18 @@ class SodaScsWisskiVolumeHelpers {
   ];
 
   /**
+   * Install state files in sites/ written by the WissKI entrypoint.
+   *
+   * They describe the installation of the target, not of the source: taken
+   * from another instance, a half-finished source install would stop the
+   * target from starting again.
+   */
+  protected const INSTANCE_STATE_PATTERNS = [
+    '.wisski-install-*',
+    '.wisski-packages-version',
+  ];
+
+  /**
    * Constructs the helper.
    */
   public function __construct(
@@ -129,10 +141,16 @@ class SodaScsWisskiVolumeHelpers {
         static fn (string $pattern): string => '/volume-sites/default/' . $pattern,
         self::INSTANCE_SETTINGS_PATTERNS,
       ));
-      $saveSettings = 'mkdir -p /keep && for f in ' . $patterns . '; do [ -e "$f" ] && cp -a "$f" /keep/; done; ' .
+      $statePatterns = implode(' ', array_map(
+        static fn (string $pattern): string => '/volume-sites/' . $pattern,
+        self::INSTANCE_STATE_PATTERNS,
+      ));
+      $saveSettings = 'mkdir -p /keep /keep-state && for f in ' . $patterns . '; do [ -e "$f" ] && cp -a "$f" /keep/; done; ' .
+        'for f in ' . $statePatterns . '; do [ -e "$f" ] && cp -a "$f" /keep-state/; done; ' .
         'rm -f /keep/default.settings.php /keep/default.services.yml; ' .
         '[ -f /keep/settings.php ] || { echo "Target settings.php not found; refusing to overwrite the instance" >&2; exit 1; }; ';
-      $restoreSettings = 'mkdir -p /volume-sites/default && rm -f /volume-sites/default/settings*.php /volume-sites/default/services*.yml && cp -a /keep/. /volume-sites/default/ && ';
+      $restoreSettings = 'mkdir -p /volume-sites/default && rm -f /volume-sites/default/settings*.php /volume-sites/default/services*.yml && cp -a /keep/. /volume-sites/default/ && ' .
+        'rm -f ' . $statePatterns . ' && cp -a /keep-state/. /volume-sites/ && ';
     }
 
     return 'STAGING=/staging && ' .

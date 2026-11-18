@@ -30,6 +30,26 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- Demo templates: building a version refuses a source WissKI that has not
+  finished its installation, before anything is stopped. Before, the build
+  stopped the WissKI during its installation; it did not start again, and the
+  version was still marked ready. A demo WissKI keeps its own install state
+  when the template is restored into it. Provisioning fails when the WissKI of
+  the template lacks one of the roles of the `api-import` account, instead of
+  creating the account without them, and an existing `api-import` account gets
+  the roles too. The Team Folder copy skips `.ipynb_checkpoints`, and the
+  Jupyter home in a template no longer contains the runtime files, history,
+  workspaces and caches of the source user. Varnish is restarted after the
+  WissKI container starts again (demo build and restore, snapshot create and
+  restore). When the manager issues a new triplestore token for a user (their
+  OpenGDB account was created again), the adapters of the user's running
+  WissKI instances get the new token; a demo restore also writes the current
+  token. Before, such a WissKI kept the old token, so every read and write of
+  its triplestore was refused and the notebook import stored nothing.
+  **Build a new demo template version from an installed source
+  WissKI that has the `api-import` account and the role `wisski_api_import`,
+  then activate it, and reset existing demo projects.**
+  Related: [#3639291](https://www.drupal.org/project/soda_scs_manager/issues/3639291).
 - Demo jobs: a job that finishes within a second (for example a template
   build that is refused at once) no longer shows "Could not start the demo
   jobs". The start counts as done when the queue run is still going or has

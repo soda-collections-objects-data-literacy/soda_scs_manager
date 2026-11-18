@@ -39,6 +39,23 @@ class SodaScsDemoTemplateBuilder {
   protected const ARTIFACT_OWNER = SodaScsSnapshotHelpers::SNAPSHOT_FILE_OWNER_UID;
 
   /**
+   * Paths in the Jupyter home that stay out of the template.
+   *
+   * Server secrets, history, collaboration state, workspaces and caches
+   * belong to the source user; every demo gets its own on first start.
+   * The leading "./" anchors them at the volume root (busybox tar).
+   */
+  protected const JUPYTER_HOME_EXCLUDES = [
+    './.cache',
+    './.ipython/profile_default/history.sqlite',
+    './.jupyter/collaboration_sessions.json',
+    './.jupyter/lab/workspaces',
+    './.jupyter_ystore.db',
+    './.local/share/jupyter/notebook_secret',
+    './.local/share/jupyter/runtime',
+  ];
+
+  /**
    * Constructs the builder.
    */
   public function __construct(
@@ -91,6 +108,11 @@ class SodaScsDemoTemplateBuilder {
       ];
 
       $wisskiStack = $this->projectApps->wisskiStack($source);
+      // The export stops the container; stopped during the installation, the
+      // WissKI would not start again.
+      if ($wisskiStack !== NULL && !$this->wisskiTransfer->isInstallComplete($wisskiStack)) {
+        throw new SodaScsDemoException(sprintf('The WissKI %s of the source project has not finished its installation. Wait until it is installed and build the version again.', $wisskiStack->label()));
+      }
       if ($wisskiStack !== NULL) {
         $reportStep((string) $this->t('Exporting the WissKI'));
         $this->createDirectory($directory . '/' . self::WISSKI_DIRECTORY);
@@ -272,7 +294,7 @@ class SodaScsDemoTemplateBuilder {
           SodaScsJupyterHelpers::projectVolumeName($source),
           $directory,
           self::JUPYTER_VOLUME_FILE,
-          [SodaScsDemoApiCredentials::CREDENTIALS_FILE],
+          [SodaScsDemoApiCredentials::CREDENTIALS_FILE, ...self::JUPYTER_HOME_EXCLUDES],
         ),
         'Export Jupyter home',
       );

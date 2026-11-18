@@ -32,6 +32,7 @@ use Drupal\soda_scs_manager\Helpers\SodaScsServiceHelpers;
 use Drupal\soda_scs_manager\Helpers\SodaScsSnapshotHelpers;
 use Drupal\soda_scs_manager\Helpers\SodaScsStackHelpers;
 use Drupal\soda_scs_manager\Helpers\SodaScsWisskiVolumeHelpers;
+use Drupal\soda_scs_manager\Service\SodaScsWisskiVarnishCache;
 use Drupal\soda_scs_manager\RequestActions\SodaScsExecRequestInterface;
 use Drupal\soda_scs_manager\RequestActions\SodaScsRunRequestInterface;
 use Drupal\soda_scs_manager\RequestActions\SodaScsServiceRequestInterface;
@@ -297,6 +298,7 @@ class SodaScsWisskiComponentActionsCreateTest extends UnitTestCase {
       $this->prophesize(SodaScsStackHelpers::class)->reveal(),
       $this->getStringTranslationStub(),
       $this->prophesize(SodaScsWisskiVolumeHelpers::class)->reveal(),
+      $this->prophesize(SodaScsWisskiVarnishCache::class)->reveal(),
     );
   }
 

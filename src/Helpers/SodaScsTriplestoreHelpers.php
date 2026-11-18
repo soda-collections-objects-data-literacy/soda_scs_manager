@@ -13,6 +13,7 @@ use Drupal\Core\Logger\LoggerChannelFactoryInterface;
 use Drupal\Core\Entity\EntityTypeBundleInfoInterface;
 use Drupal\Core\Entity\EntityTypeManagerInterface;
 use Drupal\soda_scs_manager\Entity\SodaScsComponentInterface;
+use Drupal\soda_scs_manager\Service\SodaScsWisskiTriplestoreTokenSync;
 use Drupal\soda_scs_manager\ServiceKeyActions\SodaScsServiceKeyActionsInterface;
 
 /**
@@ -86,6 +87,8 @@ class SodaScsTriplestoreHelpers {
    *   The entity type bundle info.
    * @param \Drupal\Core\Entity\EntityTypeManagerInterface $entityTypeManager
    *   The entity type manager.
+   * @param \Drupal\soda_scs_manager\Service\SodaScsWisskiTriplestoreTokenSync $wisskiTokenSync
+   *   Writes a new token into the WissKI adapters of the user.
    */
   public function __construct(
     LoggerChannelFactoryInterface $loggerFactory,
@@ -99,6 +102,8 @@ class SodaScsTriplestoreHelpers {
     SodaScsOpenGdbHelpers $sodaScsOpenGdbHelpers,
     EntityTypeBundleInfoInterface $entityTypeBundleInfo,
     EntityTypeManagerInterface $entityTypeManager,
+    #[Autowire(service: 'soda_scs_manager.wisski_triplestore_token_sync')]
+    protected SodaScsWisskiTriplestoreTokenSync $wisskiTokenSync,
   ) {
     $this->loggerFactory = $loggerFactory;
     $this->sodaScsOpenGdbServiceActions = $sodaScsOpenGdbServiceActions;
@@ -336,6 +341,8 @@ class SodaScsTriplestoreHelpers {
       $componentServiceKeyToken = $this->sodaScsServiceKeyActions->createServiceKey($keyTokenProps);
 
       $userData['token'] = $userToken;
+      // OpenGDB replaced any earlier token of the account.
+      $this->wisskiTokenSync->syncUser((int) $component->getOwnerId());
 
     }
     elseif ($userCreated) {
@@ -348,6 +355,8 @@ class SodaScsTriplestoreHelpers {
         '@user' => $component->getOwnerId(),
       ]);
       $userData['token'] = $userToken;
+      // Running WissKIs of the user still send the token of the old account.
+      $this->wisskiTokenSync->syncUser((int) $component->getOwnerId());
     }
     else {
       $userData['token'] = $componentServiceKeyToken->get('servicePassword')->value;
