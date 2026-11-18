@@ -81,7 +81,7 @@ Deleting an account (`hook_user_predelete`, `SodaScsUserOffboarding::purge()`) d
 
 Demo jobs take minutes and do not run during Drupal cron. Building a version, creating a demo and resetting a demo spawn a background loop inside `manager--drupal--app` and return at once. The loop runs `drush queue:run soda_scs_manager_demo` and, while items are only delayed (a new WissKI is still installing), sleeps and tries again for up to two hours. A job that is already waiting is started with **Start queued jobs** on the demo admin page.
 
-The page refreshes the status every 5 seconds while a version is building and reloads when the version becomes ready or failed. The runner's own output, including errors, is `/tmp/scs-demo-queue.log` in the manager container:
+`SodaScsDemoQueueRunner::start()` counts the start as done when the `queue:run` loop is in the process list or the queue already holds fewer items than before the spawn: a job refused at once finishes before the process check, and the loop has exited by then. The page refreshes the status every 5 seconds while a version is building and reloads when the version becomes ready or failed. The runner's own output, including errors, is `/tmp/scs-demo-queue.log` in the manager container:
 
 ```bash
 docker exec manager--drupal--app tail -f /tmp/scs-demo-queue.log

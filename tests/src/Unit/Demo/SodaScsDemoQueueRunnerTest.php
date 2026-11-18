@@ -14,7 +14,8 @@ use Psr\Log\LoggerInterface;
  * Tests which log file a demo queue run writes to.
  *
  * A run started by root could not open the web server's log in the sticky
- * /tmp, so it never started (#3638553).
+ * /tmp, so it never started (#3638553). A job refused at once ended the run
+ * before the process check and was reported as not started (#3639298).
  *
  * @coversDefaultClass \Drupal\soda_scs_manager\Demo\SodaScsDemoQueueRunner
  * @group soda_scs_manager
@@ -96,6 +97,86 @@ class SodaScsDemoQueueRunnerTest extends UnitTestCase {
   }
 
   /**
+   * A run that is gone at the check counts as started when jobs were done.
+   *
+   * @covers ::start
+   */
+  public function testStartSucceedsWhenTheRunIsGoneButJobsWereDone(): void {
+    $logger = $this->createMock(LoggerInterface::class);
+    $logger->expects($this->never())->method('error');
+    $runner = $this->runner('www-data', [FALSE, FALSE], $logger, [2, 1]);
+
+    $result = $runner->start();
+
+    $this->assertTrue($result->success);
+    $this->assertFalse($result->data['alreadyRunning']);
+    $this->assertNotSame('', $runner->spawnedCommand);
+  }
+
+  /**
+   * Every waiting job done and the run gone is a start too.
+   *
+   * @covers ::start
+   */
+  public function testStartSucceedsWhenTheQueueIsEmptyAfterTheSpawn(): void {
+    $runner = $this->runner('www-data', [FALSE, FALSE], NULL, [1, 0]);
+
+    $this->assertTrue($runner->start()->success);
+  }
+
+  /**
+   * No process and the same number of jobs waiting is a failed start.
+   *
+   * @covers ::start
+   */
+  public function testStartFailsWhenTheRunIsGoneAndNoJobWasDone(): void {
+    $logger = $this->createMock(LoggerInterface::class);
+    $logger->expects($this->once())->method('error');
+    $runner = $this->runner('www-data', [FALSE, FALSE], $logger, [2, 2]);
+
+    $result = $runner->start();
+
+    $this->assertFalse($result->success);
+  }
+
+  /**
+   * More jobs waiting after the spawn is not progress.
+   *
+   * @covers ::start
+   */
+  public function testStartFailsWhenMoreJobsAreWaitingAfterTheSpawn(): void {
+    $runner = $this->runner('www-data', [FALSE, FALSE], NULL, [1, 3]);
+
+    $this->assertFalse($runner->start()->success);
+  }
+
+  /**
+   * A shell that refused the command fails the start despite done jobs.
+   *
+   * @covers ::start
+   */
+  public function testStartFailsOnSpawnErrorEvenWhenJobsWereDone(): void {
+    $runner = $this->runner('www-data', [FALSE, TRUE], NULL, [2, 1]);
+    $runner->spawnExitCode = 127;
+
+    $this->assertFalse($runner->start()->success);
+  }
+
+  /**
+   * Nothing is spawned when no job is waiting.
+   *
+   * @covers ::start
+   */
+  public function testStartSpawnsNothingWithoutJobs(): void {
+    $runner = $this->runner('www-data', [], NULL, [0]);
+
+    $result = $runner->start();
+
+    $this->assertFalse($result->success);
+    $this->assertSame('', $runner->spawnedCommand);
+  }
+
+  /**
    * A runner for the given process user that never spawns a process.
    *
    * @param string $user
@@ -104,10 +185,16 @@ class SodaScsDemoQueueRunnerTest extends UnitTestCase {
    *   What isRunning() answers, call by call.
    * @param \Psr\Log\LoggerInterface|null $logger
    *   The logger, or NULL for a mock without expectations.
+   * @param int[] $pending
+   *   What numberOfItems() answers, call by call; the last value repeats.
    */
-  protected function runner(string $user, array $running = [], ?LoggerInterface $logger = NULL): TestDemoQueueRunner {
+  protected function runner(string $user, array $running = [], ?LoggerInterface $logger = NULL, array $pending = [1]): TestDemoQueueRunner {
     $queue = $this->createMock(QueueInterface::class);
-    $queue->method('numberOfItems')->willReturn(1);
+    $queue->method('numberOfItems')->willReturnCallback(
+      static function () use (&$pending): int {
+        return count($pending) > 1 ? array_shift($pending) : $pending[0];
+      }
+    );
     $queueFactory = $this->createMock(QueueFactory::class);
     $queueFactory->method('get')->willReturn($queue);
     $runner = new TestDemoQueueRunner($logger ?? $this->createMock(LoggerInterface::class), $queueFactory);
@@ -142,6 +229,11 @@ class TestDemoQueueRunner extends SodaScsDemoQueueRunner {
   public string $spawnedCommand = '';
 
   /**
+   * The exit code the spawn reports.
+   */
+  public int $spawnExitCode = 0;
+
+  /**
    * {@inheritdoc}
    */
   public function isRunning(): bool {
@@ -160,7 +252,7 @@ class TestDemoQueueRunner extends SodaScsDemoQueueRunner {
    */
   protected function spawn(string $command): int {
     $this->spawnedCommand = $command;
-    return 0;
+    return $this->spawnExitCode;
   }
 
 }

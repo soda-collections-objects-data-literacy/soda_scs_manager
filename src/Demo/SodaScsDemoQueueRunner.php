@@ -110,7 +110,8 @@ class SodaScsDemoQueueRunner {
    * Spawns the queue run when jobs are waiting and none is running.
    */
   public function start(): SodaScsResult {
-    if ($this->pendingCount() < 1) {
+    $pendingBefore = $this->pendingCount();
+    if ($pendingBefore < 1) {
       return SodaScsResult::failure(
         error: 'No demo jobs.',
         message: (string) $this->t('There are no demo jobs waiting.'),
@@ -147,7 +148,10 @@ class SodaScsDemoQueueRunner {
       escapeshellarg($logFile),
     );
     $exitCode = $this->spawn($command);
-    if ($exitCode !== 0 || !$this->isRunning()) {
+    // A job that is refused at once can be done before the process check:
+    // the loop has then already exited, and fewer jobs are waiting.
+    $hasRun = $this->isRunning() || $this->pendingCount() < $pendingBefore;
+    if ($exitCode !== 0 || !$hasRun) {
       $this->logger->error('Could not start the demo queue run (exit @code). Output is in @log.', [
         '@code' => $exitCode,
         '@log' => $logFile,

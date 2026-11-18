@@ -30,6 +30,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- Demo jobs: a job that finishes within a second (for example a template
+  build that is refused at once) no longer shows "Could not start the demo
+  jobs". The start counts as done when the queue run is still going or has
+  already taken the jobs.
+  Related: [#3639298](https://www.drupal.org/project/soda_scs_manager/issues/3639298).
 - A dashboard, project, application, conversation or demo project page left
   open after the session expired no longer polls the health status, the
   notification count, the messages or the demo status forever. The first
