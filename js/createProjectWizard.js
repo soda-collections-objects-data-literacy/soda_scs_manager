@@ -642,16 +642,17 @@
             credentials: 'same-origin',
             body: formData,
           }).then(function (response) {
-            if (!response.ok) {
+            // A redirect (for example to the login page when the session
+            // expired) is no validation result.
+            if (!response.ok || response.redirected) {
               throw new Error('HTTP ' + response.status);
             }
             return response.text();
           }).then(function (html) {
             var doc = new DOMParser().parseFromString(html, 'text/html');
-            // Without the rebuilt form the answer is no validation result
-            // (for example a login page).
-            if (!doc.querySelector('form [name="form_id"]')) {
-              throw new Error('No form in the response');
+            var formIdInput = doc.querySelector('form [name="form_id"]');
+            if (!formIdInput || formIdInput.value !== formData.get('form_id')) {
+              throw new Error('The response holds another form');
             }
             var errors = Drupal.sodaScsManager.collectFormErrors(doc);
             if (errors.length) {
@@ -1151,7 +1152,8 @@
         }
 
         function closeOverlay() {
-          if (state.creating) {
+          // A running check would continue the queue of the next wizard run.
+          if (state.creating || state.validating) {
             return;
           }
           root.hidden = true;

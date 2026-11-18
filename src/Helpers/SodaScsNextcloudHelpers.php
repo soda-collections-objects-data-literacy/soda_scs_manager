@@ -667,18 +667,7 @@ class SodaScsNextcloudHelpers {
       return $stored;
     }
 
-    // When Bearer is disabled, only use stored credentials (Login Flow v2).
-    if (!$this->nextcloudServiceActions->getUseBearerToken()) {
-      return NULL;
-    }
-
-    // Flow B: auto-create via OIDC Bearer if the owner is the current user.
-    if ((int) $this->currentUser->id() !== (int) $owner->id()) {
-      return NULL;
-    }
-
-    $token = $this->openIdConnectSession->retrieveAccessToken(FALSE);
-    if (empty($token)) {
+    if (!$this->canCreateAppPasswordViaBearer($owner)) {
       return NULL;
     }
 
@@ -703,6 +692,39 @@ class SodaScsNextcloudHelpers {
     }
 
     return $credentials;
+  }
+
+  /**
+   * Whether ensureCredentials() would obtain credentials, without creating any.
+   *
+   * The create-project wizard checks a WissKI step before the project exists;
+   * that check must not leave an app password in Nextcloud.
+   *
+   * @param \Drupal\user\UserInterface $owner
+   *   The component owner.
+   *
+   * @return bool
+   *   TRUE when stored credentials are valid or Flow B could create them.
+   */
+  public function canEnsureCredentials(UserInterface $owner): bool {
+    return $this->getValidatedStoredNextcloudCredentials($owner) !== NULL
+      || $this->canCreateAppPasswordViaBearer($owner);
+  }
+
+  /**
+   * Whether Flow B (OIDC Bearer) can create an app password for the owner.
+   *
+   * Only when Bearer is enabled (otherwise Login Flow v2 only) and the owner
+   * is the current user with an access token in the session.
+   */
+  private function canCreateAppPasswordViaBearer(UserInterface $owner): bool {
+    if (!$this->nextcloudServiceActions->getUseBearerToken()) {
+      return FALSE;
+    }
+    if ((int) $this->currentUser->id() !== (int) $owner->id()) {
+      return FALSE;
+    }
+    return !empty($this->openIdConnectSession->retrieveAccessToken(FALSE));
   }
 
   /**

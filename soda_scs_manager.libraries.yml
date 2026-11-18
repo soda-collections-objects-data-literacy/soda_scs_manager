@@ -130,7 +130,7 @@ addApplicationPopup:
     - soda_scs_manager/formErrorMessages
 
 createProjectWizard:
-  version: 1.11
+  version: 1.12
   js:
     js/createProjectWizard.js: {}
   dependencies:

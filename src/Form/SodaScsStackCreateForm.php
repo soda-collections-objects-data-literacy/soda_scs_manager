@@ -341,13 +341,17 @@ class SodaScsStackCreateForm extends ContentEntityForm {
     // For WissKI stacks, ensure Nextcloud credentials are available.
     // Tries stored credentials first; if missing, attempts auto-creation via
     // the current OIDC token (Flow B). If both fail, block submission.
+    // A validate-only request only checks that this would work: it must not
+    // create an app password.
     if ($this->bundle === 'soda_scs_wisski_stack') {
       $owner = $this->entityTypeManager->getStorage('user')
         ->load($this->currentUser->id());
       if ($owner) {
         $machineName = $form_state->getValue('machineName')[0]['value'] ?? 'scs-wisski';
-        $credentials = $this->nextcloudHelpers->ensureCredentials($owner, $machineName);
-        if ($credentials === NULL) {
+        $hasCredentials = $this->isValidateOnlyRequest()
+          ? $this->nextcloudHelpers->canEnsureCredentials($owner)
+          : $this->nextcloudHelpers->ensureCredentials($owner, $machineName) !== NULL;
+        if (!$hasCredentials) {
           $connectUrl = Url::fromRoute('openid_connect.accounts_controller_index', [
             'user' => $this->currentUser->id(),
           ])->toString();
