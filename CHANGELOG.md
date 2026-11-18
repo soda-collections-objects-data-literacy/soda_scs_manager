@@ -30,6 +30,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- A dashboard, project, application, conversation or demo project page left
+  open after the session expired no longer polls the health status, the
+  notification count, the messages or the demo status forever. The first
+  refused request stops the polling and the status tooltip asks to reload the
+  page. Background requests of an expired session get a
+  plain 403 instead of a redirect to Keycloak, so the log is no longer flooded
+  with "access denied" and "Send authorize request" entries.
+  Related: [#3639179](https://www.drupal.org/project/soda_scs_manager/issues/3639179).
 - The application forms reject a name that an existing application already
   uses, also when the existing one stores it with a prefix (a WissKI's
   database, triplestore and stack, or a standalone SQL database or

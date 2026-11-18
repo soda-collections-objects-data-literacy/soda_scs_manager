@@ -3409,6 +3409,10 @@ msgstr "Betriebszustand: @status"
 msgid "Could not refresh status"
 msgstr "Zustand konnte nicht aktualisiert werden"
 
+#: js/healthStatus.js src/Controller/SodaScsKeycloakLoginRedirectController.php
+msgid "Your session has expired. Reload the page to log in again."
+msgstr "Ihre Sitzung ist abgelaufen. Laden Sie die Seite neu, um sich wieder anzumelden."
+
 #: js/nextcloudConnect.js
 msgid "Request timed out. Nextcloud may be slow or unreachable."
 msgstr "Zeitüberschreitung der Anfrage. Nextcloud reagiert möglicherweise langsam oder ist nicht erreichbar."

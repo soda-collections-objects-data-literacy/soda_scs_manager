@@ -11,6 +11,8 @@ use Drupal\openid_connect\OpenIDConnectClaims;
 use Drupal\openid_connect\OpenIDConnectSessionInterface;
 use Drupal\openid_connect\OpenIDConnectClientEntityInterface;
 use Symfony\Component\DependencyInjection\ContainerInterface;
+use Symfony\Component\HttpFoundation\JsonResponse;
+use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 
@@ -40,8 +42,22 @@ final class SodaScsKeycloakLoginRedirectController extends ControllerBase {
 
   /**
    * Saves the requested destination and redirects to the configured provider.
+   *
+   * The login route is also the site's 403 page, so a background request of
+   * an expired session (health or notification polling) ends up here. It
+   * cannot follow a redirect to Keycloak (cross-origin), so it gets a plain
+   * 403 instead: no authorize request, no saved destination, and the polling
+   * script can see that the session is gone.
    */
-  public function redirectToKeycloak(): Response {
+  public function redirectToKeycloak(Request $request): Response {
+    if ($this->isBackgroundRequest($request)) {
+      // A plain JsonResponse is not cacheable, so the page cache skips it.
+      return new JsonResponse(
+        ['message' => (string) $this->t('Your session has expired. Reload the page to log in again.')],
+        Response::HTTP_FORBIDDEN,
+      );
+    }
+
     $settings = $this->configFactoryService->get('soda_scs_manager.settings');
     $clientId = $settings->get('keycloak.keycloakTabs.generalSettings.fields.OpenIdConnectClientMachineName');
     if (!is_string($clientId) || $clientId === '') {
@@ -63,6 +79,17 @@ final class SodaScsKeycloakLoginRedirectController extends ControllerBase {
     $this->openIdConnectSession->saveOp('login');
 
     return $plugin->authorize($this->openIdConnectClaims->getScopes($plugin));
+  }
+
+  /**
+   * Whether the request comes from a script rather than a page navigation.
+   */
+  private function isBackgroundRequest(Request $request): bool {
+    if ($request->isXmlHttpRequest()) {
+      return TRUE;
+    }
+    $acceptedTypes = $request->getAcceptableContentTypes();
+    return ($acceptedTypes[0] ?? '') === 'application/json';
   }
 
 }

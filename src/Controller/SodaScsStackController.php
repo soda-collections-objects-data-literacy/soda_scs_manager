@@ -57,7 +57,8 @@ class SodaScsStackController extends ControllerBase {
       ->getStorage('soda_scs_stack')
       ->load($stack_id);
 
-    if (!$stack) {
+    // Same answer for another user's stack as for a missing one.
+    if (!$stack || !$stack->access('view')) {
       return $this->healthJson(SodaScsHealthStatus::payload(
         SodaScsHealthStatus::UNKNOWN,
         (string) $this->t('Stack not found.'),

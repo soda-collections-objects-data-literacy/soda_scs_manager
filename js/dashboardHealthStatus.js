@@ -265,8 +265,13 @@
 
             // Update previous status for next check.
             previousStatus = currentStatus;
-          }).fail(function () {
+          }).fail(function (xhr) {
             previousStatus = 'unknown';
+            if (Drupal.sodaScsHealth.isSessionLost(xhr)) {
+              clearInterval(pollInterval);
+              updateHealthIcon('unknown', Drupal.t('Unknown'), 'unknown', Drupal.sodaScsHealth.sessionLostMessage());
+              return;
+            }
             updateHealthIcon('unknown', Drupal.t('Unknown'), 'unknown', Drupal.t('Could not reach the status service.'));
           });
         }
@@ -377,7 +382,7 @@
         checkHealth();
 
         // Poll every 15 seconds.
-        setInterval(checkHealth, 15000);
+        var pollInterval = setInterval(checkHealth, 15000);
       });
 
       once('dashboardHealthLifecycleDismiss', 'html', context).forEach(function () {

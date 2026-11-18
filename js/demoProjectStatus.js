@@ -8,6 +8,23 @@
  */
 ((Drupal, once) => {
   const POLL_INTERVAL_MS = 3000;
+  // Marks the fetches as script requests: an expired session gets a 403
+  // instead of a redirect to the login provider.
+  const SCRIPT_REQUEST_HEADER = { 'X-Requested-With': 'XMLHttpRequest' };
+
+  /**
+   * Thrown when the session is gone: retrying cannot succeed until reload.
+   */
+  class SessionLostError extends Error {}
+
+  /**
+   * @param {Response} response
+   */
+  function assertSession(response) {
+    if (response.status === 401 || response.status === 403) {
+      throw new SessionLostError(`Session lost (${response.status})`);
+    }
+  }
 
   /**
    * @return {number}
@@ -136,8 +153,9 @@
     const response = await fetch(window.location.href, {
       cache: 'no-store',
       credentials: 'same-origin',
-      headers: { Accept: 'text/html' },
+      headers: { Accept: 'text/html', ...SCRIPT_REQUEST_HEADER },
     });
+    assertSession(response);
     if (!response.ok) {
       throw new Error(`Application refresh failed with ${response.status}`);
     }
@@ -165,8 +183,9 @@
   async function refresh(element) {
     const response = await fetch(element.dataset.statusUrl, {
       credentials: 'same-origin',
-      headers: { Accept: 'application/json' },
+      headers: { Accept: 'application/json', ...SCRIPT_REQUEST_HEADER },
     });
+    assertSession(response);
     if (!response.ok) {
       throw new Error(`Demo status request failed with ${response.status}`);
     }
@@ -201,6 +220,9 @@
             }
           }
           catch (error) {
+            if (error instanceof SessionLostError) {
+              window.clearInterval(timer);
+            }
             // Transient errors (deploys, network) must not stop the polling.
             console.warn(error);
           }

@@ -172,9 +172,15 @@
               notifyWisskiReadyIfApplicable();
             }
             previousStatus = currentStatus;
-          }).fail(function () {
+          }).fail(function (xhr) {
             stopLoading();
-            const transportTitle = Drupal.t('Could not refresh status');
+            const isSessionLost = Drupal.sodaScsHealth.isSessionLost(xhr);
+            if (isSessionLost) {
+              clearInterval(pollInterval);
+            }
+            const transportTitle = isSessionLost
+              ? Drupal.sodaScsHealth.sessionLostMessage()
+              : Drupal.t('Could not refresh status');
             updateDetailsHealth('unknown', Drupal.t('Unknown'));
             $healthItem.html(renderBadge('unknown', HEALTH_SYMBOLS.unknown, Drupal.t('Unknown'), transportTitle, ''));
             $healthLabel.removeClass('soda-scs-manager--entity-status--api-error').removeAttr('title');
@@ -182,7 +188,7 @@
         }
 
         runHealthCheck();
-        setInterval(runHealthCheck, 3000);
+        const pollInterval = setInterval(runHealthCheck, 3000);
       });
     }
   };

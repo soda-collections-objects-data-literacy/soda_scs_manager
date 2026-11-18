@@ -100,7 +100,8 @@ class SodaScsComponentController extends ControllerBase {
         ->getStorage('soda_scs_component')
         ->load($component_id);
 
-      if (!$component) {
+      // Same answer for another user's component as for a missing one.
+      if (!$component || !$component->access('view')) {
         return $this->healthJson(SodaScsHealthStatus::payload(
           SodaScsHealthStatus::UNKNOWN,
           (string) $this->t('Component not found.'),

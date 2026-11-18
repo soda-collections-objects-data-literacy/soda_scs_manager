@@ -65,6 +65,20 @@
     return String(data.status.error || data.status.message || '');
   }
 
+  /**
+   * Whether a failed poll means the session is gone (401/403).
+   *
+   * Polling scripts stop on it: retrying cannot succeed until the page is
+   * reloaded, and every retry writes an "access denied" log entry.
+   */
+  function isSessionLost(xhr) {
+    return Boolean(xhr) && (xhr.status === 401 || xhr.status === 403);
+  }
+
+  function sessionLostMessage() {
+    return Drupal.t('Your session has expired. Reload the page to log in again.');
+  }
+
   Drupal.sodaScsHealth = {
     ALL: ALL,
     PROBLEM: 'problem',
@@ -75,6 +89,8 @@
     detail: detail,
     fromPayload: fromPayload,
     fromStatus: fromStatus,
+    isSessionLost: isSessionLost,
     label: label,
+    sessionLostMessage: sessionLostMessage,
   };
 })(Drupal);

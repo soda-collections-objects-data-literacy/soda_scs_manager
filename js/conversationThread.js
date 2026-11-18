@@ -44,9 +44,11 @@
     try {
       const response = await fetch(thread.dataset.conversationRefreshUrl, {
         credentials: 'same-origin',
-        headers: { Accept: 'text/html' },
+        // Marks it as a script request: an expired session gets a 403
+        // instead of a redirect to the login provider.
+        headers: { Accept: 'text/html', 'X-Requested-With': 'XMLHttpRequest' },
       });
-      if (response.status === 403 || response.status === 404) {
+      if (response.status === 401 || response.status === 403 || response.status === 404) {
         // Deleted conversation or expired session: polling would fail forever.
         thread.dataset.conversationStopped = '1';
         stop(thread);

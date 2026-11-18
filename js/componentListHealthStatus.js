@@ -44,14 +44,19 @@
           }).done(function (data) {
             clearInterval(dotsInterval);
             applyStatus(Drupal.sodaScsHealth.fromPayload(data), Drupal.sodaScsHealth.detail(data));
-          }).fail(function () {
+          }).fail(function (xhr) {
             clearInterval(dotsInterval);
+            if (Drupal.sodaScsHealth.isSessionLost(xhr)) {
+              clearInterval(pollInterval);
+              applyStatus('unknown', Drupal.sodaScsHealth.sessionLostMessage());
+              return;
+            }
             applyStatus('unknown', Drupal.t('Could not refresh status'));
           });
         }
 
         updateHealth();
-        setInterval(updateHealth, 10000);
+        const pollInterval = setInterval(updateHealth, 10000);
       });
     }
   };
