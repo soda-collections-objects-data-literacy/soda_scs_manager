@@ -18,6 +18,8 @@ use Drupal\Tests\soda_scs_manager\Unit\SodaScsCreatePathTestTrait;
 use Drupal\Tests\UnitTestCase;
 use Prophecy\Argument;
 use Prophecy\PhpUnit\ProphecyTrait;
+use Symfony\Component\HttpFoundation\Request;
+use Symfony\Component\HttpFoundation\RequestStack;
 
 /**
  * What SodaScsStackCreateForm::save() logs and shows when creation fails.
@@ -100,6 +102,10 @@ class SodaScsStackCreateFormSaveTest extends UnitTestCase {
     $this->form->setEntity($stack->reveal());
     $this->form->setMessenger($this->messenger->reveal());
     $this->form->setStringTranslation($this->getStringTranslationStub());
+    // save() asks the request whether the wizard only validates.
+    $requestStack = new RequestStack();
+    $requestStack->push(new Request());
+    $this->form->setRequestStack($requestStack);
     foreach ([
       'bundle' => 'soda_scs_wisski_stack',
       'currentUser' => $account->reveal(),

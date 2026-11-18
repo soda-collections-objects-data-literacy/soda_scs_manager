@@ -35,6 +35,8 @@ class SodaScsNextcloudHelpersTest extends UnitTestCase {
     ?SodaScsNextcloudServiceActions $nextcloudActions = NULL,
     ?SodaScsProjectHelpers $projectHelpers = NULL,
     ?SodaScsKeycloakHelpers $keycloakHelpers = NULL,
+    ?AccountProxyInterface $currentUser = NULL,
+    ?OpenIDConnectSessionInterface $openIdConnectSession = NULL,
   ): SodaScsNextcloudHelpers {
     $nextcloudActions ??= $this->createMock(SodaScsNextcloudServiceActions::class);
     $nextcloudActions->method('getOidcUsernamePrefix')->willReturn($prefix);
@@ -57,9 +59,9 @@ class SodaScsNextcloudHelpersTest extends UnitTestCase {
     return new SodaScsNextcloudHelpers(
       $nextcloudActions,
       $configFactory,
-      $this->createMock(AccountProxyInterface::class),
+      $currentUser ?? $this->createMock(AccountProxyInterface::class),
       $this->createMock(MessengerInterface::class),
-      $this->createMock(OpenIDConnectSessionInterface::class),
+      $openIdConnectSession ?? $this->createMock(OpenIDConnectSessionInterface::class),
       $keycloakHelpers ?? $this->createMock(SodaScsKeycloakHelpers::class),
       $projectHelpers ?? $this->createMock(SodaScsProjectHelpers::class),
       $loggerFactory,
@@ -222,6 +224,50 @@ class SodaScsNextcloudHelpersTest extends UnitTestCase {
     return [
       'null' => [NULL],
       'empty string' => [''],
+    ];
+  }
+
+  /**
+   * Only Flow B with the owner's own token counts; nothing is requested.
+   *
+   * The owner has no stored credentials (no SSO link), so the result depends
+   * on the Bearer setting, the current user and the session token alone.
+   *
+   * @covers ::canEnsureCredentials
+   * @dataProvider provideBearerSituations
+   */
+  public function testCanEnsureCredentialsCreatesNothing(bool $useBearer, int $currentUserId, ?string $token, bool $expected): void {
+    $nextcloudActions = $this->createMock(SodaScsNextcloudServiceActions::class);
+    $nextcloudActions->method('getUseBearerToken')->willReturn($useBearer);
+    $nextcloudActions->expects($this->never())->method('makeRequest');
+
+    $currentUser = $this->createMock(AccountProxyInterface::class);
+    $currentUser->method('id')->willReturn($currentUserId);
+    $session = $this->createMock(OpenIDConnectSessionInterface::class);
+    $session->method('retrieveAccessToken')->willReturn($token);
+
+    $owner = $this->createMock(UserInterface::class);
+    $owner->method('id')->willReturn(5);
+
+    $helper = $this->createHelper(
+      nextcloudActions: $nextcloudActions,
+      projectHelpers: $this->createProjectHelpers(NULL),
+      currentUser: $currentUser,
+      openIdConnectSession: $session,
+    );
+
+    $this->assertSame($expected, $helper->canEnsureCredentials($owner));
+  }
+
+  /**
+   * Bearer setting, current user ID, session token, expected result.
+   */
+  public static function provideBearerSituations(): array {
+    return [
+      'Bearer disabled' => [FALSE, 5, 'token', FALSE],
+      'another user' => [TRUE, 6, 'token', FALSE],
+      'no token' => [TRUE, 5, NULL, FALSE],
+      'own token' => [TRUE, 5, 'token', TRUE],
     ];
   }
 
