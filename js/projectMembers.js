@@ -48,7 +48,8 @@
   }
 
   function closeRolePanel(menu) {
-    var panel = menu.querySelector('.project-member__roles-panel');
+    var member = menu.closest('.project-member');
+    var panel = member && member.querySelector('.project-member__roles-panel');
     var trigger = menu.querySelector('.project-member__roles-trigger');
     if (panel) {
       panel.hidden = true;
@@ -59,13 +60,11 @@
   }
 
   function saveRole(select, status) {
-    var previousRole = select.getAttribute('data-current-role');
     var newRole = select.value;
-    select.disabled = true;
     status.classList.remove('project-member__roles-status--error');
     status.textContent = Drupal.t('Saving…');
 
-    fetchCsrfToken()
+    return fetchCsrfToken()
       .then(function (token) {
         return fetch(select.getAttribute('data-role-url'), {
           method: 'POST',
@@ -80,32 +79,32 @@
       .then(function (response) {
         return response.json().catch(function () {
           return { success: false, message: '' };
+        }).then(function (data) {
+          if (!response.ok || !data.success) {
+            throw new Error(data.message || '');
+          }
+          return data;
         });
       })
       .then(function (data) {
-        if (!data.success) {
-          throw new Error(data.message || '');
-        }
         select.setAttribute('data-current-role', newRole);
         status.textContent = data.message || Drupal.t('Role saved.');
+        return true;
       })
       .catch(function (error) {
-        // The server keeps the previous role on failure, so the select must too.
-        select.value = previousRole;
         status.classList.add('project-member__roles-status--error');
         status.textContent = (error && error.message) || Drupal.t('The role could not be saved. Please try again.');
-      })
-      .finally(function () {
-        select.disabled = false;
+        return false;
       });
   }
 
   Drupal.behaviors.sodaScsProjectMemberRoles = {
     attach: function (context) {
       once('sodaScsProjectMemberRoles', '.project-member__roles-menu', context).forEach(function (menu) {
+        var member = menu.closest('.project-member');
         var trigger = menu.querySelector('.project-member__roles-trigger');
-        var panel = menu.querySelector('.project-member__roles-panel');
-        var status = menu.querySelector('.project-member__roles-status');
+        var panel = member && member.querySelector('.project-member__roles-panel');
+        var status = panel && panel.querySelector('.project-member__roles-status');
         if (!trigger || !panel || !status) {
           return;
         }
@@ -125,7 +124,7 @@
           }
         });
 
-        menu.addEventListener('keydown', function (event) {
+        member.addEventListener('keydown', function (event) {
           if (event.key === 'Escape' && !panel.hidden) {
             // Close only the panel, not the surrounding team overlay.
             event.stopPropagation();
@@ -135,15 +134,55 @@
         });
 
         document.addEventListener('click', function (event) {
-          if (!panel.hidden && !menu.contains(event.target)) {
+          if (!panel.hidden && !member.contains(event.target)) {
             closeRolePanel(menu);
           }
         });
 
-        panel.querySelectorAll('.project-member__role-select').forEach(function (select) {
-          select.addEventListener('change', function () {
-            saveRole(select, status);
-          });
+      });
+
+      once('sodaScsProjectMemberRoleSave', '#project-members-edit-overlay', context).forEach(function (overlay) {
+        var save = overlay.querySelector('.project-members-edit-overlay__save');
+        var summary = overlay.querySelector('.project-members-edit-overlay__save-status');
+        if (!save || !summary) {
+          return;
+        }
+
+        var selects = Array.from(overlay.querySelectorAll('.project-member__role-select'));
+        var changed = function (select) {
+          return select.value !== select.getAttribute('data-current-role');
+        };
+
+        overlay.addEventListener('change', function (event) {
+          if (selects.includes(event.target)) {
+            save.disabled = !selects.some(changed);
+            summary.textContent = '';
+            summary.classList.remove('project-member__roles-status--error');
+          }
+        });
+
+        save.addEventListener('click', async function () {
+          var pending = selects.filter(changed);
+          if (!pending.length) {
+            return;
+          }
+          save.disabled = true;
+          selects.forEach(function (select) { select.disabled = true; });
+          summary.classList.remove('project-member__roles-status--error');
+          summary.textContent = Drupal.t('Saving…');
+          var failed = false;
+          for (var select of pending) {
+            var status = select.closest('.project-member__roles-panel').querySelector('.project-member__roles-status');
+            if (!await saveRole(select, status)) {
+              failed = true;
+            }
+          }
+          selects.forEach(function (select) { select.disabled = false; });
+          summary.classList.toggle('project-member__roles-status--error', failed);
+          summary.textContent = failed
+            ? Drupal.t('Some role changes could not be saved. Please try again.')
+            : Drupal.t('Changes saved.');
+          save.disabled = !selects.some(changed);
         });
       });
     }

@@ -84,7 +84,11 @@
 					</div>
 				</li>
 			{% endif %}
+			{% set has_role_settings = false %}
 			{% for member in members %}
+				{% if member.can_manage_roles and member.roles is not empty %}
+					{% set has_role_settings = true %}
+				{% endif %}
 				<li class="project-member{% if member.is_current_user %} project-member--current{% endif %}" title="{{ member.username }}">
 					{% if member.picture %}
 						{{ member.picture }}
@@ -94,18 +98,8 @@
 					<div class="project-member__info">
 						<p class="project-member__name">{{ member.name }}</p>
 						<p class="project-member__mail">{{ member.mail }}</p>
-					</div>
-					<div class="project-member__actions">
-					{% if member.can_manage_roles %}
-						<div class="project-member__roles-menu">
-							<button type="button" class="project-member__roles-trigger btn btn--secondary btn--icon" aria-label="{{ member.roles_label }}" title="{{ member.roles_label }}" aria-expanded="false">
-								<svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
-									<path d="M10 2L3.5 4.5v4.8c0 4 2.8 7.4 6.5 8.7 3.7-1.3 6.5-4.7 6.5-8.7V4.5L10 2z" stroke="#17212B" stroke-width="1.6" stroke-linejoin="round"/>
-									<circle cx="10" cy="8.5" r="2" stroke="#17212B" stroke-width="1.6"/>
-									<path d="M6.8 13.6c.7-1.4 1.9-2.1 3.2-2.1s2.5.7 3.2 2.1" stroke="#17212B" stroke-width="1.6" stroke-linecap="round"/>
-								</svg>
-							</button>
-							<div class="project-member__roles-panel" hidden>
+						{% if member.can_manage_roles %}
+							<div id="project-member-roles-{{ member.id }}" class="project-member__roles-panel" hidden>
 								<p class="project-member__roles-title">{{ 'Roles per application'|t }}</p>
 								{% if member.roles is empty %}
 									<p class="project-member__roles-empty">{{ 'This project has no application with roles yet. Roles can currently be set for WissKI instances.'|t }}</p>
@@ -116,7 +110,6 @@
 										<li class="project-member__role">
 											<label class="project-member__role-label" for="{{ select_id }}">
 												<span class="project-member__role-name">{{ row.label }}</span>
-												<span class="project-member__role-type">{{ row.type }}</span>
 											</label>
 											<select id="{{ select_id }}" class="project-member__role-select form-select" data-role-url="{{ row.url }}" data-current-role="{{ row.role }}">
 												{% for value, option_label in row.options %}
@@ -128,6 +121,18 @@
 								</ul>
 								<p class="project-member__roles-status" role="status" aria-live="polite"></p>
 							</div>
+						{% endif %}
+					</div>
+					<div class="project-member__actions">
+					{% if member.can_manage_roles %}
+						<div class="project-member__roles-menu">
+							<button type="button" class="project-member__roles-trigger btn btn--secondary btn--icon" aria-label="{{ member.roles_label }}" title="{{ member.roles_label }}" aria-controls="project-member-roles-{{ member.id }}" aria-expanded="false">
+								<svg width="16" height="16" viewBox="0 0 16 16" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+									<path fill="currentColor" d="M14.545 3.042l-1.586-1.585c-.389-.389-1.025-.389-1.414 0l-1.293 1.293 3 3 1.293-1.293c.389-.389.389-1.026 0-1.415z"/>
+									<rect fill="currentColor" x="5.129" y="3.8" transform="matrix(-.707 -.707 .707 -.707 6.189 20.064)" width="4.243" height="9.899"/>
+									<path fill="currentColor" d="M.908 14.775c-.087.262.055.397.316.312l2.001-.667-1.65-1.646-.667 2.001z"/>
+								</svg>
+							</button>
 						</div>
 					{% endif %}
 					{% if member.remove_form %}
@@ -204,5 +209,11 @@
 				</div>
 			{% endif %}
 		</div>
+		{% if has_role_settings %}
+			<div class="project-members-edit-overlay__save-actions">
+				<p class="project-members-edit-overlay__save-status project-member__roles-status" role="status" aria-live="polite"></p>
+				<button type="button" class="btn btn--primary project-members-edit-overlay__save" disabled>{{ 'Save'|t }}</button>
+			</div>
+		{% endif %}
 	</div>
 </div>

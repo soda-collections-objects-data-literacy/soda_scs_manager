@@ -20,6 +20,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- Application role controls now expand beneath each member's email in the
+  team editor, with changes applied using Save. **Update the SCS custom theme**
+  for the outlined member rows and the edit button's expanded state.
 - The Varnish cache, snapshot and WissKI update confirmations open in overlays
   on the application details page.
 - The WissKI update confirmation uses primary Update and secondary Cancel

@@ -5533,6 +5533,14 @@ msgid "Role saved."
 msgstr "Rolle gespeichert."
 
 #: js/projectMembers.js
+msgid "Changes saved."
+msgstr "Änderungen gespeichert."
+
+#: js/projectMembers.js
+msgid "Some role changes could not be saved. Please try again."
+msgstr "Einige Rollenänderungen konnten nicht gespeichert werden. Bitte versuchen Sie es erneut."
+
+#: js/projectMembers.js
 msgid "The role could not be saved. Please try again."
 msgstr "Die Rolle konnte nicht gespeichert werden. Bitte versuchen Sie es erneut."
 
@@ -6395,4 +6403,3 @@ msgstr "@item konnte nicht gelöscht werden."
 #: orphan cleanup batch
 msgid "Skipped @item."
 msgstr "@item übersprungen."
-
