@@ -48,12 +48,13 @@ class SodaScsOrphanDetector {
   ) {}
 
   /**
-   * Scans Portainer, MariaDB and the triplestore for orphans.
+   * Scans backends and entities for orphans.
    *
    * @return array<string, mixed>
-   *   Orphan lists and soft errors per backend, with the keys
-   *   "portainerStacks" (list of arrays with id, name and status),
-   *   "databases" (list of names), "repositories" (list of names),
+   *   Orphan lists and soft errors, with the keys "portainerStacks" (list of
+   *   arrays with id, name and status), "databases" (list of names),
+   *   "repositories" (list of names), "danglingProjectEntities" (list of
+   *   stacks/components whose partOfProjects points at a missing project),
    *   "errors" (list of messages) and "scannedAt" (Unix timestamp).
    */
   public function detect(): array {
@@ -63,11 +64,13 @@ class SodaScsOrphanDetector {
     $portainer = $this->detectPortainerOrphans($index, $errors);
     $databases = $this->detectDatabaseOrphans($index, $errors);
     $repositories = $this->detectRepositoryOrphans($index, $errors);
+    $danglingProjectEntities = $this->detectDanglingProjectEntities();
 
     return [
       'portainerStacks' => $portainer,
       'databases' => $databases,
       'repositories' => $repositories,
+      'danglingProjectEntities' => $danglingProjectEntities,
       'errors' => $errors,
       'scannedAt' => time(),
     ];
@@ -85,7 +88,58 @@ class SodaScsOrphanDetector {
   public function countOrphans(array $report): int {
     return count($report['portainerStacks'] ?? [])
       + count($report['databases'] ?? [])
-      + count($report['repositories'] ?? []);
+      + count($report['repositories'] ?? [])
+      + count($report['danglingProjectEntities'] ?? []);
+  }
+
+  /**
+   * Lists stacks and components that still reference a deleted project.
+   *
+   * @return array
+   *   Entities whose partOfProjects target is gone. Each item has entityType,
+   *   id, bundle, machineName, label and missingProjectIds.
+   */
+  protected function detectDanglingProjectEntities(): array {
+    $existingProjectIds = [];
+    foreach ($this->entityTypeManager->getStorage('soda_scs_project')->loadMultiple() as $project) {
+      $existingProjectIds[(string) $project->id()] = TRUE;
+    }
+
+    $orphans = [];
+    foreach (['soda_scs_stack', 'soda_scs_component'] as $entityTypeId) {
+      foreach ($this->entityTypeManager->getStorage($entityTypeId)->loadMultiple() as $entity) {
+        if (!$entity->hasField('partOfProjects') || $entity->get('partOfProjects')->isEmpty()) {
+          continue;
+        }
+        $missingProjectIds = [];
+        foreach ($entity->get('partOfProjects') as $item) {
+          $projectId = (string) ($item->target_id ?? '');
+          if ($projectId !== '' && !isset($existingProjectIds[$projectId])) {
+            $missingProjectIds[] = $projectId;
+          }
+        }
+        if ($missingProjectIds === []) {
+          continue;
+        }
+        $missingProjectIds = array_values(array_unique($missingProjectIds));
+        sort($missingProjectIds);
+        $orphans[] = [
+          'entityType' => $entityTypeId,
+          'id' => (string) $entity->id(),
+          'bundle' => $entity->bundle(),
+          'machineName' => (string) ($entity->get('machineName')->value ?? ''),
+          'label' => (string) $entity->label(),
+          'missingProjectIds' => $missingProjectIds,
+        ];
+      }
+    }
+
+    usort($orphans, static function (array $a, array $b): int {
+      return [$a['entityType'], $a['machineName'], $a['id']]
+        <=> [$b['entityType'], $b['machineName'], $b['id']];
+    });
+
+    return $orphans;
   }
 
   /**

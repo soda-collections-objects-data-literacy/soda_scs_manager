@@ -6255,3 +6255,31 @@ msgstr "Verwaiste Datenbanken (@count)"
 #: src/Controller/SodaScsOrphanController.php
 msgid "Orphan triplestore repositories (@count)"
 msgstr "Verwaiste Triplestore-Repositories (@count)"
+
+#: orphan dangling projects
+msgid "Scanned at @time. Found @count orphan resource(s)."
+msgstr "Gescannt um @time. @count verwaiste Ressource(n) gefunden."
+
+#: orphan dangling projects
+msgid "Orphans are Portainer stacks, MariaDB databases or triplestore repositories without a matching SCS Manager entity, and stacks or components that still point at a deleted project. Shared infrastructure databases are ignored."
+msgstr "Verwaiste Ressourcen sind Portainer-Stacks, MariaDB-Datenbanken oder Triplestore-Repositories ohne passende SCS-Manager-Entity sowie Stacks oder Komponenten, die noch auf ein gelöschtes Projekt zeigen. Gemeinsame Infrastruktur-Datenbanken werden ignoriert."
+
+#: orphan dangling projects
+msgid "Stacks and components with a deleted project (@count)"
+msgstr "Stacks und Komponenten mit gelöschtem Projekt (@count)"
+
+#: orphan dangling projects
+msgid "No stacks or components with a deleted project found."
+msgstr "Keine Stacks oder Komponenten mit gelöschtem Projekt gefunden."
+
+#: orphan dangling projects
+msgid "Missing project ID"
+msgstr "Fehlende Projekt-ID"
+
+#: orphan dangling projects
+msgid "Bundle"
+msgstr "Bundle"
+
+#: orphan dangling projects
+msgid "Find Portainer stacks, databases and triplestore repositories without an SCS Manager entity, and stacks or components that still point at a deleted project."
+msgstr "Portainer-Stacks, Datenbanken und Triplestore-Repositories ohne SCS-Manager-Entity finden sowie Stacks oder Komponenten, die noch auf ein gelöschtes Projekt zeigen."

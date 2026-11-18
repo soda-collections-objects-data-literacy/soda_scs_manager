@@ -73,7 +73,7 @@ soda_scs_manager.administration.conversations:
 ### Orphan resources
 soda_scs_manager.administration.orphans:
   title: 'Orphan resources'
-  description: 'Find Portainer stacks, databases and triplestore repositories without an SCS Manager entity.'
+  description: 'Find Portainer stacks, databases and triplestore repositories without an SCS Manager entity, and stacks or components that still point at a deleted project.'
   parent: soda_scs_manager.administration
   route_name: soda_scs_manager.orphans
   weight: 70

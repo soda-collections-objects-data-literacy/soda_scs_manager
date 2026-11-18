@@ -6,11 +6,13 @@ namespace Drupal\soda_scs_manager\Controller;
 
 use Drupal\Core\Controller\ControllerBase;
 use Drupal\Core\Datetime\DateFormatterInterface;
+use Drupal\Core\Link;
+use Drupal\Core\Url;
 use Drupal\soda_scs_manager\Service\SodaScsOrphanDetector;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 
 /**
- * Reports backend resources without an SCS Manager entity.
+ * Reports orphan backend resources and entities without a project.
  */
 final class SodaScsOrphanController extends ControllerBase {
 
@@ -30,7 +32,7 @@ final class SodaScsOrphanController extends ControllerBase {
   }
 
   /**
-   * Scans backends and lists orphan resources.
+   * Scans backends and entities and lists orphan resources.
    *
    * @return array
    *   Render array with summary and tables.
@@ -51,7 +53,7 @@ final class SodaScsOrphanController extends ControllerBase {
       '#type' => 'container',
       '#attributes' => ['class' => ['soda-scs-manager--orphan-summary']],
       'text' => [
-        '#markup' => '<p>' . $this->t('Scanned at @time. Found @count orphan resource(s) without an SCS Manager entity.', [
+        '#markup' => '<p>' . $this->t('Scanned at @time. Found @count orphan resource(s).', [
           '@time' => $this->dateFormatter->format($report['scannedAt'], 'short'),
           '@count' => $total,
         ]) . '</p>',
@@ -59,9 +61,12 @@ final class SodaScsOrphanController extends ControllerBase {
     ];
 
     $build['intro'] = [
-      '#markup' => '<p>' . $this->t('Orphans are Portainer stacks, MariaDB databases or triplestore repositories that still exist in the backend but have no matching stack or component entity. Shared infrastructure databases are ignored.') . '</p>',
+      '#markup' => '<p>' . $this->t('Orphans are Portainer stacks, MariaDB databases or triplestore repositories without a matching SCS Manager entity, and stacks or components that still point at a deleted project. Shared infrastructure databases are ignored.') . '</p>',
     ];
 
+    $build['dangling_projects'] = $this->buildDanglingProjectTable(
+      $report['danglingProjectEntities'] ?? [],
+    );
     $build['portainer'] = $this->buildPortainerTable($report['portainerStacks']);
     $build['databases'] = $this->buildSimpleTable(
       $this->t('Orphan databases (@count)', ['@count' => count($report['databases'])]),
@@ -77,6 +82,69 @@ final class SodaScsOrphanController extends ControllerBase {
       $report['repositories'],
       $this->t('No orphan triplestore repositories found.'),
     );
+
+    return $build;
+  }
+
+  /**
+   * Builds the table of entities that reference a missing project.
+   *
+   * @param array $entities
+   *   Dangling project entities from the orphan detector.
+   *
+   * @return array
+   *   Render array.
+   */
+  protected function buildDanglingProjectTable(array $entities): array {
+    $build = [
+      '#type' => 'details',
+      '#title' => $this->t('Stacks and components with a deleted project (@count)', [
+        '@count' => count($entities),
+      ]),
+      '#open' => $entities !== [],
+    ];
+
+    if ($entities === []) {
+      $build['empty'] = [
+        '#markup' => '<p>' . $this->t('No stacks or components with a deleted project found.') . '</p>',
+      ];
+      return $build;
+    }
+
+    $rows = [];
+    foreach ($entities as $entity) {
+      $routeName = $entity['entityType'] === 'soda_scs_stack'
+        ? 'entity.soda_scs_stack.canonical'
+        : 'entity.soda_scs_component.canonical';
+      $routeParam = $entity['entityType'] === 'soda_scs_stack'
+        ? 'soda_scs_stack'
+        : 'soda_scs_component';
+      $link = Link::fromTextAndUrl(
+        $entity['label'] !== '' ? $entity['label'] : $entity['machineName'],
+        Url::fromRoute($routeName, [$routeParam => $entity['id']]),
+      )->toString();
+      $rows[] = [
+        $entity['entityType'] === 'soda_scs_stack'
+          ? $this->t('Stack')
+          : $this->t('Component'),
+        $entity['bundle'],
+        ['data' => ['#markup' => $link]],
+        $entity['machineName'],
+        implode(', ', $entity['missingProjectIds']),
+      ];
+    }
+
+    $build['table'] = [
+      '#type' => 'table',
+      '#header' => [
+        $this->t('Type'),
+        $this->t('Bundle'),
+        $this->t('Label'),
+        $this->t('Machine name'),
+        $this->t('Missing project ID'),
+      ],
+      '#rows' => $rows,
+    ];
 
     return $build;
   }

@@ -11,7 +11,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Administration has an "Orphan resources" page that lists Portainer stacks,
   MariaDB databases and triplestore repositories that still exist in the
-  backend but have no matching SCS Manager stack or component entity. Shared
+  backend but have no matching SCS Manager stack or component entity, and
+  stacks or components that still point at a deleted project. Shared
   infrastructure databases are ignored.
 
 ### Changed
