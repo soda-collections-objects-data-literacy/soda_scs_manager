@@ -127,9 +127,10 @@ addApplicationPopup:
     - core/jquery
     - core/drupal
     - core/once
+    - soda_scs_manager/formErrorMessages
 
 createProjectWizard:
-  version: 1.9
+  version: 1.10
   js:
     js/createProjectWizard.js: {}
   dependencies:
@@ -137,6 +138,7 @@ createProjectWizard:
     - core/drupal
     - core/once
     - core/drupalSettings
+    - soda_scs_manager/formErrorMessages
     - soda_scs_manager/throbberOverlay
 
 projectMembers:
@@ -196,3 +198,10 @@ wisskiUpdateStatus:
   dependencies:
     - core/drupal
     - core/once
+
+formErrorMessages:
+  version: 1.0
+  js:
+    js/formErrorMessages.js: {}
+  dependencies:
+    - core/drupal

@@ -19,6 +19,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   application forms, so there a taken name still stops the applications queued
   after it; the dialog now names the reason.
   Related: [#3639084](https://www.drupal.org/project/soda_scs_manager/issues/3639084).
+- The "Add application" dialog shows the reason the server gave when an
+  application cannot be created, for example that the name is taken. Before,
+  it only showed the general list of possible reasons. The Create-Project
+  wizard now also shows a single error message, not only lists of several.
+  Related: [#3639084](https://www.drupal.org/project/soda_scs_manager/issues/3639084).
 
 ## [4.6.0] - 2026-11-17
 

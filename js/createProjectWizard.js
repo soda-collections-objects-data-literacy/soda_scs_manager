@@ -776,17 +776,7 @@
             return [];
           }
           var doc = new DOMParser().parseFromString(html, 'text/html');
-          var texts = [];
-          doc.querySelectorAll('.form-item--error-message, .messages--error, [data-drupal-messages] [role="alert"] li').forEach(function (el) {
-            if (el.querySelector('.error-with-backtrace')) {
-              return;
-            }
-            var text = (el.textContent || '').replace(/\s+/g, ' ').trim();
-            if (text && texts.indexOf(text) === -1) {
-              texts.push(text);
-            }
-          });
-          return texts;
+          return Drupal.sodaScsManager.collectFormErrors(doc);
         }
 
         function htmlFieldHasError(html, namePrefix) {

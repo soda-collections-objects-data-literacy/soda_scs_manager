@@ -327,12 +327,11 @@
                 hideThrobber();
                 var doc = new DOMParser().parseFromString(html, 'text/html');
                 var content = doc.querySelector('.dashboard-content') || doc.querySelector('main');
-                var serverError = doc.querySelector('.messages--error');
                 if (!content || !content.querySelector('form')) {
                   throw new Error('Unexpected response');
                 }
                 // Server messages may render outside the content region.
-                var serverErrorText = serverError ? serverError.textContent.trim() : '';
+                var serverErrorText = Drupal.sodaScsManager.collectFormErrors(doc).join(' ');
                 renderForm(content);
                 showFailure(serverErrorText);
               })
