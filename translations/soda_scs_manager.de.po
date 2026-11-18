@@ -6283,3 +6283,83 @@ msgstr "Bundle"
 #: orphan dangling projects
 msgid "Find Portainer stacks, databases and triplestore repositories without an SCS Manager entity, and stacks or components that still point at a deleted project."
 msgstr "Portainer-Stacks, Datenbanken und Triplestore-Repositories ohne SCS-Manager-Entity finden sowie Stacks oder Komponenten, die noch auf ein gelöschtes Projekt zeigen."
+
+#: orphan cleanup form
+msgid "Select at least one orphan resource to delete."
+msgstr "Wählen Sie mindestens eine verwaiste Ressource zum Löschen aus."
+
+#: orphan cleanup form
+msgid "Delete selected"
+msgstr "Auswahl löschen"
+
+#: orphan cleanup form
+msgid "Scanned at @time. Found @count orphan resource(s). Select items and delete them."
+msgstr "Gescannt um @time. @count verwaiste Ressource(n) gefunden. Wählen Sie Einträge aus und löschen Sie sie."
+
+#: orphan cleanup form
+msgid "Stacks or components whose project field still points at a project ID that no longer exists (for example after a project was deleted without removing its applications)."
+msgstr "Stacks oder Komponenten, deren Projektfeld noch auf eine Projekt-ID zeigt, die es nicht mehr gibt (zum Beispiel nach dem Löschen eines Projekts ohne Entfernen seiner Anwendungen)."
+
+#: orphan cleanup form
+msgid "Portainer stacks that have no matching WissKI component (by Portainer stack ID in externalId or by machine name) and no matching stack entity. Leftovers after an incomplete delete."
+msgstr "Portainer-Stacks ohne passende WissKI-Komponente (über Portainer-Stack-ID in externalId oder über den Maschinennamen) und ohne passende Stack-Entity. Reste nach einem unvollständigen Löschen."
+
+#: orphan cleanup form
+msgid "MariaDB databases that no SQL component owns by machine name. Shared infrastructure databases such as Keycloak, Nextcloud, phpMyAdmin and the manager database are ignored."
+msgstr "MariaDB-Datenbanken, die keine SQL-Komponente über den Maschinennamen besitzt. Gemeinsame Infrastruktur-Datenbanken wie Keycloak, Nextcloud, phpMyAdmin und die Manager-Datenbank werden ignoriert."
+
+#: orphan cleanup form
+msgid "Triplestore repositories that no triplestore component owns by machine name. System repositories are ignored."
+msgstr "Triplestore-Repositories, die keine Triplestore-Komponente über den Maschinennamen besitzt. System-Repositories werden ignoriert."
+
+#: orphan cleanup form
+msgid "Are you sure you want to delete the selected orphan resources?"
+msgstr "Möchten Sie die ausgewählten verwaisten Ressourcen wirklich löschen?"
+
+#: orphan cleanup form
+msgid "This permanently deletes the selected stacks, components, Portainer stacks, databases and triplestore repositories. This action cannot be undone."
+msgstr "Damit werden die ausgewählten Stacks, Komponenten, Portainer-Stacks, Datenbanken und Triplestore-Repositories dauerhaft gelöscht. Das lässt sich nicht rückgängig machen."
+
+#: orphan cleanup form
+msgid "Delete orphan resources"
+msgstr "Verwaiste Ressourcen löschen"
+
+#: orphan cleanup form
+msgid "No orphan resources were selected."
+msgstr "Es wurden keine verwaisten Ressourcen ausgewählt."
+
+#: orphan cleanup form
+msgid "Back to orphan resources"
+msgstr "Zurück zu verwaisten Ressourcen"
+
+#: orphan cleanup form
+msgid "Selected (@count)"
+msgstr "Ausgewählt (@count)"
+
+#: orphan cleanup form
+msgid "Deleted @count orphan resource(s)."
+msgstr "@count verwaiste Ressource(n) gelöscht."
+
+#: orphan cleanup form
+msgid "Skipped @count item(s) that were no longer orphans or could not be deleted."
+msgstr "@count Eintrag/Einträge übersprungen, die keine Verwaisten mehr waren oder nicht gelöscht werden konnten."
+
+#: orphan cleanup form
+msgid "Entity @type @id"
+msgstr "Entity @type @id"
+
+#: orphan cleanup form
+msgid "Portainer stack @name (ID @id)"
+msgstr "Portainer-Stack @name (ID @id)"
+
+#: orphan cleanup form
+msgid "Database @name"
+msgstr "Datenbank @name"
+
+#: orphan cleanup form
+msgid "Repository @name"
+msgstr "Repository @name"
+
+#: orphan cleanup form
+msgid "Could not delete @key: @message"
+msgstr "@key konnte nicht gelöscht werden: @message"

@@ -811,8 +811,19 @@ soda_scs_manager.administration:
 soda_scs_manager.orphans:
   path: '/soda-scs-manager/administration/orphans'
   defaults:
-    _controller: '\Drupal\soda_scs_manager\Controller\SodaScsOrphanController::report'
+    _form: '\Drupal\soda_scs_manager\Form\SodaScsOrphanCleanupForm'
     _title: 'Orphan resources'
+  requirements:
+    _permission: 'soda scs manager admin'
+  options:
+    _admin_route: TRUE
+    no_cache: TRUE
+
+soda_scs_manager.orphans.confirm:
+  path: '/soda-scs-manager/administration/orphans/delete'
+  defaults:
+    _form: '\Drupal\soda_scs_manager\Form\SodaScsOrphanCleanupConfirmForm'
+    _title: 'Delete orphan resources'
   requirements:
     _permission: 'soda scs manager admin'
   options:
