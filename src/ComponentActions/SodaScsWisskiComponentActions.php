@@ -26,6 +26,7 @@ use Drupal\soda_scs_manager\Helpers\SodaScsComponentHelpers;
 use Drupal\soda_scs_manager\Helpers\SodaScsContainerHelpers;
 use Drupal\soda_scs_manager\Helpers\SodaScsHelpers;
 use Drupal\soda_scs_manager\Helpers\SodaScsKeycloakHelpers;
+use Drupal\soda_scs_manager\Helpers\SodaScsMachineNameHelper;
 use Drupal\soda_scs_manager\Helpers\SodaScsNextcloudHelpers;
 use Drupal\soda_scs_manager\Helpers\SodaScsPortainerHelpers;
 use Drupal\soda_scs_manager\Service\NextcloudMountManager;
@@ -1004,7 +1005,7 @@ class SodaScsWisskiComponentActions implements SodaScsComponentActionsInterface 
       $component->set('description', $wisskiComponentBundleInfo['description']);
 
       // Get and set the machine name for the WissKI component.
-      $machineName = 'wisski-' . $component->get('machineName')->value;
+      $machineName = SodaScsMachineNameHelper::WISSKI_PREFIX . $component->get('machineName')->value;
       $component->set('machineName', $machineName);
 
       $this->applyDefaultWisskiComponentVersion($component);

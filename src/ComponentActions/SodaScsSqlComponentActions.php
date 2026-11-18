@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Drupal\soda_scs_manager\ComponentActions;
 
+use Drupal\soda_scs_manager\Helpers\SodaScsMachineNameHelper;
 use Symfony\Component\DependencyInjection\Attribute\Autowire;
 use Drupal\Core\Config\Config;
 use Drupal\Core\Config\ConfigFactoryInterface;
@@ -247,7 +248,7 @@ class SodaScsSqlComponentActions implements SodaScsComponentActionsInterface {
         throw new \Exception('SQL component bundle info not found');
       }
 
-      $machineName = 'sql-' . $entity->get('machineName')->value;
+      $machineName = SodaScsMachineNameHelper::SQL_PREFIX . $entity->get('machineName')->value;
       // @todo We have the entity here already, so we should not create a new one.
       $sqlComponent = $this->entityTypeManager->getStorage('soda_scs_component')->create(
         [

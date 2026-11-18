@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Drupal\soda_scs_manager\StackActions;
 
+use Drupal\soda_scs_manager\Helpers\SodaScsMachineNameHelper;
 use Symfony\Component\DependencyInjection\Attribute\Autowire;
 use Drupal\Core\Config\Config;
 use Drupal\Core\Config\ConfigFactoryInterface;
@@ -415,7 +416,7 @@ class SodaScsWisskiStackActions implements SodaScsStackActionsInterface {
       $wisskiComponent->set('partOfStack', $stack->id());
       $wisskiComponent->save();
 
-      $stack->set('machineName', 'stack-' . $stack->get('machineName')->value);
+      $stack->set('machineName', SodaScsMachineNameHelper::STACK_PREFIX . $stack->get('machineName')->value);
       $stack->save();
 
       return [

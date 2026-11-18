@@ -36,6 +36,52 @@ class SodaScsMachineNameHelper {
   public const RESERVED_PROJECT_MACHINE_NAMES = ['scs-share'];
 
   /**
+   * Prefix of the SQL database (component) a create action stores.
+   */
+  public const SQL_PREFIX = 'sql-';
+
+  /**
+   * Prefix of the WissKI stack machine name once its creation finished.
+   */
+  public const STACK_PREFIX = 'stack-';
+
+  /**
+   * Prefix of the triplestore repository (component) a create action stores.
+   */
+  public const TRIPLESTORE_PREFIX = 'ts-';
+
+  /**
+   * Prefix of the WissKI component a create action stores.
+   */
+  public const WISSKI_PREFIX = 'wisski-';
+
+  /**
+   * Prefixes the create actions put before an entered machine name.
+   *
+   * Keyed by bundle, then by the entity type that stores the name. A WissKI
+   * stack keeps the bare name until its creation finishes, so the bare name
+   * counts among stacks. Bundles that are not listed store the name unchanged
+   * as a stack or a component.
+   */
+  public const STORED_MACHINE_NAME_PREFIXES = [
+    'soda_scs_sql_component'         => ['soda_scs_component' => [self::SQL_PREFIX]],
+    'soda_scs_triplestore_component' => ['soda_scs_component' => [self::TRIPLESTORE_PREFIX]],
+    'soda_scs_wisski_component'      => ['soda_scs_component' => [self::WISSKI_PREFIX]],
+    'soda_scs_wisski_stack'          => [
+      'soda_scs_component' => [self::SQL_PREFIX, self::TRIPLESTORE_PREFIX, self::WISSKI_PREFIX],
+      'soda_scs_stack'     => [self::STACK_PREFIX, ''],
+    ],
+  ];
+
+  /**
+   * Where bundles without own prefixes store the name.
+   */
+  private const UNPREFIXED_MACHINE_NAMES = [
+    'soda_scs_component' => [''],
+    'soda_scs_stack'     => [''],
+  ];
+
+  /**
    * Constructs the helper.
    */
   public function __construct(
@@ -103,6 +149,30 @@ class SodaScsMachineNameHelper {
    */
   public function isReservedProjectMachineName(string $machineName): bool {
     return in_array($machineName, self::RESERVED_PROJECT_MACHINE_NAMES, TRUE);
+  }
+
+  /**
+   * Machine names an application of this bundle stores for an entered name.
+   *
+   * The create actions add a prefix per resource (SQL database "sql-",
+   * triplestore repository "ts-", WissKI component "wisski-", WissKI stack
+   * "stack-"), so a uniqueness check must compare these names, not the
+   * entered one.
+   *
+   * @param string $bundle
+   *   The stack or component bundle that will be created.
+   * @param string $machineName
+   *   The machine name as entered in the create form.
+   *
+   * @return array<string, string[]>
+   *   The stored machine names, keyed by entity type ID.
+   */
+  public static function storedMachineNames(string $bundle, string $machineName): array {
+    $prefixesByEntityType = self::STORED_MACHINE_NAME_PREFIXES[$bundle] ?? self::UNPREFIXED_MACHINE_NAMES;
+    return array_map(
+      static fn (array $prefixes): array => array_map(static fn (string $prefix): string => $prefix . $machineName, $prefixes),
+      $prefixesByEntityType,
+    );
   }
 
 }

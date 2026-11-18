@@ -7,6 +7,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- The application forms reject a name that an existing application already
+  uses, also when the existing one stores it with a prefix (a WissKI's
+  database, triplestore and stack, or a standalone SQL database or
+  triplestore). Before, a taken WissKI name passed the form and failed only
+  while the WissKI was created ("A database with this application name already
+  exists"). A rejected name is logged with the names it collides with. The
+  Create-Project wizard still creates the project before it sends the
+  application forms, so there a taken name still stops the applications queued
+  after it; the dialog now names the reason.
+  Related: [#3639084](https://www.drupal.org/project/soda_scs_manager/issues/3639084).
+
 ## [4.6.0] - 2026-11-17
 
 ### Added

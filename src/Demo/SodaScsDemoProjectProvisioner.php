@@ -13,6 +13,7 @@ use Drupal\soda_scs_manager\Entity\SodaScsDemoTemplateInterface;
 use Drupal\soda_scs_manager\Entity\SodaScsProjectInterface;
 use Drupal\soda_scs_manager\Entity\SodaScsStackInterface;
 use Drupal\soda_scs_manager\Helpers\SodaScsJupyterHelpers;
+use Drupal\soda_scs_manager\Helpers\SodaScsMachineNameHelper;
 use Drupal\soda_scs_manager\Helpers\SodaScsVolumeArchiveHelpers;
 use Drupal\soda_scs_manager\Helpers\SodaScsWebprotegeHelpers;
 use Drupal\soda_scs_manager\StackActions\SodaScsStackActionsInterface;
@@ -177,7 +178,7 @@ class SodaScsDemoProjectProvisioner {
     $stack = $this->newStack(
       SodaScsDemoProjectApps::JUPYTER_STACK_BUNDLE,
       $this->labelBuilder->appLabel(SodaScsDemoLabelBuilder::APP_JUPYTER, $userName),
-      $this->freeMachineName(SodaScsDemoLabelBuilder::APP_JUPYTER, $userName, 1, ['%s'], []),
+      $this->freeMachineName(SodaScsDemoLabelBuilder::APP_JUPYTER, $userName, 1, SodaScsDemoProjectApps::JUPYTER_STACK_BUNDLE),
       $project,
     );
     $this->assertActionSucceeded($this->stackActions->createStack($stack), 'Create Jupyter stack');
@@ -200,7 +201,7 @@ class SodaScsDemoProjectProvisioner {
       'bundle' => SodaScsDemoProjectApps::WEBPROTEGE_COMPONENT_BUNDLE,
       'health' => 'Unknown',
       'label' => $this->labelBuilder->appLabel(SodaScsDemoLabelBuilder::APP_WEBPROTEGE, $userName),
-      'machineName' => $this->freeMachineName(SodaScsDemoLabelBuilder::APP_WEBPROTEGE, $userName, 1, [], ['%s']),
+      'machineName' => $this->freeMachineName(SodaScsDemoLabelBuilder::APP_WEBPROTEGE, $userName, 1, SodaScsDemoProjectApps::WEBPROTEGE_COMPONENT_BUNDLE),
       'owner' => $project->getOwnerId(),
       'partOfProjects' => [$project->id()],
     ]);
@@ -233,7 +234,7 @@ class SodaScsDemoProjectProvisioner {
     $stack = $this->newStack(
       SodaScsDemoProjectApps::WISSKI_STACK_BUNDLE,
       $this->labelBuilder->appLabel(SodaScsDemoLabelBuilder::APP_WISSKI, $userName),
-      $this->freeMachineName(SodaScsDemoLabelBuilder::APP_WISSKI, $userName, 1, ['stack-%s', '%s'], ['sql-%s', 'ts-%s', 'wisski-%s', '%s']),
+      $this->freeMachineName(SodaScsDemoLabelBuilder::APP_WISSKI, $userName, 1, SodaScsDemoProjectApps::WISSKI_STACK_BUNDLE),
       $project,
     );
     $stack->set('defaultLanguage', 'en');
@@ -251,19 +252,15 @@ class SodaScsDemoProjectProvisioner {
    *   Account name of the owner.
    * @param int $index
    *   1-based position among applications of the same kind.
-   * @param string[] $stackPatterns
-   *   sprintf patterns of stack machine names derived from the base.
-   * @param string[] $componentPatterns
-   *   sprintf patterns of component machine names derived from the base.
+   * @param string $bundle
+   *   The stack or component bundle that will be created with the name.
    *
    * @throws \Drupal\soda_scs_manager\Demo\SodaScsDemoException
    */
-  protected function freeMachineName(string $appKey, string $userName, int $index, array $stackPatterns, array $componentPatterns): string {
+  protected function freeMachineName(string $appKey, string $userName, int $index, string $bundle): string {
     for ($attempt = 1; $attempt <= self::MACHINE_NAME_ATTEMPTS; $attempt++) {
       $base = $this->labelBuilder->appMachineName($appKey, $userName, $index, $attempt);
-      $isTaken = $this->isMachineNameUsed('soda_scs_stack', $stackPatterns, $base)
-        || $this->isMachineNameUsed('soda_scs_component', $componentPatterns, $base);
-      if (!$isTaken) {
+      if (!$this->isMachineNameUsed($bundle, $base)) {
         return $base;
       }
     }
@@ -305,18 +302,20 @@ class SodaScsDemoProjectProvisioner {
   }
 
   /**
-   * Whether any entity uses a machine name derived from the base.
+   * Whether a stack or component stores a machine name derived from the base.
    */
-  protected function isMachineNameUsed(string $entityTypeId, array $patterns, string $base): bool {
-    if ($patterns === []) {
-      return FALSE;
+  protected function isMachineNameUsed(string $bundle, string $base): bool {
+    foreach (SodaScsMachineNameHelper::storedMachineNames($bundle, $base) as $entityTypeId => $names) {
+      $used = $this->entityTypeManager->getStorage($entityTypeId)->getQuery()
+        ->accessCheck(FALSE)
+        ->condition('machineName', $names, 'IN')
+        ->range(0, 1)
+        ->execute() !== [];
+      if ($used) {
+        return TRUE;
+      }
     }
-    $names = array_map(static fn (string $pattern): string => sprintf($pattern, $base), $patterns);
-    return $this->entityTypeManager->getStorage($entityTypeId)->getQuery()
-      ->accessCheck(FALSE)
-      ->condition('machineName', $names, 'IN')
-      ->range(0, 1)
-      ->execute() !== [];
+    return FALSE;
   }
 
   /**

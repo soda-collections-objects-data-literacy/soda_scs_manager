@@ -1294,9 +1294,9 @@ msgstr "Der Maschinenname darf nur Kleinbuchstaben, Ziffern, Minus und Unterstri
 msgid "The machineName cannot contain the word \"@word\""
 msgstr "Der Maschinenname darf das Wort \"@word\" nicht enthalten"
 
-#: src/Form/SodaScsComponentCreateForm.php:294 src/Form/SodaScsStackCreateForm.php:239
-msgid "The machineName is already in use by another SODa SCS Component entity"
-msgstr "Der Maschinenname wird bereits von einer anderen SODa SCS-Komponente verwendet"
+#: src/Form/SodaScsComponentCreateForm.php:343 src/Form/SodaScsStackCreateForm.php:306
+msgid "An application with this name already exists. Choose another name."
+msgstr "Eine Anwendung mit diesem Namen existiert bereits. Wählen Sie einen anderen Namen."
 
 #: src/Form/SodaScsComponentCreateForm.php:315
 msgid "Cannot create component: @message"

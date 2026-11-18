@@ -302,15 +302,14 @@ class SodaScsStackCreateForm extends ContentEntityForm {
         ]));
       }
 
-      // Check if the machineName is already in use
-      // by another SodaScsComponent entity.
-      $entity_query = $this->entityTypeManager->getStorage('soda_scs_component')->getQuery()
-        ->accessCheck(FALSE)
-        ->condition('machineName', $machineName);
-      $existing_entities = $entity_query->execute();
-
-      if (!empty($existing_entities)) {
-        $form_state->setErrorByName('machineName', $this->t('The machineName is already in use by another SODa SCS Component entity'));
+      if ($this->isMachineNameTaken($machineName)) {
+        $form_state->setErrorByName('machineName', $this->t('An application with this name already exists. Choose another name.'));
+        $this->loggerFactory->get('soda_scs_manager')->notice('Rejected machine name @machineName for @bundle by user @uid: one of @storedNames is already used by a stack or component.', [
+          '@bundle'      => $this->bundle,
+          '@machineName' => $machineName,
+          '@storedNames' => implode(', ', array_merge(...array_values(SodaScsMachineNameHelper::storedMachineNames($this->bundle, $machineName)))),
+          '@uid'         => $this->currentUser->id(),
+        ]);
       }
 
       if (strlen($machineName) > SodaScsMachineNameHelper::APPLICATION_MAX_LENGTH) {
@@ -477,6 +476,33 @@ class SodaScsStackCreateForm extends ContentEntityForm {
       ['machineName', 0, 'value'],
       $this->machineNameHelper->fromLabel($label, SodaScsMachineNameHelper::APPLICATION_MAX_LENGTH),
     );
+  }
+
+  /**
+   * Whether an application already stores one of this name's machine names.
+   *
+   * Compares the prefixed names the create actions store, so an existing
+   * WissKI "stack-{name}" or a database "sql-{name}" also counts.
+   *
+   * @param string $machineName
+   *   The machine name as entered.
+   *
+   * @return bool
+   *   TRUE when a stack or component already uses one of the names.
+   */
+  protected function isMachineNameTaken(string $machineName): bool {
+    $storedNamesByEntityType = SodaScsMachineNameHelper::storedMachineNames($this->bundle, $machineName);
+    foreach ($storedNamesByEntityType as $entityTypeId => $storedNames) {
+      $count = $this->entityTypeManager->getStorage($entityTypeId)->getQuery()
+        ->accessCheck(FALSE)
+        ->condition('machineName', $storedNames, 'IN')
+        ->count()
+        ->execute();
+      if ($count > 0) {
+        return TRUE;
+      }
+    }
+    return FALSE;
   }
 
 }

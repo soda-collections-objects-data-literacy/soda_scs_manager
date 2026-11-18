@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Drupal\soda_scs_manager\ComponentActions;
 
+use Drupal\soda_scs_manager\Helpers\SodaScsMachineNameHelper;
 use Symfony\Component\DependencyInjection\Attribute\Autowire;
 
 use Drupal\Core\Config\Config;
@@ -189,7 +190,7 @@ class SodaScsTriplestoreComponentActions implements SodaScsComponentActionsInter
       if (!$triplestoreComponentBundleInfo) {
         throw new \Exception('Triplestore component bundle info not found');
       }
-      $machineName = 'ts-' . $entity->get('machineName')->value;
+      $machineName = SodaScsMachineNameHelper::TRIPLESTORE_PREFIX . $entity->get('machineName')->value;
       // @todo We have the entity here already, so we should not create a new one.
       $publicRead = $entity->hasField('publicRead') && !$entity->get('publicRead')->isEmpty()
         ? (bool) $entity->get('publicRead')->value
