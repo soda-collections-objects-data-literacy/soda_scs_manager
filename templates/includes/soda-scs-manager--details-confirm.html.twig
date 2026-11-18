@@ -1,0 +1,21 @@
+<div class="scs-manager--details-confirm" data-confirm-form="{{ form_selector }}">
+  <a class="btn btn--secondary scs-manager--details-confirm-trigger" href="{{ url }}" aria-haspopup="dialog"{% if trigger_title|default('') %} title="{{ trigger_title }}"{% endif %}>{{ title }}</a>
+  <div class="project-card__delete-confirmation project-card__delete-confirmation--grid scs-manager--details-confirm-dialog" role="dialog" aria-modal="true" aria-label="{{ title }}" hidden>
+    <div class="project-card__delete-confirmation__backdrop" aria-hidden="true"></div>
+    <div class="project-card__delete-confirmation__dialog" role="document">
+      <button type="button" class="btn btn--secondary btn--icon overlay__close scs-manager--details-confirm-close" aria-label="{{ 'Close'|t }}">
+        <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+          <line x1="14.8493" y1="14.8493" x2="4.94983" y2="4.94978" stroke="#17212B" stroke-width="2"/>
+          <line x1="4.94979" y1="14.8492" x2="14.8493" y2="4.94975" stroke="#17212B" stroke-width="2"/>
+        </svg>
+      </button>
+      <h3>{{ title }}</h3>
+      <p class="scs-manager--details-confirm-loading" role="status">{{ 'Loading...'|t }}</p>
+      <div class="scs-manager--details-confirm-content"></div>
+      <div class="scs-manager--details-confirm-error" role="alert" hidden>
+        <p>{{ 'The confirmation form could not be loaded.'|t }}</p>
+        <a class="btn btn--secondary" href="{{ url }}">{{ title }}</a>
+      </div>
+    </div>
+  </div>
+</div>

@@ -4958,6 +4958,10 @@ msgstr "Demo zurücksetzen"
 msgid "The reset confirmation could not be loaded."
 msgstr "Die Bestätigung zum Zurücksetzen konnte nicht geladen werden."
 
+#: templates/includes/soda-scs-manager--details-confirm.html.twig
+msgid "The confirmation form could not be loaded."
+msgstr "Das Bestätigungsformular konnte nicht geladen werden."
+
 #: src/Form/SodaScsDemoProjectResetForm.php
 msgid "All changes in the WissKI, the databases, the triplestores, the Jupyter home directory and the Team Folder of this project are overwritten with the demo data. Applications you added yourself are not changed. This cannot be undone."
 msgstr "Alle Änderungen im WissKI, in den Datenbanken, den Triplestores, dem Jupyter-Home-Verzeichnis und dem Team Folder dieses Projekts werden mit den Demo-Daten überschrieben. Selbst hinzugefügte Anwendungen bleiben unverändert. Dies kann nicht rückgängig gemacht werden."

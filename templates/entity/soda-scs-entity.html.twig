@@ -74,11 +74,14 @@
 	</section>
 
 	{% set wisski_admin = elements['#wisski_admin']|default({}) %}
+	{% if wisski_admin.clearVarnishCacheUrl or wisski_admin.updateUrl or elements['#snapshot_card'].createUrl|default('') %}
+		{{ attach_library('soda_scs_manager/detailsConfirmOverlay') }}
+	{% endif %}
 
 	{% if wisski_admin.clearVarnishCacheUrl %}
 		<section class="application__details-card application__details-card--admin-tasks">
 			<h2 class="application__details-card-title h4">{{ 'Admin tasks'|t }}</h2>
-			<a class="btn btn--secondary" href="{{ wisski_admin.clearVarnishCacheUrl }}" title="{{ 'Clears cached pages of this WissKI instance.'|t }}">{{ 'Clear Varnish cache'|t }}</a>
+			{% include '@soda_scs_manager/includes/soda-scs-manager--details-confirm.html.twig' with { url: wisski_admin.clearVarnishCacheUrl, title: 'Clear Varnish cache'|t, form_selector: 'soda-scs-wisski-clear-varnish-cache-confirm-form' } only %}
 		</section>
 	{% endif %}
 
@@ -99,7 +102,7 @@
 				<p>{{ 'No snapshots yet.'|t }}</p>
 			{% endif %}
 			{% if snapshot_card.createUrl %}
-				<a class="btn btn--secondary" href="{{ snapshot_card.createUrl }}">{{ 'Create snapshot'|t }}</a>
+				{% include '@soda_scs_manager/includes/soda-scs-manager--details-confirm.html.twig' with { url: snapshot_card.createUrl, title: 'Create snapshot'|t, form_selector: 'soda-scs-snapshot-confirm-form' } only %}
 			{% endif %}
 		</section>
 	{% endif %}
@@ -111,7 +114,7 @@
 				<div class="application__version-row">
 					<p class="h2">{{ elements.version }}</p>
 					{% if wisski_admin.updateUrl %}
-						<a class="btn btn--secondary" href="{{ wisski_admin.updateUrl }}" title="{{ wisski_admin.isDevelopment ?'Redeploys this instance with the current development images.'|t : 'Updates this instance to the latest production version.'|t }}">{{ 'Update'|t }}</a>
+						{% include '@soda_scs_manager/includes/soda-scs-manager--details-confirm.html.twig' with { url: wisski_admin.updateUrl, title: 'Update'|t, form_selector: 'soda-scs-wisski-update-confirm-form', trigger_title: wisski_admin.isDevelopment ? 'Redeploys this instance with the current development images.'|t : 'Updates this instance to the latest production version.'|t } only %}
 					{% endif %}
 				</div>
 				{% if wisski_admin.updateRunning %}

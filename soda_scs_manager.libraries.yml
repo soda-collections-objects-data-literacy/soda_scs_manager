@@ -182,6 +182,16 @@ demoResetOverlay:
     - core/drupal
     - core/once
 
+detailsConfirmOverlay:
+  version: 1.0
+  js:
+    js/detailsConfirmOverlay.js: {}
+  dependencies:
+    - core/drupal
+    - core/drupalSettings
+    - core/once
+    - soda_scs_manager/throbberOverlay
+
 demoVersionStatus:
   version: 1.0
   js:

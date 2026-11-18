@@ -16,6 +16,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- The Varnish cache, snapshot and WissKI update confirmations open in overlays
+  on the application details page.
 - The WissKI update confirmation uses primary Update and secondary Cancel
   buttons side by side. **Update the SCS custom theme** for the action layout.
 - The demo reset confirmation now opens in an overlay on the project page.
