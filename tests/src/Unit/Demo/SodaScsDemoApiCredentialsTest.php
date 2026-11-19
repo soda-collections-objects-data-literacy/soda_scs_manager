@@ -253,6 +253,182 @@ class SodaScsDemoApiCredentialsTest extends UnitTestCase {
   }
 
   /**
+   * The script fails on a role the WissKI lacks and saves nothing.
+   *
+   * Without the role the account cannot use the API, so the demo must not
+   * look ready. An existing account is not touched either.
+   *
+   * @covers ::setApiPassword
+   */
+  public function testScriptFailsOnMissingRoleAndSavesNothing(): void {
+    $run = $this->runGeneratedScript(['wisski_user'], ['authenticated']);
+
+    $this->assertSame(1, $run['exitCode']);
+    $this->assertStringContainsString('missing roles: wisski_api_import', $run['stderr']);
+    $this->assertStringNotContainsString('SAVED', $run['stdout']);
+    $this->assertStringNotContainsString('account created', $run['stdout']);
+    $this->assertStringNotContainsString(self::PASSWORD, $run['stdout'] . $run['stderr']);
+  }
+
+  /**
+   * The script names every missing role and creates no account for them.
+   *
+   * @covers ::setApiPassword
+   */
+  public function testScriptFailsOnAllMissingRolesWithoutCreatingTheAccount(): void {
+    $run = $this->runGeneratedScript([], NULL);
+
+    $this->assertSame(1, $run['exitCode']);
+    $this->assertStringContainsString('missing roles: wisski_user, wisski_api_import', $run['stderr']);
+    $this->assertStringNotContainsString('SAVED', $run['stdout']);
+  }
+
+  /**
+   * An account the template already had gets the missing roles.
+   *
+   * @covers ::setApiPassword
+   */
+  public function testScriptAddsRolesToExistingAccount(): void {
+    $run = $this->runGeneratedScript(['wisski_user', 'wisski_api_import'], ['authenticated', 'wisski_user']);
+
+    $this->assertSame(0, $run['exitCode'], $run['stderr']);
+    $this->assertSame(
+      ['roles' => ['authenticated', 'wisski_user', 'wisski_api_import'], 'passwordSet' => TRUE],
+      $this->savedAccount($run['stdout']),
+    );
+    $this->assertStringNotContainsString('account created', $run['stdout']);
+  }
+
+  /**
+   * A new account gets every role and the created marker.
+   *
+   * @covers ::setApiPassword
+   */
+  public function testScriptCreatesAccountWithAllRoles(): void {
+    $run = $this->runGeneratedScript(['wisski_user', 'wisski_api_import'], NULL);
+
+    $this->assertSame(0, $run['exitCode'], $run['stderr']);
+    $this->assertSame(
+      ['roles' => ['wisski_user', 'wisski_api_import'], 'passwordSet' => TRUE],
+      $this->savedAccount($run['stdout']),
+    );
+    $this->assertStringContainsString('account created', $run['stdout']);
+  }
+
+  /**
+   * Runs the script of setApiPassword() in a PHP process with a fake Drupal.
+   *
+   * @param string[] $existingRoles
+   *   Roles the fake WissKI has.
+   * @param string[]|null $accountRoles
+   *   Roles of the existing API account, or NULL when it does not exist.
+   *
+   * @return array{exitCode: int, stdout: string, stderr: string}
+   *   Exit code and output of the process.
+   */
+  protected function runGeneratedScript(array $existingRoles, ?array $accountRoles): array {
+    $request = NULL;
+    $this->containerHelpers->method('executeDockerExecCommand')
+      ->willReturnCallback(function (array $captured) use (&$request): SodaScsResult {
+        $request = $captured;
+        return SodaScsResult::success(['output' => ''], 'ok');
+      });
+    $this->setApiPassword();
+    $this->assertIsArray($request);
+
+    $directory = sys_get_temp_dir() . '/scs-api-script-' . bin2hex(random_bytes(4));
+    mkdir($directory, 0700);
+    try {
+      file_put_contents($directory . '/script.php', $request['cmd'][2]);
+      file_put_contents($directory . '/harness.php', self::HARNESS);
+      $environment = ['SCS_SCRIPT_FILE' => $directory . '/script.php', 'SCS_FAKE_ROLES' => implode(',', $existingRoles)];
+      if ($accountRoles !== NULL) {
+        $environment['SCS_FAKE_ACCOUNT_ROLES'] = implode(',', $accountRoles);
+      }
+      foreach ($request['env'] as $line) {
+        [$name, $value] = explode('=', $line, 2);
+        $environment[$name] = $value;
+      }
+      $process = proc_open([PHP_BINARY, $directory . '/harness.php'], [1 => ['pipe', 'w'], 2 => ['pipe', 'w']], $pipes, $directory, $environment);
+      $this->assertIsResource($process);
+      $stdout = (string) stream_get_contents($pipes[1]);
+      $stderr = (string) stream_get_contents($pipes[2]);
+      fclose($pipes[1]);
+      fclose($pipes[2]);
+      return ['exitCode' => proc_close($process), 'stdout' => $stdout, 'stderr' => $stderr];
+    }
+    finally {
+      @unlink($directory . '/script.php');
+      @unlink($directory . '/harness.php');
+      @rmdir($directory);
+    }
+  }
+
+  /**
+   * The account the script saved, from the harness output.
+   *
+   * @return array{roles: string[], passwordSet: bool}
+   *   Roles and whether a password was set.
+   */
+  protected function savedAccount(string $stdout): array {
+    $this->assertSame(1, preg_match('/^SAVED (.+)$/m', $stdout, $matches), 'The script must save the account once.');
+    return json_decode($matches[1], TRUE);
+  }
+
+  /**
+   * PHP file that stands in for Drupal and runs the script of the exec.
+   */
+  protected const HARNESS = <<<'PHP'
+<?php
+class ScsFakeRole {}
+class ScsFakeAccount {
+  public bool $passwordSet = FALSE;
+  public function __construct(public array $roles) {}
+  public function addRole(string $role): void {
+    if (!in_array($role, $this->roles, TRUE)) {
+      $this->roles[] = $role;
+    }
+  }
+  public function setPassword(string $password): void {
+    $this->passwordSet = $password !== '';
+  }
+  public function save(): void {
+    echo 'SAVED ' . json_encode(['roles' => $this->roles, 'passwordSet' => $this->passwordSet]) . "\n";
+  }
+}
+class ScsFakeStorage {
+  public function __construct(private string $type) {}
+  public function loadMultiple(array $ids): array {
+    $have = explode(',', (string) getenv('SCS_FAKE_ROLES'));
+    $found = [];
+    foreach ($ids as $id) {
+      if (in_array($id, $have, TRUE)) {
+        $found[$id] = new ScsFakeRole();
+      }
+    }
+    return $found;
+  }
+  public function loadByProperties(array $properties): array {
+    $roles = getenv('SCS_FAKE_ACCOUNT_ROLES');
+    return $roles === FALSE ? [] : [1 => new ScsFakeAccount(array_values(array_filter(explode(',', $roles))))];
+  }
+  public function create(array $values): ScsFakeAccount {
+    return new ScsFakeAccount([]);
+  }
+}
+class Drupal {
+  public static function entityTypeManager(): object {
+    return new class() {
+      public function getStorage(string $type): ScsFakeStorage {
+        return new ScsFakeStorage($type);
+      }
+    };
+  }
+}
+eval(file_get_contents(getenv('SCS_SCRIPT_FILE')));
+PHP;
+
+  /**
    * Runs the protected method under test.
    */
   protected function setApiPassword(): void {

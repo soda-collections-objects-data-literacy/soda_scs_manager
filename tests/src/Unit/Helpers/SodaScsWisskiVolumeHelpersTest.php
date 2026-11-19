@@ -53,6 +53,37 @@ class SodaScsWisskiVolumeHelpersTest extends UnitTestCase {
   }
 
   /**
+   * The install state files of the target survive an import of another site.
+   *
+   * A half-finished install of the source would otherwise stop the target
+   * from starting again.
+   *
+   * @covers ::buildRestoreCommand
+   */
+  public function testRestoreCommandKeepsInstallStateFilesOfTheTarget(): void {
+    $command = $this->volumeHelpers->buildRestoreCommand('wisski-volumes.tar.gz', TRUE);
+
+    $this->assertStringContainsString('/volume-sites/.wisski-install-* /volume-sites/.wisski-packages-version', $command);
+    $this->assertStringContainsString('cp -a "$f" /keep-state/', $command);
+    $this->assertStringContainsString('rm -f /volume-sites/.wisski-install-* /volume-sites/.wisski-packages-version && cp -a /keep-state/. /volume-sites/', $command);
+    $this->assertLessThan(
+      strpos($command, 'rm -rf /volume-sites/*'),
+      strpos($command, 'cp -a "$f" /keep-state/'),
+      'The state files must be saved before the volume is purged.',
+    );
+    $this->assertGreaterThan(
+      strpos($command, 'tar -xzf'),
+      strpos($command, 'cp -a /keep-state/. /volume-sites/'),
+      'The saved state files must be written back after the archive is extracted.',
+    );
+    $this->assertLessThan(
+      strpos($command, 'cp -a /keep-state/. /volume-sites/'),
+      strpos($command, 'rm -f /volume-sites/.wisski-install-*'),
+      'State files of the archive are removed before the saved ones are written back.',
+    );
+  }
+
+  /**
    * @covers ::buildRestoreCommand
    */
   public function testRestoreCommandWithoutKeepingSettingsRestoresSnapshotAsIs(): void {

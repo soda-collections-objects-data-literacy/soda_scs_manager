@@ -10,6 +10,7 @@ use Drupal\Core\Database\Connection;
 use Drupal\Core\DependencyInjection\ContainerBuilder;
 use Drupal\Core\Entity\EntityTypeBundleInfoInterface;
 use Drupal\Core\Entity\EntityTypeManagerInterface;
+use Drupal\Core\Field\FieldItemList;
 use Drupal\Core\File\FileSystemInterface;
 use Drupal\Core\Logger\LoggerChannelFactoryInterface;
 use Drupal\Core\Logger\LoggerChannelInterface;
@@ -20,6 +21,7 @@ use Drupal\soda_scs_manager\Entity\SodaScsComponent;
 use Drupal\soda_scs_manager\Entity\SodaScsComponentInterface;
 use Drupal\soda_scs_manager\Entity\SodaScsProjectInterface;
 use Drupal\soda_scs_manager\Entity\SodaScsServiceKeyInterface;
+use Drupal\soda_scs_manager\Entity\SodaScsSnapshotInterface;
 use Drupal\soda_scs_manager\Exception\SodaScsUserFacingException;
 use Drupal\soda_scs_manager\Helpers\SodaScsComponentHelpers;
 use Drupal\soda_scs_manager\Helpers\SodaScsContainerHelpers;
@@ -175,11 +177,32 @@ class SodaScsWisskiComponentActionsCreateTest extends UnitTestCase {
   protected $portainerHelpers;
 
   /**
+   * The mocked WissKI volume helpers.
+   *
+   * @var \Drupal\soda_scs_manager\Helpers\SodaScsWisskiVolumeHelpers|\Prophecy\Prophecy\ObjectProphecy
+   */
+  protected $wisskiVolumeHelpers;
+
+  /**
+   * The mocked Varnish cache service.
+   *
+   * @var \Drupal\soda_scs_manager\Service\SodaScsWisskiVarnishCache|\Prophecy\Prophecy\ObjectProphecy
+   */
+  protected $varnishCache;
+
+  /**
    * The service under test.
    *
    * @var \Drupal\soda_scs_manager\ComponentActions\SodaScsWisskiComponentActions
    */
   protected SodaScsWisskiComponentActions $actions;
+
+  /**
+   * The mocked file system.
+   *
+   * @var \Drupal\Core\File\FileSystemInterface|\Prophecy\Prophecy\ObjectProphecy
+   */
+  protected $fileSystem;
 
   /**
    * {@inheritdoc}
@@ -268,6 +291,10 @@ class SodaScsWisskiComponentActionsCreateTest extends UnitTestCase {
     $this->serviceKeyActions = $this->prophesize(SodaScsServiceKeyActionsInterface::class);
     $this->serviceKeyActions->getServiceKey(Argument::type('array'))->willReturn($serviceKey->reveal());
 
+    $this->wisskiVolumeHelpers = $this->prophesize(SodaScsWisskiVolumeHelpers::class);
+    $this->varnishCache = $this->prophesize(SodaScsWisskiVarnishCache::class);
+    $this->fileSystem = $this->prophesize(FileSystemInterface::class);
+
     $this->actions = new SodaScsWisskiComponentActions(
       $this->bundleInfo->reveal(),
       $configFactory->reveal(),
@@ -276,7 +303,7 @@ class SodaScsWisskiComponentActionsCreateTest extends UnitTestCase {
       $this->prophesize(ClientInterface::class)->reveal(),
       $loggerFactory->reveal(),
       $this->messenger->reveal(),
-      $this->prophesize(FileSystemInterface::class)->reveal(),
+      $this->fileSystem->reveal(),
       $componentHelpers->reveal(),
       $this->containerHelpers->reveal(),
       $this->prophesize(SodaScsHelpers::class)->reveal(),
@@ -297,8 +324,8 @@ class SodaScsWisskiComponentActionsCreateTest extends UnitTestCase {
       $this->prophesize(SodaScsServiceActionsInterface::class)->reveal(),
       $this->prophesize(SodaScsStackHelpers::class)->reveal(),
       $this->getStringTranslationStub(),
-      $this->prophesize(SodaScsWisskiVolumeHelpers::class)->reveal(),
-      $this->prophesize(SodaScsWisskiVarnishCache::class)->reveal(),
+      $this->wisskiVolumeHelpers->reveal(),
+      $this->varnishCache->reveal(),
     );
   }
 
@@ -759,6 +786,59 @@ class SodaScsWisskiComponentActionsCreateTest extends UnitTestCase {
     $result = $this->actions->createSnapshot($component, 'snap-1', 1700000000);
 
     $this->assertFalse($result->success);
+  }
+
+  /**
+   * A Varnish restart that fails after the restore is reported as a failure.
+   *
+   * The volumes are restored and the WissKI runs again, but Varnish still
+   * points at the old backend address: the caller must not see a success.
+   * The restart is asked for the machine name of the restored instance.
+   *
+   * @covers ::restoreFromSnapshot
+   */
+  public function testRestoreFromSnapshotFailsWhenVarnishRestartFails(): void {
+    $this->useLoggerFactoryForFailureResults();
+    $snapshotFile = $this->tempSnapshotFile();
+    try {
+      $snapshot = $this->prepareRestoreUntilVarnish($snapshotFile);
+      $this->varnishCache->restart('foo')
+        ->willReturn(SodaScsResult::failure(error: 'Varnish restart refused.', message: 'Could not restart the Varnish container.', log: FALSE))
+        ->shouldBeCalledOnce();
+
+      $result = $this->actions->restoreFromSnapshot($snapshot, NULL);
+
+      $this->assertFalse($result->success);
+      $this->assertSame('Restore completed, but failed to restart the Varnish container.', $result->message);
+      $this->assertSame('Varnish restart refused.', $result->error);
+    }
+    finally {
+      @unlink($snapshotFile);
+    }
+  }
+
+  /**
+   * A restore that fails before the start does not touch Varnish.
+   *
+   * @covers ::restoreFromSnapshot
+   */
+  public function testRestoreFromSnapshotDoesNotRestartVarnishWhenVolumeRestoreFails(): void {
+    $this->useLoggerFactoryForFailureResults();
+    $snapshotFile = $this->tempSnapshotFile();
+    try {
+      $snapshot = $this->prepareRestoreUntilVarnish($snapshotFile);
+      $this->wisskiVolumeHelpers->importVolumes('foo', dirname($snapshotFile), basename($snapshotFile), FALSE)
+        ->willReturn(SodaScsResult::failure(error: 'tar failed.', message: 'Restore failed.', log: FALSE));
+      $this->varnishCache->restart(Argument::any())->shouldNotBeCalled();
+
+      $result = $this->actions->restoreFromSnapshot($snapshot, NULL);
+
+      $this->assertFalse($result->success);
+      $this->assertSame('Failed to restore the WissKI volumes.', $result->message);
+    }
+    finally {
+      @unlink($snapshotFile);
+    }
   }
 
   /**
@@ -1411,6 +1491,83 @@ class SodaScsWisskiComponentActionsCreateTest extends UnitTestCase {
       'wisskiBaseImageProductionVersion' => 'image-1',
       'wisskiStackProductionVersion' => 'stack-1',
     ]);
+  }
+
+  /**
+   * Lets failure results log through \Drupal::logger() into the double.
+   */
+  protected function useLoggerFactoryForFailureResults(): void {
+    $loggerFactory = $this->prophesize(LoggerChannelFactoryInterface::class);
+    $loggerFactory->get('soda_scs_manager')->willReturn($this->logger->reveal());
+    $container = new ContainerBuilder();
+    $container->set('logger.factory', $loggerFactory->reveal());
+    \Drupal::setContainer($container);
+  }
+
+  /**
+   * Creates the snapshot archive file the restore looks for on disk.
+   */
+  protected function tempSnapshotFile(): string {
+    $path = tempnam(sys_get_temp_dir(), 'scs-snapshot-');
+    $this->assertIsString($path);
+    return $path;
+  }
+
+  /**
+   * Stubs every request of a restore up to the Varnish restart.
+   *
+   * The WissKI container "foo--drupal" is stopped, the rollback backup and the
+   * volume import succeed and the container starts again.
+   */
+  protected function prepareRestoreUntilVarnish(string $snapshotFile): SodaScsSnapshotInterface {
+    $component = $this->component();
+    $componentField = $this->createMock(FieldItemList::class);
+    $componentField->method('__isset')->with('entity')->willReturn(TRUE);
+    $componentField->method('__get')->with('entity')->willReturn($component);
+    $file = new class($snapshotFile) {
+
+      /**
+       * Constructs the stand-in of the snapshot file entity.
+       */
+      public function __construct(private string $path) {}
+
+      /**
+       * Returns the URI of the file.
+       */
+      public function getFileUri(): string {
+        return $this->path;
+      }
+
+    };
+    $snapshot = $this->createMock(SodaScsSnapshotInterface::class);
+    $snapshot->method('get')->with('snapshotOfComponent')->willReturn($componentField);
+    $snapshot->method('getFile')->willReturn($file);
+    $snapshot->method('label')->willReturn('Snapshot');
+    $this->fileSystem->realpath($snapshotFile)->willReturn($snapshotFile);
+
+    $this->dockerRun->buildGetAllRequest(Argument::type('array'))->willReturn(['request' => 'get-all']);
+    $this->dockerRun->makeRequest(['request' => 'get-all'])->willReturn($this->portainerJson([['Id' => 'cid-wisski']]));
+    $this->dockerRun->buildInspectRequest(Argument::type('array'))->willReturn(['request' => 'inspect']);
+    $this->dockerRun->makeRequest(['request' => 'inspect'])->willReturn($this->portainerJson(['State' => ['Running' => FALSE]]));
+    $this->dockerRun->buildCreateRequest(Argument::type('array'))->willReturn(['request' => 'create']);
+    $this->dockerRun->makeRequest(['request' => 'create'])->willReturn($this->portainerJson(['Id' => 'cid-rollback']));
+    $this->dockerRun->buildStartRequest(Argument::type('array'))->willReturn(['request' => 'start']);
+    $this->dockerRun->makeRequest(['request' => 'start'])->willReturn(['success' => TRUE]);
+    $this->containerHelpers->waitForContainerState('cid-rollback', 'exited')
+      ->willReturn(SodaScsResult::success(data: [], message: 'exited'));
+    $this->wisskiVolumeHelpers->importVolumes('foo', dirname($snapshotFile), basename($snapshotFile), FALSE)
+      ->willReturn(SodaScsResult::success(data: [], message: 'Imported.'));
+    return $snapshot;
+  }
+
+  /**
+   * A successful Portainer answer with a JSON body.
+   */
+  protected function portainerJson(array $body): array {
+    return [
+      'success' => TRUE,
+      'data' => ['portainerResponse' => new Response(200, [], json_encode($body))],
+    ];
   }
 
   /**

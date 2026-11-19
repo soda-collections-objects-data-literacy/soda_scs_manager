@@ -34,6 +34,9 @@ use PHPUnit\Framework\MockObject\MockObject;
  * Issue 3638851: a recreated account gets its rights on the owner's other
  * repositories back.
  *
+ * Issue 3639291: whenever a new token is issued, the WissKI adapters of the
+ * owner get it (syncUser()); an existing token needs no sync.
+ *
  * @coversDefaultClass \Drupal\soda_scs_manager\Helpers\SodaScsTriplestoreHelpers
  * @group soda_scs_manager
  */
@@ -67,10 +70,16 @@ class SodaScsTriplestoreHelpersUserDataTest extends UnitTestCase {
   private array $ownedRepositories = [];
 
   /**
+   * The double that writes tokens into the WissKI adapters.
+   */
+  private SodaScsWisskiTriplestoreTokenSync&MockObject $tokenSync;
+
+  /**
    * {@inheritdoc}
    */
   protected function setUp(): void {
     parent::setUp();
+    $this->tokenSync = $this->createMock(SodaScsWisskiTriplestoreTokenSync::class);
     $this->openGdbHelpers = $this->createMock(SodaScsOpenGdbHelpers::class);
     $this->serviceKeyActions = $this->createMock(SodaScsServiceKeyActionsInterface::class);
     $this->logger = $this->createMock(LoggerChannelInterface::class);
@@ -248,6 +257,108 @@ class SodaScsTriplestoreHelpersUserDataTest extends UnitTestCase {
   }
 
   /**
+   * A renewed token is synced to the owner's WissKIs after it was stored.
+   *
+   * @covers ::ensureUserDataExists
+   */
+  public function testRecreatedUserSyncsWisskiTokensAfterTheTokenIsStored(): void {
+    $this->openGdbHelpers->method('getUserDataByName')->willReturnCallback($this->userDataAfterCreate());
+    $this->openGdbHelpers->method('createUserToken')->willReturn('new-token');
+    $order = [];
+    $tokenKey = $this->createServiceKey('stale-token');
+    $tokenKey->method('save')->willReturnCallback(static function () use (&$order): void {
+      $order[] = 'save';
+    });
+    $this->useServiceKeys($tokenKey);
+    $this->tokenSync->expects($this->once())->method('syncUser')->with(7)
+      ->willReturnCallback(static function () use (&$order): int {
+        $order[] = 'sync';
+        return 1;
+      });
+
+    $this->helpers()->ensureUserDataExists($this->createComponent());
+
+    $this->assertSame(['save', 'sync'], $order);
+  }
+
+  /**
+   * A first token for an existing account is synced to the owner's WissKIs.
+   *
+   * @covers ::ensureUserDataExists
+   */
+  public function testExistingUserWithoutStoredTokenSyncsWisskiTokensAfterTheKeyIsCreated(): void {
+    $this->openGdbHelpers->method('getUserDataByName')->willReturn(['username' => 'alice']);
+    $this->openGdbHelpers->expects($this->once())->method('createUserToken')->willReturn('new-token');
+    $order = [];
+    $this->serviceKeyActions->method('getServiceKey')->willReturnCallback(
+      fn (array $props): ?SodaScsServiceKeyInterface => ($props['type'] ?? '') === 'password' ? $this->passwordKey : NULL
+    );
+    $this->serviceKeyActions->method('createServiceKey')->willReturnCallback(function () use (&$order): SodaScsServiceKeyInterface {
+      $order[] = 'create';
+      return $this->createServiceKey('new-token');
+    });
+    $this->tokenSync->expects($this->once())->method('syncUser')->with(7)
+      ->willReturnCallback(static function () use (&$order): int {
+        $order[] = 'sync';
+        return 0;
+      });
+
+    $this->helpers()->ensureUserDataExists($this->createComponent());
+
+    $this->assertSame(['create', 'sync'], $order);
+  }
+
+  /**
+   * A recreated user without any stored token is synced once.
+   *
+   * @covers ::ensureUserDataExists
+   */
+  public function testRecreatedUserWithoutStoredTokenSyncsWisskiTokensOnce(): void {
+    $this->openGdbHelpers->method('getUserDataByName')->willReturnCallback($this->userDataAfterCreate());
+    $this->openGdbHelpers->method('createUserToken')->willReturn('new-token');
+    $this->serviceKeyActions->method('getServiceKey')->willReturnCallback(
+      fn (array $props): ?SodaScsServiceKeyInterface => ($props['type'] ?? '') === 'password' ? $this->passwordKey : NULL
+    );
+    $this->serviceKeyActions->method('createServiceKey')->willReturn($this->createServiceKey('new-token'));
+    $this->tokenSync->expects($this->once())->method('syncUser')->with(7);
+
+    $this->helpers()->ensureUserDataExists($this->createComponent());
+  }
+
+  /**
+   * The stored token of an existing account stays: no WissKI is touched.
+   *
+   * @covers ::ensureUserDataExists
+   */
+  public function testExistingUserWithStoredTokenSyncsNothing(): void {
+    $this->openGdbHelpers->method('getUserDataByName')->willReturn(['username' => 'alice']);
+    $this->useServiceKeys($this->createServiceKey('stored-token'));
+    $this->tokenSync->expects($this->never())->method('syncUser');
+
+    $this->helpers()->ensureUserDataExists($this->createComponent());
+  }
+
+  /**
+   * A failing token request syncs nothing: no new token exists.
+   *
+   * @covers ::ensureUserDataExists
+   */
+  public function testFailingTokenRequestSyncsNothing(): void {
+    $this->openGdbHelpers->method('getUserDataByName')->willReturnCallback($this->userDataAfterCreate());
+    $this->openGdbHelpers->method('createUserToken')->willThrowException(new \RuntimeException('OpenGDB answered 500.'));
+    $this->useServiceKeys($this->createServiceKey('stale-token'));
+    $this->tokenSync->expects($this->never())->method('syncUser');
+
+    try {
+      $this->helpers()->ensureUserDataExists($this->createComponent());
+      $this->fail('Expected the RuntimeException of the token request.');
+    }
+    catch (\RuntimeException $exception) {
+      $this->assertSame('OpenGDB answered 500.', $exception->getMessage());
+    }
+  }
+
+  /**
    * Feeds the password key and the given token key to the key lookup.
    */
   private function useServiceKeys(SodaScsServiceKeyInterface $tokenKey): void {
@@ -286,7 +397,7 @@ class SodaScsTriplestoreHelpersUserDataTest extends UnitTestCase {
       $this->openGdbHelpers,
       $bundleInfo,
       $this->entityTypeManager(),
-      $this->createMock(SodaScsWisskiTriplestoreTokenSync::class),
+      $this->tokenSync,
     );
   }
 
