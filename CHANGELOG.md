@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [4.7.1] - 2026-11-19
+
+### Changed
+
+- Unit tests cover demo template build guards (refuse unfinished source WissKIs,
+  restart Varnish after restore or import) and writing the owner token into the
+  Salz adapter after OpenGDB recreate.
+
 ## [4.7.0] - 2026-11-18
 
 ### Added
