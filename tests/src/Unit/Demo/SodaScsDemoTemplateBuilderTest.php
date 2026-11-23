@@ -52,6 +52,11 @@ class SodaScsDemoTemplateBuilderTest extends UnitTestCase {
   ];
 
   /**
+   * Base URIs the WissKI export reports.
+   */
+  private const URI_BASES = ['graph' => 'https://source.example.org/contents/', 'site' => 'https://source.example.org/'];
+
+  /**
    * The Jupyter helpers double.
    */
   private SodaScsJupyterHelpers&MockObject $jupyterHelpers;
@@ -194,6 +199,139 @@ class SodaScsDemoTemplateBuilderTest extends UnitTestCase {
     $this->expectExceptionMessage('Export stopped here.');
 
     $this->builder()->build($this->template);
+  }
+
+  /**
+   * The base URIs the WissKI export returns land in the manifest.
+   *
+   * @covers ::build
+   */
+  public function testBuildStoresTheBaseUrisOfTheWisskiInTheManifest(): void {
+    $this->useSuccessfulWisskiExport();
+    $manifest = NULL;
+    $this->template = $this->recordingTemplate($manifest);
+
+    $this->builder()->build($this->template);
+
+    $this->assertSame(self::URI_BASES, $manifest['apps']['wisski']['uriBases']);
+    $this->assertSame('wisski', $manifest['apps']['wisski']['directory']);
+    $this->assertSame(21, $manifest['apps']['wisski']['sourceStackId']);
+  }
+
+  /**
+   * The file manifest.json holds the manifest with the format version.
+   *
+   * @covers ::build
+   */
+  public function testBuildWritesManifestFileWithFormatVersionAndBases(): void {
+    $this->useSuccessfulWisskiExport();
+    $manifest = NULL;
+    $this->template = $this->recordingTemplate($manifest);
+
+    $this->builder()->build($this->template);
+
+    $file = json_decode((string) file_get_contents($this->directory . '/manifest.json'), TRUE);
+    $this->assertSame(1, $file['formatVersion']);
+    $this->assertSame('1.0.0', $file['version']);
+    $this->assertSame(self::URI_BASES, $file['apps']['wisski']['uriBases']);
+    $this->assertSame($manifest['checksums'], $file['checksums']);
+  }
+
+  /**
+   * The file manifest.json is not part of its own checksums; the files are.
+   *
+   * @covers ::build
+   */
+  public function testBuildKeepsManifestFileOutOfTheChecksums(): void {
+    $this->useSuccessfulWisskiExport();
+    $manifest = NULL;
+    $this->template = $this->recordingTemplate($manifest);
+
+    $this->builder()->build($this->template);
+
+    $this->assertEqualsCanonicalizing(
+      ['wisski/wisski-database.sql', 'wisski/wisski-triplestore.nq', 'wisski/wisski-volumes.tar.gz'],
+      array_keys($manifest['checksums']),
+    );
+    $this->assertSame(hash('sha256', 'SELECT 1;'), $manifest['checksums']['wisski/wisski-database.sql']);
+  }
+
+  /**
+   * A manifest.json that cannot be written fails the build.
+   *
+   * @covers ::build
+   */
+  public function testBuildFailsWhenManifestFileCannotBeWritten(): void {
+    $stack = $this->createStack('Source WissKI');
+    $this->useSource($stack, NULL);
+    $this->wisskiTransfer->method('isInstallComplete')->willReturn(TRUE);
+    $this->wisskiTransfer->method('export')->willReturnCallback(function (): array {
+      // A directory in the way makes file_put_contents() fail.
+      $this->writeWisskiFiles($this->directory . '/wisski');
+      mkdir($this->directory . '/manifest.json');
+      return self::URI_BASES;
+    });
+    $this->teamFolderCopier->method('exportTeamFolder')->willReturn(SodaScsResult::success(['fileCount' => 0], 'Exported.'));
+    $this->template->expects($this->never())->method('setManifest');
+    set_error_handler(static fn (): bool => TRUE);
+
+    try {
+      $this->builder()->build($this->template);
+      $this->fail('Expected a SodaScsDemoException.');
+    }
+    catch (SodaScsDemoException $exception) {
+      $this->assertStringContainsString('Could not write manifest.json', $exception->getMessage());
+      $this->assertSame([SodaScsDemoTemplateInterface::STATUS_FAILED], $this->statuses);
+    }
+    finally {
+      restore_error_handler();
+    }
+  }
+
+  /**
+   * Lets the source have a WissKI whose export writes a file and returns bases.
+   */
+  private function useSuccessfulWisskiExport(): void {
+    $stack = $this->createStack('Source WissKI');
+    $this->useSource($stack, NULL);
+    $this->wisskiTransfer->method('isInstallComplete')->willReturn(TRUE);
+    $this->wisskiTransfer->method('export')->willReturnCallback(function (SodaScsStackInterface $stack, string $directory): array {
+      $this->writeWisskiFiles($directory);
+      return self::URI_BASES;
+    });
+    $this->teamFolderCopier->method('exportTeamFolder')->willReturn(SodaScsResult::success(['fileCount' => 0], 'Exported.'));
+  }
+
+  /**
+   * Writes the three files a WissKI export leaves in its directory.
+   */
+  private function writeWisskiFiles(string $directory): void {
+    file_put_contents($directory . '/wisski-database.sql', 'SELECT 1;');
+    file_put_contents($directory . '/wisski-triplestore.nq', '');
+    file_put_contents($directory . '/wisski-volumes.tar.gz', 'volumes');
+  }
+
+  /**
+   * A template double that records the manifest it is given.
+   *
+   * @param array|null $manifest
+   *   Receives the manifest.
+   */
+  private function recordingTemplate(?array &$manifest): SodaScsDemoTemplateInterface&MockObject {
+    $template = $this->createMock(SodaScsDemoTemplateInterface::class);
+    $template->method('getArtifactDirectory')->willReturn($this->directory);
+    $template->method('getVersion')->willReturn('1.0.0');
+    $template->method('getChangelog')->willReturn('Test.');
+    $template->method('get')->with('sourceProject')->willReturn($this->template->get('sourceProject'));
+    $template->method('setStatus')->willReturnCallback(function (string $status) use ($template): SodaScsDemoTemplateInterface {
+      $this->statuses[] = $status;
+      return $template;
+    });
+    $template->method('setManifest')->willReturnCallback(function (array $given) use (&$manifest, $template): SodaScsDemoTemplateInterface {
+      $manifest = $given;
+      return $template;
+    });
+    return $template;
   }
 
   /**
