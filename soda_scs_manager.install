@@ -2082,3 +2082,11 @@ function soda_scs_manager_update_11042() {
 
   return t('Installed conversations. Admins write to users under /soda-scs-manager/administration/conversations.');
 }
+
+/**
+ * Create the service account scs_demo that owns the demo source project.
+ */
+function soda_scs_manager_update_11043() {
+  \Drupal::service('soda_scs_manager.demo.service_account')->ensureDrupalAccount();
+  return t('Created the account scs_demo. Set SCS_DEMO_ACCOUNT_PASSWORD in the deployment .env, recreate the manager container and run drush soda_scs_manager:demo-account; "Use as demo project" then hands the source project to scs_demo.');
+}

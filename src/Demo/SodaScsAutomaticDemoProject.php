@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Drupal\soda_scs_manager\Demo;
 
 use Drupal\soda_scs_manager\Helpers\SodaScsNextcloudHelpers;
+use Drupal\soda_scs_manager\Helpers\SodaScsProtectedAccounts;
 use Drupal\user\UserInterface;
 use Psr\Log\LoggerInterface;
 
@@ -42,7 +43,7 @@ final class SodaScsAutomaticDemoProject {
    *   TRUE when a demo was just queued.
    */
   public function ensureFor(UserInterface $account): bool {
-    if (!$account->hasRole(self::PLATFORM_ROLE)) {
+    if (!$account->hasRole(self::PLATFORM_ROLE) || SodaScsProtectedAccounts::isProtected($account)) {
       return FALSE;
     }
 

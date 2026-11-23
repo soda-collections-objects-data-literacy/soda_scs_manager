@@ -18,11 +18,13 @@ use Drupal\soda_scs_manager\Demo\SodaScsDemoManager;
 use Drupal\soda_scs_manager\Demo\SodaScsDemoNotReadyException;
 use Drupal\soda_scs_manager\Demo\SodaScsDemoProjectProvisioner;
 use Drupal\soda_scs_manager\Demo\SodaScsDemoProjectStatus;
+use Drupal\soda_scs_manager\Demo\SodaScsDemoServiceAccount;
 use Drupal\soda_scs_manager\Demo\SodaScsDemoStatusBuilder;
 use Drupal\soda_scs_manager\Demo\SodaScsDemoTemplateBuilder;
 use Drupal\soda_scs_manager\Entity\SodaScsDemoTemplateInterface;
 use Drupal\soda_scs_manager\Entity\SodaScsProjectInterface;
 use Drupal\soda_scs_manager\Helpers\SodaScsProgressHelper;
+use Drupal\soda_scs_manager\Service\SodaScsProjectOwnershipTransfer;
 use Psr\Log\LoggerInterface;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 
@@ -72,8 +74,10 @@ class SodaScsDemoQueueWorker extends QueueWorkerBase implements ContainerFactory
     protected EntityTypeManagerInterface $entityTypeManager,
     protected LockBackendInterface $lock,
     protected LoggerInterface $logger,
+    protected SodaScsProjectOwnershipTransfer $ownershipTransfer,
     protected SodaScsProgressHelper $progressHelper,
     protected SodaScsDemoProjectProvisioner $projectProvisioner,
+    protected SodaScsDemoServiceAccount $serviceAccount,
     protected SodaScsDemoTemplateBuilder $templateBuilder,
     protected TimeInterface $time,
   ) {
@@ -92,8 +96,10 @@ class SodaScsDemoQueueWorker extends QueueWorkerBase implements ContainerFactory
       $container->get('entity_type.manager'),
       $container->get('lock'),
       $container->get('logger.channel.soda_scs_manager'),
+      $container->get('soda_scs_manager.project_ownership_transfer'),
       $container->get('soda_scs_manager.progress.helpers'),
       $container->get('soda_scs_manager.demo.project_provisioner'),
+      $container->get('soda_scs_manager.demo.service_account'),
       $container->get('soda_scs_manager.demo.template_builder'),
       $container->get('datetime.time'),
     );
@@ -104,7 +110,12 @@ class SodaScsDemoQueueWorker extends QueueWorkerBase implements ContainerFactory
    */
   public function processItem($data): void {
     $operation = (string) ($data['operation'] ?? '');
-    $lockName = $operation === SodaScsDemoManager::OPERATION_BUILD_TEMPLATE
+    // A source transfer redeploys the WissKI a build reads from.
+    $templateOperations = [
+      SodaScsDemoManager::OPERATION_BUILD_TEMPLATE,
+      SodaScsDemoManager::OPERATION_TRANSFER_SOURCE,
+    ];
+    $lockName = in_array($operation, $templateOperations, TRUE)
       ? 'soda_scs_manager.demo.template_build'
       : SodaScsDemoManager::PROJECT_LOCK_PREFIX . (int) ($data['projectId'] ?? 0);
     if (!$this->lock->acquire($lockName, self::LOCK_TIMEOUT_SECONDS)) {
@@ -117,6 +128,7 @@ class SodaScsDemoQueueWorker extends QueueWorkerBase implements ContainerFactory
       match ($operation) {
         SodaScsDemoManager::OPERATION_BUILD_TEMPLATE => $this->buildTemplate($data, $operationId),
         SodaScsDemoManager::OPERATION_PROVISION, SodaScsDemoManager::OPERATION_RESET => $this->applyTemplate($data, $operationId),
+        SodaScsDemoManager::OPERATION_TRANSFER_SOURCE => $this->transferSource($data, $operationId),
         default => $this->logger->error('Unknown demo queue operation @operation dropped.', ['@operation' => $operation]),
       };
     }
@@ -291,6 +303,53 @@ class SodaScsDemoQueueWorker extends QueueWorkerBase implements ContainerFactory
    */
   protected function stepReporter(?string $operationId): callable {
     return fn (TranslatableMarkup|string $message) => $this->reportStep($operationId, $message);
+  }
+
+  /**
+   * Hands the demo source project to the service account scs_demo.
+   */
+  protected function transferSource(array $data, ?string $operationId): void {
+    $project = $this->entityTypeManager->getStorage('soda_scs_project')->load((int) ($data['projectId'] ?? 0));
+    if (!$project instanceof SodaScsProjectInterface) {
+      $this->logger->warning('Demo source transfer dropped: project @project no longer exists.', ['@project' => $data['projectId'] ?? '-']);
+      $this->setOperationStatus($operationId, 'failed');
+      return;
+    }
+
+    $failed = function (string $reason) use ($operationId, $project): void {
+      $this->logger->error('Handing demo source project @project to scs_demo failed: @reason', [
+        '@project' => $project->id(),
+        '@reason' => $reason,
+      ]);
+      $this->reportStep($operationId, new TranslatableMarkup('Handing the demo project to scs_demo failed. See the log for details.'));
+      $this->setOperationStatus($operationId, 'failed');
+    };
+    try {
+      $this->reportStep($operationId, new TranslatableMarkup('Preparing the account scs_demo'));
+      $account = $this->serviceAccount->ensure();
+      if (!$account->success) {
+        $failed((string) ($account->error ?: $account->message));
+        return;
+      }
+
+      $this->reportStep($operationId, new TranslatableMarkup('Handing the demo project to scs_demo'));
+      $result = $this->ownershipTransfer->transfer($project, $account->data['account']);
+      if (!$result->success) {
+        $failed((string) ($result->error ?: $result->message));
+        return;
+      }
+    }
+    catch (\Throwable $e) {
+      $failed($e->getMessage());
+      return;
+    }
+    foreach ($result->data['warnings'] ?? [] as $warning) {
+      $this->logger->warning('Demo source transfer of project @project: @warning', [
+        '@project' => $project->id(),
+        '@warning' => $warning,
+      ]);
+    }
+    $this->setOperationStatus($operationId, 'completed');
   }
 
 }

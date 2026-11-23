@@ -12,6 +12,7 @@ use Drupal\Core\StringTranslation\StringTranslationTrait;
 use Drupal\openid_connect\OpenIDConnectSessionInterface;
 use Drupal\soda_scs_manager\RequestActions\SodaScsNextcloudServiceActions;
 use Drupal\soda_scs_manager\Service\NextcloudMountCredentialsStore;
+use Drupal\soda_scs_manager\ValueObject\SodaScsResult;
 use Drupal\user\UserInterface;
 use Symfony\Component\DependencyInjection\Attribute\Autowire;
 
@@ -532,25 +533,8 @@ class SodaScsNextcloudHelpers {
    * Creates an app password via occ (SSO accounts cannot use OCS getapppassword).
    */
   protected function createAppPasswordViaOcc(string $cloudUserId): ?string {
-    $container = (string) ($this->configFactory->get('soda_scs_manager.settings')
-      ->get('nextcloud.generalSettings.occContainerName') ?? '');
-    if ($container === '') {
-      $container = self::DEFAULT_OCC_CONTAINER;
-    }
-
     $occUser = $this->resolveOccUsername($cloudUserId);
-    $result = $this->containerHelpers->executeDockerExecCommand([
-      'cmd' => [
-        'php',
-        '/var/www/html/occ',
-        'user:add-app-password',
-        $occUser,
-        '-n',
-        '--no-warnings',
-      ],
-      'containerName' => $container,
-      'user' => 'www-data',
-    ]);
+    $result = $this->runOcc(['user:add-app-password', $occUser]);
 
     if (!$result->success) {
       $this->logNextcloudSsoFailure(
@@ -567,6 +551,35 @@ class SodaScsNextcloudHelpers {
 
     $this->logNextcloudSsoFailure('occ app password', 'could not parse occ output');
     return NULL;
+  }
+
+  /**
+   * Runs an occ command in the Nextcloud container as www-data.
+   *
+   * @param list<string> $arguments
+   *   The occ command and its arguments.
+   * @param list<string> $env
+   *   Environment entries (NAME=value), e.g. a password for
+   *   --password-from-env.
+   *
+   * @return \Drupal\soda_scs_manager\ValueObject\SodaScsResult
+   *   The docker exec result; data['output'] holds the command output.
+   */
+  protected function runOcc(array $arguments, array $env = []): SodaScsResult {
+    $container = (string) ($this->configFactory->get('soda_scs_manager.settings')
+      ->get('nextcloud.generalSettings.occContainerName') ?? '');
+    if ($container === '') {
+      $container = self::DEFAULT_OCC_CONTAINER;
+    }
+    $request = [
+      'cmd' => ['php', '/var/www/html/occ', ...$arguments, '-n', '--no-warnings'],
+      'containerName' => $container,
+      'user' => 'www-data',
+    ];
+    if ($env !== []) {
+      $request['env'] = $env;
+    }
+    return $this->containerHelpers->executeDockerExecCommand($request);
   }
 
   /**
@@ -692,6 +705,58 @@ class SodaScsNextcloudHelpers {
     }
 
     return $credentials;
+  }
+
+  /**
+   * Creates a Nextcloud account for an SSO user via occ.
+   *
+   * Stores the mount credentials as well. For service accounts that own
+   * applications but never log in to Drive: the account gets the id Drive
+   * login would give it (the raw Keycloak sub), and an app password that the
+   * WebDAV mounts use. Idempotent.
+   *
+   * @param \Drupal\user\UserInterface $user
+   *   The Drupal user, linked to Keycloak.
+   * @param string $password
+   *   The login password of the Nextcloud account.
+   *
+   * @return bool
+   *   TRUE when the account exists and mount credentials are stored.
+   */
+  public function ensureAccountViaOcc(UserInterface $user, string $password): bool {
+    $keycloakUserId = $this->projectHelpers->getUserSsoUuid($user);
+    if (empty($keycloakUserId) || $password === '') {
+      return FALSE;
+    }
+    $cloudUserId = $this->resolveOccUsername($keycloakUserId);
+
+    // user:info exits non-zero for a missing user, which the exec helper
+    // logs as an error; the list answers both cases without one.
+    $list = $this->runOcc(['user:list', '--output=json', '--limit=100000']);
+    $users = $list->success ? json_decode((string) ($list->data['output'] ?? ''), TRUE) : NULL;
+    if (!is_array($users)) {
+      $this->logNextcloudSsoFailure('occ user:list', (string) ($list->error ?? 'unreadable output'));
+      return FALSE;
+    }
+    if (!array_key_exists($cloudUserId, $users)) {
+      $added = $this->runOcc(
+        ['user:add', '--password-from-env', '--display-name=' . $user->getAccountName(), $cloudUserId],
+        ['OC_PASS=' . $password],
+      );
+      if (!$added->success) {
+        $this->logNextcloudSsoFailure('occ user:add', (string) ($added->error ?? 'docker exec failed'));
+        return FALSE;
+      }
+    }
+
+    if ($this->getMountCredentials($user) !== NULL) {
+      return TRUE;
+    }
+    $appPassword = $this->createAppPasswordViaOcc($cloudUserId);
+    if ($appPassword === NULL) {
+      return FALSE;
+    }
+    return $this->persistNextcloudCredentials($user, $cloudUserId, $appPassword);
   }
 
   /**

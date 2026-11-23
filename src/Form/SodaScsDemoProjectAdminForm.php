@@ -80,6 +80,17 @@ final class SodaScsDemoProjectAdminForm extends FormBase {
         '#markup' => $source->toLink()->toString(),
         '#weight' => -10,
       ];
+      $ownerNotice = $this->demoManager->sourceOwnerNotice();
+      if ($ownerNotice !== NULL) {
+        $form['source']['ownerNotice'] = [
+          '#type' => 'html_tag',
+          '#tag' => 'p',
+          '#value' => $ownerNotice,
+          '#attributes' => ['class' => ['messages', 'messages--warning']],
+          '#weight' => -9,
+        ];
+        $form['source']['#open'] = TRUE;
+      }
     }
 
     $form['build'] = [

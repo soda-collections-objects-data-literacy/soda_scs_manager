@@ -15,6 +15,7 @@ use Drupal\Core\Entity\EntityTypeManagerInterface;
 use Drupal\soda_scs_manager\Entity\SodaScsComponentInterface;
 use Drupal\soda_scs_manager\Service\SodaScsWisskiTriplestoreTokenSync;
 use Drupal\soda_scs_manager\ServiceKeyActions\SodaScsServiceKeyActionsInterface;
+use Drupal\user\UserInterface;
 
 /**
  * Helper class for SCS triplestore operations.
@@ -277,15 +278,28 @@ class SodaScsTriplestoreHelpers {
    *   If the operation fails.
    */
   public function ensureUserDataExists($component) {
+    return $this->ensureUserAccount($component->getOwner());
+  }
+
+  /**
+   * Ensures the OpenGDB account, password and token service keys of a user.
+   *
+   * @param \Drupal\user\UserInterface $user
+   *   The user.
+   *
+   * @return array
+   *   The OpenGDB user data plus password, token and both service keys.
+   */
+  public function ensureUserAccount(UserInterface $user): array {
     $bundleInfo = $this->entityTypeBundleInfo->getBundleInfo('soda_scs_component')['soda_scs_triplestore_component'];
 
     // Check if service key password exists.
     $keyPasswordProps = [
-      'bundle'  => $component->bundle(),
+      'bundle'  => 'soda_scs_triplestore_component',
       'bundleLabel' => $bundleInfo['label'],
       'type'  => 'password',
-      'userId'    => $component->getOwnerId(),
-      'username' => $component->getOwner()->getDisplayName(),
+      'userId'    => $user->id(),
+      'username' => $user->getDisplayName(),
     ];
 
     $componentServiceKeyPassword = $this->sodaScsServiceKeyActions->getServiceKey($keyPasswordProps);
@@ -299,18 +313,18 @@ class SodaScsTriplestoreHelpers {
     // Check if user exists. If not, create it.
     // Note: We don't pass machineName here because the repository doesn't exist yet.
     // Repository permissions will be added later after the repository is created.
-    $userData = $this->sodaScsOpenGdbHelpers->getUserDataByName($component->getOwner()->getDisplayName());
+    $userData = $this->sodaScsOpenGdbHelpers->getUserDataByName($user->getDisplayName());
     $userCreated = !$userData;
     if ($userCreated) {
-      $this->sodaScsOpenGdbHelpers->createUser($component->getOwner()->getDisplayName(), $componentServiceKeyPassword->get('servicePassword')->value);
-      $this->grantOwnedRepositories($component);
+      $this->sodaScsOpenGdbHelpers->createUser($user->getDisplayName(), $componentServiceKeyPassword->get('servicePassword')->value);
+      $this->grantOwnedRepositories($user);
     }
     else {
       // If there is a user, update the the user credentials to sync with the
       // service key.
-      $this->sodaScsOpenGdbHelpers->updateUser($component->getOwner()->getDisplayName(), $componentServiceKeyPassword->get('servicePassword')->value);
+      $this->sodaScsOpenGdbHelpers->updateUser($user->getDisplayName(), $componentServiceKeyPassword->get('servicePassword')->value);
     }
-    $userData = $this->sodaScsOpenGdbHelpers->getUserDataByName($component->getOwner()->getDisplayName());
+    $userData = $this->sodaScsOpenGdbHelpers->getUserDataByName($user->getDisplayName());
 
     $userData['password'] = $componentServiceKeyPassword->get('servicePassword')->value;
 
@@ -318,23 +332,23 @@ class SodaScsTriplestoreHelpers {
     $keyTokenProps = [
       'bundle'  => 'soda_scs_triplestore_component',
       'type'  => 'token',
-      'userId'    => $component->getOwnerId(),
-      'username' => $component->getOwner()->getDisplayName(),
+      'userId'    => $user->id(),
+      'username' => $user->getDisplayName(),
     ];
 
     $componentServiceKeyToken = $this->sodaScsServiceKeyActions->getServiceKey($keyTokenProps);
 
     if (!$componentServiceKeyToken) {
       // If no token service key, create a new one for the user at OpenGDB.
-      $userToken = $this->sodaScsOpenGdbHelpers->createUserToken($component->getOwner()->getDisplayName(), $componentServiceKeyPassword->get('servicePassword')->value);
+      $userToken = $this->sodaScsOpenGdbHelpers->createUserToken($user->getDisplayName(), $componentServiceKeyPassword->get('servicePassword')->value);
 
       $keyTokenProps = [
-        'bundle'  => $component->bundle(),
+        'bundle'  => 'soda_scs_triplestore_component',
         'bundleLabel' => $bundleInfo['label'],
         'token' => $userToken,
         'type'  => 'token',
-        'userId'    => $component->getOwnerId(),
-        'username' => $component->getOwner()->getDisplayName(),
+        'userId'    => $user->id(),
+        'username' => $user->getDisplayName(),
       ];
 
       // Create new service key token.
@@ -342,21 +356,21 @@ class SodaScsTriplestoreHelpers {
 
       $userData['token'] = $userToken;
       // OpenGDB replaced any earlier token of the account.
-      $this->wisskiTokenSync->syncUser((int) $component->getOwnerId());
+      $this->wisskiTokenSync->syncUser((int) $user->id());
 
     }
     elseif ($userCreated) {
       // OpenGDB issues tokens per account: the stored token belonged to the
       // account that was deleted and is rejected with 401.
-      $userToken = $this->sodaScsOpenGdbHelpers->createUserToken($component->getOwner()->getDisplayName(), $componentServiceKeyPassword->get('servicePassword')->value);
+      $userToken = $this->sodaScsOpenGdbHelpers->createUserToken($user->getDisplayName(), $componentServiceKeyPassword->get('servicePassword')->value);
       $componentServiceKeyToken->set('servicePassword', $userToken);
       $componentServiceKeyToken->save();
       $this->loggerFactory->get('soda_scs_manager')->notice('Renewed the triplestore token of user @user: their OpenGDB account was created again.', [
-        '@user' => $component->getOwnerId(),
+        '@user' => $user->id(),
       ]);
       $userData['token'] = $userToken;
       // Running WissKIs of the user still send the token of the old account.
-      $this->wisskiTokenSync->syncUser((int) $component->getOwnerId());
+      $this->wisskiTokenSync->syncUser((int) $user->id());
     }
     else {
       $userData['token'] = $componentServiceKeyToken->get('servicePassword')->value;
@@ -378,15 +392,15 @@ class SodaScsTriplestoreHelpers {
    * repositories, so an administrator can grant them, and does not stop the
    * new triplestore.
    *
-   * @param \Drupal\soda_scs_manager\Entity\SodaScsComponentInterface $component
+   * @param \Drupal\user\UserInterface $user
    *   The triplestore component being created.
    */
-  private function grantOwnedRepositories(SodaScsComponentInterface $component): void {
+  private function grantOwnedRepositories(UserInterface $user): void {
     $storage = $this->entityTypeManager->getStorage('soda_scs_component');
     $ids = $storage->getQuery()
       ->accessCheck(FALSE)
       ->condition('bundle', 'soda_scs_triplestore_component')
-      ->condition('owner', $component->getOwnerId())
+      ->condition('owner', $user->id())
       ->execute();
     $machineNames = [];
     foreach ($storage->loadMultiple($ids) as $owned) {
@@ -401,17 +415,17 @@ class SodaScsTriplestoreHelpers {
 
     $logger = $this->loggerFactory->get('soda_scs_manager');
     try {
-      $this->sodaScsOpenGdbHelpers->setUserRepositoryGrants($component->getOwner()->getDisplayName(), $machineNames);
+      $this->sodaScsOpenGdbHelpers->setUserRepositoryGrants($user->getDisplayName(), $machineNames);
       $logger->notice('Granted the recreated OpenGDB account of user @user its rights on @repositories.', [
         '@repositories' => implode(', ', $machineNames),
-        '@user' => $component->getOwnerId(),
+        '@user' => $user->id(),
       ]);
     }
     catch (\Exception $e) {
       $logger->error('Could not grant the recreated OpenGDB account of user @user its rights on @repositories: @message', [
         '@message' => $e->getMessage(),
         '@repositories' => implode(', ', $machineNames),
-        '@user' => $component->getOwnerId(),
+        '@user' => $user->id(),
       ]);
     }
   }

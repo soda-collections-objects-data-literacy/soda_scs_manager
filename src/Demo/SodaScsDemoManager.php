@@ -16,6 +16,7 @@ use Drupal\soda_scs_manager\Entity\SodaScsProjectInterface;
 use Drupal\soda_scs_manager\Helpers\SodaScsProgressHelper;
 use Drupal\soda_scs_manager\Helpers\SodaScsProjectHelpers;
 use Drupal\soda_scs_manager\Helpers\SodaScsProjectNameHelpers;
+use Drupal\soda_scs_manager\Helpers\SodaScsProtectedAccounts;
 use Drupal\soda_scs_manager\Service\NextcloudProjectMountManager;
 use Drupal\soda_scs_manager\Service\SodaScsProjectProvisioner;
 use Drupal\soda_scs_manager\ValueObject\SodaScsResult;
@@ -36,6 +37,7 @@ class SodaScsDemoManager {
   public const OPERATION_BUILD_TEMPLATE = 'build_template';
   public const OPERATION_PROVISION = 'provision';
   public const OPERATION_RESET = 'reset';
+  public const OPERATION_TRANSFER_SOURCE = 'transfer_source';
 
   /**
    * Lock name prefix of a demo project, held while a job or a delete runs.
@@ -350,10 +352,50 @@ class SodaScsDemoManager {
     $this->configFactory->getEditable('soda_scs_manager.settings')
       ->set('demo.sourceProjectId', (int) $project->id())
       ->save();
-    return SodaScsResult::success(
-      message: (string) $this->t('@project is now the demo project.', ['@project' => $project->label()]),
+    if ($project->getOwner()?->getAccountName() === SodaScsProtectedAccounts::DEMO_ACCOUNT_NAME) {
+      return SodaScsResult::success(
+        message: (string) $this->t('@project is now the demo project.', ['@project' => $project->label()]),
+        data: [],
+      );
+    }
+    // The transfer redeploys the source WissKI, so it runs in the job runner.
+    $operationId = $this->progressHelper->createOperation('demo_' . self::OPERATION_TRANSFER_SOURCE, 'queued');
+    if ($operationId !== NULL) {
+      $this->state->set(self::PROJECT_OPERATION_STATE_PREFIX . $project->id(), $operationId);
+    }
+    $this->queueFactory->get(self::QUEUE_NAME)->createItem([
+      'operation' => self::OPERATION_TRANSFER_SOURCE,
+      'operationId' => $operationId,
+      'projectId' => (int) $project->id(),
+      'queuedAt' => $this->time->getCurrentTime(),
+    ]);
+    return $this->withRunner(SodaScsResult::success(
+      message: (string) $this->t('@project is now the demo project. It is handed to the account @account in the background; its WissKI restarts once.', [
+        '@account' => SodaScsProtectedAccounts::DEMO_ACCOUNT_NAME,
+        '@project' => $project->label(),
+      ]),
       data: [],
-    );
+    ));
+  }
+
+  /**
+   * Says that the demo source does not belong to scs_demo yet, and why.
+   *
+   * @return string|null
+   *   NULL when scs_demo owns the source or no source is set.
+   */
+  public function sourceOwnerNotice(): ?string {
+    $source = $this->sourceProject();
+    if ($source === NULL || $source->getOwner()?->getAccountName() === SodaScsProtectedAccounts::DEMO_ACCOUNT_NAME) {
+      return NULL;
+    }
+    $operationId = $this->projectOperationId($source);
+    $steps = $operationId !== NULL ? $this->progressHelper->findLatestStepsByOperation($operationId, [], 'created', 'DESC', 1) : [];
+    return (string) $this->t('The demo project still belongs to @owner and is not handed to @account yet (@status). Its owner cannot be deleted until then. Choose the project again to retry.', [
+      '@account' => SodaScsProtectedAccounts::DEMO_ACCOUNT_NAME,
+      '@owner' => (string) $source->getOwner()?->getDisplayName(),
+      '@status' => (string) ($steps[0]['message'] ?? $this->t('no handover started')),
+    ]);
   }
 
   /**

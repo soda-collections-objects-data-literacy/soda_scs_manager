@@ -5,6 +5,8 @@
  * Functions for the soda_scs_manager module.
  */
 
+use Drupal\Core\Access\AccessResult;
+use Drupal\Core\Access\AccessResultInterface;
 use Drupal\Core\Breadcrumb\Breadcrumb;
 use Drupal\Core\Language\LanguageInterface;
 use Drupal\Core\Entity\Display\EntityViewDisplayInterface;
@@ -20,6 +22,7 @@ use Drupal\Core\Routing\RouteMatchInterface;
 use Drupal\Core\Routing\StackedRouteMatchInterface;
 use Drupal\Core\Render\Markup;
 use Drupal\Core\StringTranslation\TranslatableMarkup;
+use Drupal\Core\Session\AccountInterface;
 use Drupal\Core\Url;
 use Drupal\soda_scs_manager\Batch\SodaScsUserOffboardingBatch;
 use Drupal\soda_scs_manager\Entity\Bundle\SodaScsComponentBundle;
@@ -32,6 +35,7 @@ use Drupal\soda_scs_manager\Entity\SodaScsProjectInterface;
 use Drupal\soda_scs_manager\Entity\SodaScsProjectMembershipInterface;
 use Drupal\soda_scs_manager\Entity\SodaScsSnapshot;
 use Drupal\soda_scs_manager\Entity\SodaScsStack;
+use Drupal\soda_scs_manager\Helpers\SodaScsProtectedAccounts;
 use Drupal\soda_scs_manager\Helpers\SodaScsSnapshotHelpers;
 use Drupal\soda_scs_manager\Validation\PersonalNameValidator;
 use Drupal\user\UserInterface;
@@ -1315,6 +1319,20 @@ function soda_scs_manager_soda_scs_snapshot_delete(SodaScsSnapshot $snapshot) {
 }
 
 /**
+ * Implements hook_ENTITY_TYPE_access() for user.
+ *
+ * Protected accounts (uid 1, the demo service account) cannot be cancelled
+ * or deleted, also not by admins: the cancel forms and the bulk cancel action
+ * check this operation.
+ */
+function soda_scs_manager_user_access(UserInterface $entity, string $operation, AccountInterface $account): AccessResultInterface {
+  if ($operation === 'delete' && SodaScsProtectedAccounts::isProtected($entity)) {
+    return AccessResult::forbidden('Protected system account.')->addCacheableDependency($entity);
+  }
+  return AccessResult::neutral();
+}
+
+/**
  * Implements hook_user_predelete().
  *
  * Runs before the account row and the SSO link disappear. Owned projects and
@@ -1359,7 +1377,9 @@ function soda_scs_manager_form_user_multiple_cancel_confirm_alter(array &$form, 
  * Asks before an admin deletes an account that owns shared projects.
  */
 function _soda_scs_manager_alter_user_cancel_form(array &$form, FormStateInterface $form_state): void {
+  $form['#validate'][] = 'soda_scs_manager_user_cancel_validate_protected';
   $form['#validate'][] = 'soda_scs_manager_user_cancel_validate_demo_setup';
+  $form['#validate'][] = 'soda_scs_manager_user_cancel_validate_demo_source';
   $shared = _soda_scs_manager_shared_projects_on_cancel_form($form, $form_state);
   if ($shared === []) {
     return;
@@ -1404,6 +1424,20 @@ function soda_scs_manager_user_cancel_validate_shared_projects(array &$form, For
 }
 
 /**
+ * Refuses to cancel protected accounts (uid 1, the demo service account).
+ */
+function soda_scs_manager_user_cancel_validate_protected(array &$form, FormStateInterface $form_state): void {
+  $storage = \Drupal::entityTypeManager()->getStorage('user');
+  foreach (_soda_scs_manager_cancel_form_user_ids($form, $form_state) as $userId) {
+    $account = $storage->load($userId);
+    if ($account instanceof UserInterface && SodaScsProtectedAccounts::isProtected($account)) {
+      $form_state->setErrorByName('user_cancel_method', t('The account %name is a protected system account and cannot be cancelled.', ['%name' => $account->getAccountName()]));
+      return;
+    }
+  }
+}
+
+/**
  * Refuses to delete an account while one of its projects is locked.
  *
  * A demo job attempt could still create apps after the delete, which would
@@ -1431,6 +1465,28 @@ function soda_scs_manager_user_cancel_validate_demo_setup(array &$form, FormStat
   // element.
   if ($labels !== []) {
     $form_state->setErrorByName('user_cancel_method', t('A project is being set up or deleted right now (@projects). Delete the account when that is done.', ['@projects' => implode(', ', $labels)]));
+  }
+}
+
+/**
+ * Refuses to delete the owner of the demo source project.
+ *
+ * Deleting the owner would delete the source of all demos. It belongs to
+ * scs_demo once the handover after "Use as demo project" has worked.
+ */
+function soda_scs_manager_user_cancel_validate_demo_source(array &$form, FormStateInterface $form_state): void {
+  $method = (string) $form_state->getValue('user_cancel_method');
+  if (!in_array($method, ['user_cancel_delete', 'user_cancel_reassign'], TRUE)) {
+    return;
+  }
+  $offboarding = \Drupal::service('soda_scs_manager.user_offboarding');
+  $storage = \Drupal::entityTypeManager()->getStorage('user');
+  foreach (_soda_scs_manager_cancel_form_user_ids($form, $form_state) as $userId) {
+    $account = $storage->load($userId);
+    if ($account instanceof UserInterface && $offboarding->ownsDemoSource($account)) {
+      $form_state->setErrorByName('user_cancel_method', t('The account %name owns the demo project. Choose the demo project again on the demo page, so that it is handed to scs_demo, and delete the account afterwards.', ['%name' => $account->getAccountName()]));
+      return;
+    }
   }
 }
 

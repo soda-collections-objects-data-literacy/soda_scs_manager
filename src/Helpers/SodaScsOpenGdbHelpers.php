@@ -194,6 +194,50 @@ class SodaScsOpenGdbHelpers {
       $authorities[] = "READ_REPO_$machineName";
       $authorities[] = "WRITE_REPO_$machineName";
     }
+    $this->putUserAuthorities($username, $authorities);
+  }
+
+  /**
+   * Adds read and write rights on repositories, keeping the other rights.
+   *
+   * @param string $username
+   *   The OpenGDB user, which must exist.
+   * @param string[] $machineNames
+   *   Repository ids to add.
+   *
+   * @throws \Drupal\soda_scs_manager\Exception\SodaScsHelpersException
+   *   When the user cannot be read or OpenGDB rejects the update.
+   */
+  public function addUserRepositoryGrants(string $username, array $machineNames): void {
+    try {
+      $userData = $this->getUserDataByName($username);
+    }
+    catch (\Exception $e) {
+      throw SodaScsHelpersException::opengdbFailed($e->getMessage(), 'add_user_repository_grants', ['username' => $username], $e);
+    }
+    if (!is_array($userData) || !is_array($userData['grantedAuthorities'] ?? NULL)) {
+      throw SodaScsHelpersException::opengdbFailed('OpenGDB user not found.', 'add_user_repository_grants', ['username' => $username], new \Exception('no user data'));
+    }
+    $authorities = array_merge(['ROLE_USER'], $userData['grantedAuthorities']);
+    foreach ($machineNames as $machineName) {
+      $authorities[] = "READ_REPO_$machineName";
+      $authorities[] = "WRITE_REPO_$machineName";
+    }
+    $this->putUserAuthorities($username, array_values(array_unique($authorities)));
+  }
+
+  /**
+   * Replaces the granted authorities of an OpenGDB user.
+   *
+   * @param string $username
+   *   The OpenGDB user.
+   * @param string[] $authorities
+   *   The complete list of authorities.
+   *
+   * @throws \Drupal\soda_scs_manager\Exception\SodaScsHelpersException
+   *   When OpenGDB rejects the update.
+   */
+  private function putUserAuthorities(string $username, array $authorities): void {
     try {
       $request = $this->sodaScsOpenGdbServiceActions->buildUpdateRequest([
         'type' => 'user',

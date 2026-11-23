@@ -8,6 +8,7 @@ use Drupal\Core\Entity\EntityTypeManagerInterface;
 use Drupal\Core\Form\ConfirmFormBase;
 use Drupal\Core\Form\FormStateInterface;
 use Drupal\Core\Url;
+use Drupal\soda_scs_manager\Helpers\SodaScsProtectedAccounts;
 use Drupal\soda_scs_manager\Service\SodaScsUserOffboarding;
 use Drupal\user\UserInterface;
 use Symfony\Component\DependencyInjection\ContainerInterface;
@@ -122,6 +123,14 @@ final class SodaScsProfileDeleteForm extends ConfirmFormBase {
     if (!$user instanceof UserInterface) {
       return;
     }
+    if (SodaScsProtectedAccounts::isProtected($user)) {
+      $form_state->setErrorByName('', $this->t('This profile cannot be deleted.'));
+      return;
+    }
+    if ($this->userOffboarding->ownsDemoSource($user)) {
+      $form_state->setErrorByName('', $this->t('You own the demo project. Ask an administrator to hand it to scs_demo before you delete your profile.'));
+      return;
+    }
     // A running demo job could still create apps after the delete, and a
     // project delete would remove the same apps at the same time. One error
     // names all projects: the form state keeps only the first per element.
@@ -139,7 +148,7 @@ final class SodaScsProfileDeleteForm extends ConfirmFormBase {
    */
   public function submitForm(array &$form, FormStateInterface $form_state): void {
     $user = $this->entityTypeManager->getStorage('user')->load($this->currentUser()->id());
-    if (!$user instanceof UserInterface || (int) $user->id() === 1) {
+    if (!$user instanceof UserInterface || SodaScsProtectedAccounts::isProtected($user)) {
       $this->messenger()->addError($this->t('This profile cannot be deleted.'));
       $form_state->setRedirectUrl($this->getCancelUrl());
       return;

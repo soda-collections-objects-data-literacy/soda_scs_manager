@@ -94,6 +94,10 @@ services:
     class: Drupal\soda_scs_manager\Service\SodaScsWisskiVarnishCache
   soda_scs_manager.wisski_triplestore_token_sync:
     class: Drupal\soda_scs_manager\Service\SodaScsWisskiTriplestoreTokenSync
+  soda_scs_manager.wisski_database_credentials:
+    class: Drupal\soda_scs_manager\Service\SodaScsWisskiDatabaseCredentials
+  soda_scs_manager.project_ownership_transfer:
+    class: Drupal\soda_scs_manager\Service\SodaScsProjectOwnershipTransfer
   soda_scs_manager.wisski_admin_tasks:
     class: Drupal\soda_scs_manager\Service\SodaScsWisskiAdminTasks
   soda_scs_manager.image_registry_client:
@@ -124,6 +128,8 @@ services:
     class: Drupal\soda_scs_manager\Demo\SodaScsDemoTemplateBuilder
   soda_scs_manager.demo.project_provisioner:
     class: Drupal\soda_scs_manager\Demo\SodaScsDemoProjectProvisioner
+  soda_scs_manager.demo.service_account:
+    class: Drupal\soda_scs_manager\Demo\SodaScsDemoServiceAccount
   soda_scs_manager.demo.manager:
     class: Drupal\soda_scs_manager\Demo\SodaScsDemoManager
   soda_scs_manager.demo.automatic:

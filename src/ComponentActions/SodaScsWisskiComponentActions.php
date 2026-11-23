@@ -784,6 +784,39 @@ class SodaScsWisskiComponentActions implements SodaScsComponentActionsInterface 
   }
 
   /**
+   * Redeploys a WissKI stack with some environment values replaced.
+   *
+   * Keeps the compose reference and the image of the running deployment; use
+   * captureDeployment() before and restoreDeployment() to undo.
+   *
+   * @param \Drupal\soda_scs_manager\Entity\SodaScsComponentInterface $component
+   *   The WissKI component.
+   * @param array<string, string> $updates
+   *   Environment names and their new values.
+   *
+   * @return \Drupal\soda_scs_manager\ValueObject\SodaScsResult
+   *   Result of the redeploy operation.
+   */
+  public function redeployWithEnvironment(SodaScsComponentInterface $component, array $updates): SodaScsResult {
+    $stackResult = $this->loadStackPayload($component);
+    if (!$stackResult->success) {
+      return $stackResult;
+    }
+    $stackPayload = $stackResult->data['stackPayload'];
+    $env = $this->mergeStackEnvVars(
+      is_array($stackPayload['Env'] ?? NULL) ? $stackPayload['Env'] : [],
+      $updates,
+    );
+    return $this->redeployStack(
+      $component,
+      $stackResult->data['stackId'],
+      $env,
+      (string) ($stackPayload['GitConfig']['ReferenceName'] ?? ''),
+      FALSE,
+    );
+  }
+
+  /**
    * Returns the name of the Drupal container of a WissKI component.
    *
    * @param \Drupal\soda_scs_manager\Entity\SodaScsComponentInterface $component

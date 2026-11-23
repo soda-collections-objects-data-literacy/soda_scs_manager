@@ -84,7 +84,26 @@ class SodaScsWisskiTriplestoreTokenSync {
         error: sprintf('No triplestore token service key for user %s.', $triplestoreComponent->getOwnerId()),
       );
     }
+    return $this->writeToken($wisskiComponent, $triplestoreComponent, $token);
+  }
 
+  /**
+   * Writes a given triplestore token into the adapter of a WissKI.
+   *
+   * Used when the token changes before the component owner does, e.g. while
+   * a project is handed to another account.
+   *
+   * @param \Drupal\soda_scs_manager\Entity\SodaScsComponentInterface $wisskiComponent
+   *   The running WissKI component.
+   * @param \Drupal\soda_scs_manager\Entity\SodaScsComponentInterface $triplestoreComponent
+   *   The triplestore component of the same stack.
+   * @param string $token
+   *   The OpenGDB token, without the "Token " prefix.
+   *
+   * @return \Drupal\soda_scs_manager\ValueObject\SodaScsResult
+   *   Success when the adapter holds the token or reads another repository.
+   */
+  public function writeToken(SodaScsComponentInterface $wisskiComponent, SodaScsComponentInterface $triplestoreComponent, string $token): SodaScsResult {
     // The token travels in the environment of the exec, not in the command.
     $script = '$config = \Drupal::configFactory()->getEditable("' . self::ADAPTER_CONFIG . '");'
       . '$suffix = "/repositories/" . getenv("SCS_TS_REPOSITORY");'

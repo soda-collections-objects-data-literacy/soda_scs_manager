@@ -67,6 +67,27 @@ final class SodaScsProjectDbAccessHelpers {
   }
 
   /**
+   * Ensures one user's MariaDB account and grants on a project's databases.
+   *
+   * For a user who is not on the project yet, e.g. its next owner.
+   *
+   * @param \Drupal\user\UserInterface $user
+   *   The user.
+   * @param \Drupal\soda_scs_manager\Entity\SodaScsProjectInterface $project
+   *   The project.
+   *
+   * @return bool
+   *   TRUE when the account exists with the current service key password.
+   */
+  public function ensureProjectDbAccess(UserInterface $user, SodaScsProjectInterface $project): bool {
+    $sqlDatabases = $this->getSqlDatabasesFromProject($project);
+    if ($sqlDatabases === []) {
+      return TRUE;
+    }
+    return $this->ensureUserDbAccess($user, $sqlDatabases);
+  }
+
+  /**
    * Revokes a user's MariaDB access to a project's SQL databases.
    *
    * Only revokes on databases where the user is not a member of any other

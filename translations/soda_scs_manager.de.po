@@ -4681,6 +4681,42 @@ msgid "@project is now the demo project."
 msgstr "@project ist jetzt das Demo-Projekt."
 
 #: src/Demo/SodaScsDemoManager.php
+msgid "@project is now the demo project. It is handed to the account @account in the background; its WissKI restarts once."
+msgstr "@project ist jetzt das Demo-Projekt. Es geht im Hintergrund an das Konto @account über; seine WissKI startet dabei einmal neu."
+
+#: src/Plugin/QueueWorker/SodaScsDemoQueueWorker.php
+msgid "Preparing the account scs_demo"
+msgstr "Konto scs_demo wird vorbereitet"
+
+#: src/Plugin/QueueWorker/SodaScsDemoQueueWorker.php
+msgid "Handing the demo project to scs_demo"
+msgstr "Demo-Projekt wird an scs_demo übergeben"
+
+#: src/Plugin/QueueWorker/SodaScsDemoQueueWorker.php
+msgid "Handing the demo project to scs_demo failed. See the log for details."
+msgstr "Die Übergabe des Demo-Projekts an scs_demo ist fehlgeschlagen. Details stehen im Log."
+
+#: src/Demo/SodaScsDemoManager.php
+msgid "The demo project still belongs to @owner and is not handed to @account yet (@status). Its owner cannot be deleted until then. Choose the project again to retry."
+msgstr "Das Demo-Projekt gehört noch @owner und ist noch nicht an @account übergeben (@status). Bis dahin kann das Konto des Eigentümers nicht gelöscht werden. Wählen Sie das Projekt erneut, um es noch einmal zu versuchen."
+
+#: src/Demo/SodaScsDemoManager.php
+msgid "no handover started"
+msgstr "keine Übergabe gestartet"
+
+#: soda_scs_manager.module
+msgid "The account %name owns the demo project. Choose the demo project again on the demo page, so that it is handed to scs_demo, and delete the account afterwards."
+msgstr "Das Konto %name besitzt das Demo-Projekt. Wählen Sie das Demo-Projekt auf der Demo-Seite erneut, damit es an scs_demo übergeben wird, und löschen Sie das Konto danach."
+
+#: src/Form/SodaScsProfileDeleteForm.php
+msgid "You own the demo project. Ask an administrator to hand it to scs_demo before you delete your profile."
+msgstr "Sie besitzen das Demo-Projekt. Bitten Sie eine Administratorin oder einen Administrator, es an scs_demo zu übergeben, bevor Sie Ihr Profil löschen."
+
+#: soda_scs_manager.module
+msgid "The account %name is a protected system account and cannot be cancelled."
+msgstr "Das Konto %name ist ein geschütztes Systemkonto und kann nicht gekündigt werden."
+
+#: src/Demo/SodaScsDemoManager.php
 msgid "Could not find a free name for your demo project."
 msgstr "Für Ihr Demo-Projekt wurde kein freier Name gefunden."
 

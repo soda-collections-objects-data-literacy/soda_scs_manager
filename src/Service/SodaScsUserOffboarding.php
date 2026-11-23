@@ -22,6 +22,7 @@ use Drupal\soda_scs_manager\Entity\SodaScsStackInterface;
 use Drupal\soda_scs_manager\Helpers\SodaScsNextcloudHelpers;
 use Drupal\soda_scs_manager\Helpers\SodaScsProjectHelpers;
 use Drupal\soda_scs_manager\Helpers\SodaScsProjectMembershipHelpers;
+use Drupal\soda_scs_manager\Helpers\SodaScsProtectedAccounts;
 use Drupal\soda_scs_manager\Helpers\SodaScsServiceHelpers;
 use Drupal\soda_scs_manager\Helpers\SodaScsWebprotegeHelpers;
 use Drupal\soda_scs_manager\RequestActions\SodaScsKeycloakServiceUserActions;
@@ -204,12 +205,34 @@ final class SodaScsUserOffboarding {
    *   The project ids, in ascending order.
    */
   public function ownedProjectIds(UserInterface $user): array {
-    $ids = array_map(
-      static fn (SodaScsProjectInterface $project): int => (int) $project->id(),
-      $this->loadProjects('owner', (int) $user->id()),
-    );
+    // Projects of protected accounts (the demo source) are never removed.
+    if (SodaScsProtectedAccounts::isProtected($user)) {
+      return [];
+    }
+    // The demo source is never removed with its owner; purge() refuses the
+    // delete while the user still owns it.
+    $sourceProjectId = (int) $this->demoManager->sourceProject()?->id();
+    $ids = array_values(array_filter(
+      array_map(
+        static fn (SodaScsProjectInterface $project): int => (int) $project->id(),
+        $this->loadProjects('owner', (int) $user->id()),
+      ),
+      static fn (int $projectId): bool => $projectId !== $sourceProjectId,
+    ));
     sort($ids);
     return $ids;
+  }
+
+  /**
+   * Whether the user owns the demo source project.
+   *
+   * Choosing the project as demo project hands it to scs_demo in the
+   * background; until that has worked, deleting the owner would delete the
+   * source of all demos.
+   */
+  public function ownsDemoSource(UserInterface $user): bool {
+    $source = $this->demoManager->sourceProject();
+    return $source !== NULL && (int) $source->getOwnerId() === (int) $user->id();
   }
 
   /**
@@ -219,8 +242,13 @@ final class SodaScsUserOffboarding {
    * exist. A failing remote call is logged and does not stop the rest.
    */
   public function purge(UserInterface $user): void {
-    if ((int) $user->id() <= 1) {
+    if ((int) $user->id() <= 1 || SodaScsProtectedAccounts::isProtected($user)) {
       return;
+    }
+    // Throwing in hook_user_predelete rolls back the delete; the forms
+    // refuse it earlier with a message.
+    if ($this->ownsDemoSource($user)) {
+      throw new \LogicException(sprintf('User %s owns the demo source project and cannot be deleted.', $user->id()));
     }
 
     $inventory = $this->inventory($user);

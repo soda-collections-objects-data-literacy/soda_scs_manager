@@ -5,7 +5,7 @@
     "license": "GPL-2.0-or-later",
     "require": {
         "php": ">=8.1",
-        "drupal/core": "^10 || ^11",
+        "drupal/core": "^11.2",
         "drupal/openid_connect": "^3.0@alpha",
         "drupal/smtp": "^1.4",
         "drupal/field_group": "^3.4 || ^4.0"

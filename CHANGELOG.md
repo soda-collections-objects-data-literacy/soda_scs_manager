@@ -7,6 +7,34 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- Projects can be handed to another account with
+  `drush soda_scs_manager:project-transfer <project> <account>`. The new owner
+  gets the database, triplestore, WebProtégé and Team Folder access first;
+  each WissKI of the project is then redeployed once with the accounts of the
+  new owner. The previous owner stays a member with the admin role on the
+  WissKIs (`--remove-previous-owner` drops that). A failed WissKI step puts
+  the WissKI back as it was.
+- Service account `scs_demo` (update 11043), protected from deletion like
+  uid 1: the profile delete form, the admin cancel forms, the bulk cancel
+  action and `drush user:cancel` refuse it.
+  **Set `SCS_DEMO_ACCOUNT_PASSWORD` in the deployment `.env`, recreate the
+  manager container and run `drush soda_scs_manager:demo-account`**; it
+  creates the matching Keycloak and Nextcloud accounts. New installations run
+  the same command once after setup.
+
+### Changed
+
+- "Use as demo project" hands the source project and its applications to
+  `scs_demo` in the background, so deleting the account of the admin who set
+  it up no longer deletes the demo source. The source WissKI restarts once.
+  **Choose the demo project again after the update** to move an existing
+  source to `scs_demo`. Until the handover has worked, the demo page says so
+  and the owner of the source cannot be deleted. Related: [#3640913](https://www.drupal.org/project/soda_scs_manager/issues/3640913).
+- The module needs Drupal 11.2 or later (`core_version_requirement: ^11.2`).
+- The user names `scs_demo` and `scs-demo` are reserved at registration.
+
 ## [4.7.2] - 2026-11-23
 
 ### Fixed
