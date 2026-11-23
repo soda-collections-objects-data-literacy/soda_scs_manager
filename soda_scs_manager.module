@@ -2773,7 +2773,7 @@ function _soda_scs_manager_preprocess_menu_icons_recursive(array &$items): void 
       if ($item['url']->isExternal()) {
         $icon = 'book';
       }
-      elseif ($item['url']->isRouted() && $item['url']->getRouteName() === 'system.admin') {
+      elseif ($item['url']->isRouted() && in_array($item['url']->getRouteName(), ['system.admin', 'soda_scs_manager.administration'], TRUE)) {
         $icon = 'sliders';
       }
       if ($icon !== NULL) {
