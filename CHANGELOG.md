@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [4.8.0] - 2026-11-23
+
 ### Added
 
 - Demo versions can be moved between sites:
@@ -1250,7 +1252,8 @@ Development line: branch `2.x`. Major release relative to `1.3.x` (projects on s
 
 - Move toward fully Portainer-driven lifecycle for managed services.
 
-[Unreleased]: https://github.com/soda-collections-objects-data-literacy/soda_scs_manager/compare/4.7.2...HEAD
+[Unreleased]: https://github.com/soda-collections-objects-data-literacy/soda_scs_manager/compare/4.8.0...HEAD
+[4.8.0]: https://github.com/soda-collections-objects-data-literacy/soda_scs_manager/compare/4.7.2...4.8.0
 [4.7.2]: https://github.com/soda-collections-objects-data-literacy/soda_scs_manager/compare/4.7.1...4.7.2
 [4.7.1]: https://github.com/soda-collections-objects-data-literacy/soda_scs_manager/compare/4.7.0...4.7.1
 [4.7.0]: https://github.com/soda-collections-objects-data-literacy/soda_scs_manager/compare/4.6.0...4.7.0
