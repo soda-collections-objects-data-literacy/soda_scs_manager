@@ -35,6 +35,27 @@ class SodaScsWisskiInstanceConfigRemapper {
   ];
 
   /**
+   * Config name prefixes where only the target's own entries may remain.
+   *
+   * The template database brings the SSO clients of the source instance
+   * (other client ID, possibly a client from an older image under another
+   * machine name). Left in place, the login page shows a second button that
+   * points at a Keycloak client of another WissKI.
+   */
+  public const TARGET_ONLY_CONFIG_PREFIXES = [
+    'openid_connect.client.',
+  ];
+
+  /**
+   * Keys whose imported template value is kept over the captured value.
+   *
+   * Keyed by config name. See omitLoginRedirects().
+   */
+  protected const TEMPLATE_KEYS = [
+    'openid_connect.settings' => ['redirect_login', 'redirect_logout'],
+  ];
+
+  /**
    * Marks the payload in drush output, which may contain PHP notices.
    */
   protected const OUTPUT_MARKER = 'SCS_INSTANCE_CONFIG:';
@@ -66,18 +87,7 @@ class SodaScsWisskiInstanceConfigRemapper {
    *   The result.
    */
   public function applyInstanceConfig(array $configs, string $siteName, SodaScsComponentInterface $wisskiComponent): SodaScsResult {
-    $configs = $this->omitLoginRedirects($configs);
-    $payload = base64_encode(json_encode(
-      ['configs' => $configs, 'siteName' => $siteName],
-      JSON_THROW_ON_ERROR | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE,
-    ));
-    $code = '$payload = json_decode(base64_decode(\'' . $payload . '\'), TRUE);'
-      . '$factory = \Drupal::configFactory();'
-      . 'foreach ($payload["configs"] as $name => $data) { $factory->getEditable($name)->setData($data)->save(TRUE); }'
-      . '$factory->getEditable("system.site")->set("name", $payload["siteName"])->save();'
-      . 'echo "' . self::OUTPUT_MARKER . 'ok";';
-
-    $result = $this->runDrush($wisskiComponent, ['php:eval', $code]);
+    $result = $this->runDrush($wisskiComponent, ['php:eval', $this->buildApplyScript($configs, $siteName)]);
     if (!$result->success) {
       return $result;
     }
@@ -88,6 +98,43 @@ class SodaScsWisskiInstanceConfigRemapper {
     }
 
     return $this->runDrush($wisskiComponent, ['cache:rebuild']);
+  }
+
+  /**
+   * Builds the PHP code that restores the instance configuration via drush.
+   *
+   * The code deletes imported configs under TARGET_ONLY_CONFIG_PREFIXES that
+   * the target did not have, writes the captured configs back while keeping
+   * the imported TEMPLATE_KEYS, and sets the site name.
+   *
+   * @param array<string, array> $configs
+   *   Config data keyed by config name, as returned by captureInstanceConfig.
+   * @param string $siteName
+   *   New value for system.site:name.
+   *
+   * @return string
+   *   Code for drush php:eval.
+   */
+  public function buildApplyScript(array $configs, string $siteName): string {
+    $payload = base64_encode(json_encode(
+      [
+        'configs'      => $this->omitLoginRedirects($configs),
+        'siteName'     => $siteName,
+        'targetOnly'   => self::TARGET_ONLY_CONFIG_PREFIXES,
+        'templateKeys' => self::TEMPLATE_KEYS,
+      ],
+      JSON_THROW_ON_ERROR | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE,
+    ));
+    return '$payload = json_decode(base64_decode(\'' . $payload . '\'), TRUE);'
+      . '$factory = \Drupal::configFactory();'
+      . 'foreach ($payload["targetOnly"] as $prefix) { foreach ($factory->listAll($prefix) as $name) {'
+      . ' if (!array_key_exists($name, $payload["configs"])) { $factory->getEditable($name)->delete(); } } }'
+      . 'foreach ($payload["configs"] as $name => $data) { $config = $factory->getEditable($name);'
+      . ' foreach ($payload["templateKeys"][$name] ?? [] as $key) {'
+      . ' if ($config->get($key) !== NULL) { $data[$key] = $config->get($key); } }'
+      . ' $config->setData($data)->save(TRUE); }'
+      . '$factory->getEditable("system.site")->set("name", $payload["siteName"])->save();'
+      . 'echo "' . self::OUTPUT_MARKER . 'ok";';
   }
 
   /**

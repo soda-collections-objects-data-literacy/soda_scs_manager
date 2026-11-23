@@ -7,6 +7,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- Demo WissKIs no longer show a second SSO button on the login page: the
+  restore deletes the OpenID Connect clients that the template database
+  brought from its source instance. The login and logout redirects of the
+  template (e.g. `/wisski_home`) are kept instead of being emptied.
+  **Existing demos keep the stale client until they are reset, or until it is
+  deleted at `/admin/config/people/openid-connect` of the demo WissKI.**
+
 ## [4.7.1] - 2026-11-19
 
 ### Changed

@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Drupal\Tests\soda_scs_manager\Unit\Demo;
 
+use Drupal\Core\DependencyInjection\ContainerBuilder;
 use Drupal\soda_scs_manager\Demo\SodaScsWisskiInstanceConfigRemapper;
 use Drupal\soda_scs_manager\Helpers\SodaScsContainerHelpers;
 use Drupal\Tests\UnitTestCase;
@@ -69,6 +70,139 @@ class SodaScsWisskiInstanceConfigRemapperTest extends UnitTestCase {
     $this->assertArrayNotHasKey('redirect_logout', $result['openid_connect.settings']);
     $this->assertSame('hidden', $result['openid_connect.settings']['user_login_display']);
     $this->assertSame($configs['openid_connect.client.scs_sso'], $result['openid_connect.client.scs_sso']);
+  }
+
+  /**
+   * @covers ::buildApplyScript
+   */
+  public function testApplyScriptRemovesSsoClientsOfTheTemplateSource(): void {
+    $store = $this->runApplyScript([
+      'openid_connect.client.SCS SSO' => ['label' => 'SODA SCS Client', 'settings' => ['client_id' => 'wisski-source']],
+      'openid_connect.client.scs_sso' => ['label' => 'SCS SSO', 'settings' => ['client_id' => 'wisski-source']],
+      'wisski_salz.wisski_salz_adapter.extra' => ['id' => 'extra'],
+    ], [
+      'openid_connect.client.scs_sso' => ['label' => 'SCS SSO', 'settings' => ['client_id' => 'wisski-target']],
+    ]);
+
+    $this->assertArrayNotHasKey('openid_connect.client.SCS SSO', $store);
+    $this->assertSame('wisski-target', $store['openid_connect.client.scs_sso']['settings']['client_id']);
+    $this->assertArrayHasKey('wisski_salz.wisski_salz_adapter.extra', $store);
+  }
+
+  /**
+   * @covers ::buildApplyScript
+   */
+  public function testApplyScriptKeepsTheLoginRedirectsOfTheTemplate(): void {
+    $store = $this->runApplyScript([
+      'openid_connect.settings' => [
+        'redirect_login' => '/wisski_home',
+        'redirect_logout' => '/wisski_home',
+        'user_login_display' => 'below',
+      ],
+    ], [
+      'openid_connect.settings' => [
+        'redirect_login' => 'home',
+        'redirect_logout' => 'home',
+        'user_login_display' => 'hidden',
+      ],
+    ]);
+
+    $this->assertSame('/wisski_home', $store['openid_connect.settings']['redirect_login']);
+    $this->assertSame('/wisski_home', $store['openid_connect.settings']['redirect_logout']);
+    $this->assertSame('hidden', $store['openid_connect.settings']['user_login_display']);
+    $this->assertSame('Demo', $store['system.site']['name']);
+  }
+
+  /**
+   * Runs the apply script against an in-memory config factory.
+   *
+   * @param array<string, array> $imported
+   *   Config the instance holds after the template import.
+   * @param array<string, array> $captured
+   *   Config captured from the instance before the import.
+   *
+   * @return array<string, array>
+   *   The config store after the script ran.
+   */
+  protected function runApplyScript(array $imported, array $captured): array {
+    $factory = new class($imported) {
+
+      /**
+       * Constructs the fake factory with the given config store.
+       */
+      public function __construct(public array $store) {}
+
+      /**
+       * Lists config names with the prefix.
+       */
+      public function listAll(string $prefix): array {
+        return array_values(array_filter(array_keys($this->store), static fn (string $name): bool => str_starts_with($name, $prefix)));
+      }
+
+      /**
+       * Returns an editable config backed by the store.
+       */
+      public function getEditable(string $name): object {
+        return new class($this, $name) {
+
+          /**
+           * Constructs the fake config.
+           */
+          public function __construct(private object $factory, private string $name) {}
+
+          /**
+           * Mirrors the Config method of the same name.
+           */
+          public function delete(): static {
+            unset($this->factory->store[$this->name]);
+            return $this;
+          }
+
+          /**
+           * Mirrors the Config method of the same name.
+           */
+          public function get(string $key): mixed {
+            return $this->factory->store[$this->name][$key] ?? NULL;
+          }
+
+          /**
+           * Mirrors the Config method of the same name.
+           */
+          public function save(bool $hasTrustedData = FALSE): static {
+            return $this;
+          }
+
+          /**
+           * Mirrors the Config method of the same name.
+           */
+          public function set(string $key, mixed $value): static {
+            $this->factory->store[$this->name][$key] = $value;
+            return $this;
+          }
+
+          /**
+           * Mirrors the Config method of the same name.
+           */
+          public function setData(array $data): static {
+            $this->factory->store[$this->name] = $data;
+            return $this;
+          }
+
+        };
+      }
+
+    };
+    $container = new ContainerBuilder();
+    $container->set('config.factory', $factory);
+    \Drupal::setContainer($container);
+
+    // The script is the code drush php:eval runs inside the WissKI.
+    ob_start();
+    eval($this->remapper->buildApplyScript($captured, 'Demo'));
+    $output = (string) ob_get_clean();
+
+    $this->assertStringContainsString('SCS_INSTANCE_CONFIG:ok', $output);
+    return $factory->store;
   }
 
   /**
