@@ -18,6 +18,7 @@ use Drupal\soda_scs_manager\Helpers\SodaScsVolumeArchiveHelpers;
 use Drupal\soda_scs_manager\Helpers\SodaScsWebprotegeHelpers;
 use Drupal\soda_scs_manager\StackActions\SodaScsStackActionsInterface;
 use Drupal\user\UserInterface;
+use Psr\Log\LoggerInterface;
 use Symfony\Component\DependencyInjection\Attribute\Autowire;
 
 /**
@@ -49,12 +50,16 @@ class SodaScsDemoProjectProvisioner {
     protected SodaScsJupyterHelpers $jupyterHelpers,
     #[Autowire(service: 'soda_scs_manager.demo.label_builder')]
     protected SodaScsDemoLabelBuilder $labelBuilder,
+    #[Autowire(service: 'logger.channel.soda_scs_manager')]
+    protected LoggerInterface $logger,
     #[Autowire(service: 'soda_scs_manager.demo.project_apps')]
     protected SodaScsDemoProjectApps $projectApps,
     #[Autowire(service: 'soda_scs_manager.stack.actions')]
     protected SodaScsStackActionsInterface $stackActions,
     #[Autowire(service: 'soda_scs_manager.demo.team_folder_copier')]
     protected SodaScsTeamFolderCopier $teamFolderCopier,
+    #[Autowire(service: 'soda_scs_manager.demo.wisski_uri_rewriter')]
+    protected SodaScsWisskiUriRewriter $uriRewriter,
     #[Autowire(service: 'soda_scs_manager.volume_archive.helpers')]
     protected SodaScsVolumeArchiveHelpers $volumeArchiveHelpers,
     #[Autowire(service: 'soda_scs_manager.webprotege.helpers')]
@@ -135,6 +140,7 @@ class SodaScsDemoProjectProvisioner {
         $wisskiStack,
         $directory . '/' . $apps[SodaScsDemoLabelBuilder::APP_WISSKI]['directory'],
         (string) $wisskiStack->label(),
+        $this->sourceUriBases($template),
       );
     }
 
@@ -147,6 +153,22 @@ class SodaScsDemoProjectProvisioner {
     $project->set('demoStatus', SodaScsDemoProjectStatus::Ready->value);
     $project->save();
     $reportStep($this->t('The demo project is ready.'));
+  }
+
+  /**
+   * The base URIs of the source WissKI of a version, if known.
+   *
+   * @return array|null
+   *   array{graph: string, site: string}, or NULL to keep the URIs.
+   */
+  protected function sourceUriBases(SodaScsDemoTemplateInterface $template): ?array {
+    $bases = $this->uriRewriter->templateSourceBases($template);
+    if ($bases === NULL) {
+      $this->logger->notice($template->isImported()
+        ? 'Demo version @version was imported without base URIs; the demo WissKI keeps the URIs of the source.'
+        : 'Demo version @version lists no base URIs and its source WissKI is gone; the demo WissKI keeps the URIs of the source.', ['@version' => $template->getVersion()]);
+    }
+    return $bases;
   }
 
   /**
@@ -340,11 +362,9 @@ class SodaScsDemoProjectProvisioner {
    * @throws \Drupal\soda_scs_manager\Demo\SodaScsDemoException
    */
   protected function verifyChecksums(array $manifest, string $directory): void {
-    foreach ($manifest['checksums'] ?? [] as $relativePath => $expected) {
-      $path = $directory . '/' . $relativePath;
-      if (!is_file($path) || hash_file('sha256', $path) !== $expected) {
-        throw new SodaScsDemoException(sprintf('Template file %s is missing or damaged.', $relativePath));
-      }
+    $damaged = SodaScsDemoTemplateArchive::damagedFiles((array) ($manifest['checksums'] ?? []), $directory);
+    if ($damaged !== []) {
+      throw new SodaScsDemoException(sprintf('Template file %s is missing or damaged.', $damaged[0]));
     }
   }
 

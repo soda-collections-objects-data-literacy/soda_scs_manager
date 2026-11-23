@@ -116,6 +116,10 @@ services:
     class: Drupal\soda_scs_manager\Demo\SodaScsDemoApiCredentials
   soda_scs_manager.demo.wisski_config_remapper:
     class: Drupal\soda_scs_manager\Demo\SodaScsWisskiInstanceConfigRemapper
+  soda_scs_manager.demo.template_archive:
+    class: Drupal\soda_scs_manager\Demo\SodaScsDemoTemplateArchive
+  soda_scs_manager.demo.wisski_uri_rewriter:
+    class: Drupal\soda_scs_manager\Demo\SodaScsWisskiUriRewriter
   soda_scs_manager.demo.team_folder_copier:
     class: Drupal\soda_scs_manager\Demo\SodaScsTeamFolderCopier
   soda_scs_manager.demo.label_builder:

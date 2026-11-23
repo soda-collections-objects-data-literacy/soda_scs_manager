@@ -4950,6 +4950,22 @@ msgid "v@version (active)"
 msgstr "v@version (aktiv)"
 
 #: src/Form/SodaScsDemoProjectAdminForm.php
+msgid "v@version (active, imported)"
+msgstr "v@version (aktiv, importiert)"
+
+#: src/Form/SodaScsDemoProjectAdminForm.php
+msgid "v@version (imported)"
+msgstr "v@version (importiert)"
+
+#: src/Entity/SodaScsDemoTemplate.php
+msgid "Origin"
+msgstr "Herkunft"
+
+#: src/Entity/SodaScsDemoTemplate.php
+msgid "\"built\" on this site or \"imported\" from an archive."
+msgstr "„built“ auf dieser Website erzeugt oder „imported“ aus einem Archiv importiert."
+
+#: src/Form/SodaScsDemoProjectAdminForm.php
 msgid "v@version"
 msgstr "v@version"
 

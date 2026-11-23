@@ -236,9 +236,12 @@ final class SodaScsDemoProjectAdminForm extends FormBase {
       $rowKey = 'template_' . $template->id();
 
       $table[$rowKey]['version'] = [
-        '#markup' => $isActive
-          ? $this->t('v@version (active)', ['@version' => $template->getVersion()])
-          : $this->t('v@version', ['@version' => $template->getVersion()]),
+        '#markup' => match (TRUE) {
+          $isActive && $template->isImported() => $this->t('v@version (active, imported)', ['@version' => $template->getVersion()]),
+          $isActive => $this->t('v@version (active)', ['@version' => $template->getVersion()]),
+          $template->isImported() => $this->t('v@version (imported)', ['@version' => $template->getVersion()]),
+          default => $this->t('v@version', ['@version' => $template->getVersion()]),
+        },
       ];
       $table[$rowKey]['status'] = [
         '#plain_text' => $this->demoManager->templateStatusText($template),

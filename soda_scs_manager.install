@@ -2090,3 +2090,16 @@ function soda_scs_manager_update_11043() {
   \Drupal::service('soda_scs_manager.demo.service_account')->ensureDrupalAccount();
   return t('Created the account scs_demo. Set SCS_DEMO_ACCOUNT_PASSWORD in the deployment .env, recreate the manager container and run drush soda_scs_manager:demo-account; "Use as demo project" then hands the source project to scs_demo.');
 }
+
+/**
+ * Add the origin field to demo templates (built here or imported).
+ */
+function soda_scs_manager_update_11044() {
+  $update_manager = \Drupal::entityDefinitionUpdateManager();
+  if ($update_manager->getFieldStorageDefinition('origin', 'soda_scs_demo_template')) {
+    return t('The origin field of demo templates exists already.');
+  }
+  $definition = \Drupal::service('entity_field.manager')->getFieldStorageDefinitions('soda_scs_demo_template')['origin'];
+  $update_manager->installFieldStorageDefinition('origin', 'soda_scs_demo_template', 'soda_scs_manager', $definition);
+  return t('Added the origin field to demo templates; existing versions count as built here.');
+}

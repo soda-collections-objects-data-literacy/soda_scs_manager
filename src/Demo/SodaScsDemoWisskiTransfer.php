@@ -58,6 +58,8 @@ class SodaScsDemoWisskiTransfer {
     protected SodaScsTriplestoreHelpers $triplestoreHelpers,
     #[Autowire(service: 'soda_scs_manager.wisski_triplestore_token_sync')]
     protected SodaScsWisskiTriplestoreTokenSync $tokenSync,
+    #[Autowire(service: 'soda_scs_manager.demo.wisski_uri_rewriter')]
+    protected SodaScsWisskiUriRewriter $uriRewriter,
     #[Autowire(service: 'soda_scs_manager.wisski_varnish_cache')]
     protected SodaScsWisskiVarnishCache $varnishCache,
     #[Autowire(service: 'soda_scs_manager.wisski_volume.helpers')]
@@ -67,11 +69,15 @@ class SodaScsDemoWisskiTransfer {
   /**
    * Writes database, triplestore and volumes of a WissKI stack to a directory.
    *
+   * @return array{graph: string, site: string}
+   *   The base URIs of the exported WissKI, for the manifest.
+   *
    * @throws \Drupal\soda_scs_manager\Demo\SodaScsDemoException
    */
-  public function export(SodaScsStackInterface $stack, string $directory): void {
+  public function export(SodaScsStackInterface $stack, string $directory): array {
     [$sqlComponent, $triplestoreComponent, $wisskiComponent] = $this->stackComponents($stack);
     $containerName = $this->containerHelpers->getComponentContainerName($wisskiComponent);
+    $ownBases = SodaScsDemoException::assertSuccess($this->uriRewriter->ownBases($wisskiComponent), 'Read WissKI base URIs')->data['bases'];
 
     SodaScsDemoException::assertSuccess($this->containerHelpers->stopContainer($containerName), 'Stop WissKI');
     try {
@@ -91,6 +97,7 @@ class SodaScsDemoWisskiTransfer {
     // A failed start must not replace the export exception from the try block.
     SodaScsDemoException::assertSuccess($startResult, 'Start WissKI');
     SodaScsDemoException::assertSuccess($this->varnishCache->restart($this->machineName($wisskiComponent)), 'Restart Varnish');
+    return $ownBases;
   }
 
   /**
@@ -102,17 +109,25 @@ class SodaScsDemoWisskiTransfer {
    *   Directory written by export().
    * @param string $siteName
    *   Site name of the target.
+   * @param array|null $sourceBases
+   *   array{graph: string, site: string}, the base URIs of the source; NULL
+   *   keeps the URIs of the source.
    *
    * @throws \Drupal\soda_scs_manager\Demo\SodaScsDemoException
    */
-  public function import(SodaScsStackInterface $stack, string $directory, string $siteName): void {
+  public function import(SodaScsStackInterface $stack, string $directory, string $siteName, ?array $sourceBases = NULL): void {
     [$sqlComponent, $triplestoreComponent, $wisskiComponent] = $this->stackComponents($stack);
     $containerName = $this->containerHelpers->getComponentContainerName($wisskiComponent);
+    $triplestoreFile = $directory . '/' . self::TRIPLESTORE_BASENAME . '.nq';
 
     $instanceConfig = SodaScsDemoException::assertSuccess(
       $this->configRemapper->captureInstanceConfig($wisskiComponent),
       'Read WissKI instance configuration',
     )->data['configs'];
+    $uriMap = $sourceBases === NULL ? [] : SodaScsWisskiUriRewriter::buildMap(
+      $sourceBases,
+      SodaScsDemoException::assertSuccess($this->uriRewriter->ownBases($wisskiComponent), 'Read WissKI base URIs')->data['bases'],
+    );
 
     SodaScsDemoException::assertSuccess($this->containerHelpers->stopContainer($containerName), 'Stop WissKI');
     try {
@@ -124,7 +139,7 @@ class SodaScsDemoWisskiTransfer {
         $this->databaseHelpers->importDatabaseFromFile($this->machineName($sqlComponent), $directory . '/' . self::DATABASE_FILE, TRUE),
         'Import WissKI database',
       );
-      $this->importTriplestore($this->machineName($triplestoreComponent), $directory . '/' . self::TRIPLESTORE_BASENAME . '.nq');
+      $this->importTriplestore($this->machineName($triplestoreComponent), $triplestoreFile, $uriMap);
     }
     finally {
       $startResult = $this->containerHelpers->startContainer($containerName);
@@ -132,17 +147,29 @@ class SodaScsDemoWisskiTransfer {
     SodaScsDemoException::assertSuccess($startResult, 'Start WissKI');
     SodaScsDemoException::assertSuccess($this->varnishCache->restart($this->machineName($wisskiComponent)), 'Restart Varnish');
 
-    $this->waitForDrush($wisskiComponent);
-    SodaScsDemoException::assertSuccess(
-      $this->configRemapper->applyInstanceConfig($instanceConfig, $siteName, $wisskiComponent),
-      'Restore WissKI instance configuration',
-    );
-    // The captured adapter keeps the target's token, which is stale when
-    // OpenGDB issued a new one for the owner since the WissKI was installed.
-    SodaScsDemoException::assertSuccess(
-      $this->tokenSync->syncComponents($wisskiComponent, $triplestoreComponent),
-      'Update WissKI triplestore token',
-    );
+    // The imported database holds the Salz adapter (repository, token) and
+    // the SSO config of the source: the target's own config goes back even
+    // when a step before fails, and the first failure is reported.
+    $failure = NULL;
+    try {
+      $this->waitForDrush($wisskiComponent);
+      // Before the instance config, which wins where both touch a key.
+      if ($uriMap !== []) {
+        SodaScsDemoException::assertSuccess($this->uriRewriter->rewriteDatabase($wisskiComponent, $uriMap), 'Rewrite WissKI URIs');
+      }
+    }
+    catch (\Throwable $e) {
+      $failure = $e;
+    }
+    try {
+      $this->restoreInstance($instanceConfig, $siteName, $wisskiComponent, $triplestoreComponent);
+    }
+    catch (\Throwable $e) {
+      throw $failure === NULL ? $e : new SodaScsDemoException($failure->getMessage() . ' Restoring the WissKI instance configuration failed as well: ' . $e->getMessage(), 0, $failure);
+    }
+    if ($failure !== NULL) {
+      throw $failure;
+    }
   }
 
   /**
@@ -180,12 +207,27 @@ class SodaScsDemoWisskiTransfer {
   /**
    * Replaces the content of a triplestore repository.
    *
+   * With a URI map, a rewritten copy of the file is imported; the template
+   * file stays as it is.
+   *
+   * @param string $repositoryId
+   *   The repository.
+   * @param string $file
+   *   The N-Quads file.
+   * @param array<string, string> $uriMap
+   *   Source base => target base.
+   *
    * @throws \Drupal\soda_scs_manager\Demo\SodaScsDemoException
    */
-  protected function importTriplestore(string $repositoryId, string $file): void {
+  protected function importTriplestore(string $repositoryId, string $file, array $uriMap = []): void {
+    $rewrittenFile = NULL;
     try {
+      if ($uriMap !== []) {
+        $rewrittenFile = (string) tempnam(sys_get_temp_dir(), 'scs-demo-nq-');
+        SodaScsWisskiUriRewriter::rewriteNquads($file, $rewrittenFile, $uriMap);
+      }
       SodaScsDemoException::assertSuccess(
-        $this->triplestoreHelpers->importTriplestoreRepository($repositoryId, $file, 'nq'),
+        $this->triplestoreHelpers->importTriplestoreRepository($repositoryId, $rewrittenFile ?? $file, 'nq'),
         'Import WissKI triplestore',
       );
     }
@@ -195,6 +237,38 @@ class SodaScsDemoWisskiTransfer {
     catch (\Throwable $e) {
       throw new SodaScsDemoException('Import WissKI triplestore: ' . $e->getMessage(), 0, $e);
     }
+    finally {
+      if ($rewrittenFile !== NULL && is_file($rewrittenFile)) {
+        unlink($rewrittenFile);
+      }
+    }
+  }
+
+  /**
+   * Writes the target's instance config and triplestore token back.
+   *
+   * @param array $instanceConfig
+   *   Config captured before the import.
+   * @param string $siteName
+   *   Site name of the target.
+   * @param \Drupal\soda_scs_manager\Entity\SodaScsComponentInterface $wisskiComponent
+   *   The target WissKI.
+   * @param \Drupal\soda_scs_manager\Entity\SodaScsComponentInterface $triplestoreComponent
+   *   Its triplestore.
+   *
+   * @throws \Drupal\soda_scs_manager\Demo\SodaScsDemoException
+   */
+  protected function restoreInstance(array $instanceConfig, string $siteName, SodaScsComponentInterface $wisskiComponent, SodaScsComponentInterface $triplestoreComponent): void {
+    SodaScsDemoException::assertSuccess(
+      $this->configRemapper->applyInstanceConfig($instanceConfig, $siteName, $wisskiComponent),
+      'Restore WissKI instance configuration',
+    );
+    // The captured adapter keeps the target's token, which is stale when
+    // OpenGDB issued a new one for the owner since the WissKI was installed.
+    SodaScsDemoException::assertSuccess(
+      $this->tokenSync->syncComponents($wisskiComponent, $triplestoreComponent),
+      'Update WissKI triplestore token',
+    );
   }
 
   /**

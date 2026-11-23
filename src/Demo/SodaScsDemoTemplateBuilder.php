@@ -21,7 +21,8 @@ use Symfony\Component\DependencyInjection\Attribute\Autowire;
  * Builds a versioned demo template from the central demo project.
  *
  * Artifacts land in {snapshot root}/_demo-templates/v{N}/; the manifest on
- * the template entity lists them with their SHA-256 checksums.
+ * the template entity and in manifest.json lists them with their SHA-256
+ * checksums.
  */
 class SodaScsDemoTemplateBuilder {
 
@@ -116,11 +117,12 @@ class SodaScsDemoTemplateBuilder {
       if ($wisskiStack !== NULL) {
         $reportStep((string) $this->t('Exporting the WissKI'));
         $this->createDirectory($directory . '/' . self::WISSKI_DIRECTORY);
-        $this->wisskiTransfer->export($wisskiStack, $directory . '/' . self::WISSKI_DIRECTORY);
+        $uriBases = $this->wisskiTransfer->export($wisskiStack, $directory . '/' . self::WISSKI_DIRECTORY);
         $manifest['apps'][SodaScsDemoLabelBuilder::APP_WISSKI] = [
           'directory' => self::WISSKI_DIRECTORY,
           'sourceLabel' => (string) $wisskiStack->label(),
           'sourceStackId' => (int) $wisskiStack->id(),
+          'uriBases' => $uriBases,
         ];
       }
 
@@ -156,6 +158,10 @@ class SodaScsDemoTemplateBuilder {
 
       $manifest['checksums'] = $this->checksums($directory);
       $this->assertManifestFilesExist($manifest, $directory);
+      // Not part of the checksums: it holds them.
+      if (!SodaScsDemoTemplateArchive::writeManifestFile($directory, $manifest)) {
+        throw new SodaScsDemoException(sprintf('Could not write %s into %s.', SodaScsDemoTemplateArchive::MANIFEST_FILE, $directory));
+      }
       $template->setManifest($manifest)
         ->setStatus(SodaScsDemoTemplateInterface::STATUS_READY)
         ->save();

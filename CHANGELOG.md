@@ -9,6 +9,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Demo versions can be moved between sites:
+  `drush soda_scs_manager:demo-export <version>` writes
+  `demo-v<version>.tar.gz` and a `.sha256` file,
+  `drush soda_scs_manager:demo-import <archive> [--activate]` checks and
+  imports it as a ready version marked "imported", and
+  `drush soda_scs_manager:demo-versions` lists the versions. Builds now also
+  write `manifest.json` into the version directory. Update 11044 adds the
+  origin field to demo versions. Related: [#3640915](https://www.drupal.org/project/soda_scs_manager/issues/3640915).
 - Projects can be handed to another account with
   `drush soda_scs_manager:project-transfer <project> <account>`. The new owner
   gets the database, triplestore, WebProtégé and Team Folder access first;
@@ -26,6 +34,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- Demo create and reset rewrite the base URIs of the copied WissKI to the
+  demo WissKI: entity URIs, graphs and page links in the triplestore, the
+  WissKI URI tables and the config (e.g. IIIF server), from the source's
+  default graph and domain to the demo's. URIs that other WissKIs minted
+  stay. Versions built before read the bases from the source WissKI while it
+  exists. Related: [#3640914](https://www.drupal.org/project/soda_scs_manager/issues/3640914).
 - "Use as demo project" hands the source project and its applications to
   `scs_demo` in the background, so deleting the account of the admin who set
   it up no longer deletes the demo source. The source WissKI restarts once.

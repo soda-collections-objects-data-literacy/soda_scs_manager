@@ -27,6 +27,16 @@ interface SodaScsDemoTemplateInterface extends ContentEntityInterface {
   public const STATUS_READY = 'ready';
 
   /**
+   * Built on this site from the demo source project.
+   */
+  public const ORIGIN_BUILT = 'built';
+
+  /**
+   * Imported from an archive of another site; it has no source project.
+   */
+  public const ORIGIN_IMPORTED = 'imported';
+
+  /**
    * Absolute directory that holds the artifacts of this version.
    */
   public function getArtifactDirectory(): string;
@@ -55,6 +65,16 @@ interface SodaScsDemoTemplateInterface extends ContentEntityInterface {
    * @see \Drupal\soda_scs_manager\Demo\SodaScsDemoVersion
    */
   public function getVersion(): string;
+
+  /**
+   * One of the ORIGIN_* constants.
+   */
+  public function getOrigin(): string;
+
+  /**
+   * Whether the version was imported from another site.
+   */
+  public function isImported(): bool;
 
   /**
    * Whether all artifacts are exported and the template can be applied.

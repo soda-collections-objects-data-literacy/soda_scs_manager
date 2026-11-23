@@ -65,6 +65,14 @@ class SodaScsDemoTemplate extends ContentEntityBase implements SodaScsDemoTempla
       ->setLabel(new TranslatableMarkup('Manifest'))
       ->setDescription(new TranslatableMarkup('JSON list of the exported applications and their artifacts.'));
 
+    $fields['origin'] = BaseFieldDefinition::create('string')
+      ->setLabel(new TranslatableMarkup('Origin'))
+      ->setDescription(new TranslatableMarkup('"built" on this site or "imported" from an archive.'))
+      ->setRequired(TRUE)
+      ->setDefaultValue(self::ORIGIN_BUILT)
+      ->setInitialValue(self::ORIGIN_BUILT)
+      ->setSetting('max_length', 16);
+
     $fields['sourceProject'] = BaseFieldDefinition::create('entity_reference')
       ->setLabel(new TranslatableMarkup('Source project'))
       ->setSetting('target_type', 'soda_scs_project');
@@ -110,6 +118,13 @@ class SodaScsDemoTemplate extends ContentEntityBase implements SodaScsDemoTempla
   /**
    * {@inheritdoc}
    */
+  public function getOrigin(): string {
+    return (string) ($this->get('origin')->value ?: self::ORIGIN_BUILT);
+  }
+
+  /**
+   * {@inheritdoc}
+   */
   public function getStatus(): string {
     return (string) $this->get('status')->value;
   }
@@ -119,6 +134,13 @@ class SodaScsDemoTemplate extends ContentEntityBase implements SodaScsDemoTempla
    */
   public function getVersion(): string {
     return (string) $this->get('version')->value;
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function isImported(): bool {
+    return $this->getOrigin() === self::ORIGIN_IMPORTED;
   }
 
   /**
