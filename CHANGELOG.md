@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [4.7.2] - 2026-11-23
+
 ### Fixed
 
 - Demo WissKIs no longer show a second SSO button on the login page: the
@@ -1206,7 +1208,10 @@ Development line: branch `2.x`. Major release relative to `1.3.x` (projects on s
 
 - Move toward fully Portainer-driven lifecycle for managed services.
 
-[Unreleased]: https://github.com/soda-collections-objects-data-literacy/soda_scs_manager/compare/4.6.0...HEAD
+[Unreleased]: https://github.com/soda-collections-objects-data-literacy/soda_scs_manager/compare/4.7.2...HEAD
+[4.7.2]: https://github.com/soda-collections-objects-data-literacy/soda_scs_manager/compare/4.7.1...4.7.2
+[4.7.1]: https://github.com/soda-collections-objects-data-literacy/soda_scs_manager/compare/4.7.0...4.7.1
+[4.7.0]: https://github.com/soda-collections-objects-data-literacy/soda_scs_manager/compare/4.6.0...4.7.0
 [4.6.0]: https://github.com/soda-collections-objects-data-literacy/soda_scs_manager/compare/4.5.0...4.6.0
 [4.5.0]: https://github.com/soda-collections-objects-data-literacy/soda_scs_manager/compare/4.4.0...4.5.0
 [4.4.0]: https://github.com/soda-collections-objects-data-literacy/soda_scs_manager/compare/4.3.3...4.4.0
