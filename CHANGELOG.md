@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- Show the sliders icon on the SCS Manager administration menu link
+  (`soda_scs_manager.administration`), not only on `system.admin`.
+
 ## [4.8.0] - 2026-11-23
 
 ### Added
