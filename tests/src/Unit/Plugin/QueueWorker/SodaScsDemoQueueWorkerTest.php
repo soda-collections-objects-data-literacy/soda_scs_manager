@@ -17,13 +17,17 @@ use Drupal\soda_scs_manager\Demo\SodaScsDemoIncompleteAppException;
 use Drupal\soda_scs_manager\Demo\SodaScsDemoManager;
 use Drupal\soda_scs_manager\Demo\SodaScsDemoNotReadyException;
 use Drupal\soda_scs_manager\Demo\SodaScsDemoProjectProvisioner;
+use Drupal\soda_scs_manager\Demo\SodaScsDemoServiceAccount;
 use Drupal\soda_scs_manager\Demo\SodaScsDemoStatusBuilder;
 use Drupal\soda_scs_manager\Demo\SodaScsDemoTemplateBuilder;
 use Drupal\soda_scs_manager\Entity\SodaScsDemoTemplateInterface;
 use Drupal\soda_scs_manager\Entity\SodaScsProjectInterface;
 use Drupal\soda_scs_manager\Helpers\SodaScsProgressHelper;
 use Drupal\soda_scs_manager\Plugin\QueueWorker\SodaScsDemoQueueWorker;
+use Drupal\soda_scs_manager\Service\SodaScsProjectOwnershipTransfer;
+use Drupal\soda_scs_manager\ValueObject\SodaScsResult;
 use Drupal\Tests\UnitTestCase;
+use Drupal\user\UserInterface;
 use PHPUnit\Framework\MockObject\MockObject;
 use Psr\Log\LoggerInterface;
 
@@ -38,6 +42,8 @@ class SodaScsDemoQueueWorkerTest extends UnitTestCase {
   private const NOW = 100000;
 
   private const OPERATION_ID = 'operation-1';
+
+  private const TRANSFER_FAILED_STEP = 'Handing the demo project to scs_demo failed. See the log for details.';
 
   /**
    * Messages written with createStep(), in order.
@@ -64,6 +70,16 @@ class SodaScsDemoQueueWorkerTest extends UnitTestCase {
    * The mocked logger.
    */
   private LoggerInterface&MockObject $logger;
+
+  /**
+   * The mocked ownership transfer.
+   */
+  private SodaScsProjectOwnershipTransfer&MockObject $ownershipTransfer;
+
+  /**
+   * The mocked demo service account.
+   */
+  private SodaScsDemoServiceAccount&MockObject $serviceAccount;
 
   /**
    * The mocked progress helper.
@@ -103,6 +119,8 @@ class SodaScsDemoQueueWorkerTest extends UnitTestCase {
     $this->logger = $this->createMock(LoggerInterface::class);
     $this->project = $this->createMock(SodaScsProjectInterface::class);
     $this->provisioner = $this->createMock(SodaScsDemoProjectProvisioner::class);
+    $this->ownershipTransfer = $this->createMock(SodaScsProjectOwnershipTransfer::class);
+    $this->serviceAccount = $this->createMock(SodaScsDemoServiceAccount::class);
 
     $test = $this;
     $this->progressHelper = $this->createMock(SodaScsProgressHelper::class);
@@ -368,6 +386,179 @@ class SodaScsDemoQueueWorkerTest extends UnitTestCase {
   }
 
   /**
+   * A source transfer takes the template build lock, not a project lock.
+   *
+   * The transfer redeploys the WissKI a template build reads from.
+   *
+   * @covers ::processItem
+   */
+  public function testTransferSourceTakesTheTemplateBuildLock(): void {
+    $this->serviceAccount->method('ensure')->willReturn(SodaScsResult::success(['account' => $this->createMock(UserInterface::class)], 'ready'));
+    $this->ownershipTransfer->method('transfer')->willReturn(SodaScsResult::success(['warnings' => []], 'done'));
+
+    $this->createWorker()->processItem($this->transferJob());
+
+    $this->assertSame(['soda_scs_manager.demo.template_build'], $this->acquiredLocks);
+  }
+
+  /**
+   * The source project goes to the account that ensure() returned.
+   *
+   * @covers ::transferSource
+   */
+  public function testTransferSourceHandsTheProjectToTheServiceAccount(): void {
+    $account = $this->createMock(UserInterface::class);
+    $this->serviceAccount->expects($this->once())->method('ensure')->willReturn(SodaScsResult::success(['account' => $account], 'ready'));
+    $this->ownershipTransfer->expects($this->once())->method('transfer')->with($this->project, $account)
+      ->willReturn(SodaScsResult::success(['warnings' => []], 'done'));
+    $this->logger->expects($this->never())->method('warning');
+
+    $this->createWorker()->processItem($this->transferJob());
+
+    $this->assertSame(['running', 'completed'], $this->operationStatuses);
+    $this->assertSame(['Preparing the account scs_demo', 'Handing the demo project to scs_demo'], $this->createdSteps);
+  }
+
+  /**
+   * Follow-up warnings of the transfer are logged, the job still completes.
+   *
+   * @covers ::transferSource
+   */
+  public function testTransferSourceLogsWarningsAndCompletes(): void {
+    $this->project->method('id')->willReturn(5);
+    $this->serviceAccount->method('ensure')->willReturn(SodaScsResult::success(['account' => $this->createMock(UserInterface::class)], 'ready'));
+    $this->ownershipTransfer->method('transfer')->willReturn(SodaScsResult::success(['warnings' => ['Keycloak groups could not be synced.']], 'done'));
+    $this->logger->expects($this->once())->method('warning')->with(
+      'Demo source transfer of project @project: @warning',
+      ['@project' => 5, '@warning' => 'Keycloak groups could not be synced.'],
+    );
+
+    $this->createWorker()->processItem($this->transferJob());
+
+    $this->assertSame(['running', 'completed'], $this->operationStatuses);
+  }
+
+  /**
+   * Without the service account the project is not touched and the job fails.
+   *
+   * @covers ::transferSource
+   */
+  public function testTransferSourceFailsWhenServiceAccountIsNotReady(): void {
+    $this->serviceAccount->method('ensure')->willReturn(SodaScsResult::failure(error: 'no password', message: 'Set the password.', log: FALSE));
+    $this->ownershipTransfer->expects($this->never())->method('transfer');
+    $this->project->method('id')->willReturn(5);
+    $this->logger->expects($this->once())->method('error')->with(
+      'Handing demo source project @project to scs_demo failed: @reason',
+      ['@project' => 5, '@reason' => 'no password'],
+    );
+
+    $this->createWorker()->processItem($this->transferJob());
+
+    $this->assertSame(['running', 'failed'], $this->operationStatuses);
+    $this->assertSame(['Preparing the account scs_demo', self::TRANSFER_FAILED_STEP], $this->createdSteps);
+  }
+
+  /**
+   * A failed transfer fails the job with the reason as its last step.
+   *
+   * @covers ::transferSource
+   */
+  public function testTransferSourceFailsWithTheReasonOfTheTransfer(): void {
+    $this->serviceAccount->method('ensure')->willReturn(SodaScsResult::success(['account' => $this->createMock(UserInterface::class)], 'ready'));
+    $this->ownershipTransfer->method('transfer')->willReturn(SodaScsResult::failure(error: 'x', message: 'The project is locked by another job.', log: FALSE));
+    $this->project->method('id')->willReturn(5);
+    $this->logger->expects($this->once())->method('error')->with(
+      'Handing demo source project @project to scs_demo failed: @reason',
+      ['@project' => 5, '@reason' => 'x'],
+    );
+
+    $this->createWorker()->processItem($this->transferJob());
+
+    $this->assertSame(['running', 'failed'], $this->operationStatuses);
+    $this->assertSame(self::TRANSFER_FAILED_STEP, end($this->createdSteps));
+  }
+
+  /**
+   * Without an error text the message of the result is the logged reason.
+   *
+   * @covers ::transferSource
+   */
+  public function testTransferSourceLogsTheMessageWhenTheResultHasNoError(): void {
+    $this->serviceAccount->method('ensure')->willReturn(SodaScsResult::success(['account' => $this->createMock(UserInterface::class)], 'ready'));
+    $this->ownershipTransfer->method('transfer')->willReturn(SodaScsResult::failure(error: '', message: 'The project is locked by another job.', log: FALSE));
+    $this->project->method('id')->willReturn(5);
+    $this->logger->expects($this->once())->method('error')->with(
+      'Handing demo source project @project to scs_demo failed: @reason',
+      ['@project' => 5, '@reason' => 'The project is locked by another job.'],
+    );
+
+    $this->createWorker()->processItem($this->transferJob());
+
+    $this->assertSame(self::TRANSFER_FAILED_STEP, end($this->createdSteps));
+  }
+
+  /**
+   * An exception from the transfer is logged and fails the job; none escapes.
+   *
+   * @covers ::transferSource
+   */
+  public function testTransferSourceFailsWhenTheTransferThrows(): void {
+    $this->serviceAccount->method('ensure')->willReturn(SodaScsResult::success(['account' => $this->createMock(UserInterface::class)], 'ready'));
+    $this->ownershipTransfer->method('transfer')->willThrowException(new \RuntimeException('portainer timeout'));
+    $this->project->method('id')->willReturn(5);
+    $this->logger->expects($this->once())->method('error')->with(
+      'Handing demo source project @project to scs_demo failed: @reason',
+      ['@project' => 5, '@reason' => 'portainer timeout'],
+    );
+
+    $this->createWorker()->processItem($this->transferJob());
+
+    $this->assertSame(['running', 'failed'], $this->operationStatuses);
+    $this->assertSame([
+      'Preparing the account scs_demo',
+      'Handing the demo project to scs_demo',
+      self::TRANSFER_FAILED_STEP,
+    ], $this->createdSteps);
+  }
+
+  /**
+   * An exception from ensure() is logged and fails the job without a transfer.
+   *
+   * @covers ::transferSource
+   */
+  public function testTransferSourceFailsWhenEnsureThrows(): void {
+    $this->serviceAccount->method('ensure')->willThrowException(new \RuntimeException('keycloak unreachable'));
+    $this->ownershipTransfer->expects($this->never())->method('transfer');
+    $this->project->method('id')->willReturn(5);
+    $this->logger->expects($this->once())->method('error')->with(
+      'Handing demo source project @project to scs_demo failed: @reason',
+      ['@project' => 5, '@reason' => 'keycloak unreachable'],
+    );
+
+    $this->createWorker()->processItem($this->transferJob());
+
+    $this->assertSame(['running', 'failed'], $this->operationStatuses);
+    $this->assertSame(self::TRANSFER_FAILED_STEP, end($this->createdSteps));
+  }
+
+  /**
+   * A project that no longer exists drops the job without a transfer.
+   *
+   * @covers ::transferSource
+   */
+  public function testTransferSourceDropsJobOfDeletedProject(): void {
+    $this->project = $this->createMock(SodaScsProjectInterface::class);
+    $this->serviceAccount->expects($this->never())->method('ensure');
+    $this->ownershipTransfer->expects($this->never())->method('transfer');
+    $this->logger->expects($this->once())->method('warning')
+      ->with('Demo source transfer dropped: project @project no longer exists.', ['@project' => 5]);
+
+    $this->createWorker(TRUE, FALSE)->processItem($this->transferJob());
+
+    $this->assertSame(['running', 'failed'], $this->operationStatuses);
+  }
+
+  /**
    * The project is expected to be marked as failed exactly once.
    */
   private function expectProjectFailed(): void {
@@ -379,9 +570,9 @@ class SodaScsDemoQueueWorkerTest extends UnitTestCase {
   /**
    * Worker with mocked collaborators and a project and template that exist.
    */
-  private function createWorker(bool $templateExists = TRUE): SodaScsDemoQueueWorker {
+  private function createWorker(bool $templateExists = TRUE, bool $projectExists = TRUE): SodaScsDemoQueueWorker {
     $projectStorage = $this->createMock(EntityStorageInterface::class);
-    $projectStorage->method('load')->willReturn($this->project);
+    $projectStorage->method('load')->willReturn($projectExists ? $this->project : NULL);
     $templateStorage = $this->createMock(EntityStorageInterface::class);
     $templateStorage->method('load')->willReturn($templateExists ? $this->createMock(SodaScsDemoTemplateInterface::class) : NULL);
     $entityTypeManager = $this->createMock(EntityTypeManagerInterface::class);
@@ -405,8 +596,10 @@ class SodaScsDemoQueueWorkerTest extends UnitTestCase {
       $entityTypeManager,
       $lock,
       $this->logger,
+      $this->ownershipTransfer,
       $this->progressHelper,
       $this->provisioner,
+      $this->serviceAccount,
       $this->createMock(SodaScsDemoTemplateBuilder::class),
       $time,
     );
@@ -428,6 +621,21 @@ class SodaScsDemoQueueWorkerTest extends UnitTestCase {
       'projectId' => 5,
       'queuedAt' => self::NOW,
       'templateId' => 9,
+    ];
+  }
+
+  /**
+   * Queue item of a source transfer job.
+   *
+   * @return array<string, mixed>
+   *   The queue item.
+   */
+  private function transferJob(): array {
+    return [
+      'operation' => SodaScsDemoManager::OPERATION_TRANSFER_SOURCE,
+      'operationId' => self::OPERATION_ID,
+      'projectId' => 5,
+      'queuedAt' => self::NOW,
     ];
   }
 

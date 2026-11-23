@@ -38,6 +38,27 @@ class SodaScsAutomaticDemoProjectTest extends UnitTestCase {
   }
 
   /**
+   * Protected accounts get no demo, even with the platform role.
+   *
+   * Issue 3640913: scs_demo owns the demo source and must not get a demo
+   * project of its own.
+   *
+   * @covers ::ensureFor
+   */
+  public function testSkipsProtectedAccountsWithThePlatformRole(): void {
+    $account = $this->createMock(UserInterface::class);
+    $account->method('hasRole')->with(SodaScsAutomaticDemoProject::PLATFORM_ROLE)->willReturn(TRUE);
+    $account->method('id')->willReturn('42');
+    $account->method('getAccountName')->willReturn('scs_demo');
+
+    $demoManager = $this->createMock(SodaScsDemoManager::class);
+    $demoManager->expects($this->never())->method('requestDemoProject');
+
+    $ensurer = new SodaScsAutomaticDemoProject($demoManager, $this->createMock(LoggerInterface::class), $this->nextcloudHelpers());
+    $this->assertFalse($ensurer->ensureFor($account));
+  }
+
+  /**
    * An approved platform user gets a demo queued.
    *
    * @covers ::ensureFor

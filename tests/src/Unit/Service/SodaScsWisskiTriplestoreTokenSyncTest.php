@@ -333,6 +333,46 @@ class SodaScsWisskiTriplestoreTokenSyncTest extends UnitTestCase {
   }
 
   /**
+   * The given token is written without a lookup of the owner's service key.
+   *
+   * Issue 3640913: during an ownership transfer the token of the new owner is
+   * written while the triplestore still belongs to the previous owner.
+   *
+   * @covers ::writeToken
+   */
+  public function testWriteTokenSendsTheGivenTokenWithoutKeyLookup(): void {
+    $this->serviceKeyActions->expects($this->never())->method('getServiceKey');
+    $this->containerHelpers->expects($this->once())->method('executeDockerExecCommand')
+      ->with($this->callback(function (array $request): bool {
+        $this->assertSame('wisski-demo--drupal', $request['containerName']);
+        $this->assertSame(['SCS_TS_REPOSITORY=ts-demo', 'SCS_TS_TOKEN=' . self::TOKEN], $request['env']);
+        $this->assertStringNotContainsString(self::TOKEN, implode(' ', $request['cmd']));
+        return TRUE;
+      }))
+      ->willReturn($this->drushOutput('SCS_TOKEN_SYNC:updated'));
+
+    $result = $this->sync()->writeToken($this->wisski(), $this->triplestore(), self::TOKEN);
+
+    $this->assertTrue($result->success);
+    $this->assertSame(['state' => 'updated'], $result->data);
+  }
+
+  /**
+   * A failing exec is a failure of writeToken() as well.
+   *
+   * @covers ::writeToken
+   */
+  public function testWriteTokenFailsWhenDrushFails(): void {
+    $this->containerHelpers->method('executeDockerExecCommand')
+      ->willReturn(new SodaScsResult(FALSE, NULL, 'container is not running', 'failed'));
+
+    $result = $this->sync()->writeToken($this->wisski(), $this->triplestore(), self::TOKEN);
+
+    $this->assertFalse($result->success);
+    $this->assertSame('container is not running', $result->error);
+  }
+
+  /**
    * Every triplestore of the user with a stack WissKI is synced and counted.
    *
    * @covers ::syncUser

@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Drupal\Tests\soda_scs_manager\Kernel\User;
 
 use Drupal\Core\Entity\ContentEntityFormInterface;
+use Drupal\Core\Entity\EntityStorageException;
 use Drupal\Core\Form\FormInterface;
 use Drupal\Core\Form\FormState;
 use Drupal\Core\Lock\LockBackendInterface;
@@ -1286,6 +1287,386 @@ class SodaScsUserOffboardingDemoLockTest extends SodaScsKernelTestBase {
   }
 
   /**
+   * A protected account owns no project the offboarding would remove.
+   *
+   * Issue 3640913: scs_demo owns the demo source project.
+   */
+  public function testOwnedProjectIdsOfProtectedAccountIsEmpty(): void {
+    $demoAccount = $this->createTestUser(['name' => 'scs_demo']);
+    $this->createTestProject(['owner' => $demoAccount->id()]);
+
+    $this->assertSame([], $this->buildService()->ownedProjectIds($demoAccount));
+  }
+
+  /**
+   * The purge of a protected account deletes no project and takes no lock.
+   */
+  public function testPurgeLeavesProtectedAccountAndItsProjectsAlone(): void {
+    $demoAccount = $this->createTestUser(['name' => 'scs_demo']);
+    $source = $this->createTestProject(['owner' => $demoAccount->id()]);
+
+    $this->buildService()->purge($demoAccount);
+
+    $this->assertSame([], $this->lockCalls);
+    $this->assertSame([], $this->persistentLockCalls);
+    $storage = $this->entityTypeManager->getStorage('soda_scs_project');
+    $storage->resetCache([$source->id()]);
+    $this->assertNotNull($storage->load($source->id()), 'The source project stays.');
+  }
+
+  /**
+   * The profile delete form refuses the demo account when validating.
+   */
+  public function testProfileDeleteFormRefusesProtectedAccountOnValidation(): void {
+    $this->account = $this->createTestUser(['name' => 'scs_demo']);
+
+    $this->assertSame(['This profile cannot be deleted.'], $this->profileDeleteFormErrorMessages());
+  }
+
+  /**
+   * The profile delete form queues no batch for the demo account.
+   */
+  public function testProfileDeleteFormQueuesNoBatchForProtectedAccount(): void {
+    $demoAccount = $this->createTestUser(['name' => 'scs_demo']);
+    $this->container->set('soda_scs_manager.user_offboarding', $this->buildService());
+    $this->container->get('current_user')->setAccount($demoAccount);
+    $form = SodaScsProfileDeleteForm::create($this->container);
+    $formArray = [];
+
+    $form->submitForm($formArray, new FormState());
+
+    $this->assertSame([], array_merge([], ...array_column(batch_get()['sets'] ?? [], 'operations')));
+    $this->assertNotNull($this->entityTypeManager->getStorage('user')->load($demoAccount->id()));
+  }
+
+  /**
+   * The cancel form validator refuses a protected account with every method.
+   *
+   * @dataProvider provideEveryCancelMethod
+   */
+  public function testCancelFormValidatorRefusesProtectedAccount(string $method): void {
+    $this->account = $this->createTestUser(['name' => 'scs_demo']);
+
+    $formState = $this->validateProtectedCancelForm($method);
+
+    $errors = $formState->getErrors();
+    $this->assertSame(['user_cancel_method'], array_keys($errors));
+    $this->assertStringContainsString('scs_demo', (string) $errors['user_cancel_method']);
+  }
+
+  /**
+   * Every cancel method, the keeping ones included.
+   *
+   * @return array<string, array{string}>
+   *   The method names.
+   */
+  public static function provideEveryCancelMethod(): array {
+    return [
+      'block account' => ['user_cancel_block'],
+      'block account and unpublish content' => ['user_cancel_block_unpublish'],
+      'delete account, reassign content' => ['user_cancel_reassign'],
+      'delete account and content' => ['user_cancel_delete'],
+    ];
+  }
+
+  /**
+   * The cancel form validator lets an ordinary account pass.
+   */
+  public function testCancelFormValidatorAcceptsOrdinaryAccount(): void {
+    $this->assertSame([], $this->validateProtectedCancelForm('user_cancel_delete')->getErrors());
+  }
+
+  /**
+   * Both cancel forms get the protected account check as a validate handler.
+   */
+  public function testCancelFormAltersRegisterTheProtectedAccountValidator(): void {
+    $this->container->set('soda_scs_manager.user_offboarding', $this->buildService());
+    $callback = 'soda_scs_manager_user_cancel_validate_protected';
+
+    $formState = new FormState();
+    $formState->setFormObject($this->createMock(FormInterface::class));
+    $single = [];
+    soda_scs_manager_form_user_cancel_form_alter($single, $formState, 'user_cancel_form');
+    $bulk = [];
+    soda_scs_manager_form_user_multiple_cancel_confirm_alter($bulk, $formState, 'user_multiple_cancel_confirm');
+
+    $this->assertContains($callback, $single['#validate']);
+    $this->assertContains($callback, $bulk['#validate']);
+  }
+
+  /**
+   * Nobody may delete a protected account, an administrator included.
+   */
+  public function testUserAccessForbidsDeleteOfProtectedAccounts(): void {
+    $demoAccount = $this->createTestUser(['name' => 'scs_demo']);
+    $administrator = $this->entityTypeManager->getStorage('user')->load(1);
+
+    $this->assertFalse($demoAccount->access('delete', $administrator));
+    $this->assertFalse($administrator->access('delete', $administrator));
+    $this->assertTrue($this->account->access('delete', $administrator), 'An ordinary account can still be deleted.');
+    $this->assertTrue($demoAccount->access('update', $administrator), 'Only the delete operation is forbidden.');
+  }
+
+  /**
+   * Deleting the demo account throws before other modules act, and keeps it.
+   */
+  public function testDeletingProtectedAccountThrowsAndKeepsIt(): void {
+    $demoAccount = $this->createTestUser(['name' => 'scs_demo']);
+    $demoAccountId = (int) $demoAccount->id();
+
+    try {
+      $demoAccount->delete();
+      $this->fail('The delete of a protected account must throw.');
+    }
+    catch (EntityStorageException $e) {
+      // The storage wraps what the hook threw.
+      $this->assertInstanceOf(\LogicException::class, $e->getPrevious());
+      $this->assertStringContainsString('scs_demo', $e->getMessage());
+    }
+
+    $this->entityTypeManager->getStorage('user')->resetCache([$demoAccountId]);
+    $this->assertNotNull($this->entityTypeManager->getStorage('user')->load($demoAccountId));
+  }
+
+  /**
+   * Cancelling the demo account throws, before another module acts.
+   *
+   * @dataProvider provideEveryCancelMethod
+   */
+  public function testCancelHookThrowsForProtectedAccount(string $method): void {
+    $demoAccount = $this->createTestUser(['name' => 'scs_demo']);
+
+    $this->expectException(\LogicException::class);
+
+    $this->container->get('module_handler')->invokeAll('user_cancel', [[], $demoAccount, $method]);
+  }
+
+  /**
+   * The demo source is not among the projects the offboarding removes.
+   *
+   * Issue 3640913.
+   */
+  public function testOwnedProjectIdsExcludesTheDemoSource(): void {
+    $source = $this->createTestProject(['owner' => $this->account->id()]);
+    $other = $this->createTestProject(['owner' => $this->account->id()]);
+    $this->setDemoSource($source);
+
+    $this->assertSame([(int) $other->id()], $this->buildService()->ownedProjectIds($this->account));
+  }
+
+  /**
+   * The owner of the demo source owns it in the sense of the guard.
+   */
+  public function testOwnsDemoSourceIsTrueForTheOwnerOfTheSource(): void {
+    $this->setDemoSource($this->createTestProject(['owner' => $this->account->id()]));
+
+    $this->assertTrue($this->buildService()->ownsDemoSource($this->account));
+  }
+
+  /**
+   * Another account does not own the demo source, whatever else it owns.
+   */
+  public function testOwnsDemoSourceIsFalseForAnotherAccount(): void {
+    $this->setDemoSource($this->createTestProject(['owner' => $this->createTestUser()->id()]));
+    $this->createTestProject(['owner' => $this->account->id()]);
+
+    $this->assertFalse($this->buildService()->ownsDemoSource($this->account));
+  }
+
+  /**
+   * Without a configured source nobody owns it.
+   */
+  public function testOwnsDemoSourceIsFalseWithoutSource(): void {
+    $this->createTestProject(['owner' => $this->account->id()]);
+
+    $this->assertFalse($this->buildService()->ownsDemoSource($this->account));
+  }
+
+  /**
+   * The purge refuses the owner of the demo source before it touches anything.
+   */
+  public function testPurgeThrowsForOwnerOfTheDemoSourceAndKeepsEverything(): void {
+    $source = $this->createTestProject(['owner' => $this->account->id()]);
+    $other = $this->createTestProject(['owner' => $this->account->id()]);
+    $this->setDemoSource($source);
+
+    try {
+      $this->buildService()->purge($this->account);
+      $this->fail('The purge must throw for the owner of the demo source.');
+    }
+    catch (\LogicException $e) {
+      $this->assertStringContainsString('demo source', $e->getMessage());
+    }
+
+    $this->assertSame([], $this->lockCalls);
+    $this->assertSame([], $this->persistentLockCalls);
+    $storage = $this->entityTypeManager->getStorage('soda_scs_project');
+    $storage->resetCache();
+    $this->assertNotNull($storage->load($source->id()), 'The source project stays.');
+    $this->assertNotNull($storage->load($other->id()), 'No other project is deleted either.');
+  }
+
+  /**
+   * Deleting the former owner while they still own the source is rolled back.
+   *
+   * Acceptance criterion 3 of issue 3640913.
+   */
+  public function testDeletingTheOwnerOfTheDemoSourceIsRolledBackAndKeepsTheSource(): void {
+    $source = $this->createTestProject(['owner' => $this->account->id()]);
+    $this->setDemoSource($source);
+    $this->useOffboardingServices();
+    $accountId = (int) $this->account->id();
+
+    try {
+      $this->account->delete();
+      $this->fail('The delete of the owner of the demo source must throw.');
+    }
+    catch (EntityStorageException $e) {
+      $this->assertInstanceOf(\LogicException::class, $e->getPrevious());
+    }
+
+    $this->entityTypeManager->getStorage('user')->resetCache([$accountId]);
+    $this->assertNotNull($this->entityTypeManager->getStorage('user')->load($accountId), 'The account stays.');
+    $storage = $this->entityTypeManager->getStorage('soda_scs_project');
+    $storage->resetCache([$source->id()]);
+    $this->assertNotNull($storage->load($source->id()), 'The source project stays.');
+  }
+
+  /**
+   * After the handover the former owner can be deleted; the source stays.
+   */
+  public function testDeletingTheFormerOwnerAfterTheHandoverKeepsTheSource(): void {
+    // The delete of a real account removes its row in the externalauth table.
+    $this->installSchema('externalauth', ['authmap']);
+    $demoAccount = $this->createTestUser(['name' => 'scs_demo']);
+    $source = $this->createTestProject(['owner' => $demoAccount->id(), 'members' => [$this->account->id()]]);
+    $this->setDemoSource($source);
+    $this->useOffboardingServices();
+    $accountId = (int) $this->account->id();
+
+    $this->account->delete();
+
+    $this->entityTypeManager->getStorage('user')->resetCache([$accountId]);
+    $this->assertNull($this->entityTypeManager->getStorage('user')->load($accountId));
+    $storage = $this->entityTypeManager->getStorage('soda_scs_project');
+    $storage->resetCache([$source->id()]);
+    $this->assertNotNull($storage->load($source->id()), 'The source project stays.');
+  }
+
+  /**
+   * The profile delete form refuses the owner of the demo source.
+   */
+  public function testProfileDeleteFormRefusesOwnerOfTheDemoSource(): void {
+    $this->setDemoSource($this->createTestProject(['owner' => $this->account->id()]));
+
+    $messages = $this->profileDeleteFormErrorMessages();
+
+    $this->assertSame(['You own the demo project. Ask an administrator to hand it to scs_demo before you delete your profile.'], $messages);
+  }
+
+  /**
+   * The profile delete form accepts an account that owns no demo source.
+   */
+  public function testProfileDeleteFormAcceptsAccountThatDoesNotOwnTheDemoSource(): void {
+    $this->setDemoSource($this->createTestProject(['owner' => $this->createTestUser()->id()]));
+    $this->createTestProject(['owner' => $this->account->id()]);
+
+    $this->assertSame([], $this->profileDeleteFormErrorMessages());
+  }
+
+  /**
+   * The cancel form refuses the deleting methods for the owner of the source.
+   *
+   * @dataProvider provideDeletingCancelMethods
+   */
+  public function testCancelFormRefusesDeletingMethodsForOwnerOfTheDemoSource(string $method): void {
+    $this->setDemoSource($this->createTestProject(['owner' => $this->account->id()]));
+
+    $formState = $this->validateCancelForm($method, 'soda_scs_manager_user_cancel_validate_demo_source');
+
+    $errors = $formState->getErrors();
+    $this->assertSame(['user_cancel_method'], array_keys($errors));
+    $this->assertStringContainsString('owns the demo project', (string) $errors['user_cancel_method']);
+    $this->assertStringContainsString($this->account->getAccountName(), (string) $errors['user_cancel_method']);
+  }
+
+  /**
+   * Methods that keep the account are fine for the owner of the source.
+   *
+   * @dataProvider provideKeepingCancelMethods
+   */
+  public function testCancelFormAcceptsKeepingMethodsForOwnerOfTheDemoSource(string $method): void {
+    $this->setDemoSource($this->createTestProject(['owner' => $this->account->id()]));
+
+    $this->assertSame([], $this->validateCancelForm($method, 'soda_scs_manager_user_cancel_validate_demo_source')->getErrors());
+  }
+
+  /**
+   * The cancel form accepts deleting an account that does not own the source.
+   */
+  public function testCancelFormAcceptsDeleteForAccountThatDoesNotOwnTheDemoSource(): void {
+    $this->setDemoSource($this->createTestProject(['owner' => $this->createTestUser()->id()]));
+
+    $this->assertSame([], $this->validateCancelForm('user_cancel_delete', 'soda_scs_manager_user_cancel_validate_demo_source')->getErrors());
+  }
+
+  /**
+   * The bulk cancel form refuses when a selected account owns the source.
+   */
+  public function testBulkCancelFormRefusesWhenOneSelectedAccountOwnsTheDemoSource(): void {
+    $idleAccount = $this->createTestUser();
+    $this->setDemoSource($this->createTestProject(['owner' => $this->account->id()]));
+    $this->container->set('soda_scs_manager.user_offboarding', $this->buildService());
+
+    $form = [];
+    $formState = new FormState();
+    $formState->setFormObject($this->createMock(FormInterface::class));
+    $formState->setValue('user_cancel_method', 'user_cancel_delete');
+    $formState->setValue('accounts', [
+      $idleAccount->id() => $idleAccount->id(),
+      $this->account->id() => $this->account->id(),
+    ]);
+    soda_scs_manager_user_cancel_validate_demo_source($form, $formState);
+
+    $errors = $formState->getErrors();
+    $this->assertSame(['user_cancel_method'], array_keys($errors));
+    $this->assertStringContainsString($this->account->getAccountName(), (string) $errors['user_cancel_method']);
+  }
+
+  /**
+   * Both cancel forms get the demo source check as a validate handler.
+   */
+  public function testCancelFormAltersRegisterTheDemoSourceValidator(): void {
+    $this->container->set('soda_scs_manager.user_offboarding', $this->buildService());
+    $callback = 'soda_scs_manager_user_cancel_validate_demo_source';
+
+    $formState = new FormState();
+    $formState->setFormObject($this->createMock(FormInterface::class));
+    $single = [];
+    soda_scs_manager_form_user_cancel_form_alter($single, $formState, 'user_cancel_form');
+    $bulk = [];
+    soda_scs_manager_form_user_multiple_cancel_confirm_alter($bulk, $formState, 'user_multiple_cancel_confirm');
+
+    $this->assertContains($callback, $single['#validate']);
+    $this->assertContains($callback, $bulk['#validate']);
+  }
+
+  /**
+   * Runs the protected account validator of the cancel forms.
+   */
+  private function validateProtectedCancelForm(string $method): FormState {
+    $formObject = $this->createMock(ContentEntityFormInterface::class);
+    $formObject->method('getEntity')->willReturn($this->account);
+    $formState = new FormState();
+    $formState->setFormObject($formObject);
+    $formState->setValue('user_cancel_method', $method);
+
+    $form = [];
+    soda_scs_manager_user_cancel_validate_protected($form, $formState);
+    return $formState;
+  }
+
+  /**
    * Creates an owned demo project, by default of the account under test.
    *
    * @param array<string, mixed> $values
@@ -1388,7 +1769,7 @@ class SodaScsUserOffboardingDemoLockTest extends SodaScsKernelTestBase {
   /**
    * Runs the cancel form validator of the account under test.
    */
-  private function validateCancelForm(string $method): FormState {
+  private function validateCancelForm(string $method, string $validator = 'soda_scs_manager_user_cancel_validate_demo_setup'): FormState {
     $this->container->set('soda_scs_manager.user_offboarding', $this->buildService());
 
     $formObject = $this->createMock(ContentEntityFormInterface::class);
@@ -1398,8 +1779,17 @@ class SodaScsUserOffboardingDemoLockTest extends SodaScsKernelTestBase {
     $formState->setValue('user_cancel_method', $method);
 
     $form = [];
-    soda_scs_manager_user_cancel_validate_demo_setup($form, $formState);
+    $validator($form, $formState);
     return $formState;
+  }
+
+  /**
+   * Makes a project the demo source.
+   */
+  private function setDemoSource(object $project): void {
+    $this->container->get('config.factory')->getEditable('soda_scs_manager.settings')
+      ->set('demo.sourceProjectId', (int) $project->id())
+      ->save();
   }
 
   /**

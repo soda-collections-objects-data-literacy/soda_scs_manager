@@ -17,6 +17,7 @@ use Drupal\soda_scs_manager\Helpers\SodaScsNextcloudHelpers;
 use Drupal\soda_scs_manager\Helpers\SodaScsProjectHelpers;
 use Drupal\soda_scs_manager\RequestActions\SodaScsNextcloudServiceActions;
 use Drupal\soda_scs_manager\Service\NextcloudMountCredentialsStore;
+use Drupal\soda_scs_manager\ValueObject\SodaScsResult;
 use Drupal\Tests\UnitTestCase;
 use Drupal\user\UserInterface;
 use GuzzleHttp\Psr7\Response;
@@ -37,6 +38,8 @@ class SodaScsNextcloudHelpersTest extends UnitTestCase {
     ?SodaScsKeycloakHelpers $keycloakHelpers = NULL,
     ?AccountProxyInterface $currentUser = NULL,
     ?OpenIDConnectSessionInterface $openIdConnectSession = NULL,
+    ?SodaScsContainerHelpers $containerHelpers = NULL,
+    ?NextcloudMountCredentialsStore $credentialsStore = NULL,
   ): SodaScsNextcloudHelpers {
     $nextcloudActions ??= $this->createMock(SodaScsNextcloudServiceActions::class);
     $nextcloudActions->method('getOidcUsernamePrefix')->willReturn($prefix);
@@ -65,8 +68,8 @@ class SodaScsNextcloudHelpersTest extends UnitTestCase {
       $keycloakHelpers ?? $this->createMock(SodaScsKeycloakHelpers::class),
       $projectHelpers ?? $this->createMock(SodaScsProjectHelpers::class),
       $loggerFactory,
-      $this->createMock(SodaScsContainerHelpers::class),
-      $this->createMock(NextcloudMountCredentialsStore::class),
+      $containerHelpers ?? $this->createMock(SodaScsContainerHelpers::class),
+      $credentialsStore ?? $this->createMock(NextcloudMountCredentialsStore::class),
     );
   }
 
@@ -269,6 +272,223 @@ class SodaScsNextcloudHelpersTest extends UnitTestCase {
       'no token' => [TRUE, 5, NULL, FALSE],
       'own token' => [TRUE, 5, 'token', TRUE],
     ];
+  }
+
+  /**
+   * The Nextcloud account of a service account is created with its password.
+   *
+   * Issue 3640913. The occ exec in the Nextcloud container is a double.
+   *
+   * @covers ::ensureAccountViaOcc
+   */
+  public function testEnsureAccountViaOccCreatesMissingAccountAndStoresAppPassword(): void {
+    $calls = [];
+    $containerHelpers = $this->occHelpers($calls, [
+      'user:list' => SodaScsResult::success(['output' => '{"other-id":"Other"}'], 'ok'),
+      'user:add' => SodaScsResult::success(['output' => 'The account "sub-1" was created successfully'], 'ok'),
+      'user:add-app-password' => SodaScsResult::success(['output' => "app password:\n  mount-secret"], 'ok'),
+    ]);
+    $credentialsStore = $this->createMock(NextcloudMountCredentialsStore::class);
+    $user = $this->createMock(UserInterface::class);
+    $user->method('getAccountName')->willReturn('scs_demo');
+    $credentialsStore->expects($this->once())->method('setAppPassword')->with($user, 'mount-secret');
+    $keycloakHelpers = $this->createMock(SodaScsKeycloakHelpers::class);
+    $keycloakHelpers->expects($this->once())->method('setKeycloakUserAttributes')
+      ->with('sub-1', ['nextcloud_login_name' => ['sub-1']])->willReturn(TRUE);
+    $helper = $this->createHelper('', NULL, $this->createProjectHelpers('sub-1'), $keycloakHelpers, NULL, NULL, $containerHelpers, $credentialsStore);
+
+    $this->assertTrue($helper->ensureAccountViaOcc($user, 'login-secret'));
+
+    $this->assertSame(['user:list', 'user:add', 'user:add-app-password'], array_column($calls, 'command'));
+    $add = $calls[1]['request'];
+    $this->assertSame('www-data', $add['user']);
+    $this->assertSame(
+      [
+        'php',
+        '/var/www/html/occ',
+        'user:add',
+        '--password-from-env',
+        '--display-name=scs_demo',
+        'sub-1',
+        '-n',
+        '--no-warnings',
+      ],
+      $add['cmd'],
+    );
+    $this->assertSame(['OC_PASS=login-secret'], $add['env']);
+    $this->assertStringNotContainsString('login-secret', implode(' ', $add['cmd']));
+    $this->assertSame('sub-1', $calls[2]['request']['cmd'][3]);
+  }
+
+  /**
+   * An account that exists is not created again.
+   *
+   * @covers ::ensureAccountViaOcc
+   */
+  public function testEnsureAccountViaOccKeepsExistingAccount(): void {
+    $calls = [];
+    $containerHelpers = $this->occHelpers($calls, [
+      'user:list' => SodaScsResult::success(['output' => '{"sub-1":"scs_demo"}'], 'ok'),
+      'user:add-app-password' => SodaScsResult::success(['output' => 'app password: mount-secret'], 'ok'),
+    ]);
+    $keycloakHelpers = $this->createMock(SodaScsKeycloakHelpers::class);
+    $keycloakHelpers->method('setKeycloakUserAttributes')->willReturn(TRUE);
+    $helper = $this->createHelper('', NULL, $this->createProjectHelpers('sub-1'), $keycloakHelpers, NULL, NULL, $containerHelpers);
+
+    $this->assertTrue($helper->ensureAccountViaOcc($this->createMock(UserInterface::class), 'login-secret'));
+
+    $this->assertSame(['user:list', 'user:add-app-password'], array_column($calls, 'command'));
+  }
+
+  /**
+   * Stored mount credentials are kept: no second app password is created.
+   *
+   * @covers ::ensureAccountViaOcc
+   */
+  public function testEnsureAccountViaOccKeepsStoredMountCredentials(): void {
+    $calls = [];
+    $containerHelpers = $this->occHelpers($calls, [
+      'user:list' => SodaScsResult::success(['output' => '{"sub-1":"scs_demo"}'], 'ok'),
+    ]);
+    $keycloakHelpers = $this->createMock(SodaScsKeycloakHelpers::class);
+    $keycloakHelpers->method('getKeycloakUserAttributes')->willReturn(['nextcloud_login_name' => ['sub-1']]);
+    $keycloakHelpers->expects($this->never())->method('setKeycloakUserAttributes');
+    $credentialsStore = $this->createMock(NextcloudMountCredentialsStore::class);
+    $credentialsStore->method('getAppPassword')->willReturn('mount-secret');
+    $credentialsStore->expects($this->never())->method('setAppPassword');
+    $helper = $this->createHelper('', NULL, $this->createProjectHelpers('sub-1'), $keycloakHelpers, NULL, NULL, $containerHelpers, $credentialsStore);
+
+    $this->assertTrue($helper->ensureAccountViaOcc($this->createMock(UserInterface::class), 'login-secret'));
+
+    $this->assertSame(['user:list'], array_column($calls, 'command'));
+  }
+
+  /**
+   * The occ user is the Keycloak sub without the OIDC username prefix.
+   *
+   * @covers ::ensureAccountViaOcc
+   */
+  public function testEnsureAccountViaOccStripsTheOidcPrefixOfTheSub(): void {
+    $sub = '4e25a3ff-b955-4731-9c56-9e67a858828d';
+    $calls = [];
+    $containerHelpers = $this->occHelpers($calls, [
+      'user:list' => SodaScsResult::success(['output' => '[]'], 'ok'),
+      'user:add' => SodaScsResult::success(['output' => 'ok'], 'ok'),
+      'user:add-app-password' => SodaScsResult::success(['output' => 'app password: mount-secret'], 'ok'),
+    ]);
+    $keycloakHelpers = $this->createMock(SodaScsKeycloakHelpers::class);
+    $keycloakHelpers->method('setKeycloakUserAttributes')->willReturn(TRUE);
+    $helper = $this->createHelper('keycloak-', NULL, $this->createProjectHelpers('keycloak-' . $sub), $keycloakHelpers, NULL, NULL, $containerHelpers);
+
+    $this->assertTrue($helper->ensureAccountViaOcc($this->createMock(UserInterface::class), 'login-secret'));
+
+    $this->assertContains($sub, $calls[1]['request']['cmd']);
+  }
+
+  /**
+   * A failing or unreadable user list creates nothing.
+   *
+   * @covers ::ensureAccountViaOcc
+   * @dataProvider unreadableUserListProvider
+   */
+  public function testEnsureAccountViaOccCreatesNothingWhenUserListFails(SodaScsResult $listAnswer): void {
+    $calls = [];
+    $containerHelpers = $this->occHelpers($calls, ['user:list' => $listAnswer]);
+    $credentialsStore = $this->createMock(NextcloudMountCredentialsStore::class);
+    $credentialsStore->expects($this->never())->method('setAppPassword');
+    $helper = $this->createHelper('', NULL, $this->createProjectHelpers('sub-1'), NULL, NULL, NULL, $containerHelpers, $credentialsStore);
+
+    $this->assertFalse($helper->ensureAccountViaOcc($this->createMock(UserInterface::class), 'login-secret'));
+
+    $this->assertSame(['user:list'], array_column($calls, 'command'));
+  }
+
+  /**
+   * Answers of the user list that the helper cannot read.
+   *
+   * @return array<string, array{0: \Drupal\soda_scs_manager\ValueObject\SodaScsResult}>
+   *   The data sets, by the way the answer is unusable.
+   */
+  public static function unreadableUserListProvider(): array {
+    return [
+      'exec failed' => [new SodaScsResult(FALSE, NULL, 'container is not running', 'failed')],
+      'not json' => [SodaScsResult::success(['output' => 'Nextcloud is in maintenance mode'], 'ok')],
+      'empty output' => [SodaScsResult::success(['output' => ''], 'ok')],
+    ];
+  }
+
+  /**
+   * A failing account creation stops before any app password exists.
+   *
+   * @covers ::ensureAccountViaOcc
+   */
+  public function testEnsureAccountViaOccStopsWhenUserAddFails(): void {
+    $calls = [];
+    $containerHelpers = $this->occHelpers($calls, [
+      'user:list' => SodaScsResult::success(['output' => '[]'], 'ok'),
+      'user:add' => new SodaScsResult(FALSE, NULL, 'password rejected', 'failed'),
+    ]);
+    $credentialsStore = $this->createMock(NextcloudMountCredentialsStore::class);
+    $credentialsStore->expects($this->never())->method('setAppPassword');
+    $helper = $this->createHelper('', NULL, $this->createProjectHelpers('sub-1'), NULL, NULL, NULL, $containerHelpers, $credentialsStore);
+
+    $this->assertFalse($helper->ensureAccountViaOcc($this->createMock(UserInterface::class), 'login-secret'));
+
+    $this->assertSame(['user:list', 'user:add'], array_column($calls, 'command'));
+  }
+
+  /**
+   * An app password that occ does not print is a failure, nothing is stored.
+   *
+   * @covers ::ensureAccountViaOcc
+   */
+  public function testEnsureAccountViaOccFailsWhenAppPasswordIsMissing(): void {
+    $calls = [];
+    $containerHelpers = $this->occHelpers($calls, [
+      'user:list' => SodaScsResult::success(['output' => '{"sub-1":"scs_demo"}'], 'ok'),
+      'user:add-app-password' => SodaScsResult::success(['output' => 'Something else'], 'ok'),
+    ]);
+    $credentialsStore = $this->createMock(NextcloudMountCredentialsStore::class);
+    $credentialsStore->expects($this->never())->method('setAppPassword');
+    $helper = $this->createHelper('', NULL, $this->createProjectHelpers('sub-1'), NULL, NULL, NULL, $containerHelpers, $credentialsStore);
+
+    $this->assertFalse($helper->ensureAccountViaOcc($this->createMock(UserInterface::class), 'login-secret'));
+  }
+
+  /**
+   * Without a Keycloak link or without a password nothing runs in Nextcloud.
+   *
+   * @covers ::ensureAccountViaOcc
+   */
+  public function testEnsureAccountViaOccNeedsSsoLinkAndPassword(): void {
+    $containerHelpers = $this->createMock(SodaScsContainerHelpers::class);
+    $containerHelpers->expects($this->never())->method('executeDockerExecCommand');
+
+    $withoutLink = $this->createHelper('', NULL, $this->createProjectHelpers(NULL), NULL, NULL, NULL, $containerHelpers);
+    $this->assertFalse($withoutLink->ensureAccountViaOcc($this->createMock(UserInterface::class), 'login-secret'));
+
+    $withoutPassword = $this->createHelper('', NULL, $this->createProjectHelpers('sub-1'), NULL, NULL, NULL, $containerHelpers);
+    $this->assertFalse($withoutPassword->ensureAccountViaOcc($this->createMock(UserInterface::class), ''));
+  }
+
+  /**
+   * Container helpers that answer occ commands by name and record them.
+   *
+   * @param array<int, array{command: string, request: array<string, mixed>}> $calls
+   *   Filled with the commands that were executed, in order.
+   * @param array<string, \Drupal\soda_scs_manager\ValueObject\SodaScsResult> $answers
+   *   The answers by occ command; a missing command fails the test.
+   */
+  private function occHelpers(array &$calls, array $answers): SodaScsContainerHelpers {
+    $containerHelpers = $this->createMock(SodaScsContainerHelpers::class);
+    $containerHelpers->method('executeDockerExecCommand')->willReturnCallback(function (array $request) use (&$calls, $answers): SodaScsResult {
+      $this->assertSame(['php', '/var/www/html/occ'], array_slice($request['cmd'], 0, 2));
+      $command = $request['cmd'][2];
+      $calls[] = ['command' => $command, 'request' => $request];
+      $this->assertArrayHasKey($command, $answers, "Unexpected occ command $command.");
+      return $answers[$command];
+    });
+    return $containerHelpers;
   }
 
 }

@@ -430,11 +430,87 @@ class SodaScsTriplestoreHelpersUserDataTest extends UnitTestCase {
   }
 
   /**
+   * Any user gets an OpenGDB account and keys, without owning a component.
+   *
+   * Issue 3640913: the next owner of a project has no triplestore yet.
+   *
+   * @covers ::ensureUserAccount
+   */
+  public function testEnsureUserAccountWorksForUserWithoutComponent(): void {
+    $this->openGdbHelpers->method('getUserDataByName')->willReturn(['username' => 'bob']);
+    $this->openGdbHelpers->expects($this->once())->method('updateUser')->with('bob', 'owner-password');
+    $this->openGdbHelpers->expects($this->once())->method('createUserToken')->with('bob', 'owner-password')->willReturn('bob-token');
+    $createdKeys = [];
+    $this->serviceKeyActions->method('getServiceKey')->willReturn(NULL);
+    $this->serviceKeyActions->method('createServiceKey')->willReturnCallback(function (array $props) use (&$createdKeys): SodaScsServiceKeyInterface {
+      $createdKeys[] = $props;
+      return $this->createServiceKey($props['type'] === 'token' ? 'bob-token' : 'owner-password');
+    });
+
+    $userData = $this->helpers()->ensureUserAccount($this->createUser(9, 'bob'));
+
+    $this->assertSame('bob-token', $userData['token']);
+    $this->assertSame('owner-password', $userData['password']);
+    $this->assertCount(2, $createdKeys);
+    foreach ($createdKeys as $props) {
+      $this->assertSame('soda_scs_triplestore_component', $props['bundle']);
+      $this->assertSame(9, $props['userId']);
+      $this->assertSame('bob', $props['username']);
+    }
+    $this->assertSame(['password', 'token'], array_column($createdKeys, 'type'));
+  }
+
+  /**
+   * The keys of the given user are looked up, not those of a component owner.
+   *
+   * @covers ::ensureUserAccount
+   */
+  public function testEnsureUserAccountLooksUpKeysOfTheGivenUser(): void {
+    $this->openGdbHelpers->method('getUserDataByName')->willReturn(['username' => 'bob']);
+    $lookups = [];
+    $this->serviceKeyActions->method('getServiceKey')->willReturnCallback(function (array $props) use (&$lookups): SodaScsServiceKeyInterface {
+      $lookups[] = [$props['type'], $props['userId']];
+      return $this->createServiceKey('secret');
+    });
+    $this->openGdbHelpers->expects($this->never())->method('createUserToken');
+
+    $this->helpers()->ensureUserAccount($this->createUser(9, 'bob'));
+
+    $this->assertSame([['password', 9], ['token', 9]], $lookups);
+  }
+
+  /**
+   * A refused account creation reaches the caller; no key is invented.
+   *
+   * @covers ::ensureUserAccount
+   */
+  public function testEnsureUserAccountThrowsWhenOpenGdbRefuses(): void {
+    $this->openGdbHelpers->method('getUserDataByName')->willThrowException(new \RuntimeException('Failed to get user by name.'));
+    $this->serviceKeyActions->method('getServiceKey')->willReturn($this->passwordKey);
+    $this->serviceKeyActions->expects($this->never())->method('createServiceKey');
+
+    $this->expectException(\RuntimeException::class);
+
+    $this->helpers()->ensureUserAccount($this->createUser(9, 'bob'));
+  }
+
+  /**
+   * Builds a user double.
+   */
+  private function createUser(int $id, string $name): UserInterface {
+    $user = $this->createMock(UserInterface::class);
+    $user->method('id')->willReturn($id);
+    $user->method('getDisplayName')->willReturn($name);
+    return $user;
+  }
+
+  /**
    * Builds the triplestore component of the user alice.
    */
   private function createComponent(): SodaScsComponentInterface {
     $owner = $this->createMock(UserInterface::class);
     $owner->method('getDisplayName')->willReturn('alice');
+    $owner->method('id')->willReturn(7);
     $component = $this->createMock(SodaScsComponentInterface::class);
     $component->method('bundle')->willReturn('soda_scs_triplestore_component');
     $component->method('getOwnerId')->willReturn(7);

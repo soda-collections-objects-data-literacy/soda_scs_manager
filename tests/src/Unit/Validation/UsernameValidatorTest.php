@@ -52,7 +52,23 @@ class UsernameValidatorTest extends UnitTestCase {
     yield 'two digits' => ['12', 'too_short'];
     yield 'special chars' => ['test-user', 'invalid_characters'];
     yield 'reserved' => ['admin', 'reserved'];
+    yield 'service account of the demo' => ['scs_demo', 'reserved'];
+    yield 'service account of the demo in capitals' => ['SCS_DEMO', 'reserved'];
     yield 'sql keyword' => ['insert', 'disallowed_term'];
+  }
+
+  /**
+   * The names of the demo service account are reserved, with both separators.
+   *
+   * @covers \Drupal\soda_scs_manager\Validation\InputDisallowedTerms::reservedUsernames
+   * @covers \Drupal\soda_scs_manager\Validation\InputDisallowedTerms::isReservedUsername
+   */
+  public function testDemoServiceAccountNamesAreReserved(): void {
+    $this->assertContains('scs_demo', InputDisallowedTerms::reservedUsernames());
+    $this->assertContains('scs-demo', InputDisallowedTerms::reservedUsernames());
+    $this->assertTrue(InputDisallowedTerms::isReservedUsername('scs_demo'));
+    $this->assertTrue(InputDisallowedTerms::isReservedUsername('scs-demo'));
+    $this->assertFalse(InputDisallowedTerms::isReservedUsername('scs_demo2'));
   }
 
 }
