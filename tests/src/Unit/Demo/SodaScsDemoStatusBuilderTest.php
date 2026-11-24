@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Drupal\Tests\soda_scs_manager\Unit\Demo;
 
 use Drupal\Component\Datetime\TimeInterface;
+use Drupal\Core\Access\AccessManagerInterface;
 use Drupal\Core\Datetime\DateFormatterInterface;
 use Drupal\Core\DependencyInjection\ContainerBuilder;
 use Drupal\Core\Routing\UrlGeneratorInterface;
@@ -441,6 +442,50 @@ class SodaScsDemoStatusBuilderTest extends UnitTestCase {
   }
 
   /**
+   * The reset action is offered when the reset route grants the viewer access.
+   *
+   * @covers ::build
+   */
+  public function testBuildOffersResetUrlWhenRouteGrantsAccess(): void {
+    $build = $this->buildResetStatus(TRUE);
+
+    $this->assertSame('/demo/url', $build['#reset_url']);
+  }
+
+  /**
+   * No reset action when the reset route denies the viewer access.
+   *
+   * @covers ::build
+   */
+  public function testBuildOmitsResetUrlWhenRouteDeniesAccess(): void {
+    $build = $this->buildResetStatus(FALSE);
+
+    $this->assertSame('', $build['#reset_url']);
+  }
+
+  /**
+   * No reset action while a queue job is running, even with access.
+   *
+   * @covers ::build
+   */
+  public function testBuildOmitsResetUrlWhileBusy(): void {
+    $build = $this->buildResetStatus(TRUE, 'resetting');
+
+    $this->assertSame('', $build['#reset_url']);
+  }
+
+  /**
+   * No reset action without an active template version, even with access.
+   *
+   * @covers ::build
+   */
+  public function testBuildOmitsResetUrlWithoutActiveTemplate(): void {
+    $build = $this->buildResetStatus(TRUE, 'ready', FALSE);
+
+    $this->assertSame('', $build['#reset_url']);
+  }
+
+  /**
    * Clock at the given time.
    */
   private function clock(int $now = 2000): TimeInterface {
@@ -517,6 +562,56 @@ class SodaScsDemoStatusBuilderTest extends UnitTestCase {
     $builder->setStringTranslation($this->translator($translations));
 
     return $builder->data($this->createProjectWithStatus('failed'))['jobLine'];
+  }
+
+  /**
+   * Render array of build() for a demo project and a viewer.
+   *
+   * @param bool $routeGrantsAccess
+   *   Whether the access manager allows the viewer the reset route.
+   * @param string $status
+   *   Stored demo status of the project.
+   * @param bool $hasActiveTemplate
+   *   Whether the demo manager has an active template version.
+   *
+   * @return array<string, mixed>
+   *   The render array.
+   */
+  private function buildResetStatus(bool $routeGrantsAccess, string $status = 'ready', bool $hasActiveTemplate = TRUE): array {
+    $account = $this->createMock(AccountInterface::class);
+
+    $urlGenerator = $this->createMock(UrlGeneratorInterface::class);
+    $urlGenerator->method('generateFromRoute')->willReturn('/demo/url');
+    $accessManager = $this->createMock(AccessManagerInterface::class);
+    $accessManager->method('checkNamedRoute')
+      ->with('soda_scs_manager.demo_project_reset', ['soda_scs_project' => 3], $account)
+      ->willReturn($routeGrantsAccess);
+    $container = new ContainerBuilder();
+    $container->set('url_generator', $urlGenerator);
+    $container->set('access_manager', $accessManager);
+    \Drupal::setContainer($container);
+
+    $template = $this->createMock(SodaScsDemoTemplateInterface::class);
+    $template->method('getVersion')->willReturn('1.0.0');
+
+    $demoManager = $this->createMock(SodaScsDemoManager::class);
+    $demoManager->method('isDemoProject')->willReturn(TRUE);
+    $demoManager->method('activeTemplate')->willReturn($hasActiveTemplate ? $template : NULL);
+    $demoManager->method('projectOperationId')->willReturn(NULL);
+
+    $project = $this->createProjectWithStatus($status);
+    $project->method('id')->willReturn(3);
+
+    $builder = new SodaScsDemoStatusBuilder(
+      $this->dateFormatter(),
+      $demoManager,
+      $this->createMock(SodaScsProgressHelper::class),
+      $this->createMock(SodaScsDemoProjectApps::class),
+      $this->clock(),
+    );
+    $builder->setStringTranslation($this->getStringTranslationStub());
+
+    return $builder->build($account, $project, SodaScsDemoStatusBuilder::VARIANT_PANEL);
   }
 
 }
