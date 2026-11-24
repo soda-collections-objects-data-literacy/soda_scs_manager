@@ -193,6 +193,7 @@ class SodaScsManagerController extends ControllerBase {
           'soda_scs_project' => $project->id(),
         ])->toString(),
         '#is_owner' => $ownerId === $uid,
+        '#can_delete' => $project->access('delete', $current_user),
         '#members_ids' => $memberIds,
         '#member_profiles' => $memberProfiles,
         '#members_count' => $membersCount,

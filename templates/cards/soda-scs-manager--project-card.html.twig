@@ -9,6 +9,8 @@
  * - label: Project label.
  * - url: Canonical project URL.
  * - is_owner: Whether the current user owns the project.
+ * - can_delete: Whether the current user may delete the project (owner or
+ *   SCS Manager admin).
  * - owner_id: User project owner user ID.
  * - members_count: Number of project participants (owner + members).
  * - members_ids: Array of project member user IDs.
@@ -68,10 +70,13 @@
 		</button>
 		<div id="project-actions-{{ project_id }}" class="project-card__actions" role="menu" hidden>
 			<a role="menuitem" class="btn btn--secondary" href="{{ url }}">{{ 'Edit'|t }}</a>
-			<button type="button" class="btn project-card__delete-trigger" data-delete-url="{{ path('entity.soda_scs_project.delete_form', {'soda_scs_project': project_id}) }}" role="menuitem">{{ 'Delete'|t }}</button>
+			{% if can_delete %}
+				<button type="button" class="btn project-card__delete-trigger" data-delete-url="{{ path('entity.soda_scs_project.delete_form', {'soda_scs_project': project_id}) }}" role="menuitem">{{ 'Delete'|t }}</button>
+			{% endif %}
 		</div>
 	</div>
 
+	{% if can_delete %}
 	<div class="project-card__delete-confirmation project-card__delete-confirmation--grid" role="dialog" aria-modal="true" aria-labelledby="project-delete-title-{{ project_id }}" hidden>
 		<div class="project-card__delete-confirmation__backdrop" aria-hidden="true"></div>
 		<div class="project-card__delete-confirmation__dialog" role="document">
@@ -92,5 +97,6 @@
 			</div>
 		</div>
 	</div>
+	{% endif %}
 
 </article>

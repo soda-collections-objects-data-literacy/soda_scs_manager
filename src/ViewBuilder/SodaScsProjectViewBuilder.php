@@ -151,6 +151,7 @@ final class SodaScsProjectViewBuilder extends EntityViewBuilder
     $build['#label'] = $project->label();
     $build['#project_id'] = (int) $project->id();
     $build['#is_owner'] = $isOwner;
+    $build['#can_delete'] = $project->access('delete', $this->currentUser);
     $build['#owner'] = $project->get('owner')->view('default');
     $membersDisplay = $this->buildMembersDisplay($project);
     $build['#members'] = $membersDisplay;

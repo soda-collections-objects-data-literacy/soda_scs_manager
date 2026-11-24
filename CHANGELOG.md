@@ -7,6 +7,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- SCS Manager admins see the "Delete" button on every project page and the
+  "Reset demo" link on every demo project, not only on their own. Access to
+  the routes was already granted; only the buttons were hidden. On the
+  dashboard, the "Delete" entry of a project card's menu is now shown only to
+  the owner and SCS Manager admins; other members got an access-denied page
+  when they used it.
+  Related: [#3641351](https://www.drupal.org/project/soda_scs_manager/issues/3641351).
+
 ## [4.8.1] - 2026-11-23
 
 ### Fixed

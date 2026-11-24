@@ -7,6 +7,8 @@
  * - label: Project label.
  * - project_id: Project entity ID.
  * - is_owner: Whether the current user owns the project.
+ * - can_delete: Whether the current user may delete the project (owner or
+ *   SCS Manager admin).
  * - owner: Rendered owner field.
  * - members: Rendered members field.
  * - other_member_names: Display names of members other than the owner.
@@ -72,7 +74,7 @@
 	{% if files %}
 		{{ files }}
 	{% endif %}
-	{% if is_owner %}
+	{% if can_delete %}
 		<div class="project__delete">
 			<button type="button" class="project-card__delete-trigger" data-delete-url="{{ path('entity.soda_scs_project.delete_form', {'soda_scs_project': project_id}) }}" data-delete-destination="{{ path('soda_scs_manager.dashboard') }}" aria-label="{{ 'Delete project @name'|t({'@name': label}) }}">
 				{{ 'Delete'|t }} {{ label }}

@@ -96,7 +96,8 @@ class SodaScsDemoStatusBuilder {
    * Render array of the demo status, or NULL for non-demo projects.
    *
    * @param \Drupal\Core\Session\AccountInterface $account
-   *   The viewer; only the owner gets the reset action.
+   *   The viewer; the reset action is offered when the reset route grants
+   *   them access (owner or SCS Manager admin).
    * @param \Drupal\soda_scs_manager\Entity\SodaScsProjectInterface $project
    *   The project.
    * @param string $variant
@@ -110,7 +111,9 @@ class SodaScsDemoStatusBuilder {
     $activeTemplate = $this->demoManager->activeTemplate();
     $currentTemplate = $project->get('demoTemplate')->entity;
     $currentVersion = $currentTemplate instanceof SodaScsDemoTemplateInterface ? $currentTemplate->getVersion() : NULL;
-    $isOwner = (int) $project->getOwnerId() === (int) $account->id();
+    // The route's own access check decides, so link and form cannot drift.
+    $resetUrl = Url::fromRoute('soda_scs_manager.demo_project_reset', ['soda_scs_project' => $project->id()]);
+    $canReset = !$status->isBusy() && $activeTemplate !== NULL && $resetUrl->access($account);
 
     return [
       '#theme' => 'soda_scs_manager__demo_status',
@@ -121,9 +124,7 @@ class SodaScsDemoStatusBuilder {
       '#message' => '',
       '#job_line' => $this->jobLine($project),
       '#status_url' => Url::fromRoute('soda_scs_manager.demo_project_status', ['soda_scs_project' => $project->id()])->toString(),
-      '#reset_url' => $isOwner && !$status->isBusy() && $activeTemplate !== NULL
-        ? Url::fromRoute('soda_scs_manager.demo_project_reset', ['soda_scs_project' => $project->id()])->toString()
-        : '',
+      '#reset_url' => $canReset ? $resetUrl->toString() : '',
       '#apps' => $status->isBusy() ? $this->appProgress($project) : [],
       '#current_version' => $currentVersion,
       '#newer_version' => $activeTemplate !== NULL && $currentVersion !== NULL && SodaScsDemoVersion::compare($activeTemplate->getVersion(), $currentVersion) > 0
