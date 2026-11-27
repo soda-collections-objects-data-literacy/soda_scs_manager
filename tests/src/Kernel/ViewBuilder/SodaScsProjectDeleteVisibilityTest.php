@@ -7,18 +7,21 @@ namespace Drupal\Tests\soda_scs_manager\Kernel\ViewBuilder;
 use Drupal\Core\Session\AccountInterface;
 use Drupal\soda_scs_manager\Controller\SodaScsManagerController;
 use Drupal\soda_scs_manager\Service\SodaScsNextcloudPreview;
+use Drupal\soda_scs_manager\ViewBuilder\SodaScsProjectViewBuilder;
 use Drupal\Tests\soda_scs_manager\Kernel\SodaScsKernelTestBase;
 use Drupal\user\Entity\Role;
+use PHPUnit\Framework\Attributes\CoversMethod;
+use PHPUnit\Framework\Attributes\Group;
 
 /**
  * Tests who is offered the Delete action of a project.
  *
  * The owner and an SCS Manager admin may delete, a plain member may not; the
  * project page and the dashboard card carry that as #can_delete.
- *
- * @group soda_scs_manager
- * @coversDefaultClass \Drupal\soda_scs_manager\ViewBuilder\SodaScsProjectViewBuilder
  */
+#[CoversMethod(SodaScsProjectViewBuilder::class, 'build')]
+#[CoversMethod(SodaScsManagerController::class, 'dashboardPage')]
+#[Group('soda_scs_manager')]
 class SodaScsProjectDeleteVisibilityTest extends SodaScsKernelTestBase {
 
   /**
@@ -96,8 +99,6 @@ class SodaScsProjectDeleteVisibilityTest extends SodaScsKernelTestBase {
 
   /**
    * An admin who does not own the project is offered Delete on the page.
-   *
-   * @covers ::build
    */
   public function testProjectPageOffersDeleteToAdminWhoIsNotOwner(): void {
     $build = $this->projectPageBuildFor($this->admin);
@@ -108,8 +109,6 @@ class SodaScsProjectDeleteVisibilityTest extends SodaScsKernelTestBase {
 
   /**
    * The owner is offered Delete on the page.
-   *
-   * @covers ::build
    */
   public function testProjectPageOffersDeleteToOwner(): void {
     $build = $this->projectPageBuildFor($this->owner);
@@ -120,8 +119,6 @@ class SodaScsProjectDeleteVisibilityTest extends SodaScsKernelTestBase {
 
   /**
    * A plain member is not offered Delete on the page.
-   *
-   * @covers ::build
    */
   public function testProjectPageOmitsDeleteForPlainMember(): void {
     $build = $this->projectPageBuildFor($this->member);
@@ -132,8 +129,6 @@ class SodaScsProjectDeleteVisibilityTest extends SodaScsKernelTestBase {
 
   /**
    * An admin who does not own the project gets Delete on the dashboard card.
-   *
-   * @covers \Drupal\soda_scs_manager\Controller\SodaScsManagerController::dashboardPage
    */
   public function testDashboardCardOffersDeleteToAdminWhoIsNotOwner(): void {
     $card = $this->dashboardCardFor($this->admin);
@@ -144,8 +139,6 @@ class SodaScsProjectDeleteVisibilityTest extends SodaScsKernelTestBase {
 
   /**
    * The owner gets Delete on the dashboard card.
-   *
-   * @covers \Drupal\soda_scs_manager\Controller\SodaScsManagerController::dashboardPage
    */
   public function testDashboardCardOffersDeleteToOwner(): void {
     $card = $this->dashboardCardFor($this->owner);
@@ -156,8 +149,6 @@ class SodaScsProjectDeleteVisibilityTest extends SodaScsKernelTestBase {
 
   /**
    * A plain member gets no Delete on the dashboard card.
-   *
-   * @covers \Drupal\soda_scs_manager\Controller\SodaScsManagerController::dashboardPage
    */
   public function testDashboardCardOmitsDeleteForPlainMember(): void {
     $card = $this->dashboardCardFor($this->member);

@@ -18,6 +18,8 @@ use Drupal\soda_scs_manager\ServiceActions\SodaScsServiceActionsInterface;
 use Drupal\soda_scs_manager\ServiceKeyActions\SodaScsServiceKeyActionsInterface;
 use Drupal\Tests\UnitTestCase;
 use Drupal\user\UserInterface;
+use PHPUnit\Framework\Attributes\CoversMethod;
+use PHPUnit\Framework\Attributes\Group;
 use PHPUnit\Framework\MockObject\MockObject;
 use Psr\Log\LoggerInterface;
 
@@ -27,10 +29,9 @@ use Psr\Log\LoggerInterface;
  * Issue 3640913: the next owner of a project is not a member yet, but needs
  * the MariaDB account the WissKI settings.php will use. The MariaDB calls are
  * doubles.
- *
- * @coversDefaultClass \Drupal\soda_scs_manager\Helpers\SodaScsProjectDbAccessHelpers
- * @group soda_scs_manager
  */
+#[CoversMethod(SodaScsProjectDbAccessHelpers::class, 'ensureProjectDbAccess')]
+#[Group('soda_scs_manager')]
 class SodaScsProjectDbAccessHelpersEnsureAccessTest extends UnitTestCase {
 
   /**
@@ -60,8 +61,6 @@ class SodaScsProjectDbAccessHelpersEnsureAccessTest extends UnitTestCase {
 
   /**
    * A project without SQL databases needs no MariaDB call.
-   *
-   * @covers ::ensureProjectDbAccess
    */
   public function testProjectWithoutDatabasesTouchesNothing(): void {
     $this->sqlActions->expects($this->never())->method('existServiceUser');
@@ -72,8 +71,6 @@ class SodaScsProjectDbAccessHelpersEnsureAccessTest extends UnitTestCase {
 
   /**
    * A missing account is created with its service key password and granted.
-   *
-   * @covers ::ensureProjectDbAccess
    */
   public function testMissingAccountIsCreatedAndGrantedOnEveryDatabase(): void {
     $this->serviceKeyActions->method('getServiceKey')->willReturn($this->passwordKey('db-secret'));
@@ -95,8 +92,6 @@ class SodaScsProjectDbAccessHelpersEnsureAccessTest extends UnitTestCase {
 
   /**
    * An existing account gets its password synced and is not created again.
-   *
-   * @covers ::ensureProjectDbAccess
    */
   public function testExistingAccountIsKeptAndItsPasswordSynced(): void {
     $key = $this->passwordKey('db-secret');
@@ -111,8 +106,6 @@ class SodaScsProjectDbAccessHelpersEnsureAccessTest extends UnitTestCase {
 
   /**
    * A failing account check is a failure and nothing is granted.
-   *
-   * @covers ::ensureProjectDbAccess
    */
   public function testFailedAccountCheckFailsWithoutGrants(): void {
     $this->serviceKeyActions->method('getServiceKey')->willReturn($this->passwordKey('db-secret'));
@@ -125,8 +118,6 @@ class SodaScsProjectDbAccessHelpersEnsureAccessTest extends UnitTestCase {
 
   /**
    * A failing account creation is a failure and nothing is granted.
-   *
-   * @covers ::ensureProjectDbAccess
    */
   public function testFailedAccountCreationFailsWithoutGrants(): void {
     $this->serviceKeyActions->method('getServiceKey')->willReturn($this->passwordKey('db-secret'));

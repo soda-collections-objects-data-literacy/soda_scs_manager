@@ -11,15 +11,21 @@ use Drupal\soda_scs_manager\ComponentActions\SodaScsComponentActions;
 use Drupal\soda_scs_manager\ComponentActions\SodaScsComponentActionsInterface;
 use Drupal\soda_scs_manager\Entity\SodaScsComponentInterface;
 use Drupal\Tests\UnitTestCase;
+use PHPUnit\Framework\Attributes\CoversMethod;
+use PHPUnit\Framework\Attributes\DataProvider;
+use PHPUnit\Framework\Attributes\Group;
 use Prophecy\PhpUnit\ProphecyTrait;
 use Prophecy\Prophecy\ObjectProphecy;
 
 /**
  * Tests the SodaScsComponentActions orchestration service.
- *
- * @group soda_scs_manager
- * @coversDefaultClass \Drupal\soda_scs_manager\ComponentActions\SodaScsComponentActions
  */
+#[CoversMethod(SodaScsComponentActions::class, 'createComponent')]
+#[CoversMethod(SodaScsComponentActions::class, 'deleteComponent')]
+#[CoversMethod(SodaScsComponentActions::class, 'updateComponent')]
+#[CoversMethod(SodaScsComponentActions::class, 'getComponents')]
+#[CoversMethod(SodaScsComponentActions::class, 'getComponent')]
+#[Group('soda_scs_manager')]
 class SodaScsComponentActionsTest extends UnitTestCase {
 
   use ProphecyTrait;
@@ -100,8 +106,6 @@ class SodaScsComponentActionsTest extends UnitTestCase {
 
   /**
    * Tests createComponent delegates to SQL component actions.
-   *
-   * @covers ::createComponent
    */
   public function testCreateComponentSql(): void {
     $component = $this->prophesize(SodaScsComponentInterface::class);
@@ -125,8 +129,6 @@ class SodaScsComponentActionsTest extends UnitTestCase {
 
   /**
    * Tests createComponent delegates to triplestore component actions.
-   *
-   * @covers ::createComponent
    */
   public function testCreateComponentTriplestore(): void {
     $component = $this->prophesize(SodaScsComponentInterface::class);
@@ -150,8 +152,6 @@ class SodaScsComponentActionsTest extends UnitTestCase {
 
   /**
    * Tests createComponent delegates to WissKI component actions.
-   *
-   * @covers ::createComponent
    */
   public function testCreateComponentWisski(): void {
     $component = $this->prophesize(SodaScsComponentInterface::class);
@@ -175,8 +175,6 @@ class SodaScsComponentActionsTest extends UnitTestCase {
 
   /**
    * Tests createComponent delegates to WebProtege component actions.
-   *
-   * @covers ::createComponent
    */
   public function testCreateComponentWebprotege(): void {
     $component = $this->prophesize(SodaScsComponentInterface::class);
@@ -200,8 +198,6 @@ class SodaScsComponentActionsTest extends UnitTestCase {
 
   /**
    * Tests createComponent returns empty for unknown bundle.
-   *
-   * @covers ::createComponent
    */
   public function testCreateComponentUnknownBundle(): void {
     $component = $this->prophesize(SodaScsComponentInterface::class);
@@ -215,10 +211,8 @@ class SodaScsComponentActionsTest extends UnitTestCase {
 
   /**
    * Tests deleteComponent delegates to correct actions based on bundle.
-   *
-   * @covers ::deleteComponent
-   * @dataProvider componentBundleProvider
    */
+  #[DataProvider('componentBundleProvider')]
   public function testDeleteComponent(string $bundle, string $expectedService): void {
     $component = $this->prophesize(SodaScsComponentInterface::class);
     $component->bundle()->willReturn($bundle);
@@ -264,8 +258,6 @@ class SodaScsComponentActionsTest extends UnitTestCase {
 
   /**
    * Tests updateComponent for WissKI bundle.
-   *
-   * @covers ::updateComponent
    */
   public function testUpdateComponentWisski(): void {
     $component = $this->prophesize(SodaScsComponentInterface::class);
@@ -288,8 +280,6 @@ class SodaScsComponentActionsTest extends UnitTestCase {
 
   /**
    * Tests updateComponent for WebProtege bundle.
-   *
-   * @covers ::updateComponent
    */
   public function testUpdateComponentWebprotege(): void {
     $component = $this->prophesize(SodaScsComponentInterface::class);
@@ -312,8 +302,6 @@ class SodaScsComponentActionsTest extends UnitTestCase {
 
   /**
    * Tests updateComponent returns empty for unsupported bundles.
-   *
-   * @covers ::updateComponent
    */
   public function testUpdateComponentUnsupportedBundle(): void {
     $component = $this->prophesize(SodaScsComponentInterface::class);
@@ -326,8 +314,6 @@ class SodaScsComponentActionsTest extends UnitTestCase {
 
   /**
    * Tests getComponents returns empty array.
-   *
-   * @covers ::getComponents
    */
   public function testGetComponents(): void {
     $result = $this->componentActions->getComponents();
@@ -337,8 +323,6 @@ class SodaScsComponentActionsTest extends UnitTestCase {
 
   /**
    * Tests getComponent returns not implemented response.
-   *
-   * @covers ::getComponent
    */
   public function testGetComponent(): void {
     $component = $this->prophesize(SodaScsComponentInterface::class);
@@ -379,8 +363,6 @@ class SodaScsComponentActionsTest extends UnitTestCase {
 
   /**
    * Tests that createComponent() refuses an entity without a project.
-   *
-   * @covers ::createComponent
    */
   public function testCreateComponentWithoutProject(): void {
     $projects = $this->prophesize(FieldItemListInterface::class);

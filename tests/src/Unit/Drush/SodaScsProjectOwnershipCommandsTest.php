@@ -13,6 +13,8 @@ use Drupal\soda_scs_manager\Service\SodaScsProjectOwnershipTransfer;
 use Drupal\soda_scs_manager\ValueObject\SodaScsResult;
 use Drupal\Tests\UnitTestCase;
 use Drupal\user\UserInterface;
+use PHPUnit\Framework\Attributes\CoversMethod;
+use PHPUnit\Framework\Attributes\Group;
 use PHPUnit\Framework\MockObject\MockObject;
 use Drush\Drush;
 use Drush\Log\DrushLoggerManager;
@@ -25,10 +27,10 @@ use Symfony\Component\Console\Output\BufferedOutput;
  * The drush commands for the demo account and the project transfer.
  *
  * Issue 3640913. The services behind the commands are doubles.
- *
- * @coversDefaultClass \Drupal\soda_scs_manager\Drush\Commands\SodaScsProjectOwnershipCommands
- * @group soda_scs_manager
  */
+#[CoversMethod(SodaScsProjectOwnershipCommands::class, 'demoAccount')]
+#[CoversMethod(SodaScsProjectOwnershipCommands::class, 'projectTransfer')]
+#[Group('soda_scs_manager')]
 class SodaScsProjectOwnershipCommandsTest extends UnitTestCase {
 
   /**
@@ -92,8 +94,6 @@ class SodaScsProjectOwnershipCommandsTest extends UnitTestCase {
 
   /**
    * A ready account exits with success and logs the message.
-   *
-   * @covers ::demoAccount
    */
   public function testDemoAccountSucceeds(): void {
     $this->serviceAccount->method('ensure')->willReturn(SodaScsResult::success(data: [], message: 'The account scs_demo is ready.'));
@@ -104,8 +104,6 @@ class SodaScsProjectOwnershipCommandsTest extends UnitTestCase {
 
   /**
    * A failing setup exits with failure and logs the reason.
-   *
-   * @covers ::demoAccount
    */
   public function testDemoAccountFailureExitsWithFailure(): void {
     $this->serviceAccount->method('ensure')->willReturn(SodaScsResult::failure(error: 'x', message: 'Set the password.', log: FALSE));
@@ -116,8 +114,6 @@ class SodaScsProjectOwnershipCommandsTest extends UnitTestCase {
 
   /**
    * An unknown project is reported and nothing is transferred.
-   *
-   * @covers ::projectTransfer
    */
   public function testTransferOfUnknownProjectFails(): void {
     $this->projectStorage->method('load')->with(99)->willReturn(NULL);
@@ -130,8 +126,6 @@ class SodaScsProjectOwnershipCommandsTest extends UnitTestCase {
 
   /**
    * An unknown account is reported and nothing is transferred.
-   *
-   * @covers ::projectTransfer
    */
   public function testTransferToUnknownAccountFails(): void {
     $this->projectStorage->method('load')->willReturn($this->createMock(SodaScsProjectInterface::class));
@@ -144,8 +138,6 @@ class SodaScsProjectOwnershipCommandsTest extends UnitTestCase {
 
   /**
    * The previous owner stays a member unless the option says otherwise.
-   *
-   * @covers ::projectTransfer
    */
   public function testTransferKeepsPreviousOwnerByDefault(): void {
     $project = $this->createMock(SodaScsProjectInterface::class);
@@ -161,8 +153,6 @@ class SodaScsProjectOwnershipCommandsTest extends UnitTestCase {
 
   /**
    * The confirmation names project and account; "no" transfers nothing.
-   *
-   * @covers ::projectTransfer
    */
   public function testDeclinedConfirmationTransfersNothing(): void {
     $project = $this->createMock(SodaScsProjectInterface::class);
@@ -182,8 +172,6 @@ class SodaScsProjectOwnershipCommandsTest extends UnitTestCase {
 
   /**
    * The option drops the previous owner.
-   *
-   * @covers ::projectTransfer
    */
   public function testTransferCanRemovePreviousOwner(): void {
     $project = $this->createMock(SodaScsProjectInterface::class);
@@ -198,8 +186,6 @@ class SodaScsProjectOwnershipCommandsTest extends UnitTestCase {
 
   /**
    * A failed transfer exits with failure and logs the reason.
-   *
-   * @covers ::projectTransfer
    */
   public function testFailedTransferExitsWithFailure(): void {
     $this->projectStorage->method('load')->willReturn($this->createMock(SodaScsProjectInterface::class));
@@ -212,8 +198,6 @@ class SodaScsProjectOwnershipCommandsTest extends UnitTestCase {
 
   /**
    * Follow-up warnings are logged before the success message.
-   *
-   * @covers ::projectTransfer
    */
   public function testTransferLogsWarnings(): void {
     $this->projectStorage->method('load')->willReturn($this->createMock(SodaScsProjectInterface::class));

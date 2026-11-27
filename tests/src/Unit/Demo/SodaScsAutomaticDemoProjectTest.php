@@ -12,19 +12,21 @@ use Drupal\soda_scs_manager\Helpers\SodaScsNextcloudHelpers;
 use Drupal\soda_scs_manager\ValueObject\SodaScsResult;
 use Drupal\Tests\UnitTestCase;
 use Drupal\user\UserInterface;
+use PHPUnit\Framework\Attributes\CoversMethod;
+use PHPUnit\Framework\Attributes\Group;
 use PHPUnit\Framework\MockObject\MockObject;
 use Psr\Log\LoggerInterface;
 
 /**
- * @coversDefaultClass \Drupal\soda_scs_manager\Demo\SodaScsAutomaticDemoProject
- * @group soda_scs_manager
+ * Tests SodaScsAutomaticDemoProject.
  */
+#[CoversMethod(SodaScsAutomaticDemoProject::class, 'ensureFor')]
+#[CoversMethod(SodaScsAutomaticDemoProject::class, 'prepareNextcloudCredentials')]
+#[Group('soda_scs_manager')]
 class SodaScsAutomaticDemoProjectTest extends UnitTestCase {
 
   /**
    * Accounts without the platform role are left alone.
-   *
-   * @covers ::ensureFor
    */
   public function testSkipsAccountsWithoutThePlatformRole(): void {
     $account = $this->createMock(UserInterface::class);
@@ -42,8 +44,6 @@ class SodaScsAutomaticDemoProjectTest extends UnitTestCase {
    *
    * Issue 3640913: scs_demo owns the demo source and must not get a demo
    * project of its own.
-   *
-   * @covers ::ensureFor
    */
   public function testSkipsProtectedAccountsWithThePlatformRole(): void {
     $account = $this->createMock(UserInterface::class);
@@ -60,8 +60,6 @@ class SodaScsAutomaticDemoProjectTest extends UnitTestCase {
 
   /**
    * An approved platform user gets a demo queued.
-   *
-   * @covers ::ensureFor
    */
   public function testQueuesDemoForPlatformUser(): void {
     $account = $this->platformAccount();
@@ -77,8 +75,6 @@ class SodaScsAutomaticDemoProjectTest extends UnitTestCase {
 
   /**
    * No active demo version is not a sign-in failure.
-   *
-   * @covers ::ensureFor
    */
   public function testMissingTemplateDoesNotThrow(): void {
     $demoManager = $this->createMock(SodaScsDemoManager::class);
@@ -94,8 +90,6 @@ class SodaScsAutomaticDemoProjectTest extends UnitTestCase {
 
   /**
    * A provisioning error is logged and does not escape sign-in.
-   *
-   * @covers ::ensureFor
    */
   public function testProvisioningErrorIsLogged(): void {
     $demoManager = $this->createMock(SodaScsDemoManager::class);
@@ -110,9 +104,6 @@ class SodaScsAutomaticDemoProjectTest extends UnitTestCase {
 
   /**
    * Credentials are ensured before the demo is requested.
-   *
-   * @covers ::ensureFor
-   * @covers ::prepareNextcloudCredentials
    */
   public function testCredentialsAreEnsuredBeforeTheDemoIsRequested(): void {
     $account = $this->platformAccount();
@@ -143,8 +134,6 @@ class SodaScsAutomaticDemoProjectTest extends UnitTestCase {
 
   /**
    * An exception while ensuring credentials is logged; the demo still starts.
-   *
-   * @covers ::prepareNextcloudCredentials
    */
   public function testCredentialExceptionIsLoggedAndDemoIsStillRequested(): void {
     $nextcloudHelpers = $this->nextcloudHelpers(TRUE);
@@ -168,8 +157,6 @@ class SodaScsAutomaticDemoProjectTest extends UnitTestCase {
 
   /**
    * No obtainable credentials are logged; the demo still starts.
-   *
-   * @covers ::prepareNextcloudCredentials
    */
   public function testMissingCredentialsAreLoggedAndDemoIsStillRequested(): void {
     $nextcloudHelpers = $this->nextcloudHelpers(TRUE);
@@ -190,8 +177,6 @@ class SodaScsAutomaticDemoProjectTest extends UnitTestCase {
 
   /**
    * Without Bearer the Login Flow is the only source, so nothing is ensured.
-   *
-   * @covers ::prepareNextcloudCredentials
    */
   public function testCredentialsAreSkippedWithoutBearer(): void {
     $nextcloudHelpers = $this->nextcloudHelpers(FALSE);
@@ -210,8 +195,6 @@ class SodaScsAutomaticDemoProjectTest extends UnitTestCase {
 
   /**
    * Accounts without the platform role get no credentials either.
-   *
-   * @covers ::ensureFor
    */
   public function testNoCredentialsForAccountsWithoutThePlatformRole(): void {
     $account = $this->createMock(UserInterface::class);
@@ -225,8 +208,6 @@ class SodaScsAutomaticDemoProjectTest extends UnitTestCase {
 
   /**
    * A user who already has a demo project costs no Nextcloud call.
-   *
-   * @covers ::ensureFor
    */
   public function testNoCredentialsForUserWithDemoProject(): void {
     $nextcloudHelpers = $this->nextcloudHelpers(TRUE);
@@ -244,8 +225,6 @@ class SodaScsAutomaticDemoProjectTest extends UnitTestCase {
 
   /**
    * Without an active demo version no Nextcloud call is made.
-   *
-   * @covers ::ensureFor
    */
   public function testNoCredentialsWithoutActiveTemplate(): void {
     $nextcloudHelpers = $this->nextcloudHelpers(TRUE);

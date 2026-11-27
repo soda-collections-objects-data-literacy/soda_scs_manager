@@ -10,6 +10,8 @@ use Drupal\soda_scs_manager\Entity\SodaScsComponentInterface;
 use Drupal\soda_scs_manager\Helpers\SodaScsContainerHelpers;
 use Drupal\soda_scs_manager\ValueObject\SodaScsResult;
 use Drupal\Tests\soda_scs_manager\Kernel\SodaScsKernelTestBase;
+use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\Group;
 
 /**
  * Runs the script that rewrites the URIs inside a copied WissKI.
@@ -17,10 +19,9 @@ use Drupal\Tests\soda_scs_manager\Kernel\SodaScsKernelTestBase;
  * Issue 3640914. The script is a string that "drush php:eval" runs in the
  * WissKI; here it is evaluated against the WissKI tables and a config object
  * of the test database, with the map in SCS_URI_MAP as in the container.
- *
- * @coversDefaultClass \Drupal\soda_scs_manager\Demo\SodaScsWisskiUriRewriter
- * @group soda_scs_manager
  */
+#[CoversClass(SodaScsWisskiUriRewriter::class)]
+#[Group('soda_scs_manager')]
 final class SodaScsWisskiUriRewriteScriptTest extends SodaScsKernelTestBase {
 
   private const SOURCE_GRAPH = 'https://source.example.org/contents/';

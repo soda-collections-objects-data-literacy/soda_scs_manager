@@ -10,6 +10,8 @@ use Drupal\soda_scs_manager\Drush\Commands\SodaScsDemoTemplateCommands;
 use Drupal\soda_scs_manager\Entity\SodaScsDemoTemplateInterface;
 use Drupal\soda_scs_manager\ValueObject\SodaScsResult;
 use Drupal\Tests\UnitTestCase;
+use PHPUnit\Framework\Attributes\CoversMethod;
+use PHPUnit\Framework\Attributes\Group;
 use PHPUnit\Framework\MockObject\MockObject;
 use Drush\Drush;
 use Drush\Log\DrushLoggerManager;
@@ -19,10 +21,11 @@ use Psr\Log\AbstractLogger;
  * The drush commands that export, import and list demo versions.
  *
  * Issue 3640915. The demo manager and the archive service are doubles.
- *
- * @coversDefaultClass \Drupal\soda_scs_manager\Drush\Commands\SodaScsDemoTemplateCommands
- * @group soda_scs_manager
  */
+#[CoversMethod(SodaScsDemoTemplateCommands::class, 'demoExport')]
+#[CoversMethod(SodaScsDemoTemplateCommands::class, 'demoImport')]
+#[CoversMethod(SodaScsDemoTemplateCommands::class, 'demoVersions')]
+#[Group('soda_scs_manager')]
 class SodaScsDemoTemplateCommandsTest extends UnitTestCase {
 
   /**
@@ -58,8 +61,6 @@ class SodaScsDemoTemplateCommandsTest extends UnitTestCase {
 
   /**
    * An unknown version is reported and nothing is exported.
-   *
-   * @covers ::demoExport
    */
   public function testExportOfUnknownVersionFails(): void {
     $this->demoManager->method('templateWithVersion')->with('9.9.9')->willReturn(NULL);
@@ -71,8 +72,6 @@ class SodaScsDemoTemplateCommandsTest extends UnitTestCase {
 
   /**
    * The export uses the default directory without the option.
-   *
-   * @covers ::demoExport
    */
   public function testExportUsesTheDefaultOutputDirectory(): void {
     $template = $this->createMock(SodaScsDemoTemplateInterface::class);
@@ -86,8 +85,6 @@ class SodaScsDemoTemplateCommandsTest extends UnitTestCase {
 
   /**
    * The output option reaches the archive service.
-   *
-   * @covers ::demoExport
    */
   public function testExportPassesTheOutputOption(): void {
     $template = $this->createMock(SodaScsDemoTemplateInterface::class);
@@ -100,8 +97,6 @@ class SodaScsDemoTemplateCommandsTest extends UnitTestCase {
 
   /**
    * An empty output option counts as not given.
-   *
-   * @covers ::demoExport
    */
   public function testExportTreatsAnEmptyOutputOptionAsNotGiven(): void {
     $template = $this->createMock(SodaScsDemoTemplateInterface::class);
@@ -114,8 +109,6 @@ class SodaScsDemoTemplateCommandsTest extends UnitTestCase {
 
   /**
    * A failed export exits with failure and logs the reason.
-   *
-   * @covers ::demoExport
    */
   public function testFailedExportExitsWithFailure(): void {
     $this->demoManager->method('templateWithVersion')->willReturn($this->createMock(SodaScsDemoTemplateInterface::class));
@@ -128,8 +121,6 @@ class SodaScsDemoTemplateCommandsTest extends UnitTestCase {
 
   /**
    * The import does not activate unless asked.
-   *
-   * @covers ::demoImport
    */
   public function testImportDoesNotActivateByDefault(): void {
     $this->templateArchive->expects($this->once())->method('import')->with('/in/demo-v1.2.5.tar.gz', FALSE)
@@ -141,8 +132,6 @@ class SodaScsDemoTemplateCommandsTest extends UnitTestCase {
 
   /**
    * The activate option reaches the archive service.
-   *
-   * @covers ::demoImport
    */
   public function testImportPassesTheActivateOption(): void {
     $this->templateArchive->expects($this->once())->method('import')->with('/in/demo-v1.2.5.tar.gz', TRUE)
@@ -153,8 +142,6 @@ class SodaScsDemoTemplateCommandsTest extends UnitTestCase {
 
   /**
    * A refused archive exits with failure and logs the reason.
-   *
-   * @covers ::demoImport
    */
   public function testFailedImportExitsWithFailure(): void {
     $this->templateArchive->method('import')
@@ -166,8 +153,6 @@ class SodaScsDemoTemplateCommandsTest extends UnitTestCase {
 
   /**
    * The list shows version, status, origin, active flag and usage.
-   *
-   * @covers ::demoVersions
    */
   public function testVersionsListsEveryVersionInTheOrderOfTheManager(): void {
     $imported = $this->template('1.3.0', 'ready', 'imported');
@@ -188,8 +173,6 @@ class SodaScsDemoTemplateCommandsTest extends UnitTestCase {
 
   /**
    * Without versions the list is empty.
-   *
-   * @covers ::demoVersions
    */
   public function testVersionsIsEmptyWithoutVersions(): void {
     $this->demoManager->method('templatesByVersion')->willReturn([]);

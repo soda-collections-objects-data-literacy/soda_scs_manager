@@ -11,15 +11,20 @@ use Drupal\soda_scs_manager\Helpers\SodaScsContainerHelpers;
 use Drupal\soda_scs_manager\Service\SodaScsWisskiVarnishCache;
 use Drupal\soda_scs_manager\ValueObject\SodaScsResult;
 use Drupal\Tests\UnitTestCase;
+use PHPUnit\Framework\Attributes\CoversMethod;
+use PHPUnit\Framework\Attributes\Group;
 
 /**
- * @coversDefaultClass \Drupal\soda_scs_manager\Service\SodaScsWisskiVarnishCache
- * @group soda_scs_manager
+ * Tests SodaScsWisskiVarnishCache.
  */
+#[CoversMethod(SodaScsWisskiVarnishCache::class, 'varnishContainerName')]
+#[CoversMethod(SodaScsWisskiVarnishCache::class, 'clear')]
+#[CoversMethod(SodaScsWisskiVarnishCache::class, 'restart')]
+#[Group('soda_scs_manager')]
 class SodaScsWisskiVarnishCacheTest extends UnitTestCase {
 
   /**
-   * @covers ::varnishContainerName
+   * Tests varnishContainerName().
    */
   public function testVarnishContainerName(): void {
     $service = $this->createService($this->createMock(SodaScsContainerHelpers::class));
@@ -28,7 +33,7 @@ class SodaScsWisskiVarnishCacheTest extends UnitTestCase {
   }
 
   /**
-   * @covers ::clear
+   * Tests that clear() rejects invalid machine name without Docker.
    */
   public function testClearRejectsInvalidMachineNameWithoutDocker(): void {
     $helpers = $this->createMock(SodaScsContainerHelpers::class);
@@ -42,7 +47,7 @@ class SodaScsWisskiVarnishCacheTest extends UnitTestCase {
   }
 
   /**
-   * @covers ::clear
+   * Tests that clear() rejects stopped container.
    */
   public function testClearRejectsStoppedContainer(): void {
     $helpers = $this->createMock(SodaScsContainerHelpers::class);
@@ -66,7 +71,7 @@ class SodaScsWisskiVarnishCacheTest extends UnitTestCase {
   }
 
   /**
-   * @covers ::clear
+   * Tests that clear() bans every cached URL.
    */
   public function testClearBansEveryCachedUrl(): void {
     $helpers = $this->createMock(SodaScsContainerHelpers::class);
@@ -95,7 +100,7 @@ class SodaScsWisskiVarnishCacheTest extends UnitTestCase {
   }
 
   /**
-   * @covers ::restart
+   * Tests that restart() rejects invalid machine name without Docker.
    */
   public function testRestartRejectsInvalidMachineNameWithoutDocker(): void {
     $this->useLoggerFactoryForFailureResults($this->createMock(LoggerChannelInterface::class));
@@ -111,8 +116,6 @@ class SodaScsWisskiVarnishCacheTest extends UnitTestCase {
 
   /**
    * A WissKI without a Varnish container has nothing to restart.
-   *
-   * @covers ::restart
    */
   public function testRestartSucceedsWithoutVarnishContainer(): void {
     $helpers = $this->createMock(SodaScsContainerHelpers::class);
@@ -130,8 +133,6 @@ class SodaScsWisskiVarnishCacheTest extends UnitTestCase {
 
   /**
    * Another lookup error is no proof that nothing runs: it is a failure.
-   *
-   * @covers ::restart
    */
   public function testRestartFailsWhenTheLookupFailsForAnotherReason(): void {
     $this->useLoggerFactoryForFailureResults($this->createMock(LoggerChannelInterface::class));
@@ -148,8 +149,6 @@ class SodaScsWisskiVarnishCacheTest extends UnitTestCase {
 
   /**
    * A stopped Varnish container is left stopped.
-   *
-   * @covers ::restart
    */
   public function testRestartLeavesStoppedContainerAlone(): void {
     $helpers = $this->createMock(SodaScsContainerHelpers::class);
@@ -167,8 +166,6 @@ class SodaScsWisskiVarnishCacheTest extends UnitTestCase {
 
   /**
    * A running Varnish container is restarted by its ID.
-   *
-   * @covers ::restart
    */
   public function testRestartRestartsRunningContainer(): void {
     $helpers = $this->createMock(SodaScsContainerHelpers::class);
@@ -189,8 +186,6 @@ class SodaScsWisskiVarnishCacheTest extends UnitTestCase {
 
   /**
    * A failing restart is an error in the log and a failure for the caller.
-   *
-   * @covers ::restart
    */
   public function testRestartFailureIsLoggedAndReturned(): void {
     $helpers = $this->createMock(SodaScsContainerHelpers::class);

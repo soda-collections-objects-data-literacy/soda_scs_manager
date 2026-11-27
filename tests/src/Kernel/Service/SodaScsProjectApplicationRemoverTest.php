@@ -16,6 +16,8 @@ use Drupal\soda_scs_manager\ServiceActions\SodaScsSqlServiceActions;
 use Drupal\soda_scs_manager\StackActions\SodaScsStackActionsInterface;
 use Drupal\Tests\soda_scs_manager\Kernel\SodaScsKernelTestBase;
 use Drupal\user\UserInterface;
+use PHPUnit\Framework\Attributes\CoversMethod;
+use PHPUnit\Framework\Attributes\Group;
 
 /**
  * What happens to the applications of a project that is about to be deleted.
@@ -24,10 +26,14 @@ use Drupal\user\UserInterface;
  * owner are deleted through the stack and component actions; those of other
  * members are detached from the project and stay. The stack and component
  * actions are doubles: no remote service is reached.
- *
- * @coversDefaultClass \Drupal\soda_scs_manager\Service\SodaScsProjectApplicationRemover
- * @group soda_scs_manager
  */
+#[CoversMethod(SodaScsProjectApplicationRemover::class, 'removeApplications')]
+#[CoversMethod(SodaScsProjectApplicationRemover::class, 'detach')]
+#[CoversMethod(SodaScsProjectApplicationRemover::class, 'deleteFailure')]
+#[CoversMethod(SodaScsProjectApplicationRemover::class, 'removeNextApplication')]
+#[CoversMethod(SodaScsProjectApplicationRemover::class, 'removedResult')]
+#[CoversMethod(SodaScsProjectApplicationRemover::class, 'dropUnlinkedComponents')]
+#[Group('soda_scs_manager')]
 class SodaScsProjectApplicationRemoverTest extends SodaScsKernelTestBase {
 
   /**
@@ -79,8 +85,6 @@ class SodaScsProjectApplicationRemoverTest extends SodaScsKernelTestBase {
 
   /**
    * A project without applications is removed without any call.
-   *
-   * @covers ::removeApplications
    */
   public function testProjectWithoutApplicationsSucceeds(): void {
     $this->stackActions->expects($this->never())->method('deleteStack');
@@ -93,8 +97,6 @@ class SodaScsProjectApplicationRemoverTest extends SodaScsKernelTestBase {
 
   /**
    * The WissKI stack of the project owner is deleted through the stack actions.
-   *
-   * @covers ::removeApplications
    */
   public function testOwnersWisskiStackIsDeleted(): void {
     $stack = $this->createStack($this->testUser);
@@ -109,8 +111,6 @@ class SodaScsProjectApplicationRemoverTest extends SodaScsKernelTestBase {
 
   /**
    * Loose databases and triplestores of the owner are deleted, in id order.
-   *
-   * @covers ::removeApplications
    */
   public function testOwnersLooseComponentsAreDeleted(): void {
     $sql = $this->createComponent('soda_scs_sql_component', $this->testUser);
@@ -130,8 +130,6 @@ class SodaScsProjectApplicationRemoverTest extends SodaScsKernelTestBase {
 
   /**
    * A database of a stack goes with its stack, not on its own.
-   *
-   * @covers ::removeApplications
    */
   public function testStackComponentIsNotDeletedSeparately(): void {
     $stack = $this->createStack($this->testUser);
@@ -146,8 +144,6 @@ class SodaScsProjectApplicationRemoverTest extends SodaScsKernelTestBase {
 
   /**
    * Other bundles of the project are left to the callers.
-   *
-   * @covers ::removeApplications
    */
   public function testJupyterStackAndWebprotegeComponentAreNotTouched(): void {
     $jupyter = $this->createStack($this->testUser, 'soda_scs_jupyter_stack');
@@ -164,8 +160,6 @@ class SodaScsProjectApplicationRemoverTest extends SodaScsKernelTestBase {
 
   /**
    * Applications of another project are not touched.
-   *
-   * @covers ::removeApplications
    */
   public function testApplicationsOfAnotherProjectAreNotTouched(): void {
     $other = $this->createTestProject(['label' => 'Other project']);
@@ -183,9 +177,6 @@ class SodaScsProjectApplicationRemoverTest extends SodaScsKernelTestBase {
 
   /**
    * A loose component of another member stays and only loses the project.
-   *
-   * @covers ::removeApplications
-   * @covers ::detach
    */
   public function testOtherMembersComponentIsDetachedNotDeleted(): void {
     $component = $this->createComponent('soda_scs_sql_component', $this->member);
@@ -207,8 +198,6 @@ class SodaScsProjectApplicationRemoverTest extends SodaScsKernelTestBase {
    *
    * Regression: the project delete hook links every component still listed in
    * connectedComponents of the object being deleted back to the project.
-   *
-   * @covers ::detach
    */
   public function testDetachedComponentStaysWithoutProjectAfterProjectDelete(): void {
     $component = $this->createComponent('soda_scs_sql_component', $this->member);
@@ -224,8 +213,6 @@ class SodaScsProjectApplicationRemoverTest extends SodaScsKernelTestBase {
 
   /**
    * A detached component stays unlinked when the project object is saved.
-   *
-   * @covers ::detach
    */
   public function testDetachedComponentStaysWithoutProjectAfterProjectSave(): void {
     $component = $this->createComponent('soda_scs_sql_component', $this->member);
@@ -239,9 +226,6 @@ class SodaScsProjectApplicationRemoverTest extends SodaScsKernelTestBase {
 
   /**
    * A stack of another member and its components are detached together.
-   *
-   * @covers ::removeApplications
-   * @covers ::detach
    */
   public function testOtherMembersStackIsDetachedWithItsComponents(): void {
     $stack = $this->createStack($this->member);
@@ -262,8 +246,6 @@ class SodaScsProjectApplicationRemoverTest extends SodaScsKernelTestBase {
 
   /**
    * Owner and member applications are handled each by their own rule.
-   *
-   * @covers ::removeApplications
    */
   public function testOwnerApplicationsAreDeletedWhileMemberApplicationsAreDetached(): void {
     $ownersStack = $this->createStack($this->testUser);
@@ -286,9 +268,6 @@ class SodaScsProjectApplicationRemoverTest extends SodaScsKernelTestBase {
 
   /**
    * The first failure stops the run when the caller asks for it.
-   *
-   * @covers ::removeApplications
-   * @covers ::deleteFailure
    */
   public function testStopOnFailureStopsAtTheFirstFailedStack(): void {
     $first = $this->createStack($this->testUser, label: 'First stack');
@@ -319,8 +298,6 @@ class SodaScsProjectApplicationRemoverTest extends SodaScsKernelTestBase {
 
   /**
    * A failed stack keeps its entity and its link to the project.
-   *
-   * @covers ::removeApplications
    */
   public function testFailedStackStaysLinkedToTheProject(): void {
     $stack = $this->createStack($this->testUser);
@@ -335,8 +312,6 @@ class SodaScsProjectApplicationRemoverTest extends SodaScsKernelTestBase {
 
   /**
    * A failed loose component stops the run and keeps the later ones.
-   *
-   * @covers ::removeApplications
    */
   public function testStopOnFailureStopsAtTheFirstFailedComponent(): void {
     $first = $this->createComponent('soda_scs_sql_component', $this->testUser, ['label' => 'First database']);
@@ -361,8 +336,6 @@ class SodaScsProjectApplicationRemoverTest extends SodaScsKernelTestBase {
 
   /**
    * Without stopOnFailure the others are removed and the first failure returns.
-   *
-   * @covers ::removeApplications
    */
   public function testContinuesAfterFailureWhenNotStopping(): void {
     $first = $this->createStack($this->testUser, label: 'First stack');
@@ -388,8 +361,6 @@ class SodaScsProjectApplicationRemoverTest extends SodaScsKernelTestBase {
 
   /**
    * An answer without a success flag counts as a failure.
-   *
-   * @covers ::removeApplications
    */
   public function testMalformedDeleteAnswerCountsAsFailure(): void {
     $this->createStack($this->testUser);
@@ -405,8 +376,6 @@ class SodaScsProjectApplicationRemoverTest extends SodaScsKernelTestBase {
 
   /**
    * An exception of the stack actions is a failure, not a crash.
-   *
-   * @covers ::removeApplications
    */
   public function testExceptionOfTheStackActionsCountsAsFailure(): void {
     $stack = $this->createStack($this->testUser);
@@ -422,8 +391,6 @@ class SodaScsProjectApplicationRemoverTest extends SodaScsKernelTestBase {
 
   /**
    * An exception of the component actions is a failure, not a crash.
-   *
-   * @covers ::removeApplications
    */
   public function testExceptionOfTheComponentActionsCountsAsFailure(): void {
     $component = $this->createComponent('soda_scs_sql_component', $this->testUser);
@@ -439,8 +406,6 @@ class SodaScsProjectApplicationRemoverTest extends SodaScsKernelTestBase {
 
   /**
    * A failed detach says so, and the application keeps the project.
-   *
-   * @covers ::detach
    */
   public function testFailedDetachCountsAsFailureWithItsOwnMessage(): void {
     $component = $this->createComponent('soda_scs_triplestore_component', $this->member, ['label' => 'Member triplestore']);
@@ -461,8 +426,6 @@ class SodaScsProjectApplicationRemoverTest extends SodaScsKernelTestBase {
 
   /**
    * The user message stays markup, so a label is escaped only once.
-   *
-   * @covers ::removeApplications
    */
   public function testFailureMessageIsEscapedOnce(): void {
     $this->project->set('label', 'R&D')->save();
@@ -481,8 +444,6 @@ class SodaScsProjectApplicationRemoverTest extends SodaScsKernelTestBase {
 
   /**
    * A failed lookup is a failure, so the caller keeps the project.
-   *
-   * @covers ::removeApplications
    */
   public function testFailedLookupCountsAsFailure(): void {
     $entityTypeManager = $this->createMock(EntityTypeManagerInterface::class);
@@ -500,8 +461,6 @@ class SodaScsProjectApplicationRemoverTest extends SodaScsKernelTestBase {
 
   /**
    * A component whose stack is gone is handled as a loose one.
-   *
-   * @covers ::removeApplications
    */
   public function testComponentWithMissingStackIsDeletedAsLoose(): void {
     $component = $this->createComponent('soda_scs_sql_component', $this->testUser, ['partOfStack' => 999999]);
@@ -516,8 +475,6 @@ class SodaScsProjectApplicationRemoverTest extends SodaScsKernelTestBase {
 
   /**
    * The next application is a stack, before any loose component.
-   *
-   * @covers ::removeNextApplication
    */
   public function testNextApplicationIsTheStackBeforeLooseComponents(): void {
     $this->createComponent('soda_scs_sql_component', $this->testUser, ['label' => 'Loose database']);
@@ -535,9 +492,6 @@ class SodaScsProjectApplicationRemoverTest extends SodaScsKernelTestBase {
 
   /**
    * The key of a loose component names its entity type and id.
-   *
-   * @covers ::removeNextApplication
-   * @covers ::removedResult
    */
   public function testNextApplicationKeyOfTheLooseComponent(): void {
     $component = $this->createComponent('soda_scs_sql_component', $this->testUser, ['label' => 'Loose database']);
@@ -550,9 +504,6 @@ class SodaScsProjectApplicationRemoverTest extends SodaScsKernelTestBase {
 
   /**
    * Each removed application has its own key, so a repeat can be told apart.
-   *
-   * @covers ::removeNextApplication
-   * @covers ::removedResult
    */
   public function testNextApplicationKeysDifferPerApplication(): void {
     $first = $this->createStack($this->testUser, label: 'First stack');
@@ -571,8 +522,6 @@ class SodaScsProjectApplicationRemoverTest extends SodaScsKernelTestBase {
    * An application whose deletion succeeds but that stays comes back by key.
    *
    * The delete form's batch compares the keys to stop on such an application.
-   *
-   * @covers ::removeNextApplication
    */
   public function testNextApplicationReportsTheSameKeyForTheStackThatStays(): void {
     $stack = $this->createStack($this->testUser, label: 'Stubborn stack');
@@ -588,8 +537,6 @@ class SodaScsProjectApplicationRemoverTest extends SodaScsKernelTestBase {
 
   /**
    * Each call removes one application and then reports that none is left.
-   *
-   * @covers ::removeNextApplication
    */
   public function testNextApplicationRemovesOneApplicationPerCall(): void {
     $this->createStack($this->testUser, label: 'First stack');
@@ -611,8 +558,6 @@ class SodaScsProjectApplicationRemoverTest extends SodaScsKernelTestBase {
 
   /**
    * Without applications the result succeeds with no application and no call.
-   *
-   * @covers ::removeNextApplication
    */
   public function testNextApplicationIsNullWithoutApplications(): void {
     $this->stackActions->expects($this->never())->method('deleteStack');
@@ -628,8 +573,6 @@ class SodaScsProjectApplicationRemoverTest extends SodaScsKernelTestBase {
 
   /**
    * Jupyter stack, WebProtégé component and other projects' applications stay.
-   *
-   * @covers ::removeNextApplication
    */
   public function testNextApplicationIgnoresOtherBundlesAndProjects(): void {
     $this->createStack($this->testUser, 'soda_scs_jupyter_stack');
@@ -648,8 +591,6 @@ class SodaScsProjectApplicationRemoverTest extends SodaScsKernelTestBase {
 
   /**
    * A database of an existing stack goes with the stack, not as next one.
-   *
-   * @covers ::removeNextApplication
    */
   public function testNextApplicationSkipsComponentsOfAnExistingStack(): void {
     $stack = $this->createStack($this->testUser, label: 'Wisski stack');
@@ -667,8 +608,6 @@ class SodaScsProjectApplicationRemoverTest extends SodaScsKernelTestBase {
 
   /**
    * A component whose stack is gone is the next application as a loose one.
-   *
-   * @covers ::removeNextApplication
    */
   public function testNextApplicationTakesTheComponentWithMissingStack(): void {
     $component = $this->createComponent('soda_scs_sql_component', $this->testUser, [
@@ -687,8 +626,6 @@ class SodaScsProjectApplicationRemoverTest extends SodaScsKernelTestBase {
    * An application of another member only loses the project and stays.
    *
    * The next call goes on to the next application, so the batch ends.
-   *
-   * @covers ::removeNextApplication
    */
   public function testNextApplicationDetachesAnotherMembersApplication(): void {
     $stack = $this->createStack($this->member, label: 'Member stack');
@@ -713,8 +650,6 @@ class SodaScsProjectApplicationRemoverTest extends SodaScsKernelTestBase {
 
   /**
    * A failed deletion fails the call, keeps the application and its link.
-   *
-   * @covers ::removeNextApplication
    */
   public function testNextApplicationStopsAtTheFailedDeletion(): void {
     $first = $this->createStack($this->testUser, label: 'First stack');
@@ -743,8 +678,6 @@ class SodaScsProjectApplicationRemoverTest extends SodaScsKernelTestBase {
 
   /**
    * A malformed answer of the component actions fails the call.
-   *
-   * @covers ::removeNextApplication
    */
   public function testNextApplicationFailsOnMalformedComponentAnswer(): void {
     $component = $this->createComponent('soda_scs_sql_component', $this->testUser);
@@ -758,8 +691,6 @@ class SodaScsProjectApplicationRemoverTest extends SodaScsKernelTestBase {
 
   /**
    * A failed lookup fails the call, so the caller keeps the project.
-   *
-   * @covers ::removeNextApplication
    */
   public function testNextApplicationFailsWhenTheLookupFails(): void {
     $entityTypeManager = $this->createMock(EntityTypeManagerInterface::class);
@@ -784,9 +715,6 @@ class SodaScsProjectApplicationRemoverTest extends SodaScsKernelTestBase {
    * The delete form's batch keeps the project object it was started with
    * across the requests, while each request detaches one application; that
    * object still lists every component.
-   *
-   * @covers ::removeApplications
-   * @covers ::dropUnlinkedComponents
    */
   public function testRemoveApplicationsDropsComponentsDetachedInEarlierRequests(): void {
     $component = $this->createComponent('soda_scs_sql_component', $this->member);
@@ -805,9 +733,6 @@ class SodaScsProjectApplicationRemoverTest extends SodaScsKernelTestBase {
 
   /**
    * The project delete does not link a component detached earlier again.
-   *
-   * @covers ::removeApplications
-   * @covers ::dropUnlinkedComponents
    */
   public function testComponentDetachedInEarlierRequestStaysWithoutProjectAfterProjectDelete(): void {
     $component = $this->createComponent('soda_scs_sql_component', $this->member);
@@ -825,8 +750,6 @@ class SodaScsProjectApplicationRemoverTest extends SodaScsKernelTestBase {
 
   /**
    * Components that still list the project stay in connectedComponents.
-   *
-   * @covers ::dropUnlinkedComponents
    */
   public function testRemoveApplicationsKeepsComponentsThatListTheProject(): void {
     $webprotege = $this->createComponent('soda_scs_webprotege_component', $this->testUser);

@@ -7,13 +7,16 @@ namespace Drupal\Tests\soda_scs_manager\Unit\Helpers;
 use Drupal\soda_scs_manager\Exception\SodaScsOntologyImportsException;
 use Drupal\soda_scs_manager\Helpers\SodaScsOntologyImportInspector;
 use Drupal\Tests\UnitTestCase;
+use PHPUnit\Framework\Attributes\CoversMethod;
+use PHPUnit\Framework\Attributes\DataProvider;
+use PHPUnit\Framework\Attributes\Group;
 
 /**
  * Tests reading and checking the owl:imports of uploaded ontologies.
- *
- * @coversDefaultClass \Drupal\soda_scs_manager\Helpers\SodaScsOntologyImportInspector
- * @group soda_scs_manager
  */
+#[CoversMethod(SodaScsOntologyImportInspector::class, 'importIris')]
+#[CoversMethod(SodaScsOntologyImportInspector::class, 'isAllowedImportIri')]
+#[Group('soda_scs_manager')]
 class SodaScsOntologyImportInspectorTest extends UnitTestCase {
 
   private const OWL_PREFIX = "@prefix owl: <http://www.w3.org/2002/07/owl#> .\n";
@@ -46,8 +49,7 @@ class SodaScsOntologyImportInspectorTest extends UnitTestCase {
   }
 
   /**
-   * @covers ::importIris
-   * @dataProvider providerDocumentsWithImports
+   * Tests that importIris() reads every import spelling.
    *
    * @param string $mimeType
    *   Content type of the document.
@@ -56,6 +58,7 @@ class SodaScsOntologyImportInspectorTest extends UnitTestCase {
    * @param list<string> $expected
    *   The import IRIs.
    */
+  #[DataProvider('providerDocumentsWithImports')]
   public function testImportIrisReadsEveryImportSpelling(string $mimeType, string $document, array $expected): void {
     $this->assertSame($expected, $this->createInspector()->importIris($document, $mimeType));
   }
@@ -139,8 +142,7 @@ class SodaScsOntologyImportInspectorTest extends UnitTestCase {
   }
 
   /**
-   * @covers ::importIris
-   * @dataProvider providerUnreadableImports
+   * Tests that importIris() refuses what it cannot read.
    *
    * @param string $mimeType
    *   Content type of the document.
@@ -149,6 +151,7 @@ class SodaScsOntologyImportInspectorTest extends UnitTestCase {
    * @param int $code
    *   Expected exception code.
    */
+  #[DataProvider('providerUnreadableImports')]
   public function testImportIrisRefusesWhatItCannotRead(string $mimeType, string $document, int $code): void {
     $this->expectException(SodaScsOntologyImportsException::class);
     $this->expectExceptionCode($code);
@@ -214,7 +217,7 @@ class SodaScsOntologyImportInspectorTest extends UnitTestCase {
   }
 
   /**
-   * @covers ::importIris
+   * Tests that importIris() never loads external entities.
    */
   public function testImportIrisNeverLoadsExternalEntities(): void {
     $marker = tempnam(sys_get_temp_dir(), 'scs-entity-');
@@ -231,8 +234,7 @@ class SodaScsOntologyImportInspectorTest extends UnitTestCase {
   }
 
   /**
-   * @covers ::isAllowedImportIri
-   * @dataProvider providerImportTargets
+   * Tests isAllowedImportIri().
    *
    * @param bool $expected
    *   Whether WebProtégé may fetch the IRI.
@@ -241,6 +243,7 @@ class SodaScsOntologyImportInspectorTest extends UnitTestCase {
    * @param array<string, list<string>> $resolvedHosts
    *   Addresses the host lookup returns.
    */
+  #[DataProvider('providerImportTargets')]
   public function testIsAllowedImportIri(bool $expected, string $iri, array $resolvedHosts = []): void {
     $this->assertSame($expected, $this->createInspector($resolvedHosts)->isAllowedImportIri($iri));
   }

@@ -21,6 +21,8 @@ use Drupal\soda_scs_manager\Service\SodaScsWisskiTriplestoreTokenSync;
 use Drupal\soda_scs_manager\ServiceKeyActions\SodaScsServiceKeyActionsInterface;
 use Drupal\Tests\UnitTestCase;
 use Drupal\user\UserInterface;
+use PHPUnit\Framework\Attributes\CoversMethod;
+use PHPUnit\Framework\Attributes\Group;
 use PHPUnit\Framework\MockObject\MockObject;
 
 /**
@@ -36,10 +38,10 @@ use PHPUnit\Framework\MockObject\MockObject;
  *
  * Issue 3639291: whenever a new token is issued, the WissKI adapters of the
  * owner get it (syncUser()); an existing token needs no sync.
- *
- * @coversDefaultClass \Drupal\soda_scs_manager\Helpers\SodaScsTriplestoreHelpers
- * @group soda_scs_manager
  */
+#[CoversMethod(SodaScsTriplestoreHelpers::class, 'ensureUserDataExists')]
+#[CoversMethod(SodaScsTriplestoreHelpers::class, 'ensureUserAccount')]
+#[Group('soda_scs_manager')]
 class SodaScsTriplestoreHelpersUserDataTest extends UnitTestCase {
 
   /**
@@ -88,8 +90,6 @@ class SodaScsTriplestoreHelpersUserDataTest extends UnitTestCase {
 
   /**
    * A recreated OpenGDB user gets a new token, saved into the existing key.
-   *
-   * @covers ::ensureUserDataExists
    */
   public function testRecreatedUserGetsNewTokenSavedIntoExistingKey(): void {
     $this->openGdbHelpers->method('getUserDataByName')->willReturnCallback($this->userDataAfterCreate());
@@ -113,8 +113,6 @@ class SodaScsTriplestoreHelpersUserDataTest extends UnitTestCase {
 
   /**
    * An existing OpenGDB user keeps the stored token; no token is requested.
-   *
-   * @covers ::ensureUserDataExists
    */
   public function testExistingUserKeepsStoredToken(): void {
     $this->openGdbHelpers->method('getUserDataByName')->willReturn(['username' => 'alice']);
@@ -135,8 +133,6 @@ class SodaScsTriplestoreHelpersUserDataTest extends UnitTestCase {
 
   /**
    * A recreated user without any stored token gets one key, no second request.
-   *
-   * @covers ::ensureUserDataExists
    */
   public function testRecreatedUserWithoutStoredTokenCreatesTokenKeyOnly(): void {
     $this->openGdbHelpers->method('getUserDataByName')->willReturnCallback($this->userDataAfterCreate());
@@ -161,8 +157,6 @@ class SodaScsTriplestoreHelpersUserDataTest extends UnitTestCase {
    *
    * The stored token key is neither changed nor saved then, so the stale
    * token stays as it was and the next call tries again.
-   *
-   * @covers ::ensureUserDataExists
    */
   public function testFailingTokenRequestForRecreatedUserReachesCallerAndLeavesTokenKeyUntouched(): void {
     $this->openGdbHelpers->method('getUserDataByName')->willReturnCallback($this->userDataAfterCreate());
@@ -183,8 +177,6 @@ class SodaScsTriplestoreHelpersUserDataTest extends UnitTestCase {
 
   /**
    * A recreated user gets its rights on the owner's stored repositories.
-   *
-   * @covers ::ensureUserDataExists
    */
   public function testRecreatedUserGetsRightsOnOwnedRepositories(): void {
     $this->ownedRepositories = ['ts-first', 'ts-second'];
@@ -207,8 +199,6 @@ class SodaScsTriplestoreHelpersUserDataTest extends UnitTestCase {
 
   /**
    * A recreated user without stored repositories gets no grant request.
-   *
-   * @covers ::ensureUserDataExists
    */
   public function testRecreatedUserWithoutOwnedRepositoriesSendsNoGrants(): void {
     $this->openGdbHelpers->method('getUserDataByName')->willReturnCallback($this->userDataAfterCreate());
@@ -221,8 +211,6 @@ class SodaScsTriplestoreHelpersUserDataTest extends UnitTestCase {
 
   /**
    * An existing user keeps its rights; no grant request is sent.
-   *
-   * @covers ::ensureUserDataExists
    */
   public function testExistingUserGetsNoGrantRequest(): void {
     $this->ownedRepositories = ['ts-first'];
@@ -237,8 +225,6 @@ class SodaScsTriplestoreHelpersUserDataTest extends UnitTestCase {
    * A refused grant request is logged and the new triplestore goes on.
    *
    * The error names the repositories, so an administrator can grant them.
-   *
-   * @covers ::ensureUserDataExists
    */
   public function testRefusedGrantsAreLoggedAndTokenIsStillRenewed(): void {
     $this->ownedRepositories = ['ts-first'];
@@ -258,8 +244,6 @@ class SodaScsTriplestoreHelpersUserDataTest extends UnitTestCase {
 
   /**
    * A renewed token is synced to the owner's WissKIs after it was stored.
-   *
-   * @covers ::ensureUserDataExists
    */
   public function testRecreatedUserSyncsWisskiTokensAfterTheTokenIsStored(): void {
     $this->openGdbHelpers->method('getUserDataByName')->willReturnCallback($this->userDataAfterCreate());
@@ -283,8 +267,6 @@ class SodaScsTriplestoreHelpersUserDataTest extends UnitTestCase {
 
   /**
    * A first token for an existing account is synced to the owner's WissKIs.
-   *
-   * @covers ::ensureUserDataExists
    */
   public function testExistingUserWithoutStoredTokenSyncsWisskiTokensAfterTheKeyIsCreated(): void {
     $this->openGdbHelpers->method('getUserDataByName')->willReturn(['username' => 'alice']);
@@ -310,8 +292,6 @@ class SodaScsTriplestoreHelpersUserDataTest extends UnitTestCase {
 
   /**
    * A recreated user without any stored token is synced once.
-   *
-   * @covers ::ensureUserDataExists
    */
   public function testRecreatedUserWithoutStoredTokenSyncsWisskiTokensOnce(): void {
     $this->openGdbHelpers->method('getUserDataByName')->willReturnCallback($this->userDataAfterCreate());
@@ -327,8 +307,6 @@ class SodaScsTriplestoreHelpersUserDataTest extends UnitTestCase {
 
   /**
    * The stored token of an existing account stays: no WissKI is touched.
-   *
-   * @covers ::ensureUserDataExists
    */
   public function testExistingUserWithStoredTokenSyncsNothing(): void {
     $this->openGdbHelpers->method('getUserDataByName')->willReturn(['username' => 'alice']);
@@ -340,8 +318,6 @@ class SodaScsTriplestoreHelpersUserDataTest extends UnitTestCase {
 
   /**
    * A failing token request syncs nothing: no new token exists.
-   *
-   * @covers ::ensureUserDataExists
    */
   public function testFailingTokenRequestSyncsNothing(): void {
     $this->openGdbHelpers->method('getUserDataByName')->willReturnCallback($this->userDataAfterCreate());
@@ -433,8 +409,6 @@ class SodaScsTriplestoreHelpersUserDataTest extends UnitTestCase {
    * Any user gets an OpenGDB account and keys, without owning a component.
    *
    * Issue 3640913: the next owner of a project has no triplestore yet.
-   *
-   * @covers ::ensureUserAccount
    */
   public function testEnsureUserAccountWorksForUserWithoutComponent(): void {
     $this->openGdbHelpers->method('getUserDataByName')->willReturn(['username' => 'bob']);
@@ -462,8 +436,6 @@ class SodaScsTriplestoreHelpersUserDataTest extends UnitTestCase {
 
   /**
    * The keys of the given user are looked up, not those of a component owner.
-   *
-   * @covers ::ensureUserAccount
    */
   public function testEnsureUserAccountLooksUpKeysOfTheGivenUser(): void {
     $this->openGdbHelpers->method('getUserDataByName')->willReturn(['username' => 'bob']);
@@ -481,8 +453,6 @@ class SodaScsTriplestoreHelpersUserDataTest extends UnitTestCase {
 
   /**
    * A refused account creation reaches the caller; no key is invented.
-   *
-   * @covers ::ensureUserAccount
    */
   public function testEnsureUserAccountThrowsWhenOpenGdbRefuses(): void {
     $this->openGdbHelpers->method('getUserDataByName')->willThrowException(new \RuntimeException('Failed to get user by name.'));

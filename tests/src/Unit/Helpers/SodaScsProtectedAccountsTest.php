@@ -7,21 +7,20 @@ namespace Drupal\Tests\soda_scs_manager\Unit\Helpers;
 use Drupal\Core\Session\AccountInterface;
 use Drupal\soda_scs_manager\Helpers\SodaScsProtectedAccounts;
 use Drupal\Tests\UnitTestCase;
+use PHPUnit\Framework\Attributes\CoversMethod;
+use PHPUnit\Framework\Attributes\Group;
 
 /**
  * Which accounts are protected from deletion and offboarding.
  *
  * Issue 3640913.
- *
- * @coversDefaultClass \Drupal\soda_scs_manager\Helpers\SodaScsProtectedAccounts
- * @group soda_scs_manager
  */
+#[CoversMethod(SodaScsProtectedAccounts::class, 'isProtected')]
+#[Group('soda_scs_manager')]
 class SodaScsProtectedAccountsTest extends UnitTestCase {
 
   /**
    * The site administrator is protected whatever its name.
-   *
-   * @covers ::isProtected
    */
   public function testUidOneIsProtected(): void {
     $this->assertTrue(SodaScsProtectedAccounts::isProtected($this->account(1, 'admin')));
@@ -29,8 +28,6 @@ class SodaScsProtectedAccountsTest extends UnitTestCase {
 
   /**
    * The demo service account is protected by its name.
-   *
-   * @covers ::isProtected
    */
   public function testDemoServiceAccountIsProtected(): void {
     $this->assertTrue(SodaScsProtectedAccounts::isProtected($this->account(42, 'scs_demo')));
@@ -38,8 +35,6 @@ class SodaScsProtectedAccountsTest extends UnitTestCase {
 
   /**
    * An ordinary account is not protected.
-   *
-   * @covers ::isProtected
    */
   public function testOrdinaryAccountIsNotProtected(): void {
     $this->assertFalse(SodaScsProtectedAccounts::isProtected($this->account(42, 'alice')));
@@ -47,8 +42,6 @@ class SodaScsProtectedAccountsTest extends UnitTestCase {
 
   /**
    * The name is matched exactly, not as a prefix.
-   *
-   * @covers ::isProtected
    */
   public function testSimilarNameIsNotProtected(): void {
     $this->assertFalse(SodaScsProtectedAccounts::isProtected($this->account(42, 'scs_demo2')));
@@ -57,8 +50,6 @@ class SodaScsProtectedAccountsTest extends UnitTestCase {
 
   /**
    * The anonymous user (uid 0) is not protected, even with the demo name.
-   *
-   * @covers ::isProtected
    */
   public function testAnonymousUserIsNotProtected(): void {
     $this->assertFalse(SodaScsProtectedAccounts::isProtected($this->account(0, 'scs_demo')));

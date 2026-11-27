@@ -12,18 +12,22 @@ use Drupal\soda_scs_manager\Service\NextcloudMountCredentialsStore;
 use Drupal\soda_scs_manager\Service\NextcloudMounterClient;
 use Drupal\soda_scs_manager\Service\NextcloudMountManager;
 use Drupal\Tests\UnitTestCase;
+use PHPUnit\Framework\Attributes\CoversMethod;
+use PHPUnit\Framework\Attributes\DataProvider;
+use PHPUnit\Framework\Attributes\Group;
 use Psr\Log\LoggerInterface;
 
 /**
- * @coversDefaultClass \Drupal\soda_scs_manager\Service\NextcloudMountManager
- * @group soda_scs_manager
+ * Tests the machine names of NextcloudMountManager.
  */
+#[CoversMethod(NextcloudMountManager::class, 'machineNameForUser')]
+#[Group('soda_scs_manager')]
 class NextcloudMountManagerMachineNameTest extends UnitTestCase {
 
   /**
-   * @covers ::machineNameForUser
-   * @dataProvider machineNameProvider
+   * Tests machineNameForUser().
    */
+  #[DataProvider('machineNameProvider')]
   public function testMachineNameForUser(string $accountName, int $uid, string $expected): void {
     $account = $this->createMock(AccountInterface::class);
     $account->method('getAccountName')->willReturn($accountName);

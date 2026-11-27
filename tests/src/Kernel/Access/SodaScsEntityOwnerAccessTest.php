@@ -8,12 +8,12 @@ use Drupal\soda_scs_manager\Access\SodaScsComponentAccessControlHandler;
 use Drupal\soda_scs_manager\Access\SodaScsStackAccessControlHandler;
 use Drupal\Tests\soda_scs_manager\Kernel\SodaScsKernelTestBase;
 use Drupal\user\Entity\Role;
+use PHPUnit\Framework\Attributes\Group;
 
 /**
  * Tests owner-based access for components, stacks, and snapshots.
- *
- * @group soda_scs_manager
  */
+#[Group('soda_scs_manager')]
 class SodaScsEntityOwnerAccessTest extends SodaScsKernelTestBase {
 
   /**

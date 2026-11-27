@@ -9,12 +9,20 @@ use Drupal\soda_scs_manager\Entity\SodaScsProjectInterface;
 use Drupal\soda_scs_manager\Helpers\SodaScsJupyterHelpers;
 use Drupal\soda_scs_manager\Service\SodaScsJupyterHubApiClient;
 use Drupal\Tests\UnitTestCase;
+use PHPUnit\Framework\Attributes\CoversMethod;
+use PHPUnit\Framework\Attributes\Group;
 use Psr\Log\LoggerInterface;
 
 /**
- * @coversDefaultClass \Drupal\soda_scs_manager\Helpers\SodaScsJupyterHelpers
- * @group soda_scs_manager
+ * Tests SodaScsJupyterHelpers.
  */
+#[CoversMethod(SodaScsJupyterHelpers::class, 'buildProjectLauncherUrl')]
+#[CoversMethod(SodaScsJupyterHelpers::class, 'projectServerUserName')]
+#[CoversMethod(SodaScsJupyterHelpers::class, 'projectVolumeName')]
+#[CoversMethod(SodaScsJupyterHelpers::class, 'startProjectServer')]
+#[CoversMethod(SodaScsJupyterHelpers::class, 'stopProjectServer')]
+#[CoversMethod(SodaScsJupyterHelpers::class, 'removeProjectServerUser')]
+#[Group('soda_scs_manager')]
 class SodaScsJupyterHelpersTest extends UnitTestCase {
 
   /**
@@ -43,7 +51,7 @@ class SodaScsJupyterHelpersTest extends UnitTestCase {
   }
 
   /**
-   * @covers ::buildProjectLauncherUrl
+   * Tests buildProjectLauncherUrl().
    */
   public function testBuildProjectLauncherUrl(): void {
     $this->assertSame(
@@ -53,8 +61,7 @@ class SodaScsJupyterHelpersTest extends UnitTestCase {
   }
 
   /**
-   * @covers ::projectServerUserName
-   * @covers ::projectVolumeName
+   * Tests project names.
    */
   public function testProjectNames(): void {
     $project = $this->createProject('10027');
@@ -63,7 +70,7 @@ class SodaScsJupyterHelpersTest extends UnitTestCase {
   }
 
   /**
-   * @covers ::startProjectServer
+   * Tests that startProjectServer() starts the project user.
    */
   public function testStartProjectServerStartsTheProjectUser(): void {
     $hubApi = $this->createMock(SodaScsJupyterHubApiClient::class);
@@ -75,7 +82,7 @@ class SodaScsJupyterHelpersTest extends UnitTestCase {
   }
 
   /**
-   * @covers ::stopProjectServer
+   * Tests hub errors become failures.
    */
   public function testHubErrorsBecomeFailures(): void {
     $hubApi = $this->createMock(SodaScsJupyterHubApiClient::class);
@@ -88,7 +95,7 @@ class SodaScsJupyterHelpersTest extends UnitTestCase {
   }
 
   /**
-   * @covers ::removeProjectServerUser
+   * Tests remove keeps the user when the server does not stop.
    */
   public function testRemoveKeepsTheUserWhenTheServerDoesNotStop(): void {
     $hubApi = $this->createMock(SodaScsJupyterHubApiClient::class);

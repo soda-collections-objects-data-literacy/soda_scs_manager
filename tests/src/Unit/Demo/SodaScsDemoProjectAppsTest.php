@@ -12,22 +12,22 @@ use Drupal\soda_scs_manager\Demo\SodaScsDemoProjectApps;
 use Drupal\soda_scs_manager\Entity\SodaScsProjectInterface;
 use Drupal\soda_scs_manager\Entity\SodaScsStackInterface;
 use Drupal\Tests\UnitTestCase;
+use PHPUnit\Framework\Attributes\CoversMethod;
+use PHPUnit\Framework\Attributes\Group;
 
 /**
  * Which WissKI stacks of a project the demo inventory returns.
  *
  * Only stacks of the project owner that belong to this project alone count
  * as the demo's; they are the ones deleting a demo project removes.
- *
- * @coversDefaultClass \Drupal\soda_scs_manager\Demo\SodaScsDemoProjectApps
- * @group soda_scs_manager
  */
+#[CoversMethod(SodaScsDemoProjectApps::class, 'demoWisskiStacks')]
+#[CoversMethod(SodaScsDemoProjectApps::class, 'wisskiStack')]
+#[Group('soda_scs_manager')]
 class SodaScsDemoProjectAppsTest extends UnitTestCase {
 
   /**
    * Every WissKI stack of the project comes back, not only the first.
-   *
-   * @covers ::demoWisskiStacks
    */
   public function testDemoWisskiStacksReturnsEveryStackOfTheProject(): void {
     $first = $this->stack(1, [3]);
@@ -40,8 +40,6 @@ class SodaScsDemoProjectAppsTest extends UnitTestCase {
 
   /**
    * A stack of another user in the demo project is not the demo's.
-   *
-   * @covers ::demoWisskiStacks
    */
   public function testDemoWisskiStacksSkipsStackOfAnotherOwner(): void {
     $demo = $this->stack(1, [3]);
@@ -52,8 +50,6 @@ class SodaScsDemoProjectAppsTest extends UnitTestCase {
 
   /**
    * A stack that is part of another project as well is not the demo's.
-   *
-   * @covers ::demoWisskiStacks
    */
   public function testDemoWisskiStacksSkipsStackSharedWithAnotherProject(): void {
     $demo = $this->stack(1, [3]);
@@ -64,8 +60,6 @@ class SodaScsDemoProjectAppsTest extends UnitTestCase {
 
   /**
    * A project without an owner has no demo stacks.
-   *
-   * @covers ::demoWisskiStacks
    */
   public function testDemoWisskiStacksIsEmptyWithoutOwner(): void {
     $this->assertSame([], $this->apps([4 => $this->stack(0, [3])])->demoWisskiStacks($this->project(3, 0)));
@@ -73,8 +67,6 @@ class SodaScsDemoProjectAppsTest extends UnitTestCase {
 
   /**
    * The query is limited to the WissKI bundle and the project, ordered by id.
-   *
-   * @covers ::demoWisskiStacks
    */
   public function testDemoWisskiStacksQueriesWisskiBundleOfTheProject(): void {
     $conditions = [];
@@ -102,8 +94,6 @@ class SodaScsDemoProjectAppsTest extends UnitTestCase {
 
   /**
    * A project without a WissKI stack gives an empty list.
-   *
-   * @covers ::demoWisskiStacks
    */
   public function testDemoWisskiStacksIsEmptyWithoutStacks(): void {
     $this->assertSame([], $this->apps([])->demoWisskiStacks($this->project(3)));
@@ -111,8 +101,6 @@ class SodaScsDemoProjectAppsTest extends UnitTestCase {
 
   /**
    * The single-stack lookup still returns the first of several stacks.
-   *
-   * @covers ::wisskiStack
    */
   public function testWisskiStackReturnsFirstOfSeveral(): void {
     $first = $this->createMock(SodaScsStackInterface::class);

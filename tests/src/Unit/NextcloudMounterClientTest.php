@@ -10,12 +10,22 @@ use GuzzleHttp\ClientInterface;
 use GuzzleHttp\Exception\ConnectException;
 use GuzzleHttp\Psr7\Request;
 use GuzzleHttp\Psr7\Response;
+use PHPUnit\Framework\Attributes\CoversMethod;
+use PHPUnit\Framework\Attributes\Group;
 use Psr\Log\LoggerInterface;
 
 /**
- * @coversDefaultClass \Drupal\soda_scs_manager\Service\NextcloudMounterClient
- * @group soda_scs_manager
+ * Tests NextcloudMounterClient.
  */
+#[CoversMethod(NextcloudMounterClient::class, 'obscure')]
+#[CoversMethod(NextcloudMounterClient::class, 'listMounts')]
+#[CoversMethod(NextcloudMounterClient::class, 'isListed')]
+#[CoversMethod(NextcloudMounterClient::class, 'forgetDirectoryCache')]
+#[CoversMethod(NextcloudMounterClient::class, 'sidecarMountPoint')]
+#[CoversMethod(NextcloudMounterClient::class, 'hostMountPath')]
+#[CoversMethod(NextcloudMounterClient::class, 'ensureMountDirectory')]
+#[CoversMethod(NextcloudMounterClient::class, 'createMountDirectoryInSidecar')]
+#[Group('soda_scs_manager')]
 class NextcloudMounterClientTest extends UnitTestCase {
 
   /**
@@ -34,9 +44,7 @@ class NextcloudMounterClientTest extends UnitTestCase {
   }
 
   /**
-   * @covers ::obscure
-   * @covers ::listMounts
-   * @covers ::isListed
+   * Tests that obscure() and list mounts.
    */
   public function testObscureAndListMounts(): void {
     putenv('NEXTCLOUD_MOUNTER_RC_URL=http://mounter.test:5572');
@@ -73,7 +81,7 @@ class NextcloudMounterClientTest extends UnitTestCase {
   }
 
   /**
-   * @covers ::forgetDirectoryCache
+   * Tests that forgetDirectoryCache() targets the mounts VFS.
    */
   public function testForgetDirectoryCacheTargetsTheMountsVfs(): void {
     putenv('NEXTCLOUD_MOUNTER_RC_URL=http://mounter.test:5572');
@@ -107,8 +115,7 @@ class NextcloudMounterClientTest extends UnitTestCase {
   }
 
   /**
-   * @covers ::sidecarMountPoint
-   * @covers ::hostMountPath
+   * Tests paths.
    */
   public function testPaths(): void {
     $http = $this->createMock(ClientInterface::class);
@@ -119,7 +126,7 @@ class NextcloudMounterClientTest extends UnitTestCase {
   }
 
   /**
-   * @covers ::ensureMountDirectory
+   * Tests that ensureMountDirectory() creates directory without RC call.
    */
   public function testEnsureMountDirectoryCreatesDirectoryWithoutRcCall(): void {
     $root = $this->createMountsRoot(0755);
@@ -134,7 +141,7 @@ class NextcloudMounterClientTest extends UnitTestCase {
   }
 
   /**
-   * @covers ::ensureMountDirectory
+   * Tests that ensureMountDirectory() ignores existing directory.
    */
   public function testEnsureMountDirectoryIgnoresExistingDirectory(): void {
     $root = $this->createMountsRoot(0755);
@@ -149,8 +156,9 @@ class NextcloudMounterClientTest extends UnitTestCase {
   }
 
   /**
-   * @covers ::ensureMountDirectory
-   * @covers ::createMountDirectoryInSidecar
+   * Tests ensureMountDirectory().
+   *
+   * Falls back to sidecar when root is read only.
    */
   public function testEnsureMountDirectoryFallsBackToSidecarWhenRootIsReadOnly(): void {
     $root = $this->createMountsRoot(0555);
@@ -178,8 +186,7 @@ class NextcloudMounterClientTest extends UnitTestCase {
   }
 
   /**
-   * @covers ::ensureMountDirectory
-   * @covers ::createMountDirectoryInSidecar
+   * Tests that ensureMountDirectory() sends path so far for nested segments.
    */
   public function testEnsureMountDirectorySendsPathSoFarForNestedSegments(): void {
     $root = $this->createMountsRoot(0755);
@@ -203,8 +210,7 @@ class NextcloudMounterClientTest extends UnitTestCase {
   }
 
   /**
-   * @covers ::ensureMountDirectory
-   * @covers ::createMountDirectoryInSidecar
+   * Tests that ensureMountDirectory() throws with previous when RC call fails.
    */
   public function testEnsureMountDirectoryThrowsWithPreviousWhenRcCallFails(): void {
     $root = $this->createMountsRoot(0555);
@@ -228,8 +234,7 @@ class NextcloudMounterClientTest extends UnitTestCase {
   }
 
   /**
-   * @covers ::ensureMountDirectory
-   * @covers ::createMountDirectoryInSidecar
+   * Tests that ensureMountDirectory() throws when RC answer is not JSON.
    */
   public function testEnsureMountDirectoryThrowsWhenRcAnswerIsNotJson(): void {
     $root = $this->createMountsRoot(0555);
@@ -245,8 +250,9 @@ class NextcloudMounterClientTest extends UnitTestCase {
   }
 
   /**
-   * @covers ::ensureMountDirectory
-   * @covers ::createMountDirectoryInSidecar
+   * Tests ensureMountDirectory().
+   *
+   * Throws when sidecar answers but directory is missing.
    */
   public function testEnsureMountDirectoryThrowsWhenSidecarAnswersButDirectoryIsMissing(): void {
     $root = $this->createMountsRoot(0555);

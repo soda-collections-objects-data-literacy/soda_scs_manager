@@ -6,15 +6,18 @@ namespace Drupal\Tests\soda_scs_manager\Unit\Helpers;
 
 use Drupal\soda_scs_manager\Helpers\SodaScsWebprotegeHelpers;
 use Drupal\Tests\UnitTestCase;
+use PHPUnit\Framework\Attributes\CoversMethod;
+use PHPUnit\Framework\Attributes\Group;
 
 /**
- * @coversDefaultClass \Drupal\soda_scs_manager\Helpers\SodaScsWebprotegeHelpers
- * @group soda_scs_manager
+ * Tests the ontology handling of SodaScsWebprotegeHelpers.
  */
+#[CoversMethod(SodaScsWebprotegeHelpers::class, 'removeImportDeclarations')]
+#[Group('soda_scs_manager')]
 class SodaScsWebprotegeHelpersOntologyTest extends UnitTestCase {
 
   /**
-   * @covers ::removeImportDeclarations
+   * Tests that removeImportDeclarations() drops only import lines.
    */
   public function testRemoveImportDeclarationsDropsOnlyImportLines(): void {
     $document = <<<'OFN'

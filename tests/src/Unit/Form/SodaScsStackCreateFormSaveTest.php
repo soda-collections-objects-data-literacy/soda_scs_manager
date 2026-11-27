@@ -16,6 +16,9 @@ use Drupal\soda_scs_manager\Form\SodaScsStackCreateForm;
 use Drupal\soda_scs_manager\StackActions\SodaScsStackActionsInterface;
 use Drupal\Tests\soda_scs_manager\Unit\SodaScsCreatePathTestTrait;
 use Drupal\Tests\UnitTestCase;
+use PHPUnit\Framework\Attributes\CoversMethod;
+use PHPUnit\Framework\Attributes\DataProvider;
+use PHPUnit\Framework\Attributes\Group;
 use Prophecy\Argument;
 use Prophecy\PhpUnit\ProphecyTrait;
 use Symfony\Component\HttpFoundation\Request;
@@ -26,10 +29,9 @@ use Symfony\Component\HttpFoundation\RequestStack;
  *
  * Issue 3637658: one message with a translated reason; the original exception
  * is logged; raw strings and exception texts never reach the user.
- *
- * @coversDefaultClass \Drupal\soda_scs_manager\Form\SodaScsStackCreateForm
- * @group soda_scs_manager
  */
+#[CoversMethod(SodaScsStackCreateForm::class, 'save')]
+#[Group('soda_scs_manager')]
 class SodaScsStackCreateFormSaveTest extends UnitTestCase {
 
   use ProphecyTrait;
@@ -119,8 +121,6 @@ class SodaScsStackCreateFormSaveTest extends UnitTestCase {
 
   /**
    * A translated reason is shown once, with the label.
-   *
-   * @covers ::save
    */
   public function testSaveShowsTranslatedReasonOnce(): void {
     $reason = new TranslatableMarkup('Database: A database with this application name already exists. Choose another name.', [], [], $this->getStringTranslationStub());
@@ -144,8 +144,6 @@ class SodaScsStackCreateFormSaveTest extends UnitTestCase {
 
   /**
    * The original exception is logged with machine name, bundle and user.
-   *
-   * @covers ::save
    */
   public function testSaveLogsOriginalExceptionWithContext(): void {
     $this->stackActions->createStack(Argument::any())->willReturn([
@@ -168,8 +166,6 @@ class SodaScsStackCreateFormSaveTest extends UnitTestCase {
 
   /**
    * A plain string message is never shown, only the generic reason.
-   *
-   * @covers ::save
    */
   public function testSaveDoesNotShowRawStringMessage(): void {
     $this->stackActions->createStack(Argument::any())->willReturn([
@@ -191,11 +187,8 @@ class SodaScsStackCreateFormSaveTest extends UnitTestCase {
 
   /**
    * A failure without error details is logged with a descriptive message.
-   *
-   * @covers ::save
-   *
-   * @dataProvider missingErrorProvider
    */
+  #[DataProvider('missingErrorProvider')]
   public function testSaveNeverLogsUnknownError(array $createResult): void {
     $this->stackActions->createStack(Argument::any())->willReturn($createResult);
     $this->logger->log('error', Argument::type('string'), Argument::that(
@@ -225,8 +218,6 @@ class SodaScsStackCreateFormSaveTest extends UnitTestCase {
 
   /**
    * An exception thrown by createStack() is caught, logged and not shown.
-   *
-   * @covers ::save
    */
   public function testSaveCatchesExceptionOfCreateStack(): void {
     $failure = new \RuntimeException('Bundle info missing at db.internal.');
@@ -247,8 +238,6 @@ class SodaScsStackCreateFormSaveTest extends UnitTestCase {
 
   /**
    * A successful creation redirects and shows no error.
-   *
-   * @covers ::save
    */
   public function testSaveRedirectsToDashboardOnSuccess(): void {
     $this->stackActions->createStack(Argument::any())->willReturn([
@@ -267,11 +256,8 @@ class SodaScsStackCreateFormSaveTest extends UnitTestCase {
 
   /**
    * The form stores the state of the default data model checkbox.
-   *
-   * @covers ::save
-   *
-   * @dataProvider withDefaultDataModelProvider
    */
+  #[DataProvider('withDefaultDataModelProvider')]
   public function testSaveStoresWithDefaultDataModelFromFormState(array $postedValue, bool $expected): void {
     $this->stack->hasField('withDefaultDataModel')->willReturn(TRUE);
     $this->stack->set('withDefaultDataModel', $expected)->shouldBeCalledOnce();
@@ -306,8 +292,6 @@ class SodaScsStackCreateFormSaveTest extends UnitTestCase {
 
   /**
    * A stack without the field is left alone.
-   *
-   * @covers ::save
    */
   public function testSaveDoesNotSetWithDefaultDataModelWhenStackHasNoField(): void {
     $this->stack->hasField('withDefaultDataModel')->willReturn(FALSE);

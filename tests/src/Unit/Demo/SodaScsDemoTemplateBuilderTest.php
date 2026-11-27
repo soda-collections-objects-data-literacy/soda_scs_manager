@@ -22,6 +22,8 @@ use Drupal\soda_scs_manager\Helpers\SodaScsVolumeArchiveHelpers;
 use Drupal\soda_scs_manager\Helpers\SodaScsWebprotegeHelpers;
 use Drupal\soda_scs_manager\ValueObject\SodaScsResult;
 use Drupal\Tests\UnitTestCase;
+use PHPUnit\Framework\Attributes\CoversMethod;
+use PHPUnit\Framework\Attributes\Group;
 use PHPUnit\Framework\MockObject\MockObject;
 use Psr\Log\LoggerInterface;
 
@@ -32,10 +34,10 @@ use Psr\Log\LoggerInterface;
  * (the export stops its container), and the Jupyter home export leaves the
  * server secrets, history and caches of the source user out. All services
  * are doubles; the artifacts go to a temporary directory.
- *
- * @coversDefaultClass \Drupal\soda_scs_manager\Demo\SodaScsDemoTemplateBuilder
- * @group soda_scs_manager
  */
+#[CoversMethod(SodaScsDemoTemplateBuilder::class, 'build')]
+#[CoversMethod(SodaScsDemoTemplateBuilder::class, 'exportJupyterHome')]
+#[Group('soda_scs_manager')]
 class SodaScsDemoTemplateBuilderTest extends UnitTestCase {
 
   /**
@@ -137,8 +139,6 @@ class SodaScsDemoTemplateBuilderTest extends UnitTestCase {
 
   /**
    * A source WissKI in its installation is not exported or stopped.
-   *
-   * @covers ::build
    */
   public function testBuildThrowsBeforeAnyStopWhenInstallIsNotComplete(): void {
     $this->useSource($this->createStack('Source WissKI'), NULL);
@@ -156,8 +156,6 @@ class SodaScsDemoTemplateBuilderTest extends UnitTestCase {
 
   /**
    * The unfinished install marks the template failed and logs the reason.
-   *
-   * @covers ::build
    */
   public function testBuildMarksTemplateFailedWhenInstallIsNotComplete(): void {
     $this->useSource($this->createStack('Source WissKI'), NULL);
@@ -184,8 +182,6 @@ class SodaScsDemoTemplateBuilderTest extends UnitTestCase {
 
   /**
    * A finished install lets the export start.
-   *
-   * @covers ::build
    */
   public function testBuildExportsWisskiWhenInstallIsComplete(): void {
     $stack = $this->createStack('Source WissKI');
@@ -203,8 +199,6 @@ class SodaScsDemoTemplateBuilderTest extends UnitTestCase {
 
   /**
    * The base URIs the WissKI export returns land in the manifest.
-   *
-   * @covers ::build
    */
   public function testBuildStoresTheBaseUrisOfTheWisskiInTheManifest(): void {
     $this->useSuccessfulWisskiExport();
@@ -220,8 +214,6 @@ class SodaScsDemoTemplateBuilderTest extends UnitTestCase {
 
   /**
    * The file manifest.json holds the manifest with the format version.
-   *
-   * @covers ::build
    */
   public function testBuildWritesManifestFileWithFormatVersionAndBases(): void {
     $this->useSuccessfulWisskiExport();
@@ -239,8 +231,6 @@ class SodaScsDemoTemplateBuilderTest extends UnitTestCase {
 
   /**
    * The file manifest.json is not part of its own checksums; the files are.
-   *
-   * @covers ::build
    */
   public function testBuildKeepsManifestFileOutOfTheChecksums(): void {
     $this->useSuccessfulWisskiExport();
@@ -258,8 +248,6 @@ class SodaScsDemoTemplateBuilderTest extends UnitTestCase {
 
   /**
    * A manifest.json that cannot be written fails the build.
-   *
-   * @covers ::build
    */
   public function testBuildFailsWhenManifestFileCannotBeWritten(): void {
     $stack = $this->createStack('Source WissKI');
@@ -336,9 +324,6 @@ class SodaScsDemoTemplateBuilderTest extends UnitTestCase {
 
   /**
    * The Jupyter home archive excludes secrets, history and caches.
-   *
-   * @covers ::build
-   * @covers ::exportJupyterHome
    */
   public function testBuildExcludesJupyterSecretsAndCachesFromTheHomeExport(): void {
     $this->useSource(NULL, $this->createStack('Jupyter'));
@@ -369,9 +354,6 @@ class SodaScsDemoTemplateBuilderTest extends UnitTestCase {
 
   /**
    * A failing archive step keeps the template from being ready.
-   *
-   * @covers ::build
-   * @covers ::exportJupyterHome
    */
   public function testBuildFailsWhenTheJupyterHomeExportFails(): void {
     $this->useSource(NULL, $this->createStack('Jupyter'));

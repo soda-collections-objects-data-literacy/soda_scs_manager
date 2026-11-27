@@ -21,17 +21,24 @@ use Drupal\soda_scs_manager\Entity\SodaScsProjectInterface;
 use Drupal\soda_scs_manager\Entity\SodaScsStackInterface;
 use Drupal\soda_scs_manager\Helpers\SodaScsProgressHelper;
 use Drupal\Tests\UnitTestCase;
+use PHPUnit\Framework\Attributes\CoversMethod;
+use PHPUnit\Framework\Attributes\Group;
 
 /**
- * @coversDefaultClass \Drupal\soda_scs_manager\Demo\SodaScsDemoStatusBuilder
- * @group soda_scs_manager
+ * Tests SodaScsDemoStatusBuilder.
  */
+#[CoversMethod(SodaScsDemoStatusBuilder::class, 'data')]
+#[CoversMethod(SodaScsDemoStatusBuilder::class, 'jobLine')]
+#[CoversMethod(SodaScsDemoStatusBuilder::class, 'stepLabel')]
+#[CoversMethod(SodaScsDemoStatusBuilder::class, 'waitingSince')]
+#[CoversMethod(SodaScsDemoStatusBuilder::class, 'waitingLine')]
+#[CoversMethod(SodaScsDemoStatusBuilder::class, 'failureReason')]
+#[CoversMethod(SodaScsDemoStatusBuilder::class, 'build')]
+#[Group('soda_scs_manager')]
 class SodaScsDemoStatusBuilderTest extends UnitTestCase {
 
   /**
    * Busy status lists only applications that are not ready yet.
-   *
-   * @covers ::data
    */
   public function testDataListsPendingApps(): void {
     $template = $this->createMock(SodaScsDemoTemplateInterface::class);
@@ -93,8 +100,6 @@ class SodaScsDemoStatusBuilderTest extends UnitTestCase {
 
   /**
    * An application that already exists and whose step has finished is omitted.
-   *
-   * @covers ::data
    */
   public function testDataOmitsReadyApps(): void {
     $template = $this->createMock(SodaScsDemoTemplateInterface::class);
@@ -151,8 +156,6 @@ class SodaScsDemoStatusBuilderTest extends UnitTestCase {
 
   /**
    * Jupyter is done once it exists, and WebProtégé only stays while importing.
-   *
-   * @covers ::data
    */
   public function testDataTreatsExistingJupyterAndIdleWebprotegeAsReady(): void {
     $template = $this->createMock(SodaScsDemoTemplateInterface::class);
@@ -206,9 +209,6 @@ class SodaScsDemoStatusBuilderTest extends UnitTestCase {
 
   /**
    * A queued job says since when it waits for a worker.
-   *
-   * @covers ::data
-   * @covers ::jobLine
    */
   public function testJobLineQueuedShowsCreationTime(): void {
     $line = $this->jobLine(['created' => 1000, 'status' => 'queued', 'updated' => 1500], []);
@@ -218,8 +218,6 @@ class SodaScsDemoStatusBuilderTest extends UnitTestCase {
 
   /**
    * A running job shows the last step it reported.
-   *
-   * @covers ::jobLine
    */
   public function testJobLineRunningShowsLastStep(): void {
     $line = $this->jobLine(['status' => 'running', 'updated' => 2000], [
@@ -232,8 +230,6 @@ class SodaScsDemoStatusBuilderTest extends UnitTestCase {
 
   /**
    * The stored source step is shown in the viewer's language.
-   *
-   * @covers ::stepLabel
    */
   public function testJobLineRunningTranslatesStepForViewer(): void {
     $line = $this->jobLine(['status' => 'running', 'updated' => 2000], [
@@ -247,8 +243,6 @@ class SodaScsDemoStatusBuilderTest extends UnitTestCase {
    * A running job without a step shows since when it runs.
    *
    * Blank steps count as none.
-   *
-   * @covers ::jobLine
    */
   public function testJobLineRunningWithoutStepShowsUpdateTime(): void {
     $line = $this->jobLine(['status' => 'running', 'updated' => 2000], [
@@ -262,8 +256,6 @@ class SodaScsDemoStatusBuilderTest extends UnitTestCase {
    * A waiting job shows its first wait step and the next attempt.
    *
    * The next attempt is a minute after the last update.
-   *
-   * @covers ::jobLine
    */
   public function testJobLineWaitingShowsFirstWaitStepAndNextAttempt(): void {
     $line = $this->jobLine(['status' => 'waiting', 'updated' => 2000], [
@@ -278,8 +270,6 @@ class SodaScsDemoStatusBuilderTest extends UnitTestCase {
 
   /**
    * Without a wait step the waiting job counts from its last update.
-   *
-   * @covers ::jobLine
    */
   public function testJobLineWaitingWithoutWaitStepFallsBackToUpdateTime(): void {
     $line = $this->jobLine(['status' => 'waiting', 'updated' => 2000], [
@@ -291,8 +281,6 @@ class SodaScsDemoStatusBuilderTest extends UnitTestCase {
 
   /**
    * A wait step stored translated by an older job still counts.
-   *
-   * @covers ::waitingSince
    */
   public function testJobLineWaitingFindsWaitStepStoredTranslated(): void {
     $line = $this->jobLine(['status' => 'waiting', 'updated' => 2000], [
@@ -304,8 +292,6 @@ class SodaScsDemoStatusBuilderTest extends UnitTestCase {
 
   /**
    * A next attempt that is a full retry delay overdue is left out.
-   *
-   * @covers ::waitingLine
    */
   public function testJobLineWaitingDropsOverdueNextAttempt(): void {
     $steps = [['created' => 1600.0, 'message' => 'Waiting for the WissKI installation to finish']];
@@ -322,9 +308,6 @@ class SodaScsDemoStatusBuilderTest extends UnitTestCase {
 
   /**
    * A failed job shows the stored reason, translated.
-   *
-   * @covers ::failureReason
-   * @covers ::jobLine
    */
   public function testJobLineFailedShowsStoredReason(): void {
     $translations = [
@@ -344,8 +327,6 @@ class SodaScsDemoStatusBuilderTest extends UnitTestCase {
 
   /**
    * A failed job whose last step is a setup step names that step.
-   *
-   * @covers ::failureReason
    */
   public function testJobLineFailedAtStepNamesTranslatedStep(): void {
     $line = $this->jobLine(['status' => 'failed', 'updated' => 2000], [
@@ -360,8 +341,6 @@ class SodaScsDemoStatusBuilderTest extends UnitTestCase {
 
   /**
    * A reason stored as text by an older job is shown as it is.
-   *
-   * @covers ::failureReason
    */
   public function testJobLineFailedShowsUnknownLastStepAsIs(): void {
     $line = $this->jobLine(['status' => 'failed', 'updated' => 2000], [
@@ -373,8 +352,6 @@ class SodaScsDemoStatusBuilderTest extends UnitTestCase {
 
   /**
    * A failed job without a step shows when it failed.
-   *
-   * @covers ::jobLine
    */
   public function testJobLineFailedWithoutStepShowsUpdateTime(): void {
     $line = $this->jobLine(['status' => 'failed', 'updated' => 2000], []);
@@ -384,8 +361,6 @@ class SodaScsDemoStatusBuilderTest extends UnitTestCase {
 
   /**
    * A completed job and an unknown status have no job line.
-   *
-   * @covers ::jobLine
    */
   public function testJobLineIsEmptyForCompletedAndUnknownStatus(): void {
     $steps = [['created' => 1500.0, 'message' => 'The demo project is ready.']];
@@ -397,8 +372,6 @@ class SodaScsDemoStatusBuilderTest extends UnitTestCase {
 
   /**
    * A project without an operation or with an unreadable one has no job line.
-   *
-   * @covers ::jobLine
    */
   public function testJobLineIsEmptyWithoutOperation(): void {
     $this->assertSame('', $this->jobLine(NULL, []));
@@ -407,8 +380,6 @@ class SodaScsDemoStatusBuilderTest extends UnitTestCase {
 
   /**
    * The panel and badge render array carries the job line.
-   *
-   * @covers ::build
    */
   public function testBuildPassesJobLineToRenderArray(): void {
     $urlGenerator = $this->createMock(UrlGeneratorInterface::class);
@@ -443,8 +414,6 @@ class SodaScsDemoStatusBuilderTest extends UnitTestCase {
 
   /**
    * The reset action is offered when the reset route grants the viewer access.
-   *
-   * @covers ::build
    */
   public function testBuildOffersResetUrlWhenRouteGrantsAccess(): void {
     $build = $this->buildResetStatus(TRUE);
@@ -454,8 +423,6 @@ class SodaScsDemoStatusBuilderTest extends UnitTestCase {
 
   /**
    * No reset action when the reset route denies the viewer access.
-   *
-   * @covers ::build
    */
   public function testBuildOmitsResetUrlWhenRouteDeniesAccess(): void {
     $build = $this->buildResetStatus(FALSE);
@@ -465,8 +432,6 @@ class SodaScsDemoStatusBuilderTest extends UnitTestCase {
 
   /**
    * No reset action while a queue job is running, even with access.
-   *
-   * @covers ::build
    */
   public function testBuildOmitsResetUrlWhileBusy(): void {
     $build = $this->buildResetStatus(TRUE, 'resetting');
@@ -476,8 +441,6 @@ class SodaScsDemoStatusBuilderTest extends UnitTestCase {
 
   /**
    * No reset action without an active template version, even with access.
-   *
-   * @covers ::build
    */
   public function testBuildOmitsResetUrlWithoutActiveTemplate(): void {
     $build = $this->buildResetStatus(TRUE, 'ready', FALSE);

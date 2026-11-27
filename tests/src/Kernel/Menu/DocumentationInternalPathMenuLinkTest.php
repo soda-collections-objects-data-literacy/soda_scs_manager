@@ -6,12 +6,12 @@ namespace Drupal\Tests\soda_scs_manager\Kernel\Menu;
 
 use Drupal\soda_scs_manager\Plugin\Menu\DocumentationInternalPathMenuLink;
 use Drupal\Tests\soda_scs_manager\Kernel\SodaScsKernelTestBase;
+use PHPUnit\Framework\Attributes\Group;
 
 /**
  * Tests the documentation menu link before the documentation book exists.
- *
- * @group soda_scs_manager
  */
+#[Group('soda_scs_manager')]
 final class DocumentationInternalPathMenuLinkTest extends SodaScsKernelTestBase {
 
   /**

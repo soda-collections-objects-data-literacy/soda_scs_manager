@@ -14,7 +14,9 @@ use Drupal\openid_connect\OpenIDConnectSessionInterface;
 use Drupal\openid_connect\Plugin\OpenIDConnectClientInterface;
 use Drupal\soda_scs_manager\Controller\SodaScsKeycloakLoginRedirectController;
 use Drupal\Tests\UnitTestCase;
+use PHPUnit\Framework\Attributes\CoversMethod;
 use PHPUnit\Framework\Attributes\DataProvider;
+use PHPUnit\Framework\Attributes\Group;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\RedirectResponse;
 use Symfony\Component\HttpFoundation\Request;
@@ -25,10 +27,10 @@ use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
  *
  * Background requests of an expired session (health and notification polling)
  * must get a plain JSON 403 instead of a Keycloak authorize redirect.
- *
- * @group soda_scs_manager
- * @coversDefaultClass \Drupal\soda_scs_manager\Controller\SodaScsKeycloakLoginRedirectController
  */
+#[CoversMethod(SodaScsKeycloakLoginRedirectController::class, 'redirectToKeycloak')]
+#[CoversMethod(SodaScsKeycloakLoginRedirectController::class, 'isBackgroundRequest')]
+#[Group('soda_scs_manager')]
 class SodaScsKeycloakLoginRedirectControllerTest extends UnitTestCase {
 
   private const CLIENT_ID = 'test_client';
@@ -117,24 +119,21 @@ class SodaScsKeycloakLoginRedirectControllerTest extends UnitTestCase {
   }
 
   /**
-   * @covers ::redirectToKeycloak
-   * @covers ::isBackgroundRequest
+   * Tests XML HTTP request gets JSON 403 without authorize request.
    */
   public function testXmlHttpRequestGetsJson403WithoutAuthorizeRequest(): void {
     $this->assertBackgroundRequestGetsJson403(['HTTP_X_REQUESTED_WITH' => 'XMLHttpRequest']);
   }
 
   /**
-   * @covers ::redirectToKeycloak
-   * @covers ::isBackgroundRequest
+   * Tests JSON accept request gets JSON 403 without authorize request.
    */
   public function testJsonAcceptRequestGetsJson403WithoutAuthorizeRequest(): void {
     $this->assertBackgroundRequestGetsJson403(['HTTP_ACCEPT' => 'application/json']);
   }
 
   /**
-   * @covers ::redirectToKeycloak
-   * @covers ::isBackgroundRequest
+   * Tests JSON accept with quality fallback still gets JSON 403.
    */
   public function testJsonAcceptWithQualityFallbackStillGetsJson403(): void {
     $this->assertBackgroundRequestGetsJson403(['HTTP_ACCEPT' => 'application/json, text/plain, */*']);
@@ -145,9 +144,6 @@ class SodaScsKeycloakLoginRedirectControllerTest extends UnitTestCase {
    *
    * @param array<string, string> $server
    *   Server variables of a browser navigation.
-   *
-   * @covers ::redirectToKeycloak
-   * @covers ::isBackgroundRequest
    */
   #[DataProvider('pageNavigationHeadersProvider')]
   public function testPageNavigationStartsAuthorizeRequest(array $server): void {
@@ -177,7 +173,7 @@ class SodaScsKeycloakLoginRedirectControllerTest extends UnitTestCase {
   }
 
   /**
-   * @covers ::redirectToKeycloak
+   * Tests page navigation without enabled client is not found.
    */
   public function testPageNavigationWithoutEnabledClientIsNotFound(): void {
     $session = $this->createMock(OpenIDConnectSessionInterface::class);

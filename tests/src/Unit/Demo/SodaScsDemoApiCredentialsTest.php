@@ -15,14 +15,15 @@ use Drupal\soda_scs_manager\Helpers\SodaScsServiceHelpers;
 use Drupal\soda_scs_manager\Helpers\SodaScsSnapshotHelpers;
 use Drupal\soda_scs_manager\ValueObject\SodaScsResult;
 use Drupal\Tests\UnitTestCase;
+use PHPUnit\Framework\Attributes\CoversMethod;
+use PHPUnit\Framework\Attributes\Group;
 use Psr\Log\LoggerInterface;
 
 /**
  * Tests the API account handling inside a demo WissKI.
- *
- * @coversDefaultClass \Drupal\soda_scs_manager\Demo\SodaScsDemoApiCredentials
- * @group soda_scs_manager
  */
+#[CoversMethod(SodaScsDemoApiCredentials::class, 'setApiPassword')]
+#[Group('soda_scs_manager')]
 class SodaScsDemoApiCredentialsTest extends UnitTestCase {
 
   /**
@@ -74,8 +75,6 @@ class SodaScsDemoApiCredentialsTest extends UnitTestCase {
 
   /**
    * The exec hands the role list to the script through the environment.
-   *
-   * @covers ::setApiPassword
    */
   public function testExecPassesRolesAndCredentialsAsEnvironment(): void {
     $this->containerHelpers->expects($this->once())
@@ -94,8 +93,6 @@ class SodaScsDemoApiCredentialsTest extends UnitTestCase {
 
   /**
    * The password stays out of the command line.
-   *
-   * @covers ::setApiPassword
    */
   public function testPasswordIsNotPartOfTheCommand(): void {
     $this->containerHelpers->method('executeDockerExecCommand')
@@ -110,8 +107,6 @@ class SodaScsDemoApiCredentialsTest extends UnitTestCase {
 
   /**
    * The script prints the marker the PHP side looks for, and only then.
-   *
-   * @covers ::setApiPassword
    */
   public function testScriptPrintsTheMarkerOnlyWhenItCreatesTheAccount(): void {
     $this->containerHelpers->method('executeDockerExecCommand')
@@ -130,8 +125,6 @@ class SodaScsDemoApiCredentialsTest extends UnitTestCase {
 
   /**
    * An account the template already had changes nothing but the password.
-   *
-   * @covers ::setApiPassword
    */
   public function testNoWarningWhenTheTemplateHadTheAccount(): void {
     $this->containerHelpers->method('executeDockerExecCommand')
@@ -143,8 +136,6 @@ class SodaScsDemoApiCredentialsTest extends UnitTestCase {
 
   /**
    * An exec without output data is no reason to warn.
-   *
-   * @covers ::setApiPassword
    */
   public function testNoWarningWhenTheExecReturnsNoOutput(): void {
     $this->containerHelpers->method('executeDockerExecCommand')
@@ -156,8 +147,6 @@ class SodaScsDemoApiCredentialsTest extends UnitTestCase {
 
   /**
    * Creating the account is logged so the template can be fixed.
-   *
-   * @covers ::setApiPassword
    */
   public function testWarnsWhenTheScriptCreatedTheAccount(): void {
     $this->containerHelpers->method('executeDockerExecCommand')
@@ -181,8 +170,6 @@ class SodaScsDemoApiCredentialsTest extends UnitTestCase {
 
   /**
    * A project without a template is named with a dash in the warning.
-   *
-   * @covers ::setApiPassword
    */
   public function testWarningNamesDashWhenProjectHasNoTemplate(): void {
     $this->templateId = NULL;
@@ -204,8 +191,6 @@ class SodaScsDemoApiCredentialsTest extends UnitTestCase {
 
   /**
    * A failed exec throws and does not claim the account was created.
-   *
-   * @covers ::setApiPassword
    */
   public function testFailedExecThrows(): void {
     $this->containerHelpers->method('executeDockerExecCommand')
@@ -219,8 +204,6 @@ class SodaScsDemoApiCredentialsTest extends UnitTestCase {
 
   /**
    * A failed exec without stderr says so instead of ending in a colon.
-   *
-   * @covers ::setApiPassword
    */
   public function testFailedExecWithoutErrorTextSaysNoOutput(): void {
     $this->containerHelpers->method('executeDockerExecCommand')
@@ -233,8 +216,6 @@ class SodaScsDemoApiCredentialsTest extends UnitTestCase {
 
   /**
    * The password reaches neither the exception message nor the log.
-   *
-   * @covers ::setApiPassword
    */
   public function testPasswordIsNeitherInExceptionNorLogContext(): void {
     $this->containerHelpers->method('executeDockerExecCommand')
@@ -257,8 +238,6 @@ class SodaScsDemoApiCredentialsTest extends UnitTestCase {
    *
    * Without the role the account cannot use the API, so the demo must not
    * look ready. An existing account is not touched either.
-   *
-   * @covers ::setApiPassword
    */
   public function testScriptFailsOnMissingRoleAndSavesNothing(): void {
     $run = $this->runGeneratedScript(['wisski_user'], ['authenticated']);
@@ -272,8 +251,6 @@ class SodaScsDemoApiCredentialsTest extends UnitTestCase {
 
   /**
    * The script names every missing role and creates no account for them.
-   *
-   * @covers ::setApiPassword
    */
   public function testScriptFailsOnAllMissingRolesWithoutCreatingTheAccount(): void {
     $run = $this->runGeneratedScript([], NULL);
@@ -285,8 +262,6 @@ class SodaScsDemoApiCredentialsTest extends UnitTestCase {
 
   /**
    * An account the template already had gets the missing roles.
-   *
-   * @covers ::setApiPassword
    */
   public function testScriptAddsRolesToExistingAccount(): void {
     $run = $this->runGeneratedScript(['wisski_user', 'wisski_api_import'], ['authenticated', 'wisski_user']);
@@ -301,8 +276,6 @@ class SodaScsDemoApiCredentialsTest extends UnitTestCase {
 
   /**
    * A new account gets every role and the created marker.
-   *
-   * @covers ::setApiPassword
    */
   public function testScriptCreatesAccountWithAllRoles(): void {
     $run = $this->runGeneratedScript(['wisski_user', 'wisski_api_import'], NULL);

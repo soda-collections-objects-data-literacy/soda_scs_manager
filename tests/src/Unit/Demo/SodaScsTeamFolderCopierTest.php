@@ -12,6 +12,8 @@ use Drupal\soda_scs_manager\Entity\SodaScsProjectInterface;
 use Drupal\soda_scs_manager\Service\NextcloudMounterClient;
 use Drupal\soda_scs_manager\Service\NextcloudProjectMountManager;
 use Drupal\Tests\UnitTestCase;
+use PHPUnit\Framework\Attributes\CoversMethod;
+use PHPUnit\Framework\Attributes\Group;
 use PHPUnit\Framework\MockObject\MockObject;
 
 /**
@@ -20,10 +22,11 @@ use PHPUnit\Framework\MockObject\MockObject;
  * Issue 3639291: Jupyter checkpoints are per-user editor state and stay out
  * of the template and out of the demo's Team Folder. The Nextcloud mounter is
  * a double; the folders are temporary local directories.
- *
- * @coversDefaultClass \Drupal\soda_scs_manager\Demo\SodaScsTeamFolderCopier
- * @group soda_scs_manager
  */
+#[CoversMethod(SodaScsTeamFolderCopier::class, 'exportTeamFolder')]
+#[CoversMethod(SodaScsTeamFolderCopier::class, 'copyTree')]
+#[CoversMethod(SodaScsTeamFolderCopier::class, 'importTeamFolder')]
+#[Group('soda_scs_manager')]
 class SodaScsTeamFolderCopierTest extends UnitTestCase {
 
   /**
@@ -66,9 +69,6 @@ class SodaScsTeamFolderCopierTest extends UnitTestCase {
 
   /**
    * The export leaves checkpoint directories out at every depth.
-   *
-   * @covers ::exportTeamFolder
-   * @covers ::copyTree
    */
   public function testExportSkipsIpynbCheckpointsAtAnyDepth(): void {
     $this->writeFiles($this->workDirectory . '/mount', [
@@ -91,9 +91,6 @@ class SodaScsTeamFolderCopierTest extends UnitTestCase {
 
   /**
    * Files and directories with other dot names are still copied.
-   *
-   * @covers ::exportTeamFolder
-   * @covers ::copyTree
    */
   public function testExportKeepsOtherHiddenFiles(): void {
     $this->writeFiles($this->workDirectory . '/mount', [
@@ -110,9 +107,6 @@ class SodaScsTeamFolderCopierTest extends UnitTestCase {
 
   /**
    * A folder that holds only checkpoints exports no file.
-   *
-   * @covers ::exportTeamFolder
-   * @covers ::copyTree
    */
   public function testExportOfCheckpointsOnlyFolderCopiesNothing(): void {
     $this->writeFiles($this->workDirectory . '/mount', ['.ipynb_checkpoints/a-checkpoint.ipynb' => '{}']);
@@ -126,9 +120,6 @@ class SodaScsTeamFolderCopierTest extends UnitTestCase {
 
   /**
    * The import does not copy checkpoints of an older template either.
-   *
-   * @covers ::importTeamFolder
-   * @covers ::copyTree
    */
   public function testImportSkipsIpynbCheckpointsOfTheTemplate(): void {
     $this->writeFiles($this->workDirectory . '/mount', ['old.txt' => 'old']);
@@ -148,8 +139,6 @@ class SodaScsTeamFolderCopierTest extends UnitTestCase {
 
   /**
    * A Team Folder that cannot be mounted fails and copies nothing.
-   *
-   * @covers ::exportTeamFolder
    */
   public function testExportFailsWhenTheTeamFolderIsNotMounted(): void {
     $projectMountManager = $this->createMock(NextcloudProjectMountManager::class);

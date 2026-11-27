@@ -7,15 +7,18 @@ namespace Drupal\Tests\soda_scs_manager\Unit\Demo;
 use Drupal\soda_scs_manager\Demo\SodaScsDemoManager;
 use Drupal\soda_scs_manager\Entity\SodaScsDemoTemplateInterface;
 use Drupal\Tests\UnitTestCase;
+use PHPUnit\Framework\Attributes\CoversMethod;
+use PHPUnit\Framework\Attributes\Group;
 
 /**
- * @coversDefaultClass \Drupal\soda_scs_manager\Demo\SodaScsDemoManager
- * @group soda_scs_manager
+ * Tests the demo version handling of SodaScsDemoManager.
  */
+#[CoversMethod(SodaScsDemoManager::class, 'validateNewVersion')]
+#[Group('soda_scs_manager')]
 class SodaScsDemoManagerVersionTest extends UnitTestCase {
 
   /**
-   * @covers ::validateNewVersion
+   * Tests failed version can be rebuilt.
    */
   public function testFailedVersionCanBeRebuilt(): void {
     $manager = $this->manager($this->template(SodaScsDemoTemplateInterface::STATUS_FAILED), '1.0.0');
@@ -24,7 +27,7 @@ class SodaScsDemoManagerVersionTest extends UnitTestCase {
   }
 
   /**
-   * @covers ::validateNewVersion
+   * Tests ready version keeps its number.
    */
   public function testReadyVersionKeepsItsNumber(): void {
     $manager = $this->manager($this->template(SodaScsDemoTemplateInterface::STATUS_READY), '1.0.0');
@@ -33,7 +36,7 @@ class SodaScsDemoManagerVersionTest extends UnitTestCase {
   }
 
   /**
-   * @covers ::validateNewVersion
+   * Tests building version keeps its number.
    */
   public function testBuildingVersionKeepsItsNumber(): void {
     $manager = $this->manager($this->template(SodaScsDemoTemplateInterface::STATUS_BUILDING), '1.0.0');
@@ -42,7 +45,7 @@ class SodaScsDemoManagerVersionTest extends UnitTestCase {
   }
 
   /**
-   * @covers ::validateNewVersion
+   * Tests new number must be higher than the latest.
    */
   public function testNewNumberMustBeHigherThanTheLatest(): void {
     $manager = $this->manager(NULL, '1.0.0');

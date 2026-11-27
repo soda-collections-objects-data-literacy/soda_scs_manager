@@ -47,6 +47,9 @@ use Drupal\Tests\UnitTestCase;
 use Drupal\user\UserInterface;
 use GuzzleHttp\ClientInterface;
 use GuzzleHttp\Psr7\Response;
+use PHPUnit\Framework\Attributes\CoversMethod;
+use PHPUnit\Framework\Attributes\DataProvider;
+use PHPUnit\Framework\Attributes\Group;
 use Prophecy\Argument;
 use Prophecy\PhpUnit\ProphecyTrait;
 
@@ -69,10 +72,17 @@ require_once __DIR__ . '/SodaScsSleepStub.php';
  *
  * The wait for the container runs against a sleep() stand-in
  * (SodaScsSleepStub.php), so the tests do not wait.
- *
- * @coversDefaultClass \Drupal\soda_scs_manager\ComponentActions\SodaScsWisskiComponentActions
- * @group soda_scs_manager
  */
+#[CoversMethod(SodaScsWisskiComponentActions::class, 'createComponent')]
+#[CoversMethod(SodaScsWisskiComponentActions::class, 'waitForNewContainerId')]
+#[CoversMethod(SodaScsWisskiComponentActions::class, 'resolveWisskiVersionSettings')]
+#[CoversMethod(SodaScsWisskiComponentActions::class, 'usesWisskiDefaultDataModel')]
+#[CoversMethod(SodaScsWisskiComponentActions::class, 'createSnapshot')]
+#[CoversMethod(SodaScsWisskiComponentActions::class, 'refreshComponentContainerId')]
+#[CoversMethod(SodaScsWisskiComponentActions::class, 'restoreFromSnapshot')]
+#[CoversMethod(SodaScsWisskiComponentActions::class, 'deleteKeycloakResources')]
+#[CoversMethod(SodaScsWisskiComponentActions::class, 'deleteComponent')]
+#[Group('soda_scs_manager')]
 class SodaScsWisskiComponentActionsCreateTest extends UnitTestCase {
 
   use ProphecyTrait;
@@ -339,8 +349,6 @@ class SodaScsWisskiComponentActionsCreateTest extends UnitTestCase {
 
   /**
    * A missing bundle info is returned as a failure with a message.
-   *
-   * @covers ::createComponent
    */
   public function testCreateComponentFailsWhenBundleInfoIsMissing(): void {
     $this->bundleInfo->getBundleInfo('soda_scs_component')->willReturn([]);
@@ -356,8 +364,6 @@ class SodaScsWisskiComponentActionsCreateTest extends UnitTestCase {
 
   /**
    * An unconnected Nextcloud account is a user-facing failure with a link.
-   *
-   * @covers ::createComponent
    */
   public function testCreateComponentReturnsUserFacingReasonWhenNextcloudIsNotConnected(): void {
     $urlGenerator = $this->prophesize(UrlGeneratorInterface::class);
@@ -381,8 +387,6 @@ class SodaScsWisskiComponentActionsCreateTest extends UnitTestCase {
 
   /**
    * A Team Folder that is not ready is a user-facing failure.
-   *
-   * @covers ::createComponent
    */
   public function testCreateComponentReturnsUserFacingReasonWhenTeamFolderIsNotReady(): void {
     $this->mountManager->ensureProjectTeamFolderReady(Argument::cetera())->willReturn(FALSE);
@@ -398,8 +402,6 @@ class SodaScsWisskiComponentActionsCreateTest extends UnitTestCase {
 
   /**
    * An exception of the Portainer request is returned as the error.
-   *
-   * @covers ::createComponent
    */
   public function testCreateComponentReturnsExceptionOfPortainerRequest(): void {
     $failure = new \RuntimeException('Connection refused.');
@@ -416,8 +418,6 @@ class SodaScsWisskiComponentActionsCreateTest extends UnitTestCase {
 
   /**
    * A Portainer error answer without details still has a non-empty error.
-   *
-   * @covers ::createComponent
    */
   public function testCreateComponentFailsWhenPortainerAnswersWithoutDetails(): void {
     $this->portainer->makeRequest(['request' => 'portainer'])->willReturn(['success' => FALSE]);
@@ -431,8 +431,6 @@ class SodaScsWisskiComponentActionsCreateTest extends UnitTestCase {
 
   /**
    * A Portainer error answer keeps its error text and status code.
-   *
-   * @covers ::createComponent
    */
   public function testCreateComponentReturnsErrorTextAndStatusOfPortainerAnswer(): void {
     $this->portainer->makeRequest(['request' => 'portainer'])
@@ -448,9 +446,6 @@ class SodaScsWisskiComponentActionsCreateTest extends UnitTestCase {
 
   /**
    * The container ID of the new stack is stored when the first lookup finds it.
-   *
-   * @covers ::createComponent
-   * @covers ::waitForNewContainerId
    */
   public function testCreateComponentStoresContainerIdFoundOnFirstLookup(): void {
     $this->portainerCreatesStack();
@@ -472,9 +467,6 @@ class SodaScsWisskiComponentActionsCreateTest extends UnitTestCase {
 
   /**
    * A container that shows up on a later lookup is found after a poll wait.
-   *
-   * @covers ::createComponent
-   * @covers ::waitForNewContainerId
    */
   public function testCreateComponentWaitsUntilContainerAppears(): void {
     $this->portainerCreatesStack();
@@ -498,9 +490,6 @@ class SodaScsWisskiComponentActionsCreateTest extends UnitTestCase {
    *
    * The ID stays NULL (inspectComponentContainer() resolves it by name later),
    * the stack and the component are kept and a warning is logged.
-   *
-   * @covers ::createComponent
-   * @covers ::waitForNewContainerId
    */
   public function testCreateComponentSucceedsWithEmptyContainerIdWhenContainerNeverAppears(): void {
     $this->portainerCreatesStack();
@@ -530,9 +519,6 @@ class SodaScsWisskiComponentActionsCreateTest extends UnitTestCase {
 
   /**
    * A lookup that answers without a container ID counts as not found.
-   *
-   * @covers ::createComponent
-   * @covers ::waitForNewContainerId
    */
   public function testCreateComponentTreatsLookupWithoutContainerIdAsNotFound(): void {
     $this->portainerCreatesStack();
@@ -549,10 +535,6 @@ class SodaScsWisskiComponentActionsCreateTest extends UnitTestCase {
 
   /**
    * A WissKI without the default data model gets an empty recipe version.
-   *
-   * @covers ::createComponent
-   * @covers ::resolveWisskiVersionSettings
-   * @covers ::usesWisskiDefaultDataModel
    */
   public function testCreateComponentPassesEmptyRecipeVersionWithoutDefaultDataModel(): void {
     $this->productionVersionSettings();
@@ -570,10 +552,6 @@ class SodaScsWisskiComponentActionsCreateTest extends UnitTestCase {
 
   /**
    * A WissKI with the default data model keeps the resolved recipe version.
-   *
-   * @covers ::createComponent
-   * @covers ::resolveWisskiVersionSettings
-   * @covers ::usesWisskiDefaultDataModel
    */
   public function testCreateComponentPassesRecipeVersionWithDefaultDataModel(): void {
     $this->productionVersionSettings();
@@ -590,12 +568,8 @@ class SodaScsWisskiComponentActionsCreateTest extends UnitTestCase {
 
   /**
    * Components created before the field existed keep the recipe version.
-   *
-   * @covers ::createComponent
-   * @covers ::usesWisskiDefaultDataModel
-   *
-   * @dataProvider legacyDefaultDataModelProvider
    */
+  #[DataProvider('legacyDefaultDataModelProvider')]
   public function testCreateComponentKeepsRecipeVersionWhenFieldIsNullOrMissing(array $extraFields): void {
     $this->productionVersionSettings();
     $this->portainerCreatesStack();
@@ -626,12 +600,8 @@ class SodaScsWisskiComponentActionsCreateTest extends UnitTestCase {
    * An empty development recipe setting becomes the apply flag.
    *
    * An empty version would otherwise mean "plain WissKI" to the image.
-   *
-   * @covers ::createComponent
-   * @covers ::resolveWisskiVersionSettings
-   *
-   * @dataProvider emptyRecipeSettingProvider
    */
+  #[DataProvider('emptyRecipeSettingProvider')]
   public function testCreateComponentPassesApplyFlagWhenDevelopmentRecipeSettingIsEmpty(array $fields): void {
     $this->serviceHelpers->initWisskiInstanceSettings()->willReturn([
       'varnishImageDevelopmentVersion' => 'varnish-dev',
@@ -654,12 +624,8 @@ class SodaScsWisskiComponentActionsCreateTest extends UnitTestCase {
 
   /**
    * An empty production recipe setting becomes the apply flag.
-   *
-   * @covers ::createComponent
-   * @covers ::resolveWisskiVersionSettings
-   *
-   * @dataProvider emptyRecipeSettingProvider
    */
+  #[DataProvider('emptyRecipeSettingProvider')]
   public function testCreateComponentPassesApplyFlagWhenProductionRecipeSettingIsEmpty(array $fields): void {
     $this->serviceHelpers->initWisskiInstanceSettings()->willReturn([
       'defaultDataModelRecipeProductionVersion' => '',
@@ -693,9 +659,6 @@ class SodaScsWisskiComponentActionsCreateTest extends UnitTestCase {
 
   /**
    * An empty recipe setting stays empty without the default data model.
-   *
-   * @covers ::createComponent
-   * @covers ::resolveWisskiVersionSettings
    */
   public function testCreateComponentKeepsEmptyRecipeVersionWithoutDefaultDataModelWhenSettingIsEmpty(): void {
     $this->serviceHelpers->initWisskiInstanceSettings()->willReturn([
@@ -716,9 +679,6 @@ class SodaScsWisskiComponentActionsCreateTest extends UnitTestCase {
    * A snapshot of a WissKI without a stored container ID needs the sync.
    *
    * A failed sync is returned as it is and no Docker request is made.
-   *
-   * @covers ::createSnapshot
-   * @covers ::refreshComponentContainerId
    */
   public function testCreateSnapshotReturnsFailureWhenContainerIdSyncFails(): void {
     $failure = SodaScsResult::failure(
@@ -742,9 +702,6 @@ class SodaScsWisskiComponentActionsCreateTest extends UnitTestCase {
    * A successful sync lets the snapshot go on with the Docker requests.
    *
    * The inspect request fails here, which ends the run after the sync.
-   *
-   * @covers ::createSnapshot
-   * @covers ::refreshComponentContainerId
    */
   public function testCreateSnapshotContinuesWithInspectAfterContainerIdSync(): void {
     $loggerFactory = $this->prophesize(LoggerChannelFactoryInterface::class);
@@ -767,8 +724,6 @@ class SodaScsWisskiComponentActionsCreateTest extends UnitTestCase {
 
   /**
    * A stored container ID is not synced before the snapshot.
-   *
-   * @covers ::createSnapshot
    */
   public function testCreateSnapshotDoesNotSyncWhenContainerIdIsStored(): void {
     $loggerFactory = $this->prophesize(LoggerChannelFactoryInterface::class);
@@ -794,8 +749,6 @@ class SodaScsWisskiComponentActionsCreateTest extends UnitTestCase {
    * The volumes are restored and the WissKI runs again, but Varnish still
    * points at the old backend address: the caller must not see a success.
    * The restart is asked for the machine name of the restored instance.
-   *
-   * @covers ::restoreFromSnapshot
    */
   public function testRestoreFromSnapshotFailsWhenVarnishRestartFails(): void {
     $this->useLoggerFactoryForFailureResults();
@@ -819,8 +772,6 @@ class SodaScsWisskiComponentActionsCreateTest extends UnitTestCase {
 
   /**
    * A restore that fails before the start does not touch Varnish.
-   *
-   * @covers ::restoreFromSnapshot
    */
   public function testRestoreFromSnapshotDoesNotRestartVarnishWhenVolumeRestoreFails(): void {
     $this->useLoggerFactoryForFailureResults();
@@ -843,9 +794,6 @@ class SodaScsWisskiComponentActionsCreateTest extends UnitTestCase {
 
   /**
    * The off switch only empties the recipe version, not the other pins.
-   *
-   * @covers ::createComponent
-   * @covers ::resolveWisskiVersionSettings
    */
   public function testCreateComponentKeepsOtherVersionPinsWithoutDefaultDataModel(): void {
     $this->productionVersionSettings();
@@ -864,8 +812,6 @@ class SodaScsWisskiComponentActionsCreateTest extends UnitTestCase {
 
   /**
    * The client and both groups of the instance are deleted.
-   *
-   * @covers ::deleteKeycloakResources
    */
   public function testDeleteKeycloakResourcesDeletesClientAndBothGroups(): void {
     $this->stubKeycloakResources(clients: [['id' => 'client-uuid', 'clientId' => 'wisski-foo']]);
@@ -881,8 +827,6 @@ class SodaScsWisskiComponentActionsCreateTest extends UnitTestCase {
 
   /**
    * A client that is already gone counts as deleted; the groups still go.
-   *
-   * @covers ::deleteKeycloakResources
    */
   public function testDeleteKeycloakResourcesCountsMissingClientAsDeleted(): void {
     $this->stubKeycloakResources(clients: []);
@@ -897,8 +841,6 @@ class SodaScsWisskiComponentActionsCreateTest extends UnitTestCase {
 
   /**
    * Groups that are already gone count as deleted; the client still goes.
-   *
-   * @covers ::deleteKeycloakResources
    */
   public function testDeleteKeycloakResourcesCountsMissingGroupsAsDeleted(): void {
     $this->stubKeycloakResources(clients: [['id' => 'client-uuid', 'clientId' => 'wisski-foo']]);
@@ -913,8 +855,6 @@ class SodaScsWisskiComponentActionsCreateTest extends UnitTestCase {
 
   /**
    * Only the groups that existed are reported as deleted.
-   *
-   * @covers ::deleteKeycloakResources
    */
   public function testDeleteKeycloakResourcesReportsOnlyTheGroupThatWasDeleted(): void {
     $this->stubKeycloakResources(clients: []);
@@ -928,8 +868,6 @@ class SodaScsWisskiComponentActionsCreateTest extends UnitTestCase {
 
   /**
    * Nothing to delete at all is a success, so a repeated call is harmless.
-   *
-   * @covers ::deleteKeycloakResources
    */
   public function testDeleteKeycloakResourcesSucceedsWhenNothingExists(): void {
     $this->stubKeycloakResources(clients: []);
@@ -944,8 +882,6 @@ class SodaScsWisskiComponentActionsCreateTest extends UnitTestCase {
 
   /**
    * A client with another client ID in the answer is not deleted.
-   *
-   * @covers ::deleteKeycloakResources
    */
   public function testDeleteKeycloakResourcesIgnoresClientWithOtherClientId(): void {
     $this->stubKeycloakResources(clients: [['id' => 'other-uuid', 'clientId' => 'wisski-foo-2']]);
@@ -960,8 +896,6 @@ class SodaScsWisskiComponentActionsCreateTest extends UnitTestCase {
 
   /**
    * With a required client and none found, nothing is deleted.
-   *
-   * @covers ::deleteKeycloakResources
    */
   public function testDeleteKeycloakResourcesSkipsGroupsWhenClientIsRequiredAndMissing(): void {
     $this->stubKeycloakResources(clients: []);
@@ -976,8 +910,6 @@ class SodaScsWisskiComponentActionsCreateTest extends UnitTestCase {
 
   /**
    * A required client that exists is deleted together with the groups.
-   *
-   * @covers ::deleteKeycloakResources
    */
   public function testDeleteKeycloakResourcesDeletesWhenClientIsRequiredAndPresent(): void {
     $this->stubKeycloakResources(clients: [['id' => 'client-uuid', 'clientId' => 'wisski-foo', 'name' => 'Foo']]);
@@ -992,8 +924,6 @@ class SodaScsWisskiComponentActionsCreateTest extends UnitTestCase {
 
   /**
    * A client that carries another name belongs to another WissKI.
-   *
-   * @covers ::deleteKeycloakResources
    */
   public function testDeleteKeycloakResourcesLeavesClientWithOtherNameAlone(): void {
     $this->stubKeycloakResources(clients: [['id' => 'client-uuid', 'clientId' => 'wisski-foo', 'name' => 'Bar']]);
@@ -1008,8 +938,6 @@ class SodaScsWisskiComponentActionsCreateTest extends UnitTestCase {
 
   /**
    * A client without a name is not the one named in the call.
-   *
-   * @covers ::deleteKeycloakResources
    */
   public function testDeleteKeycloakResourcesLeavesUnnamedClientAloneWhenNameIsGiven(): void {
     $this->stubKeycloakResources(clients: [['id' => 'client-uuid', 'clientId' => 'wisski-foo']]);
@@ -1023,8 +951,6 @@ class SodaScsWisskiComponentActionsCreateTest extends UnitTestCase {
 
   /**
    * Without a client, a given name does not keep the groups from going.
-   *
-   * @covers ::deleteKeycloakResources
    */
   public function testDeleteKeycloakResourcesDeletesGroupsWithoutClientWhenClientIsNotRequired(): void {
     $this->stubKeycloakResources(clients: []);
@@ -1038,8 +964,6 @@ class SodaScsWisskiComponentActionsCreateTest extends UnitTestCase {
 
   /**
    * Without a Keycloak token nothing is asked or deleted.
-   *
-   * @covers ::deleteKeycloakResources
    */
   public function testDeleteKeycloakResourcesFailsWithoutToken(): void {
     $this->keycloakHelpers->getKeycloakToken()->willReturn(NULL);
@@ -1055,8 +979,6 @@ class SodaScsWisskiComponentActionsCreateTest extends UnitTestCase {
 
   /**
    * A failed client lookup stops the call before anything is deleted.
-   *
-   * @covers ::deleteKeycloakResources
    */
   public function testDeleteKeycloakResourcesStopsWhenClientLookupFails(): void {
     $this->stubKeycloakResources();
@@ -1074,8 +996,6 @@ class SodaScsWisskiComponentActionsCreateTest extends UnitTestCase {
 
   /**
    * A client lookup that throws is a failure result, not an exception.
-   *
-   * @covers ::deleteKeycloakResources
    */
   public function testDeleteKeycloakResourcesReturnsFailureWhenClientLookupThrows(): void {
     $this->stubKeycloakResources();
@@ -1091,8 +1011,6 @@ class SodaScsWisskiComponentActionsCreateTest extends UnitTestCase {
 
   /**
    * A malformed client lookup answer is no client; nothing is deleted for it.
-   *
-   * @covers ::deleteKeycloakResources
    */
   public function testDeleteKeycloakResourcesTreatsMalformedClientAnswerAsNoClient(): void {
     $this->stubKeycloakResources();
@@ -1111,8 +1029,6 @@ class SodaScsWisskiComponentActionsCreateTest extends UnitTestCase {
 
   /**
    * A failed client delete leaves the groups alone.
-   *
-   * @covers ::deleteKeycloakResources
    */
   public function testDeleteKeycloakResourcesStopsWhenClientDeleteFails(): void {
     $this->stubKeycloakResources(clients: [['id' => 'client-uuid', 'clientId' => 'wisski-foo']]);
@@ -1128,8 +1044,6 @@ class SodaScsWisskiComponentActionsCreateTest extends UnitTestCase {
 
   /**
    * A failing group delete is a failure result with the reason of the helper.
-   *
-   * @covers ::deleteKeycloakResources
    */
   public function testDeleteKeycloakResourcesFailsWhenGroupDeleteThrows(): void {
     $this->stubKeycloakResources(clients: [['id' => 'client-uuid', 'clientId' => 'wisski-foo']]);
@@ -1145,8 +1059,6 @@ class SodaScsWisskiComponentActionsCreateTest extends UnitTestCase {
 
   /**
    * A failed group lookup of the helper stops the delete with its reason.
-   *
-   * @covers ::deleteKeycloakResources
    */
   public function testDeleteKeycloakResourcesFailsWhenGroupLookupThrows(): void {
     $this->stubKeycloakResources();
@@ -1161,8 +1073,6 @@ class SodaScsWisskiComponentActionsCreateTest extends UnitTestCase {
 
   /**
    * A deleted WissKI loses its Portainer stack, volumes, Keycloak and entity.
-   *
-   * @covers ::deleteComponent
    */
   public function testDeleteComponentDeletesPortainerStackKeycloakAndEntity(): void {
     $component = $this->deletableComponent();
@@ -1180,8 +1090,6 @@ class SodaScsWisskiComponentActionsCreateTest extends UnitTestCase {
 
   /**
    * A Portainer stack that is already gone (404) does not stop the delete.
-   *
-   * @covers ::deleteComponent
    */
   public function testDeleteComponentGoesOnWhenPortainerStackIsAlreadyGone(): void {
     $component = $this->deletableComponent();
@@ -1198,11 +1106,8 @@ class SodaScsWisskiComponentActionsCreateTest extends UnitTestCase {
 
   /**
    * A failed Portainer delete keeps Keycloak, volumes and the entity.
-   *
-   * @covers ::deleteComponent
-   *
-   * @dataProvider failedPortainerDeleteProvider
    */
+  #[DataProvider('failedPortainerDeleteProvider')]
   public function testDeleteComponentKeepsEverythingWhenPortainerDeleteFails(array $portainerAnswer): void {
     $component = $this->deletableComponent();
     $this->portainerAnswersDeleteWith($portainerAnswer);
@@ -1236,8 +1141,6 @@ class SodaScsWisskiComponentActionsCreateTest extends UnitTestCase {
 
   /**
    * A Portainer delete that throws keeps Keycloak, volumes and the entity.
-   *
-   * @covers ::deleteComponent
    */
   public function testDeleteComponentKeepsEverythingWhenPortainerDeleteThrows(): void {
     $component = $this->deletableComponent();
@@ -1255,8 +1158,6 @@ class SodaScsWisskiComponentActionsCreateTest extends UnitTestCase {
 
   /**
    * A failed Keycloak cleanup keeps the entity, so the delete can be repeated.
-   *
-   * @covers ::deleteComponent
    */
   public function testDeleteComponentKeepsEntityWhenKeycloakCleanupFails(): void {
     $component = $this->deletableComponent();
@@ -1273,8 +1174,6 @@ class SodaScsWisskiComponentActionsCreateTest extends UnitTestCase {
 
   /**
    * A Keycloak client that already exists (409) is not ours to delete.
-   *
-   * @covers ::createComponent
    */
   public function testCreateComponentLeavesExistingKeycloakClientAloneOnConflict(): void {
     $this->stubKeycloakResources();
@@ -1293,8 +1192,6 @@ class SodaScsWisskiComponentActionsCreateTest extends UnitTestCase {
 
   /**
    * The Keycloak client of a failed Portainer answer goes with its groups.
-   *
-   * @covers ::createComponent
    */
   public function testCreateComponentDeletesKeycloakResourcesWhenPortainerAnswersWithError(): void {
     $this->portainer->makeRequest(['request' => 'portainer'])
@@ -1310,8 +1207,6 @@ class SodaScsWisskiComponentActionsCreateTest extends UnitTestCase {
 
   /**
    * The Keycloak client of an unreachable Portainer is deleted with its groups.
-   *
-   * @covers ::createComponent
    */
   public function testCreateComponentDeletesKeycloakResourcesWhenPortainerRequestThrows(): void {
     $failure = new \RuntimeException('Connection refused.');
@@ -1327,8 +1222,6 @@ class SodaScsWisskiComponentActionsCreateTest extends UnitTestCase {
 
   /**
    * A step after the Keycloak client that fails deletes client and groups.
-   *
-   * @covers ::createComponent
    */
   public function testCreateComponentDeletesKeycloakResourcesWhenPreparationFailsAfterClientCreation(): void {
     $this->mountManager->ensureProjectTeamFolderReady(Argument::cetera())->willReturn(FALSE);
@@ -1344,8 +1237,6 @@ class SodaScsWisskiComponentActionsCreateTest extends UnitTestCase {
 
   /**
    * A failed Keycloak cleanup does not hide the failure of the creation.
-   *
-   * @covers ::createComponent
    */
   public function testCreateComponentReturnsPortainerFailureWhenKeycloakCleanupFails(): void {
     $this->portainer->makeRequest(['request' => 'portainer'])
@@ -1364,8 +1255,6 @@ class SodaScsWisskiComponentActionsCreateTest extends UnitTestCase {
 
   /**
    * A created WissKI keeps its Keycloak client and groups.
-   *
-   * @covers ::createComponent
    */
   public function testCreateComponentKeepsKeycloakResourcesWhenPortainerSucceeds(): void {
     $this->portainerCreatesStack();

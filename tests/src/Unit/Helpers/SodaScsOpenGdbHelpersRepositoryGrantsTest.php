@@ -11,16 +11,18 @@ use Drupal\soda_scs_manager\RequestActions\SodaScsOpenGdbRequestInterface;
 use Drupal\soda_scs_manager\ServiceKeyActions\SodaScsServiceKeyActionsInterface;
 use Drupal\Tests\UnitTestCase;
 use GuzzleHttp\Psr7\Response;
+use PHPUnit\Framework\Attributes\CoversMethod;
+use PHPUnit\Framework\Attributes\Group;
 use PHPUnit\Framework\MockObject\MockObject;
 
 /**
  * The repository grants of a recreated OpenGDB account.
  *
  * Issue 3638851. The OpenGDB requests are doubles.
- *
- * @coversDefaultClass \Drupal\soda_scs_manager\Helpers\SodaScsOpenGdbHelpers
- * @group soda_scs_manager
  */
+#[CoversMethod(SodaScsOpenGdbHelpers::class, 'setUserRepositoryGrants')]
+#[CoversMethod(SodaScsOpenGdbHelpers::class, 'addUserRepositoryGrants')]
+#[Group('soda_scs_manager')]
 class SodaScsOpenGdbHelpersRepositoryGrantsTest extends UnitTestCase {
 
   /**
@@ -38,8 +40,6 @@ class SodaScsOpenGdbHelpersRepositoryGrantsTest extends UnitTestCase {
 
   /**
    * The grant list is ROLE_USER plus read and write on every repository.
-   *
-   * @covers ::setUserRepositoryGrants
    */
   public function testGrantListHoldsRoleAndRightsOnEveryRepository(): void {
     $this->requestActions->expects($this->once())->method('buildUpdateRequest')
@@ -65,8 +65,6 @@ class SodaScsOpenGdbHelpersRepositoryGrantsTest extends UnitTestCase {
 
   /**
    * A refused update reaches the caller as a helpers exception.
-   *
-   * @covers ::setUserRepositoryGrants
    */
   public function testRefusedUpdateThrows(): void {
     $this->requestActions->method('buildUpdateRequest')->willReturn(['route' => 'update-user']);
@@ -82,8 +80,6 @@ class SodaScsOpenGdbHelpersRepositoryGrantsTest extends UnitTestCase {
    *
    * Issue 3640913: a new project owner is an existing account with rights on
    * other repositories; replacing the list would lock it out of them.
-   *
-   * @covers ::addUserRepositoryGrants
    */
   public function testAddGrantsKeepsExistingAuthorities(): void {
     $this->requestActions->method('buildGetRequest')->willReturn(['route' => 'get-user']);
@@ -109,8 +105,6 @@ class SodaScsOpenGdbHelpersRepositoryGrantsTest extends UnitTestCase {
 
   /**
    * A repository the account already has is not listed twice.
-   *
-   * @covers ::addUserRepositoryGrants
    */
   public function testAddGrantsDoesNotDuplicateAuthorities(): void {
     $this->requestActions->method('buildGetRequest')->willReturn(['route' => 'get-user']);
@@ -132,8 +126,6 @@ class SodaScsOpenGdbHelpersRepositoryGrantsTest extends UnitTestCase {
 
   /**
    * An account OpenGDB does not know is never written.
-   *
-   * @covers ::addUserRepositoryGrants
    */
   public function testAddGrantsThrowsAndWritesNothingForUnknownUser(): void {
     $this->requestActions->method('buildGetRequest')->willReturn(['route' => 'get-user']);
@@ -150,8 +142,6 @@ class SodaScsOpenGdbHelpersRepositoryGrantsTest extends UnitTestCase {
 
   /**
    * A failing read of the account is not mistaken for an empty grant list.
-   *
-   * @covers ::addUserRepositoryGrants
    */
   public function testAddGrantsThrowsAndWritesNothingWhenReadFails(): void {
     $this->requestActions->method('buildGetRequest')->willReturn(['route' => 'get-user']);
@@ -168,8 +158,6 @@ class SodaScsOpenGdbHelpersRepositoryGrantsTest extends UnitTestCase {
 
   /**
    * An answer without a grant list is malformed and nothing is written.
-   *
-   * @covers ::addUserRepositoryGrants
    */
   public function testAddGrantsThrowsAndWritesNothingForMalformedAnswer(): void {
     $this->requestActions->method('buildGetRequest')->willReturn(['route' => 'get-user']);
@@ -186,8 +174,6 @@ class SodaScsOpenGdbHelpersRepositoryGrantsTest extends UnitTestCase {
 
   /**
    * A refused update reaches the caller as a helpers exception.
-   *
-   * @covers ::addUserRepositoryGrants
    */
   public function testAddGrantsThrowsWhenUpdateIsRefused(): void {
     $this->requestActions->method('buildGetRequest')->willReturn(['route' => 'get-user']);

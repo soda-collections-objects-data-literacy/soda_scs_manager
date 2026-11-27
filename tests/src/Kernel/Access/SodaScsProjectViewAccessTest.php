@@ -5,15 +5,17 @@ declare(strict_types=1);
 namespace Drupal\Tests\soda_scs_manager\Kernel\Access;
 
 use Drupal\Core\Session\AccountInterface;
+use Drupal\soda_scs_manager\Access\SodaScsProjectAccessControlHandler;
 use Drupal\Tests\soda_scs_manager\Kernel\SodaScsKernelTestBase;
 use Drupal\user\Entity\Role;
+use PHPUnit\Framework\Attributes\CoversMethod;
+use PHPUnit\Framework\Attributes\Group;
 
 /**
  * Tests that project pages are limited to owners, members and admins.
- *
- * @group soda_scs_manager
- * @coversDefaultClass \Drupal\soda_scs_manager\Access\SodaScsProjectAccessControlHandler
  */
+#[CoversMethod(SodaScsProjectAccessControlHandler::class, 'checkAccess')]
+#[Group('soda_scs_manager')]
 class SodaScsProjectViewAccessTest extends SodaScsKernelTestBase {
 
   /**
@@ -44,8 +46,6 @@ class SodaScsProjectViewAccessTest extends SodaScsKernelTestBase {
 
   /**
    * Outsiders with the generic user permission cannot open a project URL.
-   *
-   * @covers ::checkAccess
    */
   public function testCanonicalRouteRequiresMembership(): void {
     $owner = $this->testUser;

@@ -16,7 +16,9 @@ use Drupal\soda_scs_manager\Entity\SodaScsStackInterface;
 use Drupal\soda_scs_manager\Helpers\SodaScsContainerHelpers;
 use Drupal\soda_scs_manager\ValueObject\SodaScsResult;
 use Drupal\Tests\UnitTestCase;
+use PHPUnit\Framework\Attributes\CoversMethod;
 use PHPUnit\Framework\Attributes\DataProvider;
+use PHPUnit\Framework\Attributes\Group;
 use PHPUnit\Framework\MockObject\MockObject;
 use Psr\Log\LoggerInterface;
 
@@ -25,10 +27,14 @@ use Psr\Log\LoggerInterface;
  *
  * Issue 3640914. Docker is a double; N-Quads files are temporary files. The
  * script that rewrites the database runs in the Kernel test.
- *
- * @coversDefaultClass \Drupal\soda_scs_manager\Demo\SodaScsWisskiUriRewriter
- * @group soda_scs_manager
  */
+#[CoversMethod(SodaScsWisskiUriRewriter::class, 'buildMap')]
+#[CoversMethod(SodaScsWisskiUriRewriter::class, 'isValidBase')]
+#[CoversMethod(SodaScsWisskiUriRewriter::class, 'ownBases')]
+#[CoversMethod(SodaScsWisskiUriRewriter::class, 'rewriteDatabase')]
+#[CoversMethod(SodaScsWisskiUriRewriter::class, 'rewriteNquads')]
+#[CoversMethod(SodaScsWisskiUriRewriter::class, 'templateSourceBases')]
+#[Group('soda_scs_manager')]
 class SodaScsWisskiUriRewriterTest extends UnitTestCase {
 
   private const SOURCE_GRAPH = 'https://source.example.org/contents/';
@@ -106,8 +112,6 @@ class SodaScsWisskiUriRewriterTest extends UnitTestCase {
 
   /**
    * Both differing bases are mapped to those of the target.
-   *
-   * @covers ::buildMap
    */
   public function testBuildMapMapsSiteAndGraphBase(): void {
     $map = SodaScsWisskiUriRewriter::buildMap(
@@ -120,8 +124,6 @@ class SodaScsWisskiUriRewriterTest extends UnitTestCase {
 
   /**
    * Equal bases need no rewrite.
-   *
-   * @covers ::buildMap
    */
   public function testBuildMapIsEmptyForIdenticalBases(): void {
     $bases = ['graph' => self::TARGET_GRAPH, 'site' => self::TARGET_SITE];
@@ -131,8 +133,6 @@ class SodaScsWisskiUriRewriterTest extends UnitTestCase {
 
   /**
    * A base that equals the target's is left out, the other is kept.
-   *
-   * @covers ::buildMap
    */
   public function testBuildMapKeepsOnlyTheBaseThatDiffers(): void {
     $map = SodaScsWisskiUriRewriter::buildMap(
@@ -145,8 +145,6 @@ class SodaScsWisskiUriRewriterTest extends UnitTestCase {
 
   /**
    * Missing or non-string source bases are skipped.
-   *
-   * @covers ::buildMap
    */
   public function testBuildMapSkipsMissingAndNonStringBases(): void {
     $targetBases = ['graph' => self::TARGET_GRAPH, 'site' => self::TARGET_SITE];
@@ -157,8 +155,6 @@ class SodaScsWisskiUriRewriterTest extends UnitTestCase {
 
   /**
    * Source bases that are no bases (an imported manifest) are dropped.
-   *
-   * @covers ::buildMap
    */
   #[DataProvider('invalidBases')]
   public function testBuildMapDropsInvalidSourceBases(string $invalid): void {
@@ -172,8 +168,6 @@ class SodaScsWisskiUriRewriterTest extends UnitTestCase {
 
   /**
    * Accepts scheme, host and a path that ends with a slash.
-   *
-   * @covers ::isValidBase
    */
   #[DataProvider('validBases')]
   public function testIsValidBaseAccepts(string $base): void {
@@ -182,8 +176,6 @@ class SodaScsWisskiUriRewriterTest extends UnitTestCase {
 
   /**
    * Refuses everything else.
-   *
-   * @covers ::isValidBase
    */
   #[DataProvider('invalidBases')]
   public function testIsValidBaseRefuses(string $base): void {
@@ -195,8 +187,6 @@ class SodaScsWisskiUriRewriterTest extends UnitTestCase {
    *
    * Fails while VALID_BASE_PATTERN ends in a plain "$" (it matches before a
    * final newline): the pattern needs the D modifier or "\z".
-   *
-   * @covers ::isValidBase
    */
   public function testIsValidBaseRefusesTrailingNewline(): void {
     $this->assertFalse(SodaScsWisskiUriRewriter::isValidBase("https://demo.example.org/\n"));
@@ -239,8 +229,6 @@ class SodaScsWisskiUriRewriterTest extends UnitTestCase {
 
   /**
    * The bases come from the environment of the running container.
-   *
-   * @covers ::ownBases
    */
   public function testOwnBasesReadsGraphAndDomainFromTheEnvironment(): void {
     $this->containerHelpers->expects($this->once())->method('executeDockerExecCommand')
@@ -259,8 +247,6 @@ class SodaScsWisskiUriRewriterTest extends UnitTestCase {
 
   /**
    * Windows line endings in the output do not end up in the bases.
-   *
-   * @covers ::ownBases
    */
   public function testOwnBasesAcceptsCarriageReturns(): void {
     $this->containerHelpers->method('executeDockerExecCommand')
@@ -273,8 +259,6 @@ class SodaScsWisskiUriRewriterTest extends UnitTestCase {
 
   /**
    * A failing printenv (container down) is a failure, not empty bases.
-   *
-   * @covers ::ownBases
    */
   public function testOwnBasesFailsWhenTheCommandFails(): void {
     $this->containerHelpers->method('executeDockerExecCommand')
@@ -288,8 +272,6 @@ class SodaScsWisskiUriRewriterTest extends UnitTestCase {
 
   /**
    * A variable that is not set makes the output too short.
-   *
-   * @covers ::ownBases
    */
   #[DataProvider('brokenEnvironmentOutputs')]
   public function testOwnBasesFailsWhenVariableIsMissingOrInvalid(string $output): void {
@@ -317,8 +299,6 @@ class SodaScsWisskiUriRewriterTest extends UnitTestCase {
 
   /**
    * The script runs as www-data with the map as JSON in the environment.
-   *
-   * @covers ::rewriteDatabase
    */
   public function testRewriteDatabaseRunsDrushWithTheMapInTheEnvironment(): void {
     $map = [self::SOURCE_SITE => self::TARGET_SITE, self::SOURCE_GRAPH => self::TARGET_GRAPH];
@@ -343,8 +323,6 @@ class SodaScsWisskiUriRewriterTest extends UnitTestCase {
 
   /**
    * Notices before the marker in the drush output do not matter.
-   *
-   * @covers ::rewriteDatabase
    */
   public function testRewriteDatabaseFindsTheMarkerAmongNotices(): void {
     $this->containerHelpers->method('executeDockerExecCommand')->willReturn(SodaScsResult::success(
@@ -360,8 +338,6 @@ class SodaScsWisskiUriRewriterTest extends UnitTestCase {
 
   /**
    * A failing drush call fails the rewrite and names the reason.
-   *
-   * @covers ::rewriteDatabase
    */
   public function testRewriteDatabaseFailsWhenDrushFails(): void {
     $this->containerHelpers->method('executeDockerExecCommand')
@@ -375,8 +351,6 @@ class SodaScsWisskiUriRewriterTest extends UnitTestCase {
 
   /**
    * A drush call that succeeds without the marker is not a success.
-   *
-   * @covers ::rewriteDatabase
    */
   #[DataProvider('unusableScriptOutputs')]
   public function testRewriteDatabaseFailsWithoutUsableMarker(string $output): void {
@@ -406,8 +380,6 @@ class SodaScsWisskiUriRewriterTest extends UnitTestCase {
 
   /**
    * The script's own error is reported.
-   *
-   * @covers ::rewriteDatabase
    */
   public function testRewriteDatabaseReportsTheErrorOfTheScript(): void {
     $this->containerHelpers->method('executeDockerExecCommand')
@@ -421,8 +393,6 @@ class SodaScsWisskiUriRewriterTest extends UnitTestCase {
 
   /**
    * IRIs and literals of the source bases are replaced line by line.
-   *
-   * @covers ::rewriteNquads
    */
   public function testRewriteNquadsReplacesBasesInIrisAndLiterals(): void {
     $source = $this->temporaryFile(
@@ -445,8 +415,6 @@ class SodaScsWisskiUriRewriterTest extends UnitTestCase {
 
   /**
    * The graph base is a longer match than the site base and wins.
-   *
-   * @covers ::rewriteNquads
    */
   public function testRewriteNquadsPrefersTheLongerBase(): void {
     $source = $this->temporaryFile('<https://source.example.org/contents/a> <https://source.example.org/b> "z" .' . "\n");
@@ -462,8 +430,6 @@ class SodaScsWisskiUriRewriterTest extends UnitTestCase {
 
   /**
    * URIs minted by other WissKIs stay as they are.
-   *
-   * @covers ::rewriteNquads
    */
   public function testRewriteNquadsLeavesForeignBasesAlone(): void {
     $line = '<https://older.example.org/contents/a> <https://older.example.org/wisski/navigate/9/view> "o" <https://older.example.org/contents/g> .' . "\n";
@@ -480,8 +446,6 @@ class SodaScsWisskiUriRewriterTest extends UnitTestCase {
 
   /**
    * The source file is not changed, an empty file stays empty.
-   *
-   * @covers ::rewriteNquads
    */
   public function testRewriteNquadsKeepsTheSourceFileAndHandlesEmptyFiles(): void {
     $line = '<https://source.example.org/contents/a> <urn:p> "x" .' . "\n";
@@ -498,8 +462,6 @@ class SodaScsWisskiUriRewriterTest extends UnitTestCase {
 
   /**
    * A last line without a newline is rewritten too.
-   *
-   * @covers ::rewriteNquads
    */
   public function testRewriteNquadsRewritesLastLineWithoutNewline(): void {
     $source = $this->temporaryFile('<https://source.example.org/contents/a> <urn:p> "x" .');
@@ -512,8 +474,6 @@ class SodaScsWisskiUriRewriterTest extends UnitTestCase {
 
   /**
    * A base that straddles a very long line is still replaced.
-   *
-   * @covers ::rewriteNquads
    */
   public function testRewriteNquadsRewritesVeryLongLines(): void {
     $literal = str_repeat('ab ', 200000);
@@ -527,8 +487,6 @@ class SodaScsWisskiUriRewriterTest extends UnitTestCase {
 
   /**
    * A missing source file throws and writes nothing.
-   *
-   * @covers ::rewriteNquads
    */
   public function testRewriteNquadsThrowsWhenTheSourceCannotBeRead(): void {
     $target = $this->temporaryFile('');
@@ -541,8 +499,6 @@ class SodaScsWisskiUriRewriterTest extends UnitTestCase {
 
   /**
    * An unwritable target throws.
-   *
-   * @covers ::rewriteNquads
    */
   public function testRewriteNquadsThrowsWhenTheTargetCannotBeWritten(): void {
     $source = $this->temporaryFile("x\n");
@@ -555,8 +511,6 @@ class SodaScsWisskiUriRewriterTest extends UnitTestCase {
 
   /**
    * The base URIs of the manifest are used without any lookup.
-   *
-   * @covers ::templateSourceBases
    */
   public function testTemplateSourceBasesComeFromTheManifest(): void {
     $bases = ['graph' => self::SOURCE_GRAPH, 'site' => self::SOURCE_SITE];
@@ -569,8 +523,6 @@ class SodaScsWisskiUriRewriterTest extends UnitTestCase {
 
   /**
    * An imported version takes its bases from the manifest as well.
-   *
-   * @covers ::templateSourceBases
    */
   public function testTemplateSourceBasesOfAnImportedVersionComeFromTheManifest(): void {
     $bases = ['graph' => self::SOURCE_GRAPH, 'site' => self::SOURCE_SITE];
@@ -580,8 +532,6 @@ class SodaScsWisskiUriRewriterTest extends UnitTestCase {
 
   /**
    * A version built before 4.8 reads the bases from its source WissKI.
-   *
-   * @covers ::templateSourceBases
    */
   public function testTemplateSourceBasesFallBackToTheSourceWisski(): void {
     $stack = $this->createMock(SodaScsStackInterface::class);
@@ -597,8 +547,6 @@ class SodaScsWisskiUriRewriterTest extends UnitTestCase {
 
   /**
    * A source stack that is gone leaves the bases unknown.
-   *
-   * @covers ::templateSourceBases
    */
   public function testTemplateSourceBasesAreNullWhenTheSourceStackIsGone(): void {
     $this->stackStorage->method('load')->with(8)->willReturn(NULL);
@@ -609,8 +557,6 @@ class SodaScsWisskiUriRewriterTest extends UnitTestCase {
 
   /**
    * A source stack without a WissKI component leaves the bases unknown.
-   *
-   * @covers ::templateSourceBases
    */
   public function testTemplateSourceBasesAreNullWhenTheSourceStackHasNoWisskiComponent(): void {
     $this->stackStorage->method('load')->willReturn($this->createMock(SodaScsStackInterface::class));
@@ -622,8 +568,6 @@ class SodaScsWisskiUriRewriterTest extends UnitTestCase {
 
   /**
    * A source WissKI that does not answer leaves the bases unknown.
-   *
-   * @covers ::templateSourceBases
    */
   public function testTemplateSourceBasesAreNullWhenTheSourceWisskiDoesNotAnswer(): void {
     $this->stackStorage->method('load')->willReturn($this->createMock(SodaScsStackInterface::class));
@@ -639,8 +583,6 @@ class SodaScsWisskiUriRewriterTest extends UnitTestCase {
    *
    * Its sourceStackId belongs to another site; a stack of the same number
    * here is an unrelated WissKI.
-   *
-   * @covers ::templateSourceBases
    */
   public function testTemplateSourceBasesOfAnImportedVersionWithoutBasesAreNullWithoutLookup(): void {
     $this->stackStorage->expects($this->never())->method('load');
@@ -651,8 +593,6 @@ class SodaScsWisskiUriRewriterTest extends UnitTestCase {
 
   /**
    * A version without a WissKI has no bases.
-   *
-   * @covers ::templateSourceBases
    */
   public function testTemplateSourceBasesAreNullWithoutWisskiApp(): void {
     $template = $this->createMock(SodaScsDemoTemplateInterface::class);

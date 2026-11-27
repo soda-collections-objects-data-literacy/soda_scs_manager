@@ -6,19 +6,19 @@ namespace Drupal\Tests\soda_scs_manager\Kernel\Entity;
 
 use Drupal\soda_scs_manager\Entity\SodaScsStack;
 use Drupal\Tests\soda_scs_manager\Kernel\SodaScsKernelTestBase;
+use PHPUnit\Framework\Attributes\DataProvider;
+use PHPUnit\Framework\Attributes\Group;
 
 /**
  * Tests CRUD operations for SODa SCS Stack entities.
- *
- * @group soda_scs_manager
  */
+#[Group('soda_scs_manager')]
 class SodaScsStackCrudTest extends SodaScsKernelTestBase {
 
   /**
    * Tests creating a stack entity for each bundle.
-   *
-   * @dataProvider stackBundleProvider
    */
+  #[DataProvider('stackBundleProvider')]
   public function testCreateStack(string $bundle): void {
     $label = 'Test ' . $bundle;
     $machineName = 'test-' . str_replace('_', '-', $bundle);
@@ -46,9 +46,8 @@ class SodaScsStackCrudTest extends SodaScsKernelTestBase {
 
   /**
    * Tests reading a stack entity for each bundle.
-   *
-   * @dataProvider stackBundleProvider
    */
+  #[DataProvider('stackBundleProvider')]
   public function testReadStack(string $bundle): void {
     // Create a stack first.
     $stack = $this->createTestStack($bundle);
@@ -70,9 +69,8 @@ class SodaScsStackCrudTest extends SodaScsKernelTestBase {
 
   /**
    * Tests updating a stack entity for each bundle.
-   *
-   * @dataProvider stackBundleProvider
    */
+  #[DataProvider('stackBundleProvider')]
   public function testUpdateStack(string $bundle): void {
     // Create a stack first.
     $stack = $this->createTestStack($bundle);
@@ -97,9 +95,8 @@ class SodaScsStackCrudTest extends SodaScsKernelTestBase {
 
   /**
    * Tests deleting a stack entity for each bundle.
-   *
-   * @dataProvider stackBundleProvider
    */
+  #[DataProvider('stackBundleProvider')]
   public function testDeleteStack(string $bundle): void {
     // Create a stack first.
     $stack = $this->createTestStack($bundle);

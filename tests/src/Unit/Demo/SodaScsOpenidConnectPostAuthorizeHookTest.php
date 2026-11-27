@@ -9,6 +9,7 @@ use Drupal\Core\DependencyInjection\ContainerBuilder;
 use Drupal\openid_connect\OpenIDConnectSessionInterface;
 use Drupal\Tests\UnitTestCase;
 use Drupal\user\UserInterface;
+use PHPUnit\Framework\Attributes\Group;
 use Prophecy\Argument;
 use Prophecy\PhpUnit\ProphecyTrait;
 use Symfony\Component\DependencyInjection\ContainerInterface;
@@ -20,9 +21,8 @@ require_once dirname(__DIR__, 4) . '/soda_scs_manager.module';
  *
  * Issue 3638489: the demo is requested only when openid_connect put an access
  * token into the session, so the Nextcloud credentials can be stored first.
- *
- * @group soda_scs_manager
  */
+#[Group('soda_scs_manager')]
 class SodaScsOpenidConnectPostAuthorizeHookTest extends UnitTestCase {
 
   use ProphecyTrait;

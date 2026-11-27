@@ -28,15 +28,22 @@ use Drupal\soda_scs_manager\Service\SodaScsProjectOwnershipTransfer;
 use Drupal\soda_scs_manager\ValueObject\SodaScsResult;
 use Drupal\Tests\UnitTestCase;
 use Drupal\user\UserInterface;
+use PHPUnit\Framework\Attributes\CoversMethod;
+use PHPUnit\Framework\Attributes\Group;
 use PHPUnit\Framework\MockObject\MockObject;
 use Psr\Log\LoggerInterface;
 
 /**
  * Tests the progress steps and failure reasons of the demo queue worker.
- *
- * @coversDefaultClass \Drupal\soda_scs_manager\Plugin\QueueWorker\SodaScsDemoQueueWorker
- * @group soda_scs_manager
  */
+#[CoversMethod(SodaScsDemoQueueWorker::class, 'reportStep')]
+#[CoversMethod(SodaScsDemoQueueWorker::class, 'applyTemplate')]
+#[CoversMethod(SodaScsDemoQueueWorker::class, 'failProject')]
+#[CoversMethod(SodaScsDemoQueueWorker::class, 'recordLastStep')]
+#[CoversMethod(SodaScsDemoQueueWorker::class, 'markProjectFailed')]
+#[CoversMethod(SodaScsDemoQueueWorker::class, 'processItem')]
+#[CoversMethod(SodaScsDemoQueueWorker::class, 'transferSource')]
+#[Group('soda_scs_manager')]
 class SodaScsDemoQueueWorkerTest extends UnitTestCase {
 
   private const NOW = 100000;
@@ -138,8 +145,6 @@ class SodaScsDemoQueueWorkerTest extends UnitTestCase {
 
   /**
    * A step the job already recorded is not written a second time.
-   *
-   * @covers ::reportStep
    */
   public function testReportStepSkipsMessageTheOperationAlreadyHas(): void {
     $this->recordedSteps = [['message' => 'Creating missing applications']];
@@ -156,8 +161,6 @@ class SodaScsDemoQueueWorkerTest extends UnitTestCase {
    *
    * The queue runs in the site default language; the status translates the
    * step for each viewer.
-   *
-   * @covers ::reportStep
    */
   public function testReportStepStoresSourceStringOfMarkup(): void {
     $translator = $this->createMock(TranslationInterface::class);
@@ -173,8 +176,6 @@ class SodaScsDemoQueueWorkerTest extends UnitTestCase {
 
   /**
    * A step is written when the operation has none yet.
-   *
-   * @covers ::reportStep
    */
   public function testReportStepWritesNewMessages(): void {
     $this->provisionerReports(['Creating missing applications', 'Importing the ontology']);
@@ -186,8 +187,6 @@ class SodaScsDemoQueueWorkerTest extends UnitTestCase {
 
   /**
    * A job without an operation ID reads and writes no steps.
-   *
-   * @covers ::reportStep
    */
   public function testReportStepWithoutOperationIdTouchesNoProgress(): void {
     $this->provisionerReports(['Creating missing applications']);
@@ -201,8 +200,6 @@ class SodaScsDemoQueueWorkerTest extends UnitTestCase {
 
   /**
    * A progress storage problem is logged and does not stop the job.
-   *
-   * @covers ::reportStep
    */
   public function testReportStepLogsProgressErrorAndJobCompletes(): void {
     $this->provisionerReports(['Creating missing applications']);
@@ -217,9 +214,6 @@ class SodaScsDemoQueueWorkerTest extends UnitTestCase {
 
   /**
    * A job that waited for an hour fails with the timeout reason.
-   *
-   * @covers ::applyTemplate
-   * @covers ::failProject
    */
   public function testTimeoutFailsWithWaitReason(): void {
     $this->provisioner->method('apply')->willThrowException(new SodaScsDemoNotReadyException('WissKI not ready'));
@@ -233,8 +227,6 @@ class SodaScsDemoQueueWorkerTest extends UnitTestCase {
 
   /**
    * Before the hour is over the job waits and is requeued without a failure.
-   *
-   * @covers ::applyTemplate
    */
   public function testNotReadyBeforeTimeoutRequeuesAndKeepsProject(): void {
     $this->provisioner->method('apply')->willThrowException(new SodaScsDemoNotReadyException('WissKI not ready'));
@@ -257,9 +249,6 @@ class SodaScsDemoQueueWorkerTest extends UnitTestCase {
    * An incomplete WissKI fails the project at once with its own reason.
    *
    * No wait and no requeue: retrying would not create the missing WissKI.
-   *
-   * @covers ::applyTemplate
-   * @covers ::failProject
    */
   public function testIncompleteAppFailsWithWisskiIncompleteReasonWithoutRequeue(): void {
     $this->provisioner->method('apply')->willThrowException(new SodaScsDemoIncompleteAppException('WissKI stack 7 has no WissKI component.'));
@@ -273,9 +262,6 @@ class SodaScsDemoQueueWorkerTest extends UnitTestCase {
 
   /**
    * Any other error leaves the step it failed at last; its message is logged.
-   *
-   * @covers ::applyTemplate
-   * @covers ::failProject
    */
   public function testFailureNamesTheLastStep(): void {
     $this->provisioner->method('apply')->willReturnCallback(static function ($project, $template, callable $reportStep): void {
@@ -299,8 +285,6 @@ class SodaScsDemoQueueWorkerTest extends UnitTestCase {
    * A retry that fails at a step recorded earlier records that step again.
    *
    * Otherwise the wait step would stay last and be shown as the reason.
-   *
-   * @covers ::recordLastStep
    */
   public function testFailureAtEarlierStepRecordsItAgain(): void {
     $this->recordedSteps = [
@@ -320,9 +304,6 @@ class SodaScsDemoQueueWorkerTest extends UnitTestCase {
 
   /**
    * A deleted template version marks the project failed with its reason.
-   *
-   * @covers ::applyTemplate
-   * @covers ::markProjectFailed
    */
   public function testMissingTemplateMarksProjectFailed(): void {
     $this->expectProjectFailed();
@@ -336,9 +317,6 @@ class SodaScsDemoQueueWorkerTest extends UnitTestCase {
 
   /**
    * An error before any step stores no reason; the status shows the time.
-   *
-   * @covers ::applyTemplate
-   * @covers ::failProject
    */
   public function testFailureWithoutStepStoresNoReason(): void {
     $this->provisioner->method('apply')->willThrowException(new \RuntimeException('boom'));
@@ -352,8 +330,6 @@ class SodaScsDemoQueueWorkerTest extends UnitTestCase {
 
   /**
    * The last step of a finished job is not carried into the next job.
-   *
-   * @covers ::applyTemplate
    */
   public function testLastStepIsResetForTheNextJob(): void {
     $calls = 0;
@@ -376,8 +352,6 @@ class SodaScsDemoQueueWorkerTest extends UnitTestCase {
 
   /**
    * A project job takes the lock the project delete form takes.
-   *
-   * @covers ::processItem
    */
   public function testProjectJobTakesTheProjectLockOfTheDeleteForm(): void {
     $this->processProvisionJob();
@@ -389,8 +363,6 @@ class SodaScsDemoQueueWorkerTest extends UnitTestCase {
    * A source transfer takes the template build lock, not a project lock.
    *
    * The transfer redeploys the WissKI a template build reads from.
-   *
-   * @covers ::processItem
    */
   public function testTransferSourceTakesTheTemplateBuildLock(): void {
     $this->serviceAccount->method('ensure')->willReturn(SodaScsResult::success(['account' => $this->createMock(UserInterface::class)], 'ready'));
@@ -403,8 +375,6 @@ class SodaScsDemoQueueWorkerTest extends UnitTestCase {
 
   /**
    * The source project goes to the account that ensure() returned.
-   *
-   * @covers ::transferSource
    */
   public function testTransferSourceHandsTheProjectToTheServiceAccount(): void {
     $account = $this->createMock(UserInterface::class);
@@ -421,8 +391,6 @@ class SodaScsDemoQueueWorkerTest extends UnitTestCase {
 
   /**
    * Follow-up warnings of the transfer are logged, the job still completes.
-   *
-   * @covers ::transferSource
    */
   public function testTransferSourceLogsWarningsAndCompletes(): void {
     $this->project->method('id')->willReturn(5);
@@ -440,8 +408,6 @@ class SodaScsDemoQueueWorkerTest extends UnitTestCase {
 
   /**
    * Without the service account the project is not touched and the job fails.
-   *
-   * @covers ::transferSource
    */
   public function testTransferSourceFailsWhenServiceAccountIsNotReady(): void {
     $this->serviceAccount->method('ensure')->willReturn(SodaScsResult::failure(error: 'no password', message: 'Set the password.', log: FALSE));
@@ -460,8 +426,6 @@ class SodaScsDemoQueueWorkerTest extends UnitTestCase {
 
   /**
    * A failed transfer fails the job with the reason as its last step.
-   *
-   * @covers ::transferSource
    */
   public function testTransferSourceFailsWithTheReasonOfTheTransfer(): void {
     $this->serviceAccount->method('ensure')->willReturn(SodaScsResult::success(['account' => $this->createMock(UserInterface::class)], 'ready'));
@@ -480,8 +444,6 @@ class SodaScsDemoQueueWorkerTest extends UnitTestCase {
 
   /**
    * Without an error text the message of the result is the logged reason.
-   *
-   * @covers ::transferSource
    */
   public function testTransferSourceLogsTheMessageWhenTheResultHasNoError(): void {
     $this->serviceAccount->method('ensure')->willReturn(SodaScsResult::success(['account' => $this->createMock(UserInterface::class)], 'ready'));
@@ -499,8 +461,6 @@ class SodaScsDemoQueueWorkerTest extends UnitTestCase {
 
   /**
    * An exception from the transfer is logged and fails the job; none escapes.
-   *
-   * @covers ::transferSource
    */
   public function testTransferSourceFailsWhenTheTransferThrows(): void {
     $this->serviceAccount->method('ensure')->willReturn(SodaScsResult::success(['account' => $this->createMock(UserInterface::class)], 'ready'));
@@ -523,8 +483,6 @@ class SodaScsDemoQueueWorkerTest extends UnitTestCase {
 
   /**
    * An exception from ensure() is logged and fails the job without a transfer.
-   *
-   * @covers ::transferSource
    */
   public function testTransferSourceFailsWhenEnsureThrows(): void {
     $this->serviceAccount->method('ensure')->willThrowException(new \RuntimeException('keycloak unreachable'));
@@ -543,8 +501,6 @@ class SodaScsDemoQueueWorkerTest extends UnitTestCase {
 
   /**
    * A project that no longer exists drops the job without a transfer.
-   *
-   * @covers ::transferSource
    */
   public function testTransferSourceDropsJobOfDeletedProject(): void {
     $this->project = $this->createMock(SodaScsProjectInterface::class);

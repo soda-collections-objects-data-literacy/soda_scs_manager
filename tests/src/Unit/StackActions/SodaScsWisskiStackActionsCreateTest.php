@@ -31,6 +31,9 @@ use Drupal\soda_scs_manager\StackActions\SodaScsWisskiStackActions;
 use Drupal\soda_scs_manager\ValueObject\SodaScsResult;
 use Drupal\Tests\soda_scs_manager\Unit\SodaScsCreatePathTestTrait;
 use Drupal\Tests\UnitTestCase;
+use PHPUnit\Framework\Attributes\CoversMethod;
+use PHPUnit\Framework\Attributes\DataProvider;
+use PHPUnit\Framework\Attributes\Group;
 use Prophecy\Argument;
 use Prophecy\PhpUnit\ProphecyTrait;
 
@@ -49,10 +52,16 @@ use Prophecy\PhpUnit\ProphecyTrait;
  *
  * Issue 3638568: deleteStack() of a stack without WissKI component deletes the
  * Keycloak client and groups that a failed WissKI creation left behind.
- *
- * @coversDefaultClass \Drupal\soda_scs_manager\StackActions\SodaScsWisskiStackActions
- * @group soda_scs_manager
  */
+#[CoversMethod(SodaScsWisskiStackActions::class, 'createStack')]
+#[CoversMethod(SodaScsWisskiStackActions::class, 'buildCreateStackFailure')]
+#[CoversMethod(SodaScsWisskiStackActions::class, 'deleteStack')]
+#[CoversMethod(SodaScsWisskiStackActions::class, 'buildDeleteStackFailure')]
+#[CoversMethod(SodaScsWisskiStackActions::class, 'rollBackCreateStack')]
+#[CoversMethod(SodaScsWisskiStackActions::class, 'componentActionsFor')]
+#[CoversMethod(SodaScsWisskiStackActions::class, 'deleteOrphanedKeycloakResources')]
+#[CoversMethod(SodaScsWisskiStackActions::class, 'isWisskiNameInUse')]
+#[Group('soda_scs_manager')]
 class SodaScsWisskiStackActionsCreateTest extends UnitTestCase {
 
   use ProphecyTrait;
@@ -212,9 +221,6 @@ class SodaScsWisskiStackActionsCreateTest extends UnitTestCase {
 
   /**
    * A failed SQL step names the database and passes the reason on.
-   *
-   * @covers ::createStack
-   * @covers ::buildCreateStackFailure
    */
   public function testCreateStackReturnsReasonOfFailedSqlStep(): void {
     $error = new \RuntimeException('Database failed.');
@@ -237,9 +243,6 @@ class SodaScsWisskiStackActionsCreateTest extends UnitTestCase {
 
   /**
    * A failed triplestore step names the triplestore.
-   *
-   * @covers ::createStack
-   * @covers ::buildCreateStackFailure
    */
   public function testCreateStackReturnsReasonOfFailedTriplestoreStep(): void {
     $this->sqlActions->createComponent(Argument::any())->willReturn($this->sqlSuccess());
@@ -261,9 +264,6 @@ class SodaScsWisskiStackActionsCreateTest extends UnitTestCase {
 
   /**
    * A failed WissKI step names WissKI and keeps the user-facing reason.
-   *
-   * @covers ::createStack
-   * @covers ::buildCreateStackFailure
    */
   public function testCreateStackReturnsReasonOfFailedWisskiStep(): void {
     $this->sqlActions->createComponent(Argument::any())->willReturn($this->sqlSuccess());
@@ -285,11 +285,8 @@ class SodaScsWisskiStackActionsCreateTest extends UnitTestCase {
 
   /**
    * The WissKI component is created with the choice stored on the stack.
-   *
-   * @covers ::createStack
-   *
-   * @dataProvider withDefaultDataModelProvider
    */
+  #[DataProvider('withDefaultDataModelProvider')]
   public function testCreateStackPassesWithDefaultDataModelToWisskiComponent(mixed $stackValue, bool $expected): void {
     $this->componentStorage->create(Argument::that(
       fn(array $values) => ($values['bundle'] ?? '') === 'soda_scs_wisski_component'
@@ -324,12 +321,8 @@ class SodaScsWisskiStackActionsCreateTest extends UnitTestCase {
 
   /**
    * Failure results without an error never yield a NULL or empty error.
-   *
-   * @covers ::createStack
-   * @covers ::buildCreateStackFailure
-   *
-   * @dataProvider missingErrorProvider
    */
+  #[DataProvider('missingErrorProvider')]
   public function testCreateStackFallsBackToDescriptiveErrorWhenStepReturnsNone(array $componentResult): void {
     $this->sqlActions->createComponent(Argument::any())->willReturn($componentResult);
 
@@ -357,9 +350,6 @@ class SodaScsWisskiStackActionsCreateTest extends UnitTestCase {
 
   /**
    * A plain string message is never shown as the reason.
-   *
-   * @covers ::createStack
-   * @covers ::buildCreateStackFailure
    */
   public function testCreateStackDoesNotShowPlainStringMessages(): void {
     $this->sqlActions->createComponent(Argument::any())->willReturn([
@@ -378,9 +368,6 @@ class SodaScsWisskiStackActionsCreateTest extends UnitTestCase {
 
   /**
    * A string error of a step is kept as it is.
-   *
-   * @covers ::createStack
-   * @covers ::buildCreateStackFailure
    */
   public function testCreateStackKeepsStringErrorOfStep(): void {
     $this->sqlActions->createComponent(Argument::any())->willReturn($this->sqlSuccess());
@@ -399,8 +386,6 @@ class SodaScsWisskiStackActionsCreateTest extends UnitTestCase {
 
   /**
    * An unexpected exception of a step is caught and returned as the error.
-   *
-   * @covers ::createStack
    */
   public function testCreateStackReturnsUnexpectedExceptionOfStep(): void {
     $failure = new \RuntimeException('Storage failed.');
@@ -416,9 +401,6 @@ class SodaScsWisskiStackActionsCreateTest extends UnitTestCase {
 
   /**
    * A failed database delete keeps the stack and stops before the rest.
-   *
-   * @covers ::deleteStack
-   * @covers ::buildDeleteStackFailure
    */
   public function testDeleteStackKeepsStackWhenDatabaseDeleteFails(): void {
     $stack = $this->deletableStack();
@@ -443,9 +425,6 @@ class SodaScsWisskiStackActionsCreateTest extends UnitTestCase {
 
   /**
    * A failed triplestore delete keeps the stack and the WissKI.
-   *
-   * @covers ::deleteStack
-   * @covers ::buildDeleteStackFailure
    */
   public function testDeleteStackKeepsStackWhenTriplestoreDeleteFails(): void {
     $stack = $this->deletableStack();
@@ -471,9 +450,6 @@ class SodaScsWisskiStackActionsCreateTest extends UnitTestCase {
 
   /**
    * A WissKI delete answer without a success flag keeps the stack.
-   *
-   * @covers ::deleteStack
-   * @covers ::buildDeleteStackFailure
    */
   public function testDeleteStackKeepsStackWhenWisskiDeleteAnswersWithoutSuccess(): void {
     $stack = $this->deletableStack();
@@ -496,8 +472,6 @@ class SodaScsWisskiStackActionsCreateTest extends UnitTestCase {
 
   /**
    * The stack is deleted once every component is gone.
-   *
-   * @covers ::deleteStack
    */
   public function testDeleteStackDeletesStackWhenEveryComponentIsDeleted(): void {
     $stack = $this->deletableStack();
@@ -516,9 +490,6 @@ class SodaScsWisskiStackActionsCreateTest extends UnitTestCase {
 
   /**
    * A failed SQL step has nothing to delete, but the stack goes.
-   *
-   * @covers ::createStack
-   * @covers ::rollBackCreateStack
    */
   public function testCreateStackDeletesOnlyStackWhenSqlStepFails(): void {
     $this->sqlActions->createComponent(Argument::any())->willReturn([
@@ -540,10 +511,6 @@ class SodaScsWisskiStackActionsCreateTest extends UnitTestCase {
 
   /**
    * A failed triplestore step deletes the SQL component and the stack.
-   *
-   * @covers ::createStack
-   * @covers ::rollBackCreateStack
-   * @covers ::componentActionsFor
    */
   public function testCreateStackDeletesSqlComponentAndStackWhenTriplestoreStepFails(): void {
     $sqlComponent = $this->componentDouble('5', 'soda_scs_sql_component')->reveal();
@@ -568,10 +535,6 @@ class SodaScsWisskiStackActionsCreateTest extends UnitTestCase {
 
   /**
    * A failed WissKI step deletes triplestore, then SQL, then the stack.
-   *
-   * @covers ::createStack
-   * @covers ::rollBackCreateStack
-   * @covers ::componentActionsFor
    */
   public function testCreateStackDeletesComponentsInReverseOrderWhenWisskiStepFails(): void {
     $sqlComponent = $this->componentDouble('5', 'soda_scs_sql_component')->reveal();
@@ -605,10 +568,6 @@ class SodaScsWisskiStackActionsCreateTest extends UnitTestCase {
 
   /**
    * An exception after all components were created deletes all of them.
-   *
-   * @covers ::createStack
-   * @covers ::rollBackCreateStack
-   * @covers ::componentActionsFor
    */
   public function testCreateStackDeletesAllComponentsWhenLinkingThemThrows(): void {
     $failure = new \RuntimeException('Storage failed.');
@@ -645,12 +604,8 @@ class SodaScsWisskiStackActionsCreateTest extends UnitTestCase {
 
   /**
    * A WissKI saved by createComponent() before it threw is deleted as well.
-   *
-   * @covers ::createStack
-   * @covers ::rollBackCreateStack
-   *
-   * @dataProvider savedWisskiProvider
    */
+  #[DataProvider('savedWisskiProvider')]
   public function testCreateStackDeletesWisskiThatWasSavedBeforeCreateComponentThrew(bool $isNew, int $expectedWisskiDeletes): void {
     $failure = new \RuntimeException('Portainer failed after the save.');
     $sqlComponent = $this->componentDouble('5', 'soda_scs_sql_component')->reveal();
@@ -691,9 +646,6 @@ class SodaScsWisskiStackActionsCreateTest extends UnitTestCase {
 
   /**
    * An unexpected exception before any component exists only deletes the stack.
-   *
-   * @covers ::createStack
-   * @covers ::rollBackCreateStack
    */
   public function testCreateStackDeletesOnlyStackWhenFirstStepThrows(): void {
     $this->sqlActions->createComponent(Argument::any())->willThrow(new \RuntimeException('Storage failed.'));
@@ -708,9 +660,6 @@ class SodaScsWisskiStackActionsCreateTest extends UnitTestCase {
 
   /**
    * A component that cannot be deleted keeps the stack and stays in it.
-   *
-   * @covers ::createStack
-   * @covers ::rollBackCreateStack
    */
   public function testCreateStackKeepsStackWithUndeletableComponentAndReturnsOriginalFailure(): void {
     $sqlComponent = $this->componentDouble('5', 'soda_scs_sql_component')->reveal();
@@ -742,9 +691,6 @@ class SodaScsWisskiStackActionsCreateTest extends UnitTestCase {
 
   /**
    * A failed delete does not stop the others; only the failed one is kept.
-   *
-   * @covers ::createStack
-   * @covers ::rollBackCreateStack
    */
   public function testCreateStackKeepsOnlyUndeletableComponentAndDeletesTheRest(): void {
     $sqlComponent = $this->componentDouble('5', 'soda_scs_sql_component')->reveal();
@@ -771,9 +717,6 @@ class SodaScsWisskiStackActionsCreateTest extends UnitTestCase {
 
   /**
    * Kept components stay in creation order.
-   *
-   * @covers ::createStack
-   * @covers ::rollBackCreateStack
    */
   public function testCreateStackKeepsAllUndeletableComponentsInCreationOrder(): void {
     $sqlComponent = $this->componentDouble('5', 'soda_scs_sql_component')->reveal();
@@ -796,9 +739,6 @@ class SodaScsWisskiStackActionsCreateTest extends UnitTestCase {
 
   /**
    * A component delete that throws counts as not deleted.
-   *
-   * @covers ::createStack
-   * @covers ::rollBackCreateStack
    */
   public function testCreateStackKeepsStackWhenComponentDeleteThrows(): void {
     $sqlComponent = $this->componentDouble('5', 'soda_scs_sql_component')->reveal();
@@ -818,9 +758,6 @@ class SodaScsWisskiStackActionsCreateTest extends UnitTestCase {
 
   /**
    * A component delete answer without success flag counts as not deleted.
-   *
-   * @covers ::createStack
-   * @covers ::rollBackCreateStack
    */
   public function testCreateStackKeepsStackWhenComponentDeleteAnswersWithoutSuccess(): void {
     $sqlComponent = $this->componentDouble('5', 'soda_scs_sql_component')->reveal();
@@ -846,12 +783,8 @@ class SodaScsWisskiStackActionsCreateTest extends UnitTestCase {
    *   The machine name of the stack.
    * @param array $expectedCalls
    *   The expected client ID and requireClient flag, in order.
-   *
-   * @covers ::deleteStack
-   * @covers ::deleteOrphanedKeycloakResources
-   *
-   * @dataProvider stackMachineNameProvider
    */
+  #[DataProvider('stackMachineNameProvider')]
   public function testDeleteStackDeletesKeycloakResourcesOfStackWithoutWisski(string $stackMachineName, array $expectedCalls): void {
     $stack = $this->deletableStack();
     $stack->get('machineName')->willReturn($this->fieldList($stackMachineName));
@@ -892,8 +825,6 @@ class SodaScsWisskiStackActionsCreateTest extends UnitTestCase {
 
   /**
    * A bare "stack-" name has nothing to strip, only the raw reading remains.
-   *
-   * @covers ::deleteOrphanedKeycloakResources
    */
   public function testDeleteStackReadsBareStackPrefixOnlyOnce(): void {
     $stack = $this->deletableStack();
@@ -910,8 +841,6 @@ class SodaScsWisskiStackActionsCreateTest extends UnitTestCase {
 
   /**
    * An empty machine name looks for no client at all.
-   *
-   * @covers ::deleteOrphanedKeycloakResources
    */
   public function testDeleteStackLooksForNoKeycloakClientWhenMachineNameIsEmpty(): void {
     $stack = $this->deletableStack();
@@ -925,10 +854,6 @@ class SodaScsWisskiStackActionsCreateTest extends UnitTestCase {
 
   /**
    * Another WissKI stack with the name may be a creation in progress.
-   *
-   * @covers ::deleteStack
-   * @covers ::deleteOrphanedKeycloakResources
-   * @covers ::isWisskiNameInUse
    */
   public function testDeleteStackLeavesKeycloakResourcesWhenAnotherWisskiStackHasTheName(): void {
     $stack = $this->deletableStack();
@@ -947,8 +872,6 @@ class SodaScsWisskiStackActionsCreateTest extends UnitTestCase {
 
   /**
    * The stack that is being deleted never counts as "another" stack.
-   *
-   * @covers ::isWisskiNameInUse
    */
   public function testDeleteStackExcludesItselfFromTheNameInUseLookup(): void {
     $stack = $this->deletableStack();
@@ -961,8 +884,6 @@ class SodaScsWisskiStackActionsCreateTest extends UnitTestCase {
 
   /**
    * When the raw reading is in use, the stripped reading is still checked.
-   *
-   * @covers ::deleteOrphanedKeycloakResources
    */
   public function testDeleteStackSkipsOnlyTheReadingThatIsInUse(): void {
     $stack = $this->deletableStack();
@@ -987,9 +908,6 @@ class SodaScsWisskiStackActionsCreateTest extends UnitTestCase {
 
   /**
    * An existing WissKI component with that name owns the client.
-   *
-   * @covers ::deleteStack
-   * @covers ::deleteOrphanedKeycloakResources
    */
   public function testDeleteStackLeavesKeycloakResourcesOfExistingWisskiComponent(): void {
     $stack = $this->deletableStack();
@@ -1005,8 +923,6 @@ class SodaScsWisskiStackActionsCreateTest extends UnitTestCase {
 
   /**
    * A WissKI component in the stack deletes its Keycloak client itself.
-   *
-   * @covers ::deleteStack
    */
   public function testDeleteStackDoesNotLookForOrphansWhenStackHasWisskiComponent(): void {
     $stack = $this->deletableStack();
@@ -1028,9 +944,6 @@ class SodaScsWisskiStackActionsCreateTest extends UnitTestCase {
 
   /**
    * A failed Keycloak cleanup keeps the stack and skips the next reading.
-   *
-   * @covers ::deleteStack
-   * @covers ::deleteOrphanedKeycloakResources
    */
   public function testDeleteStackKeepsStackWhenKeycloakCleanupFails(): void {
     $stack = $this->deletableStack();
@@ -1053,8 +966,6 @@ class SodaScsWisskiStackActionsCreateTest extends UnitTestCase {
 
   /**
    * A failure of the stripped reading keeps the stack as well.
-   *
-   * @covers ::deleteOrphanedKeycloakResources
    */
   public function testDeleteStackKeepsStackWhenKeycloakCleanupOfStrippedNameFails(): void {
     $stack = $this->deletableStack();

@@ -24,15 +24,18 @@ use Drupal\soda_scs_manager\Helpers\SodaScsVolumeArchiveHelpers;
 use Drupal\soda_scs_manager\Helpers\SodaScsWebprotegeHelpers;
 use Drupal\soda_scs_manager\StackActions\SodaScsStackActionsInterface;
 use Drupal\Tests\UnitTestCase;
+use PHPUnit\Framework\Attributes\CoversMethod;
+use PHPUnit\Framework\Attributes\Group;
 use PHPUnit\Framework\MockObject\MockObject;
 use Psr\Log\LoggerInterface;
 
 /**
  * Tests how the demo provisioner treats an existing WissKI stack.
- *
- * @coversDefaultClass \Drupal\soda_scs_manager\Demo\SodaScsDemoProjectProvisioner
- * @group soda_scs_manager
  */
+#[CoversMethod(SodaScsDemoProjectProvisioner::class, 'ensureWisskiStack')]
+#[CoversMethod(SodaScsDemoProjectProvisioner::class, 'sourceUriBases')]
+#[CoversMethod(SodaScsDemoProjectProvisioner::class, 'verifyChecksums')]
+#[Group('soda_scs_manager')]
 class SodaScsDemoProjectProvisionerTest extends UnitTestCase {
 
   /**
@@ -75,8 +78,6 @@ class SodaScsDemoProjectProvisionerTest extends UnitTestCase {
 
   /**
    * A stack left without a WissKI component fails the job at once.
-   *
-   * @covers ::ensureWisskiStack
    */
   public function testExistingWisskiStackWithoutWisskiComponentThrowsIncompleteApp(): void {
     $this->existingWisskiStack(NULL);
@@ -90,8 +91,6 @@ class SodaScsDemoProjectProvisionerTest extends UnitTestCase {
 
   /**
    * An existing stack with its WissKI component is reused, not created again.
-   *
-   * @covers ::ensureWisskiStack
    */
   public function testExistingWisskiStackWithWisskiComponentIsReturned(): void {
     $stack = $this->existingWisskiStack($this->createMock(SodaScsComponentInterface::class));
@@ -102,8 +101,6 @@ class SodaScsDemoProjectProvisionerTest extends UnitTestCase {
 
   /**
    * The bases the rewriter finds are handed on.
-   *
-   * @covers ::sourceUriBases
    */
   public function testSourceUriBasesAreThoseOfTheRewriter(): void {
     $bases = ['graph' => 'https://source.example.org/contents/', 'site' => 'https://source.example.org/'];
@@ -116,8 +113,6 @@ class SodaScsDemoProjectProvisionerTest extends UnitTestCase {
 
   /**
    * Unknown bases of a built version keep the URIs and log a notice.
-   *
-   * @covers ::sourceUriBases
    */
   public function testUnknownSourceUriBasesOfBuiltVersionLogThatTheSourceIsGone(): void {
     $this->uriRewriter->method('templateSourceBases')->willReturn(NULL);
@@ -129,8 +124,6 @@ class SodaScsDemoProjectProvisionerTest extends UnitTestCase {
 
   /**
    * Unknown bases of an imported version are logged as imported without them.
-   *
-   * @covers ::sourceUriBases
    */
   public function testUnknownSourceUriBasesOfAnImportedVersionLogThatNoneWereImported(): void {
     $this->uriRewriter->method('templateSourceBases')->willReturn(NULL);
@@ -142,8 +135,6 @@ class SodaScsDemoProjectProvisionerTest extends UnitTestCase {
 
   /**
    * A template file that is missing or changed is named.
-   *
-   * @covers ::verifyChecksums
    */
   public function testVerifyChecksumsNamesTheFirstDamagedFile(): void {
     $directory = sys_get_temp_dir() . '/scs-provisioner-test-' . bin2hex(random_bytes(4));
@@ -163,8 +154,6 @@ class SodaScsDemoProjectProvisionerTest extends UnitTestCase {
 
   /**
    * Matching files pass; a manifest without checksums passes nothing to check.
-   *
-   * @covers ::verifyChecksums
    */
   public function testVerifyChecksumsAcceptsMatchingFiles(): void {
     $directory = sys_get_temp_dir() . '/scs-provisioner-test-' . bin2hex(random_bytes(4));

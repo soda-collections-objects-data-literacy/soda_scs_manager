@@ -5,8 +5,11 @@ declare(strict_types=1);
 namespace Drupal\Tests\soda_scs_manager\Kernel\ViewBuilder;
 
 use Drupal\soda_scs_manager\Service\SodaScsNextcloudPreview;
+use Drupal\soda_scs_manager\ViewBuilder\SodaScsProjectViewBuilder;
 use Drupal\Tests\soda_scs_manager\Kernel\SodaScsKernelTestBase;
 use Drupal\user\Entity\Role;
+use PHPUnit\Framework\Attributes\CoversMethod;
+use PHPUnit\Framework\Attributes\Group;
 
 /**
  * Tests that a demo project offers no links into apps and files while busy.
@@ -16,10 +19,9 @@ use Drupal\user\Entity\Role;
  * application cards and the Files section as pending and the templates render
  * no link. Ready and failed demos (a failed one needs the links to clean up)
  * and non-demo projects keep them.
- *
- * @group soda_scs_manager
- * @coversDefaultClass \Drupal\soda_scs_manager\ViewBuilder\SodaScsProjectViewBuilder
  */
+#[CoversMethod(SodaScsProjectViewBuilder::class, 'build')]
+#[Group('soda_scs_manager')]
 class SodaScsProjectDemoPendingLinksTest extends SodaScsKernelTestBase {
 
   private const OPEN_URL = 'https://files.example.invalid/apps/files/?dir=/Demo';
@@ -62,8 +64,6 @@ class SodaScsProjectDemoPendingLinksTest extends SodaScsKernelTestBase {
 
   /**
    * Application cards of a provisioning demo are marked pending.
-   *
-   * @covers ::build
    */
   public function testCardsArePendingWhileDemoIsProvisioning(): void {
     $build = $this->buildProjectPage('provisioning');
@@ -76,8 +76,6 @@ class SodaScsProjectDemoPendingLinksTest extends SodaScsKernelTestBase {
 
   /**
    * Application cards of a resetting demo are marked pending.
-   *
-   * @covers ::build
    */
   public function testCardsArePendingWhileDemoIsResetting(): void {
     $build = $this->buildProjectPage('resetting');
@@ -90,8 +88,6 @@ class SodaScsProjectDemoPendingLinksTest extends SodaScsKernelTestBase {
 
   /**
    * The Files section of a provisioning demo is marked pending.
-   *
-   * @covers ::build
    */
   public function testFilesArePendingWhileDemoIsProvisioning(): void {
     $build = $this->buildProjectPage('provisioning');
@@ -101,8 +97,6 @@ class SodaScsProjectDemoPendingLinksTest extends SodaScsKernelTestBase {
 
   /**
    * The Files section of a resetting demo is marked pending.
-   *
-   * @covers ::build
    */
   public function testFilesArePendingWhileDemoIsResetting(): void {
     $build = $this->buildProjectPage('resetting');
@@ -112,8 +106,6 @@ class SodaScsProjectDemoPendingLinksTest extends SodaScsKernelTestBase {
 
   /**
    * A ready demo keeps its links.
-   *
-   * @covers ::build
    */
   public function testNothingIsPendingWhenDemoIsReady(): void {
     $build = $this->buildProjectPage('ready');
@@ -127,8 +119,6 @@ class SodaScsProjectDemoPendingLinksTest extends SodaScsKernelTestBase {
 
   /**
    * A failed demo keeps its links: the owner needs them to clean up.
-   *
-   * @covers ::build
    */
   public function testNothingIsPendingWhenDemoFailed(): void {
     $build = $this->buildProjectPage('failed');
@@ -142,8 +132,6 @@ class SodaScsProjectDemoPendingLinksTest extends SodaScsKernelTestBase {
 
   /**
    * A project that is not a demo is unchanged.
-   *
-   * @covers ::build
    */
   public function testNothingIsPendingForNonDemoProject(): void {
     $build = $this->buildProjectPage(NULL);

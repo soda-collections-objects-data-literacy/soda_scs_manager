@@ -6,14 +6,14 @@ namespace Drupal\Tests\soda_scs_manager\Kernel\Entity;
 
 use Drupal\soda_scs_manager\Entity\SodaScsDemoTemplateInterface;
 use Drupal\Tests\soda_scs_manager\Kernel\SodaScsKernelTestBase;
+use PHPUnit\Framework\Attributes\Group;
 
 /**
  * Tests the origin of demo template versions (built here or imported).
  *
  * Issue 3640915.
- *
- * @group soda_scs_manager
  */
+#[Group('soda_scs_manager')]
 final class SodaScsDemoTemplateOriginTest extends SodaScsKernelTestBase {
 
   /**

@@ -6,15 +6,15 @@ namespace Drupal\Tests\soda_scs_manager\Kernel\Install;
 
 use Drupal\soda_scs_manager\Entity\SodaScsDemoTemplateInterface;
 use Drupal\Tests\soda_scs_manager\Kernel\SodaScsKernelTestBase;
+use PHPUnit\Framework\Attributes\Group;
 
 /**
  * Tests soda_scs_manager_update_11044() (origin of demo templates).
  *
  * Issue 3640915. A site that was installed before the field existed has no
  * installed definition for it; the test removes it to get that state.
- *
- * @group soda_scs_manager
  */
+#[Group('soda_scs_manager')]
 final class SodaScsUpdate11044Test extends SodaScsKernelTestBase {
 
   private const ENTITY_TYPE_ID = 'soda_scs_demo_template';

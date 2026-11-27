@@ -9,16 +9,32 @@ use Drupal\Core\Session\AnonymousUserSession;
 use Drupal\soda_scs_manager\Batch\SodaScsConversationBroadcastBatch;
 use Drupal\soda_scs_manager\Entity\SodaScsConversationInterface;
 use Drupal\soda_scs_manager\Helpers\SodaScsConversationHelpers;
+use Drupal\soda_scs_manager\Helpers\SodaScsMessageHelpers;
 use Drupal\Tests\soda_scs_manager\Kernel\SodaScsKernelTestBase;
 use Drupal\user\Entity\Role;
 use Drupal\user\UserInterface;
+use PHPUnit\Framework\Attributes\CoversMethod;
+use PHPUnit\Framework\Attributes\Group;
 
 /**
  * Conversations between users and the admin team.
- *
- * @group soda_scs_manager
- * @coversDefaultClass \Drupal\soda_scs_manager\Helpers\SodaScsConversationHelpers
  */
+#[CoversMethod(SodaScsConversationHelpers::class, 'startConversation')]
+#[CoversMethod(SodaScsConversationHelpers::class, 'loadLastMessages')]
+#[CoversMethod(SodaScsConversationHelpers::class, 'isInstalled')]
+#[CoversMethod(SodaScsConversationHelpers::class, 'postMessage')]
+#[CoversMethod(SodaScsConversationHelpers::class, 'markRead')]
+#[CoversMethod(SodaScsConversationHelpers::class, 'countUnread')]
+#[CoversMethod(SodaScsMessageHelpers::class, 'countAttentionItems')]
+#[CoversMethod(SodaScsConversationHelpers::class, 'editMessage')]
+#[CoversMethod(SodaScsConversationHelpers::class, 'deleteMessage')]
+#[CoversMethod(SodaScsConversationHelpers::class, 'deleteForUser')]
+#[CoversMethod(SodaScsConversationHelpers::class, 'loadForUser')]
+#[CoversMethod(SodaScsConversationHelpers::class, 'loadForTeam')]
+#[CoversMethod(SodaScsConversationHelpers::class, 'countForTeam')]
+#[CoversMethod(SodaScsConversationHelpers::class, 'resolveRecipients')]
+#[CoversMethod(SodaScsConversationBroadcastBatch::class, 'startChunk')]
+#[Group('soda_scs_manager')]
 class SodaScsConversationHelpersTest extends SodaScsKernelTestBase {
 
   /**
@@ -93,8 +109,6 @@ class SodaScsConversationHelpersTest extends SodaScsKernelTestBase {
 
   /**
    * An admin starts a conversation: user unread, team read, first message.
-   *
-   * @covers ::startConversation
    */
   public function testStartCreatesConversationAndFirstMessage(): void {
     $conversation = $this->helpers->startConversation($this->admin, (int) $this->alice->id(), '  Maintenance  ', "Hello\r\nworld ");
@@ -121,8 +135,6 @@ class SodaScsConversationHelpersTest extends SodaScsKernelTestBase {
 
   /**
    * The last messages are loaded in bulk, keyed by conversation id.
-   *
-   * @covers ::loadLastMessages
    */
   public function testLoadLastMessagesReturnsLastMessagePerConversation(): void {
     $first = $this->startWithAlice();
@@ -139,8 +151,6 @@ class SodaScsConversationHelpersTest extends SodaScsKernelTestBase {
 
   /**
    * A conversation without a last message is left out of the result.
-   *
-   * @covers ::loadLastMessages
    */
   public function testLoadLastMessagesLeavesOutConversationWithoutMessages(): void {
     $withMessage = $this->startWithAlice();
@@ -160,8 +170,6 @@ class SodaScsConversationHelpersTest extends SodaScsKernelTestBase {
 
   /**
    * A last message id pointing to a deleted message is left out.
-   *
-   * @covers ::loadLastMessages
    */
   public function testLoadLastMessagesLeavesOutMissingMessage(): void {
     $conversation = $this->startWithAlice();
@@ -173,8 +181,6 @@ class SodaScsConversationHelpersTest extends SodaScsKernelTestBase {
 
   /**
    * The schema is installed in the kernel test.
-   *
-   * @covers ::isInstalled
    */
   public function testIsInstalledIsTrueWithSchema(): void {
     $this->assertTrue($this->helpers->isInstalled());
@@ -182,8 +188,6 @@ class SodaScsConversationHelpersTest extends SodaScsKernelTestBase {
 
   /**
    * Only an admin may start a conversation.
-   *
-   * @covers ::startConversation
    */
   public function testStartIsDeniedForNonAdmin(): void {
     $this->assertNull($this->helpers->startConversation($this->alice, (int) $this->bob->id(), 'Hi', 'Text'));
@@ -192,8 +196,6 @@ class SodaScsConversationHelpersTest extends SodaScsKernelTestBase {
 
   /**
    * A refused start by a non-admin is logged as a warning, without the text.
-   *
-   * @covers ::startConversation
    */
   public function testStartByNonAdminLogsWarning(): void {
     $logger = $this->createMock(LoggerChannelInterface::class);
@@ -213,8 +215,6 @@ class SodaScsConversationHelpersTest extends SodaScsKernelTestBase {
 
   /**
    * A refused start for an empty subject or text is logged as a warning.
-   *
-   * @covers ::startConversation
    */
   public function testStartWithEmptyTextLogsWarning(): void {
     $logger = $this->createMock(LoggerChannelInterface::class);
@@ -234,8 +234,6 @@ class SodaScsConversationHelpersTest extends SodaScsKernelTestBase {
 
   /**
    * A successful start logs no warning.
-   *
-   * @covers ::startConversation
    */
   public function testSuccessfulStartLogsNoWarning(): void {
     $logger = $this->createMock(LoggerChannelInterface::class);
@@ -246,8 +244,6 @@ class SodaScsConversationHelpersTest extends SodaScsKernelTestBase {
 
   /**
    * A blank subject or body starts nothing.
-   *
-   * @covers ::startConversation
    */
   public function testStartWithEmptySubjectOrBodyCreatesNothing(): void {
     $this->assertNull($this->helpers->startConversation($this->admin, (int) $this->alice->id(), '   ', 'Text'));
@@ -258,8 +254,6 @@ class SodaScsConversationHelpersTest extends SodaScsKernelTestBase {
 
   /**
    * A reply of the user flags the team and clears the user's flag.
-   *
-   * @covers ::postMessage
    */
   public function testReplyByUserSetsTeamUnreadAndClearsUserUnread(): void {
     $conversation = $this->startWithAlice();
@@ -277,8 +271,6 @@ class SodaScsConversationHelpersTest extends SodaScsKernelTestBase {
 
   /**
    * A reply of an admin flags the user and clears the team's flag.
-   *
-   * @covers ::postMessage
    */
   public function testReplyByAdminSetsUserUnreadAndClearsTeamUnread(): void {
     $conversation = $this->startWithAlice();
@@ -296,8 +288,6 @@ class SodaScsConversationHelpersTest extends SodaScsKernelTestBase {
 
   /**
    * A foreign user cannot reply; nothing is written.
-   *
-   * @covers ::postMessage
    */
   public function testReplyByForeignUserIsDeniedAndWritesNothing(): void {
     $conversation = $this->startWithAlice();
@@ -311,8 +301,6 @@ class SodaScsConversationHelpersTest extends SodaScsKernelTestBase {
 
   /**
    * An empty reply is refused.
-   *
-   * @covers ::postMessage
    */
   public function testReplyWithEmptyBodyIsRefused(): void {
     $conversation = $this->startWithAlice();
@@ -325,8 +313,6 @@ class SodaScsConversationHelpersTest extends SodaScsKernelTestBase {
 
   /**
    * Text longer than the maximum is cut.
-   *
-   * @covers ::postMessage
    */
   public function testReplyIsCutToMaximumLength(): void {
     $conversation = $this->startWithAlice();
@@ -339,8 +325,6 @@ class SodaScsConversationHelpersTest extends SodaScsKernelTestBase {
 
   /**
    * Markup in a message is stored as typed, not interpreted.
-   *
-   * @covers ::postMessage
    */
   public function testMessageTextIsStoredAsPlainText(): void {
     $conversation = $this->startWithAlice();
@@ -356,8 +340,6 @@ class SodaScsConversationHelpersTest extends SodaScsKernelTestBase {
 
   /**
    * Reading clears the flag of the reading side only.
-   *
-   * @covers ::markRead
    */
   public function testMarkReadClearsOnlyTheFlagOfTheReadingSide(): void {
     $conversation = $this->startWithAlice();
@@ -379,8 +361,6 @@ class SodaScsConversationHelpersTest extends SodaScsKernelTestBase {
 
   /**
    * A foreign user's visit does not clear anything.
-   *
-   * @covers ::markRead
    */
   public function testMarkReadByForeignUserChangesNothing(): void {
     $conversation = $this->startWithAlice();
@@ -397,8 +377,6 @@ class SodaScsConversationHelpersTest extends SodaScsKernelTestBase {
 
   /**
    * The user counts own unread conversations; the admin also the team's.
-   *
-   * @covers ::countUnread
    */
   public function testCountUnreadForUserAndAdmin(): void {
     $this->assertSame(0, $this->helpers->countUnread($this->alice));
@@ -423,8 +401,6 @@ class SodaScsConversationHelpersTest extends SodaScsKernelTestBase {
 
   /**
    * An anonymous visitor has nothing unread.
-   *
-   * @covers ::countUnread
    */
   public function testCountUnreadForAnonymousIsZero(): void {
     $this->startWithAlice();
@@ -433,8 +409,6 @@ class SodaScsConversationHelpersTest extends SodaScsKernelTestBase {
 
   /**
    * The menu badge adds the unread conversations.
-   *
-   * @covers \Drupal\soda_scs_manager\Helpers\SodaScsMessageHelpers::countAttentionItems
    */
   public function testCountAttentionItemsIncludesConversations(): void {
     $messageHelpers = $this->container->get('soda_scs_manager.message.helpers');
@@ -451,8 +425,6 @@ class SodaScsConversationHelpersTest extends SodaScsKernelTestBase {
 
   /**
    * Only the author edits; the edit is marked.
-   *
-   * @covers ::editMessage
    */
   public function testEditByAuthorChangesBodyAndMarksEdited(): void {
     $conversation = $this->startWithAlice();
@@ -470,8 +442,6 @@ class SodaScsConversationHelpersTest extends SodaScsKernelTestBase {
 
   /**
    * Editing with the same text does not mark the message edited.
-   *
-   * @covers ::editMessage
    */
   public function testEditWithSameTextDoesNotMarkEdited(): void {
     $conversation = $this->startWithAlice();
@@ -484,8 +454,6 @@ class SodaScsConversationHelpersTest extends SodaScsKernelTestBase {
 
   /**
    * An admin may not edit the message of someone else.
-   *
-   * @covers ::editMessage
    */
   public function testEditByAdminWhoIsNotTheAuthorIsDenied(): void {
     $conversation = $this->startWithAlice();
@@ -501,8 +469,6 @@ class SodaScsConversationHelpersTest extends SodaScsKernelTestBase {
 
   /**
    * A foreign user may not edit.
-   *
-   * @covers ::editMessage
    */
   public function testEditByForeignUserIsDenied(): void {
     $conversation = $this->startWithAlice();
@@ -515,8 +481,6 @@ class SodaScsConversationHelpersTest extends SodaScsKernelTestBase {
 
   /**
    * An edit to an empty text is refused and keeps the old text.
-   *
-   * @covers ::editMessage
    */
   public function testEditToEmptyBodyIsRefused(): void {
     $conversation = $this->startWithAlice();
@@ -529,8 +493,6 @@ class SodaScsConversationHelpersTest extends SodaScsKernelTestBase {
 
   /**
    * A deleted message cannot be edited.
-   *
-   * @covers ::editMessage
    */
   public function testEditAfterDeleteIsDenied(): void {
     $conversation = $this->startWithAlice();
@@ -545,8 +507,6 @@ class SodaScsConversationHelpersTest extends SodaScsKernelTestBase {
 
   /**
    * The author deletes softly: the row stays, the text goes.
-   *
-   * @covers ::deleteMessage
    */
   public function testDeleteByAuthorEmptiesBodyAndKeepsRow(): void {
     $conversation = $this->startWithAlice();
@@ -565,8 +525,6 @@ class SodaScsConversationHelpersTest extends SodaScsKernelTestBase {
 
   /**
    * An admin moderates the message of a user.
-   *
-   * @covers ::deleteMessage
    */
   public function testDeleteByAdminEmptiesBody(): void {
     $conversation = $this->startWithAlice();
@@ -582,8 +540,6 @@ class SodaScsConversationHelpersTest extends SodaScsKernelTestBase {
 
   /**
    * Another user and a participant who is not the author cannot delete.
-   *
-   * @covers ::deleteMessage
    */
   public function testDeleteByOtherUserIsDenied(): void {
     $conversation = $this->startWithAlice();
@@ -600,8 +556,6 @@ class SodaScsConversationHelpersTest extends SodaScsKernelTestBase {
 
   /**
    * A deleted message cannot be deleted again, even by an admin.
-   *
-   * @covers ::deleteMessage
    */
   public function testDeleteTwiceIsDenied(): void {
     $conversation = $this->startWithAlice();
@@ -660,8 +614,6 @@ class SodaScsConversationHelpersTest extends SodaScsKernelTestBase {
 
   /**
    * Deleting a user removes their conversations with all messages only.
-   *
-   * @covers ::deleteForUser
    */
   public function testDeleteForUserRemovesOwnConversationsAndTheirMessages(): void {
     $aliceConversation = $this->startWithAlice();
@@ -685,8 +637,6 @@ class SodaScsConversationHelpersTest extends SodaScsKernelTestBase {
    * The account is not deleted here: the user delete hook also runs the
    * offboarding against external services. A message whose author account is
    * gone looks the same to the helper.
-   *
-   * @covers ::deleteForUser
    */
   public function testDeleteForUserKeepsMessagesOfDeletedAdmin(): void {
     $aliceConversation = $this->startWithAlice();
@@ -711,8 +661,6 @@ class SodaScsConversationHelpersTest extends SodaScsKernelTestBase {
 
   /**
    * Deleting a user without conversations is a no-op.
-   *
-   * @covers ::deleteForUser
    */
   public function testDeleteForUserWithoutConversationsDeletesNothing(): void {
     $this->startWithAlice();
@@ -725,10 +673,6 @@ class SodaScsConversationHelpersTest extends SodaScsKernelTestBase {
 
   /**
    * The lists are ordered by the latest activity and scoped.
-   *
-   * @covers ::loadForUser
-   * @covers ::loadForTeam
-   * @covers ::countForTeam
    */
   public function testListsAreOrderedByLastActivityAndScoped(): void {
     $first = $this->startWithAlice();
@@ -752,8 +696,6 @@ class SodaScsConversationHelpersTest extends SodaScsKernelTestBase {
 
   /**
    * Users mode: only the picked, active users with access, not the sender.
-   *
-   * @covers ::resolveRecipients
    */
   public function testResolveRecipientsForPickedUsersDropsBlockedUnauthorizedAndSender(): void {
     $blocked = $this->createBlockedUser();
@@ -773,8 +715,6 @@ class SodaScsConversationHelpersTest extends SodaScsKernelTestBase {
 
   /**
    * Users mode with an empty pick resolves to nobody, not to everybody.
-   *
-   * @covers ::resolveRecipients
    */
   public function testResolveRecipientsForEmptyPickIsEmpty(): void {
     $this->assertSame([], $this->helpers->resolveRecipients(SodaScsConversationHelpers::RECIPIENTS_USERS, [], [], $this->admin));
@@ -783,8 +723,6 @@ class SodaScsConversationHelpersTest extends SodaScsKernelTestBase {
 
   /**
    * Project mode: owner and members, active, with access, not the sender.
-   *
-   * @covers ::resolveRecipients
    */
   public function testResolveRecipientsForProjectCoversOwnerAndMembers(): void {
     // Saving a project looks up its components.
@@ -809,8 +747,6 @@ class SodaScsConversationHelpersTest extends SodaScsKernelTestBase {
 
   /**
    * Project mode with a missing project or none resolves to nobody.
-   *
-   * @covers ::resolveRecipients
    */
   public function testResolveRecipientsForMissingProjectIsEmpty(): void {
     $this->assertSame([], $this->helpers->resolveRecipients(SodaScsConversationHelpers::RECIPIENTS_PROJECT, [], [], $this->admin));
@@ -819,8 +755,6 @@ class SodaScsConversationHelpersTest extends SodaScsKernelTestBase {
 
   /**
    * All mode: every active user with access, the other admin included.
-   *
-   * @covers ::resolveRecipients
    */
   public function testResolveRecipientsForAllExcludesBlockedUnauthorizedAndSender(): void {
     $this->createBlockedUser();
@@ -841,8 +775,6 @@ class SodaScsConversationHelpersTest extends SodaScsKernelTestBase {
    *
    * Users never store the implicit authenticated role, so a user without
    * extra roles is found only when the roles condition is dropped.
-   *
-   * @covers ::resolveRecipients
    */
   public function testResolveRecipientsWhenAuthenticatedRoleHasThePermission(): void {
     $blocked = $this->createBlockedUser();
@@ -872,8 +804,6 @@ class SodaScsConversationHelpersTest extends SodaScsKernelTestBase {
 
   /**
    * Without any role carrying the permission nobody is a recipient.
-   *
-   * @covers ::resolveRecipients
    */
   public function testResolveRecipientsIsEmptyWhenNoRoleHasThePermission(): void {
     foreach (['scs_admin', 'scs_user'] as $roleId) {
@@ -885,8 +815,6 @@ class SodaScsConversationHelpersTest extends SodaScsKernelTestBase {
 
   /**
    * The batch step counts started and failed conversations.
-   *
-   * @covers \Drupal\soda_scs_manager\Batch\SodaScsConversationBroadcastBatch::startChunk
    */
   public function testBatchChunkCountsStartedConversations(): void {
     $context = [];
@@ -907,8 +835,6 @@ class SodaScsConversationHelpersTest extends SodaScsKernelTestBase {
 
   /**
    * A chunk adds to the counters of earlier chunks.
-   *
-   * @covers \Drupal\soda_scs_manager\Batch\SodaScsConversationBroadcastBatch::startChunk
    */
   public function testBatchChunkAddsToExistingResults(): void {
     $context = ['results' => ['started' => 5]];
@@ -920,8 +846,6 @@ class SodaScsConversationHelpersTest extends SodaScsKernelTestBase {
 
   /**
    * A sender without admin rights starts nothing; each attempt counts failed.
-   *
-   * @covers \Drupal\soda_scs_manager\Batch\SodaScsConversationBroadcastBatch::startChunk
    */
   public function testBatchChunkCountsFailuresForNonAdminSender(): void {
     $context = [];
@@ -935,8 +859,6 @@ class SodaScsConversationHelpersTest extends SodaScsKernelTestBase {
 
   /**
    * An unknown sender starts nothing; every chunk recipient counts failed.
-   *
-   * @covers \Drupal\soda_scs_manager\Batch\SodaScsConversationBroadcastBatch::startChunk
    */
   public function testBatchChunkWithUnknownSenderCountsAllRecipientsFailed(): void {
     $context = [];
@@ -950,8 +872,6 @@ class SodaScsConversationHelpersTest extends SodaScsKernelTestBase {
 
   /**
    * Failures of an unknown sender add to the counters of earlier chunks.
-   *
-   * @covers \Drupal\soda_scs_manager\Batch\SodaScsConversationBroadcastBatch::startChunk
    */
   public function testBatchChunkWithUnknownSenderAddsToExistingFailures(): void {
     $context = ['results' => ['started' => 3, 'failed' => 1]];

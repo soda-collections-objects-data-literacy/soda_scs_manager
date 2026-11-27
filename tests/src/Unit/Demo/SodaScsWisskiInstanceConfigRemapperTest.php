@@ -8,11 +8,17 @@ use Drupal\Core\DependencyInjection\ContainerBuilder;
 use Drupal\soda_scs_manager\Demo\SodaScsWisskiInstanceConfigRemapper;
 use Drupal\soda_scs_manager\Helpers\SodaScsContainerHelpers;
 use Drupal\Tests\UnitTestCase;
+use PHPUnit\Framework\Attributes\CoversMethod;
+use PHPUnit\Framework\Attributes\DataProvider;
+use PHPUnit\Framework\Attributes\Group;
 
 /**
- * @coversDefaultClass \Drupal\soda_scs_manager\Demo\SodaScsWisskiInstanceConfigRemapper
- * @group soda_scs_manager
+ * Tests SodaScsWisskiInstanceConfigRemapper.
  */
+#[CoversMethod(SodaScsWisskiInstanceConfigRemapper::class, 'parsePayload')]
+#[CoversMethod(SodaScsWisskiInstanceConfigRemapper::class, 'omitLoginRedirects')]
+#[CoversMethod(SodaScsWisskiInstanceConfigRemapper::class, 'buildApplyScript')]
+#[Group('soda_scs_manager')]
 class SodaScsWisskiInstanceConfigRemapperTest extends UnitTestCase {
 
   /**
@@ -29,7 +35,7 @@ class SodaScsWisskiInstanceConfigRemapperTest extends UnitTestCase {
   }
 
   /**
-   * @covers ::parsePayload
+   * Tests that parsePayload() ignores surrounding drush output.
    */
   public function testParsePayloadIgnoresSurroundingDrushOutput(): void {
     $configs = [
@@ -42,15 +48,15 @@ class SodaScsWisskiInstanceConfigRemapperTest extends UnitTestCase {
   }
 
   /**
-   * @covers ::parsePayload
-   * @dataProvider invalidPayloadProvider
+   * Tests that parsePayload() rejects invalid output.
    */
+  #[DataProvider('invalidPayloadProvider')]
   public function testParsePayloadRejectsInvalidOutput(string $output): void {
     $this->assertNull($this->remapper->parsePayload($output));
   }
 
   /**
-   * @covers ::omitLoginRedirects
+   * Tests that omitLoginRedirects() keeps the SSO client.
    */
   public function testOmitLoginRedirectsKeepsTheSsoClient(): void {
     $configs = [
@@ -73,7 +79,7 @@ class SodaScsWisskiInstanceConfigRemapperTest extends UnitTestCase {
   }
 
   /**
-   * @covers ::buildApplyScript
+   * Tests apply script removes SSO clients of the template source.
    */
   public function testApplyScriptRemovesSsoClientsOfTheTemplateSource(): void {
     $store = $this->runApplyScript([
@@ -90,7 +96,7 @@ class SodaScsWisskiInstanceConfigRemapperTest extends UnitTestCase {
   }
 
   /**
-   * @covers ::buildApplyScript
+   * Tests apply script keeps the login redirects of the template.
    */
   public function testApplyScriptKeepsTheLoginRedirectsOfTheTemplate(): void {
     $store = $this->runApplyScript([

@@ -9,6 +9,9 @@ use Drupal\soda_scs_manager\Service\NextcloudMountCredentialsStore;
 use Drupal\Tests\UnitTestCase;
 use Drupal\user\UserDataInterface;
 use Drupal\user\UserInterface;
+use PHPUnit\Framework\Attributes\CoversMethod;
+use PHPUnit\Framework\Attributes\DataProvider;
+use PHPUnit\Framework\Attributes\Group;
 
 /**
  * The list of users with a stored app password and the Keycloak-missing mark.
@@ -16,10 +19,12 @@ use Drupal\user\UserInterface;
  * Issue 3638812: a user whose Keycloak account is gone is marked with the
  * mount status and a timestamp; the mark holds for a day, and a login or a
  * new status removes it.
- *
- * @coversDefaultClass \Drupal\soda_scs_manager\Service\NextcloudMountCredentialsStore
- * @group soda_scs_manager
  */
+#[CoversMethod(NextcloudMountCredentialsStore::class, 'markKeycloakUserMissing')]
+#[CoversMethod(NextcloudMountCredentialsStore::class, 'isKeycloakUserMarkedMissing')]
+#[CoversMethod(NextcloudMountCredentialsStore::class, 'clearKeycloakUserMissing')]
+#[CoversMethod(NextcloudMountCredentialsStore::class, 'userIdsWithAppPassword')]
+#[Group('soda_scs_manager')]
 class NextcloudMountCredentialsStoreTest extends UnitTestCase {
 
   /**
@@ -36,9 +41,6 @@ class NextcloudMountCredentialsStoreTest extends UnitTestCase {
 
   /**
    * A mark set now holds right away.
-   *
-   * @covers ::markKeycloakUserMissing
-   * @covers ::isKeycloakUserMarkedMissing
    */
   public function testMarkedUserIsMarkedMissing(): void {
     $store = $this->buildStore();
@@ -51,8 +53,6 @@ class NextcloudMountCredentialsStoreTest extends UnitTestCase {
 
   /**
    * Marking sets the mount status and the time of the mark.
-   *
-   * @covers ::markKeycloakUserMissing
    */
   public function testMarkSetsMountStatusAndTimestamp(): void {
     $store = $this->buildStore();
@@ -66,8 +66,6 @@ class NextcloudMountCredentialsStoreTest extends UnitTestCase {
 
   /**
    * The mark holds until a full day has passed.
-   *
-   * @covers ::isKeycloakUserMarkedMissing
    */
   public function testMarkHoldsJustBeforeTheDayIsOver(): void {
     $store = $this->buildStore();
@@ -81,8 +79,6 @@ class NextcloudMountCredentialsStoreTest extends UnitTestCase {
 
   /**
    * After a day the user is checked in Keycloak again.
-   *
-   * @covers ::isKeycloakUserMarkedMissing
    */
   public function testMarkExpiresAfterOneDay(): void {
     $store = $this->buildStore();
@@ -96,9 +92,6 @@ class NextcloudMountCredentialsStoreTest extends UnitTestCase {
 
   /**
    * Marking again after the day restarts the day.
-   *
-   * @covers ::markKeycloakUserMissing
-   * @covers ::isKeycloakUserMarkedMissing
    */
   public function testMarkingAgainAfterOneDayRestartsTheDay(): void {
     $store = $this->buildStore();
@@ -115,8 +108,6 @@ class NextcloudMountCredentialsStoreTest extends UnitTestCase {
 
   /**
    * A user without any mount status is not marked.
-   *
-   * @covers ::isKeycloakUserMarkedMissing
    */
   public function testUserWithoutStatusIsNotMarkedMissing(): void {
     $this->assertFalse($this->buildStore()->isKeycloakUserMarkedMissing($this->createUser(5)));
@@ -124,8 +115,6 @@ class NextcloudMountCredentialsStoreTest extends UnitTestCase {
 
   /**
    * Another status is not the mark, even with a fresh timestamp.
-   *
-   * @covers ::isKeycloakUserMarkedMissing
    */
   public function testOtherMountStatusIsNotMarkedMissing(): void {
     $store = $this->buildStore();
@@ -139,8 +128,6 @@ class NextcloudMountCredentialsStoreTest extends UnitTestCase {
 
   /**
    * The status without a timestamp is not a mark: the user is asked again.
-   *
-   * @covers ::isKeycloakUserMarkedMissing
    */
   public function testStatusWithoutTimestampIsNotMarkedMissing(): void {
     $store = $this->buildStore();
@@ -152,8 +139,6 @@ class NextcloudMountCredentialsStoreTest extends UnitTestCase {
 
   /**
    * The mark of one user does not touch another user.
-   *
-   * @covers ::isKeycloakUserMarkedMissing
    */
   public function testMarkBelongsToOneUser(): void {
     $store = $this->buildStore();
@@ -164,8 +149,6 @@ class NextcloudMountCredentialsStoreTest extends UnitTestCase {
 
   /**
    * Clearing removes the status and the timestamp.
-   *
-   * @covers ::clearKeycloakUserMissing
    */
   public function testClearRemovesMarkStatusAndTimestamp(): void {
     $store = $this->buildStore();
@@ -184,8 +167,6 @@ class NextcloudMountCredentialsStoreTest extends UnitTestCase {
    *
    * A login must not wipe "mounted" or another error of a user who was never
    * marked.
-   *
-   * @covers ::clearKeycloakUserMissing
    */
   public function testClearKeepsOtherMountStatus(): void {
     $store = $this->buildStore();
@@ -201,8 +182,6 @@ class NextcloudMountCredentialsStoreTest extends UnitTestCase {
    * Clearing does not touch the stored app password or another user.
    *
    * The password is put into the user data as it is stored: encrypted.
-   *
-   * @covers ::clearKeycloakUserMissing
    */
   public function testClearKeepsAppPasswordAndOtherUsers(): void {
     $store = $this->buildStore();
@@ -220,8 +199,6 @@ class NextcloudMountCredentialsStoreTest extends UnitTestCase {
 
   /**
    * Clearing a user that was never marked does nothing.
-   *
-   * @covers ::clearKeycloakUserMissing
    */
   public function testClearOfUnmarkedUserIsHarmless(): void {
     $store = $this->buildStore();
@@ -235,8 +212,6 @@ class NextcloudMountCredentialsStoreTest extends UnitTestCase {
 
   /**
    * The ids are the keys of the stored values, as integers.
-   *
-   * @covers ::userIdsWithAppPassword
    */
   public function testUserIdsWithAppPasswordAreTheStoredUserIdsAsIntegers(): void {
     $userData = $this->createMock(UserDataInterface::class);
@@ -249,10 +224,8 @@ class NextcloudMountCredentialsStoreTest extends UnitTestCase {
 
   /**
    * Nothing stored, or an unexpected value, gives an empty list.
-   *
-   * @covers ::userIdsWithAppPassword
-   * @dataProvider provideNoStoredPasswords
    */
+  #[DataProvider('provideNoStoredPasswords')]
   public function testUserIdsWithAppPasswordIsEmptyWithoutStoredPasswords(mixed $stored): void {
     $userData = $this->createMock(UserDataInterface::class);
     $userData->method('get')->willReturn($stored);

@@ -7,16 +7,19 @@ namespace Drupal\Tests\soda_scs_manager\Unit\MessageType;
 use Drupal\soda_scs_manager\Entity\SodaScsMessageInterface;
 use Drupal\soda_scs_manager\MessageType\SodaScsGenericMessageType;
 use Drupal\Tests\UnitTestCase;
+use PHPUnit\Framework\Attributes\CoversMethod;
+use PHPUnit\Framework\Attributes\Group;
 
 /**
- * @coversDefaultClass \Drupal\soda_scs_manager\MessageType\SodaScsGenericMessageType
- * @group soda_scs_manager
+ * Tests SodaScsGenericMessageType.
  */
+#[CoversMethod(SodaScsGenericMessageType::class, 'buildSubject')]
+#[CoversMethod(SodaScsGenericMessageType::class, 'buildActions')]
+#[Group('soda_scs_manager')]
 class SodaScsMessageTypeTest extends UnitTestCase {
 
   /**
-   * @covers \Drupal\soda_scs_manager\MessageType\SodaScsGenericMessageType::buildSubject
-   * @covers \Drupal\soda_scs_manager\MessageType\SodaScsGenericMessageType::buildActions
+   * Tests generic type uses stored subject and delete action.
    */
   public function testGenericTypeUsesStoredSubjectAndDeleteAction(): void {
     $message = $this->createMock(SodaScsMessageInterface::class);

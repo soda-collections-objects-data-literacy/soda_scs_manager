@@ -6,17 +6,24 @@ namespace Drupal\Tests\soda_scs_manager\Unit\Demo;
 
 use Drupal\soda_scs_manager\Demo\SodaScsDemoVersion;
 use Drupal\Tests\UnitTestCase;
+use PHPUnit\Framework\Attributes\CoversMethod;
+use PHPUnit\Framework\Attributes\DataProvider;
+use PHPUnit\Framework\Attributes\Group;
 
 /**
- * @coversDefaultClass \Drupal\soda_scs_manager\Demo\SodaScsDemoVersion
- * @group soda_scs_manager
+ * Tests SodaScsDemoVersion.
  */
+#[CoversMethod(SodaScsDemoVersion::class, 'bump')]
+#[CoversMethod(SodaScsDemoVersion::class, 'compare')]
+#[CoversMethod(SodaScsDemoVersion::class, 'isValid')]
+#[CoversMethod(SodaScsDemoVersion::class, 'suggestions')]
+#[Group('soda_scs_manager')]
 class SodaScsDemoVersionTest extends UnitTestCase {
 
   /**
-   * @covers ::bump
-   * @dataProvider bumpProvider
+   * Tests bump().
    */
+  #[DataProvider('bumpProvider')]
   public function testBump(string $version, string $part, string $expected): void {
     $this->assertSame($expected, SodaScsDemoVersion::bump($version, $part));
   }
@@ -34,7 +41,7 @@ class SodaScsDemoVersionTest extends UnitTestCase {
   }
 
   /**
-   * @covers ::bump
+   * Tests that bump() rejects invalid version.
    */
   public function testBumpRejectsInvalidVersion(): void {
     $this->expectException(\InvalidArgumentException::class);
@@ -42,7 +49,7 @@ class SodaScsDemoVersionTest extends UnitTestCase {
   }
 
   /**
-   * @covers ::compare
+   * Tests that compare() is numeric.
    */
   public function testCompareIsNumeric(): void {
     $this->assertGreaterThan(0, SodaScsDemoVersion::compare('1.10.0', '1.9.0'));
@@ -51,9 +58,9 @@ class SodaScsDemoVersionTest extends UnitTestCase {
   }
 
   /**
-   * @covers ::isValid
-   * @dataProvider validityProvider
+   * Tests isValid().
    */
+  #[DataProvider('validityProvider')]
   public function testIsValid(string $version, bool $expected): void {
     $this->assertSame($expected, SodaScsDemoVersion::isValid($version));
   }
@@ -77,7 +84,7 @@ class SodaScsDemoVersionTest extends UnitTestCase {
   }
 
   /**
-   * @covers ::suggestions
+   * Tests suggestions().
    */
   public function testSuggestions(): void {
     $this->assertSame([SodaScsDemoVersion::BUMP_MAJOR => '1.0.0'], SodaScsDemoVersion::suggestions(NULL));

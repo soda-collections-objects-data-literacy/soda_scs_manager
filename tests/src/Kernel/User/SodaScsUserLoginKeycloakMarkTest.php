@@ -9,6 +9,7 @@ use Drupal\soda_scs_manager\Helpers\SodaScsNextcloudHelpers;
 use Drupal\soda_scs_manager\Service\NextcloudMountCredentialsStore;
 use Drupal\Tests\soda_scs_manager\Kernel\SodaScsKernelTestBase;
 use Drupal\user\UserInterface;
+use PHPUnit\Framework\Attributes\Group;
 
 /**
  * What a login does to the "Keycloak account missing" mark of the mount.
@@ -16,9 +17,8 @@ use Drupal\user\UserInterface;
  * Issue 3638812: a login proves the Keycloak account exists again, so
  * hook_user_login() removes the mark and the mount reconcile takes the user
  * back. Keycloak and Nextcloud are doubles.
- *
- * @group soda_scs_manager
  */
+#[Group('soda_scs_manager')]
 class SodaScsUserLoginKeycloakMarkTest extends SodaScsKernelTestBase {
 
   /**

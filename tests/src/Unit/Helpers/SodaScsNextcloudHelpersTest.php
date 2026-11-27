@@ -21,11 +21,21 @@ use Drupal\soda_scs_manager\ValueObject\SodaScsResult;
 use Drupal\Tests\UnitTestCase;
 use Drupal\user\UserInterface;
 use GuzzleHttp\Psr7\Response;
+use PHPUnit\Framework\Attributes\CoversMethod;
+use PHPUnit\Framework\Attributes\DataProvider;
+use PHPUnit\Framework\Attributes\Group;
 
 /**
- * @coversDefaultClass \Drupal\soda_scs_manager\Helpers\SodaScsNextcloudHelpers
- * @group soda_scs_manager
+ * Tests SodaScsNextcloudHelpers.
  */
+#[CoversMethod(SodaScsNextcloudHelpers::class, 'addUserToGroup')]
+#[CoversMethod(SodaScsNextcloudHelpers::class, 'expectedNextcloudUsernameForKeycloakId')]
+#[CoversMethod(SodaScsNextcloudHelpers::class, 'storedUsernameMatchesKeycloakSub')]
+#[CoversMethod(SodaScsNextcloudHelpers::class, 'buildProjectFilesUrl')]
+#[CoversMethod(SodaScsNextcloudHelpers::class, 'isKeycloakUserMissing')]
+#[CoversMethod(SodaScsNextcloudHelpers::class, 'canEnsureCredentials')]
+#[CoversMethod(SodaScsNextcloudHelpers::class, 'ensureAccountViaOcc')]
+#[Group('soda_scs_manager')]
 class SodaScsNextcloudHelpersTest extends UnitTestCase {
 
   /**
@@ -102,9 +112,9 @@ class SodaScsNextcloudHelpersTest extends UnitTestCase {
   }
 
   /**
-   * @covers ::addUserToGroup
-   * @dataProvider groupStatusProvider
+   * Tests that addUserToGroup() follows OCS status.
    */
+  #[DataProvider('groupStatusProvider')]
   public function testAddUserToGroupFollowsOcsStatus(int $ocsStatus, bool $expected): void {
     $helper = $this->createHelper('', $this->createGroupActions($ocsStatus), $this->createProjectHelpers('sub-1'));
     $this->assertSame($expected, $helper->addUserToGroup('10069', $this->createMock(UserInterface::class)));
@@ -122,7 +132,7 @@ class SodaScsNextcloudHelpersTest extends UnitTestCase {
   }
 
   /**
-   * @covers ::addUserToGroup
+   * Tests that addUserToGroup() skips users without SSO.
    */
   public function testAddUserToGroupSkipsUsersWithoutSso(): void {
     $actions = $this->createMock(SodaScsNextcloudServiceActions::class);
@@ -132,7 +142,7 @@ class SodaScsNextcloudHelpersTest extends UnitTestCase {
   }
 
   /**
-   * @covers ::expectedNextcloudUsernameForKeycloakId
+   * Tests expectedNextcloudUsernameForKeycloakId().
    */
   public function testExpectedNextcloudUsernameForKeycloakId(): void {
     $helper = $this->createHelper();
@@ -144,7 +154,7 @@ class SodaScsNextcloudHelpersTest extends UnitTestCase {
   }
 
   /**
-   * @covers ::storedUsernameMatchesKeycloakSub
+   * Tests storedUsernameMatchesKeycloakSub().
    */
   public function testStoredUsernameMatchesKeycloakSub(): void {
     $helper = $this->createHelper();
@@ -165,7 +175,7 @@ class SodaScsNextcloudHelpersTest extends UnitTestCase {
   }
 
   /**
-   * @covers ::buildProjectFilesUrl
+   * Tests buildProjectFilesUrl().
    */
   public function testBuildProjectFilesUrl(): void {
     $this->assertSame(
@@ -179,8 +189,6 @@ class SodaScsNextcloudHelpersTest extends UnitTestCase {
 
   /**
    * A user whose Keycloak account answers "not found" is missing.
-   *
-   * @covers ::isKeycloakUserMissing
    */
   public function testIsKeycloakUserMissingAsksKeycloakWithTheSsoUuid(): void {
     $keycloakHelpers = $this->createMock(SodaScsKeycloakHelpers::class);
@@ -192,8 +200,6 @@ class SodaScsNextcloudHelpersTest extends UnitTestCase {
 
   /**
    * Keycloak that still knows the user means the user is not missing.
-   *
-   * @covers ::isKeycloakUserMissing
    */
   public function testIsKeycloakUserMissingIsFalseWhenKeycloakKnowsTheUser(): void {
     $keycloakHelpers = $this->createMock(SodaScsKeycloakHelpers::class);
@@ -205,10 +211,8 @@ class SodaScsNextcloudHelpersTest extends UnitTestCase {
 
   /**
    * Without an SSO link nothing is asked and the user is not called missing.
-   *
-   * @covers ::isKeycloakUserMissing
-   * @dataProvider provideNoSsoUuid
    */
+  #[DataProvider('provideNoSsoUuid')]
   public function testIsKeycloakUserMissingIsFalseWithoutSsoLink(?string $ssoUuid): void {
     $keycloakHelpers = $this->createMock(SodaScsKeycloakHelpers::class);
     $keycloakHelpers->expects($this->never())->method('isKeycloakUserMissing');
@@ -235,10 +239,8 @@ class SodaScsNextcloudHelpersTest extends UnitTestCase {
    *
    * The owner has no stored credentials (no SSO link), so the result depends
    * on the Bearer setting, the current user and the session token alone.
-   *
-   * @covers ::canEnsureCredentials
-   * @dataProvider provideBearerSituations
    */
+  #[DataProvider('provideBearerSituations')]
   public function testCanEnsureCredentialsCreatesNothing(bool $useBearer, int $currentUserId, ?string $token, bool $expected): void {
     $nextcloudActions = $this->createMock(SodaScsNextcloudServiceActions::class);
     $nextcloudActions->method('getUseBearerToken')->willReturn($useBearer);
@@ -278,8 +280,6 @@ class SodaScsNextcloudHelpersTest extends UnitTestCase {
    * The Nextcloud account of a service account is created with its password.
    *
    * Issue 3640913. The occ exec in the Nextcloud container is a double.
-   *
-   * @covers ::ensureAccountViaOcc
    */
   public function testEnsureAccountViaOccCreatesMissingAccountAndStoresAppPassword(): void {
     $calls = [];
@@ -322,8 +322,6 @@ class SodaScsNextcloudHelpersTest extends UnitTestCase {
 
   /**
    * An account that exists is not created again.
-   *
-   * @covers ::ensureAccountViaOcc
    */
   public function testEnsureAccountViaOccKeepsExistingAccount(): void {
     $calls = [];
@@ -342,8 +340,6 @@ class SodaScsNextcloudHelpersTest extends UnitTestCase {
 
   /**
    * Stored mount credentials are kept: no second app password is created.
-   *
-   * @covers ::ensureAccountViaOcc
    */
   public function testEnsureAccountViaOccKeepsStoredMountCredentials(): void {
     $calls = [];
@@ -365,8 +361,6 @@ class SodaScsNextcloudHelpersTest extends UnitTestCase {
 
   /**
    * The occ user is the Keycloak sub without the OIDC username prefix.
-   *
-   * @covers ::ensureAccountViaOcc
    */
   public function testEnsureAccountViaOccStripsTheOidcPrefixOfTheSub(): void {
     $sub = '4e25a3ff-b955-4731-9c56-9e67a858828d';
@@ -387,10 +381,8 @@ class SodaScsNextcloudHelpersTest extends UnitTestCase {
 
   /**
    * A failing or unreadable user list creates nothing.
-   *
-   * @covers ::ensureAccountViaOcc
-   * @dataProvider unreadableUserListProvider
    */
+  #[DataProvider('unreadableUserListProvider')]
   public function testEnsureAccountViaOccCreatesNothingWhenUserListFails(SodaScsResult $listAnswer): void {
     $calls = [];
     $containerHelpers = $this->occHelpers($calls, ['user:list' => $listAnswer]);
@@ -419,8 +411,6 @@ class SodaScsNextcloudHelpersTest extends UnitTestCase {
 
   /**
    * A failing account creation stops before any app password exists.
-   *
-   * @covers ::ensureAccountViaOcc
    */
   public function testEnsureAccountViaOccStopsWhenUserAddFails(): void {
     $calls = [];
@@ -439,8 +429,6 @@ class SodaScsNextcloudHelpersTest extends UnitTestCase {
 
   /**
    * An app password that occ does not print is a failure, nothing is stored.
-   *
-   * @covers ::ensureAccountViaOcc
    */
   public function testEnsureAccountViaOccFailsWhenAppPasswordIsMissing(): void {
     $calls = [];
@@ -457,8 +445,6 @@ class SodaScsNextcloudHelpersTest extends UnitTestCase {
 
   /**
    * Without a Keycloak link or without a password nothing runs in Nextcloud.
-   *
-   * @covers ::ensureAccountViaOcc
    */
   public function testEnsureAccountViaOccNeedsSsoLinkAndPassword(): void {
     $containerHelpers = $this->createMock(SodaScsContainerHelpers::class);

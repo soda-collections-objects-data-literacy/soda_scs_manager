@@ -19,6 +19,8 @@ use Drupal\soda_scs_manager\RequestActions\SodaScsPortainerServiceActions;
 use Drupal\soda_scs_manager\ValueObject\SodaScsResult;
 use Drupal\Tests\UnitTestCase;
 use GuzzleHttp\Psr7\Response;
+use PHPUnit\Framework\Attributes\CoversMethod;
+use PHPUnit\Framework\Attributes\Group;
 use PHPUnit\Framework\MockObject\MockObject;
 
 /**
@@ -27,10 +29,9 @@ use PHPUnit\Framework\MockObject\MockObject;
  * Issue 3640913: handing a project to another owner redeploys its WissKI with
  * the database, triplestore and Nextcloud accounts of the new owner. The
  * Portainer and container calls are doubles.
- *
- * @coversDefaultClass \Drupal\soda_scs_manager\ComponentActions\SodaScsWisskiComponentActions
- * @group soda_scs_manager
  */
+#[CoversMethod(SodaScsWisskiComponentActions::class, 'redeployWithEnvironment')]
+#[Group('soda_scs_manager')]
 class SodaScsWisskiComponentActionsRedeployTest extends UnitTestCase {
 
   /**
@@ -92,8 +93,6 @@ class SodaScsWisskiComponentActionsRedeployTest extends UnitTestCase {
 
   /**
    * The given values replace the stack variables, all others stay.
-   *
-   * @covers ::redeployWithEnvironment
    */
   public function testEnvironmentValuesAreMergedIntoTheStackEnvironment(): void {
     $this->portainerAnswers([
@@ -122,8 +121,6 @@ class SodaScsWisskiComponentActionsRedeployTest extends UnitTestCase {
 
   /**
    * The compose reference stays and the image is not pulled again.
-   *
-   * @covers ::redeployWithEnvironment
    */
   public function testRedeployKeepsReferenceAndImage(): void {
     $this->portainerAnswers(['Env' => [], 'GitConfig' => ['ReferenceName' => 'refs/tags/1.2.3']]);
@@ -138,8 +135,6 @@ class SodaScsWisskiComponentActionsRedeployTest extends UnitTestCase {
 
   /**
    * A component without Portainer stack id sends nothing.
-   *
-   * @covers ::redeployWithEnvironment
    */
   public function testComponentWithoutStackIdFailsWithoutRequests(): void {
     $this->portainer->expects($this->never())->method('makeRequest');
@@ -151,8 +146,6 @@ class SodaScsWisskiComponentActionsRedeployTest extends UnitTestCase {
 
   /**
    * A failing read of the stack redeploys nothing.
-   *
-   * @covers ::redeployWithEnvironment
    */
   public function testFailedStackReadSendsNoRedeploy(): void {
     $this->portainer->method('makeRequest')->willReturnCallback(function (array $request): array {
@@ -168,8 +161,6 @@ class SodaScsWisskiComponentActionsRedeployTest extends UnitTestCase {
 
   /**
    * A malformed stack answer redeploys nothing; the environment is not guessed.
-   *
-   * @covers ::redeployWithEnvironment
    */
   public function testMalformedStackAnswerSendsNoRedeploy(): void {
     $this->portainer->method('makeRequest')->willReturnCallback(function (array $request): array {
@@ -186,8 +177,6 @@ class SodaScsWisskiComponentActionsRedeployTest extends UnitTestCase {
 
   /**
    * A refused redeploy is a failure and does not wait for a container.
-   *
-   * @covers ::redeployWithEnvironment
    */
   public function testRefusedRedeployFailsWithoutWaiting(): void {
     $this->portainer->method('makeRequest')->willReturnCallback(function (array $request): array {

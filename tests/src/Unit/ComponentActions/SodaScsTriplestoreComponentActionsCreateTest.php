@@ -29,6 +29,9 @@ use Drupal\user\UserInterface;
 use GuzzleHttp\Exception\ServerException;
 use GuzzleHttp\Psr7\Request;
 use GuzzleHttp\Psr7\Response;
+use PHPUnit\Framework\Attributes\CoversMethod;
+use PHPUnit\Framework\Attributes\DataProvider;
+use PHPUnit\Framework\Attributes\Group;
 use Prophecy\Argument;
 use Prophecy\PhpUnit\ProphecyTrait;
 
@@ -37,10 +40,12 @@ use Prophecy\PhpUnit\ProphecyTrait;
  *
  * Issue 3637658: every failure returns success FALSE, an error and a
  * translated message; a failed repository request stops the creation.
- *
- * @coversDefaultClass \Drupal\soda_scs_manager\ComponentActions\SodaScsTriplestoreComponentActions
- * @group soda_scs_manager
  */
+#[CoversMethod(SodaScsTriplestoreComponentActions::class, 'createComponent')]
+#[CoversMethod(SodaScsTriplestoreComponentActions::class, 'rollBackCreateComponent')]
+#[CoversMethod(SodaScsTriplestoreComponentActions::class, 'deleteComponent')]
+#[CoversMethod(SodaScsTriplestoreComponentActions::class, 'getOpenGdbStatusCode')]
+#[Group('soda_scs_manager')]
 class SodaScsTriplestoreComponentActionsCreateTest extends UnitTestCase {
 
   use ProphecyTrait;
@@ -167,11 +172,8 @@ class SodaScsTriplestoreComponentActionsCreateTest extends UnitTestCase {
 
   /**
    * A failed repository answer stops the creation.
-   *
-   * @covers ::createComponent
-   *
-   * @dataProvider failedRepositoryResponseProvider
    */
+  #[DataProvider('failedRepositoryResponseProvider')]
   public function testCreateComponentStopsWhenRepositoryRequestIsNotSuccessful(array $response): void {
     $this->openGdb->makeRequest(['request' => 'create'])->willReturn($response);
     $this->openGdb->buildUpdateRequest(Argument::cetera())->shouldNotBeCalled();
@@ -208,8 +210,6 @@ class SodaScsTriplestoreComponentActionsCreateTest extends UnitTestCase {
 
   /**
    * An exception of the repository request is returned as the error.
-   *
-   * @covers ::createComponent
    */
   public function testCreateComponentReturnsExceptionOfRepositoryRequest(): void {
     $failure = new \RuntimeException('Connection refused.');
@@ -227,8 +227,6 @@ class SodaScsTriplestoreComponentActionsCreateTest extends UnitTestCase {
 
   /**
    * A failing rights update is returned, the component is not saved.
-   *
-   * @covers ::createComponent
    */
   public function testCreateComponentReturnsExceptionOfRightsUpdate(): void {
     $this->openGdb->makeRequest(['request' => 'create'])->willReturn(['success' => TRUE]);
@@ -247,8 +245,6 @@ class SodaScsTriplestoreComponentActionsCreateTest extends UnitTestCase {
 
   /**
    * A failing Keycloak step is returned, the component is not saved.
-   *
-   * @covers ::createComponent
    */
   public function testCreateComponentReturnsExceptionOfKeycloakGroups(): void {
     $this->openGdb->makeRequest(['request' => 'create'])->willReturn(['success' => TRUE]);
@@ -267,9 +263,6 @@ class SodaScsTriplestoreComponentActionsCreateTest extends UnitTestCase {
 
   /**
    * A failing save deletes repository, rights and groups again.
-   *
-   * @covers ::createComponent
-   * @covers ::rollBackCreateComponent
    */
   public function testCreateComponentRollsBackWhenSavingTheComponentFails(): void {
     $this->openGdb->makeRequest(['request' => 'create'])->willReturn(['success' => TRUE]);
@@ -289,9 +282,6 @@ class SodaScsTriplestoreComponentActionsCreateTest extends UnitTestCase {
 
   /**
    * A failed rollback is logged and the original failure is returned.
-   *
-   * @covers ::createComponent
-   * @covers ::rollBackCreateComponent
    */
   public function testCreateComponentReturnsOriginalFailureWhenRollbackFails(): void {
     $this->openGdb->makeRequest(['request' => 'create'])->willReturn(['success' => TRUE]);
@@ -319,11 +309,8 @@ class SodaScsTriplestoreComponentActionsCreateTest extends UnitTestCase {
 
   /**
    * A repository that cannot be deleted keeps the component and the groups.
-   *
-   * @covers ::deleteComponent
-   *
-   * @dataProvider failedRepositoryDeleteProvider
    */
+  #[DataProvider('failedRepositoryDeleteProvider')]
   public function testDeleteComponentKeepsComponentWhenRepositoryDeleteFails(array $response): void {
     $this->openGdb->buildDeleteRequest(Argument::cetera())->willReturn(['request' => 'delete-repo']);
     $this->openGdb->makeRequest(['request' => 'delete-repo'])->willReturn($response);
@@ -368,8 +355,6 @@ class SodaScsTriplestoreComponentActionsCreateTest extends UnitTestCase {
 
   /**
    * A repository delete that throws keeps the component.
-   *
-   * @covers ::deleteComponent
    */
   public function testDeleteComponentKeepsComponentWhenRepositoryDeleteThrows(): void {
     $this->openGdb->buildDeleteRequest(Argument::cetera())->willReturn(['request' => 'delete-repo']);
@@ -386,8 +371,6 @@ class SodaScsTriplestoreComponentActionsCreateTest extends UnitTestCase {
 
   /**
    * A repository that is already gone (404) does not stop the delete.
-   *
-   * @covers ::deleteComponent
    */
   public function testDeleteComponentGoesOnWhenRepositoryIsAlreadyGone(): void {
     $this->stubUserOfDeletedComponent();
@@ -413,8 +396,6 @@ class SodaScsTriplestoreComponentActionsCreateTest extends UnitTestCase {
    *
    * Issue 3638647: array_filter() left gaps in the keys, which made OpenGDB
    * receive a JSON object instead of a list.
-   *
-   * @covers ::deleteComponent
    */
   public function testDeleteComponentSendsRemainingGrantsAsJsonList(): void {
     $this->stubRepositoryDeleted();
@@ -437,8 +418,6 @@ class SodaScsTriplestoreComponentActionsCreateTest extends UnitTestCase {
 
   /**
    * The last repository removed leaves ROLE_USER; the user is never deleted.
-   *
-   * @covers ::deleteComponent
    */
   public function testDeleteComponentKeepsUserWithRoleUserWhenLastRepositoryIsRemoved(): void {
     $this->stubRepositoryDeleted();
@@ -458,8 +437,6 @@ class SodaScsTriplestoreComponentActionsCreateTest extends UnitTestCase {
 
   /**
    * A user without a grant of this repository is not updated.
-   *
-   * @covers ::deleteComponent
    */
   public function testDeleteComponentSendsNoUpdateWhenUserHasNoGrantOfRepository(): void {
     $this->stubRepositoryDeleted();
@@ -478,8 +455,6 @@ class SodaScsTriplestoreComponentActionsCreateTest extends UnitTestCase {
 
   /**
    * A grant update that OpenGDB refuses keeps the component and the groups.
-   *
-   * @covers ::deleteComponent
    */
   public function testDeleteComponentKeepsComponentWhenGrantUpdateIsRefused(): void {
     $this->stubRepositoryDeleted();
@@ -502,8 +477,6 @@ class SodaScsTriplestoreComponentActionsCreateTest extends UnitTestCase {
 
   /**
    * A grant update that throws keeps the component and the groups.
-   *
-   * @covers ::deleteComponent
    */
   public function testDeleteComponentKeepsComponentWhenGrantUpdateThrows(): void {
     $this->stubRepositoryDeleted();
@@ -525,9 +498,6 @@ class SodaScsTriplestoreComponentActionsCreateTest extends UnitTestCase {
    *
    * The user-404 answer of the request layer carries no statusCode, only the
    * exception's code.
-   *
-   * @covers ::deleteComponent
-   * @covers ::getOpenGdbStatusCode
    */
   public function testDeleteComponentContinuesWhenUserIsMissing(): void {
     $this->stubRepositoryDeleted();
@@ -553,12 +523,8 @@ class SodaScsTriplestoreComponentActionsCreateTest extends UnitTestCase {
 
   /**
    * A failed user lookup stops before any grant is touched.
-   *
-   * @covers ::deleteComponent
-   * @covers ::getOpenGdbStatusCode
-   *
-   * @dataProvider failedUserLookupProvider
    */
+  #[DataProvider('failedUserLookupProvider')]
   public function testDeleteComponentKeepsComponentWhenUserLookupFails(array $response, int $expectedStatus): void {
     $this->stubRepositoryDeleted();
     $this->openGdb->buildGetRequest(Argument::that(fn(array $params) => ($params['type'] ?? '') === 'user'))->willReturn(['request' => 'get-user']);
@@ -615,11 +581,8 @@ class SodaScsTriplestoreComponentActionsCreateTest extends UnitTestCase {
 
   /**
    * A user answer without a usable grant list keeps the component.
-   *
-   * @covers ::deleteComponent
-   *
-   * @dataProvider malformedUserBodyProvider
    */
+  #[DataProvider('malformedUserBodyProvider')]
   public function testDeleteComponentKeepsComponentWhenUserHasNoGrantList(string $body): void {
     $this->stubRepositoryDeleted();
     $this->openGdb->buildGetRequest(Argument::that(fn(array $params) => ($params['type'] ?? '') === 'user'))->willReturn(['request' => 'get-user']);
@@ -657,8 +620,6 @@ class SodaScsTriplestoreComponentActionsCreateTest extends UnitTestCase {
 
   /**
    * The main path still saves the component and reports success.
-   *
-   * @covers ::createComponent
    */
   public function testCreateComponentSavesComponentWhenAllStepsSucceed(): void {
     $this->openGdb->makeRequest(['request' => 'create'])->willReturn(['success' => TRUE]);

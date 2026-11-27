@@ -6,17 +6,21 @@ namespace Drupal\Tests\soda_scs_manager\Unit;
 
 use Drupal\soda_scs_manager\Helpers\SodaScsWebprotegeHelpers;
 use Drupal\Tests\UnitTestCase;
+use PHPUnit\Framework\Attributes\CoversMethod;
+use PHPUnit\Framework\Attributes\Group;
 
 /**
  * Tests WebProtégé username sanitization and project URL building.
- *
- * @group soda_scs_manager
- * @coversDefaultClass \Drupal\soda_scs_manager\Helpers\SodaScsWebprotegeHelpers
  */
+#[CoversMethod(SodaScsWebprotegeHelpers::class, 'sanitizeUserName')]
+#[CoversMethod(SodaScsWebprotegeHelpers::class, 'buildProjectHashUrl')]
+#[CoversMethod(SodaScsWebprotegeHelpers::class, 'buildProjectLoginUrl')]
+#[CoversMethod(SodaScsWebprotegeHelpers::class, 'extractProjectId')]
+#[Group('soda_scs_manager')]
 class SodaScsWebprotegeHelpersTest extends UnitTestCase {
 
   /**
-   * @covers ::sanitizeUserName
+   * Tests that sanitizeUserName() lowercases and replaces invalid characters.
    */
   public function testSanitizeUserNameLowercasesAndReplacesInvalidCharacters(): void {
     $this->assertSame('alice_example.com', SodaScsWebprotegeHelpers::sanitizeUserName('Alice@Example.com'));
@@ -25,7 +29,7 @@ class SodaScsWebprotegeHelpersTest extends UnitTestCase {
   }
 
   /**
-   * @covers ::buildProjectHashUrl
+   * Tests that buildProjectHashUrl() uses classes perspective.
    */
   public function testBuildProjectHashUrlUsesClassesPerspective(): void {
     $uuid = 'aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee';
@@ -40,7 +44,7 @@ class SodaScsWebprotegeHelpersTest extends UnitTestCase {
   }
 
   /**
-   * @covers ::buildProjectHashUrl
+   * Tests that buildProjectHashUrl() falls back to project list.
    */
   public function testBuildProjectHashUrlFallsBackToProjectList(): void {
     $url = SodaScsWebprotegeHelpers::buildProjectHashUrl('webprotege.example.com', NULL);
@@ -51,7 +55,7 @@ class SodaScsWebprotegeHelpersTest extends UnitTestCase {
   }
 
   /**
-   * @covers ::buildProjectLoginUrl
+   * Tests that buildProjectLoginUrl() passes project place as return to.
    */
   public function testBuildProjectLoginUrlPassesProjectPlaceAsReturnTo(): void {
     $uuid = 'AAAAAAAA-bbbb-cccc-dddd-eeeeeeeeeeee';
@@ -63,7 +67,7 @@ class SodaScsWebprotegeHelpersTest extends UnitTestCase {
   }
 
   /**
-   * @covers ::buildProjectLoginUrl
+   * Tests that buildProjectLoginUrl() falls back to project list.
    */
   public function testBuildProjectLoginUrlFallsBackToProjectList(): void {
     $this->assertSame(
@@ -73,7 +77,7 @@ class SodaScsWebprotegeHelpersTest extends UnitTestCase {
   }
 
   /**
-   * @covers ::extractProjectId
+   * Tests that extractProjectId() from create payload and location.
    */
   public function testExtractProjectIdFromCreatePayloadAndLocation(): void {
     $uuid = '11111111-2222-3333-4444-555555555555';

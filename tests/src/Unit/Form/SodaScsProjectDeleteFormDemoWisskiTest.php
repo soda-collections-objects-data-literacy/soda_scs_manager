@@ -23,6 +23,7 @@ use Drupal\soda_scs_manager\ComponentActions\SodaScsComponentActionsInterface;
 use Drupal\soda_scs_manager\Demo\SodaScsDemoManager;
 use Drupal\soda_scs_manager\Entity\SodaScsProjectInterface;
 use Drupal\soda_scs_manager\Entity\SodaScsStackInterface;
+use Drupal\soda_scs_manager\Form\SodaScsProjectDeleteForm;
 use Drupal\soda_scs_manager\Helpers\SodaScsProjectApplicationHelpers;
 use Drupal\soda_scs_manager\Helpers\SodaScsProjectHelpers;
 use Drupal\soda_scs_manager\Helpers\SodaScsProjectMembershipHelpers;
@@ -34,6 +35,8 @@ use Drupal\soda_scs_manager\ValueObject\SodaScsResult;
 use Drupal\Core\Field\EntityReferenceFieldItemListInterface;
 use Drupal\Tests\UnitTestCase;
 use Drupal\user\UserInterface;
+use PHPUnit\Framework\Attributes\CoversMethod;
+use PHPUnit\Framework\Attributes\Group;
 use Symfony\Component\HttpFoundation\RedirectResponse;
 
 /**
@@ -47,10 +50,15 @@ use Symfony\Component\HttpFoundation\RedirectResponse;
  * tests run its operations synchronously (RecordingProjectDeleteForm), so a
  * failure shows in the messenger and in the finish callback instead of in the
  * form state.
- *
- * @coversDefaultClass \Drupal\soda_scs_manager\Form\SodaScsProjectDeleteForm
- * @group soda_scs_manager
  */
+#[CoversMethod(SodaScsProjectDeleteForm::class, 'deleteProject')]
+#[CoversMethod(SodaScsProjectDeleteForm::class, 'submitForm')]
+#[CoversMethod(SodaScsProjectDeleteForm::class, 'membersMayBeRemoved')]
+#[CoversMethod(SodaScsProjectDeleteForm::class, 'finishDeleteBatch')]
+#[CoversMethod(SodaScsProjectDeleteForm::class, 'removeApplicationsStep')]
+#[CoversMethod(SodaScsProjectDeleteForm::class, 'deleteProjectStep')]
+#[CoversMethod(SodaScsProjectDeleteForm::class, 'projectPageRedirect')]
+#[Group('soda_scs_manager')]
 class SodaScsProjectDeleteFormDemoWisskiTest extends UnitTestCase {
 
   /**
@@ -230,9 +238,6 @@ class SodaScsProjectDeleteFormDemoWisskiTest extends UnitTestCase {
 
   /**
    * Every WissKI stack of a demo project is deleted, in id order.
-   *
-   * @covers ::deleteProject
-   * @covers ::submitForm
    */
   public function testDemoProjectDeletesEveryWisskiStack(): void {
     $first = $this->stack(11);
@@ -258,8 +263,6 @@ class SodaScsProjectDeleteFormDemoWisskiTest extends UnitTestCase {
 
   /**
    * The WissKI stacks go before the Team Folder, the group and the project.
-   *
-   * @covers ::submitForm
    */
   public function testDemoProjectDeletesWisskiStacksBeforeTheRest(): void {
     $this->wisskiStacks = [$this->stack(11)];
@@ -282,8 +285,6 @@ class SodaScsProjectDeleteFormDemoWisskiTest extends UnitTestCase {
 
   /**
    * A demo project without a WissKI stack is deleted as usual.
-   *
-   * @covers ::deleteProject
    */
   public function testDemoProjectWithoutWisskiStackIsDeleted(): void {
     $this->wisskiStacks = [];
@@ -295,8 +296,6 @@ class SodaScsProjectDeleteFormDemoWisskiTest extends UnitTestCase {
 
   /**
    * A failed stack deletion stops the project deletion and keeps the rest.
-   *
-   * @covers ::deleteProject
    */
   public function testFailedWisskiStackDeletionStopsProjectDeletion(): void {
     $first = $this->stack(11);
@@ -336,8 +335,6 @@ class SodaScsProjectDeleteFormDemoWisskiTest extends UnitTestCase {
    * The membership helpers are an uninitialized instance of a final class:
    * detachMember() would throw on it, so this test also fails when a member
    * is detached.
-   *
-   * @covers ::submitForm
    */
   public function testFailedWisskiStackDeletionKeepsMembers(): void {
     $member = $this->createMock(UserInterface::class);
@@ -358,9 +355,6 @@ class SodaScsProjectDeleteFormDemoWisskiTest extends UnitTestCase {
 
   /**
    * Without the confirmation, members refuse the deletion before the WissKI.
-   *
-   * @covers ::membersMayBeRemoved
-   * @covers ::submitForm
    */
   public function testMembersWithoutConfirmationStopBeforeWisskiDeletion(): void {
     $member = $this->createMock(UserInterface::class);
@@ -384,8 +378,6 @@ class SodaScsProjectDeleteFormDemoWisskiTest extends UnitTestCase {
 
   /**
    * An answer without a success flag counts as a failure.
-   *
-   * @covers ::deleteProject
    */
   public function testMalformedStackDeletionAnswerStopsProjectDeletion(): void {
     $this->wisskiStacks = [$this->stack(11)];
@@ -403,8 +395,6 @@ class SodaScsProjectDeleteFormDemoWisskiTest extends UnitTestCase {
    *
    * The user gets the message instead of an error page; the project, its
    * members and the services stay as they were.
-   *
-   * @covers ::deleteProject
    */
   public function testFailedApplicationLookupDeletesNothing(): void {
     $this->wisskiStacks = new \RuntimeException('Query failed.');
@@ -425,8 +415,6 @@ class SodaScsProjectDeleteFormDemoWisskiTest extends UnitTestCase {
 
   /**
    * A regular project deletes the WissKI stacks of its owner as well.
-   *
-   * @covers ::deleteProject
    */
   public function testRegularProjectDeletesItsWisskiStacks(): void {
     $this->isDemo = FALSE;
@@ -445,8 +433,6 @@ class SodaScsProjectDeleteFormDemoWisskiTest extends UnitTestCase {
 
   /**
    * A regular project whose WissKI stack cannot be deleted stays.
-   *
-   * @covers ::deleteProject
    */
   public function testRegularProjectStaysWhenWisskiStackCannotBeDeleted(): void {
     $this->isDemo = FALSE;
@@ -464,8 +450,6 @@ class SodaScsProjectDeleteFormDemoWisskiTest extends UnitTestCase {
 
   /**
    * A demo project is deleted while its lock is held, the lock then goes.
-   *
-   * @covers ::submitForm
    */
   public function testDemoProjectDeleteTakesAndReleasesItsLock(): void {
     $this->wisskiStacks = [$this->stack(11)];
@@ -490,8 +474,6 @@ class SodaScsProjectDeleteFormDemoWisskiTest extends UnitTestCase {
 
   /**
    * A demo project whose job holds the lock is neither looked up nor deleted.
-   *
-   * @covers ::submitForm
    */
   public function testDemoProjectHeldByRunningSetupIsNotDeleted(): void {
     $this->isLockFree = FALSE;
@@ -515,8 +497,6 @@ class SodaScsProjectDeleteFormDemoWisskiTest extends UnitTestCase {
 
   /**
    * The lock is released when a WissKI stack cannot be deleted.
-   *
-   * @covers ::submitForm
    */
   public function testDemoProjectLockIsReleasedWhenWisskiDeletionFails(): void {
     $this->wisskiStacks = [$this->stack(11)];
@@ -539,8 +519,6 @@ class SodaScsProjectDeleteFormDemoWisskiTest extends UnitTestCase {
    *
    * The Batch API ends the batch and runs the finish callback with a failed
    * state then.
-   *
-   * @covers ::finishDeleteBatch
    */
   public function testDemoProjectLockIsReleasedWhenDeleteThrows(): void {
     $this->project->method('delete')->willThrowException(new \RuntimeException('Database is gone.'));
@@ -559,8 +537,6 @@ class SodaScsProjectDeleteFormDemoWisskiTest extends UnitTestCase {
 
   /**
    * A demo project that is gone once the lock is held is not deleted again.
-   *
-   * @covers ::submitForm
    */
   public function testDemoProjectGoneAfterLockIsNotDeletedAgain(): void {
     $this->isProjectGone = TRUE;
@@ -583,8 +559,6 @@ class SodaScsProjectDeleteFormDemoWisskiTest extends UnitTestCase {
 
   /**
    * A regular project is deleted under the project lock as well.
-   *
-   * @covers ::submitForm
    */
   public function testRegularProjectTakesAndReleasesTheLock(): void {
     $this->isDemo = FALSE;
@@ -600,8 +574,6 @@ class SodaScsProjectDeleteFormDemoWisskiTest extends UnitTestCase {
 
   /**
    * A regular project that is locked (a second delete) is not deleted.
-   *
-   * @covers ::submitForm
    */
   public function testRegularProjectHeldByAnotherDeleteIsNotDeleted(): void {
     $this->isDemo = FALSE;
@@ -623,8 +595,6 @@ class SodaScsProjectDeleteFormDemoWisskiTest extends UnitTestCase {
 
   /**
    * A regular project that is gone once the lock is held is not deleted again.
-   *
-   * @covers ::submitForm
    */
   public function testRegularProjectGoneAfterLockIsNotDeletedAgain(): void {
     $this->isDemo = FALSE;
@@ -646,8 +616,6 @@ class SodaScsProjectDeleteFormDemoWisskiTest extends UnitTestCase {
 
   /**
    * The lock of a regular project is released when its batch fails.
-   *
-   * @covers ::finishDeleteBatch
    */
   public function testRegularProjectLockIsReleasedWhenWisskiDeletionFails(): void {
     $this->isDemo = FALSE;
@@ -668,8 +636,6 @@ class SodaScsProjectDeleteFormDemoWisskiTest extends UnitTestCase {
 
   /**
    * Submitting only hands the batch over; nothing is deleted before it runs.
-   *
-   * @covers ::submitForm
    */
   public function testSubmitOnlyStartsTheBatch(): void {
     $this->isDemo = FALSE;
@@ -692,8 +658,6 @@ class SodaScsProjectDeleteFormDemoWisskiTest extends UnitTestCase {
 
   /**
    * The confirmation of the member removal reaches the delete step.
-   *
-   * @covers ::submitForm
    */
   public function testSubmitPassesTheMemberConfirmationToTheDeleteStep(): void {
     $this->isDemo = FALSE;
@@ -707,8 +671,6 @@ class SodaScsProjectDeleteFormDemoWisskiTest extends UnitTestCase {
 
   /**
    * A demo project keeps its lock after the submit, until the batch ends.
-   *
-   * @covers ::submitForm
    */
   public function testDemoLockIsHeldUntilTheBatchFinishes(): void {
     $this->submit(new FormState(), FALSE);
@@ -725,8 +687,6 @@ class SodaScsProjectDeleteFormDemoWisskiTest extends UnitTestCase {
 
   /**
    * One application is removed per call of the step; the step asks for more.
-   *
-   * @covers ::removeApplicationsStep
    */
   public function testApplicationsStepRemovesOneApplicationPerCall(): void {
     $first = $this->stack(11);
@@ -758,8 +718,6 @@ class SodaScsProjectDeleteFormDemoWisskiTest extends UnitTestCase {
 
   /**
    * A failed removal ends the step and is passed on as the batch failure.
-   *
-   * @covers ::removeApplicationsStep
    */
   public function testApplicationsStepReportsFailureAndFinishes(): void {
     $this->wisskiStacks = [$this->stack(11)];
@@ -778,8 +736,6 @@ class SodaScsProjectDeleteFormDemoWisskiTest extends UnitTestCase {
 
   /**
    * A stack that is reported as removed but stays does not loop forever.
-   *
-   * @covers ::removeApplicationsStep
    */
   public function testApplicationsStepGivesUpAfterTooManySteps(): void {
     $this->wisskiStacks = [$this->stack(11)];
@@ -803,9 +759,6 @@ class SodaScsProjectDeleteFormDemoWisskiTest extends UnitTestCase {
    * The repeat is only seen after the removal call that returns it, so the
    * stack's deletion is called twice and then the batch stops: not once per
    * step until the step limit.
-   *
-   * @covers ::removeApplicationsStep
-   * @covers ::submitForm
    */
   public function testBatchEndsWhenTheStackStaysAfterItsDeletion(): void {
     $this->isDemo = FALSE;
@@ -828,8 +781,6 @@ class SodaScsProjectDeleteFormDemoWisskiTest extends UnitTestCase {
 
   /**
    * Different applications are not mistaken for a repeat.
-   *
-   * @covers ::removeApplicationsStep
    */
   public function testApplicationsStepAcceptsDifferentApplications(): void {
     $this->wisskiStacks = [$this->stack(11), $this->stack(12)];
@@ -848,8 +799,6 @@ class SodaScsProjectDeleteFormDemoWisskiTest extends UnitTestCase {
 
   /**
    * The delete step does nothing after a failed removal.
-   *
-   * @covers ::deleteProjectStep
    */
   public function testDeleteStepIsSkippedAfterFailure(): void {
     $this->expectNothingElseDeleted();
@@ -863,8 +812,6 @@ class SodaScsProjectDeleteFormDemoWisskiTest extends UnitTestCase {
 
   /**
    * The delete step deletes the project and records it.
-   *
-   * @covers ::deleteProjectStep
    */
   public function testDeleteStepDeletesTheProject(): void {
     $this->project->expects($this->once())->method('delete');
@@ -879,8 +826,6 @@ class SodaScsProjectDeleteFormDemoWisskiTest extends UnitTestCase {
 
   /**
    * A project that is gone when the delete step runs counts as deleted.
-   *
-   * @covers ::deleteProjectStep
    */
   public function testDeleteStepReportsDeletedWhenTheProjectIsGone(): void {
     $this->isProjectGone = TRUE;
@@ -897,8 +842,6 @@ class SodaScsProjectDeleteFormDemoWisskiTest extends UnitTestCase {
 
   /**
    * The delete step does not reload the project after a failed removal.
-   *
-   * @covers ::deleteProjectStep
    */
   public function testDeleteStepDoesNotReloadAfterFailure(): void {
     $this->buildForm();
@@ -914,8 +857,6 @@ class SodaScsProjectDeleteFormDemoWisskiTest extends UnitTestCase {
    *
    * The final pass of the delete step catches an application added while the
    * batch ran.
-   *
-   * @covers ::deleteProjectStep
    */
   public function testDeleteStepKeepsProjectWhenTheLateApplicationCannotBeRemoved(): void {
     $this->wisskiStacks = [$this->stack(11)];
@@ -936,8 +877,6 @@ class SodaScsProjectDeleteFormDemoWisskiTest extends UnitTestCase {
 
   /**
    * Members that are not confirmed keep the project in the delete step.
-   *
-   * @covers ::deleteProjectStep
    */
   public function testDeleteStepKeepsProjectWhenMembersAreNotConfirmed(): void {
     $member = $this->createMock(UserInterface::class);
@@ -957,8 +896,6 @@ class SodaScsProjectDeleteFormDemoWisskiTest extends UnitTestCase {
 
   /**
    * An aborted batch tells the user and returns to the project page.
-   *
-   * @covers ::finishDeleteBatch
    */
   public function testFinishAfterAbortedBatchReportsErrorAndReturnsToProject(): void {
     $this->isDemo = FALSE;
@@ -974,8 +911,6 @@ class SodaScsProjectDeleteFormDemoWisskiTest extends UnitTestCase {
 
   /**
    * A failure of a step is shown once, without the generic error.
-   *
-   * @covers ::finishDeleteBatch
    */
   public function testFinishShowsTheStepFailureOnly(): void {
     $this->messenger->expects($this->once())->method('addError')->with('Stack 11 stays.');
@@ -988,8 +923,6 @@ class SodaScsProjectDeleteFormDemoWisskiTest extends UnitTestCase {
 
   /**
    * A finished batch whose project is gone leaves the dashboard redirect.
-   *
-   * @covers ::finishDeleteBatch
    */
   public function testFinishAfterDeletionReturnsNothing(): void {
     $this->messenger->expects($this->never())->method('addError');
@@ -1001,8 +934,6 @@ class SodaScsProjectDeleteFormDemoWisskiTest extends UnitTestCase {
 
   /**
    * The failure redirect lets the project page win over the link's destination.
-   *
-   * @covers ::projectPageRedirect
    */
   public function testProjectPageRedirectIgnoresTheDestination(): void {
     $url = $this->createMock(Url::class);
@@ -1019,8 +950,6 @@ class SodaScsProjectDeleteFormDemoWisskiTest extends UnitTestCase {
 
   /**
    * A deleted project leaves the destination of the delete link alone.
-   *
-   * @covers ::finishDeleteBatch
    */
   public function testDeletedProjectDoesNotIgnoreTheDestination(): void {
     $this->redirectResponseSubscriber->expects($this->never())->method('setIgnoreDestination');

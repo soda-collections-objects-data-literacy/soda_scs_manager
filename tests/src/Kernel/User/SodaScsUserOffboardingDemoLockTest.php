@@ -32,6 +32,8 @@ use Drupal\soda_scs_manager\StackActions\SodaScsStackActionsInterface;
 use Drupal\soda_scs_manager\ValueObject\SodaScsResult;
 use Drupal\Tests\soda_scs_manager\Kernel\SodaScsKernelTestBase;
 use Drupal\user\UserInterface;
+use PHPUnit\Framework\Attributes\DataProvider;
+use PHPUnit\Framework\Attributes\Group;
 
 /**
  * Account delete and the project locks around it.
@@ -46,9 +48,8 @@ use Drupal\user\UserInterface;
  * persistent lock in its first request and holds them until deleteAccount()
  * has run _user_cancel(); a busy project makes deleteAccount() refuse. No
  * remote service is reached: every client the purge calls is a double.
- *
- * @group soda_scs_manager
  */
+#[Group('soda_scs_manager')]
 class SodaScsUserOffboardingDemoLockTest extends SodaScsKernelTestBase {
 
   /**
@@ -486,9 +487,8 @@ class SodaScsUserOffboardingDemoLockTest extends SodaScsKernelTestBase {
 
   /**
    * The admin cancel form refuses the delete method while a demo is in setup.
-   *
-   * @dataProvider provideDeletingCancelMethods
    */
+  #[DataProvider('provideDeletingCancelMethods')]
   public function testCancelFormRefusesDeletingMethodsWhileDemoProjectIsInSetup(string $method): void {
     $demo = $this->createDemoProject(['label' => 'Setup demo']);
     $this->busyLocks[] = SodaScsDemoManager::PROJECT_LOCK_PREFIX . $demo->id();
@@ -517,9 +517,8 @@ class SodaScsUserOffboardingDemoLockTest extends SodaScsKernelTestBase {
 
   /**
    * Methods that keep the account never look at the demo projects.
-   *
-   * @dataProvider provideKeepingCancelMethods
    */
+  #[DataProvider('provideKeepingCancelMethods')]
   public function testCancelFormAcceptsKeepingMethodsWhileDemoProjectIsInSetup(string $method): void {
     $demo = $this->createDemoProject();
     $this->busyLocks[] = SodaScsDemoManager::PROJECT_LOCK_PREFIX . $demo->id();
@@ -1341,9 +1340,8 @@ class SodaScsUserOffboardingDemoLockTest extends SodaScsKernelTestBase {
 
   /**
    * The cancel form validator refuses a protected account with every method.
-   *
-   * @dataProvider provideEveryCancelMethod
    */
+  #[DataProvider('provideEveryCancelMethod')]
   public function testCancelFormValidatorRefusesProtectedAccount(string $method): void {
     $this->account = $this->createTestUser(['name' => 'scs_demo']);
 
@@ -1430,9 +1428,8 @@ class SodaScsUserOffboardingDemoLockTest extends SodaScsKernelTestBase {
 
   /**
    * Cancelling the demo account throws, before another module acts.
-   *
-   * @dataProvider provideEveryCancelMethod
    */
+  #[DataProvider('provideEveryCancelMethod')]
   public function testCancelHookThrowsForProtectedAccount(string $method): void {
     $demoAccount = $this->createTestUser(['name' => 'scs_demo']);
 
@@ -1576,9 +1573,8 @@ class SodaScsUserOffboardingDemoLockTest extends SodaScsKernelTestBase {
 
   /**
    * The cancel form refuses the deleting methods for the owner of the source.
-   *
-   * @dataProvider provideDeletingCancelMethods
    */
+  #[DataProvider('provideDeletingCancelMethods')]
   public function testCancelFormRefusesDeletingMethodsForOwnerOfTheDemoSource(string $method): void {
     $this->setDemoSource($this->createTestProject(['owner' => $this->account->id()]));
 
@@ -1592,9 +1588,8 @@ class SodaScsUserOffboardingDemoLockTest extends SodaScsKernelTestBase {
 
   /**
    * Methods that keep the account are fine for the owner of the source.
-   *
-   * @dataProvider provideKeepingCancelMethods
    */
+  #[DataProvider('provideKeepingCancelMethods')]
   public function testCancelFormAcceptsKeepingMethodsForOwnerOfTheDemoSource(string $method): void {
     $this->setDemoSource($this->createTestProject(['owner' => $this->account->id()]));
 

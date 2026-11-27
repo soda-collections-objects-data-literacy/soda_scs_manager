@@ -4,16 +4,21 @@ declare(strict_types=1);
 
 namespace Drupal\Tests\soda_scs_manager\Kernel\Helpers;
 
+use Drupal\soda_scs_manager\Helpers\SodaScsProjectMembershipHelpers;
 use Drupal\Tests\soda_scs_manager\Kernel\SodaScsKernelTestBase;
 use Drupal\soda_scs_manager\Entity\SodaScsProjectMembershipInterface;
 use Drupal\user\UserInterface;
+use PHPUnit\Framework\Attributes\CoversMethod;
+use PHPUnit\Framework\Attributes\Group;
 
 /**
  * A person can have only one open project invitation.
- *
- * @group soda_scs_manager
- * @coversDefaultClass \Drupal\soda_scs_manager\Helpers\SodaScsProjectMembershipHelpers
  */
+#[CoversMethod(SodaScsProjectMembershipHelpers::class, 'inviteUsers')]
+#[CoversMethod(SodaScsProjectMembershipHelpers::class, 'resendInvitation')]
+#[CoversMethod(SodaScsProjectMembershipHelpers::class, 'withdrawInvitation')]
+#[CoversMethod(SodaScsProjectMembershipHelpers::class, 'deleteDeclinedInvitation')]
+#[Group('soda_scs_manager')]
 class SodaScsProjectInvitationTest extends SodaScsKernelTestBase {
 
   /**
@@ -34,11 +39,6 @@ class SodaScsProjectInvitationTest extends SodaScsKernelTestBase {
 
   /**
    * Pending and declined invitations are not created a second time.
-   *
-   * @covers ::inviteUsers
-   * @covers ::resendInvitation
-   * @covers ::withdrawInvitation
-   * @covers ::deleteDeclinedInvitation
    */
   public function testOneOpenInvitationPerPerson(): void {
     $owner = $this->testUser;

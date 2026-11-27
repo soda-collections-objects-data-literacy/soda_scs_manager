@@ -8,6 +8,9 @@ use Drupal\Core\Queue\QueueFactory;
 use Drupal\Core\Queue\QueueInterface;
 use Drupal\soda_scs_manager\Demo\SodaScsDemoQueueRunner;
 use Drupal\Tests\UnitTestCase;
+use PHPUnit\Framework\Attributes\CoversMethod;
+use PHPUnit\Framework\Attributes\DataProvider;
+use PHPUnit\Framework\Attributes\Group;
 use Psr\Log\LoggerInterface;
 
 /**
@@ -16,18 +19,16 @@ use Psr\Log\LoggerInterface;
  * A run started by root could not open the web server's log in the sticky
  * /tmp, so it never started (#3638553). A job refused at once ended the run
  * before the process check and was reported as not started (#3639298).
- *
- * @coversDefaultClass \Drupal\soda_scs_manager\Demo\SodaScsDemoQueueRunner
- * @group soda_scs_manager
  */
+#[CoversMethod(SodaScsDemoQueueRunner::class, 'logFile')]
+#[CoversMethod(SodaScsDemoQueueRunner::class, 'start')]
+#[Group('soda_scs_manager')]
 class SodaScsDemoQueueRunnerTest extends UnitTestCase {
 
   /**
    * The web server user and an unknown user share LOG_FILE.
-   *
-   * @covers ::logFile
-   * @dataProvider sharedLogUsers
    */
+  #[DataProvider('sharedLogUsers')]
   public function testLogFileIsSharedForTheWebServer(string $user): void {
     $this->assertSame(SodaScsDemoQueueRunner::LOG_FILE, $this->runner($user)->logFile());
   }
@@ -44,10 +45,8 @@ class SodaScsDemoQueueRunnerTest extends UnitTestCase {
 
   /**
    * Every other user, root among them, gets a file of its own.
-   *
-   * @covers ::logFile
-   * @dataProvider ownLogUsers
    */
+  #[DataProvider('ownLogUsers')]
   public function testLogFileIsOwnForOtherUsers(string $user, string $expected): void {
     $this->assertSame($expected, $this->runner($user)->logFile());
   }
@@ -66,8 +65,6 @@ class SodaScsDemoQueueRunnerTest extends UnitTestCase {
 
   /**
    * The command redirects into the user's file.
-   *
-   * @covers ::start
    */
   public function testStartRedirectsIntoTheLogFileOfTheUser(): void {
     $runner = $this->runner('root', [FALSE, TRUE]);
@@ -80,8 +77,6 @@ class SodaScsDemoQueueRunnerTest extends UnitTestCase {
 
   /**
    * A failed start names the log file that was used.
-   *
-   * @covers ::start
    */
   public function testFailedStartNamesTheLogFileOfTheUser(): void {
     $logger = $this->createMock(LoggerInterface::class);
@@ -98,8 +93,6 @@ class SodaScsDemoQueueRunnerTest extends UnitTestCase {
 
   /**
    * A run that is gone at the check counts as started when jobs were done.
-   *
-   * @covers ::start
    */
   public function testStartSucceedsWhenTheRunIsGoneButJobsWereDone(): void {
     $logger = $this->createMock(LoggerInterface::class);
@@ -115,8 +108,6 @@ class SodaScsDemoQueueRunnerTest extends UnitTestCase {
 
   /**
    * Every waiting job done and the run gone is a start too.
-   *
-   * @covers ::start
    */
   public function testStartSucceedsWhenTheQueueIsEmptyAfterTheSpawn(): void {
     $runner = $this->runner('www-data', [FALSE, FALSE], NULL, [1, 0]);
@@ -126,8 +117,6 @@ class SodaScsDemoQueueRunnerTest extends UnitTestCase {
 
   /**
    * No process and the same number of jobs waiting is a failed start.
-   *
-   * @covers ::start
    */
   public function testStartFailsWhenTheRunIsGoneAndNoJobWasDone(): void {
     $logger = $this->createMock(LoggerInterface::class);
@@ -141,8 +130,6 @@ class SodaScsDemoQueueRunnerTest extends UnitTestCase {
 
   /**
    * More jobs waiting after the spawn is not progress.
-   *
-   * @covers ::start
    */
   public function testStartFailsWhenMoreJobsAreWaitingAfterTheSpawn(): void {
     $runner = $this->runner('www-data', [FALSE, FALSE], NULL, [1, 3]);
@@ -152,8 +139,6 @@ class SodaScsDemoQueueRunnerTest extends UnitTestCase {
 
   /**
    * A shell that refused the command fails the start despite done jobs.
-   *
-   * @covers ::start
    */
   public function testStartFailsOnSpawnErrorEvenWhenJobsWereDone(): void {
     $runner = $this->runner('www-data', [FALSE, TRUE], NULL, [2, 1]);
@@ -164,8 +149,6 @@ class SodaScsDemoQueueRunnerTest extends UnitTestCase {
 
   /**
    * Nothing is spawned when no job is waiting.
-   *
-   * @covers ::start
    */
   public function testStartSpawnsNothingWithoutJobs(): void {
     $runner = $this->runner('www-data', [], NULL, [0]);

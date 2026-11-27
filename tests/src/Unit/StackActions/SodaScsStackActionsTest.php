@@ -11,15 +11,21 @@ use Drupal\soda_scs_manager\StackActions\SodaScsStackActions;
 use Drupal\soda_scs_manager\StackActions\SodaScsStackActionsInterface;
 use Drupal\soda_scs_manager\ValueObject\SodaScsResult;
 use Drupal\Tests\UnitTestCase;
+use PHPUnit\Framework\Attributes\CoversMethod;
+use PHPUnit\Framework\Attributes\Group;
 use Prophecy\PhpUnit\ProphecyTrait;
 use Prophecy\Prophecy\ObjectProphecy;
 
 /**
  * Tests the SodaScsStackActions orchestration service.
- *
- * @group soda_scs_manager
- * @coversDefaultClass \Drupal\soda_scs_manager\StackActions\SodaScsStackActions
  */
+#[CoversMethod(SodaScsStackActions::class, 'createStack')]
+#[CoversMethod(SodaScsStackActions::class, 'deleteStack')]
+#[CoversMethod(SodaScsStackActions::class, 'createSnapshot')]
+#[CoversMethod(SodaScsStackActions::class, 'getStacks')]
+#[CoversMethod(SodaScsStackActions::class, 'getStack')]
+#[CoversMethod(SodaScsStackActions::class, 'updateStack')]
+#[Group('soda_scs_manager')]
 class SodaScsStackActionsTest extends UnitTestCase {
 
   use ProphecyTrait;
@@ -73,8 +79,6 @@ class SodaScsStackActionsTest extends UnitTestCase {
 
   /**
    * Tests createStack delegates to WissKI stack actions.
-   *
-   * @covers ::createStack
    */
   public function testCreateStackWisski(): void {
     $stack = $this->prophesize(SodaScsStackInterface::class);
@@ -98,8 +102,6 @@ class SodaScsStackActionsTest extends UnitTestCase {
 
   /**
    * Tests createStack delegates to Jupyter stack actions.
-   *
-   * @covers ::createStack
    */
   public function testCreateStackJupyter(): void {
     $stack = $this->prophesize(SodaScsStackInterface::class);
@@ -123,8 +125,6 @@ class SodaScsStackActionsTest extends UnitTestCase {
 
   /**
    * Tests createStack throws exception for unknown bundle.
-   *
-   * @covers ::createStack
    */
   public function testCreateStackUnknownBundle(): void {
     $stack = $this->prophesize(SodaScsStackInterface::class);
@@ -139,8 +139,6 @@ class SodaScsStackActionsTest extends UnitTestCase {
 
   /**
    * Tests deleteStack delegates to WissKI stack actions.
-   *
-   * @covers ::deleteStack
    */
   public function testDeleteStackWisski(): void {
     $stack = $this->prophesize(SodaScsStackInterface::class);
@@ -164,8 +162,6 @@ class SodaScsStackActionsTest extends UnitTestCase {
 
   /**
    * Tests deleteStack delegates to Jupyter stack actions.
-   *
-   * @covers ::deleteStack
    */
   public function testDeleteStackJupyter(): void {
     $stack = $this->prophesize(SodaScsStackInterface::class);
@@ -189,8 +185,6 @@ class SodaScsStackActionsTest extends UnitTestCase {
 
   /**
    * Tests deleteStack throws exception for unknown bundle.
-   *
-   * @covers ::deleteStack
    */
   public function testDeleteStackUnknownBundle(): void {
     $stack = $this->prophesize(SodaScsStackInterface::class);
@@ -204,8 +198,6 @@ class SodaScsStackActionsTest extends UnitTestCase {
 
   /**
    * Tests createSnapshot delegates to WissKI stack actions.
-   *
-   * @covers ::createSnapshot
    */
   public function testCreateSnapshotWisski(): void {
     $stack = $this->prophesize(SodaScsStackInterface::class);
@@ -230,8 +222,6 @@ class SodaScsStackActionsTest extends UnitTestCase {
 
   /**
    * Tests createSnapshot delegates to Jupyter stack actions.
-   *
-   * @covers ::createSnapshot
    */
   public function testCreateSnapshotJupyter(): void {
     $stack = $this->prophesize(SodaScsStackInterface::class);
@@ -256,8 +246,6 @@ class SodaScsStackActionsTest extends UnitTestCase {
 
   /**
    * Tests createSnapshot throws exception for unknown bundle.
-   *
-   * @covers ::createSnapshot
    */
   public function testCreateSnapshotUnknownBundle(): void {
     $stack = $this->prophesize(SodaScsStackInterface::class);
@@ -271,8 +259,6 @@ class SodaScsStackActionsTest extends UnitTestCase {
 
   /**
    * Tests getStacks delegates to WissKI stack actions.
-   *
-   * @covers ::getStacks
    */
   public function testGetStacksWisski(): void {
     $expectedResult = [
@@ -291,8 +277,6 @@ class SodaScsStackActionsTest extends UnitTestCase {
 
   /**
    * Tests getStacks throws exception for unknown bundle.
-   *
-   * @covers ::getStacks
    */
   public function testGetStacksUnknownBundle(): void {
     $this->expectException(\Exception::class);
@@ -303,8 +287,6 @@ class SodaScsStackActionsTest extends UnitTestCase {
 
   /**
    * Tests getStack delegates to WissKI stack actions.
-   *
-   * @covers ::getStack
    */
   public function testGetStackWisski(): void {
     $component = $this->prophesize(SodaScsStackInterface::class);
@@ -326,8 +308,6 @@ class SodaScsStackActionsTest extends UnitTestCase {
 
   /**
    * Tests getStack throws exception for unknown bundle.
-   *
-   * @covers ::getStack
    */
   public function testGetStackUnknownBundle(): void {
     $component = $this->prophesize(SodaScsStackInterface::class);
@@ -341,8 +321,6 @@ class SodaScsStackActionsTest extends UnitTestCase {
 
   /**
    * Tests updateStack delegates to WissKI stack actions.
-   *
-   * @covers ::updateStack
    */
   public function testUpdateStackWisski(): void {
     $component = $this->prophesize(SodaScsStackInterface::class);
@@ -364,8 +342,6 @@ class SodaScsStackActionsTest extends UnitTestCase {
 
   /**
    * Tests updateStack throws exception for unknown bundle.
-   *
-   * @covers ::updateStack
    */
   public function testUpdateStackUnknownBundle(): void {
     $component = $this->prophesize(SodaScsStackInterface::class);
@@ -392,8 +368,6 @@ class SodaScsStackActionsTest extends UnitTestCase {
 
   /**
    * Tests that createStack() refuses an entity without a project.
-   *
-   * @covers ::createStack
    */
   public function testCreateStackWithoutProject(): void {
     $projects = $this->prophesize(FieldItemListInterface::class);

@@ -7,17 +7,27 @@ namespace Drupal\Tests\soda_scs_manager\Unit\Helpers;
 use Drupal\Core\DependencyInjection\ContainerBuilder;
 use Drupal\soda_scs_manager\Helpers\SodaScsHealthStatus;
 use Drupal\Tests\UnitTestCase;
+use PHPUnit\Framework\Attributes\CoversMethod;
+use PHPUnit\Framework\Attributes\DataProvider;
+use PHPUnit\Framework\Attributes\Group;
 
 /**
- * @coversDefaultClass \Drupal\soda_scs_manager\Helpers\SodaScsHealthStatus
- * @group soda_scs_manager
+ * Tests SodaScsHealthStatus.
  */
+#[CoversMethod(SodaScsHealthStatus::class, 'fromDockerState')]
+#[CoversMethod(SodaScsHealthStatus::class, 'fromHttpCode')]
+#[CoversMethod(SodaScsHealthStatus::class, 'fromStatus')]
+#[CoversMethod(SodaScsHealthStatus::class, 'combine')]
+#[CoversMethod(SodaScsHealthStatus::class, 'normalizePayload')]
+#[CoversMethod(SodaScsHealthStatus::class, 'duringSetup')]
+#[CoversMethod(SodaScsHealthStatus::class, 'fromDockerInspect')]
+#[Group('soda_scs_manager')]
 class SodaScsHealthStatusTest extends UnitTestCase {
 
   /**
-   * @covers ::fromDockerState
-   * @dataProvider dockerStateProvider
+   * Tests fromDockerState().
    */
+  #[DataProvider('dockerStateProvider')]
   public function testFromDockerState(string $status, ?int $exitCode, ?string $health, string $expected): void {
     $this->assertSame($expected, SodaScsHealthStatus::fromDockerState($status, $exitCode, $health));
   }
@@ -44,9 +54,9 @@ class SodaScsHealthStatusTest extends UnitTestCase {
   }
 
   /**
-   * @covers ::fromHttpCode
-   * @dataProvider httpCodeProvider
+   * Tests fromHttpCode().
    */
+  #[DataProvider('httpCodeProvider')]
   public function testFromHttpCode(int $code, bool $containerRunning, string $expected): void {
     $this->assertSame($expected, SodaScsHealthStatus::fromHttpCode($code, $containerRunning));
   }
@@ -73,9 +83,9 @@ class SodaScsHealthStatusTest extends UnitTestCase {
   }
 
   /**
-   * @covers ::fromStatus
-   * @dataProvider statusAliasProvider
+   * Tests fromStatus().
    */
+  #[DataProvider('statusAliasProvider')]
   public function testFromStatus(?string $status, string $expected): void {
     $this->assertSame($expected, SodaScsHealthStatus::fromStatus($status));
   }
@@ -100,7 +110,7 @@ class SodaScsHealthStatusTest extends UnitTestCase {
   }
 
   /**
-   * @covers ::combine
+   * Tests that combine() container stopped skips HTTP.
    */
   public function testCombineContainerStoppedSkipsHttp(): void {
     $this->assertSame(
@@ -110,7 +120,7 @@ class SodaScsHealthStatusTest extends UnitTestCase {
   }
 
   /**
-   * @covers ::combine
+   * Tests that combine() running uses HTTP.
    */
   public function testCombineRunningUsesHttp(): void {
     $this->assertSame(
@@ -128,7 +138,7 @@ class SodaScsHealthStatusTest extends UnitTestCase {
   }
 
   /**
-   * @covers ::normalizePayload
+   * Tests that normalizePayload() rewrites legacy status.
    */
   public function testNormalizePayloadRewritesLegacyStatus(): void {
     // normalizePayload() casts the status label (TranslatableMarkup) to string.
@@ -149,9 +159,9 @@ class SodaScsHealthStatusTest extends UnitTestCase {
   }
 
   /**
-   * @covers ::duringSetup
-   * @dataProvider duringSetupProvider
+   * Tests duringSetup().
    */
+  #[DataProvider('duringSetupProvider')]
   public function testDuringSetup(string $status, bool $setupInProgress, string $expected): void {
     $this->assertSame($expected, SodaScsHealthStatus::duringSetup($status, $setupInProgress));
   }
@@ -170,7 +180,7 @@ class SodaScsHealthStatusTest extends UnitTestCase {
   }
 
   /**
-   * @covers ::fromDockerInspect
+   * Tests that fromDockerInspect() reads nested health.
    */
   public function testFromDockerInspectReadsNestedHealth(): void {
     $this->assertSame(

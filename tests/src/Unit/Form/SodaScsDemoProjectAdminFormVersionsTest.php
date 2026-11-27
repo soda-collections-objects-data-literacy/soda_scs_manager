@@ -14,17 +14,18 @@ use Drupal\soda_scs_manager\Demo\SodaScsDemoQueueRunner;
 use Drupal\soda_scs_manager\Entity\SodaScsDemoTemplateInterface;
 use Drupal\soda_scs_manager\Form\SodaScsDemoProjectAdminForm;
 use Drupal\Tests\UnitTestCase;
+use PHPUnit\Framework\Attributes\CoversMethod;
 use PHPUnit\Framework\Attributes\DataProvider;
+use PHPUnit\Framework\Attributes\Group;
 use PHPUnit\Framework\MockObject\MockObject;
 
 /**
  * Tests the version labels of the demo project admin form.
  *
  * Issue 3640915: imported versions are marked in the table.
- *
- * @coversDefaultClass \Drupal\soda_scs_manager\Form\SodaScsDemoProjectAdminForm
- * @group soda_scs_manager
  */
+#[CoversMethod(SodaScsDemoProjectAdminForm::class, 'buildVersionsTable')]
+#[Group('soda_scs_manager')]
 class SodaScsDemoProjectAdminFormVersionsTest extends UnitTestCase {
 
   /**
@@ -47,8 +48,6 @@ class SodaScsDemoProjectAdminFormVersionsTest extends UnitTestCase {
 
   /**
    * The version column marks imported and active versions.
-   *
-   * @covers ::buildVersionsTable
    */
   #[DataProvider('labelCases')]
   public function testVersionLabel(bool $imported, bool $active, string $expected): void {

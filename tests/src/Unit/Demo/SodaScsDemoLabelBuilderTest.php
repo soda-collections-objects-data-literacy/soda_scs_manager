@@ -8,11 +8,17 @@ use Drupal\Component\Transliteration\PhpTransliteration;
 use Drupal\soda_scs_manager\Demo\SodaScsDemoLabelBuilder;
 use Drupal\soda_scs_manager\Helpers\SodaScsMachineNameHelper;
 use Drupal\Tests\UnitTestCase;
+use PHPUnit\Framework\Attributes\CoversMethod;
+use PHPUnit\Framework\Attributes\DataProvider;
+use PHPUnit\Framework\Attributes\Group;
 
 /**
- * @coversDefaultClass \Drupal\soda_scs_manager\Demo\SodaScsDemoLabelBuilder
- * @group soda_scs_manager
+ * Tests SodaScsDemoLabelBuilder.
  */
+#[CoversMethod(SodaScsDemoLabelBuilder::class, 'appLabel')]
+#[CoversMethod(SodaScsDemoLabelBuilder::class, 'appMachineName')]
+#[CoversMethod(SodaScsDemoLabelBuilder::class, 'projectLabel')]
+#[Group('soda_scs_manager')]
 class SodaScsDemoLabelBuilderTest extends UnitTestCase {
 
   /**
@@ -29,9 +35,9 @@ class SodaScsDemoLabelBuilderTest extends UnitTestCase {
   }
 
   /**
-   * @covers ::appLabel
-   * @dataProvider appLabelProvider
+   * Tests appLabel().
    */
+  #[DataProvider('appLabelProvider')]
   public function testAppLabel(string $appKey, int $index, string $expected): void {
     $this->assertSame($expected, $this->labelBuilder->appLabel($appKey, 'anna', $index));
   }
@@ -48,9 +54,9 @@ class SodaScsDemoLabelBuilderTest extends UnitTestCase {
   }
 
   /**
-   * @covers ::appMachineName
-   * @dataProvider appMachineNameProvider
+   * Tests appMachineName().
    */
+  #[DataProvider('appMachineNameProvider')]
   public function testAppMachineName(string $appKey, string $userName, int $index, int $attempt, string $expected): void {
     $this->assertSame($expected, $this->labelBuilder->appMachineName($appKey, $userName, $index, $attempt));
   }
@@ -69,7 +75,7 @@ class SodaScsDemoLabelBuilderTest extends UnitTestCase {
   }
 
   /**
-   * @covers ::appMachineName
+   * Tests that appMachineName() respects maximum length.
    */
   public function testAppMachineNameRespectsMaximumLength(): void {
     $machineName = $this->labelBuilder->appMachineName(SodaScsDemoLabelBuilder::APP_JUPYTER, str_repeat('verylongusername', 4), 2, 2);
@@ -78,7 +84,7 @@ class SodaScsDemoLabelBuilderTest extends UnitTestCase {
   }
 
   /**
-   * @covers ::projectLabel
+   * Tests projectLabel().
    */
   public function testProjectLabel(): void {
     $this->assertSame('anna Demo', $this->labelBuilder->projectLabel('anna'));

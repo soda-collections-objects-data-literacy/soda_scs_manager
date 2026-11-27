@@ -12,8 +12,12 @@ use Drupal\soda_scs_manager\Form\SodaScsComponentCreateForm;
 use Drupal\soda_scs_manager\Form\SodaScsStackCreateForm;
 use Drupal\soda_scs_manager\Helpers\SodaScsNextcloudHelpers;
 use Drupal\soda_scs_manager\StackActions\SodaScsStackActionsInterface;
+use Drupal\soda_scs_manager\Traits\SodaScsProjectScopedCreateFormTrait;
 use Drupal\Tests\soda_scs_manager\Kernel\SodaScsKernelTestBase;
 use Drupal\user\Entity\Role;
+use PHPUnit\Framework\Attributes\CoversMethod;
+use PHPUnit\Framework\Attributes\DataProvider;
+use PHPUnit\Framework\Attributes\Group;
 use Psr\Log\AbstractLogger;
 
 /**
@@ -22,11 +26,19 @@ use Psr\Log\AbstractLogger;
  * Issue 3639084: the check compared the entered name with the components'
  * machine names, but those are stored with a prefix ("sql-", "ts-", "wisski-",
  * "stack-"), so a taken name was only found when creation failed.
- *
- * @coversDefaultClass \Drupal\soda_scs_manager\Form\SodaScsStackCreateForm
- *
- * @group soda_scs_manager
  */
+#[CoversMethod(SodaScsStackCreateForm::class, 'validateForm')]
+#[CoversMethod(SodaScsStackCreateForm::class, 'isMachineNameTaken')]
+#[CoversMethod(SodaScsComponentCreateForm::class, 'validateForm')]
+#[CoversMethod(SodaScsComponentCreateForm::class, 'isMachineNameTaken')]
+#[CoversMethod(SodaScsProjectScopedCreateFormTrait::class, 'isValidateOnlyRequest')]
+#[CoversMethod(SodaScsStackCreateForm::class, 'save')]
+#[CoversMethod(SodaScsProjectScopedCreateFormTrait::class, 'submitValidateOnly')]
+#[CoversMethod(SodaScsProjectScopedCreateFormTrait::class, 'applySelectedProject')]
+#[CoversMethod(SodaScsProjectScopedCreateFormTrait::class, 'getEditedFieldNames')]
+#[CoversMethod(SodaScsComponentCreateForm::class, 'save')]
+#[CoversMethod(SodaScsProjectScopedCreateFormTrait::class, 'buildProjectScope')]
+#[Group('soda_scs_manager')]
 class SodaScsCreateFormTakenMachineNameTest extends SodaScsKernelTestBase {
 
   /**
@@ -97,9 +109,6 @@ class SodaScsCreateFormTakenMachineNameTest extends SodaScsKernelTestBase {
 
   /**
    * A WissKI name is taken when its "sql-" component exists.
-   *
-   * @covers ::validateForm
-   * @covers ::isMachineNameTaken
    */
   public function testStackFormRejectsNameOfExistingPrefixedComponent(): void {
     $prefixByBundle = [
@@ -119,8 +128,6 @@ class SodaScsCreateFormTakenMachineNameTest extends SodaScsKernelTestBase {
 
   /**
    * A WissKI name is taken when its "stack-" stack exists.
-   *
-   * @covers ::validateForm
    */
   public function testStackFormRejectsNameOfExistingWisskiStack(): void {
     $this->createTestStack('soda_scs_wisski_stack', ['machineName' => 'stack-wisski-demo']);
@@ -130,8 +137,6 @@ class SodaScsCreateFormTakenMachineNameTest extends SodaScsKernelTestBase {
 
   /**
    * The rejection is logged as a notice with the stored names and the user.
-   *
-   * @covers ::validateForm
    */
   public function testStackFormLogsNoticeWithStoredNamesWhenRejecting(): void {
     $this->createTestComponent('soda_scs_sql_component', ['machineName' => 'sql-wisski-demo']);
@@ -149,8 +154,6 @@ class SodaScsCreateFormTakenMachineNameTest extends SodaScsKernelTestBase {
 
   /**
    * A free name raises no taken error and logs no notice.
-   *
-   * @covers ::validateForm
    */
   public function testStackFormAcceptsFreeName(): void {
     $this->createTestComponent('soda_scs_sql_component', ['machineName' => 'sql-other']);
@@ -162,8 +165,6 @@ class SodaScsCreateFormTakenMachineNameTest extends SodaScsKernelTestBase {
 
   /**
    * The bare name is no stored name of a WissKI, so it does not block it.
-   *
-   * @covers ::validateForm
    */
   public function testStackFormIgnoresBareNameOfOtherApplication(): void {
     $this->createTestComponent('soda_scs_webprotege_component', ['machineName' => 'wisski-demo']);
@@ -173,8 +174,6 @@ class SodaScsCreateFormTakenMachineNameTest extends SodaScsKernelTestBase {
 
   /**
    * A bundle without a prefix still compares the bare name.
-   *
-   * @covers ::validateForm
    */
   public function testStackFormComparesBareNameForBundleWithoutPrefix(): void {
     $this->createTestStack('soda_scs_jupyter_stack', ['machineName' => 'lab-demo']);
@@ -184,9 +183,6 @@ class SodaScsCreateFormTakenMachineNameTest extends SodaScsKernelTestBase {
 
   /**
    * A standalone database name is taken when its "sql-" component exists.
-   *
-   * @covers \Drupal\soda_scs_manager\Form\SodaScsComponentCreateForm::validateForm
-   * @covers \Drupal\soda_scs_manager\Form\SodaScsComponentCreateForm::isMachineNameTaken
    */
   public function testComponentFormRejectsNameOfExistingSqlComponent(): void {
     $this->createTestComponent('soda_scs_sql_component', ['machineName' => 'sql-demo']);
@@ -198,8 +194,6 @@ class SodaScsCreateFormTakenMachineNameTest extends SodaScsKernelTestBase {
 
   /**
    * A standalone database named like a WissKI collides with its "sql-" part.
-   *
-   * @covers \Drupal\soda_scs_manager\Form\SodaScsComponentCreateForm::validateForm
    */
   public function testComponentFormRejectsNameOfExistingWisskiSqlComponent(): void {
     $this->createTestComponent('soda_scs_sql_component', ['machineName' => 'sql-wisski-demo']);
@@ -212,8 +206,6 @@ class SodaScsCreateFormTakenMachineNameTest extends SodaScsKernelTestBase {
    *
    * SodaScsWisskiStackActions::createStack() saves the stack with the entered
    * name and adds "stack-" only once the components exist.
-   *
-   * @covers ::isMachineNameTaken
    */
   public function testStackFormRejectsNameOfWisskiStackUnderCreation(): void {
     $this->createTestStack('soda_scs_wisski_stack', ['machineName' => 'wisski-demo']);
@@ -223,8 +215,6 @@ class SodaScsCreateFormTakenMachineNameTest extends SodaScsKernelTestBase {
 
   /**
    * A free standalone database name raises no taken error and no notice.
-   *
-   * @covers \Drupal\soda_scs_manager\Form\SodaScsComponentCreateForm::validateForm
    */
   public function testComponentFormAcceptsFreeName(): void {
     $this->createTestComponent('soda_scs_sql_component', ['machineName' => 'sql-other']);
@@ -237,9 +227,6 @@ class SodaScsCreateFormTakenMachineNameTest extends SodaScsKernelTestBase {
 
   /**
    * Validate-only mode reports a taken name of a stack.
-   *
-   * @covers ::validateForm
-   * @covers \Drupal\soda_scs_manager\Traits\SodaScsProjectScopedCreateFormTrait::isValidateOnlyRequest
    */
   public function testValidateOnlyStackFormReportsTakenName(): void {
     $this->createTestComponent('soda_scs_sql_component', ['machineName' => 'sql-wisski-demo']);
@@ -254,8 +241,6 @@ class SodaScsCreateFormTakenMachineNameTest extends SodaScsKernelTestBase {
 
   /**
    * Validate-only mode reports a taken name of a standalone component.
-   *
-   * @covers \Drupal\soda_scs_manager\Form\SodaScsComponentCreateForm::validateForm
    */
   public function testValidateOnlyComponentFormReportsTakenName(): void {
     $this->createTestComponent('soda_scs_sql_component', ['machineName' => 'sql-demo']);
@@ -268,9 +253,6 @@ class SodaScsCreateFormTakenMachineNameTest extends SodaScsKernelTestBase {
 
   /**
    * Validate-only mode saves nothing when the name is rejected.
-   *
-   * @covers ::validateForm
-   * @covers ::save
    */
   public function testValidateOnlyStackFormSavesNothingWhenNameIsTaken(): void {
     $this->createTestComponent('soda_scs_sql_component', ['machineName' => 'sql-wisski-demo']);
@@ -288,9 +270,6 @@ class SodaScsCreateFormTakenMachineNameTest extends SodaScsKernelTestBase {
    * A free stack name gives no error and creates nothing.
    *
    * The mocked stack actions fail the test when createStack() is called.
-   *
-   * @covers ::validateForm
-   * @covers \Drupal\soda_scs_manager\Traits\SodaScsProjectScopedCreateFormTrait::submitValidateOnly
    */
   public function testValidateOnlyStackFormAcceptsFreeNameWithoutSaving(): void {
     $this->createTestComponent('soda_scs_sql_component', ['machineName' => 'sql-other']);
@@ -312,8 +291,6 @@ class SodaScsCreateFormTakenMachineNameTest extends SodaScsKernelTestBase {
    *
    * The check only asks canEnsureCredentials(); the mock fails the test when
    * ensureCredentials() would create an app password.
-   *
-   * @covers ::validateForm
    */
   public function testValidateOnlyWisskiStackReportsMissingNextcloudCredentials(): void {
     $form_object = $this->buildStackFormObject('soda_scs_wisski_stack', FALSE);
@@ -327,9 +304,6 @@ class SodaScsCreateFormTakenMachineNameTest extends SodaScsKernelTestBase {
 
   /**
    * A free component name gives no error and creates nothing.
-   *
-   * @covers \Drupal\soda_scs_manager\Form\SodaScsComponentCreateForm::validateForm
-   * @covers \Drupal\soda_scs_manager\Traits\SodaScsProjectScopedCreateFormTrait::submitValidateOnly
    */
   public function testValidateOnlyComponentFormAcceptsFreeNameWithoutSaving(): void {
     $componentCount = $this->countEntities('soda_scs_component');
@@ -347,10 +321,6 @@ class SodaScsCreateFormTakenMachineNameTest extends SodaScsKernelTestBase {
    *
    * Without validateOnly the same request reports the missing project, so the
    * project choice is only skipped in the validate-only mode.
-   *
-   * @covers ::validateForm
-   * @covers \Drupal\soda_scs_manager\Traits\SodaScsProjectScopedCreateFormTrait::applySelectedProject
-   * @covers \Drupal\soda_scs_manager\Traits\SodaScsProjectScopedCreateFormTrait::getEditedFieldNames
    */
   public function testValidateOnlyStackFormDoesNotReportMissingProject(): void {
     $deferredOnly = $this->submitValidateOnly(
@@ -367,8 +337,6 @@ class SodaScsCreateFormTakenMachineNameTest extends SodaScsKernelTestBase {
 
   /**
    * Validate-only mode neither requires nor reports a project (component).
-   *
-   * @covers \Drupal\soda_scs_manager\Form\SodaScsComponentCreateForm::validateForm
    */
   public function testValidateOnlyComponentFormDoesNotReportMissingProject(): void {
     $deferredOnly = $this->submitValidateOnly(
@@ -388,9 +356,6 @@ class SodaScsCreateFormTakenMachineNameTest extends SodaScsKernelTestBase {
    *
    * A new project has no applications, so "can only be added to a project"
    * must not appear for JupyterHub and WebProtégé.
-   *
-   * @covers ::validateForm
-   * @covers \Drupal\soda_scs_manager\Form\SodaScsComponentCreateForm::validateForm
    */
   public function testValidateOnlySkipsSingleInstanceProjectCheck(): void {
     $stackErrors = $this->errorsOf($this->submitValidateOnly(
@@ -412,8 +377,6 @@ class SodaScsCreateFormTakenMachineNameTest extends SodaScsKernelTestBase {
 
   /**
    * Validate-only mode still reports a malformed name.
-   *
-   * @covers ::validateForm
    */
   public function testValidateOnlyStackFormReportsLabelLongerThanLimit(): void {
     $form_state = $this->submitValidateOnly(
@@ -429,8 +392,6 @@ class SodaScsCreateFormTakenMachineNameTest extends SodaScsKernelTestBase {
    * The save() backstop creates nothing in validate-only mode (stack).
    *
    * The mocked stack actions fail the test when createStack() is called.
-   *
-   * @covers ::save
    */
   public function testStackFormSaveDoesNothingInValidateOnlyMode(): void {
     $this->container->get('request_stack')->getCurrentRequest()->query->set('validateOnly', '1');
@@ -445,8 +406,6 @@ class SodaScsCreateFormTakenMachineNameTest extends SodaScsKernelTestBase {
 
   /**
    * The save() backstop creates nothing in validate-only mode (component).
-   *
-   * @covers \Drupal\soda_scs_manager\Form\SodaScsComponentCreateForm::save
    */
   public function testComponentFormSaveDoesNothingInValidateOnlyMode(): void {
     $this->container->get('request_stack')->getCurrentRequest()->query->set('validateOnly', '1');
@@ -468,12 +427,8 @@ class SodaScsCreateFormTakenMachineNameTest extends SodaScsKernelTestBase {
    *   The validateOnly query value, NULL for none.
    * @param bool $isReplaced
    *   Whether the buttons only call submitValidateOnly().
-   *
-   * @covers \Drupal\soda_scs_manager\Traits\SodaScsProjectScopedCreateFormTrait::buildProjectScope
-   * @covers \Drupal\soda_scs_manager\Traits\SodaScsProjectScopedCreateFormTrait::isValidateOnlyRequest
-   *
-   * @dataProvider providerValidateOnlyQueryValues
    */
+  #[DataProvider('providerValidateOnlyQueryValues')]
   public function testStackFormReplacesSubmitHandlersOnlyForBothQueryValues(?string $deferProject, ?string $validateOnly, bool $isReplaced): void {
     $form = $this->buildFormWithQuery($this->buildStackFormObject('soda_scs_wisski_stack'), 'soda_scs_wisski_stack', $deferProject, $validateOnly);
 
@@ -482,11 +437,8 @@ class SodaScsCreateFormTakenMachineNameTest extends SodaScsKernelTestBase {
 
   /**
    * The component form replaces its submit buttons by the same rule.
-   *
-   * @covers \Drupal\soda_scs_manager\Traits\SodaScsProjectScopedCreateFormTrait::buildProjectScope
-   *
-   * @dataProvider providerValidateOnlyQueryValues
    */
+  #[DataProvider('providerValidateOnlyQueryValues')]
   public function testComponentFormReplacesSubmitHandlersOnlyForBothQueryValues(?string $deferProject, ?string $validateOnly, bool $isReplaced): void {
     $form = $this->buildFormWithQuery($this->buildComponentFormObject('soda_scs_sql_component'), 'soda_scs_sql_component', $deferProject, $validateOnly);
 

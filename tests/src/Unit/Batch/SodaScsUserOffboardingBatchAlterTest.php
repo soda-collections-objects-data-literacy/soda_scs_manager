@@ -7,6 +7,9 @@ namespace Drupal\Tests\soda_scs_manager\Unit\Batch;
 use Drupal\soda_scs_manager\Batch\SodaScsUserOffboardingBatch;
 use Drupal\Tests\UnitTestCase;
 use Drupal\user\UserInterface;
+use PHPUnit\Framework\Attributes\CoversMethod;
+use PHPUnit\Framework\Attributes\DataProvider;
+use PHPUnit\Framework\Attributes\Group;
 
 /**
  * Where hook_batch_alter() puts the application removal.
@@ -15,18 +18,15 @@ use Drupal\user\UserInterface;
  * requests of its own in front of each deleting _user_cancel() operation. The
  * operation itself is replaced by deleteAccount(), which refuses when a
  * project was busy and calls _user_cancel() otherwise.
- *
- * @coversDefaultClass \Drupal\soda_scs_manager\Batch\SodaScsUserOffboardingBatch
- * @group soda_scs_manager
  */
+#[CoversMethod(SodaScsUserOffboardingBatch::class, 'addToAccountDeletes')]
+#[Group('soda_scs_manager')]
 class SodaScsUserOffboardingBatchAlterTest extends UnitTestCase {
 
   /**
    * The removal step is inserted and the delete operation is replaced.
-   *
-   * @covers ::addToAccountDeletes
-   * @dataProvider provideDeletingMethods
    */
+  #[DataProvider('provideDeletingMethods')]
   public function testRemovalStepIsInsertedAndDeletingCancelIsReplaced(string $method): void {
     $cancel = $this->cancelOperation(42, $method);
     $batch = ['sets' => [['operations' => [$cancel], 'total' => 1, 'count' => 1]]];
@@ -54,8 +54,6 @@ class SodaScsUserOffboardingBatchAlterTest extends UnitTestCase {
 
   /**
    * The totals of the set count the inserted step.
-   *
-   * @covers ::addToAccountDeletes
    */
   public function testTotalsIncludeInsertedStep(): void {
     $batch = [
@@ -75,8 +73,6 @@ class SodaScsUserOffboardingBatchAlterTest extends UnitTestCase {
 
   /**
    * The original _user_cancel operation is gone, only deleteAccount() remains.
-   *
-   * @covers ::addToAccountDeletes
    */
   public function testNoPlainCancelOperationRemainsForDeletingMethod(): void {
     $batch = [
@@ -96,8 +92,6 @@ class SodaScsUserOffboardingBatchAlterTest extends UnitTestCase {
 
   /**
    * The delete operation keeps the account, the method and the form values.
-   *
-   * @covers ::addToAccountDeletes
    */
   public function testDeleteOperationKeepsOriginalArguments(): void {
     $account = $this->createMock(UserInterface::class);
@@ -123,8 +117,6 @@ class SodaScsUserOffboardingBatchAlterTest extends UnitTestCase {
 
   /**
    * Operations of other callbacks keep their place between the new steps.
-   *
-   * @covers ::addToAccountDeletes
    */
   public function testOtherOperationsKeepTheirOrderAroundTheNewSteps(): void {
     $before = ['node_mass_update', [[1], []]];
@@ -145,8 +137,6 @@ class SodaScsUserOffboardingBatchAlterTest extends UnitTestCase {
 
   /**
    * Every account of a bulk cancel gets its own step and its own delete.
-   *
-   * @covers ::addToAccountDeletes
    */
   public function testEachAccountOfBulkCancelGetsItsOwnStep(): void {
     $first = $this->cancelOperation(5, 'user_cancel_delete');
@@ -166,10 +156,8 @@ class SodaScsUserOffboardingBatchAlterTest extends UnitTestCase {
 
   /**
    * Methods that keep the account get no removal step.
-   *
-   * @covers ::addToAccountDeletes
-   * @dataProvider provideKeepingMethods
    */
+  #[DataProvider('provideKeepingMethods')]
   public function testKeepingMethodsAreLeftAlone(string $method): void {
     $set = [
       'operations' => [$this->cancelOperation(42, $method)],
@@ -198,8 +186,6 @@ class SodaScsUserOffboardingBatchAlterTest extends UnitTestCase {
 
   /**
    * Operations of other callbacks are left alone, and no step is added.
-   *
-   * @covers ::addToAccountDeletes
    */
   public function testOtherOperationsAreLeftAlone(): void {
     $set = [
@@ -221,8 +207,6 @@ class SodaScsUserOffboardingBatchAlterTest extends UnitTestCase {
 
   /**
    * Only the set with an account delete changes; other sets stay as they are.
-   *
-   * @covers ::addToAccountDeletes
    */
   public function testOnlySetWithAccountDeleteChanges(): void {
     $unrelated = ['operations' => [['node_mass_update', [[1], []]]], 'total' => 1, 'count' => 1];
@@ -241,8 +225,6 @@ class SodaScsUserOffboardingBatchAlterTest extends UnitTestCase {
 
   /**
    * A batch without sets or operations is no problem.
-   *
-   * @covers ::addToAccountDeletes
    */
   public function testBatchWithoutSetsOrOperationsIsLeftAlone(): void {
     $empty = [];

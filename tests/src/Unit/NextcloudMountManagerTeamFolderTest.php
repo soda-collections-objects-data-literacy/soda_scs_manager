@@ -14,13 +14,16 @@ use Drupal\soda_scs_manager\Service\NextcloudMounterClient;
 use Drupal\soda_scs_manager\Service\NextcloudMountManager;
 use Drupal\Tests\UnitTestCase;
 use Drupal\user\UserInterface;
+use PHPUnit\Framework\Attributes\CoversMethod;
+use PHPUnit\Framework\Attributes\Group;
 use PHPUnit\Framework\MockObject\MockObject;
 use Psr\Log\LoggerInterface;
 
 /**
- * @coversDefaultClass \Drupal\soda_scs_manager\Service\NextcloudMountManager
- * @group soda_scs_manager
+ * Tests the Team Folder handling of NextcloudMountManager.
  */
+#[CoversMethod(NextcloudMountManager::class, 'ensureProjectTeamFolderReady')]
+#[Group('soda_scs_manager')]
 class NextcloudMountManagerTeamFolderTest extends UnitTestCase {
 
   /**
@@ -73,8 +76,6 @@ class NextcloudMountManagerTeamFolderTest extends UnitTestCase {
    * Regression: Nextcloud adds Keycloak groups only at Drive login, so a
    * WissKI created right after its project failed with "Team Folder is not
    * available under the owner mount yet".
-   *
-   * @covers ::ensureProjectTeamFolderReady
    */
   public function testMissingTeamFolderIsGrantedAndCacheDropped(): void {
     $user = $this->createUser();
@@ -94,8 +95,6 @@ class NextcloudMountManagerTeamFolderTest extends UnitTestCase {
 
   /**
    * A visible Team Folder needs no Nextcloud call.
-   *
-   * @covers ::ensureProjectTeamFolderReady
    */
   public function testVisibleTeamFolderSkipsGrant(): void {
     mkdir($this->mountPath . '/wat26-workshop');

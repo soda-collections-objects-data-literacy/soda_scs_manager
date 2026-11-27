@@ -9,18 +9,18 @@ use Drupal\Core\Form\FormState;
 use Drupal\soda_scs_manager\Form\SodaScsStackCreateForm;
 use Drupal\soda_scs_manager\Helpers\SodaScsMachineNameHelper;
 use Drupal\Tests\UnitTestCase;
+use PHPUnit\Framework\Attributes\CoversMethod;
+use PHPUnit\Framework\Attributes\Group;
 
 /**
- * @coversDefaultClass \Drupal\soda_scs_manager\Form\SodaScsStackCreateForm
- *
- * @group soda_scs_manager
+ * Tests the machine name handling of SodaScsStackCreateForm.
  */
+#[CoversMethod(SodaScsStackCreateForm::class, 'ensureMachineNameFromLabel')]
+#[Group('soda_scs_manager')]
 class SodaScsStackCreateFormMachineNameTest extends UnitTestCase {
 
   /**
    * Empty machineName from a wizard/fetch submit is derived from the label.
-   *
-   * @covers ::ensureMachineNameFromLabel
    */
   public function testEnsureMachineNameFromLabelDerivesWhenEmpty(): void {
     $this->assertTrue(
@@ -40,8 +40,6 @@ class SodaScsStackCreateFormMachineNameTest extends UnitTestCase {
 
   /**
    * A client-supplied machineName is left unchanged.
-   *
-   * @covers ::ensureMachineNameFromLabel
    */
   public function testEnsureMachineNameFromLabelKeepsExistingValue(): void {
     $this->assertTrue(

@@ -9,12 +9,15 @@ use Drupal\soda_scs_manager\Form\SodaScsStackCreateForm;
 use Drupal\soda_scs_manager\Helpers\SodaScsMachineNameHelper;
 use Drupal\Tests\soda_scs_manager\Kernel\SodaScsKernelTestBase;
 use Drupal\user\Entity\Role;
+use PHPUnit\Framework\Attributes\CoversMethod;
+use PHPUnit\Framework\Attributes\Group;
 
 /**
- * @coversDefaultClass \Drupal\soda_scs_manager\Form\SodaScsStackCreateForm
- *
- * @group soda_scs_manager
+ * Tests that SodaScsStackCreateForm requires a machine name.
  */
+#[CoversMethod(SodaScsStackCreateForm::class, 'buildForm')]
+#[CoversMethod(SodaScsMachineNameHelper::class, 'valueCallback')]
+#[Group('soda_scs_manager')]
 class SodaScsStackCreateFormMachineNameRequiredTest extends SodaScsKernelTestBase {
 
   /**
@@ -32,8 +35,6 @@ class SodaScsStackCreateFormMachineNameRequiredTest extends SodaScsKernelTestBas
 
   /**
    * The machineName field stays required; the value callback fills it earlier.
-   *
-   * @covers ::buildForm
    */
   public function testMachineNameStaysRequiredAndUsesValueCallback(): void {
     $form = $this->buildStackCreateForm();
@@ -50,8 +51,6 @@ class SodaScsStackCreateFormMachineNameRequiredTest extends SodaScsKernelTestBas
    * An empty posted machineName is derived before the required check.
    *
    * No project is selected, so validation fails closed and nothing is saved.
-   *
-   * @covers \Drupal\soda_scs_manager\Helpers\SodaScsMachineNameHelper::valueCallback
    */
   public function testEmptyPostedMachineNameIsDerivedBeforeRequiredCheck(): void {
     $stack = $this->entityTypeManager->getStorage('soda_scs_stack')->create([
@@ -79,8 +78,6 @@ class SodaScsStackCreateFormMachineNameRequiredTest extends SodaScsKernelTestBas
 
   /**
    * A label with no letters still fails the required check.
-   *
-   * @covers \Drupal\soda_scs_manager\Helpers\SodaScsMachineNameHelper::valueCallback
    */
   public function testUndersivableMachineNameStaysRequired(): void {
     $stack = $this->entityTypeManager->getStorage('soda_scs_stack')->create([

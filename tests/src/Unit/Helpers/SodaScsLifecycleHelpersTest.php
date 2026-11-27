@@ -13,11 +13,16 @@ use Drupal\soda_scs_manager\Helpers\SodaScsJupyterHelpers;
 use Drupal\soda_scs_manager\Helpers\SodaScsLifecycleHelpers;
 use Drupal\soda_scs_manager\Helpers\SodaScsProjectApplicationHelpers;
 use Drupal\Tests\UnitTestCase;
+use PHPUnit\Framework\Attributes\CoversMethod;
+use PHPUnit\Framework\Attributes\DataProvider;
+use PHPUnit\Framework\Attributes\Group;
 
 /**
- * @coversDefaultClass \Drupal\soda_scs_manager\Helpers\SodaScsLifecycleHelpers
- * @group soda_scs_manager
+ * Tests SodaScsLifecycleHelpers.
  */
+#[CoversMethod(SodaScsLifecycleHelpers::class, 'supportsEntity')]
+#[CoversMethod(SodaScsLifecycleHelpers::class, 'performAction')]
+#[Group('soda_scs_manager')]
 class SodaScsLifecycleHelpersTest extends UnitTestCase {
 
   /**
@@ -36,10 +41,9 @@ class SodaScsLifecycleHelpersTest extends UnitTestCase {
   }
 
   /**
-   * @covers ::supportsEntity
-   *
-   * @dataProvider componentBundleProvider
+   * Tests supports component bundles.
    */
+  #[DataProvider('componentBundleProvider')]
   public function testSupportsComponentBundles(string $bundle, bool $expected): void {
     $component = $this->createMock(SodaScsComponentInterface::class);
     $component->method('bundle')->willReturn($bundle);
@@ -60,10 +64,9 @@ class SodaScsLifecycleHelpersTest extends UnitTestCase {
   }
 
   /**
-   * @covers ::supportsEntity
-   *
-   * @dataProvider stackBundleProvider
+   * Tests supports stack bundles.
    */
+  #[DataProvider('stackBundleProvider')]
   public function testSupportsStackBundles(string $bundle, bool $expected): void {
     $stack = $this->createMock(SodaScsStackInterface::class);
     $stack->method('bundle')->willReturn($bundle);
@@ -83,7 +86,7 @@ class SodaScsLifecycleHelpersTest extends UnitTestCase {
   }
 
   /**
-   * @covers ::performAction
+   * Tests that performAction() rejects unknown action.
    */
   public function testPerformActionRejectsUnknownAction(): void {
     $component = $this->createMock(SodaScsComponentInterface::class);
@@ -95,7 +98,7 @@ class SodaScsLifecycleHelpersTest extends UnitTestCase {
   }
 
   /**
-   * @covers ::performAction
+   * Tests that performAction() rejects shared service.
    */
   public function testPerformActionRejectsSharedService(): void {
     $stack = $this->createMock(SodaScsStackInterface::class);

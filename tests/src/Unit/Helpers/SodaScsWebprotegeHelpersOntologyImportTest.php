@@ -6,13 +6,16 @@ namespace Drupal\Tests\soda_scs_manager\Unit\Helpers;
 
 use Drupal\soda_scs_manager\Helpers\SodaScsWebprotegeHelpers;
 use GuzzleHttp\Psr7\Response;
+use PHPUnit\Framework\Attributes\CoversMethod;
+use PHPUnit\Framework\Attributes\DataProvider;
+use PHPUnit\Framework\Attributes\Group;
 
 /**
  * Tests the import of uploaded ontology files into WebProtégé projects.
- *
- * @coversDefaultClass \Drupal\soda_scs_manager\Helpers\SodaScsWebprotegeHelpers
- * @group soda_scs_manager
  */
+#[CoversMethod(SodaScsWebprotegeHelpers::class, 'importOntologyDocument')]
+#[CoversMethod(SodaScsWebprotegeHelpers::class, 'parserErrorFromResponse')]
+#[Group('soda_scs_manager')]
 class SodaScsWebprotegeHelpersOntologyImportTest extends SodaScsWebprotegeHelpersTestBase {
 
   /**
@@ -31,9 +34,9 @@ class SodaScsWebprotegeHelpersOntologyImportTest extends SodaScsWebprotegeHelper
   private const IMPORT_TIMEOUT = 240;
 
   /**
-   * @covers ::importOntologyDocument
-   * @dataProvider providerOntologyExtensions
+   * Tests that importOntologyDocument() posts content type of the extension.
    */
+  #[DataProvider('providerOntologyExtensions')]
   public function testImportOntologyDocumentPostsContentTypeOfTheExtension(string $extension, string $expectedMimeType): void {
     $values = ['webprotegeProjectId' => self::PROJECT_UUID];
     $this->answerAxiomsAccepted();
@@ -62,7 +65,9 @@ class SodaScsWebprotegeHelpersOntologyImportTest extends SodaScsWebprotegeHelper
   }
 
   /**
-   * @covers ::importOntologyDocument
+   * Tests importOntologyDocument().
+   *
+   * Posts nothing for unsupported extension.
    */
   public function testImportOntologyDocumentPostsNothingForUnsupportedExtension(): void {
     $values = ['webprotegeProjectId' => self::PROJECT_UUID];
@@ -77,7 +82,9 @@ class SodaScsWebprotegeHelpersOntologyImportTest extends SodaScsWebprotegeHelper
   }
 
   /**
-   * @covers ::importOntologyDocument
+   * Tests importOntologyDocument().
+   *
+   * Posts nothing when no project is linked.
    */
   public function testImportOntologyDocumentPostsNothingWhenNoProjectIsLinked(): void {
     $values = [];
@@ -91,8 +98,9 @@ class SodaScsWebprotegeHelpersOntologyImportTest extends SodaScsWebprotegeHelper
   }
 
   /**
-   * @covers ::importOntologyDocument
-   * @dataProvider providerDocumentsWithPublicImports
+   * Tests importOntologyDocument().
+   *
+   * Posts document with its imports unchanged.
    *
    * @param string $extension
    *   File extension.
@@ -101,6 +109,7 @@ class SodaScsWebprotegeHelpersOntologyImportTest extends SodaScsWebprotegeHelper
    * @param list<string> $expectedImports
    *   The imports the result reports.
    */
+  #[DataProvider('providerDocumentsWithPublicImports')]
   public function testImportOntologyDocumentPostsDocumentWithItsImportsUnchanged(string $extension, string $document, array $expectedImports): void {
     $values = ['webprotegeProjectId' => self::PROJECT_UUID];
     $this->answerAxiomsAccepted();
@@ -136,14 +145,14 @@ class SodaScsWebprotegeHelpersOntologyImportTest extends SodaScsWebprotegeHelper
   }
 
   /**
-   * @covers ::importOntologyDocument
-   * @dataProvider providerBlockedImports
+   * Tests that importOntologyDocument() refuses imports of internal addresses.
    *
    * @param string $import
    *   Import IRI the document names.
    * @param array<string, list<string>> $resolvedHosts
    *   Addresses the host lookup returns.
    */
+  #[DataProvider('providerBlockedImports')]
   public function testImportOntologyDocumentRefusesImportsOfInternalAddresses(string $import, array $resolvedHosts): void {
     $values = ['webprotegeProjectId' => self::PROJECT_UUID];
     $this->answerAxiomsAccepted();
@@ -181,7 +190,7 @@ class SodaScsWebprotegeHelpersOntologyImportTest extends SodaScsWebprotegeHelper
   }
 
   /**
-   * @covers ::importOntologyDocument
+   * Tests that importOntologyDocument() refuses import it cannot read.
    */
   public function testImportOntologyDocumentRefusesImportItCannotRead(): void {
     $values = ['webprotegeProjectId' => self::PROJECT_UUID];
@@ -196,7 +205,7 @@ class SodaScsWebprotegeHelpersOntologyImportTest extends SodaScsWebprotegeHelper
   }
 
   /**
-   * @covers ::importOntologyDocument
+   * Tests that importOntologyDocument() refuses OWL XML with hint.
    */
   public function testImportOntologyDocumentRefusesOwlXmlWithHint(): void {
     $values = ['webprotegeProjectId' => self::PROJECT_UUID];
@@ -211,9 +220,11 @@ class SodaScsWebprotegeHelpersOntologyImportTest extends SodaScsWebprotegeHelper
   }
 
   /**
-   * @covers ::importOntologyDocument
-   * @dataProvider providerImportFailureStatuses
+   * Tests importOntologyDocument().
+   *
+   * Names imports when WebProtégé cannot read them.
    */
+  #[DataProvider('providerImportFailureStatuses')]
   public function testImportOntologyDocumentNamesImportsWhenWebprotegeCannotReadThem(int $statusCode): void {
     $values = ['webprotegeProjectId' => self::PROJECT_UUID];
     $this->answerAxiomsRejected($statusCode, '{"errorMessage":"An error occurred while parsing the posted axioms","lineNumber":-1,"columnNumber":-1}');
@@ -234,7 +245,7 @@ class SodaScsWebprotegeHelpersOntologyImportTest extends SodaScsWebprotegeHelper
   }
 
   /**
-   * @covers ::importOntologyDocument
+   * Tests that importOntologyDocument() reports success and logs import.
    */
   public function testImportOntologyDocumentReportsSuccessAndLogsImport(): void {
     $values = ['webprotegeProjectId' => strtoupper(self::PROJECT_UUID)];
@@ -254,7 +265,9 @@ class SodaScsWebprotegeHelpersOntologyImportTest extends SodaScsWebprotegeHelper
   }
 
   /**
-   * @covers ::importOntologyDocument
+   * Tests importOntologyDocument().
+   *
+   * Logs parser error and keeps it from user message on 400.
    */
   public function testImportOntologyDocumentLogsParserErrorAndKeepsItFromUserMessageOn400(): void {
     $values = ['webprotegeProjectId' => self::PROJECT_UUID];
@@ -281,7 +294,9 @@ class SodaScsWebprotegeHelpersOntologyImportTest extends SodaScsWebprotegeHelper
   }
 
   /**
-   * @covers ::importOntologyDocument
+   * Tests importOntologyDocument().
+   *
+   * Logs request error when 400 body is not JSON.
    */
   public function testImportOntologyDocumentLogsRequestErrorWhen400BodyIsNotJson(): void {
     $values = ['webprotegeProjectId' => self::PROJECT_UUID];
@@ -302,7 +317,9 @@ class SodaScsWebprotegeHelpersOntologyImportTest extends SodaScsWebprotegeHelper
   }
 
   /**
-   * @covers ::importOntologyDocument
+   * Tests importOntologyDocument().
+   *
+   * Returns generic message when WebProtégé fails with 500.
    */
   public function testImportOntologyDocumentReturnsGenericMessageWhenWebprotegeFailsWith500(): void {
     $values = ['webprotegeProjectId' => self::PROJECT_UUID];
@@ -323,7 +340,7 @@ class SodaScsWebprotegeHelpersOntologyImportTest extends SodaScsWebprotegeHelper
   }
 
   /**
-   * @covers ::importOntologyDocument
+   * Tests that importOntologyDocument() fails without response body.
    */
   public function testImportOntologyDocumentFailsWithoutResponseBody(): void {
     $values = ['webprotegeProjectId' => self::PROJECT_UUID];
@@ -344,7 +361,7 @@ class SodaScsWebprotegeHelpersOntologyImportTest extends SodaScsWebprotegeHelper
   }
 
   /**
-   * @covers ::parserErrorFromResponse
+   * Tests that parserErrorFromResponse() reads message line and column.
    */
   public function testParserErrorFromResponseReadsMessageLineAndColumn(): void {
     $response = new Response(400, [], '{"errorMessage":"Unexpected token","lineNumber":12,"columnNumber":5}');
@@ -353,7 +370,7 @@ class SodaScsWebprotegeHelpersOntologyImportTest extends SodaScsWebprotegeHelper
   }
 
   /**
-   * @covers ::parserErrorFromResponse
+   * Tests that parserErrorFromResponse() marks missing position with minus one.
    */
   public function testParserErrorFromResponseMarksMissingPositionWithMinusOne(): void {
     $response = new Response(400, [], '{"errorMessage":"Unexpected token"}');
@@ -362,7 +379,7 @@ class SodaScsWebprotegeHelpersOntologyImportTest extends SodaScsWebprotegeHelper
   }
 
   /**
-   * @covers ::parserErrorFromResponse
+   * Tests that parserErrorFromResponse() cuts long messages.
    */
   public function testParserErrorFromResponseCutsLongMessages(): void {
     $response = new Response(400, [], json_encode([
@@ -375,9 +392,9 @@ class SodaScsWebprotegeHelpersOntologyImportTest extends SodaScsWebprotegeHelper
   }
 
   /**
-   * @covers ::parserErrorFromResponse
-   * @dataProvider providerUnreadableParserResponses
+   * Tests that parserErrorFromResponse() returns null without parser message.
    */
+  #[DataProvider('providerUnreadableParserResponses')]
   public function testParserErrorFromResponseReturnsNullWithoutParserMessage(mixed $response): void {
     $this->assertNull(SodaScsWebprotegeHelpers::parserErrorFromResponse($response));
   }

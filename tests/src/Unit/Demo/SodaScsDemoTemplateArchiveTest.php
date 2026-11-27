@@ -15,7 +15,9 @@ use Drupal\soda_scs_manager\Demo\SodaScsWisskiUriRewriter;
 use Drupal\soda_scs_manager\Entity\SodaScsDemoTemplateInterface;
 use Drupal\soda_scs_manager\ValueObject\SodaScsResult;
 use Drupal\Tests\UnitTestCase;
+use PHPUnit\Framework\Attributes\CoversMethod;
 use PHPUnit\Framework\Attributes\DataProvider;
+use PHPUnit\Framework\Attributes\Group;
 use PHPUnit\Framework\MockObject\MockObject;
 use Psr\Log\LoggerInterface;
 use Symfony\Component\Process\Process;
@@ -26,10 +28,15 @@ use Symfony\Component\Process\Process;
  * Issue 3640915. Real tar and real temporary directories; the demo manager,
  * the template builder and the entity storage are doubles. An import that
  * fails must leave neither the temporary directory nor the version behind.
- *
- * @coversDefaultClass \Drupal\soda_scs_manager\Demo\SodaScsDemoTemplateArchive
- * @group soda_scs_manager
  */
+#[CoversMethod(SodaScsDemoTemplateArchive::class, 'damagedFiles')]
+#[CoversMethod(SodaScsDemoTemplateArchive::class, 'writeManifestFile')]
+#[CoversMethod(SodaScsDemoTemplateArchive::class, 'export')]
+#[CoversMethod(SodaScsDemoTemplateArchive::class, 'import')]
+#[CoversMethod(SodaScsDemoTemplateArchive::class, 'readManifest')]
+#[CoversMethod(SodaScsDemoTemplateArchive::class, 'checkArchiveChecksum')]
+#[CoversMethod(SodaScsDemoTemplateArchive::class, 'checkEntries')]
+#[Group('soda_scs_manager')]
 class SodaScsDemoTemplateArchiveTest extends UnitTestCase {
 
   private const VERSION = '1.2.0';
@@ -124,8 +131,6 @@ class SodaScsDemoTemplateArchiveTest extends UnitTestCase {
 
   /**
    * Files that match their checksum are not reported.
-   *
-   * @covers ::damagedFiles
    */
   public function testDamagedFilesIsEmptyWhenEveryFileMatches(): void {
     $directory = $this->versionDirectory('src');
@@ -136,8 +141,6 @@ class SodaScsDemoTemplateArchiveTest extends UnitTestCase {
 
   /**
    * Missing, changed, linked and malformed entries are all damaged.
-   *
-   * @covers ::damagedFiles
    */
   public function testDamagedFilesReportsMissingChangedLinkedAndMalformedEntries(): void {
     $directory = $this->versionDirectory('src');
@@ -156,8 +159,6 @@ class SodaScsDemoTemplateArchiveTest extends UnitTestCase {
 
   /**
    * The manifest file gets the format version and readable JSON.
-   *
-   * @covers ::writeManifestFile
    */
   public function testWriteManifestFileAddsFormatVersionAndKeepsSlashesAndUnicode(): void {
     $directory = $this->baseDirectory . '/manifest';
@@ -175,8 +176,6 @@ class SodaScsDemoTemplateArchiveTest extends UnitTestCase {
 
   /**
    * A directory that cannot be written is reported, not thrown.
-   *
-   * @covers ::writeManifestFile
    */
   public function testWriteManifestFileReturnsFalseWhenTheDirectoryIsMissing(): void {
     $this->assertFalse(@SodaScsDemoTemplateArchive::writeManifestFile($this->baseDirectory . '/missing', ['version' => '1.0.0']));
@@ -184,8 +183,6 @@ class SodaScsDemoTemplateArchiveTest extends UnitTestCase {
 
   /**
    * The export writes the archive and a checksum file that matches.
-   *
-   * @covers ::export
    */
   public function testExportWritesArchiveAndMatchingChecksumFile(): void {
     $template = $this->readyTemplate($this->versionDirectory('src'));
@@ -203,8 +200,6 @@ class SodaScsDemoTemplateArchiveTest extends UnitTestCase {
 
   /**
    * The archive holds v{version}/ with the manifest and every file.
-   *
-   * @covers ::export
    */
   public function testExportArchiveHoldsTheVersionDirectoryWithManifest(): void {
     $this->archive()->export($this->readyTemplate($this->versionDirectory('src')), $this->archiveDirectory);
@@ -222,8 +217,6 @@ class SodaScsDemoTemplateArchiveTest extends UnitTestCase {
 
   /**
    * Without an output directory the archive goes to _exports of the root.
-   *
-   * @covers ::export
    */
   public function testExportWritesToExportsUnderTheTemplatesRootByDefault(): void {
     $result = $this->archive()->export($this->readyTemplate($this->versionDirectory('src')));
@@ -235,8 +228,6 @@ class SodaScsDemoTemplateArchiveTest extends UnitTestCase {
 
   /**
    * A version built before manifest.json existed gets the file on export.
-   *
-   * @covers ::export
    */
   public function testExportWritesMissingManifestFileOfAnOlderVersion(): void {
     $directory = $this->versionDirectory('src');
@@ -254,8 +245,6 @@ class SodaScsDemoTemplateArchiveTest extends UnitTestCase {
 
   /**
    * A version that is not ready is not exported.
-   *
-   * @covers ::export
    */
   public function testExportRefusesVersionThatIsNotReady(): void {
     $template = $this->readyTemplate($this->versionDirectory('src'), ready: FALSE);
@@ -269,8 +258,6 @@ class SodaScsDemoTemplateArchiveTest extends UnitTestCase {
 
   /**
    * A changed file stops the export; no archive is left behind.
-   *
-   * @covers ::export
    */
   public function testExportRefusesDamagedFileAndWritesNoArchive(): void {
     $directory = $this->versionDirectory('src');
@@ -285,8 +272,6 @@ class SodaScsDemoTemplateArchiveTest extends UnitTestCase {
 
   /**
    * A version directory that is gone stops the export.
-   *
-   * @covers ::export
    */
   public function testExportRefusesMissingVersionDirectory(): void {
     $directory = $this->versionDirectory('src');
@@ -301,8 +286,6 @@ class SodaScsDemoTemplateArchiveTest extends UnitTestCase {
 
   /**
    * An output directory that cannot be created is reported.
-   *
-   * @covers ::export
    */
   public function testExportFailsWhenTheOutputDirectoryCannotBeCreated(): void {
     $blocker = $this->baseDirectory . '/blocker';
@@ -316,8 +299,6 @@ class SodaScsDemoTemplateArchiveTest extends UnitTestCase {
 
   /**
    * A version built before 4.8 gets the bases of its source WissKI.
-   *
-   * @covers ::export
    */
   public function testExportAddsTheBasesOfTheSourceWisskiToAnOlderVersion(): void {
     $directory = $this->versionDirectory('src');
@@ -334,8 +315,6 @@ class SodaScsDemoTemplateArchiveTest extends UnitTestCase {
 
   /**
    * An older version whose source WissKI is gone is not exported.
-   *
-   * @covers ::export
    */
   public function testExportRefusesAnOlderVersionWhoseSourceWisskiCannotBeRead(): void {
     $directory = $this->versionDirectory('src');
@@ -352,8 +331,6 @@ class SodaScsDemoTemplateArchiveTest extends UnitTestCase {
 
   /**
    * Bases that are in the manifest need no lookup.
-   *
-   * @covers ::export
    */
   public function testExportDoesNotLookUpBasesThatTheManifestLists(): void {
     $this->uriRewriter->expects($this->never())->method('templateSourceBases');
@@ -363,8 +340,6 @@ class SodaScsDemoTemplateArchiveTest extends UnitTestCase {
 
   /**
    * A version without a WissKI is exported without any lookup.
-   *
-   * @covers ::export
    */
   public function testExportOfVersionWithoutWisskiNeedsNoBases(): void {
     $directory = $this->versionDirectory('src');
@@ -377,8 +352,6 @@ class SodaScsDemoTemplateArchiveTest extends UnitTestCase {
 
   /**
    * The manifest.json in the archive is rewritten from the entity manifest.
-   *
-   * @covers ::export
    */
   public function testExportRewritesManifestFileOnEveryExport(): void {
     $directory = $this->versionDirectory('src');
@@ -395,8 +368,6 @@ class SodaScsDemoTemplateArchiveTest extends UnitTestCase {
 
   /**
    * A finished version of that number blocks the import; nothing is changed.
-   *
-   * @covers ::import
    */
   public function testImportRefusesWhenVersionOfThatNumberExistsAndIsNotFailed(): void {
     $archive = $this->exportedArchive();
@@ -415,8 +386,6 @@ class SodaScsDemoTemplateArchiveTest extends UnitTestCase {
 
   /**
    * A failed build of that number is deleted first, then the import runs.
-   *
-   * @covers ::import
    */
   public function testImportReplacesFailedBuildOfTheSameVersion(): void {
     $archive = $this->exportedArchive();
@@ -435,8 +404,6 @@ class SodaScsDemoTemplateArchiveTest extends UnitTestCase {
 
   /**
    * A failed build that cannot be deleted stops the import untouched.
-   *
-   * @covers ::import
    */
   public function testImportRefusesWhenTheFailedBuildCannotBeDeleted(): void {
     $archive = $this->exportedArchive();
@@ -456,8 +423,6 @@ class SodaScsDemoTemplateArchiveTest extends UnitTestCase {
 
   /**
    * A Team Folder directory in the manifest is the one the builder writes.
-   *
-   * @covers ::readManifest
    */
   public function testImportAcceptsTheTeamFolderDirectoryOfTheBuilder(): void {
     $directory = $this->versionDirectory('src');
@@ -471,8 +436,6 @@ class SodaScsDemoTemplateArchiveTest extends UnitTestCase {
 
   /**
    * A Team Folder directory outside the version is refused.
-   *
-   * @covers ::readManifest
    */
   public function testImportRefusesTeamFolderDirectoryWithParentPath(): void {
     $directory = $this->versionDirectory('src');
@@ -485,8 +448,6 @@ class SodaScsDemoTemplateArchiveTest extends UnitTestCase {
 
   /**
    * Another directory name or a malformed entry is refused too.
-   *
-   * @covers ::readManifest
    */
   #[DataProvider('invalidTeamFolderEntries')]
   public function testImportRefusesMalformedTeamFolderEntry(mixed $teamFolder): void {
@@ -516,8 +477,6 @@ class SodaScsDemoTemplateArchiveTest extends UnitTestCase {
 
   /**
    * An archive written by the export imports as a ready, imported version.
-   *
-   * @covers ::import
    */
   public function testImportCreatesReadyImportedVersionAndMovesTheDirectory(): void {
     $archive = $this->exportedArchive();
@@ -546,8 +505,6 @@ class SodaScsDemoTemplateArchiveTest extends UnitTestCase {
 
   /**
    * The imported files are the exported ones.
-   *
-   * @covers ::import
    */
   public function testImportRestoresTheFileContents(): void {
     $archive = $this->exportedArchive();
@@ -561,8 +518,6 @@ class SodaScsDemoTemplateArchiveTest extends UnitTestCase {
 
   /**
    * Without the option the imported version is not activated.
-   *
-   * @covers ::import
    */
   public function testImportDoesNotActivateByDefault(): void {
     $archive = $this->exportedArchive();
@@ -574,8 +529,6 @@ class SodaScsDemoTemplateArchiveTest extends UnitTestCase {
 
   /**
    * With the option the imported version becomes the active one.
-   *
-   * @covers ::import
    */
   public function testImportActivatesTheVersionWhenAsked(): void {
     $archive = $this->exportedArchive();
@@ -592,8 +545,6 @@ class SodaScsDemoTemplateArchiveTest extends UnitTestCase {
 
   /**
    * A failed activation is reported; the imported version stays.
-   *
-   * @covers ::import
    */
   public function testImportReportsFailedActivationAndKeepsTheVersion(): void {
     $archive = $this->exportedArchive();
@@ -611,8 +562,6 @@ class SodaScsDemoTemplateArchiveTest extends UnitTestCase {
 
   /**
    * Names other than demo-v{x.y.z}.tar.gz are refused before anything is read.
-   *
-   * @covers ::import
    */
   #[DataProvider('invalidArchiveNames')]
   public function testImportRefusesAnInvalidArchiveName(string $name): void {
@@ -645,8 +594,6 @@ class SodaScsDemoTemplateArchiveTest extends UnitTestCase {
 
   /**
    * An archive that does not exist is refused.
-   *
-   * @covers ::import
    */
   public function testImportRefusesMissingArchive(): void {
     $result = $this->archive()->import($this->archiveDirectory . '/demo-v1.2.0.tar.gz');
@@ -657,8 +604,6 @@ class SodaScsDemoTemplateArchiveTest extends UnitTestCase {
 
   /**
    * A symbolic link to an archive is refused.
-   *
-   * @covers ::import
    */
   public function testImportRefusesSymbolicLinkAsArchive(): void {
     $archive = $this->exportedArchive();
@@ -675,9 +620,6 @@ class SodaScsDemoTemplateArchiveTest extends UnitTestCase {
 
   /**
    * Without the .sha256 file nothing is unpacked.
-   *
-   * @covers ::import
-   * @covers ::checkArchiveChecksum
    */
   public function testImportRefusesAnArchiveWithoutChecksumFile(): void {
     $archive = $this->exportedArchive();
@@ -693,8 +635,6 @@ class SodaScsDemoTemplateArchiveTest extends UnitTestCase {
 
   /**
    * A checksum file without a SHA-256 value is refused.
-   *
-   * @covers ::checkArchiveChecksum
    */
   public function testImportRefusesMalformedChecksumFile(): void {
     $archive = $this->exportedArchive();
@@ -709,8 +649,6 @@ class SodaScsDemoTemplateArchiveTest extends UnitTestCase {
 
   /**
    * An archive that differs from its checksum is refused.
-   *
-   * @covers ::checkArchiveChecksum
    */
   public function testImportRefusesChangedArchive(): void {
     $archive = $this->exportedArchive();
@@ -726,8 +664,6 @@ class SodaScsDemoTemplateArchiveTest extends UnitTestCase {
 
   /**
    * A version that is not higher than the latest is refused before unpacking.
-   *
-   * @covers ::import
    */
   public function testImportRefusesVersionThatIsNotHigher(): void {
     $archive = $this->exportedArchive();
@@ -743,8 +679,6 @@ class SodaScsDemoTemplateArchiveTest extends UnitTestCase {
 
   /**
    * A version directory that exists already is not overwritten.
-   *
-   * @covers ::import
    */
   public function testImportRefusesWhenTheTargetDirectoryExists(): void {
     $archive = $this->exportedArchive();
@@ -762,8 +696,6 @@ class SodaScsDemoTemplateArchiveTest extends UnitTestCase {
 
   /**
    * A symbolic link inside the archive is refused before unpacking.
-   *
-   * @covers ::checkEntries
    */
   public function testImportRefusesSymbolicLinkEntry(): void {
     $directory = $this->versionDirectory('src');
@@ -774,8 +706,6 @@ class SodaScsDemoTemplateArchiveTest extends UnitTestCase {
 
   /**
    * A hard link inside the archive is refused as well.
-   *
-   * @covers ::checkEntries
    */
   public function testImportRefusesHardLinkEntry(): void {
     $directory = $this->versionDirectory('src');
@@ -786,8 +716,6 @@ class SodaScsDemoTemplateArchiveTest extends UnitTestCase {
 
   /**
    * An entry with "../" is refused.
-   *
-   * @covers ::checkEntries
    */
   public function testImportRefusesParentDirectoryEntry(): void {
     $directory = $this->versionDirectory('src');
@@ -801,8 +729,6 @@ class SodaScsDemoTemplateArchiveTest extends UnitTestCase {
 
   /**
    * An absolute entry is refused.
-   *
-   * @covers ::checkEntries
    */
   public function testImportRefusesAnAbsoluteEntry(): void {
     $directory = $this->versionDirectory('src');
@@ -816,8 +742,6 @@ class SodaScsDemoTemplateArchiveTest extends UnitTestCase {
 
   /**
    * An entry beside the version directory is refused.
-   *
-   * @covers ::checkEntries
    */
   public function testImportRefusesAnEntryOutsideTheVersionDirectory(): void {
     $directory = $this->versionDirectory('src');
@@ -830,8 +754,6 @@ class SodaScsDemoTemplateArchiveTest extends UnitTestCase {
 
   /**
    * An archive that holds another version directory than its name is refused.
-   *
-   * @covers ::checkEntries
    */
   public function testImportRefusesDirectoryThatDoesNotMatchTheArchiveName(): void {
     $archive = $this->packedArchive($this->versionDirectory('src', '9.9.9'), archiveVersion: '1.2.0');
@@ -841,8 +763,6 @@ class SodaScsDemoTemplateArchiveTest extends UnitTestCase {
 
   /**
    * A file that is no archive but matches its checksum is refused.
-   *
-   * @covers ::checkEntries
    */
   public function testImportRefusesFileThatIsNoTarArchive(): void {
     $archive = $this->archiveDirectory . '/demo-v1.2.0.tar.gz';
@@ -854,8 +774,6 @@ class SodaScsDemoTemplateArchiveTest extends UnitTestCase {
 
   /**
    * An archive without manifest.json is refused after unpacking, cleanly.
-   *
-   * @covers ::readManifest
    */
   public function testImportRefusesAnArchiveWithoutManifestFile(): void {
     $directory = $this->versionDirectory('src');
@@ -866,8 +784,6 @@ class SodaScsDemoTemplateArchiveTest extends UnitTestCase {
 
   /**
    * A manifest.json that is no JSON object is refused.
-   *
-   * @covers ::readManifest
    */
   public function testImportRefusesAnUnreadableManifestFile(): void {
     $directory = $this->versionDirectory('src');
@@ -878,8 +794,6 @@ class SodaScsDemoTemplateArchiveTest extends UnitTestCase {
 
   /**
    * A manifest of another format is refused.
-   *
-   * @covers ::readManifest
    */
   public function testImportRefusesAnotherFormatVersion(): void {
     $directory = $this->versionDirectory('src');
@@ -892,8 +806,6 @@ class SodaScsDemoTemplateArchiveTest extends UnitTestCase {
 
   /**
    * A manifest without a format version is refused.
-   *
-   * @covers ::readManifest
    */
   public function testImportRefusesManifestWithoutFormatVersion(): void {
     $directory = $this->versionDirectory('src');
@@ -906,8 +818,6 @@ class SodaScsDemoTemplateArchiveTest extends UnitTestCase {
 
   /**
    * A manifest that names another version than the archive is refused.
-   *
-   * @covers ::readManifest
    */
   public function testImportRefusesManifestThatNamesAnotherVersion(): void {
     $directory = $this->versionDirectory('src');
@@ -920,8 +830,6 @@ class SodaScsDemoTemplateArchiveTest extends UnitTestCase {
 
   /**
    * A manifest without checksums verifies nothing and is refused.
-   *
-   * @covers ::readManifest
    */
   public function testImportRefusesManifestWithoutChecksums(): void {
     $directory = $this->versionDirectory('src');
@@ -934,8 +842,6 @@ class SodaScsDemoTemplateArchiveTest extends UnitTestCase {
 
   /**
    * A file that differs from the manifest checksum is refused.
-   *
-   * @covers ::readManifest
    */
   public function testImportRefusesDamagedFile(): void {
     $directory = $this->versionDirectory('src');
@@ -946,8 +852,6 @@ class SodaScsDemoTemplateArchiveTest extends UnitTestCase {
 
   /**
    * A listed file that is missing from the archive is refused.
-   *
-   * @covers ::readManifest
    */
   public function testImportRefusesMissingListedFile(): void {
     $directory = $this->versionDirectory('src');
@@ -958,8 +862,6 @@ class SodaScsDemoTemplateArchiveTest extends UnitTestCase {
 
   /**
    * A file the manifest does not list is refused.
-   *
-   * @covers ::readManifest
    */
   public function testImportRefusesAnUnlistedFile(): void {
     $directory = $this->versionDirectory('src');
@@ -970,8 +872,6 @@ class SodaScsDemoTemplateArchiveTest extends UnitTestCase {
 
   /**
    * An app entry that points at a file the archive lacks is refused.
-   *
-   * @covers ::readManifest
    */
   public function testImportRefusesAnAppEntryThatPointsAtMissingFile(): void {
     $directory = $this->versionDirectory('src');
@@ -984,8 +884,6 @@ class SodaScsDemoTemplateArchiveTest extends UnitTestCase {
 
   /**
    * An app entry with a parent path is refused.
-   *
-   * @covers ::readManifest
    */
   public function testImportRefusesAnAppEntryWithParentPath(): void {
     $directory = $this->versionDirectory('src');
@@ -998,8 +896,6 @@ class SodaScsDemoTemplateArchiveTest extends UnitTestCase {
 
   /**
    * An app entry that is no object is refused.
-   *
-   * @covers ::readManifest
    */
   public function testImportRefusesAnAppEntryThatIsNoObject(): void {
     $directory = $this->versionDirectory('src');
@@ -1012,8 +908,6 @@ class SodaScsDemoTemplateArchiveTest extends UnitTestCase {
 
   /**
    * A failing entity save removes the moved directory and the work directory.
-   *
-   * @covers ::import
    */
   public function testImportRemovesTheDirectoryWhenTheEntityCannotBeSaved(): void {
     $archive = $this->exportedArchive();
@@ -1031,8 +925,6 @@ class SodaScsDemoTemplateArchiveTest extends UnitTestCase {
 
   /**
    * An import that fails logs nothing as success.
-   *
-   * @covers ::import
    */
   public function testImportOfRefusedArchiveLogsNoNotice(): void {
     $directory = $this->versionDirectory('src');

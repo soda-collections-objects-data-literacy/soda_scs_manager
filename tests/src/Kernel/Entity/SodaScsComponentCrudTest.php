@@ -6,12 +6,13 @@ namespace Drupal\Tests\soda_scs_manager\Kernel\Entity;
 
 use Drupal\soda_scs_manager\Entity\SodaScsComponent;
 use Drupal\Tests\soda_scs_manager\Kernel\SodaScsKernelTestBase;
+use PHPUnit\Framework\Attributes\DataProvider;
+use PHPUnit\Framework\Attributes\Group;
 
 /**
  * Tests CRUD operations for SODa SCS Component entities.
- *
- * @group soda_scs_manager
  */
+#[Group('soda_scs_manager')]
 class SodaScsComponentCrudTest extends SodaScsKernelTestBase {
 
   /**
@@ -28,9 +29,8 @@ class SodaScsComponentCrudTest extends SodaScsKernelTestBase {
 
   /**
    * Tests creating a component entity for each bundle.
-   *
-   * @dataProvider componentBundleProvider
    */
+  #[DataProvider('componentBundleProvider')]
   public function testCreateComponent(string $bundle): void {
     $label = 'Test ' . $bundle;
     $machineName = 'test-' . str_replace('_', '-', $bundle);
@@ -58,9 +58,8 @@ class SodaScsComponentCrudTest extends SodaScsKernelTestBase {
 
   /**
    * Tests reading a component entity for each bundle.
-   *
-   * @dataProvider componentBundleProvider
    */
+  #[DataProvider('componentBundleProvider')]
   public function testReadComponent(string $bundle): void {
     // Create a component first.
     $component = $this->createTestComponent($bundle);
@@ -82,9 +81,8 @@ class SodaScsComponentCrudTest extends SodaScsKernelTestBase {
 
   /**
    * Tests updating a component entity for each bundle.
-   *
-   * @dataProvider componentBundleProvider
    */
+  #[DataProvider('componentBundleProvider')]
   public function testUpdateComponent(string $bundle): void {
     // Create a component first.
     $component = $this->createTestComponent($bundle);
@@ -109,9 +107,8 @@ class SodaScsComponentCrudTest extends SodaScsKernelTestBase {
 
   /**
    * Tests deleting a component entity for each bundle.
-   *
-   * @dataProvider componentBundleProvider
    */
+  #[DataProvider('componentBundleProvider')]
   public function testDeleteComponent(string $bundle): void {
     // Create a component first.
     $component = $this->createTestComponent($bundle);

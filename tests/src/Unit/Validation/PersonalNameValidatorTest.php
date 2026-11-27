@@ -7,19 +7,22 @@ namespace Drupal\Tests\soda_scs_manager\Unit\Validation;
 use Drupal\soda_scs_manager\Validation\InputDisallowedTerms;
 use Drupal\soda_scs_manager\Validation\PersonalNameValidator;
 use Drupal\Tests\UnitTestCase;
+use PHPUnit\Framework\Attributes\CoversMethod;
+use PHPUnit\Framework\Attributes\DataProvider;
+use PHPUnit\Framework\Attributes\Group;
 
 /**
  * Tests personal name validation rules.
- *
- * @coversDefaultClass \Drupal\soda_scs_manager\Validation\PersonalNameValidator
- * @group soda_scs_manager
  */
+#[CoversMethod(PersonalNameValidator::class, 'validate')]
+#[CoversMethod(PersonalNameValidator::class, 'countLetters')]
+#[Group('soda_scs_manager')]
 class PersonalNameValidatorTest extends UnitTestCase {
 
   /**
-   * @covers ::validate
-   * @dataProvider validNamesProvider
+   * Tests valid names.
    */
+  #[DataProvider('validNamesProvider')]
   public function testValidNames(string $value): void {
     $this->assertNull(PersonalNameValidator::validate($value));
   }
@@ -36,9 +39,9 @@ class PersonalNameValidatorTest extends UnitTestCase {
   }
 
   /**
-   * @covers ::validate
-   * @dataProvider invalidNamesProvider
+   * Tests invalid names.
    */
+  #[DataProvider('invalidNamesProvider')]
   public function testInvalidNames(string $value, string $expectedCode): void {
     $violation = PersonalNameValidator::validate($value);
     $this->assertIsArray($violation);
@@ -59,7 +62,7 @@ class PersonalNameValidatorTest extends UnitTestCase {
   }
 
   /**
-   * @covers ::countLetters
+   * Tests that countLetters() ignores separators.
    */
   public function testCountLettersIgnoresSeparators(): void {
     $this->assertSame(6, PersonalNameValidator::countLetters("O'Brien"));
@@ -67,7 +70,7 @@ class PersonalNameValidatorTest extends UnitTestCase {
   }
 
   /**
-   * @covers ::validate
+   * Tests empty value is not validated.
    */
   public function testEmptyValueIsNotValidated(): void {
     $this->assertNull(PersonalNameValidator::validate(''));
@@ -75,7 +78,7 @@ class PersonalNameValidatorTest extends UnitTestCase {
   }
 
   /**
-   * @covers ::validate
+   * Tests minimum letter count constant.
    */
   public function testMinimumLetterCountConstant(): void {
     $letters = str_repeat('a', InputDisallowedTerms::PERSONAL_NAME_MIN_LETTERS);

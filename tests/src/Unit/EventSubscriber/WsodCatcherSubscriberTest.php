@@ -13,7 +13,9 @@ use Drupal\Core\ParamConverter\ParamNotConvertedException;
 use Drupal\Core\Render\RendererInterface;
 use Drupal\soda_scs_manager\EventSubscriber\WsodCatcherSubscriber;
 use Drupal\Tests\UnitTestCase;
+use PHPUnit\Framework\Attributes\CoversMethod;
 use PHPUnit\Framework\Attributes\DataProvider;
+use PHPUnit\Framework\Attributes\Group;
 use Symfony\Component\HttpFoundation\RedirectResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpKernel\Event\ExceptionEvent;
@@ -24,10 +26,9 @@ use Symfony\Component\HttpKernel\HttpKernelInterface;
 
 /**
  * Tests the controlled error page for unhandled server exceptions.
- *
- * @group soda_scs_manager
- * @coversDefaultClass \Drupal\soda_scs_manager\EventSubscriber\WsodCatcherSubscriber
  */
+#[CoversMethod(WsodCatcherSubscriber::class, 'onException')]
+#[Group('soda_scs_manager')]
 class WsodCatcherSubscriberTest extends UnitTestCase {
 
   private const SECRET_MESSAGE = 'SQLSTATE[HY000]: connection to core--mariadb--db refused';
@@ -93,7 +94,7 @@ class WsodCatcherSubscriberTest extends UnitTestCase {
   }
 
   /**
-   * @covers ::onException
+   * Tests that onException() leaves handled exceptions alone.
    */
   #[DataProvider('skippedExceptionProvider')]
   public function testOnExceptionLeavesHandledExceptionsAlone(\Throwable $exception): void {
@@ -108,7 +109,7 @@ class WsodCatcherSubscriberTest extends UnitTestCase {
   }
 
   /**
-   * @covers ::onException
+   * Tests that onException() ignores sub requests.
    */
   public function testOnExceptionIgnoresSubRequests(): void {
     $this->logger->expects($this->never())->method($this->anything());
@@ -121,7 +122,7 @@ class WsodCatcherSubscriberTest extends UnitTestCase {
   }
 
   /**
-   * @covers ::onException
+   * Tests that onException() renders error page without exception message.
    */
   public function testOnExceptionRendersErrorPageWithoutExceptionMessage(): void {
     $this->logger->expects($this->once())
@@ -146,7 +147,7 @@ class WsodCatcherSubscriberTest extends UnitTestCase {
   }
 
   /**
-   * @covers ::onException
+   * Tests that onException() logs class name when message is empty.
    */
   public function testOnExceptionLogsClassNameWhenMessageIsEmpty(): void {
     $this->logger->expects($this->once())
@@ -161,7 +162,9 @@ class WsodCatcherSubscriberTest extends UnitTestCase {
   }
 
   /**
-   * @covers ::onException
+   * Tests onException().
+   *
+   * Renders error page for server error HTTP exception.
    */
   public function testOnExceptionRendersErrorPageForServerErrorHttpException(): void {
     $this->logger->expects($this->once())->method('error');
@@ -174,7 +177,9 @@ class WsodCatcherSubscriberTest extends UnitTestCase {
   }
 
   /**
-   * @covers ::onException
+   * Tests onException().
+   *
+   * Fallback HTML hides exception message when render fails.
    */
   public function testOnExceptionFallbackHtmlHidesExceptionMessageWhenRenderFails(): void {
     $loggedErrors = [];

@@ -9,14 +9,15 @@ use Drupal\Core\Session\AccountInterface;
 use Drupal\soda_scs_manager\Controller\SodaScsOnboardingController;
 use Drupal\Tests\UnitTestCase;
 use Drupal\user\UserDataInterface;
+use PHPUnit\Framework\Attributes\CoversMethod;
+use PHPUnit\Framework\Attributes\Group;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 
 /**
  * Tests automatic guided onboarding startup.
- *
- * @group soda_scs_manager
- * @coversDefaultClass \Drupal\soda_scs_manager\Controller\SodaScsOnboardingController
  */
+#[CoversMethod(SodaScsOnboardingController::class, 'state')]
+#[Group('soda_scs_manager')]
 class SodaScsOnboardingControllerTest extends UnitTestCase {
 
   private ?ContainerInterface $previousContainer = NULL;
@@ -50,7 +51,7 @@ class SodaScsOnboardingControllerTest extends UnitTestCase {
   }
 
   /**
-   * @covers ::state
+   * Tests that state() starts tour without legacy intro completion.
    */
   public function testStateStartsTourWithoutLegacyIntroCompletion(): void {
     $userData = $this->createMock(UserDataInterface::class);
@@ -66,7 +67,7 @@ class SodaScsOnboardingControllerTest extends UnitTestCase {
   }
 
   /**
-   * @covers ::state
+   * Tests that state() does not restart completed tour.
    */
   public function testStateDoesNotRestartCompletedTour(): void {
     $userData = $this->createMock(UserDataInterface::class);

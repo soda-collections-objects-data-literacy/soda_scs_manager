@@ -11,16 +11,17 @@ use Drupal\soda_scs_manager\Demo\SodaScsDemoManager;
 use Drupal\soda_scs_manager\Entity\SodaScsProjectInterface;
 use Drupal\soda_scs_manager\Form\SodaScsDemoProjectResetForm;
 use Drupal\Tests\UnitTestCase;
+use PHPUnit\Framework\Attributes\CoversMethod;
+use PHPUnit\Framework\Attributes\Group;
 
 /**
  * Who may open the reset form of a demo project.
  *
  * The demo panel's "Reset demo" link asks this check through the route, so
  * these cases are also the rule for the link.
- *
- * @coversDefaultClass \Drupal\soda_scs_manager\Form\SodaScsDemoProjectResetForm
- * @group soda_scs_manager
  */
+#[CoversMethod(SodaScsDemoProjectResetForm::class, 'access')]
+#[Group('soda_scs_manager')]
 class SodaScsDemoProjectResetFormAccessTest extends UnitTestCase {
 
   /**
@@ -37,8 +38,6 @@ class SodaScsDemoProjectResetFormAccessTest extends UnitTestCase {
 
   /**
    * The owner may reset their demo project.
-   *
-   * @covers ::access
    */
   public function testOwnerIsAllowed(): void {
     $this->assertTrue($this->access(TRUE, 7, 7, FALSE));
@@ -46,8 +45,6 @@ class SodaScsDemoProjectResetFormAccessTest extends UnitTestCase {
 
   /**
    * An SCS Manager admin may reset another user's demo project.
-   *
-   * @covers ::access
    */
   public function testAdminWhoIsNotOwnerIsAllowed(): void {
     $this->assertTrue($this->access(TRUE, 7, 9, TRUE));
@@ -55,8 +52,6 @@ class SodaScsDemoProjectResetFormAccessTest extends UnitTestCase {
 
   /**
    * A viewer who is neither owner nor admin may not reset.
-   *
-   * @covers ::access
    */
   public function testOtherUserIsDenied(): void {
     $this->assertFalse($this->access(TRUE, 7, 9, FALSE));
@@ -64,8 +59,6 @@ class SodaScsDemoProjectResetFormAccessTest extends UnitTestCase {
 
   /**
    * Nobody may reset a project that is not a demo project, not even an admin.
-   *
-   * @covers ::access
    */
   public function testNonDemoProjectIsDeniedForAdmin(): void {
     $this->assertFalse($this->access(FALSE, 7, 9, TRUE));

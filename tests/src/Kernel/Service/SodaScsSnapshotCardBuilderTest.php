@@ -9,6 +9,8 @@ use Drupal\soda_scs_manager\Service\SodaScsSnapshotCardBuilder;
 use Drupal\Tests\soda_scs_manager\Kernel\SodaScsKernelTestBase;
 use Drupal\user\Entity\Role;
 use Drupal\user\UserInterface;
+use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\Group;
 
 /**
  * The Snapshots card on the detail page of a stack or a component.
@@ -16,10 +18,9 @@ use Drupal\user\UserInterface;
  * The card shows the newest snapshots the viewer may see and the link that
  * starts a new snapshot, or nothing at all when the viewer has neither. No
  * remote service is reached: only entities, routes and access are involved.
- *
- * @coversDefaultClass \Drupal\soda_scs_manager\Service\SodaScsSnapshotCardBuilder
- * @group soda_scs_manager
  */
+#[CoversClass(SodaScsSnapshotCardBuilder::class)]
+#[Group('soda_scs_manager')]
 class SodaScsSnapshotCardBuilderTest extends SodaScsKernelTestBase {
 
   /**

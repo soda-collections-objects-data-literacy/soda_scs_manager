@@ -5,13 +5,18 @@ declare(strict_types=1);
 namespace Drupal\Tests\soda_scs_manager\Kernel\Form;
 
 use Drupal\Core\Form\FormState;
+use Drupal\soda_scs_manager\Form\SodaScsComponentEditForm;
+use Drupal\soda_scs_manager\Form\SodaScsStackEditForm;
 use Drupal\Tests\soda_scs_manager\Kernel\SodaScsKernelTestBase;
+use PHPUnit\Framework\Attributes\CoversMethod;
+use PHPUnit\Framework\Attributes\Group;
 
 /**
  * Fields the edit forms of stacks and components must not offer.
- *
- * @group soda_scs_manager
  */
+#[CoversMethod(SodaScsStackEditForm::class, 'buildForm')]
+#[CoversMethod(SodaScsComponentEditForm::class, 'buildForm')]
+#[Group('soda_scs_manager')]
 class SodaScsEditFormsHideFieldsTest extends SodaScsKernelTestBase {
 
   /**
@@ -24,8 +29,6 @@ class SodaScsEditFormsHideFieldsTest extends SodaScsKernelTestBase {
 
   /**
    * The default data model switch can not be changed on a WissKI stack.
-   *
-   * @covers \Drupal\soda_scs_manager\Form\SodaScsStackEditForm::buildForm
    */
   public function testStackEditFormHidesWithDefaultDataModel(): void {
     $stack = $this->createTestStack('soda_scs_wisski_stack');
@@ -39,8 +42,6 @@ class SodaScsEditFormsHideFieldsTest extends SodaScsKernelTestBase {
 
   /**
    * The default data model switch can not be changed on a WissKI component.
-   *
-   * @covers \Drupal\soda_scs_manager\Form\SodaScsComponentEditForm::buildForm
    */
   public function testComponentEditFormHidesWithDefaultDataModel(): void {
     $component = $this->createTestComponent('soda_scs_wisski_component');

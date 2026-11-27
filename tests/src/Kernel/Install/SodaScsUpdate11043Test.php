@@ -8,15 +8,15 @@ use Drupal\soda_scs_manager\Demo\SodaScsDemoServiceAccount;
 use Drupal\soda_scs_manager\Helpers\SodaScsProtectedAccounts;
 use Drupal\Tests\soda_scs_manager\Kernel\SodaScsKernelTestBase;
 use Drupal\user\UserInterface;
+use PHPUnit\Framework\Attributes\Group;
 
 /**
  * Tests soda_scs_manager_update_11043() (the service account scs_demo).
  *
  * Issue 3640913. The update only creates the Drupal account; Keycloak and
  * Nextcloud are reached by drush soda_scs_manager:demo-account, never here.
- *
- * @group soda_scs_manager
  */
+#[Group('soda_scs_manager')]
 final class SodaScsUpdate11043Test extends SodaScsKernelTestBase {
 
   /**

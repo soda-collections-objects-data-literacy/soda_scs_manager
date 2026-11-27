@@ -10,15 +10,15 @@ use Drupal\soda_scs_manager\Entity\SodaScsServiceKey;
 use Drupal\soda_scs_manager\Entity\SodaScsSnapshot;
 use Drupal\soda_scs_manager\Entity\SodaScsStack;
 use Drupal\Tests\soda_scs_manager\Kernel\SodaScsKernelTestBase;
+use PHPUnit\Framework\Attributes\Group;
 
 /**
  * Tests user deletion cleanup for SODa SCS Manager.
  *
  * This tests the hook_user_delete() implementation which cleans up
  * all entities owned by a user when they are deleted.
- *
- * @group soda_scs_manager
  */
+#[Group('soda_scs_manager')]
 class SodaScsUserDeleteTest extends SodaScsKernelTestBase {
 
   /**

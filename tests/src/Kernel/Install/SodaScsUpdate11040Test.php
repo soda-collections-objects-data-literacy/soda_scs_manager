@@ -5,12 +5,12 @@ declare(strict_types=1);
 namespace Drupal\Tests\soda_scs_manager\Kernel\Install;
 
 use Drupal\Tests\soda_scs_manager\Kernel\SodaScsKernelTestBase;
+use PHPUnit\Framework\Attributes\Group;
 
 /**
  * Tests soda_scs_manager_update_11040() (withDefaultDataModel on WissKI).
- *
- * @group soda_scs_manager
  */
+#[Group('soda_scs_manager')]
 final class SodaScsUpdate11040Test extends SodaScsKernelTestBase {
 
   private const FIELD_NAME = 'withDefaultDataModel';

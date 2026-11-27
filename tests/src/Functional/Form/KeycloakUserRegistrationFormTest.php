@@ -6,12 +6,12 @@ namespace Drupal\Tests\soda_scs_manager\Functional\Form;
 
 use Drupal\Core\Database\Connection;
 use Drupal\Tests\BrowserTestBase;
+use PHPUnit\Framework\Attributes\Group;
 
 /**
  * Tests the Keycloak user registration form.
- *
- * @group soda_scs_manager
  */
+#[Group('soda_scs_manager')]
 class KeycloakUserRegistrationFormTest extends BrowserTestBase {
 
   /**

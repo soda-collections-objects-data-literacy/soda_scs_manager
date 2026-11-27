@@ -6,12 +6,12 @@ namespace Drupal\Tests\soda_scs_manager\Kernel\Entity;
 
 use Drupal\soda_scs_manager\Entity\SodaScsServiceKey;
 use Drupal\Tests\soda_scs_manager\Kernel\SodaScsKernelTestBase;
+use PHPUnit\Framework\Attributes\Group;
 
 /**
  * Tests CRUD operations for SODa SCS ServiceKey entities.
- *
- * @group soda_scs_manager
  */
+#[Group('soda_scs_manager')]
 class SodaScsServiceKeyCrudTest extends SodaScsKernelTestBase {
 
   /**

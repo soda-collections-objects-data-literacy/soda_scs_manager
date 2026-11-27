@@ -10,6 +10,7 @@ use Drupal\soda_scs_manager\Demo\SodaScsDemoTemplateBuilder;
 use Drupal\soda_scs_manager\Demo\SodaScsWisskiUriRewriter;
 use Drupal\soda_scs_manager\Entity\SodaScsDemoTemplateInterface;
 use Drupal\Tests\soda_scs_manager\Kernel\SodaScsKernelTestBase;
+use PHPUnit\Framework\Attributes\Group;
 use Psr\Log\LoggerInterface;
 
 /**
@@ -17,9 +18,8 @@ use Psr\Log\LoggerInterface;
  *
  * Issue 3640915. Real tar, real temporary directories, real template
  * entities; demo manager, template builder and URI rewriter are doubles.
- *
- * @group soda_scs_manager
  */
+#[Group('soda_scs_manager')]
 final class SodaScsDemoTemplateArchiveRoundTripTest extends SodaScsKernelTestBase {
 
   /**

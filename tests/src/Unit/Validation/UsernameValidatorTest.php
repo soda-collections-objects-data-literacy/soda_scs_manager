@@ -7,19 +7,23 @@ namespace Drupal\Tests\soda_scs_manager\Unit\Validation;
 use Drupal\soda_scs_manager\Validation\InputDisallowedTerms;
 use Drupal\soda_scs_manager\Validation\UsernameValidator;
 use Drupal\Tests\UnitTestCase;
+use PHPUnit\Framework\Attributes\CoversMethod;
+use PHPUnit\Framework\Attributes\DataProvider;
+use PHPUnit\Framework\Attributes\Group;
 
 /**
  * Tests username validation rules.
- *
- * @coversDefaultClass \Drupal\soda_scs_manager\Validation\UsernameValidator
- * @group soda_scs_manager
  */
+#[CoversMethod(UsernameValidator::class, 'validate')]
+#[CoversMethod(InputDisallowedTerms::class, 'reservedUsernames')]
+#[CoversMethod(InputDisallowedTerms::class, 'isReservedUsername')]
+#[Group('soda_scs_manager')]
 class UsernameValidatorTest extends UnitTestCase {
 
   /**
-   * @covers ::validate
-   * @dataProvider validUsernamesProvider
+   * Tests valid usernames.
    */
+  #[DataProvider('validUsernamesProvider')]
   public function testValidUsernames(string $value): void {
     $this->assertNull(UsernameValidator::validate($value));
   }
@@ -35,9 +39,9 @@ class UsernameValidatorTest extends UnitTestCase {
   }
 
   /**
-   * @covers ::validate
-   * @dataProvider invalidUsernamesProvider
+   * Tests invalid usernames.
    */
+  #[DataProvider('invalidUsernamesProvider')]
   public function testInvalidUsernames(string $value, string $expectedCode): void {
     $violation = UsernameValidator::validate($value);
     $this->assertIsArray($violation);
@@ -59,9 +63,6 @@ class UsernameValidatorTest extends UnitTestCase {
 
   /**
    * The names of the demo service account are reserved, with both separators.
-   *
-   * @covers \Drupal\soda_scs_manager\Validation\InputDisallowedTerms::reservedUsernames
-   * @covers \Drupal\soda_scs_manager\Validation\InputDisallowedTerms::isReservedUsername
    */
   public function testDemoServiceAccountNamesAreReserved(): void {
     $this->assertContains('scs_demo', InputDisallowedTerms::reservedUsernames());

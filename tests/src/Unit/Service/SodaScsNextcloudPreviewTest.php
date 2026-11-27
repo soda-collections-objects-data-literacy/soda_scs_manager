@@ -12,11 +12,14 @@ use Drupal\soda_scs_manager\RequestActions\SodaScsNextcloudServiceActions;
 use Drupal\soda_scs_manager\Service\SodaScsNextcloudPreview;
 use Drupal\Tests\UnitTestCase;
 use Drupal\user\UserInterface;
+use PHPUnit\Framework\Attributes\CoversMethod;
+use PHPUnit\Framework\Attributes\Group;
 
 /**
- * @coversDefaultClass \Drupal\soda_scs_manager\Service\SodaScsNextcloudPreview
- * @group soda_scs_manager
+ * Tests SodaScsNextcloudPreview.
  */
+#[CoversMethod(SodaScsNextcloudPreview::class, 'buildProjectFeedData')]
+#[Group('soda_scs_manager')]
 class SodaScsNextcloudPreviewTest extends UnitTestCase {
 
   /**
@@ -37,7 +40,7 @@ class SodaScsNextcloudPreviewTest extends UnitTestCase {
   }
 
   /**
-   * @covers ::buildProjectFeedData
+   * Tests that buildProjectFeedData() needs connect.
    */
   public function testBuildProjectFeedDataNeedsConnect(): void {
     $helpers = $this->createMock(SodaScsNextcloudHelpers::class);
@@ -63,7 +66,7 @@ class SodaScsNextcloudPreviewTest extends UnitTestCase {
   }
 
   /**
-   * @covers ::buildProjectFeedData
+   * Tests that buildProjectFeedData() maps folder feed items.
    */
   public function testBuildProjectFeedDataMapsFolderFeedItems(): void {
     $helpers = $this->createMock(SodaScsNextcloudHelpers::class);
@@ -131,7 +134,7 @@ class SodaScsNextcloudPreviewTest extends UnitTestCase {
   }
 
   /**
-   * @covers ::buildProjectFeedData
+   * Tests that buildProjectFeedData() falls back to folder name.
    */
   public function testBuildProjectFeedDataFallsBackToFolderName(): void {
     $helpers = $this->createMock(SodaScsNextcloudHelpers::class);

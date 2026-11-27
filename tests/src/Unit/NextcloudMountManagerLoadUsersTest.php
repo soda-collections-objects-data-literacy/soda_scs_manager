@@ -14,6 +14,8 @@ use Drupal\soda_scs_manager\Service\NextcloudMounterClient;
 use Drupal\soda_scs_manager\Service\NextcloudMountManager;
 use Drupal\Tests\UnitTestCase;
 use Drupal\user\UserInterface;
+use PHPUnit\Framework\Attributes\CoversMethod;
+use PHPUnit\Framework\Attributes\Group;
 use PHPUnit\Framework\MockObject\MockObject;
 use Psr\Log\LoggerInterface;
 
@@ -23,10 +25,9 @@ use Psr\Log\LoggerInterface;
  * Issue 3638812: the reconcile runs every minute. It only asks for users with
  * a stored app password, skips users whose Keycloak account is gone, and marks
  * and logs such a user once.
- *
- * @coversDefaultClass \Drupal\soda_scs_manager\Service\NextcloudMountManager
- * @group soda_scs_manager
  */
+#[CoversMethod(NextcloudMountManager::class, 'loadUsersWithCredentials')]
+#[Group('soda_scs_manager')]
 class NextcloudMountManagerLoadUsersTest extends UnitTestCase {
 
   /**
@@ -69,8 +70,6 @@ class NextcloudMountManagerLoadUsersTest extends UnitTestCase {
 
   /**
    * Without a stored app password nobody is loaded or asked.
-   *
-   * @covers ::loadUsersWithCredentials
    */
   public function testNoUsersAreLoadedWhenNobodyHasAnAppPassword(): void {
     $this->credentialsStore->method('userIdsWithAppPassword')->willReturn([]);
@@ -83,8 +82,6 @@ class NextcloudMountManagerLoadUsersTest extends UnitTestCase {
 
   /**
    * The query is limited to active users with a stored app password.
-   *
-   * @covers ::loadUsersWithCredentials
    */
   public function testQueryIsLimitedToUsersWithAppPassword(): void {
     $this->credentialsStore->method('userIdsWithAppPassword')->willReturn([5, 9]);
@@ -99,8 +96,6 @@ class NextcloudMountManagerLoadUsersTest extends UnitTestCase {
 
   /**
    * A user with credentials is returned and Keycloak is not asked.
-   *
-   * @covers ::loadUsersWithCredentials
    */
   public function testUserWithCredentialsIsReturnedWithoutKeycloakCall(): void {
     $user = $this->createUser(5);
@@ -119,8 +114,6 @@ class NextcloudMountManagerLoadUsersTest extends UnitTestCase {
 
   /**
    * A user already marked as missing in Keycloak is skipped without any call.
-   *
-   * @covers ::loadUsersWithCredentials
    */
   public function testUserMarkedKeycloakUserMissingIsSkipped(): void {
     $this->credentialsStore->method('userIdsWithAppPassword')->willReturn([5]);
@@ -136,8 +129,6 @@ class NextcloudMountManagerLoadUsersTest extends UnitTestCase {
 
   /**
    * A user without credentials whose Keycloak account is gone is marked once.
-   *
-   * @covers ::loadUsersWithCredentials
    */
   public function testUserWithoutCredentialsAndWithoutKeycloakAccountIsMarkedAndWarnedOnce(): void {
     $user = $this->createUser(5);
@@ -158,8 +149,6 @@ class NextcloudMountManagerLoadUsersTest extends UnitTestCase {
    *
    * The credentials may be missing for another reason (an outage while the
    * login name is read), and the next run tries again.
-   *
-   * @covers ::loadUsersWithCredentials
    */
   public function testUserWithoutCredentialsButWithKeycloakAccountIsSkippedNotMarked(): void {
     $this->credentialsStore->method('userIdsWithAppPassword')->willReturn([5]);
@@ -175,8 +164,6 @@ class NextcloudMountManagerLoadUsersTest extends UnitTestCase {
 
   /**
    * Each user is judged on its own: a missing one does not hide the others.
-   *
-   * @covers ::loadUsersWithCredentials
    */
   public function testMissingUserDoesNotHideOtherUsers(): void {
     $gone = $this->createUser(5);

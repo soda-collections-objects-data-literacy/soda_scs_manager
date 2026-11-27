@@ -8,17 +8,25 @@ use Drupal\Core\Logger\LoggerChannelFactoryInterface;
 use Drupal\soda_scs_manager\Entity\SodaScsProjectInterface;
 use Drupal\soda_scs_manager\Helpers\SodaScsWebprotegeHelpers;
 use GuzzleHttp\Psr7\Response;
+use PHPUnit\Framework\Attributes\CoversMethod;
+use PHPUnit\Framework\Attributes\DataProvider;
+use PHPUnit\Framework\Attributes\Group;
 
 /**
  * Tests that linked WebProtégé projects get a first revision.
- *
- * @coversDefaultClass \Drupal\soda_scs_manager\Helpers\SodaScsWebprotegeHelpers
- * @group soda_scs_manager
  */
+#[CoversMethod(SodaScsWebprotegeHelpers::class, 'ensureInitialRevision')]
+#[CoversMethod(SodaScsWebprotegeHelpers::class, 'downloadOntologyArchive')]
+#[CoversMethod(SodaScsWebprotegeHelpers::class, 'createOntologyProject')]
+#[CoversMethod(SodaScsWebprotegeHelpers::class, 'syncOntologyProject')]
+#[CoversMethod(SodaScsWebprotegeHelpers::class, 'isOntologyProjectUsed')]
+#[Group('soda_scs_manager')]
 class SodaScsWebprotegeHelpersInitialRevisionTest extends SodaScsWebprotegeHelpersTestBase {
 
   /**
-   * @covers ::ensureInitialRevision
+   * Tests ensureInitialRevision().
+   *
+   * Posts initial document when project has no revisions.
    */
   public function testEnsureInitialRevisionPostsInitialDocumentWhenProjectHasNoRevisions(): void {
     $values = ['webprotegeProjectId' => self::PROJECT_UUID];
@@ -42,7 +50,7 @@ class SodaScsWebprotegeHelpersInitialRevisionTest extends SodaScsWebprotegeHelpe
   }
 
   /**
-   * @covers ::ensureInitialRevision
+   * Tests that ensureInitialRevision() leaves project with revisions untouched.
    */
   public function testEnsureInitialRevisionLeavesProjectWithRevisionsUntouched(): void {
     $values = ['webprotegeProjectId' => self::PROJECT_UUID];
@@ -58,7 +66,9 @@ class SodaScsWebprotegeHelpersInitialRevisionTest extends SodaScsWebprotegeHelpe
   }
 
   /**
-   * @covers ::ensureInitialRevision
+   * Tests ensureInitialRevision().
+   *
+   * Returns failure and posts nothing when revisions cannot be read.
    */
   public function testEnsureInitialRevisionReturnsFailureAndPostsNothingWhenRevisionsCannotBeRead(): void {
     $values = ['webprotegeProjectId' => self::PROJECT_UUID];
@@ -73,7 +83,9 @@ class SodaScsWebprotegeHelpersInitialRevisionTest extends SodaScsWebprotegeHelpe
   }
 
   /**
-   * @covers ::ensureInitialRevision
+   * Tests ensureInitialRevision().
+   *
+   * Posts nothing when revisions body is malformed.
    */
   public function testEnsureInitialRevisionPostsNothingWhenRevisionsBodyIsMalformed(): void {
     $values = ['webprotegeProjectId' => self::PROJECT_UUID];
@@ -87,7 +99,7 @@ class SodaScsWebprotegeHelpersInitialRevisionTest extends SodaScsWebprotegeHelpe
   }
 
   /**
-   * @covers ::ensureInitialRevision
+   * Tests that ensureInitialRevision() sends nothing when no project is linked.
    */
   public function testEnsureInitialRevisionSendsNothingWhenNoProjectIsLinked(): void {
     $values = [];
@@ -100,7 +112,9 @@ class SodaScsWebprotegeHelpersInitialRevisionTest extends SodaScsWebprotegeHelpe
   }
 
   /**
-   * @covers ::ensureInitialRevision
+   * Tests ensureInitialRevision().
+   *
+   * Returns failure and logs when axioms request fails.
    */
   public function testEnsureInitialRevisionReturnsFailureAndLogsWhenAxiomsRequestFails(): void {
     $values = ['webprotegeProjectId' => self::PROJECT_UUID];
@@ -116,7 +130,9 @@ class SodaScsWebprotegeHelpersInitialRevisionTest extends SodaScsWebprotegeHelpe
   }
 
   /**
-   * @covers ::downloadOntologyArchive
+   * Tests downloadOntologyArchive().
+   *
+   * Returns failure without download request when initial revision fails.
    */
   public function testDownloadOntologyArchiveReturnsFailureWithoutDownloadRequestWhenInitialRevisionFails(): void {
     $values = ['webprotegeProjectId' => self::PROJECT_UUID];
@@ -136,7 +152,9 @@ class SodaScsWebprotegeHelpersInitialRevisionTest extends SodaScsWebprotegeHelpe
   }
 
   /**
-   * @covers ::downloadOntologyArchive
+   * Tests downloadOntologyArchive().
+   *
+   * Writes initial revision before downloading.
    */
   public function testDownloadOntologyArchiveWritesInitialRevisionBeforeDownloading(): void {
     $values = ['webprotegeProjectId' => self::PROJECT_UUID];
@@ -156,7 +174,7 @@ class SodaScsWebprotegeHelpersInitialRevisionTest extends SodaScsWebprotegeHelpe
   }
 
   /**
-   * @covers ::createOntologyProject
+   * Tests that createOntologyProject() writes initial revision of new project.
    */
   public function testCreateOntologyProjectWritesInitialRevisionOfNewProject(): void {
     $values = [];
@@ -176,7 +194,9 @@ class SodaScsWebprotegeHelpersInitialRevisionTest extends SodaScsWebprotegeHelpe
   }
 
   /**
-   * @covers ::createOntologyProject
+   * Tests createOntologyProject().
+   *
+   * Stays linked and warns when initial revision fails.
    */
   public function testCreateOntologyProjectStaysLinkedAndWarnsWhenInitialRevisionFails(): void {
     $values = [];
@@ -196,7 +216,9 @@ class SodaScsWebprotegeHelpersInitialRevisionTest extends SodaScsWebprotegeHelpe
   }
 
   /**
-   * @covers ::createOntologyProject
+   * Tests createOntologyProject().
+   *
+   * Skips initial revision when project is already linked.
    */
   public function testCreateOntologyProjectSkipsInitialRevisionWhenProjectIsAlreadyLinked(): void {
     $values = ['webprotegeProjectId' => self::PROJECT_UUID];
@@ -208,7 +230,9 @@ class SodaScsWebprotegeHelpersInitialRevisionTest extends SodaScsWebprotegeHelpe
   }
 
   /**
-   * @covers ::syncOntologyProject
+   * Tests syncOntologyProject().
+   *
+   * Writes initial revision of already linked project.
    */
   public function testSyncOntologyProjectWritesInitialRevisionOfAlreadyLinkedProject(): void {
     $values = ['webprotegeProjectId' => self::PROJECT_UUID];
@@ -222,7 +246,9 @@ class SodaScsWebprotegeHelpersInitialRevisionTest extends SodaScsWebprotegeHelpe
   }
 
   /**
-   * @covers ::syncOntologyProject
+   * Tests syncOntologyProject().
+   *
+   * Returns failure when initial revision of linked project fails.
    */
   public function testSyncOntologyProjectReturnsFailureWhenInitialRevisionOfLinkedProjectFails(): void {
     $values = ['webprotegeProjectId' => self::PROJECT_UUID];
@@ -236,7 +262,9 @@ class SodaScsWebprotegeHelpersInitialRevisionTest extends SodaScsWebprotegeHelpe
   }
 
   /**
-   * @covers ::syncOntologyProject
+   * Tests syncOntologyProject().
+   *
+   * Syncs members even when initial revision fails.
    */
   public function testSyncOntologyProjectSyncsMembersEvenWhenInitialRevisionFails(): void {
     $values = ['webprotegeProjectId' => self::PROJECT_UUID];
@@ -269,9 +297,9 @@ class SodaScsWebprotegeHelpersInitialRevisionTest extends SodaScsWebprotegeHelpe
   }
 
   /**
-   * @covers ::isOntologyProjectUsed
-   * @dataProvider providerOntologyProjectUse
+   * Tests isOntologyProjectUsed().
    */
+  #[DataProvider('providerOntologyProjectUse')]
   public function testIsOntologyProjectUsed(bool $expected, int $count, ?array $latest, string $createdAt, string $modifiedAt): void {
     $this->assertSame($expected, $this->createHelper()->isOntologyProjectUsed($count, $latest, $createdAt, $modifiedAt));
   }
@@ -305,7 +333,9 @@ class SodaScsWebprotegeHelpersInitialRevisionTest extends SodaScsWebprotegeHelpe
   }
 
   /**
-   * @covers ::syncOntologyProject
+   * Tests syncOntologyProject().
+   *
+   * Checks revisions only once for new project.
    */
   public function testSyncOntologyProjectChecksRevisionsOnlyOnceForNewProject(): void {
     $values = [];

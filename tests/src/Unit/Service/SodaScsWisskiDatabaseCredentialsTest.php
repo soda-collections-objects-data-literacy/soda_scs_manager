@@ -12,6 +12,8 @@ use Drupal\soda_scs_manager\Helpers\SodaScsContainerHelpers;
 use Drupal\soda_scs_manager\Service\SodaScsWisskiDatabaseCredentials;
 use Drupal\soda_scs_manager\ValueObject\SodaScsResult;
 use Drupal\Tests\UnitTestCase;
+use PHPUnit\Framework\Attributes\CoversMethod;
+use PHPUnit\Framework\Attributes\Group;
 use PHPUnit\Framework\MockObject\MockObject;
 
 /**
@@ -21,10 +23,9 @@ use PHPUnit\Framework\MockObject\MockObject;
  * settings.php once, so a project handed to another owner needs the file
  * changed by hand. The docker exec is a double; one group of tests runs the
  * script it would send against a settings.php in a temporary directory.
- *
- * @coversDefaultClass \Drupal\soda_scs_manager\Service\SodaScsWisskiDatabaseCredentials
- * @group soda_scs_manager
  */
+#[CoversMethod(SodaScsWisskiDatabaseCredentials::class, 'replace')]
+#[Group('soda_scs_manager')]
 class SodaScsWisskiDatabaseCredentialsTest extends UnitTestCase {
 
   /**
@@ -70,8 +71,6 @@ class SodaScsWisskiDatabaseCredentialsTest extends UnitTestCase {
 
   /**
    * The exec runs drush in the WissKI container as www-data.
-   *
-   * @covers ::replace
    */
   public function testReplaceRunsDrushInTheWisskiContainer(): void {
     $this->containerHelpers->expects($this->once())->method('executeDockerExecCommand')
@@ -89,8 +88,6 @@ class SodaScsWisskiDatabaseCredentialsTest extends UnitTestCase {
 
   /**
    * The passwords travel in the environment, not in the command line.
-   *
-   * @covers ::replace
    */
   public function testReplaceKeepsCredentialsOutOfTheCommand(): void {
     $this->containerHelpers->expects($this->once())->method('executeDockerExecCommand')
@@ -114,8 +111,6 @@ class SodaScsWisskiDatabaseCredentialsTest extends UnitTestCase {
 
   /**
    * Updated and unchanged are successes with their state.
-   *
-   * @covers ::replace
    */
   public function testReplaceMapsMarkerToState(): void {
     foreach (['updated', 'unchanged'] as $state) {
@@ -132,8 +127,6 @@ class SodaScsWisskiDatabaseCredentialsTest extends UnitTestCase {
 
   /**
    * A settings.php the script could not match is a failure naming the key.
-   *
-   * @covers ::replace
    */
   public function testReplaceFailsOnMismatch(): void {
     $component = $this->createMock(SodaScsComponentInterface::class);
@@ -148,8 +141,6 @@ class SodaScsWisskiDatabaseCredentialsTest extends UnitTestCase {
 
   /**
    * A write that failed in the container is a failure.
-   *
-   * @covers ::replace
    */
   public function testReplaceFailsWhenWriteFails(): void {
     $this->containerHelpers->method('executeDockerExecCommand')->willReturn($this->drushOutput('SCS_DB_CREDENTIALS:write failed'));
@@ -162,8 +153,6 @@ class SodaScsWisskiDatabaseCredentialsTest extends UnitTestCase {
 
   /**
    * A failing exec returns its error.
-   *
-   * @covers ::replace
    */
   public function testReplaceFailsWhenExecFails(): void {
     $this->containerHelpers->method('executeDockerExecCommand')
@@ -177,8 +166,6 @@ class SodaScsWisskiDatabaseCredentialsTest extends UnitTestCase {
 
   /**
    * Output without the marker is a failure, whatever the exec returned.
-   *
-   * @covers ::replace
    */
   public function testReplaceFailsWithoutMarkerInOutput(): void {
     foreach (['Some warning only', '', 'SCS_DB_CREDENTIALS:exploded'] as $output) {
@@ -194,8 +181,6 @@ class SodaScsWisskiDatabaseCredentialsTest extends UnitTestCase {
 
   /**
    * The passwords reach neither the failure error nor its message.
-   *
-   * @covers ::replace
    */
   public function testReplaceKeepsPasswordsOutOfFailures(): void {
     $this->containerHelpers->method('executeDockerExecCommand')->willReturn($this->drushOutput('SCS_DB_CREDENTIALS:mismatch password'));
@@ -208,8 +193,6 @@ class SodaScsWisskiDatabaseCredentialsTest extends UnitTestCase {
 
   /**
    * The script replaces both values of the default connection.
-   *
-   * @covers ::replace
    */
   public function testScriptReplacesUserAndPassword(): void {
     $path = $this->writeSettings("'username' => 'olduser',\n  'password' => 'old-secret',\n");
@@ -226,8 +209,6 @@ class SodaScsWisskiDatabaseCredentialsTest extends UnitTestCase {
 
   /**
    * A second run with the same values changes nothing.
-   *
-   * @covers ::replace
    */
   public function testScriptIsIdempotent(): void {
     $this->writeSettings("'username' => 'olduser',\n  'password' => 'old-secret',\n");
@@ -238,8 +219,6 @@ class SodaScsWisskiDatabaseCredentialsTest extends UnitTestCase {
 
   /**
    * A value that occurs twice is refused and the file stays as it is.
-   *
-   * @covers ::replace
    */
   public function testScriptRefusesAmbiguousValueAndLeavesFile(): void {
     $original = "'username' => 'olduser',\n  'password' => 'old-secret',\n'username' => 'olduser',\n";
@@ -253,8 +232,6 @@ class SodaScsWisskiDatabaseCredentialsTest extends UnitTestCase {
 
   /**
    * A settings.php changed by hand (value missing) is left alone.
-   *
-   * @covers ::replace
    */
   public function testScriptRefusesMissingValueAndLeavesFile(): void {
     $original = "'username' => 'somebody-else',\n  'password' => 'old-secret',\n";
@@ -268,8 +245,6 @@ class SodaScsWisskiDatabaseCredentialsTest extends UnitTestCase {
 
   /**
    * Quotes and backslashes in a password are written as valid PHP.
-   *
-   * @covers ::replace
    */
   public function testScriptEscapesSpecialCharacters(): void {
     $path = $this->writeSettings("'username' => 'olduser',\n  'password' => 'old-secret',\n");
@@ -285,8 +260,6 @@ class SodaScsWisskiDatabaseCredentialsTest extends UnitTestCase {
 
   /**
    * The file permissions are the same after the write.
-   *
-   * @covers ::replace
    */
   public function testScriptKeepsFilePermissions(): void {
     $path = $this->writeSettings("'username' => 'olduser',\n  'password' => 'old-secret',\n");

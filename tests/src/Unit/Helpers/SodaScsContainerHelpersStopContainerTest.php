@@ -8,14 +8,15 @@ use Drupal\soda_scs_manager\Helpers\SodaScsContainerHelpers;
 use Drupal\soda_scs_manager\RequestActions\SodaScsDockerRunServiceActions;
 use Drupal\soda_scs_manager\ValueObject\SodaScsResult;
 use Drupal\Tests\UnitTestCase;
+use PHPUnit\Framework\Attributes\CoversMethod;
+use PHPUnit\Framework\Attributes\Group;
 use PHPUnit\Framework\MockObject\MockObject;
 
 /**
  * Regression test: stopContainer() must not stop a container that is not running.
- *
- * @coversDefaultClass \Drupal\soda_scs_manager\Helpers\SodaScsContainerHelpers
- * @group soda_scs_manager
  */
+#[CoversMethod(SodaScsContainerHelpers::class, 'stopContainer')]
+#[Group('soda_scs_manager')]
 class SodaScsContainerHelpersStopContainerTest extends UnitTestCase {
 
   /**
@@ -24,7 +25,7 @@ class SodaScsContainerHelpersStopContainerTest extends UnitTestCase {
   protected const CONTAINER_ID = 'abc123';
 
   /**
-   * @covers ::stopContainer
+   * Tests stopped container is not stopped again.
    */
   public function testStoppedContainerIsNotStoppedAgain(): void {
     $dockerRunActions = $this->createMock(SodaScsDockerRunServiceActions::class);
@@ -40,7 +41,7 @@ class SodaScsContainerHelpersStopContainerTest extends UnitTestCase {
   }
 
   /**
-   * @covers ::stopContainer
+   * Tests running container is stopped.
    */
   public function testRunningContainerIsStopped(): void {
     $dockerRunActions = $this->createMock(SodaScsDockerRunServiceActions::class);

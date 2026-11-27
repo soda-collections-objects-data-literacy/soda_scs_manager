@@ -6,16 +6,17 @@ namespace Drupal\Tests\soda_scs_manager\Unit\Helpers;
 
 use Drupal\soda_scs_manager\Helpers\SodaScsOpenGdbHelpers;
 use Drupal\Tests\UnitTestCase;
+use PHPUnit\Framework\Attributes\CoversMethod;
+use PHPUnit\Framework\Attributes\Group;
 
 /**
  * Signature of SodaScsOpenGdbHelpers::createUser().
  *
  * Issue 3637657: an implicitly nullable parameter (`string $x = NULL`) raises
  * a deprecation at compile time on PHP 8.4 and later.
- *
- * @coversDefaultClass \Drupal\soda_scs_manager\Helpers\SodaScsOpenGdbHelpers
- * @group soda_scs_manager
  */
+#[CoversMethod(SodaScsOpenGdbHelpers::class, 'createUser')]
+#[Group('soda_scs_manager')]
 class SodaScsOpenGdbHelpersSignatureTest extends UnitTestCase {
 
   /**
@@ -25,8 +26,6 @@ class SodaScsOpenGdbHelpersSignatureTest extends UnitTestCase {
    * file is linted in a separate PHP process with all errors reported. The
    * deprecation is only raised on PHP 8.4 and later; on older versions this
    * test passes by itself.
-   *
-   * @covers ::createUser
    */
   public function testHelperFileCompilesWithoutDeprecation(): void {
     $file = (new \ReflectionClass(SodaScsOpenGdbHelpers::class))->getFileName();
@@ -51,8 +50,6 @@ class SodaScsOpenGdbHelpersSignatureTest extends UnitTestCase {
    * machine name, so NULL must stay a valid value. It does not catch the
    * implicit-nullable deprecation (Reflection cannot tell the two forms
    * apart); testHelperFileCompilesWithoutDeprecation() does.
-   *
-   * @covers ::createUser
    */
   public function testCreateUserMachineNameIsNullableStringDefaultingToNull(): void {
     $parameters = (new \ReflectionMethod(SodaScsOpenGdbHelpers::class, 'createUser'))->getParameters();

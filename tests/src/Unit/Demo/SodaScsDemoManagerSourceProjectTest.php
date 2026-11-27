@@ -27,16 +27,19 @@ use Drupal\soda_scs_manager\Service\SodaScsProjectProvisioner;
 use Drupal\soda_scs_manager\ValueObject\SodaScsResult;
 use Drupal\Tests\UnitTestCase;
 use Drupal\user\UserInterface;
+use PHPUnit\Framework\Attributes\CoversMethod;
+use PHPUnit\Framework\Attributes\Group;
 use PHPUnit\Framework\MockObject\MockObject;
 
 /**
  * Choosing the demo source project hands it to the service account scs_demo.
  *
  * Issue 3640913. The queue, the runner and the progress storage are doubles.
- *
- * @coversDefaultClass \Drupal\soda_scs_manager\Demo\SodaScsDemoManager
- * @group soda_scs_manager
  */
+#[CoversMethod(SodaScsDemoManager::class, 'setSourceProject')]
+#[CoversMethod(SodaScsDemoManager::class, 'projectOperationId')]
+#[CoversMethod(SodaScsDemoManager::class, 'sourceOwnerNotice')]
+#[Group('soda_scs_manager')]
 class SodaScsDemoManagerSourceProjectTest extends UnitTestCase {
 
   private const NOW = 100000;
@@ -101,8 +104,6 @@ class SodaScsDemoManagerSourceProjectTest extends UnitTestCase {
 
   /**
    * A source owned by someone else queues the transfer job for the project.
-   *
-   * @covers ::setSourceProject
    */
   public function testSourceOfAnotherOwnerQueuesTheTransferJob(): void {
     $this->progressHelper->expects($this->once())->method('createOperation')
@@ -126,9 +127,6 @@ class SodaScsDemoManagerSourceProjectTest extends UnitTestCase {
 
   /**
    * The operation id of the handover is found again through the project.
-   *
-   * @covers ::projectOperationId
-   * @covers ::setSourceProject
    */
   public function testOperationIdOfTheHandoverIsReadableThroughTheProject(): void {
     $stored = [];
@@ -151,8 +149,6 @@ class SodaScsDemoManagerSourceProjectTest extends UnitTestCase {
 
   /**
    * Without an operation id nothing is stored, but the job is still queued.
-   *
-   * @covers ::setSourceProject
    */
   public function testMissingOperationIdStoresNothingAndStillQueuesTheJob(): void {
     $this->progressHelper->method('createOperation')->willReturn(NULL);
@@ -164,8 +160,6 @@ class SodaScsDemoManagerSourceProjectTest extends UnitTestCase {
 
   /**
    * A source that scs_demo owns stores no operation id.
-   *
-   * @covers ::setSourceProject
    */
   public function testSourceOfTheServiceAccountStoresNoOperationId(): void {
     $this->state->expects($this->never())->method('set');
@@ -175,8 +169,6 @@ class SodaScsDemoManagerSourceProjectTest extends UnitTestCase {
 
   /**
    * A refused project stores no operation id.
-   *
-   * @covers ::setSourceProject
    */
   public function testRefusedProjectStoresNoOperationId(): void {
     $this->state->expects($this->never())->method('set');
@@ -186,8 +178,6 @@ class SodaScsDemoManagerSourceProjectTest extends UnitTestCase {
 
   /**
    * Without a source there is no notice.
-   *
-   * @covers ::sourceOwnerNotice
    */
   public function testNoNoticeWithoutSource(): void {
     $this->assertNull($this->manager()->sourceOwnerNotice());
@@ -195,8 +185,6 @@ class SodaScsDemoManagerSourceProjectTest extends UnitTestCase {
 
   /**
    * A configured id whose project is gone gives no notice.
-   *
-   * @covers ::sourceOwnerNotice
    */
   public function testNoNoticeWhenTheSourceProjectIsGone(): void {
     $this->configuredSourceId = 5;
@@ -207,8 +195,6 @@ class SodaScsDemoManagerSourceProjectTest extends UnitTestCase {
 
   /**
    * A source that scs_demo owns gives no notice.
-   *
-   * @covers ::sourceOwnerNotice
    */
   public function testNoNoticeWhenTheServiceAccountOwnsTheSource(): void {
     $this->useSource($this->project('scs_demo'));
@@ -219,8 +205,6 @@ class SodaScsDemoManagerSourceProjectTest extends UnitTestCase {
 
   /**
    * The notice names the owner and the latest step of the handover.
-   *
-   * @covers ::sourceOwnerNotice
    */
   public function testNoticeNamesOwnerAndLatestHandoverStep(): void {
     $this->useSource($this->project('alice'));
@@ -238,8 +222,6 @@ class SodaScsDemoManagerSourceProjectTest extends UnitTestCase {
 
   /**
    * Without an operation the notice says that no handover started.
-   *
-   * @covers ::sourceOwnerNotice
    */
   public function testNoticeSaysNoHandoverStartedWithoutOperation(): void {
     $this->useSource($this->project('alice'));
@@ -254,8 +236,6 @@ class SodaScsDemoManagerSourceProjectTest extends UnitTestCase {
 
   /**
    * An operation without steps yet counts as not started.
-   *
-   * @covers ::sourceOwnerNotice
    */
   public function testNoticeSaysNoHandoverStartedWhenTheOperationHasNoSteps(): void {
     $this->useSource($this->project('alice'));
@@ -267,8 +247,6 @@ class SodaScsDemoManagerSourceProjectTest extends UnitTestCase {
 
   /**
    * A source without owner still gets a notice, with an empty owner name.
-   *
-   * @covers ::sourceOwnerNotice
    */
   public function testNoticeForSourceWithoutOwner(): void {
     $this->useSource($this->project(NULL));
@@ -282,8 +260,6 @@ class SodaScsDemoManagerSourceProjectTest extends UnitTestCase {
 
   /**
    * A source that scs_demo owns already queues nothing and starts no runner.
-   *
-   * @covers ::setSourceProject
    */
   public function testSourceOfTheServiceAccountQueuesNothing(): void {
     $this->queue->expects($this->never())->method('createItem');
@@ -300,8 +276,6 @@ class SodaScsDemoManagerSourceProjectTest extends UnitTestCase {
 
   /**
    * A project without an owner is handed over as well (the job reports it).
-   *
-   * @covers ::setSourceProject
    */
   public function testSourceWithoutOwnerQueuesTheTransferJob(): void {
     $this->progressHelper->method('createOperation')->willReturn('operation-1');
@@ -312,8 +286,6 @@ class SodaScsDemoManagerSourceProjectTest extends UnitTestCase {
 
   /**
    * A demo project of a user cannot be the source; nothing changes.
-   *
-   * @covers ::setSourceProject
    */
   public function testUserDemoProjectIsRefusedWithoutChanges(): void {
     $this->queue->expects($this->never())->method('createItem');
@@ -326,8 +298,6 @@ class SodaScsDemoManagerSourceProjectTest extends UnitTestCase {
 
   /**
    * A refused name keeps the old source and queues nothing.
-   *
-   * @covers ::setSourceProject
    */
   public function testRejectedNameQueuesNothingAndKeepsTheSetting(): void {
     $this->projectNameHelpers = $this->createMock(SodaScsProjectNameHelpers::class);
@@ -344,8 +314,6 @@ class SodaScsDemoManagerSourceProjectTest extends UnitTestCase {
 
   /**
    * When the runner cannot start, the failure is returned.
-   *
-   * @covers ::setSourceProject
    */
   public function testRunnerFailureIsReturned(): void {
     $this->progressHelper->method('createOperation')->willReturn('operation-1');

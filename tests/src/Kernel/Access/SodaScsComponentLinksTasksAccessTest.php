@@ -7,12 +7,12 @@ namespace Drupal\Tests\soda_scs_manager\Kernel\Access;
 use Drupal\soda_scs_manager\Access\SodaScsComponentLinksTasksAccessControlHandler;
 use Drupal\Tests\soda_scs_manager\Kernel\SodaScsKernelTestBase;
 use Drupal\user\Entity\Role;
+use PHPUnit\Framework\Attributes\Group;
 
 /**
  * Tests who may open the WebProtégé ontology import form of a component.
- *
- * @group soda_scs_manager
  */
+#[Group('soda_scs_manager')]
 class SodaScsComponentLinksTasksAccessTest extends SodaScsKernelTestBase {
 
   /**

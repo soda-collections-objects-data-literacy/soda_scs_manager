@@ -20,16 +20,20 @@ use Drupal\soda_scs_manager\RequestActions\SodaScsKeycloakServiceUserActions;
 use Drupal\Tests\UnitTestCase;
 use Drupal\user\UserInterface;
 use GuzzleHttp\Psr7\Response;
+use PHPUnit\Framework\Attributes\CoversMethod;
+use PHPUnit\Framework\Attributes\Group;
 use PHPUnit\Framework\MockObject\MockObject;
 
 /**
  * The service account scs_demo in Drupal, Keycloak and Nextcloud.
  *
  * Issue 3640913. Keycloak, Nextcloud and the user storage are doubles.
- *
- * @coversDefaultClass \Drupal\soda_scs_manager\Demo\SodaScsDemoServiceAccount
- * @group soda_scs_manager
  */
+#[CoversMethod(SodaScsDemoServiceAccount::class, 'account')]
+#[CoversMethod(SodaScsDemoServiceAccount::class, 'ensureDrupalAccount')]
+#[CoversMethod(SodaScsDemoServiceAccount::class, 'ensure')]
+#[CoversMethod(SodaScsDemoServiceAccount::class, 'ensureKeycloakAccount')]
+#[Group('soda_scs_manager')]
 class SodaScsDemoServiceAccountTest extends UnitTestCase {
 
   private const KEYCLOAK_ID = '4e25a3ff-b955-4731-9c56-9e67a858828d';
@@ -123,8 +127,6 @@ class SodaScsDemoServiceAccountTest extends UnitTestCase {
 
   /**
    * The Drupal account is looked up by its name.
-   *
-   * @covers ::account
    */
   public function testAccountIsLoadedByName(): void {
     $this->userStorage->expects($this->once())->method('loadByProperties')->with(['name' => 'scs_demo'])->willReturn([4 => $this->account]);
@@ -134,8 +136,6 @@ class SodaScsDemoServiceAccountTest extends UnitTestCase {
 
   /**
    * Without an account the lookup returns NULL.
-   *
-   * @covers ::account
    */
   public function testAccountIsNullWhenMissing(): void {
     $this->userStorage->method('loadByProperties')->willReturn([]);
@@ -145,8 +145,6 @@ class SodaScsDemoServiceAccountTest extends UnitTestCase {
 
   /**
    * The update hook path creates the account without calling any service.
-   *
-   * @covers ::ensureDrupalAccount
    */
   public function testEnsureDrupalAccountCreatesAccountWithoutExternalCalls(): void {
     $this->userStorage->method('loadByProperties')->willReturn([]);
@@ -167,8 +165,6 @@ class SodaScsDemoServiceAccountTest extends UnitTestCase {
 
   /**
    * The password and e-mail of the environment are used for a new account.
-   *
-   * @covers ::ensureDrupalAccount
    */
   public function testEnsureDrupalAccountUsesEnvironment(): void {
     putenv(SodaScsDemoServiceAccount::PASSWORD_ENV . '=env-password');
@@ -186,8 +182,6 @@ class SodaScsDemoServiceAccountTest extends UnitTestCase {
 
   /**
    * An existing account is returned as it is, nothing is created.
-   *
-   * @covers ::ensureDrupalAccount
    */
   public function testEnsureDrupalAccountKeepsExistingAccount(): void {
     $this->userStorage->method('loadByProperties')->willReturn([4 => $this->account]);
@@ -199,8 +193,6 @@ class SodaScsDemoServiceAccountTest extends UnitTestCase {
 
   /**
    * Without the password and without a completed account, ensure() fails.
-   *
-   * @covers ::ensure
    */
   public function testEnsureFailsWithoutPasswordForUnpreparedAccount(): void {
     $this->userStorage->method('loadByProperties')->willReturn([4 => $this->account]);
@@ -218,8 +210,6 @@ class SodaScsDemoServiceAccountTest extends UnitTestCase {
    * Without the password a completed account is accepted as it is.
    *
    * The job runner may start without the variable.
-   *
-   * @covers ::ensure
    */
   public function testEnsureAcceptsCompletedAccountWithoutPassword(): void {
     $this->userStorage->method('loadByProperties')->willReturn([4 => $this->account]);
@@ -236,8 +226,6 @@ class SodaScsDemoServiceAccountTest extends UnitTestCase {
 
   /**
    * Without the password an account without Nextcloud mount is not ready.
-   *
-   * @covers ::ensure
    */
   public function testEnsureFailsWithoutPasswordWhenMountCredentialsAreMissing(): void {
     $this->userStorage->method('loadByProperties')->willReturn([4 => $this->account]);
@@ -249,8 +237,6 @@ class SodaScsDemoServiceAccountTest extends UnitTestCase {
 
   /**
    * A new account is created in Keycloak, linked, and created in Nextcloud.
-   *
-   * @covers ::ensure
    */
   public function testEnsureCreatesKeycloakUserLinksAndCreatesNextcloudAccount(): void {
     putenv(SodaScsDemoServiceAccount::PASSWORD_ENV . '=env-password');
@@ -293,8 +279,6 @@ class SodaScsDemoServiceAccountTest extends UnitTestCase {
 
   /**
    * Without an e-mail address the Keycloak user gets none.
-   *
-   * @covers ::ensure
    */
   public function testEnsureSendsNoEmailWhenNoneIsConfigured(): void {
     putenv(SodaScsDemoServiceAccount::PASSWORD_ENV . '=env-password');
@@ -326,8 +310,6 @@ class SodaScsDemoServiceAccountTest extends UnitTestCase {
 
   /**
    * An existing Keycloak user gets the password again and is not created.
-   *
-   * @covers ::ensure
    */
   public function testEnsureResetsPasswordOfExistingKeycloakUser(): void {
     putenv(SodaScsDemoServiceAccount::PASSWORD_ENV . '=env-password');
@@ -357,8 +339,6 @@ class SodaScsDemoServiceAccountTest extends UnitTestCase {
 
   /**
    * An existing Keycloak user gets the configured e-mail before the password.
-   *
-   * @covers ::ensureKeycloakAccount
    */
   public function testEnsureSetsConfiguredEmailOfExistingKeycloakUserBeforeThePassword(): void {
     putenv(SodaScsDemoServiceAccount::PASSWORD_ENV . '=env-password');
@@ -383,8 +363,6 @@ class SodaScsDemoServiceAccountTest extends UnitTestCase {
 
   /**
    * Without a configured address the Keycloak user's former address is emptied.
-   *
-   * @covers ::ensureKeycloakAccount
    */
   public function testEnsureEmptiesEmailOfExistingKeycloakUserWhenNoneIsConfigured(): void {
     putenv(SodaScsDemoServiceAccount::PASSWORD_ENV . '=env-password');
@@ -398,8 +376,6 @@ class SodaScsDemoServiceAccountTest extends UnitTestCase {
 
   /**
    * A refused e-mail update fails the run before the password is reset.
-   *
-   * @covers ::ensureKeycloakAccount
    */
   public function testEnsureFailsWhenKeycloakRefusesTheEmailUpdate(): void {
     putenv(SodaScsDemoServiceAccount::PASSWORD_ENV . '=env-password');
@@ -418,8 +394,6 @@ class SodaScsDemoServiceAccountTest extends UnitTestCase {
 
   /**
    * A Keycloak user the account is not linked to is not taken over.
-   *
-   * @covers ::ensureKeycloakAccount
    */
   public function testEnsureDoesNotTakeOverKeycloakUserWhenAccountIsNotLinked(): void {
     putenv(SodaScsDemoServiceAccount::PASSWORD_ENV . '=env-password');
@@ -438,8 +412,6 @@ class SodaScsDemoServiceAccountTest extends UnitTestCase {
 
   /**
    * A Keycloak user linked to the account under another id is not taken either.
-   *
-   * @covers ::ensureKeycloakAccount
    */
   public function testEnsureDoesNotTakeOverKeycloakUserWhenAccountIsLinkedToAnotherId(): void {
     putenv(SodaScsDemoServiceAccount::PASSWORD_ENV . '=env-password');
@@ -453,8 +425,6 @@ class SodaScsDemoServiceAccountTest extends UnitTestCase {
 
   /**
    * A password the Keycloak refuses fails the run before Nextcloud.
-   *
-   * @covers ::ensure
    */
   public function testEnsureFailsWhenKeycloakRefusesPasswordReset(): void {
     putenv(SodaScsDemoServiceAccount::PASSWORD_ENV . '=env-password');
@@ -483,8 +453,6 @@ class SodaScsDemoServiceAccountTest extends UnitTestCase {
 
   /**
    * Without a Keycloak token nothing is created or linked.
-   *
-   * @covers ::ensure
    */
   public function testEnsureFailsWithoutKeycloakToken(): void {
     putenv(SodaScsDemoServiceAccount::PASSWORD_ENV . '=env-password');
@@ -499,8 +467,6 @@ class SodaScsDemoServiceAccountTest extends UnitTestCase {
 
   /**
    * A refused Keycloak user creation fails the run and is logged.
-   *
-   * @covers ::ensure
    */
   public function testEnsureFailsWhenKeycloakRefusesCreation(): void {
     putenv(SodaScsDemoServiceAccount::PASSWORD_ENV . '=env-password');
@@ -519,8 +485,6 @@ class SodaScsDemoServiceAccountTest extends UnitTestCase {
 
   /**
    * A malformed user list from Keycloak is not taken for an existing user.
-   *
-   * @covers ::ensure
    */
   public function testEnsureIgnoresMalformedKeycloakUserList(): void {
     putenv(SodaScsDemoServiceAccount::PASSWORD_ENV . '=env-password');
@@ -539,8 +503,6 @@ class SodaScsDemoServiceAccountTest extends UnitTestCase {
 
   /**
    * Without an OpenID Connect client the account is not linked.
-   *
-   * @covers ::ensure
    */
   public function testEnsureFailsWithoutOpenIdConnectClient(): void {
     putenv(SodaScsDemoServiceAccount::PASSWORD_ENV . '=env-password');
@@ -568,8 +530,6 @@ class SodaScsDemoServiceAccountTest extends UnitTestCase {
 
   /**
    * A failing Nextcloud setup fails the run.
-   *
-   * @covers ::ensure
    */
   public function testEnsureFailsWhenNextcloudAccountCannotBeCreated(): void {
     putenv(SodaScsDemoServiceAccount::PASSWORD_ENV . '=env-password');

@@ -7,12 +7,12 @@ namespace Drupal\Tests\soda_scs_manager\Kernel\Entity;
 use Drupal\soda_scs_manager\Entity\SodaScsMessage;
 use Drupal\soda_scs_manager\Entity\SodaScsMessageInterface;
 use Drupal\Tests\soda_scs_manager\Kernel\SodaScsKernelTestBase;
+use PHPUnit\Framework\Attributes\Group;
 
 /**
  * Tests CRUD for in-app message entities.
- *
- * @group soda_scs_manager
  */
+#[Group('soda_scs_manager')]
 class SodaScsMessageCrudTest extends SodaScsKernelTestBase {
 
   /**

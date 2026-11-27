@@ -20,6 +20,8 @@ use Drupal\soda_scs_manager\Service\SodaScsWisskiTriplestoreTokenSync;
 use Drupal\soda_scs_manager\ServiceKeyActions\SodaScsServiceKeyActionsInterface;
 use Drupal\soda_scs_manager\ValueObject\SodaScsResult;
 use Drupal\Tests\UnitTestCase;
+use PHPUnit\Framework\Attributes\CoversMethod;
+use PHPUnit\Framework\Attributes\Group;
 use PHPUnit\Framework\MockObject\MockObject;
 
 /**
@@ -28,10 +30,11 @@ use PHPUnit\Framework\MockObject\MockObject;
  * Issue 3639291: OpenGDB issues one token per account, so a recreated account
  * or an imported database leaves the Salz adapter with a token that OpenGDB
  * rejects. The drush exec in the WissKI container is a double.
- *
- * @coversDefaultClass \Drupal\soda_scs_manager\Service\SodaScsWisskiTriplestoreTokenSync
- * @group soda_scs_manager
  */
+#[CoversMethod(SodaScsWisskiTriplestoreTokenSync::class, 'syncComponents')]
+#[CoversMethod(SodaScsWisskiTriplestoreTokenSync::class, 'writeToken')]
+#[CoversMethod(SodaScsWisskiTriplestoreTokenSync::class, 'syncUser')]
+#[Group('soda_scs_manager')]
 class SodaScsWisskiTriplestoreTokenSyncTest extends UnitTestCase {
 
   /**
@@ -88,8 +91,6 @@ class SodaScsWisskiTriplestoreTokenSyncTest extends UnitTestCase {
 
   /**
    * An owner without a token service key fails before any exec.
-   *
-   * @covers ::syncComponents
    */
   public function testSyncComponentsFailsWithoutTokenServiceKey(): void {
     $this->serviceKeyActions->method('getServiceKey')->willReturn(NULL);
@@ -104,8 +105,6 @@ class SodaScsWisskiTriplestoreTokenSyncTest extends UnitTestCase {
 
   /**
    * A token service key with an empty token fails before any exec.
-   *
-   * @covers ::syncComponents
    */
   public function testSyncComponentsFailsWithEmptyToken(): void {
     $this->serviceKeyActions->method('getServiceKey')->willReturn($this->tokenKey(''));
@@ -119,8 +118,6 @@ class SodaScsWisskiTriplestoreTokenSyncTest extends UnitTestCase {
 
   /**
    * The key of the triplestore owner is looked up by bundle, type and user.
-   *
-   * @covers ::syncComponents
    */
   public function testSyncComponentsLooksUpTheTokenOfTheTriplestoreOwner(): void {
     $this->serviceKeyActions->expects($this->once())->method('getServiceKey')
@@ -132,8 +129,6 @@ class SodaScsWisskiTriplestoreTokenSyncTest extends UnitTestCase {
 
   /**
    * The token and the repository travel in the environment, not the command.
-   *
-   * @covers ::syncComponents
    */
   public function testSyncComponentsPassesTokenThroughEnvironmentNotCommand(): void {
     $this->serviceKeyActions->method('getServiceKey')->willReturn($this->tokenKey(self::TOKEN));
@@ -155,8 +150,6 @@ class SodaScsWisskiTriplestoreTokenSyncTest extends UnitTestCase {
 
   /**
    * The script sets the Django token header value and switches token auth on.
-   *
-   * @covers ::syncComponents
    */
   public function testSyncComponentsScriptWritesTokenWithPrefix(): void {
     $this->serviceKeyActions->method('getServiceKey')->willReturn($this->tokenKey(self::TOKEN));
@@ -174,8 +167,6 @@ class SodaScsWisskiTriplestoreTokenSyncTest extends UnitTestCase {
 
   /**
    * The marker "updated" is a success with state updated, logged as notice.
-   *
-   * @covers ::syncComponents
    */
   public function testSyncComponentsMapsUpdatedMarkerToState(): void {
     $this->serviceKeyActions->method('getServiceKey')->willReturn($this->tokenKey(self::TOKEN));
@@ -191,8 +182,6 @@ class SodaScsWisskiTriplestoreTokenSyncTest extends UnitTestCase {
 
   /**
    * The marker "unchanged" is a success with state unchanged and no log entry.
-   *
-   * @covers ::syncComponents
    */
   public function testSyncComponentsMapsUnchangedMarkerToState(): void {
     $this->serviceKeyActions->method('getServiceKey')->willReturn($this->tokenKey(self::TOKEN));
@@ -207,8 +196,6 @@ class SodaScsWisskiTriplestoreTokenSyncTest extends UnitTestCase {
 
   /**
    * An adapter that reads another repository is a success and stays as it is.
-   *
-   * @covers ::syncComponents
    */
   public function testSyncComponentsMapsOtherRepositoryMarkerToState(): void {
     $this->serviceKeyActions->method('getServiceKey')->willReturn($this->tokenKey(self::TOKEN));
@@ -223,8 +210,6 @@ class SodaScsWisskiTriplestoreTokenSyncTest extends UnitTestCase {
 
   /**
    * The marker is found between the notices that drush prints around it.
-   *
-   * @covers ::syncComponents
    */
   public function testSyncComponentsFindsMarkerAmongDrushNotices(): void {
     $this->serviceKeyActions->method('getServiceKey')->willReturn($this->tokenKey(self::TOKEN));
@@ -239,8 +224,6 @@ class SodaScsWisskiTriplestoreTokenSyncTest extends UnitTestCase {
 
   /**
    * A failing drush returns the failure and does not claim a state.
-   *
-   * @covers ::syncComponents
    */
   public function testSyncComponentsFailsWhenDrushFails(): void {
     $this->serviceKeyActions->method('getServiceKey')->willReturn($this->tokenKey(self::TOKEN));
@@ -257,8 +240,6 @@ class SodaScsWisskiTriplestoreTokenSyncTest extends UnitTestCase {
 
   /**
    * A failing exec without an error text still carries an error.
-   *
-   * @covers ::syncComponents
    */
   public function testSyncComponentsFailsWithDefaultErrorWhenDrushFailsWithoutText(): void {
     $this->serviceKeyActions->method('getServiceKey')->willReturn($this->tokenKey(self::TOKEN));
@@ -273,8 +254,6 @@ class SodaScsWisskiTriplestoreTokenSyncTest extends UnitTestCase {
 
   /**
    * Output without the marker is a failure, however the exec ended.
-   *
-   * @covers ::syncComponents
    */
   public function testSyncComponentsFailsWhenMarkerIsMissing(): void {
     $this->serviceKeyActions->method('getServiceKey')->willReturn($this->tokenKey(self::TOKEN));
@@ -289,8 +268,6 @@ class SodaScsWisskiTriplestoreTokenSyncTest extends UnitTestCase {
 
   /**
    * A successful exec without output data is a failure, not a state.
-   *
-   * @covers ::syncComponents
    */
   public function testSyncComponentsFailsWhenOutputIsMissing(): void {
     $this->serviceKeyActions->method('getServiceKey')->willReturn($this->tokenKey(self::TOKEN));
@@ -304,8 +281,6 @@ class SodaScsWisskiTriplestoreTokenSyncTest extends UnitTestCase {
 
   /**
    * An unknown state in the marker is not taken as a success.
-   *
-   * @covers ::syncComponents
    */
   public function testSyncComponentsFailsOnUnknownMarkerState(): void {
     $this->serviceKeyActions->method('getServiceKey')->willReturn($this->tokenKey(self::TOKEN));
@@ -319,8 +294,6 @@ class SodaScsWisskiTriplestoreTokenSyncTest extends UnitTestCase {
 
   /**
    * The token reaches neither the log nor the failure messages.
-   *
-   * @covers ::syncComponents
    */
   public function testSyncComponentsKeepsTokenOutOfLogAndFailure(): void {
     $this->serviceKeyActions->method('getServiceKey')->willReturn($this->tokenKey(self::TOKEN));
@@ -337,8 +310,6 @@ class SodaScsWisskiTriplestoreTokenSyncTest extends UnitTestCase {
    *
    * Issue 3640913: during an ownership transfer the token of the new owner is
    * written while the triplestore still belongs to the previous owner.
-   *
-   * @covers ::writeToken
    */
   public function testWriteTokenSendsTheGivenTokenWithoutKeyLookup(): void {
     $this->serviceKeyActions->expects($this->never())->method('getServiceKey');
@@ -359,8 +330,6 @@ class SodaScsWisskiTriplestoreTokenSyncTest extends UnitTestCase {
 
   /**
    * A failing exec is a failure of writeToken() as well.
-   *
-   * @covers ::writeToken
    */
   public function testWriteTokenFailsWhenDrushFails(): void {
     $this->containerHelpers->method('executeDockerExecCommand')
@@ -374,8 +343,6 @@ class SodaScsWisskiTriplestoreTokenSyncTest extends UnitTestCase {
 
   /**
    * Every triplestore of the user with a stack WissKI is synced and counted.
-   *
-   * @covers ::syncUser
    */
   public function testSyncUserCountsSuccessfulSyncs(): void {
     $this->useTriplestores([
@@ -397,8 +364,6 @@ class SodaScsWisskiTriplestoreTokenSyncTest extends UnitTestCase {
 
   /**
    * Only the triplestores of the given user are queried.
-   *
-   * @covers ::syncUser
    */
   public function testSyncUserQueriesTriplestoresOfTheUser(): void {
     $conditions = [];
@@ -418,8 +383,6 @@ class SodaScsWisskiTriplestoreTokenSyncTest extends UnitTestCase {
 
   /**
    * A triplestore without a stack is skipped; no exec runs for it.
-   *
-   * @covers ::syncUser
    */
   public function testSyncUserSkipsTriplestoreWithoutStack(): void {
     $this->useTriplestores([1 => $this->triplestore('ts-one', NULL)]);
@@ -430,8 +393,6 @@ class SodaScsWisskiTriplestoreTokenSyncTest extends UnitTestCase {
 
   /**
    * A stack without a WissKI component is skipped.
-   *
-   * @covers ::syncUser
    */
   public function testSyncUserSkipsStackWithoutWisski(): void {
     $sql = $this->createMock(SodaScsComponentInterface::class);
@@ -444,8 +405,6 @@ class SodaScsWisskiTriplestoreTokenSyncTest extends UnitTestCase {
 
   /**
    * The WissKI is picked from the other components of the stack.
-   *
-   * @covers ::syncUser
    */
   public function testSyncUserPicksTheWisskiComponentOfTheStack(): void {
     $sql = $this->createMock(SodaScsComponentInterface::class);
@@ -462,8 +421,6 @@ class SodaScsWisskiTriplestoreTokenSyncTest extends UnitTestCase {
 
   /**
    * A failing WissKI is logged as a warning and the others are still synced.
-   *
-   * @covers ::syncUser
    */
   public function testSyncUserLogsWarningOnFailureAndContinues(): void {
     $this->useTriplestores([
@@ -485,8 +442,6 @@ class SodaScsWisskiTriplestoreTokenSyncTest extends UnitTestCase {
 
   /**
    * A user without triplestores syncs nothing and executes nothing.
-   *
-   * @covers ::syncUser
    */
   public function testSyncUserWithoutTriplestoresDoesNothing(): void {
     $this->useTriplestores([]);

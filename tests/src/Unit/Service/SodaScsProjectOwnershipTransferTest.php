@@ -40,6 +40,8 @@ use Drupal\soda_scs_manager\ServiceKeyActions\SodaScsServiceKeyActionsInterface;
 use Drupal\soda_scs_manager\ValueObject\SodaScsResult;
 use Drupal\Tests\UnitTestCase;
 use Drupal\user\UserInterface;
+use PHPUnit\Framework\Attributes\CoversMethod;
+use PHPUnit\Framework\Attributes\Group;
 use PHPUnit\Framework\MockObject\MockObject;
 use Psr\Log\LoggerInterface;
 
@@ -50,10 +52,17 @@ use Psr\Log\LoggerInterface;
  * Portainer, the WissKI container) is a double; each test changes one answer
  * of an otherwise successful transfer of a project with a WissKI, a database
  * and a triplestore. Applications that a member added keep their owner.
- *
- * @coversDefaultClass \Drupal\soda_scs_manager\Service\SodaScsProjectOwnershipTransfer
- * @group soda_scs_manager
  */
+#[CoversMethod(SodaScsProjectOwnershipTransfer::class, 'transfer')]
+#[CoversMethod(SodaScsProjectOwnershipTransfer::class, 'grantServiceAccess')]
+#[CoversMethod(SodaScsProjectOwnershipTransfer::class, 'rebindWisski')]
+#[CoversMethod(SodaScsProjectOwnershipTransfer::class, 'saveOwnership')]
+#[CoversMethod(SodaScsProjectOwnershipTransfer::class, 'ownedApplications')]
+#[CoversMethod(SodaScsProjectOwnershipTransfer::class, 'transferLocked')]
+#[CoversMethod(SodaScsProjectOwnershipTransfer::class, 'remapServiceKeys')]
+#[CoversMethod(SodaScsProjectOwnershipTransfer::class, 'transferSnapshots')]
+#[CoversMethod(SodaScsProjectOwnershipTransfer::class, 'rebindAndSave')]
+#[Group('soda_scs_manager')]
 class SodaScsProjectOwnershipTransferTest extends UnitTestCase {
 
   private const PROJECT_ID = 5;
@@ -385,8 +394,6 @@ class SodaScsProjectOwnershipTransferTest extends UnitTestCase {
 
   /**
    * The new owner gets access first, then the WissKI is rebound, then owners.
-   *
-   * @covers ::transfer
    */
   public function testTransferGrantsAccessThenRebindsWisskiThenChangesOwners(): void {
     $result = $this->transfer();
@@ -417,9 +424,6 @@ class SodaScsProjectOwnershipTransferTest extends UnitTestCase {
 
   /**
    * The grants name the new owner and the repositories of the project.
-   *
-   * @covers ::transfer
-   * @covers ::grantServiceAccess
    */
   public function testTransferGrantsTheNewOwnerAccessToTheProjectServices(): void {
     $this->transfer();
@@ -434,9 +438,6 @@ class SodaScsProjectOwnershipTransferTest extends UnitTestCase {
 
   /**
    * Database account, triplestore account and mount of the WissKI are replaced.
-   *
-   * @covers ::transfer
-   * @covers ::rebindWisski
    */
   public function testTransferPointsTheWisskiAtTheAccountsOfTheNewOwner(): void {
     $this->transfer();
@@ -460,9 +461,6 @@ class SodaScsProjectOwnershipTransferTest extends UnitTestCase {
 
   /**
    * Applications and project change owner; the previous owner stays admin.
-   *
-   * @covers ::transfer
-   * @covers ::saveOwnership
    */
   public function testTransferChangesOwnersAndKeepsPreviousOwnerAsAdminMember(): void {
     $result = $this->transfer();
@@ -482,9 +480,6 @@ class SodaScsProjectOwnershipTransferTest extends UnitTestCase {
 
   /**
    * Without the keep option the previous owner leaves the project.
-   *
-   * @covers ::transfer
-   * @covers ::saveOwnership
    */
   public function testTransferCanDropThePreviousOwner(): void {
     $result = $this->transfer(FALSE);
@@ -496,8 +491,6 @@ class SodaScsProjectOwnershipTransferTest extends UnitTestCase {
 
   /**
    * The result names the new owner; the transaction is not rolled back.
-   *
-   * @covers ::transfer
    */
   public function testTransferSucceedsWithoutWarnings(): void {
     $this->transactionManager->expects($this->never())->method('rollback');
@@ -510,8 +503,6 @@ class SodaScsProjectOwnershipTransferTest extends UnitTestCase {
 
   /**
    * A failing Keycloak group sync is a warning, not a failure.
-   *
-   * @covers ::transfer
    */
   public function testTransferReportsKeycloakGroupSyncAsWarning(): void {
     $this->keycloakGroupsSynced = FALSE;
@@ -525,8 +516,6 @@ class SodaScsProjectOwnershipTransferTest extends UnitTestCase {
 
   /**
    * A new owner that already owns the project changes nothing.
-   *
-   * @covers ::transfer
    */
   public function testTransferToTheCurrentOwnerDoesNothing(): void {
     $result = $this->service()->transfer($this->project, $this->previousOwner);
@@ -537,8 +526,6 @@ class SodaScsProjectOwnershipTransferTest extends UnitTestCase {
 
   /**
    * A project without an owner is refused before any lock or call.
-   *
-   * @covers ::transfer
    */
   public function testProjectWithoutOwnerIsRefused(): void {
     $this->project = $this->createMock(SodaScsProjectInterface::class);
@@ -552,8 +539,6 @@ class SodaScsProjectOwnershipTransferTest extends UnitTestCase {
 
   /**
    * A new owner without Keycloak account is refused before the lock.
-   *
-   * @covers ::transfer
    */
   public function testNewOwnerWithoutKeycloakAccountIsRefused(): void {
     $this->newOwnerHasKeycloakAccount = FALSE;
@@ -567,8 +552,6 @@ class SodaScsProjectOwnershipTransferTest extends UnitTestCase {
 
   /**
    * A project locked by another job stays untouched and its lock is kept.
-   *
-   * @covers ::transfer
    */
   public function testLockedProjectIsNotTouched(): void {
     $this->lockAcquired = FALSE;
@@ -582,8 +565,6 @@ class SodaScsProjectOwnershipTransferTest extends UnitTestCase {
 
   /**
    * The lock is released after a failure too.
-   *
-   * @covers ::transfer
    */
   public function testLockIsReleasedAfterFailure(): void {
     $this->databaseAccessGranted = FALSE;
@@ -595,9 +576,6 @@ class SodaScsProjectOwnershipTransferTest extends UnitTestCase {
 
   /**
    * An application that also belongs to another project stops the transfer.
-   *
-   * @covers ::transfer
-   * @covers ::ownedApplications
    */
   public function testApplicationSharedWithAnotherProjectStopsTheTransfer(): void {
     $this->components[13] = $this->component(
@@ -616,9 +594,6 @@ class SodaScsProjectOwnershipTransferTest extends UnitTestCase {
 
   /**
    * An application a member added keeps its owner and its keys.
-   *
-   * @covers ::transfer
-   * @covers ::ownedApplications
    */
   public function testApplicationOfMemberKeepsItsOwner(): void {
     $this->extraComponents[15] = 3;
@@ -631,9 +606,6 @@ class SodaScsProjectOwnershipTransferTest extends UnitTestCase {
 
   /**
    * A failing database grant stops before anything is changed.
-   *
-   * @covers ::transfer
-   * @covers ::grantServiceAccess
    */
   public function testDatabaseGrantFailureChangesNothing(): void {
     $this->databaseAccessGranted = FALSE;
@@ -646,9 +618,6 @@ class SodaScsProjectOwnershipTransferTest extends UnitTestCase {
 
   /**
    * A failing triplestore account stops before the WissKI is touched.
-   *
-   * @covers ::transfer
-   * @covers ::grantServiceAccess
    */
   public function testTriplestoreAccountFailureChangesNothing(): void {
     $this->triplestoreAccountFails = TRUE;
@@ -661,9 +630,6 @@ class SodaScsProjectOwnershipTransferTest extends UnitTestCase {
 
   /**
    * A refused WebProtégé right stops before the WissKI is touched.
-   *
-   * @covers ::transfer
-   * @covers ::grantServiceAccess
    */
   public function testWebprotegeGrantFailureChangesNothing(): void {
     $this->webprotegeGrantSucceeds = FALSE;
@@ -677,9 +643,6 @@ class SodaScsProjectOwnershipTransferTest extends UnitTestCase {
 
   /**
    * A new owner without Drive login yet does not stop the transfer.
-   *
-   * @covers ::transfer
-   * @covers ::grantServiceAccess
    */
   public function testMissingNextcloudGroupMembershipIsOnlyLogged(): void {
     $this->nextcloudGroupJoined = FALSE;
@@ -691,9 +654,6 @@ class SodaScsProjectOwnershipTransferTest extends UnitTestCase {
 
   /**
    * A deployment that cannot be read stops before settings.php is changed.
-   *
-   * @covers ::transfer
-   * @covers ::rebindWisski
    */
   public function testUnreadableDeploymentChangesNothing(): void {
     $this->deploymentCaptured = FALSE;
@@ -707,9 +667,6 @@ class SodaScsProjectOwnershipTransferTest extends UnitTestCase {
 
   /**
    * A new owner without database password is refused before settings.php.
-   *
-   * @covers ::transfer
-   * @covers ::rebindWisski
    */
   public function testNewOwnerWithoutDatabasePasswordChangesNothing(): void {
     $this->newDatabasePassword = '';
@@ -723,9 +680,6 @@ class SodaScsProjectOwnershipTransferTest extends UnitTestCase {
 
   /**
    * A refused settings.php change leaves the WissKI as it is.
-   *
-   * @covers ::transfer
-   * @covers ::rebindWisski
    */
   public function testRefusedSettingsChangeStopsBeforeRedeploy(): void {
     $this->settingsReplaced = FALSE;
@@ -740,9 +694,6 @@ class SodaScsProjectOwnershipTransferTest extends UnitTestCase {
 
   /**
    * A new owner without triplestore token undoes the settings.php change.
-   *
-   * @covers ::transfer
-   * @covers ::rebindWisski
    */
   public function testMissingTripleStoreTokenUndoesSettings(): void {
     $this->newToken = '';
@@ -757,9 +708,6 @@ class SodaScsProjectOwnershipTransferTest extends UnitTestCase {
 
   /**
    * A Team Folder that is not ready under the new mount undoes the settings.
-   *
-   * @covers ::transfer
-   * @covers ::rebindWisski
    */
   public function testTeamFolderNotReadyUndoesSettings(): void {
     $this->teamFolderReady = FALSE;
@@ -774,9 +722,6 @@ class SodaScsProjectOwnershipTransferTest extends UnitTestCase {
 
   /**
    * A mount source of someone else is left alone.
-   *
-   * @covers ::transfer
-   * @covers ::rebindWisski
    */
   public function testForeignMountSourceIsNotReplaced(): void {
     $this->mountSourceOfWisski = '/mnt/somebody-else/Team';
@@ -788,9 +733,6 @@ class SodaScsProjectOwnershipTransferTest extends UnitTestCase {
 
   /**
    * A failed redeploy restores the deployment and the settings.php values.
-   *
-   * @covers ::transfer
-   * @covers ::rebindWisski
    */
   public function testFailedRedeployRestoresDeploymentAndSettings(): void {
     $this->redeployed = FALSE;
@@ -810,9 +752,6 @@ class SodaScsProjectOwnershipTransferTest extends UnitTestCase {
 
   /**
    * A failed token write restores the token, the deployment and the settings.
-   *
-   * @covers ::transfer
-   * @covers ::rebindWisski
    */
   public function testFailedTokenWriteRestoresEverything(): void {
     $this->tokenWritten = FALSE;
@@ -828,9 +767,6 @@ class SodaScsProjectOwnershipTransferTest extends UnitTestCase {
 
   /**
    * A second WissKI that fails undoes the first one as well.
-   *
-   * @covers ::transfer
-   * @covers ::transferLocked
    */
   public function testFailureOfSecondWisskiUndoesTheFirst(): void {
     $this->hasSecondWisski = TRUE;
@@ -845,9 +781,6 @@ class SodaScsProjectOwnershipTransferTest extends UnitTestCase {
 
   /**
    * A failing save undoes the WissKI changes and rolls the transaction back.
-   *
-   * @covers ::transfer
-   * @covers ::saveOwnership
    */
   public function testFailedSaveRollsBackTransactionAndWisski(): void {
     $this->projectSaveFails = TRUE;
@@ -864,9 +797,6 @@ class SodaScsProjectOwnershipTransferTest extends UnitTestCase {
 
   /**
    * Keys of the previous owner are replaced by the keys of the new owner.
-   *
-   * @covers ::transfer
-   * @covers ::remapServiceKeys
    */
   public function testServiceKeysOfThePreviousOwnerMoveToTheNewOwner(): void {
     $previousKey = $this->key(self::PREVIOUS_OWNER_ID, 'soda_scs_sql_component', 'password', 'old-db-secret');
@@ -881,9 +811,6 @@ class SodaScsProjectOwnershipTransferTest extends UnitTestCase {
 
   /**
    * The snapshots of the applications go to the new owner too.
-   *
-   * @covers ::transfer
-   * @covers ::transferSnapshots
    */
   public function testSnapshotsOfTheApplicationsGoToTheNewOwner(): void {
     $this->snapshotIds = [70, 71];
@@ -895,8 +822,6 @@ class SodaScsProjectOwnershipTransferTest extends UnitTestCase {
 
   /**
    * A WissKI that is being updated stops the transfer before any change.
-   *
-   * @covers ::transferLocked
    */
   public function testBusyWisskiUpdateLockStopsTheTransferBeforeAnyChange(): void {
     $this->busyUpdateLocks = ['soda_scs_manager.wisski_update.12'];
@@ -913,8 +838,6 @@ class SodaScsProjectOwnershipTransferTest extends UnitTestCase {
 
   /**
    * The update locks taken before the busy one are released again.
-   *
-   * @covers ::transferLocked
    */
   public function testBusyWisskiUpdateLockOfSecondWisskiReleasesTheFirst(): void {
     $this->hasSecondWisski = TRUE;
@@ -931,8 +854,6 @@ class SodaScsProjectOwnershipTransferTest extends UnitTestCase {
 
   /**
    * Every changed WissKI is locked, and the locks are released after success.
-   *
-   * @covers ::transferLocked
    */
   public function testWisskiUpdateLocksAreTakenBeforeAndReleasedAfterTheRebind(): void {
     $this->hasSecondWisski = TRUE;
@@ -951,8 +872,6 @@ class SodaScsProjectOwnershipTransferTest extends UnitTestCase {
 
   /**
    * The update locks are released after a failed rebind too.
-   *
-   * @covers ::transferLocked
    */
   public function testWisskiUpdateLocksAreReleasedAfterFailure(): void {
     $this->redeployed = FALSE;
@@ -966,8 +885,6 @@ class SodaScsProjectOwnershipTransferTest extends UnitTestCase {
 
   /**
    * Without WissKI no update lock is taken.
-   *
-   * @covers ::transferLocked
    */
   public function testNoUpdateLockWithoutWisski(): void {
     $this->hasWisski = FALSE;
@@ -981,8 +898,6 @@ class SodaScsProjectOwnershipTransferTest extends UnitTestCase {
 
   /**
    * An exception from the redeploy restores the deployment and the settings.
-   *
-   * @covers ::rebindWisski
    */
   public function testExceptionDuringRedeployRestoresDeploymentAndSettings(): void {
     $this->redeployThrows = TRUE;
@@ -1007,8 +922,6 @@ class SodaScsProjectOwnershipTransferTest extends UnitTestCase {
 
   /**
    * An exception from the mount manager undoes the settings.
-   *
-   * @covers ::rebindWisski
    */
   public function testExceptionFromTheMountManagerUndoesSettingsBeforeRedeploy(): void {
     $this->mountThrows = TRUE;
@@ -1024,9 +937,6 @@ class SodaScsProjectOwnershipTransferTest extends UnitTestCase {
 
   /**
    * An exception while rebinding a second WissKI undoes the first one.
-   *
-   * @covers ::rebindWisski
-   * @covers ::rebindAndSave
    */
   public function testExceptionWhileRebindingSecondWisskiUndoesTheFirst(): void {
     $this->hasSecondWisski = TRUE;
@@ -1043,9 +953,6 @@ class SodaScsProjectOwnershipTransferTest extends UnitTestCase {
 
   /**
    * A new owner with a different WissKI password produces a warning.
-   *
-   * @covers ::remapServiceKeys
-   * @covers ::saveOwnership
    */
   public function testDifferentWisskiPasswordOfTheNewOwnerGivesWarning(): void {
     $this->serviceKeys[12] = [$this->key(self::PREVIOUS_OWNER_ID, 'soda_scs_wisski_component', 'password', 'admin-old-secret')];
@@ -1063,8 +970,6 @@ class SodaScsProjectOwnershipTransferTest extends UnitTestCase {
 
   /**
    * An equal WissKI password of the new owner is no warning.
-   *
-   * @covers ::remapServiceKeys
    */
   public function testEqualWisskiPasswordOfTheNewOwnerIsNoWarning(): void {
     $this->serviceKeys[12] = [$this->key(self::PREVIOUS_OWNER_ID, 'soda_scs_wisski_component', 'password', $this->newWisskiPassword)];
@@ -1077,8 +982,6 @@ class SodaScsProjectOwnershipTransferTest extends UnitTestCase {
 
   /**
    * A copied WissKI key matches by construction and is no warning.
-   *
-   * @covers ::remapServiceKeys
    */
   public function testCopiedWisskiKeyIsNoWarning(): void {
     $this->newOwnerHasWisskiKey = FALSE;
@@ -1093,8 +996,6 @@ class SodaScsProjectOwnershipTransferTest extends UnitTestCase {
 
   /**
    * Differing passwords of other bundles are not reported.
-   *
-   * @covers ::remapServiceKeys
    */
   public function testDifferentPasswordOfAnotherBundleIsNoWarning(): void {
     $this->serviceKeys[13] = [$this->key(self::PREVIOUS_OWNER_ID, 'soda_scs_sql_component', 'password', 'old-db-secret')];
@@ -1107,8 +1008,6 @@ class SodaScsProjectOwnershipTransferTest extends UnitTestCase {
 
   /**
    * The warning stays next to the Keycloak sync warning.
-   *
-   * @covers ::transferLocked
    */
   public function testKeyWarningsAreKeptWhenTheKeycloakSyncFails(): void {
     $this->keycloakGroupsSynced = FALSE;

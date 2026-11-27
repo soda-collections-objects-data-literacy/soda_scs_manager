@@ -7,15 +7,15 @@ namespace Drupal\Tests\soda_scs_manager\Kernel\Install;
 use Drupal\field\Entity\FieldConfig;
 use Drupal\field\Entity\FieldStorageConfig;
 use Drupal\Tests\soda_scs_manager\Kernel\SodaScsKernelTestBase;
+use PHPUnit\Framework\Attributes\Group;
 
 /**
  * Tests the optional body field config of the Documentation content type.
  *
  * Drupal 11.3+ no longer creates field.storage.node.body on install, so the
  * module ships it as optional config; a site that already has it keeps it.
- *
- * @group soda_scs_manager
  */
+#[Group('soda_scs_manager')]
 final class SodaScsDocumentationBodyFieldTest extends SodaScsKernelTestBase {
 
   /**

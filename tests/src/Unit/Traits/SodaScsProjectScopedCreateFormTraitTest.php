@@ -8,19 +8,24 @@ use Drupal\Core\Form\FormState;
 use Drupal\Core\Form\FormStateInterface;
 use Drupal\soda_scs_manager\Traits\SodaScsProjectScopedCreateFormTrait;
 use Drupal\Tests\UnitTestCase;
+use PHPUnit\Framework\Attributes\CoversMethod;
+use PHPUnit\Framework\Attributes\DataProvider;
+use PHPUnit\Framework\Attributes\Group;
 use Symfony\Component\HttpFoundation\Request;
 
 /**
- * @coversDefaultClass \Drupal\soda_scs_manager\Traits\SodaScsProjectScopedCreateFormTrait
- *
- * @group soda_scs_manager
+ * Tests SodaScsProjectScopedCreateFormTrait.
  */
+#[CoversMethod(SodaScsProjectScopedCreateFormTrait::class, 'queryDefersProjectSelection')]
+#[CoversMethod(SodaScsProjectScopedCreateFormTrait::class, 'isValidateOnlyRequest')]
+#[CoversMethod(SodaScsProjectScopedCreateFormTrait::class, 'submitValidateOnly')]
+#[CoversMethod(SodaScsProjectScopedCreateFormTrait::class, 'getEditedFieldNames')]
+#[CoversMethod(SodaScsProjectScopedCreateFormTrait::class, 'applySelectedProject')]
+#[Group('soda_scs_manager')]
 class SodaScsProjectScopedCreateFormTraitTest extends UnitTestCase {
 
   /**
    * Only the query string "1" skips the project picker.
-   *
-   * @covers ::queryDefersProjectSelection
    */
   public function testQueryDefersProjectSelectionOnlyForTheStringOne(): void {
     $this->assertTrue(DeferProjectSelectionProbe::queryDefersProjectSelection('1'));
@@ -37,11 +42,8 @@ class SodaScsProjectScopedCreateFormTraitTest extends UnitTestCase {
    *   The query parameters of the request.
    * @param bool $expected
    *   Whether the request is a validate-only request.
-   *
-   * @covers ::isValidateOnlyRequest
-   *
-   * @dataProvider providerValidateOnlyQuery
    */
+  #[DataProvider('providerValidateOnlyQuery')]
   public function testIsValidateOnlyRequestNeedsBothQueryValuesAsStringOne(array $query, bool $expected): void {
     $probe = new ValidateOnlyProbe(new Request($query));
 
@@ -72,8 +74,6 @@ class SodaScsProjectScopedCreateFormTraitTest extends UnitTestCase {
 
   /**
    * Without a request nothing is validate-only.
-   *
-   * @covers ::isValidateOnlyRequest
    */
   public function testIsValidateOnlyRequestIsFalseWithoutRequest(): void {
     $this->assertFalse((new ValidateOnlyProbe(NULL))->isValidateOnly());
@@ -81,8 +81,6 @@ class SodaScsProjectScopedCreateFormTraitTest extends UnitTestCase {
 
   /**
    * The validate-only submit handler asks for a rebuild and nothing else.
-   *
-   * @covers ::submitValidateOnly
    */
   public function testSubmitValidateOnlyRebuildsTheForm(): void {
     $form = [];
@@ -97,8 +95,6 @@ class SodaScsProjectScopedCreateFormTraitTest extends UnitTestCase {
 
   /**
    * A validate-only request leaves partOfProjects out of the edited fields.
-   *
-   * @covers ::getEditedFieldNames
    */
   public function testGetEditedFieldNamesDropsPartOfProjectsWhenValidateOnly(): void {
     $probe = new ValidateOnlyProbe(new Request(['deferProject' => '1', 'validateOnly' => '1']));
@@ -108,8 +104,6 @@ class SodaScsProjectScopedCreateFormTraitTest extends UnitTestCase {
 
   /**
    * Other requests keep partOfProjects in the edited fields.
-   *
-   * @covers ::getEditedFieldNames
    */
   public function testGetEditedFieldNamesKeepsPartOfProjectsOtherwise(): void {
     $probe = new ValidateOnlyProbe(new Request(['deferProject' => '1']));
@@ -119,8 +113,6 @@ class SodaScsProjectScopedCreateFormTraitTest extends UnitTestCase {
 
   /**
    * A validate-only request selects no project and sets no error.
-   *
-   * @covers ::applySelectedProject
    */
   public function testApplySelectedProjectDoesNothingWhenValidateOnly(): void {
     $probe = new ValidateOnlyProbe(new Request(['deferProject' => '1', 'validateOnly' => '1']));

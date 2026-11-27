@@ -15,6 +15,9 @@ use Drupal\soda_scs_manager\Form\SodaScsComponentCreateForm;
 use Drupal\soda_scs_manager\ComponentActions\SodaScsComponentActionsInterface;
 use Drupal\Tests\soda_scs_manager\Unit\SodaScsCreatePathTestTrait;
 use Drupal\Tests\UnitTestCase;
+use PHPUnit\Framework\Attributes\CoversMethod;
+use PHPUnit\Framework\Attributes\DataProvider;
+use PHPUnit\Framework\Attributes\Group;
 use Prophecy\Argument;
 use Prophecy\PhpUnit\ProphecyTrait;
 use Symfony\Component\HttpFoundation\Request;
@@ -25,10 +28,9 @@ use Symfony\Component\HttpFoundation\RequestStack;
  *
  * Issue 3637658: one message with a translated reason; the original exception
  * is logged; raw strings and exception texts never reach the user.
- *
- * @coversDefaultClass \Drupal\soda_scs_manager\Form\SodaScsComponentCreateForm
- * @group soda_scs_manager
  */
+#[CoversMethod(SodaScsComponentCreateForm::class, 'save')]
+#[Group('soda_scs_manager')]
 class SodaScsComponentCreateFormSaveTest extends UnitTestCase {
 
   use ProphecyTrait;
@@ -125,8 +127,6 @@ class SodaScsComponentCreateFormSaveTest extends UnitTestCase {
 
   /**
    * A translated reason is shown once, with the label.
-   *
-   * @covers ::save
    */
   public function testSaveShowsTranslatedReasonOnce(): void {
     $reason = new TranslatableMarkup('Database: A database with this application name already exists. Choose another name.', [], [], $this->getStringTranslationStub());
@@ -150,8 +150,6 @@ class SodaScsComponentCreateFormSaveTest extends UnitTestCase {
 
   /**
    * The original exception is logged with machine name, bundle and user.
-   *
-   * @covers ::save
    */
   public function testSaveLogsOriginalExceptionWithContext(): void {
     $this->componentActions->createComponent(Argument::any())->willReturn([
@@ -174,8 +172,6 @@ class SodaScsComponentCreateFormSaveTest extends UnitTestCase {
 
   /**
    * A plain string message is never shown, only the generic reason.
-   *
-   * @covers ::save
    */
   public function testSaveDoesNotShowRawStringMessage(): void {
     $this->componentActions->createComponent(Argument::any())->willReturn([
@@ -197,11 +193,8 @@ class SodaScsComponentCreateFormSaveTest extends UnitTestCase {
 
   /**
    * A failure without error details is logged with a descriptive message.
-   *
-   * @covers ::save
-   *
-   * @dataProvider missingErrorProvider
    */
+  #[DataProvider('missingErrorProvider')]
   public function testSaveNeverLogsUnknownError(array $createResult): void {
     $this->componentActions->createComponent(Argument::any())->willReturn($createResult);
     $this->logger->log('error', Argument::type('string'), Argument::that(
@@ -231,8 +224,6 @@ class SodaScsComponentCreateFormSaveTest extends UnitTestCase {
 
   /**
    * A successful creation redirects and shows no error.
-   *
-   * @covers ::save
    */
   public function testSaveRedirectsToComponentOnSuccess(): void {
     $this->componentActions->createComponent(Argument::any())->willReturn([
@@ -252,8 +243,6 @@ class SodaScsComponentCreateFormSaveTest extends UnitTestCase {
 
   /**
    * The application type is appended to the label.
-   *
-   * @covers ::save
    */
   public function testSaveAppendsApplicationTypeToLabel(): void {
     $this->succeedCreation();
@@ -264,8 +253,6 @@ class SodaScsComponentCreateFormSaveTest extends UnitTestCase {
 
   /**
    * A WebProtégé label stays as entered: its card is titled "WebProtégé".
-   *
-   * @covers ::save
    */
   public function testSaveKeepsWebprotegeLabel(): void {
     $this->bundleId = 'soda_scs_webprotege_component';

@@ -20,6 +20,8 @@ use Drupal\soda_scs_manager\Service\SodaScsWisskiTriplestoreTokenSync;
 use Drupal\soda_scs_manager\Service\SodaScsWisskiVarnishCache;
 use Drupal\soda_scs_manager\ValueObject\SodaScsResult;
 use Drupal\Tests\UnitTestCase;
+use PHPUnit\Framework\Attributes\CoversMethod;
+use PHPUnit\Framework\Attributes\Group;
 use PHPUnit\Framework\MockObject\MockObject;
 
 /**
@@ -29,10 +31,12 @@ use PHPUnit\Framework\MockObject\MockObject;
  * done; after the container started again the Varnish container is restarted
  * and the import writes the owner's current token into the adapter. Every
  * service is a double.
- *
- * @coversDefaultClass \Drupal\soda_scs_manager\Demo\SodaScsDemoWisskiTransfer
- * @group soda_scs_manager
  */
+#[CoversMethod(SodaScsDemoWisskiTransfer::class, 'isInstallComplete')]
+#[CoversMethod(SodaScsDemoWisskiTransfer::class, 'import')]
+#[CoversMethod(SodaScsDemoWisskiTransfer::class, 'export')]
+#[CoversMethod(SodaScsDemoWisskiTransfer::class, 'importTriplestore')]
+#[Group('soda_scs_manager')]
 class SodaScsDemoWisskiTransferTest extends UnitTestCase {
 
   /**
@@ -131,8 +135,6 @@ class SodaScsDemoWisskiTransferTest extends UnitTestCase {
 
   /**
    * The check passes only with the complete marker and without the other.
-   *
-   * @covers ::isInstallComplete
    */
   public function testIsInstallCompleteTestsBothMarkersAsWwwData(): void {
     $this->containerHelpers->expects($this->once())->method('executeDockerExecCommand')
@@ -151,8 +153,6 @@ class SodaScsDemoWisskiTransferTest extends UnitTestCase {
 
   /**
    * A failing test command (marker missing or install in progress) is false.
-   *
-   * @covers ::isInstallComplete
    */
   public function testIsInstallCompleteIsFalseWhenTheTestFails(): void {
     $this->containerHelpers->method('executeDockerExecCommand')
@@ -163,8 +163,6 @@ class SodaScsDemoWisskiTransferTest extends UnitTestCase {
 
   /**
    * A stack without a WissKI component is not installed.
-   *
-   * @covers ::isInstallComplete
    */
   public function testIsInstallCompleteIsFalseWithoutWisskiComponent(): void {
     $projectApps = $this->createMock(SodaScsDemoProjectApps::class);
@@ -177,8 +175,6 @@ class SodaScsDemoWisskiTransferTest extends UnitTestCase {
 
   /**
    * The import restarts Varnish after the WissKI started, before the config.
-   *
-   * @covers ::import
    */
   public function testImportRestartsVarnishAfterStartAndBeforeConfigRestore(): void {
     $this->useImportDoubles();
@@ -193,8 +189,6 @@ class SodaScsDemoWisskiTransferTest extends UnitTestCase {
 
   /**
    * The import writes the owner's token into the adapter after the config.
-   *
-   * @covers ::import
    */
   public function testImportSyncsTriplestoreTokenAfterConfigRestore(): void {
     $this->useImportDoubles();
@@ -211,8 +205,6 @@ class SodaScsDemoWisskiTransferTest extends UnitTestCase {
 
   /**
    * A failing token sync fails the import with the step named.
-   *
-   * @covers ::import
    */
   public function testImportThrowsWhenTokenSyncFails(): void {
     $this->useImportDoubles();
@@ -228,8 +220,6 @@ class SodaScsDemoWisskiTransferTest extends UnitTestCase {
 
   /**
    * A failing Varnish restart stops the import before the config is applied.
-   *
-   * @covers ::import
    */
   public function testImportThrowsAndStopsWhenVarnishRestartFails(): void {
     $this->useImportDoubles();
@@ -246,8 +236,6 @@ class SodaScsDemoWisskiTransferTest extends UnitTestCase {
 
   /**
    * A WissKI that does not start leaves Varnish and the token alone.
-   *
-   * @covers ::import
    */
   public function testImportDoesNotRestartVarnishWhenWisskiDoesNotStart(): void {
     $this->useImportDoubles(startSucceeds: FALSE);
@@ -262,8 +250,6 @@ class SodaScsDemoWisskiTransferTest extends UnitTestCase {
 
   /**
    * The export restarts Varnish once the WissKI runs again.
-   *
-   * @covers ::export
    */
   public function testExportRestartsVarnishAfterTheWisskiStarted(): void {
     $this->containerHelpers->method('stopContainer')
@@ -287,8 +273,6 @@ class SodaScsDemoWisskiTransferTest extends UnitTestCase {
 
   /**
    * A failing export still starts the WissKI, but leaves Varnish alone.
-   *
-   * @covers ::export
    */
   public function testExportStartsWisskiButNotVarnishWhenExportFails(): void {
     $this->containerHelpers->method('stopContainer')->willReturn(SodaScsResult::success([], 'Stopped.'));
@@ -308,8 +292,6 @@ class SodaScsDemoWisskiTransferTest extends UnitTestCase {
 
   /**
    * The export returns the base URIs read from the running WissKI.
-   *
-   * @covers ::export
    */
   public function testExportReturnsTheBaseUrisOfTheWisski(): void {
     $this->useExportDoubles();
@@ -322,8 +304,6 @@ class SodaScsDemoWisskiTransferTest extends UnitTestCase {
 
   /**
    * The bases are read before the container stops (printenv needs it).
-   *
-   * @covers ::export
    */
   public function testExportReadsBasesBeforeStoppingTheContainer(): void {
     $this->uriRewriter = $this->createMock(SodaScsWisskiUriRewriter::class);
@@ -339,8 +319,6 @@ class SodaScsDemoWisskiTransferTest extends UnitTestCase {
 
   /**
    * Bases that cannot be read stop the export before the WissKI is touched.
-   *
-   * @covers ::export
    */
   public function testExportFailsWithoutStoppingWhenBasesCannotBeRead(): void {
     $this->uriRewriter = $this->createMock(SodaScsWisskiUriRewriter::class);
@@ -358,8 +336,6 @@ class SodaScsDemoWisskiTransferTest extends UnitTestCase {
 
   /**
    * Without source bases the import neither reads bases nor rewrites.
-   *
-   * @covers ::import
    */
   public function testImportWithoutSourceBasesDoesNotRewrite(): void {
     $this->uriRewriter = $this->createMock(SodaScsWisskiUriRewriter::class);
@@ -378,8 +354,6 @@ class SodaScsDemoWisskiTransferTest extends UnitTestCase {
 
   /**
    * Identical bases leave the file and the database as they are.
-   *
-   * @covers ::import
    */
   public function testImportWithIdenticalBasesDoesNotRewrite(): void {
     $this->uriRewriter->expects($this->never())->method('rewriteDatabase');
@@ -397,9 +371,6 @@ class SodaScsDemoWisskiTransferTest extends UnitTestCase {
 
   /**
    * Different bases import a rewritten copy; the template file is unchanged.
-   *
-   * @covers ::import
-   * @covers ::importTriplestore
    */
   public function testImportImportsRewrittenCopyAndKeepsTheTemplateFile(): void {
     $directory = $this->temporaryDirectory();
@@ -431,8 +402,6 @@ class SodaScsDemoWisskiTransferTest extends UnitTestCase {
 
   /**
    * The rewritten copy is deleted when the triplestore import fails.
-   *
-   * @covers ::importTriplestore
    */
   public function testImportDeletesTheRewrittenCopyWhenTheTriplestoreImportFails(): void {
     $directory = $this->temporaryDirectory();
@@ -463,8 +432,6 @@ class SodaScsDemoWisskiTransferTest extends UnitTestCase {
 
   /**
    * A missing template file fails the import, with the WissKI started again.
-   *
-   * @covers ::importTriplestore
    */
   public function testImportThrowsWhenTheTemplateTriplestoreFileIsMissing(): void {
     $directory = $this->temporaryDirectory();
@@ -486,8 +453,6 @@ class SodaScsDemoWisskiTransferTest extends UnitTestCase {
 
   /**
    * The database is rewritten after Drush answers and before the config.
-   *
-   * @covers ::import
    */
   public function testImportRewritesTheDatabaseBeforeTheInstanceConfig(): void {
     $this->useImportDoubles();
@@ -518,8 +483,6 @@ class SodaScsDemoWisskiTransferTest extends UnitTestCase {
    *
    * The imported database holds the source's adapter and SSO settings; the
    * failure is reported after the instance config and the token went back.
-   *
-   * @covers ::import
    */
   public function testImportRestoresTheInstanceConfigAndThrowsWhenTheDatabaseRewriteFails(): void {
     $this->useImportDoubles();
@@ -543,8 +506,6 @@ class SodaScsDemoWisskiTransferTest extends UnitTestCase {
 
   /**
    * When the restore fails as well, both reasons are reported.
-   *
-   * @covers ::import
    */
   public function testImportReportsBothFailuresWhenTheRewriteAndTheRestoreFail(): void {
     $this->useImportDoubles();
@@ -573,8 +534,6 @@ class SodaScsDemoWisskiTransferTest extends UnitTestCase {
 
   /**
    * A failing restore without an earlier failure is reported as it is.
-   *
-   * @covers ::import
    */
   public function testImportThrowsTheRestoreFailureWhenNothingElseFailed(): void {
     $this->useImportDoubles();
@@ -594,8 +553,6 @@ class SodaScsDemoWisskiTransferTest extends UnitTestCase {
 
   /**
    * Unreadable bases of the target stop the import before anything stops.
-   *
-   * @covers ::import
    */
   public function testImportFailsWithoutStoppingWhenTargetBasesCannotBeRead(): void {
     $this->uriRewriter = $this->createMock(SodaScsWisskiUriRewriter::class);
@@ -613,8 +570,6 @@ class SodaScsDemoWisskiTransferTest extends UnitTestCase {
 
   /**
    * Source bases that are not bases (a tampered manifest) rewrite nothing.
-   *
-   * @covers ::import
    */
   public function testImportWithInvalidSourceBasesDoesNotRewrite(): void {
     $this->uriRewriter->expects($this->never())->method('rewriteDatabase');

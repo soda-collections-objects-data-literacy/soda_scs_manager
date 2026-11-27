@@ -14,16 +14,19 @@ use Drupal\soda_scs_manager\Helpers\SodaScsProjectApplicationHelpers;
 use Drupal\soda_scs_manager\Helpers\SodaScsWebprotegeHelpers;
 use Drupal\soda_scs_manager\ValueObject\SodaScsResult;
 use Drupal\Tests\UnitTestCase;
+use PHPUnit\Framework\Attributes\CoversMethod;
+use PHPUnit\Framework\Attributes\DataProvider;
+use PHPUnit\Framework\Attributes\Group;
 use Symfony\Component\HttpFoundation\File\UploadedFile;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\RequestStack;
 
 /**
  * Tests the upload validation and submit of the ontology import form.
- *
- * @coversDefaultClass \Drupal\soda_scs_manager\Form\SodaScsWebprotegeOntologyImportForm
- * @group soda_scs_manager
  */
+#[CoversMethod(SodaScsWebprotegeOntologyImportForm::class, 'validateForm')]
+#[CoversMethod(SodaScsWebprotegeOntologyImportForm::class, 'submitForm')]
+#[Group('soda_scs_manager')]
 class SodaScsWebprotegeOntologyImportFormTest extends UnitTestCase {
 
   /**
@@ -110,7 +113,7 @@ class SodaScsWebprotegeOntologyImportFormTest extends UnitTestCase {
   }
 
   /**
-   * @covers ::validateForm
+   * Tests validate rejects missing file.
    */
   public function testValidateRejectsMissingFile(): void {
     $formState = $this->validate($this->createForm([]));
@@ -120,7 +123,7 @@ class SodaScsWebprotegeOntologyImportFormTest extends UnitTestCase {
   }
 
   /**
-   * @covers ::validateForm
+   * Tests validate rejects failed upload.
    */
   public function testValidateRejectsFailedUpload(): void {
     $upload = $this->createUpload('model.ttl', 'x', UPLOAD_ERR_INI_SIZE);
@@ -132,7 +135,7 @@ class SodaScsWebprotegeOntologyImportFormTest extends UnitTestCase {
   }
 
   /**
-   * @covers ::validateForm
+   * Tests validate rejects file above the size limit.
    */
   public function testValidateRejectsFileAboveTheSizeLimit(): void {
     $upload = $this->createUploadOfSize('large.ttl', SodaScsWebprotegeOntologyImportForm::MAX_FILE_SIZE + 1);
@@ -144,7 +147,7 @@ class SodaScsWebprotegeOntologyImportFormTest extends UnitTestCase {
   }
 
   /**
-   * @covers ::validateForm
+   * Tests validate accepts file at the size limit.
    */
   public function testValidateAcceptsFileAtTheSizeLimit(): void {
     $upload = $this->createUploadOfSize('large.ttl', SodaScsWebprotegeOntologyImportForm::MAX_FILE_SIZE);
@@ -169,9 +172,9 @@ class SodaScsWebprotegeOntologyImportFormTest extends UnitTestCase {
   }
 
   /**
-   * @covers ::validateForm
-   * @dataProvider providerUnsupportedFileNames
+   * Tests validate rejects unsupported extension.
    */
+  #[DataProvider('providerUnsupportedFileNames')]
   public function testValidateRejectsUnsupportedExtension(string $clientName): void {
     $upload = $this->createUpload($clientName);
 
@@ -197,9 +200,9 @@ class SodaScsWebprotegeOntologyImportFormTest extends UnitTestCase {
   }
 
   /**
-   * @covers ::validateForm
-   * @dataProvider providerSupportedFileNames
+   * Tests validate accepts supported extension in any case.
    */
+  #[DataProvider('providerSupportedFileNames')]
   public function testValidateAcceptsSupportedExtensionInAnyCase(string $clientName): void {
     $upload = $this->createUpload($clientName);
 
@@ -224,7 +227,7 @@ class SodaScsWebprotegeOntologyImportFormTest extends UnitTestCase {
   }
 
   /**
-   * @covers ::submitForm
+   * Tests submit passes document lowercase extension and message to helper.
    */
   public function testSubmitPassesDocumentLowercaseExtensionAndMessageToHelper(): void {
     $project = $this->createMock(SodaScsProjectInterface::class);
@@ -244,7 +247,7 @@ class SodaScsWebprotegeOntologyImportFormTest extends UnitTestCase {
   }
 
   /**
-   * @covers ::submitForm
+   * Tests submit uses default message when message is blank.
    */
   public function testSubmitUsesDefaultMessageWhenMessageIsBlank(): void {
     $project = $this->createMock(SodaScsProjectInterface::class);
@@ -259,7 +262,7 @@ class SodaScsWebprotegeOntologyImportFormTest extends UnitTestCase {
   }
 
   /**
-   * @covers ::submitForm
+   * Tests submit shows error message when import fails.
    */
   public function testSubmitShowsErrorMessageWhenImportFails(): void {
     $project = $this->createMock(SodaScsProjectInterface::class);
@@ -277,7 +280,7 @@ class SodaScsWebprotegeOntologyImportFormTest extends UnitTestCase {
   }
 
   /**
-   * @covers ::submitForm
+   * Tests submit imports nothing when component belongs to no project.
    */
   public function testSubmitImportsNothingWhenComponentBelongsToNoProject(): void {
     $this->applicationHelpers->method('loadPartOfProject')->willReturn(NULL);

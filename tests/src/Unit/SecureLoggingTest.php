@@ -4,14 +4,16 @@ namespace Drupal\Tests\soda_scs_manager\Unit;
 
 use Drupal\Tests\UnitTestCase;
 use Drupal\soda_scs_manager\Traits\SecureLoggingTrait;
+use PHPUnit\Framework\Attributes\CoversMethod;
 use PHPUnit\Framework\Attributes\DataProvider;
+use PHPUnit\Framework\Attributes\Group;
 
 /**
  * Tests the SecureLoggingTrait functionality.
- *
- * @coversDefaultClass \Drupal\soda_scs_manager\Traits\SecureLoggingTrait
- * @group soda_scs_manager
  */
+#[CoversMethod(SecureLoggingTrait::class, 'sanitizeForLogging')]
+#[CoversMethod(SecureLoggingTrait::class, 'sanitizeCommandForLogging')]
+#[Group('soda_scs_manager')]
 class SecureLoggingTest extends UnitTestCase {
 
   /**
@@ -42,8 +44,6 @@ class SecureLoggingTest extends UnitTestCase {
 
   /**
    * Tests sanitization of the MySQL -p option.
-   *
-   * @covers ::sanitizeForLogging
    */
   #[DataProvider('mysqlPasswordProvider')]
   public function testSanitizeMysqlPasswords(string $input, string $expected): void {
@@ -111,8 +111,6 @@ class SecureLoggingTest extends UnitTestCase {
 
   /**
    * Tests that text with -p inside a word or another option stays unchanged.
-   *
-   * @covers ::sanitizeForLogging
    */
   #[DataProvider('unchangedTextProvider')]
   public function testSanitizeKeepsTextWithoutSecret(string $input): void {
@@ -143,8 +141,6 @@ class SecureLoggingTest extends UnitTestCase {
 
   /**
    * Tests sanitization of various password patterns.
-   *
-   * @covers ::sanitizeForLogging
    */
   #[DataProvider('passwordPatternProvider')]
   public function testSanitizePasswordPatterns(string $input, string $expected): void {
@@ -218,8 +214,6 @@ class SecureLoggingTest extends UnitTestCase {
 
   /**
    * Tests sanitization of the SQL IDENTIFIED BY clause.
-   *
-   * @covers ::sanitizeForLogging
    */
   #[DataProvider('identifiedByProvider')]
   public function testSanitizeIdentifiedBy(string $input, string $expected): void {
@@ -267,8 +261,6 @@ class SecureLoggingTest extends UnitTestCase {
 
   /**
    * Tests sanitization of connection strings.
-   *
-   * @covers ::sanitizeForLogging
    */
   #[DataProvider('connectionStringProvider')]
   public function testSanitizeConnectionStrings(string $input, string $expected): void {
@@ -300,8 +292,6 @@ class SecureLoggingTest extends UnitTestCase {
 
   /**
    * Tests sanitization of JSON with sensitive fields.
-   *
-   * @covers ::sanitizeForLogging
    */
   #[DataProvider('jsonFieldProvider')]
   public function testSanitizeJsonFields(string $input, string $expected): void {
@@ -328,8 +318,6 @@ class SecureLoggingTest extends UnitTestCase {
 
   /**
    * Tests the command-specific sanitization method.
-   *
-   * @covers ::sanitizeCommandForLogging
    */
   #[DataProvider('commandProvider')]
   public function testSanitizeCommandForLogging(string $input, string $expected): void {
@@ -413,8 +401,6 @@ class SecureLoggingTest extends UnitTestCase {
 
   /**
    * Tests that a command without a secret stays unchanged.
-   *
-   * @covers ::sanitizeCommandForLogging
    */
   #[DataProvider('commandWithoutSecretProvider')]
   public function testSanitizeCommandKeepsCommandWithoutSecret(string $command): void {
@@ -437,8 +423,6 @@ class SecureLoggingTest extends UnitTestCase {
 
   /**
    * Tests sanitization with additional patterns.
-   *
-   * @covers ::sanitizeForLogging
    */
   public function testAdditionalPatterns(): void {
     $additionalPatterns = [

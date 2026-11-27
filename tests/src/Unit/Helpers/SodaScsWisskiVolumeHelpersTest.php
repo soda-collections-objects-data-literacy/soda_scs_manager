@@ -8,11 +8,16 @@ use Drupal\soda_scs_manager\Helpers\SodaScsContainerHelpers;
 use Drupal\soda_scs_manager\Helpers\SodaScsSnapshotHelpers;
 use Drupal\soda_scs_manager\Helpers\SodaScsWisskiVolumeHelpers;
 use Drupal\Tests\UnitTestCase;
+use PHPUnit\Framework\Attributes\CoversMethod;
+use PHPUnit\Framework\Attributes\Group;
 
 /**
- * @coversDefaultClass \Drupal\soda_scs_manager\Helpers\SodaScsWisskiVolumeHelpers
- * @group soda_scs_manager
+ * Tests SodaScsWisskiVolumeHelpers.
  */
+#[CoversMethod(SodaScsWisskiVolumeHelpers::class, 'buildRestoreCommand')]
+#[CoversMethod(SodaScsWisskiVolumeHelpers::class, 'privateFilesVolumeName')]
+#[CoversMethod(SodaScsWisskiVolumeHelpers::class, 'sitesVolumeName')]
+#[Group('soda_scs_manager')]
 class SodaScsWisskiVolumeHelpersTest extends UnitTestCase {
 
   /**
@@ -32,7 +37,7 @@ class SodaScsWisskiVolumeHelpersTest extends UnitTestCase {
   }
 
   /**
-   * @covers ::buildRestoreCommand
+   * Tests restore command keeps target settings.
    */
   public function testRestoreCommandKeepsTargetSettings(): void {
     $command = $this->volumeHelpers->buildRestoreCommand('wisski-volumes.tar.gz', TRUE);
@@ -57,8 +62,6 @@ class SodaScsWisskiVolumeHelpersTest extends UnitTestCase {
    *
    * A half-finished install of the source would otherwise stop the target
    * from starting again.
-   *
-   * @covers ::buildRestoreCommand
    */
   public function testRestoreCommandKeepsInstallStateFilesOfTheTarget(): void {
     $command = $this->volumeHelpers->buildRestoreCommand('wisski-volumes.tar.gz', TRUE);
@@ -84,7 +87,7 @@ class SodaScsWisskiVolumeHelpersTest extends UnitTestCase {
   }
 
   /**
-   * @covers ::buildRestoreCommand
+   * Tests restore command without keeping settings restores snapshot as is.
    */
   public function testRestoreCommandWithoutKeepingSettingsRestoresSnapshotAsIs(): void {
     $command = $this->volumeHelpers->buildRestoreCommand('snapshot.tar.gz', FALSE);
@@ -94,7 +97,7 @@ class SodaScsWisskiVolumeHelpersTest extends UnitTestCase {
   }
 
   /**
-   * @covers ::buildRestoreCommand
+   * Tests restore command quotes the archive name.
    */
   public function testRestoreCommandQuotesTheArchiveName(): void {
     $command = $this->volumeHelpers->buildRestoreCommand("evil'; rm -rf /; '.tar.gz", FALSE);
@@ -103,8 +106,7 @@ class SodaScsWisskiVolumeHelpersTest extends UnitTestCase {
   }
 
   /**
-   * @covers ::privateFilesVolumeName
-   * @covers ::sitesVolumeName
+   * Tests volume names.
    */
   public function testVolumeNames(): void {
     $this->assertSame('wisski-anna-demo--drupal-sites', SodaScsWisskiVolumeHelpers::sitesVolumeName('wisski-anna-demo'));

@@ -34,6 +34,9 @@ use Drupal\Tests\soda_scs_manager\Unit\SodaScsCreatePathTestTrait;
 use Drupal\Tests\UnitTestCase;
 use Drupal\user\UserInterface;
 use GuzzleHttp\ClientInterface;
+use PHPUnit\Framework\Attributes\CoversMethod;
+use PHPUnit\Framework\Attributes\DataProvider;
+use PHPUnit\Framework\Attributes\Group;
 use Prophecy\Argument;
 use Prophecy\PhpUnit\ProphecyTrait;
 
@@ -42,10 +45,11 @@ use Prophecy\PhpUnit\ProphecyTrait;
  *
  * Issue 3637658: every failure returns success FALSE, an error and a
  * translated message; nothing escapes the method.
- *
- * @coversDefaultClass \Drupal\soda_scs_manager\ComponentActions\SodaScsSqlComponentActions
- * @group soda_scs_manager
  */
+#[CoversMethod(SodaScsSqlComponentActions::class, 'createComponent')]
+#[CoversMethod(SodaScsSqlComponentActions::class, 'rollBackCreateComponent')]
+#[CoversMethod(SodaScsSqlComponentActions::class, 'deleteComponent')]
+#[Group('soda_scs_manager')]
 class SodaScsSqlComponentActionsCreateTest extends UnitTestCase {
 
   use ProphecyTrait;
@@ -183,8 +187,6 @@ class SodaScsSqlComponentActionsCreateTest extends UnitTestCase {
 
   /**
    * An existing database is a user-facing failure, not an empty array.
-   *
-   * @covers ::createComponent
    */
   public function testCreateComponentReturnsUserFacingReasonWhenDatabaseExists(): void {
     $this->sqlServiceActions->existService('sql-foo')->willReturn(['execStatus' => 0, 'result' => TRUE]);
@@ -207,8 +209,6 @@ class SodaScsSqlComponentActionsCreateTest extends UnitTestCase {
 
   /**
    * A SodaScsSqlServiceException no longer escapes createComponent().
-   *
-   * @covers ::createComponent
    */
   public function testCreateComponentCatchesSqlServiceExceptionOfGrant(): void {
     $this->sqlServiceActions->existService('sql-foo')->willReturn(['execStatus' => 0, 'result' => FALSE]);
@@ -227,8 +227,6 @@ class SodaScsSqlComponentActionsCreateTest extends UnitTestCase {
 
   /**
    * A failing create database command is returned as a failure.
-   *
-   * @covers ::createComponent
    */
   public function testCreateComponentCatchesSqlServiceExceptionOfCreateDatabase(): void {
     $this->sqlServiceActions->existService('sql-foo')->willReturn(['execStatus' => 0, 'result' => FALSE]);
@@ -246,8 +244,6 @@ class SodaScsSqlComponentActionsCreateTest extends UnitTestCase {
 
   /**
    * A failing existence check is returned as a failure, nothing is created.
-   *
-   * @covers ::createComponent
    */
   public function testCreateComponentFailsWhenExistenceCheckFails(): void {
     $this->sqlServiceActions->existService('sql-foo')
@@ -262,8 +258,6 @@ class SodaScsSqlComponentActionsCreateTest extends UnitTestCase {
 
   /**
    * An exception of the Keycloak step is returned, the component not saved.
-   *
-   * @covers ::createComponent
    */
   public function testCreateComponentCatchesKeycloakFailure(): void {
     $this->databaseCanBeCreated();
@@ -282,9 +276,6 @@ class SodaScsSqlComponentActionsCreateTest extends UnitTestCase {
 
   /**
    * A failure after the database was created deletes it again.
-   *
-   * @covers ::createComponent
-   * @covers ::rollBackCreateComponent
    */
   public function testCreateComponentDeletesDatabaseWhenKeycloakGroupsFail(): void {
     $this->databaseCanBeCreated();
@@ -310,9 +301,6 @@ class SodaScsSqlComponentActionsCreateTest extends UnitTestCase {
 
   /**
    * A failure when the component is saved deletes the database as well.
-   *
-   * @covers ::createComponent
-   * @covers ::rollBackCreateComponent
    */
   public function testCreateComponentDeletesDatabaseWhenSavingTheComponentFails(): void {
     $this->databaseCanBeCreated();
@@ -335,9 +323,6 @@ class SodaScsSqlComponentActionsCreateTest extends UnitTestCase {
 
   /**
    * A failed rollback is logged and does not hide the original failure.
-   *
-   * @covers ::createComponent
-   * @covers ::rollBackCreateComponent
    */
   public function testCreateComponentReturnsOriginalFailureWhenRollbackFails(): void {
     $this->databaseCanBeCreated();
@@ -359,11 +344,8 @@ class SodaScsSqlComponentActionsCreateTest extends UnitTestCase {
 
   /**
    * Failures before the database exists delete nothing.
-   *
-   * @covers ::createComponent
-   *
-   * @dataProvider failureBeforeDatabaseCreationProvider
    */
+  #[DataProvider('failureBeforeDatabaseCreationProvider')]
   public function testCreateComponentDeletesNothingWhenItFailsBeforeCreatingTheDatabase(array $createResult): void {
     $this->sqlServiceActions->existService('sql-foo')->willReturn(['execStatus' => 0, 'result' => FALSE]);
     $this->sqlServiceActions->existServiceUser(Argument::any())->willReturn(['execStatus' => 0, 'result' => 1]);
@@ -391,8 +373,6 @@ class SodaScsSqlComponentActionsCreateTest extends UnitTestCase {
 
   /**
    * An existing database is never deleted by the rollback.
-   *
-   * @covers ::createComponent
    */
   public function testCreateComponentDoesNotDeleteExistingDatabase(): void {
     $this->sqlServiceActions->existService('sql-foo')->willReturn(['execStatus' => 0, 'result' => TRUE]);
@@ -406,11 +386,8 @@ class SodaScsSqlComponentActionsCreateTest extends UnitTestCase {
 
   /**
    * A database that cannot be deleted keeps the component and the groups.
-   *
-   * @covers ::deleteComponent
-   *
-   * @dataProvider failedDatabaseDeleteProvider
    */
+  #[DataProvider('failedDatabaseDeleteProvider')]
   public function testDeleteComponentKeepsComponentAndGroupsWhenDatabaseDeleteFails(array $deleteResult, string $expectedError): void {
     $component = $this->prophesize(SodaScsComponentInterface::class);
     $component->id()->willReturn(5);
@@ -451,8 +428,6 @@ class SodaScsSqlComponentActionsCreateTest extends UnitTestCase {
 
   /**
    * A deleted database takes the groups and the component with it.
-   *
-   * @covers ::deleteComponent
    */
   public function testDeleteComponentDeletesDatabaseGroupsAndComponent(): void {
     $component = $this->prophesize(SodaScsComponentInterface::class);
@@ -473,8 +448,6 @@ class SodaScsSqlComponentActionsCreateTest extends UnitTestCase {
 
   /**
    * A missing setting still yields the complete failure shape.
-   *
-   * @covers ::createComponent
    */
   public function testCreateComponentFailsWhenDatabaseHostSettingIsMissing(): void {
     $this->settings->get('dbHost')->willReturn('');
@@ -489,8 +462,6 @@ class SodaScsSqlComponentActionsCreateTest extends UnitTestCase {
 
   /**
    * The failure is logged with the original exception.
-   *
-   * @covers ::createComponent
    */
   public function testCreateComponentLogsTheFailure(): void {
     $this->sqlServiceActions->existService('sql-foo')->willReturn(['execStatus' => 0, 'result' => TRUE]);
@@ -503,8 +474,6 @@ class SodaScsSqlComponentActionsCreateTest extends UnitTestCase {
 
   /**
    * A missing bundle info is returned as a failure.
-   *
-   * @covers ::createComponent
    */
   public function testCreateComponentFailsWhenBundleInfoIsMissing(): void {
     $this->bundleInfo->getBundleInfo('soda_scs_component')->willReturn(['soda_scs_sql_component' => []]);

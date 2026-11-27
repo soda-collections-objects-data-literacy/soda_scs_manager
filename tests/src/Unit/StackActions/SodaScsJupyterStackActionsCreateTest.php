@@ -19,6 +19,8 @@ use Drupal\soda_scs_manager\StackActions\SodaScsJupyterStackActions;
 use Drupal\soda_scs_manager\ValueObject\SodaScsResult;
 use Drupal\Tests\soda_scs_manager\Unit\SodaScsCreatePathTestTrait;
 use Drupal\Tests\UnitTestCase;
+use PHPUnit\Framework\Attributes\CoversMethod;
+use PHPUnit\Framework\Attributes\Group;
 use Prophecy\Argument;
 use Prophecy\PhpUnit\ProphecyTrait;
 
@@ -27,10 +29,9 @@ use Prophecy\PhpUnit\ProphecyTrait;
  *
  * Issue 3637658: the user message is translated and never holds the text of
  * an exception; the error carries the details for the log.
- *
- * @coversDefaultClass \Drupal\soda_scs_manager\StackActions\SodaScsJupyterStackActions
- * @group soda_scs_manager
  */
+#[CoversMethod(SodaScsJupyterStackActions::class, 'createStack')]
+#[Group('soda_scs_manager')]
 class SodaScsJupyterStackActionsCreateTest extends UnitTestCase {
 
   use ProphecyTrait;
@@ -118,8 +119,6 @@ class SodaScsJupyterStackActionsCreateTest extends UnitTestCase {
 
   /**
    * A project that already has JupyterHub is a complete failure result.
-   *
-   * @covers ::createStack
    */
   public function testCreateStackFailsWhenProjectAlreadyHasJupyterHub(): void {
     $this->applicationHelpers->loadProjectApplication(Argument::cetera())->willReturn($this->stack->reveal());
@@ -133,8 +132,6 @@ class SodaScsJupyterStackActionsCreateTest extends UnitTestCase {
 
   /**
    * A project folder that is not ready is a failure; the stack is not saved.
-   *
-   * @covers ::createStack
    */
   public function testCreateStackFailsWhenProjectFolderGroupsCannotBeSynced(): void {
     $this->projectHelpers->syncProjectTeamFolderGroups($this->project->reveal(), TRUE)
@@ -154,8 +151,6 @@ class SodaScsJupyterStackActionsCreateTest extends UnitTestCase {
 
   /**
    * The text of an exception is returned as the error, not shown.
-   *
-   * @covers ::createStack
    */
   public function testCreateStackKeepsExceptionTextOutOfTheUserMessage(): void {
     $failure = new \RuntimeException('connect to jupyterhub.internal:8081 refused');

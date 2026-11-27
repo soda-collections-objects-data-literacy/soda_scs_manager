@@ -7,7 +7,12 @@ namespace Drupal\Tests\soda_scs_manager\Kernel\ViewBuilder;
 use Drupal\soda_scs_manager\Entity\SodaScsComponentInterface;
 use Drupal\soda_scs_manager\Helpers\SodaScsServiceHelpers;
 use Drupal\soda_scs_manager\Service\SodaScsWisskiAdminTasks;
+use Drupal\soda_scs_manager\ViewBuilder\SodaScsComponentViewBuilder;
+use Drupal\soda_scs_manager\ViewBuilder\SodaScsStackViewBuilder;
 use Drupal\Tests\soda_scs_manager\Kernel\SodaScsKernelTestBase;
+use PHPUnit\Framework\Attributes\CoversMethod;
+use PHPUnit\Framework\Attributes\DataProvider;
+use PHPUnit\Framework\Attributes\Group;
 
 /**
  * Tests the access data on the detail pages of SQL and triplestore components.
@@ -15,10 +20,14 @@ use Drupal\Tests\soda_scs_manager\Kernel\SodaScsKernelTestBase;
  * The SQL page shows the database user and password, the triplestore page the
  * public read flag, the SPARQL URLs, user, password and token. The stack page
  * links to the detail page of exactly these two component kinds.
- *
- * @group soda_scs_manager
- * @coversDefaultClass \Drupal\soda_scs_manager\ViewBuilder\SodaScsComponentViewBuilder
  */
+#[CoversMethod(SodaScsComponentViewBuilder::class, 'buildDatabaseCredentials')]
+#[CoversMethod(SodaScsComponentViewBuilder::class, 'getServiceKeyValues')]
+#[CoversMethod(SodaScsComponentViewBuilder::class, 'buildUsernameItem')]
+#[CoversMethod(SodaScsComponentViewBuilder::class, 'build')]
+#[CoversMethod(SodaScsComponentViewBuilder::class, 'buildTriplestoreCredentials')]
+#[CoversMethod(SodaScsStackViewBuilder::class, 'build')]
+#[Group('soda_scs_manager')]
 class SodaScsCredentialsViewTest extends SodaScsKernelTestBase {
 
   /**
@@ -60,8 +69,6 @@ class SodaScsCredentialsViewTest extends SodaScsKernelTestBase {
 
   /**
    * The SQL page shows the owner's display name as database user.
-   *
-   * @covers ::buildDatabaseCredentials
    */
   public function testSqlPageShowsOwnerNameAsUser(): void {
     $owner = $this->createTestUser(['name' => 'sql_owner']);
@@ -76,9 +83,6 @@ class SodaScsCredentialsViewTest extends SodaScsKernelTestBase {
 
   /**
    * The SQL password comes from the service key and sits in the hidden span.
-   *
-   * @covers ::buildDatabaseCredentials
-   * @covers ::getServiceKeyValues
    */
   public function testSqlPageShowsServicePasswordInClickToViewSpan(): void {
     $key = $this->createTestServiceKey('default', ['servicePassword' => 'sql-secret-1']);
@@ -92,9 +96,6 @@ class SodaScsCredentialsViewTest extends SodaScsKernelTestBase {
 
   /**
    * Without a service key the SQL page shows the not-set placeholder.
-   *
-   * @covers ::buildDatabaseCredentials
-   * @covers ::getServiceKeyValues
    */
   public function testSqlPageShowsNotSetWithoutServiceKey(): void {
     $component = $this->createTestComponent(self::SQL_BUNDLE);
@@ -106,8 +107,6 @@ class SodaScsCredentialsViewTest extends SodaScsKernelTestBase {
 
   /**
    * A service key with an empty password shows the placeholder, not a blank.
-   *
-   * @covers ::getServiceKeyValues
    */
   public function testSqlPageShowsNotSetForEmptyPassword(): void {
     $key = $this->createTestServiceKey('default', ['servicePassword' => '']);
@@ -120,9 +119,6 @@ class SodaScsCredentialsViewTest extends SodaScsKernelTestBase {
 
   /**
    * HTML in the password and the user name is escaped.
-   *
-   * @covers ::buildDatabaseCredentials
-   * @covers ::buildUsernameItem
    */
   public function testSqlPageEscapesPasswordAndUserName(): void {
     $owner = $this->createTestUser(['name' => 'o<b>x']);
@@ -141,8 +137,6 @@ class SodaScsCredentialsViewTest extends SodaScsKernelTestBase {
 
   /**
    * The SQL password of a token-typed key is not taken as the password.
-   *
-   * @covers ::getServiceKeyValues
    */
   public function testSqlPageIgnoresServiceKeyOfOtherType(): void {
     $key = $this->createTestServiceKey('default', [
@@ -159,8 +153,6 @@ class SodaScsCredentialsViewTest extends SodaScsKernelTestBase {
 
   /**
    * The SQL page prints the database card with the stored values.
-   *
-   * @covers ::build
    */
   public function testSqlPageRendersDatabaseAccessCard(): void {
     $owner = $this->createTestUser(['name' => 'sql_render_owner']);
@@ -181,9 +173,6 @@ class SodaScsCredentialsViewTest extends SodaScsKernelTestBase {
 
   /**
    * The triplestore page prints the endpoint card with every row.
-   *
-   * @covers ::build
-   * @covers ::buildTriplestoreCredentials
    */
   public function testTriplestorePageRendersEndpointAccessCard(): void {
     $owner = $this->createTestUser(['name' => 'ts_render_owner']);
@@ -217,9 +206,6 @@ class SodaScsCredentialsViewTest extends SodaScsKernelTestBase {
 
   /**
    * The triplestore block has the owner's display name as user row.
-   *
-   * @covers ::buildTriplestoreCredentials
-   * @covers ::buildUsernameItem
    */
   public function testTriplestoreBlockHasOwnerNameAsUser(): void {
     $owner = $this->createTestUser(['name' => 'ts_owner']);
@@ -234,8 +220,6 @@ class SodaScsCredentialsViewTest extends SodaScsKernelTestBase {
 
   /**
    * Public read is a disabled, ticked checkbox when the store is public.
-   *
-   * @covers ::buildTriplestoreCredentials
    */
   public function testTriplestorePublicReadCheckboxIsCheckedWhenPublic(): void {
     $component = $this->createTestComponent(self::TRIPLESTORE_BUNDLE, ['publicRead' => TRUE]);
@@ -249,8 +233,6 @@ class SodaScsCredentialsViewTest extends SodaScsKernelTestBase {
 
   /**
    * Public read is an unticked checkbox when the store is not public.
-   *
-   * @covers ::buildTriplestoreCredentials
    */
   public function testTriplestorePublicReadCheckboxIsUncheckedWhenNotPublic(): void {
     $component = $this->createTestComponent(self::TRIPLESTORE_BUNDLE, ['publicRead' => FALSE]);
@@ -263,8 +245,6 @@ class SodaScsCredentialsViewTest extends SodaScsKernelTestBase {
 
   /**
    * Public read is unticked when the flag was never set.
-   *
-   * @covers ::buildTriplestoreCredentials
    */
   public function testTriplestorePublicReadCheckboxIsUncheckedWhenUnset(): void {
     $component = $this->createTestComponent(self::TRIPLESTORE_BUNDLE);
@@ -277,8 +257,6 @@ class SodaScsCredentialsViewTest extends SodaScsKernelTestBase {
 
   /**
    * The rendered checkbox carries the checked attribute only when public.
-   *
-   * @covers ::buildTriplestoreCredentials
    */
   public function testTriplestoreRenderedCheckboxCheckedOnlyWhenPublic(): void {
     $public = $this->renderComponent($this->createTestComponent(self::TRIPLESTORE_BUNDLE, ['publicRead' => TRUE]));
@@ -291,8 +269,6 @@ class SodaScsCredentialsViewTest extends SodaScsKernelTestBase {
 
   /**
    * Password and token are read by the type of the service key.
-   *
-   * @covers ::getServiceKeyValues
    */
   public function testTriplestoreReadsPasswordAndTokenByKeyType(): void {
     $password = $this->createTestServiceKey('default', ['servicePassword' => 'pw-value']);
@@ -312,8 +288,6 @@ class SodaScsCredentialsViewTest extends SodaScsKernelTestBase {
 
   /**
    * Without service keys the triplestore shows the placeholder twice.
-   *
-   * @covers ::getServiceKeyValues
    */
   public function testTriplestoreShowsNotSetWithoutServiceKeys(): void {
     $component = $this->createTestComponent(self::TRIPLESTORE_BUNDLE);
@@ -326,8 +300,6 @@ class SodaScsCredentialsViewTest extends SodaScsKernelTestBase {
 
   /**
    * Without a configured host the SPARQL URLs stay empty.
-   *
-   * @covers ::buildTriplestoreCredentials
    */
   public function testTriplestoreUrlsAreEmptyWithoutHost(): void {
     $this->config('soda_scs_manager.settings')
@@ -342,8 +314,6 @@ class SodaScsCredentialsViewTest extends SodaScsKernelTestBase {
 
   /**
    * Other component kinds get neither credentials block.
-   *
-   * @covers ::build
    */
   public function testOtherBundlesGetNoCredentialsBlock(): void {
     $component = $this->createTestComponent('soda_scs_wisski_component');
@@ -359,8 +329,6 @@ class SodaScsCredentialsViewTest extends SodaScsKernelTestBase {
 
   /**
    * The stack page links the SQL and triplestore cards to their detail page.
-   *
-   * @covers \Drupal\soda_scs_manager\ViewBuilder\SodaScsStackViewBuilder::build
    */
   public function testStackPageShowsDetailsLinkForSqlAndTriplestoreCards(): void {
     $sql = $this->createTestComponent(self::SQL_BUNDLE);
@@ -376,8 +344,6 @@ class SodaScsCredentialsViewTest extends SodaScsKernelTestBase {
 
   /**
    * The stack page keeps the Details button hidden on the other cards.
-   *
-   * @covers \Drupal\soda_scs_manager\ViewBuilder\SodaScsStackViewBuilder::build
    */
   public function testStackPageHidesDetailsLinkForOtherCards(): void {
     $wisski = $this->createTestComponent('soda_scs_wisski_component');
@@ -393,11 +359,8 @@ class SodaScsCredentialsViewTest extends SodaScsKernelTestBase {
 
   /**
    * A viewer who is not the owner gets no credentials in the render array.
-   *
-   * @covers ::build
-   *
-   * @dataProvider credentialBundleProvider
    */
+  #[DataProvider('credentialBundleProvider')]
   public function testNonOwnerGetsNoCredentials(string $bundle, string $key): void {
     $owner = $this->createTestUser(['name' => 'the_owner']);
     $secret = $this->createTestServiceKey('default', ['servicePassword' => 'owner-only-secret']);

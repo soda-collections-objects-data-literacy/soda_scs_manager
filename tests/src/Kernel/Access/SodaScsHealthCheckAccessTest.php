@@ -8,15 +8,15 @@ use Drupal\soda_scs_manager\Controller\SodaScsComponentController;
 use Drupal\soda_scs_manager\Controller\SodaScsStackController;
 use Drupal\Tests\soda_scs_manager\Kernel\SodaScsKernelTestBase;
 use Drupal\user\Entity\Role;
+use PHPUnit\Framework\Attributes\Group;
 
 /**
  * Tests that the health endpoints follow the entity's view access.
  *
  * A user without view access gets the "not found" payload, the same as for a
  * missing ID, and no health check runs.
- *
- * @group soda_scs_manager
  */
+#[Group('soda_scs_manager')]
 class SodaScsHealthCheckAccessTest extends SodaScsKernelTestBase {
 
   /**

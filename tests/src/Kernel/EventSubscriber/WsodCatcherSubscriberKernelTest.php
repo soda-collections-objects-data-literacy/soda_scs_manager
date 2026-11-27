@@ -5,7 +5,10 @@ declare(strict_types=1);
 namespace Drupal\Tests\soda_scs_manager\Kernel\EventSubscriber;
 
 use Drupal\Core\ParamConverter\ParamNotConvertedException;
+use Drupal\soda_scs_manager\EventSubscriber\WsodCatcherSubscriber;
 use Drupal\Tests\soda_scs_manager\Kernel\SodaScsKernelTestBase;
+use PHPUnit\Framework\Attributes\CoversMethod;
+use PHPUnit\Framework\Attributes\Group;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpKernel\Event\ExceptionEvent;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
@@ -14,10 +17,9 @@ use Symfony\Component\HttpKernel\KernelEvents;
 
 /**
  * Tests the WSOD catcher together with core's exception subscribers.
- *
- * @group soda_scs_manager
- * @coversDefaultClass \Drupal\soda_scs_manager\EventSubscriber\WsodCatcherSubscriber
  */
+#[CoversMethod(WsodCatcherSubscriber::class, 'onException')]
+#[Group('soda_scs_manager')]
 class WsodCatcherSubscriberKernelTest extends SodaScsKernelTestBase {
 
   /**
@@ -29,7 +31,7 @@ class WsodCatcherSubscriberKernelTest extends SodaScsKernelTestBase {
   }
 
   /**
-   * @covers ::onException
+   * Tests param not converted exception becomes not found after dispatch.
    */
   public function testParamNotConvertedExceptionBecomesNotFoundAfterDispatch(): void {
     $event = new ExceptionEvent(
@@ -45,7 +47,7 @@ class WsodCatcherSubscriberKernelTest extends SodaScsKernelTestBase {
   }
 
   /**
-   * @covers ::onException
+   * Tests unknown component URL returns not found.
    */
   public function testUnknownComponentUrlReturnsNotFound(): void {
     $this->container->get('current_user')->setAccount($this->testUser);

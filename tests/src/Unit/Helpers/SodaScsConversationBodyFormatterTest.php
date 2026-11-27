@@ -6,16 +6,18 @@ namespace Drupal\Tests\soda_scs_manager\Unit\Helpers;
 
 use Drupal\soda_scs_manager\Helpers\SodaScsConversationBodyFormatter;
 use Drupal\Tests\UnitTestCase;
+use PHPUnit\Framework\Attributes\CoversMethod;
+use PHPUnit\Framework\Attributes\Group;
 
 /**
- * @coversDefaultClass \Drupal\soda_scs_manager\Helpers\SodaScsConversationBodyFormatter
- *
- * @group soda_scs_manager
+ * Tests SodaScsConversationBodyFormatter.
  */
+#[CoversMethod(SodaScsConversationBodyFormatter::class, 'toHtml')]
+#[Group('soda_scs_manager')]
 final class SodaScsConversationBodyFormatterTest extends UnitTestCase {
 
   /**
-   * @covers ::toHtml
+   * Tests escapes HTML and keeps line breaks.
    */
   public function testEscapesHtmlAndKeepsLineBreaks(): void {
     $html = SodaScsConversationBodyFormatter::toHtml("<b>x</b>\ny");
@@ -24,7 +26,7 @@ final class SodaScsConversationBodyFormatterTest extends UnitTestCase {
   }
 
   /**
-   * @covers ::toHtml
+   * Tests formats headings and inline styles.
    */
   public function testFormatsHeadingsAndInlineStyles(): void {
     $html = SodaScsConversationBodyFormatter::toHtml(
@@ -40,7 +42,7 @@ final class SodaScsConversationBodyFormatterTest extends UnitTestCase {
   }
 
   /**
-   * @covers ::toHtml
+   * Tests formats subheadings.
    */
   public function testFormatsSubheadings(): void {
     $html = SodaScsConversationBodyFormatter::toHtml("## Sub\n### Smaller");
@@ -49,7 +51,7 @@ final class SodaScsConversationBodyFormatterTest extends UnitTestCase {
   }
 
   /**
-   * @covers ::toHtml
+   * Tests turns markdown and bare https links into anchors.
    */
   public function testTurnsMarkdownAndBareHttpsLinksIntoAnchors(): void {
     $html = SodaScsConversationBodyFormatter::toHtml(
@@ -66,7 +68,7 @@ final class SodaScsConversationBodyFormatterTest extends UnitTestCase {
   }
 
   /**
-   * @covers ::toHtml
+   * Tests rejects non HTTP schemes.
    */
   public function testRejectsNonHttpSchemes(): void {
     $html = SodaScsConversationBodyFormatter::toHtml('[x](javascript:alert(1))');

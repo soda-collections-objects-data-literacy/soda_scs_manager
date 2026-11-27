@@ -24,6 +24,8 @@ use Drupal\soda_scs_manager\ServiceKeyActions\SodaScsServiceKeyActionsInterface;
 use Drupal\soda_scs_manager\ValueObject\SodaScsResult;
 use Drupal\Tests\soda_scs_manager\Unit\SodaScsCreatePathTestTrait;
 use Drupal\Tests\UnitTestCase;
+use PHPUnit\Framework\Attributes\CoversMethod;
+use PHPUnit\Framework\Attributes\Group;
 
 /**
  * The container ID the Docker exec commands of SodaScsDrupalHelpers use.
@@ -31,10 +33,11 @@ use Drupal\Tests\UnitTestCase;
  * A WissKI whose container started after the create request has no stored
  * container ID; the helper then syncs it instead of exec-ing into an empty
  * container name.
- *
- * @coversDefaultClass \Drupal\soda_scs_manager\Helpers\SodaScsDrupalHelpers
- * @group soda_scs_manager
  */
+#[CoversMethod(SodaScsDrupalHelpers::class, 'setDrupalMaintainmentMode')]
+#[CoversMethod(SodaScsDrupalHelpers::class, 'resolveContainerId')]
+#[CoversMethod(SodaScsDrupalHelpers::class, 'getInstalledDrupalPackages')]
+#[Group('soda_scs_manager')]
 class SodaScsDrupalHelpersContainerIdTest extends UnitTestCase {
 
   use SodaScsCreatePathTestTrait;
@@ -99,9 +102,6 @@ class SodaScsDrupalHelpersContainerIdTest extends UnitTestCase {
 
   /**
    * An empty stored container ID is synced and the synced ID is used.
-   *
-   * @covers ::setDrupalMaintainmentMode
-   * @covers ::resolveContainerId
    */
   public function testEmptyContainerIdIsSyncedAndUsedAsContainerName(): void {
     $component = $this->component('');
@@ -121,9 +121,6 @@ class SodaScsDrupalHelpersContainerIdTest extends UnitTestCase {
 
   /**
    * A NULL stored container ID is treated like an empty one.
-   *
-   * @covers ::setDrupalMaintainmentMode
-   * @covers ::resolveContainerId
    */
   public function testNullContainerIdIsSynced(): void {
     $component = $this->component(NULL);
@@ -140,9 +137,6 @@ class SodaScsDrupalHelpersContainerIdTest extends UnitTestCase {
 
   /**
    * A stored container ID is used as it is; nothing is synced.
-   *
-   * @covers ::setDrupalMaintainmentMode
-   * @covers ::resolveContainerId
    */
   public function testStoredContainerIdIsUsedWithoutSync(): void {
     $this->containerHelpers->expects($this->never())->method('syncComponentContainerId');
@@ -161,9 +155,6 @@ class SodaScsDrupalHelpersContainerIdTest extends UnitTestCase {
    *
    * The exec result decides: the empty name is passed on, never a stale or
    * made-up ID.
-   *
-   * @covers ::setDrupalMaintainmentMode
-   * @covers ::resolveContainerId
    */
   public function testFailedSyncPassesEmptyContainerName(): void {
     $this->containerHelpers->expects($this->once())
@@ -185,9 +176,6 @@ class SodaScsDrupalHelpersContainerIdTest extends UnitTestCase {
 
   /**
    * A sync that answers without a container ID leaves the name empty.
-   *
-   * @covers ::setDrupalMaintainmentMode
-   * @covers ::resolveContainerId
    */
   public function testSyncWithoutContainerIdInDataPassesEmptyContainerName(): void {
     $this->containerHelpers->expects($this->once())
@@ -203,9 +191,6 @@ class SodaScsDrupalHelpersContainerIdTest extends UnitTestCase {
 
   /**
    * The installed packages command uses the synced container ID as well.
-   *
-   * @covers ::getInstalledDrupalPackages
-   * @covers ::resolveContainerId
    */
   public function testInstalledPackagesUseSyncedContainerId(): void {
     $this->containerHelpers->expects($this->once())

@@ -4,17 +4,21 @@ declare(strict_types=1);
 
 namespace Drupal\Tests\soda_scs_manager\Kernel\Access;
 
+use Drupal\soda_scs_manager\Helpers\SodaScsProjectMembershipHelpers;
 use Drupal\Tests\soda_scs_manager\Kernel\SodaScsKernelTestBase;
 use Drupal\user\Entity\Role;
 use Drupal\user\Entity\User;
 use Drupal\user\UserInterface;
+use PHPUnit\Framework\Attributes\CoversMethod;
+use PHPUnit\Framework\Attributes\Group;
 
 /**
  * Tests project member add/remove permission rules.
- *
- * @group soda_scs_manager
- * @coversDefaultClass \Drupal\soda_scs_manager\Helpers\SodaScsProjectMembershipHelpers
  */
+#[CoversMethod(SodaScsProjectMembershipHelpers::class, 'canAddMembers')]
+#[CoversMethod(SodaScsProjectMembershipHelpers::class, 'canRemoveMember')]
+#[CoversMethod(SodaScsProjectMembershipHelpers::class, 'isListedMember')]
+#[Group('soda_scs_manager')]
 class SodaScsProjectMembershipAccessTest extends SodaScsKernelTestBase {
 
   /**
@@ -49,9 +53,7 @@ class SodaScsProjectMembershipAccessTest extends SodaScsKernelTestBase {
   }
 
   /**
-   * @covers ::canAddMembers
-   * @covers ::canRemoveMember
-   * @covers ::isListedMember
+   * Tests member add and remove rules.
    */
   public function testMemberAddAndRemoveRules(): void {
     $owner = $this->testUser;
@@ -96,7 +98,7 @@ class SodaScsProjectMembershipAccessTest extends SodaScsKernelTestBase {
   }
 
   /**
-   * @covers ::canRemoveMember
+   * Tests anonymous cannot change members.
    */
   public function testAnonymousCannotChangeMembers(): void {
     $member = $this->createTestUser();

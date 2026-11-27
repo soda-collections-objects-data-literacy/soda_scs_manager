@@ -8,17 +8,18 @@ use Drupal\Core\Config\Config;
 use Drupal\Core\Config\ConfigFactoryInterface;
 use Drupal\soda_scs_manager\Helpers\SodaScsSnapshotHelpers;
 use Drupal\Tests\UnitTestCase;
+use PHPUnit\Framework\Attributes\CoversMethod;
+use PHPUnit\Framework\Attributes\Group;
 
 /**
- * @coversDefaultClass \Drupal\soda_scs_manager\Helpers\SodaScsSnapshotHelpers
- * @group soda_scs_manager
+ * Tests the snapshot paths of SodaScsSnapshotHelpers.
  */
+#[CoversMethod(SodaScsSnapshotHelpers::class, 'convertContainerPathToHostPath')]
+#[Group('soda_scs_manager')]
 class SodaScsSnapshotPathTest extends UnitTestCase {
 
   /**
    * The legacy config value must not hide the real container root.
-   *
-   * @covers ::convertContainerPathToHostPath
    */
   public function testLegacySnapshotPathMapsToTheHostBind(): void {
     $helper = $this->helper('/srv/backups/scs-manager/snapshots');
@@ -31,8 +32,6 @@ class SodaScsSnapshotPathTest extends UnitTestCase {
 
   /**
    * No remap when the host path is the container root.
-   *
-   * @covers ::convertContainerPathToHostPath
    */
   public function testEqualRootsStayUnchanged(): void {
     $helper = $this->helper('/var/scs-manager/snapshots');

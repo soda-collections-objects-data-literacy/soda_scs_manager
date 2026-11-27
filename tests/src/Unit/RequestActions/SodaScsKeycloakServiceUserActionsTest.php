@@ -16,15 +16,23 @@ use Drupal\soda_scs_manager\RequestActions\SodaScsKeycloakServiceUserActions;
 use Drupal\Tests\UnitTestCase;
 use GuzzleHttp\ClientInterface;
 use GuzzleHttp\Psr7\Response;
+use PHPUnit\Framework\Attributes\CoversMethod;
+use PHPUnit\Framework\Attributes\Group;
 use Prophecy\PhpUnit\ProphecyTrait;
 use Symfony\Component\HttpFoundation\RequestStack;
 
 /**
  * Tests the SodaScsKeycloakServiceUserActions service.
- *
- * @group soda_scs_manager
- * @coversDefaultClass \Drupal\soda_scs_manager\RequestActions\SodaScsKeycloakServiceUserActions
  */
+#[CoversMethod(SodaScsKeycloakServiceUserActions::class, 'buildCreateRequest')]
+#[CoversMethod(SodaScsKeycloakServiceUserActions::class, 'buildGetRequest')]
+#[CoversMethod(SodaScsKeycloakServiceUserActions::class, 'buildGetAllRequest')]
+#[CoversMethod(SodaScsKeycloakServiceUserActions::class, 'buildUpdateRequest')]
+#[CoversMethod(SodaScsKeycloakServiceUserActions::class, 'buildDeleteRequest')]
+#[CoversMethod(SodaScsKeycloakServiceUserActions::class, 'buildTokenRequest')]
+#[CoversMethod(SodaScsKeycloakServiceUserActions::class, 'buildHealthCheckRequest')]
+#[CoversMethod(SodaScsKeycloakServiceUserActions::class, 'makeRequest')]
+#[Group('soda_scs_manager')]
 class SodaScsKeycloakServiceUserActionsTest extends UnitTestCase {
 
   use ProphecyTrait;
@@ -163,8 +171,6 @@ class SodaScsKeycloakServiceUserActionsTest extends UnitTestCase {
 
   /**
    * Tests buildCreateRequest method.
-   *
-   * @covers ::buildCreateRequest
    */
   public function testBuildCreateRequest(): void {
     $requestParams = [
@@ -200,8 +206,6 @@ class SodaScsKeycloakServiceUserActionsTest extends UnitTestCase {
 
   /**
    * Tests buildGetRequest method.
-   *
-   * @covers ::buildGetRequest
    */
   public function testBuildGetRequest(): void {
     $requestParams = [
@@ -223,8 +227,6 @@ class SodaScsKeycloakServiceUserActionsTest extends UnitTestCase {
 
   /**
    * Tests buildGetAllRequest method for users.
-   *
-   * @covers ::buildGetAllRequest
    */
   public function testBuildGetAllRequestUsers(): void {
     $requestParams = [
@@ -242,8 +244,6 @@ class SodaScsKeycloakServiceUserActionsTest extends UnitTestCase {
 
   /**
    * Tests buildGetAllRequest method for groups.
-   *
-   * @covers ::buildGetAllRequest
    */
   public function testBuildGetAllRequestGroups(): void {
     $requestParams = [
@@ -264,8 +264,6 @@ class SodaScsKeycloakServiceUserActionsTest extends UnitTestCase {
 
   /**
    * Tests buildUpdateRequest method for updating user.
-   *
-   * @covers ::buildUpdateRequest
    */
   public function testBuildUpdateRequestUpdateUser(): void {
     $requestParams = [
@@ -290,8 +288,6 @@ class SodaScsKeycloakServiceUserActionsTest extends UnitTestCase {
 
   /**
    * Tests buildUpdateRequest method for adding user to group.
-   *
-   * @covers ::buildUpdateRequest
    */
   public function testBuildUpdateRequestAddUserToGroup(): void {
     $requestParams = [
@@ -313,8 +309,6 @@ class SodaScsKeycloakServiceUserActionsTest extends UnitTestCase {
 
   /**
    * Tests buildDeleteRequest method for deleting user.
-   *
-   * @covers ::buildDeleteRequest
    */
   public function testBuildDeleteRequestUser(): void {
     $requestParams = [
@@ -336,8 +330,6 @@ class SodaScsKeycloakServiceUserActionsTest extends UnitTestCase {
 
   /**
    * Tests buildDeleteRequest method for removing user from group.
-   *
-   * @covers ::buildDeleteRequest
    */
   public function testBuildDeleteRequestRemoveFromGroup(): void {
     $requestParams = [
@@ -359,8 +351,6 @@ class SodaScsKeycloakServiceUserActionsTest extends UnitTestCase {
 
   /**
    * Tests buildTokenRequest method.
-   *
-   * @covers ::buildTokenRequest
    */
   public function testBuildTokenRequest(): void {
     $result = $this->keycloakServiceUserActions->buildTokenRequest([]);
@@ -377,8 +367,6 @@ class SodaScsKeycloakServiceUserActionsTest extends UnitTestCase {
 
   /**
    * Tests buildHealthCheckRequest method.
-   *
-   * @covers ::buildHealthCheckRequest
    */
   public function testBuildHealthCheckRequest(): void {
     $requestParams = [];
@@ -392,8 +380,6 @@ class SodaScsKeycloakServiceUserActionsTest extends UnitTestCase {
 
   /**
    * Tests makeRequest method with successful response.
-   *
-   * @covers ::makeRequest
    */
   public function testMakeRequestSuccess(): void {
     $mockResponse = new Response(200, [], '{"id": "user-123"}');
@@ -419,8 +405,6 @@ class SodaScsKeycloakServiceUserActionsTest extends UnitTestCase {
 
   /**
    * Tests makeRequest method with request body.
-   *
-   * @covers ::makeRequest
    */
   public function testMakeRequestWithBody(): void {
     $mockResponse = new Response(201, [], '{"id": "new-user-123"}');
