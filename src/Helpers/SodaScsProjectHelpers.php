@@ -78,6 +78,8 @@ class SodaScsProjectHelpers {
     LoggerChannelFactoryInterface $loggerFactory,
     #[Autowire(service: 'soda_scs_manager.project_application.helpers')]
     protected SodaScsProjectApplicationHelpers $projectApplicationHelpers,
+    #[Autowire(service: 'soda_scs_manager.nextcloud_group.helpers')]
+    protected SodaScsNextcloudGroupHelpers $nextcloudGroupHelpers,
   ) {
     $this->settings = $this->configFactory->getEditable('soda_scs_manager.settings');
     $this->entityTypeManager = $entityTypeManager;
@@ -104,6 +106,7 @@ class SodaScsProjectHelpers {
       $container->get('soda_scs_manager.nextcloud_service.actions'),
       $container->get('logger.factory'),
       $container->get('soda_scs_manager.project_application.helpers'),
+      $container->get('soda_scs_manager.nextcloud_group.helpers'),
     );
   }
 
@@ -607,7 +610,7 @@ class SodaScsProjectHelpers {
   }
 
   /**
-   * Delete the project group from Keycloak.
+   * Delete the project group from Keycloak and its group in Nextcloud.
    *
    * @param \Drupal\soda_scs_manager\Entity\SodaScsProjectInterface $project
    *   The project entity.
@@ -642,6 +645,11 @@ class SodaScsProjectHelpers {
         ]),
       ];
     }
+
+    // The Team Folder created a Nextcloud group named by the gid; nothing
+    // else removes it. Only after the Keycloak group is gone, so a Drive
+    // login cannot copy it back.
+    $this->nextcloudGroupHelpers->deleteGroup((string) ($project->get('groupId')->value ?? ''));
 
     return [
       'success' => TRUE,

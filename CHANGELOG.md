@@ -7,8 +7,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- `drush soda_scs_manager:delete-orphaned-nextcloud-groups` lists the
+  Nextcloud groups of projects and applications that no longer exist; with
+  `--apply` it deletes the empty ones. Groups that still have members are
+  kept. **After the update, run it once without `--apply`, check the list,
+  then run it with `--apply`.**
+  Related: [#3642180](https://www.drupal.org/project/soda_scs_manager/issues/3642180).
+
 ### Fixed
 
+- Deleting a project, a WissKI, SQL or triplestore application, or an
+  account no longer leaves empty groups in Nextcloud. The project group and
+  the application's `-admin` and `-user` groups are now deleted in Nextcloud
+  together with the Keycloak group.
+  Related: [#3642180](https://www.drupal.org/project/soda_scs_manager/issues/3642180).
 - Deleting an account no longer logs an error when the user never opened
   WebProtégé. The missing WebProtégé account is logged as a notice.
   Related: [#3642180](https://www.drupal.org/project/soda_scs_manager/issues/3642180).

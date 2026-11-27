@@ -21,12 +21,16 @@ class SodaScsKeycloakHelpers {
    *   The Soda SCS keycloak service group actions.
    * @param \Drupal\soda_scs_manager\RequestActions\SodaScsServiceRequestInterface $sodaScsKeycloakServiceUserActions
    *   The Soda SCS keycloak service user actions.
+   * @param \Drupal\soda_scs_manager\Helpers\SodaScsNextcloudGroupHelpers $nextcloudGroupHelpers
+   *   Deletes the Nextcloud copies of deleted Keycloak groups.
    */
   public function __construct(
     #[Autowire(service: 'soda_scs_manager.keycloak_service.group.actions')]
     protected SodaScsKeycloakServiceGroupActions $sodaScsKeycloakServiceGroupActions,
     #[Autowire(service: 'soda_scs_manager.keycloak_service.user.actions')]
     protected SodaScsServiceRequestInterface $sodaScsKeycloakServiceUserActions,
+    #[Autowire(service: 'soda_scs_manager.nextcloud_group.helpers')]
+    protected SodaScsNextcloudGroupHelpers $nextcloudGroupHelpers,
   ) {
     $this->sodaScsKeycloakServiceGroupActions = $sodaScsKeycloakServiceGroupActions;
     $this->sodaScsKeycloakServiceUserActions = $sodaScsKeycloakServiceUserActions;
@@ -429,7 +433,8 @@ class SodaScsKeycloakHelpers {
    * Deletes {machineName}-admin and {machineName}-user Keycloak groups.
    *
    * Missing groups are skipped so legacy components without groups can still
-   * be deleted.
+   * be deleted. Their Nextcloud copies (user_oidc creates them at the Drive
+   * login and never removes them) are deleted afterwards.
    *
    * @param string $machineName
    *   Component machine name.
@@ -483,6 +488,9 @@ class SodaScsKeycloakHelpers {
       }
       $userDeleted = TRUE;
     }
+
+    $this->nextcloudGroupHelpers->deleteGroup($adminGroupName);
+    $this->nextcloudGroupHelpers->deleteGroup($userGroupName);
 
     return [
       'adminGroupName' => $adminGroupName,

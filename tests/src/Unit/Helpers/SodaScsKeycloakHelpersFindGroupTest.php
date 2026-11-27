@@ -5,10 +5,13 @@ declare(strict_types=1);
 namespace Drupal\Tests\soda_scs_manager\Unit\Helpers;
 
 use Drupal\soda_scs_manager\Helpers\SodaScsKeycloakHelpers;
+use Drupal\soda_scs_manager\Helpers\SodaScsNextcloudGroupHelpers;
 use Drupal\soda_scs_manager\RequestActions\SodaScsKeycloakServiceGroupActions;
 use Drupal\soda_scs_manager\RequestActions\SodaScsServiceRequestInterface;
 use Drupal\Tests\UnitTestCase;
 use GuzzleHttp\Psr7\Response;
+use PHPUnit\Framework\Attributes\CoversMethod;
+use PHPUnit\Framework\Attributes\Group;
 use Prophecy\Argument;
 use Prophecy\PhpUnit\ProphecyTrait;
 
@@ -17,10 +20,10 @@ use Prophecy\PhpUnit\ProphecyTrait;
  *
  * Issue 3638568: the lookup asks Keycloak for the exact name and throws when
  * it cannot answer, so a delete never takes an outage for a missing group.
- *
- * @coversDefaultClass \Drupal\soda_scs_manager\Helpers\SodaScsKeycloakHelpers
- * @group soda_scs_manager
  */
+#[CoversMethod(SodaScsKeycloakHelpers::class, 'deleteComponentAccessGroups')]
+#[CoversMethod(SodaScsKeycloakHelpers::class, 'findGroupByName')]
+#[Group('soda_scs_manager')]
 class SodaScsKeycloakHelpersFindGroupTest extends UnitTestCase {
 
   use ProphecyTrait;
@@ -40,6 +43,13 @@ class SodaScsKeycloakHelpersFindGroupTest extends UnitTestCase {
   protected $userActions;
 
   /**
+   * The mocked Nextcloud group helpers.
+   *
+   * @var \Drupal\soda_scs_manager\Helpers\SodaScsNextcloudGroupHelpers|\Prophecy\Prophecy\ObjectProphecy
+   */
+  protected $nextcloudGroupHelpers;
+
+  /**
    * The service under test.
    *
    * @var \Drupal\soda_scs_manager\Helpers\SodaScsKeycloakHelpers
@@ -53,16 +63,16 @@ class SodaScsKeycloakHelpersFindGroupTest extends UnitTestCase {
     parent::setUp();
     $this->groupActions = $this->prophesize(SodaScsKeycloakServiceGroupActions::class);
     $this->userActions = $this->prophesize(SodaScsServiceRequestInterface::class);
+    $this->nextcloudGroupHelpers = $this->prophesize(SodaScsNextcloudGroupHelpers::class);
     $this->helpers = new SodaScsKeycloakHelpers(
       $this->groupActions->reveal(),
       $this->userActions->reveal(),
+      $this->nextcloudGroupHelpers->reveal(),
     );
   }
 
   /**
    * The lookup asks for the exact name and returns the group.
-   *
-   * @covers ::findGroupByName
    */
   public function testFindGroupByNameAsksForExactNameAndReturnsGroup(): void {
     $this->groupActions->buildGetAllRequest([
@@ -83,8 +93,6 @@ class SodaScsKeycloakHelpersFindGroupTest extends UnitTestCase {
 
   /**
    * Keycloak searches by substring: a similar name is no match.
-   *
-   * @covers ::findGroupByName
    */
   public function testFindGroupByNameReturnsNullWhenOnlySimilarNamesAreFound(): void {
     $this->groupActions->buildGetAllRequest(Argument::any())->willReturn(['request' => 'lookup']);
@@ -99,8 +107,6 @@ class SodaScsKeycloakHelpersFindGroupTest extends UnitTestCase {
 
   /**
    * An empty list is a missing group, not a failure.
-   *
-   * @covers ::findGroupByName
    */
   public function testFindGroupByNameReturnsNullWhenThereIsNoGroup(): void {
     $this->groupActions->buildGetAllRequest(Argument::any())->willReturn(['request' => 'lookup']);
@@ -111,8 +117,6 @@ class SodaScsKeycloakHelpersFindGroupTest extends UnitTestCase {
 
   /**
    * A body that is no JSON list is read as no group.
-   *
-   * @covers ::findGroupByName
    */
   public function testFindGroupByNameReturnsNullWhenBodyIsNoList(): void {
     $this->groupActions->buildGetAllRequest(Argument::any())->willReturn(['request' => 'lookup']);
@@ -126,8 +130,6 @@ class SodaScsKeycloakHelpersFindGroupTest extends UnitTestCase {
 
   /**
    * A token is fetched when the caller has none.
-   *
-   * @covers ::findGroupByName
    */
   public function testFindGroupByNameFetchesTokenWhenNoneIsGiven(): void {
     $this->userActions->buildTokenRequest()->willReturn(['request' => 'token']);
@@ -150,8 +152,6 @@ class SodaScsKeycloakHelpersFindGroupTest extends UnitTestCase {
 
   /**
    * Without a token the lookup throws instead of answering "no group".
-   *
-   * @covers ::findGroupByName
    */
   public function testFindGroupByNameThrowsWithoutToken(): void {
     $this->userActions->buildTokenRequest()->willReturn(['request' => 'token']);
@@ -165,8 +165,6 @@ class SodaScsKeycloakHelpersFindGroupTest extends UnitTestCase {
 
   /**
    * A failed lookup throws with the reason of the request.
-   *
-   * @covers ::findGroupByName
    */
   public function testFindGroupByNameThrowsWhenLookupFails(): void {
     $this->groupActions->buildGetAllRequest(Argument::any())->willReturn(['request' => 'lookup']);
@@ -180,8 +178,6 @@ class SodaScsKeycloakHelpersFindGroupTest extends UnitTestCase {
 
   /**
    * A failed lookup without reason still throws.
-   *
-   * @covers ::findGroupByName
    */
   public function testFindGroupByNameThrowsWhenAnswerHasNoDetails(): void {
     $this->groupActions->buildGetAllRequest(Argument::any())->willReturn(['request' => 'lookup']);
@@ -194,8 +190,6 @@ class SodaScsKeycloakHelpersFindGroupTest extends UnitTestCase {
 
   /**
    * An outage during the lookup deletes no group.
-   *
-   * @covers ::deleteComponentAccessGroups
    */
   public function testDeleteComponentAccessGroupsDeletesNothingWhenLookupFails(): void {
     $this->userActions->buildTokenRequest()->willReturn(['request' => 'token']);
@@ -207,15 +201,36 @@ class SodaScsKeycloakHelpersFindGroupTest extends UnitTestCase {
     $this->groupActions->makeRequest(['request' => 'lookup'])
       ->willReturn(['success' => FALSE, 'error' => 'Server error.']);
     $this->groupActions->buildDeleteRequest(Argument::any())->shouldNotBeCalled();
+    $this->nextcloudGroupHelpers->deleteGroup(Argument::any())->shouldNotBeCalled();
 
     $this->expectException(\RuntimeException::class);
     $this->helpers->deleteComponentAccessGroups('wisski-foo');
   }
 
   /**
-   * Both groups that exist are deleted and reported.
-   *
-   * @covers ::deleteComponentAccessGroups
+   * A failed Keycloak group delete keeps the Nextcloud groups.
+   */
+  public function testDeleteComponentAccessGroupsKeepsNextcloudGroupsWhenKeycloakDeleteFails(): void {
+    $this->userActions->buildTokenRequest()->willReturn(['request' => 'token']);
+    $this->userActions->makeRequest(['request' => 'token'])->willReturn([
+      'success' => TRUE,
+      'data' => ['keycloakResponse' => new Response(200, [], json_encode(['access_token' => 'not-a-token']))],
+    ]);
+    $this->groupActions->buildGetAllRequest(Argument::any())->willReturn(['request' => 'lookup-admin']);
+    $this->groupActions->makeRequest(['request' => 'lookup-admin'])->willReturn($this->answer([
+      ['id' => 'admin-uuid', 'name' => 'wisski-foo-admin'],
+    ]));
+    $this->groupActions->buildDeleteRequest(Argument::any())->willReturn(['request' => 'delete-admin']);
+    $this->groupActions->makeRequest(['request' => 'delete-admin'])
+      ->willReturn(['success' => FALSE, 'error' => 'Server error.']);
+    $this->nextcloudGroupHelpers->deleteGroup(Argument::any())->shouldNotBeCalled();
+
+    $this->expectException(\Exception::class);
+    $this->helpers->deleteComponentAccessGroups('wisski-foo');
+  }
+
+  /**
+   * Both groups that exist are deleted and reported, also in Nextcloud.
    */
   public function testDeleteComponentAccessGroupsDeletesBothGroups(): void {
     $this->userActions->buildTokenRequest()->willReturn(['request' => 'token']);
@@ -239,6 +254,9 @@ class SodaScsKeycloakHelpersFindGroupTest extends UnitTestCase {
         ->willReturn(['request' => 'delete-' . $kind]);
       $this->groupActions->makeRequest(['request' => 'delete-' . $kind])
         ->willReturn(['success' => TRUE])
+        ->shouldBeCalledOnce();
+      $this->nextcloudGroupHelpers->deleteGroup('wisski-foo-' . $kind)
+        ->willReturn(TRUE)
         ->shouldBeCalledOnce();
     }
 

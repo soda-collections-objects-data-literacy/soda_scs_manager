@@ -147,7 +147,8 @@ class SodaScsNextcloudServiceActions implements SodaScsServiceRequestInterface {
     }
     catch (RequestException $e) {
       $logger = $this->loggerFactory->get('soda_scs_manager');
-      $requestDump = Message::toString($e->getRequest());
+      // The header carries the admin login or the user's token.
+      $requestDump = Message::toString($e->getRequest()->withoutHeader('Authorization'));
       $responseDump = $e->hasResponse() ? Message::toString($e->getResponse()) : '';
       $logger->error('Nextcloud request failed: @message', ['@message' => $e->getMessage()]);
       $logger->debug('Failed Nextcloud request: %request', ['%request' => $requestDump]);
@@ -622,6 +623,39 @@ class SodaScsNextcloudServiceActions implements SodaScsServiceRequestInterface {
   }
 
   /**
+   * Builds a request that deletes a group via the provisioning API.
+   *
+   * Nextcloud endpoint: DELETE /ocs/v1.php/cloud/groups/{groupid}.
+   * OCS v1 answers HTTP 200 and reports an unknown group as OCS status 101.
+   *
+   * @param array $requestParams
+   *   Required:
+   *     - 'groupId' (string): Nextcloud group id.
+   *
+   * @return array
+   *   Request array ready to pass to makeRequest().
+   */
+  public function buildDeleteGroupRequest(array $requestParams): array {
+    return $this->buildAdminOcsRequest(
+      'DELETE',
+      '/ocs/v1.php/cloud/groups/' . rawurlencode((string) ($requestParams['groupId'] ?? '')),
+      [],
+    );
+  }
+
+  /**
+   * Builds a request that lists all groups with their member count.
+   *
+   * Nextcloud endpoint: GET /ocs/v1.php/cloud/groups/details.
+   *
+   * @return array
+   *   Request array ready to pass to makeRequest().
+   */
+  public function buildGroupDetailsRequest(): array {
+    return $this->buildAdminOcsRequest('GET', '/ocs/v1.php/cloud/groups/details', []);
+  }
+
+  /**
    * Not applicable for Nextcloud; returns an empty stub.
    *
    * Nextcloud uses Basic Auth or OIDC Bearer tokens directly — there is no
@@ -885,6 +919,44 @@ class SodaScsNextcloudServiceActions implements SodaScsServiceRequestInterface {
     $user = $requestParams['username'] ?? '';
     $pass = $requestParams['password'] ?? '';
     return 'Basic ' . base64_encode($user . ':' . $pass);
+  }
+
+  /**
+   * Builds an OCS request with the Nextcloud admin credentials.
+   *
+   * @param string $method
+   *   The HTTP method.
+   * @param string $path
+   *   The path below the Nextcloud base URL, starting with a slash.
+   * @param array $query
+   *   Query parameters; 'format' => 'json' is added.
+   *
+   * @return array
+   *   Request array ready to pass to makeRequest().
+   */
+  protected function buildAdminOcsRequest(string $method, string $path, array $query): array {
+    $adminAuth = $this->buildAdminAuthHeader();
+    if ($adminAuth === NULL) {
+      return [
+        'success' => FALSE,
+        'method' => '',
+        'route' => '',
+        'headers' => [],
+        'error' => 'Nextcloud admin credentials are not configured.',
+      ];
+    }
+
+    $nextcloudSettings = $this->sodaScsServiceHelpers->initNextcloudSettings();
+    return [
+      'success' => TRUE,
+      'method' => $method,
+      'route' => rtrim($nextcloudSettings['baseUrl'], '/') . $path . '?' . http_build_query(['format' => 'json'] + $query),
+      'headers' => [
+        'OCS-APIRequest' => 'true',
+        'Accept' => 'application/json',
+        'Authorization' => $adminAuth,
+      ],
+    ];
   }
 
   /**

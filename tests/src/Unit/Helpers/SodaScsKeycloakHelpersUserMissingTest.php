@@ -5,12 +5,16 @@ declare(strict_types=1);
 namespace Drupal\Tests\soda_scs_manager\Unit\Helpers;
 
 use Drupal\soda_scs_manager\Helpers\SodaScsKeycloakHelpers;
+use Drupal\soda_scs_manager\Helpers\SodaScsNextcloudGroupHelpers;
 use Drupal\soda_scs_manager\RequestActions\SodaScsKeycloakServiceGroupActions;
 use Drupal\soda_scs_manager\RequestActions\SodaScsServiceRequestInterface;
 use Drupal\Tests\UnitTestCase;
 use GuzzleHttp\Exception\RequestException;
 use GuzzleHttp\Psr7\Request;
 use GuzzleHttp\Psr7\Response;
+use PHPUnit\Framework\Attributes\CoversMethod;
+use PHPUnit\Framework\Attributes\DataProvider;
+use PHPUnit\Framework\Attributes\Group;
 use Prophecy\Prophecy\ObjectProphecy;
 use Prophecy\PhpUnit\ProphecyTrait;
 
@@ -19,10 +23,9 @@ use Prophecy\PhpUnit\ProphecyTrait;
  *
  * Issue 3638812: only a 404 with "User not found" marks a user as gone; a
  * failed request or another error must never read as a missing user.
- *
- * @coversDefaultClass \Drupal\soda_scs_manager\Helpers\SodaScsKeycloakHelpers
- * @group soda_scs_manager
  */
+#[CoversMethod(SodaScsKeycloakHelpers::class, 'isKeycloakUserMissing')]
+#[Group('soda_scs_manager')]
 class SodaScsKeycloakHelpersUserMissingTest extends UnitTestCase {
 
   use ProphecyTrait;
@@ -51,13 +54,12 @@ class SodaScsKeycloakHelpersUserMissingTest extends UnitTestCase {
     $this->helpers = new SodaScsKeycloakHelpers(
       $this->prophesize(SodaScsKeycloakServiceGroupActions::class)->reveal(),
       $this->userActions->reveal(),
+      $this->prophesize(SodaScsNextcloudGroupHelpers::class)->reveal(),
     );
   }
 
   /**
    * A 404 "User not found" is a missing user; the user is asked for by id.
-   *
-   * @covers ::isKeycloakUserMissing
    */
   public function testMissingUserWhenKeycloakAnswers404UserNotFound(): void {
     $this->userActions->buildGetRequest([
@@ -71,8 +73,6 @@ class SodaScsKeycloakHelpersUserMissingTest extends UnitTestCase {
 
   /**
    * An existing user is not missing.
-   *
-   * @covers ::isKeycloakUserMissing
    */
   public function testExistingUserIsNotMissing(): void {
     $this->answerGetWith([
@@ -86,8 +86,6 @@ class SodaScsKeycloakHelpersUserMissingTest extends UnitTestCase {
 
   /**
    * A 404 for another reason (unknown realm) is not a missing user.
-   *
-   * @covers ::isKeycloakUserMissing
    */
   public function testOtherNotFoundIsNotMissingUser(): void {
     $this->answerGetWith($this->failed(404, '{"error":"Realm not found."}'));
@@ -97,10 +95,8 @@ class SodaScsKeycloakHelpersUserMissingTest extends UnitTestCase {
 
   /**
    * Other statuses are no missing user, even when the body names the user.
-   *
-   * @covers ::isKeycloakUserMissing
-   * @dataProvider provideOtherStatuses
    */
+  #[DataProvider('provideOtherStatuses')]
   public function testOtherStatusIsNotMissingUser(int $status): void {
     $this->answerGetWith($this->failed($status, '{"error":"User not found"}'));
 
@@ -124,8 +120,6 @@ class SodaScsKeycloakHelpersUserMissingTest extends UnitTestCase {
 
   /**
    * A 404 whose exception carries no response is no missing user.
-   *
-   * @covers ::isKeycloakUserMissing
    */
   public function testNotFoundWithoutResponseIsNotMissingUser(): void {
     $this->answerGetWith([
@@ -139,8 +133,6 @@ class SodaScsKeycloakHelpersUserMissingTest extends UnitTestCase {
 
   /**
    * A 404 without a Guzzle exception in the answer is no missing user.
-   *
-   * @covers ::isKeycloakUserMissing
    */
   public function testNotFoundWithoutExceptionIsNotMissingUser(): void {
     $this->answerGetWith(['success' => FALSE, 'statusCode' => 404, 'data' => []]);

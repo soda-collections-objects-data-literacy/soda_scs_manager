@@ -76,6 +76,8 @@ services:
     class: Drupal\soda_scs_manager\Helpers\SodaScsKeycloakHelpers
   soda_scs_manager.nextcloud.helpers:
     class: Drupal\soda_scs_manager\Helpers\SodaScsNextcloudHelpers
+  soda_scs_manager.nextcloud_group.helpers:
+    class: Drupal\soda_scs_manager\Helpers\SodaScsNextcloudGroupHelpers
   soda_scs_manager.jupyter.helpers:
     class: Drupal\soda_scs_manager\Helpers\SodaScsJupyterHelpers
   soda_scs_manager.lifecycle.helpers:
