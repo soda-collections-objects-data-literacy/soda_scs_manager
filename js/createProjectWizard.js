@@ -221,6 +221,22 @@
               el.hidden = key !== name;
             }
           });
+          var activeStep = stepEls[name];
+          if (!activeStep) {
+            return;
+          }
+          var focusableElements = activeStep.querySelectorAll('input:not([type="hidden"]):not([disabled]), select:not([disabled]), textarea:not([disabled]), button:not([disabled]), a[href], [tabindex]:not([tabindex="-1"])');
+          var firstFocusable = Array.prototype.find.call(focusableElements, function (element) {
+            return element.getClientRects().length > 0
+              && window.getComputedStyle(element).visibility !== 'hidden';
+          });
+          if (firstFocusable) {
+            firstFocusable.focus();
+          }
+          else {
+            activeStep.setAttribute('tabindex', '-1');
+            activeStep.focus();
+          }
         }
 
         function computePages() {
@@ -1170,6 +1186,7 @@
           resetState();
           root.hidden = false;
           activeTrigger.setAttribute('aria-expanded', 'true');
+          closeBtn.focus();
           goToPhase('details');
         });
 
@@ -1220,7 +1237,64 @@
             closeOverlay();
           }
         });
+        document.addEventListener('keydown', function (e) {
+          if (e.key !== 'Tab' || root.hidden) {
+            return;
+          }
+          var focusable = Array.prototype.filter.call(
+            root.querySelectorAll('a[href], area[href], button, input:not([type="hidden"]), select, textarea, [contenteditable="true"], [tabindex]:not([tabindex="-1"])'),
+            function (element) {
+              return !element.disabled
+                && element.getClientRects().length > 0
+                && window.getComputedStyle(element).visibility !== 'hidden';
+            }
+          );
+          if (state.phase === 'apps-select') {
+            var cards = focusable.filter(function (element) {
+              return element.matches('.create-project-wizard__app-card');
+            });
+            var documentationLinks = focusable.filter(function (element) {
+              return element.matches('.add-app-popup-card__doc-link');
+            });
+            var otherControls = focusable.filter(function (element) {
+              return !element.matches('.create-project-wizard__app-card, .add-app-popup-card__doc-link');
+            });
+            focusable = otherControls.filter(function (element) {
+              return element === closeBtn;
+            }).concat(cards, otherControls.filter(function (element) {
+              return element !== closeBtn;
+            }), documentationLinks);
+          }
+          if (focusable.length === 0) {
+            e.preventDefault();
+            closeBtn.focus();
+            return;
+          }
+          var currentIndex = focusable.indexOf(document.activeElement);
+          var nextIndex;
+          if (currentIndex === -1) {
+            nextIndex = e.shiftKey ? focusable.length - 1 : 0;
+          }
+          else if (e.shiftKey) {
+            nextIndex = (currentIndex - 1 + focusable.length) % focusable.length;
+          }
+          else {
+            nextIndex = (currentIndex + 1) % focusable.length;
+          }
+          e.preventDefault();
+          focusable[nextIndex].focus();
+        }, true);
         root.addEventListener('keydown', function (e) {
+          if (e.key === 'Enter' && !e.defaultPrevented && !e.isComposing && !e.shiftKey && !e.ctrlKey && !e.metaKey && !e.altKey) {
+            var target = e.target;
+            var isSingleLineInput = target instanceof HTMLInputElement
+              && !['button', 'checkbox', 'file', 'hidden', 'image', 'radio', 'reset', 'submit'].includes(target.type);
+            if (isSingleLineInput && target.closest('form')) {
+              e.preventDefault();
+              goNext();
+              return;
+            }
+          }
           if (e.key === 'Escape') {
             e.preventDefault();
             closeOverlay();

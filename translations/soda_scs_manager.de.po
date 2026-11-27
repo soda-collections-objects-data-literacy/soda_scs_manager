@@ -1354,6 +1354,10 @@ msgstr "Das Projekt konnte nicht gelöscht werden."
 msgid "Removed @application."
 msgstr "@application entfernt."
 
+#: themes/custom/scs_custom_theme/assets/js/scripts.js
+msgid "Deleting WissKI Instances"
+msgstr "WissKI-Instanzen werden gelöscht"
+
 #: src/Form/SodaScsProjectDeleteForm.php
 msgid "The project @label could not be deleted. Some of its applications may already be deleted; try again."
 msgstr "Das Projekt @label konnte nicht gelöscht werden. Einige seiner Anwendungen sind eventuell schon gelöscht; versuchen Sie es erneut."
