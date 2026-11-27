@@ -137,6 +137,9 @@
     const projectTiles = () => findAll('.project__applications .application--card:not(.application--card--add) .application__core[href]');
     const projectDetails = () => findAll('.project__applications .application--card:not(.application--card--add) .application__details-link[href]');
     const detailsLink = () => projectDetails()[0];
+    // While the demo is being set up, the project page shows notes instead of links.
+    const filesPending = () => findAll('.project__files .project__files__pending').length > 0;
+    const tilesPending = () => findAll('.project__applications .application--card--pending').length > 0;
     const subsystemTiles = () => findAll('.application__details-card--applications .application--card .application__core[href]');
     const outline = (elements, tone) => elements.map((element) => ({ element, tone }));
     const backAction = () => ({ label: Drupal.t('One step back'), tone: 'secondary', command: 'back' });
@@ -208,6 +211,12 @@
             kind: 'hint',
             text: Drupal.t('Click the @button to get to the file system.', { '@button': slot(0) }),
             slots: [() => accentNode(Drupal.t('button'), 'blue', true)],
+            when: () => !filesPending(),
+          },
+          {
+            kind: 'hint',
+            text: Drupal.t('The file system opens once the demo project is ready.'),
+            when: filesPending,
           },
         ],
         actions: [backAction(), nextAction()],
@@ -223,6 +232,12 @@
             kind: 'hint',
             text: Drupal.t('Jump right in by clicking on the @tile.', { '@tile': slot(0) }),
             slots: [() => accentNode(Drupal.t('tile'), 'blue', true)],
+            when: () => !tilesPending(),
+          },
+          {
+            kind: 'hint',
+            text: Drupal.t('The tiles open your apps once the demo project is ready.'),
+            when: tilesPending,
           },
           {
             kind: 'hint',
@@ -537,7 +552,8 @@
     const content = document.createElement('div');
     content.className = 'scs-onboarding__content';
     content.id = 'scs-onboarding-content';
-    step.blocks.forEach((block, index) => {
+    // A block with `when` is shown only while its condition holds.
+    step.blocks.filter((block) => !block.when || block.when()).forEach((block, index) => {
       const element = document.createElement(block.kind === 'heading' ? 'h2' : 'p');
       element.className = BLOCK_CLASSES[block.kind];
       if (index === 0) {

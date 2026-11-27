@@ -6467,3 +6467,19 @@ msgstr "Datenbank-Zugriff"
 #: src/ViewBuilder/SodaScsComponentViewBuilder.php
 msgid "Use with the database user. Click to copy."
 msgstr "Zusammen mit dem Datenbank-Nutzer verwenden. Zum Kopieren klicken."
+
+#: templates/cards/soda-scs-manager--entity-card.html.twig
+msgid "Available once the demo project is ready."
+msgstr "Verfügbar, sobald das Demo-Projekt bereit ist."
+
+#: templates/entity/soda-scs-manager--project-files.html.twig
+msgid "The files are being copied into the project folder. The link appears once the demo project is ready."
+msgstr "Die Dateien werden in den Projektordner kopiert. Der Link erscheint, sobald das Demo-Projekt bereit ist."
+
+#: js/onboardingTour.js
+msgid "The file system opens once the demo project is ready."
+msgstr "Das Dateisystem lässt sich öffnen, sobald das Demo-Projekt bereit ist."
+
+#: js/onboardingTour.js
+msgid "The tiles open your apps once the demo project is ready."
+msgstr "Über die Kacheln öffnen Sie Ihre Anwendungen, sobald das Demo-Projekt bereit ist."

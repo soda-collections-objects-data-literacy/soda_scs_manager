@@ -161,12 +161,25 @@ final class SodaScsProjectViewBuilder extends EntityViewBuilder
     )));
     $build['#note'] = $project->get('note')->isEmpty() ? NULL : $project->get('note')->view('default');
     $build['#note_edit_form'] = $this->formBuilder->getForm(SodaScsProjectNoteForm::class, $project);
-    $applicationCards = $this->applicationCardBuilder->buildForProject($project);
-    $build['#application_cards'] = $applicationCards;
-    $build['#filter_tags'] = $this->applicationCardBuilder->collectFilterTags($applicationCards);
-    $build['#files'] = $this->buildFilesDisplay($project);
     $demoStatus = $this->demoStatusBuilder->build($this->currentUser, $project, SodaScsDemoStatusBuilder::VARIANT_PANEL);
     $build['#demo_status'] = $demoStatus;
+    // While the demo job fills the project, its Team Folder and apps are not
+    // there yet: no links into them until the job is done.
+    $isDemoBusy = (bool) ($demoStatus['#is_busy'] ?? FALSE);
+    $applicationCards = $this->applicationCardBuilder->buildForProject($project);
+    if ($isDemoBusy) {
+      foreach ($applicationCards as &$card) {
+        $card['#is_pending'] = TRUE;
+      }
+      unset($card);
+    }
+    $build['#application_cards'] = $applicationCards;
+    $build['#filter_tags'] = $this->applicationCardBuilder->collectFilterTags($applicationCards);
+    $files = $this->buildFilesDisplay($project);
+    if ($files !== NULL && $isDemoBusy) {
+      $files['#is_pending'] = TRUE;
+    }
+    $build['#files'] = $files;
     $build['#add_application_card'] = $isOwner ? [
       '#theme' => 'soda_scs_manager__add_application_card',
       '#asset_base' => $assetBase,

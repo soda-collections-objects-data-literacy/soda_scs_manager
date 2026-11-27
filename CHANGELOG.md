@@ -7,6 +7,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- While a demo project is being set up or reset, its project page no longer
+  links into the project: the application cards cannot be opened yet and the
+  Files section shows a note instead of the "Go to file system" button. Users
+  who followed the tutorial landed on "folder not found" in Nextcloud or on a
+  half-installed application. The links appear when the demo is ready (the
+  page reloads by itself). **Update `scs_custom_theme` together with the
+  module: it styles the new notes.**
+  Related: [#3642169](https://www.drupal.org/project/soda_scs_manager/issues/3642169),
+  [#143](https://github.com/soda-collections-objects-data-literacy/soda_scs_manager/issues/143).
+
 ## [4.8.3] - 2026-11-27
 
 ### Fixed

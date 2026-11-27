@@ -64,7 +64,7 @@
 
 {% endif %}
 
-<div class="application--card application--card--{{ card_type }}"{% if entity_id %} data-entity-id="{{ entity_id }}"{% endif %}{% if entity_type_id %} data-entity-type="{{ entity_type_id }}"{% endif %} data-health-status="{{ health_status }}">
+<div class="application--card application--card--{{ card_type }}{% if is_pending %} application--card--pending{% endif %}"{% if entity_id %} data-entity-id="{{ entity_id }}"{% endif %}{% if entity_type_id %} data-entity-type="{{ entity_type_id }}"{% endif %} data-health-status="{{ health_status }}">
 	<div class="application__meta">
 		<div class="application__health-status application__health-status--{{ health_status }}" data-health-status="{{ health_status }}" title="{{ health_label }}">
 			<div class="application__health__icon" aria-hidden="true"></div>
@@ -82,7 +82,12 @@
 		{% endif %}
 	</div>
 
+	{# A demo that is still being set up has no app to open yet (#3642169). #}
+	{% if is_pending %}
+	<div class="application__core">
+	{% else %}
 	<a href="{{ url }}" class="application__core" aria-label="{{ 'Open @title'|t({'@title': title}) }}">
+	{% endif %}
 		<h2 class="application__title h1">{{ application_name }}</h2>
 		<div class="application__icons-and-arrow">
 			{% if application_icons is defined and application_icons|length %}
@@ -92,14 +97,22 @@
 					{% endfor %}
 				</div>
 			{% endif %}
+			{% if is_pending %}
+				<p class="application__pending-note">{{ 'Available once the demo project is ready.'|t }}</p>
+			{% else %}
 			<div class="application__arrow">
 				<svg width="34" height="34" viewbox="0 0 34 34" fill="none" xmlns="http://www.w3.org/2000/svg">
 					<circle cx="17" cy="17" r="16.5" stroke="#17212B"/>
 					<path d="M24 11C24 10.4477 23.5523 10 23 10L14 10C13.4477 10 13 10.4477 13 11C13 11.5523 13.4477 12 14 12L22 12L22 20C22 20.5523 22.4477 21 23 21C23.5523 21 24 20.5523 24 20L24 11ZM11 23L11.7071 23.7071L23.7071 11.7071L23 11L22.2929 10.2929L10.2929 22.2929L11 23Z" fill="#17212B"/>
 				</svg>
 			</div>
+			{% endif %}
 		</div>
+	{% if is_pending %}
+	</div>
+	{% else %}
 	</a>
+	{% endif %}
 
 	<div class="application__name">
 		<h3 class="h4">{{ instance_name|default(title) }}</h3>

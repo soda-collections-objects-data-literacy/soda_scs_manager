@@ -8,12 +8,16 @@
  * - open_url: Nextcloud URL into this project's Team Folder
  * - activities: { status, items: [{label, subtitle, url, action}] }
  * - project_label: Project display name
+ * - is_pending: TRUE while a demo project is being set up or reset; the
+ *   Team Folder is not filled yet, so no link into it.
  */
 #}
 <div class="project__files project__section project__files__block" aria-label="{{ 'Project files'|t }}">
   <div class="project__section__header">
   		<h2 class="project__section-title h5">{{ 'Files'|t }}</h2>
-	{% if open_url %}
+	{% if is_pending %}
+		<p class="project__files__pending">{{ 'The files are being copied into the project folder. The link appears once the demo project is ready.'|t }}</p>
+	{% elseif open_url %}
 		<a href="{{ open_url }}" target="_blank" rel="noopener noreferrer" class="project__files__button btn btn--extern btn--secondary">
 			{{ 'Go to file system'|t }}
 		</a>
