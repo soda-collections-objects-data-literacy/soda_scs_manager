@@ -150,6 +150,25 @@ echo json_encode($g["attributes"] ?? [], JSON_UNESCAPED_UNICODE|JSON_PRETTY_PRIN
 - Content migration of private skeleton `SCS-Share` is **out of scope** here (see `docs/technical/scs-share-private-to-teamfolder.md` / Plan 06).
 - Adding a user to a project only syncs Keycloak/OIDC membership for folders that **already** exist. Each legacy project still needs the Team Folder backfill once.
 
+## Deletion and cleanup of the Nextcloud groups
+
+Nextcloud never removes a group by itself: the integration app creates group `G` with the Team Folder, and `user_oidc` copies the Keycloak access groups `{machineName}-admin` / `-user` of WissKI, SQL and triplestore applications at the Drive login. The Manager therefore deletes them (`SodaScsNextcloudGroupHelpers::deleteGroup()`, OCS `DELETE /ocs/v1.php/cloud/groups/{groupid}`):
+
+- `SodaScsProjectHelpers::deleteProjectGroup()` deletes group `G` after the Keycloak project group (project delete form, account delete, rollback of a failed project create).
+- `SodaScsKeycloakHelpers::deleteComponentAccessGroups()` deletes `{machineName}-admin` and `-user` after their Keycloak groups (application delete).
+- Only after the Keycloak delete succeeded: a group that is still in Keycloak would come back with the next Drive login. A failed Keycloak delete or lookup keeps the Nextcloud group.
+
+Groups left by deletes before this change (also with the old `keycloak-` prefix) are removed with a Drush command, in the container:
+
+```bash
+# List orphaned groups (no writes)
+docker exec manager--drupal--app drush soda_scs_manager:delete-orphaned-nextcloud-groups
+# Delete the empty ones
+docker exec manager--drupal--app drush soda_scs_manager:delete-orphaned-nextcloud-groups --apply
+```
+
+A group counts as orphaned when it is named like a project gid or an application access group and no project or application of that name exists; a `keycloak-` copy of an existing group is kept. Groups that still have members are listed and kept.
+
 ### Optional: rename default label to “Projekt 1”
 
 Backfill does **not** rename existing labels (e.g. `rnsrk default project`). To align with new defaults:
