@@ -35,6 +35,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   module: it styles the new notes.**
   Related: [#3642169](https://www.drupal.org/project/soda_scs_manager/issues/3642169),
   [#143](https://github.com/soda-collections-objects-data-literacy/soda_scs_manager/issues/143).
+- The module now declares the core modules Node and Block as dependencies.
+  It ships the Documentation content type and places blocks when it is
+  installed, so installing it on a site without them failed. Existing sites
+  already have both enabled; nothing to do.
+  Related: [#3642221](https://www.drupal.org/project/soda_scs_manager/issues/3642221).
 
 ## [4.8.3] - 2026-11-27
 
