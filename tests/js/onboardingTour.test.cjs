@@ -31,3 +31,37 @@ test('onboarding outlines all clickable controls with the matching colours', () 
   context.testSteps[6].capture(state);
   assert.equal(state.urls.application, '/details/1');
 });
+
+test('onboarding swaps the click hints for a wait note while the demo is being set up', () => {
+  const load = (selectors) => {
+    const document = { querySelectorAll: (selector) => selectors[selector] || [] };
+    const Drupal = { behaviors: {}, t: (text) => text };
+    const context = { Drupal, drupalSettings: {}, once: () => [], document };
+    const file = path.join(__dirname, '../../js/onboardingTour.js');
+    const source = fs.readFileSync(file, 'utf8').replace(
+      '  Drupal.behaviors.sodaScsOnboardingTour = {',
+      '  globalThis.testSteps = buildSteps();\n  Drupal.behaviors.sodaScsOnboardingTour = {',
+    );
+    vm.runInNewContext(source, context);
+    return context.testSteps;
+  };
+  const hints = (step) => Array.from(step.blocks
+    .filter((block) => block.kind === 'hint' && (!block.when || block.when())), (block) => block.text);
+
+  const pending = load({
+    '.project__files .project__files__pending': [{ id: 'note' }],
+    '.project__applications .application--card--pending': [{ id: 'card' }],
+  });
+  assert.deepEqual(hints(pending[5]), ['The file system opens once the demo project is ready.']);
+  assert.deepEqual(hints(pending[6]), [
+    'The tiles open your apps once the demo project is ready.',
+    'Or click the details @button to get to the application details.',
+  ]);
+
+  const ready = load({});
+  assert.deepEqual(hints(ready[5]), ['Click the @button to get to the file system.']);
+  assert.deepEqual(hints(ready[6]), [
+    'Jump right in by clicking on the @tile.',
+    'Or click the details @button to get to the application details.',
+  ]);
+});
