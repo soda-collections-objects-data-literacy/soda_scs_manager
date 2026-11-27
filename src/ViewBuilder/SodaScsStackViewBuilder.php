@@ -115,7 +115,11 @@ class SodaScsStackViewBuilder extends EntityViewBuilder {
       $build['includedComponentCards'] = [];
       foreach ($entity->get('includedComponents')->referencedEntities() as $component) {
         if ($component instanceof SodaScsComponentInterface) {
-          $build['includedComponentCards'][] = $this->applicationCardBuilder->buildComponentCard($component, showDetailsLink: FALSE);
+          // Only the SQL and triplestore components have a detail page with
+          // content of its own (their credentials); for the others it would
+          // repeat the stack page.
+          $hasDetailPage = in_array($component->bundle(), ['soda_scs_sql_component', 'soda_scs_triplestore_component'], TRUE);
+          $build['includedComponentCards'][] = $this->applicationCardBuilder->buildComponentCard($component, showDetailsLink: $hasDetailPage);
         }
       }
       // The cards are rendered from the stored health field, which is only

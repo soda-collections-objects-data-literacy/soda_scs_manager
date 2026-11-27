@@ -28,6 +28,28 @@
 		{% endif %}
 	</section>
 
+	{% if elements.triplestoreCredentials %}
+		<section class="application__details-card application__details-card--endpoint-access">
+			<h2 class="application__details-card-title h4">{{ 'Endpoint access'|t }}</h2>
+			{% set credentials = elements.triplestoreCredentials %}
+			{{ credentials.publicRead }}
+			{{ credentials.readUrl }}
+			{{ credentials.writeUrl }}
+			{{ credentials.username }}
+			{{ credentials.password }}
+			{{ credentials.token }}
+		</section>
+	{% endif %}
+
+	{% if elements.databaseCredentials %}
+		<section class="application__details-card application__details-card--database-access">
+			<h2 class="application__details-card-title h4">{{ 'Database access'|t }}</h2>
+			{% set credentials = elements.databaseCredentials %}
+			{{ credentials.username }}
+			{{ credentials.password }}
+		</section>
+	{% endif %}
+
 	{% if elements.notes or elements['#note_edit_form'] %}
 		<section class="application__details-card application__details-card--notes project__note">
 			<div class="project__section__header">

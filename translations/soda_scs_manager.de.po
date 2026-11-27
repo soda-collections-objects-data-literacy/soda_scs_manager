@@ -6459,3 +6459,11 @@ msgstr "@item konnte nicht gelöscht werden."
 #: orphan cleanup batch
 msgid "Skipped @item."
 msgstr "@item übersprungen."
+
+#: src/ViewBuilder/SodaScsComponentViewBuilder.php
+msgid "Database access"
+msgstr "Datenbank-Zugriff"
+
+#: src/ViewBuilder/SodaScsComponentViewBuilder.php
+msgid "Use with the database user. Click to copy."
+msgstr "Zusammen mit dem Datenbank-Nutzer verwenden. Zum Kopieren klicken."

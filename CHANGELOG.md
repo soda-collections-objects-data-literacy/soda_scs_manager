@@ -7,6 +7,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- The detail page of a triplestore application shows the "Endpoint access"
+  card again: public read (as a checkbox), SPARQL read and write endpoints,
+  user, password and token. The redesigned detail template never printed it.
+  The detail page of a SQL database application now has a "Database access"
+  card with the database user and password. Password and token stay hidden
+  until clicked. The SQL and triplestore cards on the stack detail page link
+  to these pages again with a "Details" button. The cards are shown only to
+  the owner of the application and to administrators.
+  Related: [#3642133](https://www.drupal.org/project/soda_scs_manager/issues/3642133).
+
 ## [4.8.2] - 2026-11-25
 
 ### Fixed

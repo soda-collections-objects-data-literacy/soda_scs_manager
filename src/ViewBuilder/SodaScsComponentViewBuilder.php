@@ -152,10 +152,25 @@ class SodaScsComponentViewBuilder extends EntityViewBuilder {
     catch (MissingDataException $e) {
       // Settings incomplete; health badge will not be linked.
     }
+    // The credentials belong to the owner (and admins): everyone with the
+    // view permission can open the page, so the values must not reach the
+    // render array for anyone else.
+    $showCredentials = $entity->access('update');
     if ($entity->bundle() === 'soda_scs_triplestore_component') {
-      $build['triplestoreCredentials'] = $this->buildTriplestoreCredentials($entity);
-      $build['triplestoreCredentials']['#weight'] = 55;
+      if ($showCredentials) {
+        $build['triplestoreCredentials'] = $this->buildTriplestoreCredentials($entity);
+        $build['triplestoreCredentials']['#weight'] = 55;
+      }
       // Hide default service key display to avoid duplication.
+      if (isset($build['serviceKey'])) {
+        $build['serviceKey']['#access'] = FALSE;
+      }
+    }
+
+    if ($entity->bundle() === 'soda_scs_sql_component') {
+      if ($showCredentials) {
+        $build['databaseCredentials'] = $this->buildDatabaseCredentials($entity);
+      }
       if (isset($build['serviceKey'])) {
         $build['serviceKey']['#access'] = FALSE;
       }
@@ -204,22 +219,7 @@ class SodaScsComponentViewBuilder extends EntityViewBuilder {
     $readUrl = $host ? $host . '/repositories/' . $machineName : '';
     $writeUrl = $host ? $host . '/repositories/' . $machineName . '/statements' : '';
 
-    $password = '';
-    $token = '';
-    foreach ($entity->get('serviceKey') as $ref) {
-      $serviceKey = $ref->entity;
-      if (!$serviceKey) {
-        continue;
-      }
-      $value = $serviceKey->get('servicePassword')->value ?? '';
-      $value = is_string($value) ? $value : '';
-      if ($serviceKey->get('type')->value === 'password') {
-        $password = $value;
-      }
-      elseif ($serviceKey->get('type')->value === 'token') {
-        $token = $value;
-      }
-    }
+    ['password' => $password, 'token' => $token] = $this->getServiceKeyValues($entity);
 
     $passwordDisplay = $password ?: (string) $this->t('(not set)');
     $tokenDisplay = $token ?: (string) $this->t('(not set)');
@@ -231,7 +231,17 @@ class SodaScsComponentViewBuilder extends EntityViewBuilder {
       'publicRead' => [
         '#type' => 'item',
         '#title' => $this->t('Public read'),
-        '#markup' => $publicRead ? $this->t('Yes') : $this->t('No'),
+        'checkbox' => [
+          '#type' => 'html_tag',
+          '#tag' => 'input',
+          '#attributes' => [
+            'type' => 'checkbox',
+            'disabled' => 'disabled',
+            'checked' => $publicRead,
+            'aria-label' => $this->t('Public read'),
+            'class' => ['scs-manager--triplestore--public-read'],
+          ],
+        ],
         '#description' => $this->t('When enabled, the SPARQL endpoint is readable without authentication.'),
         '#description_display' => 'after',
       ],
@@ -251,6 +261,7 @@ class SodaScsComponentViewBuilder extends EntityViewBuilder {
         '#description' => $this->t('SPARQL write endpoint for INSERT/UPDATE/DELETE.'),
         '#description_display' => 'after',
       ],
+      'username' => $this->buildUsernameItem($entity, 'scs-manager--triplestore--username'),
       'password' => [
         '#type' => 'item',
         '#title' => $this->t('Password'),
@@ -268,6 +279,85 @@ class SodaScsComponentViewBuilder extends EntityViewBuilder {
         '#description_display' => 'after',
       ],
     ];
+  }
+
+  /**
+   * Builds the database credentials display (user, password).
+   *
+   * @param \Drupal\Core\Entity\EntityInterface $entity
+   *   The SQL component entity.
+   *
+   * @return array
+   *   Render array for the credentials section.
+   */
+  protected function buildDatabaseCredentials(EntityInterface $entity): array {
+    $password = $this->getServiceKeyValues($entity)['password'];
+    $passwordDisplay = $password ?: (string) $this->t('(not set)');
+
+    return [
+      '#type' => 'fieldset',
+      '#title' => $this->t('Database access'),
+      'username' => $this->buildUsernameItem($entity, 'scs-manager--database--username'),
+      'password' => [
+        '#type' => 'item',
+        '#title' => $this->t('Password'),
+        '#markup' => '<span class="soda-scs-manager--service-password scs-manager--database--password">' . htmlspecialchars($passwordDisplay) . '</span>',
+        '#allowed_tags' => ['span'],
+        '#description' => $this->t('Use with the database user. Click to copy.'),
+        '#description_display' => 'after',
+      ],
+    ];
+  }
+
+  /**
+   * Builds the user name row of a credentials block.
+   *
+   * The service account is named after the component owner (see
+   * SodaScsSqlServiceActions and SodaScsTriplestoreHelpers).
+   *
+   * @param \Drupal\Core\Entity\EntityInterface $entity
+   *   The component entity.
+   * @param string $cssClass
+   *   The class of the value element.
+   *
+   * @return array
+   *   Render array of the row.
+   */
+  protected function buildUsernameItem(EntityInterface $entity, string $cssClass): array {
+    $owner = method_exists($entity, 'getOwner') ? $entity->getOwner() : NULL;
+    $username = $owner ? (string) $owner->getDisplayName() : '';
+
+    return [
+      '#type' => 'item',
+      '#title' => $this->t('User'),
+      '#markup' => '<span class="' . $cssClass . '">' . htmlspecialchars($username !== '' ? $username : (string) $this->t('(not set)')) . '</span>',
+      '#allowed_tags' => ['span'],
+    ];
+  }
+
+  /**
+   * Reads the password and token values of the component's service keys.
+   *
+   * @param \Drupal\Core\Entity\EntityInterface $entity
+   *   The component entity.
+   *
+   * @return array{password: string, token: string}
+   *   The values; an empty string when the service key does not exist.
+   */
+  protected function getServiceKeyValues(EntityInterface $entity): array {
+    $values = ['password' => '', 'token' => ''];
+    foreach ($entity->get('serviceKey') as $ref) {
+      $serviceKey = $ref->entity;
+      if (!$serviceKey) {
+        continue;
+      }
+      $value = $serviceKey->get('servicePassword')->value ?? '';
+      $type = $serviceKey->get('type')->value;
+      if (isset($values[$type])) {
+        $values[$type] = is_string($value) ? $value : '';
+      }
+    }
+    return $values;
   }
 
   /**
