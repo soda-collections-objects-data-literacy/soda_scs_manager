@@ -9,6 +9,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- Deleting an account no longer logs an error when the user never opened
+  WebProtégé. The missing WebProtégé account is logged as a notice.
+  Related: [#3642180](https://www.drupal.org/project/soda_scs_manager/issues/3642180).
 - While a demo project is being set up or reset, its project page no longer
   links into the project: the application cards cannot be opened yet and the
   Files section shows a note instead of the "Go to file system" button. Users

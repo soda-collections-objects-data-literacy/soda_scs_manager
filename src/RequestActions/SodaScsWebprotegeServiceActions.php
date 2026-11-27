@@ -266,6 +266,8 @@ class SodaScsWebprotegeServiceActions implements SodaScsServiceRequestInterface 
         'method' => 'DELETE',
         'route' => $settings['apiBaseUrl'] . '/data/users/' . rawurlencode($userName),
         'headers' => $this->apiHeaders($settings['apiKey']),
+        // A user who never opened WebProtégé has no account to delete.
+        'expectedStatusCodes' => [404],
       ];
     }
 
@@ -298,6 +300,9 @@ class SodaScsWebprotegeServiceActions implements SodaScsServiceRequestInterface 
 
   /**
    * {@inheritdoc}
+   *
+   * A status listed in the request's 'expectedStatusCodes' is logged as a
+   * notice instead of an error; the result still reports the failure.
    */
   public function makeRequest($request): array {
     if (empty($request['success'])) {
@@ -333,13 +338,22 @@ class SodaScsWebprotegeServiceActions implements SodaScsServiceRequestInterface 
     }
     catch (RequestException $e) {
       $statusCode = $e->getResponse() ? $e->getResponse()->getStatusCode() : 0;
-      Error::logException(
-        $this->loggerFactory->get('soda_scs_manager'),
-        $e,
-        'WebProtégé request failed: @message',
-        ['@message' => $e->getMessage()],
-        LogLevel::ERROR,
-      );
+      if (in_array($statusCode, $request['expectedStatusCodes'] ?? [], TRUE)) {
+        $this->loggerFactory->get('soda_scs_manager')->notice('WebProtégé answered @status to @method @route.', [
+          '@status' => $statusCode,
+          '@method' => $request['method'],
+          '@route' => $request['route'],
+        ]);
+      }
+      else {
+        Error::logException(
+          $this->loggerFactory->get('soda_scs_manager'),
+          $e,
+          'WebProtégé request failed: @message',
+          ['@message' => $e->getMessage()],
+          LogLevel::ERROR,
+        );
+      }
       return [
         'data' => [
           'webprotegeResponse' => $e->getResponse(),
