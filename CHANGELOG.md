@@ -18,6 +18,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   to these pages again with a "Details" button. The cards are shown only to
   the owner of the application and to administrators.
   Related: [#3642133](https://www.drupal.org/project/soda_scs_manager/issues/3642133).
+- The create-project wizard is easier to use with the keyboard and screen
+  readers: focus moves into the dialog when it opens and to the first field of
+  each step, Tab and Shift+Tab stay inside the dialog, and Enter in a
+  single-line field goes to the next step.
 
 ## [4.8.2] - 2026-11-25
 
